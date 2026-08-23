@@ -537,6 +537,42 @@ func TestVolumeConfigValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "state memory valid",
+
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+
+				return c
+			},
+		},
+		{
+			name: "state memory rejects encryption",
+
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{{
+					KeySlot: 0,
+					KeyStatic: &block.EncryptionKeyStatic{
+						KeyData: "topsecret",
+					},
+				}}
+
+				return c
+			},
+
+			expectedErrors: "encryption config is not allowed for volumeType \"memory\"",
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {

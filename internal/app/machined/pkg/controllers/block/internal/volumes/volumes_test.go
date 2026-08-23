@@ -8,10 +8,10 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/optional"
-	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
+	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
