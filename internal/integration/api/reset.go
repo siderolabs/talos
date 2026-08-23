@@ -42,6 +42,10 @@ func (suite *ResetSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ResetSuite) SetupTest() {
+	if suite.EphemeralNode || suite.EphemeralWorkers {
+		suite.T().Skip("skipping: reset is meaningless on ephemeral nodes: EPHEMERAL and STATE are tmpfs and there are no on-disk user partitions to wipe")
+	}
+
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
 	}
