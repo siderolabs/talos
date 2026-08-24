@@ -28,6 +28,13 @@ import (
 func Untar(ctx context.Context, r io.Reader, rootPath string, xattrsMap map[string]string) error {
 	tr := tar.NewReader(r)
 
+	root, err := os.OpenRoot(rootPath)
+	if err != nil {
+		return fmt.Errorf("error opening root path %q: %w", rootPath, err)
+	}
+
+	defer root.Close() //nolint:errcheck
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -44,35 +51,45 @@ func Untar(ctx context.Context, r io.Reader, rootPath string, xattrsMap map[stri
 			return fmt.Errorf("error reading tar header: %s", err)
 		}
 
-		hdrPath := safepath.CleanPath(hdr.Name)
-		if hdrPath == "" {
-			return errors.New("empty tar header path")
+		path := safepath.CleanPath(hdr.Name)
+		if filepath.IsAbs(path) {
+			path = path[1:]
 		}
 
-		path := filepath.Join(rootPath, hdrPath)
+		if path == "" {
+			return errors.New("empty tar header path")
+		}
 
 		switch hdr.Typeflag {
 		case tar.TypeDir:
 			mode := hdr.FileInfo().Mode() & os.ModePerm
 			mode |= 0o700 // make rwx for the owner
 
-			if err = os.Mkdir(path, mode); err != nil && !os.IsExist(err) {
+			if err = root.MkdirAll(path, mode); err != nil && !os.IsExist(err) {
 				return fmt.Errorf("error creating directory %q mode %s: %w", path, mode, err)
 			}
 
-			if err = os.Chmod(path, mode); err != nil {
+			if err = root.Chmod(path, mode); err != nil {
 				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
 			}
 
 		case tar.TypeSymlink:
-			if err = os.Symlink(hdr.Linkname, path); err != nil {
+			if err = root.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+				return fmt.Errorf("error creating parent directory for symlink %q: %w", path, err)
+			}
+
+			if err = root.Symlink(hdr.Linkname, path); err != nil {
 				return fmt.Errorf("error creating symlink %q -> %q: %w", path, hdr.Linkname, err)
 			}
 
 		default:
 			mode := hdr.FileInfo().Mode()
 
-			fp, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
+			if err = root.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+				return fmt.Errorf("error creating parent directory for file %q: %w", path, err)
+			}
+
+			fp, err := root.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
 			if err != nil {
 				return fmt.Errorf("error creating file %q mode %s: %w", path, mode, err)
 			}
@@ -86,13 +103,13 @@ func Untar(ctx context.Context, r io.Reader, rootPath string, xattrsMap map[stri
 				return fmt.Errorf("error closing %q: %w", path, err)
 			}
 
-			if err = os.Chmod(path, mode); err != nil {
+			if err = root.Chmod(path, mode); err != nil {
 				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
 			}
 		}
 
 		if hdr.PAXRecords[constants.TarPaxHeaderSELinux] != "" && xattrsMap != nil {
-			xattrsMap[path] = hdr.PAXRecords[constants.TarPaxHeaderSELinux]
+			xattrsMap[filepath.Join(rootPath, path)] = hdr.PAXRecords[constants.TarPaxHeaderSELinux]
 		}
 	}
 
