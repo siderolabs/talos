@@ -21,8 +21,8 @@ import (
 //
 // It legitimately may not exist: the startup task creates it, so a controller can run a pass before
 // it is there.
-func readContainerLifecycle(ctx context.Context, r controller.Runtime) (*containers.ContainerLifecycle, error) {
-	lifecycle, err := safe.ReaderGetByID[*containers.ContainerLifecycle](ctx, r, containers.ContainerLifecycleID)
+func readContainerLifecycle(ctx context.Context, runtime controller.Runtime) (*containers.ContainerLifecycle, error) {
+	containerLifecycle, err := safe.ReaderGetByID[*containers.ContainerLifecycle](ctx, runtime, containers.ContainerLifecycleID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil, nil
@@ -31,7 +31,7 @@ func readContainerLifecycle(ctx context.Context, r controller.Runtime) (*contain
 		return nil, fmt.Errorf("failed to get container lifecycle: %w", err)
 	}
 
-	return lifecycle, nil
+	return containerLifecycle, nil
 }
 
 // reconcileLifecycle holds a finalizer on the container shutdown barrier on behalf of controllerName.
@@ -45,22 +45,22 @@ func readContainerLifecycle(ctx context.Context, r controller.Runtime) (*contain
 // that is never released. See RuntimeController.reconcile.
 func reconcileLifecycle(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
-	lifecycle *containers.ContainerLifecycle,
+	containerLifecycle *containers.ContainerLifecycle,
 	controllerName string,
 	releasable bool,
 ) error {
-	if lifecycle == nil {
+	if containerLifecycle == nil {
 		return nil
 	}
 
-	hasFinalizer := lifecycle.Metadata().Finalizers().Has(controllerName)
+	hasFinalizer := containerLifecycle.Metadata().Finalizers().Has(controllerName)
 
-	switch lifecycle.Metadata().Phase() {
+	switch containerLifecycle.Metadata().Phase() {
 	case resource.PhaseRunning:
 		if !hasFinalizer {
-			if err := r.AddFinalizer(ctx, lifecycle.Metadata(), controllerName); err != nil {
+			if err := runtime.AddFinalizer(ctx, containerLifecycle.Metadata(), controllerName); err != nil {
 				return fmt.Errorf("failed to add lifecycle finalizer: %w", err)
 			}
 
@@ -70,7 +70,7 @@ func reconcileLifecycle(
 		// Not logging the still-waiting case: it would repeat on every reconcile for the length of
 		// the shutdown, and the controllers already log each thing they are winding down.
 		if hasFinalizer && releasable {
-			if err := r.RemoveFinalizer(ctx, lifecycle.Metadata(), controllerName); err != nil {
+			if err := runtime.RemoveFinalizer(ctx, containerLifecycle.Metadata(), controllerName); err != nil {
 				return fmt.Errorf("failed to remove lifecycle finalizer: %w", err)
 			}
 
