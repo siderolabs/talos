@@ -80,14 +80,12 @@ func NewLogViewer(app *tview.Application) *LogViewer {
 		widget.renderLogs()
 	})
 	widget.filterInput.SetDoneFunc(func(key tcell.Key) {
-		if key == tcell.KeyEscape {
-			widget.deactivateSearch()
-		}
+		widget.deactivateSearch(key == tcell.KeyEscape)
 	})
 
 	widget.SetRows(1, 0).SetColumns(0)
 
-	widget.AddItem(NewHorizontalLine("Logs"), 0, 0, 1, 1, 0, 0, false)
+	widget.AddItem(NewHorizontalLine("Logs (/: filter)"), 0, 0, 1, 1, 0, 0, false)
 	widget.AddItem(&widget.logs, 1, 0, 1, 1, 0, 0, true)
 
 	return widget
@@ -108,22 +106,33 @@ func (widget *LogViewer) activateSearch() {
 	widget.app.SetFocus(widget.filterInput)
 }
 
-// deactivateSearch hides the search input and clears the filter.
-func (widget *LogViewer) deactivateSearch() {
-	if widget.filterText != "" {
-		widget.filterText = ""
-		widget.filterInput.SetText("")
-		widget.renderLogs()
+// deactivateSearch hides the search input. If clearText is true, the filter is also cleared.
+func (widget *LogViewer) deactivateSearch(clearText bool) {
+	if !widget.filterActive {
+		if clearText && widget.filterText != "" {
+			widget.filterText = ""
+			widget.filterInput.SetText("")
+			widget.renderLogs()
+		}
+
+		return
 	}
 
-	if !widget.filterActive {
-		return
+	hadFilter := widget.filterText != ""
+
+	if clearText {
+		widget.filterText = ""
+		widget.filterInput.SetText("")
 	}
 
 	widget.filterActive = false
 	widget.RemoveItem(widget.filterInput)
 	widget.SetRows(1, 0)
 	widget.app.SetFocus(&widget.logs)
+
+	if clearText && hadFilter {
+		widget.renderLogs()
+	}
 }
 
 // WriteLog writes the log line to the widget.
