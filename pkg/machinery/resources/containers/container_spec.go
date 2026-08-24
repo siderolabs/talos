@@ -30,6 +30,10 @@ import (
 // Paths are the one dependency with no COSI equivalent, so they have to be polled.
 const pathPollInterval = time.Second
 
+// containerDependencyStabilityWindow is how long a dependsOn.containers entry's dependency must have
+// been Running before it counts as healthy for gating purposes.
+const containerDependencyStabilityWindow = 5 * time.Second
+
 // ContainerSpecType is type of ContainerSpec resource.
 const ContainerSpecType = resource.Type("ContainerSpecs.containers.talos.dev")
 
@@ -64,9 +68,6 @@ type ContainerSpecSpec struct {
 // and how soon to recheck them.
 //
 // containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
-//
-// dependsOn.containers is not checked here: it would need the aggregated ContainerStatus, which
-// only arrives with ContainerStatusController (github.com/siderolabs/talos/issues/14104).
 func (containerSpec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, containerID string) ([]string, optional.Optional[time.Duration], error) {
 	var waitingFor []string
 
@@ -96,6 +97,35 @@ func (containerSpec ContainerSpecSpec) Ready(ctx context.Context, r controller.R
 	waitingFor = append(waitingFor, unmet...)
 
 	return waitingFor, wakeUpAfter, nil
+}
+
+// CurrentImageStatus returns the image status describing the reference the container spec asks for,
+// or nil if there is none.
+//
+// ImageController rewrites the status only on its own next reconcile, so right after a reference
+// edit the one on record still describes the previous image: its phase and its error belong to a
+// pull that is no longer the one being waited on. Same check GetImageDigest makes.
+//
+// containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
+func (containerSpec ContainerSpecSpec) CurrentImageStatus(
+	ctx context.Context,
+	r controller.Reader,
+	containerID string,
+) (*ContainerImageStatus, error) {
+	containerImageStatus, err := safe.ReaderGetByID[*ContainerImageStatus](ctx, r, containerID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to get image status %q: %w", containerID, err)
+	}
+
+	if containerImageStatus.TypedSpec().Image != containerSpec.Image.Ref {
+		return nil, nil
+	}
+
+	return containerImageStatus, nil
 }
 
 // GetResolvedMounts returns the mounts MountController has most recently resolved for this
@@ -248,7 +278,8 @@ type ContainerDependsOnSpec struct {
 }
 
 // Ready reports the declared dependsOn gates that are not yet satisfied, and how soon the caller
-// should recheck gates Ready cannot itself observe an event for (currently only Paths).
+// should recheck the gates Ready cannot itself observe an event for: Paths, which are polled, and
+// Containers, whose dependencies have to stay running for containerDependencyStabilityWindow.
 //
 // Returns: unsatisfied dependencies, duration to wait before rechecking, error.
 func (dependsOn ContainerDependsOnSpec) Ready(
@@ -282,13 +313,41 @@ func (dependsOn ContainerDependsOnSpec) Ready(
 		}
 	}
 
+	// dependsOn.containers
+	unmetContainers, containersWakeUpAfter, err := dependsOn.ContainersReady(ctx, r)
+	if err != nil {
+		return nil, optional.None[time.Duration](), fmt.Errorf("failed to check container dependency readiness: %w", err)
+	}
+
+	waitingFor = append(waitingFor, unmetContainers...)
+
 	var wakeUpAfter optional.Optional[time.Duration]
 	if len(dependsOn.Paths) > 0 {
 		// Paths have no event to wake us, so poll while any are declared.
 		wakeUpAfter = optional.Some(pathPollInterval)
 	}
 
+	wakeUpAfter = EarliestWakeUpAfter(wakeUpAfter, containersWakeUpAfter)
+
 	return waitingFor, wakeUpAfter, nil
+}
+
+// EarliestWakeUpAfter returns the smaller of two optional wake-up durations, treating an unset one as
+// "no opinion" rather than as zero.
+func EarliestWakeUpAfter(a, b optional.Optional[time.Duration]) optional.Optional[time.Duration] {
+	av, aok := a.Get()
+	bv, bok := b.Get()
+
+	switch {
+	case !aok:
+		return b
+	case !bok:
+		return a
+	case bv < av:
+		return b
+	default:
+		return a
+	}
 }
 
 // TimeReady reports whether the dependsOn.time gate is satisfied.
@@ -340,6 +399,64 @@ func (dependsOn ContainerDependsOnSpec) NetworksReady(ctx context.Context, r con
 	}
 
 	return waitingFor, nil
+}
+
+// ContainersReady reports the declared dependsOn.containers entries that are not yet trustworthy, and
+// how soon to recheck one that is running but has not yet been running long enough to trust (see
+// containerDependencyStabilityWindow).
+//
+// A container with no ContainerStatus yet counts as not satisfied, same as a network or time status
+// that hasn't arrived: waiting is the correct answer, not an error. So does one that is stopping:
+// it is on its way out, whatever its last health was.
+func (dependsOn ContainerDependsOnSpec) ContainersReady(
+	ctx context.Context, r controller.Reader,
+) ([]string, optional.Optional[time.Duration], error) {
+	var (
+		waitingFor  []string
+		wakeUpAfter optional.Optional[time.Duration]
+	)
+
+	for _, name := range dependsOn.Containers {
+		status, err := safe.ReaderGetByID[*ContainerStatus](ctx, r, name)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				waitingFor = append(waitingFor, "container: "+name)
+
+				continue
+			}
+
+			return nil, optional.None[time.Duration](), fmt.Errorf("failed to get container status %q: %w", name, err)
+		}
+
+		// State as well as Health: an instance on its way out keeps the Health it had, by design, so
+		// Health alone would let a dependency that is being torn down satisfy the gate.
+		if status.TypedSpec().Health != ContainerHealthHealthy || status.TypedSpec().State != ContainerStateRunning {
+			waitingFor = append(waitingFor, "container: "+name)
+
+			continue
+		}
+
+		instanceStatus, err := LatestInstanceStatus(ctx, r, name)
+		if err != nil {
+			return nil, optional.None[time.Duration](), fmt.Errorf("failed to get instance status for container %q: %w", name, err)
+		}
+
+		// Health said Healthy but the newest instance status disagrees: a stale read between two
+		// resources written by different controllers. Treat as not yet trustworthy rather than
+		// erroring -- the next pass sees a consistent view.
+		if instanceStatus == nil || instanceStatus.TypedSpec().Phase != ContainerInstancePhaseRunning {
+			waitingFor = append(waitingFor, "container: "+name)
+
+			continue
+		}
+
+		if since := time.Since(instanceStatus.TypedSpec().StartedAt); since < containerDependencyStabilityWindow {
+			waitingFor = append(waitingFor, "container: "+name)
+			wakeUpAfter = EarliestWakeUpAfter(wakeUpAfter, optional.Some(containerDependencyStabilityWindow-since))
+		}
+	}
+
+	return waitingFor, wakeUpAfter, nil
 }
 
 // NetworkConditionMet reports whether one declared dependsOn.networks condition is satisfied.

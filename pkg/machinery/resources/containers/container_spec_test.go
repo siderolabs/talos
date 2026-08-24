@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
@@ -191,6 +192,120 @@ func TestNetworkConditionMet(t *testing.T) {
 	}
 }
 
+func TestContainersReady(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+
+	tests := []struct {
+		name            string
+		containers      []string
+		setup           func(*containers.ContainerStatus)
+		setupInstance   func(*containers.ContainerInstanceStatus)
+		want            []string
+		wantWakeUpAfter bool
+	}{
+		{
+			name:       "no containers declared",
+			containers: nil,
+			want:       nil,
+		},
+		{
+			name:       "status missing",
+			containers: []string{"other"},
+			want:       []string{"container: other"},
+		},
+		{
+			name:       "healthy but just started",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now()
+			},
+			want:            []string{"container: other"},
+			wantWakeUpAfter: true,
+		},
+		{
+			name:       "healthy and stable",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now().Add(-time.Hour)
+			},
+			want: nil,
+		},
+		{
+			name:       "stopping keeps its health",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				// What StatusController writes for an instance that is on its way out: the health it had
+				// last, carried over, with the state saying what is actually happening to it.
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateStopping
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now().Add(-time.Hour)
+			},
+			want: []string{"container: other"},
+		},
+		{
+			name:       "healthy but no instance status",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			want: []string{"container: other"},
+		},
+		{
+			name:       "degraded",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthDegraded
+			},
+			want: []string{"container: other"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			if tt.setup != nil {
+				status := containers.NewContainerStatus(containers.NamespaceName, "other")
+				tt.setup(status)
+				require.NoError(t, st.Create(ctx, status))
+			}
+
+			if tt.setupInstance != nil {
+				instanceStatus := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID("other", 0))
+				instanceStatus.TypedSpec().ContainerID = "other"
+				instanceStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, "other")
+				tt.setupInstance(instanceStatus)
+				require.NoError(t, st.Create(ctx, instanceStatus))
+			}
+
+			got, wakeUpAfter, err := containers.ContainerDependsOnSpec{Containers: tt.containers}.ContainersReady(ctx, st)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+
+			_, wakeUpAfterSet := wakeUpAfter.Get()
+			assert.Equal(t, tt.wantWakeUpAfter, wakeUpAfterSet)
+		})
+	}
+}
+
 func TestReady(t *testing.T) {
 	t.Parallel()
 
@@ -255,6 +370,13 @@ func TestReady(t *testing.T) {
 			wantWaitingFor:  []string{"path: " + missingPath},
 			wantWakeUpAfter: true,
 		},
+		{
+			name: "container dependency unmet",
+			dependsOn: containers.ContainerDependsOnSpec{
+				Containers: []string{"other"},
+			},
+			wantWaitingFor: []string{"container: other"},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -278,13 +400,14 @@ func TestReadyMissingStatuses(t *testing.T) {
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
 	dependsOn := containers.ContainerDependsOnSpec{
-		Networks: []string{"addresses"},
-		Time:     true,
+		Networks:   []string{"addresses"},
+		Time:       true,
+		Containers: []string{"other"},
 	}
 
 	waitingFor, wakeUpAfter, err := dependsOn.Ready(ctx, st)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"network: addresses", "time"}, waitingFor)
+	assert.Equal(t, []string{"network: addresses", "time", "container: other"}, waitingFor)
 
 	_, wakeUpAfterSet := wakeUpAfter.Get()
 	assert.False(t, wakeUpAfterSet)

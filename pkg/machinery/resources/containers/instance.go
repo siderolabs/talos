@@ -7,6 +7,7 @@ package containers
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"slices"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -28,6 +30,14 @@ import (
 // to replace another cannot be confused with it, nor collide with a destruction still in flight.
 func InstanceID(container string, generation uint64) resource.ID {
 	return fmt.Sprintf("%s-%d", container, generation)
+}
+
+// InstanceIDQuery matches the IDs of every instance resource belonging to one container.
+//
+// The generation suffix is anchored and digits-only, so a query for "a" cannot pick up "a-1-2":
+// that ID belongs to container "a-1".
+func InstanceIDQuery(container string) resource.IDQueryOption {
+	return resource.IDRegexpMatch(regexp.MustCompile(`^` + regexp.QuoteMeta(container) + `-\d+$`))
 }
 
 // ContainerInstanceSpecType is type of ContainerInstanceSpec resource.
@@ -130,6 +140,11 @@ func init() {
 
 // ContainerInstanceStatusType is type of ContainerInstanceStatus resource.
 const ContainerInstanceStatusType = resource.Type("ContainerInstanceStatuses.containers.talos.dev")
+
+// ContainerSpecIdLabel is the label key for the owning container's ID, set on both
+// ContainerInstanceSpec and ContainerInstanceStatus resources so that either can be looked up by
+// container without scanning every instance.
+const ContainerSpecIdLabel = "container-spec-id"
 
 // ContainerInstanceStatus resource reports the execution state of a ContainerInstanceSpec.
 //
@@ -239,6 +254,20 @@ func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx contex
 	return inSync, nil
 }
 
+// RestartWindowWakeAfter returns how long is left of restartInterval since a finished instance's
+// FinishedAt, if it is still inside that window.
+func (instanceStatusSpec ContainerInstanceStatusSpec) RestartWindowWakeAfter(restartInterval time.Duration) optional.Optional[time.Duration] {
+	switch instanceStatusSpec.Phase {
+	case ContainerInstancePhaseTerminated, ContainerInstancePhaseFailed:
+		if remaining := restartInterval - time.Since(instanceStatusSpec.FinishedAt); remaining > 0 {
+			return optional.Some(remaining)
+		}
+	case ContainerInstancePhaseCreated, ContainerInstancePhaseRunning:
+	}
+
+	return optional.None[time.Duration]()
+}
+
 // GetImageDigest returns the digest an instance of this container should run, or an empty string if
 // imageRef has not been resolved to one.
 //
@@ -255,11 +284,83 @@ func GetImageDigest(ctx context.Context, r controller.Reader, containerID, image
 		return "", fmt.Errorf("failed to get image status %q: %w", containerID, err)
 	}
 
-	if imageStatus.TypedSpec().Phase != ContainerImagePhaseReady || imageStatus.TypedSpec().Image != imageRef {
-		return "", nil
+	return ImageDigest(imageStatus, imageRef), nil
+}
+
+// ImageDigest returns the digest imageStatus resolved to for imageRef, or an empty string if there is
+// no status yet or the pull behind it has not completed.
+//
+// Same check GetImageDigest makes, for callers that already hold the status.
+func ImageDigest(imageStatus *ContainerImageStatus, imageRef string) string {
+	if imageStatus == nil ||
+		imageStatus.TypedSpec().Phase != ContainerImagePhaseReady ||
+		imageStatus.TypedSpec().Image != imageRef {
+		return ""
 	}
 
-	return imageStatus.TypedSpec().Digest, nil
+	return imageStatus.TypedSpec().Digest
+}
+
+// DeriveReportedError picks the error to report, preferring the running execution's over the image's.
+func DeriveReportedError(containerInstanceStatus *ContainerInstanceStatus, containerImageStatus *ContainerImageStatus) string {
+	if containerInstanceStatus != nil && containerInstanceStatus.TypedSpec().Error != "" {
+		return containerInstanceStatus.TypedSpec().Error
+	}
+
+	if containerImageStatus != nil && containerImageStatus.TypedSpec().Error != "" {
+		return containerImageStatus.TypedSpec().Error
+	}
+
+	return ""
+}
+
+// LatestInstanceStatus returns the newest instance status of containerID, or nil if there is none.
+func LatestInstanceStatus(
+	ctx context.Context,
+	reader controller.Reader,
+	containerID string,
+) (*ContainerInstanceStatus, error) {
+	containerInstanceStatuses, err := safe.ReaderListAll[*ContainerInstanceStatus](ctx, reader,
+		state.WithLabelQuery(resource.LabelEqual(ContainerSpecIdLabel, containerID)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list instance statuses %q: %w", containerID, err)
+	}
+
+	var latestStatus *ContainerInstanceStatus
+
+	for containerInstanceStatus := range containerInstanceStatuses.All() {
+		if latestStatus == nil || containerInstanceStatus.TypedSpec().Generation > latestStatus.TypedSpec().Generation {
+			latestStatus = containerInstanceStatus
+		}
+	}
+
+	return latestStatus, nil
+}
+
+// CurrentInstanceSpec returns the spec of containerID's current instance, or nil if there is none.
+func CurrentInstanceSpec(
+	ctx context.Context,
+	reader controller.Reader,
+	containerID string,
+	containerInstanceStatus *ContainerInstanceStatus,
+) (*ContainerInstanceSpec, error) {
+	if containerInstanceStatus == nil {
+		return nil, nil
+	}
+
+	instanceSpecID := InstanceID(containerID, containerInstanceStatus.TypedSpec().Generation)
+
+	containerInstanceSpec, err := safe.ReaderGetByID[*ContainerInstanceSpec](ctx, reader, instanceSpecID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to get instance spec %q: %w", instanceSpecID, err)
+	}
+
+	return containerInstanceSpec, nil
 }
 
 // Int32PtrEqual compares two int32 pointers, treating nil as equal only to nil.

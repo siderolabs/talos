@@ -120,6 +120,12 @@ func (suite *InstanceSuite) assertInstance(generation uint64) {
 	ctest.AssertResource(suite, containers.InstanceID(testContainer, generation),
 		func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
 			asrt.Equal(generation, instance.TypedSpec().Generation)
+
+			// Instances are looked up by owning container through this label, so it has to be there
+			// from the moment the instance is created.
+			containerID, ok := instance.Metadata().Labels().Get(containers.ContainerSpecIdLabel)
+			asrt.True(ok)
+			asrt.Equal(testContainer, containerID)
 		})
 }
 

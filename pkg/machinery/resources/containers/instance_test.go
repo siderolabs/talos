@@ -5,9 +5,14 @@
 package containers_test
 
 import (
+	"context"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -522,4 +527,154 @@ func TestResolvedMountsEqual(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestDeriveReportedError(t *testing.T) {
+	t.Parallel()
+
+	newInstanceStatus := func(errMsg string) *containers.ContainerInstanceStatus {
+		status := containers.NewContainerInstanceStatus(containers.NamespaceName, "nginx-0")
+		status.TypedSpec().Error = errMsg
+
+		return status
+	}
+
+	newImageStatus := func(errMsg string) *containers.ContainerImageStatus {
+		status := containers.NewContainerImageStatus(containers.NamespaceName, "nginx")
+		status.TypedSpec().Error = errMsg
+
+		return status
+	}
+
+	tests := []struct {
+		name                    string
+		containerInstanceStatus *containers.ContainerInstanceStatus
+		containerImageStatus    *containers.ContainerImageStatus
+		want                    string
+	}{
+		{
+			name: "neither present",
+		},
+		{
+			name:                    "instance error only",
+			containerInstanceStatus: newInstanceStatus("instance failed"),
+			want:                    "instance failed",
+		},
+		{
+			name:                 "image error only",
+			containerImageStatus: newImageStatus("pull failed"),
+			want:                 "pull failed",
+		},
+		{
+			name:                    "instance error outranks image error",
+			containerInstanceStatus: newInstanceStatus("instance failed"),
+			containerImageStatus:    newImageStatus("pull failed"),
+			want:                    "instance failed",
+		},
+		{
+			name:                    "instance present without an error falls back to the image error",
+			containerInstanceStatus: newInstanceStatus(""),
+			containerImageStatus:    newImageStatus("pull failed"),
+			want:                    "pull failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := containers.DeriveReportedError(tt.containerInstanceStatus, tt.containerImageStatus)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestLatestInstanceStatus(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	const containerID = "nginx"
+
+	newStatus := func(generation uint64) *containers.ContainerInstanceStatus {
+		status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(containerID, generation))
+		status.TypedSpec().ContainerID = containerID
+		status.TypedSpec().Generation = generation
+		status.Metadata().Labels().Set(containers.ContainerSpecIdLabel, containerID)
+
+		return status
+	}
+
+	// Created out of generation order: a bug that returned the last-listed resource rather than
+	// tracking the maximum Generation would not be caught by a monotonic creation order.
+	require.NoError(t, st.Create(ctx, newStatus(1)))
+	require.NoError(t, st.Create(ctx, newStatus(3)))
+	require.NoError(t, st.Create(ctx, newStatus(0)))
+	require.NoError(t, st.Create(ctx, newStatus(2)))
+
+	got, err := containers.LatestInstanceStatus(ctx, st, containerID)
+	require.NoError(t, err)
+	require.NotNil(t, got)
+	assert.Equal(t, uint64(3), got.TypedSpec().Generation)
+}
+
+func TestLatestInstanceStatusNone(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	got, err := containers.LatestInstanceStatus(ctx, st, "nginx")
+	require.NoError(t, err)
+	assert.Nil(t, got)
+}
+
+func TestCurrentInstanceSpec(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	const containerID = "nginx"
+
+	t.Run("nil status returns nil", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+		got, err := containers.CurrentInstanceSpec(ctx, st, containerID, nil)
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("status without a matching spec returns nil", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+		status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(containerID, 0))
+		status.TypedSpec().Generation = 0
+
+		got, err := containers.CurrentInstanceSpec(ctx, st, containerID, status)
+		require.NoError(t, err)
+		assert.Nil(t, got)
+	})
+
+	t.Run("returns the spec matching the status's generation", func(t *testing.T) {
+		t.Parallel()
+
+		st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+		spec := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(containerID, 2))
+		spec.TypedSpec().ContainerID = containerID
+		require.NoError(t, st.Create(ctx, spec))
+
+		status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(containerID, 2))
+		status.TypedSpec().Generation = 2
+
+		got, err := containers.CurrentInstanceSpec(ctx, st, containerID, status)
+		require.NoError(t, err)
+		require.NotNil(t, got)
+		assert.Equal(t, containers.InstanceID(containerID, 2), got.Metadata().ID())
+	})
 }
