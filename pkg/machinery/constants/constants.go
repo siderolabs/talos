@@ -840,6 +840,10 @@ const (
 	// a domain of their own is what lets them be told apart in audit and confined separately.
 	SelinuxLabelTalosContainer = "system_u:system_r:taloscontainer_t:s0"
 
+	// SelinuxLabelTalosContainerMachined is the SELinux label for containers declared via
+	// ContainerConfig with security.machinedAccess set.
+	SelinuxLabelTalosContainerMachined = "system_u:system_r:taloscontainer_machined_t:s0"
+
 	// SelinuxLabelUnconfinedService is the SELinux label for process without label set (normally should not occur).
 	SelinuxLabelUnconfinedService = "system_u:system_r:unconfined_service_t:s0"
 
@@ -1440,6 +1444,11 @@ const (
 
 	// SwapVolumePrefix is the prefix for the swap volumes.
 	SwapVolumePrefix = "s-"
+
+	// ContainerServicePIDPrefix distinguishes container PIDs from Talos service PIDs in the ServicePID
+	// namespace, parallel to the "ext-" prefix extension services use, so an AllowedServices glob can
+	// target containers without risking a collision with an unrelated service name.
+	ContainerServicePIDPrefix = "ctr-"
 
 	// PartitionLabelLength is the length of the partition label.
 	//

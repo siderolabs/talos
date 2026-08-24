@@ -10,3 +10,18 @@
 ; explicitly instead, by ContainerRuntimeController.
 (type taloscontainer_t)
 (call pod_p (taloscontainer_t))
+
+; Containers that asked for security.machinedAccess, labelled by ContainerRuntimeController in place
+; of taloscontainer_t.
+;
+; A domain of its own rather than granting taloscontainer_t the socket: the bind-mount already
+; decides which containers can see the socket, and keeping the permission on a separate label means
+; policy still refuses the connect for every container that did not ask for it, however it got there.
+(type taloscontainer_machined_t)
+(call pod_p (taloscontainer_machined_t))
+
+; Talk to machined. The pair mirrors every other consumer of this socket (apid, dashboard,
+; installer): write the socket file, and connect to the domain listening on it.
+(allow taloscontainer_machined_t system_run_t (fs_classes (ro)))
+(allow taloscontainer_machined_t machine_socket_t (fs_classes (rw)))
+(allow taloscontainer_machined_t init_t (unix_stream_socket (connectto)))

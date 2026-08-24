@@ -782,8 +782,11 @@ type ContainerSecuritySpec struct {
 	Privileged       bool     `protobuf:"varint,1,opt,name=privileged,proto3" json:"privileged,omitempty"`
 	CapabilitiesAdd  []string `protobuf:"bytes,2,rep,name=capabilities_add,json=capabilitiesAdd,proto3" json:"capabilities_add,omitempty"`
 	CapabilitiesDrop []string `protobuf:"bytes,3,rep,name=capabilities_drop,json=capabilitiesDrop,proto3" json:"capabilities_drop,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// MachinedAccess publishes the container's PID as a ServicePID resource and mounts the
+	// machined API socket into the container.
+	MachinedAccess bool `protobuf:"varint,4,opt,name=machined_access,json=machinedAccess,proto3" json:"machined_access,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ContainerSecuritySpec) Reset() {
@@ -835,6 +838,13 @@ func (x *ContainerSecuritySpec) GetCapabilitiesDrop() []string {
 		return x.CapabilitiesDrop
 	}
 	return nil
+}
+
+func (x *ContainerSecuritySpec) GetMachinedAccess() bool {
+	if x != nil {
+		return x.MachinedAccess
+	}
+	return false
 }
 
 // ContainerSpecSpec is the spec for ContainerSpec.
@@ -1119,13 +1129,14 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\tcpu_limit\x18\x02 \x01(\x04R\bcpuLimit\"8\n" +
 	"\x12ContainerRunAsSpec\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x05R\x03uid\x12\x10\n" +
-	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\x8f\x01\n" +
+	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\xb8\x01\n" +
 	"\x15ContainerSecuritySpec\x12\x1e\n" +
 	"\n" +
 	"privileged\x18\x01 \x01(\bR\n" +
 	"privileged\x12)\n" +
 	"\x10capabilities_add\x18\x02 \x03(\tR\x0fcapabilitiesAdd\x12+\n" +
-	"\x11capabilities_drop\x18\x03 \x03(\tR\x10capabilitiesDrop\"\xec\x05\n" +
+	"\x11capabilities_drop\x18\x03 \x03(\tR\x10capabilitiesDrop\x12'\n" +
+	"\x0fmachined_access\x18\x04 \x01(\bR\x0emachinedAccess\"\xec\x05\n" +
 	"\x11ContainerSpecSpec\x12O\n" +
 	"\x05image\x18\x01 \x01(\v29.talos.resource.definitions.containers.ContainerImageSpecR\x05image\x12\x1e\n" +
 	"\n" +

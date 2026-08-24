@@ -191,6 +191,7 @@ ContainerSecurity configures the container's security posture.
 |-------|------|-------------|----------|
 |`profile` |ContainerSecurityProfile |Security profile.<br><br>`restricted` drops all capabilities, allows no device access, and mounts the rootfs<br>and sysfs read-only. `privileged` grants all grantable capabilities and all devices,<br>which is what extension services get implicitly.  |`restricted`<br />`privileged`<br /> |
 |`capabilities` |<a href="#ContainerConfig.security.capabilities">ContainerCapabilities</a> |Linux capabilities to add or drop on top of the profile.  | |
+|`machinedAccess` |bool |Publishes the container's PID so machined's API can recognize it, and bind-mounts the<br>machined API socket into the container.<br><br>This alone does not grant DAC access to the socket, which is owned by the `apid` user:<br>reaching it in practice still requires `profile: privileged` or an equivalent capability/<br>`runAs` grant. A container authorized this way is only ever given the `Reader` role.  | |
 
 
 
