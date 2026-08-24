@@ -734,6 +734,68 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 	})
 }
 
+// TestDependsOnContainers verifies that a container declaring dependsOn.containers waits for the
+// named container to report healthy, and starts once it does.
+func (suite *ContainersSuite) TestDependsOnContainers() {
+	ctx, base, node := suite.setupContainer("dependson-containers")
+
+	dependency, waiter, writer := base+"-dep", base+"-waiter", base+"-writer"
+
+	// The dependency has to be configured from the start. A dependsOn.containers entry naming a
+	// container that is not in the configuration is rejected by config validation.
+	markerName := base + "-marker"
+	marker := "/var/" + markerName
+
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(
+			client.WithNode(context.Background(), node),
+			containercfg.ContainerConfigKind, dependency, waiter, writer,
+		)
+	})
+
+	dependencyDoc := suite.newContainer(dependency, containerPauseImage)
+	dependencyDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		PathsConfig: []string{marker},
+	}
+
+	waiterDoc := suite.newContainer(waiter, containerPauseImage)
+	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		ContainersConfig: []string{dependency},
+	}
+
+	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
+
+	// Waiting for the image first matters, same as in TestDependsOnPaths: without it "no instance
+	// yet" would also be true of a container held back by its own pull, and the test would pass
+	// without the dependsOn.containers gate doing anything.
+	suite.assertImageReady(ctx, waiter)
+	suite.assertNoInstance(ctx, dependency)
+	suite.assertNoInstance(ctx, waiter)
+
+	suite.T().Logf("starting container %q to create %s, which unblocks %q", writer, marker, dependency)
+
+	const writerMountPoint = "/hostvar"
+
+	writerDoc := suite.shellContainer(writer,
+		"touch "+writerMountPoint+"/"+markerName+" && echo marker-created")
+	writerDoc.MountsConfig = []containercfg.ContainerMount{
+		{
+			HostPathMount: &containercfg.HostPathMount{
+				MountSource:      "/var",
+				MountDestination: writerMountPoint,
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, writerDoc)
+
+	suite.assertContainerLogged(ctx, writer, "marker-created")
+
+	suite.assertContainerRunning(ctx, dependency, "the dependency, after the path it waits for appeared")
+
+	suite.assertContainerRunning(ctx, waiter, "after its dependency became healthy")
+}
+
 // TestMultipleContainers verifies that containers declared side by side are independent of each other.
 func (suite *ContainersSuite) TestMultipleContainers() {
 	ctx, base, node := suite.setupContainer("multi")

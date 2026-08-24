@@ -4,6 +4,58 @@
 
 package containers
 
+// ContainerState describes where a container is in its lifecycle.
+type ContainerState int
+
+// Container states.
+//
+//structprotogen:gen_enum
+const (
+	ContainerStatePending  ContainerState = iota // pending
+	ContainerStatePulling                        // pulling
+	ContainerStateStarting                       // starting
+	ContainerStateRunning                        // running
+	ContainerStateExited                         // exited
+	ContainerStateBackoff                        // backoff
+	ContainerStateStopping                       // stopping
+)
+
+// Health returns the coarse health summary for a state.
+//
+// Keeping this mapping in one place means the projection cannot drift between controllers.
+func (state ContainerState) Health() ContainerHealth {
+	switch state {
+	case ContainerStatePending:
+		return ContainerHealthPending
+	case ContainerStatePulling, ContainerStateStarting:
+		return ContainerHealthPulling
+	case ContainerStateRunning:
+		return ContainerHealthHealthy
+	case ContainerStateExited, ContainerStateBackoff:
+		return ContainerHealthDegraded
+	case ContainerStateStopping:
+		// Always healthy here: this method has no access to prior state. StatusController is the
+		// one that actually preserves the last meaningful value, by skipping this result for
+		// Stopping rather than relying on it.
+		return ContainerHealthHealthy
+	default:
+		return ContainerHealthDegraded
+	}
+}
+
+// ContainerHealth is the coarse answer to "should I be looking at this container?".
+type ContainerHealth int
+
+// Container health values.
+//
+//structprotogen:gen_enum
+const (
+	ContainerHealthPending  ContainerHealth = iota // pending
+	ContainerHealthPulling                         // pulling
+	ContainerHealthHealthy                         // healthy
+	ContainerHealthDegraded                        // degraded
+)
+
 // ContainerImagePhase describes the state of a container's image pull.
 type ContainerImagePhase int
 

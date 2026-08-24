@@ -261,6 +261,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&containerctrls.RuntimeController{
 			Runtime: ctrl.v1alpha1Runtime,
 		},
+		&containerctrls.StatusController{},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", constants.SystemContainerdNamespace, nil),
 		cri.NewImageGCController("cri", constants.SystemContainerdNamespace, cri.KubernetesRefsToRetain),
