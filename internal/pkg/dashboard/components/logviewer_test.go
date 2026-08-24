@@ -8,6 +8,8 @@ package components
 import (
 	"testing"
 	"unicode/utf8"
+
+	"github.com/rivo/tview"
 )
 
 // TestFormatLogEntry covers the two responsibilities of formatLogEntry: deciding
@@ -180,6 +182,112 @@ func TestFormatLogEntryKeepsTextValid(t *testing.T) {
 
 	if !utf8.ValidString(actual) {
 		t.Fatalf("output is not valid UTF-8: %q", actual)
+	}
+}
+
+// TestDeactivateSearchKeepFilter verifies that Enter (clearText=false) hides the
+// input row while preserving the filter text for next activation.
+func TestDeactivateSearchKeepFilter(t *testing.T) {
+	app := tview.NewApplication()
+	defer app.Stop()
+
+	viewer := NewLogViewer(app)
+
+	// Manually set up the filtered state as activateSearch would.
+	viewer.filterText = "test"
+	viewer.filterActive = true
+	viewer.filterInput.SetText("test")
+	viewer.SetRows(1, 0, 1)
+	viewer.AddItem(viewer.filterInput, 2, 0, 1, 1, 0, 0, true)
+
+	// Simulate Enter: keep the filter but hide the input row.
+	viewer.deactivateSearch(false)
+
+	if viewer.filterActive {
+		t.Fatalf("filterActive = %v, expected false (input row should be hidden)", viewer.filterActive)
+	}
+
+	if viewer.filterText != "test" {
+		t.Fatalf("filterText = %q, expected %q (filter text should be preserved for next /)", viewer.filterText, "test")
+	}
+}
+
+// TestDeactivateSearchClearFilter verifies that Escape (clearText=true) clears
+// the filter and hides the input row.
+func TestDeactivateSearchClearFilter(t *testing.T) {
+	app := tview.NewApplication()
+	defer app.Stop()
+
+	viewer := NewLogViewer(app)
+
+	// Manually set up the filtered state.
+	viewer.filterText = "test"
+	viewer.filterActive = true
+	viewer.filterInput.SetText("test")
+	viewer.SetRows(1, 0, 1)
+	viewer.AddItem(viewer.filterInput, 2, 0, 1, 1, 0, 0, true)
+
+	// Add a log entry so renderLogs has something to process.
+	viewer.entries = append(viewer.entries, logEntry{text: "test line", isError: false})
+
+	// Simulate Escape: clear the filter and hide the input row.
+	viewer.deactivateSearch(true)
+
+	if viewer.filterActive {
+		t.Fatalf("filterActive = %v, expected false", viewer.filterActive)
+	}
+
+	if viewer.filterText != "" {
+		t.Fatalf("filterText = %q, expected empty", viewer.filterText)
+	}
+
+	if viewer.filterInput.GetText() != "" {
+		t.Fatalf("filterInput text = %q, expected empty", viewer.filterInput.GetText())
+	}
+}
+
+// TestDeactivateSearchWhenInactive verifies that calling deactivateSearch when
+// the input is not active clears the text only if clearText=true.
+func TestDeactivateSearchWhenInactive(t *testing.T) {
+	app := tview.NewApplication()
+	defer app.Stop()
+
+	viewer := NewLogViewer(app)
+	viewer.filterText = "old"
+	viewer.filterActive = false
+
+	// clearText=false: should not clear.
+	viewer.deactivateSearch(false)
+
+	if viewer.filterText != "old" {
+		t.Fatalf("filterText = %q, expected %q", viewer.filterText, "old")
+	}
+
+	// clearText=true: should clear and re-render.
+	viewer.entries = append(viewer.entries, logEntry{text: "line", isError: false})
+	viewer.deactivateSearch(true)
+
+	if viewer.filterText != "" {
+		t.Fatalf("filterText = %q, expected empty", viewer.filterText)
+	}
+}
+
+// TestDeactivateSearchEscapeWithoutFilterKeepsNoData verifies that pressing Esc
+// immediately after opening the filter (without typing) does not clear the
+// initial noData placeholder.
+func TestDeactivateSearchEscapeWithoutFilterKeepsNoData(t *testing.T) {
+	app := tview.NewApplication()
+	defer app.Stop()
+
+	viewer := NewLogViewer(app)
+	// Manually activate the filter input (as activateSearch would).
+	viewer.filterActive = true
+	viewer.SetRows(1, 0, 1)
+	viewer.AddItem(viewer.filterInput, 2, 0, 1, 1, 0, 0, true)
+	viewer.deactivateSearch(true)
+
+	if text := viewer.logs.GetText(true); text != noData {
+		t.Fatalf("logs text = %q, expected %q", text, noData)
 	}
 }
 
