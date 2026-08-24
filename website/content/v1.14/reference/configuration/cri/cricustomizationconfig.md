@@ -18,7 +18,7 @@ apiVersion: v1alpha1
 kind: CRICustomizationConfig
 name: enable-metrics # Name of the CRI customization.
 content: | # CRI containerd configuration fragment in TOML format.
-    [metrics]
+    [plugins."io.containerd.server.v1.metrics"]
       address = "0.0.0.0:11234"
 {{< /highlight >}}
 
