@@ -66,6 +66,18 @@ type NetworkConfigGrid struct {
 	nodeMap      map[string]*networkConfigData
 }
 
+// dropdownListStyles returns the styles for the drop-down popup list.
+//
+// The popup keeps a background of its own so that it stands out from whatever it
+// covers, but the text color is left at the terminal default, and the selected entry
+// is marked with reverse video rather than a hardcoded color pair, so that both work
+// on dark and light terminals alike.
+func dropdownListStyles() (unselected, selected tcell.Style) {
+	unselected = tcell.StyleDefault.Background(tview.Styles.MoreContrastBackgroundColor)
+
+	return unselected, unselected.Attributes(tcell.AttrReverse)
+}
+
 // NewNetworkConfigGrid initializes NetworkConfigGrid.
 func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkConfigGrid {
 	widget := &NetworkConfigGrid{
@@ -117,10 +129,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	widget.interfaceDropdown.SetOptions([]string{interfaceNone}, func(_ string, _ int) {
 		widget.formEdited()
 	})
-	widget.interfaceDropdown.SetListStyles(
-		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
-		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
-	)
+	widget.interfaceDropdown.SetListStyles(dropdownListStyles())
 
 	widget.vlanIDField = tview.NewInputField().SetLabel(formItemVLANID).SetAcceptanceFunc(tview.InputFieldInteger)
 	widget.vlanIDField.SetBlurFunc(widget.formEdited)
@@ -130,10 +139,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	widget.modeDropdown.SetOptions([]string{ModeDHCP, ModeStatic}, func(_ string, _ int) {
 		widget.formEdited()
 	})
-	widget.modeDropdown.SetListStyles(
-		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
-		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
-	)
+	widget.modeDropdown.SetListStyles(dropdownListStyles())
 
 	widget.addressesField = tview.NewInputField().SetLabel(formItemAddresses)
 	widget.addressesField.SetBlurFunc(widget.formEdited)

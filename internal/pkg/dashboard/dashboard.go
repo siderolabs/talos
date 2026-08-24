@@ -28,8 +28,19 @@ import (
 )
 
 func init() {
-	// set background to be left as the default color of the terminal
+	// Inherit the color scheme from the terminal: leave the foreground and background
+	// at the terminal defaults, so that the dashboard is readable on both dark and
+	// light themes without any detection or configuration.
+	//
+	// Accent colors elsewhere in the dashboard are ANSI-16 names (red, green, yellow,
+	// gray, ...) on purpose: tcell renders those as palette indices, so the terminal
+	// remaps them to the theme the user picked. Absolute (RGB) colors bypass the
+	// palette and must not be used.
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
+	tview.Styles.PrimaryTextColor = tcell.ColorDefault
+	tview.Styles.BorderColor = tcell.ColorDefault
+	tview.Styles.TitleColor = tcell.ColorDefault
+	tview.Styles.GraphicsColor = tcell.ColorDefault
 }
 
 // Screen is a dashboard screen.
