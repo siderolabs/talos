@@ -19,9 +19,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
+
+// containerServicePID builds the ServicePID resource ID for a container.
+func containerServicePID(containerID string) string {
+	return constants.ContainerServicePIDPrefix + containerID
+}
 
 // TaskRunner runs one container execution against a container runtime.
 //
@@ -56,6 +63,9 @@ type RuntimeController struct {
 
 	// RunnerProvider is overridable for testing.
 	RunnerProvider func() (TaskRunner, error)
+
+	// PIDRecorder is overridable for testing.
+	PIDRecorder pid.Recorder
 
 	// Everything below outlives a single Run: see init.
 	instances map[string]*instanceRunState
@@ -194,6 +204,13 @@ func (ctrl *RuntimeController) Run(ctx context.Context, r controller.Runtime, lo
 	if ctrl.RunnerProvider == nil {
 		ctrl.RunnerProvider = func() (TaskRunner, error) {
 			return newContainerdRunner(ctrl.Runtime.Logging(), logger)
+		}
+	}
+
+	if ctrl.PIDRecorder == nil {
+		ctrl.PIDRecorder = func(serviceName string, servicePID int32, clearEntry bool) error {
+			return pid.NewStateRecorder(ctrl.Runtime.State().V1Alpha2().Resources()).
+				Record(serviceName, servicePID, clearEntry)
 		}
 	}
 
@@ -647,6 +664,15 @@ func (ctrl *RuntimeController) start(
 				logger.Error("container run panicked", zap.Stack("stack"), zap.String("instance", id))
 			}
 
+			// Clearing the ServicePID from the defer covers every way the run can end, panics
+			// included: once the started callback has recorded the PID, leaving it behind would
+			// hand out a stale ctr-<name> -> PID mapping.
+			if everStarted && instanceSpec.Security.MachinedAccess {
+				if err := ctrl.PIDRecorder(containerServicePID(instanceSpec.ContainerID), 0, true); err != nil {
+					logger.Error("failed to clear container PID", zap.String("instance", id), zap.Error(err))
+				}
+			}
+
 			// Wake the controller so the terminal status is published even if nothing else changes.
 			notify()
 		}()
@@ -656,12 +682,18 @@ func (ctrl *RuntimeController) start(
 			zap.String("image", instanceSpec.Image),
 		)
 
-		exitCode, err := taskRunner.Run(runCtx, id, instanceSpec, func(pid uint32) {
+		exitCode, err := taskRunner.Run(runCtx, id, instanceSpec, func(taskPID uint32) {
 			everStarted = true
 
-			instance.setStarted(pid)
+			instance.setStarted(taskPID)
 
-			logger.Info("container started", zap.String("instance", id), zap.Uint32("pid", pid))
+			logger.Info("container started", zap.String("instance", id), zap.Uint32("pid", taskPID))
+
+			if instanceSpec.Security.MachinedAccess {
+				if err := ctrl.PIDRecorder(containerServicePID(instanceSpec.ContainerID), int32(taskPID), false); err != nil { //nolint:gosec
+					logger.Error("failed to record container PID", zap.String("instance", id), zap.Error(err))
+				}
+			}
 
 			notify()
 		})

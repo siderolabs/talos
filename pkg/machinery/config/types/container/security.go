@@ -35,6 +35,14 @@ type ContainerSecurity struct {
 	//   description: |
 	//     Linux capabilities to add or drop on top of the profile.
 	SecurityCapabilities *ContainerCapabilities `yaml:"capabilities,omitempty"`
+	//   description: |
+	//     Publishes the container's PID so machined's API can recognize it, and bind-mounts the
+	//     machined API socket into the container.
+	//
+	//     This alone does not grant DAC access to the socket, which is owned by the `apid` user:
+	//     reaching it in practice still requires `profile: privileged` or an equivalent capability/
+	//     `runAs` grant. A container authorized this way is only ever given the `Reader` role.
+	SecurityMachinedAccess bool `yaml:"machinedAccess,omitempty"`
 }
 
 // ContainerCapabilities adjusts the container's Linux capabilities.
@@ -79,6 +87,11 @@ func (s *ContainerSecurity) CapabilitiesDrop() []string {
 	}
 
 	return s.SecurityCapabilities.CapabilitiesDropConfig
+}
+
+// MachinedAccess implements config.ContainerSecurityConfig interface.
+func (s *ContainerSecurity) MachinedAccess() bool {
+	return s.SecurityMachinedAccess
 }
 
 // Validate checks the security settings.

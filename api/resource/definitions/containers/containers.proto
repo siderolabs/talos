@@ -133,6 +133,9 @@ message ContainerSecuritySpec {
   bool privileged = 1;
   repeated string capabilities_add = 2;
   repeated string capabilities_drop = 3;
+  // MachinedAccess publishes the container's PID as a ServicePID resource and mounts the
+  // machined API socket into the container.
+  bool machined_access = 4;
 }
 
 // ContainerSpecSpec is the spec for ContainerSpec.

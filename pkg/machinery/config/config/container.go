@@ -96,6 +96,9 @@ type ContainerSecurityConfig interface {
 	CapabilitiesAdd() []string
 	// CapabilitiesDrop lists capabilities to remove; "ALL" is accepted.
 	CapabilitiesDrop() []string
+	// MachinedAccess publishes the container's PID for machined's API to recognize, and mounts
+	// the machined API socket into the container.
+	MachinedAccess() bool
 }
 
 // ContainerNetworkMode selects the container's network namespace.

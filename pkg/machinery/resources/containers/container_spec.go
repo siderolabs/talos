@@ -205,13 +205,18 @@ type ContainerSecuritySpec struct {
 
 	CapabilitiesAdd  []string `yaml:"capabilitiesAdd,omitempty" protobuf:"2"`
 	CapabilitiesDrop []string `yaml:"capabilitiesDrop,omitempty" protobuf:"3"`
+
+	// MachinedAccess publishes the container's PID as a ServicePID resource and mounts the
+	// machined API socket into the container.
+	MachinedAccess bool `yaml:"machinedAccess,omitempty" protobuf:"4"`
 }
 
 // Equal compares two security specs field by field, as they carry slices.
 func (a ContainerSecuritySpec) Equal(b ContainerSecuritySpec) bool {
 	return a.Privileged == b.Privileged &&
 		slices.Equal(a.CapabilitiesAdd, b.CapabilitiesAdd) &&
-		slices.Equal(a.CapabilitiesDrop, b.CapabilitiesDrop)
+		slices.Equal(a.CapabilitiesDrop, b.CapabilitiesDrop) &&
+		a.MachinedAccess == b.MachinedAccess
 }
 
 // ContainerNetworkSpec is the resolved network configuration.

@@ -167,6 +167,7 @@ func applyConfig(spec *containers.ContainerSpecSpec, cfg configcfg.ContainerConf
 		Privileged:       security.Profile() == configcfg.ContainerSecurityProfilePrivileged,
 		CapabilitiesAdd:  security.CapabilitiesAdd(),
 		CapabilitiesDrop: security.CapabilitiesDrop(),
+		MachinedAccess:   security.MachinedAccess(),
 	}
 
 	spec.Network = containers.ContainerNetworkSpec{

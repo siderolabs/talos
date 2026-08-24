@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -129,6 +130,13 @@ func (r *containerdRunner) Run(
 
 	cgroupPath := filepath.Join(constants.CgroupTalosContainersRoot, spec.ContainerID)
 
+	// The mount alone does not make the socket usable: only the machined-access domain is permitted to
+	// connect to it, so a container that asked for the socket has to be labeled for it as well.
+	selinuxLabel := constants.SelinuxLabelTalosContainer
+	if spec.Security.MachinedAccess {
+		selinuxLabel = constants.SelinuxLabelTalosContainerMachined
+	}
+
 	svc := containerdrunner.NewRunner(false,
 		&runner.Args{ID: id},
 		runner.WithNamespace(constants.TalosContainersContainerdNamespace),
@@ -144,7 +152,7 @@ func (r *containerdRunner) Run(
 		runner.WithOOMScoreAdj(oomScoreAdj),
 		runner.WithGracefulShutdownTimeout(gracefulShutdownTimeout),
 		runner.WithHostNetworkFiles(spec.Network.HostNetwork),
-		runner.WithSelinuxLabel(constants.SelinuxLabelTalosContainer),
+		runner.WithSelinuxLabel(selinuxLabel),
 		runner.WithOCISpecOpts(r.ociSpecOpts(spec, image)...),
 	)
 
@@ -202,6 +210,23 @@ func (r *containerdRunner) ociSpecOpts(spec containersres.ContainerInstanceSpecS
 
 	if mounts := MountsResolvedToOCI(spec.Mounts); len(mounts) > 0 {
 		opts = append(opts, oci.WithMounts(mounts))
+	}
+
+	if spec.Security.MachinedAccess {
+		opts = append(opts, func(_ context.Context, _ oci.Client, _ *ctrdcontainers.Container, s *specs.Spec) error {
+			if _, err := os.Stat(constants.MachineSocketPath); err != nil {
+				return fmt.Errorf("machined socket %q not available for machinedAccess: %w", constants.MachineSocketPath, err)
+			}
+
+			s.Mounts = append(s.Mounts, specs.Mount{
+				Type:        "bind",
+				Destination: constants.MachineSocketPath,
+				Source:      constants.MachineSocketPath,
+				Options:     []string{"rbind", "ro"},
+			})
+
+			return nil
+		})
 	}
 
 	opts = append(opts, containersadapter.ContainerSecuritySpec(&spec.Security).OCISpecOpts(capability.AllGrantableCapabilities())...)

@@ -492,6 +492,13 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Description: "Linux capabilities to add or drop on top of the profile.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Linux capabilities to add or drop on top of the profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "machinedAccess",
+				Type:        "bool",
+				Note:        "",
+				Description: "Publishes the container's PID so machined's API can recognize it, and bind-mounts the\nmachined API socket into the container.\n\nThis alone does not grant DAC access to the socket, which is owned by the `apid` user:\nreaching it in practice still requires `profile: privileged` or an equivalent capability/\n`runAs` grant. A container authorized this way is only ever given the `Reader` role.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Publishes the container's PID so machined's API can recognize it, and bind-mounts the" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

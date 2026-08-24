@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 const (
@@ -43,6 +44,9 @@ const (
 	// something about itself. The pause image has no shell and produces no output, so it cannot
 	// carry any assertion about what the container actually got.
 	containerShellImage = "docker.io/library/alpine:3.23"
+
+	// containerSocatImage carries a unix-socket client, needed for machined socket access testing.
+	containerSocatImage = "docker.io/alpine/socat:1.8.1.3"
 )
 
 // containerStartTimeout covers an image pull on a cold node plus the controller chain.
@@ -944,6 +948,95 @@ func (suite *ContainersSuite) TestUserVolumeMountGate() {
 	suite.assertContainerRunning(ctx, name, "once the volume was declared")
 }
 
+// TestAllowMachinedAccess verifies that security.machinedAccess publishes the container's PID as a
+// ServicePID resource and mounts the machined API socket into the container, and that neither
+// happens when it is left unset.
+func (suite *ContainersSuite) TestAllowMachinedAccess() {
+	suite.Run("enabled", func() {
+		ctx, name, _ := suite.setupContainer("allow-machined-enabled")
+		script := fmt.Sprintf(
+			`if [ -S %s ]; then echo SOCKET_OK; else echo SOCKET_MISSING; fi
+sleep 3600`,
+			constants.MachineSocketPath,
+		)
+
+		doc := suite.shellContainer(name, script)
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityProfile:        configcontainer.ContainerSecurityProfilePrivileged,
+			SecurityMachinedAccess: true,
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		_, instance := suite.assertContainerRunning(ctx, name, "with security.machinedAccess")
+
+		logs := suite.assertContainerLogged(ctx, name, "SOCKET_OK", "SOCKET_MISSING")
+
+		suite.Assert().Contains(logs, "SOCKET_OK",
+			"the machined socket is not mounted into the container: %s", logs)
+
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, constants.ContainerServicePIDPrefix+name,
+			func(servicePID *runtimeres.ServicePID, asrt *assert.Assertions) {
+				asrt.EqualValues(instance.PID, servicePID.TypedSpec().PID)
+			})
+
+		suite.T().Logf("removing container config %q", name)
+
+		suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+
+		rtestutils.AssertNoResource[*runtimeres.ServicePID](ctx, suite.T(), suite.Client.COSI, constants.ContainerServicePIDPrefix+name)
+	})
+
+	suite.Run("disabled", func() {
+		ctx, name, _ := suite.setupContainer("allow-machined-disabled")
+
+		script := fmt.Sprintf(
+			`ls %s >/dev/null 2>&1 && echo SOCKET_FOUND || echo SOCKET_ABSENT
+sleep 3600`,
+			constants.MachineSocketPath,
+		)
+
+		suite.applyContainers(ctx, suite.shellContainer(name, script))
+
+		suite.assertContainerRunning(ctx, name, "without security.machinedAccess")
+
+		logs := suite.assertContainerLogged(ctx, name, "SOCKET_ABSENT", "SOCKET_FOUND")
+
+		suite.Assert().Contains(logs, "SOCKET_ABSENT",
+			"the machined socket must not be mounted without security.machinedAccess")
+
+		rtestutils.AssertNoResource[*runtimeres.ServicePID](ctx, suite.T(), suite.Client.COSI, constants.ContainerServicePIDPrefix+name)
+	})
+}
+
+// TestAllowMachinedSocketConnect verifies that a container granted security.machinedAccess can
+// actually connect() to the machined socket, not merely see it.
+func (suite *ContainersSuite) TestAllowMachinedSocketConnect() {
+	ctx, name, _ := suite.setupContainer("allow-machined-connect")
+
+	script := fmt.Sprintf(
+		`out=$(timeout 10 socat -u OPEN:/dev/null UNIX-CONNECT:%s 2>&1); rc=$?
+echo "CONNECT rc=$rc out=$out"
+sleep 3600`,
+		constants.MachineSocketPath,
+	)
+
+	doc := suite.socatContainer(name, script)
+	doc.SecurityConfig = &containercfg.ContainerSecurity{
+		SecurityProfile:        configcontainer.ContainerSecurityProfilePrivileged,
+		SecurityMachinedAccess: true,
+	}
+
+	suite.applyContainers(ctx, doc)
+
+	suite.assertContainerRunning(ctx, name, "with security.machinedAccess")
+
+	logs := suite.assertContainerLogged(ctx, name, "CONNECT rc=")
+
+	suite.Assert().Contains(logs, "CONNECT rc=0",
+		"the container could not connect to the machined socket: %s", logs)
+}
+
 // setupContainer returns a node-scoped context and a container name unique to this test, and registers
 // removal of that container's config. Registering the cleanup here rather than after the container is
 // applied means a failure part-way through does not leave the container running for the rest of the
@@ -1014,6 +1107,17 @@ func (suite *ContainersSuite) newContainer(name, image string) *containercfg.Con
 // when the command does, and is then restarted, so its log accumulates one run's output per restart.
 func (suite *ContainersSuite) shellContainer(name, command string) *containercfg.ContainerConfigV1Alpha1 {
 	doc := suite.newContainer(name, containerShellImage)
+	doc.ContainerEntrypoint = []string{"/bin/sh", "-c"}
+	doc.ContainerArgs = []string{command}
+
+	return doc
+}
+
+// socatContainer is shellContainer against an image that also carries socat, for the tests that have
+// to talk to a unix socket rather than just look at one. The image's own entrypoint is socat, so the
+// shell has to be named explicitly here as well.
+func (suite *ContainersSuite) socatContainer(name, command string) *containercfg.ContainerConfigV1Alpha1 {
+	doc := suite.newContainer(name, containerSocatImage)
 	doc.ContainerEntrypoint = []string{"/bin/sh", "-c"}
 	doc.ContainerArgs = []string{command}
 

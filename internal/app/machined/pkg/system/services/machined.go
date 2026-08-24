@@ -222,6 +222,13 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 				// allow processes forked inside the container to access apid as well
 				AllowNamespaceMatch: true,
 			},
+			{
+				// containers with security.machinedAccess enabled.
+				Pattern:      constants.ContainerServicePIDPrefix + "*",
+				AllowedRoles: role.MakeSet(role.Reader),
+				// allow processes forked inside the container to access machined as well
+				AllowNamespaceMatch: true,
+			},
 		},
 	}
 

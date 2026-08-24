@@ -19,6 +19,7 @@ import (
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -244,10 +245,60 @@ func (f *fakeTaskRunner) hasFinished(id string) bool {
 	return ok
 }
 
+// fakePIDRecorder stands in for the ServicePID resource writer, recording what the controller asked
+// for rather than touching COSI. Only containers with security.machinedAccess are recorded at all, so
+// the absence of an entry is as meaningful as its contents.
+type fakePIDRecorder struct {
+	mu       sync.Mutex
+	recorded map[string]int32
+	cleared  []string
+}
+
+func newFakePIDRecorder() *fakePIDRecorder {
+	return &fakePIDRecorder{recorded: map[string]int32{}}
+}
+
+// record implements pid.Recorder.
+func (f *fakePIDRecorder) record(serviceName string, servicePID int32, clearEntry bool) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	if clearEntry {
+		f.cleared = append(f.cleared, serviceName)
+
+		delete(f.recorded, serviceName)
+
+		return nil
+	}
+
+	f.recorded[serviceName] = servicePID
+
+	return nil
+}
+
+// pidOf reports the PID recorded for serviceName, and whether one is recorded at all.
+func (f *fakePIDRecorder) pidOf(serviceName string) (int32, bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	servicePID, ok := f.recorded[serviceName]
+
+	return servicePID, ok
+}
+
+// wasCleared reports whether serviceName was ever cleared, which outlives the entry itself.
+func (f *fakePIDRecorder) wasCleared(serviceName string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return slices.Contains(f.cleared, serviceName)
+}
+
 type RuntimeSuite struct {
 	ctest.DefaultSuite
 
-	runner *fakeTaskRunner
+	runner      *fakeTaskRunner
+	pidRecorder *fakePIDRecorder
 }
 
 func TestRuntimeSuite(t *testing.T) {
@@ -260,10 +311,12 @@ func TestRuntimeSuite(t *testing.T) {
 // removed) that must not leak between tests.
 func (suite *RuntimeSuite) SetupTest() {
 	suite.runner = newFakeTaskRunner()
+	suite.pidRecorder = newFakePIDRecorder()
 
 	suite.AfterSetup = func(s *ctest.DefaultSuite) {
 		s.Require().NoError(s.Runtime().RegisterController(&containersctrl.RuntimeController{
 			RunnerProvider: func() (containersctrl.TaskRunner, error) { return suite.runner, nil },
+			PIDRecorder:    suite.pidRecorder.record,
 		}))
 	}
 
@@ -289,6 +342,15 @@ func (suite *RuntimeSuite) createInstanceSpec(id string) {
 	spec := containers.NewContainerInstanceSpec(containers.NamespaceName, id)
 	spec.TypedSpec().ContainerID = id
 	spec.TypedSpec().Image = "sha256:abc123"
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
+}
+
+func (suite *RuntimeSuite) createInstanceSpecAllowingMachined(id string) {
+	spec := containers.NewContainerInstanceSpec(containers.NamespaceName, id)
+	spec.TypedSpec().ContainerID = id
+	spec.TypedSpec().Image = "sha256:abc123"
+	spec.TypedSpec().Security.MachinedAccess = true
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
 }
@@ -356,6 +418,73 @@ func (suite *RuntimeSuite) TestTeardownStopsRemovesAndReleasesFinalizer() {
 	suite.Assert().True(suite.runner.wasRemoved(id))
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), md))
+}
+
+// TestAllowMachinedAccessRecordsAndClearsServicePID covers the ServicePID half of
+// security.machinedAccess: the PID is published under the ctr- prefix while the container runs, and
+// taken back once it is gone.
+func (suite *RuntimeSuite) TestAllowMachinedAccessRecordsAndClearsServicePID() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const id = "nginx-8"
+
+	servicePIDName := constants.ContainerServicePIDPrefix + id
+
+	suite.createInstanceSpecAllowingMachined(id)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	// Recorded from the started callback, so it may land a moment after the status does.
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		servicePID, ok := suite.pidRecorder.pidOf(servicePIDName)
+		if !ok {
+			return retry.ExpectedErrorf("no ServicePID recorded for %q", servicePIDName)
+		}
+
+		suite.Assert().Equal(int32(4242), servicePID)
+
+		return nil
+	})
+
+	md := containers.NewContainerInstanceSpec(containers.NamespaceName, id).Metadata()
+
+	_, err := suite.State().Teardown(suite.Ctx(), md)
+	suite.Require().NoError(err)
+
+	_, err = suite.State().WatchFor(suite.Ctx(), md, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Assert().True(suite.pidRecorder.wasCleared(servicePIDName),
+		"ServicePID %q was never cleared", servicePIDName)
+
+	_, stillRecorded := suite.pidRecorder.pidOf(servicePIDName)
+	suite.Assert().False(stillRecorded, "ServicePID %q is still recorded after the container stopped", servicePIDName)
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), md))
+}
+
+// TestNoServicePIDWithoutAllowMachinedAccess is the other half of the contract: a container that did
+// not ask for machined access must not be given an identity machined would recognize.
+func (suite *RuntimeSuite) TestNoServicePIDWithoutAllowMachinedAccess() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const id = "nginx-9"
+
+	suite.createInstanceSpec(id)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+		asrt.NotZero(status.TypedSpec().PID)
+	})
+
+	// The container is running and its PID is known, so the recorder has had every chance to be
+	// called; nothing being there is the assertion.
+	_, recorded := suite.pidRecorder.pidOf(constants.ContainerServicePIDPrefix + id)
+	suite.Assert().False(recorded, "a ServicePID was recorded without security.machinedAccess")
 }
 
 func (suite *RuntimeSuite) TestSweepsOrphanedContainerOnStartup() {
