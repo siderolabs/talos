@@ -154,6 +154,26 @@ message ContainerSpecSpec {
   ContainerDependsOnSpec depends_on = 11;
 }
 
+// ContainerStatusSpec is the spec for ContainerStatus.
+message ContainerStatusSpec {
+  // State is the fine-grained lifecycle position, derived from the newest instance.
+  talos.resource.definitions.enums.ContainersContainerState state = 1;
+  // Health is the coarse summary of State, kept stable across internal changes.
+  talos.resource.definitions.enums.ContainersContainerHealth health = 2;
+  // Image is the resolved digest once the pull completes, otherwise the requested reference.
+  string image = 3;
+  // PID of the running task; zero when not running.
+  uint32 pid = 4;
+  // ExitCode of the last task exit.
+  int32 exit_code = 5;
+  // RestartCount is the current instance generation, i.e. restarts beyond the first start.
+  uint64 restart_count = 6;
+  // Error is the last failure, verbatim, from whichever stage produced it.
+  string error = 7;
+  // WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
+  repeated string waiting_for = 8;
+}
+
 // ResolvedMountSpec is a mount with its host-side source resolved.
 message ResolvedMountSpec {
   string kind = 1;

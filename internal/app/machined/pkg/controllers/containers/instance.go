@@ -18,9 +18,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
-	"github.com/siderolabs/talos/pkg/machinery/resources/network"
-	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
-	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // RestartInterval is how long to wait after an instance terminates before starting the next one.
@@ -35,46 +32,21 @@ func (ctrl *InstanceController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *InstanceController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: containers.NamespaceName,
-			Type:      containers.ContainerSpecType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: containers.NamespaceName,
-			Type:      containers.ContainerImageStatusType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: containers.NamespaceName,
-			Type:      containers.ContainerMountStatusType,
-			Kind:      controller.InputWeak,
-		},
-		{
+	return append(containerCreationGateInputs(),
+		// Restarts are paced off the previous instance's outcome.
+		controller.Input{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceStatusType,
 			Kind:      controller.InputWeak,
 		},
-		{
+		// This controller's own output: DestroyReady, because an instance being replaced is torn
+		// down here and must not be destroyed until RuntimeController has released it.
+		controller.Input{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceSpecType,
 			Kind:      controller.InputDestroyReady,
 		},
-		// Needed to check whether dependsOn is satisfied.
-		{
-			Namespace: network.NamespaceName,
-			Type:      network.StatusType,
-			ID:        optional.Some(network.StatusID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: v1alpha1.NamespaceName,
-			Type:      timeres.StatusType,
-			ID:        optional.Some(timeres.StatusID),
-			Kind:      controller.InputWeak,
-		},
-	}
+	)
 }
 
 // Outputs implements controller.Controller interface.
@@ -89,44 +61,14 @@ func (ctrl *InstanceController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 func (ctrl *InstanceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	// A single timer serves both the restart delay and path polling: it is reset each pass to the
-	// earliest deadline anything is waiting on, so an idle node does no work at all.
-	timer := time.NewTimer(0)
-	defer timer.Stop()
-
-	if !timer.Stop() {
-		<-timer.C
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		case <-timer.C:
-		}
-
+	return runWithWakeTimer(ctx, r, func(ctx context.Context, r controller.Runtime) (optional.Optional[time.Duration], error) {
 		wakeAfter, err := ctrl.reconcile(ctx, r, logger)
 		if err != nil {
 			logger.Error("failed to reconcile container instances", zap.Error(err))
-
-			return err
 		}
 
-		if !timer.Stop() {
-			// Drain a timer that fired while we were reconciling, so the next Reset is honored.
-			select {
-			case <-timer.C:
-			default:
-			}
-		}
-
-		if duration, ok := wakeAfter.Get(); ok {
-			timer.Reset(duration)
-		}
-
-		r.ResetRestartBackoff()
-	}
+		return wakeAfter, err
+	})
 }
 
 // reconcile returns how long until the controller next needs to wake up on its own, if at all.

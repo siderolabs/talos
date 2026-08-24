@@ -34,6 +34,7 @@ func TestRegisterResource(t *testing.T) {
 		&containers.ContainerInstanceStatus{},
 		&containers.ContainerMountStatus{},
 		&containers.ContainerLifecycle{},
+		&containers.ContainerStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -187,6 +188,26 @@ func TestMountStatusProtobufRoundTrip(t *testing.T) {
 			},
 		},
 		Error: "volume \"u-other\" is not mounted",
+	}
+
+	assertRoundTrip(t, status)
+}
+
+// TestStatusProtobufRoundTrip guards the protobuf tags on ContainerStatusSpec, including that the
+// state and health enums survive the trip as more than their zero values.
+func TestStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerStatus(containers.NamespaceName, "nginx")
+	*status.TypedSpec() = containers.ContainerStatusSpec{
+		State:        containers.ContainerStateBackoff,
+		Health:       containers.ContainerHealthDegraded,
+		Image:        "docker.io/library/nginx@sha256:abc123",
+		PID:          1234,
+		ExitCode:     137,
+		RestartCount: 3,
+		Error:        "signal: killed",
+		WaitingFor:   []string{"container: other"},
 	}
 
 	assertRoundTrip(t, status)
