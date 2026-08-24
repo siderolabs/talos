@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -26,7 +27,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/crane"
 	"github.com/google/go-containerregistry/pkg/name"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
-	"github.com/google/go-containerregistry/pkg/v1/cache"
 	"github.com/google/go-containerregistry/pkg/v1/empty"
 	"github.com/google/go-containerregistry/pkg/v1/google"
 	"github.com/google/go-containerregistry/pkg/v1/layout"
@@ -364,11 +364,7 @@ func processImage(
 		return fmt.Errorf("converting image to index: %w", err)
 	}
 
-	if imageLayerCachePath != "" {
-		img = cache.Image(img, cache.NewFilesystemCache(imageLayerCachePath))
-	}
-
-	return cacheImage(img, digestDir, tmpDir)
+	return cacheImage(img, digestDir, tmpDir, imageLayerCachePath)
 }
 
 //nolint:gocyclo
@@ -432,7 +428,7 @@ func processImageAllPlatforms(
 			return fmt.Errorf("getting attestation image %s: %w", desc.Digest, err)
 		}
 
-		if err := cacheImage(childImg, digestDir, tmpDir); err != nil {
+		if err := cacheImage(childImg, digestDir, tmpDir, ""); err != nil {
 			return err
 		}
 	}
@@ -521,7 +517,7 @@ func processCosignSignature(
 					return fmt.Errorf("getting cosign child image %s: %w", descriptor.Digest, err)
 				}
 
-				if err := cacheImage(childImg, digestDir, tmpDir); err != nil {
+				if err := cacheImage(childImg, digestDir, tmpDir, ""); err != nil {
 					return err
 				}
 			}
@@ -531,7 +527,7 @@ func processCosignSignature(
 				return fmt.Errorf("getting cosign image: %w", err)
 			}
 
-			if err := cacheImage(img, digestDir, tmpDir); err != nil {
+			if err := cacheImage(img, digestDir, tmpDir, ""); err != nil {
 				return err
 			}
 		}
@@ -542,7 +538,8 @@ func processCosignSignature(
 	return nil
 }
 
-func cacheImage(img v1.Image, digestDir, tmpDir string) error {
+//nolint:gocyclo
+func cacheImage(img v1.Image, digestDir, tmpDir, imageLayerCachePath string) error {
 	manifest, err := img.RawManifest()
 	if err != nil {
 		return fmt.Errorf("getting image manifest: %w", err)
@@ -577,12 +574,80 @@ func cacheImage(img v1.Image, digestDir, tmpDir string) error {
 	}
 
 	for _, layer := range layers {
+		if imageLayerCachePath != "" {
+			layer = &cachedLayer{
+				Layer: layer,
+				path:  imageLayerCachePath,
+			}
+		}
+
 		if err := processLayer(layer, tmpDir); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+type cachedLayer struct {
+	v1.Layer
+
+	path string
+}
+
+func (layer *cachedLayer) Compressed() (io.ReadCloser, error) {
+	digest, err := layer.Digest()
+	if err != nil {
+		return nil, err
+	}
+
+	cachePath := filepath.Join(layer.path, layerCacheFileName(digest))
+
+	cached, err := os.Open(cachePath)
+	if err == nil {
+		return cached, nil
+	}
+
+	if !errors.Is(err, fs.ErrNotExist) {
+		return nil, err
+	}
+
+	source, err := layer.Layer.Compressed()
+	if err != nil {
+		return nil, err
+	}
+
+	cacheFile, err := os.Create(cachePath)
+	if err != nil {
+		source.Close() //nolint:errcheck
+
+		return nil, err
+	}
+
+	return &cachedLayerReadCloser{
+		Reader: io.TeeReader(source, cacheFile),
+		source: source,
+		cache:  cacheFile,
+	}, nil
+}
+
+type cachedLayerReadCloser struct {
+	io.Reader
+
+	source io.Closer
+	cache  io.Closer
+}
+
+func (reader *cachedLayerReadCloser) Close() error {
+	return cmp.Or(reader.source.Close(), reader.cache.Close())
+}
+
+func layerCacheFileName(digest v1.Hash) string {
+	if runtime.GOOS == "windows" {
+		return strings.ReplaceAll(digest.String(), ":", "-")
+	}
+
+	return digest.String()
 }
 
 func processLayer(layer v1.Layer, dstDir string) error {
