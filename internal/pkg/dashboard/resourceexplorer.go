@@ -363,14 +363,14 @@ func (widget *ResourceExplorerGrid) renderTypesTable() {
 		widget.typesTable.SetCell(row, 0, &tview.TableCell{
 			Text:      spec.Type,
 			Align:     tview.AlignLeft,
-			Color:     tcell.ColorWhite,
+			Color:     tcell.ColorDefault,
 			Reference: rd, // used by selectResourceType to retrieve the RD
 			Expansion: 1,
 		})
 		widget.typesTable.SetCell(row, 1, &tview.TableCell{
 			Text:  spec.DefaultNamespace,
 			Align: tview.AlignLeft,
-			Color: tcell.ColorWhite,
+			Color: tcell.ColorDefault,
 		})
 		widget.typesTable.SetCell(row, 2, &tview.TableCell{
 			Text:  strings.Join(spec.Aliases, ", "),
@@ -491,17 +491,15 @@ func (widget *ResourceExplorerGrid) renderResourceTable() {
 		md := res.Metadata()
 
 		phaseText := tview.Escape(md.Phase().String())
-		phaseColor := tcell.ColorWhite
 
 		if md.Phase() == resource.PhaseTearingDown {
 			phaseText = "[red]" + phaseText + "[-]"
-			phaseColor = tcell.ColorDefault
 		}
 
 		widget.resourceTable.SetCell(i+1, 0, &tview.TableCell{
 			Text:      tview.Escape(md.ID()),
 			Align:     tview.AlignLeft,
-			Color:     tcell.ColorWhite,
+			Color:     tcell.ColorDefault,
 			Expansion: 1,
 		})
 		widget.resourceTable.SetCell(i+1, 1, &tview.TableCell{
@@ -512,7 +510,7 @@ func (widget *ResourceExplorerGrid) renderResourceTable() {
 		widget.resourceTable.SetCell(i+1, 2, &tview.TableCell{
 			Text:  phaseText,
 			Align: tview.AlignLeft,
-			Color: phaseColor,
+			Color: tcell.ColorDefault,
 		})
 		widget.resourceTable.SetCell(i+1, 3, &tview.TableCell{
 			Text:  tview.Escape(md.Owner()),
@@ -532,7 +530,7 @@ func (widget *ResourceExplorerGrid) renderResourceTable() {
 				widget.resourceTable.SetCell(i+1, 4+j, &tview.TableCell{
 					Text:  tview.Escape(text),
 					Align: tview.AlignLeft,
-					Color: tcell.ColorWhite,
+					Color: tcell.ColorDefault,
 				})
 			}
 		}
@@ -868,6 +866,6 @@ func headerCell(text string) *tview.TableCell {
 		Text:          "[::b]" + text,
 		Align:         tview.AlignLeft,
 		NotSelectable: true,
-		Color:         tcell.ColorWhite,
+		Color:         tcell.ColorDefault,
 	}
 }
