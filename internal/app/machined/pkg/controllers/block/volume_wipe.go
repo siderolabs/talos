@@ -306,8 +306,11 @@ func (ctrl *VolumeWipeController) waitForRediscovery(
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-timeout:
-			// proceeding is not fatal (VolumeManagerController ignores discovered volumes whose device
-			// is gone), but the discovery being this slow is worth a loud log line
+			// proceeding is not fatal: VolumeManagerController skips discovered volumes whose device node
+			// is gone, so a stale entry can no longer pin a volume to a device which does not exist. Some
+			// devices never produce the event which would retire the entry at all — dropping a partition
+			// of an md device is one — so this timeout is expected there rather than exceptional, but it
+			// is still worth a loud log line.
 			logger.Sugar().Errorf("timed out waiting for wiped volumes to be re-discovered: %v", stale)
 
 			return nil

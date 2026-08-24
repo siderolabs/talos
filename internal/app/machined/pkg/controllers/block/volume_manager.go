@@ -379,6 +379,14 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				},
 			); err != nil {
 				volumeStatus.TypedSpec().PreFailPhase = volumeStatus.TypedSpec().Phase
+
+				if errors.Is(err, os.ErrNotExist) {
+					// The device this volume was located at is gone, e.g. its partition was dropped by a
+					// wipe. Recovering into the phase which failed would keep working against the stale
+					// location, so recover into missing, which locates the volume from scratch.
+					volumeStatus.TypedSpec().PreFailPhase = block.VolumePhaseMissing
+				}
+
 				volumeStatus.TypedSpec().Phase = block.VolumePhaseFailed
 
 				volumeStatus.TypedSpec().ErrorMessage = err.Error()

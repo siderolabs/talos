@@ -5,6 +5,8 @@
 package block_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -122,6 +124,66 @@ func (suite *VolumeManagerSuite) TestFailingExistingVolumeDoesNotBlockReset() {
 
 func (suite *VolumeManagerSuite) TestFailingSwapVolumeDoesNotBlockReset() {
 	suite.assertFailingVolumeDoesNotBlockReset(block.SwapVolumeLabel)
+}
+
+// TestVolumeLosingItsDeviceRelocates covers a volume whose located device disappears under it.
+//
+// A wipe drops the partition of a volume which is being provisioned in the same pass, and on devices
+// whose partition removal produces no udev event (an md array, say) the discovery keeps reporting it
+// for a while. The volume then fails mid-machine against a device which is gone, and as a failed
+// volume resumes at its pre-failure phase, resuming there would retry the same dead location for the
+// rest of the boot: for STATE that means the machine configuration never loads and the node never
+// comes back. The volume has to be sent back to locating instead.
+func (suite *VolumeManagerSuite) TestVolumeLosingItsDeviceRelocates() {
+	ctx := suite.Ctx()
+
+	const id = "v-lost"
+
+	discoveredVolumesStatus := block.NewDiscoveredVolumesStatus(block.NamespaceName, block.DiscoveredVolumesStatusID)
+	discoveredVolumesStatus.TypedSpec().Ready = true
+	suite.Require().NoError(suite.State().Create(ctx, discoveredVolumesStatus))
+
+	suite.Require().NoError(suite.State().Create(ctx, block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)))
+
+	// The device itself has to exist, or the controller drops the discovered volume before the locator
+	// ever sees it; it is the parent, which the grow step opens, that is gone here.
+	devPath := filepath.Join(suite.T().TempDir(), "device")
+	suite.Require().NoError(os.WriteFile(devPath, nil, 0o600))
+
+	dv := block.NewDiscoveredVolume(block.NamespaceName, id)
+	dv.TypedSpec().DevPath = devPath
+	dv.TypedSpec().ParentDevPath = "/dev/does-not-exist-parent"
+	dv.TypedSpec().PartitionLabel = id
+	dv.TypedSpec().PartitionIndex = 1
+	dv.TypedSpec().SetSize(1024 * 1024)
+	suite.Require().NoError(suite.State().Create(ctx, dv))
+
+	vc := block.NewVolumeConfig(block.NamespaceName, id)
+	vc.TypedSpec().Type = block.VolumeTypePartition
+	vc.TypedSpec().Provisioning = block.ProvisioningSpec{
+		Wave: block.WaveUserVolumes,
+		DiskSelector: block.DiskSelector{
+			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.dev_path == "/dev/does-not-exist"`, celenv.DiskLocator())),
+		},
+		PartitionSpec: block.PartitionSpec{
+			MinSize: 1024 * 1024,
+			// Grow is what makes the volume open its parent device, which is the step that discovers
+			// the location is gone.
+			Grow: true,
+		},
+	}
+	vc.TypedSpec().Locator = block.LocatorSpec{
+		Match: cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label == "`+id+`"`, celenv.VolumeLocator())),
+	}
+	suite.Require().NoError(suite.State().Create(ctx, vc))
+
+	ctest.AssertResource(suite, id, func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumePhaseFailed, vs.TypedSpec().Phase)
+		asrt.Contains(vs.TypedSpec().ErrorMessage, "no such file or directory")
+		// Not the phase which failed: recovering there would keep working against the location the
+		// volume held when its device went away.
+		asrt.Equal(block.VolumePhaseMissing, vs.TypedSpec().PreFailPhase)
+	})
 }
 
 // TestFailingSystemVolumeStillBlocks verifies the fix is scoped to user-configured

@@ -1833,6 +1833,36 @@ func SendResetSignal(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 	}, "sendResetSignal"
 }
 
+// AnnounceLeavingIfWipeStaged announces that the node is leaving the cluster when a volume wipe is
+// staged for the next boot.
+//
+// A staged wipe of STATE discards the node identity, so the node comes back as a different affiliate,
+// and nothing retires the old one. Peers keep both: on a KubeSpan cluster they hold a WireGuard peer
+// for the node's address whose key the node no longer has, so node-to-node traffic to it is dropped
+// until the stale affiliate expires — long enough that the node cannot get its certificates from
+// trustd and its API never comes back. Reset avoids this with SendResetSignal, which is what makes
+// DiscoveryServiceController drop the local affiliate; a reboot which is about to apply a staged wipe
+// needs the same announcement.
+//
+// Gated on a wipe being staged at all rather than on which volumes it names: the staged tag holds CEL
+// selectors keyed by partition UUID, so telling STATE apart from EPHEMERAL would mean widening its
+// format, and re-registering the affiliate on the way back up costs nothing.
+func AnnounceLeavingIfWipeStaged(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		if _, ok := r.State().Machine().Meta().ReadTag(metamachinery.StagedWipeSelectors); !ok {
+			return nil
+		}
+
+		logger.Printf("a volume wipe is staged for the next boot, announcing that the node is leaving the cluster")
+
+		if err := r.State().V1Alpha2().Resources().Create(ctx, resourceruntime.NewMachineResetSignal()); err != nil && !state.IsConflictError(err) {
+			return err
+		}
+
+		return nil
+	}, "announceLeavingIfWipeStaged"
+}
+
 // WaitForCARoots represents the WaitForCARoots task.
 //
 //nolint:gocyclo

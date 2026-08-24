@@ -121,6 +121,10 @@ The `META` volume is not a valid wipe target and is rejected: it carries the sta
 themselves, so it is the one volume which has to be provisioned *before* the wipe runs, and it also holds
 the machine's unique token.
 
+Wiping `STATE` discards the node identity along with the rest of its contents, so the node re-joins the
+cluster as a new member: the reboot which applies the wipe announces that the node is leaving, the same
+way a reset does, and the node registers afresh on the way back up.
+
 This can be combined with `talosctl apply-config --staged` to reshape system volumes across a reboot, for
 example splitting the monolithic EPHEMERAL volume into sub-volumes.
 """

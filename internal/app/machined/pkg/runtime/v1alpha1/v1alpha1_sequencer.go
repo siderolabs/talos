@@ -262,6 +262,12 @@ func (*Sequencer) Reboot(r runtime.Runtime, in *machineapi.RebootRequest) []runt
 	if in.GetMode() != machineapi.RebootRequest_FORCE {
 		phases = phases.
 			Append(
+				// Ahead of the phases which stop everything, so that the announcement has the time it
+				// takes to stop pods and services to reach the discovery service.
+				"announceLeaving",
+				AnnounceLeavingIfWipeStaged,
+			).
+			Append(
 				"cleanup",
 				StopAllPods,
 			).
@@ -455,6 +461,10 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		return nil
 	default:
 		phases = phases.Append(
+			// An upgrade reboots as well, so a wipe staged before it is applied on the way back up.
+			"announceLeaving",
+			AnnounceLeavingIfWipeStaged,
+		).Append(
 			"denyNewServices",
 			DenyNewServices,
 		).AppendWhen(
