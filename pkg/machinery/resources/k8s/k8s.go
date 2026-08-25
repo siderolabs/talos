@@ -63,27 +63,3 @@ func DNSServiceAddrs(serviceSubnets []netip.Prefix) []netip.Addr {
 		},
 	)
 }
-
-// DNSServiceAddrsWithOverride returns the list of kube-dns service IPs to use for the cluster.
-//
-// If the kubelet clusterDNS is configured, its valid addresses take precedence over the
-// addresses derived from the service CIDRs, so that the kube-dns Service is generated with
-// the clusterIPs the kubelet is actually configured to use. Invalid entries are skipped;
-// if none of the configured addresses is valid, the service CIDR-derived defaults are used.
-func DNSServiceAddrsWithOverride(serviceSubnets []netip.Prefix, clusterDNS []string) []netip.Addr {
-	if len(clusterDNS) > 0 {
-		addrs := make([]netip.Addr, 0, len(clusterDNS))
-
-		for _, s := range clusterDNS {
-			if addr, err := netip.ParseAddr(s); err == nil {
-				addrs = append(addrs, addr)
-			}
-		}
-
-		if len(addrs) > 0 {
-			return addrs
-		}
-	}
-
-	return DNSServiceAddrs(serviceSubnets)
-}

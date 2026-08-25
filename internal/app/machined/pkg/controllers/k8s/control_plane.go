@@ -398,10 +398,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.BootstrapManifestsConfig) error {
 				cfgProvider := machineConfig.Config()
 
-				dnsServiceIPs := k8s.DNSServiceAddrsWithOverride(
-					cfgProvider.K8sNetworkConfig().ServiceCIDRs(),
-					cfgProvider.K8sKubeletConfig().ClusterDNS(),
-				)
+				dnsServiceIPs := k8s.DNSServiceAddrs(cfgProvider.K8sNetworkConfig().ServiceCIDRs())
 
 				dnsServiceIP := ""
 				dnsServiceIPv6 := ""
