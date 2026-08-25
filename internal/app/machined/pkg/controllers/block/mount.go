@@ -594,6 +594,12 @@ func (ctrl *MountController) handleDiskMountOperation(
 			fsOpts []fsopen.Option
 		)
 
+		// Read-only volumes preserve their existing metadata, detached mounts have no target,
+		// and external volume metadata is owned by the host.
+		shouldUpdateTargetSettings := !mountRequest.TypedSpec().ReadOnly &&
+			!mountRequest.TypedSpec().Detached &&
+			volumeStatus.TypedSpec().Type != block.VolumeTypeExternal
+
 		fsOpts = append(
 			fsOpts,
 			fsopen.WithSource(mountSource),
@@ -631,10 +637,9 @@ func (ctrl *MountController) handleDiskMountOperation(
 			}
 		}
 
-		opts = append(
-			opts,
-			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
-		)
+		if shouldUpdateTargetSettings {
+			opts = append(opts, mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel))
+		}
 
 		if mountRequest.TypedSpec().DisableAccessTime {
 			opts = append(opts, mount.WithDisableAccessTime())
@@ -673,11 +678,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
-		// external volumes are provided by the host (e.g. virtiofs): the mode and ownership of the mount root
-		// belong to the host, not to Talos, and the SELinux label is already applied by the mount itself.
-		if !mountRequest.TypedSpec().ReadOnly &&
-			!mountRequest.TypedSpec().Detached &&
-			volumeStatus.TypedSpec().Type != block.VolumeTypeExternal {
+		if shouldUpdateTargetSettings {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
 				manager.Unmount() //nolint:errcheck
 
