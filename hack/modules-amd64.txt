@@ -327,6 +327,7 @@ kernel/net/tls/tls.ko
 kernel/net/vmw_vsock/hv_sock.ko
 kernel/net/vmw_vsock/vmw_vsock_virtio_transport.ko
 kernel/net/vmw_vsock/vmw_vsock_vmci_transport.ko
+kernel/net/xfrm/xfrm_interface.ko
 modules.builtin
 modules.builtin.modinfo
 modules.order
