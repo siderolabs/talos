@@ -1924,62 +1924,62 @@ spec:
         labelKeys: [test]
         flatJobMatrix: true
         include:
-          - test: factory-1.12-iso
+          - test: factory-1.13-iso
             factoryBootMethod: iso
-            factoryVersion: v1.12.5
+            factoryVersion: v1.13.8
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.36.4
             factoryUpgrade: "true"
             factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            factoryUpgradeVersion: v1.12.6
-          - test: factory-1.12-image
+            factoryUpgradeVersion: v1.13.9
+          - test: factory-1.13-image
             factoryBootMethod: disk-image
-            factoryVersion: v1.12.5
+            factoryVersion: v1.13.8
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.36.4
             factoryUpgrade: "true"
             factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            factoryUpgradeVersion: v1.12.6
-          - test: factory-1.12-pxe
+            factoryUpgradeVersion: v1.13.9
+          - test: factory-1.13-pxe
             factoryBootMethod: ipxe
-            factoryVersion: v1.12.6
+            factoryVersion: v1.13.9
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.36.4
             factoryUpgrade: ""
             factoryUpgradeSchematic: ""
             factoryUpgradeVersion: ""
+          - test: factory-1.13-secureboot
+            factoryBootMethod: secureboot-iso
+            factoryVersion: v1.13.8
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            kubernetesVersion: 1.36.4
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.13.9
           - test: factory-1.12-secureboot
             factoryBootMethod: secureboot-iso
-            factoryVersion: v1.12.5
+            factoryVersion: v1.12.10
             factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.35.8
             factoryUpgrade: "true"
             factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            factoryUpgradeVersion: v1.12.6
-          - test: factory-1.11-secureboot
-            factoryBootMethod: secureboot-iso
-            factoryVersion: v1.11.5
-            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            kubernetesVersion: 1.34.3
+            factoryUpgradeVersion: v1.12.11
+          - test: factory-1.12-iso
+            factoryBootMethod: iso
+            factoryVersion: v1.12.10
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.35.8
             factoryUpgrade: "true"
-            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            factoryUpgradeVersion: v1.11.6
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.11
           - test: factory-1.11-iso
             factoryBootMethod: iso
             factoryVersion: v1.11.5
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.34.3
+            kubernetesVersion: 1.34.11
             factoryUpgrade: "true"
             factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
             factoryUpgradeVersion: v1.11.6
-          - test: factory-1.10-iso
-            factoryBootMethod: iso
-            factoryVersion: v1.10.8
-            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.33.7
-            factoryUpgrade: "true"
-            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            factoryUpgradeVersion: v1.10.9
       steps:
         - name: download-artifacts
           artifactStep:
