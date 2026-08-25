@@ -835,6 +835,93 @@ func (MacVLANConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VXLANConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VXLANConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VXLANConfig is a config document to create a VXLAN (Virtual eXtensible LAN) link over a parent link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VXLANConfig is a config document to create a VXLAN (Virtual eXtensible LAN) link over a parent link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the vxlan link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the vxlan link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "id",
+				Type:        "uint32",
+				Note:        "",
+				Description: "VXLAN network identifier (VNI) to be used for the vxlan link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "VXLAN network identifier (VNI) to be used for the vxlan link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "local",
+				Type:        "Addr",
+				Note:        "",
+				Description: "Source IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Source IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "group",
+				Type:        "Addr",
+				Note:        "",
+				Description: "Multicast group IP address (IPv4 or IPv6) to join for the tunnel.\nEither the group or the local address should be set, not both.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Multicast group IP address (IPv4 or IPv6) to join for the tunnel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "parent",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the parent link (interface) used as the physical device for the tunnel endpoint.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the parent link (interface) used as the physical device for the tunnel endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "port",
+				Type:        "uint16",
+				Note:        "",
+				Description: "Destination UDP port for VXLAN traffic.\nIf not set, defaults to 4789.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination UDP port for VXLAN traffic." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "learning",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable learning of source link addresses (MAC learning).\nIf not set, defaults to true.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable learning of source link addresses (MAC learning)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVXLANConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "vxlan900")
+	doc.Fields[2].AddExample("", 100)
+	doc.Fields[3].AddExample("", "10.255.0.1")
+	doc.Fields[4].AddExample("", "239.1.1.1")
+	doc.Fields[5].AddExample("", "vtep0")
+	doc.Fields[6].AddExample("", 4789)
+	doc.Fields[7].AddExample("", false)
+	doc.Fields[8].AddExample("", "2e:3c:4d:5e:6f:70")
+
+	return doc
+}
+
 func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkDefaultActionConfig",
@@ -1568,6 +1655,10 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 			},
 			{
 				TypeName:  "MacVLANConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "VXLANConfigV1Alpha1",
 				FieldName: "",
 			},
 			{
@@ -2659,6 +2750,7 @@ func GetFileDoc() *encoder.FileDoc {
 			BridgeVLANConfig{}.Doc(),
 			VRFConfigV1Alpha1{}.Doc(),
 			MacVLANConfigV1Alpha1{}.Doc(),
+			VXLANConfigV1Alpha1{}.Doc(),
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			DHCPv4ConfigV1Alpha1{}.Doc(),
 			DHCPv6ConfigV1Alpha1{}.Doc(),

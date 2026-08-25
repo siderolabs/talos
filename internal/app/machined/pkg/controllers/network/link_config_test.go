@@ -683,6 +683,70 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
 	)
 }
 
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVXLAN() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	vxlan := networkcfg.NewVXLANConfigV1Alpha1("vxlan900")
+	vxlan.VXLANID = 100
+	vxlan.VXLANLocal = meta.Addr{Addr: netip.MustParseAddr("10.255.0.1")}
+	vxlan.VXLANParent = "vtep0"
+	vxlan.VXLANPort = new(uint16(4789))
+	vxlan.VXLANLearning = new(false)
+
+	ctr, err := container.New(vxlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/vxlan900",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal("vxlan900", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.True(r.TypedSpec().Logical)
+			asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+			asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+			asrt.Equal("vtep0", r.TypedSpec().ParentName)
+			asrt.Equal(network.VXLANSpec{
+				ID:       100,
+				Local:    netip.MustParseAddr("10.255.0.1"),
+				Port:     4789,
+				Learning: false,
+			}, r.TypedSpec().VXLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVXLANDefaults() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	vxlan := networkcfg.NewVXLANConfigV1Alpha1("vxlan900")
+	vxlan.VXLANID = 100
+	vxlan.VXLANParent = "vtep0"
+
+	ctr, err := container.New(vxlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/vxlan900",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+			asrt.Equal(network.VXLANSpec{
+				ID:       100,
+				Port:     4789,
+				Learning: true,
+			}, r.TypedSpec().VXLAN)
+		},
+	)
+}
+
 func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVethVRF() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
 

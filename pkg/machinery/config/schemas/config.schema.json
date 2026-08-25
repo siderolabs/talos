@@ -6184,6 +6184,138 @@
       ],
       "description": "VRFConfig is a config document to create a vrf and assign links to it."
     },
+    "network.VXLANConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "VXLANConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the vxlan link (interface) to be created.\n",
+          "markdownDescription": "Name of the vxlan link (interface) to be created.",
+          "x-intellij-html-description": "\u003cp\u003eName of the vxlan link (interface) to be created.\u003c/p\u003e\n"
+        },
+        "id": {
+          "type": "integer",
+          "title": "id",
+          "description": "VXLAN network identifier (VNI) to be used for the vxlan link.\n",
+          "markdownDescription": "VXLAN network identifier (VNI) to be used for the vxlan link.",
+          "x-intellij-html-description": "\u003cp\u003eVXLAN network identifier (VNI) to be used for the vxlan link.\u003c/p\u003e\n"
+        },
+        "local": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+$",
+          "title": "local",
+          "description": "Source IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint.\n",
+          "markdownDescription": "Source IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint.",
+          "x-intellij-html-description": "\u003cp\u003eSource IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint.\u003c/p\u003e\n"
+        },
+        "group": {
+          "type": "string",
+          "pattern": "^[0-9a-f.:]+$",
+          "title": "group",
+          "description": "Multicast group IP address (IPv4 or IPv6) to join for the tunnel.\nEither the group or the local address should be set, not both.\n",
+          "markdownDescription": "Multicast group IP address (IPv4 or IPv6) to join for the tunnel.\nEither the group or the local address should be set, not both.",
+          "x-intellij-html-description": "\u003cp\u003eMulticast group IP address (IPv4 or IPv6) to join for the tunnel.\nEither the group or the local address should be set, not both.\u003c/p\u003e\n"
+        },
+        "parent": {
+          "type": "string",
+          "title": "parent",
+          "description": "Name of the parent link (interface) used as the physical device for the tunnel endpoint.\nLink aliases can be used here as well.\n",
+          "markdownDescription": "Name of the parent link (interface) used as the physical device for the tunnel endpoint.\nLink aliases can be used here as well.",
+          "x-intellij-html-description": "\u003cp\u003eName of the parent link (interface) used as the physical device for the tunnel endpoint.\nLink aliases can be used here as well.\u003c/p\u003e\n"
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "Destination UDP port for VXLAN traffic.\nIf not set, defaults to 4789.\n",
+          "markdownDescription": "Destination UDP port for VXLAN traffic.\nIf not set, defaults to 4789.",
+          "x-intellij-html-description": "\u003cp\u003eDestination UDP port for VXLAN traffic.\nIf not set, defaults to 4789.\u003c/p\u003e\n"
+        },
+        "learning": {
+          "type": "boolean",
+          "title": "learning",
+          "description": "Enable learning of source link addresses (MAC learning).\nIf not set, defaults to true.\n",
+          "markdownDescription": "Enable learning of source link addresses (MAC learning).\nIf not set, defaults to true.",
+          "x-intellij-html-description": "\u003cp\u003eEnable learning of source link addresses (MAC learning).\nIf not set, defaults to true.\u003c/p\u003e\n"
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "pattern": "^[0-9a-f:]+$",
+          "title": "hardwareAddr",
+          "description": "Override the hardware (MAC) address of the link.\n",
+          "markdownDescription": "Override the hardware (MAC) address of the link.",
+          "x-intellij-html-description": "\u003cp\u003eOverride the hardware (MAC) address of the link.\u003c/p\u003e\n"
+        },
+        "up": {
+          "type": "boolean",
+          "title": "up",
+          "description": "Bring the link up or down.\n\nIf not specified, the link will be brought up.\n",
+          "markdownDescription": "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+          "x-intellij-html-description": "\u003cp\u003eBring the link up or down.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the link will be brought up.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).\n",
+          "markdownDescription": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+          "x-intellij-html-description": "\u003cp\u003eConfigure LinkMTU (Maximum Transmission Unit) for the link.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default LinkMTU will be used (usually 1500).\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/network.AddressConfig"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Configure addresses to be statically assigned to the link.\n",
+          "markdownDescription": "Configure addresses to be statically assigned to the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure addresses to be statically assigned to the link.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/network.RouteConfig"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "Configure routes to be statically created via the link.\n",
+          "markdownDescription": "Configure routes to be statically created via the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "id",
+        "kind",
+        "name",
+        "parent"
+      ],
+      "description": "VXLANConfig is a config document to create a VXLAN (Virtual eXtensible LAN) link over a parent link."
+    },
     "network.VethConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -7989,6 +8121,9 @@
     },
     {
       "$ref": "#/$defs/network.VRFConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.VXLANConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.WireguardConfigV1Alpha1"

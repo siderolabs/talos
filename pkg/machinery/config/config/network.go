@@ -336,6 +336,20 @@ type NetworkVRFConfig interface {
 	Table() nethelpers.RoutingTable
 }
 
+// NetworkVXLANConfig defines a vxlan link configuration.
+type NetworkVXLANConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	VXLANConfig()
+	ID() uint32
+	Local() optional.Optional[netip.Addr]
+	Group() optional.Optional[netip.Addr]
+	Parent() string
+	Port() optional.Optional[uint16]
+	Learning() optional.Optional[bool]
+}
+
 // NetworkWireguardConfig defines a Wireguard link configuration.
 type NetworkWireguardConfig interface {
 	NamedDocument

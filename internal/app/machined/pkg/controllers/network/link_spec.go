@@ -399,7 +399,10 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			}
 
 			// the parent link (VLAN, macvlan) is set on link creation and can't be changed on the fly
-			if !replace && link.TypedSpec().ParentName != "" {
+			//
+			// existing.Attributes.Type is IFLA_LINK; VXLAN is skipped here, as the kernel doesn't report
+			// its parent via IFLA_LINK, it is carried inside the link info and checked in the VXLAN sync below
+			if !replace && link.TypedSpec().ParentName != "" && link.TypedSpec().Kind != network.LinkKindVXLAN {
 				parent := findLink(*links, link.TypedSpec().ParentName, true) // allow aliases for physical links/parents
 
 				// if the new parent doesn't exist yet, there's nothing to re-create the link on top of, so leave it alone
@@ -498,6 +501,48 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 			}
 
+			// sync VXLAN spec, as it can't be modified on the fly
+			if !replace && link.TypedSpec().Kind == network.LinkKindVXLAN {
+				var (
+					existingVXLAN       network.VXLANSpec
+					existingParentIndex uint32
+				)
+
+				if existingRawLinkData == nil {
+					return fmt.Errorf("existing link %q has no data, can't decode vxlan settings", link.TypedSpec().Name)
+				}
+
+				if err := networkadapter.VXLANSpec(&existingVXLAN, &existingParentIndex).Decode(existingRawLinkData); err != nil {
+					return fmt.Errorf("error decoding vxlan properties on %q: %w", link.TypedSpec().Name, err)
+				}
+
+				if existingVXLAN != networkadapter.NormalizeVXLANSpec(link.TypedSpec().VXLAN) {
+					logger.Info(
+						"replacing vxlan link",
+						zap.Uint32("old_id", existingVXLAN.ID),
+						zap.Uint32("new_id", link.TypedSpec().VXLAN.ID),
+					)
+
+					replace = true
+				}
+
+				// the parent is part of the link info for VXLAN, so it is checked here rather than via IFLA_LINK
+				if !replace && link.TypedSpec().ParentName != "" {
+					parent := findLink(*links, link.TypedSpec().ParentName, true) // allow aliases for physical links/parents
+
+					if parent != nil && existingParentIndex != parent.Index {
+						logger.Info(
+							"replacing vxlan link with a different parent",
+							zap.String("parent_name", link.TypedSpec().ParentName),
+							zap.Uint32("old_parent_index", existingParentIndex),
+							zap.Uint32("new_parent_index", parent.Index),
+						)
+
+						replace = true
+					}
+				}
+			}
+
 			if replace {
 				if err := conn.Link.Delete(existing.Index); err != nil {
 					return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
@@ -561,6 +606,13 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				data, err = networkadapter.VethSpec(&link.TypedSpec().Veth).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding veth attributes for link %q: %w", link.TypedSpec().Name, err)
+				}
+			}
+
+			if link.TypedSpec().Kind == network.LinkKindVXLAN {
+				data, err = networkadapter.VXLANSpec(&link.TypedSpec().VXLAN, &parentIndex).Encode()
+				if err != nil {
+					return fmt.Errorf("error encoding vxlan attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
 			}
 

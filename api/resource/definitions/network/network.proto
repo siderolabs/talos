@@ -386,6 +386,7 @@ message LinkSpecSpec {
   VRFSlave vrf_slave = 18;
   VethSpec veth = 19;
   MacVLANSpec mac_vlan = 20;
+  VXLANSpec vxlan = 21;
 }
 
 // LinkStatusSpec describes status of rendered secrets.
@@ -428,6 +429,7 @@ message LinkStatusSpec {
   VRFMasterSpec vrf_master = 33;
   VethSpec veth = 34;
   MacVLANSpec mac_vlan = 35;
+  VXLANSpec vxlan = 36;
 }
 
 // MacVLANSpec describes MACVLAN settings if Kind == "macvlan".
@@ -791,6 +793,20 @@ message VRFMasterSpec {
 // VRFSlave contains the name of the master vrf for an interface
 message VRFSlave {
   string master_name = 1;
+}
+
+// VXLANSpec describes VXLAN settings if Kind == "vxlan".
+message VXLANSpec {
+  // ID is the VXLAN network identifier (VNI).
+  uint32 id = 1;
+  // Local is the source IP address (IPv4 or IPv6) of the tunnel endpoint.
+  common.NetIP local = 2;
+  // Group is the multicast group IP address (IPv4 or IPv6) of the tunnel.
+  common.NetIP group = 3;
+  // Port is the destination UDP port for VXLAN traffic.
+  uint32 port = 4;
+  // Learning enables learning of source link addresses.
+  bool learning = 5;
 }
 
 // VethSpec identifies the expected peer of a veth endpoint.

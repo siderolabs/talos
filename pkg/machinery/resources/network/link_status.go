@@ -59,6 +59,7 @@ type LinkStatusSpec struct {
 	// Following fields are only populated with respective Kind.
 	VLAN         VLANSpec         `yaml:"vlan,omitempty" protobuf:"26"`
 	MacVLAN      MacVLANSpec      `yaml:"macvlan,omitempty" protobuf:"35"`
+	VXLAN        VXLANSpec        `yaml:"vxlan,omitempty" protobuf:"36"`
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"27"`
 	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"28"`
 	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"33"`

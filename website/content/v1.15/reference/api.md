@@ -647,6 +647,7 @@ description: Talos gRPC API reference.
     - [VLANSpec](#talos.resource.definitions.network.VLANSpec)
     - [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec)
     - [VRFSlave](#talos.resource.definitions.network.VRFSlave)
+    - [VXLANSpec](#talos.resource.definitions.network.VXLANSpec)
     - [VethSpec](#talos.resource.definitions.network.VethSpec)
     - [WireguardPeer](#talos.resource.definitions.network.WireguardPeer)
     - [WireguardSpec](#talos.resource.definitions.network.WireguardSpec)
@@ -10612,6 +10613,7 @@ LinkSpecSpec describes spec for the link.
 | vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  | VRFSlave carries VRF slave details for interfaces in a VRF. |
 | veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
 | mac_vlan | [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec) |  |  |
+| vxlan | [VXLANSpec](#talos.resource.definitions.network.VXLANSpec) |  |  |
 
 
 
@@ -10661,6 +10663,7 @@ LinkStatusSpec describes status of rendered secrets.
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 | veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
 | mac_vlan | [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec) |  |  |
+| vxlan | [VXLANSpec](#talos.resource.definitions.network.VXLANSpec) |  |  |
 
 
 
@@ -11395,6 +11398,25 @@ VRFSlave contains the name of the master vrf for an interface
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | master_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.VXLANSpec"></a>
+
+### VXLANSpec
+VXLANSpec describes VXLAN settings if Kind == "vxlan".
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [uint32](#uint32) |  | ID is the VXLAN network identifier (VNI). |
+| local | [common.NetIP](#common.NetIP) |  | Local is the source IP address (IPv4 or IPv6) of the tunnel endpoint. |
+| group | [common.NetIP](#common.NetIP) |  | Group is the multicast group IP address (IPv4 or IPv6) of the tunnel. |
+| port | [uint32](#uint32) |  | Port is the destination UDP port for VXLAN traffic. |
+| learning | [bool](#bool) |  | Learning enables learning of source link addresses. |
 
 
 

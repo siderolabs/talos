@@ -68,6 +68,7 @@ type LinkSpecSpec struct {
 	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"17"`
 	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"13"`
 	Veth         VethSpec         `yaml:"veth,omitempty" protobuf:"19"`
+	VXLAN        VXLANSpec        `yaml:"vxlan,omitempty" protobuf:"21"`
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"14"`
@@ -120,11 +121,13 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.ParentName, other.ParentName)
 	updateIfNotZero(&spec.BondSlave, other.BondSlave)
 	updateIfNotZero(&spec.VLAN, other.VLAN)
+	updateIfNotZero(&spec.MacVLAN, other.MacVLAN)
 	updateIfNotZero(&spec.BridgeMaster, other.BridgeMaster)
 	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
 	updateIfNotZero(&spec.VRFMaster, other.VRFMaster)
 	updateIfNotZero(&spec.VRFSlave, other.VRFSlave)
 	updateIfNotZero(&spec.Veth, other.Veth)
+	updateIfNotZero(&spec.VXLAN, other.VXLAN)
 
 	if !other.BondMaster.IsZero() {
 		spec.BondMaster = other.BondMaster.DeepCopy()

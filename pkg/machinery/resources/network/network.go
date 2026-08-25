@@ -90,4 +90,5 @@ const (
 	LinkKindVeth      = "veth"
 	LinkKindMacVLAN   = "macvlan"
 	LinkKindWireguard = "wireguard"
+	LinkKindVXLAN     = "vxlan"
 )

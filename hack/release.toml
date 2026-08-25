@@ -125,6 +125,25 @@ addresses:
 The `source` mode is not supported yet, as it requires a list of allowed source MAC addresses.
 """
 
+    [notes.vxlan]
+        title = "VXLAN Links"
+        description = """\
+Talos Linux now supports creating VXLAN links with a new `VXLANConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: VXLANConfig
+name: vxlan100
+id: 100 # VXLAN network identifier (VNI)
+parent: eth0
+local: 10.255.0.1 # or `group:` for a multicast group, but not both
+port: 4789 # optional, defaults to 4789
+learning: false # optional, defaults to true
+addresses:
+  - address: 192.168.1.100/24
+```
+"""
+
 [make_deps]
 
     [make_deps.tools]

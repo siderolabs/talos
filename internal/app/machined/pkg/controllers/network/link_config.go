@@ -479,6 +479,9 @@ func (ctrl *LinkConfigController) processLinkConfigs(linkMap map[string]*network
 		case talosconfig.NetworkMacVLANConfig:
 			parentLink := linkNameResolver.Resolve(specificLinkConfig.Parent())
 			macvlanLink(linkMap[linkName], parentLink, specificLinkConfig)
+		case talosconfig.NetworkVXLANConfig:
+			parentLink := linkNameResolver.Resolve(specificLinkConfig.Parent())
+			vxlanLink(linkMap[linkName], parentLink, specificLinkConfig)
 		case talosconfig.NetworkBondConfig:
 			SendBondMaster(linkMap[linkName], specificLinkConfig, linkNameResolver.Resolve)
 
@@ -590,6 +593,28 @@ func macvlanLink(link *network.LinkSpecSpec, parentName string, config talosconf
 	link.ParentName = parentName
 	link.MacVLAN = network.MacVLANSpec{
 		Mode: config.Mode().ValueOr(nethelpers.MacvlanModeBridge),
+	}
+}
+
+func vxlanLink(link *network.LinkSpecSpec, parentName string, config talosconfig.NetworkVXLANConfig) {
+	link.Logical = true
+	link.Kind = network.LinkKindVXLAN
+	link.Type = nethelpers.LinkEther
+	link.ParentName = parentName
+	link.VXLAN = network.VXLANSpec{
+		ID:       config.ID(),
+		Port:     config.Port().ValueOr(4789),
+		Learning: config.Learning().ValueOr(true),
+	}
+
+	// the addresses are stored in the form they are read back from the kernel: IPv4 addresses are
+	// never IPv4-mapped, and the zone is not passed to the kernel at all
+	if local, ok := config.Local().Get(); ok {
+		link.VXLAN.Local = local.Unmap().WithZone("")
+	}
+
+	if group, ok := config.Group().Get(); ok {
+		link.VXLAN.Group = group.Unmap().WithZone("")
 	}
 }
 

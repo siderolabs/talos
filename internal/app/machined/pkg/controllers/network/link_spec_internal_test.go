@@ -21,7 +21,7 @@ import (
 // populated by the init() of github.com/jsimonetti/rtnetlink/v2/driver. Talos encodes and decodes
 // these attributes itself (see the adapters in pkg/adapters/network), so importing that package
 // anywhere in the machined dependency graph would make rawLinkData return nil for bonds, bridges,
-// VLANs, macvlans and veths, breaking every link kind that carries settings.
+// VLANs, macvlans, veths and VXLANs, breaking every link kind that carries settings.
 func TestRawLinkData(t *testing.T) {
 	t.Parallel()
 
@@ -31,6 +31,7 @@ func TestRawLinkData(t *testing.T) {
 		networkres.LinkKindVLAN,
 		networkres.LinkKindMacVLAN,
 		networkres.LinkKindVeth,
+		networkres.LinkKindVXLAN,
 	} {
 		t.Run(kind, func(t *testing.T) {
 			t.Parallel()
