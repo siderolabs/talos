@@ -9,7 +9,13 @@ package k8s
 import (
 	"context"
 	_ "embed"
+	"errors"
+	"fmt"
+	"io"
+	"maps"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -56,8 +62,9 @@ func (suite *OomSuite) TestOom() {
 		suite.T().Skip("skipping OOM test since provisioner is not qemu")
 	}
 
-	// overarching timeout should be longer than the sum of all timeouts in the test
-	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Minute)
+	// overarching timeout should be longer than the sum of all timeouts in the test,
+	// with enough slack for the cluster health check at the end
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	suite.T().Cleanup(cancel)
 
 	oomPodManifest := suite.ParseManifests(oomPodSpec)
@@ -112,7 +119,8 @@ func (suite *OomSuite) TestOom() {
 	// Scale to discovered number of replicas
 	suite.PatchK8sObject(ctx, "default", "apps", "Deployment", "v1", "stress-mem", patchToReplicas(suite.T(), numReplicas))
 
-	// Expect at least one OOM kill of stress-ng within 15 seconds
+	// Expect at least one OOM kill of stress-ng within 15 seconds, either by the Talos
+	// userspace OOM handler, or by the kernel OOM killer
 	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 1, false))
 
 	// Scale to 1, wait for deployment to scale down, proving system is operational
@@ -141,12 +149,24 @@ func patchToReplicas(t *testing.T, replicas int) []byte {
 	return patch
 }
 
-// waitForOOMKilled waits for OOM events containing the specified process substring.
+// kernelOOMReadTimeout bounds a single read of the kernel OOM kill counter.
 //
-// It returns true if at least n matching events are observed within the observation
-// period or before the timeout expires. If a non-matching OOM kill is observed, it
-// returns false immediately when allowNotMatchingKills is false; otherwise, such
-// events are ignored.
+// A node under heavy memory pressure might be slow to respond or not respond at all, and the
+// test should never block on it: the counters are a best-effort signal.
+const kernelOOMReadTimeout = 5 * time.Second
+
+// waitForOOMKilled waits for OOM kills to be observed on the worker nodes.
+//
+// Two independent sources are counted and reported separately:
+//   - userspace OOM kills performed by the Talos OOM handler (OOMAction resources) which
+//     contain the specified process substring;
+//   - kernel OOM kills, as reported by the `oom_kill` counter in /proc/vmstat, summed over
+//     all worker nodes (the kernel counter is not process-specific).
+//
+// It returns true if at least n kills from either source are observed within the observation
+// period or before the timeout expires. If a non-matching userspace OOM kill is observed, it
+// returns false immediately when allowNotMatchingKills is false; otherwise, such events are
+// ignored.
 //
 //nolint:gocyclo
 func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, timeout time.Duration, substr string, n int, allowNotMatchingKills bool) bool {
@@ -155,8 +175,15 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 	watchCh := make(chan state.Event)
 	workerNodes := suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeWorker)
 
+	// reads of the kernel counters should outlive the watch context below, as the last read
+	// happens once the observation window is over
+	readCtx := ctx
+
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+
+	// baseline for the kernel OOM kill counters, so that only the kills happening from now on are counted
+	kernelOOM := suite.newKernelOOMTracker(readCtx, workerNodes)
 
 	// start watching OOM events on all worker nodes
 	for _, workerNode := range workerNodes {
@@ -169,18 +196,42 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 
 	timeoutCh := time.After(timeout)
 	timeToObserveCh := time.After(timeToObserve)
-	numOOMObserved := 0
+
+	// the kernel counters are not exposed as an event stream, so they have to be polled
+	kernelPollTicker := time.NewTicker(time.Second)
+	defer kernelPollTicker.Stop()
+
+	numOOMObserved, numKernelOOMObserved := 0, 0
+
+	report := func() {
+		suite.T().Logf("observed %d userspace OOM events containing process substring %q, and %d kernel OOM kills",
+			numOOMObserved, substr, numKernelOOMObserved)
+	}
 
 	for {
 		select {
 		case <-timeoutCh:
-			suite.T().Logf("observed %d OOM events containing process substring %q", numOOMObserved, substr)
+			numKernelOOMObserved = kernelOOM.poll(readCtx)
 
-			return numOOMObserved >= n
+			report()
+
+			return numOOMObserved >= n || numKernelOOMObserved >= n
+		case <-kernelPollTicker.C:
+			numKernelOOMObserved = kernelOOM.poll(readCtx)
+
+			// don't bail out early when n is zero, as in that case the point is to observe
+			// the whole period and report what happened
+			if n > 0 && numKernelOOMObserved >= n {
+				report()
+
+				return true
+			}
 		case <-timeToObserveCh:
-			if numOOMObserved >= n {
-				// if we already observed some OOM events, consider it a success
-				suite.T().Logf("observed %d OOM events containing process substring %q", numOOMObserved, substr)
+			numKernelOOMObserved = kernelOOM.poll(readCtx)
+
+			if numOOMObserved >= n || numKernelOOMObserved >= n {
+				// if we already observed enough OOM kills, consider it a success
+				report()
 
 				return true
 			}
@@ -191,39 +242,165 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 
 			res := ev.Resource.(*runtime.OOMAction).TypedSpec()
 
-			bailOut := false
+			matched, bailOut := matchOOMActionProcesses(res.Processes, substr)
 
-			for _, proc := range res.Processes {
-				if strings.Contains(proc, substr) {
-					numOOMObserved++
+			if matched {
+				numOOMObserved++
 
-					if numOOMObserved >= n {
-						// if we already observed enough OOM events, consider it a success
-						suite.T().Logf("observed %d OOM events containing process substring %q", numOOMObserved, substr)
+				if numOOMObserved >= n {
+					// if we already observed enough OOM events, consider it a success
+					report()
 
-						return true
-					}
-
-					break
-				}
-
-				// Sometimes OOM catches containers in restart phase (while the
-				// cgroup has previously accumulated OOM score).
-				// Consider an OOM event wrong if something other than that is found.
-				if !strings.Contains(proc, "runc init") && !strings.Contains(proc, "/pause") && proc != "" {
-					bailOut = true
+					return true
 				}
 			}
 
 			if bailOut {
-				suite.T().Logf("observed an OOM event not containing process substring %q: %v (%d containing, ignoring it: %v)", substr, res.Processes, numOOMObserved, allowNotMatchingKills)
+				// the kernel OOM killer might have been the one doing the killing here,
+				// so refresh its counters before declaring a failure
+				numKernelOOMObserved = kernelOOM.poll(readCtx)
 
-				if !allowNotMatchingKills {
+				suite.T().Logf("observed an OOM event not containing process substring %q: %v (%d containing, %d kernel OOM kills, ignoring it: %v)",
+					substr, res.Processes, numOOMObserved, numKernelOOMObserved, allowNotMatchingKills)
+
+				if !allowNotMatchingKills && numKernelOOMObserved < n {
 					return false
 				}
 			}
 		}
 	}
+}
+
+// matchOOMActionProcesses inspects the processes killed in a single userspace OOM event.
+//
+// It reports whether the event contains a process matching substr, and whether it contains
+// a process which is not expected to be killed at all.
+func matchOOMActionProcesses(processes []string, substr string) (matched, bailOut bool) {
+	for _, proc := range processes {
+		if strings.Contains(proc, substr) {
+			return true, bailOut
+		}
+
+		// Sometimes OOM catches containers in restart phase (while the
+		// cgroup has previously accumulated OOM score).
+		// Consider an OOM event wrong if something other than that is found.
+		if !strings.Contains(proc, "runc init") && !strings.Contains(proc, "/pause") && proc != "" {
+			bailOut = true
+		}
+	}
+
+	return false, bailOut
+}
+
+// kernelOOMTracker tracks the number of kernel OOM kills across the worker nodes.
+//
+// Reads are best-effort: a node which fails to report its counter (which is likely, as the node
+// is under memory pressure) keeps its last known value, so that the number of kills observed
+// never goes down.
+type kernelOOMTracker struct {
+	suite    *OomSuite
+	nodes    []string
+	baseline map[string]int
+	latest   map[string]int
+}
+
+// newKernelOOMTracker captures the baseline of the kernel OOM kill counters.
+func (suite *OomSuite) newKernelOOMTracker(ctx context.Context, nodes []string) *kernelOOMTracker {
+	baseline := suite.readKernelOOMCounters(ctx, nodes)
+
+	return &kernelOOMTracker{
+		suite:    suite,
+		nodes:    nodes,
+		baseline: baseline,
+		latest:   maps.Clone(baseline),
+	}
+}
+
+// poll refreshes the counters, returning the total number of kills observed since the baseline.
+func (tracker *kernelOOMTracker) poll(ctx context.Context) int {
+	for node, count := range tracker.suite.readKernelOOMCounters(ctx, tracker.nodes) {
+		// a node without a baseline can't be counted, as the number of kills can't be established
+		if _, ok := tracker.baseline[node]; ok {
+			tracker.latest[node] = count
+		}
+	}
+
+	var total int
+
+	for node, count := range tracker.latest {
+		total += count - tracker.baseline[node]
+	}
+
+	return total
+}
+
+// readKernelOOMCounters reads the cumulative kernel OOM kill counter from each node in parallel.
+//
+// Every read is bounded by kernelOOMReadTimeout, and nodes which fail to answer are skipped
+// (with a log message) instead of failing the test.
+func (suite *OomSuite) readKernelOOMCounters(ctx context.Context, nodes []string) map[string]int {
+	ctx, cancel := context.WithTimeout(ctx, kernelOOMReadTimeout)
+	defer cancel()
+
+	counts := make([]int, len(nodes))
+	errs := make([]error, len(nodes))
+
+	var wg sync.WaitGroup
+
+	for i, node := range nodes {
+		wg.Go(func() {
+			counts[i], errs[i] = suite.readKernelOOMCounter(client.WithNode(ctx, node))
+		})
+	}
+
+	wg.Wait()
+
+	counters := make(map[string]int, len(nodes))
+
+	// the results are processed here (and not in the goroutines above) to keep the logging
+	// on the goroutine running the test
+	for i, node := range nodes {
+		if errs[i] != nil {
+			suite.T().Logf("failed to read kernel OOM kill counter from %s: %v", node, errs[i])
+
+			continue
+		}
+
+		counters[node] = counts[i]
+	}
+
+	return counters
+}
+
+// readKernelOOMCounter reads the `oom_kill` counter from /proc/vmstat on a single node.
+func (suite *OomSuite) readKernelOOMCounter(nodeCtx context.Context) (int, error) {
+	reader, err := suite.Client.Read(nodeCtx, "/proc/vmstat")
+	if err != nil {
+		return 0, err
+	}
+
+	defer reader.Close() //nolint:errcheck
+
+	contents, err := io.ReadAll(reader)
+	if err != nil {
+		return 0, err
+	}
+
+	for line := range strings.Lines(string(contents)) {
+		value, ok := strings.CutPrefix(strings.TrimSpace(line), "oom_kill ")
+		if !ok {
+			continue
+		}
+
+		count, err := strconv.Atoi(strings.TrimSpace(value))
+		if err != nil {
+			return 0, fmt.Errorf("failed to parse %q from /proc/vmstat: %w", line, err)
+		}
+
+		return count, nil
+	}
+
+	return 0, errors.New("oom_kill counter not found in /proc/vmstat")
 }
 
 func init() {
