@@ -579,7 +579,7 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		)
 	}
 
-	artifactsLayer, err := filemap.Layer(artifacts)
+	artifactsLayer, err := filemap.Layer(i.tempDir, artifacts)
 	if err != nil {
 		return xerrors.NewTaggedf[DependencyTag]("failed to create artifacts layer: %w", err)
 	}
@@ -646,7 +646,7 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 			overlayArtifacts = append(overlayArtifacts, extraFiles...)
 		}
 
-		overlayArtifactsLayer, internalErr := filemap.Layer(overlayArtifacts)
+		overlayArtifactsLayer, internalErr := filemap.Layer(i.tempDir, overlayArtifacts)
 		if internalErr != nil {
 			return xerrors.NewTaggedf[DependencyTag]("failed to create overlay artifacts layer: %w", internalErr)
 		}
