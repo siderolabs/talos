@@ -23,7 +23,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
@@ -83,10 +82,6 @@ func GRPCDialOptions() []grpc.DialOption {
 			// disable grpc backoff
 			Backoff:           backoff.Config{},
 			MinConnectTimeout: 20 * time.Second,
-		}),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:    10 * time.Second,
-			Timeout: 5 * time.Second,
 		}),
 	}
 }
