@@ -23,10 +23,16 @@ type Spec struct {
 	//
 	// Valid: [-_a-z0-9]+
 	Name string `yaml:"name"`
-	// Container to run.
+	// Container specifies the process and its container-specific options.
 	//
-	// Container rootfs should be extracted to the /usr/local/lib/containers/<name>.
+	// The rootfs should be extracted to /usr/local/lib/containers/<name>.
 	Container Container `yaml:"container"`
+	// RunnerMode selects how to run the service. It defaults to container when omitted.
+	//
+	// Host mode runs the entrypoint directly from the Talos host filesystem and does
+	// not use a per-service container rootfs. Container mounts, security options, and
+	// extension service config files are not supported in host mode.
+	RunnerMode RunnerMode `yaml:"runnerMode,omitempty"`
 	// Service dependencies.
 	Depends []Dependency `yaml:"depends"`
 	// Restart configuration.
@@ -37,7 +43,10 @@ type Spec struct {
 
 // Container specifies service container to run.
 type Container struct {
-	// Entrypoint for the service, relative to the container rootfs.
+	// Entrypoint for the service.
+	//
+	// It is relative to the container rootfs in container mode and must be an absolute
+	// host path in host mode.
 	Entrypoint string `yaml:"entrypoint"`
 	// Environment variables for the service.
 	Environment []string `yaml:"environment"`
@@ -97,10 +106,37 @@ func (spec *Spec) Validate() error {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("restart kind is invalid: %s", spec.Restart))
 	}
 
+	if !spec.RunnerMode.IsARunnerMode() {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("runner mode is invalid: %s", spec.RunnerMode))
+	}
+
 	multiErr = multierror.Append(multiErr, spec.Container.Validate())
+
+	if spec.RunnerMode == RunnerModeHost {
+		multiErr = multierror.Append(multiErr, spec.validateHostMode())
+	}
 
 	for _, dep := range spec.Depends {
 		multiErr = multierror.Append(multiErr, dep.Validate())
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
+func (spec *Spec) validateHostMode() error {
+	var multiErr *multierror.Error
+
+	if len(spec.Container.Mounts) > 0 {
+		multiErr = multierror.Append(multiErr, errors.New("container mounts are not supported in host runner mode"))
+	}
+
+	security := spec.Container.Security
+	if security.WriteableSysfs || len(security.MaskedPaths) > 0 || len(security.ReadonlyPaths) > 0 || security.WriteableRootfs || security.RootfsPropagation != "" {
+		multiErr = multierror.Append(multiErr, errors.New("container security options are not supported in host runner mode"))
+	}
+
+	if !filepath.IsAbs(spec.Container.Entrypoint) {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("container entrypoint must be an absolute host path in host runner mode: %q", spec.Container.Entrypoint))
 	}
 
 	return multiErr.ErrorOrNil()

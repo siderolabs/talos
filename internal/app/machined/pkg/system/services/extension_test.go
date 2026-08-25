@@ -14,10 +14,12 @@ import (
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/mocks"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type MockClient struct {
@@ -185,4 +187,68 @@ func TestGetOCIOptions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"FOO=BARFROMENVFILE"}, spec.Process.Env)
 	})
+}
+
+func TestExtensionHostRunnerMode(t *testing.T) {
+	svc := &services.Extension{
+		Spec: extservices.Spec{
+			Name:       "hello",
+			RunnerMode: extservices.RunnerModeHost,
+			Container: extservices.Container{
+				Entrypoint: "/usr/local/bin/hello",
+				Args:       []string{"--log=debug"},
+			},
+			Depends: []extservices.Dependency{{Service: "networkd"}},
+		},
+	}
+
+	args, err := svc.HostProcessArgs()
+	require.NoError(t, err)
+
+	assert.Equal(t, "ext-hello", args.ID)
+	assert.Equal(t, []string{"/usr/local/bin/hello", "--log=debug"}, args.ProcessArgs)
+	assert.Equal(t, []string{"networkd"}, svc.DependsOn(nil))
+	assert.NoError(t, svc.PostFunc(nil, 0))
+}
+
+func TestExtensionHostRunnerConfig(t *testing.T) {
+	svc := &services.Extension{
+		Spec: extservices.Spec{
+			Name:       "hello",
+			RunnerMode: extservices.RunnerModeHost,
+		},
+	}
+
+	mounts, env, err := svc.ApplyExtensionServiceConfig(&runtimeres.ExtensionServiceConfigSpec{
+		Environment: []string{"FROM_CONFIG=true"},
+	}, nil, []string{"FROM_MANIFEST=true"})
+	require.NoError(t, err)
+	assert.Empty(t, mounts)
+	assert.Equal(t, []string{"FROM_MANIFEST=true", "FROM_CONFIG=true"}, env)
+
+	_, _, err = svc.ApplyExtensionServiceConfig(&runtimeres.ExtensionServiceConfigSpec{
+		Files: []runtimeres.ExtensionServiceConfigFile{{MountPath: "/etc/hello.conf"}},
+	}, nil, nil)
+	assert.EqualError(t, err, "extension service config files are not supported in host runner mode")
+}
+
+func TestExtensionContainerRunnerModeDefault(t *testing.T) {
+	svc := &services.Extension{}
+
+	assert.Equal(t, []string{"containerd"}, svc.DependsOn(nil))
+}
+
+func TestExtensionHostRunnerRejectsRelativeEntrypoint(t *testing.T) {
+	svc := &services.Extension{
+		Spec: extservices.Spec{
+			Name:       "hello",
+			RunnerMode: extservices.RunnerModeHost,
+			Container: extservices.Container{
+				Entrypoint: "usr/local/bin/hello",
+			},
+		},
+	}
+
+	_, err := svc.HostProcessArgs()
+	assert.EqualError(t, err, "host runner entrypoint must be an absolute path: \"usr/local/bin/hello\"")
 }

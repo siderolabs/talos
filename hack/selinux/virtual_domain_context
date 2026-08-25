@@ -1,0 +1,2 @@
+system_u:system_r:svirt_t:s0
+system_u:system_r:svirt_tcg_t:s0
