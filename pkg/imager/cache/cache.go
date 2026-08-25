@@ -155,7 +155,15 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 		return fmt.Errorf("walking filesystem: %w", err)
 	}
 
-	artifactsLayer, err := filemap.Layer(artifacts)
+	// staged outside tmpDir, which is the tree the layer is built from.
+	layerDir, err := os.MkdirTemp("", "talos-image-cache-layer")
+	if err != nil {
+		return fmt.Errorf("creating layer staging directory: %w", err)
+	}
+
+	defer os.RemoveAll(layerDir) //nolint:errcheck
+
+	artifactsLayer, err := filemap.Layer(layerDir, artifacts)
 	if err != nil {
 		return fmt.Errorf("creating artifacts layer: %w", err)
 	}
