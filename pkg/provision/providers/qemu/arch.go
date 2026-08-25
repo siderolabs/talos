@@ -255,6 +255,13 @@ func (arch Arch) getMachineArgs(iommu bool) []string {
 
 	if arch == ArchAmd64 {
 		args += ",smm=on"
+
+		// the VMs are driven over the serial console, so the emulated PS/2 controller is never used,
+		// while tearing down `psmouse` in the kernel shutdown path is a known source of hangs on
+		// reboot/kexec
+		//
+		// note: requires QEMU >= 7.0
+		args += ",i8042=off"
 	}
 
 	return []string{"-machine", args}
