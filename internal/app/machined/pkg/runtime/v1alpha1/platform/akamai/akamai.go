@@ -105,39 +105,43 @@ func (a *Akamai) ParseMetadata(
 		)
 	}
 
-	networkConfig.Addresses = append(
-		networkConfig.Addresses,
-		network.AddressSpecSpec{
+	// only add IPv6 link-local address and gateway route if IPv6 is supported
+	// (VPC interfaces don't support IPv6, so the metadata doesn't include it)
+	if interfaceAddresses.IPv6.LinkLocal.IsValid() {
+		networkConfig.Addresses = append(
+			networkConfig.Addresses,
+			network.AddressSpecSpec{
+				ConfigLayer: network.ConfigPlatform,
+				LinkName:    "eth0",
+				Address:     interfaceAddresses.IPv6.LinkLocal,
+				Scope:       nethelpers.ScopeLink,
+				Family:      nethelpers.FamilyInet6,
+			},
+		)
+
+		ipv6gw, err := netip.ParseAddr(
+			strings.Split(interfaceAddresses.IPv6.LinkLocal.String(), ":")[0] + "::1",
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		route := network.RouteSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
-			LinkName:    "eth0",
-			Address:     interfaceAddresses.IPv6.LinkLocal,
-			Scope:       nethelpers.ScopeLink,
+			Gateway:     ipv6gw,
+			OutLinkName: "eth0",
+			Destination: interfaceAddresses.IPv6.LinkLocal,
+			Table:       nethelpers.TableMain,
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
 			Family:      nethelpers.FamilyInet6,
-		},
-	)
+			Priority:    1024,
+		}
 
-	ipv6gw, err := netip.ParseAddr(
-		strings.Split(interfaceAddresses.IPv6.LinkLocal.String(), ":")[0] + "::1",
-	)
-	if err != nil {
-		return nil, err
+		route.Normalize()
+
+		networkConfig.Routes = append(networkConfig.Routes, route)
 	}
-
-	route := network.RouteSpecSpec{
-		ConfigLayer: network.ConfigPlatform,
-		Gateway:     ipv6gw,
-		OutLinkName: "eth0",
-		Destination: interfaceAddresses.IPv6.LinkLocal,
-		Table:       nethelpers.TableMain,
-		Protocol:    nethelpers.ProtocolStatic,
-		Type:        nethelpers.TypeUnicast,
-		Family:      nethelpers.FamilyInet6,
-		Priority:    1024,
-	}
-
-	route.Normalize()
-
-	networkConfig.Routes = append(networkConfig.Routes, route)
 
 	for _, ipStr := range publicIPs {
 		if ip, err := netip.ParseAddr(ipStr); err == nil {

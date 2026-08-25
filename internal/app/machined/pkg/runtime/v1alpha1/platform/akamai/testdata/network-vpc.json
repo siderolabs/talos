@@ -1,0 +1,33 @@
+{
+    "interfaces": [
+        {
+            "id": 123456,
+            "purpose": "vpc",
+            "label": null,
+            "ipam_address": null,
+            "vpc": {
+                "id": 123456,
+                "label": "talos-devl",
+                "subnet": {
+                    "id": 123456,
+                    "label": "talos-devl",
+                    "ipv4": {
+                        "subnet_range": "10.239.96.0/20",
+                        "instance_address": "10.239.111.253/32",
+                        "nat_1_1": "172.234.1.2/32",
+                        "instance_ranges": []
+                    },
+                    "ipv6": null
+                }
+            }
+        }
+    ],
+    "ipv4": {
+        "public": [
+            "172.234.1.2/32"
+        ],
+        "private": [],
+        "shared": []
+    },
+    "ipv6": null
+}

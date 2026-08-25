@@ -26,27 +26,42 @@ var rawInstanceWithTags []byte
 //go:embed testdata/network.json
 var rawNetwork []byte
 
+//go:embed testdata/network-vpc.json
+var rawNetworkVPC []byte
+
 //go:embed testdata/expected-no-tags.yaml
 var expectedNoTags string
 
 //go:embed testdata/expected-with-tags.yaml
 var expectedWithTags string
 
+//go:embed testdata/expected-vpc.yaml
+var expectedVPC string
+
 func TestParseMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
 		instance []byte
+		network  []byte
 		expected string
 	}{
 		{
 			name:     "no tags",
 			instance: rawInstanceNoTags,
+			network:  rawNetwork,
 			expected: expectedNoTags,
 		},
 		{
 			name:     "with tags",
 			instance: rawInstanceWithTags,
+			network:  rawNetwork,
 			expected: expectedWithTags,
+		},
+		{
+			name:     "vpc interface (no IPv6)",
+			instance: rawInstanceNoTags,
+			network:  rawNetworkVPC,
+			expected: expectedVPC,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -57,7 +72,7 @@ func TestParseMetadata(t *testing.T) {
 			var interfaceConfig akametadata.NetworkData
 
 			require.NoError(t, json.Unmarshal(tt.instance, &metadata))
-			require.NoError(t, json.Unmarshal(rawNetwork, &interfaceConfig))
+			require.NoError(t, json.Unmarshal(tt.network, &interfaceConfig))
 
 			networkConfig, err := p.ParseMetadata(&metadata, &interfaceConfig)
 			require.NoError(t, err)

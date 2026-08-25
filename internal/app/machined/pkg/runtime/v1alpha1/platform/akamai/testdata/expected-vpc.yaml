@@ -1,0 +1,25 @@
+addresses:
+    - address: 172.234.1.2/32
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links: []
+routes: []
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs:
+    - 172.234.1.2
+metadata:
+    platform: akamai
+    hostname: talos
+    region: us-east
+    instanceType: g6-standard-1
+    instanceId: "123456"
+    providerId: linode://123456
