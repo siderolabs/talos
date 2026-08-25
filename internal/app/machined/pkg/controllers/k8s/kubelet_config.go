@@ -69,13 +69,12 @@ func NewKubeletConfigController() *KubeletConfigController {
 
 				kubeletConfig.Image = cfgProvider.K8sKubeletConfig().Image()
 
-				kubeletConfig.ClusterDNS = cfgProvider.K8sKubeletConfig().ClusterDNS()
+				addrs := k8s.DNSServiceAddrsWithOverride(
+					cfgProvider.K8sNetworkConfig().ServiceCIDRs(),
+					cfgProvider.K8sKubeletConfig().ClusterDNS(),
+				)
 
-				if len(kubeletConfig.ClusterDNS) == 0 {
-					addrs := k8s.DNSServiceAddrs(cfgProvider.K8sNetworkConfig().ServiceCIDRs())
-
-					kubeletConfig.ClusterDNS = xslices.Map(addrs, netip.Addr.String)
-				}
+				kubeletConfig.ClusterDNS = xslices.Map(addrs, netip.Addr.String)
 
 				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.K8sKubeletConfig().ExtraArgs()))
 				for k, v := range cfgProvider.K8sKubeletConfig().ExtraArgs() {

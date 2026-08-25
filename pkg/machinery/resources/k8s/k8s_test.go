@@ -5,6 +5,7 @@
 package k8s_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -14,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -60,6 +62,50 @@ func TestRegisterResource(t *testing.T) {
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}
+}
+
+func TestDNSServiceAddrsWithOverride(t *testing.T) {
+	const (
+		ipv4ServiceCIDR = "10.96.0.0/12"
+		ipv6ServiceCIDR = "fc00:db8:20::/112"
+	)
+
+	defaultAddrs := func() []netip.Prefix {
+		return []netip.Prefix{
+			netip.MustParsePrefix(ipv4ServiceCIDR),
+			netip.MustParsePrefix(ipv6ServiceCIDR),
+		}
+	}
+
+	t.Run("defaults", func(t *testing.T) {
+		addrs := k8s.DNSServiceAddrsWithOverride(defaultAddrs(), nil)
+
+		assert.Equal(t, []string{"10.96.0.10", "fc00:db8:20::a"}, xslices.Map(addrs, netip.Addr.String))
+	})
+
+	t.Run("custom ipv4", func(t *testing.T) {
+		addrs := k8s.DNSServiceAddrsWithOverride(defaultAddrs(), []string{"10.96.0.42"})
+
+		assert.Equal(t, []string{"10.96.0.42"}, xslices.Map(addrs, netip.Addr.String))
+	})
+
+	t.Run("custom dual stack", func(t *testing.T) {
+		addrs := k8s.DNSServiceAddrsWithOverride(defaultAddrs(), []string{"10.96.0.42", "fd00::42"})
+
+		assert.Equal(t, []string{"10.96.0.42", "fd00::42"}, xslices.Map(addrs, netip.Addr.String))
+	})
+
+	t.Run("invalid entries skipped", func(t *testing.T) {
+		addrs := k8s.DNSServiceAddrsWithOverride(defaultAddrs(), []string{"not-an-ip", "10.96.0.42"})
+
+		assert.Equal(t, []string{"10.96.0.42"}, xslices.Map(addrs, netip.Addr.String))
+	})
+
+	t.Run("all invalid falls back to defaults", func(t *testing.T) {
+		addrs := k8s.DNSServiceAddrsWithOverride(defaultAddrs(), []string{"not-an-ip"})
+
+		assert.Equal(t, []string{"10.96.0.10", "fc00:db8:20::a"}, xslices.Map(addrs, netip.Addr.String))
+	})
 }
 
 func TestKubeletConfig(t *testing.T) {
