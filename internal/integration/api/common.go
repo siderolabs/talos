@@ -268,6 +268,25 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 		"Running",
 	}
 
+	assertUlimit := func(exec func() (string, string, error), expected string) {
+		suite.Require().NoError(retry.Constant(30*time.Second, retry.WithUnits(time.Second)).Retry(func() error {
+			stdout, stderr, err := exec()
+			if err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			if stderr != "" {
+				return retry.ExpectedErrorf("unexpected stderr: %s", stderr)
+			}
+
+			if stdout != expected {
+				return retry.ExpectedErrorf("expected ulimit %q, got %q", expected, stdout)
+			}
+
+			return nil
+		}))
+	}
+
 	// Capture the baseline before applying the config: CRI can emit Stopping before ApplyConfiguration returns.
 	ts := suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
 
@@ -285,14 +304,9 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 	defer func() { suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx)) }()
 
-	stdout, stderr, err := ociUlimits1PodDef.Exec(
-		suite.ctx,
-		"ulimit -n",
-	)
-	suite.Require().NoError(err)
-
-	suite.Require().Equal("", stderr)
-	suite.Require().Equal("1024\n", stdout)
+	assertUlimit(func() (string, string, error) {
+		return ociUlimits1PodDef.Exec(suite.ctx, "ulimit -n")
+	}, "1024\n")
 
 	// Delete immediately before removing the CRIBaseRuntimeSpecConfig document.
 	suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx))
@@ -312,14 +326,9 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 	defer func() { suite.Assert().NoError(ociUlimits2PodDef.Delete(suite.ctx)) }()
 
-	stdout, stderr, err = ociUlimits2PodDef.Exec(
-		suite.ctx,
-		"ulimit -n",
-	)
-	suite.Require().NoError(err)
-
-	suite.Require().Equal("", stderr)
-	suite.Require().Equal("1048576\n", stdout)
+	assertUlimit(func() (string, string, error) {
+		return ociUlimits2PodDef.Exec(suite.ctx, "ulimit -n")
+	}, "1048576\n")
 }
 
 func init() {

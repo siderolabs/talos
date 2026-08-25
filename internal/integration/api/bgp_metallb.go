@@ -246,10 +246,6 @@ func (suite *BGPMetalLBSuite) TestMetalLBVRFBGP() { //nolint:gocyclo
 
 	workloadHelper.assertFabricSessions(nodeCtx, fabricSessions)
 
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BGPInstanceKind, metalLBWorkloadBGP)
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, metalLBWorkloadVRF)
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VethKind, metalLBVethName)
-
 	bgpImportsRoutesDeletePatch := map[string]any{
 		"apiVersion": "v1alpha1",
 		"kind":       "BGPInstanceConfig",
@@ -259,6 +255,10 @@ func (suite *BGPMetalLBSuite) TestMetalLBVRFBGP() { //nolint:gocyclo
 		},
 	}
 	suite.PatchMachineConfig(nodeCtx, bgpImportsRoutesDeletePatch)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BGPInstanceKind, metalLBWorkloadBGP)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, metalLBWorkloadVRF)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VethKind, metalLBVethName)
 
 	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](
 		nodeCtx,
