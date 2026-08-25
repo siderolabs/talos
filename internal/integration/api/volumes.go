@@ -1490,7 +1490,8 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 		),
 	)
 
-	// create existing volume
+	// mount the existing volume read-only from the start
+	existingVolumeDoc.MountSpec.MountReadOnly = new(true)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
 	// wait for the existing volume to be discovered
@@ -1502,7 +1503,16 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 		},
 	)
 
-	// check that the volume is mounted
+	// check that the volume is mounted read-only
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.True(vs.TypedSpec().ReadOnly)
+		})
+
+	// switch the existing volume to read-write
+	existingVolumeDoc.MountSpec.MountReadOnly = new(false)
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().ReadOnly)
