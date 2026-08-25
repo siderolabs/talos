@@ -82,6 +82,23 @@ func (builder *Builder) generateInitrd() error {
 	return nil
 }
 
+func (builder *Builder) generateDTB() error {
+	if builder.DTBPath == "" {
+		return nil
+	}
+
+	builder.sections = append(builder.sections,
+		section{
+			Name:    SectionDTB.String(),
+			Path:    builder.DTBPath,
+			Measure: true,
+			Append:  true,
+		},
+	)
+
+	return nil
+}
+
 func (builder *Builder) generateSplash() error {
 	path := filepath.Join(builder.scratchDir, "splash.bmp")
 
