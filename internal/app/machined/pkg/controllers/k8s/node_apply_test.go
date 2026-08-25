@@ -5,14 +5,18 @@
 package k8s_test
 
 import (
+	"context"
 	"slices"
 	"testing"
 
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sfake "k8s.io/client-go/kubernetes/fake"
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -523,4 +527,120 @@ func TestApplyCordoned(t *testing.T) {
 			assert.Equal(t, tt.expectedAnnotations, node.Annotations)
 		})
 	}
+}
+
+func TestSyncOnceWorkerSkipsTaintUpdates(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	logger := zaptest.NewLogger(t)
+
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:        "worker-1",
+			Annotations: map[string]string{},
+		},
+		Spec: corev1.NodeSpec{
+			Taints: []corev1.Taint{
+				{
+					Key:    "node.cloudprovider.kubernetes.io/uninitialized",
+					Value:  "true",
+					Effect: corev1.TaintEffectNoSchedule,
+				},
+			},
+		},
+	}
+
+	fakeClient := k8sfake.NewSimpleClientset(node)
+
+	ctrl := &k8sctrl.NodeApplyController{}
+
+	err := ctrl.SyncOnceForTest(
+		ctx,
+		logger,
+		fakeClient,
+		"worker-1",
+		map[string]string{"example.com/tainted": "true"},
+		map[string]string{"example.com/annotation": "value"},
+		[]k8s.NodeTaintSpecSpec{
+			{
+				Key:    "talos.dev/taint",
+				Value:  "true",
+				Effect: "NoSchedule",
+			},
+		},
+		true,  // shouldCordon
+		false, // canManageTaints (worker -> kubelet identity)
+	)
+	require.NoError(t, err)
+
+	updated, err := fakeClient.CoreV1().Nodes().Get(ctx, "worker-1", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// cordon (unschedulable) must be applied even though taint changes are requested
+	assert.True(t, updated.Spec.Unschedulable)
+	assert.Equal(t, "true", updated.Annotations[constants.AnnotationCordonedKey])
+
+	// labels and annotations must be applied
+	assert.Equal(t, "true", updated.Labels["example.com/tainted"])
+	assert.Equal(t, "value", updated.Annotations["example.com/annotation"])
+
+	// taints must NOT be modified: the pre-existing taint stays, the requested one is not added
+	assert.Equal(t, []corev1.Taint{node.Spec.Taints[0]}, updated.Spec.Taints)
+
+	// Talos must not claim ownership of taints it can't manage
+	_, ownedTaints := updated.Annotations[constants.AnnotationOwnedTaints]
+	assert.False(t, ownedTaints)
+}
+
+func TestSyncOnceControlPlaneAppliesTaints(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	logger := zaptest.NewLogger(t)
+
+	node := &corev1.Node{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cp-1",
+		},
+	}
+
+	fakeClient := k8sfake.NewSimpleClientset(node)
+
+	ctrl := &k8sctrl.NodeApplyController{}
+
+	err := ctrl.SyncOnceForTest(
+		ctx,
+		logger,
+		fakeClient,
+		"cp-1",
+		nil,
+		nil,
+		[]k8s.NodeTaintSpecSpec{
+			{
+				Key:    "talos.dev/taint",
+				Value:  "true",
+				Effect: "NoSchedule",
+			},
+		},
+		true, // shouldCordon
+		true, // canManageTaints (control plane -> temporary admin client)
+	)
+	require.NoError(t, err)
+
+	updated, err := fakeClient.CoreV1().Nodes().Get(ctx, "cp-1", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	assert.True(t, updated.Spec.Unschedulable)
+
+	// the requested taint must be applied in the separate update
+	assert.Equal(t, []corev1.Taint{
+		{
+			Key:    "talos.dev/taint",
+			Value:  "true",
+			Effect: corev1.TaintEffectNoSchedule,
+		},
+	}, updated.Spec.Taints)
+
+	assert.Equal(t, `["talos.dev/taint"]`, updated.Annotations[constants.AnnotationOwnedTaints])
 }

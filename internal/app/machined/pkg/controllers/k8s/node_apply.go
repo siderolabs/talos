@@ -23,6 +23,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sclient "k8s.io/client-go/kubernetes"
 
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/kubernetes"
@@ -166,23 +167,29 @@ func (ctrl *NodeApplyController) getNodeCordoned(ctx context.Context, r controll
 	return items.Len() > 0, nil
 }
 
-func (ctrl *NodeApplyController) getK8sClient(ctx context.Context, r controller.Runtime, logger *zap.Logger) (*kubernetes.Client, error) {
+func (ctrl *NodeApplyController) getK8sClient(ctx context.Context, r controller.Runtime, logger *zap.Logger) (*kubernetes.Client, bool, error) {
 	machineType, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
 	if err != nil {
-		return nil, fmt.Errorf("error getting machine type: %w", err)
+		return nil, false, fmt.Errorf("error getting machine type: %w", err)
 	}
 
 	if machineType.MachineType().IsControlPlane() {
-		return kubernetes.NewTemporaryClientControlPlane(ctx, r)
+		client, err := kubernetes.NewTemporaryClientControlPlane(ctx, r)
+
+		// control plane nodes use a temporary admin client which can modify node taints
+		return client, true, err
 	}
 
 	logger.Debug("waiting for kubelet client config", zap.String("file", constants.KubeletKubeconfig))
 
 	if err := conditions.WaitForKubeconfigReady(constants.KubeletKubeconfig).Wait(ctx); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	return kubernetes.NewClientFromKubeletKubeconfig()
+	client, err := kubernetes.NewClientFromKubeletKubeconfig()
+
+	// worker nodes use the kubelet identity, which is not allowed to modify taints (NodeRestriction)
+	return client, false, err
 }
 
 func (ctrl *NodeApplyController) reconcileWithK8s(
@@ -206,7 +213,7 @@ func (ctrl *NodeApplyController) reconcileWithK8s(
 
 	nodename := nodenameResource.TypedSpec().Nodename
 
-	k8sClient, err := ctrl.getK8sClient(ctx, r, logger)
+	k8sClient, canManageTaints, err := ctrl.getK8sClient(ctx, r, logger)
 	if err != nil {
 		return fmt.Errorf("error building kubernetes client: %w", err)
 	}
@@ -238,21 +245,22 @@ func (ctrl *NodeApplyController) reconcileWithK8s(
 		return err
 	}
 
-	return ctrl.sync(ctx, logger, k8sClient, nodename, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon)
+	return ctrl.sync(ctx, logger, k8sClient, nodename, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon, canManageTaints)
 }
 
 func (ctrl *NodeApplyController) sync(
 	ctx context.Context,
 	logger *zap.Logger,
-	k8sClient *kubernetes.Client,
+	k8sClient k8sclient.Interface,
 	nodeName string,
 	nodeLabelSpecs, nodeAnnotationSpecs map[string]string,
 	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
 	nodeShouldCordon bool,
+	canManageTaints bool,
 ) error {
 	// run several attempts retrying conflict errors
 	return retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).RetryWithContext(ctx, func(ctx context.Context) error {
-		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon)
+		err := ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon, canManageTaints)
 		if err != nil && (apierrors.IsConflict(err) || apierrors.IsForbidden(err)) {
 			return retry.ExpectedError(err)
 		}
@@ -301,11 +309,12 @@ func marshalOwnedAnnotation(node *corev1.Node, annotation string, ownedMap map[s
 func (ctrl *NodeApplyController) syncOnce(
 	ctx context.Context,
 	logger *zap.Logger,
-	k8sClient *kubernetes.Client,
+	k8sClient k8sclient.Interface,
 	nodeName string,
 	nodeLabelSpecs, nodeAnnotationSpecs map[string]string,
 	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
 	nodeShouldCordon bool,
+	canManageTaints bool,
 ) error {
 	node, err := k8sClient.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
 	if err != nil {
@@ -326,14 +335,8 @@ func (ctrl *NodeApplyController) syncOnce(
 		return fmt.Errorf("error unmarshaling owned annotations: %w", err)
 	}
 
-	ownedTaintsMap, err := umarshalOwnedAnnotation(node, constants.AnnotationOwnedTaints)
-	if err != nil {
-		return fmt.Errorf("error unmarshaling owned taints: %w", err)
-	}
-
 	ctrl.ApplyLabels(logger, node, ownedLabelsMap, nodeLabelSpecs)
 	ctrl.ApplyAnnotations(logger, node, ownedAnnotationsMap, nodeAnnotationSpecs)
-	ctrl.ApplyTaints(logger, node, ownedTaintsMap, nodeTaintSpecs)
 	ctrl.ApplyCordoned(logger, node, nodeShouldCordon)
 
 	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedLabels, ownedLabelsMap); err != nil {
@@ -343,6 +346,32 @@ func (ctrl *NodeApplyController) syncOnce(
 	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedAnnotations, ownedAnnotationsMap); err != nil {
 		return fmt.Errorf("error marshaling owned annotations: %w", err)
 	}
+
+	node, err = k8sClient.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	if err != nil {
+		return fmt.Errorf("error updating node: %w", err)
+	}
+
+	if !canManageTaints {
+		// nodes using the kubelet identity are not allowed to modify taints (NodeRestriction),
+		// so taints can't be managed here; in particular taint changes must not be sent in
+		// the same update as the cordon, or the whole update would be rejected (and the node
+		// would never get cordoned, blocking drain during upgrades)
+		if len(nodeTaintSpecs) > 0 {
+			logger.Debug("skipping taint updates, node identity is not allowed to modify taints")
+		}
+
+		return nil
+	}
+
+	// apply taints in a separate update, so that taint changes never poison the
+	// labels/annotations/cordon update
+	ownedTaintsMap, err := umarshalOwnedAnnotation(node, constants.AnnotationOwnedTaints)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling owned taints: %w", err)
+	}
+
+	ctrl.ApplyTaints(logger, node, ownedTaintsMap, nodeTaintSpecs)
 
 	if err = marshalOwnedAnnotation(node, constants.AnnotationOwnedTaints, ownedTaintsMap); err != nil {
 		return fmt.Errorf("error marshaling owned taints: %w", err)
@@ -396,6 +425,22 @@ func (ctrl *NodeApplyController) applyNodeKV(logger *zap.Logger, nodeKV map[stri
 // This method is exported for testing purposes.
 func (ctrl *NodeApplyController) ApplyLabels(logger *zap.Logger, node *corev1.Node, ownedLabels map[string]struct{}, nodeLabelSpecs map[string]string) {
 	ctrl.applyNodeKV(logger, node.Labels, ownedLabels, nodeLabelSpecs)
+}
+
+// SyncOnceForTest runs a single sync against the provided (fake) client.
+//
+// This method is exported for testing purposes.
+func (ctrl *NodeApplyController) SyncOnceForTest(
+	ctx context.Context,
+	logger *zap.Logger,
+	k8sClient k8sclient.Interface,
+	nodeName string,
+	nodeLabelSpecs, nodeAnnotationSpecs map[string]string,
+	nodeTaintSpecs []k8s.NodeTaintSpecSpec,
+	nodeShouldCordon bool,
+	canManageTaints bool,
+) error {
+	return ctrl.syncOnce(ctx, logger, k8sClient, nodeName, nodeLabelSpecs, nodeAnnotationSpecs, nodeTaintSpecs, nodeShouldCordon, canManageTaints)
 }
 
 // ApplyAnnotations performs the inner loop of the node annotation reconciliation.
