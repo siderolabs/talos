@@ -6,11 +6,15 @@ package runtime_test
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"net"
 	"os"
 	"testing"
+	"time"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc"
@@ -24,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type TimedSuite struct {
@@ -53,34 +58,37 @@ func (provider *mockConfigProvider) Config() config.Config {
 func (suite *TimedSuite) TestTime() {
 	testServer := "time.cloudflare.com"
 
-	// Create gRPC server
-	api := &runtime.TimeServer{
+	nClient := suite.newTimeClient(&runtime.TimeServer{
 		ConfigProvider: &mockConfigProvider{timeServer: testServer},
-	}
-	server := factory.NewServer(api)
-	listener, err := fakeTimedRPC(suite.T())
-	suite.Assert().NoError(err)
+	})
 
-	defer server.Stop()
-
-	//nolint:errcheck
-	defer os.Remove(listener.Addr().String())
-
-	//nolint:errcheck
-	go server.Serve(listener)
-
-	conn, err := grpc.NewClient(
-		fmt.Sprintf("%s://%s", "unix", listener.Addr().String()),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(dialer.DialUnix()),
-	)
-	suite.Require().NoError(err)
-	suite.T().Cleanup(func() { conn.Close() }) //nolint:errcheck
-
-	nClient := timeapi.NewTimeServiceClient(conn)
 	reply, err := nClient.Time(context.Background(), &emptypb.Empty{})
 	suite.Require().NoError(err)
 	suite.Assert().Equal(reply.Messages[0].Server, testServer)
+}
+
+func (suite *TimedSuite) TestTimeUsesRuntimeTimeServers() {
+	// fake NTP server so the test doesn't depend on the network
+	ntpAddr := fakeNTPServer(suite.T())
+
+	ctx := context.Background()
+
+	st := state.WrapCore(inmem.NewStateWithOptions()(network.NamespaceName))
+
+	timeServersStatus := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
+	timeServersStatus.TypedSpec().NTPServers = []string{ntpAddr}
+
+	suite.Require().NoError(st.Create(ctx, timeServersStatus))
+
+	// the static config has a different server; the runtime list (e.g. from DHCP) should win
+	nClient := suite.newTimeClient(&runtime.TimeServer{
+		ConfigProvider: &mockConfigProvider{timeServer: "time.cloudflare.com"},
+		State:          st,
+	})
+
+	reply, err := nClient.Time(ctx, &emptypb.Empty{})
+	suite.Require().NoError(err)
+	suite.Assert().Equal(reply.Messages[0].Server, ntpAddr)
 }
 
 func (suite *TimedSuite) TestTimeCheck() {
@@ -90,16 +98,20 @@ func (suite *TimedSuite) TestTimeCheck() {
 	// so we can check that we explicitly check the time of the
 	// specified server ( testserver )
 
-	// Create gRPC server
-	api := &runtime.TimeServer{}
+	nClient := suite.newTimeClient(&runtime.TimeServer{})
+
+	reply, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
+	suite.Require().NoError(err)
+	suite.Assert().Equal(reply.Messages[0].Server, testServer)
+}
+
+func (suite *TimedSuite) newTimeClient(api *runtime.TimeServer) timeapi.TimeServiceClient {
 	server := factory.NewServer(api)
 	listener, err := fakeTimedRPC(suite.T())
 	suite.Assert().NoError(err)
 
-	defer server.Stop()
-
-	//nolint:errcheck
-	defer os.Remove(listener.Addr().String())
+	suite.T().Cleanup(server.Stop)                                    //nolint:errcheck
+	suite.T().Cleanup(func() { os.Remove(listener.Addr().String()) }) //nolint:errcheck
 
 	//nolint:errcheck
 	go server.Serve(listener)
@@ -112,10 +124,62 @@ func (suite *TimedSuite) TestTimeCheck() {
 	suite.Require().NoError(err)
 	suite.T().Cleanup(func() { conn.Close() }) //nolint:errcheck
 
-	nClient := timeapi.NewTimeServiceClient(conn)
-	reply, err := nClient.TimeCheck(context.Background(), &timeapi.TimeRequest{Server: testServer})
-	suite.Require().NoError(err)
-	suite.Assert().Equal(reply.Messages[0].Server, testServer)
+	return timeapi.NewTimeServiceClient(conn)
+}
+
+// ntpEpochOffset is the number of seconds between the NTP epoch (1900-01-01) and the Unix epoch.
+const ntpEpochOffset = 2208988800
+
+// fakeNTPServer starts a minimal UDP NTP responder on loopback and returns its address.
+func fakeNTPServer(t *testing.T) string {
+	t.Helper()
+
+	conn, err := net.ListenPacket("udp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	t.Cleanup(func() { conn.Close() }) //nolint:errcheck
+
+	go func() {
+		buf := make([]byte, 512)
+
+		for {
+			n, raddr, err := conn.ReadFrom(buf)
+			if err != nil {
+				return
+			}
+
+			if n < 48 {
+				continue
+			}
+
+			resp := make([]byte, 48)
+
+			now := uint64(time.Now().Unix()) + ntpEpochOffset
+
+			resp[0] = 0x24 // leap 0, version 4, mode 4 (server)
+			resp[1] = 1    // stratum 1
+
+			// reference time: now - 1s, so the response is fresh
+			putNTPTime(resp[16:24], now-1)
+			// origin time: echo the request's transmit timestamp
+			copy(resp[24:32], buf[40:48])
+			// receive and transmit times
+			putNTPTime(resp[32:40], now)
+			putNTPTime(resp[40:48], now)
+
+			_, err = conn.WriteTo(resp, raddr)
+			if err != nil {
+				return
+			}
+		}
+	}()
+
+	return conn.LocalAddr().String()
+}
+
+// putNTPTime writes a 64-bit NTP timestamp (seconds since the NTP epoch, zero fraction) into b.
+func putNTPTime(b []byte, secs uint64) {
+	binary.BigEndian.PutUint64(b, secs<<32)
 }
 
 func fakeTimedRPC(t *testing.T) (net.Listener, error) {

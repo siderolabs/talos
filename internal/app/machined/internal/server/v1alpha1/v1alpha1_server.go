@@ -164,7 +164,10 @@ func (s *Server) Register(obj *grpc.Server) {
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.Controller})
 	machine.RegisterLVMServiceServer(obj, lvmd.NewService(s.Controller, s.Logger))
 	machine.RegisterMDServiceServer(obj, mdd.NewService(s.Controller, s.Logger))
-	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
+	timeapi.RegisterTimeServiceServer(obj, &TimeServer{
+		ConfigProvider: s.Controller.Runtime(),
+		State:          resourceState,
+	})
 }
 
 // modeWrapper overrides RequiresInstall() based on actual installed status.
