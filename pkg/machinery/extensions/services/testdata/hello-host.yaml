@@ -1,0 +1,9 @@
+name: hello-host
+runnerMode: host
+container:
+  entrypoint: /usr/local/bin/hello-world
+  environment:
+    - MODE=host
+  args:
+    - --log=debug
+restart: always

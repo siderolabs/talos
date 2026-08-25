@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/containerd/containerd/v2/core/containers"
@@ -24,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/environment"
@@ -50,6 +52,11 @@ func (svc *Extension) ID(r runtime.Runtime) string {
 
 // PreFunc implements the Service interface.
 func (svc *Extension) PreFunc(ctx context.Context, r runtime.Runtime) error {
+	if svc.Spec.RunnerMode == extservices.RunnerModeHost {
+		// Host services run binaries installed directly into the Talos host filesystem.
+		return nil
+	}
+
 	// re-mount service rootfs as overlay rw mount to allow containerd to mount there /dev, /proc, etc.
 	rootfsPath := filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)
 
@@ -71,6 +78,10 @@ func (svc *Extension) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 // PostFunc implements the Service interface.
 func (svc *Extension) PostFunc(r runtime.Runtime, state events.ServiceState) (err error) {
+	if svc.overlayUnmounter == nil {
+		return nil
+	}
+
 	return svc.overlayUnmounter()
 }
 
@@ -105,7 +116,11 @@ func (svc *Extension) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (svc *Extension) DependsOn(r runtime.Runtime) []string {
-	deps := []string{"containerd"}
+	var deps []string
+
+	if svc.Spec.RunnerMode == extservices.RunnerModeContainer {
+		deps = append(deps, "containerd")
+	}
 
 	for _, dep := range svc.Spec.Depends {
 		if dep.Service != "" {
@@ -165,47 +180,19 @@ func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oc
 //
 //nolint:gocyclo
 func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
-	args := runner.Args{
-		ID:          svc.ID(r),
-		ProcessArgs: append([]string{svc.Spec.Container.Entrypoint}, svc.Spec.Container.Args...),
-	}
-
-	for _, mount := range svc.Spec.Container.Mounts {
-		if _, err := os.Stat(mount.Source); err == nil {
-			// already exists, skip
-			continue
-		} else if !errors.Is(err, os.ErrNotExist) {
-			return nil, err
-		}
-
-		if err := os.MkdirAll(mount.Source, 0o700); err != nil {
-			return nil, err
-		}
-	}
-
-	mounts := append([]specs.Mount{}, svc.Spec.Container.Mounts...)
-
-	mounts = bindMountContainerMarker(mounts)
-
 	envVars, err := svc.parseEnvironment()
 	if err != nil {
 		return nil, err
 	}
 
+	mounts := append([]specs.Mount{}, svc.Spec.Container.Mounts...)
+
 	configSpec, err := safe.StateGetByID[*runtimeres.ExtensionServiceConfig](context.Background(), r.State().V1Alpha2().Resources(), svc.Spec.Name)
 	if err == nil {
-		spec := configSpec.TypedSpec()
-
-		for _, ext := range spec.Files {
-			mounts = append(mounts, specs.Mount{
-				Source:      filepath.Join(constants.ExtensionServiceUserConfigPath, svc.Spec.Name, strings.ReplaceAll(strings.TrimPrefix(ext.MountPath, "/"), "/", "-")),
-				Destination: ext.MountPath,
-				Type:        "bind",
-				Options:     []string{"ro", "bind"},
-			})
+		mounts, envVars, err = svc.applyExtensionServiceConfig(configSpec.TypedSpec(), mounts, envVars)
+		if err != nil {
+			return nil, err
 		}
-
-		envVars = append(envVars, spec.Environment...)
 	} else if !state.IsNotFoundError(err) {
 		return nil, err
 	}
@@ -221,8 +208,6 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		restartType = restart.UntilSuccess
 	}
 
-	ociSpecOpts := svc.getOCIOptions(envVars, mounts)
-
 	logToConsole := false
 
 	if r.Config() != nil {
@@ -232,6 +217,47 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 	if svc.Spec.LogToConsole {
 		logToConsole = true
 	}
+
+	if svc.Spec.RunnerMode == extservices.RunnerModeHost {
+		args, err := svc.hostProcessArgs(r)
+		if err != nil {
+			return nil, err
+		}
+
+		return restart.New(
+			process.NewRunner(
+				logToConsole,
+				&args,
+				runner.WithLoggingManager(r.Logging()),
+				runner.WithEnv(slices.Concat(envVars, environment.Get(r.Config()))),
+				runner.WithCgroupPath(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
+				runner.WithOOMScoreAdj(-600),
+			),
+			restart.WithType(restartType),
+		), nil
+	}
+
+	args := runner.Args{
+		ID:          svc.ID(r),
+		ProcessArgs: append([]string{svc.Spec.Container.Entrypoint}, svc.Spec.Container.Args...),
+	}
+
+	for _, mount := range svc.Spec.Container.Mounts {
+		if _, err = os.Stat(mount.Source); err == nil {
+			// already exists, skip
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return nil, err
+		}
+
+		if err = os.MkdirAll(mount.Source, 0o700); err != nil {
+			return nil, err
+		}
+	}
+
+	mounts = bindMountContainerMarker(mounts)
+
+	ociSpecOpts := svc.getOCIOptions(envVars, mounts)
 
 	return restart.New(
 		containerd.NewRunner(
@@ -247,6 +273,38 @@ func (svc *Extension) Runner(r runtime.Runtime) (runner.Runner, error) {
 		),
 		restart.WithType(restartType),
 	), nil
+}
+
+func (svc *Extension) hostProcessArgs(r runtime.Runtime) (runner.Args, error) {
+	if !filepath.IsAbs(svc.Spec.Container.Entrypoint) {
+		return runner.Args{}, fmt.Errorf("host runner entrypoint must be an absolute path: %q", svc.Spec.Container.Entrypoint)
+	}
+
+	return runner.Args{
+		ID:          svc.ID(r),
+		ProcessArgs: append([]string{svc.Spec.Container.Entrypoint}, svc.Spec.Container.Args...),
+	}, nil
+}
+
+func (svc *Extension) applyExtensionServiceConfig(
+	spec *runtimeres.ExtensionServiceConfigSpec,
+	mounts []specs.Mount,
+	envVars []string,
+) ([]specs.Mount, []string, error) {
+	if svc.Spec.RunnerMode == extservices.RunnerModeHost && len(spec.Files) > 0 {
+		return nil, nil, errors.New("extension service config files are not supported in host runner mode")
+	}
+
+	for _, ext := range spec.Files {
+		mounts = append(mounts, specs.Mount{
+			Source:      filepath.Join(constants.ExtensionServiceUserConfigPath, svc.Spec.Name, strings.ReplaceAll(strings.TrimPrefix(ext.MountPath, "/"), "/", "-")),
+			Destination: ext.MountPath,
+			Type:        "bind",
+			Options:     []string{"ro", "bind"},
+		})
+	}
+
+	return mounts, append(envVars, spec.Environment...), nil
 }
 
 // APIRestartAllowed implements APIRestartableService.

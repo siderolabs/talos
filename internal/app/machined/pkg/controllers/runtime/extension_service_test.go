@@ -19,6 +19,7 @@ import (
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	extensionservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -156,6 +157,11 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 	suite.Require().IsType(&services.Extension{}, helloSvc)
 
 	suite.Assert().Equal("./hello-world", helloSvc.(*services.Extension).Spec.Container.Entrypoint)
+
+	frrSvc := svcMock.get("ext-frr")
+	suite.Require().IsType(&services.Extension{}, frrSvc)
+	suite.Assert().Equal("/usr/local/bin/frr", frrSvc.(*services.Extension).Spec.Container.Entrypoint)
+	suite.Assert().Equal(extensionservices.RunnerModeHost, frrSvc.(*services.Extension).Spec.RunnerMode)
 
 	suite.Assert().Equal(
 		map[string]serviceStartStopInfo{

@@ -1,6 +1,7 @@
 name: frr
+runnerMode: host
 container:
-  entrypoint: ./frr
+  entrypoint: /usr/local/bin/frr
   args:
     - --msg
     - BGP FRR

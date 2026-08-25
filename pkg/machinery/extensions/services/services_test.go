@@ -20,6 +20,9 @@ import (
 //go:embed "testdata/hello.yaml"
 var helloYAML []byte
 
+//go:embed "testdata/hello-host.yaml"
+var helloHostYAML []byte
+
 func TestUnmarshal(t *testing.T) {
 	var spec services.Spec
 
@@ -54,6 +57,24 @@ func TestUnmarshal(t *testing.T) {
 	}, spec)
 
 	assert.NoError(t, spec.Validate())
+	assert.Equal(t, services.RunnerModeContainer, spec.RunnerMode)
+}
+
+func TestUnmarshalHostRunnerMode(t *testing.T) {
+	var spec services.Spec
+
+	require.NoError(t, yaml.Unmarshal(helloHostYAML, &spec))
+
+	assert.Equal(t, services.RunnerModeHost, spec.RunnerMode)
+	assert.NoError(t, spec.Validate())
+}
+
+func TestInvalidRunnerModeUnmarshal(t *testing.T) {
+	var spec services.Spec
+
+	err := yaml.Unmarshal([]byte("name: foo\nrunnerMode: bogus\ncontainer:\n  entrypoint: foo\nrestart: always\n"), &spec)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "bogus")
 }
 
 func TestValidate(t *testing.T) {
@@ -77,6 +98,73 @@ func TestValidate(t *testing.T) {
 				Restart: services.RestartAlways,
 			},
 			expectedError: "1 error occurred:\n\t* name \"FOO\" is invalid\n\n",
+		},
+		{
+			name: "invalid runner mode",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "foo",
+				},
+				RunnerMode: services.RunnerMode(100),
+				Restart:    services.RestartAlways,
+			},
+			expectedError: "1 error occurred:\n\t* runner mode is invalid: RunnerMode(100)\n\n",
+		},
+		{
+			name: "host runner with mounts",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "/usr/local/bin/foo",
+					Mounts:     []specs.Mount{{Source: "/source", Destination: "/destination"}},
+				},
+				RunnerMode: services.RunnerModeHost,
+				Restart:    services.RestartAlways,
+			},
+			expectedError: "1 error occurred:\n\t* container mounts are not supported in host runner mode\n\n",
+		},
+		{
+			name: "host runner with security options",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "/usr/local/bin/foo",
+					Security: services.Security{
+						WriteableRootfs: true,
+					},
+				},
+				RunnerMode: services.RunnerModeHost,
+				Restart:    services.RestartAlways,
+			},
+			expectedError: "1 error occurred:\n\t* container security options are not supported in host runner mode\n\n",
+		},
+		{
+			name: "host runner with empty security paths",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "/usr/local/bin/foo",
+					Security: services.Security{
+						MaskedPaths:   []string{},
+						ReadonlyPaths: []string{},
+					},
+				},
+				RunnerMode: services.RunnerModeHost,
+				Restart:    services.RestartAlways,
+			},
+		},
+		{
+			name: "host runner with relative entrypoint",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "usr/local/bin/foo",
+				},
+				RunnerMode: services.RunnerModeHost,
+				Restart:    services.RestartAlways,
+			},
+			expectedError: "1 error occurred:\n\t* container entrypoint must be an absolute host path in host runner mode: \"usr/local/bin/foo\"\n\n",
 		},
 		{
 			name: "invalid deps",
@@ -109,6 +197,12 @@ func TestValidate(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.spec.Validate()
+			if tt.expectedError == "" {
+				assert.NoError(t, err)
+
+				return
+			}
+
 			assert.EqualError(t, err, tt.expectedError)
 		})
 	}
