@@ -32,6 +32,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	"github.com/google/uuid"
+	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/afpacket"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/nberlee/go-netstat/netstat"
@@ -2480,6 +2481,9 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		afpacket.OptInterface(in.Interface),
 		afpacket.OptPollTimeout(100*time.Millisecond),
 		afpacket.OptSocketType(unix.SOCK_RAW|unix.SOCK_CLOEXEC),
+		// the kernel strips the VLAN header off the ingress frames and reports the tag out-of-band,
+		// so ask afpacket to re-insert it into the packet data, the same way libpcap/tcpdump do
+		afpacket.OptAddVLANHeader(true),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating afpacket handle: %w", err)
@@ -2499,11 +2503,21 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		return fmt.Errorf("error setting promiscuous mode %v: %w", in.Promiscuous, err)
 	}
 
-	return capturePackets(srv.Context(), &packetStreamWriter{srv}, handle, in.SnapLen, linkType)
+	return CapturePackets(srv.Context(), &packetStreamWriter{srv}, handle, in.SnapLen, linkType)
 }
 
+// PacketCaptureHandle is a subset of [afpacket.TPacket] used for packet capture.
+type PacketCaptureHandle interface {
+	ZeroCopyReadPacketData() ([]byte, gopacket.CaptureInfo, error)
+	Stats() (afpacket.Stats, error)
+	SocketStats() (afpacket.SocketStats, afpacket.SocketStatsV3, error)
+	Close()
+}
+
+// CapturePackets handles the packet capture loop and writes packets to the provided writer in pcap format.
+//
 //nolint:gocyclo,cyclop
-func capturePackets(ctx context.Context, w io.Writer, handle *afpacket.TPacket, snapLen uint32, linkType pcap.LinkType) error {
+func CapturePackets(ctx context.Context, w io.Writer, handle PacketCaptureHandle, snapLen uint32, linkType pcap.LinkType) error {
 	defer handle.Close()
 
 	pcapw := pcap.NewWriter(w)
@@ -2537,6 +2551,11 @@ func capturePackets(ctx context.Context, w io.Writer, handle *afpacket.TPacket, 
 
 		data, captureData, err := handle.ZeroCopyReadPacketData()
 		if err == nil {
+			// afpacket re-inserts the VLAN header stripped by the kernel into the packet data (which bumps the
+			// capture length), but, unlike libpcap, it doesn't adjust the original wire length reported by the
+			// kernel, so compensate here: otherwise the pcap writer rejects the packet as capture length > length.
+			captureData.Length = max(captureData.Length, captureData.CaptureLength)
+
 			if err = pcapw.WritePacket(captureData, data); err != nil {
 				return err
 			}
