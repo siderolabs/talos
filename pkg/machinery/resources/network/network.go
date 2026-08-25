@@ -88,5 +88,6 @@ const (
 	LinkKindBridge    = "bridge"
 	LinkKindVRF       = "vrf"
 	LinkKindVeth      = "veth"
+	LinkKindMacVLAN   = "macvlan"
 	LinkKindWireguard = "wireguard"
 )

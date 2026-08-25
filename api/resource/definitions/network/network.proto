@@ -385,6 +385,7 @@ message LinkSpecSpec {
   // VRFSlave carries VRF slave details for interfaces in a VRF.
   VRFSlave vrf_slave = 18;
   VethSpec veth = 19;
+  MacVLANSpec mac_vlan = 20;
 }
 
 // LinkStatusSpec describes status of rendered secrets.
@@ -426,6 +427,13 @@ message LinkStatusSpec {
   repeated string alt_names = 32;
   VRFMasterSpec vrf_master = 33;
   VethSpec veth = 34;
+  MacVLANSpec mac_vlan = 35;
+}
+
+// MacVLANSpec describes MACVLAN settings if Kind == "macvlan".
+message MacVLANSpec {
+  // Mode is the MACVLAN operating mode.
+  talos.resource.definitions.enums.NethelpersMacvlanMode mode = 1;
 }
 
 // NameServerSpec describes a single DNS nameserver with additional configuration.

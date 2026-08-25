@@ -398,6 +398,23 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				replace = true
 			}
 
+			// the parent link (VLAN, macvlan) is set on link creation and can't be changed on the fly
+			if !replace && link.TypedSpec().ParentName != "" {
+				parent := findLink(*links, link.TypedSpec().ParentName, true) // allow aliases for physical links/parents
+
+				// if the new parent doesn't exist yet, there's nothing to re-create the link on top of, so leave it alone
+				if parent != nil && existing.Attributes.Type != parent.Index {
+					logger.Info(
+						"replacing logical link with a different parent",
+						zap.String("parent_name", link.TypedSpec().ParentName),
+						zap.Uint32("old_parent_index", existing.Attributes.Type),
+						zap.Uint32("new_parent_index", parent.Index),
+					)
+
+					replace = true
+				}
+			}
+
 			if !replace && link.TypedSpec().Kind == network.LinkKindVeth {
 				if err := verifyVethPeers(*links, link.TypedSpec().Name, link.TypedSpec().Veth.PeerName); err != nil {
 					logger.Info(
@@ -429,6 +446,29 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 						zap.Uint16("new_id", link.TypedSpec().VLAN.VID),
 						zap.Stringer("old_protocol", existingVLAN.Protocol),
 						zap.Stringer("new_protocol", link.TypedSpec().VLAN.Protocol),
+					)
+
+					replace = true
+				}
+			}
+
+			// sync MACVLAN spec, as it's not reconciled in-place
+			if !replace && link.TypedSpec().Kind == network.LinkKindMacVLAN {
+				var existingMacVLAN network.MacVLANSpec
+
+				if existingRawLinkData == nil {
+					return fmt.Errorf("existing link %q has no data, can't decode macvlan settings", link.TypedSpec().Name)
+				}
+
+				if err := networkadapter.MacVLANSpec(&existingMacVLAN).Decode(existingRawLinkData); err != nil {
+					return fmt.Errorf("error decoding macvlan properties on %q: %w", link.TypedSpec().Name, err)
+				}
+
+				if existingMacVLAN != link.TypedSpec().MacVLAN {
+					logger.Info(
+						"replacing macvlan link",
+						zap.Stringer("old_mode", existingMacVLAN.Mode),
+						zap.Stringer("new_mode", link.TypedSpec().MacVLAN.Mode),
 					)
 
 					replace = true
@@ -498,6 +538,13 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				data, err = networkadapter.VLANSpec(&link.TypedSpec().VLAN).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding VLAN attributes for link %q: %w", link.TypedSpec().Name, err)
+				}
+			}
+
+			if link.TypedSpec().Kind == network.LinkKindMacVLAN {
+				data, err = networkadapter.MacVLANSpec(&link.TypedSpec().MacVLAN).Encode()
+				if err != nil {
+					return fmt.Errorf("error encoding macvlan attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
 			}
 

@@ -773,6 +773,68 @@ func (VRFConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (MacVLANConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "MacVLANConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "MacVLANConfig is a config document to create a MACVLAN link over a parent link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "MacVLANConfig is a config document to create a MACVLAN link over a parent link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the macvlan link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the macvlan link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "MacvlanMode",
+				Note:        "",
+				Description: "MACVLAN mode to use for the link.\nIf not set, defaults to bridge.\n\nThe `source` mode requires a list of source MAC addresses, which is\nnot supported yet, so it can't be used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "MACVLAN mode to use for the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"private",
+					"vepa",
+					"bridge",
+					"passthru",
+					"source",
+				},
+			},
+			{
+				Name:        "parent",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the parent link (interface) the macvlan link is created on.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the parent link (interface) the macvlan link is created on." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleMacVLANConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "eth0.macvlan")
+	doc.Fields[2].AddExample("", "bridge")
+	doc.Fields[3].AddExample("", "eth0")
+	doc.Fields[4].AddExample("", "2e:3c:4d:5e:6f:70")
+
+	return doc
+}
+
 func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkDefaultActionConfig",
@@ -1502,6 +1564,10 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 			},
 			{
 				TypeName:  "VRFConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "MacVLANConfigV1Alpha1",
 				FieldName: "",
 			},
 			{
@@ -2592,6 +2658,7 @@ func GetFileDoc() *encoder.FileDoc {
 			BridgeSTPConfig{}.Doc(),
 			BridgeVLANConfig{}.Doc(),
 			VRFConfigV1Alpha1{}.Doc(),
+			MacVLANConfigV1Alpha1{}.Doc(),
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			DHCPv4ConfigV1Alpha1{}.Doc(),
 			DHCPv6ConfigV1Alpha1{}.Doc(),

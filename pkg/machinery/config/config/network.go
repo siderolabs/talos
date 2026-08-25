@@ -347,6 +347,16 @@ type NetworkWireguardConfig interface {
 	Peers() []NetworkWireguardPeerConfig
 }
 
+// NetworkMacVLANConfig defines a macvlan link configuration.
+type NetworkMacVLANConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	MacVLANConfig()
+	Parent() string
+	Mode() optional.Optional[nethelpers.MacvlanMode]
+}
+
 // NetworkWireguardPeerConfig defines a Wireguard peer configuration.
 type NetworkWireguardPeerConfig interface {
 	PublicKey() string

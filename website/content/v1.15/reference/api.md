@@ -337,6 +337,7 @@ description: Talos gRPC API reference.
     - [NethelpersICMPType](#talos.resource.definitions.enums.NethelpersICMPType)
     - [NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate)
     - [NethelpersLinkType](#talos.resource.definitions.enums.NethelpersLinkType)
+    - [NethelpersMacvlanMode](#talos.resource.definitions.enums.NethelpersMacvlanMode)
     - [NethelpersMatchOperator](#talos.resource.definitions.enums.NethelpersMatchOperator)
     - [NethelpersNfTablesChainHook](#talos.resource.definitions.enums.NethelpersNfTablesChainHook)
     - [NethelpersNfTablesChainPriority](#talos.resource.definitions.enums.NethelpersNfTablesChainPriority)
@@ -606,6 +607,7 @@ description: Talos gRPC API reference.
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
     - [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec)
     - [LinkStatusSpec](#talos.resource.definitions.network.LinkStatusSpec)
+    - [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec)
     - [NameServerSpec](#talos.resource.definitions.network.NameServerSpec)
     - [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch)
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
@@ -5783,6 +5785,22 @@ NethelpersLinkType is a link type.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersMacvlanMode"></a>
+
+### NethelpersMacvlanMode
+NethelpersMacvlanMode is a MACVLAN operating mode.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_MACVLANMODE_UNSPECIFIED | 0 |  |
+| MACVLAN_MODE_PRIVATE | 1 |  |
+| MACVLAN_MODE_VEPA | 2 |  |
+| MACVLAN_MODE_BRIDGE | 4 |  |
+| MACVLAN_MODE_PASSTHRU | 8 |  |
+| MACVLAN_MODE_SOURCE | 16 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersMatchOperator"></a>
 
 ### NethelpersMatchOperator
@@ -10593,6 +10611,7 @@ LinkSpecSpec describes spec for the link.
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 | vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  | VRFSlave carries VRF slave details for interfaces in a VRF. |
 | veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
+| mac_vlan | [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec) |  |  |
 
 
 
@@ -10641,6 +10660,22 @@ LinkStatusSpec describes status of rendered secrets.
 | alt_names | [string](#string) | repeated |  |
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 | veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
+| mac_vlan | [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.MacVLANSpec"></a>
+
+### MacVLANSpec
+MacVLANSpec describes MACVLAN settings if Kind == "macvlan".
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mode | [talos.resource.definitions.enums.NethelpersMacvlanMode](#talos.resource.definitions.enums.NethelpersMacvlanMode) |  | Mode is the MACVLAN operating mode. |
 
 
 

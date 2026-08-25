@@ -107,6 +107,24 @@ contents: |
 The extension does not provide a default configuration, so `multipathd` remains waiting until `/etc/multipath.conf` is present.
 """
 
+    [notes.macvlan]
+        title = "MACVLAN Links"
+        description = """\
+Talos Linux now supports creating MACVLAN links with a new `MacVLANConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: MacVLANConfig
+name: eth0.macvlan
+parent: eth0
+mode: bridge # optional, defaults to `bridge`
+addresses:
+  - address: 192.168.1.100/24
+```
+
+The `source` mode is not supported yet, as it requires a list of allowed source MAC addresses.
+"""
+
 [make_deps]
 
     [make_deps.tools]

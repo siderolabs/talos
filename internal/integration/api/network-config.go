@@ -452,6 +452,109 @@ func (suite *NetworkConfigSuite) TestVLANConfig() {
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
 }
 
+// TestMacVLANConfig tests creation of macvlan interfaces.
+func (suite *NetworkConfigSuite) TestMacVLANConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	suffix := rand.IntN(10000)
+
+	dummyNames := xslices.Map([]string{"a", "b"}, func(s string) string {
+		return fmt.Sprintf("dummy%d%s", suffix, s)
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	macvlanName := fmt.Sprintf("mvlan%d", suffix)
+
+	macvlan := network.NewMacVLANConfigV1Alpha1(macvlanName)
+	macvlan.MacVLANParent = dummyNames[0]
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModePrivate)
+	macvlan.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	macvlan.LinkMTU = 1400
+	macvlan.LinkUp = new(false)
+	macvlan.LinkAddresses = []network.AddressConfig{
+		{AddressAddress: netip.MustParsePrefix("192.0.2.3/32")},
+	}
+
+	addressID := macvlanName + "/192.0.2.3/32"
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, macvlan)...)
+
+	dummyIndexes := xslices.Map(dummyNames, func(dummyName string) uint32 {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, dummyName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal("dummy", link.TypedSpec().Kind)
+			},
+		)
+
+		dummy, err := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, dummyName)
+		suite.Require().NoError(err)
+
+		return dummy.TypedSpec().Index
+	})
+
+	assertMacVLANLink := func(parentIndex uint32, up bool, mode nethelpers.MacvlanMode) {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, macvlanName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal(networkres.LinkKindMacVLAN, link.TypedSpec().Kind)
+				asrt.EqualValues(1400, link.TypedSpec().MTU)
+				asrt.Equal(macvlan.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+				asrt.Equal(parentIndex, link.TypedSpec().LinkIndex)
+				asrt.Equal(up, link.TypedSpec().Flags&nethelpers.LinkFlags(nethelpers.LinkUp) != 0)
+				asrt.Equal(mode, link.TypedSpec().MacVLAN.Mode)
+			},
+		)
+	}
+
+	// the link is created on top of the first dummy, and `up: false` is honored
+	assertMacVLANLink(dummyIndexes[0], false, nethelpers.MacvlanModePrivate)
+
+	macvlan.LinkUp = new(true)
+	suite.PatchMachineConfig(nodeCtx, macvlan)
+
+	assertMacVLANLink(dummyIndexes[0], true, nethelpers.MacvlanModePrivate)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(macvlanName, address.TypedSpec().LinkName)
+		},
+	)
+
+	// changing the parent re-creates the link on top of the new parent
+	macvlan.MacVLANParent = dummyNames[1]
+	suite.PatchMachineConfig(nodeCtx, macvlan)
+
+	assertMacVLANLink(dummyIndexes[1], true, nethelpers.MacvlanModePrivate)
+
+	// the mode can't be changed on the fly either, so the link is re-created
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+	suite.PatchMachineConfig(nodeCtx, macvlan)
+
+	assertMacVLANLink(dummyIndexes[1], true, nethelpers.MacvlanModeBridge)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.MacVLANKind, macvlanName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, macvlanName)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+}
+
 // TestBondConfig tests creation of bond interfaces.
 func (suite *NetworkConfigSuite) TestBondConfig() {
 	if suite.Cluster == nil {

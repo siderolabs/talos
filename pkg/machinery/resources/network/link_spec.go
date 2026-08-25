@@ -62,6 +62,7 @@ type LinkSpecSpec struct {
 
 	// These structures are present depending on "Kind" for Logical interfaces.
 	VLAN         VLANSpec         `yaml:"vlan,omitempty" protobuf:"10"`
+	MacVLAN      MacVLANSpec      `yaml:"macvlan,omitempty" protobuf:"20"`
 	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"11"`
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"12"`
 	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"17"`

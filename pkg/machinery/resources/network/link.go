@@ -24,6 +24,14 @@ type VLANSpec struct {
 	Protocol nethelpers.VLANProtocol `yaml:"vlanProtocol" protobuf:"2"`
 }
 
+// MacVLANSpec describes MACVLAN settings if Kind == "macvlan".
+//
+//gotagsrewrite:gen
+type MacVLANSpec struct {
+	// Mode is the MACVLAN operating mode.
+	Mode nethelpers.MacvlanMode `yaml:"mode" protobuf:"1"`
+}
+
 // BondMasterSpec describes bond settings if Kind == "bond".
 //
 //gotagsrewrite:gen

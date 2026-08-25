@@ -476,6 +476,9 @@ func (ctrl *LinkConfigController) processLinkConfigs(linkMap map[string]*network
 		case talosconfig.NetworkVLANConfig:
 			parentLink := linkNameResolver.Resolve(specificLinkConfig.ParentLink())
 			vlanLink(linkMap[linkName], linkName, parentLink, networkVLANConfigToVlaner{specificLinkConfig})
+		case talosconfig.NetworkMacVLANConfig:
+			parentLink := linkNameResolver.Resolve(specificLinkConfig.Parent())
+			macvlanLink(linkMap[linkName], parentLink, specificLinkConfig)
 		case talosconfig.NetworkBondConfig:
 			SendBondMaster(linkMap[linkName], specificLinkConfig, linkNameResolver.Resolve)
 
@@ -577,6 +580,16 @@ func vlanLink(link *network.LinkSpecSpec, vlanName, linkName string, vlan vlaner
 	link.VLAN = network.VLANSpec{
 		VID:      vlan.ID(),
 		Protocol: vlan.Mode(),
+	}
+}
+
+func macvlanLink(link *network.LinkSpecSpec, parentName string, config talosconfig.NetworkMacVLANConfig) {
+	link.Logical = true
+	link.Kind = network.LinkKindMacVLAN
+	link.Type = nethelpers.LinkEther
+	link.ParentName = parentName
+	link.MacVLAN = network.MacVLANSpec{
+		Mode: config.Mode().ValueOr(nethelpers.MacvlanModeBridge),
 	}
 }
 

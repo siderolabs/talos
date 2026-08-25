@@ -241,6 +241,75 @@ func (suite *LinkStatusSuite) TestBridgeInterface() {
 	})
 }
 
+func (suite *LinkStatusSuite) TestMacVLANInterface() {
+	if os.Geteuid() != 0 {
+		suite.T().Skip("requires root")
+	}
+
+	parentInterface := uniqueDummyInterface()
+	macvlanInterface := uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type: unix.ARPHRD_ETHER,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: parentInterface,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "dummy",
+					},
+				},
+			},
+		),
+	)
+
+	parentIface, err := net.InterfaceByName(parentInterface)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(parentIface.Index)) //nolint:errcheck
+
+	macvlanData, err := networkadapter.MacVLANSpec(
+		&network.MacVLANSpec{Mode: nethelpers.MacvlanModePrivate},
+	).Encode()
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type: unix.ARPHRD_ETHER,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: macvlanInterface,
+					Type: uint32(parentIface.Index),
+					Info: &rtnetlink.LinkInfo{
+						Kind: "macvlan",
+						Data: &rtnetlink.LinkData{
+							Name: "macvlan",
+							Data: macvlanData,
+						},
+					},
+				},
+			},
+		),
+	)
+
+	macvlanIface, err := net.InterfaceByName(macvlanInterface)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(macvlanIface.Index)) //nolint:errcheck
+
+	ctest.AssertResource(suite, macvlanInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("ether", r.TypedSpec().Type.String())
+		asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+		asrt.EqualValues(parentIface.Index, r.TypedSpec().LinkIndex)
+		asrt.Equal(nethelpers.MacvlanModePrivate, r.TypedSpec().MacVLAN.Mode)
+	})
+}
+
 func encodeBridgeData(stpEnabled bool) ([]byte, error) {
 	encoder := netlink.NewAttributeEncoder()
 

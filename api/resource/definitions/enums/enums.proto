@@ -303,6 +303,16 @@ enum NethelpersLinkType {
   LINK_NONE = 65534;
 }
 
+// NethelpersMacvlanMode is a MACVLAN operating mode.
+enum NethelpersMacvlanMode {
+  NETHELPERS_MACVLANMODE_UNSPECIFIED = 0;
+  MACVLAN_MODE_PRIVATE = 1;
+  MACVLAN_MODE_VEPA = 2;
+  MACVLAN_MODE_BRIDGE = 4;
+  MACVLAN_MODE_PASSTHRU = 8;
+  MACVLAN_MODE_SOURCE = 16;
+}
+
 // NethelpersMatchOperator is a netfilter match operator.
 enum NethelpersMatchOperator {
   OPERATOR_EQUAL = 0;

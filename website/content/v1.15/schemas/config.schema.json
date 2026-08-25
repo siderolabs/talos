@@ -5308,6 +5308,113 @@
       "type": "object",
       "description": "LinkSelector selects a link to alias."
     },
+    "network.MacVLANConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "MacVLANConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the macvlan link (interface) to be created.\n",
+          "markdownDescription": "Name of the macvlan link (interface) to be created.",
+          "x-intellij-html-description": "\u003cp\u003eName of the macvlan link (interface) to be created.\u003c/p\u003e\n"
+        },
+        "mode": {
+          "enum": [
+            "private",
+            "vepa",
+            "bridge",
+            "passthru",
+            "source"
+          ],
+          "title": "mode",
+          "description": "MACVLAN mode to use for the link.\nIf not set, defaults to bridge.\n\nThe source mode requires a list of source MAC addresses, which is\nnot supported yet, so it can’t be used.\n",
+          "markdownDescription": "MACVLAN mode to use for the link.\nIf not set, defaults to bridge.\n\nThe `source` mode requires a list of source MAC addresses, which is\nnot supported yet, so it can't be used.",
+          "x-intellij-html-description": "\u003cp\u003eMACVLAN mode to use for the link.\nIf not set, defaults to bridge.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003esource\u003c/code\u003e mode requires a list of source MAC addresses, which is\nnot supported yet, so it can\u0026rsquo;t be used.\u003c/p\u003e\n"
+        },
+        "parent": {
+          "type": "string",
+          "title": "parent",
+          "description": "Name of the parent link (interface) the macvlan link is created on.\nLink aliases can be used here as well.\n",
+          "markdownDescription": "Name of the parent link (interface) the macvlan link is created on.\nLink aliases can be used here as well.",
+          "x-intellij-html-description": "\u003cp\u003eName of the parent link (interface) the macvlan link is created on.\nLink aliases can be used here as well.\u003c/p\u003e\n"
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "pattern": "^[0-9a-f:]+$",
+          "title": "hardwareAddr",
+          "description": "Override the hardware (MAC) address of the link.\n",
+          "markdownDescription": "Override the hardware (MAC) address of the link.",
+          "x-intellij-html-description": "\u003cp\u003eOverride the hardware (MAC) address of the link.\u003c/p\u003e\n"
+        },
+        "up": {
+          "type": "boolean",
+          "title": "up",
+          "description": "Bring the link up or down.\n\nIf not specified, the link will be brought up.\n",
+          "markdownDescription": "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+          "x-intellij-html-description": "\u003cp\u003eBring the link up or down.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the link will be brought up.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).\n",
+          "markdownDescription": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+          "x-intellij-html-description": "\u003cp\u003eConfigure LinkMTU (Maximum Transmission Unit) for the link.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default LinkMTU will be used (usually 1500).\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/network.AddressConfig"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Configure addresses to be statically assigned to the link.\n",
+          "markdownDescription": "Configure addresses to be statically assigned to the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure addresses to be statically assigned to the link.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/network.RouteConfig"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "Configure routes to be statically created via the link.\n",
+          "markdownDescription": "Configure routes to be statically created via the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "parent"
+      ],
+      "description": "MacVLANConfig is a config document to create a MACVLAN link over a parent link."
+    },
     "network.NTPConfig": {
       "properties": {
         "servers": {
@@ -7852,6 +7959,9 @@
     },
     {
       "$ref": "#/$defs/network.LinkAliasConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.MacVLANConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.ResolverConfigV1Alpha1"

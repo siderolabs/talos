@@ -343,6 +343,12 @@ func (ctrl *LinkStatusController) reconcile(
 				} else if err = networkadapter.VLANSpec(&status.VLAN).Decode(rawLinkData); err != nil {
 					logger.Warn("failure decoding VLAN attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
+			case network.LinkKindMacVLAN:
+				if rawLinkData == nil {
+					logger.Warn("macvlan link data is nil", zap.String("link", link.Attributes.Name))
+				} else if err = networkadapter.MacVLANSpec(&status.MacVLAN).Decode(rawLinkData); err != nil {
+					logger.Warn("failure decoding macvlan attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				}
 			case network.LinkKindBond:
 				if rawLinkData == nil {
 					logger.Warn("bond link data is nil", zap.String("link", link.Attributes.Name))
