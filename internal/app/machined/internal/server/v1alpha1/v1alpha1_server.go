@@ -2026,7 +2026,10 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 		return err
 	}
 
-	snapshot, err := os.OpenFile(constants.EtcdRecoverySnapshotPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
+	// The snapshot is written to a temporary file and moved into place only once it is complete,
+	// so that the recovery running in the etcd service keeps reading the snapshot it started with:
+	// a repeated upload never truncates or removes the file under an in-progress recovery.
+	snapshot, err := os.CreateTemp(filepath.Dir(constants.EtcdRecoverySnapshotPath), filepath.Base(constants.EtcdRecoverySnapshotPath)+".*")
 	if err != nil {
 		return fmt.Errorf("error creating etcd recovery snapshot: %w", err)
 	}
@@ -2065,6 +2068,10 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 
 	if err = snapshot.Close(); err != nil {
 		return fmt.Errorf("error closing snapshot: %w", err)
+	}
+
+	if err = os.Rename(snapshot.Name(), constants.EtcdRecoverySnapshotPath); err != nil {
+		return fmt.Errorf("error moving snapshot into place: %w", err)
 	}
 
 	successfulUpload = true
