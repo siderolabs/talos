@@ -451,6 +451,12 @@ func PerformManifestsSync(
 		return err
 	}
 
+	// Service clusterIPs are immutable once allocated; keep the values already
+	// present in the cluster instead of the freshly generated ones
+	if err := preserveServiceClusterIPs(ctx, cluster, objects); err != nil {
+		return fmt.Errorf("error preserving Service clusterIPs: %w", err)
+	}
+
 	// Use server-side apply for Talos versions >= v1.13.0
 	if useSSA {
 		return syncManifestsSSA(ctx, objects, cluster, options)
