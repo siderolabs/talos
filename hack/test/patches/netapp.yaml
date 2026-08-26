@@ -6,13 +6,12 @@ machine:
       - name: dm_round-robin
 ---
 apiVersion: v1alpha1
-kind: ExtensionServiceConfig
-name: multipathd
-configFiles:
-    - content: |
-        defaults {
-            user_friendly_names yes
-            find_multipaths no
-            path_selector "round-robin 0"
-        }
-      mountPath: /etc/multipath.conf
+kind: EtcFileConfig
+name: multipath.conf
+mode: 0o644
+contents: |
+    defaults {
+        user_friendly_names yes
+        find_multipaths no
+        path_selector "round-robin 0"
+    }
