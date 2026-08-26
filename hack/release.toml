@@ -63,6 +63,50 @@ The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
 `talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
 """
 
+    [notes.extension_service_configuration]
+        title = "Extension Service Configuration"
+        description = """\
+`ExtensionServiceConfig` is supported only for extension services whose service manifest explicitly declares a configuration dependency:
+
+```yaml
+depends:
+  - configuration: true
+```
+
+Using `ExtensionServiceConfig` with a service that does not declare this dependency is unsupported and has undefined startup behavior.
+The service might start before its configuration is rendered, leaving config files or environment variables unavailable until a later service restart.
+Extension authors must declare the dependency before documenting `ExtensionServiceConfig` support.
+"""
+
+    [notes.multipath_configuration]
+        title = "Multipath Configuration"
+        description = """\
+The `multipath-tools` system extension now reads `/etc/multipath.conf` from the Talos host instead of using `ExtensionServiceConfig`.
+The `multipathd` service waits for this file and bind-mounts it read-only into its service container.
+
+Before updating the extension, apply a machine config patch that deletes the existing `ExtensionServiceConfig` document and adds an `EtcFileConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: multipathd
+$patch: delete
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: multipath.conf
+mode: 0o644
+contents: |
+  defaults {
+      user_friendly_names yes
+      find_multipaths no
+      path_selector "round-robin 0"
+  }
+```
+
+The extension does not provide a default configuration, so `multipathd` remains waiting until `/etc/multipath.conf` is present.
+"""
+
 [make_deps]
 
     [make_deps.tools]
