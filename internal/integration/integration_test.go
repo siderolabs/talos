@@ -47,6 +47,7 @@ var (
 	airgapped           bool
 	virtiofsd           bool
 	nfs                 bool
+	ipmi                bool
 	race                bool
 	skipEphemeralPolicy bool
 
@@ -150,6 +151,7 @@ func TestIntegration(t *testing.T) {
 				Airgapped:              airgapped,
 				Virtiofsd:              virtiofsd,
 				NFS:                    nfs,
+				IPMI:                   ipmi,
 				Race:                   race,
 				SkipEphemeralPolicy:    skipEphemeralPolicy,
 				DedicatedSystemVolumes: dedicatedSystemVolumes,
@@ -222,6 +224,7 @@ func init() {
 	flag.BoolVar(&airgapped, "talos.airgapped", false, "Marker to skip tests that should not be run on airgapped talos cluster")
 	flag.BoolVar(&virtiofsd, "talos.virtiofsd", false, "Marker to skip tests that should not be run without virtiofsd")
 	flag.BoolVar(&nfs, "talos.nfs", false, "enable tests for the embedded NFS server and external volumes")
+	flag.BoolVar(&ipmi, "talos.ipmi", false, "Marker to skip tests that should not be run without an emulated BMC (IPMI)")
 	flag.BoolVar(&skipEphemeralPolicy, "talos.skip-ephemeral-policy", false,
 		"Skip MountsSuite assertions for EPHEMERAL-backed fixture mounts")
 	flag.BoolVar(&dedicatedSystemVolumes, "talos.dedicated-system-volumes", false,

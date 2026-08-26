@@ -242,6 +242,24 @@ func (arch Arch) TPMDeviceArgs(socketPath string) []string {
 	}
 }
 
+// IPMIDeviceArgs returns arguments for qemu to enable an emulated BMC (IPMI) device.
+//
+// QEMU publishes an SMBIOS type-38 (IPMI Device Information) entry for the device, so the
+// guest kernel autoloads `ipmi_si` and exposes `/dev/ipmi0`, same as on real hardware.
+//
+// The BMC identity is fixed to values the integration test asserts on: Dell (IANA 674),
+// product 0x029a, firmware 7.10.
+func (arch Arch) IPMIDeviceArgs() ([]string, error) {
+	if arch != ArchAmd64 {
+		return nil, fmt.Errorf("IPMI emulation is only supported on amd64, not %s", string(arch))
+	}
+
+	return []string{
+		"-device", "ipmi-bmc-sim,id=bmc0,mfg_id=674,product_id=666,fwrev1=7,fwrev2=0x10",
+		"-device", "isa-ipmi-kcs,bmc=bmc0",
+	}, nil
+}
+
 func (arch Arch) getMachineArgs(iommu bool) []string {
 	args := arch.QemuMachine()
 	if arch.acceleratorAvailable() {

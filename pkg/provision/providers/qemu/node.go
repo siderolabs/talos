@@ -234,6 +234,8 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		APIPort: apiBind.Port,
 	}
 
+	launchConfig.IPMIEnabled = opts.IPMIEnabled
+
 	if opts.TPM1_2Enabled || opts.TPM2Enabled {
 		tpmConfig, tpm2Err := p.createVirtualTPMState(state, nodeReq.Name, opts.TPM2Enabled)
 		if tpm2Err != nil {

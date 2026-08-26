@@ -111,6 +111,7 @@ type Qemu struct {
 	UefiEnabled               bool
 	Tpm1_2Enabled             bool
 	Tpm2Enabled               bool
+	IPMIEnabled               bool
 	ExtraUEFISearchPaths      []string
 	NetworkNoMasqueradeCIDRs  []string
 	Nameservers               []string

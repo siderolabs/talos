@@ -143,6 +143,33 @@ func (suite *HardwareSuite) TestDiskFirmwareVersion() {
 	}
 }
 
+// TestBMCDevice tests that a BMC is discovered over the local IPMI interface.
+//
+// It requires a cluster created with `--with-ipmi`, which attaches QEMU's built-in BMC
+// simulator with the identity asserted below.
+func (suite *HardwareSuite) TestBMCDevice() {
+	if !suite.IPMI {
+		suite.T().Skip("cluster is running without IPMI emulation, skipping")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	bmc, err := safe.StateGetByID[*hardware.BMCDevice](ctx, suite.Client.COSI, "ipmi0")
+	suite.Require().NoError(err)
+
+	suite.Assert().EqualValues(674, bmc.TypedSpec().ManufacturerID)
+	suite.Assert().Equal("Dell", bmc.TypedSpec().Manufacturer)
+	suite.Assert().EqualValues(666, bmc.TypedSpec().ProductID)
+	suite.Assert().Equal("7.10", bmc.TypedSpec().FirmwareVersion)
+	suite.Assert().Equal("2.0", bmc.TypedSpec().IPMIVersion)
+
+	// the QEMU BMC simulator doesn't implement Get LAN Configuration Parameters,
+	// so the network configuration is expected to be empty
+	suite.Assert().False(bmc.TypedSpec().Address.IsValid())
+	suite.Assert().False(bmc.TypedSpec().Gateway.IsValid())
+}
+
 func init() {
 	allSuites = append(allSuites, new(HardwareSuite))
 }

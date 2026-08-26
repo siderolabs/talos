@@ -75,6 +75,14 @@ function run_talos_integration_test {
       TEST_VIRTIOFSD=("-talos.virtiofsd")
   fi
 
+  case "${WITH_IPMI:-false}" in
+    false)
+      ;;
+    *)
+      TEST_IPMI=("-talos.ipmi")
+      ;;
+  esac
+
   "${INTEGRATION_TEST}" \
     -test.v \
     -talos.failfast \
@@ -90,7 +98,8 @@ function run_talos_integration_test {
     "${TEST_SHORT[@]}" \
     "${TEST_AIRGAPPED[@]}" \
     "${TEST_VIRTIOFSD[@]}" \
-    "${TEST_NFS[@]}"
+    "${TEST_NFS[@]}" \
+    "${TEST_IPMI[@]}"
 }
 
 function run_talos_integration_test_docker {

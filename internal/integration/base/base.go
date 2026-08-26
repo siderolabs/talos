@@ -77,6 +77,8 @@ type TalosSuite struct {
 	Virtiofsd bool
 	// NFS marks that the cluster has the embedded NFS server and test volumes enabled.
 	NFS bool
+	// IPMI marks that cluster nodes have an emulated BMC attached (QEMU BMC simulator)
+	IPMI bool
 	// Race informs test suites about race detector being enabled (e.g. for skipping incompatible tests)
 	Race bool
 	// SkipEphemeralPolicy disables MountsSuite's policy assertions for EPHEMERAL-backed fixture mounts.

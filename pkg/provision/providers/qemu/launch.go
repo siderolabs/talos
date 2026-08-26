@@ -72,6 +72,7 @@ type LaunchConfig struct {
 	BadRTC                    bool
 	ArchitectureData          Arch
 	IOMMUEnabled              bool
+	IPMIEnabled               bool
 	SkipInjectingExtraCmdline bool
 
 	// Talos config
@@ -400,6 +401,15 @@ func launchVM(config *LaunchConfig) error {
 			args,
 			config.ArchitectureData.TPMDeviceArgs(tpm2SocketPath)...,
 		)
+	}
+
+	if config.IPMIEnabled {
+		ipmiArgs, err := config.ArchitectureData.IPMIDeviceArgs()
+		if err != nil {
+			return err
+		}
+
+		args = append(args, ipmiArgs...)
 	}
 
 	// ref: https://wiki.qemu.org/Features/VT-d

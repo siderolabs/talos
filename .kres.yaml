@@ -462,6 +462,7 @@ spec:
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml:@hack/test/patches/dedicated-system-volumes-worker.yaml"
             withConfigPatchControlPlane: "@hack/test/patches/dedicated-system-volumes-controlplane.yaml"
+            withIpmi: "true"
             qemuExtraDisks: "5"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
             qemuExtraDisksTags: "disk0"
@@ -549,6 +550,7 @@ spec:
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
             WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlPlane }}
+            WITH_IPMI: ${{ matrix.withIpmi }}
             WITH_TALOS_VERSION: ${{ matrix.withTalosVersion }}
             QEMU_EXTRA_DISKS: ${{ matrix.qemuExtraDisks }}
             QEMU_EXTRA_DISKS_SIZE: "10240"

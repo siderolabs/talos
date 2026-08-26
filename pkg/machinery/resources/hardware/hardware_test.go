@@ -24,6 +24,7 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []meta.ResourceWithRD{
+		&hardware.BMCDevice{},
 		&hardware.CPUCore{},
 		&hardware.MemoryModule{},
 		&hardware.PCIDevice{},
