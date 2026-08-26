@@ -458,6 +458,7 @@ description: Talos gRPC API reference.
     - [EtcFileStatusSpec](#talos.resource.definitions.files.EtcFileStatusSpec)
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
+    - [BMCDeviceSpec](#talos.resource.definitions.hardware.BMCDeviceSpec)
     - [CPUCoreSpec](#talos.resource.definitions.hardware.CPUCoreSpec)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
     - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
@@ -8056,6 +8057,34 @@ EtcFileStatusSpec describes status of rendered secrets.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/hardware/hardware.proto
+
+
+
+<a name="talos.resource.definitions.hardware.BMCDeviceSpec"></a>
+
+### BMCDeviceSpec
+BMCDeviceSpec describes a BMC as reported over the local IPMI interface.
+
+The identity fields come from Get Device ID, the network configuration from
+Get LAN Configuration Parameters. Network configuration is best-effort: a BMC
+with no LAN channel configured (or one which doesn't implement the commands)
+yields the identity fields only.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| manufacturer_id | [uint32](#uint32) |  | ManufacturerID is the IANA enterprise number of the BMC vendor (e.g. 674 for Dell). |
+| manufacturer | [string](#string) |  | Manufacturer is the vendor name resolved from ManufacturerID, empty if the vendor is not known. |
+| product_id | [uint32](#uint32) |  | ProductID is the vendor-specific product identifier of the BMC. |
+| firmware_version | [string](#string) |  | FirmwareVersion is the BMC firmware revision, e.g. `7.10`. |
+| ipmi_version | [string](#string) |  | IPMIVersion is the IPMI specification version supported by the BMC, e.g. `2.0`. |
+| channel | [uint32](#uint32) |  | Channel is the IPMI LAN channel the network configuration was read from. |
+| address | [common.NetIPPrefix](#common.NetIPPrefix) |  | Address is the BMC IP address with its subnet mask. |
+| gateway | [common.NetIP](#common.NetIP) |  | Gateway is the BMC default gateway. |
+| hardware_addr | [bytes](#bytes) |  | HardwareAddr is the MAC address of the BMC LAN interface. |
+
+
+
 
 
 

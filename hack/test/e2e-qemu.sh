@@ -214,6 +214,14 @@ case "${WITH_TPM1_2:-false}" in
     ;;
 esac
 
+case "${WITH_IPMI:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--with-ipmi")
+    ;;
+esac
+
 case "${WITH_SIDEROLINK_AGENT:-false}" in
   false)
     ;;

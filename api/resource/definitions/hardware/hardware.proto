@@ -5,6 +5,35 @@ package talos.resource.definitions.hardware;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hardware";
 option java_package = "dev.talos.api.resource.definitions.hardware";
 
+import "common/common.proto";
+
+// BMCDeviceSpec describes a BMC as reported over the local IPMI interface.
+//
+// The identity fields come from Get Device ID, the network configuration from
+// Get LAN Configuration Parameters. Network configuration is best-effort: a BMC
+// with no LAN channel configured (or one which doesn't implement the commands)
+// yields the identity fields only.
+message BMCDeviceSpec {
+  // ManufacturerID is the IANA enterprise number of the BMC vendor (e.g. 674 for Dell).
+  uint32 manufacturer_id = 1;
+  // Manufacturer is the vendor name resolved from ManufacturerID, empty if the vendor is not known.
+  string manufacturer = 2;
+  // ProductID is the vendor-specific product identifier of the BMC.
+  uint32 product_id = 3;
+  // FirmwareVersion is the BMC firmware revision, e.g. `7.10`.
+  string firmware_version = 4;
+  // IPMIVersion is the IPMI specification version supported by the BMC, e.g. `2.0`.
+  string ipmi_version = 5;
+  // Channel is the IPMI LAN channel the network configuration was read from.
+  uint32 channel = 6;
+  // Address is the BMC IP address with its subnet mask.
+  common.NetIPPrefix address = 7;
+  // Gateway is the BMC default gateway.
+  common.NetIP gateway = 8;
+  // HardwareAddr is the MAC address of the BMC LAN interface.
+  bytes hardware_addr = 9;
+}
+
 // CPUCoreSpec represents a single CPU core as seen by the Linux kernel.
 message CPUCoreSpec {
   // Socket is the physical package (socket) identifier the core belongs to.
