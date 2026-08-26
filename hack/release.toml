@@ -144,6 +144,27 @@ addresses:
 ```
 """
 
+    [notes.kmsg_log_extra_tags]
+        title = "Kernel Log Extra Tags"
+        description = """\
+The `KmsgLogConfig` document now supports an `extraTags` field which attaches additional key-value pairs
+to every kernel log message sent to that destination:
+
+```yaml
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: apiSink
+url: https://kmsglog.api/logs
+extraTags:
+  cluster: staging-west
+  node: worker-1
+```
+
+Tags are scoped to the destination they are configured on, so different endpoints can receive different tags.
+The keys `facility`, `seq`, `clock`, `priority`, `msg`, `talos-time` and `talos-level` are reserved and rejected,
+as they are set by Talos itself.
+"""
+
 [make_deps]
 
     [make_deps.tools]

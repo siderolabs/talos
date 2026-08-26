@@ -554,6 +554,8 @@ description: Talos gRPC API reference.
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
     - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
+    - [KmsgLogDestination](#talos.resource.definitions.runtime.KmsgLogDestination)
+    - [KmsgLogDestination.ExtraTagsEntry](#talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
@@ -9648,7 +9650,40 @@ KmsgLogConfigSpec describes configuration for kmsg log streaming.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| destinations | [common.URL](#common.URL) | repeated |  |
+| destinations | [common.URL](#common.URL) | repeated | Destinations is retained for compatibility with clients which do not support tagged destinations. |
+| tagged_destinations | [KmsgLogDestination](#talos.resource.definitions.runtime.KmsgLogDestination) | repeated | TaggedDestinations associates each endpoint with its dedicated extra tags. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KmsgLogDestination"></a>
+
+### KmsgLogDestination
+KmsgLogDestination configures a destination for kernel message logs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [common.URL](#common.URL) |  |  |
+| extra_tags | [KmsgLogDestination.ExtraTagsEntry](#talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry"></a>
+
+### KmsgLogDestination.ExtraTagsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

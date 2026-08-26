@@ -117,7 +117,16 @@ message KernelParamStatusSpec {
 
 // KmsgLogConfigSpec describes configuration for kmsg log streaming.
 message KmsgLogConfigSpec {
+  // Destinations is retained for compatibility with clients which do not support tagged destinations.
   repeated common.URL destinations = 1;
+  // TaggedDestinations associates each endpoint with its dedicated extra tags.
+  repeated KmsgLogDestination tagged_destinations = 2;
+}
+
+// KmsgLogDestination configures a destination for kernel message logs.
+message KmsgLogDestination {
+  common.URL endpoint = 1;
+  map<string, string> extra_tags = 2;
 }
 
 // LoadedKernelModuleSpec describes loaded Linux kernel modules.

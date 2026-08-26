@@ -6858,6 +6858,18 @@
           "description": "The URL encodes the log destination.\nThe scheme must be tcp:// or udp://.\nThe path must be empty.\nThe port is required.\n",
           "markdownDescription": "The URL encodes the log destination.\nThe scheme must be tcp:// or udp://.\nThe path must be empty.\nThe port is required.",
           "x-intellij-html-description": "\u003cp\u003eThe URL encodes the log destination.\nThe scheme must be tcp:// or udp://.\nThe path must be empty.\nThe port is required.\u003c/p\u003e\n"
+        },
+        "extraTags": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "extraTags",
+          "description": "Extra tags (key-value) pairs to attach to every kernel log message sent.\nThe keys facility, seq, clock, priority, msg, talos-time, and talos-level are reserved and rejected.\n",
+          "markdownDescription": "Extra tags (key-value) pairs to attach to every kernel log message sent.\nThe keys `facility`, `seq`, `clock`, `priority`, `msg`, `talos-time`, and `talos-level` are reserved and rejected.",
+          "x-intellij-html-description": "\u003cp\u003eExtra tags (key-value) pairs to attach to every kernel log message sent.\nThe keys \u003ccode\u003efacility\u003c/code\u003e, \u003ccode\u003eseq\u003c/code\u003e, \u003ccode\u003eclock\u003c/code\u003e, \u003ccode\u003epriority\u003c/code\u003e, \u003ccode\u003emsg\u003c/code\u003e, \u003ccode\u003etalos-time\u003c/code\u003e, and \u003ccode\u003etalos-level\u003c/code\u003e are reserved and rejected.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

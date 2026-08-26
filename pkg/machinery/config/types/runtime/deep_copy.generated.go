@@ -39,6 +39,12 @@ func (o *KmsgLogV1Alpha1) DeepCopy() *KmsgLogV1Alpha1 {
 			*cp.KmsgLogURL.URL.User = *o.KmsgLogURL.URL.User
 		}
 	}
+	if o.ExtraTags != nil {
+		cp.ExtraTags = make(map[string]string, len(o.ExtraTags))
+		for k2, v2 := range o.ExtraTags {
+			cp.ExtraTags[k2] = v2
+		}
+	}
 	return &cp
 }
 

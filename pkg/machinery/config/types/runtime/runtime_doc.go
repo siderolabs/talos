@@ -34,6 +34,13 @@ func (KmsgLogV1Alpha1) Doc() *encoder.Doc {
 				Description: "The URL encodes the log destination.\nThe scheme must be tcp:// or udp://.\nThe path must be empty.\nThe port is required.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The URL encodes the log destination." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "extraTags",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Extra tags (key-value) pairs to attach to every kernel log message sent.\nThe keys `facility`, `seq`, `clock`, `priority`, `msg`, `talos-time`, and `talos-level` are reserved and rejected.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra tags (key-value) pairs to attach to every kernel log message sent." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

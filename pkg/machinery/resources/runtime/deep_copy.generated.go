@@ -142,6 +142,26 @@ func (o KmsgLogConfigSpec) DeepCopy() KmsgLogConfigSpec {
 			}
 		}
 	}
+	if o.TaggedDestinations != nil {
+		cp.TaggedDestinations = make([]KmsgLogDestination, len(o.TaggedDestinations))
+		copy(cp.TaggedDestinations, o.TaggedDestinations)
+		for i2 := range o.TaggedDestinations {
+			if o.TaggedDestinations[i2].Endpoint != nil {
+				cp.TaggedDestinations[i2].Endpoint = new(url.URL)
+				*cp.TaggedDestinations[i2].Endpoint = *o.TaggedDestinations[i2].Endpoint
+				if o.TaggedDestinations[i2].Endpoint.User != nil {
+					cp.TaggedDestinations[i2].Endpoint.User = new(url.Userinfo)
+					*cp.TaggedDestinations[i2].Endpoint.User = *o.TaggedDestinations[i2].Endpoint.User
+				}
+			}
+			if o.TaggedDestinations[i2].ExtraTags != nil {
+				cp.TaggedDestinations[i2].ExtraTags = make(map[string]string, len(o.TaggedDestinations[i2].ExtraTags))
+				for k4, v4 := range o.TaggedDestinations[i2].ExtraTags {
+					cp.TaggedDestinations[i2].ExtraTags[k4] = v4
+				}
+			}
+		}
+	}
 	return cp
 }
 
