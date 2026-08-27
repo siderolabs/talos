@@ -121,7 +121,6 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 	}
 
 	var (
-		syncCtx       context.Context
 		syncCtxCancel context.CancelFunc
 		syncWg        sync.WaitGroup
 
@@ -130,14 +129,65 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		spikeCh <-chan struct{}
 		syncer  NTPSyncer
 
-		timeSynced  bool
+		// ntpSynced is set once the NTP syncer reports the time as in sync.
+		//
+		// It is sticky: the wall clock doesn't become wrong because the syncer got restarted or
+		// reconfigured, so once the time is in sync, it stays in sync.
+		ntpSynced bool
+		// bootTimeoutElapsed is set once the configured boot timeout elapses since the boot time.
+		//
+		// It is sticky as well: once the boot sequence has been unblocked, it should never be
+		// blocked again on the time sync.
+		bootTimeoutElapsed bool
+
 		epoch       int
 		useNTS      bool
 		spikeStatus ntp.SpikeStatus
 
-		timeSyncTimeoutTimer *stdtime.Timer
-		timeSyncTimeoutCh    <-chan stdtime.Time
+		bootTimeoutTimer *stdtime.Timer
+		bootTimeoutCh    <-chan stdtime.Time
 	)
+
+	stopBootTimeoutTimer := func() {
+		if bootTimeoutTimer != nil {
+			bootTimeoutTimer.Stop()
+
+			bootTimeoutTimer = nil
+		}
+
+		bootTimeoutCh = nil
+	}
+
+	stopSyncer := func() {
+		syncCtxCancel()
+
+		syncWg.Wait()
+
+		syncer = nil
+		syncCh = nil
+		epochCh = nil
+		spikeCh = nil
+		spikeStatus = ntp.SpikeStatus{}
+	}
+
+	startSyncer := func(timeServers []string, newUseNTS bool) {
+		useNTS = newUseNTS
+
+		newSyncer := ctrl.NewNTPSyncer(logger, timeServers, useNTS)
+
+		syncer = newSyncer
+		syncCh = newSyncer.Synced()
+		epochCh = newSyncer.EpochChange()
+		spikeCh = newSyncer.SpikeStatusChange()
+		spikeStatus = ntp.SpikeStatus{}
+
+		syncCtx, cancel := context.WithCancel(ctx)
+		syncCtxCancel = cancel
+
+		syncWg.Go(func() {
+			newSyncer.Run(syncCtx)
+		})
+	}
 
 	wallClockJumpDetector := ctrl.NewClockJumpDetector(clock.DefaultJumpDetectionInterval, ntp.EpochLimit)
 	wallClockJumpCh := wallClockJumpDetector.Run(ctx)
@@ -149,9 +199,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncWg.Wait()
 		}
 
-		if timeSyncTimeoutTimer != nil {
-			timeSyncTimeoutTimer.Stop()
-		}
+		stopBootTimeoutTimer()
 	}()
 
 	var wallClockJumpDetected bool
@@ -163,14 +211,15 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		case <-r.EventCh():
 		case <-syncCh:
 			syncCh = nil
-			timeSynced = true
+			ntpSynced = true
 		case <-epochCh:
 			epoch++
 		case <-spikeCh:
 			spikeStatus = syncer.SpikeStatus()
-		case <-timeSyncTimeoutCh:
-			timeSynced = true
-			timeSyncTimeoutTimer = nil
+		case <-bootTimeoutCh:
+			bootTimeoutElapsed = true
+			bootTimeoutTimer = nil
+			bootTimeoutCh = nil
 		case <-wallClockJumpCh:
 			wallClockJumpDetected = true
 		}
@@ -198,7 +247,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			}
 		}
 
-		var syncTimeout stdtime.Duration
+		var bootTimeout stdtime.Duration
 
 		syncDisabled := false
 		newUseNTS := timeServersStatus.TypedSpec().UseNTS
@@ -212,7 +261,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 				syncDisabled = true
 			}
 
-			syncTimeout = cfg.Config().NetworkTimeSyncConfig().BootTimeout()
+			bootTimeout = cfg.Config().NetworkTimeSyncConfig().BootTimeout()
 		}
 
 		if wallClockJumpDetected && syncDisabled {
@@ -225,90 +274,56 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			)
 		}
 
-		if !timeSynced {
+		// The boot timeout unblocks the boot sequence if the time doesn't get in sync in time.
+		//
+		// It is measured since the boot time, and it is the timer which brings the controller out
+		// of the select above: nothing else is guaranteed to wake it up once the machine config
+		// and the time server status settle down.
+		if !bootTimeoutElapsed {
 			sinceBoot := stdtime.Since(ctrl.bootTime)
 
 			switch {
-			case syncTimeout == 0:
-				// disable sync timeout
-				if timeSyncTimeoutTimer != nil {
-					timeSyncTimeoutTimer.Stop()
-				}
+			case bootTimeout == 0:
+				// no boot timeout configured
+				stopBootTimeoutTimer()
+			case sinceBoot >= bootTimeout:
+				bootTimeoutElapsed = true
 
-				timeSyncTimeoutCh = nil
-			case sinceBoot > syncTimeout:
-				// over sync timeout already, so in sync
-				timeSynced = true
+				stopBootTimeoutTimer()
+			case bootTimeoutTimer == nil:
+				bootTimeoutTimer = stdtime.NewTimer(bootTimeout - sinceBoot)
+				bootTimeoutCh = bootTimeoutTimer.C
 			default:
-				// make sure timer fires in whatever time is left till the timeout
-				if timeSyncTimeoutTimer == nil || !timeSyncTimeoutTimer.Reset(syncTimeout-sinceBoot) {
-					timeSyncTimeoutTimer = stdtime.NewTimer(syncTimeout - sinceBoot)
-					timeSyncTimeoutCh = timeSyncTimeoutTimer.C
-				}
+				// the configured timeout might have changed, so re-arm the timer for the time left
+				bootTimeoutTimer.Reset(bootTimeout - sinceBoot)
 			}
 		}
 
 		switch {
 		case syncDisabled && syncer != nil:
 			// stop syncing
-			syncCtxCancel()
-
-			syncWg.Wait()
-
-			syncer = nil
-			syncCh = nil
-			epochCh = nil
-			spikeCh = nil
-			spikeStatus = ntp.SpikeStatus{}
+			stopSyncer()
 		case !syncDisabled && syncer != nil && newUseNTS != useNTS:
 			// NTS setting changed, restart the syncer
 			logger.Info("NTS setting changed, restarting syncer", zap.Bool("useNTS", newUseNTS))
 
-			syncCtxCancel()
-
-			syncWg.Wait()
-
-			useNTS = newUseNTS
-
-			syncer = ctrl.NewNTPSyncer(logger, timeServers, useNTS)
-			syncCh = syncer.Synced()
-			epochCh = syncer.EpochChange()
-			spikeCh = syncer.SpikeStatusChange()
-
-			timeSynced = false
-			spikeStatus = ntp.SpikeStatus{}
-
-			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
-
-			syncWg.Go(func() {
-				syncer.Run(syncCtx)
-			})
+			stopSyncer()
+			startSyncer(timeServers, newUseNTS)
 		case !syncDisabled && syncer == nil:
 			// start syncing
-			useNTS = newUseNTS
-
-			syncer = ctrl.NewNTPSyncer(logger, timeServers, useNTS)
-			syncCh = syncer.Synced()
-			epochCh = syncer.EpochChange()
-			spikeCh = syncer.SpikeStatusChange()
-
-			timeSynced = false
-			spikeStatus = ntp.SpikeStatus{}
-
-			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
-
-			syncWg.Go(func() {
-				syncer.Run(syncCtx)
-			})
+			startSyncer(timeServers, newUseNTS)
 		}
 
 		if syncer != nil {
 			syncer.SetTimeServers(timeServers)
 		}
 
-		if syncDisabled {
-			timeSynced = true
-		}
+		// The time is in sync if the syncer has reported it as in sync, or if the boot timeout has
+		// elapsed, or if the time sync is disabled altogether.
+		//
+		// Both flags this is derived from are sticky, so the time never goes out of sync once it
+		// gets in sync, no matter how the syncer gets restarted or reconfigured.
+		timeSynced := ntpSynced || bootTimeoutElapsed || syncDisabled
 
 		// NOTE: TimeStatus is used as a reconcile trigger by the certificate generating controllers,
 		// so it should only carry the fields which change rarely; the spike filter state, which
@@ -321,7 +336,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 			return nil
 		}); err != nil {
-			return fmt.Errorf("error updating NTP status: %w", err) //nolint:govet
+			return fmt.Errorf("error updating NTP status: %w", err)
 		}
 
 		if err = safe.WriterModify(ctx, r, time.NewStatus(), func(r *time.Status) error {
@@ -333,7 +348,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 			return nil
 		}); err != nil {
-			return fmt.Errorf("error updating objects: %w", err) //nolint:govet
+			return fmt.Errorf("error updating objects: %w", err)
 		}
 
 		r.ResetRestartBackoff()
