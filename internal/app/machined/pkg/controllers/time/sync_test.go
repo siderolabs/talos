@@ -278,6 +278,118 @@ func (suite *SyncSuite) TestReconcileSyncBootTimeout() {
 	})
 }
 
+func (suite *SyncSuite) TestReconcileSyncBootTimeoutKeptAcrossSyncerRestart() {
+	suite.registerSyncController(v1alpha1runtime.ModeMetal)
+	timeServers := suite.createDefaultTimeServers()
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineTime: &v1alpha1.TimeConfig{
+						TimeBootTimeout: time.Second,
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			},
+		),
+	)
+
+	suite.Create(cfg)
+
+	// the boot timeout elapses and unblocks the boot sequence
+	suite.assertTimeStatus(timeresource.StatusSpec{
+		Synced:       true,
+		Epoch:        0,
+		SyncDisabled: false,
+	})
+
+	versionBeforeRestart := suite.timeStatusVersion()
+
+	// flipping the NTS setting restarts the syncer, but the boot timeout has already elapsed
+	ctest.UpdateWithConflicts(suite, timeServers, func(r *network.TimeServerStatus) error {
+		r.TypedSpec().UseNTS = true
+
+		return nil
+	})
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		s := suite.getMockSyncer()
+		if !assert.NotNil(collect, s, "syncer not created yet") {
+			return
+		}
+
+		assert.True(collect, s.getUseNTS(), "syncer not yet restarted with NTS")
+	}, 10*time.Second, 100*time.Millisecond)
+
+	suite.assertTimeStatus(timeresource.StatusSpec{
+		Synced:       true,
+		Epoch:        0,
+		SyncDisabled: false,
+	})
+
+	suite.Assert().Equal(versionBeforeRestart, suite.timeStatusVersion(), "time should not go out of sync when the syncer is restarted")
+}
+
+func (suite *SyncSuite) TestReconcileSyncKeptAcrossSyncerRestart() {
+	suite.registerSyncController(v1alpha1runtime.ModeMetal)
+	timeServers := suite.createDefaultTimeServers()
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			},
+		),
+	)
+
+	suite.Create(cfg)
+
+	var mockSyncer *mockSyncer
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		mockSyncer = suite.getMockSyncer()
+		assert.NotNil(collect, mockSyncer, "syncer not created yet")
+	}, 10*time.Second, 100*time.Millisecond)
+
+	close(mockSyncer.syncedCh)
+
+	suite.assertTimeStatus(timeresource.StatusSpec{
+		Synced:       true,
+		Epoch:        0,
+		SyncDisabled: false,
+	})
+
+	versionBeforeRestart := suite.timeStatusVersion()
+
+	// no boot timeout is configured here, so the sync state has to survive the restart on its own
+	ctest.UpdateWithConflicts(suite, timeServers, func(r *network.TimeServerStatus) error {
+		r.TypedSpec().UseNTS = true
+
+		return nil
+	})
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		s := suite.getMockSyncer()
+		if !assert.NotNil(collect, s, "syncer not created yet") {
+			return
+		}
+
+		assert.True(collect, s.getUseNTS(), "syncer not yet restarted with NTS")
+	}, 10*time.Second, 100*time.Millisecond)
+
+	suite.assertTimeStatus(timeresource.StatusSpec{
+		Synced:       true,
+		Epoch:        0,
+		SyncDisabled: false,
+	})
+
+	suite.Assert().Equal(versionBeforeRestart, suite.timeStatusVersion(), "time should not go out of sync when the syncer is restarted")
+}
+
 func (suite *SyncSuite) TestReconcileSyncWithNTS() {
 	suite.registerSyncController(v1alpha1runtime.ModeMetal)
 	timeServers := suite.createDefaultTimeServers()

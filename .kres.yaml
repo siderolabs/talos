@@ -1151,6 +1151,8 @@ spec:
             withConfigPatch: "@hack/test/patches/dns-over-tls.yaml"
           - test: e2e-dns-over-http
             withConfigPatch: "@hack/test/patches/dns-over-http.yaml"
+          - test: e2e-sync-disabled
+            withConfigPatch: "@hack/test/patches/ntp-disabled.yaml"
       steps:
         - name: download-artifacts
           artifactStep:
