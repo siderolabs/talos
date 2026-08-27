@@ -44,6 +44,14 @@ func TestSetupTeardownNoLeak(t *testing.T) {
 
 	tmp := t.TempDir()
 
+	// Replace /etc inside this private mount namespace with a marker-bearing host mount.
+	// The overlay lowerdir=/ sees only the underlying mount-point directory, so the marker
+	// is visible in the debug root only when Setup explicitly bind-mounts the live /etc.
+	hostEtc := filepath.Join(tmp, "host-etc")
+	require.NoError(t, os.MkdirAll(hostEtc, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(hostEtc, "hostns-marker"), []byte("host-etc"), 0o644))
+	require.NoError(t, unix.Mount(hostEtc, "/etc", "", unix.MS_BIND|unix.MS_REC, ""))
+
 	// Fake image snapshot: overlayfs needs at least two lower layers (a real Nix image
 	// has ~70). The top layer carries /nix/bin/tool.
 	imgUpperLayer := filepath.Join(tmp, "img1")
@@ -74,6 +82,10 @@ func TestSetupTeardownNoLeak(t *testing.T) {
 	_, err = os.Stat(filepath.Join(merged, "nix", "bin", "tool"))
 	assert.NoError(t, err, "image /nix overlaid into merged")
 
+	marker, err := os.ReadFile(filepath.Join(merged, "etc", "hostns-marker"))
+	require.NoError(t, err)
+	assert.Equal(t, "host-etc", string(marker), "live host /etc bound into merged")
+
 	// The overlay root and every host bind are mounted.
 	assert.True(t, isMounted(t, merged), "overlay root mounted")
 
@@ -101,6 +113,10 @@ func TestSetupTeardownNoLeak(t *testing.T) {
 	assert.Zero(t, countUnder(t, baseDir), "no scratch mounts remain under baseDir")
 	assert.True(t, isMounted(t, "/proc"), "host /proc survived teardown")
 	assert.True(t, isMounted(t, "/sys"), "host /sys survived teardown")
+
+	marker, err = os.ReadFile("/etc/hostns-marker")
+	require.NoError(t, err)
+	assert.Equal(t, "host-etc", string(marker), "host /etc survived teardown")
 	assert.Equal(t, baseline, len(mountTargets(t)), "mount table returned to baseline — nothing leaked")
 }
 
