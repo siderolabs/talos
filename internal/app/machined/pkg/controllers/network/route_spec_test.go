@@ -15,6 +15,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/jsimonetti/rtnetlink/v2"
+	"github.com/mdlayher/netlink"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
@@ -642,6 +643,113 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 		suite.assertNoRoute(
 			netip.MustParsePrefix("169.254.169.254/32"),
 			netip.MustParseAddr("10.28.0.1"),
+		),
+	)
+}
+
+func (suite *RouteSpecSuite) TestIPv6GatewaylessRouteNoChurn() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type:   unix.ARPHRD_ETHER,
+				Flags:  unix.IFF_UP,
+				Change: unix.IFF_UP,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					Info: &rtnetlink.LinkInfo{Kind: "dummy"},
+				},
+			},
+		),
+	)
+
+	iface, err := net.InterfaceByName(dummyInterface)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+
+	localIP := net.ParseIP("2001:db8:1399:5::2").To16()
+
+	suite.Require().NoError(
+		conn.Address.New(
+			&rtnetlink.AddressMessage{
+				Family:       unix.AF_INET6,
+				PrefixLength: 64,
+				Scope:        unix.RT_SCOPE_UNIVERSE,
+				Index:        uint32(iface.Index),
+				Attributes: &rtnetlink.AddressAttributes{
+					Address: localIP,
+					Local:   localIP,
+				},
+			},
+		),
+	)
+
+	destination := netip.MustParsePrefix("2001:db8:1399:6::/64")
+	route := network.NewRouteSpec(network.NamespaceName, "ipv6-gatewayless-no-churn")
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet6,
+		Destination: destination,
+		Table:       nethelpers.TableMain,
+		OutLinkName: dummyInterface,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+	// Normalize is what assigns the link scope this test is about.
+	route.TypedSpec().Normalize()
+
+	suite.Create(route)
+
+	suite.Require().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(destination, netip.Addr{}, func(rtnetlink.RouteMessage) error { return nil })
+			},
+		),
+	)
+
+	// the IPv6 kernel reports every route as universe, so a link-scoped spec would be
+	// deleted and recreated on every reconcile, forever.
+	monitor, err := rtnetlink.Dial(&netlink.Config{Groups: unix.RTMGRP_IPV6_ROUTE})
+	suite.Require().NoError(err)
+
+	defer monitor.Close() //nolint:errcheck
+
+	suite.Require().NoError(monitor.SetReadDeadline(time.Now().Add(time.Second)))
+
+	for {
+		rtmsgs, msgs, recvErr := monitor.Receive()
+		if recvErr != nil {
+			break
+		}
+
+		for i, msg := range msgs {
+			if msg.Header.Type != unix.RTM_DELROUTE {
+				continue
+			}
+
+			deleted, ok := rtmsgs[i].(*rtnetlink.RouteMessage)
+			if !ok {
+				continue
+			}
+
+			if deleted.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
+				suite.FailNow(fmt.Sprintf("route to %s was deleted by the controller", destination))
+			}
+		}
+	}
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+	suite.Require().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error { return suite.assertNoRoute(destination, netip.Addr{}) },
 		),
 	)
 }

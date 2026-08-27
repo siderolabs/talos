@@ -142,6 +142,16 @@ func routePriorityMatches(actual uint32, expected *network.RouteSpecSpec) bool {
 		actual == network.DefaultRouteMetric
 }
 
+func routeScopeMatches(actual uint8, expected *network.RouteSpecSpec) bool {
+	if actual == uint8(expected.Scope) {
+		return true
+	}
+
+	// The IPv6 kernel has no per-route scope: it ignores rtm_scope on add and reports
+	// every route as universe, so a link-scoped spec would never match what it reads back.
+	return expected.Family == nethelpers.FamilyInet6 && actual == uint8(nethelpers.ScopeGlobal)
+}
+
 func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
@@ -355,7 +365,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			}
 
 			// check if existing route matches the spec: if it does, skip update
-			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
+			if routeScopeMatches(existing.Scope, route.TypedSpec()) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				// when no out-link is requested, accept whatever egress device the kernel resolved
 				(linkIndex == 0 || existing.Attributes.OutIface == linkIndex) &&
