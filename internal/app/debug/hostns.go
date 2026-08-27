@@ -94,13 +94,10 @@ func runHostNsContainer( //nolint:gocyclo
 
 	defer teardown() //nolint:errcheck
 
-	// 4. Seed /etc files the squashfs lower doesn't carry.
-	seedEtcFiles(merged)
-
-	// 5. gRPC I/O streams.
+	// 4. gRPC I/O streams.
 	grpcStreamer, stdinR, stdoutW := newGrpcStreamWriter(srv)
 
-	// 6. Command + args: with explicit args, args[0] is the executable (resolved
+	// 5. Command + args: with explicit args, args[0] is the executable (resolved
 	// against PATH in launchInHostNs); otherwise default to the Nix bash.
 	const defaultShell = "/nix/var/nix/profiles/default/bin/bash"
 
@@ -117,11 +114,13 @@ func runHostNsContainer( //nolint:gocyclo
 		cmdArgs = []string{defaultShell}
 	}
 
-	// 7. Env: Nix profile on PATH (per-user profile first so nix-env installs win),
-	// plus caller-supplied overrides.
+	// 6. Env: Nix profile on PATH (per-user profile first so nix-env installs win),
+	// plus caller-supplied overrides. NIX_CONFIG carries settings that cannot be written
+	// under the live, read-only host /etc bind.
 	env := []string{
 		"PATH=/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 		"NIX_SSL_CERT_FILE=/nix/var/nix/profiles/default/etc/ssl/certs/ca-bundle.crt",
+		"NIX_CONFIG=build-users-group =\nsandbox = false\nexperimental-features = nix-command flakes",
 		"TERM=xterm-256color",
 		"HOME=/root",
 	}
@@ -130,14 +129,14 @@ func runHostNsContainer( //nolint:gocyclo
 		env = append(env, k+"="+v)
 	}
 
-	// 8. Per-session cgroup dir as an fd: SysProcAttr.CgroupFD places the child into
+	// 7. Per-session cgroup dir as an fd: SysProcAttr.CgroupFD places the child into
 	// the cgroup atomically at fork, avoiding a post-fork cgroup.procs write race.
 	cgroupFd, err := os.Open(filepath.Join("/sys/fs/cgroup", cgroupPath))
 	if err != nil {
 		return fmt.Errorf("host-ns: open cgroup dir %s: %w", cgroupPath, err)
 	}
 
-	// 9. Control channel: carries signals and pty-resize events from the gRPC recv
+	// 8. Control channel: carries signals and pty-resize events from the gRPC recv
 	// loop into the goroutine that owns the child. Buffered so recv never blocks.
 	controlC := make(chan hostNsControl, 16)
 
@@ -173,28 +172,6 @@ func runHostNsContainer( //nolint:gocyclo
 	<-launchDone
 
 	return streamErr
-}
-
-// seedEtcFiles writes into the overlay's /etc the files the raw squashfs lower does
-// not carry: the host's live resolv.conf (otherwise DNS is broken), and a nix.conf so
-// the package manager works without the nixbld build-users group or a sandbox.
-func seedEtcFiles(merged string) {
-	if hostResolv, readErr := os.ReadFile("/etc/resolv.conf"); readErr == nil && len(hostResolv) > 0 {
-		resolvDst := filepath.Join(merged, "etc", "resolv.conf")
-
-		if mkErr := os.MkdirAll(filepath.Dir(resolvDst), 0o755); mkErr == nil {
-			os.WriteFile(resolvDst, hostResolv, 0o644) //nolint:errcheck
-		}
-	}
-
-	nixConfDst := filepath.Join(merged, "etc", "nix", "nix.conf")
-	if mkErr := os.MkdirAll(filepath.Dir(nixConfDst), 0o755); mkErr == nil {
-		os.WriteFile(nixConfDst, []byte( //nolint:errcheck
-			"build-users-group =\n"+
-				"sandbox = false\n"+
-				"experimental-features = nix-command flakes\n",
-		), 0o644)
-	}
 }
 
 // launchInHostNs execs the requested command chrooted into the prepared root (merged),
