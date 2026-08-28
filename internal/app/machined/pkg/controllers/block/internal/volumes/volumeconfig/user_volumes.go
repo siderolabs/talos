@@ -42,6 +42,21 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 
 	for _, userVolumeConfig := range c.UserVolumeConfigs() {
 		volumeID := constants.UserVolumePrefix + userVolumeConfig.Name()
+
+		// A volume declared with no filesystem is a raw block device, for a
+		// consumer such as LVM. There is nothing to mount, and an empty
+		// TargetPath is how the volume manager already spells that: the
+		// FilesystemTypeNone branch in volumes.Format only probes for an
+		// existing filesystem when a target path is set, and would otherwise
+		// fail the volume for the absence of a filesystem that was
+		// deliberately not created.
+		mountOrNone := func(spec block.MountSpec) block.MountSpec {
+			if userVolumeConfig.Filesystem().Type() == block.FilesystemTypeNone {
+				return block.MountSpec{}
+			}
+
+			return spec
+		}
 		userVolumeResource := VolumeResource{
 			VolumeID:           volumeID,
 			Label:              block.UserVolumeLabel,
@@ -81,7 +96,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 						MinAllocationGroupSize: minAllocationGroupSize(userVolumeConfig.Filesystem()),
 					},
 				}).
-				WithMount(block.MountSpec{
+				WithMount(mountOrNone(block.MountSpec{
 					TargetPath:          userVolumeConfig.Name(),
 					ParentID:            constants.UserVolumeMountPoint,
 					SelinuxLabel:        constants.EphemeralSelinuxLabel,
@@ -89,7 +104,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					UID:                 0,
 					GID:                 0,
 					ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
-				}).
+				})).
 				WithTrim(c, userVolumeConfig).
 				WithScrub(c, userVolumeConfig).
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
@@ -118,7 +133,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 						MinAllocationGroupSize: minAllocationGroupSize(userVolumeConfig.Filesystem()),
 					},
 				}).
-				WithMount(block.MountSpec{
+				WithMount(mountOrNone(block.MountSpec{
 					TargetPath:          userVolumeConfig.Name(),
 					ParentID:            constants.UserVolumeMountPoint,
 					SelinuxLabel:        constants.EphemeralSelinuxLabel,
@@ -126,7 +141,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					UID:                 0,
 					GID:                 0,
 					ProjectQuotaSupport: userVolumeConfig.Filesystem().ProjectQuotaSupport(),
-				}).
+				})).
 				WithTrim(c, userVolumeConfig).
 				WithScrub(c, userVolumeConfig).
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).

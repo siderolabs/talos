@@ -138,7 +138,7 @@ func exampleUserVolumeConfigV1Alpha1Partition() *UserVolumeConfigV1Alpha1 {
 		ProvisioningMaxSize: MustSize("50GiB"),
 	}
 	cfg.FilesystemSpec = FilesystemSpec{
-		FilesystemType: block.FilesystemTypeXFS,
+		FilesystemType: pointer.To(block.FilesystemTypeXFS),
 	}
 	cfg.EncryptionSpec = EncryptionSpec{
 		EncryptionProvider: block.EncryptionProviderLUKS2,
@@ -177,7 +177,7 @@ func exampleUserVolumeConfigV1Alpha1Disk() *UserVolumeConfigV1Alpha1 {
 		},
 	}
 	cfg.FilesystemSpec = FilesystemSpec{
-		FilesystemType: block.FilesystemTypeXFS,
+		FilesystemType: pointer.To(block.FilesystemTypeXFS),
 	}
 	cfg.EncryptionSpec = EncryptionSpec{
 		EncryptionProvider: block.EncryptionProviderLUKS2,
@@ -379,11 +379,18 @@ func (s *UserVolumeConfigV1Alpha1) Scrub() config.VolumeScrubConfig {
 type FilesystemSpec struct {
 	//   description: |
 	//     Filesystem type. Default is `xfs`.
+	//
+	//     `none` leaves the volume unformatted and unmounted -- a raw block
+	//     device for a consumer such as LVM. That is distinct from omitting
+	//     this field, which selects the `xfs` default, and the two cannot be
+	//     told apart by value: `none` is the zero of the enum. Hence the
+	//     pointer.
 	//   values:
+	//     - none
 	//     - ext4
 	//     - xfs
 	//     - btrfs
-	FilesystemType block.FilesystemType `yaml:"type,omitempty"`
+	FilesystemType *block.FilesystemType `yaml:"type,omitempty"`
 	//   description: |
 	//     Enables project quota support, valid only for 'xfs' filesystem.
 	//
@@ -419,16 +426,16 @@ type XFSSpec struct {
 
 // IsZero checks if the filesystem spec is zero.
 func (s FilesystemSpec) IsZero() bool {
-	return s.FilesystemType == block.FilesystemTypeNone && s.ProjectQuotaSupportConfig == nil && s.XFSSpec == nil
+	return s.FilesystemType == nil && s.ProjectQuotaSupportConfig == nil && s.XFSSpec == nil
 }
 
 // Type implements config.FilesystemConfig interface.
 func (s FilesystemSpec) Type() block.FilesystemType {
-	if s.FilesystemType == block.FilesystemTypeNone {
+	if s.FilesystemType == nil {
 		return block.FilesystemTypeXFS
 	}
 
-	return s.FilesystemType
+	return *s.FilesystemType
 }
 
 // ProjectQuotaSupport implements config.FilesysteemConfig interface.
@@ -447,13 +454,13 @@ func (s FilesystemSpec) XFS() config.XFSFilesystemConfig {
 
 // Validate implements config.Validator interface.
 func (s FilesystemSpec) Validate() ([]string, error) {
-	switch s.FilesystemType { //nolint:exhaustive
+	switch pointer.SafeDeref(s.FilesystemType) { //nolint:exhaustive
 	case block.FilesystemTypeNone:
 	case block.FilesystemTypeXFS:
 	case block.FilesystemTypeEXT4:
 	case block.FilesystemTypeBtrfs:
 	default:
-		return nil, fmt.Errorf("unsupported filesystem type: %s", s.FilesystemType)
+		return nil, fmt.Errorf("unsupported filesystem type: %s", pointer.SafeDeref(s.FilesystemType))
 	}
 
 	if pointer.SafeDeref(s.ProjectQuotaSupportConfig) && s.Type() != block.FilesystemTypeXFS {

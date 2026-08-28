@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
@@ -40,7 +41,7 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme" && !system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("100GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeXFS
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeXFS)
 
 				return c
 			},
@@ -81,7 +82,7 @@ func TestUserVolumeConfigMarshalUnmarshal(t *testing.T) {
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeXFS
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeXFS)
 				c.FilesystemSpec.ProjectQuotaSupportConfig = new(true)
 
 				return c
@@ -227,7 +228,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeISO9660
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeISO9660)
 
 				return c
 			},
@@ -309,7 +310,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeEXT4)
 				c.FilesystemSpec.ProjectQuotaSupportConfig = new(true)
 
 				return c
@@ -326,7 +327,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeEXT4)
 				c.FilesystemSpec.XFSSpec = &block.XFSSpec{
 					MinAllocationGroupSizeConfig: block.MustByteSize("128GiB"),
 				}
@@ -385,7 +386,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeEXT4)
 
 				return c
 			},
@@ -400,7 +401,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.MetaName = constants.EphemeralPartitionLabel
 				c.VolumeType = new(blockres.VolumeTypeDirectory)
 
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeVFAT
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeVFAT)
 
 				return c
 			},
@@ -467,7 +468,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeEXT4)
 
 				return c
 			},
@@ -483,7 +484,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeEXT4)
 
 				return c
 			},
@@ -508,7 +509,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				c.VolumeType = new(blockres.VolumeTypeDisk)
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
-				c.FilesystemSpec.FilesystemType = blockres.FilesystemTypeEXT4
+				c.FilesystemSpec.FilesystemType = pointer.To(blockres.FilesystemTypeEXT4)
 
 				return c
 			},

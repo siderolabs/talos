@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -51,7 +52,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 					MetaName:   "foo",
 					VolumeType: new(block.VolumeTypePartition),
 					FilesystemSpec: blockcfg.FilesystemSpec{
-						FilesystemType: block.FilesystemTypeXFS,
+						FilesystemType: pointer.To(block.FilesystemTypeXFS),
 					},
 				},
 			},
@@ -82,6 +83,66 @@ func TestUserVolumeTransformer(t *testing.T) {
 			},
 		},
 		{
+			// A whole-disk volume that declares no filesystem is a raw block
+			// device for a consumer such as LVM: it must NOT be coerced to xfs,
+			// and it must NOT be given a mount target, or the volume manager
+			// would probe it for a filesystem that was deliberately not created.
+			name: "disk volume, no filesystem",
+			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{
+				{
+					Meta: meta.Meta{
+						MetaKind:       blockcfg.UserVolumeConfigKind,
+						MetaAPIVersion: "v1alpha1",
+					},
+					MetaName:   "lvmdata",
+					VolumeType: new(block.VolumeTypeDisk),
+					FilesystemSpec: blockcfg.FilesystemSpec{
+						FilesystemType: pointer.To(block.FilesystemTypeNone),
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
+				require.NoError(t, err)
+				require.Len(t, resources, 1)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.VolumeTypeDisk, vc.TypedSpec().Type)
+					assert.Equal(t, block.FilesystemTypeNone, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+					assert.Empty(t, vc.TypedSpec().Mount.TargetPath)
+				})
+			},
+		},
+		{
+			// The control for the case above: omitting the filesystem entirely
+			// still selects the documented xfs default and still mounts. Without
+			// this, making `none` expressible could silently stop formatting
+			// every user volume that does not name a filesystem.
+			name: "disk volume, filesystem unset, defaults to xfs",
+			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{
+				{
+					Meta: meta.Meta{
+						MetaKind:       blockcfg.UserVolumeConfigKind,
+						MetaAPIVersion: "v1alpha1",
+					},
+					MetaName:   "plain",
+					VolumeType: new(block.VolumeTypeDisk),
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
+				require.NoError(t, err)
+				require.Len(t, resources, 1)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.FilesystemTypeXFS, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+					assert.Equal(t, "plain", vc.TypedSpec().Mount.TargetPath)
+				})
+			},
+		},
+		{
 			name: "directory volume",
 			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
 				Meta: meta.Meta{
@@ -91,7 +152,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 				MetaName:   "bar",
 				VolumeType: new(block.VolumeTypeDirectory),
 				FilesystemSpec: blockcfg.FilesystemSpec{
-					FilesystemType: block.FilesystemTypeXFS,
+					FilesystemType: pointer.To(block.FilesystemTypeXFS),
 				},
 			}},
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
@@ -147,7 +208,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 				MetaName:   "foo",
 				VolumeType: new(block.VolumeTypePartition),
 				FilesystemSpec: blockcfg.FilesystemSpec{
-					FilesystemType: block.FilesystemTypeXFS,
+					FilesystemType: pointer.To(block.FilesystemTypeXFS),
 				},
 			}, {
 				Meta: meta.Meta{
@@ -157,7 +218,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 				MetaName:   "bar",
 				VolumeType: new(block.VolumeTypeDirectory),
 				FilesystemSpec: blockcfg.FilesystemSpec{
-					FilesystemType: block.FilesystemTypeXFS,
+					FilesystemType: pointer.To(block.FilesystemTypeXFS),
 				},
 			}},
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {

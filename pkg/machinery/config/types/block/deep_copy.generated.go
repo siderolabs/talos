@@ -271,6 +271,10 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 			copy(cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw)
 		}
 	}
+	if o.FilesystemSpec.FilesystemType != nil {
+		filesystemType := *o.FilesystemSpec.FilesystemType
+		cp.FilesystemSpec.FilesystemType = &filesystemType
+	}
 	if o.FilesystemSpec.ProjectQuotaSupportConfig != nil {
 		cp.FilesystemSpec.ProjectQuotaSupportConfig = new(bool)
 		*cp.FilesystemSpec.ProjectQuotaSupportConfig = *o.FilesystemSpec.ProjectQuotaSupportConfig
