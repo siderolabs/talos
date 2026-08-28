@@ -18,30 +18,44 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/distribution/reference"
+	"github.com/opencontainers/go-digest"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// ImageCleanupInterval is the interval at which the image GC controller runs.
-const ImageCleanupInterval = 15 * time.Minute
+// DefaultImageCleanupInterval is the default interval at which the image GC controller runs.
+const DefaultImageCleanupInterval = 15 * time.Minute
 
-// ImageGCGracePeriod is the minimum age of an image before it can be deleted.
-const ImageGCGracePeriod = 4 * ImageCleanupInterval
+// DefaultImageGCGracePeriod is the default minimum age of an image before it can be deleted.
+const DefaultImageGCGracePeriod = 4 * DefaultImageCleanupInterval
+
+// RefsToRetainFunc returns the image references which must be preserved.
+//
+// It may return an empty set before its underlying resources have synced (e.g. right after boot).
+// That is safe: cleanup only deletes an image once it has looked unreferenced continuously for a full
+// GCGracePeriod, tracked per-image from the first time the controller ever observed it as such (see
+// imageFirstSeenUnreferenced in cleanup below) — which is reliably longer than resources take to sync.
+type RefsToRetainFunc func(ctx context.Context, reader controller.Reader) ([]string, error)
 
 // NewImageGCController creates a new ImageGCController.
-func NewImageGCController(containerdName string, buildExpectedImages bool) *ImageGCController {
-	controllerName := "cri." + containerdName + "ImageGCController"
+//
+// containerdName selects the containerd instance (and the v1alpha1.Service gating on it), and
+// namespace is the containerd namespace to collect. A nil refsToRetain means nothing is retained,
+// i.e. every image in the namespace is eligible for cleanup.
+func NewImageGCController(containerdName, namespace string, refsToRetainFunc RefsToRetainFunc) *ImageGCController {
+	controllerName := fmt.Sprintf("%s.%s.ImageGCController", containerdName, namespace)
 
 	return &ImageGCController{
 		containerdName:      containerdName,
+		containerdNamespace: namespace,
 		controllerName:      controllerName,
-		buildExpectedImages: buildExpectedImages,
+		refsToRetain:        refsToRetainFunc,
 	}
 }
 
@@ -49,9 +63,19 @@ func NewImageGCController(containerdName string, buildExpectedImages bool) *Imag
 type ImageGCController struct {
 	ImageServiceProvider func() (ImageServiceProvider, error)
 
-	containerdName             string
+	// CleanupInterval and GCGracePeriod default to DefaultImageCleanupInterval and DefaultImageGCGracePeriod.
+	//
+	// They are fields rather than constants so that tests can run a cleanup cycle without waiting
+	// out the production timing; nothing in Talos overrides them.
+	CleanupInterval time.Duration
+	GCGracePeriod   time.Duration
+
+	containerdName      string
+	containerdNamespace string
+	// refsToRetain computes the images to preserve; nil retains nothing.
+	refsToRetain RefsToRetainFunc
+
 	controllerName             string
-	buildExpectedImages        bool
 	imageFirstSeenUnreferenced map[string]time.Time
 }
 
@@ -67,35 +91,43 @@ func (ctrl *ImageGCController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
+//
+// Only the containerd service is an input: it is the one thing the controller has to wake for.
+// Everything else is read on the cleanup tick, see RefsToRetainFunc.
 func (ctrl *ImageGCController) Inputs() []controller.Input {
-	inputs := []controller.Input{
+	return []controller.Input{
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        optional.Some(ctrl.containerdName),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerImageStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerInstanceSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: etcd.NamespaceName,
+			Type:      etcd.SpecType,
+			Kind:      controller.InputWeak,
+		},
 	}
-
-	if ctrl.buildExpectedImages {
-		inputs = append(
-			inputs,
-			controller.Input{
-				Namespace: k8s.NamespaceName,
-				Type:      k8s.KubeletSpecType,
-				ID:        optional.Some(k8s.KubeletID),
-				Kind:      controller.InputWeak,
-			},
-			controller.Input{
-				Namespace: etcd.NamespaceName,
-				Type:      etcd.SpecType,
-				ID:        optional.Some(etcd.SpecID),
-				Kind:      controller.InputWeak,
-			},
-		)
-	}
-
-	return inputs
 }
 
 // Outputs implements controller.Controller interface.
@@ -140,24 +172,15 @@ func (s *containerdImageServiceProvider) Close() error {
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo,cyclop
 func (ctrl *ImageGCController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if ctrl.ImageServiceProvider == nil {
-		ctrl.ImageServiceProvider = defaultImageServiceProvider(ctrl.containerdName)
-	}
-
-	if ctrl.imageFirstSeenUnreferenced == nil {
-		ctrl.imageFirstSeenUnreferenced = map[string]time.Time{}
-	}
+	ctrl.ensureDefaults()
 
 	var (
 		containerdIsUp       bool
-		expectedImages       []string
 		imageServiceProvider ImageServiceProvider
 	)
 
-	ticker := time.NewTicker(ImageCleanupInterval)
+	ticker := time.NewTicker(ctrl.CleanupInterval)
 	defer ticker.Stop()
 
 	defer func() {
@@ -171,50 +194,22 @@ func (ctrl *ImageGCController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			if !containerdIsUp || (ctrl.buildExpectedImages && len(expectedImages) == 0) {
+			if !containerdIsUp {
 				continue
 			}
 
-			if imageServiceProvider == nil {
-				var err error
+			var err error
 
-				imageServiceProvider, err = ctrl.ImageServiceProvider()
-				if err != nil {
-					return fmt.Errorf("error creating image service provider: %w", err)
-				}
-			}
-
-			if err := ctrl.cleanup(ctx, logger, imageServiceProvider.ImageService(), expectedImages); err != nil {
-				return fmt.Errorf("error running image cleanup: %w", err)
+			imageServiceProvider, err = ctrl.runCleanup(ctx, logger, r, imageServiceProvider)
+			if err != nil {
+				return err
 			}
 		case <-r.EventCh():
-			containerdService, err := safe.ReaderGet[*v1alpha1.Service](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, ctrl.containerdName, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting container service: %w", err)
-			}
+			var err error
 
-			containerdIsUp = containerdService != nil && containerdService.TypedSpec().Running && containerdService.TypedSpec().Healthy
-
-			expectedImages = nil
-
-			if ctrl.buildExpectedImages {
-				etcdSpec, err := safe.ReaderGet[*etcd.Spec](ctx, r, resource.NewMetadata(etcd.NamespaceName, etcd.SpecType, etcd.SpecID, resource.VersionUndefined))
-				if err != nil && !state.IsNotFoundError(err) {
-					return fmt.Errorf("error getting etcd spec: %w", err)
-				}
-
-				if etcdSpec != nil {
-					expectedImages = append(expectedImages, etcdSpec.TypedSpec().Image)
-				}
-
-				kubeletSpec, err := safe.ReaderGet[*k8s.KubeletSpec](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
-				if err != nil && !state.IsNotFoundError(err) {
-					return fmt.Errorf("error getting kubelet spec: %w", err)
-				}
-
-				if kubeletSpec != nil {
-					expectedImages = append(expectedImages, kubeletSpec.TypedSpec().Image)
-				}
+			containerdIsUp, err = ctrl.updateContainerdStatus(ctx, r)
+			if err != nil {
+				return err
 			}
 		}
 
@@ -222,23 +217,106 @@ func (ctrl *ImageGCController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
+// ensureDefaults fills in zero-value fields with their defaults.
+func (ctrl *ImageGCController) ensureDefaults() {
+	if ctrl.ImageServiceProvider == nil {
+		ctrl.ImageServiceProvider = defaultImageServiceProvider(ctrl.containerdName)
+	}
+
+	if ctrl.imageFirstSeenUnreferenced == nil {
+		ctrl.imageFirstSeenUnreferenced = map[string]time.Time{}
+	}
+
+	if ctrl.CleanupInterval == 0 {
+		ctrl.CleanupInterval = DefaultImageCleanupInterval
+	}
+
+	if ctrl.GCGracePeriod == 0 {
+		ctrl.GCGracePeriod = DefaultImageGCGracePeriod
+	}
+}
+
+// runCleanup runs a single cleanup cycle, lazily creating imageServiceProvider if it isn't set yet.
+//
+// It returns imageServiceProvider back (created or unchanged) so the caller can keep closing it on exit.
+func (ctrl *ImageGCController) runCleanup(ctx context.Context, logger *zap.Logger, reader controller.Reader, imageServiceProvider ImageServiceProvider) (ImageServiceProvider, error) {
+	retainRefs, err := ctrl.safeRefsToRetain(ctx, reader)
+	if err != nil {
+		return imageServiceProvider, fmt.Errorf("error computing images to retain: %w", err)
+	}
+
+	if imageServiceProvider == nil {
+		imageServiceProvider, err = ctrl.ImageServiceProvider()
+		if err != nil {
+			return nil, fmt.Errorf("error creating image service provider: %w", err)
+		}
+	}
+
+	if err := ctrl.cleanup(ctx, logger, imageServiceProvider.ImageService(), retainRefs); err != nil {
+		return imageServiceProvider, fmt.Errorf("error running image cleanup: %w", err)
+	}
+
+	return imageServiceProvider, nil
+}
+
+// updateContainerdStatus reports whether the watched containerd service is running and healthy.
+func (ctrl *ImageGCController) updateContainerdStatus(ctx context.Context, r controller.Runtime) (bool, error) {
+	containerdService, err := safe.ReaderGet[*v1alpha1.Service](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, ctrl.containerdName, resource.VersionUndefined))
+	if err != nil && !state.IsNotFoundError(err) {
+		return false, fmt.Errorf("error getting container service: %w", err)
+	}
+
+	return containerdService != nil && containerdService.TypedSpec().Running && containerdService.TypedSpec().Healthy, nil
+}
+
+// safeRefsToRetain calls RefsToRetain, treating a nil one as retaining nothing.
+func (ctrl *ImageGCController) safeRefsToRetain(ctx context.Context, reader controller.Reader) ([]string, error) {
+	if ctrl.refsToRetain == nil {
+		return nil, nil
+	}
+
+	return ctrl.refsToRetain(ctx, reader)
+}
+
+// buildExpectedDigests resolves the expected image references to the digests they name.
+//
+// An expectation is either a bare digest, which resolves to itself, or a reference, which either
+// carries its digest or has to be matched by name and tag against the images actually stored.
+//
 //nolint:gocyclo
 func buildExpectedDigests(logger *zap.Logger, actualImages []images.Image, expectedImages []string) (map[string]struct{}, error) {
-	var parseErrors error
+	var (
+		parseErrors        error
+		expectedReferences []reference.Named
+	)
 
-	expectedReferences := xslices.Map(expectedImages, func(ref string) reference.Named {
-		res, parseErr := reference.ParseNamed(ref)
+	expectedDigests := map[string]struct{}{}
 
-		parseErrors = errors.Join(parseErrors, parseErr)
+	for _, ref := range expectedImages {
+		// Bare digest, as ContainerImageStatus and ContainerInstanceSpec carry it: nothing to
+		// resolve.
+		if dgst, err := digest.Parse(ref); err == nil {
+			expectedDigests[dgst.String()] = struct{}{}
 
-		return res
-	})
+			continue
+		}
+
+		// ParseDockerRef rather than ParseNamed, because it is what the pull path normalizes with
+		// (see internal/pkg/containers/image.Pull), and the containerd image record is named after
+		// the result.
+		parsed, parseErr := reference.ParseDockerRef(ref)
+		if parseErr != nil {
+			parseErrors = errors.Join(parseErrors, parseErr)
+
+			continue
+		}
+
+		expectedReferences = append(expectedReferences, parsed)
+	}
 
 	if parseErrors != nil {
 		return nil, fmt.Errorf("error parsing expected images: %w", parseErrors)
 	}
-
-	expectedDigests := map[string]struct{}{}
 
 	for _, expectedRef := range expectedReferences {
 		// easy case: image ref has digest, record it
@@ -257,7 +335,7 @@ func buildExpectedDigests(logger *zap.Logger, actualImages []images.Image, expec
 				continue
 			}
 
-			digest := image.Target.Digest.String()
+			imageDigest := image.Target.Digest.String()
 
 			if ref, ok := imageRef.(reference.NamedTagged); ok {
 				if expectedRef.Name() != ref.Name() {
@@ -266,7 +344,7 @@ func buildExpectedDigests(logger *zap.Logger, actualImages []images.Image, expec
 
 				if expectedTagged, ok := expectedRef.(reference.Tagged); ok && ref.Tag() == expectedTagged.Tag() {
 					// this is expected image by tag, inject digest
-					expectedDigests[digest] = struct{}{}
+					expectedDigests[imageDigest] = struct{}{}
 
 					break
 				}
@@ -280,7 +358,7 @@ func buildExpectedDigests(logger *zap.Logger, actualImages []images.Image, expec
 func (ctrl *ImageGCController) cleanup(ctx context.Context, logger *zap.Logger, imageService images.Store, expectedImages []string) error {
 	logger.Debug("running image cleanup")
 
-	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+	ctx = namespaces.WithNamespace(ctx, ctrl.containerdNamespace)
 
 	actualImages, err := imageService.List(ctx)
 	if err != nil {
@@ -311,13 +389,13 @@ func (ctrl *ImageGCController) cleanup(ctx context.Context, logger *zap.Logger, 
 
 		// calculate image age two ways, and pick the minimum:
 		//  * as CRI reports it, which is the time image got pulled
-		//  * as we see it, this means the image won't be deleted until it reaches the age of ImageGCGracePeriod from the moment it became unreferenced
+		//  * as we see it, this means the image won't be deleted until it reaches the age of GCGracePeriod from the moment it became unreferenced
 		imageAgeCRI := time.Since(image.CreatedAt)
 		imageAgeInternal := time.Since(ctrl.imageFirstSeenUnreferenced[image.Name])
 
 		imageAge := min(imageAgeCRI, imageAgeInternal)
 
-		if imageAge < ImageGCGracePeriod {
+		if imageAge < ctrl.GCGracePeriod {
 			logger.Debug("skipping image cleanup, as it's below minimum age", zap.String("image", image.Name), zap.Duration("age", imageAge))
 
 			continue
