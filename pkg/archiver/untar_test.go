@@ -93,6 +93,27 @@ func TestUntar(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "setuid file",
+
+			entries: []tarEntry{
+				{
+					header: tar.Header{
+						Name: "setuid-file",
+						Mode: 0o4755,
+					},
+					payload: []byte("setuid"),
+				},
+			},
+			verification: func(t *testing.T, dir string, xattrs map[string]string) {
+				info, err := os.Stat(filepath.Join(dir, "setuid-file"))
+				require.NoError(t, err)
+
+				assert.Equal(t, os.FileMode(0o755), info.Mode().Perm())
+				assert.NotZero(t, info.Mode()&os.ModeSetuid)
+				assert.Empty(t, xattrs)
+			},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
