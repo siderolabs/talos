@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -24,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	configcontainer "github.com/siderolabs/talos/pkg/machinery/config/config"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
@@ -1378,6 +1380,87 @@ func (suite *ContainersSuite) readContainerLog(ctx context.Context, containerNam
 	}
 
 	return string(body), nil
+}
+
+// containerdImages lists the names of the images stored in a containerd namespace.
+func (suite *ContainersSuite) containerdImages(ctx context.Context, namespace common.ContainerdNamespace) ([]string, error) {
+	driver := common.ContainerDriver_CONTAINERD
+	if namespace == common.ContainerdNamespace_NS_SYSTEM || namespace == common.ContainerdNamespace_NS_CRI {
+		driver = common.ContainerDriver_CRI
+	}
+
+	rcv, err := suite.Client.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+		Containerd: &common.ContainerdInstance{
+			Driver:    driver,
+			Namespace: namespace,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var imageNames []string
+
+	for {
+		msg, err := rcv.Recv()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return imageNames, nil
+			}
+
+			return nil, err
+		}
+
+		imageNames = append(imageNames, msg.GetName())
+	}
+}
+
+// assertContainerdImages returns the image names in a containerd namespace, failing the test if
+// they cannot be read.
+func (suite *ContainersSuite) assertContainerdImages(ctx context.Context, namespace common.ContainerdNamespace) []string {
+	imageNames, err := suite.containerdImages(ctx, namespace)
+	suite.Require().NoError(err)
+
+	return imageNames
+}
+
+// TestImageNotGarbageCollectedWhileReferenced covers the image GC instance which collects the
+// taloscontainers namespace: a declared container's image lands there and not in the system
+// namespace, and is not collected out from under a container that is still using it.
+//
+// The deletion half cannot be covered here: an unreferenced image only becomes eligible after
+// cri.ImageGCGracePeriod, an hour, which is far longer than any node can be held for. That path is
+// covered by TestImageGCTalosContainers in the controller's own tests, on synthetic time. This is
+// the same kind of blind spot as the one assertNoContainerdContainer documents.
+func (suite *ContainersSuite) TestImageNotGarbageCollectedWhileReferenced() {
+	ctx, name, _ := suite.setupContainer("image-gc")
+
+	suite.applyContainers(ctx, suite.shellContainer(name, "sleep 3600"))
+
+	suite.assertContainerRunning(ctx, name, "before inspecting the image store")
+
+	suite.Assert().Contains(suite.assertContainerdImages(ctx, common.ContainerdNamespace_NS_TALOSCONTAINERS), containerShellImage,
+		"the container's image must be pulled into the taloscontainers namespace")
+
+	suite.Assert().NotContains(suite.assertContainerdImages(ctx, common.ContainerdNamespace_NS_SYSTEM), containerShellImage,
+		"the container's image must not leak into the system namespace, which is collected against a different expected set")
+
+	suite.T().Logf("removing container config %q", name)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+
+	suite.assertNoContainerdContainer(ctx, name)
+
+	// The image is unreferenced from here on, and must survive until the grace period elapses.
+	suite.Require().Never(func() bool {
+		imageNames, err := suite.containerdImages(ctx, common.ContainerdNamespace_NS_TALOSCONTAINERS)
+		if err != nil {
+			// A failed read is not the image having been collected.
+			return false
+		}
+
+		return !slices.Contains(imageNames, containerShellImage)
+	}, 30*time.Second, 5*time.Second, "image was collected before the grace period elapsed")
 }
 
 // assertNoContainerdContainer verifies that containerd is running no task for containerName.

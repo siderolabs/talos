@@ -262,8 +262,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Runtime: ctrl.v1alpha1Runtime,
 		},
 		&cri.CustomizationConfigController{},
-		cri.NewImageGCController("containerd", false),
-		cri.NewImageGCController("cri", true),
+		cri.NewImageGCController("containerd", constants.SystemContainerdNamespace, nil),
+		cri.NewImageGCController("cri", constants.SystemContainerdNamespace, cri.KubernetesRefsToRetain),
+		cri.NewImageGCController("cri", constants.TalosContainersContainerdNamespace, cri.TalosContainersRefsToRetain),
 		&cri.RegistriesConfigController{},
 		&cri.ServiceController{
 			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
