@@ -89,7 +89,7 @@ func Untar(ctx context.Context, r io.Reader, rootPath string, xattrsMap map[stri
 				return fmt.Errorf("error creating parent directory for file %q: %w", path, err)
 			}
 
-			fp, err := root.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
+			fp, err := root.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode.Perm())
 			if err != nil {
 				return fmt.Errorf("error creating file %q mode %s: %w", path, mode, err)
 			}
