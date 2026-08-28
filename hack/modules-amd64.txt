@@ -99,6 +99,7 @@ kernel/drivers/hwmon/k10temp.ko
 kernel/drivers/hwmon/k8temp.ko
 kernel/drivers/hwmon/nct6683.ko
 kernel/drivers/hwmon/nct6775.ko
+kernel/drivers/hwmon/spd5118.ko
 kernel/drivers/i2c/algos/i2c-algo-bit.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
 kernel/drivers/i2c/i2c-smbus.ko
