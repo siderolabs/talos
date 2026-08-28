@@ -66,6 +66,7 @@ kernel/drivers/hv/hv_utils.ko
 kernel/drivers/hwmon/acpi_power_meter.ko
 kernel/drivers/hwmon/drivetemp.ko
 kernel/drivers/hwmon/i5k_amb.ko
+kernel/drivers/hwmon/spd5118.ko
 kernel/drivers/i2c/algos/i2c-algo-bit.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
 kernel/drivers/i2c/i2c-mux.ko
