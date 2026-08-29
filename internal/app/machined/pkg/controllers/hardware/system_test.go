@@ -181,6 +181,39 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformationEmpty() {
 		asrt.Equal("UNKNOWN", r.TypedSpec().Manufacturer)
 		asrt.NotZero(r.TypedSpec().Size)
 	})
+
+	ctest.AssertResource(suite, "UNKNOWN", func(r *hardware.Processor, asrt *assert.Assertions) {
+		asrt.NotZero(r.TypedSpec().CoreCount)
+		asrt.NotZero(r.TypedSpec().ThreadCount)
+	})
+}
+
+// TestPopulateProcessorsFallbackForThinSMBIOS verifies that CoreCount/ThreadCount/MaxSpeed are
+// backfilled from /sys/devices/system/cpu when SMBIOS reports a populated socket but doesn't
+// provide topology data — as seen on some ARM SBCs booting through a minimal UEFI shim.
+func (suite *SystemInfoSuite) TestPopulateProcessorsFallbackForThinSMBIOS() {
+	s := &smbios.SMBIOS{
+		ProcessorInformation: []smbios.ProcessorInformation{
+			{
+				SocketDesignation:     "CPU 0",
+				ProcessorManufacturer: "Raspberry Pi",
+				Status:                0x40, // socket populated, all other bits unset
+			},
+		},
+	}
+
+	suite.Require().NoError(suite.Runtime().RegisterController(&hardwarectrl.SystemInfoController{
+		SMBIOS: s,
+	}))
+
+	suite.Create(runtime.NewMetaLoaded())
+
+	ctest.AssertResource(suite, "CPU-0", func(r *hardware.Processor, asrt *assert.Assertions) {
+		asrt.Equal("Raspberry Pi", r.TypedSpec().Manufacturer)
+		asrt.NotZero(r.TypedSpec().CoreCount)
+		asrt.NotZero(r.TypedSpec().CoreEnabled)
+		asrt.NotZero(r.TypedSpec().ThreadCount)
+	})
 }
 
 func (suite *SystemInfoSuite) TestUUIDOverwrite() {
