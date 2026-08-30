@@ -8,6 +8,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -41,6 +42,17 @@ func createPartition(suite *ctest.DefaultSuite, id, devPath, parentDevPath, part
 	dv.TypedSpec().ParentDevPath = parentDevPath
 	dv.TypedSpec().PartitionLabel = partitionLabel
 	dv.TypedSpec().Type = "partition"
+
+	suite.Create(dv)
+}
+
+func createLUKSPartition(suite *ctest.DefaultSuite, id, devPath, parentDevPath, partitionLabel string) {
+	dv := block.NewDiscoveredVolume(block.NamespaceName, id)
+	dv.TypedSpec().DevPath = devPath
+	dv.TypedSpec().ParentDevPath = parentDevPath
+	dv.TypedSpec().PartitionLabel = partitionLabel
+	dv.TypedSpec().Type = "partition"
+	dv.TypedSpec().Name = "luks"
 
 	suite.Create(dv)
 }
@@ -103,6 +115,49 @@ func newRAIDDoc(name, match string) *storagecfg.RAIDArrayConfigV1Alpha1 {
 	doc.Level = storageres.MDLevelRAID1
 
 	if err := doc.ProvisioningSpec.RAIDVolumeSelector.Match.UnmarshalText([]byte(match)); err != nil {
+		panic(err)
+	}
+
+	return doc
+}
+
+// createVolumeStatus inserts a block.VolumeStatus describing a volume.
+//
+//nolint:unparam
+func createVolumeStatus(
+	suite *ctest.DefaultSuite,
+	id string,
+	phase block.VolumePhase,
+	provider block.EncryptionProviderType,
+	location, mountLocation string,
+) {
+	vs := block.NewVolumeStatus(block.NamespaceName, id)
+	vs.TypedSpec().Phase = phase
+	vs.TypedSpec().EncryptionProvider = provider
+	vs.TypedSpec().Location = location
+	vs.TypedSpec().MountLocation = mountLocation
+
+	suite.Create(vs)
+}
+
+// newEncryptedRawVolumeDoc builds a RawVolumeConfig declaring LUKS2 encryption.
+func newEncryptedRawVolumeDoc(name string) *blockcfg.RawVolumeConfigV1Alpha1 {
+	doc := blockcfg.NewRawVolumeConfigV1Alpha1()
+	doc.MetaName = name
+	doc.EncryptionSpec.EncryptionProvider = block.EncryptionProviderLUKS2
+
+	return doc
+}
+
+// newEncryptedWholeDiskUserVolumeDoc builds a whole-disk UserVolumeConfig, LUKS2 encrypted.
+func newEncryptedWholeDiskUserVolumeDoc(name, diskMatch string) *blockcfg.UserVolumeConfigV1Alpha1 {
+	doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+	doc.MetaName = name
+	volumeType := block.VolumeTypeDisk
+	doc.VolumeType = &volumeType
+	doc.EncryptionSpec.EncryptionProvider = block.EncryptionProviderLUKS2
+
+	if err := doc.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(diskMatch)); err != nil {
 		panic(err)
 	}
 
