@@ -79,7 +79,7 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 
 		err := dashboard.cli.MetaWrite(ctx, meta.DownloadURLCode, []byte(value))
 		if err != nil {
-			grid.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+			grid.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
 			return
 		}
@@ -99,7 +99,7 @@ func NewConfigURLGrid(ctx context.Context, dashboard *Dashboard) *ConfigURLGrid 
 				return
 			}
 
-			grid.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+			grid.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
 			return
 		}
@@ -179,7 +179,7 @@ func (widget *ConfigURLGrid) updateNodeData(data resourcedata.Data) {
 					val = "(empty)"
 				}
 
-				nodeData.existingCode = fmt.Sprintf("[blue]%s[-]", val)
+				nodeData.existingCode = fmt.Sprintf("[blue]%s[-]", tview.Escape(val))
 			}
 		}
 	}

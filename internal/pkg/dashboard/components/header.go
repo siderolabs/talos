@@ -71,7 +71,7 @@ func (widget *Header) OnResourceDataChange(data resourcedata.Data) {
 		if data.Deleted {
 			nodeData.hostname = noHostname
 		} else {
-			nodeData.hostname = res.TypedSpec().Hostname
+			nodeData.hostname = tview.Escape(res.TypedSpec().Hostname)
 		}
 	}
 
@@ -146,7 +146,7 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	nodeData.memUsagePercent = fmt.Sprintf("%.1f%%", data.MemUsage()*100.0)
 
 	if data.Version != nil {
-		nodeData.version = data.Version.GetVersion().GetTag()
+		nodeData.version = tview.Escape(data.Version.GetVersion().GetTag())
 	} else {
 		nodeData.version = notAvailable
 	}
