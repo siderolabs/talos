@@ -953,7 +953,7 @@ COPY --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
 COPY --from=vex /talos.vex.json /talos.vex.json
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
-    --vex /talos.vex.json -vv 2>&1 | tee /grype-scan.log
+    --vex /talos.vex.json 2>&1 | tee /grype-scan.log
 
 FROM scratch AS grype-scan-result
 COPY --from=grype-scan /grype-scan.log /grype-scan.log
@@ -964,7 +964,7 @@ COPY --from=vex /talos.vex.json /talos.vex.json
 COPY --from=vex /talos.grype.yaml /talos.grype.yaml
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
-    --vex /talos.vex.json -vv --fail-on negligible --config /talos.grype.yaml
+    --vex /talos.vex.json --fail-on negligible --config /talos.grype.yaml
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN rm -rf /rootfs/usr/share/spdx/*
