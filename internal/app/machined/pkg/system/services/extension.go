@@ -42,7 +42,8 @@ import (
 type Extension struct {
 	Spec extservices.Spec
 
-	overlayUnmounter func() error
+	overlayUnmounter    func() error
+	preShutdownRunnerFn func(bool, *runner.Args, ...runner.Option) runner.Runner
 }
 
 // ID implements the Service interface.
@@ -83,6 +84,95 @@ func (svc *Extension) PostFunc(r runtime.Runtime, state events.ServiceState) (er
 	}
 
 	return svc.overlayUnmounter()
+}
+
+// PreShutdownFunc runs the configured node shutdown hook while the service is still running.
+func (svc *Extension) PreShutdownFunc(ctx context.Context, r runtime.Runtime) error {
+	if svc.Spec.PreShutdown == nil {
+		return nil
+	}
+
+	envVars, err := svc.preShutdownEnvironment(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	hookCtx, cancel := context.WithTimeout(ctx, svc.Spec.PreShutdown.Timeout)
+	defer cancel()
+
+	hookRunner := svc.preShutdownRunner(r, envVars)
+	if err = hookRunner.Open(); err != nil {
+		return fmt.Errorf("failed to open pre-shutdown hook runner: %w", err)
+	}
+
+	defer hookRunner.Close() //nolint:errcheck
+
+	_, err = hookRunner.Run(hookCtx, events.NullRecorder, nil)
+
+	return svc.preShutdownError(err, hookCtx.Err())
+}
+
+func (svc *Extension) preShutdownEnvironment(ctx context.Context, r runtime.Runtime) ([]string, error) {
+	envVars, err := svc.parseEnvironment()
+	if err != nil {
+		return nil, err
+	}
+
+	configSpec, err := safe.StateGetByID[*runtimeres.ExtensionServiceConfig](ctx, r.State().V1Alpha2().Resources(), svc.Spec.Name)
+	if state.IsNotFoundError(err) {
+		return slices.Concat(envVars, environment.Get(r.Config())), nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, envVars, err = svc.applyExtensionServiceConfig(configSpec.TypedSpec(), nil, envVars)
+	if err != nil {
+		return nil, err
+	}
+
+	return slices.Concat(envVars, environment.Get(r.Config())), nil
+}
+
+func (svc *Extension) preShutdownRunner(r runtime.Runtime, envVars []string) runner.Runner {
+	logToConsole := svc.Spec.LogToConsole
+	if r.Config() != nil && r.Config().Debug() {
+		logToConsole = true
+	}
+
+	runnerFn := svc.preShutdownRunnerFn
+	if runnerFn == nil {
+		runnerFn = process.NewRunner
+	}
+
+	return runnerFn(
+		logToConsole,
+		&runner.Args{
+			ID:          svc.ID(r) + "-pre-shutdown",
+			ProcessArgs: append([]string{svc.Spec.PreShutdown.Entrypoint}, svc.Spec.PreShutdown.Args...),
+		},
+		runner.WithLoggingManager(r.Logging()),
+		runner.WithEnv(envVars),
+		runner.WithCgroupPath(filepath.Join(constants.CgroupExtensions, svc.Spec.Name)),
+		runner.WithGracefulShutdownTimeout(0),
+		runner.WithOOMScoreAdj(-600),
+	)
+}
+
+func (svc *Extension) preShutdownError(runErr, contextErr error) error {
+	switch contextErr {
+	case context.DeadlineExceeded:
+		return fmt.Errorf("pre-shutdown hook timed out after %s: %w", svc.Spec.PreShutdown.Timeout, contextErr)
+	case context.Canceled:
+		return fmt.Errorf("pre-shutdown hook canceled: %w", contextErr)
+	}
+
+	if runErr != nil {
+		return fmt.Errorf("pre-shutdown hook failed: %w", runErr)
+	}
+
+	return nil
 }
 
 // Condition implements the Service interface.

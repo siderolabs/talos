@@ -265,10 +265,7 @@ func (*Sequencer) Reboot(r runtime.Runtime, in *machineapi.RebootRequest) []runt
 				"cleanup",
 				StopAllPods,
 			).
-			Append(
-				"dbus",
-				StopDBus,
-			).
+			AppendList(preShutdownPhaselist()).
 			AppendList(stopAllPhaselist(r, true))
 	}
 
@@ -324,9 +321,8 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			!in.GetGraceful(),
 			"cleanup",
 			taskErrorHandler(logError, StopAllPods),
-		).Append(
-			"dbus",
-			StopDBus,
+		).AppendList(
+			preShutdownPhaselist(),
 		).AppendWhen(
 			in.GetGraceful() && (r.Config().Machine().Type() != machine.TypeWorker),
 			"leave",
@@ -379,9 +375,8 @@ func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []
 	).Append(
 		"cleanup",
 		StopAllPods,
-	).Append(
-		"dbus",
-		StopDBus,
+	).AppendList(
+		preShutdownPhaselist(),
 	).
 		AppendList(stopAllPhaselist(r, false)).
 		Append("shutdown", Shutdown)
@@ -400,9 +395,8 @@ func (*Sequencer) StageUpgrade(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		phases = phases.Append(
 			"cleanup",
 			StopAllPods,
-		).Append(
-			"dbus",
-			StopDBus,
+		).AppendList(
+			preShutdownPhaselist(),
 		).AppendList(
 			stopAllPhaselist(r, in.GetRebootMode() == machineapi.UpgradeRequest_DEFAULT),
 		).Append(
@@ -464,9 +458,8 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 		).Append(
 			"cleanup",
 			StopAllPods,
-		).Append(
-			"dbus",
-			StopDBus,
+		).AppendList(
+			preShutdownPhaselist(),
 		).Append(
 			"stopContainers",
 			TeardownContainerLifecycle,
@@ -508,6 +501,12 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 	}
 
 	return phases
+}
+
+func preShutdownPhaselist() PhaseList {
+	return PhaseList{}.
+		Append("preShutdown", PreShutdownServices).
+		Append("dbus", StopDBus)
 }
 
 func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {

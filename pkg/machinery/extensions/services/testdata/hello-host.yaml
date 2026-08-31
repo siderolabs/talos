@@ -7,3 +7,8 @@ container:
   args:
     - --log=debug
 restart: always
+preShutdown:
+  entrypoint: /usr/local/bin/hello-shutdown
+  args:
+    - --graceful
+  timeout: 30s

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -37,8 +38,20 @@ type Spec struct {
 	Depends []Dependency `yaml:"depends"`
 	// Restart configuration.
 	Restart RestartKind `yaml:"restart"`
+	// PreShutdown specifies a command to run before node shutdown.
+	PreShutdown *Command `yaml:"preShutdown,omitempty"`
 	// LogToConsole enables sending service logs to the console.
 	LogToConsole bool `yaml:"logToConsole"`
+}
+
+// Command specifies a bounded host command to run during a service lifecycle hook.
+type Command struct {
+	// Entrypoint is the absolute host path to execute.
+	Entrypoint string `yaml:"entrypoint"`
+	// Args are passed to the entrypoint.
+	Args []string `yaml:"args,omitempty"`
+	// Timeout bounds command execution.
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 // Container specifies service container to run.
@@ -116,6 +129,14 @@ func (spec *Spec) Validate() error {
 		multiErr = multierror.Append(multiErr, spec.validateHostMode())
 	}
 
+	if spec.PreShutdown != nil {
+		if spec.RunnerMode != RunnerModeHost {
+			multiErr = multierror.Append(multiErr, errors.New("pre-shutdown hook is only supported in host runner mode"))
+		}
+
+		multiErr = multierror.Append(multiErr, spec.PreShutdown.Validate())
+	}
+
 	for _, dep := range spec.Depends {
 		multiErr = multierror.Append(multiErr, dep.Validate())
 	}
@@ -137,6 +158,21 @@ func (spec *Spec) validateHostMode() error {
 
 	if !filepath.IsAbs(spec.Container.Entrypoint) {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("container entrypoint must be an absolute host path in host runner mode: %q", spec.Container.Entrypoint))
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
+// Validate the command spec.
+func (command *Command) Validate() error {
+	var multiErr *multierror.Error
+
+	if !filepath.IsAbs(command.Entrypoint) {
+		multiErr = multierror.Append(multiErr, fmt.Errorf("pre-shutdown entrypoint must be an absolute host path: %q", command.Entrypoint))
+	}
+
+	if command.Timeout <= 0 {
+		multiErr = multierror.Append(multiErr, errors.New("pre-shutdown timeout must be positive"))
 	}
 
 	return multiErr.ErrorOrNil()
