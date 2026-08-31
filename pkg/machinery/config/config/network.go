@@ -393,6 +393,7 @@ type NetworkKubeSpanConfig interface {
 // NetworkKubeSpanFilters configures KubeSpan filters.
 type NetworkKubeSpanFilters interface {
 	Endpoints() []string
+	PeerEndpoints() []string
 	ExcludeAdvertisedNetworks() []netip.Prefix
 }
 

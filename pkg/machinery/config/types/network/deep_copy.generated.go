@@ -544,6 +544,10 @@ func (o *KubeSpanConfigV1Alpha1) DeepCopy() *KubeSpanConfigV1Alpha1 {
 			cp.ConfigFilters.ConfigEndpoints = make([]string, len(o.ConfigFilters.ConfigEndpoints))
 			copy(cp.ConfigFilters.ConfigEndpoints, o.ConfigFilters.ConfigEndpoints)
 		}
+		if o.ConfigFilters.ConfigPeerEndpoints != nil {
+			cp.ConfigFilters.ConfigPeerEndpoints = make([]string, len(o.ConfigFilters.ConfigPeerEndpoints))
+			copy(cp.ConfigFilters.ConfigPeerEndpoints, o.ConfigFilters.ConfigPeerEndpoints)
+		}
 		if o.ConfigFilters.ConfigExcludeAdvertisedNetworks != nil {
 			cp.ConfigFilters.ConfigExcludeAdvertisedNetworks = make([]meta.Prefix, len(o.ConfigFilters.ConfigExcludeAdvertisedNetworks))
 			copy(cp.ConfigFilters.ConfigExcludeAdvertisedNetworks, o.ConfigFilters.ConfigExcludeAdvertisedNetworks)

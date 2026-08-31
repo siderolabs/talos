@@ -5073,6 +5073,16 @@
           "markdownDescription": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
           "x-intellij-html-description": "\u003cp\u003eFilter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\u003c/p\u003e\n\n\u003cp\u003eBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
         },
+        "peerEndpoints": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "peerEndpoints",
+          "description": "Filter endpoints received from other KubeSpan peers before this node attempts to connect to them.\n\nThis filter is the opposite of the endpoints filter: endpoints filters the addresses this node\nadvertises to the whole cluster, affecting how every peer connects to this node, while peerEndpoints\nfilters the endpoints received from other peers, affecting only outgoing connections of this node.\n\nUse it to exclude endpoints which are known to be unreachable from this node\n(e.g., addresses of a private network this node is not connected to), so they are never attempted.\n\nDefault value: no filtering.\n",
+          "markdownDescription": "Filter endpoints received from other KubeSpan peers before this node attempts to connect to them.\n\nThis filter is the opposite of the `endpoints` filter: `endpoints` filters the addresses this node\nadvertises to the whole cluster, affecting how every peer connects to this node, while `peerEndpoints`\nfilters the endpoints received from other peers, affecting only outgoing connections of this node.\n\nUse it to exclude endpoints which are known to be unreachable from this node\n(e.g., addresses of a private network this node is not connected to), so they are never attempted.\n\nDefault value: no filtering.",
+          "x-intellij-html-description": "\u003cp\u003eFilter endpoints received from other KubeSpan peers before this node attempts to connect to them.\u003c/p\u003e\n\n\u003cp\u003eThis filter is the opposite of the \u003ccode\u003eendpoints\u003c/code\u003e filter: \u003ccode\u003eendpoints\u003c/code\u003e filters the addresses this node\nadvertises to the whole cluster, affecting how every peer connects to this node, while \u003ccode\u003epeerEndpoints\u003c/code\u003e\nfilters the endpoints received from other peers, affecting only outgoing connections of this node.\u003c/p\u003e\n\n\u003cp\u003eUse it to exclude endpoints which are known to be unreachable from this node\n(e.g., addresses of a private network this node is not connected to), so they are never attempted.\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
+        },
         "excludeAdvertisedNetworks": {
           "items": {
             "type": "string",

@@ -99,6 +99,7 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 	kubeSpanCfg.ConfigMTU = new(uint32(1380))
 	kubeSpanCfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
+		ConfigPeerEndpoints:             []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"},
 		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/8")}},
 	}
 
@@ -127,6 +128,7 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 			asrt.Equal("test-cluster-secret-multi-doc", spec.SharedSecret)
 			asrt.Equal(uint32(1380), spec.MTU)
 			asrt.Equal([]string{"0.0.0.0/0", "::/0"}, spec.EndpointFilters)
+			asrt.Equal([]string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"}, spec.PeerEndpointFilters)
 			asrt.Equal([]netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}, spec.ExcludeAdvertisedNetworks)
 		},
 	)

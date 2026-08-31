@@ -7,6 +7,7 @@ package kubespan
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -15,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
+	sideronet "github.com/siderolabs/net"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 
@@ -164,11 +166,20 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 
 				peerIPSets[spec.KubeSpan.PublicKey] = ipSet
 
+				endpoints := slices.Clone(spec.KubeSpan.Endpoints)
+
+				if len(cfg.TypedSpec().PeerEndpointFilters) > 0 {
+					endpoints, err = filterPeerEndpoints(endpoints, cfg.TypedSpec().PeerEndpointFilters)
+					if err != nil {
+						return fmt.Errorf("error filtering endpoints for peer %q: %w", spec.KubeSpan.PublicKey, err)
+					}
+				}
+
 				if err = safe.WriterModify(ctx, r, kubespan.NewPeerSpec(kubespan.NamespaceName, spec.KubeSpan.PublicKey), func(res *kubespan.PeerSpec) error {
 					*res.TypedSpec() = kubespan.PeerSpecSpec{
 						Address:    spec.KubeSpan.Address,
 						AllowedIPs: ipSet.Prefixes(),
-						Endpoints:  slices.Clone(spec.KubeSpan.Endpoints),
+						Endpoints:  endpoints,
 						Label:      spec.Nodename,
 					}
 
@@ -206,4 +217,20 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 // dumpSet converts IPSet to a form suitable for logging.
 func dumpSet(set *netipx.IPSet) []string {
 	return xslices.Map(set.Ranges(), netipx.IPRange.String)
+}
+
+// filterPeerEndpoints filters peer endpoints by the list of CIDR filters, preserving the original endpoint order.
+func filterPeerEndpoints(endpoints []netip.AddrPort, filters []string) ([]netip.AddrPort, error) {
+	filteredAddrs, err := sideronet.FilterIPs(xslices.Map(endpoints, netip.AddrPort.Addr), filters)
+	if err != nil {
+		return nil, err
+	}
+
+	allowedAddrs := xslices.ToSet(filteredAddrs)
+
+	return xslices.Filter(endpoints, func(endpoint netip.AddrPort) bool {
+		_, ok := allowedAddrs[endpoint.Addr()]
+
+		return ok
+	}), nil
 }

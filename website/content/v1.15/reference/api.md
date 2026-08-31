@@ -9300,6 +9300,7 @@ ConfigSpec describes KubeSpan configuration..
 | harvest_extra_endpoints | [bool](#bool) |  | Harvest endpoints from the peer statuses. |
 | extra_endpoints | [common.NetIPPort](#common.NetIPPort) | repeated | Extra endpoints to announce. |
 | exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated | If not empty, filter advertised networks using the list of CIDRs. |
+| peer_endpoint_filters | [string](#string) | repeated | If not empty, filter peer endpoints to connect to using the list of CIDRs. |
 
 
 

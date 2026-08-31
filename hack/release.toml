@@ -26,6 +26,17 @@ CoreDNS: 1.14.7
 Talos is built with Go 1.26.7.
 """
 
+    [notes.kubespan_peer_endpoint_filters]
+        title = "KubeSpan Peer Endpoint Filters"
+        description = """\
+KubeSpan now supports filtering the endpoints received from other peers via `filters.peerEndpoints` in the `KubeSpanConfig` document.
+
+While `filters.endpoints` filters the addresses a node advertises to the whole cluster, `filters.peerEndpoints` filters the endpoints
+received from other peers before the node connects to them, affecting only that node. This allows excluding peer-advertised endpoints
+which are known to be unreachable from a node (e.g., addresses of a private network the node is not connected to), so that KubeSpan
+endpoint rotation never attempts them.
+"""
+
     [notes.ipvs]
         title = "IPVS Support"
         description = """\

@@ -1170,6 +1170,13 @@ func (k *KubeSpanFilters) Endpoints() []string {
 	return k.KubeSpanFiltersEndpoints
 }
 
+// PeerEndpoints implements the config.KubeSpanFilters interface.
+//
+// Peer endpoint filters are only supported in the KubeSpanConfig document.
+func (k *KubeSpanFilters) PeerEndpoints() []string {
+	return nil
+}
+
 // ExcludeAdvertisedNetworks implements the config.KubeSpanFilters interface.
 func (k *KubeSpanFilters) ExcludeAdvertisedNetworks() []netip.Prefix {
 	if len(k.KubeSpanFiltersExcludeAdvertisedNetworks) == 0 {
