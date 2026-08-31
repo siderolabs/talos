@@ -16,7 +16,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
+	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
+	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -229,7 +231,30 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 
 		touchedIDs[id] = struct{}{}
 
-		for _, nested := range info.Parts {
+		parts := info.Parts
+
+		if len(parts) == 0 && info.Name != "" && info.Name != "gpt" && device.TypedSpec().Type == "disk" {
+			// The probe matched a whole-disk filesystem signature, so no partitions were discovered.
+			//
+			// On hybrid disk layouts (e.g. a Talos ISO written to a USB stick), a filesystem signature (ISO9660)
+			// coexists with a valid GPT, and the probe returns the first (filesystem) match without enumerating
+			// the partition table.
+			//
+			// The kernel parses the partition table independently of the filesystem signature: if it published
+			// partition devices for this disk, recover the partitions by reading the GPT directly, so that
+			// volumes on such disks are discoverable (e.g. a `metal-iso` machine configuration partition
+			// on the boot USB stick).
+			kernelPartitions, err := kernelPartitionsForDisk(ctx, r, id)
+			if err != nil {
+				return nil, err
+			}
+
+			if len(kernelPartitions) > 0 {
+				parts = ctrl.probeHybridDiskPartitions(logger.With(zap.String("device", id)), id, kernelPartitions)
+			}
+		}
+
+		for _, nested := range parts {
 			partID := partitioning.DevName(id, nested.PartitionIndex)
 
 			if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, partID), func(dv *block.DiscoveredVolume) error {
@@ -326,4 +351,127 @@ func (ctrl *DiscoveryController) fillDiscoveredVolumeFromInfo(dv *block.Discover
 	dv.TypedSpec().BlockSize = info.BlockSize
 	dv.TypedSpec().FilesystemBlockSize = info.FilesystemBlockSize
 	dv.TypedSpec().ProbedSize = info.ProbedSize
+}
+
+// kernelPartitionsForDisk returns a map of partition numbers to partition device IDs published by the kernel for the given disk.
+func kernelPartitionsForDisk(ctx context.Context, r controller.Reader, diskID string) (map[uint]string, error) {
+	devices, err := safe.ReaderListAll[*block.Device](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list devices: %w", err)
+	}
+
+	var kernelPartitions map[uint]string
+
+	for device := range devices.All() {
+		if device.TypedSpec().Type != "partition" || device.TypedSpec().Parent != diskID {
+			continue
+		}
+
+		if device.TypedSpec().PartitionNumber <= 0 {
+			continue
+		}
+
+		if kernelPartitions == nil {
+			kernelPartitions = map[uint]string{}
+		}
+
+		kernelPartitions[uint(device.TypedSpec().PartitionNumber)] = device.Metadata().ID()
+	}
+
+	return kernelPartitions, nil
+}
+
+// probeHybridDiskPartitions discovers partitions on a disk which carries both a whole-disk filesystem signature and a GPT.
+//
+// The partition entries are read directly from the GPT, while the filesystem on each partition is probed via the
+// kernel-published partition device (which handles the partition offset). Only partitions published by the kernel
+// are returned.
+//
+// Any error is treated as "no partitions discovered" (the behavior before the hybrid disk support), as a disk with
+// a whole-disk filesystem signature is not expected to have a partition table in the general case.
+func (ctrl *DiscoveryController) probeHybridDiskPartitions(logger *zap.Logger, id string, kernelPartitions map[uint]string) []blkid.NestedProbeResult {
+	parts, err := readGPTPartitions(filepath.Join("/dev", id), kernelPartitions)
+	if err != nil {
+		logger.Debug("failed to read GPT on a disk with a whole-disk filesystem signature", zap.Error(err))
+
+		return nil
+	}
+
+	for i := range parts {
+		partInfo, err := blkid.ProbePath(filepath.Join("/dev", kernelPartitions[parts[i].PartitionIndex]), blkid.WithProbeLogger(logger))
+		if err != nil {
+			logger.Debug("failed to probe partition device", zap.Uint("partition", parts[i].PartitionIndex), zap.Error(err))
+
+			continue
+		}
+
+		parts[i].ProbeResult = partInfo.ProbeResult
+		parts[i].Parts = partInfo.Parts
+	}
+
+	return parts
+}
+
+// readGPTPartitions opens the disk device and converts its GPT partition entries into nested probe results.
+func readGPTPartitions(devPath string, kernelPartitions map[uint]string) ([]blkid.NestedProbeResult, error) {
+	dev, err := blockdev.NewFromPath(devPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open device: %w", err)
+	}
+
+	defer dev.Close() //nolint:errcheck
+
+	if err = dev.TryLock(false); err != nil {
+		return nil, fmt.Errorf("failed to lock device: %w", err)
+	}
+
+	defer dev.Unlock() //nolint:errcheck
+
+	gptdev, err := gpt.DeviceFromBlockDevice(dev)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get GPT device: %w", err)
+	}
+
+	return gptNestedProbeResults(gptdev, kernelPartitions)
+}
+
+// gptNestedProbeResults reads the GPT and converts partition entries into nested probe results,
+// matching the format of the results returned by the blkid GPT prober.
+//
+// Partitions not published by the kernel (not present in kernelPartitions) are skipped.
+func gptNestedProbeResults(gptdev gpt.Device, kernelPartitions map[uint]string) ([]blkid.NestedProbeResult, error) {
+	pt, err := gpt.Read(gptdev)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read GPT: %w", err)
+	}
+
+	sectorSize := uint64(gptdev.GetSectorSize())
+
+	var parts []blkid.NestedProbeResult
+
+	for idx, part := range pt.Partitions() {
+		if part == nil {
+			continue
+		}
+
+		partitionIndex := uint(idx) + 1 // GPT partition index is 1-based
+
+		if _, ok := kernelPartitions[partitionIndex]; !ok {
+			continue
+		}
+
+		parts = append(parts, blkid.NestedProbeResult{
+			NestedResult: blkid.NestedResult{
+				PartitionUUID:  new(part.PartGUID),
+				PartitionType:  new(part.TypeGUID),
+				PartitionLabel: new(part.Name),
+				PartitionIndex: partitionIndex,
+
+				PartitionOffset: part.FirstLBA * sectorSize,
+				PartitionSize:   (part.LastLBA - part.FirstLBA + 1) * sectorSize,
+			},
+		})
+	}
+
+	return parts, nil
 }
