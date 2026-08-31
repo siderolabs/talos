@@ -41,6 +41,11 @@ func (svc *Extension) HostProcessArgs() (runner.Args, error) {
 	return svc.hostProcessArgs(nil)
 }
 
+// SetPreShutdownRunnerFactory replaces the pre-shutdown process runner factory for tests.
+func (svc *Extension) SetPreShutdownRunnerFactory(factory func(bool, *runner.Args, ...runner.Option) runner.Runner) {
+	svc.preShutdownRunnerFn = factory
+}
+
 // ApplyExtensionServiceConfig exposes applyExtensionServiceConfig for tests.
 func (svc *Extension) ApplyExtensionServiceConfig(
 	spec *runtimeres.ExtensionServiceConfigSpec,

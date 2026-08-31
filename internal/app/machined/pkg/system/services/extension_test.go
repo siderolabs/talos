@@ -5,8 +5,13 @@
 package services_test
 
 import (
+	"context"
+	"errors"
+	"log"
 	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/core/snapshots"
@@ -16,14 +21,59 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	runtimev1alpha1 "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/mocks"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type MockClient struct {
 	controller *gomock.Controller
+}
+
+type preShutdownRunner struct {
+	run    func(context.Context) error
+	opened bool
+	closed bool
+}
+
+func (mock *preShutdownRunner) String() string {
+	return "pre-shutdown-test-runner"
+}
+
+func (mock *preShutdownRunner) Open() error {
+	mock.opened = true
+
+	return nil
+}
+
+func (mock *preShutdownRunner) Run(ctx context.Context, _ events.Recorder, _ runner.OnStart) (runner.Status, error) {
+	return runner.Status{Started: true}, mock.run(ctx)
+}
+
+func (mock *preShutdownRunner) Close() error {
+	mock.closed = true
+
+	return nil
+}
+
+func newExtensionRuntime(t *testing.T) runtime.Runtime {
+	t.Helper()
+	t.Setenv("PLATFORM", "container")
+
+	state, err := runtimev1alpha1.NewState()
+	require.NoError(t, err)
+
+	eventSink := runtimev1alpha1.NewEvents(1000, 10)
+	loggingManager := logging.NewCircularBufferLoggingManager(log.New(t.Output(), "fallback logger: ", log.Flags()))
+
+	return runtimev1alpha1.NewRuntime(state, eventSink, loggingManager)
 }
 
 func (c *MockClient) SnapshotService(snapshotterName string) snapshots.Snapshotter {
@@ -209,6 +259,101 @@ func TestExtensionHostRunnerMode(t *testing.T) {
 	assert.Equal(t, []string{"/usr/local/bin/hello", "--log=debug"}, args.ProcessArgs)
 	assert.Equal(t, []string{"networkd"}, svc.DependsOn(nil))
 	assert.NoError(t, svc.PostFunc(nil, 0))
+}
+
+func TestExtensionPreShutdown(t *testing.T) {
+	rt := newExtensionRuntime(t)
+	mockRunner := &preShutdownRunner{run: func(context.Context) error { return nil }}
+
+	var (
+		gotArgs runner.Args
+		gotOpts runner.Options
+	)
+
+	svc := &services.Extension{
+		Spec: extservices.Spec{
+			Name:       "hello",
+			RunnerMode: extservices.RunnerModeHost,
+			Container: extservices.Container{
+				Environment: []string{"MODE=host"},
+			},
+			PreShutdown: &extservices.Command{
+				Entrypoint: "/usr/local/bin/hello-shutdown",
+				Args:       []string{"--graceful"},
+				Timeout:    time.Minute,
+			},
+		},
+	}
+
+	svc.SetPreShutdownRunnerFactory(func(_ bool, args *runner.Args, setters ...runner.Option) runner.Runner {
+		gotArgs = *args
+
+		opts := runner.DefaultOptions()
+		for _, setter := range setters {
+			setter(opts)
+		}
+
+		gotOpts = *opts
+
+		return mockRunner
+	})
+
+	require.NoError(t, svc.PreShutdownFunc(t.Context(), rt))
+	assert.True(t, mockRunner.opened)
+	assert.True(t, mockRunner.closed)
+	assert.Equal(t, "ext-hello-pre-shutdown", gotArgs.ID)
+	assert.Equal(t, []string{"/usr/local/bin/hello-shutdown", "--graceful"}, gotArgs.ProcessArgs)
+	assert.Contains(t, gotOpts.Env, "MODE=host")
+	assert.Equal(t, filepath.Join(constants.CgroupExtensions, "hello"), gotOpts.CgroupPath)
+	assert.Zero(t, gotOpts.GracefulShutdownTimeout)
+}
+
+func TestExtensionPreShutdownFailure(t *testing.T) {
+	rt := newExtensionRuntime(t)
+	svc := &services.Extension{
+		Spec: extservices.Spec{
+			Name:       "hello",
+			RunnerMode: extservices.RunnerModeHost,
+			PreShutdown: &extservices.Command{
+				Entrypoint: "/usr/local/bin/hello-shutdown",
+				Timeout:    time.Minute,
+			},
+		},
+	}
+
+	mockRunner := &preShutdownRunner{run: func(context.Context) error { return errors.New("exit 1") }}
+
+	svc.SetPreShutdownRunnerFactory(func(bool, *runner.Args, ...runner.Option) runner.Runner { return mockRunner })
+
+	err := svc.PreShutdownFunc(t.Context(), rt)
+	require.ErrorContains(t, err, "pre-shutdown hook failed: exit 1")
+	assert.True(t, mockRunner.closed)
+}
+
+func TestExtensionPreShutdownTimeout(t *testing.T) {
+	rt := newExtensionRuntime(t)
+	svc := &services.Extension{
+		Spec: extservices.Spec{
+			Name:       "hello",
+			RunnerMode: extservices.RunnerModeHost,
+			PreShutdown: &extservices.Command{
+				Entrypoint: "/usr/local/bin/hello-shutdown",
+				Timeout:    time.Nanosecond,
+			},
+		},
+	}
+
+	mockRunner := &preShutdownRunner{run: func(ctx context.Context) error {
+		<-ctx.Done()
+
+		return nil
+	}}
+
+	svc.SetPreShutdownRunnerFactory(func(bool, *runner.Args, ...runner.Option) runner.Runner { return mockRunner })
+
+	err := svc.PreShutdownFunc(t.Context(), rt)
+	require.ErrorContains(t, err, "pre-shutdown hook timed out after 1ns: context deadline exceeded")
+	assert.True(t, mockRunner.closed)
 }
 
 func TestExtensionHostRunnerConfig(t *testing.T) {

@@ -442,6 +442,13 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 	}, "startAllServices"
 }
 
+// PreShutdownServices runs node shutdown hooks while services are still running.
+func PreShutdownServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, _ *log.Logger, r runtime.Runtime) error {
+		return system.Services(r).PreShutdown(ctx)
+	}, "preShutdownServices"
+}
+
 // StopServicesEphemeral represents the StopServicesEphemeral task.
 func StopServicesEphemeral(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

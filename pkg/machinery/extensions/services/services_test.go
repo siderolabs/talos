@@ -7,6 +7,7 @@ package services_test
 import (
 	_ "embed"
 	"testing"
+	"time"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
@@ -66,6 +67,11 @@ func TestUnmarshalHostRunnerMode(t *testing.T) {
 	require.NoError(t, yaml.Unmarshal(helloHostYAML, &spec))
 
 	assert.Equal(t, services.RunnerModeHost, spec.RunnerMode)
+	assert.Equal(t, &services.Command{
+		Entrypoint: "/usr/local/bin/hello-shutdown",
+		Args:       []string{"--graceful"},
+		Timeout:    30 * time.Second,
+	}, spec.PreShutdown)
 	assert.NoError(t, spec.Validate())
 }
 
@@ -165,6 +171,52 @@ func TestValidate(t *testing.T) {
 				Restart:    services.RestartAlways,
 			},
 			expectedError: "1 error occurred:\n\t* container entrypoint must be an absolute host path in host runner mode: \"usr/local/bin/foo\"\n\n",
+		},
+		{
+			name: "container runner with pre-shutdown hook",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "foo",
+				},
+				Restart: services.RestartAlways,
+				PreShutdown: &services.Command{
+					Entrypoint: "/usr/local/bin/foo-shutdown",
+					Timeout:    time.Minute,
+				},
+			},
+			expectedError: "1 error occurred:\n\t* pre-shutdown hook is only supported in host runner mode\n\n",
+		},
+		{
+			name: "pre-shutdown hook with relative entrypoint",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "/usr/local/bin/foo",
+				},
+				RunnerMode: services.RunnerModeHost,
+				Restart:    services.RestartAlways,
+				PreShutdown: &services.Command{
+					Entrypoint: "usr/local/bin/foo-shutdown",
+					Timeout:    time.Minute,
+				},
+			},
+			expectedError: "1 error occurred:\n\t* pre-shutdown entrypoint must be an absolute host path: \"usr/local/bin/foo-shutdown\"\n\n",
+		},
+		{
+			name: "pre-shutdown hook without timeout",
+			spec: services.Spec{
+				Name: "foo",
+				Container: services.Container{
+					Entrypoint: "/usr/local/bin/foo",
+				},
+				RunnerMode: services.RunnerModeHost,
+				Restart:    services.RestartAlways,
+				PreShutdown: &services.Command{
+					Entrypoint: "/usr/local/bin/foo-shutdown",
+				},
+			},
+			expectedError: "1 error occurred:\n\t* pre-shutdown timeout must be positive\n\n",
 		},
 		{
 			name: "invalid deps",

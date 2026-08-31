@@ -33,6 +33,11 @@ type Service interface {
 	Volumes(runtime.Runtime) []string
 }
 
+// PreShutdownService is a service which performs work before node shutdown.
+type PreShutdownService interface {
+	PreShutdownFunc(context.Context, runtime.Runtime) error
+}
+
 // HealthcheckedService is a service which provides health check.
 type HealthcheckedService interface {
 	// HealtFunc provides function that checks health of the service

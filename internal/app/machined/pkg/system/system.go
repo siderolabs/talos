@@ -246,6 +246,28 @@ func (s *singleton) Shutdown(ctx context.Context) {
 	_ = s.stopServices(ctx, nil, true) //nolint:errcheck
 }
 
+// PreShutdown runs node shutdown hooks for all running services.
+func (s *singleton) PreShutdown(ctx context.Context) error {
+	var multiErr *multierror.Error
+
+	for _, svcrunner := range s.List() {
+		if svcrunner.GetState() != events.StateRunning {
+			continue
+		}
+
+		service, ok := svcrunner.service.(PreShutdownService)
+		if !ok {
+			continue
+		}
+
+		if err := service.PreShutdownFunc(ctx, s.runtime); err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("service %q pre-shutdown hook failed: %w", svcrunner.id, err))
+		}
+	}
+
+	return multiErr.ErrorOrNil()
+}
+
 // Stop will initiate a shutdown of the specified service.
 func (s *singleton) Stop(ctx context.Context, serviceIDs ...string) (err error) {
 	if len(serviceIDs) == 0 {
