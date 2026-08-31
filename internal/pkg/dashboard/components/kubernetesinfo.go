@@ -117,7 +117,7 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 			nodeData.typ = notAvailable
 		} else {
 			nodeData.isControlPlane = res.MachineType() == machine.TypeControlPlane
-			nodeData.typ = res.MachineType().String()
+			nodeData.typ = tview.Escape(res.MachineType().String())
 		}
 	}
 }
@@ -133,7 +133,7 @@ func kubernetesVersion(deleted bool, image string) string {
 		return notAvailable
 	}
 
-	return version
+	return tview.Escape(version)
 }
 
 func (widget *KubernetesInfo) updateNodeAPIData(node string, data *apidata.Node) {

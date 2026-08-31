@@ -77,34 +77,34 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 		if data.Deleted {
 			nodeData.uuid = notAvailable
 		} else {
-			nodeData.uuid = res.TypedSpec().UUID
+			nodeData.uuid = tview.Escape(res.TypedSpec().UUID)
 		}
 	case *cluster.Info:
 		clusterName := res.TypedSpec().ClusterName
 		if data.Deleted || clusterName == "" {
 			nodeData.clusterName = notAvailable
 		} else {
-			nodeData.clusterName = clusterName
+			nodeData.clusterName = tview.Escape(clusterName)
 		}
 	case *siderolink.Status:
 		if data.Deleted {
 			nodeData.siderolink = notAvailable
 		} else {
-			nodeData.siderolink = formatText(res.TypedSpec().Host, res.TypedSpec().Connected)
+			nodeData.siderolink = FormatText(res.TypedSpec().Host, res.TypedSpec().Connected)
 		}
 	case *runtime.MachineStatus:
 		if data.Deleted {
 			nodeData.stage = notAvailable
 			nodeData.ready = notAvailable
 		} else {
-			nodeData.stage = formatStatus(res.TypedSpec().Stage.String())
-			nodeData.ready = formatStatus(res.TypedSpec().Status.Ready)
+			nodeData.stage = FormatStatus(res.TypedSpec().Stage.String())
+			nodeData.ready = FormatStatus(res.TypedSpec().Status.Ready)
 		}
 	case *runtime.SecurityState:
 		if data.Deleted {
 			nodeData.secureBootState = notAvailable
 		} else {
-			nodeData.secureBootState = formatStatus(res.TypedSpec().SecureBoot)
+			nodeData.secureBootState = FormatStatus(res.TypedSpec().SecureBoot)
 		}
 	case *cluster.Member:
 		if data.Deleted {

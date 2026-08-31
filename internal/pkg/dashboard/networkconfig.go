@@ -314,7 +314,7 @@ func (widget *NetworkConfigGrid) redraw() {
 
 		err := encoder.Encode(data.existingConfig)
 		if err != nil {
-			widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+			widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(err.Error())))
 		}
 
 		widget.existingConfigView.SetText(fmt.Sprintf("[lightblue]%s[-]", tview.Escape(buf.String())))
@@ -323,7 +323,7 @@ func (widget *NetworkConfigGrid) redraw() {
 	}
 
 	if data.newConfigError != nil {
-		widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", data.newConfigError))
+		widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(data.newConfigError.Error())))
 	} else if data.newConfig != nil {
 		var buf strings.Builder
 
@@ -332,7 +332,7 @@ func (widget *NetworkConfigGrid) redraw() {
 
 		err := encoder.Encode(data.newConfig)
 		if err != nil {
-			widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+			widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(err.Error())))
 		}
 
 		widget.newConfigView.SetText(fmt.Sprintf("[green]%s[-]", tview.Escape(buf.String())))
@@ -387,7 +387,7 @@ func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
 				cfg := runtime.PlatformNetworkConfig{}
 
 				if err := yaml.Unmarshal([]byte(res.TypedSpec().Value), &cfg); err != nil {
-					widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+					widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(err.Error())))
 
 					return
 				}
@@ -437,7 +437,7 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 
 	configBytes, err := yaml.Marshal(nodeData.newConfig)
 	if err != nil {
-		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
 		return
 	}
@@ -445,7 +445,7 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 	ctx = utils.NodeContext(ctx, widget.selectedNode)
 
 	if err = widget.dashboard.cli.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, configBytes); err != nil {
-		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
 		return
 	}
