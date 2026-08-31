@@ -145,21 +145,6 @@ func (in *Input) worker() ([]config.Document, error) {
 		}
 	}
 
-	if machine.MachineRegistries.RegistryMirrors == nil { //nolint:staticcheck // backwards compatibility
-		machine.MachineRegistries.RegistryMirrors = map[string]*v1alpha1.RegistryMirrorConfig{} //nolint:staticcheck // backwards compatibility
-	}
-
-	if in.Options.VersionContract.KubernetesAlternateImageRegistries() {
-		if _, ok := machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"]; !ok { //nolint:staticcheck // backwards compatibility Talos v1.1->1.2
-			machine.MachineRegistries.RegistryMirrors["k8s.gcr.io"] = &v1alpha1.RegistryMirrorConfig{ //nolint:staticcheck // backwards compatibility Talos v1.1->1.2
-				MirrorEndpoints: []string{
-					"https://registry.k8s.io",
-					"https://k8s.gcr.io",
-				},
-			}
-		}
-	}
-
 	if in.Options.VersionContract.ClusterNameForWorkers() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		cluster.ClusterName = in.ClusterName //nolint:staticcheck // legacy configuration
 	}
