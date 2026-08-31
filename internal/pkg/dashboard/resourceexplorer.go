@@ -297,7 +297,7 @@ func (widget *ResourceExplorerGrid) loadResourceTypes() {
 			widget.app.QueueUpdateDraw(func() {
 				widget.initTypesTableHeader()
 				widget.typesTable.SetCell(1, 0, &tview.TableCell{
-					Text:          fmt.Sprintf("[red]%s[-]", formatError(err)),
+					Text:          fmt.Sprintf("[red]%s[-]", tview.Escape(formatError(err))),
 					NotSelectable: true,
 				})
 			})
@@ -360,19 +360,19 @@ func (widget *ResourceExplorerGrid) renderTypesTable() {
 		}
 
 		widget.typesTable.SetCell(row, 0, &tview.TableCell{
-			Text:      spec.Type,
+			Text:      tview.Escape(spec.Type),
 			Align:     tview.AlignLeft,
 			Color:     tcell.ColorWhite,
 			Reference: rd, // used by selectResourceType to retrieve the RD
 			Expansion: 1,
 		})
 		widget.typesTable.SetCell(row, 1, &tview.TableCell{
-			Text:  spec.DefaultNamespace,
+			Text:  tview.Escape(spec.DefaultNamespace),
 			Align: tview.AlignLeft,
 			Color: tcell.ColorWhite,
 		})
 		widget.typesTable.SetCell(row, 2, &tview.TableCell{
-			Text:  strings.Join(spec.Aliases, ", "),
+			Text:  tview.Escape(strings.Join(spec.Aliases, ", ")),
 			Align: tview.AlignLeft,
 			Color: tcell.ColorGray,
 		})
@@ -694,16 +694,16 @@ func (widget *ResourceExplorerGrid) selectResource(row int) {
 func (widget *ResourceExplorerGrid) showResourceYAML(res resource.Resource) {
 	out, err := resource.MarshalYAML(res)
 	if err != nil {
-		widget.yamlView.SetText(fmt.Sprintf("Error marshaling resource: %v", err))
+		widget.yamlView.SetText(tview.Escape(fmt.Sprintf("Error marshaling resource: %v", err)))
 	} else {
 		outBytes, marshalErr := yaml.Marshal(out)
 		if marshalErr != nil {
-			widget.yamlView.SetText(fmt.Sprintf("Error encoding YAML: %v", marshalErr))
+			widget.yamlView.SetText(tview.Escape(fmt.Sprintf("Error encoding YAML: %v", marshalErr)))
 		} else {
 			var node yaml.Node
 
 			if unmarshalErr := yaml.Unmarshal(outBytes, &node); unmarshalErr != nil {
-				widget.yamlView.SetText(fmt.Sprintf("Error encoding YAML: %v", unmarshalErr))
+				widget.yamlView.SetText(tview.Escape(fmt.Sprintf("Error encoding YAML: %v", unmarshalErr)))
 			} else {
 				var sb strings.Builder
 

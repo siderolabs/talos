@@ -95,7 +95,7 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 		} else {
 			imageParts := strings.Split(res.TypedSpec().Image, ":")
 			if len(imageParts) > 0 {
-				nodeData.kubernetesVersion = imageParts[len(imageParts)-1]
+				nodeData.kubernetesVersion = tview.Escape(imageParts[len(imageParts)-1])
 			}
 		}
 	case *k8s.StaticPodStatus:
@@ -112,7 +112,7 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 			nodeData.typ = notAvailable
 		} else {
 			nodeData.isControlPlane = res.MachineType() == machine.TypeControlPlane
-			nodeData.typ = res.MachineType().String()
+			nodeData.typ = tview.Escape(res.MachineType().String())
 		}
 	}
 }

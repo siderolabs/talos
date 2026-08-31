@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/xslices"
 )
 
@@ -62,29 +63,33 @@ func padRight(s string, width int) string {
 
 func toHealthStatus(healthy bool) string {
 	if healthy {
-		return formatStatus("Healthy")
+		return FormatStatus("Healthy")
 	}
 
-	return formatStatus("Unhealthy")
+	return FormatStatus("Unhealthy")
 }
 
-func formatStatus(status any) string {
-	statusStr := capitalizeFirst(fmt.Sprintf("%v", status))
+// FormatStatus formats a status string with a checkmark or cross based on the status value.
+func FormatStatus(status any) string {
+	statusStr := tview.Escape(capitalizeFirst(fmt.Sprintf("%v", status)))
 
 	switch strings.ToLower(statusStr) {
 	case "running", "healthy", "true":
-		return formatText(statusStr, true)
+		return FormatText(statusStr, true)
 	case "stopped", "unhealthy", "false":
-		return formatText(statusStr, false)
+		return FormatText(statusStr, false)
 	default:
 		return statusStr
 	}
 }
 
-func formatText(text string, ok bool) string {
+// FormatText formats a text with a checkmark or cross based on the boolean value.
+func FormatText(text string, ok bool) string {
 	if text == "" {
 		return ""
 	}
+
+	text = tview.Escape(text)
 
 	if ok {
 		return fmt.Sprintf("[green]√ %s[-]", text)
