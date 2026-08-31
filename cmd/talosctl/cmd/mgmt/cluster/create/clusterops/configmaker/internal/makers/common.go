@@ -228,7 +228,7 @@ func (m *Maker[T]) initVersionContract() error {
 	return nil
 }
 
-// GetClusterConfigs prepares and returns the cluster create request data. This method is ment to be called after the implemeting maker
+// GetClusterConfigs prepares and returns the cluster create request data. This method is meant to be called after the implementing maker
 // logic has been run.
 func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 	var configBundle *bundle.Bundle

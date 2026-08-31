@@ -23,7 +23,7 @@ func getDockerClusterRequest(cOps clusterops.Common, dOps clusterops.Docker, pro
 	_, err := config.ParseContractFromVersion(cOps.TalosVersion)
 	if err != nil {
 		currentVersion := helpers.GetTag()
-		fmt.Printf("failed to derrive Talos version from the docker image, defaulting to %s\n", currentVersion)
+		fmt.Printf("failed to derive Talos version from the docker image, defaulting to %s\n", currentVersion)
 		cOps.TalosVersion = currentVersion
 	}
 
