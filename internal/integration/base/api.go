@@ -168,6 +168,7 @@ type Capabilities struct {
 	SupportsReboot  bool
 	SupportsRecover bool
 	SupportsVolumes bool
+	SupportsMETA    bool
 	SecureBooted    bool
 }
 
@@ -185,6 +186,7 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 			caps.RunsTalosKernel = true
 			caps.SupportsReboot = true
 			caps.SupportsRecover = true
+			caps.SupportsMETA = true
 			caps.SupportsVolumes = true
 		}
 	}
