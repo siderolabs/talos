@@ -1281,11 +1281,12 @@ COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
+ARG UNITTEST_PARALLELISM
 ENV PLATFORM=container
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p 4 ${TESTPKGS}
+    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p ${UNITTEST_PARALLELISM} ${TESTPKGS}
 FROM scratch AS unit-tests
 COPY --link --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
@@ -1296,12 +1297,15 @@ COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
+ARG UNITTEST_PARALLELISM
 ENV PLATFORM=container
 ENV CGO_ENABLED=1
+ # reduce the wait time of TSan to exit after the test is done
+ENV GORACE=atexit_sleep_ms=100
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -race -p 4 ${TESTPKGS}
+    -race -p ${UNITTEST_PARALLELISM} ${TESTPKGS}
 
 # The unit-tests-fips target performs tests with FIPS strict mode.
 FROM base AS unit-tests-fips
@@ -1309,13 +1313,14 @@ COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
+ARG UNITTEST_PARALLELISM
 ENV PLATFORM=container
 ENV GOFIPS140=latest
 ENV GODEBUG=fips140=only,tlsmlkem=0
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -p 4 ${TESTPKGS}
+    -p ${UNITTEST_PARALLELISM} ${TESTPKGS}
 
 # The integration-test targets builds integration test binary.
 

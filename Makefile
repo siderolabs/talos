@@ -121,6 +121,7 @@ KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_V
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
+UNITTEST_PARALLELISM ?= 8
 RELEASES ?= v1.12.9 v1.13.7
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
@@ -255,6 +256,7 @@ COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
+COMMON_ARGS += --build-arg=UNITTEST_PARALLELISM=$(UNITTEST_PARALLELISM)
 COMMON_ARGS += --build-arg=TOOLS_PREFIX=$(TOOLS_PREFIX)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=GENERATE_VEX_PREFIX=$(GENERATE_VEX_PREFIX)
