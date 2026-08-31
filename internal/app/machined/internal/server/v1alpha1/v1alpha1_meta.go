@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 )
 
 // MetaWrite implements the machine.MachineServer interface.
@@ -22,11 +23,17 @@ func (s *Server) MetaWrite(ctx context.Context, req *machine.MetaWriteRequest) (
 		return nil, err
 	}
 
-	if uint32(uint8(req.Key)) != req.Key {
+	metaKey := uint8(req.Key)
+
+	if uint32(metaKey) != req.Key {
 		return nil, status.Errorf(codes.InvalidArgument, "key must be a uint8")
 	}
 
-	ok, err := s.Controller.Runtime().State().Machine().Meta().SetTagBytes(ctx, uint8(req.Key), req.Value)
+	if !meta.IsAPIWriteable(metaKey) {
+		return nil, status.Errorf(codes.PermissionDenied, "meta key is not writeable via the API")
+	}
+
+	ok, err := s.Controller.Runtime().State().Machine().Meta().SetTagBytes(ctx, metaKey, req.Value)
 	if err != nil {
 		return nil, err
 	}
@@ -55,11 +62,17 @@ func (s *Server) MetaDelete(ctx context.Context, req *machine.MetaDeleteRequest)
 		return nil, err
 	}
 
-	if uint32(uint8(req.Key)) != req.Key {
+	metaKey := uint8(req.Key)
+
+	if uint32(metaKey) != req.Key {
 		return nil, status.Errorf(codes.InvalidArgument, "key must be a uint8")
 	}
 
-	ok, err := s.Controller.Runtime().State().Machine().Meta().DeleteTag(ctx, uint8(req.Key))
+	if !meta.IsAPIWriteable(metaKey) {
+		return nil, status.Errorf(codes.PermissionDenied, "meta key is not writeable via the API")
+	}
+
+	ok, err := s.Controller.Runtime().State().Machine().Meta().DeleteTag(ctx, metaKey)
 	if err != nil {
 		return nil, err
 	}
