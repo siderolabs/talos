@@ -39,6 +39,10 @@ func (v *Value) Parse(s string) error {
 		return fmt.Errorf("invalid key %q", k)
 	}
 
+	if key == 0 { // reserved value, used as a sentinel for "no key"
+		return fmt.Errorf("invalid key %q: key cannot be 0", k)
+	}
+
 	v.Key = uint8(key)
 	v.Value = vv
 
