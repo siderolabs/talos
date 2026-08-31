@@ -18,6 +18,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkRules() NetworkRuleConfig
 	KubespanConfig() KubespanConfig
 	EthernetConfigs() []EthernetConfig
+	NetworkWifiConfigs() []NetworkWifiConfig
 	RunDefaultDHCPOperators() bool
 	NetworkStaticHostConfig() []NetworkStaticHostConfig
 	NetworkHostnameConfig() NetworkHostnameConfig

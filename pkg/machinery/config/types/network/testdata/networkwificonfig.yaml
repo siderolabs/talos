@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: NetworkWifiConfig
+name: wlan0
+countryCode: NL
+networks:
+    - ssid: HomeNetwork
+      psk: topsecretpassphrase
+    - ssid: HiddenNetwork
+      psk: anothersecret
+      hidden: true

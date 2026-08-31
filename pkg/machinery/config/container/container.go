@@ -448,6 +448,11 @@ func (container *Container) EthernetConfigs() []config.EthernetConfig {
 	return findMatchingDocs[config.EthernetConfig](container.documents)
 }
 
+// NetworkWifiConfigs implements config.Config interface.
+func (container *Container) NetworkWifiConfigs() []config.NetworkWifiConfig {
+	return findMatchingDocs[config.NetworkWifiConfig](container.documents)
+}
+
 // ContainerConfigs implements config.Config interface.
 func (container *Container) ContainerConfigs() []config.ContainerConfig {
 	return findMatchingDocs[config.ContainerConfig](container.documents)

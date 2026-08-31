@@ -226,6 +226,7 @@ func NewState() (*State, error) {
 		&network.Status{},
 		&network.TimeServerStatus{},
 		&network.TimeServerSpec{},
+		&network.WifiSpec{},
 		&perf.CPU{},
 		&perf.Memory{},
 		&cri.BaseRuntimeSpecConfig{},

@@ -2464,6 +2464,84 @@ func (VLANConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (WifiConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NetworkWifiConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkWifiConfig is a config document to configure a WiFi (wireless) network interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NetworkWifiConfig is a config document to configure a WiFi (wireless) network interface.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the wireless link (interface), e.g. `wlan0`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the wireless link (interface), e.g. `wlan0`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "countryCode",
+				Type:        "string",
+				Note:        "",
+				Description: "ISO/IEC 3166-1 alpha2 country code to set the wireless regulatory domain, e.g. `NL`.\n\nIf not set, the regulatory domain is left to the kernel default (world domain).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "ISO/IEC 3166-1 alpha2 country code to set the wireless regulatory domain, e.g. `NL`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "networks",
+				Type:        "[]WifiNetworkConfig",
+				Note:        "",
+				Description: "List of wireless networks to connect to (in order of preference).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "List of wireless networks to connect to (in order of preference)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleWifiConfigV1Alpha1())
+
+	return doc
+}
+
+func (WifiNetworkConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "WifiNetworkConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "WifiNetworkConfig describes a single WiFi network." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "WifiNetworkConfig describes a single WiFi network.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "WifiConfigV1Alpha1",
+				FieldName: "networks",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "ssid",
+				Type:        "string",
+				Note:        "",
+				Description: "SSID (network name) of the wireless network.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "SSID (network name) of the wireless network." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "psk",
+				Type:        "string",
+				Note:        "",
+				Description: "Pre-shared key (passphrase) of the wireless network (WPA2-PSK/WPA3-SAE).\n\nIf not set, the network is assumed to be open (no authentication).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Pre-shared key (passphrase) of the wireless network (WPA2-PSK/WPA3-SAE)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hidden",
+				Type:        "bool",
+				Note:        "",
+				Description: "Set if the network SSID is hidden (not broadcasted).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Set if the network SSID is hidden (not broadcasted)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (WireguardConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WireguardConfig",
@@ -2629,6 +2707,8 @@ func GetFileDoc() *encoder.FileDoc {
 			VethConfigV1Alpha1{}.Doc(),
 			VethPeerConfig{}.Doc(),
 			VLANConfigV1Alpha1{}.Doc(),
+			WifiConfigV1Alpha1{}.Doc(),
+			WifiNetworkConfig{}.Doc(),
 			WireguardConfigV1Alpha1{}.Doc(),
 			WireguardPeer{}.Doc(),
 		},

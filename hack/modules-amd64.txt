@@ -213,6 +213,8 @@ kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/virtio_net.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
 kernel/drivers/net/vrf.ko
+kernel/drivers/net/wireless/intel/iwlwifi/iwlwifi.ko
+kernel/drivers/net/wireless/intel/iwlwifi/mvm/iwlmvm.ko
 kernel/drivers/net/xen-netfront.ko
 kernel/drivers/nvme/common/nvme-auth.ko
 kernel/drivers/nvme/host/nvme-rdma.ko
@@ -315,6 +317,7 @@ kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
 kernel/net/ipv4/ip_gre.ko
 kernel/net/ipv6/ip6_gre.ko
+kernel/net/mac80211/mac80211.ko
 kernel/net/netfilter/ipvs/ip_vs.ko
 kernel/net/netfilter/ipvs/ip_vs_lc.ko
 kernel/net/netfilter/ipvs/ip_vs_mh.ko
@@ -328,6 +331,7 @@ kernel/net/tls/tls.ko
 kernel/net/vmw_vsock/hv_sock.ko
 kernel/net/vmw_vsock/vmw_vsock_virtio_transport.ko
 kernel/net/vmw_vsock/vmw_vsock_vmci_transport.ko
+kernel/net/wireless/cfg80211.ko
 kernel/net/xfrm/xfrm_interface.ko
 modules.builtin
 modules.builtin.modinfo
