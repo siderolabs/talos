@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	mc "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
@@ -166,6 +167,31 @@ func TestGenerateRegistryMirrorsOrder(t *testing.T) {
 	named, ok = registryConfigs[1].(mc.NamedDocument)
 	require.True(t, ok)
 	assert.Equal(t, "b.com", named.Name())
+}
+
+// TestGenerateNoLegacyRegistries asserts that no empty legacy `.machine.registries` stanza is
+// generated for machine types which use the multi-doc registry configuration.
+func TestGenerateNoLegacyRegistries(t *testing.T) {
+	t.Parallel()
+
+	input, err := generate.NewInput("test", "https://10.0.1.5", constants.DefaultKubernetesVersion)
+	require.NoError(t, err)
+
+	for _, machineType := range []machine.Type{machine.TypeControlPlane, machine.TypeWorker} {
+		t.Run(machineType.String(), func(t *testing.T) {
+			t.Parallel()
+
+			cfg, err := input.Config(machineType)
+			require.NoError(t, err)
+
+			// the legacy stanza is only rendered by the commented encoder, which is what
+			// `talosctl gen config` uses by default.
+			out, err := cfg.EncodeBytes(encoder.WithComments(encoder.CommentsAll))
+			require.NoError(t, err)
+
+			assert.NotContains(t, string(out), "registries:")
+		})
+	}
 }
 
 func TestGenerateEphemeralVolumeConfig(t *testing.T) {
