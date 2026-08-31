@@ -130,6 +130,20 @@ func netipPrefixBitsCorrected(p netip.Prefix) int {
 	return p.Bits()
 }
 
+// RouteScopeMatches compares the actual rtm scope (as reported by the kernel), with the expected scope, as defined in the RouteSpec.
+//
+// The kernel accepts any scope on RTM_NEWROUTE. However, the route scope is an IPv4-only concept.
+// In the case of IPv6, the kernel ignores the provided scope, and the IPv6 FIB (fib6_info) doesn't even have an equivalent scope field.
+// When the route is read back, the kernel always fills the returned route's scope with RT_SCOPE_UNIVERSE (nethelpers.ScopeGlobal), in
+// rt6_fill_node(). That's why we only assert the scope in non-IPv6 scenarios.
+func RouteScopeMatches(actual uint8, expected *network.RouteSpecSpec) bool {
+	if expected.Family == nethelpers.FamilyInet6 {
+		return true
+	}
+
+	return actual == uint8(expected.Scope)
+}
+
 func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
@@ -224,7 +238,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			}
 
 			// check if existing route matches the spec: if it does, skip update
-			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
+			if RouteScopeMatches(existing.Scope, route.TypedSpec()) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
 				existing.Attributes.OutIface == linkIndex &&
 				(value.IsZero(route.TypedSpec().Source) ||
