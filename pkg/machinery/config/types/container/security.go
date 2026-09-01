@@ -41,7 +41,8 @@ type ContainerSecurity struct {
 	//
 	//     This alone does not grant DAC access to the socket, which is owned by the `apid` user:
 	//     reaching it in practice still requires `profile: privileged` or an equivalent capability/
-	//     `runAs` grant. A container authorized this way is only ever given the `Reader` role.
+	//     `runAs` grant. Once connected, the container may request any role, same as extension
+	//     services; the RPC's own role requirements are what actually gate access.
 	SecurityMachinedAccess bool `yaml:"machinedAccess,omitempty"`
 }
 
