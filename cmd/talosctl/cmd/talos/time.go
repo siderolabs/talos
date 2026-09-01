@@ -8,12 +8,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -50,7 +50,7 @@ var timeCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tNTP-SERVER\tNODE-TIME\tNTP-SERVER-TIME")
 
 		flushTimer := time.NewTimer(outputFlushInterval)
@@ -83,7 +83,7 @@ var timeCmd = &cobra.Command{
 							continue
 						}
 
-						fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", resp.Node, msg.Server, msg.Localtime.AsTime().String(), msg.Remotetime.AsTime().String())
+						safeout.Fprintf(w, "%s\t%s\t%s\t%s\n", resp.Node, msg.Server, msg.Localtime.AsTime().String(), msg.Remotetime.AsTime().String())
 					}
 				}
 

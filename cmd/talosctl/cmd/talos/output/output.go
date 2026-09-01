@@ -7,7 +7,7 @@ package output
 
 import (
 	"fmt"
-	"os"
+	"io"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -15,6 +15,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/util/jsonpath"
+
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 )
 
 // Writer interface.
@@ -24,17 +26,23 @@ type Writer interface {
 	Flush() error
 }
 
-// NewWriter builds writer from type.
-func NewWriter(format string) (Writer, error) {
-	writer := os.Stdout
+// NewWriter builds a writer over out, taking the raw stream so that the choice of
+// which formats are filtered is testable.
+//
+// A resource comes from the node, so its ID, its spec and even the print columns
+// of its definition are node-supplied. The JSON and YAML encoders escape control
+// characters themselves and are handed the raw stream; the table and jsonpath
+// writers render values verbatim and are handed the filtered one.
+func NewWriter(format string, out io.Writer) (Writer, error) {
+	filtered := safeout.NewWriter(out)
 
 	switch {
 	case format == "table":
-		return NewTable(writer), nil
+		return filterFlusher{NewTable(filtered), filtered}, nil
 	case format == "yaml":
-		return NewYAML(writer), nil
+		return NewYAML(out), nil
 	case format == "json":
-		return NewJSON(writer), nil
+		return NewJSON(out), nil
 	case strings.HasPrefix(format, "jsonpath="):
 		path := format[len("jsonpath="):]
 
@@ -44,10 +52,29 @@ func NewWriter(format string) (Writer, error) {
 			return nil, fmt.Errorf("error parsing jsonpath: %w", err)
 		}
 
-		return NewJSONPath(writer, jp), nil
+		// a jsonpath expression selecting a scalar renders it verbatim, unlike the
+		// JSON branch of the same writer. The filter is the identity on printable
+		// UTF-8, so `-o jsonpath=` stays usable from a script.
+		return filterFlusher{NewJSONPath(filtered, jp), filtered}, nil
 	default:
 		return nil, fmt.Errorf("output format %q is not supported", format)
 	}
+}
+
+// filterFlusher extends Flush down to the escaping stream, which otherwise holds
+// on to the trailing bytes of a value that ends mid-rune.
+type filterFlusher struct {
+	Writer
+
+	filter *safeout.Writer
+}
+
+func (f filterFlusher) Flush() error {
+	if err := f.Writer.Flush(); err != nil {
+		return err
+	}
+
+	return f.filter.Flush()
 }
 
 // CompleteOutputArg represents tab completion for `--output` argument.

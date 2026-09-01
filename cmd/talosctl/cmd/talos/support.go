@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/kubeconfig"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -99,10 +100,10 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 
 			encryptionOpts = opts
 
-			fmt.Fprintln(os.Stderr, "Encrypting support bundle to the following recipients:")
+			fmt.Fprintln(safeout.Stderr(), "Encrypting support bundle to the following recipients:")
 
 			for _, r := range recipients {
-				fmt.Fprintf(os.Stderr, "  - %s\n", r)
+				fmt.Fprintf(safeout.Stderr(), "  - %s\n", r)
 			}
 		}
 
@@ -165,7 +166,7 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 			return err
 		}
 
-		fmt.Fprintf(os.Stderr, "Support bundle is written to %s\n", supportCmdFlags.output)
+		fmt.Fprintf(safeout.Stderr(), "Support bundle is written to %s\n", supportCmdFlags.output)
 
 		return collectErr
 	},
@@ -314,7 +315,7 @@ func openArchive(ctx context.Context, clientFactory *global.ClientFactory) (*os.
 	} else {
 		buf := bufio.NewReader(os.Stdin)
 
-		fmt.Printf("%s already exists, overwrite? [y/N]: ", supportCmdFlags.output)
+		safeout.Printf("%s already exists, overwrite? [y/N]: ", supportCmdFlags.output)
 
 		choice, err := buf.ReadString('\n')
 		if err != nil {
@@ -354,13 +355,19 @@ func (sbe *supportBundleErrors) print() error {
 
 	var wroteHeader bool
 
-	w := tabwriter.NewWriter(os.Stderr, 0, 0, 3, ' ', 0)
+	// the rows are colorized, and a color escape written through the filter would be
+	// escaped into literal text, so the stream stays raw and every cell coming from
+	// a node is escaped by hand below.
+	w := tabwriter.NewWriter(os.Stderr, 0, 0, 3, ' ', 0) //nolint:forbidigo // see above
 
 	for _, err := range sbe.errors {
 		if !wroteHeader {
 			wroteHeader = true
 
-			fmt.Fprintln(os.Stderr, "Processed with errors:")
+			// the header goes through the tabwriter too, so that it keeps its place
+			// in the output: a line without a tab is a block of its own and is
+			// written out unchanged.
+			fmt.Fprintln(w, "Processed with errors:")
 			fmt.Fprintln(w, "\tSOURCE\tERROR")
 		}
 
@@ -369,11 +376,11 @@ func (sbe *supportBundleErrors) print() error {
 			details[i] = strings.TrimSpace(d)
 		}
 
-		fmt.Fprintf(w, "\t%s\t%s\n", err.source, color.RedString(details[0]))
+		fmt.Fprintf(w, "\t%s\t%s\n", safeout.Cell(err.source), color.RedString("%s", safeout.Cell(details[0])))
 
 		if len(details) > 1 {
 			for _, line := range details[1:] {
-				fmt.Fprintf(w, "\t\t%s\n", color.RedString(line))
+				fmt.Fprintf(w, "\t\t%s\n", color.RedString("%s", safeout.Cell(line)))
 			}
 		}
 	}

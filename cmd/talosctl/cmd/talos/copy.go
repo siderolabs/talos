@@ -64,7 +64,7 @@ captures ownership and permission bits.`,
 		localPath := args[1]
 
 		if localPath == "-" {
-			_, err = io.Copy(os.Stdout, r)
+			_, err = io.Copy(os.Stdout, r) //nolint:forbidigo // a tar stream, not text.
 
 			return err
 		}

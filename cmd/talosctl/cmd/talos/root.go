@@ -20,6 +20,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -63,7 +64,7 @@ func (f containerNamespaceFlag) resolveContainerNamespace() (string, common.Cont
 // operator had asked for another.
 func addContainerNamespaceFlags(cmd *cobra.Command, flags *containerNamespaceFlag) {
 	cmd.Flags().BoolVarP(&flags.kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
-	cmd.Flags().MarkDeprecated("kubernetes", "use --namespace cri instead") //nolint:errcheck
+	helpers.MarkFlagDeprecated(cmd.Flags(), "kubernetes", "use --namespace cri instead") //nolint:errcheck
 	cmd.Flags().StringVar(&flags.namespace, "namespace", "system",
 		"namespace to use: \"system\" (default, Talos service containers), \"cri\" for Kubernetes workloads, \""+
 			constants.TalosContainersContainerdNamespace+"\" for containers declared via ContainerConfig")

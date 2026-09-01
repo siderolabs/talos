@@ -10,12 +10,12 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"os"
 	"text/tabwriter"
 	"time"
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -45,12 +45,12 @@ var mountsCmd = &cobra.Command{
 			},
 		)
 
-		return renderMounts(os.Stdout, responseChan)
+		return RenderMounts(safeout.Stdout(), responseChan)
 	},
 }
 
-// renderMounts renders the mounts output for a stream of multiplexed responses.
-func renderMounts(output io.Writer, responseChan <-chan multiplex.Response[*machineapi.MountsResponse]) error {
+// RenderMounts renders the mounts output for a stream of multiplexed responses.
+func RenderMounts(output io.Writer, responseChan <-chan multiplex.Response[*machineapi.MountsResponse]) error {
 	w := tabwriter.NewWriter(output, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
 
@@ -79,7 +79,7 @@ func renderMounts(output io.Writer, responseChan <-chan multiplex.Response[*mach
 							continue
 						}
 
-						fmt.Fprintf(
+						safeout.Fprintf(
 							w, "%s\t%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n",
 							resp.Node,
 							r.Filesystem,

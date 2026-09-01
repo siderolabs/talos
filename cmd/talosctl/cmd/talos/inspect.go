@@ -6,11 +6,10 @@ package talos
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
@@ -58,10 +57,10 @@ to render the graph:
 				return fmt.Errorf("error getting controller runtime dependencies: %s", err)
 			}
 
-			cli.Warning("%s", err)
+			safeout.Warningf("%s", err)
 		}
 
-		return formatters.RenderGraph(ctx, c, resp, os.Stdout, inspectDependenciesCmdFlags.withResources)
+		return formatters.RenderGraph(ctx, c, resp, safeout.Stdout(), inspectDependenciesCmdFlags.withResources)
 	},
 }
 

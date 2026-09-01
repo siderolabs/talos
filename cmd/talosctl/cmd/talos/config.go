@@ -27,6 +27,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -282,7 +283,7 @@ var configRemoveCmd = &cobra.Command{
 		for _, match := range matches {
 			if match == c.Context {
 				fmt.Fprintf(
-					os.Stderr,
+					safeout.Stderr(),
 					"skipping removal of current context %q, please change it to another before removing\n",
 					match,
 				)
@@ -297,7 +298,7 @@ var configRemoveCmd = &cobra.Command{
 					continue
 				}
 			} else {
-				fmt.Fprintf(os.Stderr, "removing context %q\n", match)
+				fmt.Fprintf(safeout.Stderr(), "removing context %q\n", match)
 			}
 
 			noChanges = false
@@ -369,7 +370,7 @@ var configGetContextsCmd = &cobra.Command{
 		keys := maps.Keys(c.Contexts)
 		slices.Sort(keys)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "CURRENT\tNAME\tENDPOINTS\tNODES")
 
 		for _, name := range keys {
@@ -393,7 +394,7 @@ var configGetContextsCmd = &cobra.Command{
 				nodes = strings.Join(context.Nodes, ",")
 			}
 
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", current, name, endpoints, nodes)
+			safeout.Fprintf(w, "%s\t%s\t%s\t%s\n", current, name, endpoints, nodes)
 		}
 
 		return w.Flush()
@@ -421,7 +422,7 @@ var configMergeCmd = &cobra.Command{
 
 		renames := c.Merge(secondConfig)
 		for _, rename := range renames {
-			fmt.Fprintf(os.Stderr, "renamed talosconfig context %s\n", rename.String())
+			fmt.Fprintf(safeout.Stderr(), "renamed talosconfig context %s\n", rename.String())
 		}
 
 		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
@@ -604,7 +605,7 @@ var configInfoCmd = &cobra.Command{
 				return err
 			}
 
-			fmt.Print(res)
+			safeout.Print(res)
 
 			return nil
 		case "json":
@@ -613,7 +614,7 @@ var configInfoCmd = &cobra.Command{
 				return err
 			}
 
-			enc := json.NewEncoder(os.Stdout)
+			enc := json.NewEncoder(os.Stdout) //nolint:forbidigo // the encoder escapes control characters itself
 			enc.SetIndent("", "  ")
 
 			return enc.Encode(&info)
@@ -623,7 +624,7 @@ var configInfoCmd = &cobra.Command{
 				return err
 			}
 
-			return yaml.NewEncoder(os.Stdout).Encode(&info)
+			return yaml.NewEncoder(os.Stdout).Encode(&info) //nolint:forbidigo // the encoder escapes control characters itself
 		default:
 			return fmt.Errorf("unknown output format: %q", configInfoCmdFlags.output)
 		}

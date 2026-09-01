@@ -752,7 +752,6 @@ func (ctrl *Controller) MakeLogger(serviceName string) (*zap.Logger, error) {
 	return logging.ZapLogger(
 		logging.NewLogDestination(
 			logWriter, zapcore.DebugLevel,
-			logging.WithColoredLevels(),
 		),
 		logging.NewLogDestination(
 			logging.StdWriter, ctrl.consoleLogLevel,

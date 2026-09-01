@@ -21,8 +21,8 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/cgroupsprinter"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/internal/pkg/cgroups"
-	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -137,7 +137,7 @@ To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/c
 			}
 		})
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 
 		defer w.Flush() //nolint:errcheck
 
@@ -161,7 +161,7 @@ func buildCgroupResolveMap(ctx context.Context, c *client.Client) map[string]str
 
 	containersResp, err := c.Containers(ctx, constants.K8sContainerdNamespace, common.ContainerDriver_CRI)
 	if err != nil {
-		cli.Warning("error getting containers: %s", err)
+		safeout.Warningf("error getting containers: %s", err)
 	} else {
 		for _, ctr := range containersResp.Messages[0].Containers {
 			if ctr.Uid != "" && ctr.PodId != "" {
@@ -186,7 +186,7 @@ func buildProcessResolveMap(ctx context.Context, c *client.Client) map[string]st
 
 	processesResp, err := c.Processes(ctx)
 	if err != nil {
-		cli.Warning("error getting processes: %s", err)
+		safeout.Warningf("error getting processes: %s", err)
 
 		return processResolveMap
 	}
@@ -219,7 +219,7 @@ func buildDevicesResolveMap(ctx context.Context, c *client.Client) map[string]st
 
 	r, err := c.Copy(ctx, "/sys/dev/block")
 	if err != nil {
-		cli.Warning("error copying devices: %s", err)
+		safeout.Warningf("error copying devices: %s", err)
 
 		return devicesResolveMap
 	}
@@ -228,7 +228,7 @@ func buildDevicesResolveMap(ctx context.Context, c *client.Client) map[string]st
 
 	gzR, err := gzip.NewReader(r)
 	if err != nil {
-		cli.Warning("error reading devices: %s", err)
+		safeout.Warningf("error reading devices: %s", err)
 
 		return devicesResolveMap
 	}

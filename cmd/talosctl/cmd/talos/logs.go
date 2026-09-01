@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -84,7 +85,7 @@ var logsCmd = &cobra.Command{
 		lineBuffers := map[string][]byte{}
 
 		emit := func(node string, line []byte) error {
-			_, err := fmt.Printf("%s: %s\n", node, line)
+			_, err := safeout.Printf("%s: %s\n", node, line)
 
 			return err
 		}

@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -63,7 +64,7 @@ var etcdAlarmListCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 
 		flushTimer := time.NewTimer(outputFlushInterval)
 		defer flushTimer.Stop()
@@ -93,7 +94,7 @@ var etcdAlarmListCmd = &cobra.Command{
 								headerPrinted = true
 							}
 
-							fmt.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
+							safeout.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
 						}
 					}
 				}
@@ -131,7 +132,7 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 
 		flushTimer := time.NewTimer(outputFlushInterval)
 		defer flushTimer.Stop()
@@ -161,7 +162,7 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 								headerPrinted = true
 							}
 
-							fmt.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
+							safeout.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
 						}
 					}
 				}
@@ -331,7 +332,7 @@ var etcdMemberListCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
 
 		flushTimer := time.NewTimer(outputFlushInterval)
@@ -353,7 +354,7 @@ var etcdMemberListCmd = &cobra.Command{
 				} else {
 					for _, message := range resp.Payload.Messages {
 						for _, member := range message.Members {
-							fmt.Fprintf(
+							safeout.Fprintf(
 								w, "%s\t%s\t%s\t%s\t%s\t%v\n",
 								resp.Node,
 								etcdresource.FormatMemberID(member.Id),
@@ -398,7 +399,7 @@ var etcdStatusCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tMEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tPROTOCOL\tSTORAGE\tERRORS")
 
 		flushTimer := time.NewTimer(outputFlushInterval)
@@ -425,7 +426,7 @@ var etcdStatusCmd = &cobra.Command{
 							ratio = float64(message.GetMemberStatus().GetDbSizeInUse()) / float64(message.GetMemberStatus().GetDbSize()) * 100.0
 						}
 
-						fmt.Fprintf(
+						safeout.Fprintf(
 							w, "%s\t%s\t%s\t%s (%.2f%%)\t%s\t%d\t%d\t%d\t%v\t%s\t%s\t%s\n",
 							resp.Node,
 							etcdresource.FormatMemberID(message.GetMemberStatus().GetMemberId()),
@@ -515,16 +516,16 @@ var etcdSnapshotCmd = &cobra.Command{
 			return fmt.Errorf("error renaming to final location: %w", err)
 		}
 
-		fmt.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
+		safeout.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
 
-		manager := snapshot.NewV3(logging.Wrap(os.Stderr))
+		manager := snapshot.NewV3(logging.Wrap(os.Stderr)) //nolint:forbidigo // a zap sink, not a render path
 
 		status, err := manager.Status(dbPath)
 		if err != nil {
 			return err
 		}
 
-		fmt.Printf("snapshot info: hash %08x, revision %d, total keys %d, total size %d\n",
+		safeout.Printf("snapshot info: hash %08x, revision %d, total keys %d, total size %d\n",
 			status.Hash, status.Revision, status.TotalKey, status.TotalSize)
 
 		return nil
@@ -569,7 +570,7 @@ var etcdDowngradeValidateCmd = &cobra.Command{
 			return err
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		pattern := etcdDowngradePattern
 		header := etcdDowngradeHeader
 
@@ -578,7 +579,7 @@ var etcdDowngradeValidateCmd = &cobra.Command{
 				fmt.Fprintln(w, header)
 			}
 
-			fmt.Fprintf(
+			safeout.Fprintf(
 				w, pattern, node,
 				fmt.Sprintf(
 					"downgrade validate success, cluster version %s",
@@ -618,7 +619,7 @@ var etcdDowngradeEnableCmd = &cobra.Command{
 			return err
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		pattern := etcdDowngradePattern
 		header := etcdDowngradeHeader
 
@@ -627,7 +628,7 @@ var etcdDowngradeEnableCmd = &cobra.Command{
 				fmt.Fprintln(w, header)
 			}
 
-			fmt.Fprintf(
+			safeout.Fprintf(
 				w, pattern,
 				node,
 				fmt.Sprintf(
@@ -666,7 +667,7 @@ var etcdDowngradeCancelCmd = &cobra.Command{
 			return err
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		pattern := etcdDowngradePattern
 		header := etcdDowngradeHeader
 
@@ -675,7 +676,7 @@ var etcdDowngradeCancelCmd = &cobra.Command{
 				fmt.Fprintln(w, header)
 			}
 
-			fmt.Fprintf(
+			safeout.Fprintf(
 				w, pattern, node,
 				fmt.Sprintf(
 					"downgrade cancel success, cluster version %s",

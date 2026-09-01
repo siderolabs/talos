@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"strconv"
 	"text/tabwriter"
@@ -16,6 +15,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -81,7 +81,7 @@ var duCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		defer w.Flush() //nolint:errcheck
 
 		stringifySize := func(s int64) string {
@@ -133,7 +133,7 @@ var duCmd = &cobra.Command{
 				outputArgs = slices.Insert(outputArgs, 0, any(resp.Node))
 			}
 
-			fmt.Fprintf(w, pattern, outputArgs...)
+			safeout.Fprintf(w, pattern, outputArgs...)
 		}
 
 		return errs

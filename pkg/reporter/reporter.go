@@ -45,6 +45,7 @@ type Reporter struct {
 	w                 *os.File
 	lastLine          string
 	lastLineTemporary bool
+	lineFilter        func(string) string
 
 	colorized  bool
 	spinnerIdx int
@@ -100,6 +101,19 @@ func WithOutputMode(mode OutputMode) Option {
 	}
 }
 
+// WithLineFilter returns an Option that sets a filter applied to every message
+// before it is rendered.
+//
+// A message assembled from data a Talos node supplied can carry terminal control
+// sequences, and the reporter writes to the terminal directly and adds its own
+// colors and cursor movement, so such a message has to be filtered as text here
+// rather than on the stream underneath the reporter.
+func WithLineFilter(filter func(string) string) Option {
+	return func(r *Reporter) {
+		r.lineFilter = filter
+	}
+}
+
 // New returns a console reporter with stderr output.
 func New(opts ...Option) *Reporter {
 	rep := &Reporter{
@@ -126,6 +140,10 @@ func (r *Reporter) Report(update Update) {
 	line := strings.TrimSpace(update.Message)
 	// replace tabs with spaces to get consistent output length
 	line = strings.ReplaceAll(line, "\t", "    ")
+
+	if r.lineFilter != nil {
+		line = r.lineFilter(line)
+	}
 
 	if !r.colorized {
 		if line != r.lastLine {

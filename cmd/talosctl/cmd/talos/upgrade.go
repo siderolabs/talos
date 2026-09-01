@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -23,7 +22,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
-	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -101,7 +100,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	}
 
 	if upgradeCmdFlags.legacy {
-		cli.Warning("Forcing use of legacy upgrade method. This flag is deprecated and will be removed in Talos 1.18.")
+		safeout.Warningf("Forcing use of legacy upgrade method. This flag is deprecated and will be removed in Talos 1.18.")
 
 		return upgradeLegacy(ctx, clientFactory)
 	}
@@ -117,6 +116,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 
 	rep := reporter.New(
 		reporter.WithOutputMode(upgradeCmdFlags.progress.Value()),
+		reporter.WithLineFilter(safeout.String),
 	)
 
 	if err = helpers.TalosVersionCheck(ctx, clientFactory, talosUpgradeAPIVersionRange); err != nil {
@@ -310,14 +310,14 @@ func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, o
 				}
 
 				// partial success: the upgrade was acknowledged but some non-fatal error occurred
-				cli.Warning("%s", err)
+				safeout.Warningf("%s", err)
 			}
 
 			return resp, nil
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tACK\tSTARTED")
 
 	var errs error
@@ -330,7 +330,7 @@ func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, o
 		}
 
 		for _, msg := range resp.Payload.Messages {
-			fmt.Fprintf(w, "%s\t%s\t%s\t\n", resp.Node, msg.Ack, time.Now())
+			safeout.Fprintf(w, "%s\t%s\t%s\t\n", resp.Node, msg.Ack, time.Now())
 		}
 	}
 
@@ -385,7 +385,7 @@ func init() {
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
 
 	for _, flag := range []string{"force", "insecure", "preserve", "stage"} {
-		upgradeCmd.Flags().MarkDeprecated(flag, "legacy flag for MachineService.Upgrade fallback, to be removed in Talos 1.18") //nolint:errcheck
+		helpers.MarkFlagDeprecated(upgradeCmd.Flags(), flag, "legacy flag for MachineService.Upgrade fallback, to be removed in Talos 1.18") //nolint:errcheck
 	}
 
 	addCommand(upgradeCmd)

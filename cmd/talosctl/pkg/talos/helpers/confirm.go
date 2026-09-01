@@ -7,6 +7,8 @@ package helpers
 import (
 	"fmt"
 	"strings"
+
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 )
 
 var okays = []string{"y", "yes"}
@@ -16,7 +18,7 @@ var okays = []string{"y", "yes"}
 func Confirm(prompt string) bool {
 	var inp string
 
-	fmt.Printf("%s (y/N): ", prompt)
+	safeout.Printf("%s (y/N): ", prompt)
 	fmt.Scanf("%s", &inp) //nolint:errcheck
 	inp = strings.TrimSpace(inp)
 

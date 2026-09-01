@@ -11,12 +11,14 @@ import (
 	"io"
 	"strings"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-circular"
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -148,7 +150,7 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 				}
 
 				a.update(reporter.Update{
-					Message: fmt.Sprintf("actor ID: %v", actorID),
+					Message: fmt.Sprintf("actor ID: %v", safeout.String(actorID)),
 					Status:  reporter.StatusRunning,
 				})
 
@@ -175,7 +177,7 @@ func (a *nodeTracker) trackEventsWithRetry(actorIDCh chan string) error {
 
 		if err != nil {
 			a.update(reporter.Update{
-				Message: fmt.Sprintf("error: %v", err),
+				Message: fmt.Sprintf("error: %v", safeout.String(err.Error())),
 				Status:  reporter.StatusError,
 			})
 		}
@@ -257,13 +259,13 @@ func (a *nodeTracker) handleEvent(event client.Event) error {
 	switch msg := event.Payload.(type) {
 	case *machineapi.PhaseEvent:
 		a.update(reporter.Update{
-			Message: fmt.Sprintf("phase: %s action: %v", msg.GetPhase(), msg.GetAction()),
+			Message: fmt.Sprintf("phase: %s action: %v", safeout.String(msg.GetPhase()), msg.GetAction()),
 			Status:  reporter.StatusRunning,
 		})
 
 	case *machineapi.TaskEvent:
 		a.update(reporter.Update{
-			Message: fmt.Sprintf("task: %s action: %v", msg.GetTask(), msg.GetAction()),
+			Message: fmt.Sprintf("task: %s action: %v", safeout.String(msg.GetTask()), msg.GetAction()),
 			Status:  reporter.StatusRunning,
 		})
 
@@ -276,13 +278,13 @@ func (a *nodeTracker) handleEvent(event client.Event) error {
 		if msg.GetError().GetMessage() != "" {
 			errStr = fmt.Sprintf(
 				" error: [code: %v message: %v]",
-				msg.GetError().GetMessage(),
 				msg.GetError().GetCode(),
+				safeout.String(msg.GetError().GetMessage()),
 			)
 		}
 
 		a.update(reporter.Update{
-			Message: fmt.Sprintf("sequence: %s action: %v%v", msg.GetSequence(), msg.GetAction(), errStr),
+			Message: fmt.Sprintf("sequence: %s action: %v%v", safeout.String(msg.GetSequence()), msg.GetAction(), errStr),
 			Status:  reporter.StatusRunning,
 		})
 
@@ -291,18 +293,21 @@ func (a *nodeTracker) handleEvent(event client.Event) error {
 		}
 
 		if errStr != "" {
-			return fmt.Errorf("sequence error: %s", msg.GetError().GetMessage())
+			return fmt.Errorf("sequence error: %s", safeout.String(msg.GetError().GetMessage()))
 		}
 
 	case *machineapi.MachineStatusEvent:
 		a.update(reporter.Update{
-			Message: fmt.Sprintf("stage: %v ready: %v unmetCond: %v", msg.GetStage(), msg.GetStatus().GetReady(), msg.GetStatus().GetUnmetConditions()),
-			Status:  reporter.StatusRunning,
+			Message: fmt.Sprintf("stage: %v ready: %v unmetCond: %v", msg.GetStage(), msg.GetStatus().GetReady(),
+				xslices.Map(msg.GetStatus().GetUnmetConditions(), func(c *machineapi.MachineStatusEvent_MachineStatus_UnmetCondition) string {
+					return safeout.String(c.GetName())
+				})),
+			Status: reporter.StatusRunning,
 		})
 
 	case *machineapi.ServiceStateEvent:
 		a.update(reporter.Update{
-			Message: fmt.Sprintf("service: %v message: %v healthy: %v", msg.GetService(), msg.GetMessage(), msg.GetHealth().GetHealthy()),
+			Message: fmt.Sprintf("service: %v message: %v healthy: %v", safeout.String(msg.GetService()), safeout.String(msg.GetMessage()), msg.GetHealth().GetHealthy()),
 			Status:  reporter.StatusRunning,
 		})
 	}

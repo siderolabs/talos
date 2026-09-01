@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 	"text/tabwriter"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -53,7 +53,7 @@ var statsCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
 
 		flushTimer := time.NewTimer(outputFlushInterval)
@@ -83,7 +83,7 @@ var statsCmd = &cobra.Command{
 								display = "└─ " + display
 							}
 
-							fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+							safeout.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 						}
 					}
 				}
