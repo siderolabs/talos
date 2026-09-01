@@ -1441,6 +1441,70 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-extensions-libvirt
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/extensions
+        - integration/extensions-libvirt
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: libvirtd extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/amd64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: installer extensions
+          command: installer-with-extensions
+          environment:
+            EXTENSIONS_FILTER_COMMAND: "grep -E '/libvirtd:'"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-extensions-libvirt
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-extensions-libvirt
+            QEMU_WORKERS: 1
+            QEMU_MEMORY_WORKERS: 4096
+            WITH_CONFIG_PATCH_WORKER: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml"
+            SHORT_INTEGRATION_TEST: yes
+            EXTRA_TEST_ARGS: -talos.extensions.qemu -talos.extensions.libvirt
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteQEMU/TestExtensionsLibvirt
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-extensions-libvirt
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-cilium
       buildxOptions:
         enabled: true

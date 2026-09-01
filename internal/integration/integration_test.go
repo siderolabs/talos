@@ -38,6 +38,7 @@ var (
 	trustedBoot         bool
 	selinuxEnforcing    bool
 	extensionsQEMU      bool
+	extensionsLibvirt   bool
 	extensionsNvidia    bool
 	bgpEnabled          bool
 	bgpCLOSEnabled      bool
@@ -134,6 +135,7 @@ func TestIntegration(t *testing.T) {
 				HelmPath:               helmPath,
 				KubeStrPath:            kubeStrPath,
 				ExtensionsQEMU:         extensionsQEMU,
+				ExtensionsLibvirt:      extensionsLibvirt,
 				ExtensionsNvidia:       extensionsNvidia,
 				BGPEnabled:             bgpEnabled,
 				BGPCLOSEnabled:         bgpCLOSEnabled,
@@ -181,6 +183,7 @@ func init() {
 	flag.BoolVar(&trustedBoot, "talos.trustedboot", false, "enable tests for trusted boot mode")
 	flag.BoolVar(&selinuxEnforcing, "talos.enforcing", false, "enable tests for SELinux enforcing mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
+	flag.BoolVar(&extensionsLibvirt, "talos.extensions.libvirt", false, "enable tests for libvirt extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")

@@ -48,6 +48,8 @@ type TalosSuite struct {
 	KubeStrPath string
 	// ExtensionsQEMU runs tests with qemu and extensions enabled
 	ExtensionsQEMU bool
+	// ExtensionsLibvirt runs tests with libvirt extensions enabled
+	ExtensionsLibvirt bool
 	// ExtensionsNvidia runs tests with nvidia extensions enabled
 	ExtensionsNvidia bool
 	// BGPEnabled runs tests against a cluster created with an embedded BGP fabric peer (--with-bgp)
