@@ -104,6 +104,14 @@ func (s Set) Strings() []string {
 	return res
 }
 
+// Empty returns true if the set contains no roles.
+//
+// A credential resolving to an empty set names no roles at all, and never authorizes
+// anything: it should be rejected rather than treated as a caller holding no roles.
+func (s Set) Empty() bool {
+	return len(s.roles) == 0
+}
+
 // IncludesAny returns true if there is a non-empty intersection between sets.
 //
 // Returns false if any set is empty.
