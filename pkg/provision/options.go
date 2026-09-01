@@ -88,6 +88,15 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
+// WithIPMI enables or disables BMC (IPMI) emulation.
+func WithIPMI(enabled bool) Option {
+	return func(o *Options) error {
+		o.IPMIEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithIOMMU enables or disables IOMMU.
 func WithIOMMU(enabled bool) Option {
 	return func(o *Options) error {
@@ -250,6 +259,8 @@ type Options struct {
 	TPM2Enabled bool
 	// Enable IOMMU for VMs and add a new PCI root controller and network interface.
 	IOMMUEnabled bool
+	// Enable BMC (IPMI) emulation using QEMU's built-in BMC simulator.
+	IPMIEnabled bool
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 

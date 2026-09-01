@@ -213,6 +213,7 @@ talosctl cluster create dev [flags]
       --with-firewall string                     inject firewall rules into the cluster, value is default policy - accept/block
       --with-init-node                           create the cluster with an init node
       --with-iommu                               enable IOMMU support, this also add a new PCI root port and an interface attached to it
+      --with-ipmi                                enable BMC (IPMI) emulation using QEMU's built-in BMC simulator (amd64 only)
       --with-json-logs                           enable JSON logs receiver and configure Talos to send logs there
       --with-kubespan                            enable KubeSpan system
       --with-network-bandwidth int               specify bandwidth restriction (in kbps) on the bridge interface
