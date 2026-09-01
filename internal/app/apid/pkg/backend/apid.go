@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protowire"
 
-	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	proxybackend "github.com/siderolabs/talos/pkg/grpc/proxy/backend"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -68,20 +68,20 @@ func (a *APID) String() string {
 
 // GetConnection returns a grpc connection to the backend.
 func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *grpc.ClientConn, error) {
-	md, _ := metadata.FromIncomingContext(ctx)
-	md = md.Copy()
+	md := proxybackend.OutgoingMetadata(ctx)
 
-	authz.SetMetadata(md, authz.GetRoles(ctx))
+	// 'proxyfrom' tells the next apid instance that the request has already been routed,
+	// so it should not be routed any further. It is derived from the (caller-controlled)
+	// authority, but it is never inherited from the caller: the allowlist in
+	// OutgoingMetadata drops both ':authority' and 'proxyfrom', as it does the routing
+	// metadata ('node', 'nodes').
+	incomingMD, _ := metadata.FromIncomingContext(ctx)
 
-	if authority := md[":authority"]; len(authority) > 0 {
+	if authority := incomingMD[":authority"]; len(authority) > 0 {
 		md.Set("proxyfrom", authority...)
 	} else {
 		md.Set("proxyfrom", "unknown")
 	}
-
-	delete(md, ":authority")
-	delete(md, "nodes")
-	delete(md, "node")
 
 	outCtx := metadata.NewOutgoingContext(ctx, md)
 
