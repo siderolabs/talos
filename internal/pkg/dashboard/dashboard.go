@@ -63,6 +63,9 @@ const (
 
 	// ScreenResourceExplorer is the resource explorer screen.
 	ScreenResourceExplorer Screen = "Resources"
+
+	// ScreenContainers is the containers screen.
+	ScreenContainers Screen = "Containers"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -284,6 +287,11 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		if ok {
 			dashboard.nodeSelectListeners = append(dashboard.nodeSelectListeners, nodeSelectListener)
 		}
+
+		tickerListener, ok := screenPrimitive.(TickerListener)
+		if ok {
+			dashboard.tickerListeners = append(dashboard.tickerListeners, tickerListener)
+		}
 	}
 
 	dashboard.apiDataSource = &apidata.Source{
@@ -302,28 +310,31 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	return dashboard, nil
 }
 
-func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
-	primitiveForScreen := func(screen Screen) screenSelectListener {
-		switch screen {
-		case ScreenSummary:
-			return NewSummaryGrid(d.app)
-		case ScreenMonitor:
-			return NewMonitorGrid(d.app)
-		case ScreenNetworkConfig:
-			return NewNetworkConfigGrid(ctx, d)
-		case ScreenConfigURL:
-			return NewConfigURLGrid(ctx, d)
-		case ScreenResourceExplorer:
-			return NewResourceExplorerGrid(ctx, d)
-		default:
-			return nil
-		}
+// primitiveForScreen builds the primitive backing a screen, or nil when the screen is unknown.
+func (d *Dashboard) primitiveForScreen(ctx context.Context, screen Screen) screenSelectListener { //nolint:ireturn
+	switch screen {
+	case ScreenSummary:
+		return NewSummaryGrid(d.app)
+	case ScreenMonitor:
+		return NewMonitorGrid(d.app)
+	case ScreenNetworkConfig:
+		return NewNetworkConfigGrid(ctx, d)
+	case ScreenConfigURL:
+		return NewConfigURLGrid(ctx, d)
+	case ScreenResourceExplorer:
+		return NewResourceExplorerGrid(ctx, d)
+	case ScreenContainers:
+		return NewContainersGrid(ctx, d)
+	default:
+		return nil
 	}
+}
 
+func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
 	d.screenConfigs = make([]screenConfig, 0, len(screens))
 
 	for i, screen := range screens {
-		primitive := primitiveForScreen(screen)
+		primitive := d.primitiveForScreen(ctx, screen)
 		if primitive == nil {
 			return fmt.Errorf("unknown screen %s", screen)
 		}

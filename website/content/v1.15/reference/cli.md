@@ -1179,11 +1179,11 @@ talosctl copy <src-path> -|<local-path> [flags]
 
 ## talosctl dashboard
 
-Cluster dashboard with node overview, logs and real-time metrics
+Cluster dashboard with node overview, containers, logs and real-time metrics
 
 ### Synopsis
 
-Provide a text-based UI to navigate node overview, logs and real-time metrics.
+Provide a text-based UI to navigate node overview, containers, logs and real-time metrics.
 
 Keyboard shortcuts:
 
@@ -1195,6 +1195,21 @@ Keyboard shortcuts:
  - <C-u> - scroll logs/process list half page up
  - <C-f> - scroll logs/process list one page down
  - <C-b> - scroll logs/process list one page up
+ - <C-z> - pause updates
+
+Containers screen:
+
+ - <Enter> - open the selected container's details and logs
+ - <Esc> - go back one level
+ - / - filter the container list, or the logs when viewing them
+ - s - cycle the list ordering: name, health, restarts, cpu, memory (taloscontainers only)
+ - n - cycle the containerd namespace: taloscontainers, system, k8s.io
+ - y - view the selected container's resources as YAML; <Tab> cycles between them (taloscontainers only)
+ - i - toggle the instance history of the selected container (taloscontainers only)
+ - f - freeze or resume log following
+ - w - toggle log line wrapping
+ - <Tab> - move the focus between the details and the logs
+ - g, G - jump to the top or the bottom
 
 
 ```
@@ -3895,7 +3910,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
-* [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
+* [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, containers, logs and real-time metrics
 * [talosctl debug](#talosctl-debug)	 - Run a debug container from an image archive or reference
 * [talosctl diskfree](#talosctl-diskfree)	 - Retrieve disk usage information for mounted volumes
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
