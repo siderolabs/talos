@@ -191,3 +191,16 @@ func Worker(defaultAction nethelpers.DefaultAction, cidrs []netip.Prefix, gatewa
 
 	return configpatcher.NewStrategicMergePatch(provider)
 }
+
+// LinkIngress generates a link ingress filter to block all traffic
+// not destined to the node IPs.
+func LinkIngress(interfaceName string) configpatcher.Patch {
+	linkIngress := network.NewLinkIngressConfigV1Alpha1(interfaceName)
+
+	provider, err := container.New(linkIngress)
+	if err != nil { // should not fail
+		panic(err)
+	}
+
+	return configpatcher.NewStrategicMergePatch(provider)
+}
