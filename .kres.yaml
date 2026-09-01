@@ -1583,19 +1583,22 @@ spec:
         flatJobMatrix: true
         include:
           - test: e2e-cilium
-            ciliumConfigPatch: "@hack/test/patches/cilium-no-kubeproxy.yaml"
+            ciliumConfigPatchCP: "@hack/test/patches/cilium-no-kubeproxy.yaml"
             ciliumInstallType: ""
             withKubespan: ""
           - test: e2e-cilium-strict
-            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatchCP: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatch: "@hack/test/patches/no-link-ingress.yaml"
             ciliumInstallType: strict
             withKubespan: ""
           - test: e2e-cilium-strict-kubespan
-            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatchCP: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatch: "@hack/test/patches/no-link-ingress.yaml"
             ciliumInstallType: strict
             withKubespan: "true"
           - test: e2e-cilium-bgp
-            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatchCP: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatch: "@hack/test/patches/no-link-ingress.yaml"
             ciliumInstallType: strict
             withKubespan: ""
             withBGPCLOS: "true"
@@ -1605,7 +1608,7 @@ spec:
             extraTestArgs: -talos.bgp.clos -talos.bgp.cilium
             integrationTestRun: TestIntegration/api.BGPCiliumSuite
           - test: e2e-cilium-strict-enforcing
-            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumConfigPatchCP: "@hack/test/patches/cilium-kubeproxy.yaml"
             ciliumInstallType: strict
             withKubespan: ""
             tagSuffixIn: -enforcing
@@ -1634,7 +1637,8 @@ spec:
             QEMU_WORKERS: ${{ matrix.qemuWorkers }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             INTEGRATION_TEST_RUN: ${{ matrix.integrationTestRun }}
-            WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.ciliumConfigPatch }}
+            WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.ciliumConfigPatchCP }}
+            WITH_CONFIG_PATCH: ${{ matrix.ciliumConfigPatchA }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
         - name: save-talos-logs

@@ -531,3 +531,120 @@ func TestNfTablesChainConfig(t *testing.T) {
 		},
 	})
 }
+
+// trustedLinksRule is the preamble rule of the prerouting chain, accepting the trusted links.
+func trustedLinksRule() network.NfTablesRule {
+	return network.NfTablesRule{
+		MatchIIfName: &network.NfTablesIfNameMatch{
+			InterfaceNames: []string{
+				"lo",
+				constants.SideroLinkName,
+				constants.KubeSpanLinkName,
+			},
+			Operator: nethelpers.OperatorEqual,
+		},
+		AnonCounter: true,
+		Verdict:     new(nethelpers.VerdictAccept),
+	}
+}
+
+func (suite *NfTablesChainConfigTestSuite) injectLinkIngressConfig(docs ...configtypes.Document) {
+	// "enp0s5" is aliased to "net0", "eth1" has no alias
+	linkStatus := network.NewLinkStatus(network.NamespaceName, "enp0s5")
+	linkStatus.TypedSpec().Alias = "net0"
+	suite.Create(linkStatus)
+	suite.Create(network.NewLinkStatus(network.NamespaceName, "eth1"))
+
+	cfg, err := container.New(docs...)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(cfg))
+}
+
+// TestLinkIngress verifies the rules generated for the NetworkLinkIngressConfig documents.
+//
+// The machine config has no network rules, so the prerouting chain is built for the link ingress
+// filtering alone.
+func (suite *NfTablesChainConfigTestSuite) TestLinkIngress() {
+	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.NodeAddressRoutedID)
+	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.3.4.5/24")}
+	suite.Create(nodeAddresses)
+
+	// the link is named by its alias, the rule should match on the actual link name
+	defaultDestinations := networkcfg.NewLinkIngressConfigV1Alpha1("net0")
+
+	// an explicitly empty list allows no destination at all
+	noDestinations := networkcfg.NewLinkIngressConfigV1Alpha1("eth1")
+	noDestinations.DestinationAddressesConfig = []meta.Prefix{}
+
+	suite.injectLinkIngressConfig(defaultDestinations, noDestinations)
+
+	ctest.AssertNoResource[*network.NfTablesChain](suite, netctrl.IngressChainName)
+
+	ctest.AssertResource(suite, netctrl.PreroutingChainName, func(chain *network.NfTablesChain, asrt *assert.Assertions) {
+		asrt.Equal(
+			[]network.NfTablesRule{
+				trustedLinksRule(),
+				// no destinations configured: the node's own addresses are allowed
+				{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{"enp0s5"},
+						Operator:       nethelpers.OperatorEqual,
+					},
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{netip.MustParsePrefix("10.3.4.5/32")},
+						Invert:         true,
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictDrop),
+				},
+				// nothing is allowed: everything arriving on the link is dropped
+				{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{"eth1"},
+						Operator:       nethelpers.OperatorEqual,
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictDrop),
+				},
+				// the link ingress rules are evaluated before this one, which would otherwise
+				// accept the very traffic they drop
+				{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: []netip.Prefix{netip.MustParsePrefix("10.3.4.5/32")},
+						Invert:         true,
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictAccept),
+				},
+			},
+			chain.TypedSpec().Rules,
+		)
+	})
+}
+
+// TestLinkIngressWithoutNodeAddresses verifies that the filtering fails closed while the node
+// addresses are not known yet.
+func (suite *NfTablesChainConfigTestSuite) TestLinkIngressWithoutNodeAddresses() {
+	suite.injectLinkIngressConfig(networkcfg.NewLinkIngressConfigV1Alpha1("net0"))
+
+	ctest.AssertResource(suite, netctrl.PreroutingChainName, func(chain *network.NfTablesChain, asrt *assert.Assertions) {
+		asrt.Equal(
+			[]network.NfTablesRule{
+				trustedLinksRule(),
+				// no address is allowed yet, so everything arriving on the link is dropped
+				{
+					MatchIIfName: &network.NfTablesIfNameMatch{
+						InterfaceNames: []string{"enp0s5"},
+						Operator:       nethelpers.OperatorEqual,
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictDrop),
+				},
+				// the rule accepting the traffic which is not addressed to the machine is skipped:
+				// with no addresses to match against it would accept every packet
+			},
+			chain.TypedSpec().Rules,
+		)
+	})
+}
