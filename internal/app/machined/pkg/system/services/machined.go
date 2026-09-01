@@ -225,7 +225,7 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 			{
 				// containers with security.machinedAccess enabled.
 				Pattern:      constants.ContainerServicePIDPrefix + "*",
-				AllowedRoles: role.MakeSet(role.Reader),
+				AllowedRoles: role.All,
 				// allow processes forked inside the container to access machined as well
 				AllowNamespaceMatch: true,
 			},

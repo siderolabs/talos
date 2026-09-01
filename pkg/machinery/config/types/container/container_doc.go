@@ -496,7 +496,7 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Name:        "machinedAccess",
 				Type:        "bool",
 				Note:        "",
-				Description: "Publishes the container's PID so machined's API can recognize it, and bind-mounts the\nmachined API socket into the container.\n\nThis alone does not grant DAC access to the socket, which is owned by the `apid` user:\nreaching it in practice still requires `profile: privileged` or an equivalent capability/\n`runAs` grant. A container authorized this way is only ever given the `Reader` role.",
+				Description: "Publishes the container's PID so machined's API can recognize it, and bind-mounts the\nmachined API socket into the container.\n\nThis alone does not grant DAC access to the socket, which is owned by the `apid` user:\nreaching it in practice still requires `profile: privileged` or an equivalent capability/\n`runAs` grant. Once connected, the container may request any role, same as extension\nservices; the RPC's own role requirements are what actually gate access.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Publishes the container's PID so machined's API can recognize it, and bind-mounts the" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
