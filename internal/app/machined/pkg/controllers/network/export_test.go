@@ -9,4 +9,5 @@ var (
 	BuildMultipathForTest     = buildMultipath
 	MultipathEqualForTest     = multipathEqual
 	ResolveBondPrimaryForTest = resolveBondPrimary
+	SubnetBroadcastsForTest   = subnetBroadcasts
 )
