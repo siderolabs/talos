@@ -9,7 +9,7 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/distribution/reference"
 	"github.com/sigstore/cosign/v3/pkg/cosign"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -186,8 +186,11 @@ func TestVerifyImage(t *testing.T) {
 
 			logger := zaptest.NewLogger(t)
 
-			imageRef, err := name.NewDigest(test.imageRef)
+			namedRef, err := reference.ParseDockerRef(test.imageRef)
 			require.NoError(t, err)
+
+			imageRef, ok := namedRef.(reference.Canonical)
+			require.True(t, ok, "image reference must be digested")
 
 			result, err := ourcosign.VerifyImage(t.Context(), logger, resolver, tagFetcher, imageRef, test.checkOpts)
 

@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/containers/image/imageref"
 	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/security"
 )
@@ -72,7 +73,9 @@ func (ctrl *ImageVerificationConfigController) Run(ctx context.Context, r contro
 				for idx, rule := range cfg.Rules() {
 					if err := safe.WriterModify(ctx, r, security.NewImageVerificationRule(fmt.Sprintf("%04d", idx)),
 						func(r *security.ImageVerificationRule) error {
-							r.TypedSpec().ImagePattern = rule.ImagePattern()
+							// store the pattern in its normalized form, so that `talosctl get
+							// imageverificationrules` shows the pattern which is actually matched
+							r.TypedSpec().ImagePattern = imageref.NormalizePattern(rule.ImagePattern())
 							r.TypedSpec().Skip = rule.Skip()
 							r.TypedSpec().Deny = rule.Deny()
 
