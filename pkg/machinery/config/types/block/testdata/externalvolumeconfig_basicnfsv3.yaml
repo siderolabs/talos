@@ -1,0 +1,22 @@
+apiVersion: v1alpha1
+kind: ExternalVolumeConfig
+name: my-nfs-volume
+filesystemType: nfs
+mount:
+    nfs:
+        server: 10.5.0.1
+        path: /export
+        version: "3"
+        port: 12049
+        transport: tcp
+        mountPort: 12049
+        mountTransport: tcp
+        locking: remote
+        recovery: soft-error
+        timeout: 600
+        retransmissions: 2
+        readSize: 1048576
+        writeSize: 1048576
+        connections: 4
+        reservedPort: false
+        security: sys

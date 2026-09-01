@@ -143,6 +143,7 @@ type Qemu struct {
 	WithFirewall              string
 	WithBGP                   bool
 	WithBGPCLOS               bool
+	WithNFS                   bool
 	WithSiderolinkAgent       flags.Agent
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string

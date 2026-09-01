@@ -222,6 +222,7 @@ talosctl cluster create dev [flags]
       --with-network-packet-corrupt float        specify percent of corrupt packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)
       --with-network-packet-loss float           specify percent of packet loss on the bridge interface. e.g. 50% = 0.50 (default: 0.0)
       --with-network-packet-reorder float        specify percent of reordered packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)
+      --with-nfs                                 run an embedded userspace NFS server and mount NFSv3 and NFSv4 test volumes
       --with-siderolink true                     enables the use of siderolink agent as configuration apply mechanism. true or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling (default none)
       --with-tpm1_2                              enable TPM 1.2 emulation support using swtpm
       --with-tpm2                                enable TPM 2.0 emulation support using swtpm

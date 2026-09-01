@@ -10,6 +10,7 @@ CLUSTER_NAME="e2e-${PROVISIONER}"
 LOG_ARCHIVE_SUFFIX="${GITHUB_STEP_NAME:-e2e-${PROVISIONER}}"
 
 QEMU_FLAGS=()
+TEST_NFS=("-talos.nfs")
 
 case "${CI:-false}" in
   false)
@@ -364,6 +365,7 @@ function create_cluster {
     --cidr=172.20.1.0/24 \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
+    --with-nfs \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"

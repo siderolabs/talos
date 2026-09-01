@@ -125,6 +125,36 @@ addresses:
 The `source` mode is not supported yet, as it requires a list of allowed source MAC addresses.
 """
 
+    [notes.nfs_external_volumes]
+        title = "NFS External Volumes"
+        description = """\
+Talos now supports NFS as an `ExternalVolumeConfig` filesystem type alongside `virtiofs`, allowing nodes to mount network exports at `/var/mnt/<name>` through the existing block volume machinery.
+
+```yaml
+apiVersion: v1alpha1
+kind: ExternalVolumeConfig
+name: shared
+filesystemType: nfs
+mount:
+  nfs:
+    server: 10.0.0.10
+    path: /export
+    version: "4.1"
+```
+
+Supported `version` values are `3`, `4`, `4.1`, and `4.2`.
+The `mount.nfs` spec configures the kernel NFS client:
+
+* Connectivity: `server` (hostname or IP; IPv6 is bracketed automatically) and absolute `path` are required; optional `port`, `transport` (`tcp`/`udp`), and NFSv3-only `mountPort`/`mountTransport` (otherwise `rpcbind` discovery is used).
+* NFSv3 locking: `locking` (`local` default / `remote`) controls `nolock`/`lock`; Talos does not run `rpc.statd`, so `local` (nolock) is the safe default. You need `rpc.statd` extension for remote locking.
+* Recovery: `recovery` (`hard`/`soft`/`soft-error`) maps to `hard`/`soft`/`softerr`.
+* Tuning: `timeout` (`timeo`, deciseconds), `retransmissions` (`retrans`), `readSize`/`writeSize` (`rsize`/`wsize`, 1024–1048576 multiples of 1024), `connections` (`nconnect`, 1–16, TCP only), `reservedPort` (`resvport`/`noresvport`), and `security` (`none`/`sys`; Kerberos flavors are unsupported as Talos does not run `rpc.gssd`).
+* NFSv4 enforces `tcp` transport.
+
+Common `mount` flags (`readOnly`, `disableAccessTime`, `secure`) apply as with other volume types.
+Validation rejects `mountPort`/`mountTransport`/`locking` outside NFSv3 and `udp` for NFSv4.
+"""
+
 [make_deps]
 
     [make_deps.tools]

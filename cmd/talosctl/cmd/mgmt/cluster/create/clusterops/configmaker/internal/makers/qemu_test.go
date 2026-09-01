@@ -68,6 +68,29 @@ func TestQemuMaker_RegistryAuth(t *testing.T) {
 	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
 }
 
+func TestQemuMaker_NFSDoesNotAddConfigDocuments(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	qOps := clusterops.GetQemu()
+	qOps.WithNFS = true
+
+	m, err := makers.NewQemu(makers.MakerOptions[clusterops.Qemu]{
+		ExtraOps:    qOps,
+		CommonOps:   cOps,
+		Provisioner: testProvisioner{},
+	})
+	require.NoError(t, err)
+
+	clusterConfigs, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	for _, node := range clusterConfigs.ClusterRequest.Nodes {
+		for _, doc := range node.Config.Documents() {
+			_, isExternalVolume := doc.(*block.ExternalVolumeConfigV1Alpha1)
+			require.False(t, isExternalVolume, "--with-nfs must not add default external volume documents")
+		}
+	}
+}
+
 func TestQemuMaker_BGPCLOSCustomCNIPatchWins(t *testing.T) {
 	cOps := clusterops.GetCommon()
 	qOps := clusterops.GetQemu()

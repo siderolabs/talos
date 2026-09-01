@@ -459,6 +459,7 @@ func (ExternalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Filesystem type." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"virtiofs",
+					"nfs",
 				},
 			},
 			{
@@ -472,6 +473,8 @@ func (ExternalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleExternalVolumeConfigV1Alpha1Virtiofs())
+
+	doc.AddExample("", exampleExternalVolumeConfigV1Alpha1NFS())
 
 	return doc
 }
@@ -516,6 +519,13 @@ func (ExternalMountSpec) Doc() *encoder.Doc {
 				Description: "Virtiofs mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Virtiofs mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "nfs",
+				Type:        "NFSMountSpec",
+				Note:        "",
+				Description: "NFS mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -540,6 +550,167 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Selector tag for the Virtiofs mount.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector tag for the Virtiofs mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (NFSMountSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NFSMountSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NFSMountSpec describes NFS mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NFSMountSpec describes NFS mount options.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExternalMountSpec",
+				FieldName: "nfs",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "server",
+				Type:        "string",
+				Note:        "",
+				Description: "NFS server hostname or IP address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS server hostname or IP address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "path",
+				Type:        "string",
+				Note:        "",
+				Description: "Absolute path of the NFS export.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Absolute path of the NFS export." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "version",
+				Type:        "NFSVersion",
+				Note:        "",
+				Description: "NFS protocol version.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS protocol version." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"3",
+					"4",
+					"4.1",
+					"4.2",
+				},
+			},
+			{
+				Name:        "port",
+				Type:        "uint16",
+				Note:        "",
+				Description: "NFS server port. If unset, the kernel default is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS server port. If unset, the kernel default is used." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "transport",
+				Type:        "NFSTransport",
+				Note:        "",
+				Description: "NFS transport protocol. If unset, the kernel default is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS transport protocol. If unset, the kernel default is used." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"tcp",
+					"tcp6",
+					"udp",
+					"udp6",
+				},
+			},
+			{
+				Name:        "mountPort",
+				Type:        "uint16",
+				Note:        "",
+				Description: "NFS mount protocol port. Only valid with NFSv3. If unset, rpcbind discovery is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS mount protocol port. Only valid with NFSv3. If unset, rpcbind discovery is used." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mountTransport",
+				Type:        "NFSTransport",
+				Note:        "",
+				Description: "NFS mount transport protocol. Only valid with NFSv3. Must use the same address family as\n`transport`. If unset, the kernel default is used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS mount transport protocol. Only valid with NFSv3. Must use the same address family as" /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"tcp",
+					"tcp6",
+					"udp",
+					"udp6",
+				},
+			},
+			{
+				Name:        "locking",
+				Type:        "NFSLocking",
+				Note:        "",
+				Description: "NFSv3 locking mode. Defaults to local because Talos does not run rpc.statd by default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFSv3 locking mode. Defaults to local because Talos does not run rpc.statd by default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"local",
+					"remote",
+				},
+			},
+			{
+				Name:        "recovery",
+				Type:        "NFSRecovery",
+				Note:        "",
+				Description: "Recovery behavior after an NFS request times out. Soft modes can risk data corruption.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Recovery behavior after an NFS request times out. Soft modes can risk data corruption." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"hard",
+					"soft",
+					"soft-error",
+				},
+			},
+			{
+				Name:        "timeout",
+				Type:        "uint32",
+				Note:        "",
+				Description: "NFS request timeout in deciseconds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS request timeout in deciseconds." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "retransmissions",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of NFS request retransmissions before recovery action is taken.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of NFS request retransmissions before recovery action is taken." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "readSize",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Maximum NFS read request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Maximum NFS read request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "writeSize",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Maximum NFS write request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Maximum NFS write request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "connections",
+				Type:        "uint8",
+				Note:        "",
+				Description: "Number of TCP connections to the NFS server. Must be between 1 and 16.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of TCP connections to the NFS server. Must be between 1 and 16." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "reservedPort",
+				Type:        "bool",
+				Note:        "",
+				Description: "Use a privileged source port. The kernel default is used when unset.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Use a privileged source port. The kernel default is used when unset." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "security",
+				Type:        "NFSSecurity",
+				Note:        "",
+				Description: "NFS RPC security flavor. Kerberos flavors are not supported because Talos does not run rpc.gssd.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "NFS RPC security flavor. Kerberos flavors are not supported because Talos does not run rpc.gssd." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"none",
+					"sys",
+				},
 			},
 		},
 	}
@@ -1211,6 +1382,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalVolumeConfigV1Alpha1{}.Doc(),
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
+			NFSMountSpec{}.Doc(),
 			FilesystemTrimConfigV1Alpha1{}.Doc(),
 			FilesystemScrubConfigV1Alpha1{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
