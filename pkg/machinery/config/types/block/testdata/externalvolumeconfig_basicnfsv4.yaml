@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: ExternalVolumeConfig
+name: my-nfs-volume
+filesystemType: nfs
+mount:
+    nfs:
+        server: fd00::1
+        path: /export
+        version: "4.1"

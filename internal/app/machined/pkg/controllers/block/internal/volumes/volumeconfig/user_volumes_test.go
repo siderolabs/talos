@@ -412,7 +412,7 @@ func TestExternalVolumeTransformer(t *testing.T) {
 			},
 		},
 		{
-			name: "external volume RW",
+			name: "external volume RO",
 			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
 				{
 					Meta: meta.Meta{
@@ -449,9 +449,42 @@ func TestExternalVolumeTransformer(t *testing.T) {
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
 					require.NoError(t, err)
 
-					assert.True(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+					assert.True(t, m.TypedSpec().ReadOnly, "expected read-only mount")
 					assert.True(t, m.TypedSpec().Secure)
 					assert.True(t, m.TypedSpec().NoExec)
+				})
+			},
+		},
+		{
+			name: "NFSv3 external volume",
+			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
+				{
+					Meta:           meta.Meta{MetaKind: blockcfg.ExternalVolumeConfigKind, MetaAPIVersion: "v1alpha1"},
+					MetaName:       "nfs-data",
+					FilesystemType: block.FilesystemTypeNFS,
+					MountSpec: blockcfg.ExternalMountSpec{
+						MountNFS: &blockcfg.NFSMountSpec{
+							NFSServer:  "10.5.0.1",
+							NFSPath:    "/export",
+							NFSVersion: block.NFSVersion3,
+							NFSPort:    12049,
+						},
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
+				require.Len(t, resources, 1)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.FilesystemTypeNFS, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+					assert.Equal(t, "10.5.0.1:/export", vc.TypedSpec().Provisioning.DiskSelector.External)
+					assert.Equal(t, []block.ParameterSpec{
+						block.NewStringParameter("vers", "3"),
+						block.NewStringParameter("port", "12049"),
+						block.NewBooleanParameter("nolock"),
+					}, vc.TypedSpec().Mount.Parameters)
 				})
 			},
 		},

@@ -379,6 +379,38 @@ func (o *ExternalVolumeConfigV1Alpha1) DeepCopy() *ExternalVolumeConfigV1Alpha1 
 		cp.MountSpec.MountVirtiofs = new(VirtiofsMountSpec)
 		*cp.MountSpec.MountVirtiofs = *o.MountSpec.MountVirtiofs
 	}
+	if o.MountSpec.MountNFS != nil {
+		cp.MountSpec.MountNFS = new(NFSMountSpec)
+		*cp.MountSpec.MountNFS = *o.MountSpec.MountNFS
+		if o.MountSpec.MountNFS.NFSTransport != nil {
+			cp.MountSpec.MountNFS.NFSTransport = new(NFSTransport)
+			*cp.MountSpec.MountNFS.NFSTransport = *o.MountSpec.MountNFS.NFSTransport
+		}
+		if o.MountSpec.MountNFS.NFSMountTransport != nil {
+			cp.MountSpec.MountNFS.NFSMountTransport = new(NFSTransport)
+			*cp.MountSpec.MountNFS.NFSMountTransport = *o.MountSpec.MountNFS.NFSMountTransport
+		}
+		if o.MountSpec.MountNFS.NFSLocking != nil {
+			cp.MountSpec.MountNFS.NFSLocking = new(NFSLocking)
+			*cp.MountSpec.MountNFS.NFSLocking = *o.MountSpec.MountNFS.NFSLocking
+		}
+		if o.MountSpec.MountNFS.NFSRecovery != nil {
+			cp.MountSpec.MountNFS.NFSRecovery = new(NFSRecovery)
+			*cp.MountSpec.MountNFS.NFSRecovery = *o.MountSpec.MountNFS.NFSRecovery
+		}
+		if o.MountSpec.MountNFS.NFSRetransmissions != nil {
+			cp.MountSpec.MountNFS.NFSRetransmissions = new(uint32)
+			*cp.MountSpec.MountNFS.NFSRetransmissions = *o.MountSpec.MountNFS.NFSRetransmissions
+		}
+		if o.MountSpec.MountNFS.NFSReservedPort != nil {
+			cp.MountSpec.MountNFS.NFSReservedPort = new(bool)
+			*cp.MountSpec.MountNFS.NFSReservedPort = *o.MountSpec.MountNFS.NFSReservedPort
+		}
+		if o.MountSpec.MountNFS.NFSSecurity != nil {
+			cp.MountSpec.MountNFS.NFSSecurity = new(NFSSecurity)
+			*cp.MountSpec.MountNFS.NFSSecurity = *o.MountSpec.MountNFS.NFSSecurity
+		}
+	}
 	return &cp
 }
 

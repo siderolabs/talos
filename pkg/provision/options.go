@@ -210,6 +210,15 @@ func WithBGPCLOS(advertise string, localASN, peerASN uint32, loopbackCIDR string
 	}
 }
 
+// WithNFS enables an embedded userspace NFS server for development clusters.
+func WithNFS(enabled bool) Option {
+	return func(o *Options) error {
+		o.NFSEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithSiderolinkAgent enables or disables siderolink agent.
 func WithSiderolinkAgent(v bool) Option {
 	return func(o *Options) error {
@@ -262,6 +271,7 @@ type Options struct {
 
 	KMSEndpoint      string
 	JSONLogsEndpoint string
+	NFSEnabled       bool
 
 	SiderolinkEnabled bool
 

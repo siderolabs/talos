@@ -210,6 +210,11 @@
 ; TODO: label
 (allow pod_p kubelet_state_t (fs_classes (rw)))
 
+; Network filesystems are labeled network_fs_t by genfscon. Let regular pods use
+; NFS/CIFS volumes while the filesystem and mount options continue to enforce
+; read-only and Unix-level access controls.
+(allow pod_t network_fs_t (fs_classes (rw)))
+
 ; getattr, unmount called by containers and should be guarded by their mount namespaces
 (allow pod_p fs_t (filesystem (
     ; associate

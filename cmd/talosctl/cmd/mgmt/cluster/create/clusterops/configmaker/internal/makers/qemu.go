@@ -220,6 +220,7 @@ func (m *Qemu) AddExtraProvisionOpts() error {
 		provision.WithExtraUEFISearchPaths(m.EOps.ExtraUEFISearchPaths),
 		provision.WithTargetArch(m.EOps.TargetArch),
 		provision.WithSiderolinkAgent(m.EOps.WithSiderolinkAgent.IsEnabled()),
+		provision.WithNFS(m.EOps.WithNFS),
 	})
 
 	externalKubernetesEndpoint := m.Provisioner.GetExternalKubernetesControlPlaneEndpoint(m.ClusterRequest.Network, m.Ops.ControlPlanePort)

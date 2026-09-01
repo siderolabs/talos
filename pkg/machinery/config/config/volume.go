@@ -211,6 +211,7 @@ type ExistingVolumeMountConfig interface {
 type ExternalVolumeMountConfig interface {
 	ExistingVolumeMountConfig
 	Virtiofs() optional.Optional[ExternalVolumeMountConfigSpec]
+	NFS() optional.Optional[ExternalVolumeMountConfigSpec]
 }
 
 // ExternalVolumeMountConfigSpec defines the interface to access external mount configuration spec.

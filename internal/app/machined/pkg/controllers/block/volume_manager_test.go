@@ -108,6 +108,45 @@ func (suite *VolumeManagerSuite) assertFailingVolumeDoesNotBlockReset(label stri
 // not hold up a global volume lifecycle teardown (reset/reboot/upgrade), even if its
 // status still has a finalizer. This applies to every user-configured volume kind.
 
+func (suite *VolumeManagerSuite) TestReadyExternalVolumePropagatesMountSpecUpdates() {
+	ctx := suite.Ctx()
+
+	discoveredVolumesStatus := block.NewDiscoveredVolumesStatus(block.NamespaceName, block.DiscoveredVolumesStatusID)
+	discoveredVolumesStatus.TypedSpec().Ready = true
+	suite.Require().NoError(suite.State().Create(ctx, discoveredVolumesStatus))
+
+	lifecycle := block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)
+	suite.Require().NoError(suite.State().Create(ctx, lifecycle))
+
+	volumeConfig := block.NewVolumeConfig(block.NamespaceName, "external-nfs")
+	volumeConfig.TypedSpec().Type = block.VolumeTypeExternal
+	volumeConfig.TypedSpec().Provisioning.DiskSelector.External = "192.0.2.10:/export"
+	volumeConfig.TypedSpec().Provisioning.FilesystemSpec.Type = block.FilesystemTypeNFS
+	volumeConfig.TypedSpec().Mount.Parameters = []block.ParameterSpec{
+		block.NewStringParameter("vers", "3"),
+		block.NewBooleanParameter("nolock"),
+	}
+	suite.Require().NoError(suite.State().Create(ctx, volumeConfig))
+
+	ctest.AssertResource(suite, "external-nfs", func(status *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal(volumeConfig.TypedSpec().Mount, status.TypedSpec().MountSpec)
+	})
+
+	volumeConfig, err := safe.StateGetByID[*block.VolumeConfig](ctx, suite.State(), "external-nfs")
+	suite.Require().NoError(err)
+
+	volumeConfig.TypedSpec().Mount.Parameters = []block.ParameterSpec{
+		block.NewStringParameter("vers", "4.1"),
+	}
+	suite.Update(volumeConfig)
+
+	ctest.AssertResource(suite, "external-nfs", func(status *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal(volumeConfig.TypedSpec().Mount, status.TypedSpec().MountSpec)
+	})
+}
+
 func (suite *VolumeManagerSuite) TestFailingUserVolumeDoesNotBlockReset() {
 	suite.assertFailingVolumeDoesNotBlockReset(block.UserVolumeLabel)
 }

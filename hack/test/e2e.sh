@@ -44,6 +44,7 @@ CLUSTER_NAME=
 
 TEST_SHORT=()
 TEST_RUN=("-test.run" ".")
+TEST_NFS=()
 
 function run_talos_integration_test {
   case "${SHORT_INTEGRATION_TEST:-no}" in
@@ -88,7 +89,8 @@ function run_talos_integration_test {
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}" \
     "${TEST_AIRGAPPED[@]}" \
-    "${TEST_VIRTIOFSD[@]}"
+    "${TEST_VIRTIOFSD[@]}" \
+    "${TEST_NFS[@]}"
 }
 
 function run_talos_integration_test_docker {
