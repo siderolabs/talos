@@ -5294,6 +5294,54 @@
       ],
       "description": "LinkConfig is a config document to configure physical interfaces (network links)."
     },
+    "network.LinkIngressConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "NetworkLinkIngressConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the link (interface) to filter the incoming packets on.\n",
+          "markdownDescription": "Name of the link (interface) to filter the incoming packets on.",
+          "x-intellij-html-description": "\u003cp\u003eName of the link (interface) to filter the incoming packets on.\u003c/p\u003e\n"
+        },
+        "destinationAddresses": {
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f.:]+/\\d{1,3}$"
+          },
+          "type": "array",
+          "title": "destinationAddresses",
+          "description": "Destination addresses to accept on this link, as a list of CIDRs.\n\nThis is an override: when specified, only packets destined to one of these addresses are\naccepted, and the node’s own addresses are not implicitly allowed.\n\nAn empty list allows no destination at all, i.e. all packets arriving on the link are\ndropped.\n\nDefault value: the node’s own addresses.\n",
+          "markdownDescription": "Destination addresses to accept on this link, as a list of CIDRs.\n\nThis is an override: when specified, only packets destined to one of these addresses are\naccepted, and the node's own addresses are not implicitly allowed.\n\nAn empty list allows no destination at all, i.e. all packets arriving on the link are\ndropped.\n\nDefault value: the node's own addresses.",
+          "x-intellij-html-description": "\u003cp\u003eDestination addresses to accept on this link, as a list of CIDRs.\u003c/p\u003e\n\n\u003cp\u003eThis is an override: when specified, only packets destined to one of these addresses are\naccepted, and the node\u0026rsquo;s own addresses are not implicitly allowed.\u003c/p\u003e\n\n\u003cp\u003eAn empty list allows no destination at all, i.e. all packets arriving on the link are\ndropped.\u003c/p\u003e\n\n\u003cp\u003eDefault value: the node\u0026rsquo;s own addresses.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "NetworkLinkIngressConfig is a config document to filter out the packets coming into the system based on destination IP and interface.\\nFilters incoming packets on a link by destination address: only packets destined to one of\\nthe node's own addresses are accepted, anything else is dropped.\\nThis is meant for clusters using an encapsulating CNI, where pod/service CIDR destinations should never\\narrive unencapsulated on an external interface; it is incompatible with native pod IP routing (e.g. BGP).\\n\\nThe set of accepted destinations can be overridden with the `destinationAddresses` option.\\n"
+    },
     "network.LinkSelector": {
       "properties": {
         "match": {
@@ -7852,6 +7900,9 @@
     },
     {
       "$ref": "#/$defs/network.LinkAliasConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.LinkIngressConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.ResolverConfigV1Alpha1"

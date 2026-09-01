@@ -638,6 +638,11 @@ func (container *Container) NetworkLinkAliasConfigs() []config.NetworkLinkAliasC
 	return findMatchingDocs[config.NetworkLinkAliasConfig](container.documents)
 }
 
+// NetworkLinkIngressConfigs implements config.Config interface.
+func (container *Container) NetworkLinkIngressConfigs() []config.NetworkLinkIngressConfig {
+	return findMatchingDocs[config.NetworkLinkIngressConfig](container.documents)
+}
+
 // NetworkDHCPConfigs implements config.Config interface.
 func (container *Container) NetworkDHCPConfigs() []config.NetworkDHCPConfig {
 	return findMatchingDocs[config.NetworkDHCPConfig](container.documents)
