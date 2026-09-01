@@ -112,11 +112,11 @@ func (s ProvisioningSpec) IsZero() bool {
 // Validate parses selector without mutating stored config.
 func (s ProvisioningSpec) Validate() error {
 	if s.DiskSelector.Match.IsZero() {
-		return errors.New("provisioning.volumeSelector.match is required")
+		return errors.New("provisioning.diskSelector.match is required")
 	}
 
 	if err := s.DiskSelector.Match.ParseBool(celenv.DiskLocator()); err != nil {
-		return fmt.Errorf("provisioning.volumeSelector.match: %w", err)
+		return fmt.Errorf("provisioning.diskSelector.match: %w", err)
 	}
 
 	return nil

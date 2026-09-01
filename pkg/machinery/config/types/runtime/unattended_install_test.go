@@ -90,7 +90,7 @@ func TestUnattendedInstallValidate(t *testing.T) {
 		{
 			name:          "empty",
 			cfg:           runtime.NewUnattendedInstallConfigV1Alpha1,
-			expectedError: "provisioning.volumeSelector.match is required",
+			expectedError: "provisioning.diskSelector.match is required",
 			expectedWarnings: []string{
 				"installer.image is not set, if Talos is not booted from asset built by Image Factory, installation will fail",
 			},
@@ -108,14 +108,14 @@ func TestUnattendedInstallValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "no volume selector match",
+			name: "no disk selector match",
 			cfg: func() *runtime.UnattendedInstallConfigV1Alpha1 {
 				cfg := runtime.NewUnattendedInstallConfigV1Alpha1()
 				cfg.Installer.Image = "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.0.0"
 
 				return cfg
 			},
-			expectedError: "provisioning.volumeSelector.match is required",
+			expectedError: "provisioning.diskSelector.match is required",
 		},
 		{
 			name: "invalid match expression",
@@ -131,7 +131,7 @@ func TestUnattendedInstallValidate(t *testing.T) {
 
 				return cfg
 			},
-			expectedError: "provisioning.volumeSelector.match: expression output type is int, expected bool",
+			expectedError: "provisioning.diskSelector.match: expression output type is int, expected bool",
 		},
 		{
 			name: "valid config",
