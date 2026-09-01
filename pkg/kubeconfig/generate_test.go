@@ -71,6 +71,9 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 			suite.Require().NoError(err)
 
 			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, fmt.Sprintf("admin@%s", cfg.K8sClusterConfig().ClusterName())))
+
+			// whatever Talos generates should always pass the validation talosctl applies to it
+			suite.Assert().NoError(kubeconfig.Validate(config))
 		})
 	}
 }
@@ -107,6 +110,7 @@ func (suite *GenerateSuite) TestGenerate() {
 	suite.Require().NoError(err)
 
 	suite.Assert().NoError(clientcmd.ConfirmUsable(*config, "kube-controller-manager@foo"))
+	suite.Assert().NoError(kubeconfig.Validate(config))
 }
 
 func TestGenerateSuite(t *testing.T) {
