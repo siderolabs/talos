@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -39,14 +40,20 @@ import (
 const (
 	// containerPauseImage never writes anything and never exits, which is what the lifecycle tests
 	// want.
+	//
+	// Note: this image is part of the default image cache in `talosctl image integration`.
 	containerPauseImage = images.DefaultSandboxImage
 
 	// containerShellImage is used wherever a test needs the container to run a command and say
 	// something about itself. The pause image has no shell and produces no output, so it cannot
 	// carry any assertion about what the container actually got.
+	//
+	// Note: this image is part of the default image cache in `talosctl image integration`.
 	containerShellImage = "docker.io/library/alpine:3.23"
 
 	// containerSocatImage carries a unix-socket client, needed for machined socket access testing.
+	//
+	// Note: this image is part of the default image cache in `talosctl image integration`.
 	containerSocatImage = "docker.io/alpine/socat:1.8.1.3"
 )
 
@@ -80,10 +87,6 @@ func (suite *ContainersSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ContainersSuite) SetupTest() {
-	if suite.Airgapped {
-		suite.T().Skip("skipping test in airgapped mode, the tests pull images")
-	}
-
 	// Enough for an image pull; the reboot test extends its own deadline.
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Minute)
 }
@@ -141,6 +144,10 @@ func (suite *ContainersSuite) TestContainerLifecycle() {
 // TestSurvivesReboot verifies that a declared container is stopped on the way down and started again
 // as a new task on the way up.
 func (suite *ContainersSuite) TestSurvivesReboot() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
 	if !suite.Capabilities().SupportsReboot {
 		suite.T().Skip("cluster doesn't support reboots")
 	}
@@ -223,6 +230,10 @@ func (suite *ContainersSuite) TestRestartAfterTermination() {
 // TestUnresolvableImage verifies that a container whose image cannot be pulled is withheld while the
 // pull keeps retrying, and starts once the reference is corrected.
 func (suite *ContainersSuite) TestUnresolvableImage() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
 	ctx, name, _ := suite.setupContainer("bad-image")
 
 	// Built off the pause image rather than the shell one: the corrected container has to stay up
@@ -626,6 +637,10 @@ func (suite *ContainersSuite) TestHostPathMount() {
 // TestDependsOnPaths verifies that a container declaring dependsOn.paths waits for the path to exist
 // and starts once it does.
 func (suite *ContainersSuite) TestDependsOnPaths() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
 	// Redeclaring the container against a path that exists, rather than making the original path
 	// appear. This covers the gate being re-evaluated when the spec changes; the subtest below covers
 	// an unmet path being noticed without any config change.
@@ -907,6 +922,10 @@ func (suite *ContainersSuite) TestUserVolumeMountWritableByDefault() {
 // The pause image is used because it is already on every node, so nothing here waits on a pull; what
 // is being timed is the gate, not the registry.
 func (suite *ContainersSuite) TestUserVolumeMountGate() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
 	ctx, name, node := suite.setupContainer("volume-gate")
 
 	// Named but not declared: the volume config is applied only further down.
@@ -950,6 +969,10 @@ func (suite *ContainersSuite) TestUserVolumeMountGate() {
 // happens when it is left unset.
 func (suite *ContainersSuite) TestAllowMachinedAccess() {
 	suite.Run("enabled", func() {
+		if testing.Short() {
+			suite.T().Skip("skipping the test in short mode")
+		}
+
 		ctx, name, _ := suite.setupContainer("allow-machined-enabled")
 		script := fmt.Sprintf(
 			`if [ -S %s ]; then echo SOCKET_OK; else echo SOCKET_MISSING; fi
@@ -1009,6 +1032,10 @@ sleep 3600`,
 // TestAllowMachinedSocketConnect verifies that a container granted security.machinedAccess can
 // actually connect() to the machined socket, not merely see it.
 func (suite *ContainersSuite) TestAllowMachinedSocketConnect() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
 	ctx, name, _ := suite.setupContainer("allow-machined-connect")
 
 	script := fmt.Sprintf(
@@ -1433,6 +1460,10 @@ func (suite *ContainersSuite) assertContainerdImages(ctx context.Context, namesp
 // covered by TestImageGCTalosContainers in the controller's own tests, on synthetic time. This is
 // the same kind of blind spot as the one assertNoContainerdContainer documents.
 func (suite *ContainersSuite) TestImageNotGarbageCollectedWhileReferenced() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
 	ctx, name, _ := suite.setupContainer("image-gc")
 
 	suite.applyContainers(ctx, suite.shellContainer(name, "sleep 3600"))

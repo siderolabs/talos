@@ -750,6 +750,7 @@ var imageIntegrationCmd = &cobra.Command{
 			imgs.Pause.String(),
 			imgs.KubeNetworkPolicies.String(),
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
+			"docker.io/alpine/socat:1.8.1.3",
 			"docker.io/library/alpine:latest",
 			"ghcr.io/siderolabs/talosctl:v1.13.5",
 			"registry.k8s.io/kube-apiserver:v1.27.0",
