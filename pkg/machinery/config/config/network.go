@@ -70,6 +70,12 @@ func (w networkRuleConfigWrapper) Rules() []NetworkRule {
 	)
 }
 
+// NetworkLinkIngressConfig defines an ingress filtering configuration for a single link.
+type NetworkLinkIngressConfig interface {
+	NamedDocument
+	DestinationAddresses() []netip.Prefix
+}
+
 // EthernetConfig defines a network interface configuration.
 type EthernetConfig interface {
 	NamedDocument
