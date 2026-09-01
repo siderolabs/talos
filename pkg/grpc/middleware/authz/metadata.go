@@ -17,9 +17,19 @@ import (
 // Should be used only in this file.
 const mdKey = constants.APIAuthzRoleMetadataKey
 
-// SetMetadata sets given roles in gRPC metadata.
+// SetMetadata sets given roles in gRPC metadata, replacing any value already present.
+//
+// An empty role set removes the key.
 func SetMetadata(md metadata.MD, roles role.Set) {
-	md.Set(mdKey, roles.Strings()...)
+	roleStrings := roles.Strings()
+
+	if len(roleStrings) == 0 {
+		md.Delete(mdKey)
+
+		return
+	}
+
+	md.Set(mdKey, roleStrings...)
 }
 
 // getFromMetadata returns roles extracted from gRPC metadata.
