@@ -44,3 +44,8 @@ func NewHorizontalLine(label string) *HorizontalLine {
 
 	return widget
 }
+
+// SetLabel replaces the label drawn on the line.
+func (widget *HorizontalLine) SetLabel(label string) {
+	widget.label = []rune(" " + label + " ")
+}

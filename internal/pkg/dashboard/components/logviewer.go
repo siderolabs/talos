@@ -20,11 +20,15 @@ type LogViewer struct {
 
 	logs tview.TextView
 
+	line *HorizontalLine
+
 	entries []logEntry
 
 	filterInput  *tview.InputField
 	filterActive bool
 	filterText   string
+
+	follow bool
 }
 
 // logEntry holds a single raw log line, kept so the view can be re-filtered.
@@ -36,9 +40,11 @@ type logEntry struct {
 // NewLogViewer initializes LogViewer.
 func NewLogViewer(app *tview.Application) *LogViewer {
 	widget := &LogViewer{
-		Grid: *tview.NewGrid(),
-		app:  app,
-		logs: *tview.NewTextView(),
+		Grid:   *tview.NewGrid(),
+		app:    app,
+		logs:   *tview.NewTextView(),
+		line:   NewHorizontalLine("Logs (/: filter)"),
+		follow: true,
 	}
 
 	widget.logs.ScrollToEnd().
@@ -85,10 +91,59 @@ func NewLogViewer(app *tview.Application) *LogViewer {
 
 	widget.SetRows(1, 0).SetColumns(0)
 
-	widget.AddItem(NewHorizontalLine("Logs (/: filter)"), 0, 0, 1, 1, 0, 0, false)
+	widget.AddItem(widget.line, 0, 0, 1, 1, 0, 0, false)
 	widget.AddItem(&widget.logs, 1, 0, 1, 1, 0, 0, true)
 
 	return widget
+}
+
+// SetLabel sets the label rendered on the widget's horizontal line.
+func (widget *LogViewer) SetLabel(label string) {
+	widget.line.SetLabel(label)
+}
+
+// Reset drops all buffered log lines, for when the widget is pointed at a different log stream.
+func (widget *LogViewer) Reset() {
+	widget.entries = nil
+
+	widget.logs.Clear()
+	widget.logs.SetText(noData)
+	widget.SetFollow(true)
+}
+
+// Follow reports whether the view scrolls to the newest line as it arrives.
+func (widget *LogViewer) Follow() bool {
+	return widget.follow
+}
+
+// SetFollow sets whether the view scrolls to the newest line as it arrives.
+//
+// Turning follow off freezes the view where it is, which is what makes a scrollback readable while
+// a chatty container keeps writing.
+func (widget *LogViewer) SetFollow(follow bool) {
+	widget.follow = follow
+
+	if follow {
+		widget.logs.ScrollToEnd()
+
+		return
+	}
+
+	// ScrollTo clears the "track end" flag that ScrollToEnd sets; scrolling to where the view
+	// already is pins it there without moving it.
+	widget.logs.ScrollTo(widget.logs.GetScrollOffset())
+}
+
+// ScrollToBeginning jumps to the oldest line, which stops following: a view that tracks the end
+// would jump straight back down on the next line.
+func (widget *LogViewer) ScrollToBeginning() {
+	widget.SetFollow(false)
+	widget.logs.ScrollToBeginning()
+}
+
+// ScrollToEnd jumps to the newest line and resumes following.
+func (widget *LogViewer) ScrollToEnd() {
+	widget.SetFollow(true)
 }
 
 // activateSearch shows the search input below the log view.
@@ -167,7 +222,9 @@ func (widget *LogViewer) renderLogs() {
 		}
 	}
 
-	widget.logs.ScrollToEnd()
+	if widget.follow {
+		widget.logs.ScrollToEnd()
+	}
 }
 
 // lowerWithOffsets lowercases text and returns, for each byte index of the result,

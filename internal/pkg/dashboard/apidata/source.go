@@ -15,9 +15,11 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Source is a data source that gathers information about a Talos node using Talos API.
@@ -256,6 +258,23 @@ func (source *Source) gather() *Data {
 				},
 				func(node *Node, value *machine.ServiceList) {
 					node.ServiceList = value
+				},
+			)
+		},
+		func() error {
+			// Stats for the containers declared via ContainerConfig. Nodes running an older
+			// Talos, or one where the namespace was never created, return an error here; it is
+			// joined with the rest and the container metrics are simply left unset.
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.Stats], error) {
+					return source.MachineClient.Stats(ctx, &machine.StatsRequest{
+						Namespace: constants.TalosContainersContainerdNamespace,
+						Driver:    common.ContainerDriver_CONTAINERD,
+					})
+				},
+				func(node *Node, value *machine.Stats) {
+					node.ContainerStats = value
 				},
 			)
 		},
