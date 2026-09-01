@@ -63,6 +63,9 @@ const (
 
 	// ScreenResourceExplorer is the resource explorer screen.
 	ScreenResourceExplorer Screen = "Resources"
+
+	// ScreenContainers is the containers screen.
+	ScreenContainers Screen = "Containers"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -302,28 +305,32 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	return dashboard, nil
 }
 
-func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
-	primitiveForScreen := func(screen Screen) screenSelectListener {
-		switch screen {
-		case ScreenSummary:
-			return NewSummaryGrid(d.app)
-		case ScreenMonitor:
-			return NewMonitorGrid(d.app)
-		case ScreenNetworkConfig:
-			return NewNetworkConfigGrid(ctx, d)
-		case ScreenConfigURL:
-			return NewConfigURLGrid(ctx, d)
-		case ScreenResourceExplorer:
-			return NewResourceExplorerGrid(ctx, d)
-		default:
-			return nil
-		}
+// newScreenPrimitive builds the primitive implementing the given screen, or nil when the screen is
+// unknown.
+func (d *Dashboard) newScreenPrimitive(ctx context.Context, screen Screen) screenSelectListener { //nolint:ireturn
+	switch screen {
+	case ScreenSummary:
+		return NewSummaryGrid(d.app)
+	case ScreenMonitor:
+		return NewMonitorGrid(d.app)
+	case ScreenNetworkConfig:
+		return NewNetworkConfigGrid(ctx, d)
+	case ScreenConfigURL:
+		return NewConfigURLGrid(ctx, d)
+	case ScreenResourceExplorer:
+		return NewResourceExplorerGrid(ctx, d)
+	case ScreenContainers:
+		return NewContainersGrid(ctx, d)
+	default:
+		return nil
 	}
+}
 
+func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
 	d.screenConfigs = make([]screenConfig, 0, len(screens))
 
 	for i, screen := range screens {
-		primitive := primitiveForScreen(screen)
+		primitive := d.newScreenPrimitive(ctx, screen)
 		if primitive == nil {
 			return fmt.Errorf("unknown screen %s", screen)
 		}
