@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"text/tabwriter"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -92,7 +92,7 @@ func serviceList(ctx context.Context, clientFactory *global.ClientFactory) error
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tSERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
 
 	var errs error
@@ -108,7 +108,7 @@ func serviceList(ctx context.Context, clientFactory *global.ClientFactory) error
 			for _, s := range msg.Services {
 				svc := serviceInfoWrapper{s}
 
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", resp.Node, svc.Id, svc.State, svc.healthStatus(), svc.lastUpdated(), svc.lastEvent())
+				safeout.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", resp.Node, svc.Id, svc.State, svc.healthStatus(), svc.lastUpdated(), svc.lastEvent())
 			}
 		}
 	}
@@ -124,7 +124,7 @@ func serviceInfo(ctx context.Context, clientFactory *global.ClientFactory, id st
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 
 	var (
 		errs  error
@@ -160,13 +160,13 @@ func serviceInfo(ctx context.Context, clientFactory *global.ClientFactory, id st
 func renderServiceInfo(w *tabwriter.Writer, node string, s *machineapi.ServiceInfo) {
 	svc := serviceInfoWrapper{s}
 
-	fmt.Fprintf(w, "NODE\t%s\n", node)
-	fmt.Fprintf(w, "ID\t%s\n", svc.Id)
-	fmt.Fprintf(w, "STATE\t%s\n", svc.State)
-	fmt.Fprintf(w, "HEALTH\t%s\n", svc.healthStatus())
+	safeout.Fprintf(w, "NODE\t%s\n", node)
+	safeout.Fprintf(w, "ID\t%s\n", svc.Id)
+	safeout.Fprintf(w, "STATE\t%s\n", svc.State)
+	safeout.Fprintf(w, "HEALTH\t%s\n", svc.healthStatus())
 
 	if svc.Health.LastMessage != "" {
-		fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
+		safeout.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
 	}
 
 	label := "EVENTS"
@@ -175,7 +175,7 @@ func renderServiceInfo(w *tabwriter.Writer, node string, s *machineapi.ServiceIn
 		event := svc.Events.Events[len(svc.Events.Events)-1-i]
 
 		ts := event.Ts.AsTime()
-		fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
+		safeout.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
 		label = ""
 	}
 }
@@ -225,7 +225,7 @@ func serviceActionRun[RespT any](
 ) error {
 	responseChan := multiplex.UnaryViaFactory(ctx, clientFactory, call)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
 	var errs error
@@ -238,7 +238,7 @@ func serviceActionRun[RespT any](
 		}
 
 		for _, r := range responses(resp.Payload) {
-			fmt.Fprintf(w, "%s\t%s\n", resp.Node, r)
+			safeout.Fprintf(w, "%s\t%s\n", resp.Node, r)
 		}
 	}
 

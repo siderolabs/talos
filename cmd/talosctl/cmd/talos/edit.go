@@ -23,6 +23,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/util/editor/crlf"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/yamlstrip"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -109,13 +110,13 @@ func editFn() func(ctx context.Context, c *client.Client, node string, mc resour
 			}
 
 			if len(bytes.TrimSpace(bytes.TrimSpace(yamlstrip.Comments(edited)))) == 0 {
-				fmt.Fprintln(os.Stderr, "Apply was skipped: empty file.")
+				fmt.Fprintln(safeout.Stderr(), "Apply was skipped: empty file.")
 
 				break
 			}
 
 			if bytes.Equal(edited, body) {
-				fmt.Fprintln(os.Stderr, "Apply was skipped: no changes detected.")
+				fmt.Fprintln(safeout.Stderr(), "Apply was skipped: no changes detected.")
 
 				break
 			}

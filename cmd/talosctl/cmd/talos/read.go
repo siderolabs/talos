@@ -48,7 +48,9 @@ var readCmd = &cobra.Command{
 
 		defer r.Close() //nolint:errcheck
 
-		_, err = io.Copy(os.Stdout, r)
+		// the file is arbitrary bytes, not text: it is routinely redirected to a
+		// file, so it is passed through unmodified.
+		_, err = io.Copy(os.Stdout, r) //nolint:forbidigo
 		if err != nil {
 			return fmt.Errorf("error reading: %w", err)
 		}

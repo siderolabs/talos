@@ -19,6 +19,7 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	taloskubeconfig "github.com/siderolabs/talos/pkg/kubeconfig"
 )
 
@@ -129,7 +130,8 @@ If merge flag is false and [local-path] is "-", config will be written to stdout
 		}
 
 		if localPath == stdoutOutput {
-			_, err = os.Stdout.Write(data)
+			// a kubeconfig written for a program to read back.
+			_, err = os.Stdout.Write(data) //nolint:forbidigo
 
 			return err
 		}
@@ -144,12 +146,12 @@ func mergeKubeconfig(config *clientcmdapi.Config, localPath string) error {
 		return err
 	}
 
-	interactive := isatty.IsTerminal(os.Stdout.Fd())
+	interactive := isatty.IsTerminal(os.Stdout.Fd()) //nolint:forbidigo // asking about the stream, not writing to it
 
 	err = merger.Merge(config, kubeconfig.MergeOptions{
 		ActivateContext:  true,
 		ForceContextName: kubeconfigFlags.forceContextName,
-		OutputWriter:     os.Stdout,
+		OutputWriter:     os.Stdout, //nolint:forbidigo // a kubeconfig written for a program to read back
 		ConflictHandler: func(component kubeconfig.ConfigComponent, name string) (kubeconfig.ConflictDecision, error) {
 			if kubeconfigFlags.force {
 				return kubeconfig.OverwriteDecision, nil
@@ -173,7 +175,7 @@ func askOverwriteOrRename(prompt string) (kubeconfig.ConflictDecision, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Printf("%s [(r)ename/(o)verwrite]: ", prompt)
+		safeout.Printf("%s [(r)ename/(o)verwrite]: ", prompt)
 
 		response, err := reader.ReadString('\n')
 		if err != nil {

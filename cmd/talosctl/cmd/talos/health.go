@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"os"
 	"slices"
 	"time"
 
@@ -17,6 +16,7 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	clusterres "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	"github.com/siderolabs/talos/pkg/reporter"
 )
 
 type clusterNodes struct {
@@ -158,7 +159,12 @@ func healthOnClient(ctx context.Context, clientFactory *global.ClientFactory) er
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, healthCmdFlags.clusterWaitTimeout)
 	defer checkCtxCancel()
 
-	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
+	// the condition lines are assembled from node names, service states and API
+	// errors the nodes chose, and the reporter colorizes them and writes to the
+	// terminal itself, so the text is filtered on its way in.
+	rep := check.StderrReporter(reporter.WithLineFilter(safeout.String))
+
+	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), rep)
 }
 
 func healthOnServer(ctx context.Context, clientFactory *global.ClientFactory) error {
@@ -195,7 +201,7 @@ func healthOnServer(ctx context.Context, clientFactory *global.ClientFactory) er
 			return err
 		}
 
-		fmt.Fprintln(os.Stderr, msg.GetMessage())
+		fmt.Fprintln(safeout.Stderr(), msg.GetMessage())
 	}
 }
 

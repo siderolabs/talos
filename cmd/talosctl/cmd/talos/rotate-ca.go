@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -141,7 +142,7 @@ func rotateTalosCA(ctx context.Context, oldClient *client.Client, encoderOpt enc
 
 		EncoderOption: encoderOpt,
 
-		Printf: func(format string, args ...any) { fmt.Printf(format, args...) },
+		Printf: func(format string, args ...any) { safeout.Printf(format, args...) },
 	}
 
 	newTalosconfig, err := talos.Rotate(ctx, options)
@@ -150,12 +151,12 @@ func rotateTalosCA(ctx context.Context, oldClient *client.Client, encoderOpt enc
 	}
 
 	if rotateCACmdFlags.dryRun {
-		fmt.Println("> Dry-run mode enabled, no changes were made to the cluster, re-run with `--dry-run=false` to apply the changes.")
+		safeout.Println("> Dry-run mode enabled, no changes were made to the cluster, re-run with `--dry-run=false` to apply the changes.")
 
 		return nil, nil
 	}
 
-	fmt.Printf("> Writing new talosconfig to %q\n", rotateCACmdFlags.output)
+	safeout.Printf("> Writing new talosconfig to %q\n", rotateCACmdFlags.output)
 
 	return newTalosconfig, newTalosconfig.Save(rotateCACmdFlags.output)
 }
@@ -173,7 +174,7 @@ func rotateKubernetesCA(ctx context.Context, c *client.Client, encoderOpt encode
 
 		EncoderOption: encoderOpt,
 
-		Printf: func(format string, args ...any) { fmt.Printf(format, args...) },
+		Printf: func(format string, args ...any) { safeout.Printf(format, args...) },
 	}
 
 	if err := kubernetes.Rotate(ctx, options); err != nil {
@@ -181,12 +182,12 @@ func rotateKubernetesCA(ctx context.Context, c *client.Client, encoderOpt encode
 	}
 
 	if rotateCACmdFlags.dryRun {
-		fmt.Println("> Dry-run mode enabled, no changes were made to the cluster, re-run with `--dry-run=false` to apply the changes.")
+		safeout.Println("> Dry-run mode enabled, no changes were made to the cluster, re-run with `--dry-run=false` to apply the changes.")
 
 		return nil
 	}
 
-	fmt.Printf("> Kubernetes CA rotation done, new 'kubeconfig' can be fetched with `talosctl kubeconfig`.\n")
+	safeout.Printf("> Kubernetes CA rotation done, new 'kubeconfig' can be fetched with `talosctl kubeconfig`.\n")
 
 	return nil
 }

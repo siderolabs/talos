@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -18,6 +17,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -74,7 +74,7 @@ This is a per-volume view rather than the node's full mount table: use
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		defer w.Flush() //nolint:errcheck
 
 		var (
@@ -193,13 +193,13 @@ func printDiskFreeRow(w *tabwriter.Writer, node string, row dfRow) {
 	info := row.statfs
 
 	if dfCmdFlags.inodes {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		safeout.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			node, row.volume, row.source,
 			stringifyCount(info.Inodes), stringifyCount(info.InodesUsed), stringifyCount(info.InodesFree),
 			percent(info.InodesUsed, info.Inodes), row.target,
 		)
 	} else {
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+		safeout.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 			node, row.volume, row.source,
 			stringifySize(info.Size), stringifySize(info.Used), stringifySize(info.Available),
 			percent(info.Used, info.Used+info.Available), row.target,

@@ -36,6 +36,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/registry"
 	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/imager/cache"
@@ -164,7 +165,7 @@ func imageList(ctx context.Context) error {
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	headerWritten := false
 
 	var errs error
@@ -187,7 +188,7 @@ func imageList(ctx context.Context) error {
 			fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tLABELS\tCREATED")
 		}
 
-		fmt.Fprintf(
+		safeout.Fprintf(
 			w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			resp.Node,
 			resp.Payload.GetName(),
@@ -217,7 +218,7 @@ func imageListLegacy(ctx context.Context, clientFactory *global.ClientFactory) e
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
 
 	var errs error
@@ -229,7 +230,7 @@ func imageListLegacy(ctx context.Context, clientFactory *global.ClientFactory) e
 			continue
 		}
 
-		fmt.Fprintf(
+		safeout.Fprintf(
 			w, "%s\t%s\t%s\t%s\t%s\n",
 			resp.Node,
 			resp.Payload.Name,
@@ -263,7 +264,7 @@ func imagePull(ctx context.Context, imageRef string) error {
 
 	defer clientFactory.Close() //nolint:errcheck
 
-	rep := reporter.New()
+	rep := reporter.New(reporter.WithLineFilter(safeout.String))
 
 	containerdInstance, err := imageCmdFlags.containerdInstance()
 	if err != nil {
@@ -335,7 +336,7 @@ func imagePullInternal(
 		var sb strings.Builder
 
 		for node, imageName := range finishedPulls {
-			fmt.Fprintf(&sb, "%s: pulled image %s\n", node, imageName)
+			fmt.Fprintf(&sb, "%s: pulled image %s\n", node, safeout.String(imageName))
 		}
 
 		rep.Report(reporter.Update{
@@ -564,16 +565,16 @@ var imageK8sBundleCmd = &cobra.Command{
 			},
 		)
 
-		fmt.Printf("%s\n", images.Flannel)
-		fmt.Printf("%s\n", images.CoreDNS)
-		fmt.Printf("%s\n", images.Etcd)
-		fmt.Printf("%s\n", images.Pause)
-		fmt.Printf("%s\n", images.KubeAPIServer)
-		fmt.Printf("%s\n", images.KubeControllerManager)
-		fmt.Printf("%s\n", images.KubeScheduler)
-		fmt.Printf("%s\n", images.KubeProxy)
-		fmt.Printf("%s\n", images.Kubelet)
-		fmt.Printf("%s\n", images.KubeNetworkPolicies)
+		safeout.Printf("%s\n", images.Flannel)
+		safeout.Printf("%s\n", images.CoreDNS)
+		safeout.Printf("%s\n", images.Etcd)
+		safeout.Printf("%s\n", images.Pause)
+		safeout.Printf("%s\n", images.KubeAPIServer)
+		safeout.Printf("%s\n", images.KubeControllerManager)
+		safeout.Printf("%s\n", images.KubeScheduler)
+		safeout.Printf("%s\n", images.KubeProxy)
+		safeout.Printf("%s\n", images.Kubelet)
+		safeout.Printf("%s\n", images.KubeNetworkPolicies)
 
 		return nil
 	},
@@ -652,15 +653,15 @@ var imageTalosBundleCmd = &cobra.Command{
 		sources := images.ListSourcesFor(tag)
 
 		if semTag.LT(talosLegacyInstallerMaximumVersion) {
-			fmt.Printf("%s\n", sources.Installer)
+			safeout.Printf("%s\n", sources.Installer)
 		}
 
-		fmt.Printf("%s\n", sources.InstallerBase)
-		fmt.Printf("%s\n", sources.Imager)
-		fmt.Printf("%s\n", sources.Talos)
-		fmt.Printf("%s\n", sources.TalosctlAll)
-		fmt.Printf("%s\n", sources.Overlays)
-		fmt.Printf("%s\n", sources.Extensions)
+		safeout.Printf("%s\n", sources.InstallerBase)
+		safeout.Printf("%s\n", sources.Imager)
+		safeout.Printf("%s\n", sources.Talos)
+		safeout.Printf("%s\n", sources.TalosctlAll)
+		safeout.Printf("%s\n", sources.Overlays)
+		safeout.Printf("%s\n", sources.Extensions)
 
 		digestedReferences := []string{}
 
@@ -689,7 +690,7 @@ var imageTalosBundleCmd = &cobra.Command{
 		slices.Sort(digestedReferences)
 
 		for _, ref := range slices.Compact(digestedReferences) {
-			fmt.Printf("%s\n", ref)
+			safeout.Printf("%s\n", ref)
 		}
 
 		return nil
@@ -784,7 +785,7 @@ var imageIntegrationCmd = &cobra.Command{
 		imageNames = slices.Compact(imageNames)
 
 		for _, img := range imageNames {
-			fmt.Println(img)
+			safeout.Println(img)
 		}
 
 		return nil

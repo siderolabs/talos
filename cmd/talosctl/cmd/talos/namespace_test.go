@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -180,7 +181,7 @@ func TestKubernetesFlagIsDeprecated(t *testing.T) {
 			flag := tc.cmd.Flags().Lookup("kubernetes")
 
 			require.NotNil(t, flag)
-			assert.NotEmpty(t, flag.Deprecated, "expected --kubernetes to be marked deprecated")
+			assert.NotEmpty(t, helpers.DeprecationMessage(flag), "expected --kubernetes to be marked deprecated")
 		})
 	}
 }

@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -51,7 +51,7 @@ var processesCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tPID\tSTATE\tTHREADS\tCPU-TIME\tVIRTMEM\tRESMEM\tLABEL\tCOMMAND")
 
 		flushTimer := time.NewTimer(outputFlushInterval)
@@ -82,7 +82,7 @@ var processesCmd = &cobra.Command{
 						}
 
 						for _, p := range procs {
-							fmt.Fprintf(
+							safeout.Fprintf(
 								w, "%s\t%d\t%s\t%d\t%.2f\t%s\t%s\t%s\t%s\n",
 								resp.Node, p.Pid, p.State, p.Threads, p.CpuTime,
 								humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory),

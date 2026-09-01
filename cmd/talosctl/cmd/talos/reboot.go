@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -69,6 +70,7 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 
 	rep := reporter.New(
 		reporter.WithOutputMode(rebootCmdFlags.progress.Value()),
+		reporter.WithLineFilter(safeout.String),
 	)
 
 	if !rebootCmdFlags.drain {

@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -75,7 +76,7 @@ var debugCmd = &cobra.Command{
 			return err
 		}
 
-		rep := reporter.New()
+		rep := reporter.New(reporter.WithLineFilter(safeout.String))
 
 		ctrdInstance, err := debugCmdFlags.containerdInstance()
 		if err != nil {
@@ -222,7 +223,9 @@ func runContainer(
 			switch msg.Resp.(type) {
 			case *machine.DebugContainerRunResponse_StdoutData:
 				if stdoutData := msg.GetStdoutData(); stdoutData != nil {
-					os.Stdout.Write(stdoutData) //nolint:errcheck
+					// an interactive session with a pty on the node: the escape sequences
+					// are the point, exactly as they are for ssh.
+					os.Stdout.Write(stdoutData) //nolint:errcheck,forbidigo
 				}
 
 			case *machine.DebugContainerRunResponse_ExitCode:
@@ -233,7 +236,7 @@ func runContainer(
 				return
 
 			default:
-				fmt.Fprintf(os.Stderr, "unknown message type %T\n", msg.Resp)
+				fmt.Fprintf(safeout.Stderr(), "unknown message type %T\n", msg.Resp)
 			}
 		}
 	}()
@@ -244,7 +247,7 @@ func runContainer(
 	select {
 	case err := <-stdinDone:
 		if err != nil && err != io.EOF {
-			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+			fmt.Fprintf(safeout.Stderr(), "%s\n", err.Error())
 		}
 
 		cancel() // cancels sigHandler, stdinReader goroutines
@@ -258,7 +261,7 @@ func runContainer(
 		// close send stream and wait for the server to exit
 		// which will cause recvLoop to return
 		if err := stream.CloseSend(); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to close send stream: %v\n", err)
+			fmt.Fprintf(safeout.Stderr(), "Warning: failed to close send stream: %v\n", err)
 		}
 
 		if recvErr := <-recvDone; recvErr != nil && recvErr != io.EOF {

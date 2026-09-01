@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -68,7 +68,7 @@ var eventsCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tID\tEVENT\tACTOR\tSOURCE\tMESSAGE")
 
 		const format = "%s\t%s\t%s\n%s\t%s\t%s\n"
@@ -104,17 +104,17 @@ var eventsCmd = &cobra.Command{
 					eventArgs = append(eventArgs, msg.GetAction().String())
 				}
 			case *machine.PhaseEvent:
-				eventArgs = []any{msg.GetPhase(), msg.GetAction().String()}
+				eventArgs = []any{safeout.Cell(msg.GetPhase()), msg.GetAction().String()}
 			case *machine.TaskEvent:
-				eventArgs = []any{msg.GetTask(), msg.GetAction().String()}
+				eventArgs = []any{safeout.Cell(msg.GetTask()), msg.GetAction().String()}
 			case *machine.ServiceStateEvent:
-				eventArgs = []any{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
+				eventArgs = []any{safeout.Cell(msg.GetService()), fmt.Sprintf("%s: %s", msg.GetAction(), safeout.Cell(msg.GetMessage()))}
 			case *machine.ConfigLoadErrorEvent:
-				eventArgs = []any{"error", msg.GetError()}
+				eventArgs = []any{"error", safeout.Cell(msg.GetError())}
 			case *machine.ConfigValidationErrorEvent:
-				eventArgs = []any{"error", msg.GetError()}
+				eventArgs = []any{"error", safeout.Cell(msg.GetError())}
 			case *machine.AddressEvent:
-				eventArgs = []any{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
+				eventArgs = []any{safeout.Cell(msg.GetHostname()), fmt.Sprintf("ADDRESSES: %s", safeout.Cell(strings.Join(msg.GetAddresses(), ",")))}
 			case *machine.MachineStatusEvent:
 				eventArgs = []any{
 					msg.GetStage().String(),
@@ -124,7 +124,7 @@ var eventsCmd = &cobra.Command{
 						xslices.Map(
 							msg.GetStatus().GetUnmetConditions(),
 							func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
-								return c.Name
+								return safeout.Cell(c.Name)
 							},
 						),
 					),
@@ -132,7 +132,7 @@ var eventsCmd = &cobra.Command{
 			}
 
 			eventArgs = append([]any{resp.Node, event.ID, event.TypeURL, event.ActorID}, eventArgs...)
-			fmt.Fprintf(w, format, eventArgs...)
+			safeout.Fprintf(w, format, eventArgs...)
 
 			if err := w.Flush(); err != nil {
 				errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))

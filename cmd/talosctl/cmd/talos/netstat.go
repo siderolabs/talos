@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -16,7 +15,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
-	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -121,7 +120,7 @@ If you don't pass an argument, the command will show host connections.`,
 		}
 
 		printer := &netstatPrinter{
-			w:             tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0),
+			w:             tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0),
 			nodeNetNSPods: nodeNetNSPods,
 		}
 
@@ -131,7 +130,7 @@ If you don't pass an argument, the command will show host connections.`,
 			foundNode, foundNetNs := findPodNetNs(nodeNetNSPods, args[0])
 
 			if foundNetNs == "" {
-				cli.Fatalf("pod %s not found", args[0])
+				return fmt.Errorf("pod %s not found", args[0])
 			}
 
 			req.Netns.Netns = []string{foundNetNs}
@@ -148,7 +147,7 @@ If you don't pass an argument, the command will show host connections.`,
 					return err
 				}
 
-				cli.Warning("%s", err)
+				safeout.Warningf("%s", err)
 			}
 
 			printer.printResponse(foundNode, response)
@@ -380,7 +379,7 @@ func (p *netstatPrinter) printResponse(node string, response *machine.NetstatRes
 			pattern := strings.Repeat("%s\t", len(args))
 			pattern = strings.TrimSpace(pattern) + "\n"
 
-			fmt.Fprintf(p.w, pattern, args...)
+			safeout.Fprintf(p.w, pattern, args...)
 		}
 	}
 }

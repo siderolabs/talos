@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -57,7 +58,7 @@ var dmesgCmd = &cobra.Command{
 			}
 
 			if resp.Payload.Bytes != nil {
-				fmt.Printf("%s: %s", resp.Node, resp.Payload.Bytes)
+				safeout.Printf("%s: %s", resp.Node, resp.Payload.Bytes)
 			}
 		}
 

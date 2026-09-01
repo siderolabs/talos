@@ -18,6 +18,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -108,7 +109,7 @@ var lsCmd = &cobra.Command{
 		)
 
 		if !lsCmdFlags.long {
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 			defer w.Flush() //nolint:errcheck
 
 			var (
@@ -132,7 +133,7 @@ var lsCmd = &cobra.Command{
 				}
 
 				if !multipleNodes {
-					fmt.Println(info.RelativeName)
+					safeout.Println(info.RelativeName)
 
 					continue
 				}
@@ -143,7 +144,7 @@ var lsCmd = &cobra.Command{
 					headerWritten = true
 				}
 
-				fmt.Fprintf(
+				safeout.Fprintf(
 					w, "%s\t%s\n",
 					resp.Node,
 					info.RelativeName,
@@ -153,7 +154,7 @@ var lsCmd = &cobra.Command{
 			return errs
 		}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		defer w.Flush() //nolint:errcheck
 
 		var (
@@ -218,7 +219,7 @@ var lsCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Fprintf(
+			safeout.Fprintf(
 				w, "%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n",
 				resp.Node,
 				os.FileMode(info.Mode).String(),

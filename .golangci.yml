@@ -18,6 +18,7 @@ output:
 linters:
   default: all
   enable:
+    - forbidigo
     - loglinter
     - kubeimportlinter
   disable:
@@ -28,7 +29,6 @@ linters:
     - err113
     - errorlint
     - exhaustruct
-    - forbidigo
     - forcetypeassert
     - funcorder
     - funlen
@@ -63,6 +63,22 @@ linters:
     - wrapcheck
     - wsl # replaced by wsl_v5
   settings:
+    forbidigo:
+      forbid:
+        - pattern: ^fmt\.(Print|Printf|Println)$
+          msg: >-
+            talosctl renders text received from the node it is talking to, and a terminal acts on
+            control sequences in it.
+            Print through cmd/talosctl/pkg/talos/safeout instead.
+        - pattern: ^cli\.(Warning|Fatalf)$
+          msg: >-
+            these write to the raw stderr, so a warning quoting a node bypasses the filter.
+            Print through cmd/talosctl/pkg/talos/safeout instead.
+        - pattern: ^os\.(Stdout|Stderr)$
+          msg: >-
+            use safeout.Stdout / safeout.Stderr so node-supplied text cannot drive the
+            operator's terminal. A stream which must stay raw - a
+            file, a pcap, an interactive pty - needs //nolint:forbidigo saying which.
     custom:
       loglinter:
         type: module
@@ -168,6 +184,10 @@ linters:
         - fmt.Fprintln
         - fmt.Fprintf
         - fmt.Fprint
+        - github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout.Fprintf
+        - github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout.Printf
+        - github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout.Println
+        - github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout.Print
     exhaustive:
       default-signifies-exhaustive: false
     goconst:
@@ -268,6 +288,14 @@ linters:
   exclusions:
     generated: lax
     rules:
+      # forbidigo guards the code which renders responses from a node; the offline
+      # config and local cluster commands do not have that input.
+      - linters:
+          - forbidigo
+        path-except: ^cmd/talosctl/(cmd/talos|pkg/talos)/
+      - linters:
+          - forbidigo
+        path: cmd/talosctl/pkg/talos/safeout
       - linters:
           - dupl
         path: cmd/talosctl/cmd
