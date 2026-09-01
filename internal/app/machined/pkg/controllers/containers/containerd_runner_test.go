@@ -181,6 +181,63 @@ func TestMountsResolvedToOCI(t *testing.T) {
 	}
 }
 
+// TestMountsRequestSharedPropagation covers detection of a mount asking for rshared
+// propagation: missing this flips the rootfs into slave propagation, so a container-created
+// mount never becomes visible on the host.
+func TestMountsRequestSharedPropagation(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		mounts   []containers.ResolvedMountSpec
+		expected bool
+	}{
+		{
+			name: "none",
+		},
+		{
+			name: "mount with no options",
+			mounts: []containers.ResolvedMountSpec{
+				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log"},
+			},
+		},
+		{
+			name: "unrelated option only",
+			mounts: []containers.ResolvedMountSpec{
+				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log", Options: []string{"ro"}},
+			},
+		},
+		{
+			name: "rshared option",
+			mounts: []containers.ResolvedMountSpec{
+				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log", Options: []string{"rshared"}},
+			},
+			expected: true,
+		},
+		{
+			name: "later mount requests rshared",
+			mounts: []containers.ResolvedMountSpec{
+				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log", Options: []string{"ro"}},
+				{Kind: containers.MountKindHostPath, Source: "/var/mnt", Destination: "/host-mnt", Options: []string{"rshared"}},
+			},
+			expected: true,
+		},
+		{
+			name: "rshared is not the first option",
+			mounts: []containers.ResolvedMountSpec{
+				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log", Options: []string{"rbind", "rshared"}},
+			},
+			expected: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, containersctrl.MountsRequestSharedPropagation(test.mounts))
+		})
+	}
+}
+
 func TestWithProcessArgs(t *testing.T) {
 	// Test that WithProcessArgs returns an oci.SpecOpts (function)
 	// We can't easily test the full behavior without mocking the image,

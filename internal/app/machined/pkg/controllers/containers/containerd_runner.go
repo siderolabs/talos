@@ -212,6 +212,14 @@ func (r *containerdRunner) ociSpecOpts(spec containersres.ContainerInstanceSpecS
 		opts = append(opts, oci.WithMounts(mounts))
 	}
 
+	// An rshared bind can only join the host peer group when the container's
+	// rootfs propagation is shared: with the runc default (recursive slave),
+	// the bind lands in a new peer group slaved to the host, and mounts created
+	// inside the container never propagate back out.
+	if MountsRequestSharedPropagation(spec.Mounts) {
+		opts = append(opts, containerdrunner.WithRootfsPropagation("shared"))
+	}
+
 	if spec.Security.MachinedAccess {
 		opts = append(opts, func(_ context.Context, _ oci.Client, _ *ctrdcontainers.Container, s *specs.Spec) error {
 			if _, err := os.Stat(constants.MachineSocketPath); err != nil {
@@ -407,4 +415,17 @@ func MountsResolvedToOCI(mounts []containersres.ResolvedMountSpec) []specs.Mount
 	}
 
 	return out
+}
+
+// MountsRequestSharedPropagation reports whether any declared mount asks for
+// rshared propagation, which requires the rootfs itself to be shared
+// for the bind to join the host peer group (see ociSpecOpts).
+func MountsRequestSharedPropagation(mounts []containersres.ResolvedMountSpec) bool {
+	for _, mount := range mounts {
+		if slices.Contains(mount.Options, "rshared") {
+			return true
+		}
+	}
+
+	return false
 }
