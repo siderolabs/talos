@@ -63,6 +63,9 @@ const (
 
 	// ScreenResourceExplorer is the resource explorer screen.
 	ScreenResourceExplorer Screen = "Resources"
+
+	// ScreenContainers is the containers screen.
+	ScreenContainers Screen = "Containers"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -315,6 +318,8 @@ func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) err
 			return NewConfigURLGrid(ctx, d)
 		case ScreenResourceExplorer:
 			return NewResourceExplorerGrid(ctx, d)
+		case ScreenContainers:
+			return NewContainersGrid(ctx, d)
 		default:
 			return nil
 		}
