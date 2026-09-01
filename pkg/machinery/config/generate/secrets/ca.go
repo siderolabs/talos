@@ -6,6 +6,7 @@ package secrets
 
 import (
 	stdx509 "crypto/x509"
+	"errors"
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
@@ -64,6 +65,11 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 
 // NewAdminCertificateAndKey generates the admin Talos certificate and key.
 func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, roles role.Set, ttl time.Duration) (p *x509.PEMEncodedCertificateAndKey, err error) {
+	// A client certificate without any roles is no longer valid, as RBAC is now enabled by default (but it was valid in pre-RBAC days).
+	if roles.Empty() {
+		return nil, errors.New("at least one role is required to generate a Talos API certificate")
+	}
+
 	opts := []x509.Option{
 		x509.Organization(roles.Strings()...),
 		x509.NotAfter(currentTime.Add(ttl)),

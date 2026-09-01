@@ -323,7 +323,11 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 	}
 
 	desiredRoles, found, err := unstructured.NestedStringSlice(talosSA.UnstructuredContent(), "spec", "roles")
-	if err != nil || !found {
+
+	// parse desiredRoles to see if they are empty.
+	desiredRoleSet, _ := role.Parse(desiredRoles)
+
+	if err != nil || !found || desiredRoleSet.Empty() {
 		msg := messageRolesNotFound
 
 		updateErr := t.updateTalosSAStatus(ctx, talosSA, msg)
@@ -340,8 +344,6 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 		return errors.New(msg)
 	}
 
-	desiredRoleSet, _ := role.Parse(desiredRoles)
-
 	if !slices.ContainsFunc(t.allowedNamespaces, func(allowedNS string) bool {
 		return allowedNS == namespace
 	}) {
@@ -357,6 +359,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 		return nil
 	}
 
+	// every requested role must appear in the allowlist; the empty desiredRoles list is handled above.
 	var unallowedRoles []string
 
 	for _, desiredRole := range desiredRoles {
