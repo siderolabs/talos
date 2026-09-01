@@ -217,7 +217,10 @@
     mount
     quotaget
     quotamod
-    ; relabelfrom
+    ; CSI drivers mount volumes with an explicit context=, requested through StorageClass
+    ; mountOptions, and the mount syscall relabels the filesystem away from fs_t. The target
+    ; type is covered by the ephemeral_t fs_classes grant below.
+    relabelfrom
     ; relabelto
     remount
     unmount
