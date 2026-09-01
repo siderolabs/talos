@@ -14,7 +14,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -79,10 +78,6 @@ func (suite *ContainersSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ContainersSuite) SetupTest() {
-	if testing.Short() {
-		suite.T().Skip("skipping in short mode")
-	}
-
 	if suite.Airgapped {
 		suite.T().Skip("skipping test in airgapped mode, the tests pull images")
 	}
