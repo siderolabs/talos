@@ -26,14 +26,14 @@ rules:
 
         # # Regex pattern for subject matching.
         # subjectRegex: .*@example\.com
-    - image: my-registry/* # Image reference pattern to match for this rule.
+    - image: my-registry.example.com/* # Image reference pattern to match for this rule.
       # Public key verifier configuration to use for this rule.
       publicKey:
         certificate: |- # A public certificate in PEM format accepted for image signature verification.
             -----BEGIN CERTIFICATE-----
             MII--Sample Value--
             -----END CERTIFICATE-----
-    - image: locahost:3000/* # Image reference pattern to match for this rule.
+    - image: localhost:3000/* # Image reference pattern to match for this rule.
       deny: true # Deny pulling images matching the pattern (default: false).
 {{< /highlight >}}
 
@@ -54,7 +54,7 @@ ImageVerificationRuleV1Alpha1 defines a verification rule.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`image` |string |Image reference pattern to match for this rule.<br>Supports glob patterns, matches only on the image registry and repository, not on the tag or digest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`image` |string |Image reference pattern to match for this rule.<br>Supports glob patterns, matches only on the image registry and repository, not on the tag or digest.<br><br>The pattern is matched against the normalized image reference, which always starts with a registry<br>domain: `docker.io/library/nginx*` matches `nginx:latest`, while `library/nginx*` matches nothing.<br>The Docker Hub domain is always normalized to `docker.io`, so a pattern written against<br>`index.docker.io` or `registry-1.docker.io` matches the same images a `docker.io` one does. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: docker.io/library/nginx
 {{< /highlight >}}{{< highlight yaml >}}
 image: registry.k8s.io/*
