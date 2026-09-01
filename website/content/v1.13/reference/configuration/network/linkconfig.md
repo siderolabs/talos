@@ -1,5 +1,6 @@
 ---
-description: LinkConfig is a config document to configure physical interfaces (network links).
+description: LinkConfig is a config document to configure physical interfaces (network
+    links).
 title: LinkConfig
 ---
 

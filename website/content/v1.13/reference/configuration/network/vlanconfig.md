@@ -1,5 +1,6 @@
 ---
-description: VLANConfig is a config document to create a VLAN (virtual LAN) over a parent link.
+description: VLANConfig is a config document to create a VLAN (virtual LAN) over a
+    parent link.
 title: VLANConfig
 ---
 

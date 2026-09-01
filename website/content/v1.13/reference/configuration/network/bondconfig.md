@@ -1,5 +1,6 @@
 ---
-description: BondConfig is a config document to create a bond (link aggregation) over a set of links.
+description: BondConfig is a config document to create a bond (link aggregation) over
+    a set of links.
 title: BondConfig
 ---
 

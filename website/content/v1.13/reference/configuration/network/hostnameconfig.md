@@ -1,5 +1,6 @@
 ---
-description: 'HostnameConfig is a config document to configure the hostname: either a static hostname or an automatically generated hostname.'
+description: 'HostnameConfig is a config document to configure the hostname: either
+    a static hostname or an automatically generated hostname.'
 title: HostnameConfig
 ---
 

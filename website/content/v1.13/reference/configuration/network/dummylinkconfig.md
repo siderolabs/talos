@@ -1,5 +1,6 @@
 ---
-description: DummyLinkConfig is a config document to create a dummy (virtual) network link.
+description: DummyLinkConfig is a config document to create a dummy (virtual) network
+    link.
 title: DummyLinkConfig
 ---
 

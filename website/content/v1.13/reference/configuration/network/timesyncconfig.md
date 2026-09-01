@@ -1,5 +1,6 @@
 ---
-description: TimeSyncConfig is a config document to configure time synchronization (NTP).
+description: TimeSyncConfig is a config document to configure time synchronization
+    (NTP).
 title: TimeSyncConfig
 ---
 

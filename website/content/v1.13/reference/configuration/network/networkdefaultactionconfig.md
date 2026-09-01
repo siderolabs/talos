@@ -1,5 +1,6 @@
 ---
-description: NetworkDefaultActionConfig is a ingress firewall default action configuration document.
+description: NetworkDefaultActionConfig is a ingress firewall default action configuration
+    document.
 title: NetworkDefaultActionConfig
 ---
 
