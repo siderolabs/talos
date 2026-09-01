@@ -326,6 +326,13 @@
           "description": "Virtiofs mount options.\n",
           "markdownDescription": "Virtiofs mount options.",
           "x-intellij-html-description": "\u003cp\u003eVirtiofs mount options.\u003c/p\u003e\n"
+        },
+        "nfs": {
+          "$ref": "#/$defs/block.NFSMountSpec",
+          "title": "nfs",
+          "description": "NFS mount options.\n",
+          "markdownDescription": "NFS mount options.",
+          "x-intellij-html-description": "\u003cp\u003eNFS mount options.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -361,7 +368,8 @@
         },
         "filesystemType": {
           "enum": [
-            "virtiofs"
+            "virtiofs",
+            "nfs"
           ],
           "title": "filesystemType",
           "description": "Filesystem type.\n",
@@ -510,6 +518,150 @@
       "additionalProperties": false,
       "type": "object",
       "description": "MountSpec describes how the volume is mounted."
+    },
+    "block.NFSMountSpec": {
+      "properties": {
+        "server": {
+          "type": "string",
+          "title": "server",
+          "description": "NFS server hostname or IP address.\n",
+          "markdownDescription": "NFS server hostname or IP address.",
+          "x-intellij-html-description": "\u003cp\u003eNFS server hostname or IP address.\u003c/p\u003e\n"
+        },
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "Absolute path of the NFS export.\n",
+          "markdownDescription": "Absolute path of the NFS export.",
+          "x-intellij-html-description": "\u003cp\u003eAbsolute path of the NFS export.\u003c/p\u003e\n"
+        },
+        "version": {
+          "enum": [
+            "3",
+            "4",
+            "4.1",
+            "4.2"
+          ],
+          "title": "version",
+          "description": "NFS protocol version.\n",
+          "markdownDescription": "NFS protocol version.",
+          "x-intellij-html-description": "\u003cp\u003eNFS protocol version.\u003c/p\u003e\n"
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "NFS server port. If unset, the kernel default is used.\n",
+          "markdownDescription": "NFS server port. If unset, the kernel default is used.",
+          "x-intellij-html-description": "\u003cp\u003eNFS server port. If unset, the kernel default is used.\u003c/p\u003e\n"
+        },
+        "transport": {
+          "enum": [
+            "tcp",
+            "tcp6",
+            "udp",
+            "udp6"
+          ],
+          "title": "transport",
+          "description": "NFS transport protocol. If unset, the kernel default is used.\n",
+          "markdownDescription": "NFS transport protocol. If unset, the kernel default is used.",
+          "x-intellij-html-description": "\u003cp\u003eNFS transport protocol. If unset, the kernel default is used.\u003c/p\u003e\n"
+        },
+        "mountPort": {
+          "type": "integer",
+          "title": "mountPort",
+          "description": "NFS mount protocol port. Only valid with NFSv3. If unset, rpcbind discovery is used.\n",
+          "markdownDescription": "NFS mount protocol port. Only valid with NFSv3. If unset, rpcbind discovery is used.",
+          "x-intellij-html-description": "\u003cp\u003eNFS mount protocol port. Only valid with NFSv3. If unset, rpcbind discovery is used.\u003c/p\u003e\n"
+        },
+        "mountTransport": {
+          "enum": [
+            "tcp",
+            "tcp6",
+            "udp",
+            "udp6"
+          ],
+          "title": "mountTransport",
+          "description": "NFS mount transport protocol. Only valid with NFSv3. Must use the same address family as\ntransport. If unset, the kernel default is used.\n",
+          "markdownDescription": "NFS mount transport protocol. Only valid with NFSv3. Must use the same address family as\n`transport`. If unset, the kernel default is used.",
+          "x-intellij-html-description": "\u003cp\u003eNFS mount transport protocol. Only valid with NFSv3. Must use the same address family as\n\u003ccode\u003etransport\u003c/code\u003e. If unset, the kernel default is used.\u003c/p\u003e\n"
+        },
+        "locking": {
+          "enum": [
+            "local",
+            "remote"
+          ],
+          "title": "locking",
+          "description": "NFSv3 locking mode. Defaults to local because Talos does not run rpc.statd by default.\n",
+          "markdownDescription": "NFSv3 locking mode. Defaults to local because Talos does not run rpc.statd by default.",
+          "x-intellij-html-description": "\u003cp\u003eNFSv3 locking mode. Defaults to local because Talos does not run rpc.statd by default.\u003c/p\u003e\n"
+        },
+        "recovery": {
+          "enum": [
+            "hard",
+            "soft",
+            "soft-error"
+          ],
+          "title": "recovery",
+          "description": "Recovery behavior after an NFS request times out. Soft modes can risk data corruption.\n",
+          "markdownDescription": "Recovery behavior after an NFS request times out. Soft modes can risk data corruption.",
+          "x-intellij-html-description": "\u003cp\u003eRecovery behavior after an NFS request times out. Soft modes can risk data corruption.\u003c/p\u003e\n"
+        },
+        "timeout": {
+          "type": "integer",
+          "title": "timeout",
+          "description": "NFS request timeout in deciseconds.\n",
+          "markdownDescription": "NFS request timeout in deciseconds.",
+          "x-intellij-html-description": "\u003cp\u003eNFS request timeout in deciseconds.\u003c/p\u003e\n"
+        },
+        "retransmissions": {
+          "type": "integer",
+          "title": "retransmissions",
+          "description": "Number of NFS request retransmissions before recovery action is taken.\n",
+          "markdownDescription": "Number of NFS request retransmissions before recovery action is taken.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of NFS request retransmissions before recovery action is taken.\u003c/p\u003e\n"
+        },
+        "readSize": {
+          "type": "integer",
+          "title": "readSize",
+          "description": "Maximum NFS read request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.\n",
+          "markdownDescription": "Maximum NFS read request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.",
+          "x-intellij-html-description": "\u003cp\u003eMaximum NFS read request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.\u003c/p\u003e\n"
+        },
+        "writeSize": {
+          "type": "integer",
+          "title": "writeSize",
+          "description": "Maximum NFS write request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.\n",
+          "markdownDescription": "Maximum NFS write request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.",
+          "x-intellij-html-description": "\u003cp\u003eMaximum NFS write request payload in bytes. Must be a multiple of 1024 between 1024 and 1048576.\u003c/p\u003e\n"
+        },
+        "connections": {
+          "type": "integer",
+          "title": "connections",
+          "description": "Number of TCP connections to the NFS server. Must be between 1 and 16.\n",
+          "markdownDescription": "Number of TCP connections to the NFS server. Must be between 1 and 16.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of TCP connections to the NFS server. Must be between 1 and 16.\u003c/p\u003e\n"
+        },
+        "reservedPort": {
+          "type": "boolean",
+          "title": "reservedPort",
+          "description": "Use a privileged source port. The kernel default is used when unset.\n",
+          "markdownDescription": "Use a privileged source port. The kernel default is used when unset.",
+          "x-intellij-html-description": "\u003cp\u003eUse a privileged source port. The kernel default is used when unset.\u003c/p\u003e\n"
+        },
+        "security": {
+          "enum": [
+            "none",
+            "sys"
+          ],
+          "title": "security",
+          "description": "NFS RPC security flavor. Kerberos flavors are not supported because Talos does not run rpc.gssd.\n",
+          "markdownDescription": "NFS RPC security flavor. Kerberos flavors are not supported because Talos does not run rpc.gssd.",
+          "x-intellij-html-description": "\u003cp\u003eNFS RPC security flavor. Kerberos flavors are not supported because Talos does not run rpc.gssd.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "NFSMountSpec describes NFS mount options."
     },
     "block.ProvisioningSpec": {
       "properties": {

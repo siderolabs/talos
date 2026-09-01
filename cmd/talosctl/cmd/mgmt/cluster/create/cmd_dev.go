@@ -55,6 +55,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		firewallFlag                    = "with-firewall"
 		bgpFlag                         = "with-bgp"
 		bgpCLOSFlag                     = "with-bgp-clos"
+		nfsFlag                         = "with-nfs"
 		tpmEnabledFlag                  = "with-tpm1_2"
 		tpm2EnabledFlag                 = "with-tpm2"
 		withIOMMUFlag                   = "with-iommu"
@@ -258,6 +259,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.StringVar(&qOps.WithFirewall, firewallFlag, qOps.WithFirewall, "inject firewall rules into the cluster, value is default policy - accept/block")
 		qemu.BoolVar(&qOps.WithBGP, bgpFlag, qOps.WithBGP, "run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP")
 		qemu.BoolVar(&qOps.WithBGPCLOS, bgpCLOSFlag, qOps.WithBGPCLOS, "full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback")
+		qemu.BoolVar(&qOps.WithNFS, nfsFlag, qOps.WithNFS, "run an embedded userspace NFS server and mount NFSv3 and NFSv4 test volumes")
 		qemu.Var(&qOps.WithSiderolinkAgent, withSiderolinkAgentFlag,
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
 		qemu.StringVar(&qOps.ConfigInjectionMethod,
