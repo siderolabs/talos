@@ -195,11 +195,12 @@ message KubeletConfigSpec {
   map<string, string> register_with_taints = 16;
 }
 
-// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+// KubeletKubeconfigSpec describes the current kubelet client credentials.
 message KubeletKubeconfigSpec {
-  // Hash is a content digest of the kubeconfig file. It changes whenever the
-  // file contents change, which is the signal consumers use to rebuild their
-  // Kubernetes clients.
+  // Hash is a content digest of the kubeconfig file and of the certificates it
+  // references on disk (kubelet rotates its client certificate without ever
+  // touching the kubeconfig). It changes whenever the credentials change, which
+  // is the signal consumers use to rebuild their Kubernetes clients.
   string hash = 1;
 }
 

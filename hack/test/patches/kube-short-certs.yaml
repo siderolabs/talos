@@ -1,0 +1,10 @@
+# this patch is not wired in the CI, but it allows to shorten
+# the duration of the cluster signing certificates to 15 minutes,
+# which is useful for testing certificate rotation.
+#
+# apply this patch and let the cluster be idle for 15+ minutes -
+# Talos should not report any errors.
+apiVersion: v1alpha1
+kind: KubeControllerManagerConfig
+extraArgs:
+  cluster-signing-duration: 15m
