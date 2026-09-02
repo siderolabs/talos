@@ -208,7 +208,9 @@ kernel/drivers/net/mdio.ko
 kernel/drivers/net/mdio/mdio-i2c.ko
 kernel/drivers/net/mii.ko
 kernel/drivers/net/pcs/pcs_xpcs.ko
+kernel/drivers/net/phy/microchip.ko
 kernel/drivers/net/phy/sfp.ko
+kernel/drivers/net/usb/lan78xx.ko
 kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/virtio_net.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
