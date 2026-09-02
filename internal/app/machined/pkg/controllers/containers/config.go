@@ -57,79 +57,79 @@ func (ctrl *ConfigController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *ConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ConfigController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-r.EventCh():
+		case <-runtime.EventCh():
 		}
 
-		if err := ctrl.reconcile(ctx, r, logger); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger); err != nil {
 			logger.Error("failed to project container configuration", zap.Error(err))
 
 			return err
 		}
 
-		r.ResetRestartBackoff()
+		runtime.ResetRestartBackoff()
 	}
 }
 
 //nolint:gocyclo
-func (ctrl *ConfigController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ConfigController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	// Read the specs already published, so that appearing and disappearing containers can be told
 	// apart from the steady state and logged only once each.
-	previous, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
+	publishedSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
 	if err != nil {
 		return fmt.Errorf("failed to list container specs: %w", err)
 	}
 
 	stale := map[string]struct{}{}
 
-	for spec := range previous.All() {
-		stale[spec.Metadata().ID()] = struct{}{}
+	for containerSpec := range publishedSpecs.All() {
+		stale[containerSpec.Metadata().ID()] = struct{}{}
 	}
 
-	r.StartTrackingOutputs()
+	runtime.StartTrackingOutputs()
 
-	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+	machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, runtime, config.ActiveID)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("failed to get machine config: %w", err)
 	}
 
-	if cfg != nil {
-		for _, containerConfig := range cfg.Config().ContainerConfigs() {
-			name := containerConfig.Name()
+	if machineConfig != nil {
+		for _, containerConfig := range machineConfig.Config().ContainerConfigs() {
+			containerSpecID := containerConfig.Name()
 
-			if _, known := stale[name]; !known {
+			if _, known := stale[containerSpecID]; !known {
 				logger.Info(
 					"container declared",
-					zap.String("container", name),
+					zap.String("container", containerSpecID),
 					zap.String("image", containerConfig.Image()),
 				)
 			}
 
-			delete(stale, name)
+			delete(stale, containerSpecID)
 
 			if err = safe.WriterModify(
-				ctx, r,
-				containers.NewContainerSpec(containers.NamespaceName, name),
+				ctx, runtime,
+				containers.NewContainerSpec(containers.NamespaceName, containerSpecID),
 				func(res *containers.ContainerSpec) error {
 					return applyConfig(res.TypedSpec(), containerConfig)
 				},
 			); err != nil {
-				return fmt.Errorf("failed to write container spec %q: %w", name, err)
+				return fmt.Errorf("failed to write container spec %q: %w", containerSpecID, err)
 			}
 
-			logger.Debug("container spec projected", zap.String("container", name))
+			logger.Debug("container spec projected", zap.String("container", containerSpecID))
 		}
 	}
 
-	for name := range stale {
-		logger.Info("container removed from the machine configuration", zap.String("container", name))
+	for containerSpecID := range stale {
+		logger.Info("container removed from the machine configuration", zap.String("container", containerSpecID))
 	}
 
-	if err := safe.CleanupOutputs[*containers.ContainerSpec](ctx, r); err != nil {
+	if err := safe.CleanupOutputs[*containers.ContainerSpec](ctx, runtime); err != nil {
 		return fmt.Errorf("failed to clean up outputs: %w", err)
 	}
 
@@ -137,51 +137,51 @@ func (ctrl *ConfigController) reconcile(ctx context.Context, r controller.Runtim
 }
 
 // applyConfig resolves a ContainerConfig document into a ContainerSpec.
-func applyConfig(spec *containers.ContainerSpecSpec, cfg configcfg.ContainerConfig) error {
+func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfig configcfg.ContainerConfig) error {
 	// Image() already returns the canonical form: normalizing in the config layer rather than
 	// downstream keeps the reference identical to what the pull records, which is what image
 	// garbage collection matches against.
-	spec.Image = containers.ContainerImageSpec{Ref: cfg.Image()}
+	containerSpecSpec.Image = containers.ContainerImageSpec{Ref: containerConfig.Image()}
 
-	spec.Entrypoint = cfg.Entrypoint()
-	spec.Args = cfg.Args()
-	spec.WorkingDir = cfg.WorkingDir()
+	containerSpecSpec.Entrypoint = containerConfig.Entrypoint()
+	containerSpecSpec.Args = containerConfig.Args()
+	containerSpecSpec.WorkingDir = containerConfig.WorkingDir()
 
-	runAs := cfg.RunAs()
-	spec.RunAs = containers.ContainerRunAsSpec{
+	runAs := containerConfig.RunAs()
+	containerSpecSpec.RunAs = containers.ContainerRunAsSpec{
 		UID: runAs.UID().Ptr(),
 		GID: runAs.GID().Ptr(),
 	}
 
-	spec.Environment = cfg.Environment()
+	containerSpecSpec.Environment = containerConfig.Environment()
 
-	mounts, err := resolveMounts(cfg.Mounts())
+	containerMountSpecs, err := resolveMounts(containerConfig.Mounts())
 	if err != nil {
 		return err
 	}
 
-	spec.Mounts = mounts
+	containerSpecSpec.Mounts = containerMountSpecs
 
-	security := cfg.Security()
-	spec.Security = containers.ContainerSecuritySpec{
+	security := containerConfig.Security()
+	containerSpecSpec.Security = containers.ContainerSecuritySpec{
 		Privileged:       security.Profile() == configcfg.ContainerSecurityProfilePrivileged,
 		CapabilitiesAdd:  security.CapabilitiesAdd(),
 		CapabilitiesDrop: security.CapabilitiesDrop(),
 		MachinedAccess:   security.MachinedAccess(),
 	}
 
-	spec.Network = containers.ContainerNetworkSpec{
-		HostNetwork: cfg.Network().Mode() == configcfg.ContainerNetworkModeHost,
+	containerSpecSpec.Network = containers.ContainerNetworkSpec{
+		HostNetwork: containerConfig.Network().Mode() == configcfg.ContainerNetworkModeHost,
 	}
 
-	resources := cfg.Resources()
-	spec.Resources = containers.ContainerResourcesSpec{
+	resources := containerConfig.Resources()
+	containerSpecSpec.Resources = containers.ContainerResourcesSpec{
 		MemoryLimit: resources.MemoryLimit().ValueOrZero(),
 		CPULimit:    resources.CPULimit().ValueOrZero(),
 	}
 
-	dependsOn := cfg.DependsOn()
-	spec.DependsOn = containers.ContainerDependsOnSpec{
+	dependsOn := containerConfig.DependsOn()
+	containerSpecSpec.DependsOn = containers.ContainerDependsOnSpec{
 		Paths:      dependsOn.Paths(),
 		Networks:   dependsOn.Networks(),
 		Time:       dependsOn.Time(),
@@ -200,21 +200,21 @@ func resolveMounts(configMounts []configcfg.ContainerMountConfig) ([]containers.
 		return nil, nil
 	}
 
-	out := make([]containers.ContainerMountSpec, 0, len(configMounts))
+	containerMountSpecs := make([]containers.ContainerMountSpec, 0, len(configMounts))
 
-	for i, mount := range configMounts {
+	for i, containerMountConfig := range configMounts {
 		switch {
-		case mount.UserVolume().IsPresent():
-			userVolume, _ := mount.UserVolume().Get()
+		case containerMountConfig.UserVolume().IsPresent():
+			userVolume, _ := containerMountConfig.UserVolume().Get()
 
-			out = append(out, containers.ContainerMountSpec{
+			containerMountSpecs = append(containerMountSpecs, containers.ContainerMountSpec{
 				Kind:        containers.MountKindUserVolume,
 				VolumeID:    constants.UserVolumePrefix + userVolume.Name(),
 				Destination: userVolume.Destination(),
 				Options:     userVolume.MountOptions(),
 			})
-		case mount.Tmpfs().IsPresent():
-			tmpfs, _ := mount.Tmpfs().Get()
+		case containerMountConfig.Tmpfs().IsPresent():
+			tmpfs, _ := containerMountConfig.Tmpfs().Get()
 
 			var size uint64
 
@@ -228,25 +228,25 @@ func resolveMounts(configMounts []configcfg.ContainerMountConfig) ([]containers.
 				}
 			}
 
-			out = append(out, containers.ContainerMountSpec{
+			containerMountSpecs = append(containerMountSpecs, containers.ContainerMountSpec{
 				Kind:        containers.MountKindTmpfs,
 				Destination: tmpfs.Destination(),
 				Size:        size,
 				Options:     tmpfs.MountOptions(),
 			})
-		case mount.HostPath().IsPresent():
-			hostPath, _ := mount.HostPath().Get()
+		case containerMountConfig.HostPath().IsPresent():
+			hostPath, _ := containerMountConfig.HostPath().Get()
 
-			out = append(out, containers.ContainerMountSpec{
+			containerMountSpecs = append(containerMountSpecs, containers.ContainerMountSpec{
 				Kind:        containers.MountKindHostPath,
 				Source:      hostPath.Source(),
 				Destination: hostPath.Destination(),
 				Options:     hostPath.MountOptions(),
 			})
 		default:
-			return nil, fmt.Errorf("mounts[%d]: no mount source set", i)
+			return nil, fmt.Errorf("mounts[%d]: no containerMountConfig source set", i)
 		}
 	}
 
-	return out, nil
+	return containerMountSpecs, nil
 }

@@ -20,8 +20,8 @@ import (
 // next, so a controller with nothing left to poll for goes fully idle.
 func runWithWakeTimer(
 	ctx context.Context,
-	r controller.Runtime,
-	reconcile func(ctx context.Context, r controller.Runtime) (optional.Optional[time.Duration], error),
+	runtime controller.Runtime,
+	reconcile func(ctx context.Context, runtime controller.Runtime) (optional.Optional[time.Duration], error),
 ) error {
 	timer := time.NewTimer(0)
 	defer timer.Stop()
@@ -34,11 +34,11 @@ func runWithWakeTimer(
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-r.EventCh():
+		case <-runtime.EventCh():
 		case <-timer.C:
 		}
 
-		wakeAfter, err := reconcile(ctx, r)
+		wakeAfter, err := reconcile(ctx, runtime)
 		if err != nil {
 			return err
 		}
@@ -55,6 +55,6 @@ func runWithWakeTimer(
 			timer.Reset(duration)
 		}
 
-		r.ResetRestartBackoff()
+		runtime.ResetRestartBackoff()
 	}
 }

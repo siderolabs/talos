@@ -18,7 +18,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -26,8 +26,8 @@ import (
 )
 
 // containerServicePID builds the ServicePID resource ID for a container.
-func containerServicePID(containerID string) string {
-	return constants.ContainerServicePIDPrefix + containerID
+func containerServicePID(containerSpecID string) string {
+	return constants.ContainerServicePIDPrefix + containerSpecID
 }
 
 // TaskRunner runs one container execution against a container runtime.
@@ -59,7 +59,7 @@ type TaskRunner interface {
 // RuntimeController runs container instances by interacting with the container runtime.
 type RuntimeController struct {
 	// Runtime provides the logging manager for container logs.
-	Runtime runtime.Runtime
+	Runtime machineruntime.Runtime
 
 	// RunnerProvider is overridable for testing.
 	RunnerProvider func() (TaskRunner, error)
@@ -133,7 +133,7 @@ func (s *instanceRunState) snapshot() containers.ContainerInstanceStatusSpec {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	spec := containers.ContainerInstanceStatusSpec{
+	containerInstanceStatusSpec := containers.ContainerInstanceStatusSpec{
 		Phase:      s.phase,
 		PID:        s.pid,
 		ExitCode:   s.exitCode,
@@ -142,10 +142,10 @@ func (s *instanceRunState) snapshot() containers.ContainerInstanceStatusSpec {
 	}
 
 	if s.err != nil {
-		spec.Error = s.err.Error()
+		containerInstanceStatusSpec.Error = s.err.Error()
 	}
 
-	return spec
+	return containerInstanceStatusSpec
 }
 
 func (s *instanceRunState) setStarted(pid uint32) {
@@ -200,7 +200,7 @@ func (s *instanceRunState) requestStop() bool {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *RuntimeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *RuntimeController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	if ctrl.RunnerProvider == nil {
 		ctrl.RunnerProvider = func() (TaskRunner, error) {
 			return newContainerdRunner(ctrl.Runtime.Logging(), logger)
@@ -233,11 +233,11 @@ func (ctrl *RuntimeController) Run(ctx context.Context, r controller.Runtime, lo
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-r.EventCh():
+		case <-runtime.EventCh():
 		case <-ctrl.notifyCh:
 		}
 
-		criUp, err := ctrl.criIsUp(ctx, r)
+		criUp, err := ctrl.criIsUp(ctx, runtime)
 		if err != nil {
 			return err
 		}
@@ -250,11 +250,11 @@ func (ctrl *RuntimeController) Run(ctx context.Context, r controller.Runtime, lo
 			logger.Info("connected to the container runtime, containers can now be started")
 		}
 
-		if err := ctrl.reconcile(ctx, r, logger); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger); err != nil {
 			return err
 		}
 
-		r.ResetRestartBackoff()
+		runtime.ResetRestartBackoff()
 	}
 }
 
@@ -286,8 +286,8 @@ func (ctrl *RuntimeController) closeRunner() {
 	ctrl.taskRunner = nil
 }
 
-func (ctrl *RuntimeController) criIsUp(ctx context.Context, r controller.Runtime) (bool, error) {
-	service, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, criServiceID)
+func (ctrl *RuntimeController) criIsUp(ctx context.Context, runtime controller.Runtime) (bool, error) {
+	criService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, runtime, criServiceID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return false, nil
@@ -296,7 +296,7 @@ func (ctrl *RuntimeController) criIsUp(ctx context.Context, r controller.Runtime
 		return false, fmt.Errorf("failed to get %q service: %w", criServiceID, err)
 	}
 
-	return service.TypedSpec().Running && service.TypedSpec().Healthy, nil
+	return criService.TypedSpec().Running && criService.TypedSpec().Healthy, nil
 }
 
 // reconcile brings the running instances in line with the instance specs.
@@ -309,10 +309,10 @@ func (ctrl *RuntimeController) criIsUp(ctx context.Context, r controller.Runtime
 //nolint:gocyclo,cyclop
 func (ctrl *RuntimeController) reconcile(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
 ) error {
-	lifecycle, err := readContainerLifecycle(ctx, r)
+	containerLifecycle, err := readContainerLifecycle(ctx, runtime)
 	if err != nil {
 		return err
 	}
@@ -329,19 +329,19 @@ func (ctrl *RuntimeController) reconcile(
 	// what previously restarted every container immediately after stopping it, leaving containers
 	// running into the phase that kills containerd, and their records behind to be swept as orphans on
 	// the next boot.
-	if lifecycle == nil || lifecycle.Metadata().Phase() == resource.PhaseTearingDown {
+	if containerLifecycle == nil || containerLifecycle.Metadata().Phase() == resource.PhaseTearingDown {
 		ctrl.stopAll(logger)
 
-		return reconcileLifecycle(ctx, r, logger, lifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}
 
 	if ctrl.taskRunner == nil {
 		logger.Debug("waiting for the container runtime")
 
-		return reconcileLifecycle(ctx, r, logger, lifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}
 
-	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, r)
+	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
 	if err != nil {
 		return fmt.Errorf("failed to list instance specs: %w", err)
 	}
@@ -371,12 +371,12 @@ func (ctrl *RuntimeController) reconcile(
 			continue
 		}
 
-		if instance, exists := ctrl.instances[containerInstanceSpec.Metadata().ID()]; exists {
-			instance.cancel()
+		if instanceRun, exists := ctrl.instances[containerInstanceSpec.Metadata().ID()]; exists {
+			instanceRun.cancel()
 		}
 	}
 
-	r.StartTrackingOutputs()
+	runtime.StartTrackingOutputs()
 
 	live := map[string]struct{}{}
 
@@ -386,29 +386,29 @@ func (ctrl *RuntimeController) reconcile(
 	var instanceErrs error
 
 	for containerInstanceSpec := range containerInstanceSpecs.All() {
-		if err := ctrl.reconcileInstanceSpec(ctx, r, logger, containerInstanceSpec, live); err != nil {
+		if err := ctrl.reconcileInstanceSpec(ctx, runtime, logger, containerInstanceSpec, live); err != nil {
 			instanceErrs = errors.Join(instanceErrs, err)
 		}
 	}
 
 	// Any goroutine whose spec vanished outright. Asked to stop first, joined second, for the same
 	// reason as the tearing-down pass above.
-	for id, instance := range ctrl.instances {
-		if _, exists := live[id]; exists {
+	for instanceSpecID, instanceRun := range ctrl.instances {
+		if _, exists := live[instanceSpecID]; exists {
 			continue
 		}
 
-		if instance.requestStop() {
-			logger.Info("instance spec is gone, stopping the container", zap.String("instance", id))
+		if instanceRun.requestStop() {
+			logger.Info("instance spec is gone, stopping the container", zap.String("instance", instanceSpecID))
 		}
 	}
 
-	for id, instance := range ctrl.instances {
-		if _, exists := live[id]; exists {
+	for instanceSpecID, instanceRun := range ctrl.instances {
+		if _, exists := live[instanceSpecID]; exists {
 			continue
 		}
 
-		instance.stop()
+		instanceRun.stop()
 
 		// The tearing-down path can afford to fail here because the finalizer stays on the spec and
 		// brings the next pass back to it. A vanished spec leaves nothing to hold a finalizer on, so
@@ -416,13 +416,13 @@ func (ctrl *RuntimeController) reconcile(
 		// failure would leave the container behind with nothing left that knows about it, and no second
 		// orphan sweep coming to find it either. Keeping it costs a repeated stop on the retry, which
 		// is free: the cancel is idempotent and the join returns at once.
-		if err := ctrl.taskRunner.Remove(ctx, id); err != nil {
-			instanceErrs = errors.Join(instanceErrs, fmt.Errorf("failed to remove vanished container %q: %w", id, err))
+		if err := ctrl.taskRunner.Remove(ctx, instanceSpecID); err != nil {
+			instanceErrs = errors.Join(instanceErrs, fmt.Errorf("failed to remove vanished container %q: %w", instanceSpecID, err))
 
 			continue
 		}
 
-		delete(ctrl.instances, id)
+		delete(ctrl.instances, instanceSpecID)
 	}
 
 	if instanceErrs != nil {
@@ -435,11 +435,11 @@ func (ctrl *RuntimeController) reconcile(
 		return instanceErrs
 	}
 
-	if err := safe.CleanupOutputs[*containers.ContainerInstanceStatus](ctx, r); err != nil {
+	if err := safe.CleanupOutputs[*containers.ContainerInstanceStatus](ctx, runtime); err != nil {
 		return fmt.Errorf("failed to clean up outputs: %w", err)
 	}
 
-	return reconcileLifecycle(ctx, r, logger, lifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+	return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 }
 
 // reconcileInstanceSpec brings one instance in line with its spec, recording it in live if it is
@@ -450,32 +450,32 @@ func (ctrl *RuntimeController) reconcile(
 //nolint:gocyclo
 func (ctrl *RuntimeController) reconcileInstanceSpec(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
 	containerInstanceSpec *containers.ContainerInstanceSpec,
 	live map[string]struct{},
 ) error {
-	id := containerInstanceSpec.Metadata().ID()
+	instanceSpecID := containerInstanceSpec.Metadata().ID()
 
 	switch containerInstanceSpec.Metadata().Phase() {
 	case resource.PhaseRunning:
-		live[id] = struct{}{}
+		live[instanceSpecID] = struct{}{}
 
 		if !containerInstanceSpec.Metadata().Finalizers().Has(ctrl.Name()) {
 			// The finalizer is the handshake with the instance controller: it will not destroy
 			// this instance until the task is stopped and cleaned up.
-			if err := r.AddFinalizer(ctx, containerInstanceSpec.Metadata(), ctrl.Name()); err != nil {
-				return fmt.Errorf("failed to add finalizer on %q: %w", id, err)
+			if err := runtime.AddFinalizer(ctx, containerInstanceSpec.Metadata(), ctrl.Name()); err != nil {
+				return fmt.Errorf("failed to add finalizer on %q: %w", instanceSpecID, err)
 			}
 		}
 
-		instance, exists := ctrl.instances[id]
+		instanceRun, exists := ctrl.instances[instanceSpecID]
 		if !exists {
 			// A terminated instance stays PhaseRunning until the controller above decides to replace
 			// it, which for a restart is only once the restart interval has elapsed. ctrl.instances
 			// survives a controller restart, but not a machined one, and the status is this
 			// controller's own output, so it is the record of what already ran either way.
-			finished, err := ctrl.retainFinished(ctx, r, id)
+			finished, err := ctrl.retainFinished(ctx, runtime, instanceSpecID)
 			if err != nil {
 				return err
 			}
@@ -484,36 +484,36 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 				return nil
 			}
 
-			instance = ctrl.start(logger, containerInstanceSpec)
-			ctrl.instances[id] = instance
+			instanceRun = ctrl.start(logger, containerInstanceSpec)
+			ctrl.instances[instanceSpecID] = instanceRun
 		}
 
-		return ctrl.writeStatus(ctx, r, containerInstanceSpec, instance)
+		return ctrl.writeStatus(ctx, runtime, containerInstanceSpec, instanceRun)
 	case resource.PhaseTearingDown:
-		instance, exists := ctrl.instances[id]
+		instanceRun, exists := ctrl.instances[instanceSpecID]
 		if exists {
-			logger.Info("stopping container instance", zap.String("instance", id))
+			logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
 
 			// Stopping is synchronous: the task must be gone, and its runtime state cleaned up,
 			// before the instance controller is allowed to destroy the resource.
-			instance.stop()
-			delete(ctrl.instances, id)
+			instanceRun.stop()
+			delete(ctrl.instances, instanceSpecID)
 
-			logger.Info("container instance stopped", zap.String("instance", id))
+			logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
 		}
 
 		// A failure here leaves the finalizer in place, which is what makes the next pass come back
 		// and try the removal again rather than hand a half-cleaned instance over to be destroyed.
-		if err := ctrl.taskRunner.Remove(ctx, id); err != nil {
-			return fmt.Errorf("failed to remove container %q: %w", id, err)
+		if err := ctrl.taskRunner.Remove(ctx, instanceSpecID); err != nil {
+			return fmt.Errorf("failed to remove container %q: %w", instanceSpecID, err)
 		}
 
 		if containerInstanceSpec.Metadata().Finalizers().Has(ctrl.Name()) {
-			if err := r.RemoveFinalizer(ctx, containerInstanceSpec.Metadata(), ctrl.Name()); err != nil {
-				return fmt.Errorf("failed to remove finalizer on %q: %w", id, err)
+			if err := runtime.RemoveFinalizer(ctx, containerInstanceSpec.Metadata(), ctrl.Name()); err != nil {
+				return fmt.Errorf("failed to remove finalizer on %q: %w", instanceSpecID, err)
 			}
 
-			logger.Debug("released the container instance for destruction", zap.String("instance", id))
+			logger.Debug("released the container instance for destruction", zap.String("instance", instanceSpecID))
 		}
 	}
 
@@ -529,17 +529,17 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 // concurrently: serially, a handful of containers ignoring SIGTERM would take longer than the
 // shutdown sequence gives the barrier as a whole.
 func (ctrl *RuntimeController) stopAll(logger *zap.Logger) {
-	for containerID, instanceRunState := range ctrl.instances {
-		logger.Info("stopping container instance", zap.String("instance", containerID))
+	for instanceSpecID, instanceRun := range ctrl.instances {
+		logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
 
-		instanceRunState.cancel()
+		instanceRun.cancel()
 	}
 
-	for containerID, instanceRunState := range ctrl.instances {
-		instanceRunState.stop()
-		delete(ctrl.instances, containerID)
+	for instanceSpecID, instanceRun := range ctrl.instances {
+		instanceRun.stop()
+		delete(ctrl.instances, instanceSpecID)
 
-		logger.Info("container instance stopped", zap.String("instance", containerID))
+		logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
 	}
 }
 
@@ -548,35 +548,35 @@ func (ctrl *RuntimeController) stopAll(logger *zap.Logger) {
 // The status is read back rather than trusted from memory because ctrl.instances does not survive a
 // controller restart, while the status, being an output, does. A caller that gets true must not start
 // the instance.
-func (ctrl *RuntimeController) retainFinished(ctx context.Context, r controller.Runtime, id string) (bool, error) {
-	status, err := safe.ReaderGetByID[*containers.ContainerInstanceStatus](ctx, r, id)
+func (ctrl *RuntimeController) retainFinished(ctx context.Context, runtime controller.Runtime, instanceSpecID string) (bool, error) {
+	containerInstanceStatus, err := safe.ReaderGetByID[*containers.ContainerInstanceStatus](ctx, runtime, instanceSpecID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return false, nil
 		}
 
-		return false, fmt.Errorf("failed to get instance status %q: %w", id, err)
+		return false, fmt.Errorf("failed to get instance status %q: %w", instanceSpecID, err)
 	}
 
-	if !status.TypedSpec().Phase.Done() {
+	if !containerInstanceStatus.TypedSpec().Phase.Done() {
 		// Reported running, but nothing is running it: this is the interrupted case rather than the
 		// finished one, so it is started again and the status corrected.
 		return false, nil
 	}
 
-	previous := *status.TypedSpec()
+	previousStatusSpec := *containerInstanceStatus.TypedSpec()
 
 	// Rewritten unchanged purely to mark it as still wanted: an output left untouched during a pass
 	// is reclaimed by CleanupOutputs, and this status is the only record that this generation ran.
-	if err := safe.WriterModify(ctx, r,
-		containers.NewContainerInstanceStatus(containers.NamespaceName, id),
+	if err := safe.WriterModify(ctx, runtime,
+		containers.NewContainerInstanceStatus(containers.NamespaceName, instanceSpecID),
 		func(res *containers.ContainerInstanceStatus) error {
-			*res.TypedSpec() = previous
+			*res.TypedSpec() = previousStatusSpec
 
 			return nil
 		},
 	); err != nil {
-		return false, fmt.Errorf("failed to retain instance status %q: %w", id, err)
+		return false, fmt.Errorf("failed to retain instance status %q: %w", instanceSpecID, err)
 	}
 
 	return true, nil
@@ -586,7 +586,7 @@ func (ctrl *RuntimeController) retainFinished(ctx context.Context, r controller.
 func (ctrl *RuntimeController) sweepOrphans(
 	ctx context.Context,
 	logger *zap.Logger,
-	specs safe.List[*containers.ContainerInstanceSpec],
+	containerInstanceSpecs safe.List[*containers.ContainerInstanceSpec],
 ) error {
 	existing, err := ctrl.taskRunner.List(ctx)
 	if err != nil {
@@ -595,19 +595,19 @@ func (ctrl *RuntimeController) sweepOrphans(
 
 	wanted := map[string]struct{}{}
 
-	for spec := range specs.All() {
-		wanted[spec.Metadata().ID()] = struct{}{}
+	for containerInstanceSpec := range containerInstanceSpecs.All() {
+		wanted[containerInstanceSpec.Metadata().ID()] = struct{}{}
 	}
 
-	for _, id := range existing {
-		if _, exists := wanted[id]; exists {
+	for _, instanceSpecID := range existing {
+		if _, exists := wanted[instanceSpecID]; exists {
 			continue
 		}
 
-		logger.Info("removing orphaned container", zap.String("container", id))
+		logger.Info("removing orphaned container", zap.String("container", instanceSpecID))
 
-		if err := ctrl.taskRunner.Remove(ctx, id); err != nil {
-			return fmt.Errorf("failed to remove orphaned container %q: %w", id, err)
+		if err := ctrl.taskRunner.Remove(ctx, instanceSpecID); err != nil {
+			return fmt.Errorf("failed to remove orphaned container %q: %w", instanceSpecID, err)
 		}
 	}
 
@@ -617,11 +617,11 @@ func (ctrl *RuntimeController) sweepOrphans(
 // start launches the goroutine that runs one instance to completion.
 func (ctrl *RuntimeController) start(
 	logger *zap.Logger,
-	spec *containers.ContainerInstanceSpec,
+	containerInstanceSpec *containers.ContainerInstanceSpec,
 ) *instanceRunState {
-	id := spec.Metadata().ID()
+	instanceSpecID := containerInstanceSpec.Metadata().ID()
 
-	instance := &instanceRunState{
+	instanceRun := &instanceRunState{
 		phase: containers.ContainerInstancePhaseCreated,
 	}
 
@@ -630,9 +630,9 @@ func (ctrl *RuntimeController) start(
 	// for using a context that outlives the cancellation for its own teardown, or the stop sequence
 	// would be canceled before it could run.
 	runCtx, cancel := context.WithCancel(ctrl.instanceCtx)
-	instance.cancel = cancel
+	instanceRun.cancel = cancel
 
-	instanceSpec := *spec.TypedSpec()
+	containerInstanceSpecSpec := *containerInstanceSpec.TypedSpec()
 
 	// Captured rather than read from ctrl inside the goroutine: the main loop is the only writer of
 	// ctrl.taskRunner, and reading it from here would race with it.
@@ -653,23 +653,23 @@ func (ctrl *RuntimeController) start(
 		}
 	}
 
-	instance.wg.Go(func() {
+	instanceRun.wg.Go(func() {
 		var everStarted bool
 
 		defer func() {
 			if p := recover(); p != nil {
 				// One bad container must not take down machined.
-				instance.setFinished(0, fmt.Errorf("panic: %v", p), everStarted)
+				instanceRun.setFinished(0, fmt.Errorf("panic: %v", p), everStarted)
 
-				logger.Error("container run panicked", zap.Stack("stack"), zap.String("instance", id))
+				logger.Error("container run panicked", zap.Stack("stack"), zap.String("instance", instanceSpecID))
 			}
 
 			// Clearing the ServicePID from the defer covers every way the run can end, panics
 			// included: once the started callback has recorded the PID, leaving it behind would
 			// hand out a stale ctr-<name> -> PID mapping.
-			if everStarted && instanceSpec.Security.MachinedAccess {
-				if err := ctrl.PIDRecorder(containerServicePID(instanceSpec.ContainerID), 0, true); err != nil {
-					logger.Error("failed to clear container PID", zap.String("instance", id), zap.Error(err))
+			if everStarted && containerInstanceSpecSpec.Security.MachinedAccess {
+				if err := ctrl.PIDRecorder(containerServicePID(containerInstanceSpecSpec.ContainerID), 0, true); err != nil {
+					logger.Error("failed to clear container PID", zap.String("instance", instanceSpecID), zap.Error(err))
 				}
 			}
 
@@ -678,67 +678,67 @@ func (ctrl *RuntimeController) start(
 		}()
 
 		logger.Info("starting container",
-			zap.String("instance", id),
-			zap.String("image", instanceSpec.Image),
+			zap.String("instance", instanceSpecID),
+			zap.String("image", containerInstanceSpecSpec.Image),
 		)
 
-		exitCode, err := taskRunner.Run(runCtx, id, instanceSpec, func(taskPID uint32) {
+		exitCode, err := taskRunner.Run(runCtx, instanceSpecID, containerInstanceSpecSpec, func(taskPID uint32) {
 			everStarted = true
 
-			instance.setStarted(taskPID)
+			instanceRun.setStarted(taskPID)
 
-			logger.Info("container started", zap.String("instance", id), zap.Uint32("pid", taskPID))
+			logger.Info("container started", zap.String("instance", instanceSpecID), zap.Uint32("pid", taskPID))
 
-			if instanceSpec.Security.MachinedAccess {
-				if err := ctrl.PIDRecorder(containerServicePID(instanceSpec.ContainerID), int32(taskPID), false); err != nil { //nolint:gosec
-					logger.Error("failed to record container PID", zap.String("instance", id), zap.Error(err))
+			if containerInstanceSpecSpec.Security.MachinedAccess {
+				if err := ctrl.PIDRecorder(containerServicePID(containerInstanceSpecSpec.ContainerID), int32(taskPID), false); err != nil { //nolint:gosec
+					logger.Error("failed to record container PID", zap.String("instance", instanceSpecID), zap.Error(err))
 				}
 			}
 
 			notify()
 		})
 
-		instance.setFinished(exitCode, err, everStarted)
+		instanceRun.setFinished(exitCode, err, everStarted)
 
 		switch {
 		case err != nil:
-			logger.Error("container run failed", zap.String("instance", id), zap.Error(err))
+			logger.Error("container run failed", zap.String("instance", instanceSpecID), zap.Error(err))
 		case exitCode != 0:
-			logger.Warn("container exited non-zero", zap.String("instance", id), zap.Int32("exitCode", exitCode))
+			logger.Warn("container exited non-zero", zap.String("instance", instanceSpecID), zap.Int32("exitCode", exitCode))
 		default:
-			logger.Info("container exited", zap.String("instance", id))
+			logger.Info("container exited", zap.String("instance", instanceSpecID))
 		}
 	})
 
-	return instance
+	return instanceRun
 }
 
 func (ctrl *RuntimeController) writeStatus(
 	ctx context.Context,
-	r controller.Runtime,
-	spec *containers.ContainerInstanceSpec,
-	instance *instanceRunState,
+	runtime controller.Runtime,
+	containerInstanceSpec *containers.ContainerInstanceSpec,
+	instanceRun *instanceRunState,
 ) error {
-	snapshot := instance.snapshot()
+	snapshot := instanceRun.snapshot()
 
-	if err := safe.WriterModify(ctx, r,
-		containers.NewContainerInstanceStatus(containers.NamespaceName, spec.Metadata().ID()),
+	if err := safe.WriterModify(ctx, runtime,
+		containers.NewContainerInstanceStatus(containers.NamespaceName, containerInstanceSpec.Metadata().ID()),
 		func(res *containers.ContainerInstanceStatus) error {
-			status := res.TypedSpec()
+			containerInstanceStatusSpec := res.TypedSpec()
 
-			status.ContainerID = spec.TypedSpec().ContainerID
-			status.Generation = spec.TypedSpec().Generation
-			status.Phase = snapshot.Phase
-			status.PID = snapshot.PID
-			status.ExitCode = snapshot.ExitCode
-			status.Error = snapshot.Error
-			status.StartedAt = snapshot.StartedAt
-			status.FinishedAt = snapshot.FinishedAt
+			containerInstanceStatusSpec.ContainerID = containerInstanceSpec.TypedSpec().ContainerID
+			containerInstanceStatusSpec.Generation = containerInstanceSpec.TypedSpec().Generation
+			containerInstanceStatusSpec.Phase = snapshot.Phase
+			containerInstanceStatusSpec.PID = snapshot.PID
+			containerInstanceStatusSpec.ExitCode = snapshot.ExitCode
+			containerInstanceStatusSpec.Error = snapshot.Error
+			containerInstanceStatusSpec.StartedAt = snapshot.StartedAt
+			containerInstanceStatusSpec.FinishedAt = snapshot.FinishedAt
 
 			return nil
 		},
 	); err != nil {
-		return fmt.Errorf("failed to write instance status %q: %w", spec.Metadata().ID(), err)
+		return fmt.Errorf("failed to write instance status %q: %w", containerInstanceSpec.Metadata().ID(), err)
 	}
 
 	return nil

@@ -23,6 +23,8 @@ import (
 // RestartInterval is how long to wait after an instance terminates before starting the next one.
 const RestartInterval = 5 * time.Second
 
+// InstanceController creates and replaces the ContainerInstanceSpec for each container, one
+// generation per execution.
 type InstanceController struct{}
 
 // Name implements controller.Controller interface.
@@ -60,9 +62,9 @@ func (ctrl *InstanceController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *InstanceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	return runWithWakeTimer(ctx, r, func(ctx context.Context, r controller.Runtime) (optional.Optional[time.Duration], error) {
-		wakeAfter, err := ctrl.reconcile(ctx, r, logger)
+func (ctrl *InstanceController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
+	return runWithWakeTimer(ctx, runtime, func(ctx context.Context, runtime controller.Runtime) (optional.Optional[time.Duration], error) {
+		wakeAfter, err := ctrl.reconcile(ctx, runtime, logger)
 		if err != nil {
 			logger.Error("failed to reconcile container instances", zap.Error(err))
 		}
@@ -74,27 +76,27 @@ func (ctrl *InstanceController) Run(ctx context.Context, r controller.Runtime, l
 // reconcile returns how long until the controller next needs to wake up on its own, if at all.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *InstanceController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) (optional.Optional[time.Duration], error) {
-	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
+func (ctrl *InstanceController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) (optional.Optional[time.Duration], error) {
+	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
 	if err != nil {
 		return optional.None[time.Duration](), fmt.Errorf("failed to list container specs: %w", err)
 	}
 
-	constainerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, r)
+	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
 	if err != nil {
 		return optional.None[time.Duration](), fmt.Errorf("failed to list container instances: %w", err)
 	}
 
 	// Group instances by owning container so each container can be reasoned about independently.
-	idToInstanceSpecs := map[string][]*containers.ContainerInstanceSpec{}
+	containerSpecIDToInstanceSpecs := map[string][]*containers.ContainerInstanceSpec{}
 
-	for instanceSpec := range constainerInstanceSpecs.All() {
-		containerID := instanceSpec.TypedSpec().ContainerID
-		idToInstanceSpecs[containerID] = append(idToInstanceSpecs[containerID], instanceSpec)
+	for containerInstanceSpec := range containerInstanceSpecs.All() {
+		containerSpecID := containerInstanceSpec.TypedSpec().ContainerID
+		containerSpecIDToInstanceSpecs[containerSpecID] = append(containerSpecIDToInstanceSpecs[containerSpecID], containerInstanceSpec)
 	}
 
-	for _, instanceSpecs := range idToInstanceSpecs {
-		slices.SortFunc(instanceSpecs, func(a, b *containers.ContainerInstanceSpec) int {
+	for _, containerInstanceSpecs := range containerSpecIDToInstanceSpecs {
+		slices.SortFunc(containerInstanceSpecs, func(a, b *containers.ContainerInstanceSpec) int {
 			return int(a.TypedSpec().Generation) - int(b.TypedSpec().Generation)
 		})
 	}
@@ -107,7 +109,7 @@ func (ctrl *InstanceController) reconcile(ctx context.Context, r controller.Runt
 	for containerSpec := range containerSpecs.All() {
 		wantedContainers[containerSpec.Metadata().ID()] = struct{}{}
 
-		wakeAfter, err := ctrl.reconcileInstance(ctx, r, logger, containerSpec, idToInstanceSpecs[containerSpec.Metadata().ID()])
+		wakeAfter, err := ctrl.reconcileInstance(ctx, runtime, logger, containerSpec, containerSpecIDToInstanceSpecs[containerSpec.Metadata().ID()])
 		if err != nil {
 			return optional.None[time.Duration](), err
 		}
@@ -115,7 +117,7 @@ func (ctrl *InstanceController) reconcile(ctx context.Context, r controller.Runt
 		wakeCtrlAfter = minOptionalDuration(wakeCtrlAfter, wakeAfter)
 	}
 
-	if err := ctrl.destroyOrphanedInstances(ctx, r, logger, idToInstanceSpecs, wantedContainers); err != nil {
+	if err := ctrl.destroyOrphanedInstances(ctx, runtime, logger, containerSpecIDToInstanceSpecs, wantedContainers); err != nil {
 		return optional.None[time.Duration](), err
 	}
 
@@ -125,14 +127,14 @@ func (ctrl *InstanceController) reconcile(ctx context.Context, r controller.Runt
 //nolint:gocyclo,cyclop
 func (ctrl *InstanceController) reconcileInstance(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
 	containerSpec *containers.ContainerSpec,
-	instances []*containers.ContainerInstanceSpec,
+	containerInstanceSpecs []*containers.ContainerInstanceSpec,
 ) (optional.Optional[time.Duration], error) {
-	var currentInstance *containers.ContainerInstanceSpec
-	if len(instances) > 0 {
-		currentInstance = instances[len(instances)-1]
+	var currentContainerInstanceSpec *containers.ContainerInstanceSpec
+	if len(containerInstanceSpecs) > 0 {
+		currentContainerInstanceSpec = containerInstanceSpecs[len(containerInstanceSpecs)-1]
 	}
 
 	containerSpecID := containerSpec.Metadata().ID()
@@ -140,8 +142,8 @@ func (ctrl *InstanceController) reconcileInstance(
 	nextGeneration := uint64(0)
 
 	// Babysit the existing instance until the spec changes.
-	if currentInstance != nil {
-		wasDestroyed, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, r, logger, containerSpec, currentInstance)
+	if currentContainerInstanceSpec != nil {
+		wasDestroyed, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, runtime, logger, containerSpec, currentContainerInstanceSpec)
 		if err != nil {
 			return optional.None[time.Duration](), err
 		}
@@ -150,11 +152,11 @@ func (ctrl *InstanceController) reconcileInstance(
 			return wakeUpAfter, nil
 		}
 
-		nextGeneration = currentInstance.TypedSpec().Generation + 1
+		nextGeneration = currentContainerInstanceSpec.TypedSpec().Generation + 1
 	}
 
 	// No container exists now, but dependencies may be unmet.
-	waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, r, containerSpecID)
+	waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, runtime, containerSpecID)
 	if err != nil {
 		return optional.None[time.Duration](), err
 	}
@@ -169,17 +171,17 @@ func (ctrl *InstanceController) reconcileInstance(
 	}
 
 	// We're good to create a new instance.
-	imageDigest, err := containers.GetImageDigest(ctx, r, containerSpecID, containerSpec.TypedSpec().Image.Ref)
+	imageDigest, err := containers.GetImageDigest(ctx, runtime, containerSpecID, containerSpec.TypedSpec().Image.Ref)
 	if err != nil {
 		return optional.None[time.Duration](), err
 	}
 
-	resolvedMounts, err := containerSpec.TypedSpec().GetResolvedMounts(ctx, r, containerSpecID)
+	resolvedMounts, err := containerSpec.TypedSpec().GetResolvedMounts(ctx, runtime, containerSpecID)
 	if err != nil {
 		return optional.None[time.Duration](), err
 	}
 
-	if err := ctrl.createInstanceSpec(ctx, r, containerSpec, nextGeneration, imageDigest, resolvedMounts); err != nil {
+	if err := ctrl.createInstanceSpec(ctx, runtime, containerSpec, nextGeneration, imageDigest, resolvedMounts); err != nil {
 		return optional.None[time.Duration](), err
 	}
 
@@ -191,23 +193,23 @@ func (ctrl *InstanceController) reconcileInstance(
 // destroyOrphanedInstances removes instances for containers whose spec no longer exists.
 func (ctrl *InstanceController) destroyOrphanedInstances(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
-	idToInstanceSpecs map[string][]*containers.ContainerInstanceSpec,
+	containerSpecIDToInstanceSpecs map[string][]*containers.ContainerInstanceSpec,
 	wantedContainers map[string]struct{},
 ) error {
-	for containerID, list := range idToInstanceSpecs {
-		if _, exists := wantedContainers[containerID]; exists {
+	for containerSpecID, containerInstanceSpecs := range containerSpecIDToInstanceSpecs {
+		if _, exists := wantedContainers[containerSpecID]; exists {
 			continue
 		}
 
-		for _, instance := range list {
+		for _, containerInstanceSpec := range containerInstanceSpecs {
 			logger.Debug("removing instance of a deleted container",
-				zap.String("container", containerID),
-				zap.String("instance", instance.Metadata().ID()),
+				zap.String("container", containerSpecID),
+				zap.String("instance", containerInstanceSpec.Metadata().ID()),
 			)
 
-			if _, err := ctrl.destroyInstance(ctx, r, logger, instance); err != nil {
+			if _, err := ctrl.destroyInstance(ctx, runtime, logger, containerInstanceSpec); err != nil {
 				return err
 			}
 		}
@@ -221,34 +223,34 @@ func (ctrl *InstanceController) destroyOrphanedInstances(
 // A false return means something still holds a finalizer on it, i.e. it is being stopped.
 func (ctrl *InstanceController) destroyInstance(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
-	instance *containers.ContainerInstanceSpec,
+	containerInstanceSpec *containers.ContainerInstanceSpec,
 ) (bool, error) {
-	id := instance.Metadata().ID()
+	instanceSpecID := containerInstanceSpec.Metadata().ID()
 
-	okToDestroy, err := r.Teardown(ctx, instance.Metadata())
+	okToDestroy, err := runtime.Teardown(ctx, containerInstanceSpec.Metadata())
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return true, nil
 		}
 
-		return false, fmt.Errorf("failed to tear down instance %q: %w", id, err)
+		return false, fmt.Errorf("failed to tear down instance %q: %w", instanceSpecID, err)
 	}
 
 	if !okToDestroy {
 		// Something still holds a finalizer, i.e. it is stopping the task. Come back when it
 		// releases, which the InputDestroyReady input will wake us for.
-		logger.Debug("waiting for the container instance to stop", zap.String("instance", id))
+		logger.Debug("waiting for the container instance to stop", zap.String("instance", instanceSpecID))
 
 		return false, nil
 	}
 
-	if err := r.Destroy(ctx, instance.Metadata()); err != nil && !state.IsNotFoundError(err) {
-		return false, fmt.Errorf("failed to destroy instance %q: %w", id, err)
+	if err := runtime.Destroy(ctx, containerInstanceSpec.Metadata()); err != nil && !state.IsNotFoundError(err) {
+		return false, fmt.Errorf("failed to destroy instance %q: %w", instanceSpecID, err)
 	}
 
-	logger.Debug("container instance destroyed", zap.String("instance", id))
+	logger.Debug("container instance destroyed", zap.String("instance", instanceSpecID))
 
 	return true, nil
 }
@@ -262,22 +264,22 @@ func (ctrl *InstanceController) destroyInstance(
 // has at most one instance at a time and no terminated ones are kept around.
 func (ctrl *InstanceController) reconcileExistingInstance(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
-	spec *containers.ContainerSpec,
-	newestInstance *containers.ContainerInstanceSpec,
+	containerSpec *containers.ContainerSpec,
+	newestContainerInstanceSpec *containers.ContainerInstanceSpec,
 ) (bool, optional.Optional[time.Duration], error) {
-	containerID := spec.Metadata().ID()
+	containerSpecID := containerSpec.Metadata().ID()
 
 	// An instance already being torn down is finished regardless of the spec.
-	if newestInstance.Metadata().Phase() != resource.PhaseTearingDown {
-		inSync, err := newestInstance.TypedSpec().InSyncWithContainerSpec(ctx, r, spec.TypedSpec())
+	if newestContainerInstanceSpec.Metadata().Phase() != resource.PhaseTearingDown {
+		inSync, err := newestContainerInstanceSpec.TypedSpec().InSyncWithContainerSpec(ctx, runtime, containerSpec.TypedSpec())
 		if err != nil {
 			return false, optional.None[time.Duration](), err
 		}
 
 		if inSync {
-			restartDue, wakeUpAfter, err := ctrl.checkRestartDue(ctx, r, newestInstance)
+			restartDue, wakeUpAfter, err := ctrl.checkRestartDue(ctx, runtime, newestContainerInstanceSpec)
 			if err != nil {
 				return false, optional.None[time.Duration](), err
 			}
@@ -287,19 +289,19 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 			}
 
 			logger.Info("container terminated, restart interval elapsed, replacing the instance",
-				zap.String("container", containerID),
-				zap.Uint64("generation", newestInstance.TypedSpec().Generation),
+				zap.String("container", containerSpecID),
+				zap.Uint64("generation", newestContainerInstanceSpec.TypedSpec().Generation),
 			)
 		} else {
 			// A spec change invalidates the existing instance.
-			waitingFor, wakeUpAfter, err := spec.TypedSpec().Ready(ctx, r, containerID)
+			waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, runtime, containerSpecID)
 			if err != nil {
 				return false, optional.None[time.Duration](), err
 			}
 
 			if len(waitingFor) > 0 {
 				logger.Debug("container spec changed, but its replacement is waiting on dependencies",
-					zap.String("container", containerID),
+					zap.String("container", containerSpecID),
 					zap.Strings("waitingFor", waitingFor),
 				)
 
@@ -307,13 +309,13 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 			}
 
 			logger.Info("container spec changed, replacing the instance",
-				zap.String("container", containerID),
-				zap.Uint64("generation", newestInstance.TypedSpec().Generation),
+				zap.String("container", containerSpecID),
+				zap.Uint64("generation", newestContainerInstanceSpec.TypedSpec().Generation),
 			)
 		}
 	}
 
-	destroyed, err := ctrl.destroyInstance(ctx, r, logger, newestInstance)
+	destroyed, err := ctrl.destroyInstance(ctx, runtime, logger, newestContainerInstanceSpec)
 	if err != nil {
 		return false, optional.None[time.Duration](), err
 	}
@@ -334,23 +336,23 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 // but RestartInterval has not yet elapsed since it did.
 func (ctrl *InstanceController) checkRestartDue(
 	ctx context.Context,
-	r controller.Reader,
-	instance *containers.ContainerInstanceSpec,
+	reader controller.Reader,
+	containerInstanceSpec *containers.ContainerInstanceSpec,
 ) (bool, optional.Optional[time.Duration], error) {
-	status, err := safe.ReaderGetByID[*containers.ContainerInstanceStatus](ctx, r, instance.Metadata().ID())
+	containerInstanceStatus, err := safe.ReaderGetByID[*containers.ContainerInstanceStatus](ctx, reader, containerInstanceSpec.Metadata().ID())
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return false, optional.None[time.Duration](), nil
 		}
 
-		return false, optional.None[time.Duration](), fmt.Errorf("failed to get instance status %q: %w", instance.Metadata().ID(), err)
+		return false, optional.None[time.Duration](), fmt.Errorf("failed to get instance status %q: %w", containerInstanceSpec.Metadata().ID(), err)
 	}
 
-	if !status.TypedSpec().Phase.Done() {
+	if !containerInstanceStatus.TypedSpec().Phase.Done() {
 		return false, optional.None[time.Duration](), nil
 	}
 
-	if remaining := RestartInterval - time.Since(status.TypedSpec().FinishedAt); remaining > 0 {
+	if remaining := RestartInterval - time.Since(containerInstanceStatus.TypedSpec().FinishedAt); remaining > 0 {
 		return false, optional.Some(remaining), nil
 	}
 
@@ -363,8 +365,8 @@ func (ctrl *InstanceController) createInstanceSpec(
 	runtime controller.Runtime,
 	containerSpec *containers.ContainerSpec,
 	generation uint64,
-	digest string,
-	mounts []containers.ResolvedMountSpec,
+	imageDigest string,
+	resolvedMounts []containers.ResolvedMountSpec,
 ) error {
 	containerSpecID := containerSpec.Metadata().ID()
 	instanceID := containers.InstanceID(containerSpecID, generation)
@@ -372,19 +374,19 @@ func (ctrl *InstanceController) createInstanceSpec(
 	return safe.WriterModify(ctx, runtime,
 		containers.NewContainerInstanceSpec(containers.NamespaceName, instanceID),
 		func(res *containers.ContainerInstanceSpec) error {
-			instanceSpec := res.TypedSpec()
-			instanceSpec.ContainerID = containerSpecID
-			instanceSpec.Generation = generation
-			instanceSpec.Image = digest
-			instanceSpec.Entrypoint = containerSpec.TypedSpec().Entrypoint
-			instanceSpec.Args = containerSpec.TypedSpec().Args
-			instanceSpec.WorkingDir = containerSpec.TypedSpec().WorkingDir
-			instanceSpec.RunAs = containerSpec.TypedSpec().RunAs
-			instanceSpec.Environment = containerSpec.TypedSpec().Environment
-			instanceSpec.Mounts = mounts
-			instanceSpec.Security = containerSpec.TypedSpec().Security
-			instanceSpec.Network = containerSpec.TypedSpec().Network
-			instanceSpec.Resources = containerSpec.TypedSpec().Resources
+			containerInstanceSpecSpec := res.TypedSpec()
+			containerInstanceSpecSpec.ContainerID = containerSpecID
+			containerInstanceSpecSpec.Generation = generation
+			containerInstanceSpecSpec.Image = imageDigest
+			containerInstanceSpecSpec.Entrypoint = containerSpec.TypedSpec().Entrypoint
+			containerInstanceSpecSpec.Args = containerSpec.TypedSpec().Args
+			containerInstanceSpecSpec.WorkingDir = containerSpec.TypedSpec().WorkingDir
+			containerInstanceSpecSpec.RunAs = containerSpec.TypedSpec().RunAs
+			containerInstanceSpecSpec.Environment = containerSpec.TypedSpec().Environment
+			containerInstanceSpecSpec.Mounts = resolvedMounts
+			containerInstanceSpecSpec.Security = containerSpec.TypedSpec().Security
+			containerInstanceSpecSpec.Network = containerSpec.TypedSpec().Network
+			containerInstanceSpecSpec.Resources = containerSpec.TypedSpec().Resources
 
 			return nil
 		},

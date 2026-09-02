@@ -15,8 +15,7 @@ import (
 )
 
 // containerCreationGateInputs returns the inputs needed to evaluate a container's gates: everything
-// ContainerSpecSpec.Ready reads, which is not obvious from the call itself, plus the spec it is
-// called on.
+// ContainerSpecSpec.Ready reads, plus the spec it is called on.
 //
 // Shared by every controller that calls Ready, because the failure mode of getting this list wrong
 // is remote from its cause: a missing entry makes an unrelated-looking read fail at runtime with
