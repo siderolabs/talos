@@ -236,7 +236,14 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 		suite.T().Skip("skipping ulimits test since provisioner is docker")
 	}
 
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeType := machine.TypeWorker
+
+	if suite.BGPCLOSEnabled {
+		// Keep the CRI restart away from the worker used by the BGP CLOS tests.
+		nodeType = machine.TypeControlPlane
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(nodeType)
 
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
