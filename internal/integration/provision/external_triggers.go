@@ -94,6 +94,8 @@ func (suite *ExternalTriggerSuite) TestTriggers() {
 	})
 
 	suite.Run("trigger Ctrl+Alt+Delete", func() {
+		suite.T().Logf("using node %s", suite.Cluster.Info().Nodes[0].Name)
+
 		// using machine 0 for this test
 		c := maintenanceClients[0]
 
@@ -125,6 +127,8 @@ func (suite *ExternalTriggerSuite) TestTriggers() {
 	})
 
 	suite.Run("trigger poweroff", func() {
+		suite.T().Logf("using node %s", suite.Cluster.Info().Nodes[1].Name)
+
 		// using machine 1 for this test
 		c := maintenanceClients[1]
 
