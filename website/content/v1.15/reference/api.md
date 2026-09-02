@@ -8794,12 +8794,12 @@ KubeletConfigSpec holds the source of kubelet configuration.
 <a name="talos.resource.definitions.k8s.KubeletKubeconfigSpec"></a>
 
 ### KubeletKubeconfigSpec
-KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+KubeletKubeconfigSpec describes the current kubelet client credentials.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| hash | [string](#string) |  | Hash is a content digest of the kubeconfig file. It changes whenever the file contents change, which is the signal consumers use to rebuild their Kubernetes clients. |
+| hash | [string](#string) |  | Hash is a content digest of the kubeconfig file and of the certificates it references on disk (kubelet rotates its client certificate without ever touching the kubeconfig). It changes whenever the credentials change, which is the signal consumers use to rebuild their Kubernetes clients. |
 
 
 
