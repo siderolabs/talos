@@ -14,13 +14,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// containerCreationGateInputs returns the inputs needed to evaluate a container's gates: everything
-// ContainerSpecSpec.Ready reads, which is not obvious from the call itself, plus the spec it is
-// called on.
-//
-// Shared by every controller that calls Ready, because the failure mode of getting this list wrong
-// is remote from its cause: a missing entry makes an unrelated-looking read fail at runtime with
-// "not input or output for controller", on every single reconcile pass.
+// containerCreationGateInputs returns the inputs needed to evaluate a container's gates, everything ContainerSpecSpec.Ready reads.
 func containerCreationGateInputs() []controller.Input {
 	return []controller.Input{
 		{

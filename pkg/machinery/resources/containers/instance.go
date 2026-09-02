@@ -7,6 +7,7 @@ package containers
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"slices"
 	"time"
 
@@ -28,6 +29,14 @@ import (
 // to replace another cannot be confused with it, nor collide with a destruction still in flight.
 func InstanceID(container string, generation uint64) resource.ID {
 	return fmt.Sprintf("%s-%d", container, generation)
+}
+
+// InstanceIDQuery matches the IDs of every instance resource belonging to one container.
+//
+// The generation suffix is anchored and digits-only, so a query for "a" cannot pick up "a-1-2":
+// that ID belongs to container "a-1".
+func InstanceIDQuery(container string) resource.IDQueryOption {
+	return resource.IDRegexpMatch(regexp.MustCompile(`^` + regexp.QuoteMeta(container) + `-\d+$`))
 }
 
 // ContainerInstanceSpecType is type of ContainerInstanceSpec resource.
