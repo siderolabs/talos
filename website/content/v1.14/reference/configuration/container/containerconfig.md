@@ -51,13 +51,13 @@ resources:
         memory: 512MiB # Memory ceiling, mapped onto cgroup v2 `memory.max`.
 # Conditions which must be satisfied before the container is started.
 dependsOn:
+    # Host paths which must exist before the container starts.
+    paths:
+        - /var/mnt/web-content
     # Network readiness conditions which must be satisfied.
     networks:
         - addresses
-
-    # # Host paths which must exist before the container starts.
-    # paths:
-    #     - /var/mnt/web-content
+    time: true # Whether the clock must be synchronized before the container starts.
 {{< /highlight >}}
 
 
