@@ -163,7 +163,7 @@ message KubeletConfigSpec {
   bool allow_scheduling_on_control_plane = 14;
 }
 
-// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+// KubeletKubeconfigSpec describes the current kubelet client credentials.
 message KubeletKubeconfigSpec {
   string hash = 1;
 }

@@ -1348,7 +1348,7 @@ func (x *KubeletConfigSpec) GetAllowSchedulingOnControlPlane() bool {
 	return false
 }
 
-// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+// KubeletKubeconfigSpec describes the current kubelet client credentials.
 type KubeletKubeconfigSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Hash          string                 `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
