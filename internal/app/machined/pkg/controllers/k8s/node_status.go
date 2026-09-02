@@ -171,7 +171,8 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		if nodewatcher != nil && watcherKubeconfigVer != currentKubeconfigVer {
 			// kubelet kubeconfig on disk changed — the cached client may be pinned
 			// to a stale endpoint, so rebuild the watcher with a fresh client.
-			logger.Info("kubelet kubeconfig changed, restarting node watcher",
+			logger.Debug(
+				"kubelet kubeconfig changed, restarting node watcher",
 				zap.String("old_hash", watcherKubeconfigVer),
 				zap.String("new_hash", currentKubeconfigVer),
 			)

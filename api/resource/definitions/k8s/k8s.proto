@@ -171,7 +171,7 @@ message KubeletConfigSpec {
   map<string, ArgValues> extra_args = 15;
 }
 
-// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+// KubeletKubeconfigSpec describes the current kubelet client credentials.
 message KubeletKubeconfigSpec {
   string hash = 1;
 }

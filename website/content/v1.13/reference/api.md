@@ -7888,7 +7888,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 <a name="talos.resource.definitions.k8s.KubeletKubeconfigSpec"></a>
 
 ### KubeletKubeconfigSpec
-KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+KubeletKubeconfigSpec describes the current kubelet client credentials.
 
 
 | Field | Type | Label | Description |

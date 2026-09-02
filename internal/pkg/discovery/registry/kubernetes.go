@@ -15,7 +15,6 @@ import (
 
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
-	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -268,10 +267,15 @@ func (r *Kubernetes) List(localNodeName string) ([]*cluster.AffiliateSpec, error
 }
 
 // Watch starts watching Node state and notifies on updates via notify channel.
-func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, func(), error) {
+//
+// Watch errors are reported via the returned error channel, so that the caller can
+// rebuild the client (and with it, the credentials read off the disk) if the watch
+// keeps failing.
+func (r *Kubernetes) Watch(ctx context.Context) (<-chan struct{}, <-chan error, func(), error) {
 	informerFactory := informers.NewSharedInformerFactory(r.client.Clientset, constants.KubernetesInformerDefaultResyncPeriod)
 
 	notifyCh := make(chan struct{}, 1)
+	watchErrCh := make(chan error, 1)
 
 	notify := func(_ any) {
 		select {
@@ -282,10 +286,13 @@ func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan stru
 
 	r.nodes = informerFactory.Core().V1().Nodes()
 
-	if err := r.nodes.Informer().SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-		logger.Error("kubernetes registry node watch error", zap.Error(err))
+	if err := r.nodes.Informer().SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		select {
+		case watchErrCh <- err:
+		default:
+		}
 	}); err != nil {
-		return nil, nil, fmt.Errorf("failed to set watch error handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to set watch error handler: %w", err)
 	}
 
 	if _, err := r.nodes.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -293,10 +300,10 @@ func (r *Kubernetes) Watch(ctx context.Context, logger *zap.Logger) (<-chan stru
 		DeleteFunc: notify,
 		UpdateFunc: func(_, _ any) { notify(nil) },
 	}); err != nil {
-		return nil, nil, fmt.Errorf("failed to add event handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("failed to add event handler: %w", err)
 	}
 
 	informerFactory.Start(ctx.Done())
 
-	return notifyCh, informerFactory.Shutdown, nil
+	return notifyCh, watchErrCh, informerFactory.Shutdown, nil
 }
