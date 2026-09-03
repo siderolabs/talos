@@ -834,6 +834,25 @@ enum NetworkOperator {
   OPERATOR_VIP = 2;
 }
 
+// ContainersContainerState describes where a container is in its lifecycle.
+enum ContainersContainerState {
+  CONTAINER_STATE_PENDING = 0;
+  CONTAINER_STATE_PULLING = 1;
+  CONTAINER_STATE_STARTING = 2;
+  CONTAINER_STATE_RUNNING = 3;
+  CONTAINER_STATE_EXITED = 4;
+  CONTAINER_STATE_BACKOFF = 5;
+  CONTAINER_STATE_STOPPING = 6;
+}
+
+// ContainersContainerHealth is the coarse answer to "should I be looking at this container?".
+enum ContainersContainerHealth {
+  CONTAINER_HEALTH_PENDING = 0;
+  CONTAINER_HEALTH_PULLING = 1;
+  CONTAINER_HEALTH_HEALTHY = 2;
+  CONTAINER_HEALTH_DEGRADED = 3;
+}
+
 // ContainersContainerImagePhase describes the state of a container's image pull.
 enum ContainersContainerImagePhase {
   CONTAINER_IMAGE_PHASE_PENDING = 0;

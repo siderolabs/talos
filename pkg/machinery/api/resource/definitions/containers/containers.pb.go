@@ -973,6 +973,115 @@ func (x *ContainerSpecSpec) GetDependsOn() *ContainerDependsOnSpec {
 	return nil
 }
 
+// ContainerStatusSpec is the spec for ContainerStatus.
+type ContainerStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// State is the fine-grained lifecycle position, derived from the newest instance.
+	State enums.ContainersContainerState `protobuf:"varint,1,opt,name=state,proto3,enum=talos.resource.definitions.enums.ContainersContainerState" json:"state,omitempty"`
+	// Health is the coarse summary of State, kept stable across internal changes.
+	Health enums.ContainersContainerHealth `protobuf:"varint,2,opt,name=health,proto3,enum=talos.resource.definitions.enums.ContainersContainerHealth" json:"health,omitempty"`
+	// Image is the resolved digest once the pull completes, otherwise the requested reference.
+	Image string `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
+	// PID of the running task; zero when not running.
+	Pid uint32 `protobuf:"varint,4,opt,name=pid,proto3" json:"pid,omitempty"`
+	// ExitCode of the last task exit.
+	ExitCode int32 `protobuf:"varint,5,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	// RestartCount is the current instance generation, i.e. restarts beyond the first start.
+	RestartCount uint64 `protobuf:"varint,6,opt,name=restart_count,json=restartCount,proto3" json:"restart_count,omitempty"`
+	// Error is the last failure, verbatim, from whichever stage produced it.
+	Error string `protobuf:"bytes,7,opt,name=error,proto3" json:"error,omitempty"`
+	// WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
+	WaitingFor    []string `protobuf:"bytes,8,rep,name=waiting_for,json=waitingFor,proto3" json:"waiting_for,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerStatusSpec) Reset() {
+	*x = ContainerStatusSpec{}
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerStatusSpec) ProtoMessage() {}
+
+func (x *ContainerStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerStatusSpec.ProtoReflect.Descriptor instead.
+func (*ContainerStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *ContainerStatusSpec) GetState() enums.ContainersContainerState {
+	if x != nil {
+		return x.State
+	}
+	return enums.ContainersContainerState(0)
+}
+
+func (x *ContainerStatusSpec) GetHealth() enums.ContainersContainerHealth {
+	if x != nil {
+		return x.Health
+	}
+	return enums.ContainersContainerHealth(0)
+}
+
+func (x *ContainerStatusSpec) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *ContainerStatusSpec) GetPid() uint32 {
+	if x != nil {
+		return x.Pid
+	}
+	return 0
+}
+
+func (x *ContainerStatusSpec) GetExitCode() int32 {
+	if x != nil {
+		return x.ExitCode
+	}
+	return 0
+}
+
+func (x *ContainerStatusSpec) GetRestartCount() uint64 {
+	if x != nil {
+		return x.RestartCount
+	}
+	return 0
+}
+
+func (x *ContainerStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *ContainerStatusSpec) GetWaitingFor() []string {
+	if x != nil {
+		return x.WaitingFor
+	}
+	return nil
+}
+
 // ResolvedMountSpec is a mount with its host-side source resolved.
 type ResolvedMountSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -990,7 +1099,7 @@ type ResolvedMountSpec struct {
 
 func (x *ResolvedMountSpec) Reset() {
 	*x = ResolvedMountSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +1111,7 @@ func (x *ResolvedMountSpec) String() string {
 func (*ResolvedMountSpec) ProtoMessage() {}
 
 func (x *ResolvedMountSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +1124,7 @@ func (x *ResolvedMountSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolvedMountSpec.ProtoReflect.Descriptor instead.
 func (*ResolvedMountSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ResolvedMountSpec) GetKind() string {
@@ -1153,7 +1262,17 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\tresources\x18\n" +
 	" \x01(\v2=.talos.resource.definitions.containers.ContainerResourcesSpecR\tresources\x12\\\n" +
 	"\n" +
-	"depends_on\x18\v \x01(\v2=.talos.resource.definitions.containers.ContainerDependsOnSpecR\tdependsOn\"\xac\x01\n" +
+	"depends_on\x18\v \x01(\v2=.talos.resource.definitions.containers.ContainerDependsOnSpecR\tdependsOn\"\xdd\x02\n" +
+	"\x13ContainerStatusSpec\x12P\n" +
+	"\x05state\x18\x01 \x01(\x0e2:.talos.resource.definitions.enums.ContainersContainerStateR\x05state\x12S\n" +
+	"\x06health\x18\x02 \x01(\x0e2;.talos.resource.definitions.enums.ContainersContainerHealthR\x06health\x12\x14\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\x12\x10\n" +
+	"\x03pid\x18\x04 \x01(\rR\x03pid\x12\x1b\n" +
+	"\texit_code\x18\x05 \x01(\x05R\bexitCode\x12#\n" +
+	"\rrestart_count\x18\x06 \x01(\x04R\frestartCount\x12\x14\n" +
+	"\x05error\x18\a \x01(\tR\x05error\x12\x1f\n" +
+	"\vwaiting_for\x18\b \x03(\tR\n" +
+	"waitingFor\"\xac\x01\n" +
 	"\x11ResolvedMountSpec\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12 \n" +
@@ -1175,7 +1294,7 @@ func file_resource_definitions_containers_containers_proto_rawDescGZIP() []byte 
 	return file_resource_definitions_containers_containers_proto_rawDescData
 }
 
-var file_resource_definitions_containers_containers_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_resource_definitions_containers_containers_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_resource_definitions_containers_containers_proto_goTypes = []any{
 	(*ContainerDependsOnSpec)(nil),              // 0: talos.resource.definitions.containers.ContainerDependsOnSpec
 	(*ContainerImageSpec)(nil),                  // 1: talos.resource.definitions.containers.ContainerImageSpec
@@ -1189,22 +1308,25 @@ var file_resource_definitions_containers_containers_proto_goTypes = []any{
 	(*ContainerRunAsSpec)(nil),                  // 9: talos.resource.definitions.containers.ContainerRunAsSpec
 	(*ContainerSecuritySpec)(nil),               // 10: talos.resource.definitions.containers.ContainerSecuritySpec
 	(*ContainerSpecSpec)(nil),                   // 11: talos.resource.definitions.containers.ContainerSpecSpec
-	(*ResolvedMountSpec)(nil),                   // 12: talos.resource.definitions.containers.ResolvedMountSpec
-	(enums.ContainersContainerImagePhase)(0),    // 13: talos.resource.definitions.enums.ContainersContainerImagePhase
-	(enums.ContainersContainerInstancePhase)(0), // 14: talos.resource.definitions.enums.ContainersContainerInstancePhase
-	(*timestamppb.Timestamp)(nil),               // 15: google.protobuf.Timestamp
+	(*ContainerStatusSpec)(nil),                 // 12: talos.resource.definitions.containers.ContainerStatusSpec
+	(*ResolvedMountSpec)(nil),                   // 13: talos.resource.definitions.containers.ResolvedMountSpec
+	(enums.ContainersContainerImagePhase)(0),    // 14: talos.resource.definitions.enums.ContainersContainerImagePhase
+	(enums.ContainersContainerInstancePhase)(0), // 15: talos.resource.definitions.enums.ContainersContainerInstancePhase
+	(*timestamppb.Timestamp)(nil),               // 16: google.protobuf.Timestamp
+	(enums.ContainersContainerState)(0),         // 17: talos.resource.definitions.enums.ContainersContainerState
+	(enums.ContainersContainerHealth)(0),        // 18: talos.resource.definitions.enums.ContainersContainerHealth
 }
 var file_resource_definitions_containers_containers_proto_depIdxs = []int32{
-	13, // 0: talos.resource.definitions.containers.ContainerImageStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerImagePhase
+	14, // 0: talos.resource.definitions.containers.ContainerImageStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerImagePhase
 	9,  // 1: talos.resource.definitions.containers.ContainerInstanceSpecSpec.run_as:type_name -> talos.resource.definitions.containers.ContainerRunAsSpec
-	12, // 2: talos.resource.definitions.containers.ContainerInstanceSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
+	13, // 2: talos.resource.definitions.containers.ContainerInstanceSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
 	10, // 3: talos.resource.definitions.containers.ContainerInstanceSpecSpec.security:type_name -> talos.resource.definitions.containers.ContainerSecuritySpec
 	7,  // 4: talos.resource.definitions.containers.ContainerInstanceSpecSpec.network:type_name -> talos.resource.definitions.containers.ContainerNetworkSpec
 	8,  // 5: talos.resource.definitions.containers.ContainerInstanceSpecSpec.resources:type_name -> talos.resource.definitions.containers.ContainerResourcesSpec
-	14, // 6: talos.resource.definitions.containers.ContainerInstanceStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerInstancePhase
-	15, // 7: talos.resource.definitions.containers.ContainerInstanceStatusSpec.started_at:type_name -> google.protobuf.Timestamp
-	15, // 8: talos.resource.definitions.containers.ContainerInstanceStatusSpec.finished_at:type_name -> google.protobuf.Timestamp
-	12, // 9: talos.resource.definitions.containers.ContainerMountStatusSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
+	15, // 6: talos.resource.definitions.containers.ContainerInstanceStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerInstancePhase
+	16, // 7: talos.resource.definitions.containers.ContainerInstanceStatusSpec.started_at:type_name -> google.protobuf.Timestamp
+	16, // 8: talos.resource.definitions.containers.ContainerInstanceStatusSpec.finished_at:type_name -> google.protobuf.Timestamp
+	13, // 9: talos.resource.definitions.containers.ContainerMountStatusSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
 	1,  // 10: talos.resource.definitions.containers.ContainerSpecSpec.image:type_name -> talos.resource.definitions.containers.ContainerImageSpec
 	9,  // 11: talos.resource.definitions.containers.ContainerSpecSpec.run_as:type_name -> talos.resource.definitions.containers.ContainerRunAsSpec
 	5,  // 12: talos.resource.definitions.containers.ContainerSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ContainerMountSpec
@@ -1212,11 +1334,13 @@ var file_resource_definitions_containers_containers_proto_depIdxs = []int32{
 	7,  // 14: talos.resource.definitions.containers.ContainerSpecSpec.network:type_name -> talos.resource.definitions.containers.ContainerNetworkSpec
 	8,  // 15: talos.resource.definitions.containers.ContainerSpecSpec.resources:type_name -> talos.resource.definitions.containers.ContainerResourcesSpec
 	0,  // 16: talos.resource.definitions.containers.ContainerSpecSpec.depends_on:type_name -> talos.resource.definitions.containers.ContainerDependsOnSpec
-	17, // [17:17] is the sub-list for method output_type
-	17, // [17:17] is the sub-list for method input_type
-	17, // [17:17] is the sub-list for extension type_name
-	17, // [17:17] is the sub-list for extension extendee
-	0,  // [0:17] is the sub-list for field type_name
+	17, // 17: talos.resource.definitions.containers.ContainerStatusSpec.state:type_name -> talos.resource.definitions.enums.ContainersContainerState
+	18, // 18: talos.resource.definitions.containers.ContainerStatusSpec.health:type_name -> talos.resource.definitions.enums.ContainersContainerHealth
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_containers_containers_proto_init() }
@@ -1230,7 +1354,7 @@ func file_resource_definitions_containers_containers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_containers_containers_proto_rawDesc), len(file_resource_definitions_containers_containers_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

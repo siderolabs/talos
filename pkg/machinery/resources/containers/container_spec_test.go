@@ -191,6 +191,64 @@ func TestNetworkConditionMet(t *testing.T) {
 	}
 }
 
+func TestContainersReady(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+
+	tests := []struct {
+		name       string
+		containers []string
+		setup      func(*containers.ContainerStatus)
+		want       []string
+	}{
+		{
+			name:       "no containers declared",
+			containers: nil,
+			want:       nil,
+		},
+		{
+			name:       "status missing",
+			containers: []string{"other"},
+			want:       []string{"container: other"},
+		},
+		{
+			name:       "healthy",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+			},
+			want: nil,
+		},
+		{
+			name:       "degraded",
+			containers: []string{"other"},
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthDegraded
+			},
+			want: []string{"container: other"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			if tt.setup != nil {
+				status := containers.NewContainerStatus(containers.NamespaceName, "other")
+				tt.setup(status)
+				require.NoError(t, st.Create(ctx, status))
+			}
+
+			got, err := containers.ContainerDependsOnSpec{Containers: tt.containers}.ContainersReady(ctx, st)
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestReady(t *testing.T) {
 	t.Parallel()
 
@@ -255,6 +313,13 @@ func TestReady(t *testing.T) {
 			wantWaitingFor:  []string{"path: " + missingPath},
 			wantWakeUpAfter: true,
 		},
+		{
+			name: "container dependency unmet",
+			dependsOn: containers.ContainerDependsOnSpec{
+				Containers: []string{"other"},
+			},
+			wantWaitingFor: []string{"container: other"},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -278,13 +343,14 @@ func TestReadyMissingStatuses(t *testing.T) {
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
 	dependsOn := containers.ContainerDependsOnSpec{
-		Networks: []string{"addresses"},
-		Time:     true,
+		Networks:   []string{"addresses"},
+		Time:       true,
+		Containers: []string{"other"},
 	}
 
 	waitingFor, wakeUpAfter, err := dependsOn.Ready(ctx, st)
 	require.NoError(t, err)
-	assert.Equal(t, []string{"network: addresses", "time"}, waitingFor)
+	assert.Equal(t, []string{"network: addresses", "time", "container: other"}, waitingFor)
 
 	_, wakeUpAfterSet := wakeUpAfter.Get()
 	assert.False(t, wakeUpAfterSet)

@@ -312,8 +312,10 @@ description: Talos gRPC API reference.
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
+    - [ContainersContainerHealth](#talos.resource.definitions.enums.ContainersContainerHealth)
     - [ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase)
     - [ContainersContainerInstancePhase](#talos.resource.definitions.enums.ContainersContainerInstancePhase)
+    - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
@@ -422,6 +424,7 @@ description: Talos gRPC API reference.
     - [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec)
     - [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec)
     - [ContainerSpecSpec](#talos.resource.definitions.containers.ContainerSpecSpec)
+    - [ContainerStatusSpec](#talos.resource.definitions.containers.ContainerStatusSpec)
     - [ResolvedMountSpec](#talos.resource.definitions.containers.ResolvedMountSpec)
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
@@ -5355,6 +5358,20 @@ BlockVolumeType describes volume type.
 
 
 
+<a name="talos.resource.definitions.enums.ContainersContainerHealth"></a>
+
+### ContainersContainerHealth
+ContainersContainerHealth is the coarse answer to "should I be looking at this container?".
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_HEALTH_PENDING | 0 |  |
+| CONTAINER_HEALTH_PULLING | 1 |  |
+| CONTAINER_HEALTH_HEALTHY | 2 |  |
+| CONTAINER_HEALTH_DEGRADED | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.ContainersContainerImagePhase"></a>
 
 ### ContainersContainerImagePhase
@@ -5380,6 +5397,23 @@ ContainersContainerInstancePhase describes the state of a container instance's e
 | CONTAINER_INSTANCE_PHASE_RUNNING | 1 |  |
 | CONTAINER_INSTANCE_PHASE_TERMINATED | 2 |  |
 | CONTAINER_INSTANCE_PHASE_FAILED | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.ContainersContainerState"></a>
+
+### ContainersContainerState
+ContainersContainerState describes where a container is in its lifecycle.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_STATE_PENDING | 0 |  |
+| CONTAINER_STATE_PULLING | 1 |  |
+| CONTAINER_STATE_STARTING | 2 |  |
+| CONTAINER_STATE_RUNNING | 3 |  |
+| CONTAINER_STATE_EXITED | 4 |  |
+| CONTAINER_STATE_BACKOFF | 5 |  |
+| CONTAINER_STATE_STOPPING | 6 |  |
 
 
 
@@ -7542,6 +7576,28 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerStatusSpec"></a>
+
+### ContainerStatusSpec
+ContainerStatusSpec is the spec for ContainerStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| state | [talos.resource.definitions.enums.ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState) |  | State is the fine-grained lifecycle position, derived from the newest instance. |
+| health | [talos.resource.definitions.enums.ContainersContainerHealth](#talos.resource.definitions.enums.ContainersContainerHealth) |  | Health is the coarse summary of State, kept stable across internal changes. |
+| image | [string](#string) |  | Image is the resolved digest once the pull completes, otherwise the requested reference. |
+| pid | [uint32](#uint32) |  | PID of the running task; zero when not running. |
+| exit_code | [int32](#int32) |  | ExitCode of the last task exit. |
+| restart_count | [uint64](#uint64) |  | RestartCount is the current instance generation, i.e. restarts beyond the first start. |
+| error | [string](#string) |  | Error is the last failure, verbatim, from whichever stage produced it. |
+| waiting_for | [string](#string) | repeated | WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending. |
 
 
 

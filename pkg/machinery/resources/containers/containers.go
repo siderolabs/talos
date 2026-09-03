@@ -9,9 +9,9 @@ package containers
 
 import "github.com/cosi-project/runtime/pkg/resource"
 
-//go:generate go tool github.com/siderolabs/deep-copy -type ContainerSpecSpec -type ContainerImageStatusSpec -type ContainerMountStatusSpec -type ContainerInstanceSpecSpec -type ContainerInstanceStatusSpec -type ContainerLifecycleSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type ContainerSpecSpec -type ContainerImageStatusSpec -type ContainerMountStatusSpec -type ContainerInstanceSpecSpec -type ContainerInstanceStatusSpec -type ContainerLifecycleSpec -type ContainerStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
-//go:generate go tool github.com/dmarkham/enumer -type=ContainerImagePhase,ContainerInstancePhase -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=ContainerImagePhase,ContainerInstancePhase,ContainerState,ContainerHealth -linecomment -text
 
 // NamespaceName contains resources for Talos-managed containers.
 const NamespaceName resource.Namespace = "containers"
