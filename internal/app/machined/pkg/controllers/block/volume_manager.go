@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"os"
 	"slices"
 	"time"
 
@@ -155,6 +156,21 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		if err != nil {
 			return fmt.Errorf("error mapping discovered volumes: %w", err)
 		}
+
+		// a discovered volume can outlive its device node: the discovery is only refreshed once udev
+		// events are observed, so e.g. right after a volume wipe drops a partition, the gone device is
+		// still reported for a short while. Locating a volume at a device which no longer exists leaves
+		// it failed for good: a failed volume is resumed at its pre-failure phase, so it is never
+		// re-located, and never provisioned anew.
+		discoveredVolumesSpecs = xslices.FilterInPlace(discoveredVolumesSpecs, func(spec *blockpb.DiscoveredVolumeSpec) bool {
+			if _, err := os.Stat(spec.DevPath); os.IsNotExist(err) {
+				logger.Debug("ignoring discovered volume, device is gone", zap.String("device", spec.DevPath))
+
+				return false
+			}
+
+			return true
+		})
 
 		disks, err := safe.ReaderListAll[*block.Disk](ctx, r)
 		if err != nil {
@@ -363,6 +379,14 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				},
 			); err != nil {
 				volumeStatus.TypedSpec().PreFailPhase = volumeStatus.TypedSpec().Phase
+
+				if errors.Is(err, os.ErrNotExist) {
+					// The device this volume was located at is gone, e.g. its partition was dropped by a
+					// wipe. Recovering into the phase which failed would keep working against the stale
+					// location, so recover into missing, which locates the volume from scratch.
+					volumeStatus.TypedSpec().PreFailPhase = block.VolumePhaseMissing
+				}
+
 				volumeStatus.TypedSpec().Phase = block.VolumePhaseFailed
 
 				volumeStatus.TypedSpec().ErrorMessage = err.Error()

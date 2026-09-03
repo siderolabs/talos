@@ -268,6 +268,9 @@ description: Talos gRPC API reference.
     - [Version](#machine.Version)
     - [VersionInfo](#machine.VersionInfo)
     - [VersionResponse](#machine.VersionResponse)
+    - [VolumeWipe](#machine.VolumeWipe)
+    - [VolumeWipeRequest](#machine.VolumeWipeRequest)
+    - [VolumeWipeResponse](#machine.VolumeWipeResponse)
     - [Xattr](#machine.Xattr)
   
     - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
@@ -397,6 +400,7 @@ description: Talos gRPC API reference.
     - [VolumeMountStatusSpec](#talos.resource.definitions.block.VolumeMountStatusSpec)
     - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
     - [VolumeTrimScheduleSpec](#talos.resource.definitions.block.VolumeTrimScheduleSpec)
+    - [VolumeWipeStatusSpec](#talos.resource.definitions.block.VolumeWipeStatusSpec)
     - [ZswapStatusSpec](#talos.resource.definitions.block.ZswapStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
@@ -4784,6 +4788,52 @@ rpc upgrade
 
 
 
+<a name="machine.VolumeWipe"></a>
+
+### VolumeWipe
+The volume wipe message containing the wipe status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+
+
+
+
+
+
+<a name="machine.VolumeWipeRequest"></a>
+
+### VolumeWipeRequest
+rpc volumewipe
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_ids | [string](#string) | repeated | VolumeIds lists the system volume IDs to wipe (e.g. EPHEMERAL, STATE). |
+| on_reboot | [bool](#bool) |  | OnReboot stages the wipe to happen on the next boot instead of immediately. |
+
+
+
+
+
+
+<a name="machine.VolumeWipeResponse"></a>
+
+### VolumeWipeResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [VolumeWipe](#machine.VolumeWipe) | repeated |  |
+
+
+
+
+
+
 <a name="machine.Xattr"></a>
 
 ### Xattr
@@ -5083,6 +5133,7 @@ The machine service definition.
 | Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
+| VolumeWipe | [VolumeWipeRequest](#machine.VolumeWipeRequest) | [VolumeWipeResponse](#machine.VolumeWipeResponse) | VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot. |
 | ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.<br><br>Use ImageService List RPC instead. |
 | ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.<br><br>Use ImageService Pull RPC instead. |
 
@@ -7101,6 +7152,21 @@ VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type of the volume to be trimmed. |
 | interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval is the trim interval for the volume. |
 | next_trim | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | NextTrim is the next scheduled trim time for the volume. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeWipeStatusSpec"></a>
+
+### VolumeWipeStatusSpec
+VolumeWipeStatusSpec is the spec for VolumeWipeStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  | Ready indicates whether the volume wiping has completed successfully. |
 
 
 

@@ -7,7 +7,9 @@ package system
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 	"sync"
@@ -15,9 +17,20 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/google/cel-go/common/operators"
+	"github.com/google/cel-go/common/types"
 	"github.com/siderolabs/gen/xslices"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -264,5 +277,197 @@ func FindBackingVolume(ctx context.Context, st state.State, volumeID string) (st
 		}
 
 		volumeStatus = parentStatus
+	}
+}
+
+// ResolveSystemVolumeStatuses resolves the given volume IDs to their VolumeStatus, validating that each one
+// exists, is a system volume, and is not META. It returns a gRPC status error suitable for returning from the API.
+func ResolveSystemVolumeStatuses(ctx context.Context, coreState state.CoreState, volumeIDs []string) ([]*block.VolumeStatus, error) {
+	result := make([]*block.VolumeStatus, 0, len(volumeIDs))
+
+	for _, id := range volumeIDs {
+		// META is the one system volume which can't be wiped: it carries the staged wipe instructions
+		// themselves, and it is the only volume provisioned before the wipe runs (see VolumeConfigController),
+		// so wiping it drops a partition which is already in use and never gets reprovisioned in that boot.
+		if id == constants.MetaPartitionLabel {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"volume %q can't be wiped: it holds the staged wipe instructions and the machine's unique token", id)
+		}
+
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, coreState, id)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return nil, status.Errorf(codes.NotFound, "volume %q not found", id)
+			}
+
+			return nil, status.Errorf(codes.Internal, "failed to get volume status with ID %q: %s", id, err)
+		}
+
+		if _, ok := volumeStatus.Metadata().Labels().Get(block.SystemVolumeLabel); !ok {
+			return nil, status.Errorf(codes.InvalidArgument, "volume %q is not a system volume", id)
+		}
+
+		if volumeStatus.TypedSpec().Type != block.VolumeTypePartition {
+			return nil, status.Errorf(codes.InvalidArgument, "volume %q is not a partition-backed volume (type: %v)", id, volumeStatus.TypedSpec().Type)
+		}
+
+		result = append(result, volumeStatus)
+	}
+
+	return result, nil
+}
+
+// WipeVolumesOnReboot stages CEL selectors for the given volumes to be wiped on the next boot.
+func WipeVolumesOnReboot(
+	ctx context.Context,
+	ctrl runtime.Controller,
+	logger *zap.Logger,
+	volumeStatuses []*block.VolumeStatus,
+) error {
+	newSelectors, err := VolumeStatusesToSelectors(volumeStatuses)
+	if err != nil {
+		return fmt.Errorf("error converting volumes to selectors: %w", err)
+	}
+
+	allSelectors := newSelectors
+
+	stagedSelectorsStr, ok := ctrl.Runtime().State().Machine().Meta().ReadTag(meta.StagedWipeSelectors)
+	if ok {
+		existingWipeSelectors := make([]cel.Expression, 0, len(newSelectors))
+		if err := json.Unmarshal([]byte(stagedSelectorsStr), &existingWipeSelectors); err != nil {
+			return fmt.Errorf("error parsing existing staged wipe selectors: %w", err)
+		}
+
+		allSelectors = append(existingWipeSelectors, allSelectors...)
+	}
+
+	allSelectors = xslices.Deduplicate(allSelectors, func(e cel.Expression) string { return e.String() })
+
+	allSelectorsBytes, err := json.Marshal(allSelectors)
+	if err != nil {
+		return fmt.Errorf("error serializing staged volume wipe selectors: %w", err)
+	}
+
+	if ok, err := ctrl.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedWipeSelectors, string(allSelectorsBytes)); !ok || err != nil {
+		return fmt.Errorf("error adding staged partition wipe tag: %w", err)
+	}
+
+	if err := ctrl.Runtime().State().Machine().Meta().Flush(); err != nil {
+		return fmt.Errorf("error writing meta: %w", err)
+	}
+
+	logger.Sugar().Infof("staged %d volume(s) for wipe on next boot; CEL selectors: %q", len(volumeStatuses), allSelectorsBytes)
+
+	return nil
+}
+
+// WipeVolumesNow immediately wipes each of the given volumes, failing fast on the first error.
+func WipeVolumesNow(
+	ctx context.Context,
+	ctrl runtime.Controller,
+	logger *zap.Logger,
+	volumeStatuses []*block.VolumeStatus,
+) error {
+	for _, volumeStatus := range volumeStatuses {
+		if volumeStatus.TypedSpec().Location == "" {
+			return fmt.Errorf(
+				"volume %q is not located",
+				volumeStatus.Metadata().ID(),
+			)
+		}
+
+		target := partition.VolumeWipeTargetFromVolumeStatus(volumeStatus)
+
+		if err := target.Wipe(ctx, log.Printf); err != nil {
+			return fmt.Errorf(
+				"failed to wipe volume %q: %s; if the volume is in use, retry with --on-reboot",
+				volumeStatus.Metadata().ID(),
+				err,
+			)
+		}
+	}
+
+	return nil
+}
+
+// AssertVolumesNotMounted rejects an immediate wipe of any volume that is currently mounted (in use).
+//
+// A mounted volume can't be wiped safely while the node is running; that's what --on-reboot is for.
+// Mount state is tracked by block.VolumeMountStatus resources, keyed to a volume via VolumeID.
+//
+// This is also what keeps WipeVolumesNow from dropping the partition of a volume which is already
+// provisioned for this boot: its VolumeStatus would stay ready, pointing at a device which no longer
+// exists, and nothing would reprovision the volume until the next reboot. Every system volume backed
+// by a partition is mounted, so in practice this rejects them all.
+func AssertVolumesNotMounted(ctx context.Context, st state.State, ids []string) error {
+	mountStatuses, err := safe.StateListAll[*block.VolumeMountStatus](ctx, st)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to list volume mount statuses: %s", err)
+	}
+
+	wanted := xslices.ToSet(ids)
+
+	for mountStatus := range mountStatuses.All() {
+		if _, ok := wanted[mountStatus.TypedSpec().VolumeID]; ok {
+			return status.Errorf(codes.FailedPrecondition,
+				"volume %q is in use (mounted); retry with --on-reboot", mountStatus.TypedSpec().VolumeID)
+		}
+	}
+
+	return nil
+}
+
+// VolumeStatusesToSelectors converts each volume status to a CEL selector matching that volume.
+func VolumeStatusesToSelectors(volumeStatuses []*block.VolumeStatus) ([]cel.Expression, error) {
+	selectors := make([]cel.Expression, 0, len(volumeStatuses))
+
+	for _, volumeStatus := range volumeStatuses {
+		selector, err := VolumeStatusToSelector(volumeStatus)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert volume %q to selector: %w", volumeStatus.Metadata().ID(), err)
+		}
+
+		selectors = append(selectors, selector)
+	}
+
+	return selectors, nil
+}
+
+// VolumeStatusToSelector builds a CEL selector that uniquely matches the given volume.
+//
+// Only partition-backed volumes are supported for now; the partition UUID is a stable
+// identifier that survives a reboot, so it's used to locate the volume again on next boot.
+func VolumeStatusToSelector(volumeStatus *block.VolumeStatus) (cel.Expression, error) {
+	spec := volumeStatus.TypedSpec()
+
+	switch spec.Type { //nolint:exhaustive
+	case block.VolumeTypePartition:
+		if spec.PartitionUUID == "" {
+			return cel.Expression{}, fmt.Errorf("volume %q has no partition UUID", volumeStatus.Metadata().ID())
+		}
+
+		// build `volume.partition_uuid == "<uuid>"` programmatically so the UUID is a
+		// typed string literal rather than interpolated into the expression text
+		builder := cel.NewBuilder(celenv.VolumeLocator())
+
+		expr := builder.NewCall(
+			builder.NextID(),
+			operators.Equals,
+			builder.NewSelect(
+				builder.NextID(),
+				builder.NewIdent(builder.NextID(), "volume"),
+				"partition_uuid",
+			),
+			builder.NewLiteral(builder.NextID(), types.String(spec.PartitionUUID)),
+		)
+
+		selector, err := builder.ToBooleanExpression(expr)
+		if err != nil {
+			return cel.Expression{}, fmt.Errorf("failed to build wipe selector for volume %q: %w", volumeStatus.Metadata().ID(), err)
+		}
+
+		return *selector, nil
+	default:
+		return cel.Expression{}, fmt.Errorf("volume %q: wipe selector unsupported for volume type %s", volumeStatus.Metadata().ID(), spec.Type)
 	}
 }
