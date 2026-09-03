@@ -97,7 +97,7 @@ require (
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/hetznercloud/hcloud-go/v2 v2.36.0
-	github.com/insomniacslk/dhcp v0.0.0-20260220084031-5adc3eb26f91
+	github.com/insomniacslk/dhcp v0.0.0-20260901064844-234b97448fae
 	github.com/jeromer/syslogparser v1.1.0
 	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac
 	github.com/jxskiss/base62 v1.1.0
