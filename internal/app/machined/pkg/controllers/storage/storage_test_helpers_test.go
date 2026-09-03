@@ -46,6 +46,14 @@ func createPartition(suite *ctest.DefaultSuite, id, devPath, parentDevPath, part
 	suite.Create(dv)
 }
 
+// createRawVolumePartition inserts a partition Talos provisioned for a raw
+// volume: its partition label is the volume id, and the volume reports it ready
+// and unencrypted (MountLocation == Location).
+func createRawVolumePartition(suite *ctest.DefaultSuite, id, devPath, parentDevPath, volumeID string) {
+	createPartition(suite, id, devPath, parentDevPath, volumeID)
+	createVolumeStatus(suite, volumeID, block.VolumePhaseReady, block.EncryptionProviderNone, devPath, devPath)
+}
+
 func createLUKSPartition(suite *ctest.DefaultSuite, id, devPath, parentDevPath, partitionLabel string) {
 	dv := block.NewDiscoveredVolume(block.NamespaceName, id)
 	dv.TypedSpec().DevPath = devPath

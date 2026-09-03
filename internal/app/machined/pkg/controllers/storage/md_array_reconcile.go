@@ -24,8 +24,10 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/md"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -83,6 +85,17 @@ func (ctrl *MDArrayReconcileController) Inputs() []controller.Input {
 			Namespace: block.NamespaceName,
 			Type:      block.SystemDiskType,
 			ID:        optional.Some(block.SystemDiskID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -366,6 +379,32 @@ func (ctrl *MDArrayReconcileController) updateObservedStatus(ctx context.Context
 	}
 }
 
+func (ctrl *MDArrayReconcileController) systemDiskDevPath(ctx context.Context) (string, error) {
+	systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, ctrl.State, block.SystemDiskID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return "", fmt.Errorf("get system disk: %w", err)
+	}
+
+	if systemDisk == nil {
+		return "", nil
+	}
+
+	return systemDisk.TypedSpec().DevPath, nil
+}
+
+func (ctrl *MDArrayReconcileController) activeConfig(ctx context.Context) (configconfig.Config, error) {
+	machineCfg, err := safe.StateGetByID[*config.MachineConfig](ctx, ctrl.State, config.ActiveID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, fmt.Errorf("get machine config: %w", err)
+	}
+
+	if machineCfg == nil {
+		return nil, nil
+	}
+
+	return machineCfg.Config(), nil
+}
+
 func (ctrl *MDArrayReconcileController) matchMembers(ctx context.Context, selector *cel.Expression) ([]string, error) {
 	disks, err := safe.StateListAll[*block.Disk](ctx, ctrl.State)
 	if err != nil {
@@ -377,18 +416,31 @@ func (ctrl *MDArrayReconcileController) matchMembers(ctx context.Context, select
 		return nil, fmt.Errorf("list discovered volumes: %w", err)
 	}
 
-	systemDiskDevPath := ""
-
-	systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, ctrl.State, block.SystemDiskID)
-	if err != nil && !state.IsNotFoundError(err) {
-		return nil, fmt.Errorf("get system disk: %w", err)
+	// A member backing a machine config volume is used through the volume's
+	// MountLocation, and withheld while the volume manager has not prepared it:
+	// mdadm must never write a superblock onto a volume's ciphertext.
+	statuses, err := safe.StateListAll[*block.VolumeStatus](ctx, ctrl.State)
+	if err != nil {
+		return nil, fmt.Errorf("list volume statuses: %w", err)
 	}
 
-	if systemDisk != nil {
-		systemDiskDevPath = systemDisk.TypedSpec().DevPath
+	systemDiskDevPath, err := ctrl.systemDiskDevPath(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	contexts, err := blockhelpers.BuildMatchContexts(slices.Collect(disks.All()), slices.Collect(volumes.All()), systemDiskDevPath)
+	cfg, err := ctrl.activeConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	contexts, err := blockhelpers.BuildMatchContexts(
+		slices.Collect(disks.All()),
+		slices.Collect(volumes.All()),
+		slices.Collect(statuses.All()),
+		cfg,
+		systemDiskDevPath,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +456,7 @@ func matchingMemberDevices(contexts []blockhelpers.MatchContext, selector *cel.E
 			continue
 		}
 
-		matches, err := selector.EvalBool(celenv.VolumeLocator(), c.CELContext)
+		matches, err := selector.EvalBool(celenv.MemberVolumeLocator(), c.CELContext)
 		if err != nil {
 			return nil, fmt.Errorf("evaluate selector: %w", err)
 		}

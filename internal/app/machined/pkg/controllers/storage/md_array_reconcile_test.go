@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
 	"github.com/siderolabs/talos/internal/pkg/md"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -357,6 +358,46 @@ func (suite *MDArrayReconcileSuite) TestReportsSyncActionAsRebuilding() {
 		asrt.Equal(storageres.MDArrayPhaseRebuilding, status.TypedSpec().Status)
 		asrt.Equal(string(md.SyncActionRecover), status.TypedSpec().SyncAction)
 	})
+}
+
+func (suite *MDArrayReconcileSuite) TestWaitsForEncryptedMemberToBeOpened() {
+	// mdadm must never write a superblock onto a volume's ciphertext: the member
+	// is withheld until the volume reports the device it was opened as.
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-mirror0")
+	createPartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-mirror1")
+	createVolumeStatus(
+		&suite.DefaultSuite, "r-mirror1",
+		block.VolumePhaseWaiting, block.EncryptionProviderNone,
+		"/dev/vdb2", "",
+	)
+
+	suite.createArraySpec("data", `volume.partition_label.startsWith("r-mirror")`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.MDArrayPhaseWaiting, status.TypedSpec().Status)
+	})
+
+	_, created := suite.md.created("data")
+	suite.Assert().False(created, "create must not run while a member is still locked")
+
+	// Once the volume is opened, the array is built on the opened device.
+	ctest.UpdateWithConflicts(suite, block.NewVolumeStatus(block.NamespaceName, "r-mirror1"), func(vs *block.VolumeStatus) error {
+		vs.TypedSpec().Phase = block.VolumePhaseReady
+		vs.TypedSpec().EncryptionProvider = block.EncryptionProviderLUKS2
+		vs.TypedSpec().MountLocation = "/dev/dm-0"
+
+		return nil
+	})
+
+	suite.eventually(func() bool {
+		_, created := suite.md.created("data")
+
+		return created
+	})
+
+	members, _ := suite.md.created("data")
+	suite.Assert().Equal([]string{"/dev/dm-0", "/dev/vdb1"}, members)
 }
 
 func TestMDArrayReconcileSuite(t *testing.T) {

@@ -645,7 +645,7 @@ func vgDocSelector(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 
 	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 	doc.MetaName = name
 	doc.ProvisioningSpec.VolumeSelector.Match = cel.MustExpression(
-		cel.ParseBooleanExpression(match, celenv.VolumeLocator()),
+		cel.ParseBooleanExpression(match, celenv.MemberVolumeLocator()),
 	)
 
 	return doc
@@ -1645,7 +1645,7 @@ func encryptedRawVolumeDoc(name, diskMatch, maxSize, passphrase string) *blockcf
 	return doc
 }
 
-// provisionEncryptedRawVolumes creates encrypted raw volumes on the disk matched by diskMatch
+// provisionEncryptedRawVolumes creates encrypted raw volumes on the disk matched by diskMatch.
 func (suite *StorageSuite) provisionEncryptedRawVolumes(
 	nodeCtx context.Context, diskMatch, passphrase string, names ...string,
 ) (ciphertext, opened []string) {
@@ -1698,10 +1698,20 @@ func (suite *StorageSuite) volumeError(nodeCtx context.Context, volumeID string)
 	return fmt.Sprintf("phase %s: %s", vs.TypedSpec().Phase, vs.TypedSpec().ErrorMessage)
 }
 
-// TestLVMOnEncryptedRawVolumes provisions a VG backed by ENCRYPTED raw volume partitions.
-//
-//nolint:gocyclo
+// TestLVMOnEncryptedRawVolumes provisions a VG backed by ENCRYPTED raw volume
+// partitions, selected by the partition label the operator wrote.
 func (suite *StorageSuite) TestLVMOnEncryptedRawVolumes() {
+	suite.testLVMOnEncryptedRawVolumes("vgenc", `volume.partition_label.startsWith("r-lvmenc")`)
+}
+
+// TestLVMOnEncryptedRawVolumesByID provisions the same VG selected by volume id,
+// which names the volume itself rather than its ciphertext partition.
+func (suite *StorageSuite) TestLVMOnEncryptedRawVolumesByID() {
+	suite.testLVMOnEncryptedRawVolumes("vgencid", `volume_id == "r-lvmenc0"`)
+}
+
+//nolint:gocyclo
+func (suite *StorageSuite) testLVMOnEncryptedRawVolumes(vgEnc, selector string) {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -1735,10 +1745,7 @@ func (suite *StorageSuite) TestLVMOnEncryptedRawVolumes() {
 
 	rawNames := []string{"lvmenc0"}
 
-	const (
-		vgEnc      = "vgenc"
-		passphrase = "encryptedrawvolume"
-	)
+	const passphrase = "encryptedrawvolume"
 
 	var ciphertext []string
 
@@ -1752,7 +1759,7 @@ func (suite *StorageSuite) TestLVMOnEncryptedRawVolumes() {
 		suite.Require().NotEqual(ciphertext[i], opened[i], "volume %q is not encrypted", rawNames[i])
 	}
 
-	suite.PatchMachineConfig(nodeCtx, vgDocSelector(vgEnc, `volume.partition_label.startsWith("r-lvmenc")`))
+	suite.PatchMachineConfig(nodeCtx, vgDocSelector(vgEnc, selector))
 
 	// The PV must exist on the OPENED device, and NOT on the ciphertext one.
 	const (
