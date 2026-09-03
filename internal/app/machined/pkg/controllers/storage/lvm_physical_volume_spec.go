@@ -16,12 +16,9 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
-	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -112,25 +109,20 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 		vgDocs = machineCfg.Config().LVMVolumeGroupConfigs()
 	}
 
-	volumes, err := buildMatchContexts(ctx, r)
-	if err != nil {
-		return err
-	}
-
 	var machineConfig configconfig.Config
 
 	if machineCfg != nil {
 		machineConfig = machineCfg.Config()
 	}
 
-	resolver, err := buildEncryptionResolver(ctx, r, machineConfig, volumes)
+	volumes, err := buildMatchContexts(ctx, r, machineConfig)
 	if err != nil {
 		return err
 	}
 
 	r.StartTrackingOutputs()
 
-	if err := ctrl.emitSpecs(ctx, r, logger, vgDocs, volumes, resolver); err != nil {
+	if err := ctrl.emitSpecs(ctx, r, logger, vgDocs, volumes); err != nil {
 		return err
 	}
 
@@ -154,7 +146,6 @@ func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	logger *zap.Logger,
 	vgDocs []configconfig.LVMVolumeGroupConfig,
 	volumes []blockhelpers.MatchContext,
-	resolver encryptionResolver,
 ) error {
 	// Per-device claim map: detect VGs whose selectors overlap (LVM forbids a
 	// PV in two VGs).
@@ -168,7 +159,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 			continue
 		}
 
-		if err := ctrl.matchVolumesToVG(ctx, r, logger, doc, volumes, resolver, claimedBy, conflicts); err != nil {
+		if err := ctrl.matchVolumesToVG(ctx, r, logger, doc, volumes, claimedBy, conflicts); err != nil {
 			return err
 		}
 	}
@@ -190,14 +181,13 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 	logger *zap.Logger,
 	doc configconfig.LVMVolumeGroupConfig,
 	volumes []blockhelpers.MatchContext,
-	resolver encryptionResolver,
 	claimedBy map[string]string,
 	conflicts map[string]string,
 ) error {
 	selector := doc.PhysicalVolumeSelector()
 
 	for _, vol := range volumes {
-		matches, err := selector.EvalBool(celenv.VolumeLocator(), vol.CELContext)
+		matches, err := selector.EvalBool(celenv.MemberVolumeLocator(), vol.CELContext)
 		if err != nil {
 			return fmt.Errorf("evaluate selector for VG %q: %w", doc.Name(), err)
 		}
@@ -219,17 +209,9 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 			continue
 		}
 
-		// An encrypted volume is selected by the properties of the GPT label the operator wrote
-		devPath, ready := resolver.resolve(vol.DevPath)
-		if !ready {
-			logger.Debug(
-				"skipping encrypted volume that is not unlocked yet",
-				zap.String("device", vol.DevPath),
-				zap.String("vg", doc.Name()),
-			)
-
-			continue
-		}
+		// DevPath is the device to operate on: for an encrypted volume, the opened
+		// device rather than the ciphertext the selector matched on.
+		devPath := vol.DevPath
 
 		if prev, ok := claimedBy[devPath]; ok && prev != doc.Name() {
 			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", devPath, prev)
@@ -299,7 +281,12 @@ func (ctrl *LVMPhysicalVolumeSpecController) writeValidationError(ctx context.Co
 // evaluate false against partitions rather than spanning the disk and all its
 // partitions. Partitions are therefore selectable only via `volume.*`
 // predicates (e.g. volume.partition_label), matching the documented contract.
-func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpers.MatchContext, error) {
+//
+// It passes the volume statuses along so that a device backing a machine config
+// volume is reported under the volume's MountLocation, which is the opened
+// device for an encrypted volume, and withheld while the volume manager has not
+// prepared it.
+func buildMatchContexts(ctx context.Context, r controller.Runtime, cfg configconfig.Config) ([]blockhelpers.MatchContext, error) {
 	disks, err := safe.ReaderListAll[*block.Disk](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("list disks: %w", err)
@@ -308,6 +295,11 @@ func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpe
 	volumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("list discovered volumes: %w", err)
+	}
+
+	statuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("list volume statuses: %w", err)
 	}
 
 	systemDiskDevPath := ""
@@ -321,173 +313,11 @@ func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpe
 		systemDiskDevPath = systemDisk.TypedSpec().DevPath
 	}
 
-	return blockhelpers.BuildMatchContexts(slices.Collect(disks.All()), slices.Collect(volumes.All()), systemDiskDevPath)
-}
-
-type encryptionResolver struct {
-	resolved map[string]string
-	pending  map[string]struct{}
-}
-
-func (e encryptionResolver) resolve(devPath string) (string, bool) {
-	if _, notReady := e.pending[devPath]; notReady {
-		return "", false
-	}
-
-	if mapped, ok := e.resolved[devPath]; ok {
-		return mapped, true
-	}
-
-	return devPath, true
-}
-
-// buildEncryptionResolver indexes VolumeStatus by Location.
-func buildEncryptionResolver(ctx context.Context, r controller.Runtime, cfg configconfig.Config, contexts []blockhelpers.MatchContext) (encryptionResolver, error) {
-	statuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
-	if err != nil {
-		return encryptionResolver{}, fmt.Errorf("list volume statuses: %w", err)
-	}
-
-	resolver := encryptionResolver{
-		resolved: map[string]string{},
-		pending:  map[string]struct{}{},
-	}
-
-	for status := range statuses.All() {
-		spec := status.TypedSpec()
-
-		if spec.Location == "" {
-			continue
-		}
-
-		switch {
-		case spec.MountLocation == "":
-			// keyed on MountLocation: EncryptionProvider is set only after a successful open
-			resolver.pending[spec.Location] = struct{}{}
-		case spec.MountLocation != spec.Location:
-			resolver.resolved[spec.Location] = spec.MountLocation
-		}
-	}
-
-	if err := markConfiguredEncrypted(contexts, cfg, &resolver); err != nil {
-		return encryptionResolver{}, err
-	}
-
-	markDiscoveredCiphertext(contexts, &resolver)
-
-	return resolver, nil
-}
-
-func encryptedVolumeMatchers(cfg configconfig.Config) (map[string]struct{}, []cel.Expression) {
-	var (
-		labels    = map[string]struct{}{}
-		selectors []cel.Expression
+	return blockhelpers.BuildMatchContexts(
+		slices.Collect(disks.All()),
+		slices.Collect(volumes.All()),
+		slices.Collect(statuses.All()),
+		cfg,
+		systemDiskDevPath,
 	)
-
-	for _, doc := range cfg.RawVolumeConfigs() {
-		if doc.Encryption() != nil {
-			labels[constants.RawVolumePrefix+doc.Name()] = struct{}{}
-		}
-	}
-
-	for _, doc := range cfg.SwapVolumeConfigs() {
-		if doc.Encryption() != nil {
-			labels[constants.SwapVolumePrefix+doc.Name()] = struct{}{}
-		}
-	}
-
-	for _, doc := range cfg.UserVolumeConfigs() {
-		if doc.Encryption() == nil {
-			continue
-		}
-
-		if doc.Type().ValueOr(block.VolumeTypePartition) != block.VolumeTypeDisk {
-			labels[constants.UserVolumePrefix+doc.Name()] = struct{}{}
-
-			continue
-		}
-
-		if selector, ok := doc.Provisioning().DiskSelector().Get(); ok {
-			selectors = append(selectors, selector)
-		}
-	}
-
-	return labels, selectors
-}
-
-func markDiscoveredCiphertext(contexts []blockhelpers.MatchContext, resolver *encryptionResolver) {
-	for _, c := range contexts {
-		if c.DevPath == "" {
-			continue
-		}
-
-		if _, resolved := resolver.resolved[c.DevPath]; resolved {
-			continue
-		}
-
-		spec, ok := c.CELContext["volume"].(*blockpb.DiscoveredVolumeSpec)
-		if !ok || spec == nil {
-			continue
-		}
-
-		if spec.Name == "luks" {
-			resolver.pending[c.DevPath] = struct{}{}
-		}
-	}
-}
-
-func markConfiguredEncrypted(contexts []blockhelpers.MatchContext, cfg configconfig.Config, resolver *encryptionResolver) error {
-	if cfg == nil {
-		return nil
-	}
-
-	labels, selectors := encryptedVolumeMatchers(cfg)
-
-	if len(labels) == 0 && len(selectors) == 0 {
-		return nil
-	}
-
-	for _, c := range contexts {
-		if c.DevPath == "" {
-			continue
-		}
-
-		if _, resolved := resolver.resolved[c.DevPath]; resolved {
-			continue
-		}
-
-		matched, err := matchesEncryptedVolume(c, labels, selectors)
-		if err != nil {
-			return err
-		}
-
-		if matched {
-			resolver.pending[c.DevPath] = struct{}{}
-		}
-	}
-
-	return nil
-}
-
-func matchesEncryptedVolume(c blockhelpers.MatchContext, labels map[string]struct{}, selectors []cel.Expression) (bool, error) {
-	if len(labels) > 0 {
-		if spec, ok := c.CELContext["volume"].(*blockpb.DiscoveredVolumeSpec); ok && spec != nil {
-			if _, found := labels[spec.PartitionLabel]; found {
-				return true, nil
-			}
-		}
-	}
-
-	for i := range selectors {
-		matches, err := selectors[i].EvalBool(celenv.VolumeLocator(), c.CELContext)
-		if err != nil {
-			return false, fmt.Errorf("evaluate encrypted volume disk selector: %w", err)
-		}
-
-		if matches {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }

@@ -87,6 +87,46 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 	return env
 })
 
+// MemberVolumeLocator is a CEL environment for the volumeSelector of a storage
+// aggregate: VolumeLocator plus `volume_id`, `system_disk` and glob().
+//
+// It stays separate from VolumeLocator because ExistingVolumeConfig's selector
+// runs against bare discovered volumes, which have no volume id to bind.
+var MemberVolumeLocator = sync.OnceValue(func() *cel.Env {
+	var (
+		volumeSpec block.DiscoveredVolumeSpec
+		diskSpec   block.DiskSpec
+	)
+
+	env, err := cel.NewEnv(
+		slices.Concat(
+			[]cel.EnvOption{
+				cel.Types(&volumeSpec),
+				cel.Types(&diskSpec),
+				cel.Variable("volume", cel.ObjectType(string(volumeSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Variable("disk", cel.ObjectType(string(diskSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Variable("volume_id", types.StringType),
+				cel.Variable("system_disk", types.BoolType),
+				cel.Function(
+					"glob", // glob(pattern, string)
+					cel.Overload(
+						"glob_string_string", []*cel.Type{cel.StringType, cel.StringType}, cel.BoolType,
+						cel.BinaryBinding(func(arg1, arg2 ref.Val) ref.Val {
+							return types.Bool(glob.Glob(string(arg1.(types.String)), string(arg2.(types.String))))
+						}),
+					),
+				),
+			},
+			celUnitMultipliersConstants(),
+		)...,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
 // OOMTrigger is a OOM Trigger Condition CEL environment.
 var OOMTrigger = sync.OnceValue(func() *cel.Env {
 	env, err := cel.NewEnv(
