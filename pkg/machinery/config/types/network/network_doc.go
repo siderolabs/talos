@@ -1736,6 +1736,43 @@ func (LinkSelector) Doc() *encoder.Doc {
 	return doc
 }
 
+func (LinkIngressConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NetworkLinkIngressConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkLinkIngressConfig is a config document to filter out the packets coming into the system based on destination IP and interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NetworkLinkIngressConfig is a config document to filter out the packets coming into the system based on destination IP and interface.\nFilters incoming packets on a link by destination address: only packets destined to one of\nthe node's own addresses are accepted, anything else is dropped.\nThis is meant for clusters using an encapsulating CNI, where pod/service CIDR destinations should never\narrive unencapsulated on an external interface; it is incompatible with native pod IP routing (e.g. BGP).\n\nThe set of accepted destinations can be overridden with the `destinationAddresses` option.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface) to filter the incoming packets on.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface) to filter the incoming packets on." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "destinationAddresses",
+				Type:        "[]Prefix",
+				Note:        "",
+				Description: "Destination addresses to accept on this link, as a list of CIDRs.\n\nThis is an override: when specified, only packets destined to one of these addresses are\naccepted, and the node's own addresses are not implicitly allowed.\n\nAn empty list allows no destination at all, i.e. all packets arriving on the link are\ndropped.\n\nDefault value: the node's own addresses.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination addresses to accept on this link, as a list of CIDRs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLinkIngressConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "enp0s2")
+	doc.Fields[1].AddExample("", "enp0s2.35")
+	doc.Fields[2].AddExample("", []meta.Prefix{{netip.MustParsePrefix("1.2.3.4/32")}})
+	doc.Fields[2].AddExample("", []meta.Prefix{{netip.MustParsePrefix("192.168.10.0/24")}})
+
+	return doc
+}
+
 func (ResolverConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ResolverConfig",
@@ -2612,6 +2649,7 @@ func GetFileDoc() *encoder.FileDoc {
 			RouteConfig{}.Doc(),
 			LinkAliasConfigV1Alpha1{}.Doc(),
 			LinkSelector{}.Doc(),
+			LinkIngressConfigV1Alpha1{}.Doc(),
 			ResolverConfigV1Alpha1{}.Doc(),
 			NameserverConfig{}.Doc(),
 			SearchDomainsConfig{}.Doc(),

@@ -255,6 +255,7 @@ func (m *Qemu) AddExtraConfigBundleOpts() error {
 			[]bundle.Option{
 				bundle.WithPatchControlPlane([]configpatcher.Patch{firewallpatch.ControlPlane(defaultAction, m.Cidrs, m.GatewayIPs, controlplaneIPs)}),
 				bundle.WithPatchWorker([]configpatcher.Patch{firewallpatch.Worker(defaultAction, m.Cidrs, m.GatewayIPs)}),
+				bundle.WithPatch([]configpatcher.Patch{firewallpatch.LinkIngress()}),
 			})
 	}
 

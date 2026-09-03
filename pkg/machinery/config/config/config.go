@@ -27,6 +27,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkKubeSpanConfig() NetworkKubeSpanConfig
 	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig
 	NetworkLinkAliasConfigs() []NetworkLinkAliasConfig
+	NetworkLinkIngressConfigs() []NetworkLinkIngressConfig
 	NetworkDHCPConfigs() []NetworkDHCPConfig
 	NetworkDHCPv4Configs() []NetworkDHCPv4Config
 	NetworkDHCPv6Configs() []NetworkDHCPv6Config
