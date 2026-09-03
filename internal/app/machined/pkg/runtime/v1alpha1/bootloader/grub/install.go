@@ -207,7 +207,7 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 
 	copyInstructions = append(copyInstructions, utils.SourceDestination(
 		grubEFIPath,
-		filepath.Join(opts.MountPrefix, "EFI", efiFile),
+		filepath.Join(opts.MountPrefix, constants.EFIMountPoint, efiFile),
 	))
 
 	if err := utils.CopyFiles(

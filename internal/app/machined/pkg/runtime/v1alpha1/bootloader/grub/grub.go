@@ -151,6 +151,13 @@ func (c *Config) PrepareBootPartitions(opts options.InstallOptions) ([]partition
 				return nil, err
 			}
 		}
+
+		// the EFI assets (both GRUB's own, and the ones written by the overlay installer) are staged
+		// under constants.EFIMountPoint to match the layout of the install mode, so move them out of
+		// the BOOT partition source directory into the EFI partition source directory
+		if err := os.Rename(filepath.Join(opts.MountPrefix, constants.EFIMountPoint), filepath.Join(opts.MountPrefix, "EFI")); err != nil {
+			return nil, fmt.Errorf("failed to move EFI directory: %w", err)
+		}
 	}
 
 	return partitionOptions, nil
