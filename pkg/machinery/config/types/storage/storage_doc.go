@@ -83,13 +83,14 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 				Name:        "match",
 				Type:        "Expression",
 				Note:        "",
-				Description: "CEL expression matching a disk or partition to use as a physical volume.\n\nThe expression is evaluated against each discovered volume with the\n`volume` variable (the discovered volume) and, for whole disks, the\n`disk` variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via `volume.partition_label`.",
+				Description: "CEL expression matching a disk or partition to use as a physical volume.\n\nThe expression is evaluated against each discovered volume with the\n`volume` variable (the discovered volume) and, for whole disks, the\n`disk` variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via `volume.partition_label`.\n\nA volume declared in the machine config also matches on `volume_id`,\nthe volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),\nas in `volume_id == \"r-lvmdata\"`. A device Talos does not manage as a\nvolume has an empty `volume_id`.\n\nUse `volume_id` for a whole-disk volume, which carries no partition\nlabel to match on. Use it for an encrypted volume too: Talos creates\nthe physical volume on the opened device, never on the ciphertext.\n\nTalos matches a declared volume only after the volume manager has\nprepared it. Provisioning therefore waits for an encrypted volume to\nbe unlocked rather than write to the still-locked device.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching a disk or partition to use as a physical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
 
 	doc.Fields[0].AddExample("match raw volume partitions labeled r-lvm*", exampleLVMVolumeSelector())
+	doc.Fields[0].AddExample("match the raw volume named lvmdata, encrypted or not", exampleLVMVolumeIDSelector())
 
 	return doc
 }
@@ -286,7 +287,7 @@ func (RAIDVolumeSelector) Doc() *encoder.Doc {
 				Name:        "match",
 				Type:        "Expression",
 				Note:        "",
-				Description: "CEL expression matching the member volumes of the array.\n\nEvaluated against each discovered volume with the `volume` variable;\nthe `disk` variable is bound for whole disks (empty for partitions), so\nboth whole disks and partitions can be selected. The system disk and\nits partitions are never eligible.",
+				Description: "CEL expression matching the member volumes of the array.\n\nEvaluated against each discovered volume with the `volume` variable;\nthe `disk` variable is bound for whole disks (empty for partitions), so\nboth whole disks and partitions can be selected. The system disk and\nits partitions are never eligible.\n\nA volume declared in the machine config also matches on `volume_id`,\nthe volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),\nas in `volume_id == \"r-mirror0\"`. A device Talos does not manage as a\nvolume has an empty `volume_id`.\n\nAn encrypted volume matches the same way. Talos builds the array on\nthe opened device, never on the ciphertext, and matches the volume\nonly after the volume manager has prepared it.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching the member volumes of the array." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},

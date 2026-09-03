@@ -66,7 +66,7 @@ RAIDVolumeSelector matches member disks with CEL.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`match` |Expression |CEL expression matching the member volumes of the array.<br><br>Evaluated against each discovered volume with the `volume` variable;<br>the `disk` variable is bound for whole disks (empty for partitions), so<br>both whole disks and partitions can be selected. The system disk and<br>its partitions are never eligible. <details><summary>Show example(s)</summary>match NVMe disks larger than 100 GiB:{{< highlight yaml >}}
+|`match` |Expression |CEL expression matching the member volumes of the array.<br><br>Evaluated against each discovered volume with the `volume` variable;<br>the `disk` variable is bound for whole disks (empty for partitions), so<br>both whole disks and partitions can be selected. The system disk and<br>its partitions are never eligible.<br><br>A volume declared in the machine config also matches on `volume_id`,<br>the volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),<br>as in `volume_id == "r-mirror0"`. A device Talos does not manage as a<br>volume has an empty `volume_id`.<br><br>An encrypted volume matches the same way. Talos builds the array on<br>the opened device, never on the ciphertext, and matches the volume<br>only after the volume manager has prepared it. <details><summary>Show example(s)</summary>match NVMe disks larger than 100 GiB:{{< highlight yaml >}}
 match: disk.transport == "nvme" && disk.size > 100u * GiB
 {{< /highlight >}}</details> | |
 

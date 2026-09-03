@@ -83,7 +83,7 @@ func (s ProvisioningSpec) Validate() error {
 		return errors.New("provisioning.volumeSelector.match is required")
 	}
 
-	if err := s.VolumeSelector.Match.ParseBool(celenv.VolumeLocator()); err != nil {
+	if err := s.VolumeSelector.Match.ParseBool(celenv.MemberVolumeLocator()); err != nil {
 		return fmt.Errorf("provisioning.volumeSelector.match: %w", err)
 	}
 
@@ -99,12 +99,28 @@ type LVMVolumeSelectorSpec struct {
 	//     `volume` variable (the discovered volume) and, for whole disks, the
 	//     `disk` variable. Partitions (e.g. raw volumes) can be matched by their
 	//     partition label via `volume.partition_label`.
+	//
+	//     A volume declared in the machine config also matches on `volume_id`,
+	//     the volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),
+	//     as in `volume_id == "r-lvmdata"`. A device Talos does not manage as a
+	//     volume has an empty `volume_id`.
+	//
+	//     Use `volume_id` for a whole-disk volume, which carries no partition
+	//     label to match on. Use it for an encrypted volume too: Talos creates
+	//     the physical volume on the opened device, never on the ciphertext.
+	//
+	//     Talos matches a declared volume only after the volume manager has
+	//     prepared it. Provisioning therefore waits for an encrypted volume to
+	//     be unlocked rather than write to the still-locked device.
 	//   schema:
 	//     type: string
 	//   examples:
 	//     - value: >
 	//        exampleLVMVolumeSelector()
 	//       name: match raw volume partitions labeled r-lvm*
+	//     - value: >
+	//        exampleLVMVolumeIDSelector()
+	//       name: match the raw volume named lvmdata, encrypted or not
 	Match cel.Expression `yaml:"match,omitempty"`
 }
 
@@ -136,7 +152,11 @@ func exampleLVMVolumeGroupConfigV1Alpha1() *LVMVolumeGroupConfigV1Alpha1 {
 }
 
 func exampleLVMVolumeSelector() cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label.startsWith("r-lvm")`, celenv.VolumeLocator()))
+	return cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label.startsWith("r-lvm")`, celenv.MemberVolumeLocator()))
+}
+
+func exampleLVMVolumeIDSelector() cel.Expression {
+	return cel.MustExpression(cel.ParseBooleanExpression(`volume_id == "r-lvmdata"`, celenv.MemberVolumeLocator()))
 }
 
 // Name implements config.NamedDocument interface.
