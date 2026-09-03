@@ -169,6 +169,7 @@ func launchVM(config *LaunchConfig) error {
 		"-chardev", fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Network.Hostname),
 		"-device", "virtio-serial",
 		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
+		"-device", "virtio-keyboard-pci",
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action", "pause",
 	}

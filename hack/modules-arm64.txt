@@ -24,8 +24,10 @@ kernel/drivers/block/virtio_blk.ko
 kernel/drivers/block/xen-blkfront.ko
 kernel/drivers/char/ipmi/ipmi_si.ko
 kernel/drivers/char/virtio_console.ko
+kernel/drivers/cpufreq/apple-soc-cpufreq.ko
 kernel/drivers/crypto/tegra/tegra-se.ko
 kernel/drivers/crypto/virtio/virtio_crypto.ko
+kernel/drivers/gpio/gpio-macsmc.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
 kernel/drivers/gpu/drm/drm_gpuvm.ko
@@ -69,6 +71,8 @@ kernel/drivers/hwmon/i5k_amb.ko
 kernel/drivers/hwmon/spd5118.ko
 kernel/drivers/i2c/algos/i2c-algo-bit.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
+kernel/drivers/i2c/busses/i2c-pasemi-core.ko
+kernel/drivers/i2c/busses/i2c-pasemi-platform.ko
 kernel/drivers/i2c/i2c-mux.ko
 kernel/drivers/infiniband/core/ib_cm.ko
 kernel/drivers/infiniband/core/ib_core.ko
@@ -103,6 +107,7 @@ kernel/drivers/md/dm-service-time.ko
 kernel/drivers/md/dm-thin-pool.ko
 kernel/drivers/md/persistent-data/dm-persistent-data.ko
 kernel/drivers/md/raid456.ko
+kernel/drivers/mfd/macsmc.ko
 kernel/drivers/misc/hpilo.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
 kernel/drivers/mmc/host/sdhci-brcmstb.ko
@@ -206,6 +211,7 @@ kernel/drivers/net/vmxnet3/vmxnet3.ko
 kernel/drivers/net/vrf.ko
 kernel/drivers/net/xen-netfront.ko
 kernel/drivers/nvme/common/nvme-auth.ko
+kernel/drivers/nvme/host/nvme-apple.ko
 kernel/drivers/nvme/host/nvme-rdma.ko
 kernel/drivers/nvme/host/nvme.ko
 kernel/drivers/nvme/target/nvme-loop.ko
@@ -213,6 +219,8 @@ kernel/drivers/nvme/target/nvmet-fc.ko
 kernel/drivers/nvme/target/nvmet-rdma.ko
 kernel/drivers/nvme/target/nvmet-tcp.ko
 kernel/drivers/nvme/target/nvmet.ko
+kernel/drivers/nvmem/apple_nvmem_spmi.ko
+kernel/drivers/nvmem/nvmem-apple-efuses.ko
 kernel/drivers/pci/controller/pci-hyperv.ko
 kernel/drivers/perf/hisilicon/hisi_pcie_pmu.ko
 kernel/drivers/perf/hisilicon/hisi_uncore_cpa_pmu.ko
@@ -224,6 +232,8 @@ kernel/drivers/perf/hisilicon/hisi_uncore_pmu.ko
 kernel/drivers/perf/hisilicon/hisi_uncore_sllc_pmu.ko
 kernel/drivers/perf/hisilicon/hisi_uncore_uc_pmu.ko
 kernel/drivers/perf/hisilicon/hns3_pmu.ko
+kernel/drivers/power/reset/macsmc-reboot.ko
+kernel/drivers/pwm/pwm-apple.ko
 kernel/drivers/scsi/fcoe/libfcoe.ko
 kernel/drivers/scsi/hisi_sas/hisi_sas_main.ko
 kernel/drivers/scsi/hisi_sas/hisi_sas_v1_hw.ko
@@ -241,6 +251,11 @@ kernel/drivers/scsi/qla2xxx/qla2xxx.ko
 kernel/drivers/scsi/smartpqi/smartpqi.ko
 kernel/drivers/scsi/virtio_scsi.ko
 kernel/drivers/scsi/xen-scsifront.ko
+kernel/drivers/soc/apple/apple-mailbox.ko
+kernel/drivers/soc/apple/apple-rtkit.ko
+kernel/drivers/soc/apple/apple-sart.ko
+kernel/drivers/spi/spi-apple.ko
+kernel/drivers/spmi/spmi-apple-controller.ko
 kernel/drivers/target/target_core_mod.ko
 kernel/drivers/ufs/core/ufshcd-core.ko
 kernel/drivers/ufs/host/ufshcd-pci.ko
@@ -304,12 +319,12 @@ kernel/drivers/vhost/vringh.ko
 kernel/drivers/virt/vmgenid.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_dma_buf.ko
-kernel/drivers/virtio/virtio_input.ko
 kernel/drivers/virtio/virtio_mmio.ko
 kernel/drivers/virtio/virtio_pci.ko
 kernel/drivers/virtio/virtio_pci_legacy_dev.ko
 kernel/drivers/virtio/virtio_pci_modern_dev.ko
 kernel/drivers/virtio/virtio_vdpa.ko
+kernel/drivers/watchdog/apple_wdt.ko
 kernel/drivers/watchdog/sbsa_gwdt.ko
 kernel/fs/fuse/virtiofs.ko
 kernel/lib/objagg.ko

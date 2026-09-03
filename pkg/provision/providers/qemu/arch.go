@@ -255,6 +255,12 @@ func (arch Arch) getMachineArgs(iommu bool) []string {
 
 	if arch == ArchAmd64 {
 		args += ",smm=on"
+
+		// disable i8042 as it seems to cause deadlocks under QEMU on kexec due to PS/2 driver
+		// Talos 1.15+ uses virtio-keyboard driver instead
+		//
+		// note: requires QEMU >= 7.0
+		args += ",i8042=off"
 	}
 
 	return []string{"-machine", args}
