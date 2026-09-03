@@ -1,3 +1,122 @@
+## [Talos 1.13.10](https://github.com/siderolabs/talos/releases/tag/v1.13.10) (2026-09-03)
+
+Welcome to the v1.13.10 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.48
+CoreDNS: 1.14.7
+
+Talos is built with Go 1.26.7
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Noel Georgi
+* Dima Aratin
+* Ivan Demchuk
+* Maja Bojarska
+* Max Makarov
+* Utku Ozdemir
+* immanuwell
+
+### Changes
+<details><summary>27 commits</summary>
+<p>
+
+* [`271ce0dc8`](https://github.com/siderolabs/talos/commit/271ce0dc81e7f0c457d381e0ad7c3e9cac76c7b6) fix: update DHCP library
+* [`3c70f4054`](https://github.com/siderolabs/talos/commit/3c70f4054f585a150bbf738fb6b21b01ad5fba5d) fix: harden the code around kubelet's client certificate handling
+* [`40d7de4c0`](https://github.com/siderolabs/talos/commit/40d7de4c059e45e73b5a250e3590c74ae30ba865) fix: normalize image reference when passing to image verification flow
+* [`cf30d6df4`](https://github.com/siderolabs/talos/commit/cf30d6df4df34a2a5d3d54bb8e1139f729b5d100) fix: filter out passed metadata in API proxying
+* [`cc556d9ce`](https://github.com/siderolabs/talos/commit/cc556d9ce11fec9f9e6b92b5c7d912668a750fa4) fix: treat desired roles empty as error in Talos API access
+* [`0d7a47305`](https://github.com/siderolabs/talos/commit/0d7a473050d8ceee3f9b397d0847cd6f876980e8) fix: allow CSI volumes to be mounted with an SELinux context
+* [`17ab196fe`](https://github.com/siderolabs/talos/commit/17ab196fec9b96770eca7d20749b10d2a4047483) fix: validate received kubeconfig
+* [`934ae8a2b`](https://github.com/siderolabs/talos/commit/934ae8a2b58be5ef1c918517b015312b74f43b9b) chore: update etcd to v3.6.14
+* [`df9b82dce`](https://github.com/siderolabs/talos/commit/df9b82dce042d57fdfc67e9b617fde1e5a20fdc0) chore: update pkgs and tools
+* [`591c53aac`](https://github.com/siderolabs/talos/commit/591c53aacb1de42a75a55bd229e72c80154845d6) fix: use os.Root in the talosctl extract path
+* [`c36d99001`](https://github.com/siderolabs/talos/commit/c36d99001927c6110f1e81762a0f2b941a0829fd) fix: escape output in the talosctl dashboard
+* [`fc355dcd3`](https://github.com/siderolabs/talos/commit/fc355dcd353a418c37783e9acdc5b148ef47156b) fix: add checks for meta key in the API path
+* [`e950f655e`](https://github.com/siderolabs/talos/commit/e950f655eeb8cd492df41ab9964e4d62bfb401f7) feat: update COSI to 1.16.3
+* [`20cafbdb3`](https://github.com/siderolabs/talos/commit/20cafbdb3311bb885210a12c3848bcd636b13cdf) fix: route creation churning every 100ms
+* [`c6fe78c61`](https://github.com/siderolabs/talos/commit/c6fe78c61c126e39579fc02df1310708aa6fb015) chore: reduce verbosity of the grype scan
+* [`b9696f9d7`](https://github.com/siderolabs/talos/commit/b9696f9d7b548f31adb6c4dcdbb465945c622535) fix: preserve special modes when extracting files
+* [`865aaec80`](https://github.com/siderolabs/talos/commit/865aaec802ea68f60a70072dae16c6b7892f21ea) fix: use os.Root in the untar path
+* [`097fa184e`](https://github.com/siderolabs/talos/commit/097fa184e300c3dc45ffffcdad91ac3f4ae17d57) fix: create parent directories when extracting tar archives
+* [`c6edc3911`](https://github.com/siderolabs/talos/commit/c6edc3911121547a3056a9fb28d7f09d08ee1e93) chore: bump sigstore/rekor to v1.5.4
+* [`6d062e13b`](https://github.com/siderolabs/talos/commit/6d062e13bf78cbe270f2c9abdbeb594162992790) fix: write the uploaded etcd snapshot atomically
+* [`f6b795970`](https://github.com/siderolabs/talos/commit/f6b795970d7697627e86e0ced79ee154fff69e94) fix: skip selinux label for read-only/detached/external mounts
+* [`bea850ac3`](https://github.com/siderolabs/talos/commit/bea850ac3ba79dfc65a47ba21db363e20915d346) fix: persist in-memory meta on fresh install
+* [`dcf46c11e`](https://github.com/siderolabs/talos/commit/dcf46c11e662f22a741fe493db19a50dc8133b9e) fix: reduce stalls in the etcd member promotion cycle
+* [`0f4d08a1f`](https://github.com/siderolabs/talos/commit/0f4d08a1ff28bbadfdfed60a8142ef40a0e0af00) feat: update CoreDNS to 1.14.7
+* [`e0916388e`](https://github.com/siderolabs/talos/commit/e0916388ef7a21684a7c0a1c7881e100d2dfc9c9) fix: watch IPv6 route changes in RouteSpecController
+* [`92614ca8a`](https://github.com/siderolabs/talos/commit/92614ca8a1a59a80d4fccb87d53f8706fdf445e5) fix: truncate files replaced by system extensions
+* [`b7b27ec29`](https://github.com/siderolabs/talos/commit/b7b27ec2958fe74d0c506ffdb56fe208a475e887) fix: skip target settings for external volume mounts
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`9b044c5`](https://github.com/siderolabs/pkgs/commit/9b044c593c71b0ea6deb9985b7907e008b91220c) feat: update kernel to 6.18.48
+* [`de74a50`](https://github.com/siderolabs/pkgs/commit/de74a5043a90292cc8ef7e2ea6fa974f83cf8328) feat: bump kernel to 6.18.47
+* [`bb15c62`](https://github.com/siderolabs/pkgs/commit/bb15c6296167ca47d5aa14d6f55bbbc9f87a3f07) chore: update toolchain and tools
+* [`49c50f7`](https://github.com/siderolabs/pkgs/commit/49c50f7c9d23e540eeba5453c87e4f077523dd4b) feat: bump kernel to 6.18.46
+* [`2da2cdc`](https://github.com/siderolabs/pkgs/commit/2da2cdcd7c1985bec07764fd0ca4dbaffff692a2) feat: backport aes256k support (Ceph)
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>3 commits</summary>
+<p>
+
+* [`c70be08`](https://github.com/siderolabs/tools/commit/c70be08137ff2b7feea97c977e15e3fb04850d32) chore: update toolchain
+* [`7791f48`](https://github.com/siderolabs/tools/commit/7791f4879d066f6d1bb9f31cb0cb5bfc10944586) feat: use kernel gnu mirrors
+* [`d908dc0`](https://github.com/siderolabs/tools/commit/d908dc05b6092f2c48ac1feb57d5453e224a7387) fix: update OpenSSL to 3.6.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/Azure/azure-sdk-for-go/sdk/azcore**      v1.21.1 -> v1.22.0
+* **github.com/Azure/azure-sdk-for-go/sdk/azidentity**  v1.13.1 -> v1.14.0
+* **github.com/aws/aws-sdk-go-v2**                      v1.41.7 -> v1.43.0
+* **github.com/aws/aws-sdk-go-v2/config**               v1.32.17 -> v1.32.31
+* **github.com/aws/aws-sdk-go-v2/feature/ec2/imds**     v1.18.23 -> v1.18.31
+* **github.com/aws/aws-sdk-go-v2/service/kms**          v1.52.0 -> v1.55.0
+* **github.com/aws/smithy-go**                          v1.25.1 -> v1.27.3
+* **github.com/cosi-project/runtime**                   v1.14.1 -> v1.16.3
+* **github.com/docker/cli**                             v29.4.3 -> v29.5.3
+* **github.com/fatih/color**                            v1.18.0 -> v1.19.0
+* **github.com/google/go-containerregistry**            v0.21.6 -> v0.21.7
+* **github.com/grpc-ecosystem/go-grpc-middleware/v2**   v2.3.3 -> v2.3.4
+* **github.com/insomniacslk/dhcp**                      5adc3eb26f91 -> 234b97448fae
+* **github.com/klauspost/compress**                     v1.18.7 -> v1.19.2
+* **github.com/mattn/go-isatty**                        v0.0.20 -> v0.0.24
+* **github.com/prometheus/procfs**                      v0.20.1 -> v0.22.0
+* **github.com/siderolabs/pkgs**                        v1.13.0-60-gf541ca4 -> v1.13.0-65-g9b044c5
+* **github.com/siderolabs/tools**                       v1.13.0-9-ga201d19 -> v1.13.0-12-gc70be08
+* **github.com/sigstore/sigstore**                      v1.10.8 -> v1.10.9
+* **github.com/sirupsen/logrus**                        v1.9.4 -> v1.10.2
+* **github.com/stretchr/testify**                       v1.11.1 -> v1.12.1
+* **go.etcd.io/etcd/api/v3**                            v3.6.12 -> v3.6.14
+* **go.etcd.io/etcd/client/pkg/v3**                     v3.6.12 -> v3.6.14
+* **go.etcd.io/etcd/client/v3**                         v3.6.12 -> v3.6.14
+* **go.etcd.io/etcd/etcdutl/v3**                        v3.6.12 -> v3.6.14
+* **go.yaml.in/yaml/v4**                                v4.0.0-rc.4 -> v4.0.0-rc.6
+* **google.golang.org/grpc**                            v1.82.1 -> v1.83.2
+* **google.golang.org/protobuf**                        f2248ac996af -> v1.36.12
+
+Previous release can be found at [v1.13.9](https://github.com/siderolabs/talos/releases/tag/v1.13.9)
+
+
 ## [Talos 1.13.9](https://github.com/siderolabs/talos/releases/tag/v1.13.9) (2026-08-18)
 
 Welcome to the v1.13.9 release of Talos!
