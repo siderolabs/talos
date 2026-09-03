@@ -807,8 +807,8 @@ github.com/siderolabs/go-cmd v0.2.1 h1:499+nXoEKTtUnMvlXfiwMz2fudnunfB75dJR6AKYb
 github.com/siderolabs/go-cmd v0.2.1/go.mod h1:YA/UEDh8Av84RlI4LfQw7HN9+vgxUrQw/Byef1dgptY=
 github.com/siderolabs/go-copy v0.1.0 h1:OIWCtSg+rhOtnIZTpT31Gfpn17rv5kwJqQHG+QUEgC8=
 github.com/siderolabs/go-copy v0.1.0/go.mod h1:4bF2rZOZAR/ags/U4AVSpjFE5RPGdEeSkOq6yR9YOkU=
-github.com/siderolabs/go-debug v0.6.2 h1:zWWMTcrYDVyiNTotSxEVg++hj9mb2ctuTNVnOeCWtO8=
-github.com/siderolabs/go-debug v0.6.2/go.mod h1:tcHnBjzOfEC/Stfc+cpP8J9Y6y5Pp89XNBN0n3dsWD4=
+github.com/siderolabs/go-debug v0.6.3 h1:muDxyQ7SJxooq0QYT05m6Re6kRi9DwTR8/+I71Hz508=
+github.com/siderolabs/go-debug v0.6.3/go.mod h1:rEHJoPrkxhnSlLtr3XIkpq/r9aql4oRKL7WJ5h7ZhOU=
 github.com/siderolabs/go-kmsg v0.1.6 h1:ZrJPExUnJubqiNA7T8RUi/ySvJsnIen+bdiY+pea8+A=
 github.com/siderolabs/go-kmsg v0.1.6/go.mod h1:fryspKc1f6nMIOK5YbUPutz2v2rdBTBeLqW/ci9BDfk=
 github.com/siderolabs/go-kubeconfig v0.1.2 h1:0D0v3lXUKon+A2qRFwOnc9m4qSB+e+5WDmvGjiJPH8Y=

@@ -40,6 +40,13 @@ enum RuntimeSELinuxState {
   SE_LINUX_STATE_ENFORCING = 2;
 }
 
+// RuntimeLockdownState describes the current kernel lockdown level.
+enum RuntimeLockdownState {
+  LOCKDOWN_STATE_NONE = 0;
+  LOCKDOWN_STATE_INTEGRITY = 1;
+  LOCKDOWN_STATE_CONFIDENTIALITY = 2;
+}
+
 // RuntimeFIPSState describes the current FIPS status.
 enum RuntimeFIPSState {
   FIPS_STATE_DISABLED = 0;

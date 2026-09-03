@@ -359,6 +359,7 @@ description: Talos gRPC API reference.
     - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
     - [RuntimeKernelModuleState](#talos.resource.definitions.enums.RuntimeKernelModuleState)
     - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
+    - [RuntimeLockdownState](#talos.resource.definitions.enums.RuntimeLockdownState)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
     - [RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase)
@@ -6398,6 +6399,19 @@ RuntimeKernelModuleType represents whether a kernel module is built into the ker
 
 
 
+<a name="talos.resource.definitions.enums.RuntimeLockdownState"></a>
+
+### RuntimeLockdownState
+RuntimeLockdownState describes the current kernel lockdown level.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LOCKDOWN_STATE_NONE | 0 |  |
+| LOCKDOWN_STATE_INTEGRITY | 1 |  |
+| LOCKDOWN_STATE_CONFIDENTIALITY | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.RuntimeMachineStage"></a>
 
 ### RuntimeMachineStage
@@ -9882,6 +9896,7 @@ SecurityStateSpec describes the security state resource properties.
 | booted_with_uki | [bool](#bool) |  |  |
 | fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
 | module_signature_enforced | [bool](#bool) |  |  |
+| lockdown_state | [talos.resource.definitions.enums.RuntimeLockdownState](#talos.resource.definitions.enums.RuntimeLockdownState) |  |  |
 
 
 

@@ -1687,14 +1687,15 @@ func (x *SBOMItemSpec) GetExtension() bool {
 
 // SecurityStateSpec describes the security state resource properties.
 type SecurityStateSpec struct {
-	state                    protoimpl.MessageState    `protogen:"open.v1"`
-	SecureBoot               bool                      `protobuf:"varint,1,opt,name=secure_boot,json=secureBoot,proto3" json:"secure_boot,omitempty"`
-	UkiSigningKeyFingerprint string                    `protobuf:"bytes,2,opt,name=uki_signing_key_fingerprint,json=ukiSigningKeyFingerprint,proto3" json:"uki_signing_key_fingerprint,omitempty"`
-	PcrSigningKeyFingerprint string                    `protobuf:"bytes,3,opt,name=pcr_signing_key_fingerprint,json=pcrSigningKeyFingerprint,proto3" json:"pcr_signing_key_fingerprint,omitempty"`
-	SeLinuxState             enums.RuntimeSELinuxState `protobuf:"varint,4,opt,name=se_linux_state,json=seLinuxState,proto3,enum=talos.resource.definitions.enums.RuntimeSELinuxState" json:"se_linux_state,omitempty"`
-	BootedWithUki            bool                      `protobuf:"varint,5,opt,name=booted_with_uki,json=bootedWithUki,proto3" json:"booted_with_uki,omitempty"`
-	FipsState                enums.RuntimeFIPSState    `protobuf:"varint,6,opt,name=fips_state,json=fipsState,proto3,enum=talos.resource.definitions.enums.RuntimeFIPSState" json:"fips_state,omitempty"`
-	ModuleSignatureEnforced  bool                      `protobuf:"varint,7,opt,name=module_signature_enforced,json=moduleSignatureEnforced,proto3" json:"module_signature_enforced,omitempty"`
+	state                    protoimpl.MessageState     `protogen:"open.v1"`
+	SecureBoot               bool                       `protobuf:"varint,1,opt,name=secure_boot,json=secureBoot,proto3" json:"secure_boot,omitempty"`
+	UkiSigningKeyFingerprint string                     `protobuf:"bytes,2,opt,name=uki_signing_key_fingerprint,json=ukiSigningKeyFingerprint,proto3" json:"uki_signing_key_fingerprint,omitempty"`
+	PcrSigningKeyFingerprint string                     `protobuf:"bytes,3,opt,name=pcr_signing_key_fingerprint,json=pcrSigningKeyFingerprint,proto3" json:"pcr_signing_key_fingerprint,omitempty"`
+	SeLinuxState             enums.RuntimeSELinuxState  `protobuf:"varint,4,opt,name=se_linux_state,json=seLinuxState,proto3,enum=talos.resource.definitions.enums.RuntimeSELinuxState" json:"se_linux_state,omitempty"`
+	BootedWithUki            bool                       `protobuf:"varint,5,opt,name=booted_with_uki,json=bootedWithUki,proto3" json:"booted_with_uki,omitempty"`
+	FipsState                enums.RuntimeFIPSState     `protobuf:"varint,6,opt,name=fips_state,json=fipsState,proto3,enum=talos.resource.definitions.enums.RuntimeFIPSState" json:"fips_state,omitempty"`
+	ModuleSignatureEnforced  bool                       `protobuf:"varint,7,opt,name=module_signature_enforced,json=moduleSignatureEnforced,proto3" json:"module_signature_enforced,omitempty"`
+	LockdownState            enums.RuntimeLockdownState `protobuf:"varint,8,opt,name=lockdown_state,json=lockdownState,proto3,enum=talos.resource.definitions.enums.RuntimeLockdownState" json:"lockdown_state,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -1776,6 +1777,13 @@ func (x *SecurityStateSpec) GetModuleSignatureEnforced() bool {
 		return x.ModuleSignatureEnforced
 	}
 	return false
+}
+
+func (x *SecurityStateSpec) GetLockdownState() enums.RuntimeLockdownState {
+	if x != nil {
+		return x.LockdownState
+	}
+	return enums.RuntimeLockdownState(0)
 }
 
 // ServicePIDSpec is the spec for the service PID.
@@ -2281,7 +2289,7 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\alicense\x18\x03 \x01(\tR\alicense\x12\x13\n" +
 	"\x05cp_es\x18\x04 \x03(\tR\x04cpEs\x12\x15\n" +
 	"\x06pur_ls\x18\x05 \x03(\tR\x05purLs\x12\x1c\n" +
-	"\textension\x18\x06 \x01(\bR\textension\"\xc6\x03\n" +
+	"\textension\x18\x06 \x01(\bR\textension\"\xa5\x04\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
@@ -2291,7 +2299,8 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x0fbooted_with_uki\x18\x05 \x01(\bR\rbootedWithUki\x12Q\n" +
 	"\n" +
 	"fips_state\x18\x06 \x01(\x0e22.talos.resource.definitions.enums.RuntimeFIPSStateR\tfipsState\x12:\n" +
-	"\x19module_signature_enforced\x18\a \x01(\bR\x17moduleSignatureEnforced\"K\n" +
+	"\x19module_signature_enforced\x18\a \x01(\bR\x17moduleSignatureEnforced\x12]\n" +
+	"\x0elockdown_state\x18\b \x01(\x0e26.talos.resource.definitions.enums.RuntimeLockdownStateR\rlockdownState\"K\n" +
 	"\x0eServicePIDSpec\x12\x10\n" +
 	"\x03pid\x18\x01 \x01(\x05R\x03pid\x12'\n" +
 	"\x0fmount_namespace\x18\x02 \x01(\tR\x0emountNamespace\"\xa0\x01\n" +
@@ -2375,8 +2384,9 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*common.NetIP)(nil),                     // 42: common.NetIP
 	(enums.RuntimeSELinuxState)(0),           // 43: talos.resource.definitions.enums.RuntimeSELinuxState
 	(enums.RuntimeFIPSState)(0),              // 44: talos.resource.definitions.enums.RuntimeFIPSState
-	(enums.RuntimeUnattendedInstallPhase)(0), // 45: talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
-	(*durationpb.Duration)(nil),              // 46: google.protobuf.Duration
+	(enums.RuntimeLockdownState)(0),          // 45: talos.resource.definitions.enums.RuntimeLockdownState
+	(enums.RuntimeUnattendedInstallPhase)(0), // 46: talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
+	(*durationpb.Duration)(nil),              // 47: google.protobuf.Duration
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	7,  // 0: talos.resource.definitions.runtime.ExtensionServiceConfigSpec.files:type_name -> talos.resource.definitions.runtime.ExtensionServiceConfigFile
@@ -2393,15 +2403,16 @@ var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	37, // 11: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
 	43, // 12: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
 	44, // 13: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
-	45, // 14: talos.resource.definitions.runtime.UnattendedInstallStatusSpec.phase:type_name -> talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
-	46, // 15: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
-	46, // 16: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
-	46, // 17: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	45, // 14: talos.resource.definitions.runtime.SecurityStateSpec.lockdown_state:type_name -> talos.resource.definitions.enums.RuntimeLockdownState
+	46, // 15: talos.resource.definitions.runtime.UnattendedInstallStatusSpec.phase:type_name -> talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
+	47, // 16: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
+	47, // 17: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
+	47, // 18: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_runtime_runtime_proto_init() }
