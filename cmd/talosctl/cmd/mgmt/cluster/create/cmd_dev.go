@@ -48,6 +48,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		clusterDiskSizeFlag             = "disk"
 		primaryDisksFlag                = "primary-disks"
 		diskBlockSizeFlag               = "disk-block-size"
+		diskCacheModeFlag               = "disk-cache-mode"
 		useVIPFlag                      = "use-vip"
 		bootloaderEnabledFlag           = "with-bootloader"
 		skipInjectingExtraCmdlineFlag   = "skip-injecting-extra-cmdline"
@@ -232,6 +233,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
 		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use")
 		qemu.UintVar(&qOps.DiskBlockSize, diskBlockSizeFlag, qOps.DiskBlockSize, "disk block size")
+		qemu.StringVar(&qOps.DiskCacheMode, diskCacheModeFlag, qOps.DiskCacheMode,
+			"QEMU cache mode for the VM disks: none (direct IO), writeback, writethrough, directsync or unsafe (host page cache, guest flushes are ignored, fastest for throwaway clusters)")
 		qemu.StringVar(&qOps.TargetArch, targetArchFlag, qOps.TargetArch, "cluster architecture")
 		qemu.StringSliceVar(&qOps.CniBinPath, cniBinPathFlag, qOps.CniBinPath, "search path for CNI binaries")
 		qemu.StringVar(&qOps.CniConfDir, cniConfDirFlag, qOps.CniConfDir, "CNI config directory path")

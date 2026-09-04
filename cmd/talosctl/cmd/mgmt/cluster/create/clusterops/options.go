@@ -118,6 +118,7 @@ type Qemu struct {
 	PrimaryDisks              int
 	ExtraDisksOnControlplanes bool
 	DiskBlockSize             uint
+	DiskCacheMode             string
 	PreallocateDisks          bool
 	ClusterUserVolumes        []string
 	TargetArch                string

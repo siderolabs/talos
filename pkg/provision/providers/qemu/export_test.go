@@ -34,6 +34,11 @@ func BuildFabricUplinksForTest(networkName, managementBridge string, nodeIdx, co
 	return buildFabricUplinks(networkName, managementBridge, nodeIdx, count, mtu, bgpEnabled, bgpCLOS)
 }
 
+// ResolveDiskCacheModeForTest exposes the disk cache mode validation for tests.
+func ResolveDiskCacheModeForTest(cacheMode string) (string, error) {
+	return resolveDiskCacheMode(cacheMode)
+}
+
 // ProbeHTTPForTest exposes the bounded provisioner-host HTTP implementation for tests.
 func ProbeHTTPForTest(ctx context.Context, request provision.HTTPProbeRequest) (provision.HTTPProbeResponse, error) {
 	return probeHTTP(ctx, request)

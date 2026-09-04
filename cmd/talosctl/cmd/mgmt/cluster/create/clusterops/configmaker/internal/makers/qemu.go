@@ -511,6 +511,10 @@ func (m *Qemu) initDisks() error {
 		return fmt.Errorf("number of primary disks must be >= 1, got %d", m.EOps.PrimaryDisks)
 	}
 
+	if err := provision.ValidateDiskCacheMode(m.EOps.DiskCacheMode); err != nil {
+		return err
+	}
+
 	primaryCount := m.EOps.PrimaryDisks
 
 	primaryDisks := make([]*provision.Disk, 0, primaryCount)
@@ -520,6 +524,7 @@ func (m *Qemu) initDisks() error {
 			SkipPreallocate: !m.EOps.PreallocateDisks,
 			Driver:          m.EOps.Disks.Requests()[0].Driver,
 			BlockSize:       m.EOps.DiskBlockSize,
+			CacheMode:       m.EOps.DiskCacheMode,
 			Serial:          m.EOps.Disks.Requests()[0].Serial,
 		})
 	}
@@ -531,6 +536,7 @@ func (m *Qemu) initDisks() error {
 			SkipPreallocate: !m.EOps.PreallocateDisks,
 			Driver:          d.Driver,
 			BlockSize:       m.EOps.DiskBlockSize,
+			CacheMode:       m.EOps.DiskCacheMode,
 			Tag:             d.Tag,
 			Serial:          d.Serial,
 		})
@@ -610,6 +616,7 @@ func (m *Qemu) initExtraDisks() error {
 			SkipPreallocate: !m.EOps.PreallocateDisks,
 			Driver:          "ide",
 			BlockSize:       m.EOps.DiskBlockSize,
+			CacheMode:       m.EOps.DiskCacheMode,
 		})
 	}
 

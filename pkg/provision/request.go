@@ -6,8 +6,10 @@ package provision
 
 import (
 	"errors"
+	"fmt"
 	"net/netip"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -175,6 +177,18 @@ func (reqs NodeRequests) PXENodes() (nodes []NodeRequest) {
 	return nodes
 }
 
+// diskCacheModes are the supported QEMU disk cache modes.
+var diskCacheModes = []string{"none", "writeback", "writethrough", "directsync", "unsafe"}
+
+// ValidateDiskCacheMode checks that the disk cache mode is supported. An empty mode means the provisioner default.
+func ValidateDiskCacheMode(cacheMode string) error {
+	if cacheMode == "" || slices.Contains(diskCacheModes, cacheMode) {
+		return nil
+	}
+
+	return fmt.Errorf("unsupported disk cache mode %q, supported modes: %s", cacheMode, strings.Join(diskCacheModes, ", "))
+}
+
 // Disk represents a disk size and name in NodeRequest.
 type Disk struct {
 	// Size in bytes.
@@ -187,6 +201,10 @@ type Disk struct {
 	Driver string
 	// Block size for the disk, defaults to 512 if not set.
 	BlockSize uint
+	// CacheMode is the QEMU cache mode for the disk: "none", "writeback", "writethrough", "directsync" or "unsafe".
+	//
+	// Empty keeps the provisioner default, which is "none" (direct IO) for all drivers except "ahci".
+	CacheMode string
 	// Serial number for the disk.
 	Serial string
 	// Tag for the disk, only used for Virtiofs disks.

@@ -149,6 +149,7 @@ talosctl cluster create dev [flags]
       --disable-dhcp-hostname                    skip announcing hostname via DHCP
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
       --disk-block-size uint                     disk block size (default 512)
+      --disk-cache-mode string                   QEMU cache mode for the VM disks: none (direct IO), writeback, writethrough, directsync or unsafe (host page cache, guest flushes are ignored, fastest for throwaway clusters)
       --disk-encryption-key-types stringArray    encryption key types to use for disk encryption (uuid, kms) (default [uuid])
       --disk-image-path string                   disk image to use
       --disk-preallocate                         whether disk space should be preallocated (default true)

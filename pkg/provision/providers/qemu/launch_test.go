@@ -43,3 +43,29 @@ func TestBuildFabricUplinks(t *testing.T) {
 
 	assert.Empty(t, qemu.BuildFabricUplinksForTest("talos-default", "talos1234", 0, 0, 1500, false, false))
 }
+
+func TestResolveDiskCacheMode(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		in       string
+		expected string
+		err      bool
+	}{
+		{in: "", expected: "none"},
+		{in: "none", expected: "none"},
+		{in: "unsafe", expected: "unsafe"},
+		{in: "writeback", expected: "writeback"},
+		{in: "bogus", err: true},
+	} {
+		got, err := qemu.ResolveDiskCacheModeForTest(tt.in)
+		if tt.err {
+			require.Error(t, err, tt.in)
+
+			continue
+		}
+
+		require.NoError(t, err, tt.in)
+		require.Equal(t, tt.expected, got, tt.in)
+	}
+}
