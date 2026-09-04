@@ -7,16 +7,16 @@ replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-side
 
 require (
 	github.com/blang/semver/v4 v4.0.0
-	github.com/containerd/go-cni v1.1.13
+	github.com/containerd/go-cni v1.1.14
 	github.com/cosi-project/runtime v1.16.3
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.11.0
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/cel-go v0.31.0
-	github.com/google/go-containerregistry v0.21.7
+	github.com/google/cel-go v0.32.0
+	github.com/google/go-containerregistry v0.22.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260802200809-43bafec815b3
+	github.com/jsimonetti/rtnetlink/v2 9498c7a8aec5
 	github.com/mdlayher/ethtool v0.6.1
 	github.com/neticdk/go-stdlib v1.0.1
 	github.com/opencontainers/runtime-spec v1.3.0
@@ -33,8 +33,8 @@ require (
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.6
 	golang.org/x/net v0.58.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260810153831-ec0a7760b754
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260810153831-ec0a7760b754
+	google.golang.org/genproto/googleapis/api v0.0.0-20260831171406-18b4a7587f8a
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260831171406-18b4a7587f8a
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
 )
