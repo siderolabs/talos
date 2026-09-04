@@ -4444,6 +4444,7 @@ func (*RollbackRequest) Descriptor() ([]byte, []int) {
 type Rollback struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Metadata      *common.Metadata       `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	ActorId       string                 `protobuf:"bytes,2,opt,name=actor_id,json=actorId,proto3" json:"actor_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4483,6 +4484,13 @@ func (x *Rollback) GetMetadata() *common.Metadata {
 		return x.Metadata
 	}
 	return nil
+}
+
+func (x *Rollback) GetActorId() string {
+	if x != nil {
+		return x.ActorId
+	}
+	return ""
 }
 
 type RollbackResponse struct {
@@ -11923,9 +11931,10 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x03ids\x18\x02 \x03(\tR\x03ids\"L\n" +
 	"\x16LogsContainersResponse\x122\n" +
 	"\bmessages\x18\x01 \x03(\v2\x16.machine.LogsContainerR\bmessages\"\x11\n" +
-	"\x0fRollbackRequest\"8\n" +
+	"\x0fRollbackRequest\"S\n" +
 	"\bRollback\x12,\n" +
-	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\"A\n" +
+	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12\x19\n" +
+	"\bactor_id\x18\x02 \x01(\tR\aactorId\"A\n" +
 	"\x10RollbackResponse\x12-\n" +
 	"\bmessages\x18\x01 \x03(\v2\x11.machine.RollbackR\bmessages\"b\n" +
 	"\x11ContainersRequest\x12\x1c\n" +

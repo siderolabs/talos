@@ -134,7 +134,7 @@ talosctl cluster create dev [flags]
       --bad-rtc                                  launch VM with bad RTC state
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.14.0-beta.1/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/cad26b5/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
@@ -3266,11 +3266,15 @@ talosctl rollback [flags]
 ```
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
+      --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for rollback
   -n, --nodes strings              target the specified nodes
+      --progress string            output mode for rollback progress. Values: [auto plain] (default "auto")
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+      --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
+      --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
 ```
 
 ### SEE ALSO
@@ -3508,7 +3512,7 @@ talosctl upgrade [flags]
       --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for upgrade
-  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.14.0-beta.1")
+  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:cad26b5")
       --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
       --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)

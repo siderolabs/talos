@@ -386,6 +386,16 @@ func (c *Client) Rollback(ctx context.Context) (err error) {
 	return err
 }
 
+// RollbackWithResponse rolls back the node to the previous installation and returns the response.
+func (c *Client) RollbackWithResponse(ctx context.Context) (*machineapi.RollbackResponse, error) {
+	resp, err := c.MachineClient.Rollback(ctx, &machineapi.RollbackRequest{})
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
+	return resp, err
+}
+
 // Bootstrap implements the proto.MachineServiceClient interface.
 func (c *Client) Bootstrap(ctx context.Context, req *machineapi.BootstrapRequest) (err error) {
 	resp, err := c.MachineClient.Bootstrap(ctx, req)
