@@ -304,7 +304,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 			return err
 		}
 
-		if err = writeToDestination(data, outputPaths.controlPlane, 0o644); err != nil {
+		if err = writeToDestination(data, outputPaths.controlPlane, 0o600); err != nil {
 			return err
 		}
 	}
@@ -315,7 +315,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 			return err
 		}
 
-		if err = writeToDestination(data, outputPaths.worker, 0o644); err != nil {
+		if err = writeToDestination(data, outputPaths.worker, 0o600); err != nil {
 			return err
 		}
 	}
@@ -326,7 +326,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 			return fmt.Errorf("failed to marshal config: %+v", err)
 		}
 
-		if err = writeToDestination(data, outputPaths.talosconfig, 0o644); err != nil {
+		if err = writeToDestination(data, outputPaths.talosconfig, 0o600); err != nil {
 			return err
 		}
 	}
