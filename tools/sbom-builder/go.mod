@@ -3,12 +3,12 @@ module github.com/siderolabs/talos/tools/sbom-builder
 go 1.26.7
 
 require (
-	github.com/anchore/syft v1.51.0
+	github.com/anchore/syft v1.51.1
 	github.com/google/uuid v1.6.0
 	github.com/spdx/tools-golang v0.6.0-rc4
-	github.com/stretchr/testify v1.11.1
+	github.com/stretchr/testify v1.12.1
 	golang.org/x/mod v0.40.0
-	modernc.org/sqlite v1.56.0
+	modernc.org/sqlite v1.58.0
 )
 
 require (
