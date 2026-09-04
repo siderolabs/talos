@@ -18,9 +18,13 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.42
+Linux: 6.18.49
+Containerd: 2.2.7
+Flannel: 0.28.9
+Etcd: v3.6.14
+Kubernetes: v1.35.8
 
-Talos is built with Go 1.25.12.
+Talos is built with Go 1.25.14.
 """
 
 [make_deps]

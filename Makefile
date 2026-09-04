@@ -25,9 +25,9 @@ DEBUG_TOOLS_SOURCE := scratch
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.12.0-20-g7a5d6da
+TOOLS ?= v1.12.0-24-g6c999e3
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.12.0-103-gf921142
+PKGS ?= v1.12.0-113-g5eb9201
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -101,7 +101,7 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.35.4
+KUBECTL_VERSION ?= v1.35.8
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
