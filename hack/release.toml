@@ -222,6 +222,17 @@ Note that `[debug]` `level`, `format` and `log_trace_id` stay at the top level, 
 derived from the `grpc` address: if the `grpc` address is customized, the `ttrpc` plugin address has to be set explicitly.
 """
 
+    [notes.secret_file_permissions]
+        title = "Permissions of the Generated Files"
+        description = """\
+`talosctl` now writes every file which might contain secrets with `0600` permissions (owner read/write only),
+and it restricts the permissions of the files it overwrites as well.
+
+This affects the machine configuration (`talosctl gen config`, `talosctl machineconfig patch`,
+`talosctl cluster create --skip-injecting-config`), `talosconfig` and `kubeconfig`.
+"""
+
+
     [notes.nfs_external_volumes]
         title = "NFS External Volumes"
         description = """\

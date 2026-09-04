@@ -7,12 +7,12 @@ package gen
 import (
 	"fmt"
 	"net"
-	"os"
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 var genKeypairCmdFlags struct {
@@ -54,11 +54,11 @@ var genKeypairCmd = &cobra.Command{
 			return err
 		}
 
-		if err := os.WriteFile(certFile, ca.CrtPEM, 0o600); err != nil {
+		if err := fileutils.WriteSecret(certFile, ca.CrtPEM); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
 
-		if err := os.WriteFile(keyFile, ca.KeyPEM, 0o600); err != nil {
+		if err := fileutils.WriteSecret(keyFile, ca.KeyPEM); err != nil {
 			return fmt.Errorf("error writing key: %s", err)
 		}
 

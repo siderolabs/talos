@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 // Bundle defines a set of machine configuration files.
@@ -187,7 +188,7 @@ func (bundle *Bundle) Write(outputDir string, commentsFlags encoder.CommentsFlag
 			return err
 		}
 
-		if err = os.WriteFile(fullFilePath, bytes, 0o644); err != nil {
+		if err = fileutils.WriteSecret(fullFilePath, bytes); err != nil {
 			return err
 		}
 

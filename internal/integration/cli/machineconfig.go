@@ -151,6 +151,12 @@ func (suite *MachineConfigSuite) TestPatchWriteToFile() {
 	suite.Assert().NoError(err)
 
 	suite.Assert().Contains(string(outputBytes), "clusterName: replaced")
+
+	// the patched machine config contains secrets, so it should not be readable by group/others
+	st, err := os.Stat(outputFile)
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(os.FileMode(0o600), st.Mode().Perm())
 }
 
 func init() {

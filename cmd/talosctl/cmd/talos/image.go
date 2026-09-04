@@ -53,6 +53,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
@@ -1032,7 +1033,7 @@ var imageCacheCertGenCmd = &cobra.Command{
 			return err
 		}
 
-		if err := os.WriteFile(imageCacheCertGenCmdFlags.tlsKeyFile, keyPEM, 0o600); err != nil {
+		if err := fileutils.WriteSecret(imageCacheCertGenCmdFlags.tlsKeyFile, keyPEM); err != nil {
 			return err
 		}
 

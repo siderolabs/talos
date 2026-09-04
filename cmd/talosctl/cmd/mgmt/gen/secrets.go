@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 var genSecretsCmdFlags struct {
@@ -92,7 +93,7 @@ func writeSecretsBundleToFile(bundle *secrets.Bundle) error {
 		return err
 	}
 
-	return os.WriteFile(genSecretsCmdFlags.outputFile, bundleBytes, 0o600)
+	return fileutils.WriteSecret(genSecretsCmdFlags.outputFile, bundleBytes)
 }
 
 func init() {

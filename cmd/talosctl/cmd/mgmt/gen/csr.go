@@ -18,6 +18,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
@@ -77,7 +78,7 @@ var genCSRCmd = &cobra.Command{
 			return err
 		}
 
-		if err := os.WriteFile(csrFile, csr.X509CertificateRequestPEM, 0o600); err != nil {
+		if err := fileutils.WriteSecret(csrFile, csr.X509CertificateRequestPEM); err != nil {
 			return fmt.Errorf("error writing CSR: %s", err)
 		}
 

@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	taloskubeconfig "github.com/siderolabs/talos/pkg/kubeconfig"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 const stdoutOutput = "-"
@@ -136,7 +137,7 @@ If merge flag is false and [local-path] is "-", config will be written to stdout
 			return err
 		}
 
-		return os.WriteFile(localPath, data, 0o600)
+		return fileutils.WriteSecret(localPath, data)
 	},
 }
 
@@ -165,6 +166,12 @@ func mergeKubeconfig(config *clientcmdapi.Config, localPath string) error {
 		},
 	})
 	if err != nil {
+		return err
+	}
+
+	// restrict the mode before the merged kubeconfig is written back:
+	// clientcmd keeps the mode of an already existing file
+	if err = fileutils.RestrictSecretMode(localPath); err != nil {
 		return err
 	}
 

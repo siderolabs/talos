@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/provision/access"
 	"github.com/siderolabs/talos/pkg/provision/providers/remote"
 )
@@ -161,6 +162,12 @@ func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
 	})
 	if err != nil {
 		return fmt.Errorf("error merging kubeconfig: %w", err)
+	}
+
+	// restrict the mode before the merged kubeconfig is written back:
+	// clientcmd keeps the mode of an already existing file
+	if err = fileutils.RestrictSecretMode(kubeconfigPath); err != nil {
+		return err
 	}
 
 	return merger.Write(kubeconfigPath)

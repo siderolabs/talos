@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 var genCrtCmdFlags struct {
@@ -93,7 +94,7 @@ var genCrtCmd = &cobra.Command{
 			return err
 		}
 
-		if err = os.WriteFile(certFile, signedCrt.X509CertificatePEM, 0o600); err != nil {
+		if err = fileutils.WriteSecret(certFile, signedCrt.X509CertificatePEM); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
 

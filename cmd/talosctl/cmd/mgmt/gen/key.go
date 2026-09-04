@@ -6,12 +6,12 @@ package gen
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 var genKeyCmdFlags struct {
@@ -36,7 +36,7 @@ var genKeyCmd = &cobra.Command{
 			return err
 		}
 
-		if err := os.WriteFile(keyFile, key.PrivateKeyPEM, 0o600); err != nil {
+		if err := fileutils.WriteSecret(keyFile, key.PrivateKeyPEM); err != nil {
 			return fmt.Errorf("error writing key: %w", err)
 		}
 
