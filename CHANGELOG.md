@@ -1,3 +1,105 @@
+## [Talos 1.12.12](https://github.com/siderolabs/talos/releases/tag/v1.12.12) (2026-09-04)
+
+Welcome to the v1.12.12 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.49
+Containerd: 2.2.7
+Flannel: 0.28.9
+Etcd: v3.6.14
+Kubernetes: v1.35.8
+
+Talos is built with Go 1.25.14.
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+* Mateusz Urbanek
+* immanuwell
+
+### Changes
+<details><summary>12 commits</summary>
+<p>
+
+* [`5f22763ef`](https://github.com/siderolabs/talos/commit/5f22763ef11602e80d119c93e7dd7e9600918951) feat: bump dependencies
+* [`f0ef9c13b`](https://github.com/siderolabs/talos/commit/f0ef9c13b83291724c0e34637cda28ade4a45e8d) fix: harden the code around kubelet's client certificate handling
+* [`c4612c44e`](https://github.com/siderolabs/talos/commit/c4612c44ec440e1f33056df9b60509fbfee20f81) fix: filter out passed metadata in API proxying
+* [`c7ac6acf8`](https://github.com/siderolabs/talos/commit/c7ac6acf88f5759e4efc4d26fb8dcd9de01ea8b6) fix: treat desired roles empty as error in Talos API access
+* [`4615df421`](https://github.com/siderolabs/talos/commit/4615df4214a38a02ef357dacebf067036084a535) fix: create parent directories when extracting tar archives
+* [`1d685ff4e`](https://github.com/siderolabs/talos/commit/1d685ff4e6aad86bd7de356740acc1c1c4951c14) fix: use os.Root in the talosctl extract path
+* [`227390bc5`](https://github.com/siderolabs/talos/commit/227390bc5b79e9846ff25a42df79ce2b79b83e2a) fix: escape output in the talosctl dashboard
+* [`3d4cb876a`](https://github.com/siderolabs/talos/commit/3d4cb876ac34f55c613a06c4faa431c7ecf16a98) fix: add checks for meta key in the API path
+* [`8b3b65027`](https://github.com/siderolabs/talos/commit/8b3b65027a8d58056ee5fb461e5a3791b242f03d) chore: reduce verbosity of the grype scan
+* [`1eb7caf6e`](https://github.com/siderolabs/talos/commit/1eb7caf6ee39fe50dc64e5dc0591e0b03e48092a) fix: preserve special modes when extracting files
+* [`f9a8d4324`](https://github.com/siderolabs/talos/commit/f9a8d4324270f2eec38eac5a2b5d38d3b3a010fe) fix: use os.Root in the untar path
+* [`763c4e4cd`](https://github.com/siderolabs/talos/commit/763c4e4cdc815feec3914478cac3686bd27a300b) fix: don't set xattrs while decompressing extensions
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>10 commits</summary>
+<p>
+
+* [`5eb9201`](https://github.com/siderolabs/pkgs/commit/5eb92010829a064d8df326316978f24c3dcd334e) chore: rekres
+* [`8f2f189`](https://github.com/siderolabs/pkgs/commit/8f2f189aa50e672d31ddeb16b78a1a0aef3ca4f6) feat: support confiuring gnu mirror urls
+* [`0c89ae0`](https://github.com/siderolabs/pkgs/commit/0c89ae0e4a1b6f42abf008371c66055ee4bcf4a0) feat: bump linux-firmware to 20260810
+* [`eb4a8dc`](https://github.com/siderolabs/pkgs/commit/eb4a8dcf61d7c2006a6dda3d0ef05e23cd1f6dcd) feat: bump flannel to v1.9.1-flannel3
+* [`ce90bd5`](https://github.com/siderolabs/pkgs/commit/ce90bd5cd14bc0115fef1550cdae678412d8229d) feat: bump containerd to 2.2.7
+* [`935b8b2`](https://github.com/siderolabs/pkgs/commit/935b8b2a3e3f74c1ad59fffdb4ef6eca32159736) feat: bump go to 1.25.14
+* [`13cf7a6`](https://github.com/siderolabs/pkgs/commit/13cf7a64da16afc05bc956c6b4f1098c5b275b75) feat: bump kernel to 6.18.49
+* [`449db13`](https://github.com/siderolabs/pkgs/commit/449db133391306444f65b9b58fd86e1a69d36c81) feat: update kernel to 6.18.48
+* [`3584845`](https://github.com/siderolabs/pkgs/commit/3584845ce1262a092f6e6552bfd872a7d2819eb3) feat: bump kernel to 6.18.47
+* [`122c8d2`](https://github.com/siderolabs/pkgs/commit/122c8d23f1cd18ffabeae86a5ef4cce561c25b5d) feat: bump kernel to 6.18.46
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>4 commits</summary>
+<p>
+
+* [`6c999e3`](https://github.com/siderolabs/tools/commit/6c999e394d6bd4e6eff5dc36b0c25edcb3a5129e) fix: fakeroot url
+* [`5aeec5b`](https://github.com/siderolabs/tools/commit/5aeec5bb631283172f5af9c0fb7f076742ffe187) feat: use kernel gnu mirrors
+* [`5fcfa57`](https://github.com/siderolabs/tools/commit/5fcfa57a728b0d37c7da1bf4dc47b871575bb35a) feat: bump go to 1.25.14
+* [`89d3bee`](https://github.com/siderolabs/tools/commit/89d3bee0ff6d724c9753b8e3bda5e0e965772e02) fix: update OpenSSL to 3.6.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/insomniacslk/dhcp**    175e84fbb167 -> c308df0fdcef
+* **github.com/siderolabs/pkgs**      v1.12.0-103-gf921142 -> v1.12.0-113-g5eb9201
+* **github.com/siderolabs/tools**     v1.12.0-20-g7a5d6da -> v1.12.0-24-g6c999e3
+* **github.com/sirupsen/logrus**      v1.9.3 -> v1.9.4
+* **go.etcd.io/etcd/api/v3**          v3.6.11 -> v3.6.14
+* **go.etcd.io/etcd/client/pkg/v3**   v3.6.11 -> v3.6.14
+* **go.etcd.io/etcd/client/v3**       v3.6.11 -> v3.6.14
+* **go.etcd.io/etcd/etcdutl/v3**      v3.6.11 -> v3.6.14
+* **golang.org/x/net**                v0.57.0 -> v0.58.0
+* **golang.org/x/text**               v0.40.0 -> v0.41.0
+* **google.golang.org/grpc**          v1.82.1 -> v1.83.1
+* **google.golang.org/protobuf**      v1.36.11 -> f2248ac996af
+* **k8s.io/api**                      v0.35.4 -> v0.35.8
+* **k8s.io/apiextensions-apiserver**  v0.35.4 -> v0.35.8
+* **k8s.io/apimachinery**             v0.35.4 -> v0.35.8
+* **k8s.io/apiserver**                v0.35.4 -> v0.35.8
+* **k8s.io/client-go**                v0.35.4 -> v0.35.8
+* **k8s.io/component-base**           v0.35.4 -> v0.35.8
+* **k8s.io/cri-api**                  v0.35.4 -> v0.35.8
+* **k8s.io/kube-scheduler**           v0.35.4 -> v0.35.8
+* **k8s.io/kubectl**                  v0.35.4 -> v0.35.8
+* **k8s.io/kubelet**                  v0.35.4 -> v0.35.8
+* **k8s.io/pod-security-admission**   v0.35.4 -> v0.35.8
+
+Previous release can be found at [v1.12.11](https://github.com/siderolabs/talos/releases/tag/v1.12.11)
+
 ## [Talos 1.12.11](https://github.com/siderolabs/talos/releases/tag/v1.12.11) (2026-08-05)
 
 Welcome to the v1.12.11 release of Talos!
