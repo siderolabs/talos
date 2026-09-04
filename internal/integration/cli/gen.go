@@ -184,6 +184,21 @@ func (suite *GenSuite) TestGenConfigPatchStrategic() {
 	}
 }
 
+// TestGenConfigPermissions verifies that generated configs are not readable by group/others.
+func (suite *GenSuite) TestGenConfigPermissions() {
+	suite.RunCLI([]string{"gen", "config", "foo", "https://192.168.0.1:6443"},
+		base.StdoutEmpty(),
+		base.StderrNotEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile("generating PKI and tokens")))
+
+	for _, configName := range []string{"controlplane.yaml", "worker.yaml", "talosconfig"} {
+		st, err := os.Stat(configName)
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(os.FileMode(0o600), st.Mode().Perm(), "checking %q", configName)
+	}
+}
+
 // TestSecrets ...
 func (suite *GenSuite) TestSecrets() {
 	suite.RunCLI([]string{"gen", "secrets"}, base.StdoutEmpty())
