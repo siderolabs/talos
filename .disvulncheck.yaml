@@ -1,6 +1,9 @@
 ignore_ttl: 168h # 7 days, each entry must be revalidated after this time, and either removed or renewed (with a new date)
 
 ignore:
+  - id: GO-2026-5004
+    reason: Dev dependency, never shipped in Talos. Codepath not reachable from Talos code.
+    date: 2026-09-01
   - id: GO-2026-4736
     reason: 'gobgp NEXT_HOP DoS (GHSA-4p9m-8gc4-rw2h). The reachable recvMessageloop symbol is real, but the advisory records no fixed version, so govulncheck flags every version. Fix commit osrg/gobgp 583080a7 is an ancestor of pinned commit 2132288c5159, whose source skips ValidateUpdateMsg when parsing has already selected error handling, so it is not affected.'
     date: 2026-08-31

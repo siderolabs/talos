@@ -310,6 +310,11 @@ description: Talos gRPC API reference.
     - [BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType)
     - [BlockFSParameterType](#talos.resource.definitions.enums.BlockFSParameterType)
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
+    - [BlockNFSLocking](#talos.resource.definitions.enums.BlockNFSLocking)
+    - [BlockNFSRecovery](#talos.resource.definitions.enums.BlockNFSRecovery)
+    - [BlockNFSSecurity](#talos.resource.definitions.enums.BlockNFSSecurity)
+    - [BlockNFSTransport](#talos.resource.definitions.enums.BlockNFSTransport)
+    - [BlockNFSVersion](#talos.resource.definitions.enums.BlockNFSVersion)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
     - [ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase)
@@ -5319,6 +5324,72 @@ BlockFilesystemType describes filesystem type.
 | FILESYSTEM_TYPE_SWAP | 5 |  |
 | FILESYSTEM_TYPE_VIRTIOFS | 6 |  |
 | FILESYSTEM_TYPE_BTRFS | 7 |  |
+| FILESYSTEM_TYPE_NFS | 8 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockNFSLocking"></a>
+
+### BlockNFSLocking
+BlockNFSLocking controls NFSv3 lock coordination.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NFS_LOCKING_LOCAL | 0 |  |
+| NFS_LOCKING_REMOTE | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockNFSRecovery"></a>
+
+### BlockNFSRecovery
+BlockNFSRecovery controls client behavior after an NFS request times out.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NFS_RECOVERY_HARD | 0 |  |
+| NFS_RECOVERY_SOFT | 1 |  |
+| NFS_RECOVERY_SOFT_ERROR | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockNFSSecurity"></a>
+
+### BlockNFSSecurity
+BlockNFSSecurity identifies an NFS RPC security flavor.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NFS_SECURITY_NONE | 0 |  |
+| NFS_SECURITY_SYS | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockNFSTransport"></a>
+
+### BlockNFSTransport
+BlockNFSTransport identifies an NFS transport protocol.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NFS_TRANSPORT_TCP | 0 |  |
+| NFS_TRANSPORT_TCP6 | 1 |  |
+| NFS_TRANSPORT_UDP | 2 |  |
+| NFS_TRANSPORT_UDP6 | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockNFSVersion"></a>
+
+### BlockNFSVersion
+BlockNFSVersion describes an NFS protocol version.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NFS_VERSION3 | 0 |  |
+| NFS_VERSION4 | 1 |  |
+| NFS_VERSION4_POINT1 | 2 |  |
+| NFS_VERSION4_POINT2 | 3 |  |
 
 
 

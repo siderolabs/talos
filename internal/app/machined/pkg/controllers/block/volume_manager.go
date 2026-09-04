@@ -321,7 +321,13 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatuses[vc.Metadata().ID()] = volumeStatus
 			}
 
-			// propagate resolved trim/scrub configuration and the encryption discard setting to the status,
+			// External mount settings remain mutable after provisioning, so consumers always reconcile
+			// against the latest desired state even when the volume is already ready.
+			if vc.TypedSpec().Type == block.VolumeTypeExternal {
+				volumeStatus.TypedSpec().MountSpec = vc.TypedSpec().Mount
+			}
+
+			// Propagate resolved trim/scrub configuration and the encryption discard setting to the status,
 			// so consumers (e.g. the trim/scrub schedule controllers) don't need to read the volume config.
 			volumeStatus.TypedSpec().TrimEnabled = vc.TypedSpec().TrimEnabled
 			volumeStatus.TypedSpec().TrimInterval = vc.TypedSpec().TrimInterval

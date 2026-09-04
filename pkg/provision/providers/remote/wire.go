@@ -266,6 +266,7 @@ type wireOptions struct {
 	IOMMUEnabled              bool   `json:"iommu_enabled"`
 	KMSEndpoint               string `json:"kms_endpoint"`
 	JSONLogsEndpoint          string `json:"json_logs_endpoint"`
+	NFSEnabled                bool   `json:"nfs_enabled"`
 	SiderolinkEnabled         bool   `json:"siderolink_enabled"`
 	DeleteStateOnErr          bool   `json:"delete_state_on_err"`
 
@@ -302,6 +303,7 @@ func MarshalOptions(opts []provision.Option) ([]byte, error) {
 		IOMMUEnabled:              o.IOMMUEnabled,
 		KMSEndpoint:               o.KMSEndpoint,
 		JSONLogsEndpoint:          o.JSONLogsEndpoint,
+		NFSEnabled:                o.NFSEnabled,
 		SiderolinkEnabled:         o.SiderolinkEnabled,
 		DeleteStateOnErr:          o.DeleteStateOnErr,
 		BGPEnabled:                o.BGPEnabled,
@@ -338,6 +340,7 @@ func UnmarshalOptions(b []byte) ([]provision.Option, error) {
 		provision.WithIOMMU(w.IOMMUEnabled),
 		provision.WithKMS(w.KMSEndpoint),
 		provision.WithJSONLogs(w.JSONLogsEndpoint),
+		provision.WithNFS(w.NFSEnabled),
 		provision.WithSiderolinkAgent(w.SiderolinkEnabled),
 		provision.WithDeleteOnErr(w.DeleteStateOnErr),
 	}

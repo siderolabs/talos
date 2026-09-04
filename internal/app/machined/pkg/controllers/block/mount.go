@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net"
 	"os"
 	"path/filepath"
 	"slices"
@@ -23,6 +24,8 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/mountconfig"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/nfs"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/filetree"
@@ -34,6 +37,7 @@ import (
 
 type mountContext struct {
 	point               *mount.Point
+	configuration       mountconfig.Snapshot
 	readOnly            bool
 	disableAccessTime   bool
 	secure              bool
@@ -146,10 +150,17 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 			mountParentStatus := mountStatusMap[mountRequest.TypedSpec().ParentMountID] // this might be nil
 			mountParentReady := !mountHasParent || (mountParentStatus != nil && mountParentStatus.Metadata().Phase() == resource.PhaseRunning)
 			mountParentTearingDown := mountHasParent && mountParentStatus != nil && mountParentStatus.Metadata().Phase() == resource.PhaseTearingDown
+			mountParametersChanged := false
+
+			if volumeStatus != nil && volumeStatus.TypedSpec().Type == block.VolumeTypeExternal {
+				if activeMount, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]; ok {
+					mountParametersChanged = activeMount.configuration.ParametersChanged(volumeStatus.TypedSpec().MountSpec.Parameters)
+				}
+			}
 
 			parentFinalizerName := ctrl.Name() + "-" + mountRequest.Metadata().ID()
 
-			if volumeNotReady || mountRequestTearingDown || mountStatusTearingDown || mountParentTearingDown {
+			if volumeNotReady || mountRequestTearingDown || mountStatusTearingDown || mountParentTearingDown || mountParametersChanged {
 				// we should tear down the mount in the following sequence:
 				// 1. tear down & destroy MountStatus
 				// 2. perform actual unmount
@@ -225,7 +236,7 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 					rootPath = mountParentStatus.TypedSpec().Target
 				}
 
-				if err = ctrl.handleMountOperation(logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
+				if err = ctrl.handleMountOperation(ctx, logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
 					return err
 				}
 
@@ -289,6 +300,7 @@ func (ctrl *MountController) tearDownMountStatus(ctx context.Context, r controll
 }
 
 func (ctrl *MountController) handleMountOperation(
+	ctx context.Context,
 	logger *zap.Logger,
 	rootPath string,
 	mountSource, mountTarget string,
@@ -310,14 +322,14 @@ func (ctrl *MountController) handleMountOperation(
 		return fmt.Errorf("not implemented yet")
 
 	case block.VolumeTypeExternal:
-		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+		return ctrl.handleDiskMountOperation(ctx, logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
 
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
 		if mountFilesystem == block.FilesystemTypeSwap {
 			return ctrl.handleSwapMountOperation(logger, mountSource, mountRequest, volumeStatus)
 		}
 
-		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+		return ctrl.handleDiskMountOperation(ctx, logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
 
 	default:
 		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
@@ -577,6 +589,7 @@ func (ctrl *MountController) updateTargetSettings(
 
 //nolint:gocyclo,cyclop
 func (ctrl *MountController) handleDiskMountOperation(
+	ctx context.Context,
 	logger *zap.Logger,
 	mountSource, mountTarget string,
 	mountFilesystem block.FilesystemType,
@@ -606,7 +619,17 @@ func (ctrl *MountController) handleDiskMountOperation(
 			fsopen.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
 		)
 
-		for _, param := range volumeStatus.TypedSpec().MountSpec.Parameters {
+		parameters := volumeStatus.TypedSpec().MountSpec.Parameters
+		if mountFilesystem == block.FilesystemTypeNFS {
+			resolvedParameters, err := nfs.ResolveMountParameters(ctx, mountSource, parameters, net.DefaultResolver)
+			if err != nil {
+				return fmt.Errorf("failed to resolve NFS mount parameters: %w", err)
+			}
+
+			parameters = resolvedParameters
+		}
+
+		for _, param := range parameters {
 			logger.Info(
 				"adding new parameter",
 				zap.String("parameter", param.Name),
@@ -701,6 +724,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 		mountCtx = &mountContext{
 			point:               mountpoint,
+			configuration:       mountconfig.NewSnapshot(volumeStatus.TypedSpec().MountSpec.Parameters),
 			readOnly:            mountRequest.TypedSpec().ReadOnly,
 			disableAccessTime:   mountRequest.TypedSpec().DisableAccessTime,
 			secure:              mountRequest.TypedSpec().Secure,

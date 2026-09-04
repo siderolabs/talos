@@ -768,6 +768,7 @@ enum BlockFilesystemType {
   FILESYSTEM_TYPE_SWAP = 5;
   FILESYSTEM_TYPE_VIRTIOFS = 6;
   FILESYSTEM_TYPE_BTRFS = 7;
+  FILESYSTEM_TYPE_NFS = 8;
 }
 
 // BlockFSParameterType describes Filesystem Parameter type.
@@ -775,6 +776,41 @@ enum BlockFSParameterType {
   FS_PARAMETER_TYPE_STRING_VALUE = 0;
   FS_PARAMETER_TYPE_BOOLEAN_VALUE = 1;
   FS_PARAMETER_TYPE_BINARY_VALUE = 2;
+}
+
+// BlockNFSVersion describes an NFS protocol version.
+enum BlockNFSVersion {
+  NFS_VERSION3 = 0;
+  NFS_VERSION4 = 1;
+  NFS_VERSION4_POINT1 = 2;
+  NFS_VERSION4_POINT2 = 3;
+}
+
+// BlockNFSLocking controls NFSv3 lock coordination.
+enum BlockNFSLocking {
+  NFS_LOCKING_LOCAL = 0;
+  NFS_LOCKING_REMOTE = 1;
+}
+
+// BlockNFSRecovery controls client behavior after an NFS request times out.
+enum BlockNFSRecovery {
+  NFS_RECOVERY_HARD = 0;
+  NFS_RECOVERY_SOFT = 1;
+  NFS_RECOVERY_SOFT_ERROR = 2;
+}
+
+// BlockNFSSecurity identifies an NFS RPC security flavor.
+enum BlockNFSSecurity {
+  NFS_SECURITY_NONE = 0;
+  NFS_SECURITY_SYS = 1;
+}
+
+// BlockNFSTransport identifies an NFS transport protocol.
+enum BlockNFSTransport {
+  NFS_TRANSPORT_TCP = 0;
+  NFS_TRANSPORT_TCP6 = 1;
+  NFS_TRANSPORT_UDP = 2;
+  NFS_TRANSPORT_UDP6 = 3;
 }
 
 // BlockVolumePhase describes volume phase.
