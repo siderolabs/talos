@@ -8,12 +8,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	gonet "net"
 	"slices"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"github.com/siderolabs/net"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/connectivity"
@@ -34,6 +37,51 @@ import (
 //
 // The connection will enter IDLE time after GracefulShutdownTimeout/2, if no RPC is running.
 const GracefulShutdownTimeout = 30 * time.Minute
+
+// Liveness settings for the connection to the other apid instance.
+//
+// The backend connection is cached for the lifetime of apid and is the only thing standing between
+// a client and the node it asked for, so it has to notice on its own that the node went away. A
+// node which is rebooted by an upgrade (kexec, in particular) drops its TCP state without sending
+// FIN or RST, and proxied calls are mostly server-streaming, so apid sends nothing that could draw
+// a RST back: without probing, the connection stays `READY` while delivering nothing, and the
+// client blocks until its own timeout.
+//
+// Keepalives cover the connection while it is idle; TCP_USER_TIMEOUT additionally bounds how long
+// data may stay unacknowledged, which keepalives on their own do not.
+const (
+	backendKeepaliveIdle     = 30 * time.Second
+	backendKeepaliveInterval = 10 * time.Second
+	backendKeepaliveCount    = 3
+	backendUserTimeout       = 60 * time.Second
+)
+
+// backendDialer dials the other apid instance with dead peer detection enabled.
+func backendDialer() *gonet.Dialer {
+	return &gonet.Dialer{
+		KeepAliveConfig: gonet.KeepAliveConfig{
+			Enable:   true,
+			Idle:     backendKeepaliveIdle,
+			Interval: backendKeepaliveInterval,
+			Count:    backendKeepaliveCount,
+		},
+		Control: func(_, _ string, c syscall.RawConn) error {
+			var sockErr error
+
+			if err := c.Control(func(fd uintptr) {
+				sockErr = unix.SetsockoptInt(int(fd), unix.IPPROTO_TCP, unix.TCP_USER_TIMEOUT, int(backendUserTimeout.Milliseconds()))
+			}); err != nil {
+				return err
+			}
+
+			if sockErr != nil {
+				return fmt.Errorf("failed to set TCP_USER_TIMEOUT: %w", sockErr)
+			}
+
+			return nil
+		},
+	}
+}
 
 var _ proxy.Backend = (*APID)(nil)
 
@@ -106,6 +154,9 @@ func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *g
 
 	a.conn, err = grpc.NewClient(
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (gonet.Conn, error) {
+			return backendDialer().DialContext(ctx, "tcp", addr)
+		}),
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16),
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
