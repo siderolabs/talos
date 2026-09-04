@@ -173,6 +173,9 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		DiskBlockSizes: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) uint {
 			return disk.BlockSize
 		}),
+		DiskCacheModes: xslices.Map(nodeReq.Disks, func(disk *provision.Disk) string {
+			return disk.CacheMode
+		}),
 		VCPUCount:                 vcpuCount,
 		MemSize:                   memSize,
 		MemShmPath:                state.GetShmPath(fmt.Sprintf("shm-%s", nodeReq.Name)), // this is used only when attaching virtiofs disks

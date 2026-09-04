@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
@@ -48,6 +49,7 @@ type LaunchConfig struct {
 	DiskTags                  []string
 	DiskSerials               []string
 	DiskBlockSizes            []uint
+	DiskCacheModes            []string
 	VCPUCount                 int64
 	MemSize                   int64
 	MemShmPath                string
@@ -201,14 +203,21 @@ func launchVM(config *LaunchConfig) error {
 		ahciBus                                                                      int
 	)
 
-	blockDeviceIOOptions := "aio=threads,cache=none"
-	if runtime.GOOS == "linux" {
-		blockDeviceIOOptions = "aio=native,cache=none"
-	}
-
 	for i, disk := range config.DiskPaths {
 		driver := config.DiskDrivers[i]
 		blockSize := config.DiskBlockSizes[i]
+		explicitCacheMode := config.DiskCacheModes[i]
+
+		cacheMode, err := resolveDiskCacheMode(explicitCacheMode)
+		if err != nil {
+			return err
+		}
+
+		// native AIO requires direct IO, which only the "none" cache mode uses
+		blockDeviceIOOptions := "aio=threads,cache=" + cacheMode
+		if runtime.GOOS == "linux" && cacheMode == "none" {
+			blockDeviceIOOptions = "aio=native,cache=" + cacheMode
+		}
 
 		tag := config.DiskTags[i]
 		if tag == "" {
@@ -224,12 +233,12 @@ func launchVM(config *LaunchConfig) error {
 		case "virtio":
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=%s", i, disk, cacheMode),
 				"-device", fmt.Sprintf("virtio-blk-pci,drive=virtio%d,logical_block_size=%d,physical_block_size=%d%s", i, blockSize, blockSize, serial),
 			)
 
 		case "ide":
-			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none", disk))
+			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=%s", disk, cacheMode))
 
 		case "ahci":
 			if !ahciAttached {
@@ -237,9 +246,15 @@ func launchVM(config *LaunchConfig) error {
 				ahciAttached = true
 			}
 
+			// the ahci driver has always used the QEMU default cache mode, keep it unless a mode is set explicitly
+			ahciDrive := fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s", i, disk)
+			if explicitCacheMode != "" {
+				ahciDrive += ",cache=" + cacheMode
+			}
+
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s", i, disk),
+				"-drive", ahciDrive,
 				"-device", fmt.Sprintf("ide-hd,drive=ide%d,bus=ahci0.%d", i, ahciBus),
 			)
 
@@ -777,4 +792,17 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 	}
 
 	return info.Name == "gpt" && len(info.Parts) > 0, nil
+}
+
+// resolveDiskCacheMode validates the QEMU cache mode of a disk, defaulting to "none" (direct IO) when it is not set.
+func resolveDiskCacheMode(cacheMode string) (string, error) {
+	if err := provision.ValidateDiskCacheMode(cacheMode); err != nil {
+		return "", err
+	}
+
+	if cacheMode == "" {
+		return "none", nil
+	}
+
+	return cacheMode, nil
 }
