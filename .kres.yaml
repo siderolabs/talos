@@ -1510,9 +1510,10 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/cilium
@@ -1543,6 +1544,13 @@ spec:
             qemuWorkers: "1"
             extraTestArgs: -talos.bgp.clos -talos.bgp.cilium
             integrationTestRun: TestIntegration/api.BGPCiliumSuite
+          - test: e2e-cilium-strict-enforcing
+            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumInstallType: strict
+            withKubespan: ""
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
       steps:
         - name: download-artifacts
           artifactStep:
