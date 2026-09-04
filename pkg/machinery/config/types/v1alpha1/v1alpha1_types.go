@@ -1313,6 +1313,11 @@ type FlannelCNIConfig struct {
 	//
 	//     This enables Kubernetes Network Policies support in the cluster.
 	FlannelKubeNetworkPoliciesEnabled *bool `yaml:"kubeNetworkPoliciesEnabled,omitempty"`
+	//   description: |
+	//     Enables verbose logging for kube-network-policies.
+	//
+	//     This enables verbose logging for the kube-network-policies container.
+	FlannelKubeNetworkPoliciesVerbose *bool `yaml:"kubeNetworkPoliciesVerbose,omitempty"`
 }
 
 var _ config.ExternalCloudProvider = (*ExternalCloudProviderConfig)(nil)
