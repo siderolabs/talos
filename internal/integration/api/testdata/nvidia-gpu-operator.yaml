@@ -1,6 +1,10 @@
 driver:
   enabled: false
 toolkit:
-  enabled: false
+  enabled: true
+  installDir: /var/lib/nvidia
+cdi:
+  enabled: true
+  nriPluginEnabled: true
 hostPaths:
   driverInstallDir: /usr/local
