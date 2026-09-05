@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -67,7 +68,7 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestRemovingConfigCleansSpecs() {
 func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsPartitionByLabel() {
 	// Whole disk plus a raw-volume partition on it.
 	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
-	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
 
 	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume.partition_label == "r-lvmpv0"`))
 
@@ -84,10 +85,10 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsPartitionsByLabelPrefix() {
 	// Mirrors the documented example selector
 	// `volume.partition_label.startsWith("r-lvm")`.
 	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
-	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
-	createPartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-lvmpv1")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-lvmpv1")
 	// A partition that should NOT match the prefix.
-	createPartition(&suite.DefaultSuite, "vdb3", "/dev/vdb3", "/dev/vdb", "r-data0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb3", "/dev/vdb3", "/dev/vdb", "r-data0")
 
 	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume.partition_label.startsWith("r-lvm")`))
 
@@ -108,7 +109,7 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsPartitionedDisk() {
 	// The selector matches the whole disk (by transport) and a raw-volume
 	// partition (by label); only the partition must yield a PV spec.
 	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
-	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-data0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-data0")
 	// A whole, unpartitioned disk that should still be used directly.
 	createDisk(&suite.DefaultSuite, "vdd", "/dev/vdd", "virtio")
 
@@ -134,7 +135,7 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestDiskSelectorMatchesWholeDiskOnly() 
 	// vdb is whole and unpartitioned; vdc carries a partition vdc1.
 	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
 	createDisk(&suite.DefaultSuite, "vdc", "/dev/vdc", "virtio")
-	createPartition(&suite.DefaultSuite, "vdc1", "/dev/vdc1", "/dev/vdc", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdc1", "/dev/vdc1", "/dev/vdc", "r-lvmpv0")
 
 	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `disk.dev_path == "/dev/vdb"`))
 
@@ -185,6 +186,265 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestMultipleVGsDistinctDisks() {
 
 	ctest.AssertResource(suite, "sda", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
 		asrt.Equal("vg-sata", pv.TypedSpec().VGName)
+	})
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsDecryptedDeviceForEncryptedVolume() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createVolumeStatus(
+		&suite.DefaultSuite, "lvmpv0",
+		block.VolumePhaseReady, block.EncryptionProviderLUKS2,
+		"/dev/vdb1", "/dev/dm-0",
+	)
+
+	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume.partition_label == "r-lvmpv0"`))
+
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+		asrt.Equal("vg-pool", pv.TypedSpec().VGName)
+	})
+
+	// The ciphertext partition must never be handed to pvcreate.
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsEncryptedVolumeNotYetOpen() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-lvmpv1")
+	createVolumeStatus(
+		&suite.DefaultSuite, "lvmpv0",
+		block.VolumePhaseWaiting, block.EncryptionProviderNone,
+		"/dev/vdb1", "",
+	)
+
+	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume.partition_label.startsWith("r-lvm")`))
+
+	ctest.AssertResource(suite, "vdb2", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb2", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "dm-0")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestUnencryptedVolumeStatusDoesNotRedirect() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createVolumeStatus(
+		&suite.DefaultSuite, "lvmpv0",
+		block.VolumePhaseReady, block.EncryptionProviderNone,
+		"/dev/vdb1", "/dev/vdb1",
+	)
+
+	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume.partition_label == "r-lvmpv0"`))
+
+	ctest.AssertResource(suite, "vdb1", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb1", pv.TypedSpec().Device)
+	})
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsConfiguredEncryptedVolumeBeforeStatusLocation() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-plain0")
+	createVolumeStatus(
+		&suite.DefaultSuite, "lvmpv0",
+		block.VolumePhaseWaiting, block.EncryptionProviderNone,
+		"", "",
+	)
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedRawVolumeDoc("lvmpv0"),
+		newVGDoc("vg-pool", `volume.partition_label.startsWith("r-")`),
+	)
+
+	ctest.AssertResource(suite, "vdb2", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb2", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsConfiguredEncryptedVolumeWithNoStatus() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-plain0")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedRawVolumeDoc("lvmpv0"),
+		newVGDoc("vg-pool", `volume.partition_label.startsWith("r-")`),
+	)
+
+	ctest.AssertResource(suite, "vdb2", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb2", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsCiphertextWithNoStatusAndNoConfig() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createLUKSPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-plain0")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newVGDoc("vg-pool", `volume.partition_label.startsWith("r-")`),
+	)
+
+	ctest.AssertResource(suite, "vdb2", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb2", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsEncryptedVolumeAfterStatusDestroyed() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-plain0")
+	createDisk(&suite.DefaultSuite, "dm-0", "/dev/dm-0", "")
+
+	createVolumeStatus(&suite.DefaultSuite, "r-lvmpv0", block.VolumePhaseReady,
+		block.EncryptionProviderLUKS2, "/dev/vdb1", "/dev/dm-0")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedRawVolumeDoc("lvmpv0"),
+		newVGDoc("vg-pool", `volume.partition_label.startsWith("r-")`),
+	)
+
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+	})
+
+	vs := block.NewVolumeStatus(block.NamespaceName, "r-lvmpv0")
+	suite.Destroy(vs)
+
+	createRawVolumePartition(&suite.DefaultSuite, "vdb3", "/dev/vdb3", "/dev/vdb", "r-plain1")
+
+	ctest.AssertResource(suite, "vdb3", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb3", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestWaitsForVolumeManagerOnUnencryptedVolume() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-plain0")
+	createVolumeStatus(
+		&suite.DefaultSuite, "lvmpv0",
+		block.VolumePhaseLocated, block.EncryptionProviderNone,
+		"/dev/vdb1", "",
+	)
+
+	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume.partition_label.startsWith("r-")`))
+
+	// Barrier: the partition with no VolumeStatus at all is unaffected.
+	ctest.AssertResource(suite, "vdb2", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb2", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsEncryptedWholeDiskVolumeBeforeStatus() {
+	createDisk(&suite.DefaultSuite, "md0", "/dev/md0", "")
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedWholeDiskUserVolumeDoc("lvmdata", `disk.dev_path.startsWith("/dev/md")`),
+		newVGDoc("vg-pool", `disk.dev_path.startsWith("/dev/md") || disk.transport == "virtio"`),
+	)
+
+	// Positive control: the plain disk still becomes a PV, proving reconciliation ran.
+	ctest.AssertResource(suite, "vdb", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "md0")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsDecryptedDeviceForWholeDiskVolume() {
+	// Once the array is open, the PV belongs on the opened device, not on /dev/md0.
+	createDisk(&suite.DefaultSuite, "md0", "/dev/md0", "")
+	createVolumeStatus(
+		&suite.DefaultSuite, "u-lvmdata",
+		block.VolumePhaseReady, block.EncryptionProviderLUKS2,
+		"/dev/md0", "/dev/dm-0",
+	)
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedWholeDiskUserVolumeDoc("lvmdata", `disk.dev_path.startsWith("/dev/md")`),
+		newVGDoc("vg-pool", `disk.dev_path.startsWith("/dev/md")`),
+	)
+
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+		asrt.Equal("vg-pool", pv.TypedSpec().VGName)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "md0")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsVolumeByID() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb2", "/dev/vdb2", "/dev/vdb", "r-lvmpv1")
+	createVolumeStatus(
+		&suite.DefaultSuite, "r-lvmpv0",
+		block.VolumePhaseReady, block.EncryptionProviderLUKS2,
+		"/dev/vdb1", "/dev/dm-0",
+	)
+
+	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume_id == "r-lvmpv0"`))
+
+	// The id names the volume, so the PV lands on its opened device.
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+		asrt.Equal("vg-pool", pv.TypedSpec().VGName)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb2")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsWholeDiskVolumeByID() {
+	// A whole-disk volume carries no partition label, so volume_id is the only
+	// handle on it that does not name a device path.
+	createDisk(&suite.DefaultSuite, "md0", "/dev/md0", "")
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createVolumeStatus(
+		&suite.DefaultSuite, "u-lvmdata",
+		block.VolumePhaseReady, block.EncryptionProviderLUKS2,
+		"/dev/md0", "/dev/dm-0",
+	)
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedWholeDiskUserVolumeDoc("lvmdata", `disk.dev_path.startsWith("/dev/md")`),
+		newVGDoc("vg-pool", `volume_id == "u-lvmdata"`),
+	)
+
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+	})
+
+	// The id selects one volume, so the unrelated disk is untouched.
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb")
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "md0")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestVolumeIDEmptyForUnmanagedDevice() {
+	// A bare disk no volume claims has an empty volume_id, so an id predicate
+	// evaluates false rather than erroring, and a disk predicate still matches.
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+
+	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `volume_id == "" && disk.transport == "virtio"`))
+
+	ctest.AssertResource(suite, "vdb", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb", pv.TypedSpec().Device)
 	})
 }
 

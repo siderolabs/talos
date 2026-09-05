@@ -59,6 +59,11 @@ func (ctrl *LVMPhysicalVolumeSpecController) Inputs() []controller.Input {
 			ID:        optional.Some(block.SystemDiskID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -104,7 +109,13 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 		vgDocs = machineCfg.Config().LVMVolumeGroupConfigs()
 	}
 
-	volumes, err := buildMatchContexts(ctx, r)
+	var machineConfig configconfig.Config
+
+	if machineCfg != nil {
+		machineConfig = machineCfg.Config()
+	}
+
+	volumes, err := buildMatchContexts(ctx, r, machineConfig)
 	if err != nil {
 		return err
 	}
@@ -176,7 +187,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 	selector := doc.PhysicalVolumeSelector()
 
 	for _, vol := range volumes {
-		matches, err := selector.EvalBool(celenv.VolumeLocator(), vol.CELContext)
+		matches, err := selector.EvalBool(celenv.MemberVolumeLocator(), vol.CELContext)
 		if err != nil {
 			return fmt.Errorf("evaluate selector for VG %q: %w", doc.Name(), err)
 		}
@@ -198,12 +209,16 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 			continue
 		}
 
-		if prev, ok := claimedBy[vol.DevPath]; ok && prev != doc.Name() {
-			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", vol.DevPath, prev)
+		// DevPath is the device to operate on: for an encrypted volume, the opened
+		// device rather than the ciphertext the selector matched on.
+		devPath := vol.DevPath
+
+		if prev, ok := claimedBy[devPath]; ok && prev != doc.Name() {
+			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", devPath, prev)
 
 			logger.Warn(
 				"disk claimed by multiple LVM volume groups; skipping",
-				zap.String("device", vol.DevPath),
+				zap.String("device", devPath),
 				zap.String("first_vg", prev),
 				zap.String("conflicting_vg", doc.Name()),
 			)
@@ -211,9 +226,9 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 			continue
 		}
 
-		claimedBy[vol.DevPath] = doc.Name()
+		claimedBy[devPath] = doc.Name()
 
-		if err := ctrl.writePVSpec(ctx, r, vol.DevPath, doc.Name()); err != nil {
+		if err := ctrl.writePVSpec(ctx, r, devPath, doc.Name()); err != nil {
 			return err
 		}
 	}
@@ -266,7 +281,12 @@ func (ctrl *LVMPhysicalVolumeSpecController) writeValidationError(ctx context.Co
 // evaluate false against partitions rather than spanning the disk and all its
 // partitions. Partitions are therefore selectable only via `volume.*`
 // predicates (e.g. volume.partition_label), matching the documented contract.
-func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpers.MatchContext, error) {
+//
+// It passes the volume statuses along so that a device backing a machine config
+// volume is reported under the volume's MountLocation, which is the opened
+// device for an encrypted volume, and withheld while the volume manager has not
+// prepared it.
+func buildMatchContexts(ctx context.Context, r controller.Runtime, cfg configconfig.Config) ([]blockhelpers.MatchContext, error) {
 	disks, err := safe.ReaderListAll[*block.Disk](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("list disks: %w", err)
@@ -275,6 +295,11 @@ func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpe
 	volumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("list discovered volumes: %w", err)
+	}
+
+	statuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("list volume statuses: %w", err)
 	}
 
 	systemDiskDevPath := ""
@@ -288,5 +313,11 @@ func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpe
 		systemDiskDevPath = systemDisk.TypedSpec().DevPath
 	}
 
-	return blockhelpers.BuildMatchContexts(slices.Collect(disks.All()), slices.Collect(volumes.All()), systemDiskDevPath)
+	return blockhelpers.BuildMatchContexts(
+		slices.Collect(disks.All()),
+		slices.Collect(volumes.All()),
+		slices.Collect(statuses.All()),
+		cfg,
+		systemDiskDevPath,
+	)
 }

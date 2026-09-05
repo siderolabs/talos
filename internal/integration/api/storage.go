@@ -645,7 +645,7 @@ func vgDocSelector(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 
 	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 	doc.MetaName = name
 	doc.ProvisioningSpec.VolumeSelector.Match = cel.MustExpression(
-		cel.ParseBooleanExpression(match, celenv.VolumeLocator()),
+		cel.ParseBooleanExpression(match, celenv.MemberVolumeLocator()),
 	)
 
 	return doc
@@ -1627,4 +1627,172 @@ func (suite *StorageSuite) lvmVolumeExists(node string, expectedVolumes []string
 
 func init() {
 	allSuites = append(allSuites, new(StorageSuite))
+}
+
+// encryptedRawVolumeDoc builds a RawVolumeConfig like rawVolumeDoc, LUKS2 encrypted with a static key.
+func encryptedRawVolumeDoc(name, diskMatch, maxSize, passphrase string) *blockcfg.RawVolumeConfigV1Alpha1 {
+	doc := rawVolumeDoc(name, diskMatch, maxSize)
+	doc.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeySlot:   0,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{KeyData: passphrase},
+			},
+		},
+	}
+
+	return doc
+}
+
+// provisionEncryptedRawVolumes creates encrypted raw volumes on the disk matched by diskMatch.
+func (suite *StorageSuite) provisionEncryptedRawVolumes(
+	nodeCtx context.Context, diskMatch, passphrase string, names ...string,
+) (ciphertext, opened []string) {
+	const (
+		assertTimeout  = 90 * time.Second
+		assertInterval = 2 * time.Second
+	)
+
+	docs := xslices.Map(names, func(name string) any {
+		return encryptedRawVolumeDoc(name, diskMatch, "1GiB", passphrase)
+	})
+
+	suite.PatchMachineConfig(nodeCtx, docs...)
+
+	ciphertext = make([]string, 0, len(names))
+	opened = make([]string, 0, len(names))
+
+	for _, name := range names {
+		rawVolumeID := constants.RawVolumePrefix + name
+
+		// the failure is permanent rather than slow, so report the volume's own error
+		suite.Require().Eventually(func() bool {
+			vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+			if err != nil {
+				return false
+			}
+
+			return vs.TypedSpec().Phase == block.VolumePhaseReady &&
+				vs.TypedSpec().Location != "" &&
+				vs.TypedSpec().MountLocation != ""
+		}, assertTimeout, assertInterval, "encrypted raw volume %q not ready: %s", rawVolumeID, suite.volumeError(nodeCtx, rawVolumeID))
+
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+		suite.Require().NoError(err)
+
+		ciphertext = append(ciphertext, vs.TypedSpec().Location)
+		opened = append(opened, vs.TypedSpec().MountLocation)
+	}
+
+	return ciphertext, opened
+}
+
+// volumeError reports a volume's current error message, for assertion messages.
+func (suite *StorageSuite) volumeError(nodeCtx context.Context, volumeID string) string {
+	vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+	if err != nil {
+		return fmt.Sprintf("no VolumeStatus: %v", err)
+	}
+
+	return fmt.Sprintf("phase %s: %s", vs.TypedSpec().Phase, vs.TypedSpec().ErrorMessage)
+}
+
+// TestLVMOnEncryptedRawVolumes provisions a VG backed by ENCRYPTED raw volume
+// partitions, selected by the partition label the operator wrote.
+func (suite *StorageSuite) TestLVMOnEncryptedRawVolumes() {
+	suite.testLVMOnEncryptedRawVolumes("vgenc", `volume.partition_label.startsWith("r-lvmenc")`)
+}
+
+// TestLVMOnEncryptedRawVolumesByID provisions the same VG selected by volume id,
+// which names the volume itself rather than its ciphertext partition.
+func (suite *StorageSuite) TestLVMOnEncryptedRawVolumesByID() {
+	suite.testLVMOnEncryptedRawVolumes("vgencid", `volume_id == "r-lvmenc0"`)
+}
+
+//nolint:gocyclo
+func (suite *StorageSuite) testLVMOnEncryptedRawVolumes(vgEnc, selector string) {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(disk.TypedSpec().Symlinks)
+
+	diskMatch := fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0])
+
+	rawNames := []string{"lvmenc0"}
+
+	const passphrase = "encryptedrawvolume"
+
+	var ciphertext []string
+
+	defer func() { suite.cleanupRawVG(nodeCtx, vgEnc, rawNames, ciphertext, userDisks[0]) }()
+
+	ciphertext, opened := suite.provisionEncryptedRawVolumes(nodeCtx, diskMatch, passphrase, rawNames...)
+
+	suite.T().Logf("encrypted raw volumes: ciphertext %v, opened %v", ciphertext, opened)
+
+	for i := range ciphertext {
+		suite.Require().NotEqual(ciphertext[i], opened[i], "volume %q is not encrypted", rawNames[i])
+	}
+
+	suite.PatchMachineConfig(nodeCtx, vgDocSelector(vgEnc, selector))
+
+	// The PV must exist on the OPENED device, and NOT on the ciphertext one.
+	const (
+		assertTimeout  = 90 * time.Second
+		assertInterval = 2 * time.Second
+	)
+
+	ciphertextSet := xslices.ToSet(ciphertext)
+
+	suite.Require().Eventually(func() bool {
+		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		found := 0
+
+		for pv := range pvs.All() {
+			spec := pv.TypedSpec()
+			if spec.VGName != vgEnc {
+				continue
+			}
+
+			if _, isCiphertext := ciphertextSet[spec.Device]; isCiphertext {
+				return false
+			}
+
+			found++
+		}
+
+		return found == len(opened)
+	}, assertTimeout, assertInterval,
+		"no PV in %q on the opened device (ciphertext %v, opened %v)", vgEnc, ciphertext, opened)
+
+	suite.assertVGStatus(nodeCtx, vgEnc, opened)
 }
