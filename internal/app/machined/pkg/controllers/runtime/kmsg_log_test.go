@@ -28,6 +28,7 @@ import (
 type logHandler struct {
 	mu    sync.Mutex
 	count int
+	logs  []map[string]any
 }
 
 // HandleLog implements logreceiver.Handler.
@@ -36,6 +37,20 @@ func (s *logHandler) HandleLog(srcAddr netip.Addr, msg map[string]any) {
 	defer s.mu.Unlock()
 
 	s.count++
+	s.logs = append(s.logs, msg)
+}
+
+func (s *logHandler) hasTag(key, value string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, log := range s.logs {
+		if log[key] == value {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (s *logHandler) getCount() int {
@@ -60,11 +75,8 @@ type KmsgLogDeliverySuite struct {
 
 func (suite *KmsgLogDeliverySuite) TestDeliverySingleDestination() {
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
-	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
-		{
-			Scheme: "tcp",
-			Host:   suite.listener1.Addr().String(),
-		},
+	kmsgLogConfig.TypedSpec().TaggedDestinations = []runtimeres.KmsgLogDestination{
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener1.Addr().String()}},
 	}
 
 	suite.Create(kmsgLogConfig)
@@ -75,15 +87,9 @@ func (suite *KmsgLogDeliverySuite) TestDeliverySingleDestination() {
 
 func (suite *KmsgLogDeliverySuite) TestDeliveryMultipleDestinations() {
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
-	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
-		{
-			Scheme: "tcp",
-			Host:   suite.listener1.Addr().String(),
-		},
-		{
-			Scheme: "tcp",
-			Host:   suite.listener2.Addr().String(),
-		},
+	kmsgLogConfig.TypedSpec().TaggedDestinations = []runtimeres.KmsgLogDestination{
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener1.Addr().String()}},
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener2.Addr().String()}},
 	}
 
 	suite.Create(kmsgLogConfig)
@@ -93,20 +99,30 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryMultipleDestinations() {
 	suite.assertLogsSeen(suite.handler2)
 }
 
+func (suite *KmsgLogDeliverySuite) TestDeliveryExtraTags() {
+	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
+	kmsgLogConfig.TypedSpec().TaggedDestinations = []runtimeres.KmsgLogDestination{
+		{
+			Endpoint:  &url.URL{Scheme: "tcp", Host: suite.listener1.Addr().String()},
+			ExtraTags: map[string]string{"cluster": "staging-west"},
+		},
+	}
+
+	suite.Create(kmsgLogConfig)
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		assert.True(collect, suite.handler1.hasTag("cluster", "staging-west"))
+	}, 5*time.Second, 100*time.Millisecond)
+}
+
 func (suite *KmsgLogDeliverySuite) TestDeliveryOneDeadDestination() {
 	// stop one listener
 	suite.Require().NoError(suite.listener1.Close())
 
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
-	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
-		{
-			Scheme: "tcp",
-			Host:   suite.listener1.Addr().String(),
-		},
-		{
-			Scheme: "tcp",
-			Host:   suite.listener2.Addr().String(),
-		},
+	kmsgLogConfig.TypedSpec().TaggedDestinations = []runtimeres.KmsgLogDestination{
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener1.Addr().String()}},
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener2.Addr().String()}},
 	}
 
 	suite.Create(kmsgLogConfig)
@@ -121,15 +137,9 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryAllDeadDestinations() {
 	suite.Require().NoError(suite.listener2.Close())
 
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
-	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
-		{
-			Scheme: "tcp",
-			Host:   suite.listener1.Addr().String(),
-		},
-		{
-			Scheme: "tcp",
-			Host:   suite.listener2.Addr().String(),
-		},
+	kmsgLogConfig.TypedSpec().TaggedDestinations = []runtimeres.KmsgLogDestination{
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener1.Addr().String()}},
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener2.Addr().String()}},
 	}
 
 	suite.Create(kmsgLogConfig)
@@ -137,11 +147,8 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryAllDeadDestinations() {
 
 func (suite *KmsgLogDeliverySuite) TestDrain() {
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
-	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
-		{
-			Scheme: "tcp",
-			Host:   suite.listener1.Addr().String(),
-		},
+	kmsgLogConfig.TypedSpec().TaggedDestinations = []runtimeres.KmsgLogDestination{
+		{Endpoint: &url.URL{Scheme: "tcp", Host: suite.listener1.Addr().String()}},
 	}
 
 	suite.Create(kmsgLogConfig)

@@ -40,6 +40,13 @@ enum RuntimeSELinuxState {
   SE_LINUX_STATE_ENFORCING = 2;
 }
 
+// RuntimeLockdownState describes the current kernel lockdown level.
+enum RuntimeLockdownState {
+  LOCKDOWN_STATE_NONE = 0;
+  LOCKDOWN_STATE_INTEGRITY = 1;
+  LOCKDOWN_STATE_CONFIDENTIALITY = 2;
+}
+
 // RuntimeFIPSState describes the current FIPS status.
 enum RuntimeFIPSState {
   FIPS_STATE_DISABLED = 0;
@@ -301,6 +308,16 @@ enum NethelpersLinkType {
   LINK6_LOWPAN = 825;
   LINK_VOID = 65535;
   LINK_NONE = 65534;
+}
+
+// NethelpersMacvlanMode is a MACVLAN operating mode.
+enum NethelpersMacvlanMode {
+  NETHELPERS_MACVLANMODE_UNSPECIFIED = 0;
+  MACVLAN_MODE_PRIVATE = 1;
+  MACVLAN_MODE_VEPA = 2;
+  MACVLAN_MODE_BRIDGE = 4;
+  MACVLAN_MODE_PASSTHRU = 8;
+  MACVLAN_MODE_SOURCE = 16;
 }
 
 // NethelpersMatchOperator is a netfilter match operator.

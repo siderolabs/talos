@@ -34,6 +34,18 @@ const (
 	SELinuxStateEnforcing                      // enabled, enforcing
 )
 
+// LockdownState describes the current kernel lockdown level.
+type LockdownState int
+
+// Kernel lockdown level.
+//
+//structprotogen:gen_enum
+const (
+	LockdownStateNone            LockdownState = iota // none
+	LockdownStateIntegrity                            // integrity
+	LockdownStateConfidentiality                      // confidentiality
+)
+
 // FIPSState describes the current FIPS status.
 type FIPSState int
 
@@ -50,13 +62,14 @@ const (
 //
 //gotagsrewrite:gen
 type SecurityStateSpec struct {
-	SecureBoot               bool         `yaml:"secureBoot" protobuf:"1"`
-	UKISigningKeyFingerprint string       `yaml:"ukiSigningKeyFingerprint,omitempty" protobuf:"2"`
-	PCRSigningKeyFingerprint string       `yaml:"pcrSigningKeyFingerprint,omitempty" protobuf:"3"`
-	SELinuxState             SELinuxState `yaml:"selinuxState,omitempty" protobuf:"4"`
-	FIPSState                FIPSState    `yaml:"fipsState,omitempty" protobuf:"6"`
-	BootedWithUKI            bool         `yaml:"bootedWithUKI,omitempty" protobuf:"5"`
-	ModuleSignatureEnforced  bool         `yaml:"moduleSignatureEnforced,omitempty" protobuf:"7"`
+	SecureBoot               bool          `yaml:"secureBoot" protobuf:"1"`
+	UKISigningKeyFingerprint string        `yaml:"ukiSigningKeyFingerprint,omitempty" protobuf:"2"`
+	PCRSigningKeyFingerprint string        `yaml:"pcrSigningKeyFingerprint,omitempty" protobuf:"3"`
+	SELinuxState             SELinuxState  `yaml:"selinuxState,omitempty" protobuf:"4"`
+	FIPSState                FIPSState     `yaml:"fipsState,omitempty" protobuf:"6"`
+	BootedWithUKI            bool          `yaml:"bootedWithUKI,omitempty" protobuf:"5"`
+	ModuleSignatureEnforced  bool          `yaml:"moduleSignatureEnforced,omitempty" protobuf:"7"`
+	LockdownState            LockdownState `yaml:"lockdownState,omitempty" protobuf:"8"`
 }
 
 // NewSecurityStateSpec initializes a security state resource.
@@ -95,6 +108,10 @@ func (SecurityStateExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "ModuleSignatureEnforced",
 				JSONPath: `{.moduleSignatureEnforced}`,
+			},
+			{
+				Name:     "Lockdown",
+				JSONPath: `{.lockdownState}`,
 			},
 		},
 	}

@@ -24,6 +24,34 @@ type VLANSpec struct {
 	Protocol nethelpers.VLANProtocol `yaml:"vlanProtocol" protobuf:"2"`
 }
 
+// MacVLANSpec describes MACVLAN settings if Kind == "macvlan".
+//
+//gotagsrewrite:gen
+type MacVLANSpec struct {
+	// Mode is the MACVLAN operating mode.
+	Mode nethelpers.MacvlanMode `yaml:"mode" protobuf:"1"`
+}
+
+// VXLANSpec describes VXLAN settings if Kind == "vxlan".
+//
+//gotagsrewrite:gen
+type VXLANSpec struct {
+	// ID is the VXLAN network identifier (VNI).
+	ID uint32 `yaml:"id" protobuf:"1"`
+
+	// Local is the source IP address (IPv4 or IPv6) of the tunnel endpoint.
+	Local netip.Addr `yaml:"local,omitempty" protobuf:"2"`
+
+	// Group is the multicast group IP address (IPv4 or IPv6) of the tunnel.
+	Group netip.Addr `yaml:"group,omitempty" protobuf:"3"`
+
+	// Port is the destination UDP port for VXLAN traffic.
+	Port uint16 `yaml:"port,omitempty" protobuf:"4"`
+
+	// Learning enables learning of source link addresses.
+	Learning bool `yaml:"learning,omitempty" protobuf:"5"`
+}
+
 // BondMasterSpec describes bond settings if Kind == "bond".
 //
 //gotagsrewrite:gen

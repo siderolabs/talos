@@ -343,6 +343,26 @@ func (ctrl *LinkStatusController) reconcile(
 				} else if err = networkadapter.VLANSpec(&status.VLAN).Decode(rawLinkData); err != nil {
 					logger.Warn("failure decoding VLAN attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
+			case network.LinkKindMacVLAN:
+				if rawLinkData == nil {
+					logger.Warn("macvlan link data is nil", zap.String("link", link.Attributes.Name))
+				} else if err = networkadapter.MacVLANSpec(&status.MacVLAN).Decode(rawLinkData); err != nil {
+					logger.Warn("failure decoding macvlan attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				}
+			case network.LinkKindVXLAN:
+				if rawLinkData == nil {
+					logger.Warn("vxlan link data is nil", zap.String("link", link.Attributes.Name))
+				} else {
+					// the kernel doesn't report the VXLAN parent via IFLA_LINK, so pick it up from the link
+					// info and report it as LinkIndex, the same way VLANs and macvlans do
+					var parentIndex uint32
+
+					if err = networkadapter.VXLANSpec(&status.VXLAN, &parentIndex).Decode(rawLinkData); err != nil {
+						logger.Warn("failure decoding vxlan attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+					} else if parentIndex != 0 {
+						status.LinkIndex = parentIndex
+					}
+				}
 			case network.LinkKindBond:
 				if rawLinkData == nil {
 					logger.Warn("bond link data is nil", zap.String("link", link.Attributes.Name))

@@ -337,6 +337,7 @@ description: Talos gRPC API reference.
     - [NethelpersICMPType](#talos.resource.definitions.enums.NethelpersICMPType)
     - [NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate)
     - [NethelpersLinkType](#talos.resource.definitions.enums.NethelpersLinkType)
+    - [NethelpersMacvlanMode](#talos.resource.definitions.enums.NethelpersMacvlanMode)
     - [NethelpersMatchOperator](#talos.resource.definitions.enums.NethelpersMatchOperator)
     - [NethelpersNfTablesChainHook](#talos.resource.definitions.enums.NethelpersNfTablesChainHook)
     - [NethelpersNfTablesChainPriority](#talos.resource.definitions.enums.NethelpersNfTablesChainPriority)
@@ -358,6 +359,7 @@ description: Talos gRPC API reference.
     - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
     - [RuntimeKernelModuleState](#talos.resource.definitions.enums.RuntimeKernelModuleState)
     - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
+    - [RuntimeLockdownState](#talos.resource.definitions.enums.RuntimeLockdownState)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
     - [RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase)
@@ -553,6 +555,8 @@ description: Talos gRPC API reference.
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
     - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
+    - [KmsgLogDestination](#talos.resource.definitions.runtime.KmsgLogDestination)
+    - [KmsgLogDestination.ExtraTagsEntry](#talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
@@ -606,6 +610,7 @@ description: Talos gRPC API reference.
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
     - [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec)
     - [LinkStatusSpec](#talos.resource.definitions.network.LinkStatusSpec)
+    - [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec)
     - [NameServerSpec](#talos.resource.definitions.network.NameServerSpec)
     - [NfTablesAddressMatch](#talos.resource.definitions.network.NfTablesAddressMatch)
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
@@ -645,6 +650,7 @@ description: Talos gRPC API reference.
     - [VLANSpec](#talos.resource.definitions.network.VLANSpec)
     - [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec)
     - [VRFSlave](#talos.resource.definitions.network.VRFSlave)
+    - [VXLANSpec](#talos.resource.definitions.network.VXLANSpec)
     - [VethSpec](#talos.resource.definitions.network.VethSpec)
     - [WireguardPeer](#talos.resource.definitions.network.WireguardPeer)
     - [WireguardSpec](#talos.resource.definitions.network.WireguardSpec)
@@ -5783,6 +5789,22 @@ NethelpersLinkType is a link type.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersMacvlanMode"></a>
+
+### NethelpersMacvlanMode
+NethelpersMacvlanMode is a MACVLAN operating mode.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| NETHELPERS_MACVLANMODE_UNSPECIFIED | 0 |  |
+| MACVLAN_MODE_PRIVATE | 1 |  |
+| MACVLAN_MODE_VEPA | 2 |  |
+| MACVLAN_MODE_BRIDGE | 4 |  |
+| MACVLAN_MODE_PASSTHRU | 8 |  |
+| MACVLAN_MODE_SOURCE | 16 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersMatchOperator"></a>
 
 ### NethelpersMatchOperator
@@ -6374,6 +6396,19 @@ RuntimeKernelModuleType represents whether a kernel module is built into the ker
 | KERNEL_MODULE_TYPE_UNKNOWN | 0 |  |
 | KERNEL_MODULE_TYPE_BUILTIN | 1 |  |
 | KERNEL_MODULE_TYPE_DYNAMIC | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.RuntimeLockdownState"></a>
+
+### RuntimeLockdownState
+RuntimeLockdownState describes the current kernel lockdown level.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LOCKDOWN_STATE_NONE | 0 |  |
+| LOCKDOWN_STATE_INTEGRITY | 1 |  |
+| LOCKDOWN_STATE_CONFIDENTIALITY | 2 |  |
 
 
 
@@ -9265,6 +9300,7 @@ ConfigSpec describes KubeSpan configuration..
 | harvest_extra_endpoints | [bool](#bool) |  | Harvest endpoints from the peer statuses. |
 | extra_endpoints | [common.NetIPPort](#common.NetIPPort) | repeated | Extra endpoints to announce. |
 | exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated | If not empty, filter advertised networks using the list of CIDRs. |
+| peer_endpoint_filters | [string](#string) | repeated | If not empty, filter peer endpoints to connect to using the list of CIDRs. |
 
 
 
@@ -9629,7 +9665,40 @@ KmsgLogConfigSpec describes configuration for kmsg log streaming.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| destinations | [common.URL](#common.URL) | repeated |  |
+| destinations | [common.URL](#common.URL) | repeated | Destinations is retained for compatibility with clients which do not support tagged destinations. |
+| tagged_destinations | [KmsgLogDestination](#talos.resource.definitions.runtime.KmsgLogDestination) | repeated | TaggedDestinations associates each endpoint with its dedicated extra tags. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KmsgLogDestination"></a>
+
+### KmsgLogDestination
+KmsgLogDestination configures a destination for kernel message logs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| endpoint | [common.URL](#common.URL) |  |  |
+| extra_tags | [KmsgLogDestination.ExtraTagsEntry](#talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry"></a>
+
+### KmsgLogDestination.ExtraTagsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
@@ -9828,6 +9897,7 @@ SecurityStateSpec describes the security state resource properties.
 | booted_with_uki | [bool](#bool) |  |  |
 | fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
 | module_signature_enforced | [bool](#bool) |  |  |
+| lockdown_state | [talos.resource.definitions.enums.RuntimeLockdownState](#talos.resource.definitions.enums.RuntimeLockdownState) |  |  |
 
 
 
@@ -10593,6 +10663,8 @@ LinkSpecSpec describes spec for the link.
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 | vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  | VRFSlave carries VRF slave details for interfaces in a VRF. |
 | veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
+| mac_vlan | [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec) |  |  |
+| vxlan | [VXLANSpec](#talos.resource.definitions.network.VXLANSpec) |  |  |
 
 
 
@@ -10641,6 +10713,23 @@ LinkStatusSpec describes status of rendered secrets.
 | alt_names | [string](#string) | repeated |  |
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 | veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
+| mac_vlan | [MacVLANSpec](#talos.resource.definitions.network.MacVLANSpec) |  |  |
+| vxlan | [VXLANSpec](#talos.resource.definitions.network.VXLANSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.MacVLANSpec"></a>
+
+### MacVLANSpec
+MacVLANSpec describes MACVLAN settings if Kind == "macvlan".
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mode | [talos.resource.definitions.enums.NethelpersMacvlanMode](#talos.resource.definitions.enums.NethelpersMacvlanMode) |  | Mode is the MACVLAN operating mode. |
 
 
 
@@ -11360,6 +11449,25 @@ VRFSlave contains the name of the master vrf for an interface
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | master_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.VXLANSpec"></a>
+
+### VXLANSpec
+VXLANSpec describes VXLAN settings if Kind == "vxlan".
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [uint32](#uint32) |  | ID is the VXLAN network identifier (VNI). |
+| local | [common.NetIP](#common.NetIP) |  | Local is the source IP address (IPv4 or IPv6) of the tunnel endpoint. |
+| group | [common.NetIP](#common.NetIP) |  | Group is the multicast group IP address (IPv4 or IPv6) of the tunnel. |
+| port | [uint32](#uint32) |  | Port is the destination UDP port for VXLAN traffic. |
+| learning | [bool](#bool) |  | Learning enables learning of source link addresses. |
 
 
 

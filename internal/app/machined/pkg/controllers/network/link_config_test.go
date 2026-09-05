@@ -683,6 +683,70 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
 	)
 }
 
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVXLAN() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	vxlan := networkcfg.NewVXLANConfigV1Alpha1("vxlan900")
+	vxlan.VXLANID = 100
+	vxlan.VXLANLocal = meta.Addr{Addr: netip.MustParseAddr("10.255.0.1")}
+	vxlan.VXLANParent = "vtep0"
+	vxlan.VXLANPort = new(uint16(4789))
+	vxlan.VXLANLearning = new(false)
+
+	ctr, err := container.New(vxlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/vxlan900",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal("vxlan900", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.True(r.TypedSpec().Logical)
+			asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+			asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+			asrt.Equal("vtep0", r.TypedSpec().ParentName)
+			asrt.Equal(network.VXLANSpec{
+				ID:       100,
+				Local:    netip.MustParseAddr("10.255.0.1"),
+				Port:     4789,
+				Learning: false,
+			}, r.TypedSpec().VXLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVXLANDefaults() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	vxlan := networkcfg.NewVXLANConfigV1Alpha1("vxlan900")
+	vxlan.VXLANID = 100
+	vxlan.VXLANParent = "vtep0"
+
+	ctr, err := container.New(vxlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/vxlan900",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+			asrt.Equal(network.VXLANSpec{
+				ID:       100,
+				Port:     4789,
+				Learning: true,
+			}, r.TypedSpec().VXLAN)
+		},
+	)
+}
+
 func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVethVRF() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
 
@@ -1022,4 +1086,122 @@ func TestLinkConfigSuite(t *testing.T) {
 			},
 		},
 	})
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleMacVLAN() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+
+	ctr, err := container.New(macvlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal("eth0.macvlan", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.True(r.TypedSpec().Logical)
+			asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+			asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+			asrt.Equal("eth0", r.TypedSpec().ParentName)
+			asrt.Equal(network.MacVLANSpec{
+				Mode: nethelpers.MacvlanModeBridge,
+			}, r.TypedSpec().MacVLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleMacVLANDefaults() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+
+	ctr, err := container.New(macvlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+			asrt.True(r.TypedSpec().Up)
+			asrt.Equal(network.MacVLANSpec{
+				Mode: nethelpers.MacvlanModeBridge,
+			}, r.TypedSpec().MacVLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleMacVLANDown() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+	macvlan.LinkUp = new(false)
+
+	ctr, err := container.New(macvlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+			asrt.False(r.TypedSpec().Up)
+		},
+	)
+}
+
+// TestMachineConfigurationMacVLANInVRF mirrors the reporter's use case from
+// https://github.com/siderolabs/talos/issues/13167: a macvlan interface created
+// on a physical link and enslaved to a VRF.
+func (suite *LinkConfigSuite) TestMachineConfigurationMacVLANInVRF() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+
+	vrf := networkcfg.NewVRFConfigV1Alpha1("underlay")
+	vrf.VRFLinks = []string{"eth0.macvlan"}
+	vrf.VRFTable = nethelpers.RoutingTable(99)
+
+	ctr, err := container.New(macvlan, vrf)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+			"configuration/underlay",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "eth0.macvlan":
+				asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+				asrt.Equal("eth0", r.TypedSpec().ParentName)
+				asrt.Equal(network.MacVLANSpec{Mode: nethelpers.MacvlanModeBridge}, r.TypedSpec().MacVLAN)
+				asrt.Equal("underlay", r.TypedSpec().VRFSlave.MasterName)
+			case "underlay":
+				asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.RoutingTable(99), r.TypedSpec().VRFMaster.Table)
+			}
+		},
+	)
 }

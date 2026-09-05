@@ -145,7 +145,7 @@ require (
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.2.1
 	github.com/siderolabs/go-copy v0.1.0
-	github.com/siderolabs/go-debug v0.6.2
+	github.com/siderolabs/go-debug v0.6.3
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
 	github.com/siderolabs/go-kubernetes v0.2.41

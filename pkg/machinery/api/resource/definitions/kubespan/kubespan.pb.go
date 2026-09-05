@@ -46,8 +46,10 @@ type ConfigSpec struct {
 	ExtraEndpoints []*common.NetIPPort `protobuf:"bytes,9,rep,name=extra_endpoints,json=extraEndpoints,proto3" json:"extra_endpoints,omitempty"`
 	// If not empty, filter advertised networks using the list of CIDRs.
 	ExcludeAdvertisedNetworks []*common.NetIPPrefix `protobuf:"bytes,10,rep,name=exclude_advertised_networks,json=excludeAdvertisedNetworks,proto3" json:"exclude_advertised_networks,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	// If not empty, filter peer endpoints to connect to using the list of CIDRs.
+	PeerEndpointFilters []string `protobuf:"bytes,11,rep,name=peer_endpoint_filters,json=peerEndpointFilters,proto3" json:"peer_endpoint_filters,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *ConfigSpec) Reset() {
@@ -146,6 +148,13 @@ func (x *ConfigSpec) GetExtraEndpoints() []*common.NetIPPort {
 func (x *ConfigSpec) GetExcludeAdvertisedNetworks() []*common.NetIPPrefix {
 	if x != nil {
 		return x.ExcludeAdvertisedNetworks
+	}
+	return nil
+}
+
+func (x *ConfigSpec) GetPeerEndpointFilters() []string {
+	if x != nil {
+		return x.PeerEndpointFilters
 	}
 	return nil
 }
@@ -457,7 +466,7 @@ var File_resource_definitions_kubespan_kubespan_proto protoreflect.FileDescripto
 
 const file_resource_definitions_kubespan_kubespan_proto_rawDesc = "" +
 	"\n" +
-	",resource/definitions/kubespan/kubespan.proto\x12#talos.resource.definitions.kubespan\x1a\x13common/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a&resource/definitions/enums/enums.proto\"\xd9\x03\n" +
+	",resource/definitions/kubespan/kubespan.proto\x12#talos.resource.definitions.kubespan\x1a\x13common/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a&resource/definitions/enums/enums.proto\"\x8d\x04\n" +
 	"\n" +
 	"ConfigSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x1d\n" +
@@ -471,7 +480,8 @@ const file_resource_definitions_kubespan_kubespan_proto_rawDesc = "" +
 	"\x17harvest_extra_endpoints\x18\b \x01(\bR\x15harvestExtraEndpoints\x12:\n" +
 	"\x0fextra_endpoints\x18\t \x03(\v2\x11.common.NetIPPortR\x0eextraEndpoints\x12S\n" +
 	"\x1bexclude_advertised_networks\x18\n" +
-	" \x03(\v2\x13.common.NetIPPrefixR\x19excludeAdvertisedNetworks\"`\n" +
+	" \x03(\v2\x13.common.NetIPPrefixR\x19excludeAdvertisedNetworks\x122\n" +
+	"\x15peer_endpoint_filters\x18\v \x03(\tR\x13peerEndpointFilters\"`\n" +
 	"\fEndpointSpec\x12!\n" +
 	"\faffiliate_id\x18\x01 \x01(\tR\vaffiliateId\x12-\n" +
 	"\bendpoint\x18\x02 \x01(\v2\x11.common.NetIPPortR\bendpoint\"\xaa\x01\n" +

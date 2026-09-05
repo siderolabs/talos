@@ -117,6 +117,26 @@ type KubeSpanFiltersConfig struct {
 	ConfigEndpoints []string `yaml:"endpoints,omitempty"`
 
 	//   description: |
+	//     Filter endpoints received from other KubeSpan peers before this node attempts to connect to them.
+	//
+	//     This filter is the opposite of the `endpoints` filter: `endpoints` filters the addresses this node
+	//     advertises to the whole cluster, affecting how every peer connects to this node, while `peerEndpoints`
+	//     filters the endpoints received from other peers, affecting only outgoing connections of this node.
+	//
+	//     Use it to exclude endpoints which are known to be unreachable from this node
+	//     (e.g., addresses of a private network this node is not connected to), so they are never attempted.
+	//
+	//     Default value: no filtering.
+	//   examples:
+	//     - name: Exclude peer endpoints in the 192.168.0.0/16 subnet.
+	//       value: '[]string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"}'
+	//   schema:
+	//     type: array
+	//     items:
+	//       type: string
+	ConfigPeerEndpoints []string `yaml:"peerEndpoints,omitempty"`
+
+	//   description: |
 	//     Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.
 	//
 	//     By default, all networks are advertised.
@@ -183,6 +203,14 @@ func (s *KubeSpanConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 				errs = errors.Join(errs, fmt.Errorf("KubeSpan endpoint filter is not valid: %q", cidr))
 			}
 		}
+
+		for _, cidr := range s.ConfigFilters.ConfigPeerEndpoints {
+			cidr = strings.TrimPrefix(cidr, "!")
+
+			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
+				errs = errors.Join(errs, fmt.Errorf("KubeSpan peer endpoint filter is not valid: %q", cidr))
+			}
+		}
 	}
 
 	return nil, errs
@@ -240,6 +268,11 @@ func (s *KubeSpanConfigV1Alpha1) Filters() config.NetworkKubeSpanFilters {
 // Endpoints implements config.NetworkKubeSpanFilters interface.
 func (f *KubeSpanFiltersConfig) Endpoints() []string {
 	return f.ConfigEndpoints
+}
+
+// PeerEndpoints implements config.NetworkKubeSpanFilters interface.
+func (f *KubeSpanFiltersConfig) PeerEndpoints() []string {
+	return f.ConfigPeerEndpoints
 }
 
 // ExcludeAdvertisedNetworks implements config.NetworkKubeSpanFilters interface.

@@ -336,6 +336,20 @@ type NetworkVRFConfig interface {
 	Table() nethelpers.RoutingTable
 }
 
+// NetworkVXLANConfig defines a vxlan link configuration.
+type NetworkVXLANConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	VXLANConfig()
+	ID() uint32
+	Local() optional.Optional[netip.Addr]
+	Group() optional.Optional[netip.Addr]
+	Parent() string
+	Port() optional.Optional[uint16]
+	Learning() optional.Optional[bool]
+}
+
 // NetworkWireguardConfig defines a Wireguard link configuration.
 type NetworkWireguardConfig interface {
 	NamedDocument
@@ -345,6 +359,16 @@ type NetworkWireguardConfig interface {
 	ListenPort() optional.Optional[int]
 	FirewallMark() optional.Optional[int]
 	Peers() []NetworkWireguardPeerConfig
+}
+
+// NetworkMacVLANConfig defines a macvlan link configuration.
+type NetworkMacVLANConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	MacVLANConfig()
+	Parent() string
+	Mode() optional.Optional[nethelpers.MacvlanMode]
 }
 
 // NetworkWireguardPeerConfig defines a Wireguard peer configuration.
@@ -369,6 +393,7 @@ type NetworkKubeSpanConfig interface {
 // NetworkKubeSpanFilters configures KubeSpan filters.
 type NetworkKubeSpanFilters interface {
 	Endpoints() []string
+	PeerEndpoints() []string
 	ExcludeAdvertisedNetworks() []netip.Prefix
 }
 

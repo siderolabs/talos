@@ -226,3 +226,65 @@ func TestPeerSpecSuite(t *testing.T) {
 		},
 	})
 }
+
+type PeerSpecFilterSuite struct {
+	ctest.DefaultSuite
+}
+
+func (suite *PeerSpecFilterSuite) TestPeerEndpointFilters() {
+	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
+	cfg.TypedSpec().Enabled = true
+	cfg.TypedSpec().PeerEndpointFilters = []string{"0.0.0.0/0", "!172.20.0.0/24", "::/0"}
+	suite.Create(cfg)
+
+	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
+	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
+	suite.Create(nodeIdentity)
+
+	affiliate := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
+	*affiliate.TypedSpec() = cluster.AffiliateSpec{
+		NodeID:      "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		Hostname:    "node-1",
+		Nodename:    "node-1",
+		MachineType: machine.TypeWorker,
+		Addresses:   []netip.Addr{netip.MustParseAddr("172.20.0.2")},
+		KubeSpan: cluster.KubeSpanAffiliateSpec{
+			PublicKey: "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
+			Address:   netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			Endpoints: []netip.AddrPort{
+				netip.MustParseAddrPort("172.20.0.2:51820"),
+				netip.MustParseAddrPort("1.2.3.4:51820"),
+				netip.MustParseAddrPort("[2001:db8::1]:51820"),
+			},
+		},
+	}
+	suite.Create(affiliate)
+
+	// the endpoint in the excluded subnet should be filtered out, preserving the order of the others
+	ctest.AssertResource(
+		suite,
+		affiliate.TypedSpec().KubeSpan.PublicKey,
+		func(res *kubespan.PeerSpec, asrt *assert.Assertions) {
+			asrt.Equal(
+				[]netip.AddrPort{
+					netip.MustParseAddrPort("1.2.3.4:51820"),
+					netip.MustParseAddrPort("[2001:db8::1]:51820"),
+				},
+				res.TypedSpec().Endpoints,
+			)
+		},
+	)
+}
+
+func TestPeerSpecFilterSuite(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, &PeerSpecFilterSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.PeerSpecController{}))
+			},
+		},
+	})
+}

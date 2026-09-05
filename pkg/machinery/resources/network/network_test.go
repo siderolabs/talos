@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -17,7 +18,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 	networkpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -125,4 +128,91 @@ func TestOperatorSpecDHCP4SkipRoutesProtobuf(t *testing.T) {
 	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
 
 	assert.True(t, spec.GetDhcp4().GetSkipRoutes(), "SkipRoutes must survive the resource->protobuf roundtrip")
+}
+
+// TestLinkSpecMacVLANProtobuf is a regression test for the MacVLAN field being
+// dropped when a LinkSpec crosses the resource API: the field is present on the
+// Go resource struct but must also exist in the generated protobuf bindings.
+func TestLinkSpecMacVLANProtobuf(t *testing.T) {
+	t.Parallel()
+
+	res := network.NewLinkSpec(network.NamespaceName, "eth0.macvlan")
+	res.TypedSpec().Kind = network.LinkKindMacVLAN
+	res.TypedSpec().MacVLAN = network.MacVLANSpec{
+		Mode: nethelpers.MacvlanModeBridge,
+	}
+
+	var spec networkpb.LinkSpecSpec
+
+	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+	require.NotNil(t, spec.GetMacVlan(), "MacVLAN field must survive the resource->protobuf roundtrip")
+	assert.Equal(t, enums.NethelpersMacvlanMode_MACVLAN_MODE_BRIDGE, spec.GetMacVlan().GetMode())
+}
+
+// TestLinkStatusMacVLANProtobuf is the LinkStatus counterpart of
+// TestLinkSpecMacVLANProtobuf: the mode decoded from the kernel must reach the
+// API clients as well.
+func TestLinkStatusMacVLANProtobuf(t *testing.T) {
+	t.Parallel()
+
+	res := network.NewLinkStatus(network.NamespaceName, "eth0.macvlan")
+	res.TypedSpec().Kind = network.LinkKindMacVLAN
+	res.TypedSpec().MacVLAN = network.MacVLANSpec{
+		Mode: nethelpers.MacvlanModePrivate,
+	}
+
+	var spec networkpb.LinkStatusSpec
+
+	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+	require.NotNil(t, spec.GetMacVlan(), "MacVLAN field must survive the resource->protobuf roundtrip")
+	assert.Equal(t, enums.NethelpersMacvlanMode_MACVLAN_MODE_PRIVATE, spec.GetMacVlan().GetMode())
+}
+
+// TestLinkSpecVXLANProtobuf is a regression test for the VXLAN field being
+// dropped when a LinkSpec crosses the resource API: the field is present on the
+// Go resource struct but must also exist in the generated protobuf bindings.
+func TestLinkSpecVXLANProtobuf(t *testing.T) {
+	t.Parallel()
+
+	res := network.NewLinkSpec(network.NamespaceName, "vxlan100")
+	res.TypedSpec().Kind = network.LinkKindVXLAN
+	res.TypedSpec().VXLAN = network.VXLANSpec{
+		ID:       100,
+		Local:    netip.MustParseAddr("10.255.0.1"),
+		Port:     4789,
+		Learning: true,
+	}
+
+	var spec networkpb.LinkSpecSpec
+
+	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+	require.NotNil(t, spec.GetVxlan(), "VXLAN field must survive the resource->protobuf roundtrip")
+	assert.EqualValues(t, 100, spec.GetVxlan().GetId())
+	assert.EqualValues(t, 4789, spec.GetVxlan().GetPort())
+	assert.True(t, spec.GetVxlan().GetLearning())
+}
+
+// TestLinkStatusVXLANProtobuf is the LinkStatus counterpart of
+// TestLinkSpecVXLANProtobuf: the settings read back from the kernel must reach
+// the API clients as well.
+func TestLinkStatusVXLANProtobuf(t *testing.T) {
+	t.Parallel()
+
+	res := network.NewLinkStatus(network.NamespaceName, "vxlan100")
+	res.TypedSpec().Kind = network.LinkKindVXLAN
+	res.TypedSpec().VXLAN = network.VXLANSpec{
+		ID:   100,
+		Port: 4789,
+	}
+
+	var spec networkpb.LinkStatusSpec
+
+	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+	require.NotNil(t, spec.GetVxlan(), "VXLAN field must survive the resource->protobuf roundtrip")
+	assert.EqualValues(t, 100, spec.GetVxlan().GetId())
+	assert.EqualValues(t, 4789, spec.GetVxlan().GetPort())
 }

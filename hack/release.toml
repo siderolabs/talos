@@ -26,6 +26,17 @@ CoreDNS: 1.14.7
 Talos is built with Go 1.26.7.
 """
 
+    [notes.kubespan_peer_endpoint_filters]
+        title = "KubeSpan Peer Endpoint Filters"
+        description = """\
+KubeSpan now supports filtering the endpoints received from other peers via `filters.peerEndpoints` in the `KubeSpanConfig` document.
+
+While `filters.endpoints` filters the addresses a node advertises to the whole cluster, `filters.peerEndpoints` filters the endpoints
+received from other peers before the node connects to them, affecting only that node. This allows excluding peer-advertised endpoints
+which are known to be unreachable from a node (e.g., addresses of a private network the node is not connected to), so that KubeSpan
+endpoint rotation never attempts them.
+"""
+
     [notes.ipvs]
         title = "IPVS Support"
         description = """\
@@ -105,6 +116,64 @@ contents: |
 ```
 
 The extension does not provide a default configuration, so `multipathd` remains waiting until `/etc/multipath.conf` is present.
+"""
+
+    [notes.macvlan]
+        title = "MACVLAN Links"
+        description = """\
+Talos Linux now supports creating MACVLAN links with a new `MacVLANConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: MacVLANConfig
+name: eth0.macvlan
+parent: eth0
+mode: bridge # optional, defaults to `bridge`
+addresses:
+  - address: 192.168.1.100/24
+```
+
+The `source` mode is not supported yet, as it requires a list of allowed source MAC addresses.
+"""
+
+    [notes.vxlan]
+        title = "VXLAN Links"
+        description = """\
+Talos Linux now supports creating VXLAN links with a new `VXLANConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: VXLANConfig
+name: vxlan100
+id: 100 # VXLAN network identifier (VNI)
+parent: eth0
+local: 10.255.0.1 # or `group:` for a multicast group, but not both
+port: 4789 # optional, defaults to 4789
+learning: false # optional, defaults to true
+addresses:
+  - address: 192.168.1.100/24
+```
+"""
+
+    [notes.kmsg_log_extra_tags]
+        title = "Kernel Log Extra Tags"
+        description = """\
+The `KmsgLogConfig` document now supports an `extraTags` field which attaches additional key-value pairs
+to every kernel log message sent to that destination:
+
+```yaml
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: apiSink
+url: https://kmsglog.api/logs
+extraTags:
+  cluster: staging-west
+  node: worker-1
+```
+
+Tags are scoped to the destination they are configured on, so different endpoints can receive different tags.
+The keys `facility`, `seq`, `clock`, `priority`, `msg`, `talos-time` and `talos-level` are reserved and rejected,
+as they are set by Talos itself.
 """
 
 [make_deps]

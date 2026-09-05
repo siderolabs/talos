@@ -160,3 +160,42 @@ layer: platform
 
 	assert.Equal(t, spec, spec2)
 }
+
+func TestLinkSpecMergeLogicalSpecs(t *testing.T) {
+	t.Parallel()
+
+	// operator-provided specs come from a lower config layer, so they end up as the base of the
+	// merge, and the logical link settings arrive via `other`
+	base := network.LinkSpecSpec{
+		Name:        "vxlan0",
+		Up:          true,
+		MTU:         1400,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	other := network.LinkSpecSpec{
+		Name:       "vxlan0",
+		Logical:    true,
+		Up:         true,
+		Kind:       network.LinkKindVXLAN,
+		Type:       nethelpers.LinkEther,
+		ParentName: "eth0",
+		VXLAN: network.VXLANSpec{
+			ID:       100,
+			Local:    netip.MustParseAddr("10.255.0.1"),
+			Port:     4789,
+			Learning: true,
+		},
+		MacVLAN: network.MacVLANSpec{
+			Mode: nethelpers.MacvlanModeBridge,
+		},
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	require.NoError(t, base.Merge(&other))
+
+	assert.Equal(t, other.VXLAN, base.VXLAN)
+	assert.Equal(t, other.MacVLAN, base.MacVLAN)
+	assert.EqualValues(t, 1400, base.MTU)
+	assert.Equal(t, network.ConfigMachineConfiguration, base.ConfigLayer)
+}

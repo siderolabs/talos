@@ -31,6 +31,14 @@ filters:
     excludeAdvertisedNetworks:
         - 192.168.1.0/24
         - 2003::/16
+
+    # # Filter endpoints received from other KubeSpan peers before this node attempts to connect to them.
+
+    # # Exclude peer endpoints in the 192.168.0.0/16 subnet.
+    # peerEndpoints:
+    #     - 0.0.0.0/0
+    #     - '!192.168.0.0/16'
+    #     - ::/0
 {{< /highlight >}}
 
 
@@ -57,6 +65,12 @@ KubeSpanFiltersConfig configures KubeSpan endpoint filters.
 |-------|------|-------------|----------|
 |`endpoints` |[]string |Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.<br><br>By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>Exclude addresses in 192.168.0.0/16 subnet.:{{< highlight yaml >}}
 endpoints:
+    - 0.0.0.0/0
+    - '!192.168.0.0/16'
+    - ::/0
+{{< /highlight >}}</details> | |
+|`peerEndpoints` |[]string |Filter endpoints received from other KubeSpan peers before this node attempts to connect to them.<br><br>This filter is the opposite of the `endpoints` filter: `endpoints` filters the addresses this node<br>advertises to the whole cluster, affecting how every peer connects to this node, while `peerEndpoints`<br>filters the endpoints received from other peers, affecting only outgoing connections of this node.<br><br>Use it to exclude endpoints which are known to be unreachable from this node<br>(e.g., addresses of a private network this node is not connected to), so they are never attempted.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>Exclude peer endpoints in the 192.168.0.0/16 subnet.:{{< highlight yaml >}}
+peerEndpoints:
     - 0.0.0.0/0
     - '!192.168.0.0/16'
     - ::/0

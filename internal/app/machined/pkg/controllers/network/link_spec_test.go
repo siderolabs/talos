@@ -460,6 +460,92 @@ func (suite *LinkSpecSuite) TestVLAN() {
 	ctest.AssertNoResource[*network.LinkStatus](suite, vlanName2)
 }
 
+func (suite *LinkSpecSuite) TestVXLAN() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
+	*dummy.TypedSpec() = network.LinkSpecSpec{
+		Name:        dummyInterface,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		Up:          true,
+		Logical:     true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	vxlanName := fmt.Sprintf("vx%s", dummyInterface[5:])
+	vxlan := network.NewLinkSpec(network.NamespaceName, vxlanName)
+	*vxlan.TypedSpec() = network.LinkSpecSpec{
+		Name:        vxlanName,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVXLAN,
+		Up:          true,
+		Logical:     true,
+		ParentName:  dummyInterface,
+		ConfigLayer: network.ConfigDefault,
+		VXLAN: network.VXLANSpec{
+			ID:       100,
+			Port:     4789,
+			Learning: true,
+		},
+	}
+
+	for _, res := range []resource.Resource{dummy, vxlan} {
+		suite.Create(res)
+	}
+
+	var linkIndex uint32
+
+	ctest.AssertResource(suite, vxlanName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+		asrt.EqualValues(100, r.TypedSpec().VXLAN.ID)
+		asrt.EqualValues(4789, r.TypedSpec().VXLAN.Port)
+		asrt.True(r.TypedSpec().VXLAN.Learning)
+		asrt.NotZero(r.TypedSpec().LinkIndex)
+
+		linkIndex = r.TypedSpec().Index
+	})
+
+	// the settings match the spec, so the controller must leave the link alone: the kernel doesn't
+	// report the VXLAN parent via IFLA_LINK, and treating that as a parent change would put the link
+	// into an endless delete/re-create loop (the interface index would keep changing)
+	suite.assertLinkNotRecreated(vxlanName, linkIndex)
+
+	// attempt to change the VNI: the link has to be re-created
+	ctest.UpdateWithConflicts(suite, vxlan, func(r *network.LinkSpec) error {
+		r.TypedSpec().VXLAN.ID = 200
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, vxlanName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+		asrt.EqualValues(200, r.TypedSpec().VXLAN.ID)
+	})
+
+	// teardown the links
+	for _, r := range []resource.Resource{vxlan, dummy} {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
+	}
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummyInterface)
+	ctest.AssertNoResource[*network.LinkStatus](suite, vxlanName)
+}
+
+// assertLinkNotRecreated verifies that the link keeps its interface index, i.e. the controller
+// converged instead of deleting and re-creating the link on every reconcile.
+func (suite *LinkSpecSuite) assertLinkNotRecreated(linkName string, index uint32) {
+	suite.Require().NotZero(index)
+
+	for range 5 {
+		time.Sleep(200 * time.Millisecond)
+
+		link, err := safe.StateGetByID[*network.LinkStatus](suite.Ctx(), suite.State(), linkName)
+		suite.Require().NoError(err)
+		suite.Require().Equal(index, link.TypedSpec().Index, "link %q was re-created", linkName)
+	}
+}
+
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestVLANViaAlias() {
 	dummyInterface := suite.uniqueDummyInterface()
