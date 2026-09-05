@@ -7,26 +7,21 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
 	"io"
-	"strings"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
+	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/api/common"
-	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 //go:embed testdata/nvidia-gpu-operator.yaml
@@ -84,106 +79,8 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	for _, node := range nodes {
 		suite.AssertServicesRunning(suite.ctx, node, map[string]string{
 			"ext-nvidia-persistenced": "Running",
-			"ext-nvidia-cdi-gen":      "Finished",
 		})
 	}
-
-	missingCDIFilesData := map[string]map[string]int{
-		"amd64": {
-			"nvidia-open-gpu-kernel-modules-production": 13,
-			"nvidia-open-gpu-kernel-modules-lts":        11,
-			"nonfree-kmod-nvidia-production":            13,
-			"nonfree-kmod-nvidia-lts":                   11,
-		},
-		"arm64": {
-			"nvidia-open-gpu-kernel-modules-production": 11,
-			"nvidia-open-gpu-kernel-modules-lts":        11,
-			"nonfree-kmod-nvidia-production":            11,
-			"nonfree-kmod-nvidia-lts":                   11,
-		},
-	}
-
-	for _, node := range nodes {
-		nodeCtx := client.WithNode(suite.ctx, node)
-
-		versionInfo, err := suite.Client.Version(nodeCtx)
-		suite.Require().NoError(err)
-
-		suite.Require().NotNil(versionInfo.GetMessages(), "version info messages should not be nil")
-
-		extInfo := missingCDIFilesData[versionInfo.GetMessages()[0].Version.Arch]
-
-		list, err := safe.StateListAll[*runtime.ExtensionStatus](nodeCtx, suite.Client.COSI)
-		suite.Require().NoError(err)
-
-		extensionsList := safe.ToSlice(list, func(info *runtime.ExtensionStatus) string {
-			return info.TypedSpec().Metadata.Name
-		})
-
-		var expectedCount int
-
-		for _, name := range extensionsList {
-			if count, exists := extInfo[name]; exists {
-				expectedCount = count
-
-				break
-			}
-		}
-
-		suite.Require().NotZero(expectedCount, "did not find any matching nvidia extension in the list of extensions: %v", extensionsList)
-
-		logsStream, err := suite.Client.Logs(
-			nodeCtx,
-			constants.SystemContainerdNamespace,
-			common.ContainerDriver_CONTAINERD,
-			"ext-nvidia-cdi-gen",
-			false,
-			-1,
-		)
-		suite.Require().NoError(err)
-
-		logReader, err := client.ReadStream(logsStream)
-		suite.Require().NoError(err)
-
-		defer logReader.Close() //nolint:errcheck
-
-		var buffer bytes.Buffer
-
-		_, err = io.Copy(&buffer, logReader)
-		suite.Require().NoError(err)
-
-		logData := buffer.String()
-
-		// we know as baseline we have different number of missing files that are not present in the extension
-		// and manually verified, if some new files are not found we want to fix the extension
-		// Adding an example of the current log message for reference:
-		// ❯ talosctl -n 172.16.15.116 logs ext-nvidia-cdi-gen | grep "Could not"
-		// msg="Could not locate libnvidia-vulkan-producer.so.580.126.20: libnvidia-vulkan-producer.so.580.126.20: not found\nlibnvidia-vulkan-producer.so.580.126.20: not found"
-		// msg="Could not locate X11/xorg.conf.d/10-nvidia.conf: X11/xorg.conf.d/10-nvidia.conf: not found"
-		// msg="Could not locate X11/xorg.conf.d/nvidia-drm-outputclass.conf: X11/xorg.conf.d/nvidia-drm-outputclass.conf: not found"
-		// msg="Could not locate vulkan/implicit_layer.d/nvidia_layers.json: vulkan/implicit_layer.d/nvidia_layers.json: not found\nvulkan/implicit_layer.d/nvidia_layers.json: not found"
-		// msg="Could not locate vulkan/icd.d/nvidia_icd.x86_64.json: vulkan/icd.d/nvidia_icd.x86_64.json: not found\nvulkan/icd.d/nvidia_icd.x86_64.json: not found"
-		// msg="Could not locate /nvidia-fabricmanager/socket: /nvidia-fabricmanager/socket: not found"
-		// msg="Could not locate /tmp/nvidia-mps: /tmp/nvidia-mps: not found"
-		// msg="Could not locate nvidia-imex: nvidia-imex: not found"
-		// msg="Could not locate nvidia-imex-ctl: nvidia-imex-ctl: not found"
-		suite.Assert().Equal(
-			expectedCount,
-			strings.Count(logData, "Could not locate"),
-			"expected exactly %d 'Could not locate' in the logs, got %d. Logs:\n%s",
-			expectedCount,
-			strings.Count(logData, "Could not"),
-			logData,
-		)
-	}
-
-	// nodes = suite.getNVIDIANodes("node.kubernetes.io/instance-type=p4d.24xlarge")
-	// for _, node := range nodes {
-	// 	suite.testServicesRunning(node, map[string]string{
-	// 		"ext-nvidia-persistenced":  "Running",
-	// 		"ext-nvidia-fabricmanager": "Running",
-	// 	})
-	// }
 
 	_, err := suite.Clientset.CoreV1().Namespaces().Create(suite.ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
@@ -206,6 +103,90 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 		"gpu-operator",
 		nvidiaGPUOperatorHelmChartValues,
 	))
+
+	var toolkitDaemonSet *appsv1.DaemonSet
+
+	suite.Require().NoError(retry.Constant(4*time.Minute, retry.WithUnits(5*time.Second)).Retry(
+		func() error {
+			toolkitDaemonSet, err = suite.Clientset.AppsV1().DaemonSets("gpu-operator").Get(
+				suite.ctx,
+				"nvidia-container-toolkit-daemonset",
+				metav1.GetOptions{},
+			)
+			if err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			if toolkitDaemonSet.Status.NumberReady != toolkitDaemonSet.Status.DesiredNumberScheduled {
+				return retry.ExpectedErrorf(
+					"toolkit daemonset has %d/%d pods ready",
+					toolkitDaemonSet.Status.NumberReady,
+					toolkitDaemonSet.Status.DesiredNumberScheduled,
+				)
+			}
+
+			return nil
+		},
+	))
+	suite.Require().NotZero(toolkitDaemonSet.Status.DesiredNumberScheduled)
+
+	_, err = suite.Clientset.NodeV1().RuntimeClasses().Get(suite.ctx, "nvidia", metav1.GetOptions{})
+	suite.Require().True(apierrors.IsNotFound(err), "GPU Operator created the legacy nvidia RuntimeClass: %v", err)
+	suite.Require().Nil(toolkitDaemonSet.Spec.Template.Spec.RuntimeClassName)
+
+	var toolkitContainer *corev1.Container
+
+	for i := range toolkitDaemonSet.Spec.Template.Spec.Containers {
+		if toolkitDaemonSet.Spec.Template.Spec.Containers[i].Name == "nvidia-container-toolkit-ctr" {
+			toolkitContainer = &toolkitDaemonSet.Spec.Template.Spec.Containers[i]
+
+			break
+		}
+	}
+
+	suite.Require().NotNil(toolkitContainer)
+	suite.Require().Contains(toolkitContainer.Env, corev1.EnvVar{Name: "ENABLE_NRI_PLUGIN", Value: "true"})
+	suite.Require().Contains(toolkitContainer.Env, corev1.EnvVar{Name: "ROOT", Value: "/var/lib/nvidia"})
+	suite.Require().Contains(toolkitContainer.Env, corev1.EnvVar{Name: "NRI_SOCKET", Value: "/runtime/nri-sock-dir/nri.sock"})
+
+	toolkitPods, err := suite.GetPodsWithLabel(suite.ctx, "gpu-operator", "app=nvidia-container-toolkit-daemonset")
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(toolkitPods.Items)
+
+	for _, pod := range toolkitPods.Items {
+		suite.Require().Contains(suite.getPodLogs("gpu-operator", pod.Name), "Registering plugin 10-nvidia-toolkit using NRI")
+	}
+
+	var devicePluginDaemonSet *appsv1.DaemonSet
+
+	suite.Require().NoError(retry.Constant(4*time.Minute, retry.WithUnits(5*time.Second)).Retry(
+		func() error {
+			devicePluginDaemonSet, err = suite.Clientset.AppsV1().DaemonSets("gpu-operator").Get(
+				suite.ctx,
+				"nvidia-device-plugin-daemonset",
+				metav1.GetOptions{},
+			)
+			if err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			if devicePluginDaemonSet.Status.NumberReady != devicePluginDaemonSet.Status.DesiredNumberScheduled {
+				return retry.ExpectedErrorf(
+					"device plugin daemonset has %d/%d pods ready",
+					devicePluginDaemonSet.Status.NumberReady,
+					devicePluginDaemonSet.Status.DesiredNumberScheduled,
+				)
+			}
+
+			return nil
+		},
+	))
+	suite.Require().NotZero(devicePluginDaemonSet.Status.DesiredNumberScheduled)
+	suite.Require().Nil(devicePluginDaemonSet.Spec.Template.Spec.RuntimeClassName)
+	suite.Require().Equal(
+		"management.nvidia.com/gpu=all",
+		devicePluginDaemonSet.Spec.Template.Annotations["nvidia.cdi.k8s.io/container.nvidia-device-plugin"],
+	)
 
 	suite.Run("CUDA test", func() {
 		// now we can create a cuda test job
@@ -263,65 +244,6 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 		suite.Require().Len(podList.Items, 1)
 
 		for _, pod := range podList.Items {
-			logData := suite.getPodLogs("default", pod.Name)
-
-			suite.Require().Contains(logData, "Test PASSED")
-		}
-	})
-
-	suite.Run("CUDA CDI test", func() {
-		// test CDI code path by requesting nvidia.com/gpu resource limits
-		_, err = suite.Clientset.BatchV1().Jobs("default").Create(suite.ctx, nvidiaCDITestJob(), metav1.CreateOptions{})
-		defer suite.Clientset.BatchV1().Jobs("default").Delete(suite.ctx, "cuda-cdi-test", metav1.DeleteOptions{}) //nolint:errcheck
-
-		suite.Require().NoError(err)
-
-		defer func() {
-			cdiPodList, listErr := suite.GetPodsWithLabel(suite.ctx, "default", "app.kubernetes.io/name=cuda-cdi-test")
-			if listErr != nil {
-				err = listErr
-			}
-
-			for _, pod := range cdiPodList.Items {
-				err = suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, pod.Name, metav1.DeleteOptions{})
-			}
-		}()
-
-		suite.Require().NoError(retry.Constant(4*time.Minute, retry.WithUnits(time.Second*10)).Retry(
-			func() error {
-				cdiPodList, listErr := suite.GetPodsWithLabel(suite.ctx, "default", "app.kubernetes.io/name=cuda-cdi-test")
-				if listErr != nil {
-					return retry.ExpectedErrorf("error getting pod: %s", listErr)
-				}
-
-				for _, pod := range cdiPodList.Items {
-					if pod.Status.Phase == corev1.PodFailed {
-						logData := suite.getPodLogs("default", pod.Name)
-
-						suite.T().Logf("pod %s logs:\n%s", pod.Name, logData)
-					}
-				}
-
-				if len(cdiPodList.Items) != 1 {
-					return retry.ExpectedErrorf("expected 1 pod, got %d", len(cdiPodList.Items))
-				}
-
-				for _, pod := range cdiPodList.Items {
-					if pod.Status.Phase != corev1.PodSucceeded {
-						return retry.ExpectedErrorf("%s is not completed yet: %s", pod.Name, pod.Status.Phase)
-					}
-				}
-
-				return nil
-			},
-		))
-
-		cdiPodList, err := suite.GetPodsWithLabel(suite.ctx, "default", "app.kubernetes.io/name=cuda-cdi-test")
-		suite.Require().NoError(err)
-
-		suite.Require().Len(cdiPodList.Items, 1)
-
-		for _, pod := range cdiPodList.Items {
 			logData := suite.getPodLogs("default", pod.Name)
 
 			suite.Require().Contains(logData, "Test PASSED")
@@ -395,54 +317,6 @@ func nvidiaCUDATestJob() *batchv1.Job {
 						{
 							Name:  "cuda-test",
 							Image: fmt.Sprintf("nvcr.io/nvidia/k8s/cuda-sample:%s", NvidiaCUDATestImageVersion),
-						},
-					},
-					Affinity: &corev1.Affinity{
-						NodeAffinity: &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{
-									{
-										MatchExpressions: []corev1.NodeSelectorRequirement{
-											{
-												Key:      "node.kubernetes.io/instance-type",
-												Operator: corev1.NodeSelectorOpIn,
-												Values:   []string{"g4dn.xlarge", "p4d.24xlarge", "g5g.xlarge"},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-					RestartPolicy:    corev1.RestartPolicyNever,
-					RuntimeClassName: new("nvidia"),
-				},
-			},
-		},
-	}
-}
-
-// nvidiaCDITestJob creates a job that requests nvidia.com/gpu resource limits,
-// exercising the CDI code path (as opposed to runtimeClassName alone).
-func nvidiaCDITestJob() *batchv1.Job {
-	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "cuda-cdi-test",
-		},
-		Spec: batchv1.JobSpec{
-			Completions: new(int32(1)),
-			Template: corev1.PodTemplateSpec{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: "cuda-cdi-test",
-					Labels: map[string]string{
-						"app.kubernetes.io/name": "cuda-cdi-test",
-					},
-				},
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{
-						{
-							Name:  "cuda-cdi-test",
-							Image: fmt.Sprintf("nvcr.io/nvidia/k8s/cuda-sample:%s", NvidiaCUDATestImageVersion),
 							Resources: corev1.ResourceRequirements{
 								Limits: corev1.ResourceList{
 									corev1.ResourceName("nvidia.com/gpu"): resource.MustParse("1"),
@@ -467,8 +341,7 @@ func nvidiaCDITestJob() *batchv1.Job {
 							},
 						},
 					},
-					RestartPolicy:    corev1.RestartPolicyNever,
-					RuntimeClassName: new("nvidia"),
+					RestartPolicy: corev1.RestartPolicyNever,
 				},
 			},
 		},
