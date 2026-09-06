@@ -51,6 +51,7 @@
     watch_reads
     watch_sb
     watch_with_perm
+    watch_mountns
     write
 ))
 (class file (entrypoint execute_no_trans))
@@ -153,6 +154,8 @@
     firmware_load
     kexec_image_load
     kexec_initramfs_load
+    policy_load
+    x509_certificate_load
 ))
 (class process2 (nnp_transition nosuid_transition))
 (class fd (use))
@@ -217,9 +220,9 @@
 
 (class netlink_socket ())
 (classcommon netlink_socket socket_common)
-(class netlink_route_socket (nlmsg_read nlmsg_write))
+(class netlink_route_socket (nlmsg_read nlmsg_write nlmsg))
 (classcommon netlink_route_socket socket_common)
-(class netlink_tcpdiag_socket (nlmsg_read nlmsg_write))
+(class netlink_tcpdiag_socket (nlmsg_read nlmsg_write nlmsg))
 (classcommon netlink_tcpdiag_socket socket_common)
 (class netlink_nflog_socket ())
 (classcommon netlink_nflog_socket socket_common)
@@ -231,6 +234,7 @@
     nlmsg_relay
     nlmsg_tty_audit
     nlmsg_write
+    nlmsg
 ))
 (classcommon netlink_audit_socket socket_common)
 (class netlink_dnrt_socket ())
@@ -253,7 +257,7 @@
 (classcommon netlink_rdma_socket socket_common)
 (class netlink_crypto_socket ())
 (classcommon netlink_crypto_socket socket_common)
-(class netlink_xfrm_socket (nlmsg_read nlmsg_write))
+(class netlink_xfrm_socket (nlmsg_read nlmsg_write nlmsg))
 (classcommon netlink_xfrm_socket socket_common)
 
 (class obsolete_netlink_firewall_socket (nlmsg_read nlmsg_write))
@@ -373,7 +377,7 @@
 (class lockdown (integrity confidentiality))
 (class anon_inode ())
 (classcommon anon_inode file_common)
-(class io_uring (override_creds sqpoll cmd))
+(class io_uring (override_creds sqpoll cmd allowed))
 (class user_namespace (create))
 
 (classorder (
