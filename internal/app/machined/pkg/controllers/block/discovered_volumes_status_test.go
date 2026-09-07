@@ -5,12 +5,14 @@
 package block_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 
 	blockctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -29,7 +31,9 @@ func TestDiscoveredVolumesStatusSuite(t *testing.T) {
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
+					WaitForUSB: func(context.Context, *zap.Logger) error { return nil },
+				}))
 			},
 		},
 	})
@@ -132,5 +136,60 @@ func (suite *DiscoveredVolumesStatusSuite) TestReadyDoesNotResetWhenDevicesBecom
 	// Confirm Ready remains true (intentional one-way latch behavior).
 	ctest.AssertResource(suite, block.DiscoveredVolumesStatusID, func(r *block.DiscoveredVolumesStatus, asrt *assert.Assertions) {
 		asrt.True(r.TypedSpec().Ready)
+	})
+}
+
+// DiscoveredVolumesStatusUSBSuite checks that the discovery refresh is not requested before the USB
+// bus is enumerated: a USB-attached system disk shows up long after udevd settles, and if the refresh
+// runs without it, the volume manager declares META/STATE missing and the node drops to maintenance.
+type DiscoveredVolumesStatusUSBSuite struct {
+	ctest.DefaultSuite
+
+	usbSettled chan struct{}
+}
+
+func TestDiscoveredVolumesStatusUSBSuite(t *testing.T) {
+	t.Parallel()
+
+	s := &DiscoveredVolumesStatusUSBSuite{
+		usbSettled: make(chan struct{}),
+	}
+
+	s.DefaultSuite = ctest.DefaultSuite{
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
+				WaitForUSB: func(ctx context.Context, _ *zap.Logger) error {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-s.usbSettled:
+						return nil
+					}
+				},
+			}))
+		},
+	}
+
+	suite.Run(t, s)
+}
+
+func (suite *DiscoveredVolumesStatusUSBSuite) TestWaitsForUSB() {
+	devicesStatus := runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID)
+	devicesStatus.TypedSpec().Ready = true
+	suite.Create(devicesStatus)
+
+	// udevd settled, but the USB bus is still enumerating: no discovery refresh yet
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Assert().Never(func() bool {
+		_, err := safe.StateGetByID[*block.DiscoveryRefreshRequest](ctx, st, block.RefreshID)
+
+		return err == nil
+	}, time.Second, 100*time.Millisecond)
+
+	close(suite.usbSettled)
+
+	ctest.AssertResource(suite, block.RefreshID, func(r *block.DiscoveryRefreshRequest, asrt *assert.Assertions) {
+		asrt.Equal(1, r.TypedSpec().Request)
 	})
 }
