@@ -201,11 +201,6 @@ func launchVM(config *LaunchConfig) error {
 		ahciBus                                                                      int
 	)
 
-	blockDeviceIOOptions := "aio=threads,cache=none"
-	if runtime.GOOS == "linux" {
-		blockDeviceIOOptions = "aio=native,cache=none"
-	}
-
 	for i, disk := range config.DiskPaths {
 		driver := config.DiskDrivers[i]
 		blockSize := config.DiskBlockSizes[i]
@@ -224,12 +219,12 @@ func launchVM(config *LaunchConfig) error {
 		case "virtio":
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("virtio-blk-pci,drive=virtio%d,logical_block_size=%d,physical_block_size=%d%s", i, blockSize, blockSize, serial),
 			)
 
 		case "ide":
-			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none", disk))
+			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=unsafe", disk))
 
 		case "ahci":
 			if !ahciAttached {
@@ -239,7 +234,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s", i, disk),
+				"-drive", fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("ide-hd,drive=ide%d,bus=ahci0.%d", i, ahciBus),
 			)
 
@@ -253,7 +248,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi0.0,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -269,7 +264,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
+				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -283,7 +278,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
 			)
 
