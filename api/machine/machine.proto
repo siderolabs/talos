@@ -623,6 +623,7 @@ message RollbackRequest {}
 
 message Rollback {
   common.Metadata metadata = 1;
+  string actor_id = 2;
 }
 
 message RollbackResponse {
