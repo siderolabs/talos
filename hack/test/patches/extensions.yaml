@@ -182,3 +182,27 @@ contents: |
   frun 10%
   fcull 7%
   fstop 3%
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: nfsd
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: nfs
+volumeType: directory
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: exports
+mode: 0o644
+contents: |
+  /var/mnt/nfs 172.20.1.0/24(rw,sync,no_subtree_check,fsid=0)
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: netconfig
+mode: 0o644
+contents: |
+  udp        tpi_clts      v     inet     udp     -       -
+  tcp        tpi_cots_ord  v     inet     tcp     -       -
