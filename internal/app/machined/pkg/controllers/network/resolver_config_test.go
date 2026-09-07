@@ -230,7 +230,7 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationNewStyle() {
 		},
 	}
 	rc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
-		SearchDomains: []string{"example.com", "example.org"},
+		SearchDomains: networkcfg.SearchDomainList{"example.com", "example.org"},
 	}
 
 	ctr, err := container.New(rc)
@@ -270,7 +270,7 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationEmptySearchDomains() {
 	rc := networkcfg.NewResolverConfigV1Alpha1()
 	// explicit empty search domains (domains: []): no nameservers, override to clear
 	rc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
-		SearchDomains: []string{},
+		SearchDomains: networkcfg.SearchDomainList{},
 	}
 
 	ctr, err := container.New(rc)
