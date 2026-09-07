@@ -285,7 +285,7 @@ func (m *Maker[T]) applyOmniConfigs() error {
 //nolint:gocyclo
 func (m *Maker[T]) finalizeMachineConfigs() (*bundle.Bundle, error) {
 	// These options needs to be generated after the implementing maker has made changes to the cluster request.
-	provisionGenOps, provisionBundleOps := m.Provisioner.GenOptions(m.ClusterRequest.Network, m.VersionContract)
+	provisionGenOps, provisionBundleOps := m.Provisioner.GenOptions(m.ClusterRequest, m.VersionContract)
 	m.GenOps = slices.Concat(m.GenOps, provisionGenOps)
 	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, provisionBundleOps)
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithEndpointList(m.Endpoints)})

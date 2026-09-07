@@ -27,7 +27,7 @@ type Provisioner interface {
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
 
-	GenOptions(NetworkRequest, *config.VersionContract) ([]generate.Option, []bundle.Option)
+	GenOptions(ClusterRequest, *config.VersionContract) ([]generate.Option, []bundle.Option)
 
 	GetInClusterKubernetesControlPlaneEndpoint(req NetworkRequest, controlPlanePort int) string
 	GetExternalKubernetesControlPlaneEndpoint(req NetworkRequest, controlPlanePort int) string

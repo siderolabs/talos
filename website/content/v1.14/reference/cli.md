@@ -149,6 +149,7 @@ talosctl cluster create dev [flags]
       --disable-dhcp-hostname                    skip announcing hostname via DHCP
       --disk int                                 default limit on disk size in MB (each VM) (default 6144)
       --disk-block-size uint                     disk block size (default 512)
+      --disk-driver string                       driver for the primary (system) disks (virtio, ide, ahci, scsi, nvme, megaraid, usb) (default "virtio")
       --disk-encryption-key-types stringArray    encryption key types to use for disk encryption (uuid, kms) (default [uuid])
       --disk-image-path string                   disk image to use
       --disk-preallocate                         whether disk space should be preallocated (default true)
@@ -159,7 +160,7 @@ talosctl cluster create dev [flags]
       --endpoint string                          use endpoint instead of provider defaults
       --extra-boot-kernel-args string            add extra kernel args to the initial boot from vmlinuz and initramfs
       --extra-disks int                          number of extra disks to create for each worker VM
-      --extra-disks-drivers strings              driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)
+      --extra-disks-drivers strings              driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid, usb, virtiofs)
       --extra-disks-on-controlplanes             attach the extra disks to controlplane machines as well (by default they are attached only to workers)
       --extra-disks-serials strings              serials for each extra disk
       --extra-disks-size int                     default limit on disk size in MB (each VM) (default 5120)
@@ -315,7 +316,7 @@ talosctl cluster create qemu [flags]
       --controlplanes int                        the number of controlplanes to create (default 1)
       --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
       --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
-      --disks disks                              list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
+      --disks disks                              list of disks to create in format "<driver1>:<size1>", drivers: virtio, ide, ahci, scsi, nvme, megaraid, usb, virtiofs (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
   -h, --help                                     help for qemu
       --image-factory-auth string                username:password for authenticating with the Image Factory
       --image-factory-url string                 Image Factory url (default "https://factory.talos.dev/")

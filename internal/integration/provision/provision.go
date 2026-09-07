@@ -938,7 +938,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		suite.Require().NoError(err)
 	}
 
-	genOptions, bundleOptions := suite.provisioner.GenOptions(request.Network, versionContract)
+	genOptions, bundleOptions := suite.provisioner.GenOptions(request, versionContract)
 
 	for _, registryMirror := range DefaultSettings.RegistryMirrors {
 		parts := strings.Split(registryMirror, "=")

@@ -27,7 +27,7 @@ type testProvisioner struct {
 	provision.Provisioner
 }
 
-func (p testProvisioner) GenOptions(r provision.NetworkRequest, _ *config.VersionContract) ([]generate.Option, []bundle.Option) {
+func (p testProvisioner) GenOptions(r provision.ClusterRequest, _ *config.VersionContract) ([]generate.Option, []bundle.Option) {
 	return []generate.Option{func(o *generate.Options) error { return nil }}, nil
 }
 

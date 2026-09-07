@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/provision"
@@ -34,4 +35,49 @@ func TestHTTPProbeRequestNormalize(t *testing.T) {
 	normalized, err = request.Normalize()
 	require.NoError(t, err)
 	require.Equal(t, provision.HTTPProbeMaxTimeout, normalized.Timeout)
+}
+
+func TestClusterRequestInstallDiskPath(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		disks    []*provision.Disk
+		expected string
+	}{
+		{
+			name:     "no disks",
+			expected: "/dev/vda",
+		},
+		{
+			name:     "virtio",
+			disks:    []*provision.Disk{{Driver: "virtio"}, {Driver: "usb"}},
+			expected: "/dev/vda",
+		},
+		{
+			name:     "usb",
+			disks:    []*provision.Disk{{Driver: "usb"}, {Driver: "virtio"}},
+			expected: "/dev/sda",
+		},
+		{
+			name:     "nvme",
+			disks:    []*provision.Disk{{Driver: "nvme"}},
+			expected: "/dev/nvme0n1",
+		},
+		{
+			name:     "unknown driver",
+			disks:    []*provision.Disk{{Driver: "virtiofs"}},
+			expected: "/dev/vda",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			req := provision.ClusterRequest{
+				Nodes: provision.NodeRequests{{Disks: test.disks}},
+			}
+
+			assert.Equal(t, test.expected, req.InstallDiskPath())
+		})
+	}
 }
