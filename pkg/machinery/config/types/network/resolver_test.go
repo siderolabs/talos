@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -25,6 +26,9 @@ var expectedResolverConfigDocument []byte
 
 //go:embed testdata/resolverconfig_with_hostdns.yaml
 var expectedResolverConfigDocumentWithHostDNS []byte
+
+//go:embed testdata/resolverconfig_empty_search_domains.yaml
+var expectedResolverConfigDocumentEmptySearchDomains []byte
 
 func TestResolverConfigMarshalStability(t *testing.T) {
 	t.Parallel()
@@ -41,7 +45,7 @@ func TestResolverConfigMarshalStability(t *testing.T) {
 		},
 	}
 	cfg.ResolverSearchDomains = network.SearchDomainsConfig{
-		SearchDomains:        []string{"example.org", "example.com"},
+		SearchDomains:        network.SearchDomainList{"example.org", "example.com"},
 		SearchDisableDefault: new(false),
 	}
 
@@ -76,6 +80,125 @@ func TestResolverConfigMarshalStabilityWithHostDNS(t *testing.T) {
 	assert.Equal(t, expectedResolverConfigDocumentWithHostDNS, marshaled)
 }
 
+// TestResolverConfigMarshalStabilityEmptySearchDomains asserts that an explicitly empty
+// list of search domains survives encoding.
+//
+// An empty list clears search domains obtained from DHCP or platform, so dropping it on
+// encoding (as `omitempty` would) makes it impossible to persist.
+func TestResolverConfigMarshalStabilityEmptySearchDomains(t *testing.T) {
+	t.Parallel()
+
+	cfg := network.NewResolverConfigV1Alpha1()
+	cfg.ResolverSearchDomains = network.SearchDomainsConfig{
+		SearchDomains:        network.SearchDomainList{},
+		SearchDisableDefault: new(true),
+	}
+
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+	require.NoError(t, err)
+
+	t.Log(string(marshaled))
+
+	assert.Equal(t, expectedResolverConfigDocumentEmptySearchDomains, marshaled)
+
+	// the encoder takes a different code path when comments are enabled, so cover it as well
+	marshaledWithComments, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsAll)).Encode()
+	require.NoError(t, err)
+
+	t.Log(string(marshaledWithComments))
+
+	assert.Contains(t, string(marshaledWithComments), "domains: []")
+}
+
+// TestResolverConfigMarshalUnsetSearchDomains asserts that an unset list of search domains
+// is not encoded, as that would turn "inherit" into "clear" on the next write.
+func TestResolverConfigMarshalUnsetSearchDomains(t *testing.T) {
+	t.Parallel()
+
+	cfg := network.NewResolverConfigV1Alpha1()
+	cfg.ResolverSearchDomains = network.SearchDomainsConfig{
+		SearchDisableDefault: new(true),
+	}
+
+	for _, comments := range []encoder.CommentsFlags{encoder.CommentsDisabled, encoder.CommentsAll} {
+		marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(comments)).Encode()
+		require.NoError(t, err)
+
+		assert.NotContains(t, string(marshaled), "domains:")
+	}
+}
+
+func TestResolverConfigUnmarshalEmptySearchDomains(t *testing.T) {
+	t.Parallel()
+
+	provider, err := configloader.NewFromBytes(expectedResolverConfigDocumentEmptySearchDomains)
+	require.NoError(t, err)
+
+	docs := provider.Documents()
+	require.Len(t, docs, 1)
+
+	assert.Equal(t, &network.ResolverConfigV1Alpha1{
+		Meta: meta.Meta{
+			MetaAPIVersion: "v1alpha1",
+			MetaKind:       network.ResolverKind,
+		},
+		ResolverSearchDomains: network.SearchDomainsConfig{
+			SearchDomains:        network.SearchDomainList{},
+			SearchDisableDefault: new(true),
+		},
+	}, docs[0])
+
+	searchDomains := provider.NetworkResolverConfig().SearchDomains()
+	assert.True(t, searchDomains.IsPresent())
+	assert.Empty(t, searchDomains.ValueOrZero())
+}
+
+// TestResolverConfigMergeSearchDomains asserts that a strategic merge patch replaces the
+// list of search domains instead of appending to it, so that `domains: []` clears it.
+func TestResolverConfigMergeSearchDomains(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		left     network.SearchDomainList
+		right    network.SearchDomainList
+		expected network.SearchDomainList
+	}{
+		{
+			name:     "clear",
+			left:     network.SearchDomainList{"example.org"},
+			right:    network.SearchDomainList{},
+			expected: network.SearchDomainList{},
+		},
+		{
+			name:     "replace",
+			left:     network.SearchDomainList{"example.org"},
+			right:    network.SearchDomainList{"example.com"},
+			expected: network.SearchDomainList{"example.com"},
+		},
+		{
+			name:     "unset keeps left",
+			left:     network.SearchDomainList{"example.org"},
+			right:    nil,
+			expected: network.SearchDomainList{"example.org"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			left := network.NewResolverConfigV1Alpha1()
+			left.ResolverSearchDomains.SearchDomains = test.left
+
+			right := network.NewResolverConfigV1Alpha1()
+			right.ResolverSearchDomains.SearchDomains = test.right
+
+			require.NoError(t, merge.Merge(left, right))
+
+			assert.Equal(t, test.expected, left.ResolverSearchDomains.SearchDomains)
+		})
+	}
+}
+
 func TestResolverConfigUnmarshal(t *testing.T) {
 	t.Parallel()
 
@@ -101,7 +224,7 @@ func TestResolverConfigUnmarshal(t *testing.T) {
 			},
 		},
 		ResolverSearchDomains: network.SearchDomainsConfig{
-			SearchDomains:        []string{"example.org", "example.com"},
+			SearchDomains:        network.SearchDomainList{"example.org", "example.com"},
 			SearchDisableDefault: new(false),
 		},
 	}, docs[0])
