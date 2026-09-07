@@ -344,7 +344,7 @@ message LinkAliasSpecSpec {
   string alias = 1;
 }
 
-// LinkRefreshSpec describes status of rendered secrets.
+// LinkRefreshSpec is used to force refresh LinkStatus on link changes.
 message LinkRefreshSpec {
   int64 generation = 1;
 }

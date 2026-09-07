@@ -38,7 +38,12 @@ func (ctrl *LinkAliasSpecController) Inputs() []controller.Input {
 
 // Outputs implements controller.Controller interface.
 func (ctrl *LinkAliasSpecController) Outputs() []controller.Output {
-	return nil
+	return []controller.Output{
+		{
+			Type: network.LinkRefreshType,
+			Kind: controller.OutputShared,
+		},
+	}
 }
 
 // Run implements controller.Controller interface.
@@ -102,7 +107,10 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 		}
 
 		// loop over links and make reconcile decision
-		var multiErr *multierror.Error
+		var (
+			multiErr *multierror.Error
+			changed  bool
+		)
 
 		for _, link := range links {
 			if link.Attributes == nil {
@@ -137,6 +145,8 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 					},
 				}); err != nil {
 					multiErr = multierror.Append(multiErr, fmt.Errorf("error removing alias %q from link %q: %w", currentAlias, link.Attributes.Name, err))
+				} else {
+					changed = true
 				}
 			} else if shouldHaveAlias && currentAlias != expectedAlias {
 				// should have alias, but doesn't have it or it's different - set it
@@ -153,7 +163,21 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 					},
 				}); err != nil {
 					multiErr = multierror.Append(multiErr, fmt.Errorf("error setting alias %q on link %q: %w", expectedAlias, link.Attributes.Name, err))
+				} else {
+					changed = true
 				}
+			}
+		}
+
+		// the kernel sends no RTM_NEWLINK for an IFLA_IFALIAS-only change, so LinkStatusController
+		// would never learn about the new alias, so we bump the LinkRefresh resource to trigger a refresh of all links
+		if changed {
+			if err = safe.WriterModify(ctx, r, network.NewLinkRefresh(network.NamespaceName, network.LinkRefreshAliases), func(r *network.LinkRefresh) error {
+				r.TypedSpec().Bump()
+
+				return nil
+			}); err != nil {
+				multiErr = multierror.Append(multiErr, fmt.Errorf("error bumping link refresh: %w", err))
 			}
 		}
 

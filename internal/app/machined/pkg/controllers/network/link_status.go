@@ -69,6 +69,14 @@ func (ctrl *LinkStatusController) Run(ctx context.Context, r controller.Runtime,
 				Type:      network.LinkSpecType,
 				Kind:      controller.InputStrong,
 			},
+			{
+				// link changes which the kernel doesn't announce over netlink:
+				// * Wireguard settings
+				// * link alias changes
+				Namespace: network.NamespaceName,
+				Type:      network.LinkRefreshType,
+				Kind:      controller.InputWeak,
+			},
 		},
 	); err != nil {
 		return err

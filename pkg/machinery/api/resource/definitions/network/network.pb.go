@@ -2480,7 +2480,7 @@ func (x *LinkAliasSpecSpec) GetAlias() string {
 	return ""
 }
 
-// LinkRefreshSpec describes status of rendered secrets.
+// LinkRefreshSpec is used to force refresh LinkStatus on link changes.
 type LinkRefreshSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Generation    int64                  `protobuf:"varint,1,opt,name=generation,proto3" json:"generation,omitempty"`

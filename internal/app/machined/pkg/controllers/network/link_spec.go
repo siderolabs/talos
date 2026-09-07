@@ -879,7 +879,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				logger.Info("reconfigured wireguard link", zap.Int("peers", len(link.TypedSpec().Wireguard.Peers)))
 
 				// notify link status controller, as wireguard updates can't be watched via netlink API
-				if err = safe.WriterModify[*network.LinkRefresh](ctx, r, network.NewLinkRefresh(network.NamespaceName, network.LinkKindWireguard), func(r *network.LinkRefresh) error {
+				if err = safe.WriterModify[*network.LinkRefresh](ctx, r, network.NewLinkRefresh(network.NamespaceName, network.LinkRefreshWireguard), func(r *network.LinkRefresh) error {
 					r.TypedSpec().Bump()
 
 					return nil
