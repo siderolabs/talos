@@ -20,10 +20,10 @@ preface = """
         description = """\
 Linux: 6.18.49
 Kubernetes: 1.37.0
-containerd: 2.3.4
+containerd: 2.3.5
 CoreDNS: 1.14.7
 
-Talos is built with Go 1.26.7.
+Talos is built with Go 1.26.8.
 """
 
     [notes.kubespan_peer_endpoint_filters]

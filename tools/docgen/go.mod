@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/tools/docgen
 
-go 1.26.7
+go 1.26.8
 
 require (
 	github.com/gomarkdown/markdown v0.0.0-20260725000948-8435af3f5984

@@ -562,7 +562,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.3.4"
+	DefaultContainerdVersion = "2.3.5"
 
 	// RuncVersion is the runc version.
 	RuncVersion = "1.5.1"
@@ -1248,7 +1248,7 @@ const (
 	ProcModulesPath = "/proc/modules"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.7"
+	GoVersion = "go1.26.8"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
