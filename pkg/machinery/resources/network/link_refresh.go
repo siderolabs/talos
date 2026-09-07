@@ -18,14 +18,18 @@ const LinkRefreshType = resource.Type("LinkRefreshes.net.talos.dev")
 
 // LinkRefresh resource is used to communicate link changes which can't be subscribed to via netlink.
 //
-// The only usecase for now is the Wireguards, as there's no way subscribe to wireguard updates
-// via the netlink API.
-//
-// Whenever Wireguard interface is updated, LinkRefresh resource is modified to trigger a reconcile
-// loop in the LinkStatusController.
+// There are two specific use cases for this resource:
+// - Wireguard configuration changes
+// - link alias changes.
 type LinkRefresh = typed.Resource[LinkRefreshSpec, LinkRefreshExtension]
 
-// LinkRefreshSpec describes status of rendered secrets.
+// Constants for the link refreshes.
+const (
+	LinkRefreshAliases   resource.ID = "link-aliases"
+	LinkRefreshWireguard resource.ID = "wireguard"
+)
+
+// LinkRefreshSpec is used to force refresh LinkStatus on link changes.
 //
 //gotagsrewrite:gen
 type LinkRefreshSpec struct {

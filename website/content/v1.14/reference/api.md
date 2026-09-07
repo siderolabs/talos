@@ -10486,7 +10486,7 @@ LinkAliasSpecSpec describes status of rendered secrets.
 <a name="talos.resource.definitions.network.LinkRefreshSpec"></a>
 
 ### LinkRefreshSpec
-LinkRefreshSpec describes status of rendered secrets.
+LinkRefreshSpec is used to force refresh LinkStatus on link changes.
 
 
 | Field | Type | Label | Description |
