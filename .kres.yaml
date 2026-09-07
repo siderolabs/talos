@@ -1143,6 +1143,8 @@ spec:
             withDiskEncryption: "true"
             withUefi: "false"
             extraTestArgs: -talos.verifyukibooted=false
+          - test: e2e-usb-disk
+            qemuSystemDiskDriver: "usb"
           - test: e2e-node-address-v2
             withConfigPatch: "@hack/test/patches/node-address-v2.yaml"
           - test: e2e-tpm1_2
@@ -1175,6 +1177,7 @@ spec:
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             WITH_TPM1_2: ${{ matrix.withTpm12 }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            QEMU_SYSTEM_DISK_DRIVER: "${{ matrix.qemuSystemDiskDriver }}"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:

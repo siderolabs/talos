@@ -85,45 +85,6 @@ func WaitForUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "waitForUdevd"
 }
 
-// WaitForUSB represents the WaitForUSB task.
-func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		// Wait for USB storage in the case that the install disk is supplied over
-		// USB. If we don't wait, there is the chance that we will fail to detect the
-		// install disk.
-		file := "/sys/module/usb_storage/parameters/delay_use"
-
-		_, err := os.Stat(file)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil
-			}
-
-			return err
-		}
-
-		b, err := os.ReadFile(file)
-		if err != nil {
-			return err
-		}
-
-		val := strings.TrimSuffix(string(b), "\n")
-
-		var i int
-
-		i, err = strconv.Atoi(val)
-		if err != nil {
-			return err
-		}
-
-		logger.Printf("waiting %d second(s) for USB storage", i)
-
-		time.Sleep(time.Duration(i) * time.Second)
-
-		return nil
-	}, "waitForUSB"
-}
-
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
 func EnforceKSPPRequirements(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {

@@ -94,9 +94,6 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			StartSyslogd,
 			StartContainerd,
 		).Append(
-			"usb",
-			WaitForUSB,
-		).Append(
 			"meta",
 			ReloadMeta,
 		).AppendWithDeferredCheck(
