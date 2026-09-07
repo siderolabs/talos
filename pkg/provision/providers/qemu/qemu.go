@@ -47,7 +47,9 @@ func (p *provisioner) Close() error {
 // GenOptions provides a list of additional config generate options.
 //
 //nolint:gocyclo
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+func (p *provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+	networkReq := clusterReq.Network
+
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -60,7 +62,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 	}
 
 	genOpts := []generate.Option{
-		generate.WithInstallDisk("/dev/vda"),
+		generate.WithInstallDisk(clusterReq.InstallDiskPath()),
 	}
 
 	var bundleOpts []bundle.Option

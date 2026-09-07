@@ -141,7 +141,8 @@ func addTalosVersionFlag(flagset *pflag.FlagSet, bind *string, description strin
 
 func addDisksFlag(flagset *pflag.FlagSet, bind *flags.Disks) {
 	flagset.Var(bind, disksFlagName,
-		`list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines)`)
+		`list of disks to create in format "<driver1>:<size1>", drivers: virtio, ide, ahci, scsi, nvme, megaraid, usb, virtiofs `+
+			`(disks after the first one are added only to worker machines)`)
 }
 
 // selectProvisioner returns the qemu provisioner by default, or the remote

@@ -317,7 +317,9 @@ func resolveLogWriter(opts []provision.Option) io.Writer {
 // in-process QEMU provisioner expects.
 //
 //nolint:gocyclo
-func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+func (p *Provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+	networkReq := clusterReq.Network
+
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -330,7 +332,7 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 	}
 
 	genOpts := []generate.Option{
-		generate.WithInstallDisk("/dev/vda"),
+		generate.WithInstallDisk(clusterReq.InstallDiskPath()),
 	}
 
 	var bundleOpts []bundle.Option

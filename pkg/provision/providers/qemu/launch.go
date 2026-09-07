@@ -36,6 +36,9 @@ const (
 	// qemuStartupGracePeriod separates "QEMU never came up" from "the VM ran and then died": a
 	// process which exits with an error this soon after being started never got to run the VM.
 	qemuStartupGracePeriod = 5 * time.Second
+
+	// xhciID is the QEMU id of the single xHCI controller shared by the USB disks and the USB boot stick.
+	xhciID = "xhci"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.
@@ -197,8 +200,8 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	var (
-		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached bool
-		ahciBus                                                                      int
+		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached, xhciAttached bool
+		ahciBus                                                                                    int
 	)
 
 	for i, disk := range config.DiskPaths {
@@ -280,6 +283,18 @@ func launchVM(config *LaunchConfig) error {
 				args,
 				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
+			)
+
+		case "usb":
+			if !xhciAttached {
+				args = append(args, "-device", "nec-usb-xhci,id="+xhciID)
+				xhciAttached = true
+			}
+
+			args = append(
+				args,
+				"-drive", fmt.Sprintf("id=usb%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
+				"-device", fmt.Sprintf("usb-storage,bus=%s.0,drive=usb%d,logical_block_size=%d,physical_block_size=%d%s", xhciID, i, blockSize, blockSize, serial),
 			)
 
 		case "virtiofs":
@@ -417,11 +432,14 @@ func launchVM(config *LaunchConfig) error {
 				fmt.Sprintf("id=cdrom0,file=%s,media=cdrom", config.ISOPath),
 			)
 		case config.USBPath != "" && !skipBootloader:
+			if !xhciAttached {
+				args = append(args, "-device", "nec-usb-xhci,id="+xhciID)
+			}
+
 			args = append(
 				args,
 				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,read-only=on,file=%s", config.USBPath),
-				"-device", "nec-usb-xhci,id=xhci",
-				"-device", "usb-storage,bus=xhci.0,drive=stick,removable=on",
+				"-device", fmt.Sprintf("usb-storage,bus=%s.0,drive=stick,removable=on", xhciID),
 			)
 		case config.UKIPath != "":
 			args = append(

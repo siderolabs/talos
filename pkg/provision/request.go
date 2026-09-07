@@ -183,7 +183,7 @@ type Disk struct {
 	SkipPreallocate bool
 	// Driver for the disk.
 	//
-	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "virtiofs" (special).
+	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "usb", "virtiofs" (special).
 	Driver string
 	// Block size for the disk, defaults to 512 if not set.
 	BlockSize uint
@@ -289,4 +289,38 @@ func (sr *SiderolinkRequest) GetAddr(u *uuid.UUID) (netip.Addr, bool) {
 type SiderolinkBind struct {
 	UUID uuid.UUID
 	Addr netip.Addr
+}
+
+// defaultInstallDiskPath is the guest path of the primary disk for the drivers which don't override it.
+const defaultInstallDiskPath = "/dev/vda"
+
+// installDiskPaths maps a disk driver to the guest device path the kernel gives to the first such disk.
+//
+//nolint:goconst
+var installDiskPaths = map[string]string{
+	"virtio":   "/dev/vda",
+	"ide":      "/dev/sda",
+	"ahci":     "/dev/sda",
+	"scsi":     "/dev/sda",
+	"megaraid": "/dev/sda",
+	"usb":      "/dev/sda",
+	"nvme":     "/dev/nvme0n1",
+}
+
+// InstallDiskPath returns the guest device path Talos should be installed to, derived from the
+// driver of the primary disk of the first node.
+//
+// Note: with a mix of drivers which share the same device name prefix (e.g. a "usb" primary disk and
+// a "scsi" extra disk) the kernel assigns the names in probe order, so the path is only reliable when
+// the primary disk is the only one of its kind.
+func (reqs *ClusterRequest) InstallDiskPath() string {
+	if len(reqs.Nodes) == 0 || len(reqs.Nodes[0].Disks) == 0 {
+		return defaultInstallDiskPath
+	}
+
+	if path, ok := installDiskPaths[reqs.Nodes[0].Disks[0].Driver]; ok {
+		return path
+	}
+
+	return defaultInstallDiskPath
 }

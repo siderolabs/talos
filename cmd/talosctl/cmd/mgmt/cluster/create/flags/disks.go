@@ -25,7 +25,7 @@ type DiskRequest struct {
 var tagDrivers = []string{"virtiofs"}
 
 // Drivers that support serial option.
-var serialDrivers = []string{"virtio"}
+var serialDrivers = []string{"virtio", "usb"}
 
 // ParseDisksFlag parses the disks flag into a slice of DiskRequests.
 func ParseDisksFlag(disks []string) ([]DiskRequest, error) {
