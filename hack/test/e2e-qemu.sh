@@ -68,6 +68,12 @@ case "${WITH_KUBESPAN:-false}" in
     ;;
 esac
 
+case "${WITH_LLDP:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-lldp")
+    ;;
+esac
+
 case "${WITH_BGP:-false}" in
   true)
     QEMU_FLAGS+=("--with-bgp")

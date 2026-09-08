@@ -306,6 +306,11 @@ func (d *DHCP4) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return d.timeservers
 }
 
+// LLDPNeighborSpecs implements Operator interface.
+func (d *DHCP4) LLDPNeighborSpecs() []network.LLDPNeighborSpec {
+	return nil
+}
+
 func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) {
 	specs := dhcpparse.ParseDHCP4Ack(ack, d.linkName, d.routeMetric, useHostname, !d.skipRoutes)
 

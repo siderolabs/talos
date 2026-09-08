@@ -110,12 +110,14 @@ require (
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.24
 	github.com/mdlayher/arp v0.0.0-20260528070854-93566ba168e9
+	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/ethtool v0.6.1
 	github.com/mdlayher/genetlink v1.4.0
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
 	github.com/mdlayher/ndp v1.1.0
 	github.com/mdlayher/netlink v1.11.2
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
+	github.com/mdlayher/packet v1.1.2
 	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/miekg/dns v1.1.72
 	github.com/moby/moby/api v1.55.0
@@ -151,6 +153,7 @@ require (
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
 	github.com/siderolabs/go-kubernetes v0.2.41
+	github.com/siderolabs/go-lldp v0.0.0-20260909110554-76e7def0f1bb
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.3
 	github.com/siderolabs/go-pointer v1.0.1
@@ -176,6 +179,7 @@ require (
 	github.com/theupdateframework/go-tuf/v2 v2.4.2
 	github.com/u-root/u-root v0.16.0
 	github.com/ulikunitz/xz v0.5.16
+	github.com/vishvananda/netlink v1.3.1
 	github.com/vultr/metadata v1.1.0
 	go.etcd.io/etcd/api/v3 v3.7.1
 	go.etcd.io/etcd/client/pkg/v3 v3.7.1
@@ -374,8 +378,6 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
-	github.com/mdlayher/packet v1.1.2 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -453,7 +455,6 @@ require (
 	github.com/transparency-dev/formats v0.1.1 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
-	github.com/vishvananda/netlink v1.3.1 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
 	github.com/wI2L/jsondiff v0.6.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

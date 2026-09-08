@@ -217,6 +217,7 @@ talosctl cluster create dev [flags]
       --with-ipmi                                enable BMC (IPMI) emulation using QEMU's built-in BMC simulator (amd64 only)
       --with-json-logs                           enable JSON logs receiver and configure Talos to send logs there
       --with-kubespan                            enable KubeSpan system
+      --with-lldp                                run a continuous LLDP receive-test advertiser on the QEMU host
       --with-network-bandwidth int               specify bandwidth restriction (in kbps) on the bridge interface
       --with-network-chaos                       enable to use network chaos parameters
       --with-network-jitter duration             specify jitter on the bridge interface

@@ -47,6 +47,7 @@ func TestRegisterResource(t *testing.T) {
 		&network.LinkAliasSpec{},
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
+		&network.LLDPNeighborStatus{},
 		&network.LinkSpec{},
 		&network.NfTablesChain{},
 		&network.NodeAddress{},
@@ -94,6 +95,10 @@ func TestProtobufInterop(t *testing.T) {
 		{
 			res:  &network.LinkStatus{},
 			spec: &networkpb.LinkStatusSpec{},
+		},
+		{
+			res:  &network.LLDPNeighborStatus{},
+			spec: &networkpb.LLDPNeighborStatusSpec{},
 		},
 		{
 			res:  &network.NfTablesChain{},

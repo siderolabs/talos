@@ -147,6 +147,11 @@ func (vip *VIP) TimeServerSpecs() []network.TimeServerSpecSpec {
 	return nil
 }
 
+// LLDPNeighborSpecs implements Operator interface.
+func (vip *VIP) LLDPNeighborSpecs() []network.LLDPNeighborSpec {
+	return nil
+}
+
 func (vip *VIP) etcdElectionKey() string {
 	return fmt.Sprintf("%s:vip:election:%s", constants.EtcdRootTalosKey, vip.sharedIP.String())
 }

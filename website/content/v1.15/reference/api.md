@@ -612,6 +612,10 @@ description: Talos gRPC API reference.
     - [HostDNSConfigSpec](#talos.resource.definitions.network.HostDNSConfigSpec)
     - [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec)
     - [HostnameStatusSpec](#talos.resource.definitions.network.HostnameStatusSpec)
+    - [LLDPNeighborSpec](#talos.resource.definitions.network.LLDPNeighborSpec)
+    - [LLDPNeighborStatusSpec](#talos.resource.definitions.network.LLDPNeighborStatusSpec)
+    - [LLDPOperatorSpec](#talos.resource.definitions.network.LLDPOperatorSpec)
+    - [LLDPVLANSpec](#talos.resource.definitions.network.LLDPVLANSpec)
     - [LinkAliasSpecSpec](#talos.resource.definitions.network.LinkAliasSpecSpec)
     - [LinkRefreshSpec](#talos.resource.definitions.network.LinkRefreshSpec)
     - [LinkSpecSpec](#talos.resource.definitions.network.LinkSpecSpec)
@@ -6428,6 +6432,7 @@ NetworkOperator enumerates Talos network operators.
 | OPERATOR_DHCP4 | 0 |  |
 | OPERATOR_DHCP6 | 1 |  |
 | OPERATOR_VIP | 2 |  |
+| OPERATOR_LLDP | 3 |  |
 
 
 
@@ -10706,6 +10711,73 @@ HostnameStatusSpec describes node hostname.
 
 
 
+<a name="talos.resource.definitions.network.LLDPNeighborSpec"></a>
+
+### LLDPNeighborSpec
+LLDPNeighborSpec describes the advertised identity of one neighbor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| chassis_id | [string](#string) |  |  |
+| system_name | [string](#string) |  |  |
+| system_description | [string](#string) |  |  |
+| port_id | [string](#string) |  |  |
+| port_description | [string](#string) |  |  |
+| management_addresses | [string](#string) | repeated |  |
+| vlans | [LLDPVLANSpec](#talos.resource.definitions.network.LLDPVLANSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.LLDPNeighborStatusSpec"></a>
+
+### LLDPNeighborStatusSpec
+LLDPNeighborStatusSpec contains LLDP neighbors observed on a link.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| neighbors | [LLDPNeighborSpec](#talos.resource.definitions.network.LLDPNeighborSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.LLDPOperatorSpec"></a>
+
+### LLDPOperatorSpec
+LLDPOperatorSpec describes LLDP operator options.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| link_index | [uint32](#uint32) |  | LinkIndex is the kernel index of the link the operator listens on.<br><br>The packet socket is bound to the interface when it is opened, so a device replaced under the same name has to be picked up as a different operator instance. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.LLDPVLANSpec"></a>
+
+### LLDPVLANSpec
+LLDPVLANSpec describes an advertised VLAN.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [uint32](#uint32) |  |  |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.LinkAliasSpecSpec"></a>
 
 ### LinkAliasSpecSpec
@@ -11113,6 +11185,7 @@ OperatorSpecSpec describes operator specification.
 | dhcp6 | [DHCP6OperatorSpec](#talos.resource.definitions.network.DHCP6OperatorSpec) |  |  |
 | vip | [VIPOperatorSpec](#talos.resource.definitions.network.VIPOperatorSpec) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+| lldp | [LLDPOperatorSpec](#talos.resource.definitions.network.LLDPOperatorSpec) |  |  |
 
 
 

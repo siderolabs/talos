@@ -112,6 +112,8 @@ func (m *Qemu) InitExtra() error {
 		m.initJSONLogs()
 	}
 
+	m.ProvisionOps = append(m.ProvisionOps, provision.WithLLDP(m.EOps.WithLLDP))
+
 	if m.EOps.WithBGP {
 		m.initBGP()
 	}

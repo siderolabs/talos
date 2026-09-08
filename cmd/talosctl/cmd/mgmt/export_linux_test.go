@@ -10,7 +10,13 @@ import (
 	"net/netip"
 
 	"github.com/jsimonetti/rtnetlink/v2"
+	"github.com/vishvananda/netlink"
 )
+
+// LLDPBridgePortForTest exposes host bridge-port selection for tests.
+func LLDPBridgePortForTest(link netlink.Link, bridgeIndex int) bool {
+	return lldpBridgePort(link, bridgeIndex)
+}
 
 // BGPLaunchOwnedRouteInventoryForTest exposes fabric route adoption for tests.
 func BGPLaunchOwnedRouteInventoryForTest(
