@@ -108,6 +108,7 @@ spec:
     integration/qemu-13: "Run QEMU integration tests with Talos version contract v1.13"
     integration/release-gate: "Run all release-gate integration tests"
     integration/reproducibility-test: "Run build reproducibility tests"
+    integration/talosctl: "Build talosctl for all supported platforms"
     integration/trusted-boot: "Run trusted-boot integration tests (all variants)"
     integration/trusted-boot-default: "Run trusted-boot integration tests on default variant"
     integration/trusted-boot-disk-image: "Run trusted-boot integration tests on disk-image variant"
@@ -1840,6 +1841,18 @@ spec:
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+    - name: integration-talosctl
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      triggerLabels:
+        - integration/talosctl
+        - integration/release-gate
+      steps:
+        - name: ci-temp-release-tag
+        - name: talosctl-all
     - name: integration-reproducibility-test
       buildxOptions:
         enabled: true
