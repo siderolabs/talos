@@ -154,6 +154,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		packetCorruptFlag,
 		bandwidthFlag,
 		airgappedFlag,
+		ipmiEnabledFlag,
 
 		// The following might work but need testing first.
 		configInjectionMethodFlag,

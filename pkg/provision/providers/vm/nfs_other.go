@@ -2,18 +2,25 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//go:build !linux
+
 package vm
 
 import (
+	"context"
+
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-// CreateNFS starts the development NFS server.
-func (p *Provisioner) CreateNFS(state *provision.State, clusterReq provision.ClusterRequest) error {
-	return p.startNFSd(state, clusterReq)
+func NFSd(ctx context.Context, bindAddress string, port int) error {
+	return nil
+}
+
+func (p *Provisioner) startNFSd(_ *provision.State, _ provision.ClusterRequest) error {
+	return nil
 }
 
 // DestroyNFS stops the development NFS server.
-func (p *Provisioner) DestroyNFS(state *provision.State) error {
-	return p.stopNFSd(state)
+func (p *Provisioner) stopNFSd(_ *provision.State) error {
+	return nil
 }
