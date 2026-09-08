@@ -4374,6 +4374,7 @@ const (
 	NetworkOperator_OPERATOR_DHCP4 NetworkOperator = 0
 	NetworkOperator_OPERATOR_DHCP6 NetworkOperator = 1
 	NetworkOperator_OPERATOR_VIP   NetworkOperator = 2
+	NetworkOperator_OPERATOR_LLDP  NetworkOperator = 3
 )
 
 // Enum value maps for NetworkOperator.
@@ -4382,11 +4383,13 @@ var (
 		0: "OPERATOR_DHCP4",
 		1: "OPERATOR_DHCP6",
 		2: "OPERATOR_VIP",
+		3: "OPERATOR_LLDP",
 	}
 	NetworkOperator_value = map[string]int32{
 		"OPERATOR_DHCP4": 0,
 		"OPERATOR_DHCP6": 1,
 		"OPERATOR_VIP":   2,
+		"OPERATOR_LLDP":  3,
 	}
 )
 
@@ -5404,11 +5407,12 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x0eCONFIG_CMDLINE\x10\x01\x12\x13\n" +
 	"\x0fCONFIG_PLATFORM\x10\x02\x12\x13\n" +
 	"\x0fCONFIG_OPERATOR\x10\x03\x12 \n" +
-	"\x1cCONFIG_MACHINE_CONFIGURATION\x10\x04*K\n" +
+	"\x1cCONFIG_MACHINE_CONFIGURATION\x10\x04*^\n" +
 	"\x0fNetworkOperator\x12\x12\n" +
 	"\x0eOPERATOR_DHCP4\x10\x00\x12\x12\n" +
 	"\x0eOPERATOR_DHCP6\x10\x01\x12\x10\n" +
-	"\fOPERATOR_VIP\x10\x02*\xa8\x01\n" +
+	"\fOPERATOR_VIP\x10\x02\x12\x11\n" +
+	"\rOPERATOR_LLDP\x10\x03*\xa8\x01\n" +
 	"\x1dContainersContainerImagePhase\x12!\n" +
 	"\x1dCONTAINER_IMAGE_PHASE_PENDING\x10\x00\x12!\n" +
 	"\x1dCONTAINER_IMAGE_PHASE_PULLING\x10\x01\x12\x1f\n" +

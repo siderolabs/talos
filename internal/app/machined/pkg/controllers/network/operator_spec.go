@@ -83,6 +83,12 @@ func (ctrl *OperatorSpecController) Outputs() []controller.Output {
 			Type: network.TimeServerSpecType,
 			Kind: controller.OutputShared,
 		},
+		// LLDP neighbors are an observation of the link, not a configuration layer, so they are
+		// published directly to the network namespace without a merge step.
+		{
+			Type: network.LLDPNeighborStatusType,
+			Kind: controller.OutputExclusive,
+		},
 	}
 }
 
@@ -369,21 +375,40 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 				return fmt.Errorf("error applying spec: %w", err)
 			}
 		}
+
+		if neighbors := op.Operator.LLDPNeighborSpecs(); len(neighbors) > 0 {
+			// Modify tracks the output, but doesn't bump the version when the spec is equal,
+			// so refreshed advertisements don't churn the resource.
+			if err := safe.WriterModify(
+				ctx, r,
+				network.NewLLDPNeighborStatus(network.NamespaceName, op.Spec.LinkName),
+				func(r *network.LLDPNeighborStatus) error {
+					r.TypedSpec().Neighbors = neighbors
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("error applying spec: %w", err)
+			}
+		}
 	}
 
 	// clean up not touched specs
 	if err := r.CleanupOutputs(
 		ctx,
-		xslices.Map([]resource.Type{
-			network.AddressSpecType,
-			network.LinkSpecType,
-			network.RouteSpecType,
-			network.HostnameSpecType,
-			network.ResolverSpecType,
-			network.TimeServerSpecType,
-		}, func(t resource.Type) resource.Kind {
-			return resource.NewMetadata(network.ConfigNamespaceName, t, "", resource.VersionUndefined)
-		})...,
+		append(
+			xslices.Map([]resource.Type{
+				network.AddressSpecType,
+				network.LinkSpecType,
+				network.RouteSpecType,
+				network.HostnameSpecType,
+				network.ResolverSpecType,
+				network.TimeServerSpecType,
+			}, func(t resource.Type) resource.Kind {
+				return resource.NewMetadata(network.ConfigNamespaceName, t, "", resource.VersionUndefined)
+			}),
+			resource.NewMetadata(network.NamespaceName, network.LLDPNeighborStatusType, "", resource.VersionUndefined),
+		)...,
 	); err != nil {
 		return fmt.Errorf("error during outputs cleanup: %w", err)
 	}
@@ -408,6 +433,10 @@ func (ctrl *OperatorSpecController) newOperator(logger *zap.Logger, spec *networ
 		logger = logger.With(zap.String("operator", "vip"))
 
 		return operator.NewVIP(logger, spec.LinkName, spec.VIP, ctrl.State)
+	case network.OperatorLLDP:
+		logger = logger.With(zap.String("operator", "lldp"))
+
+		return operator.NewLLDP(logger, spec.LinkName, spec.LLDP.LinkIndex, nil)
 	default:
 		panic(fmt.Sprintf("unexpected operator %s", spec.Operator))
 	}

@@ -24,4 +24,9 @@ type Operator interface {
 	HostnameSpecs() []network.HostnameSpecSpec
 	ResolverSpecs() []network.ResolverSpecSpec
 	TimeServerSpecs() []network.TimeServerSpecSpec
+
+	// LLDPNeighborSpecs returns the neighbors observed on the operator's link.
+	//
+	// Unlike the specs above, these are published as a status resource for the link, not as a configuration layer.
+	LLDPNeighborSpecs() []network.LLDPNeighborSpec
 }

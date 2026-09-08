@@ -271,6 +271,8 @@ type wireOptions struct {
 	SiderolinkEnabled         bool   `json:"siderolink_enabled"`
 	DeleteStateOnErr          bool   `json:"delete_state_on_err"`
 
+	LLDPEnabled bool `json:"lldp_enabled"`
+
 	// BGP test fabric peer (runs server-side, where the VMs and the host FIB live).
 	BGPEnabled       bool   `json:"bgp_enabled"`
 	BGPCLOS          bool   `json:"bgp_clos"`
@@ -308,6 +310,7 @@ func MarshalOptions(opts []provision.Option) ([]byte, error) {
 		NFSEnabled:                o.NFSEnabled,
 		SiderolinkEnabled:         o.SiderolinkEnabled,
 		DeleteStateOnErr:          o.DeleteStateOnErr,
+		LLDPEnabled:               o.LLDPEnabled,
 		BGPEnabled:                o.BGPEnabled,
 		BGPCLOS:                   o.BGPCLOS,
 		BGPListenAddress:          o.BGPListenAddress,
@@ -346,6 +349,7 @@ func UnmarshalOptions(b []byte) ([]provision.Option, error) {
 		provision.WithNFS(w.NFSEnabled),
 		provision.WithSiderolinkAgent(w.SiderolinkEnabled),
 		provision.WithDeleteOnErr(w.DeleteStateOnErr),
+		provision.WithLLDP(w.LLDPEnabled),
 	}
 
 	switch {

@@ -1473,6 +1473,8 @@ github.com/siderolabs/go-kubeconfig v0.1.2 h1:0D0v3lXUKon+A2qRFwOnc9m4qSB+e+5WDm
 github.com/siderolabs/go-kubeconfig v0.1.2/go.mod h1:FMl17PHjjAJjdeUTMN+gBzGH0lhsCbj2IX9/HNMpMh0=
 github.com/siderolabs/go-kubernetes v0.2.41 h1:la1y0C7QDBHlyfVTUGRjeS7ILSA1SvF/wPHDiVzzQ9g=
 github.com/siderolabs/go-kubernetes v0.2.41/go.mod h1:YHFw+ud3F2y2tOu6ea2gnUmX4kVIu8RyF3zX27vakSE=
+github.com/siderolabs/go-lldp v0.1.0 h1:kupYmC/gfBTndRIRNhfjiY/WXSmOlBW2M9So9UuO7gY=
+github.com/siderolabs/go-lldp v0.1.0/go.mod h1:om5vsBjKsg+EJcGIXnIufV3BAk+WnDQ8AxjThm3X9To=
 github.com/siderolabs/go-loadbalancer v0.5.0 h1:0v7E6GrxoONyqwcmHiA+J0vIDPWbkTmevHGCFb4tjdc=
 github.com/siderolabs/go-loadbalancer v0.5.0/go.mod h1:tRVouZ9i2R/TRbNUF9MqyBlV2wsjX0cxkYTjPXcI9P0=
 github.com/siderolabs/go-pcidb v0.3.3 h1:Cxng3j6gUrWCh1tHlt524A4cC+dyRU+3j1AWQM6ULPc=
