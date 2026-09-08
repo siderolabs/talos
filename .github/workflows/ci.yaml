@@ -3262,6 +3262,10 @@ jobs:
           - shortIntegrationTest: 'yes'
             test: e2e-firewall-accept
             withFirewall: accept
+          - extraTestArgs: -talos.lldp
+            integrationTestRun: TestIntegration/api.LLDPSuite
+            test: e2e-lldp
+            withLLDP: "true"
           - extraTestArgs: -talos.bgp
             shortIntegrationTest: 'yes'
             test: e2e-bgp
@@ -3367,6 +3371,7 @@ jobs:
           WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlplane }}
           WITH_CONTROL_PLANE_PORT: ${{ matrix.withControlPlanePort }}
           WITH_FIREWALL: ${{ matrix.withFirewall }}
+          WITH_LLDP: ${{ matrix.withLLDP }}
           WITH_UKI_BOOT: ${{ matrix.withUkiBoot }}
         run: |
           sudo -E make e2e-qemu

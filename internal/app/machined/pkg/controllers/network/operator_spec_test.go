@@ -7,21 +7,28 @@ package network_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/netip"
+	"os"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/lldp"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -43,6 +50,7 @@ type mockOperator struct {
 	hostname    []network.HostnameSpecSpec
 	resolvers   []network.ResolverSpecSpec
 	timeservers []network.TimeServerSpecSpec
+	lldp        []network.LLDPNeighborSpec
 }
 
 var (
@@ -127,6 +135,13 @@ func (mock *mockOperator) TimeServerSpecs() []network.TimeServerSpecSpec {
 	defer mock.mu.Unlock()
 
 	return mock.timeservers
+}
+
+func (mock *mockOperator) LLDPNeighborSpecs() []network.LLDPNeighborSpec {
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	return mock.lldp
 }
 
 func (suite *OperatorSpecSuite) newOperator(_ *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
@@ -458,6 +473,187 @@ func (suite *OperatorSpecSuite) TestOperatorOutputs() {
 		func(*network.AddressSpec, *assert.Assertions) {},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
+}
+
+// lldpStatusListener is a socket substitute; the registered controller still runs
+// the real LLDP operator and receives its normal output notifications.
+type lldpStatusListener struct {
+	reads    chan []byte
+	failed   chan struct{}
+	closed   chan struct{}
+	once     sync.Once
+	mu       sync.Mutex
+	deadline time.Time
+}
+
+func (listener *lldpStatusListener) SetReadDeadline(deadline time.Time) error {
+	listener.mu.Lock()
+	defer listener.mu.Unlock()
+
+	listener.deadline = deadline
+
+	return nil
+}
+
+func (listener *lldpStatusListener) ReadFrame() ([]byte, error) {
+	listener.mu.Lock()
+	deadline := listener.deadline
+	listener.mu.Unlock()
+
+	var expired <-chan time.Time
+
+	if !deadline.IsZero() {
+		timer := time.NewTimer(time.Until(deadline))
+		defer timer.Stop()
+
+		expired = timer.C
+	}
+
+	select {
+	case frame := <-listener.reads:
+		return frame, nil
+	case <-listener.failed:
+		return nil, io.ErrUnexpectedEOF
+	case <-listener.closed:
+		return nil, io.EOF
+	case <-expired:
+		return nil, os.ErrDeadlineExceeded
+	}
+}
+
+func (listener *lldpStatusListener) Close() error {
+	listener.once.Do(func() { close(listener.closed) })
+
+	return nil
+}
+
+type LLDPOperatorSpecSuite struct {
+	ctest.DefaultSuite
+}
+
+func (suite *LLDPOperatorSpecSuite) TestSocketFailureAndLinkRecovery() {
+	opened := make(chan *lldpStatusListener, 4)
+
+	var (
+		attempts atomic.Int32
+		index    atomic.Uint32
+	)
+
+	require.NoError(suite.T(), suite.Runtime().RegisterController(&netctrl.OperatorSpecController{
+		Factory: func(logger *zap.Logger, spec *network.OperatorSpecSpec) operator.Operator {
+			return operator.NewLLDP(logger, spec.LinkName, spec.LLDP.LinkIndex, func(linkIndex uint32) (lldp.Listener, error) {
+				attempts.Add(1)
+				index.Store(linkIndex)
+
+				listener := &lldpStatusListener{
+					reads:  make(chan []byte, 1),
+					failed: make(chan struct{}),
+					closed: make(chan struct{}),
+				}
+				opened <- listener
+
+				return listener, nil
+			})
+		},
+	}))
+
+	spec := network.NewOperatorSpec(network.NamespaceName, "lldp/eth0")
+	*spec.TypedSpec() = network.OperatorSpecSpec{
+		Operator:  network.OperatorLLDP,
+		LinkName:  "eth0",
+		RequireUp: true,
+		LLDP:      network.LLDPOperatorSpec{LinkIndex: 7},
+	}
+	link := network.NewLinkStatus(network.NamespaceName, "eth0")
+	link.TypedSpec().OperationalState = nethelpers.OperStateUp
+
+	suite.Create(spec)
+	suite.Create(link)
+	synctest.Wait()
+
+	require.EqualValues(suite.T(), 1, attempts.Load())
+	require.EqualValues(suite.T(), 7, index.Load())
+	require.Len(suite.T(), opened, 1)
+	first := <-opened
+
+	// Ethernet header, chassis MAC, interface-name port eth0, TTL 120, end.
+	frame := []byte{
+		1, 0x80, 0xc2, 0, 0, 0x0e, 2, 0, 0, 0, 0, 1, 0x88, 0xcc,
+		2, 7, 4, 2, 0, 0, 0, 0, 1,
+		4, 5, 5, 'e', 't', 'h', '0',
+		6, 2, 0, 120, 0, 0,
+	}
+	first.reads <- frame
+
+	synctest.Wait()
+
+	status := network.NewLLDPNeighborStatus(network.NamespaceName, "eth0")
+	published, err := ctest.GetUsingResource(suite, status)
+	require.NoError(suite.T(), err)
+	require.Len(suite.T(), published.TypedSpec().Neighbors, 1)
+
+	// No resource write follows this failure: only the operator's cleanup
+	// notification can make the registered controller remove the status.
+	close(first.failed)
+	synctest.Wait()
+
+	select {
+	case <-first.closed:
+	default:
+		suite.T().Fatal("failed listener was not closed")
+	}
+
+	_, err = ctest.GetUsingResource(suite, status)
+	require.True(suite.T(), state.IsNotFoundError(err), "socket failure must remove status without a resource event; got %v", err)
+
+	// Cross the former retry interval twice, without changing the spec.
+	<-time.NewTimer(11 * time.Second).C
+	synctest.Wait()
+	require.EqualValues(suite.T(), 1, attempts.Load(), "unchanged spec must not reopen a failed socket")
+	require.Empty(suite.T(), opened)
+
+	ctest.UpdateWithConflicts(suite, link, func(link *network.LinkStatus) error {
+		link.TypedSpec().OperationalState = nethelpers.OperStateDown
+
+		return nil
+	})
+	synctest.Wait()
+	require.EqualValues(suite.T(), 1, attempts.Load())
+
+	ctest.UpdateWithConflicts(suite, link, func(link *network.LinkStatus) error {
+		link.TypedSpec().OperationalState = nethelpers.OperStateUp
+
+		return nil
+	})
+	synctest.Wait()
+	require.EqualValues(suite.T(), 2, attempts.Load())
+	require.Len(suite.T(), opened, 1)
+	second := <-opened
+	require.NotSame(suite.T(), first, second)
+
+	second.reads <- frame
+
+	synctest.Wait()
+
+	republished, err := ctest.GetUsingResource(suite, status)
+	require.NoError(suite.T(), err)
+	require.Equal(suite.T(), published.TypedSpec(), republished.TypedSpec())
+}
+
+func TestLLDPOperatorSpecSuite(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		// synctest forbids T.Run, so invoke the suite lifecycle directly rather
+		// than using suite.Run. The runtime must be created inside the bubble.
+		operatorSuite := &LLDPOperatorSpecSuite{
+			DefaultSuite: ctest.DefaultSuite{Timeout: time.Minute},
+		}
+		operatorSuite.SetT(t)
+
+		operatorSuite.SetupTest()
+		defer operatorSuite.TearDownTest()
+
+		operatorSuite.TestSocketFailureAndLinkRecovery()
+	})
 }
 
 func TestOperatorSpecSuite(t *testing.T) {

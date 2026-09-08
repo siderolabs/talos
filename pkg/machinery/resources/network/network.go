@@ -71,6 +71,8 @@ func OperatorID(spec OperatorSpecSpec) string {
 		fallthrough
 	case OperatorDHCP6:
 		fallthrough
+	case OperatorLLDP:
+		fallthrough
 	default:
 		return fmt.Sprintf("%s/%s", spec.Operator, spec.LinkName)
 	}

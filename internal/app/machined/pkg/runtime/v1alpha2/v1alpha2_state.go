@@ -210,6 +210,7 @@ func NewState() (*State, error) {
 		&network.LinkAliasSpec{},
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
+		&network.LLDPNeighborStatus{},
 		&network.LinkSpec{},
 		&network.NfTablesChain{},
 		&network.NodeAddress{},

@@ -114,6 +114,7 @@ require (
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.24
 	github.com/mdlayher/arp v0.0.0-20260528070854-93566ba168e9
+	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/ethtool v0.6.1
 	github.com/mdlayher/genetlink v1.4.0
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
@@ -155,6 +156,7 @@ require (
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
 	github.com/siderolabs/go-kubernetes v0.2.41
+	github.com/siderolabs/go-lldp v0.1.0
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.3
 	github.com/siderolabs/go-pointer v1.0.1
@@ -378,7 +380,6 @@ require (
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
-	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118 // indirect
 	github.com/mdlayher/packet v1.1.2 // indirect
 	github.com/mdlayher/socket v0.6.1 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect

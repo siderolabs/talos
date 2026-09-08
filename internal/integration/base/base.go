@@ -52,6 +52,8 @@ type TalosSuite struct {
 	ExtensionsLibvirt bool
 	// ExtensionsNvidia runs tests with nvidia extensions enabled
 	ExtensionsNvidia bool
+	// LLDPEnabled runs tests against a cluster created with --with-lldp.
+	LLDPEnabled bool
 	// BGPEnabled runs tests against a cluster created with an embedded BGP fabric peer (--with-bgp)
 	BGPEnabled bool
 	// BGPCLOSEnabled runs the full-CLOS BGP test against a cluster created with --with-bgp-clos (each

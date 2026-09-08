@@ -12,6 +12,16 @@ import (
 	"github.com/jsimonetti/rtnetlink/v2"
 )
 
+// LLDPBridgeIndexForTest exposes bridge lookup for tests.
+func LLDPBridgeIndexForTest(links []rtnetlink.LinkMessage, name string) (uint32, error) {
+	return lldpBridgeIndex(links, name)
+}
+
+// LLDPBridgePortForTest exposes host bridge-port selection for tests.
+func LLDPBridgePortForTest(link rtnetlink.LinkMessage, bridgeIndex uint32) bool {
+	return lldpBridgePort(link, bridgeIndex)
+}
+
 // BGPLaunchOwnedRouteInventoryForTest exposes fabric route adoption for tests.
 func BGPLaunchOwnedRouteInventoryForTest(
 	routes []rtnetlink.RouteMessage,

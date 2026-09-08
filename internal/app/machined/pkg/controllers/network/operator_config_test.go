@@ -18,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
+	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -74,6 +75,93 @@ func (suite *OperatorConfigSuite) TestDefaultDHCP() {
 			}
 		},
 	)
+}
+
+func (suite *OperatorConfigSuite) TestLLDPPhysicalLinksOnly() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.OperatorConfigController{}))
+
+	physical := network.NewLinkStatus(network.NamespaceName, "eth0")
+	physical.TypedSpec().Type = nethelpers.LinkEther
+	physical.TypedSpec().LinkState = true
+	physical.TypedSpec().Index = 4
+
+	suite.Create(physical)
+
+	// a bond is an Ether link too, so only the kind separates it from a physical one
+	bond := network.NewLinkStatus(network.NamespaceName, "bond0")
+	bond.TypedSpec().Type = nethelpers.LinkEther
+	bond.TypedSpec().Kind = "bond"
+	bond.TypedSpec().LinkState = true
+
+	suite.Create(bond)
+
+	loopback := network.NewLinkStatus(network.NamespaceName, "lo")
+	loopback.TypedSpec().Type = nethelpers.LinkLoopbck
+	loopback.TypedSpec().LinkState = true
+
+	suite.Create(loopback)
+
+	suite.assertOperators(
+		[]string{
+			"default/lldp/eth0",
+		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.OperatorLLDP, r.TypedSpec().Operator)
+			asrt.Equal("eth0", r.TypedSpec().LinkName)
+			asrt.True(r.TypedSpec().RequireUp, "LLDP is pointless on a link which is down")
+			asrt.EqualValues(4, r.TypedSpec().LLDP.LinkIndex)
+		},
+	)
+
+	suite.assertNoOperators(
+		[]string{
+			"default/lldp/bond0",
+			"default/lldp/lo",
+		},
+	)
+
+	// A device replaced under the same name keeps the resource ID but changes its kernel index.
+	// The spec has to change with it, otherwise the running operator keeps a socket bound to a
+	// link which no longer exists.
+	ctest.UpdateWithConflicts(suite, physical, func(r *network.LinkStatus) error {
+		r.TypedSpec().Index = 9
+
+		return nil
+	})
+
+	suite.assertOperators(
+		[]string{
+			"default/lldp/eth0",
+		}, func(r *network.OperatorSpec, asrt *assert.Assertions) {
+			asrt.EqualValues(9, r.TypedSpec().LLDP.LinkIndex, "a replaced device restarts the operator")
+		},
+	)
+}
+
+func (suite *OperatorConfigSuite) TestNoLLDPInContainer() {
+	suite.Require().NoError(
+		suite.Runtime().RegisterController(
+			&netctrl.OperatorConfigController{
+				V1Alpha1Mode: v1alpha1runtime.ModeContainer,
+			},
+		),
+	)
+
+	physical := network.NewLinkStatus(network.NamespaceName, "eth0")
+	physical.TypedSpec().Type = nethelpers.LinkEther
+	physical.TypedSpec().LinkState = true
+
+	suite.Create(physical)
+
+	// DHCP still runs in a container, so its presence proves the controller reconciled the link
+	// before LLDP was skipped.
+	suite.assertOperators(
+		[]string{
+			"default/dhcp4/eth0",
+		},
+		func(r *network.OperatorSpec, asrt *assert.Assertions) {},
+	)
+
+	suite.assertNoOperators([]string{"default/lldp/eth0"})
 }
 
 func (suite *OperatorConfigSuite) TestNoDefaultDHCP() {
