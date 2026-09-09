@@ -131,6 +131,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
 
 	ctest.AssertNoResource[*network.LinkSpec](suite, dummyInterface)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummyInterface)
 }
 
 func (suite *LinkSpecSuite) TestDummyWithMAC() {
@@ -161,6 +162,41 @@ func (suite *LinkSpecSuite) TestDummyWithMAC() {
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
 
 	ctest.AssertNoResource[*network.LinkSpec](suite, dummyInterface)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummyInterface)
+}
+
+func (suite *LinkSpecSuite) TestDummyDropsLogical() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
+	*dummy.TypedSpec() = network.LinkSpecSpec{
+		Name:        dummyInterface,
+		Type:        nethelpers.LinkEther,
+		Kind:        "dummy",
+		MTU:         1400,
+		Up:          true,
+		Logical:     true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	suite.Create(dummy)
+
+	ctest.AssertResource(suite, dummyInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("dummy", r.TypedSpec().Kind)
+	})
+
+	// drop logical flag, it doesn't matter once the link is created
+	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
+		r.TypedSpec().Logical = false
+
+		return nil
+	})
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
+
+	ctest.AssertNoResource[*network.LinkSpec](suite, dummyInterface)
+	// the link should be deleted even if it's not logical anymore
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummyInterface)
 }
 
 func (suite *LinkSpecSuite) TestVeth() {

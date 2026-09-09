@@ -340,25 +340,36 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 	switch link.Metadata().Phase() {
 	case resource.PhaseTearingDown:
 		// TODO: should we bring link down if it's physical and the spec was torn down?
-		if link.TypedSpec().Logical {
-			existing := findLink(*links, link.TypedSpec().Name, false) // logical links don't have aliases
+		existing := findLink(*links, link.TypedSpec().Name, false) // logical links don't have aliases
 
-			deleteLink := existing != nil
+		deleteLink := existing != nil
+		if deleteLink {
+			var existingKind string
 
-			if deleteLink {
-				if err := conn.Link.Delete(existing.Index); err != nil {
-					return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
-				}
+			if existing.Attributes != nil && existing.Attributes.Info != nil {
+				existingKind = existing.Attributes.Info.Kind
+			}
 
-				logger.Info("deleted link", zap.String("name", existing.Attributes.Name))
+			// this check mirrors exactly LinkStatus.Physical() method, but expressed in Linux netlink data
+			if existingKind == "" && existing.Type == uint16(nethelpers.LinkEther) {
+				// don't ever try to deleted physical links
+				deleteLink = false
+			}
+		}
 
-				// refresh links as the link list got changed
-				var err error
+		if deleteLink {
+			if err := conn.Link.Delete(existing.Index); err != nil {
+				return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
+			}
 
-				*links, err = conn.Link.List()
-				if err != nil {
-					return fmt.Errorf("error listing links: %w", err)
-				}
+			logger.Info("deleted link", zap.String("name", existing.Attributes.Name))
+
+			// refresh links as the link list got changed
+			var err error
+
+			*links, err = conn.Link.List()
+			if err != nil {
+				return fmt.Errorf("error listing links: %w", err)
 			}
 		}
 
