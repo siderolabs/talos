@@ -134,6 +134,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 			"/usr/share/qemu",
 			"/usr/share/ovmf/x64",      // Arch Linux
 			"/opt/homebrew/share/qemu", // Darwin
+			"/run/libvirt/nix-ovmf/",   // NixOS
 		}
 
 		// Secure boot enabled firmware files
