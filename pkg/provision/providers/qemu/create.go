@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // Create Talos cluster as a set of qemu VMs.
@@ -132,6 +133,19 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
+	for _, extraDHCPRecord := range request.Network.ExtraDHCPRecords {
+		if err = vm.DumpIPAMRecord(statePath, vm.IPAMRecord{
+			IP:       extraDHCPRecord.IP.Addr(),
+			Netmask:  byte(extraDHCPRecord.IP.Bits()),
+			Gateway:  extraDHCPRecord.Gateway,
+			MAC:      extraDHCPRecord.MAC,
+			Hostname: extraDHCPRecord.Name,
+			MTU:      request.Network.MTU,
+		}); err != nil {
+			return nil, fmt.Errorf("error dumping extra IPAM record: %w", err)
+		}
+	}
+
 	var nodeInfo []provision.NodeInfo //nolint:prealloc // this is created by p.createNodes
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
@@ -183,6 +197,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 			NoMasqueradeCIDRs: request.Network.NoMasqueradeCIDRs,
 			GatewayAddrs:      request.Network.GatewayAddrs,
 			MTU:               request.Network.MTU,
+			ExtraDHCPRecords:  request.Network.ExtraDHCPRecords,
 		},
 		Nodes:              nodeInfo,
 		ExtraNodes:         pxeNodeInfo,

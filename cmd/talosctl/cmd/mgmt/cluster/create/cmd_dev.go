@@ -330,6 +330,9 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 				return err
 			}
 
+			// for dev mode, provision extra DHCP records for host-exposed workloads in the cluster
+			qOps.ExtraDHCPRecordsCount = 50
+
 			return createDevCluster(cmd.Context(), cOps, qOps)
 		},
 	}

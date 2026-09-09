@@ -162,6 +162,12 @@ type Qemu struct {
 	// "example.com" or "registry.example.com:5000"), and the value is the HTTPAuth
 	// containing the username and password for that endpoint.
 	DownloadHTTPAuth map[string]HTTPAuth
+
+	// ExtraDHCPRecordsCount is a numer of extra DHCP records to be added to the DHCP server
+	// database.
+	//
+	// They can be used to ensure predictable IPs for extra MACs exposed on the QEMU virtual network.
+	ExtraDHCPRecordsCount int
 }
 
 // HTTPAuth represents basic authentication credentials for downloading boot assets.

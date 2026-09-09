@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"net"
 	"net/netip"
 	"strconv"
 	"strings"
@@ -553,6 +554,59 @@ func (suite *NetworkConfigSuite) TestMacVLANConfig() {
 	for _, dummyName := range dummyNames {
 		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
 	}
+}
+
+// TestMacVLANWithDHCP tests creation of macvlan interfaces with DHCP.
+func (suite *NetworkConfigSuite) TestMacVLANWithDHCP() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping if cluster is not qemu")
+	}
+
+	if len(suite.Cluster.Info().Network.ExtraDHCPRecords) == 0 {
+		suite.T().Skip("skipping if no extra DHCP records are configured")
+	}
+
+	dhcpRecord := suite.Cluster.Info().Network.ExtraDHCPRecords[0]
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	suffix := rand.IntN(10000)
+
+	macvlanName := fmt.Sprintf("mvlan%d", suffix)
+
+	macAddress, err := net.ParseMAC(dhcpRecord.MAC)
+	suite.Require().NoError(err)
+
+	macvlan := network.NewMacVLANConfigV1Alpha1(macvlanName)
+	macvlan.MacVLANParent = "net0"
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+	macvlan.HardwareAddressConfig = nethelpers.HardwareAddr(macAddress)
+	macvlan.LinkUp = new(true)
+
+	dhcp4 := network.NewDHCPv4ConfigV1Alpha1(macvlanName)
+	dhcp4.ConfigIgnoreHostname = new(true)
+	dhcp4.ConfigIgnoreRoutes = new(true)
+
+	addressID := macvlanName + "/" + dhcpRecord.IP.String()
+
+	suite.PatchMachineConfig(nodeCtx, macvlan, dhcp4)
+
+	// DHCP runs, assigning the expected IP address to the macvlan interface
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(macvlanName, address.TypedSpec().LinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.MacVLANKind, macvlanName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DHCPv4Kind, macvlanName)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, macvlanName)
 }
 
 // TestVXLANConfig tests creation of vxlan interfaces.

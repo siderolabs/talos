@@ -79,6 +79,8 @@ func NewQemu(ops MakerOptions[clusterops.Qemu]) (Qemu, error) {
 }
 
 // InitExtra implements ExtraOptionsProvider.
+//
+//nolint:gocyclo
 func (m *Qemu) InitExtra() error {
 	if m.EOps.UseVIP {
 		vip, err := sideronet.NthIPInNetwork(m.Cidrs[0], vipOffset)
@@ -118,6 +120,26 @@ func (m *Qemu) InitExtra() error {
 		if err := m.initBGPCLOS(); err != nil {
 			return err
 		}
+	}
+
+	for extraIPs := range m.EOps.ExtraDHCPRecordsCount {
+		// start with .100 IP: .50 is the VIP
+		const extraDHCPRecordOffset = 100
+
+		ip, err := sideronet.NthIPInNetwork(m.Cidrs[0], extraDHCPRecordOffset+extraIPs)
+		if err != nil {
+			return err
+		}
+
+		m.ClusterRequest.Network.ExtraDHCPRecords = append(
+			m.ClusterRequest.Network.ExtraDHCPRecords,
+			provision.DHCPRecord{
+				MAC:     fmt.Sprintf("52:54:00:00:%02x:%02x", extraIPs, extraIPs),
+				IP:      netip.PrefixFrom(ip, m.Cidrs[0].Bits()),
+				Gateway: m.GatewayIPs[0],
+				Name:    fmt.Sprintf("extra-%d", extraIPs),
+			},
+		)
 	}
 
 	return nil

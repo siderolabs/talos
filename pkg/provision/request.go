@@ -83,6 +83,11 @@ type NetworkRequest struct {
 	// on a BGP-advertised loopback instead.
 	NoDHCP bool
 
+	// ExtraDHCPRecords adds additional DHCP records to the DHCP server configuration.
+	//
+	// Records for the nodes will be added automatically, so this is only needed for specific tests.
+	ExtraDHCPRecords []DHCPRecord
+
 	LoadBalancerPorts []int
 
 	// CNI-specific parameters.
@@ -109,6 +114,14 @@ type NetworkRequest struct {
 	ImageCacheTLSCertFile string
 	ImageCacheTLSKeyFile  string
 	ImageCachePort        uint16
+}
+
+// DHCPRecord describes a DHCP record to be added to the DHCP server configuration.
+type DHCPRecord struct {
+	MAC     string
+	IP      netip.Prefix
+	Gateway netip.Addr
+	Name    string
 }
 
 // NodeRequests is a list of NodeRequest.
