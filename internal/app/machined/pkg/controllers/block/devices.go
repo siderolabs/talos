@@ -5,6 +5,7 @@
 package block
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -190,6 +191,13 @@ func (ctrl *DevicesController) processEvent(ctx context.Context, r controller.Ru
 			return nil //nolint:nilerr // entry doesn't exist now, so skip the event
 		}
 
+		// the kernel describes a device-mapper partition map as a whole disk, so fill in what it
+		// leaves out before the event is turned into a resource
+		//
+		// this is the single funnel for both sources of events, the netlink watch and the walk of
+		// /sys/block on resync, and neither carries any device-mapper detail
+		sysblock.AugmentDeviceMapper(ev.DevicePath, ev.Values)
+
 		if err := safe.WriterModify(ctx, r, block.NewDevice(block.NamespaceName, id), func(dev *block.Device) error {
 			dev.TypedSpec().Type = ev.Values["DEVTYPE"]
 			dev.TypedSpec().Major = atoiOrZero(ev.Values["MAJOR"])
@@ -199,8 +207,13 @@ func (ctrl *DevicesController) processEvent(ctx context.Context, r controller.Ru
 
 			dev.TypedSpec().DevicePath = ev.DevicePath
 
-			if dev.TypedSpec().Type == "partition" {
-				dev.TypedSpec().Parent = filepath.Base(filepath.Dir(dev.TypedSpec().DevicePath))
+			if dev.TypedSpec().Type == block.DeviceTypePartition {
+				// a partition is a directory inside the directory of its disk, except for a
+				// device-mapper partition map, which names its parent in the event instead
+				dev.TypedSpec().Parent = cmp.Or(
+					ev.Values[sysblock.ParentDeviceKey],
+					filepath.Base(filepath.Dir(dev.TypedSpec().DevicePath)),
+				)
 				dev.TypedSpec().Secondaries = nil
 			} else {
 				dev.TypedSpec().Parent = ""

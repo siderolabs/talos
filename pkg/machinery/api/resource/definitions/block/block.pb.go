@@ -557,8 +557,16 @@ type DiskSpec struct {
 	Uuid            string   `protobuf:"bytes,17,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	Symlinks        []string `protobuf:"bytes,18,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
 	FirmwareVersion string   `protobuf:"bytes,19,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// DeviceMapperName, DeviceMapperUUID and DeviceMapperKind identify a device-mapper disk, and
+	// are empty for any other disk.
+	//
+	// DeviceMapperKind is one of mpath, lvm, crypt or dm, so that a selector can pick out, say,
+	// multipath disks without matching every device-mapper device.
+	DeviceMapperName string `protobuf:"bytes,20,opt,name=device_mapper_name,json=deviceMapperName,proto3" json:"device_mapper_name,omitempty"`
+	DeviceMapperUuid string `protobuf:"bytes,21,opt,name=device_mapper_uuid,json=deviceMapperUuid,proto3" json:"device_mapper_uuid,omitempty"`
+	DeviceMapperKind string `protobuf:"bytes,22,opt,name=device_mapper_kind,json=deviceMapperKind,proto3" json:"device_mapper_kind,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *DiskSpec) Reset() {
@@ -720,6 +728,27 @@ func (x *DiskSpec) GetSymlinks() []string {
 func (x *DiskSpec) GetFirmwareVersion() string {
 	if x != nil {
 		return x.FirmwareVersion
+	}
+	return ""
+}
+
+func (x *DiskSpec) GetDeviceMapperName() string {
+	if x != nil {
+		return x.DeviceMapperName
+	}
+	return ""
+}
+
+func (x *DiskSpec) GetDeviceMapperUuid() string {
+	if x != nil {
+		return x.DeviceMapperUuid
+	}
+	return ""
+}
+
+func (x *DiskSpec) GetDeviceMapperKind() string {
+	if x != nil {
+		return x.DeviceMapperKind
 	}
 	return ""
 }
@@ -3220,7 +3249,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"g\n" +
 	"\fDiskSelector\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12\x1a\n" +
-	"\bexternal\x18\x02 \x01(\tR\bexternal\"\xa0\x04\n" +
+	"\bexternal\x18\x02 \x01(\tR\bexternal\"\xaa\x05\n" +
 	"\bDiskSpec\x12\x12\n" +
 	"\x04size\x18\x01 \x01(\x04R\x04size\x12\x17\n" +
 	"\aio_size\x18\x02 \x01(\x04R\x06ioSize\x12\x1f\n" +
@@ -3246,7 +3275,10 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\x0fsecondary_disks\x18\x10 \x03(\tR\x0esecondaryDisks\x12\x12\n" +
 	"\x04uuid\x18\x11 \x01(\tR\x04uuid\x12\x1a\n" +
 	"\bsymlinks\x18\x12 \x03(\tR\bsymlinks\x12)\n" +
-	"\x10firmware_version\x18\x13 \x01(\tR\x0ffirmwareVersion\"\xfb\x02\n" +
+	"\x10firmware_version\x18\x13 \x01(\tR\x0ffirmwareVersion\x12,\n" +
+	"\x12device_mapper_name\x18\x14 \x01(\tR\x10deviceMapperName\x12,\n" +
+	"\x12device_mapper_uuid\x18\x15 \x01(\tR\x10deviceMapperUuid\x12,\n" +
+	"\x12device_mapper_kind\x18\x16 \x01(\tR\x10deviceMapperKind\"\xfb\x02\n" +
 	"\rEncryptionKey\x12\x12\n" +
 	"\x04slot\x18\x01 \x01(\x03R\x04slot\x12L\n" +
 	"\x04type\x18\x02 \x01(\x0e28.talos.resource.definitions.enums.BlockEncryptionKeyTypeR\x04type\x12+\n" +
