@@ -25,6 +25,7 @@ replace (
 	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72
 )
 
+// Kubernetes dependencies sharing the same version.
 require (
 	cel.dev/cel-go v0.32.0
 	cloud.google.com/go/compute/metadata v0.9.1
@@ -135,7 +136,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.15
 	github.com/siderolabs/gen v0.8.8
 	github.com/siderolabs/go-adv v1.0.0
-	github.com/siderolabs/go-blockdevice/v2 v2.0.32
+	github.com/siderolabs/go-blockdevice/v2 v2.0.33
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.2.1
 	github.com/siderolabs/go-copy v0.1.0

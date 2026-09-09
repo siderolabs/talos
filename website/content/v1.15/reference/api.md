@@ -7061,6 +7061,9 @@ DiskSpec is the spec for Disks status.
 | uuid | [string](#string) |  |  |
 | symlinks | [string](#string) | repeated |  |
 | firmware_version | [string](#string) |  |  |
+| device_mapper_name | [string](#string) |  | DeviceMapperName, DeviceMapperUUID and DeviceMapperKind identify a device-mapper disk, and are empty for any other disk.<br><br>DeviceMapperKind is one of mpath, lvm, crypt or dm, so that a selector can pick out, say, multipath disks without matching every device-mapper device. |
+| device_mapper_uuid | [string](#string) |  |  |
+| device_mapper_kind | [string](#string) |  |  |
 
 
 

@@ -250,6 +250,10 @@ func (ctrl *DisksController) analyzeBlockDevice(
 		d.TypedSpec().Transport = props.Transport
 		d.TypedSpec().Rotational = props.Rotational
 
+		d.TypedSpec().DeviceMapperName = props.DeviceMapperName
+		d.TypedSpec().DeviceMapperUUID = props.DeviceMapperUUID
+		d.TypedSpec().DeviceMapperKind = props.DeviceMapperKind
+
 		d.TypedSpec().SecondaryDisks = secondaryDisks
 
 		if symlinks != nil {

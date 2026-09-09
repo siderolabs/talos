@@ -35,6 +35,16 @@ func TestDiskLocator(t *testing.T) {
 			name:       "glob",
 			expression: "glob('sd[a-z]', disk.dev_path)",
 		},
+		{
+			// a multipath disk, as opposed to every other device-mapper device: LVM logical
+			// volumes and dm-crypt devices share the 'dm' transport with it
+			name:       "device-mapper kind",
+			expression: "disk.device_mapper_kind == 'mpath'",
+		},
+		{
+			name:       "device-mapper name and uuid",
+			expression: "disk.device_mapper_name == 'mpatha' && disk.device_mapper_uuid.startsWith('mpath-')",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
