@@ -21,7 +21,9 @@ var grubCfgTemplate string
 
 // CreateGRUB creates a GRUB-based ISO image.
 //
-// This iso supports both BIOS and UEFI booting.
+// For Talos versions which use sd-boot for UEFI, GRUB only covers BIOS boot on amd64
+// and EFI boot on arm64, so grub-mkrescue is restricted to a single platform.
+// For older versions, this ISO supports both BIOS and UEFI booting.
 func (options Options) CreateGRUB(printf func(string, ...any)) (Generator, error) {
 	if err := utils.CopyFiles(
 		printf,
@@ -70,16 +72,45 @@ func (options Options) CreateGRUB(printf func(string, ...any)) (Generator, error
 
 	printf("creating ISO image")
 
+	arguments := []string{
+		"--compress=xz",
+		"--output=" + options.OutPath,
+		"--verbose",
+	}
+
+	if platformDir := options.grubPlatformDir(); platformDir != "" {
+		arguments = append(arguments, "--directory="+platformDir)
+	}
+
+	arguments = append(
+		arguments,
+		options.ScratchDir,
+		"-iso-level", "3",
+		"--",
+	)
+
 	return &ExecutorOptions{
-		Command: "grub-mkrescue",
-		Version: options.Version,
-		Arguments: []string{
-			"--compress=xz",
-			"--output=" + options.OutPath,
-			"--verbose",
-			options.ScratchDir,
-			"-iso-level", "3",
-			"--",
-		},
+		Command:   "grub-mkrescue",
+		Version:   options.Version,
+		Arguments: arguments,
 	}, nil
+}
+
+// grubPlatformDir returns the grub-mkrescue source directory to build the ISO from,
+// or an empty string to let grub-mkrescue auto-detect the platforms.
+//
+// Pinning the platform keeps grub-mkrescue from picking up the x86_64-efi platform, which
+// makes it render the Apple disk label and fail on the missing /usr/share/grub/unicode.pf2.
+func (options Options) grubPlatformDir() string {
+	if !quirks.New(options.Version).UseSDBootForUEFI() {
+		// legacy Talos boots both BIOS and UEFI off GRUB, and grub-mkrescue only accepts
+		// a single source directory, so let it auto-detect the platforms
+		return ""
+	}
+
+	if options.Arch == "arm64" {
+		return grubARM64EFIDirectory
+	}
+
+	return grubBIOSDirectory
 }

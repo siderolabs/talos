@@ -28,8 +28,8 @@ func (options Options) CreateHybrid(ctx context.Context, printf func(string, ...
 			"--compress=xz",
 			"--output=" + options.OutPath,
 			"--verbose",
-			"--directory=/usr/lib/grub/i386-pc", // only for BIOS boot
-			"-m", "efiboot.img",                 // exclude the EFI boot image from the ISO
+			"--directory=" + grubBIOSDirectory, // only for BIOS boot
+			"-m", "efiboot.img",                // exclude the EFI boot image from the ISO
 			"-iso-level", "3",
 			options.ScratchDir,
 			"-eltorito-alt-boot",
