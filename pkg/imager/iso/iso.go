@@ -18,6 +18,13 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
+const (
+	// grubBIOSDirectory is the grub-mkrescue source directory for BIOS boot.
+	grubBIOSDirectory = "/usr/lib/grub/i386-pc"
+	// grubARM64EFIDirectory is the grub-mkrescue source directory for arm64 EFI boot.
+	grubARM64EFIDirectory = "/usr/lib/grub/arm64-efi"
+)
+
 // VolumeID returns a valid volume ID for the given label.
 func VolumeID(label string) string {
 	// builds a valid volume ID: 32 chars out of [A-Z0-9_]
