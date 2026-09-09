@@ -55,7 +55,7 @@ func NewState() (*State, error) {
 		func(ns string) state.CoreState {
 			return inmem.NewStateWithOptions(
 				inmem.WithHistoryInitialCapacity(8),
-				inmem.WithHistoryMaxCapacity(1024),
+				inmem.WithHistoryMaxCapacity(1536),
 				inmem.WithHistoryGap(4),
 			)(ns)
 		},
