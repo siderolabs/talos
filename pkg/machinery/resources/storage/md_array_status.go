@@ -45,6 +45,12 @@ type MDArrayStatusSpec struct {
 	ArrayState string `yaml:"arrayState,omitempty" protobuf:"10"`
 	// SyncAction is the current sysfs sync_action value.
 	SyncAction string `yaml:"syncAction,omitempty" protobuf:"11"`
+	// Unmanaged is true when this array has no backing MDArraySpec.
+	//
+	// Unmanaged arrays are reported for visibility only: they are discovered
+	// on disk (e.g. assembled by the kernel/udev before Talos ever wrote a
+	// RAIDArrayConfig for them), and are never reconciled or self-healed.
+	Unmanaged bool `yaml:"unmanaged,omitempty" protobuf:"12"`
 }
 
 // NewMDArrayStatus initializes an MDArrayStatus resource.
@@ -68,6 +74,7 @@ func (MDArrayStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{Name: "Status", JSONPath: "{.status}"},
 			{Name: "Sync", JSONPath: "{.syncAction}"},
 			{Name: "Device", JSONPath: "{.device}"},
+			{Name: "Unmanaged", JSONPath: "{.unmanaged}"},
 		},
 	}
 }
