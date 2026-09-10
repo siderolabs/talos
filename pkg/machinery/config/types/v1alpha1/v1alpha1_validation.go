@@ -150,6 +150,14 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	case machine.TypeWorker:
 		for _, d := range c.Machine().Network().Devices() {
+			// Devices() maps each *Device into the config.Device interface, so a
+			// null entry arrives as a non-nil interface holding a nil pointer and
+			// d == nil does not catch it. The interfaces loop further down reports
+			// the null itself.
+			if dev, ok := d.(*Device); ok && dev == nil {
+				continue
+			}
+
 			if d.VIPConfig() != nil {
 				result = multierror.Append(result, errors.New("virtual (shared) IP is not allowed on non-controlplane nodes"))
 			}
@@ -184,7 +192,13 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	if c.MachineConfig.MachineNetwork != nil {
 		allSecondaryInterfaces := map[string]string{}
 
-		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+		for i, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+			if device == nil {
+				result = multierror.Append(result, fmt.Errorf("machine.network.interfaces[%d] is null", i))
+
+				continue
+			}
+
 			if device.Bond() != nil && device.Bridge() != nil {
 				result = multierror.Append(result, fmt.Errorf("interface has both bridge and bond sections set %q: %w", device.Interface(), ErrMutuallyExclusive))
 			}

@@ -2348,3 +2348,37 @@ func TestValidateKubernetesVersions(t *testing.T) {
 		})
 	}
 }
+
+// A null entry in a YAML sequence unmarshals to a nil element. The loop over
+// machine.disks already reports that, and ValidateNetworkDevices guards for it,
+// but the loop that cross-checks bonds and bridges runs first.
+func TestValidateNullNetworkInterface(t *testing.T) {
+	t.Parallel()
+
+	endpointURL, err := url.Parse("https://localhost:6443/")
+	require.NoError(t, err)
+
+	config := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "worker",
+			MachineCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: []byte("foo"),
+			},
+			MachineNetwork: &v1alpha1.NetworkConfig{
+				NetworkInterfaces: v1alpha1.NetworkDeviceList{nil},
+			},
+		},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					endpointURL,
+				},
+			},
+		},
+	}
+
+	_, errs := config.Validate(runtimeMode{false}, validation.WithLocal())
+	require.Error(t, errs)
+	assert.Contains(t, errs.Error(), "machine.network.interfaces[0] is null")
+}
