@@ -50,6 +50,11 @@ func TestSysfsHelpers(t *testing.T) {
 	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md0", "md", "array_state"), []byte("inactive\n"), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md0", "md", "sync_action"), []byte("resync\n"), 0o644))
 
+	// a second, active array: InactiveArrays must skip it, but ListArrays reports every
+	// present array regardless of state.
+	require.NoError(t, os.MkdirAll(filepath.Join(sysBlockDir, "md1", "md"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md1", "md", "array_state"), []byte("clean\n"), 0o644))
+
 	dev, err := FindDeviceByMember("/dev/sda")
 	require.NoError(t, err)
 	assert.Equal(t, "/dev/md0", dev)
@@ -57,6 +62,10 @@ func TestSysfsHelpers(t *testing.T) {
 	inactive, err := InactiveArrays()
 	require.NoError(t, err)
 	assert.Equal(t, []string{"/dev/md0"}, inactive)
+
+	arrays, err := ListArrays()
+	require.NoError(t, err)
+	assert.Equal(t, []string{"/dev/md0", "/dev/md1"}, arrays)
 
 	state, err := ArrayStateForDevice("/dev/md0")
 	require.NoError(t, err)
