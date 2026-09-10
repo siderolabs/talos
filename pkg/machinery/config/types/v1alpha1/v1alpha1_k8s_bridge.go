@@ -327,8 +327,18 @@ func (c *Config) K8sServiceAccountConfig() config.K8sServiceAccountConfig {
 		return nil
 	}
 
+	endpoint := c.ClusterConfig.Endpoint()
+	if endpoint == nil {
+		// the legacy service account config derives the issuer URL and the API audiences from the
+		// cluster endpoint, so it is not usable without it (e.g. when the cluster endpoint was
+		// migrated to the KubeClusterConfig document, but the service account was not)
+		//
+		// this combination is rejected by the config validation
+		return nil
+	}
+
 	return serviceAccountShim{
-		endpoint: c.ClusterConfig.Endpoint(),
+		endpoint: endpoint,
 		key:      c.ClusterConfig.ClusterServiceAccount,
 	}
 }
@@ -382,7 +392,8 @@ func (s serviceAccountShim) APIAudiences() []string {
 
 // K8sClusterConfig implements the config.Config interface.
 func (c *Config) K8sClusterConfig() config.K8sClusterConfig {
-	if c.ClusterConfig == nil || c.ClusterConfig.ControlPlane == nil {
+	// if the endpoint is missing, assume it's not set (multi-doc should provide it)
+	if c.ClusterConfig == nil || c.ClusterConfig.Endpoint() == nil {
 		return nil
 	}
 

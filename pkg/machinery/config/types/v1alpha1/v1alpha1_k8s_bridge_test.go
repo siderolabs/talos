@@ -1089,6 +1089,35 @@ func TestKubeServiceAccountBridge(t *testing.T) {
 			expectNil: true,
 		},
 		{
+			// the cluster endpoint was migrated to the KubeClusterConfig document, but the service
+			// account was left in the v1alpha1 config: the legacy service account config derives the
+			// issuer URL from the cluster endpoint, so it is not usable (and this combination is
+			// rejected by the config validation)
+			name: "v1alpha1 service account without cluster endpoint",
+
+			cfg: func(t *testing.T) config.Config {
+				cc := k8s.NewKubeClusterConfigV1Alpha1()
+				cc.ClusterNameConfig = "test-cluster"
+				cc.ClusterEndpointConfig = meta.URL{URL: endpoint}
+
+				c, err := container.New(
+					&v1alpha1.Config{
+						ClusterConfig: &v1alpha1.ClusterConfig{
+							ClusterServiceAccount: &x509.PEMEncodedKey{
+								Key: sa.KeyPEM,
+							},
+						},
+					},
+					cc,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectNil: true,
+		},
+		{
 			name: "v1alpha1 with service account",
 
 			cfg: func(*testing.T) config.Config {
@@ -1938,6 +1967,24 @@ func TestKubeClusterConfigBridge(t *testing.T) {
 
 			expectClusterName:     "test-cluster",
 			expectClusterEndpoint: endpoint,
+		},
+		{
+			// the endpoint is required, as it's the only way to reach the cluster; this combination
+			// is rejected by the config validation
+			name: "v1alpha1 without cluster endpoint",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterName: "test-cluster",
+						ControlPlane: &v1alpha1.ControlPlaneConfig{
+							LocalAPIServerPort: 7443,
+						},
+					},
+				})
+			},
+
+			expectNil: true,
 		},
 		{
 			name: "new style",
