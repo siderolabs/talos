@@ -2033,6 +2033,75 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)\n\n",
 		},
+		{
+			// the cluster endpoint was migrated to the KubeClusterConfig document, but the service
+			// account was left in the v1alpha1 config: the legacy service account config derives the
+			// issuer URL and the API audiences from the cluster endpoint, so this combination has no meaning
+			name: "ServiceAccountWithoutClusterEndpoint",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterServiceAccount: &x509.PEMEncodedKey{
+						Key: []byte("foo"),
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* .cluster.serviceAccount requires the cluster endpoint to be set in the same document (.cluster.controlPlane.endpoint); " +
+				"when the cluster endpoint is migrated to the KubeClusterConfig document, .cluster.serviceAccount should be migrated to the KubeServiceAccountConfig document as well\n\n",
+		},
+		{
+			name: "ServiceAccountWithClusterEndpoint",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterServiceAccount: &x509.PEMEncodedKey{
+						Key: []byte("foo"),
+					},
+				},
+			},
+		},
+		{
+			// .cluster.controlPlane is present, but the endpoint was migrated to the KubeClusterConfig
+			// document: the whole section should have been removed
+			name: "ControlPlaneWithoutEndpoint",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						LocalAPIServerPort: 7443,
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* cluster controlplane endpoint is required (.cluster.controlPlane.endpoint); " +
+				"when the endpoint is migrated to the KubeClusterConfig document, the whole .cluster.controlPlane section should be removed " +
+				"(.cluster.controlPlane.localAPIServerPort is migrated to the KubeAPIServerConfig document)\n\n",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

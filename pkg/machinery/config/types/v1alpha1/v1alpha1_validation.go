@@ -406,12 +406,21 @@ func (c *ClusterConfig) Validate(isControlPlane bool) error {
 
 	if c.ControlPlane != nil {
 		if c.ControlPlane.Endpoint == nil {
-			return errors.New("cluster controlplane endpoint is required")
+			return errors.New("cluster controlplane endpoint is required (.cluster.controlPlane.endpoint); " +
+				"when the endpoint is migrated to the KubeClusterConfig document, the whole .cluster.controlPlane section should be removed " +
+				"(.cluster.controlPlane.localAPIServerPort is migrated to the KubeAPIServerConfig document)")
 		}
 
 		if err := sideronet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
 			result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
 		}
+	}
+
+	// the legacy service account config derives the issuer URL and the API audiences from the cluster
+	// endpoint, so it has no meaning without the endpoint being set in the same document
+	if c.ClusterServiceAccount != nil && c.Endpoint() == nil {
+		result = multierror.Append(result, errors.New(".cluster.serviceAccount requires the cluster endpoint to be set in the same document (.cluster.controlPlane.endpoint); "+
+			"when the cluster endpoint is migrated to the KubeClusterConfig document, .cluster.serviceAccount should be migrated to the KubeServiceAccountConfig document as well"))
 	}
 
 	if c.ClusterNetwork != nil && c.ClusterNetwork.DNSDomain != "" && !isValidDNSName(c.ClusterNetwork.DNSDomain) {

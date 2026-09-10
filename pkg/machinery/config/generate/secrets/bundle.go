@@ -198,13 +198,34 @@ type etcdEncryptionConfigProvider struct {
 }
 
 // NewBundleFromConfig creates secrets bundle using existing config.
+//
+//nolint:gocyclo
 func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
-	certs := &Certs{
-		K8s:               c.K8sAPIServerCAConfig().IssuingCA(),
-		K8sAggregator:     c.K8sAggregatorCAConfig().IssuingCA(),
-		K8sServiceAccount: c.K8sServiceAccountConfig().IssuingKey(),
-		Etcd:              c.Cluster().Etcd().CA(),
-		OS:                c.Machine().Security().IssuingCA(),
+	// the secrets might be missing from the config (e.g. a worker config, or a config
+	// which keeps them in the multi-doc documents which are not present), so each accessor is
+	// checked for nil before use
+	certs := &Certs{}
+
+	if clusterConfig := c.Cluster(); clusterConfig != nil {
+		if etcdCA := clusterConfig.Etcd(); etcdCA != nil {
+			certs.Etcd = etcdCA.CA()
+		}
+	}
+
+	if machineConfig := c.Machine(); machineConfig != nil {
+		certs.OS = machineConfig.Security().IssuingCA()
+	}
+
+	if apiServerCA := c.K8sAPIServerCAConfig(); apiServerCA != nil {
+		certs.K8s = apiServerCA.IssuingCA()
+	}
+
+	if aggregatorCA := c.K8sAggregatorCAConfig(); aggregatorCA != nil {
+		certs.K8sAggregator = aggregatorCA.IssuingCA()
+	}
+
+	if serviceAccount := c.K8sServiceAccountConfig(); serviceAccount != nil {
+		certs.K8sServiceAccount = serviceAccount.IssuingKey()
 	}
 
 	cluster := &Cluster{}

@@ -1267,6 +1267,11 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 		return status.Error(codes.FailedPrecondition, "k8s API server CA config is not set")
 	}
 
+	k8sClusterConfig := s.Controller.Runtime().Config().K8sClusterConfig()
+	if k8sClusterConfig == nil {
+		return status.Error(codes.FailedPrecondition, "cluster name and endpoint are not configured (.cluster.controlPlane.endpoint or KubeClusterConfig document)")
+	}
+
 	if err := kubeconfig.GenerateAdmin(
 		struct {
 			configconfig.ClusterConfig
@@ -1275,7 +1280,7 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 		}{
 			ClusterConfig:        s.Controller.Runtime().Config().Cluster(),
 			K8sAPIServerCAConfig: k8sCAConfig,
-			K8sClusterConfig:     s.Controller.Runtime().Config().K8sClusterConfig(),
+			K8sClusterConfig:     k8sClusterConfig,
 		},
 		&b,
 	); err != nil {
@@ -2410,7 +2415,12 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	}
 
 	// make a nice context name
-	contextName := s.Controller.Runtime().Config().K8sClusterConfig().ClusterName()
+	k8sClusterConfig := s.Controller.Runtime().Config().K8sClusterConfig()
+	if k8sClusterConfig == nil {
+		return nil, status.Error(codes.FailedPrecondition, "cluster name and endpoint are not configured (.cluster.controlPlane.endpoint or KubeClusterConfig document)")
+	}
+
+	contextName := k8sClusterConfig.ClusterName()
 	if r := roles.Strings(); len(r) == 1 {
 		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
 	}
