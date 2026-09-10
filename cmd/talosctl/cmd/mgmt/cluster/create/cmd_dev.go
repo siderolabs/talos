@@ -354,6 +354,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 	createCmd.Flags().AddFlagSet(getCommonFlags())
 	createCmd.Flags().AddFlagSet(getQemuFlags())
 	addOmniJoinTokenFlag(createCmd, &cOps.OmniAPIEndpoint, configPatchFlag, configPatchWorkerFlag, configPatchControlPlaneFlag)
+	registerConfigPatchCompletions(createCmd, configPatchFlag, configPatchControlPlaneFlag, configPatchWorkerFlag)
 
 	createCmd.MarkFlagsMutuallyExclusive(tpmEnabledFlag, tpm2EnabledFlag)
 

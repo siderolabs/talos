@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/flags"
@@ -153,6 +154,15 @@ func selectProvisioner(ctx context.Context, _ clusterops.Common) (provision.Prov
 	}
 
 	return providers.Factory(ctx, providers.QemuProviderName)
+}
+
+// registerConfigPatchCompletions enables `@file` path completion for the given config patch flags.
+//
+// It has to be called after the flags have been added to the command.
+func registerConfigPatchCompletions(cmd *cobra.Command, flagNames ...string) {
+	for _, flagName := range flagNames {
+		cli.Should(cmd.RegisterFlagCompletionFunc(flagName, common.CompleteConfigPatch))
+	}
 }
 
 func addOmniJoinTokenFlag(cmd *cobra.Command, bindAPIEndpoint *string, cfgPatchAllFlagName, cfgPatchWorkersFlagName, cfgPatchCPsFlagName string) {

@@ -77,6 +77,7 @@ func init() {
 	createQemuCmd.Flags().AddFlagSet(commonFlags)
 	createQemuCmd.Flags().AddFlagSet(getQemuFlags())
 	addOmniJoinTokenFlag(createQemuCmd, &cOps.OmniAPIEndpoint, configPatchFlagName, configPatchWorkerFlagName, configPatchControlPlaneFlagName)
+	registerConfigPatchCompletions(createQemuCmd, configPatchFlagName, configPatchControlPlaneFlagName, configPatchWorkerFlagName)
 
 	createCmd.AddCommand(createQemuCmd)
 }

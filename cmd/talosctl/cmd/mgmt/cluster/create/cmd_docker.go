@@ -74,6 +74,7 @@ func init() {
 
 	createDockerCmd.Flags().AddFlagSet(getDockerFlags())
 	createDockerCmd.Flags().AddFlagSet(commonFlags)
+	registerConfigPatchCompletions(createDockerCmd, configPatchFlagName, configPatchControlPlaneFlagName, configPatchWorkerFlagName)
 
 	createCmd.AddCommand(createDockerCmd)
 }
