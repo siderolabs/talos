@@ -202,10 +202,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 	var modeDetails string
 
-	if in.Mode != machine.ApplyConfigurationRequest_TRY {
-		s.Controller.Runtime().CancelConfigRollbackTimeout()
-	}
-
 	cfgProvider, err := configloader.NewFromBytes(in.GetData())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -273,6 +269,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 				},
 			},
 		}, nil
+	}
+
+	if in.Mode != machine.ApplyConfigurationRequest_TRY {
+		s.Controller.Runtime().CancelConfigRollbackTimeout()
 	}
 
 	log.Printf("apply config request: mode %s", strings.ToLower(mode))
