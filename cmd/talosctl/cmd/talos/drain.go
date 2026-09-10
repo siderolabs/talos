@@ -29,7 +29,10 @@ type nodeUpdate struct {
 // drainNodes runs Phase 1: resolves the Kubernetes node name for each Talos node
 // and performs cordon + drain on all of them in parallel.
 //
-// It returns a map of talosIP -> k8sNodeName for use in the uncordon phase.
+// It returns a map of talosIP -> k8sNodeName for use in the uncordon phase. The
+// map is returned on error too: each name is recorded before that node is
+// cordoned, so it holds every node that may have been cordoned before the
+// failure and the caller can restore them.
 func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
 	// For kubeconfig - build a random endpoint client (to go to the controlplane).
 	c, err := clientFactory.BuildRandomEndpointClient(ctx)
@@ -103,17 +106,39 @@ func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainT
 	<-aggregatorDone
 
 	if err != nil {
-		return nil, err
+		return k8sNames, err
 	}
 
 	return k8sNames, nil
 }
 
-// uncordonNodes runs Phase 3: waits for each Kubernetes node to become Ready,
-// then uncordons all of them in parallel.
+// uncordonAbortTimeout bounds the uncordon that follows a failed drain. That path
+// runs detached from the caller's context, so it needs a ceiling of its own. The
+// budget is dominated by fetching the admin kubeconfig over the Talos API rather
+// than by the get and the at-most-one patch per node.
+const uncordonAbortTimeout = time.Minute
+
+// uncordonNodes runs Phase 3: waits for each node recorded by drainNodes to become
+// Ready, then uncordons them in parallel.
 //
 // nodeNames maps talosIP -> k8sNodeName (produced by drainNodes).
-func uncordonNodes(ctx context.Context, clientFactory *global.ClientFactory, nodeNames map[string]string, timeout time.Duration, rep *reporter.Reporter) error {
+//
+// afterFailedDrain marks the abort path, where nothing was rebooted and so there
+// is no readiness to wait for. Waiting anyway would poll any node that is not
+// Ready for the full timeout and then leave it cordoned. That path also detaches
+// from ctx, which is already canceled whenever the drain failed because the
+// operator interrupted it.
+func uncordonNodes(
+	ctx context.Context, clientFactory *global.ClientFactory, nodeNames map[string]string,
+	timeout time.Duration, afterFailedDrain bool, rep *reporter.Reporter,
+) error {
+	if afterFailedDrain {
+		var cancel context.CancelFunc
+
+		ctx, cancel = context.WithTimeout(context.WithoutCancel(ctx), uncordonAbortTimeout)
+		defer cancel()
+	}
+
 	// For kubeconfig - build a random endpoint client (to go to the controlplane).
 	c, err := clientFactory.BuildRandomEndpointClient(ctx)
 	if err != nil {
@@ -151,13 +176,15 @@ func uncordonNodes(ctx context.Context, clientFactory *global.ClientFactory, nod
 				updateCh <- nodeUpdate{node: k8sNodeName, update: upd}
 			}
 
-			reportFn(reporter.Update{
-				Message: fmt.Sprintf("%s: waiting for node to become Ready", k8sNodeName),
-				Status:  reporter.StatusRunning,
-			})
+			if !afterFailedDrain {
+				reportFn(reporter.Update{
+					Message: fmt.Sprintf("%s: waiting for node to become Ready", k8sNodeName),
+					Status:  reporter.StatusRunning,
+				})
 
-			if waitErr := nodedrain.WaitForNodeReady(ctx, clientset, k8sNodeName, timeout); waitErr != nil {
-				return fmt.Errorf("error waiting for node %q to become Ready: %w", k8sNodeName, waitErr)
+				if waitErr := nodedrain.WaitForNodeReady(ctx, clientset, k8sNodeName, timeout); waitErr != nil {
+					return fmt.Errorf("error waiting for node %q to become Ready: %w", k8sNodeName, waitErr)
+				}
 			}
 
 			return nodedrain.Uncordon(ctx, clientset, k8sNodeName, reportFn)
