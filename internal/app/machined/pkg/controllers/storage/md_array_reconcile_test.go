@@ -35,6 +35,8 @@ type fakeMDProvisioner struct {
 	details map[string]md.Detail
 	// syncAction maps md node -> current sync action (default idle).
 	syncAction map[string]md.SyncAction
+	// arrays is returned by ListArrays, simulating every MD device present on the box.
+	arrays []string
 
 	// createNode is the node Create returns; createErr overrides success.
 	createNode string
@@ -141,6 +143,13 @@ func (f *fakeMDProvisioner) ArrayStateForDevice(string) (string, error) {
 	return "clean", nil
 }
 
+func (f *fakeMDProvisioner) ListArrays() ([]string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return append([]string(nil), f.arrays...), nil
+}
+
 func (f *fakeMDProvisioner) SyncActionForDevice(device string) (md.SyncAction, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -192,6 +201,7 @@ func (f *fakeMDProvisioner) reset() {
 	f.findByMember = map[string]string{}
 	f.details = map[string]md.Detail{}
 	f.syncAction = map[string]md.SyncAction{}
+	f.arrays = nil
 	f.createNode = "/dev/md0"
 	f.createErr = nil
 	f.creates = map[string][]string{}
@@ -357,6 +367,74 @@ func (suite *MDArrayReconcileSuite) TestReportsSyncActionAsRebuilding() {
 		asrt.Equal(storageres.MDArrayPhaseRebuilding, status.TypedSpec().Status)
 		asrt.Equal(string(md.SyncActionRecover), status.TypedSpec().SyncAction)
 	})
+}
+
+func (suite *MDArrayReconcileSuite) TestReportsUnmanagedDiscoveredArray() {
+	suite.md.details["/dev/md127"] = md.Detail{
+		Level:       "raid1",
+		RaidDevices: 2,
+		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		UUID:        "1234-uuid",
+		Name:        "talos:boot",
+	}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	// no MDArraySpec exists for this array; creating an unrelated disk just gives the
+	// controller an input event to react to.
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertResource(suite, "md127", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Unmanaged)
+		asrt.Equal("/dev/md127", status.TypedSpec().Device)
+		asrt.Equal([]string{"/dev/nvme0n1", "/dev/nvme1n1"}, status.TypedSpec().Members)
+		asrt.Equal(storageres.MDArrayPhaseReady, status.TypedSpec().Status)
+	})
+
+	_, created := suite.md.created("md127")
+	suite.Assert().False(created, "an unmanaged array must never be provisioned")
+	suite.Assert().Empty(suite.md.added("/dev/md127"), "an unmanaged array must never be reconciled")
+
+	_, grown := suite.md.grown("/dev/md127")
+	suite.Assert().False(grown, "an unmanaged array must never be grown")
+}
+
+func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnsupportedLevel() {
+	suite.md.details["/dev/md127"] = md.Detail{
+		Level:       "raid5",
+		RaidDevices: 3,
+		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1", "/dev/nvme2n1"},
+	}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md127")
+}
+
+func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayNotYetQueryable() {
+	// "/dev/md127" is present per ListArrays but has no matching entry in details, so
+	// DetailDevice fails, e.g. an array udev hasn't run yet.
+	suite.md.arrays = []string{"/dev/md127"}
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md127")
+}
+
+func (suite *MDArrayReconcileSuite) TestManagedArrayIsNotReportedUnmanaged() {
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
+
+	suite.md.arrays = []string{suite.md.createNode}
+
+	suite.createArraySpec("data", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Unmanaged)
+		asrt.Equal(storageres.MDArrayPhaseReady, status.TypedSpec().Status)
+	})
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md0")
 }
 
 func TestMDArrayReconcileSuite(t *testing.T) {

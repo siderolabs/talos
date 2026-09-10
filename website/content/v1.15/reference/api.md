@@ -12405,6 +12405,7 @@ MDArrayStatusSpec is the spec for MDArrayStatus resource.
 | metadata | [string](#string) |  | Metadata is the MD metadata format/version. |
 | array_state | [string](#string) |  | ArrayState is the current sysfs array_state value. |
 | sync_action | [string](#string) |  | SyncAction is the current sysfs sync_action value. |
+| unmanaged | [bool](#bool) |  | Unmanaged is true when this array has no backing MDArraySpec.<br><br>Unmanaged arrays are reported for visibility only: they are discovered on disk (e.g. assembled by the kernel/udev before Talos ever wrote a RAIDArrayConfig for them), and are never reconciled or self-healed. |
 
 
 

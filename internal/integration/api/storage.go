@@ -1416,6 +1416,37 @@ func (suite *StorageSuite) TestRAIDArrayGrow_RAID1() {
 	}, raidAssertTimeout, raidAssertInterval, "MD array status was not grown for %q", raidName)
 }
 
+// TestRAIDArrayUnmanaged_RAID1 provisions a raid1 array via a RAIDArrayConfig, then
+// removes the config document while leaving the array itself running. Talos never
+// stops an array just because its config disappeared (only an explicit MDDestroy
+// does that), so this reproduces, on a real node, the exact state an image-based
+// deployment is in from its very first boot: an assembled MD array with no
+// MDArraySpec. It verifies MDArrayReconcileController's discovery pass reports the
+// array as Unmanaged, keyed by its kernel device name, and that the old
+// spec-keyed MDArrayStatus is gone.
+func (suite *StorageSuite) TestRAIDArrayUnmanaged_RAID1() {
+	const raidName = "mdunmanaged"
+
+	nodeCtx, _, userDisks, teardown := suite.provisionRAID1Mirror(raidName, 2)
+	defer teardown()
+
+	memberDisks := userDisks[:2]
+
+	devName, ok := suite.raidArrayDevName(nodeCtx, raidName)
+	suite.Require().True(ok, "MD array %q device name not found", raidName)
+
+	suite.T().Logf("removing RAIDArrayConfig %q, leaving array %q running", raidName, devName)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.RAIDArrayConfigKind, raidName)
+
+	suite.Require().Eventually(func() bool {
+		return suite.mdArrayStatusIsUnmanaged(nodeCtx, devName, memberDisks)
+	}, raidAssertTimeout, raidAssertInterval, "MD array %q was not reported as unmanaged after its config was removed", raidName)
+
+	_, err := safe.StateGetByID[*storageres.MDArrayStatus](nodeCtx, suite.Client.COSI, raidName)
+	suite.Require().True(state.IsNotFoundError(err), "expected MDArrayStatus %q to be gone, got: %v", raidName, err)
+}
+
 // TestRAIDArrayUserVolumeDisk provisions a disk-backed (whole-device) UserVolume
 // on top of a raid1 array and verifies it comes up Ready and mounted.
 func (suite *StorageSuite) TestRAIDArrayUserVolumeDisk_RAID1() {
@@ -1520,6 +1551,33 @@ func (suite *StorageSuite) mdArrayStatusMatches(ctx context.Context, name, devic
 
 	if len(mismatches) > 0 {
 		suite.T().Logf("MD array %q not matching yet: %s", name, strings.Join(mismatches, "; "))
+
+		return false
+	}
+
+	return true
+}
+
+// mdArrayStatusIsUnmanaged reports whether devName carries an MDArrayStatus marked
+// Unmanaged with exactly the expected members.
+func (suite *StorageSuite) mdArrayStatusIsUnmanaged(ctx context.Context, devName string, members []string) bool {
+	status, err := safe.StateGetByID[*storageres.MDArrayStatus](ctx, suite.Client.COSI, devName)
+	if err != nil {
+		suite.T().Logf("MD array %q: unmanaged status not found yet: %v", devName, err)
+
+		return false
+	}
+
+	spec := status.TypedSpec()
+
+	if !spec.Unmanaged {
+		suite.T().Logf("MD array %q: not yet reported unmanaged", devName)
+
+		return false
+	}
+
+	if !sameStringSet(spec.Members, members) {
+		suite.T().Logf("MD array %q: members got %v, want %v", devName, spec.Members, members)
 
 		return false
 	}

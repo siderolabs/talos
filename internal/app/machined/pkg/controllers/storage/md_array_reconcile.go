@@ -38,6 +38,7 @@ type MDProvisioner interface {
 	Grow(ctx context.Context, device string, raidDevices int) error
 	DetailDevice(ctx context.Context, device string) (md.Detail, error)
 	FindDeviceByMember(member string) (string, error)
+	ListArrays() ([]string, error)
 	IsSyncing(device string) (bool, error)
 	ArrayStateForDevice(device string) (string, error)
 	SyncActionForDevice(device string) (md.SyncAction, error)
@@ -127,23 +128,37 @@ func (ctrl *MDArrayReconcileController) reconcile(ctx context.Context, r control
 
 	var reconcileErrs error
 
+	claimed := map[string]struct{}{}
+	specIDs := map[string]struct{}{}
+
 	for spec := range specs.All() {
-		status, err := ctrl.reconcileArray(ctx, logger, spec.Metadata().ID(), spec.TypedSpec())
+		id := spec.Metadata().ID()
+		specIDs[id] = struct{}{}
+
+		status, device, err := ctrl.reconcileArray(ctx, logger, id, spec.TypedSpec())
 		if err != nil {
 			if errors.Is(err, md.ErrResync) {
-				logger.Debug("MD array is syncing; waiting for monitor refresh", zap.String("array", spec.Metadata().ID()), zap.Error(err))
+				logger.Debug("MD array is syncing; waiting for monitor refresh", zap.String("array", id), zap.Error(err))
 			} else {
-				reconcileErrs = errors.Join(reconcileErrs, fmt.Errorf("reconcile array %q: %w", spec.Metadata().ID(), err))
+				reconcileErrs = errors.Join(reconcileErrs, fmt.Errorf("reconcile array %q: %w", id, err))
 			}
 		}
 
-		if err := safe.WriterModify(ctx, r, storage.NewMDArrayStatus(storage.NamespaceName, spec.Metadata().ID()), func(s *storage.MDArrayStatus) error {
+		if device != "" {
+			claimed[device] = struct{}{}
+		}
+
+		if err := safe.WriterModify(ctx, r, storage.NewMDArrayStatus(storage.NamespaceName, id), func(s *storage.MDArrayStatus) error {
 			*s.TypedSpec() = *status
 
 			return nil
 		}); err != nil {
-			return fmt.Errorf("modify MDArrayStatus %q: %w", spec.Metadata().ID(), err)
+			return fmt.Errorf("modify MDArrayStatus %q: %w", id, err)
 		}
+	}
+
+	if err := ctrl.reportUnmanagedArrays(ctx, r, logger, claimed, specIDs); err != nil {
+		return err
 	}
 
 	if err := safe.CleanupOutputs[*storage.MDArrayStatus](ctx, r); err != nil {
@@ -157,12 +172,68 @@ func (ctrl *MDArrayReconcileController) reconcile(ctx context.Context, r control
 	return nil
 }
 
-func (ctrl *MDArrayReconcileController) reconcileArray(ctx context.Context, logger *zap.Logger, name string, spec *storage.MDArraySpecSpec) (*storage.MDArrayStatusSpec, error) {
+// reportUnmanagedArrays reports MDArrayStatus for MD arrays present on the box which have
+// no matching MDArraySpec (and therefore no RAIDArrayConfig), e.g. a boot mirror assembled
+// before Talos ever wrote a machine config for it. These are observed only: no Create/Add/
+// Grow is ever issued for them, and only raid1 arrays are reported, since that is the only
+// level MDArrayStatusSpec.Level can represent today.
+func (ctrl *MDArrayReconcileController) reportUnmanagedArrays(ctx context.Context, r controller.Runtime, logger *zap.Logger, claimed, specIDs map[string]struct{}) error {
+	arrays, err := ctrl.MD.ListArrays()
+	if err != nil {
+		return fmt.Errorf("list MD arrays: %w", err)
+	}
+
+	for _, device := range arrays {
+		if _, ok := claimed[device]; ok {
+			continue
+		}
+
+		id := filepath.Base(device)
+		if _, ok := specIDs[id]; ok {
+			continue
+		}
+
+		detail, err := ctrl.MD.DetailDevice(ctx, device)
+		if err != nil {
+			// e.g. an assembled-but-not-yet-running array; nothing trustworthy to report
+			// until it can be queried (MDLastResortController will run it if it's stuck).
+			continue
+		}
+
+		if detail.Level != "" && detail.Level != "raid1" {
+			// storage.MDLevel only models raid1 today: report nothing rather than mislabel
+			// the level of an array Talos doesn't actually know how to represent.
+			logger.Debug("skipping unmanaged array with unsupported level",
+				zap.String("device", device), zap.String("level", detail.Level))
+
+			continue
+		}
+
+		status := &storage.MDArrayStatusSpec{Level: storage.MDLevelRAID1, Device: device, Unmanaged: true}
+
+		ctrl.updateObservedStatus(ctx, device, status)
+		markReadyIfIdle(status)
+
+		if err := safe.WriterModify(ctx, r, storage.NewMDArrayStatus(storage.NamespaceName, id), func(s *storage.MDArrayStatus) error {
+			*s.TypedSpec() = *status
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("modify MDArrayStatus %q: %w", id, err)
+		}
+	}
+
+	return nil
+}
+
+func (ctrl *MDArrayReconcileController) reconcileArray(ctx context.Context, logger *zap.Logger, name string, spec *storage.MDArraySpecSpec) (*storage.MDArrayStatusSpec, string, error) {
 	status := mdArrayStatusForSpec(name, spec)
 
 	diskPaths, err := ctrl.matchMembers(ctx, &spec.VolumeSelector)
 	if err != nil {
-		return statusWithError(status, fmt.Errorf("match disks: %w", err))
+		errStatus, wrapErr := statusWithError(status, fmt.Errorf("match disks: %w", err))
+
+		return errStatus, "", wrapErr
 	}
 
 	status.Members = diskPaths
@@ -176,12 +247,14 @@ func (ctrl *MDArrayReconcileController) reconcileArray(ctx context.Context, logg
 		status.Status = storage.MDArrayPhaseWaiting
 		status.Error = waitingForMembersError(diskPaths)
 
-		return status, nil
+		return status, "", nil
 	}
 
 	device, err := ctrl.findExistingDevice(diskPaths)
 	if err != nil {
-		return statusWithError(status, fmt.Errorf("find existing MD device: %w", err))
+		errStatus, wrapErr := statusWithError(status, fmt.Errorf("find existing MD device: %w", err))
+
+		return errStatus, "", wrapErr
 	}
 
 	if device == "" {
@@ -199,13 +272,13 @@ func (ctrl *MDArrayReconcileController) reconcileArray(ctx context.Context, logg
 
 		status.Error = provisioningError(err)
 
-		return status, err
+		return status, device, err
 	}
 
 	ctrl.updateObservedStatus(ctx, device, status)
 	markReadyIfIdle(status)
 
-	return status, nil
+	return status, device, nil
 }
 
 func mdArrayStatusForSpec(name string, spec *storage.MDArraySpecSpec) *storage.MDArrayStatusSpec {
@@ -236,12 +309,14 @@ func (ctrl *MDArrayReconcileController) createArray(
 	spec *storage.MDArraySpecSpec,
 	members []string,
 	status *storage.MDArrayStatusSpec,
-) (*storage.MDArrayStatusSpec, error) {
+) (*storage.MDArrayStatusSpec, string, error) {
 	logger.Info("creating MD array", zap.String("array", name), zap.Strings("members", members))
 
 	device, err := ctrl.MD.Create(ctx, name, md.CreateOptions{Level: spec.Level.Mdadm(), Metadata: spec.Metadata.Mdadm(), RaidDevices: len(members), Devices: members})
 	if err != nil && !errors.Is(err, md.ErrExists) {
-		return statusWithError(status, fmt.Errorf("create: %w", err))
+		errStatus, wrapErr := statusWithError(status, fmt.Errorf("create: %w", err))
+
+		return errStatus, "", wrapErr
 	}
 
 	if device == "" {
@@ -249,7 +324,9 @@ func (ctrl *MDArrayReconcileController) createArray(
 
 		device, findErr = ctrl.findExistingDevice(members)
 		if findErr != nil {
-			return statusWithError(status, fmt.Errorf("find existing MD device: %w", findErr))
+			errStatus, wrapErr := statusWithError(status, fmt.Errorf("find existing MD device: %w", findErr))
+
+			return errStatus, "", wrapErr
 		}
 	}
 
@@ -257,13 +334,13 @@ func (ctrl *MDArrayReconcileController) createArray(
 		status.Status = storage.MDArrayPhaseError
 		status.Error = "array reported as existing but device could not be resolved (may be inactive)"
 
-		return status, nil
+		return status, "", nil
 	}
 
 	ctrl.updateObservedStatus(ctx, device, status)
 	markReadyIfIdle(status)
 
-	return status, nil
+	return status, device, nil
 }
 
 func (ctrl *MDArrayReconcileController) reconcileExistingArray(ctx context.Context, logger *zap.Logger, name, device string, desiredMembers []string) error {

@@ -146,6 +146,36 @@ func InactiveArrays() ([]string, error) {
 	return inactive, nil
 }
 
+// ListArrays returns the /dev/mdN device paths for all present MD arrays, regardless of state.
+func (*MD) ListArrays() ([]string, error) {
+	return ListArrays()
+}
+
+// ListArrays returns the /dev/mdN device paths for all present MD arrays, regardless of state.
+func ListArrays() ([]string, error) {
+	entries, err := os.ReadDir(sysBlockDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s: %w", sysBlockDir, err)
+	}
+
+	var arrays []string
+
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasPrefix(name, "md") {
+			continue
+		}
+
+		if _, err := os.Stat(filepath.Join(sysBlockDir, name, "md")); err != nil {
+			continue
+		}
+
+		arrays = append(arrays, filepath.Join("/dev", name))
+	}
+
+	return arrays, nil
+}
+
 // ArrayStateForDevice returns the current array state for an MD device.
 func (*MD) ArrayStateForDevice(device string) (string, error) {
 	return ArrayStateForDevice(device)

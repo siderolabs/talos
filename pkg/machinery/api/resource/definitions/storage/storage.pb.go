@@ -1285,7 +1285,13 @@ type MDArrayStatusSpec struct {
 	// ArrayState is the current sysfs array_state value.
 	ArrayState string `protobuf:"bytes,10,opt,name=array_state,json=arrayState,proto3" json:"array_state,omitempty"`
 	// SyncAction is the current sysfs sync_action value.
-	SyncAction    string `protobuf:"bytes,11,opt,name=sync_action,json=syncAction,proto3" json:"sync_action,omitempty"`
+	SyncAction string `protobuf:"bytes,11,opt,name=sync_action,json=syncAction,proto3" json:"sync_action,omitempty"`
+	// Unmanaged is true when this array has no backing MDArraySpec.
+	//
+	// Unmanaged arrays are reported for visibility only: they are discovered
+	// on disk (e.g. assembled by the kernel/udev before Talos ever wrote a
+	// RAIDArrayConfig for them), and are never reconciled or self-healed.
+	Unmanaged     bool `protobuf:"varint,12,opt,name=unmanaged,proto3" json:"unmanaged,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1395,6 +1401,13 @@ func (x *MDArrayStatusSpec) GetSyncAction() string {
 		return x.SyncAction
 	}
 	return ""
+}
+
+func (x *MDArrayStatusSpec) GetUnmanaged() bool {
+	if x != nil {
+		return x.Unmanaged
+	}
+	return false
 }
 
 // MDRefreshRequestSpec is the spec for MDRefreshRequest.
@@ -1577,7 +1590,7 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x0fMDArraySpecSpec\x12F\n" +
 	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12N\n" +
 	"\x0fvolume_selector\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x0evolumeSelector\x12O\n" +
-	"\bmetadata\x18\x03 \x01(\x0e23.talos.resource.definitions.enums.StorageMDMetadataR\bmetadata\"\x9b\x03\n" +
+	"\bmetadata\x18\x03 \x01(\x0e23.talos.resource.definitions.enums.StorageMDMetadataR\bmetadata\"\xb9\x03\n" +
 	"\x11MDArrayStatusSpec\x12F\n" +
 	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12\x16\n" +
 	"\x06device\x18\x02 \x01(\tR\x06device\x12\x18\n" +
@@ -1592,7 +1605,8 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	" \x01(\tR\n" +
 	"arrayState\x12\x1f\n" +
 	"\vsync_action\x18\v \x01(\tR\n" +
-	"syncAction\"0\n" +
+	"syncAction\x12\x1c\n" +
+	"\tunmanaged\x18\f \x01(\bR\tunmanaged\"0\n" +
 	"\x14MDRefreshRequestSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequestBx\n" +
 	"*dev.talos.api.resource.definitions.storageZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storageb\x06proto3"
