@@ -31,7 +31,7 @@ func (suite *StaticPodConfigSuite) TestReconcile() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachinePods: []meta.Unstructured{
+					MachinePods: []meta.Unstructured{ //nolint:staticcheck // testing deprecated field
 						{
 							Object: map[string]any{
 								"apiVersion": "v1",

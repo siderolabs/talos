@@ -53,7 +53,7 @@ func (suite *UserDiskConfigSuite) TestReconcileDefaults() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -90,7 +90,7 @@ func (suite *UserDiskConfigSuite) TestReconcileUserDisk() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineDisks: []*v1alpha1.MachineDisk{
+					MachineDisks: []*v1alpha1.MachineDisk{ //nolint:staticcheck // testing deprecated field
 						{
 							DeviceName: disk1,
 							DiskPartitions: []*v1alpha1.DiskPartition{
@@ -116,7 +116,7 @@ func (suite *UserDiskConfigSuite) TestReconcileUserDisk() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

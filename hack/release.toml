@@ -23,7 +23,7 @@ Kubernetes: 1.37.0
 containerd: 2.3.5
 CoreDNS: 1.14.7
 
-Talos is built with Go 1.26.8.
+Talos is built with Go 1.27.1.
 """
 
     [notes.kubespan_peer_endpoint_filters]

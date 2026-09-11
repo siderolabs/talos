@@ -91,10 +91,10 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigEnabled() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{URL: u},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						PodSubnet: []string{constants.DefaultIPv4PodCIDR},
 					},
 				},
@@ -138,10 +138,10 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigForwardKubeDNSIPv4() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{URL: u},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						PodSubnet: []string{constants.DefaultIPv4PodCIDR, constants.DefaultIPv6PodCIDR},
 					},
 				},
@@ -213,10 +213,10 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigForwardKubeDNSIPv6Only() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{URL: u},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						PodSubnet: []string{constants.DefaultIPv6PodCIDR},
 					},
 				},
@@ -258,7 +258,7 @@ func (suite *HostDNSConfigSuite) TestResolverConfigDocument() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 				PodSubnet: []string{constants.DefaultIPv4PodCIDR},
 			},
 		},

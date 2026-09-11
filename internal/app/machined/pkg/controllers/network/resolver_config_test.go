@@ -71,7 +71,7 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 					MachineNetwork: &v1alpha1.NetworkConfig{}, //nolint:staticcheck // legacy config
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -170,12 +170,12 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationLegacy() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NameServers: []string{"2.2.2.2", "3.3.3.3"},
-						Searches:    []string{"example.com", "example.org"},
+						NameServers: []string{"2.2.2.2", "3.3.3.3"},         //nolint:staticcheck // legacy config
+						Searches:    []string{"example.com", "example.org"}, //nolint:staticcheck // legacy config
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

@@ -32,10 +32,10 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:     "cluster1",
-			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
+			ClusterID:     "cluster1",                                     //nolint:staticcheck // testing deprecated field
+			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=", //nolint:staticcheck // testing deprecated field
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
-				DiscoveryEnabled: new(true),
+				DiscoveryEnabled: new(true), //nolint:staticcheck // legacy configuration
 			},
 		},
 	}))
@@ -64,16 +64,16 @@ func (suite *ConfigSuite) TestReconcileConfigCustom() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:     "cluster1",
-			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
+			ClusterID:     "cluster1",                                     //nolint:staticcheck // testing deprecated field
+			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=", //nolint:staticcheck // testing deprecated field
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
-				DiscoveryEnabled: new(true),
+				DiscoveryEnabled: new(true), //nolint:staticcheck // legacy configuration
 				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{ //nolint:staticcheck // legacy configuration
 					RegistryKubernetes: v1alpha1.RegistryKubernetesConfig{ //nolint:staticcheck // legacy configuration
 						RegistryDisabled: new(true),
 					},
 					RegistryService: v1alpha1.RegistryServiceConfig{ //nolint:staticcheck // legacy configuration
-						RegistryEndpoint: "https://[2001:470:6d:30e:565d:e162:e2a0:cf5a]:3456/",
+						RegistryEndpoint: "https://[2001:470:6d:30e:565d:e162:e2a0:cf5a]:3456/", //nolint:staticcheck // legacy configuration
 					},
 				},
 			},
@@ -97,16 +97,16 @@ func (suite *ConfigSuite) TestReconcileConfigCustomInsecure() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:     "cluster1",
-			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
+			ClusterID:     "cluster1",                                     //nolint:staticcheck // testing deprecated field
+			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=", //nolint:staticcheck // testing deprecated field
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
-				DiscoveryEnabled: new(true),
+				DiscoveryEnabled: new(true), //nolint:staticcheck // legacy configuration
 				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{ //nolint:staticcheck // legacy configuration
 					RegistryKubernetes: v1alpha1.RegistryKubernetesConfig{ //nolint:staticcheck // legacy configuration
 						RegistryDisabled: new(true),
 					},
 					RegistryService: v1alpha1.RegistryServiceConfig{ //nolint:staticcheck // legacy configuration
-						RegistryEndpoint: "http://localhost:3000",
+						RegistryEndpoint: "http://localhost:3000", //nolint:staticcheck // legacy configuration
 					},
 				},
 			},
@@ -177,10 +177,10 @@ func (suite *ConfigSuite) TestLegacyFieldsWithDiscoveryService() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:     "test-cluster",
-			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
+			ClusterID:     "test-cluster",                                 //nolint:staticcheck // testing deprecated field
+			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=", //nolint:staticcheck // testing deprecated field
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
-				DiscoveryEnabled: new(true),
+				DiscoveryEnabled: new(true), //nolint:staticcheck // legacy config
 			},
 		},
 	}))
@@ -226,13 +226,13 @@ func (suite *ConfigSuite) TestLegacyFieldsInsecureEndpoint() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:     "test-cluster",
-			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
+			ClusterID:     "test-cluster",                                 //nolint:staticcheck // testing deprecated field
+			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=", //nolint:staticcheck // testing deprecated field
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
-				DiscoveryEnabled: new(true),
+				DiscoveryEnabled: new(true), //nolint:staticcheck // legacy config
 				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{ //nolint:staticcheck // legacy config
 					RegistryService: v1alpha1.RegistryServiceConfig{ //nolint:staticcheck // legacy config
-						RegistryEndpoint: "http://insecure.example.com:3000",
+						RegistryEndpoint: "http://insecure.example.com:3000", //nolint:staticcheck // legacy config
 					},
 				},
 			},

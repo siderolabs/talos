@@ -250,7 +250,7 @@ func TestResolverV1Alpha1ConflictValidate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NameServers: []string{"1.1.1.1"},
+						NameServers: []string{"1.1.1.1"}, //nolint:staticcheck // legacy config
 					},
 				},
 			},
@@ -263,7 +263,7 @@ func TestResolverV1Alpha1ConflictValidate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						Searches: []string{"cluster.org"},
+						Searches: []string{"cluster.org"}, //nolint:staticcheck // legacy config
 					},
 				},
 			},
@@ -276,7 +276,7 @@ func TestResolverV1Alpha1ConflictValidate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkDisableSearchDomain: new(true),
+						NetworkDisableSearchDomain: new(true), //nolint:staticcheck // legacy config
 					},
 				},
 			},

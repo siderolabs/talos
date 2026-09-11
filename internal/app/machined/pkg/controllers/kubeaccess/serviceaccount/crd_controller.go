@@ -341,7 +341,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 			return fmt.Errorf("%s: %w", msg, err)
 		}
 
-		return errors.New(msg)
+		return errors.New(msg) //nolint:staticcheck // msg doubles as the user-facing Kubernetes Event message
 	}
 
 	if !slices.ContainsFunc(t.allowedNamespaces, func(allowedNS string) bool {

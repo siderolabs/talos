@@ -223,7 +223,7 @@ func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *g
 func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 	payload, err := proto.Marshal(&common.Empty{
 		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
-			Hostname: a.target,
+			Hostname: a.target, //nolint:staticcheck // legacy behavior
 		},
 	})
 
@@ -289,9 +289,9 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 func (a *APID) BuildError(streaming bool, err error) ([]byte, error) {
 	var resp proto.Message = &common.Empty{
 		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
-			Hostname: a.target,
-			Error:    err.Error(),
-			Status:   status.Convert(err).Proto(),
+			Hostname: a.target,                    //nolint:staticcheck // legacy behavior
+			Error:    err.Error(),                 //nolint:staticcheck // legacy behavior
+			Status:   status.Convert(err).Proto(), //nolint:staticcheck // legacy behavior
 		},
 	}
 

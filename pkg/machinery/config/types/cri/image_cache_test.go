@@ -75,7 +75,7 @@ func TestImageCacheConfigV1Alpha1Conflict(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+						ImageCacheSupport: &v1alpha1.ImageCacheConfig{ //nolint:staticcheck // test deprecated compatibility
 							CacheLocalEnabled: new(true),
 						},
 					},
@@ -90,7 +90,7 @@ func TestImageCacheConfigV1Alpha1Conflict(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+						ImageCacheSupport: &v1alpha1.ImageCacheConfig{ //nolint:staticcheck // test deprecated compatibility
 							CacheLocalEnabled: new(false),
 						},
 					},

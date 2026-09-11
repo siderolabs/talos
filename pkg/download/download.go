@@ -238,7 +238,7 @@ func download(req *http.Request, options *downloadOptions) (data []byte, err err
 		d := (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-			DualStack: true,
+			DualStack: true, //nolint:staticcheck // no-op since Go 1.12, kept for clarity
 			LocalAddr: localTCPAddr,
 		}).DialContext
 

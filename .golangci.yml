@@ -28,7 +28,8 @@ linters:
     - embeddedstructfieldcheck
     - err113
     - errorlint
-    - exhaustruct
+    - exhaustruct # new version exhaustruct_v5
+    - exhaustruct_v5
     - forcetypeassert
     - funcorder
     - funlen
