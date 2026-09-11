@@ -19,6 +19,13 @@ type ResolvedConfig struct {
 	Spec               network.BGPInstanceConfigSpec
 	AdvertisedPrefixes []netip.Prefix
 	RouterID           netip.Addr
+	// VRFIndex is the kernel index of the VRF link, zero when the instance runs in the main table.
+	//
+	// The listening socket is bound to the device by name, which the kernel resolves to an index
+	// once. A VRF recreated under the same name gets a new index, so the index is part of the
+	// server's identity: without it a rebuilt VRF leaves the server bound to a device which no
+	// longer exists, and it neither accepts nor sources connections in the new VRF.
+	VRFIndex uint32
 }
 
 // RuntimeState is an indexed snapshot of network link and address status.
@@ -108,6 +115,8 @@ func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (Resolved
 	resolved.AdvertiseLinks = slices.Clone(spec.AdvertiseLinks)
 	resolved.Neighbors = slices.Clone(spec.Neighbors)
 
+	var vrfIndex uint32
+
 	if resolved.VRF != "" {
 		status, exists := state.linksByName[resolved.VRF]
 		if !exists {
@@ -117,6 +126,8 @@ func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (Resolved
 		if status.Kind != network.LinkKindVRF {
 			return ResolvedConfig{}, fmt.Errorf("link %q is not a VRF", resolved.VRF)
 		}
+
+		vrfIndex = status.Index
 	}
 
 	if resolved.RouteSource.IsValid() {
@@ -135,6 +146,7 @@ func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (Resolved
 		Spec:               resolved,
 		AdvertisedPrefixes: connectedPrefixes(advertisedAddresses),
 		RouterID:           routerID(resolved.RouterID, advertisedAddresses),
+		VRFIndex:           vrfIndex,
 	}, nil
 }
 

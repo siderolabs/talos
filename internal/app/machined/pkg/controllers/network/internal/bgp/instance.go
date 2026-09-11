@@ -91,12 +91,13 @@ func (instance *Instance) EnsureServer(
 	logger *zap.Logger,
 	config network.BGPInstanceConfigSpec,
 	routerID netip.Addr,
+	vrfIndex uint32,
 	resolvedPeers []Peer,
 	peerIfaces map[netip.Addr]string,
 	listenPort int32,
 	signal func(),
 ) error {
-	key := ServerKey(config.LocalASN, routerID, config.Multipath, config.MaxPaths, config.VRF, config.VRFTable, listenPort)
+	key := ServerKey(config.LocalASN, routerID, config.Multipath, config.MaxPaths, config.VRF, vrfIndex, config.VRFTable, listenPort)
 
 	if instance.server == nil || instance.serverKey != key {
 		instance.Stop()
