@@ -7291,7 +7291,7 @@
         },
         "kind": {
           "enum": [
-            "UnattendedInstall"
+            "UnattendedInstallConfig"
           ],
           "title": "kind",
           "description": "kind is the kind of the resource.\n",
