@@ -15,14 +15,14 @@ const (
 	// Starting with Rook v1.20 the CSI drivers are no longer deployed by the operator chart and
 	// have to be installed separately via the ceph-csi-drivers chart.
 	// renovate: datasource=helm versioning=helm depName=ceph-csi-drivers registryUrl=https://ceph.github.io/ceph-csi-operator
-	CephCSIDriversHelmChartVersion = "v1.0.4"
+	CephCSIDriversHelmChartVersion = "1.0.5"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
 	LongHornHelmChartVersion = "1.12.0"
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
-	OpenEBSChartVersion = "4.5.1"
+	OpenEBSChartVersion = "4.6.1"
 	// TridentOperatorChartVersion is the version of the NetApp Trident Operator Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=trident-operator registryUrl=https://netapp.github.io/trident-helm-chart
-	TridentOperatorChartVersion = "100.2606.0"
+	TridentOperatorChartVersion = "100.2606.1"
 )
