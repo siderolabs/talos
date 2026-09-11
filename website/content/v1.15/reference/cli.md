@@ -2856,9 +2856,11 @@ talosctl meta delete key [flags]
 ### Options inherited from parent commands
 
 ```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2885,9 +2887,11 @@ talosctl meta write key value [flags]
 ### Options inherited from parent commands
 
 ```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
