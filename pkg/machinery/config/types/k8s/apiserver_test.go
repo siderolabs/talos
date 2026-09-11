@@ -161,7 +161,25 @@ func TestKubeAPIServerConfigValidate(t *testing.T) {
 			},
 
 			expectedError: "kube-apiserver extra argument \"anonymous-auth\" is not allowed: use KubeAuthenticationConfig\n" +
-				"kube-apiserver extra argument \"authorization-mode\" is not allowed: use KubeAuthorizationConfig",
+				"kube-apiserver extra argument \"authorization-mode\" is not allowed: use KubeAuthorizerConfig",
+		},
+		{
+			name: "oidc args",
+			cfg: func() *k8s.KubeAPIServerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAPIServerConfigV1Alpha1()
+				cfg.PodImage = constants.KubernetesAPIServerImage + ":v1.35.3"
+				cfg.PodArgs = meta.Args{
+					"oidc-issuer-url":   meta.NewArgValue("https://issuer.example.com", nil),
+					"oidc-signing-algs": meta.NewArgValue("RS512", nil),
+				}
+
+				return cfg
+			},
+
+			expectedError: "kube-apiserver extra argument \"oidc-issuer-url\" is not allowed: use KubeAuthenticationConfig\n" +
+				"kube-apiserver extra argument \"oidc-signing-algs\" is not allowed: not supported with KubeAuthenticationConfig: " +
+				"kube-apiserver rejects --oidc-* flags when structured authentication configuration is used, " +
+				"and the configuration has no equivalent setting (all RFC 7518 asymmetric algorithms are accepted)",
 		},
 		{
 			name: "valid image, local",

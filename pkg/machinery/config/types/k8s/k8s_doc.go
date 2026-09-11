@@ -95,7 +95,7 @@ func (KubeAPIServerConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "extraArgs",
 				Type:        "Args",
 				Note:        "",
-				Description: "Extra command line arguments to supply to the kube-apiserver.",
+				Description: "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\n`anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`, while\n`authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.\n\nThe single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -212,7 +212,7 @@ func (KubeAuthenticationConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "configuration",
 				Type:        "Unstructured",
 				Note:        "",
-				Description: "Kubernetes API server [authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) configuration.\nThe value is the literal Kubernetes authentication configuration.",
+				Description: "Kubernetes API server [authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) configuration.\nThe value is the literal Kubernetes authentication configuration.\n\nThis document replaces the legacy kube-apiserver authentication flags, which are rejected in\n`KubeAPIServerConfig` `extraArgs`: kube-apiserver refuses any `--oidc-*` flag whenever\n`--authentication-config` is set, and Talos always sets it.\n\nFlag equivalents:\n`--anonymous-auth` -> `anonymous.enabled`,\n`--oidc-issuer-url` -> `jwt[].issuer.url`,\n`--oidc-client-id` -> `jwt[].issuer.audiences`,\n`--oidc-ca-file` -> `jwt[].issuer.certificateAuthority`,\n`--oidc-username-claim` -> `jwt[].claimMappings.username.claim`,\n`--oidc-username-prefix` -> `jwt[].claimMappings.username.prefix`,\n`--oidc-groups-claim` -> `jwt[].claimMappings.groups.claim`,\n`--oidc-groups-prefix` -> `jwt[].claimMappings.groups.prefix`,\n`--oidc-required-claim` -> `jwt[].claimValidationRules[]`.\n\n`--oidc-signing-algs` has no equivalent and cannot be configured: with structured authentication\nconfiguration kube-apiserver accepts every RFC 7518 asymmetric algorithm\n(RS256, RS384, RS512, ES256, ES384, ES512, PS256, PS384, PS512).",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes API server [authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
