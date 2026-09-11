@@ -240,7 +240,7 @@ func TestKubeControllerManagerConfigV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 with machine control plane ControllerManager config set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineControlPlane: &v1alpha1.MachineControlPlaneConfig{
+					MachineControlPlane: &v1alpha1.MachineControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						MachineControllerManager: &v1alpha1.MachineControllerManagerConfig{}, //nolint:staticcheck // testing deprecated field
 					},
 				},

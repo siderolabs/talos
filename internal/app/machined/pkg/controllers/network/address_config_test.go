@@ -124,7 +124,7 @@ func (suite *AddressConfigSuite) TestMachineConfigurationLegacy() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "eth3",
 								DeviceCIDR:      "192.168.0.24/28",
@@ -168,7 +168,7 @@ func (suite *AddressConfigSuite) TestMachineConfigurationLegacy() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

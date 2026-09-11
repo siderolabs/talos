@@ -47,28 +47,28 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
-						KubeletImage:      "kubelet",
-						KubeletClusterDNS: []string{"10.0.0.1"},
-						KubeletExtraArgs: meta.Args{
+						KubeletImage:      "kubelet",            //nolint:staticcheck // legacy config
+						KubeletClusterDNS: []string{"10.0.0.1"}, //nolint:staticcheck // legacy config
+						KubeletExtraArgs: meta.Args{ //nolint:staticcheck // legacy config
 							"enable-feature": meta.NewArgValue("foo", nil),
 						},
-						KubeletExtraMounts: []v1alpha1.ExtraMount{
+						KubeletExtraMounts: []v1alpha1.ExtraMount{ //nolint:staticcheck // testing deprecated field
 							{
 								Destination: "/tmp",
 								Source:      "/var",
 								Type:        "tmpfs",
 							},
 						},
-						KubeletExtraConfig: meta.Unstructured{
+						KubeletExtraConfig: meta.Unstructured{ //nolint:staticcheck // testing deprecated field
 							Object: map[string]any{
 								"serverTLSBootstrap": true,
 							},
 						},
-						KubeletDefaultRuntimeSeccompProfileEnabled: new(true),
+						KubeletDefaultRuntimeSeccompProfileEnabled: new(true), //nolint:staticcheck // testing deprecated field
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -76,7 +76,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
 						ExternalEnabled: new(true),
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						DNSDomain: "service.svc",
 					},
 				},
@@ -131,16 +131,16 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
-						KubeletImage: "kubelet",
+						KubeletImage: "kubelet", //nolint:staticcheck // legacy config
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
 					},
 				},

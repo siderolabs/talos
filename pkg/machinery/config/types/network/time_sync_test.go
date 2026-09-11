@@ -210,7 +210,7 @@ func TestTimeSyncV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 timeservers set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // legacy config
 						TimeServers: []string{"za.pool.ntp.org"},
 					},
 				},
@@ -223,7 +223,7 @@ func TestTimeSyncV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 boot timeout set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // legacy config
 						TimeBootTimeout: time.Second,
 					},
 				},
@@ -236,7 +236,7 @@ func TestTimeSyncV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 disable set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // legacy config
 						TimeDisabled: new(true),
 					},
 				},

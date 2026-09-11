@@ -43,7 +43,7 @@ type mockConfigProvider struct {
 func (provider *mockConfigProvider) Config() config.Config {
 	return container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
-			MachineTime: &v1alpha1.TimeConfig{
+			MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // testing deprecated field
 				TimeServers: []string{provider.timeServer},
 			},
 		},

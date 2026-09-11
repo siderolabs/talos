@@ -37,12 +37,12 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
-						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
+						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{ //nolint:staticcheck // legacy config
 							KubeletNodeIPValidSubnets: []string{"10.0.0.0/24"},
 						},
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy controller
 							{
 								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
 									SharedIP: "1.2.3.4",
@@ -60,12 +60,12 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
 						PodSubnet:     []string{constants.DefaultIPv4PodCIDR},
 					},
@@ -95,12 +95,12 @@ func (suite *NodeIPConfigSuite) TestReconcileWithNewVIPs() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: u,
 				},
 			},
-			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 				ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
 				PodSubnet:     []string{constants.DefaultIPv4PodCIDR},
 			},
@@ -138,12 +138,12 @@ func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR, constants.DefaultIPv6ServiceCIDR},
 						PodSubnet:     []string{constants.DefaultIPv4PodCIDR, constants.DefaultIPv6PodCIDR},
 					},

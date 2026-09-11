@@ -70,7 +70,7 @@ func TestEncodeDecodeValues(t *testing.T) {
 					},
 
 					expectedEncodedSize: 3084,
-					expectedGzippedSize: 80,
+					expectedGzippedSize: 76,
 				},
 			} {
 				t.Run(test.name, func(t *testing.T) {

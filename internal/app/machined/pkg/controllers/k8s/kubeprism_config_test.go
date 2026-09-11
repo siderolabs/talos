@@ -35,11 +35,11 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must(url.Parse("https://example.com"))(suite.Require()),
 				},
-				LocalAPIServerPort: 6445,
+				LocalAPIServerPort: 6445, //nolint:staticcheck // testing deprecated field
 			},
 		},
 	}

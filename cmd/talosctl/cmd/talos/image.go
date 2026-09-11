@@ -549,11 +549,11 @@ var imageK8sBundleCmd = &cobra.Command{
 					},
 					ClusterConfig: &v1alpha1.ClusterConfig{
 						EtcdConfig:              &v1alpha1.EtcdConfig{},
-						APIServerConfig:         &v1alpha1.APIServerConfig{},
+						APIServerConfig:         &v1alpha1.APIServerConfig{},         //nolint:staticcheck // legacy configuration
 						ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck // legacy config
 						SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck // legacy config
-						CoreDNSConfig:           &v1alpha1.CoreDNS{},
-						ProxyConfig:             &v1alpha1.ProxyConfig{}, //nolint:staticcheck // legacy configuration
+						CoreDNSConfig:           &v1alpha1.CoreDNS{},                 //nolint:staticcheck // legacy config
+						ProxyConfig:             &v1alpha1.ProxyConfig{},             //nolint:staticcheck // legacy configuration
 					},
 				},
 			),
@@ -731,11 +731,11 @@ var imageIntegrationCmd = &cobra.Command{
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
 				EtcdConfig:              &v1alpha1.EtcdConfig{},
-				APIServerConfig:         &v1alpha1.APIServerConfig{},
+				APIServerConfig:         &v1alpha1.APIServerConfig{},         //nolint:staticcheck // legacy configuration
 				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck
 				SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck
-				CoreDNSConfig:           &v1alpha1.CoreDNS{},
-				ProxyConfig:             &v1alpha1.ProxyConfig{}, //nolint:staticcheck
+				CoreDNSConfig:           &v1alpha1.CoreDNS{},                 //nolint:staticcheck // legacy configuration
+				ProxyConfig:             &v1alpha1.ProxyConfig{},             //nolint:staticcheck
 			},
 		}))
 

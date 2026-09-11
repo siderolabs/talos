@@ -33,7 +33,7 @@ func init() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{URL: u},
 			},
 		},

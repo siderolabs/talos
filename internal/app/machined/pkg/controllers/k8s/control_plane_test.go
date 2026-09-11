@@ -57,7 +57,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 			MachineType: "controlplane",
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: u,
 				},
@@ -124,14 +124,14 @@ func (suite *K8sControlPlaneSuite) TestReconcileEmptyAuthorizationConfigAuthoriz
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
-						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{},
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{}, //nolint:staticcheck // testing deprecated field
 					},
 				},
 			},
@@ -160,14 +160,14 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
-						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{ //nolint:staticcheck // testing deprecated field
 							{
 								AuthorizerType: "Webhook",
 								AuthorizerName: "webhook",
@@ -228,14 +228,14 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
-						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{ //nolint:staticcheck // testing deprecated field
 							{
 								AuthorizerType: "RBAC",
 								AuthorizerName: "foo",
@@ -312,14 +312,14 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
-						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
+						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{ //nolint:staticcheck // testing deprecated field
 							{
 								AuthorizerType: "Node",
 								AuthorizerName: "foo",
@@ -392,8 +392,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileTransitionWorker() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -430,12 +430,12 @@ func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						PodSubnet:     []string{constants.DefaultIPv6PodCIDR},
 						ServiceSubnet: []string{constants.DefaultIPv6ServiceCIDR},
 					},
@@ -467,12 +467,12 @@ func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
 						PodSubnet:     []string{constants.DefaultIPv4PodCIDR, constants.DefaultIPv6PodCIDR},
 						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR, constants.DefaultIPv6ServiceCIDR},
 					},
@@ -504,13 +504,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
 						ExtraVolumesConfig: []v1alpha1.VolumeMountConfig{
 							{
 								VolumeHostPath:  "/var/lib",
@@ -566,13 +566,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
 						EnvConfig: v1alpha1.Env{
 							"HTTP_PROXY": "foo",
 						},
@@ -610,13 +610,13 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
+					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
 						ResourcesConfig: &v1alpha1.ResourcesConfig{
 							Requests: meta.Unstructured{
 								Object: map[string]any{
@@ -744,8 +744,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -815,8 +815,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileInlineManifests() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -872,8 +872,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyMode() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{}, //nolint:staticcheck // testing deprecated field
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

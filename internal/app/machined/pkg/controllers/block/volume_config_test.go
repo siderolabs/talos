@@ -109,7 +109,7 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -247,12 +247,12 @@ func (suite *VolumeConfigSuite) TestReconcileEncryptedSTATE() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{
+					MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{ //nolint:staticcheck // testing deprecated field
 						StatePartition: stateEncryption,
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -289,7 +289,7 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 			ConfigVersion: "v1alpha1",
 			MachineConfig: &v1alpha1.MachineConfig{},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 					Endpoint: &v1alpha1.Endpoint{
 						URL: u,
 					},
@@ -347,7 +347,7 @@ func (suite *VolumeConfigSuite) TestReconcilePromoteETCD() {
 			ConfigVersion: "v1alpha1",
 			MachineConfig: &v1alpha1.MachineConfig{},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 					Endpoint: &v1alpha1.Endpoint{
 						URL: u,
 					},
@@ -414,7 +414,7 @@ func (suite *VolumeConfigSuite) clusterEndpointConfig() *v1alpha1.Config {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: u,
 				},

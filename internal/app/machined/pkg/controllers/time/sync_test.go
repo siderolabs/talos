@@ -98,7 +98,7 @@ func (suite *SyncSuite) TestReconcileSyncDisabled() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // testing deprecated field
 						TimeDisabled: new(true),
 					},
 				},
@@ -260,7 +260,7 @@ func (suite *SyncSuite) TestReconcileSyncBootTimeout() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // testing deprecated field
 						TimeBootTimeout: 5 * time.Second,
 					},
 				},
@@ -287,7 +287,7 @@ func (suite *SyncSuite) TestReconcileSyncBootTimeoutKeptAcrossSyncerRestart() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // testing deprecated field
 						TimeBootTimeout: time.Second,
 					},
 				},

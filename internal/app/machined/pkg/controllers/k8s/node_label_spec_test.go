@@ -53,7 +53,7 @@ func (suite *NodeLabelsSuite) updateMachineConfig(machineType machine.Type, labe
 		cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineType:       machineType.String(),
-				MachineNodeLabels: labels,
+				MachineNodeLabels: labels, //nolint:staticcheck // testing deprecated field
 			},
 		}))
 

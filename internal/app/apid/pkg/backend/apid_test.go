@@ -168,7 +168,7 @@ func (suite *APIDSuite) TestAppendInfoStreamingMetadata() {
 	// to the message, but protobuf merges definitions
 	response := &common.Data{
 		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
-			Error: "something went wrong",
+			Error: "something went wrong", //nolint:staticcheck // legacy behavior
 		},
 	}
 

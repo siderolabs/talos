@@ -76,12 +76,12 @@ func (suite *TimeServerConfigSuite) TestMachineConfigurationLegacy() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineTime: &v1alpha1.TimeConfig{
+					MachineTime: &v1alpha1.TimeConfig{ //nolint:staticcheck // testing deprecated field
 						TimeServers: []string{"za.pool.ntp.org", "pool.ntp.org"},
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

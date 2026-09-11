@@ -34,7 +34,7 @@ func (suite *DeviceConfigSpecSuite) TestDeviceConfigs() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
-				NetworkInterfaces: []*v1alpha1.Device{
+				NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy controller
 					{
 						DeviceInterface: "eth0",
 						DeviceAddresses: []string{"192.168.2.0/24"},
@@ -81,7 +81,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
-				NetworkInterfaces: []*v1alpha1.Device{
+				NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy controller
 					// device selector selecing a single interface
 					{
 						DeviceSelector: &v1alpha1.NetworkDeviceSelector{
@@ -169,7 +169,7 @@ func (suite *DeviceConfigSpecSuite) TestBondSelectors() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy controller
-				NetworkInterfaces: []*v1alpha1.Device{
+				NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy controller
 					{
 						DeviceInterface: "bond0",
 						DeviceAddresses: []string{"192.168.2.0/24"},

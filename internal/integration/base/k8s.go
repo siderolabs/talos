@@ -779,12 +779,12 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 	fieldSelector := fields.OneTermEqualSelector("metadata.name", resourceName).String()
 
 	lw := &cache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to ListWithContext
 			options.FieldSelector = fieldSelector
 
 			return dr.List(ctx, options)
 		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to WatchWithContext
 			options.FieldSelector = fieldSelector
 
 			return dr.Watch(ctx, options)
@@ -1054,12 +1054,12 @@ func (k8sSuite *K8sSuite) DeleteManifests(ctx context.Context, manifests []unstr
 		// wait for the object to be deleted
 		fieldSelector := fields.OneTermEqualSelector("metadata.name", obj.GetName()).String()
 		lw := &cache.ListWatch{
-			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to ListWithContext
 				options.FieldSelector = fieldSelector
 
 				return dr.List(ctx, options)
 			},
-			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to WatchWithContext
 				options.FieldSelector = fieldSelector
 
 				return dr.Watch(ctx, options)

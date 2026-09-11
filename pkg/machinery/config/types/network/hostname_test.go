@@ -182,7 +182,7 @@ func TestHostnameV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkHostname: "foo",
+						NetworkHostname: "foo", //nolint:staticcheck // legacy config
 					},
 				},
 			},
@@ -195,7 +195,7 @@ func TestHostnameV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						StableHostname: new(true),
+						StableHostname: new(true), //nolint:staticcheck // legacy config
 					},
 				},
 			},
