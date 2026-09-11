@@ -47,7 +47,7 @@ var (
 //	  - value: exampleUnattendedInstallConfigV1Alpha1()
 //	alias: UnattendedInstallConfig
 //	schemaRoot: true
-//	schemaMeta: v1alpha1/UnattendedInstall
+//	schemaMeta: v1alpha1/UnattendedInstallConfig
 type UnattendedInstallConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 
