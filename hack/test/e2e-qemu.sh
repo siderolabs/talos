@@ -70,7 +70,9 @@ esac
 
 case "${WITH_BGP:-false}" in
   true)
-    QEMU_FLAGS+=("--with-bgp")
+    # The fabric NIC shares a segment with the management NIC, so ARP has to be restricted to the
+    # interface owning each address; see the patch for what breaks otherwise.
+    QEMU_FLAGS+=("--with-bgp" "--config-patch=@hack/test/patches/bgp-arp.yaml")
     ;;
 esac
 
