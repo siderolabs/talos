@@ -41,6 +41,26 @@ MD_DEVICE_dev_sdb_DEV=/dev/sdb
 	assert.Equal(t, map[string]string{"/dev/sda": "0", "/dev/sdb": "1"}, detail.MemberRoles)
 }
 
+func TestParseDetailExportDegradedMirrorRetainsConfiguredSlots(t *testing.T) {
+	detail := parseDetailExport(`MD_LEVEL=raid1
+MD_DEVICES=2
+MD_METADATA=1.0
+MD_UUID=8d84d1c8:95d9e5bc:dc9fdd7d:51f91234
+MD_NAME=talos:boot
+MD_DEVICE_dev_vda_ROLE=0
+MD_DEVICE_dev_vda_DEV=/dev/vda
+`)
+
+	// MD_DEVICES is the configured RAID slot count, not the number of healthy
+	// members. Rejoining the absent second member must not imply a third slot.
+	assert.Equal(t, 2, detail.RaidDevices)
+	assert.Equal(t, []string{"/dev/vda"}, detail.Members)
+	assert.Equal(t, map[string]string{"/dev/vda": "0"}, detail.MemberRoles)
+	assert.Equal(t, "1.0", detail.Metadata)
+	assert.Equal(t, "talos:boot", detail.Name)
+	assert.Equal(t, "8d84d1c8:95d9e5bc:dc9fdd7d:51f91234", detail.UUID)
+}
+
 func TestSysfsHelpers(t *testing.T) {
 	oldSysBlockDir := sysBlockDir
 	sysBlockDir = t.TempDir()

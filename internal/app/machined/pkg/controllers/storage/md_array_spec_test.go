@@ -40,6 +40,25 @@ func (suite *MDArraySpecSuite) TestRendersMultipleDocs() {
 	ctest.AssertResource(suite, "logs", func(*storageres.MDArraySpec, *assert.Assertions) {})
 }
 
+func (suite *MDArraySpecSuite) TestPreservesIndependentSerialSelectorsAndMetadata() {
+	boot := newRAIDDoc("boot", bootSerialSelector)
+	boot.MetadataFormat = storageres.MDMetadata10
+	data := newRAIDDoc("data", dataSerialSelector)
+	data.MetadataFormat = storageres.MDMetadata12
+	applyMachineConfigDocs(&suite.DefaultSuite, boot, data)
+
+	ctest.AssertResource(suite, "boot", func(spec *storageres.MDArraySpec, asrt *assert.Assertions) {
+		asrt.Equal(storageres.MDLevelRAID1, spec.TypedSpec().Level)
+		asrt.Equal(storageres.MDMetadata10, spec.TypedSpec().Metadata)
+		asrt.Equal(bootSerialSelector, spec.TypedSpec().VolumeSelector.String())
+	})
+	ctest.AssertResource(suite, "data", func(spec *storageres.MDArraySpec, asrt *assert.Assertions) {
+		asrt.Equal(storageres.MDLevelRAID1, spec.TypedSpec().Level)
+		asrt.Equal(storageres.MDMetadata12, spec.TypedSpec().Metadata)
+		asrt.Equal(dataSerialSelector, spec.TypedSpec().VolumeSelector.String())
+	})
+}
+
 func (suite *MDArraySpecSuite) TestRemovingDocRemovesSpec() {
 	cfg := applyMachineConfigDocs(&suite.DefaultSuite, newRAIDDoc("temp", `disk.transport == "nvme"`))
 

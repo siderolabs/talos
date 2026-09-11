@@ -19,9 +19,16 @@ import (
 // block.DiscoveredVolume so the selector controller can evaluate disk-level CEL
 // expressions against it.
 func createDisk(suite *ctest.DefaultSuite, id, devPath, transport string) {
+	createDiskWithSerial(suite, id, devPath, transport, "")
+}
+
+// createDiskWithSerial supplies the hardware identity used by exact disk
+// selectors, independently of its current kernel device name.
+func createDiskWithSerial(suite *ctest.DefaultSuite, id, devPath, transport, serial string) {
 	d := block.NewDisk(block.NamespaceName, id)
 	d.TypedSpec().DevPath = devPath
 	d.TypedSpec().Transport = transport
+	d.TypedSpec().Serial = serial
 
 	suite.Create(d)
 
