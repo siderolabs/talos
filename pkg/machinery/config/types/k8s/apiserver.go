@@ -64,6 +64,12 @@ type KubeAPIServerConfigV1Alpha1 struct {
 	PodImage string `yaml:"image"`
 	//   description: |
 	//     Extra command line arguments to supply to the kube-apiserver.
+	//
+	//     Arguments owned by other configuration documents are rejected:
+	//     `anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`, while
+	//     `authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.
+	//
+	//     The single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.
 	//   schema:
 	//     type: object
 	//     additionalProperties:
@@ -165,23 +171,39 @@ func (s *KubeAPIServerConfigV1Alpha1) Validate(_ validation.RuntimeMode, opts ..
 	return warnings, errs
 }
 
-func (s *KubeAPIServerConfigV1Alpha1) validateArgs() error {
-	deniedPrefixes := map[string]string{
-		"anonymous-auth":         "use KubeAuthenticationConfig",
-		"oidc-":                  "use KubeAuthenticationConfig",
-		"authentication-config":  "use KubeAuthenticationConfig",
-		"authorization-config":   "use KubeAuthorizationConfig",
-		"authorization-mode":     "use KubeAuthorizationConfig",
-		"authorization-webhook-": "use KubeAuthorizationConfig",
-	}
+// deniedArgPrefixes maps a denied kube-apiserver argument prefix to the reason it is denied.
+//
+// The longest matching prefix wins, so a more specific entry overrides the reason of a broader one.
+var deniedArgPrefixes = map[string]string{
+	"anonymous-auth":         "use KubeAuthenticationConfig",
+	"oidc-":                  "use KubeAuthenticationConfig",
+	"authentication-config":  "use KubeAuthenticationConfig",
+	"authorization-config":   "use KubeAuthorizerConfig",
+	"authorization-mode":     "use KubeAuthorizerConfig",
+	"authorization-webhook-": "use KubeAuthorizerConfig",
 
+	// `--oidc-signing-algs` has no counterpart in the structured authentication configuration:
+	// kube-apiserver rejects any `--oidc-*` flag when `--authentication-config` is set, and it always
+	// accepts every RFC 7518 asymmetric algorithm in that mode.
+	"oidc-signing-algs": "not supported with KubeAuthenticationConfig: " +
+		"kube-apiserver rejects --oidc-* flags when structured authentication configuration is used, " +
+		"and the configuration has no equivalent setting (all RFC 7518 asymmetric algorithms are accepted)",
+}
+
+func (s *KubeAPIServerConfigV1Alpha1) validateArgs() error {
 	var errs error
 
-	for _, prefix := range slices.Sorted(maps.Keys(deniedPrefixes)) {
-		for arg := range s.PodArgs {
-			if strings.HasPrefix(arg, prefix) {
-				errs = errors.Join(errs, fmt.Errorf("kube-apiserver extra argument %q is not allowed: %s", arg, deniedPrefixes[prefix]))
+	for _, arg := range slices.Sorted(maps.Keys(s.PodArgs)) {
+		var matchedPrefix, reason string
+
+		for prefix, prefixReason := range deniedArgPrefixes {
+			if strings.HasPrefix(arg, prefix) && len(prefix) > len(matchedPrefix) {
+				matchedPrefix, reason = prefix, prefixReason
 			}
+		}
+
+		if matchedPrefix != "" {
+			errs = errors.Join(errs, fmt.Errorf("kube-apiserver extra argument %q is not allowed: %s", arg, reason))
 		}
 	}
 
