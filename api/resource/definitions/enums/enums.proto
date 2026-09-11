@@ -885,6 +885,7 @@ enum NetworkOperator {
   OPERATOR_DHCP4 = 0;
   OPERATOR_DHCP6 = 1;
   OPERATOR_VIP = 2;
+  OPERATOR_LLDP = 3;
 }
 
 // ContainersContainerImagePhase describes the state of a container's image pull.

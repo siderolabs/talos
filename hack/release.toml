@@ -15,6 +15,14 @@ preface = """
 """
 
 [notes]
+    [notes.lldp]
+        title = "LLDP Neighbor Discovery"
+        description = """\
+Talos now listens for LLDP on physical Ethernet interfaces and reports neighbors through the `LLDPNeighborStatus` resource.
+Reported information includes chassis and port IDs, system and port descriptions, system names, management addresses, and VLANs.
+The built-in listener does not transmit advertisements; use the `lldpd` system extension when advertising is required.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\

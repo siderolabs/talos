@@ -339,6 +339,37 @@ message HostnameStatusSpec {
   string domainname = 2;
 }
 
+// LLDPNeighborSpec describes the advertised identity of one neighbor.
+message LLDPNeighborSpec {
+  string chassis_id = 1;
+  string system_name = 2;
+  string system_description = 3;
+  string port_id = 4;
+  string port_description = 5;
+  repeated string management_addresses = 6;
+  repeated LLDPVLANSpec vlans = 7;
+}
+
+// LLDPNeighborStatusSpec contains LLDP neighbors observed on a link.
+message LLDPNeighborStatusSpec {
+  repeated LLDPNeighborSpec neighbors = 1;
+}
+
+// LLDPOperatorSpec describes LLDP operator options.
+message LLDPOperatorSpec {
+  // LinkIndex is the kernel index of the link the operator listens on.
+  //
+  // The packet socket is bound to the interface when it is opened, so a device replaced under the
+  // same name has to be picked up as a different operator instance.
+  uint32 link_index = 1;
+}
+
+// LLDPVLANSpec describes an advertised VLAN.
+message LLDPVLANSpec {
+  uint32 id = 1;
+  string name = 2;
+}
+
 // LinkAliasSpecSpec describes status of rendered secrets.
 message LinkAliasSpecSpec {
   string alias = 1;
@@ -561,6 +592,7 @@ message OperatorSpecSpec {
   DHCP6OperatorSpec dhcp6 = 5;
   VIPOperatorSpec vip = 6;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 7;
+  LLDPOperatorSpec lldp = 8;
 }
 
 // PlatformConfigSpec describes platform network configuration.

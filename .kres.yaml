@@ -939,6 +939,10 @@ spec:
           - test: e2e-firewall-accept
             shortIntegrationTest: "yes"
             withFirewall: accept
+          - test: e2e-lldp
+            integrationTestRun: TestIntegration/api.LLDPSuite
+            withLLDP: "true"
+            extraTestArgs: -talos.lldp
           - test: e2e-bgp
             shortIntegrationTest: "yes"
             withBGP: "true"
@@ -984,6 +988,7 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             SHORT_INTEGRATION_TEST: ${{ matrix.shortIntegrationTest }}
             WITH_FIREWALL: ${{ matrix.withFirewall }}
+            WITH_LLDP: ${{ matrix.withLLDP }}
             WITH_BGP: ${{ matrix.withBGP }}
             WITH_BGP_CLOS: ${{ matrix.withBGPCLOS }}
             QEMU_CONTROLPLANES: ${{ matrix.qemuControlplanes }}

@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -27,7 +28,8 @@ import (
 
 // OperatorConfigController manages network.OperatorSpec based on machine configuration, kernel cmdline.
 type OperatorConfigController struct {
-	Cmdline *procfs.Cmdline
+	Cmdline      *procfs.Cmdline
+	V1Alpha1Mode runtime.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -332,6 +334,28 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 							})
 						}
 					}
+				}
+			}
+		}
+
+		// LLDP is a passive observation of the physical link, so it runs on every physical interface
+		// independently of the interface configuration. Bonds, VLANs and other virtual links are
+		// skipped: their neighbors are reported on the physical links they are built on.
+		//
+		// In container mode the links belong to the container's network namespace, so there is no
+		// physical neighbor to discover and no reason to open a packet socket.
+		if ctrl.V1Alpha1Mode != runtime.ModeContainer {
+			for linkStatus := range linkStatuses.All() {
+				if linkStatus.TypedSpec().Physical() {
+					specs = append(specs, network.OperatorSpecSpec{
+						Operator:  network.OperatorLLDP,
+						LinkName:  linkStatus.Metadata().ID(),
+						RequireUp: true,
+						LLDP: network.LLDPOperatorSpec{
+							LinkIndex: linkStatus.TypedSpec().Index,
+						},
+						ConfigLayer: network.ConfigDefault,
+					})
 				}
 			}
 		}

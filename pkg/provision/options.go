@@ -187,6 +187,15 @@ func WithJSONLogs(endpoint string) Option {
 	}
 }
 
+// WithLLDP enables the QEMU host's continuous LLDP receive-test advertiser.
+func WithLLDP(enabled bool) Option {
+	return func(o *Options) error {
+		o.LLDPEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithBGP enables an embedded gobgp speaker acting as a fabric peer for testing native BGP.
 func WithBGP(listenAddress, neighborRange, advertise string, localASN, peerASN uint32) Option {
 	return func(o *Options) error {
@@ -285,6 +294,9 @@ type Options struct {
 	NFSEnabled       bool
 
 	SiderolinkEnabled bool
+
+	// LLDP receive-test advertiser, enabled by --with-lldp.
+	LLDPEnabled bool
 
 	// BGP test fabric peer (embedded gobgp), enabled by --with-bgp.
 	BGPEnabled       bool

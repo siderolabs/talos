@@ -142,6 +142,7 @@ type Qemu struct {
 	Bandwidth                 int
 	DiskEncryptionKeyTypes    []string
 	WithFirewall              string
+	WithLLDP                  bool
 	WithBGP                   bool
 	WithBGPCLOS               bool
 	WithNFS                   bool
