@@ -22,6 +22,8 @@ replace (
 	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72
 )
 
+replace github.com/siderolabs/go-blockdevice/v2 => github.com/smira/go-blockdevice/v2 v2.0.0-20260909102110-559b0884a8cf
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.37.0
