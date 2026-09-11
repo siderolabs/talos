@@ -204,7 +204,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "eth0",
 							},
@@ -251,7 +251,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP4() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -315,7 +315,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "eth1",
 								DeviceDHCP:      new(true),
@@ -342,7 +342,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationDHCP6() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -500,7 +500,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationWithAliases() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "enx0123",
 							},
@@ -547,7 +547,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationWithAliases() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

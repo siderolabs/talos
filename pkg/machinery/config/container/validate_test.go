@@ -42,7 +42,7 @@ func TestValidateAsClient(t *testing.T) {
 
 	v1alpha1Cfg := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},
@@ -120,7 +120,7 @@ func TestCrossValidateEncryption(t *testing.T) {
 
 	v1alpha1Cfg := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},
@@ -131,7 +131,7 @@ func TestCrossValidateEncryption(t *testing.T) {
 			MachineCA: &x509.PEMEncodedCertificateAndKey{
 				Crt: []byte("cert"),
 			},
-			MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{
+			MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{ //nolint:staticcheck // testing legacy features
 				EphemeralPartition: &v1alpha1.EncryptionConfig{
 					EncryptionKeys: []*v1alpha1.EncryptionKey{
 						{
@@ -231,7 +231,7 @@ func TestValidateContainer(t *testing.T) {
 
 	v1alpha1Cfg := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},

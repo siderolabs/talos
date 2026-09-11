@@ -157,7 +157,7 @@ func (a *Alibabacloud) ParseMetadata(metadata *MetadataConfig) (*runtime.Platfor
 		}
 
 		networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
-			DNSServers:  dnsIPs,
+			DNSServers:  dnsIPs, //nolint:staticcheck // legacy resolver field
 			ConfigLayer: network.ConfigPlatform,
 		})
 	}

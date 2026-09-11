@@ -51,7 +51,7 @@ func (suite *NodeAnnotationsSuite) updateMachineConfig(annotations map[string]st
 		cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineType:            "controlplane",
-				MachineNodeAnnotations: annotations,
+				MachineNodeAnnotations: annotations, //nolint:staticcheck // testing deprecated field
 			},
 		}))
 

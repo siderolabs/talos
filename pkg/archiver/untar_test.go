@@ -79,7 +79,7 @@ func TestUntar(t *testing.T) {
 					header: tar.Header{
 						Name:   "file.txt",
 						Mode:   0o644,
-						Xattrs: map[string]string{"security.selinux": "test_t"},
+						Xattrs: map[string]string{"security.selinux": "test_t"}, //nolint:staticcheck // testing legacy tar xattr header
 					},
 					payload: []byte("xattrs"),
 				},

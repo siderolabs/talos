@@ -34,7 +34,7 @@ func (suite *ConfigSuite) TestRegistry() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineType: "controlplane",
-			MachineRegistries: v1alpha1.RegistriesConfig{
+			MachineRegistries: v1alpha1.RegistriesConfig{ //nolint:staticcheck // testing deprecated field
 				RegistryMirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"docker.io": {
 						MirrorEndpoints:    []string{"https://mirror.io"},
@@ -105,7 +105,7 @@ func (suite *ConfigSuite) TestRegistryAuth() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineType: "controlplane",
-			MachineRegistries: v1alpha1.RegistriesConfig{
+			MachineRegistries: v1alpha1.RegistriesConfig{ //nolint:staticcheck // testing deprecated field
 				RegistryMirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"docker.io": {MirrorEndpoints: []string{"https://mirror.io"}},
 				},
@@ -193,7 +193,7 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineType: "controlplane",
-			MachineRegistries: v1alpha1.RegistriesConfig{
+			MachineRegistries: v1alpha1.RegistriesConfig{ //nolint:staticcheck // testing deprecated field
 				RegistryMirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"docker.io": {MirrorEndpoints: []string{"https://mirror.io"}},
 				},

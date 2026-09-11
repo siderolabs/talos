@@ -248,7 +248,7 @@ func TestKubeServiceAccountConfigV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 with cluster service account set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterServiceAccount: &x509.PEMEncodedKey{
+					ClusterServiceAccount: &x509.PEMEncodedKey{ //nolint:staticcheck // testing deprecated field
 						Key: []byte("foo"),
 					},
 				},

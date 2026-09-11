@@ -35,12 +35,12 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 
 			cfg := &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterName: "talos1",
-					ClusterCA: &x509.PEMEncodedCertificateAndKey{
+					ClusterName: "talos1", //nolint:staticcheck // testing deprecated field
+					ClusterCA: &x509.PEMEncodedCertificateAndKey{ //nolint:staticcheck // testing deprecated field
 						Crt: ca.CrtPEM,
 						Key: ca.KeyPEM,
 					},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},

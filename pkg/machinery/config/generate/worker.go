@@ -25,7 +25,7 @@ func (in *Input) worker() ([]config.Document, error) {
 	v1alpha1Config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   new(in.Options.Debug),
-		ConfigPersist: new(true),
+		ConfigPersist: new(true), //nolint:staticcheck // legacy configuration
 	}
 
 	machine := &v1alpha1.MachineConfig{
@@ -33,10 +33,10 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineKubelet: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy configuration
-			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
+			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), //nolint:staticcheck // legacy configuration
 		}),
 		MachineCA:       &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
-		MachineDisks:    in.Options.MachineDisks,
+		MachineDisks:    in.Options.MachineDisks, //nolint:staticcheck // legacy configuration
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
@@ -51,7 +51,7 @@ func (in *Input) worker() ([]config.Document, error) {
 			InstallDisk:            in.Options.InstallDisk,
 			InstallImage:           in.Options.InstallImage,
 			InstallWipe:            new(false),
-			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
+			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs, //nolint:staticcheck // legacy configuration
 		}
 
 		if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
@@ -111,10 +111,10 @@ func (in *Input) worker() ([]config.Document, error) {
 		ClusterID:      nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
 		ClusterSecret:  nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
 		BootstrapToken: in.Options.SecretsBundle.Secrets.BootstrapToken,
-		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{
+		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // legacy configuration
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		}),
-		ClusterNetwork: nilIf(
+		ClusterNetwork: nilIf( //nolint:staticcheck // legacy configuration
 			in.Options.VersionContract.MultidocKubernetesConfigSupported(),
 			&v1alpha1.ClusterNetworkConfig{
 				DNSDomain:     in.Options.DNSDomain,
@@ -137,7 +137,7 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	if in.Options.DiscoveryEnabled != nil && !in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
 		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
-			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled),
+			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled), //nolint:staticcheck // legacy configuration
 		}
 
 		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {
