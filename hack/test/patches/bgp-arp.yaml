@@ -1,0 +1,17 @@
+# The BGP test nodes carry the management NIC and the fabric NIC on the same segment: the host
+# reaches the VRF peer address over the management bridge (see configureBGPVRFPeerRoute). With the
+# default arp_ignore=0 either NIC answers ARP for either address, so the host can cache the
+# management IP against the fabric NIC's MAC. TestVRFBGP then enslaves the fabric NIC into a VRF,
+# the management traffic lands in that VRF where the API socket is not listening, and the kernel
+# resets the connection: the test reports a refused connection from an otherwise healthy node.
+#
+# Answer ARP only for addresses configured on the receiving interface, and prefer a source address
+# from the outgoing interface's subnet.
+#
+# Only the numbered topology needs this. A full-CLOS node has no management bridge and reaches its
+# fabric peers over dedicated per-node bridges, so no two of its addresses share a segment.
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  net.ipv4.conf.all.arp_ignore: "1"
+  net.ipv4.conf.all.arp_announce: "2"
