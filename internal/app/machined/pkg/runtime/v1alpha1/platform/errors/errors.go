@@ -10,6 +10,9 @@ import "errors"
 // ErrNoConfigSource indicates that the platform does not have a configured source for the configuration.
 var ErrNoConfigSource = errors.New("no configuration source")
 
+// ErrNoUserData indicates that config drive was found but user_data is missing.
+var ErrNoUserData = errors.New("no user_data in config drive")
+
 // ErrNoHostname indicates that the meta server does not have a instance hostname.
 var ErrNoHostname = errors.New("failed to fetch hostname from metadata service")
 
