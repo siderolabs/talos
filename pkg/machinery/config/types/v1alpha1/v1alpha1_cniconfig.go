@@ -68,9 +68,5 @@ func (c *FlannelCNIConfig) KubeNetworkPoliciesEnabled() bool {
 
 // KubeNetworkPoliciesVerbose implements the config.K8sFlannelCNIConfig interface.
 func (c *FlannelCNIConfig) KubeNetworkPoliciesVerbose() bool {
-	if c.FlannelKubeNetworkPoliciesVerbose == nil {
-		return true
-	}
-
-	return *c.FlannelKubeNetworkPoliciesVerbose
+	return true
 }
