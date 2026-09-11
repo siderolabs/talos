@@ -5,10 +5,15 @@
 package makers_test
 
 import (
+	"bytes"
+	"encoding/base64"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/klauspost/compress/zstd"
+	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -38,6 +43,71 @@ func TestQemuMaker_MachineConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	assertConfigDefaultness(t, cOps, *m.Maker, nil)
+}
+
+func TestQemuMaker_StaticIP(t *testing.T) {
+	t.Setenv("TALOS_QEMU_STATIC_IP", "1")
+
+	cOps := clusterops.GetCommon()
+	cOps.NetworkCIDR = "192.168.200.0/24"
+	rootOps := *cOps.RootOps
+	rootOps.ClusterName = "talos-default"
+	cOps.RootOps = &rootOps
+
+	m, err := makers.NewQemu(makers.MakerOptions[clusterops.Qemu]{
+		ExtraOps:    clusterops.GetQemu(),
+		CommonOps:   cOps,
+		Provisioner: testProvisioner{},
+	})
+	require.NoError(t, err)
+
+	clusterConfigs, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	controlPlane := clusterConfigs.ClusterRequest.Nodes[0]
+	worker := clusterConfigs.ClusterRequest.Nodes[1]
+
+	controlPlaneEarlyConfig := decodeEarlyConfig(t, controlPlane.SDStubKernelArgs)
+	workerEarlyConfig := decodeEarlyConfig(t, worker.SDStubKernelArgs)
+	assert.Contains(t, controlPlaneEarlyConfig, "kind: LinkAliasConfig\nname: net0")
+	assert.Contains(t, controlPlaneEarlyConfig, "address: 192.168.200.2/24")
+	assert.Contains(t, controlPlaneEarlyConfig, "gateway: 192.168.200.1")
+	assert.Contains(t, workerEarlyConfig, "address: 192.168.200.3/24")
+	assert.NotContains(t, controlPlane.SDStubKernelArgs.String(), "ip=")
+
+	controlPlaneConfig, err := controlPlane.Config.EncodeString()
+	require.NoError(t, err)
+	assert.Contains(t, controlPlaneConfig, "endpoint: https://192.168.200.2:6443")
+	assert.Contains(t, controlPlaneConfig, "kind: LinkConfig\nname: net0")
+	assert.Contains(t, controlPlaneConfig, "address: 192.168.200.2/24")
+	assert.Contains(t, controlPlaneConfig, "gateway: 192.168.200.1")
+	assert.NotContains(t, controlPlaneConfig, "kind: DHCPv4Config")
+
+	workerConfig, err := worker.Config.EncodeString()
+	require.NoError(t, err)
+	assert.Contains(t, workerConfig, "address: 192.168.200.3/24")
+}
+
+func decodeEarlyConfig(t *testing.T, cmdline *procfs.Cmdline) string {
+	t.Helper()
+	require.NotNil(t, cmdline)
+
+	parameter := cmdline.Get(constants.KernelParamConfigEarly)
+	require.NotNil(t, parameter)
+	value := parameter.First()
+	require.NotNil(t, value)
+
+	compressed, err := base64.StdEncoding.DecodeString(*value)
+	require.NoError(t, err)
+
+	decoder, err := zstd.NewReader(bytes.NewReader(compressed))
+	require.NoError(t, err)
+	t.Cleanup(decoder.Close)
+
+	decoded, err := io.ReadAll(decoder)
+	require.NoError(t, err)
+
+	return string(decoded)
 }
 
 func TestQemuMaker_RegistryAuth(t *testing.T) {
