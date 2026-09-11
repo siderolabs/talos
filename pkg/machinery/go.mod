@@ -24,7 +24,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/siderolabs/crypto v0.6.5
-	github.com/siderolabs/gen v0.8.7
+	github.com/siderolabs/gen v0.8.8
 	github.com/siderolabs/go-api-signature v0.3.13
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/net v0.4.0

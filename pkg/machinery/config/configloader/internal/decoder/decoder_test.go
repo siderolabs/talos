@@ -50,6 +50,7 @@ type MockV2 struct {
 	Meta
 
 	Slice []Mock           `yaml:"slice"`
+	Ptrs  []*Mock          `yaml:"ptrs"`
 	Map   map[string]*Mock `yaml:"map"`
 }
 
@@ -226,6 +227,64 @@ map:
 `),
 			expected:    nil,
 			expectedErr: "error decoding document v1alpha2/mock/ (line 2): unknown keys found during decoding:\nmap:\n    second:\n        a:\n            b: {}\n",
+		},
+		{
+			name: "null in slice of pointers",
+			source: []byte(`---
+kind: mock
+apiVersion: v1alpha2
+ptrs:
+  - test: true
+  -
+  - null
+`),
+			expected:    nil,
+			expectedErr: "error decoding document v1alpha2/mock/ (line 2): null value is not allowed at \"ptrs[1]\" (line 6)\nnull value is not allowed at \"ptrs[2]\" (line 7)",
+		},
+		{
+			name: "null in map of pointers",
+			source: []byte(`---
+kind: mock
+apiVersion: v1alpha2
+map:
+  first: null
+  second:
+    test: true
+`),
+			expected:    nil,
+			expectedErr: "error decoding document v1alpha2/mock/ (line 2): null value is not allowed at \"map.first\" (line 5)",
+		},
+		{
+			// the YAML library drops a null item when decoding into a slice of values, so there's nothing to reject
+			name: "null in slice of values",
+			source: []byte(`---
+kind: mock
+apiVersion: v1alpha2
+slice:
+  - null
+  - test: true
+`),
+			expected: []config.Document{
+				&MockV2{
+					Slice: []Mock{{Test: true}},
+				},
+			},
+		},
+		{
+			name: "null in v1alpha1 network interfaces",
+			source: []byte(`---
+version: v1alpha1
+machine:
+  network:
+    interfaces:
+      - interface: eth0
+        vlans:
+          - null
+      - null
+`),
+			expected: nil,
+			expectedErr: "error decoding document /v1alpha1/ (line 2): null value is not allowed at \"machine.network.interfaces[0].vlans[0]\"" +
+				" (line 8)\nnull value is not allowed at \"machine.network.interfaces[1]\" (line 9)",
 		},
 		{
 			name: "valid nested",
