@@ -79,6 +79,10 @@ type Options struct {
 
 	// A value in loader.conf secure-boot-enroll: off, manual, if-safe, force.
 	SDBootSecureBootEnrollKeys string
+	// BootMenuTimeout overrides the systemd-boot menu timeout.
+	BootMenuTimeout *uint
+	// DisableResetOption omits the reset option from GRUB menus.
+	DisableResetOption bool
 
 	// UKISigningCertDer is the DER encoded UKI signing certificate.
 	UKISigningCertDerPath string

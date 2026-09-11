@@ -28,6 +28,11 @@ type Output struct {
 	//  * .xz - output xz archive
 	//  * .gz - output gz archive
 	OutFormat OutFormat `yaml:"outFormat"`
+	// BootMenuTimeout is the boot menu timeout in seconds for generated bootloaders.
+	// If unset, the bootloader default is used.
+	BootMenuTimeout *uint `yaml:"bootMenuTimeout,omitempty"`
+	// DisableResetMenu omits the reset entry from generated boot menus.
+	DisableResetMenu bool `yaml:"disableResetMenu,omitempty"`
 }
 
 // ImageOptions describes options for the 'image' output.

@@ -49,7 +49,7 @@ func (options Options) CreateGRUB(printf func(string, ...any)) (Generator, error
 		AddResetOption bool
 	}{
 		Cmdline:        options.Cmdline,
-		AddResetOption: quirks.New(options.Version).SupportsResetGRUBOption(),
+		AddResetOption: quirks.New(options.Version).SupportsResetGRUBOption() && !options.DisableResetOption,
 	}); err != nil {
 		return nil, err
 	}

@@ -224,6 +224,14 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 func (c *Config) copyAssets(opts options.InstallOptions) error {
 	cmdline := opts.Cmdline
 
+	if opts.BootMenuTimeout != nil {
+		c.Timeout = opts.BootMenuTimeout
+	}
+
+	if opts.DisableResetOption {
+		c.AddResetOption = false
+	}
+
 	// if we have a kernel path, assume that the kernel and initramfs are available
 	if _, err := os.Stat(opts.BootAssets.KernelPath); err == nil {
 		if err := utils.CopyFiles(
