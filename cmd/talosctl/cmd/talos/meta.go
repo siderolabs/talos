@@ -107,7 +107,7 @@ var metaDeleteCmd = &cobra.Command{
 }
 
 func init() {
-	metaCmdFlags.InsecureFlags.AddFlags(metaCmd)
+	metaCmdFlags.InsecureFlags.AddPersistentFlags(metaCmd)
 
 	metaCmd.AddCommand(metaWriteCmd)
 	metaCmd.AddCommand(metaDeleteCmd)
