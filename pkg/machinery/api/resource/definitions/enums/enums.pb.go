@@ -4417,6 +4417,121 @@ func (NetworkOperator) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{60}
 }
 
+// ContainersContainerState describes where a container is in its lifecycle.
+type ContainersContainerState int32
+
+const (
+	ContainersContainerState_CONTAINER_STATE_PENDING  ContainersContainerState = 0
+	ContainersContainerState_CONTAINER_STATE_PULLING  ContainersContainerState = 1
+	ContainersContainerState_CONTAINER_STATE_STARTING ContainersContainerState = 2
+	ContainersContainerState_CONTAINER_STATE_RUNNING  ContainersContainerState = 3
+	ContainersContainerState_CONTAINER_STATE_EXITED   ContainersContainerState = 4
+	ContainersContainerState_CONTAINER_STATE_BACKOFF  ContainersContainerState = 5
+	ContainersContainerState_CONTAINER_STATE_STOPPING ContainersContainerState = 6
+)
+
+// Enum value maps for ContainersContainerState.
+var (
+	ContainersContainerState_name = map[int32]string{
+		0: "CONTAINER_STATE_PENDING",
+		1: "CONTAINER_STATE_PULLING",
+		2: "CONTAINER_STATE_STARTING",
+		3: "CONTAINER_STATE_RUNNING",
+		4: "CONTAINER_STATE_EXITED",
+		5: "CONTAINER_STATE_BACKOFF",
+		6: "CONTAINER_STATE_STOPPING",
+	}
+	ContainersContainerState_value = map[string]int32{
+		"CONTAINER_STATE_PENDING":  0,
+		"CONTAINER_STATE_PULLING":  1,
+		"CONTAINER_STATE_STARTING": 2,
+		"CONTAINER_STATE_RUNNING":  3,
+		"CONTAINER_STATE_EXITED":   4,
+		"CONTAINER_STATE_BACKOFF":  5,
+		"CONTAINER_STATE_STOPPING": 6,
+	}
+)
+
+func (x ContainersContainerState) Enum() *ContainersContainerState {
+	p := new(ContainersContainerState)
+	*p = x
+	return p
+}
+
+func (x ContainersContainerState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ContainersContainerState) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[61].Descriptor()
+}
+
+func (ContainersContainerState) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[61]
+}
+
+func (x ContainersContainerState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ContainersContainerState.Descriptor instead.
+func (ContainersContainerState) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{61}
+}
+
+// ContainersContainerHealth is the coarse answer to "should I be looking at this container?".
+type ContainersContainerHealth int32
+
+const (
+	ContainersContainerHealth_CONTAINER_HEALTH_PENDING  ContainersContainerHealth = 0
+	ContainersContainerHealth_CONTAINER_HEALTH_PULLING  ContainersContainerHealth = 1
+	ContainersContainerHealth_CONTAINER_HEALTH_HEALTHY  ContainersContainerHealth = 2
+	ContainersContainerHealth_CONTAINER_HEALTH_DEGRADED ContainersContainerHealth = 3
+)
+
+// Enum value maps for ContainersContainerHealth.
+var (
+	ContainersContainerHealth_name = map[int32]string{
+		0: "CONTAINER_HEALTH_PENDING",
+		1: "CONTAINER_HEALTH_PULLING",
+		2: "CONTAINER_HEALTH_HEALTHY",
+		3: "CONTAINER_HEALTH_DEGRADED",
+	}
+	ContainersContainerHealth_value = map[string]int32{
+		"CONTAINER_HEALTH_PENDING":  0,
+		"CONTAINER_HEALTH_PULLING":  1,
+		"CONTAINER_HEALTH_HEALTHY":  2,
+		"CONTAINER_HEALTH_DEGRADED": 3,
+	}
+)
+
+func (x ContainersContainerHealth) Enum() *ContainersContainerHealth {
+	p := new(ContainersContainerHealth)
+	*p = x
+	return p
+}
+
+func (x ContainersContainerHealth) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ContainersContainerHealth) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[62].Descriptor()
+}
+
+func (ContainersContainerHealth) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[62]
+}
+
+func (x ContainersContainerHealth) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ContainersContainerHealth.Descriptor instead.
+func (ContainersContainerHealth) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{62}
+}
+
 // ContainersContainerImagePhase describes the state of a container's image pull.
 type ContainersContainerImagePhase int32
 
@@ -4454,11 +4569,11 @@ func (x ContainersContainerImagePhase) String() string {
 }
 
 func (ContainersContainerImagePhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[61].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[63].Descriptor()
 }
 
 func (ContainersContainerImagePhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[61]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[63]
 }
 
 func (x ContainersContainerImagePhase) Number() protoreflect.EnumNumber {
@@ -4467,7 +4582,7 @@ func (x ContainersContainerImagePhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ContainersContainerImagePhase.Descriptor instead.
 func (ContainersContainerImagePhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{61}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{63}
 }
 
 // ContainersContainerInstancePhase describes the state of a container instance's execution.
@@ -4507,11 +4622,11 @@ func (x ContainersContainerInstancePhase) String() string {
 }
 
 func (ContainersContainerInstancePhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[62].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[64].Descriptor()
 }
 
 func (ContainersContainerInstancePhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[62]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[64]
 }
 
 func (x ContainersContainerInstancePhase) Number() protoreflect.EnumNumber {
@@ -4520,7 +4635,7 @@ func (x ContainersContainerInstancePhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ContainersContainerInstancePhase.Descriptor instead.
 func (ContainersContainerInstancePhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{62}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{64}
 }
 
 // CriImageCacheStatus describes image cache status type.
@@ -4560,11 +4675,11 @@ func (x CriImageCacheStatus) String() string {
 }
 
 func (CriImageCacheStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[63].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[65].Descriptor()
 }
 
 func (CriImageCacheStatus) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[63]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[65]
 }
 
 func (x CriImageCacheStatus) Number() protoreflect.EnumNumber {
@@ -4573,7 +4688,7 @@ func (x CriImageCacheStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CriImageCacheStatus.Descriptor instead.
 func (CriImageCacheStatus) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{63}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{65}
 }
 
 // CriImageCacheCopyStatus describes image cache copy status type.
@@ -4613,11 +4728,11 @@ func (x CriImageCacheCopyStatus) String() string {
 }
 
 func (CriImageCacheCopyStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[64].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[66].Descriptor()
 }
 
 func (CriImageCacheCopyStatus) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[64]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[66]
 }
 
 func (x CriImageCacheCopyStatus) Number() protoreflect.EnumNumber {
@@ -4626,7 +4741,7 @@ func (x CriImageCacheCopyStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CriImageCacheCopyStatus.Descriptor instead.
 func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{64}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{66}
 }
 
 // KubespanPeerState is KubeSpan peer current state.
@@ -4663,11 +4778,11 @@ func (x KubespanPeerState) String() string {
 }
 
 func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[65].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[67].Descriptor()
 }
 
 func (KubespanPeerState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[65]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[67]
 }
 
 func (x KubespanPeerState) Number() protoreflect.EnumNumber {
@@ -4676,7 +4791,7 @@ func (x KubespanPeerState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KubespanPeerState.Descriptor instead.
 func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{65}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{67}
 }
 
 var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
@@ -5408,7 +5523,20 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x0fNetworkOperator\x12\x12\n" +
 	"\x0eOPERATOR_DHCP4\x10\x00\x12\x12\n" +
 	"\x0eOPERATOR_DHCP6\x10\x01\x12\x10\n" +
-	"\fOPERATOR_VIP\x10\x02*\xa8\x01\n" +
+	"\fOPERATOR_VIP\x10\x02*\xe6\x01\n" +
+	"\x18ContainersContainerState\x12\x1b\n" +
+	"\x17CONTAINER_STATE_PENDING\x10\x00\x12\x1b\n" +
+	"\x17CONTAINER_STATE_PULLING\x10\x01\x12\x1c\n" +
+	"\x18CONTAINER_STATE_STARTING\x10\x02\x12\x1b\n" +
+	"\x17CONTAINER_STATE_RUNNING\x10\x03\x12\x1a\n" +
+	"\x16CONTAINER_STATE_EXITED\x10\x04\x12\x1b\n" +
+	"\x17CONTAINER_STATE_BACKOFF\x10\x05\x12\x1c\n" +
+	"\x18CONTAINER_STATE_STOPPING\x10\x06*\x94\x01\n" +
+	"\x19ContainersContainerHealth\x12\x1c\n" +
+	"\x18CONTAINER_HEALTH_PENDING\x10\x00\x12\x1c\n" +
+	"\x18CONTAINER_HEALTH_PULLING\x10\x01\x12\x1c\n" +
+	"\x18CONTAINER_HEALTH_HEALTHY\x10\x02\x12\x1d\n" +
+	"\x19CONTAINER_HEALTH_DEGRADED\x10\x03*\xa8\x01\n" +
 	"\x1dContainersContainerImagePhase\x12!\n" +
 	"\x1dCONTAINER_IMAGE_PHASE_PENDING\x10\x00\x12!\n" +
 	"\x1dCONTAINER_IMAGE_PHASE_PULLING\x10\x01\x12\x1f\n" +
@@ -5447,7 +5575,7 @@ func file_resource_definitions_enums_enums_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_enums_enums_proto_rawDescData
 }
 
-var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 66)
+var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 68)
 var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(RuntimeKernelModuleState)(0),         // 0: talos.resource.definitions.enums.RuntimeKernelModuleState
 	(RuntimeKernelModuleType)(0),          // 1: talos.resource.definitions.enums.RuntimeKernelModuleType
@@ -5510,11 +5638,13 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(StorageMDMetadata)(0),                // 58: talos.resource.definitions.enums.StorageMDMetadata
 	(NetworkConfigLayer)(0),               // 59: talos.resource.definitions.enums.NetworkConfigLayer
 	(NetworkOperator)(0),                  // 60: talos.resource.definitions.enums.NetworkOperator
-	(ContainersContainerImagePhase)(0),    // 61: talos.resource.definitions.enums.ContainersContainerImagePhase
-	(ContainersContainerInstancePhase)(0), // 62: talos.resource.definitions.enums.ContainersContainerInstancePhase
-	(CriImageCacheStatus)(0),              // 63: talos.resource.definitions.enums.CriImageCacheStatus
-	(CriImageCacheCopyStatus)(0),          // 64: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(KubespanPeerState)(0),                // 65: talos.resource.definitions.enums.KubespanPeerState
+	(ContainersContainerState)(0),         // 61: talos.resource.definitions.enums.ContainersContainerState
+	(ContainersContainerHealth)(0),        // 62: talos.resource.definitions.enums.ContainersContainerHealth
+	(ContainersContainerImagePhase)(0),    // 63: talos.resource.definitions.enums.ContainersContainerImagePhase
+	(ContainersContainerInstancePhase)(0), // 64: talos.resource.definitions.enums.ContainersContainerInstancePhase
+	(CriImageCacheStatus)(0),              // 65: talos.resource.definitions.enums.CriImageCacheStatus
+	(CriImageCacheCopyStatus)(0),          // 66: talos.resource.definitions.enums.CriImageCacheCopyStatus
+	(KubespanPeerState)(0),                // 67: talos.resource.definitions.enums.KubespanPeerState
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -5534,7 +5664,7 @@ func file_resource_definitions_enums_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_enums_enums_proto_rawDesc), len(file_resource_definitions_enums_enums_proto_rawDesc)),
-			NumEnums:      66,
+			NumEnums:      68,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

@@ -37,7 +37,7 @@ const criServiceID = "cri"
 // containerd, tests substitute a fake.
 type Puller interface {
 	// Pull fetches the reference and returns the resolved digest reference.
-	Pull(ctx context.Context, logger *zap.Logger, ref string) (string, error)
+	Pull(ctx context.Context, logger *zap.Logger, imageRef string) (string, error)
 	// Close releases the underlying client.
 	Close() error
 }
@@ -105,29 +105,29 @@ func (ctrl *ImageController) Outputs() []controller.Output {
 
 // pullState tracks one in-flight pull.
 type pullState struct {
-	ref string
+	imageRef string
 
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
 
-	mu     sync.Mutex
-	digest string
-	err    error
-	done   bool
+	mu          sync.Mutex
+	imageDigest string
+	err         error
+	done        bool
 }
 
-func (state *pullState) snapshot() (digest string, err error, done bool) {
+func (state *pullState) snapshot() (imageDigest string, err error, done bool) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	return state.digest, state.err, state.done
+	return state.imageDigest, state.err, state.done
 }
 
-func (state *pullState) finish(digest string, err error) {
+func (state *pullState) finish(imageDigest string, err error) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	state.digest, state.err, state.done = digest, err, true
+	state.imageDigest, state.err, state.done = imageDigest, err, true
 }
 
 func (state *pullState) stop() {
@@ -138,7 +138,7 @@ func (state *pullState) stop() {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *ImageController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ImageController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	if ctrl.PullerProvider == nil {
 		ctrl.PullerProvider = ctrl.defaultPullerProvider
 	}
@@ -168,13 +168,13 @@ func (ctrl *ImageController) Run(ctx context.Context, r controller.Runtime, logg
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-r.EventCh():
+		case <-runtime.EventCh():
 		case <-notifyCh:
 		}
 
 		// Nothing can be pulled until the CRI containerd instance is up, since that is the socket
 		// the taloscontainers namespace lives on.
-		criUp, err := ctrl.criIsUp(ctx, r)
+		criUp, err := ctrl.criIsUp(ctx, runtime)
 		if err != nil {
 			return err
 		}
@@ -187,18 +187,18 @@ func (ctrl *ImageController) Run(ctx context.Context, r controller.Runtime, logg
 			}
 		}
 
-		if err := ctrl.reconcile(ctx, r, logger, puller, notifyCh); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger, puller, notifyCh); err != nil {
 			logger.Error("failed to reconcile container images", zap.Error(err))
 
 			return err
 		}
 
-		r.ResetRestartBackoff()
+		runtime.ResetRestartBackoff()
 	}
 }
 
-func (ctrl *ImageController) criIsUp(ctx context.Context, r controller.Runtime) (bool, error) {
-	service, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, criServiceID)
+func (ctrl *ImageController) criIsUp(ctx context.Context, runtime controller.Runtime) (bool, error) {
+	criService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, runtime, criServiceID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return false, nil
@@ -207,147 +207,147 @@ func (ctrl *ImageController) criIsUp(ctx context.Context, r controller.Runtime) 
 		return false, fmt.Errorf("failed to get %q service: %w", criServiceID, err)
 	}
 
-	return service.TypedSpec().Running && service.TypedSpec().Healthy, nil
+	return criService.TypedSpec().Running && criService.TypedSpec().Healthy, nil
 }
 
 func (ctrl *ImageController) reconcile(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
 	puller Puller,
 	notifyCh chan struct{},
 ) error {
-	specs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
+	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
 	if err != nil {
 		return fmt.Errorf("failed to list container specs: %w", err)
 	}
 
-	r.StartTrackingOutputs()
+	runtime.StartTrackingOutputs()
 
 	wanted := map[string]struct{}{}
 
-	for spec := range specs.All() {
-		containerID := spec.Metadata().ID()
-		wanted[containerID] = struct{}{}
+	for containerSpec := range containerSpecs.All() {
+		containerSpecID := containerSpec.Metadata().ID()
+		wanted[containerSpecID] = struct{}{}
 
-		if err := ctrl.reconcileContainer(ctx, r, logger, puller, notifyCh, containerID, spec.TypedSpec().Image.Ref); err != nil {
+		if err := ctrl.reconcileContainer(ctx, runtime, logger, puller, notifyCh, containerSpecID, containerSpec.TypedSpec().Image.Ref); err != nil {
 			return err
 		}
 	}
 
 	ctrl.pruneAbandoned(logger, wanted)
 
-	return safe.CleanupOutputs[*containers.ContainerImageStatus](ctx, r)
+	return safe.CleanupOutputs[*containers.ContainerImageStatus](ctx, runtime)
 }
 
 // reconcileContainer syncs the pull state for a single container and writes its resulting status.
 func (ctrl *ImageController) reconcileContainer(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
 	puller Puller,
 	notifyCh chan struct{},
-	containerID, ref string,
+	containerSpecID, imageRef string,
 ) error {
-	pull := ctrl.currentPull(logger, containerID, ref)
+	pull := ctrl.currentPull(logger, containerSpecID, imageRef)
 
 	if pull == nil {
 		if puller == nil {
 			// Waiting for the CRI service; report pending so the operator can see why.
 			logger.Debug(
 				"waiting for the container runtime before pulling",
-				zap.String("container", containerID),
-				zap.String("image", ref),
+				zap.String("container", containerSpecID),
+				zap.String("image", imageRef),
 			)
 
-			return ctrl.writeStatus(ctx, r, containerID, ref, containers.ContainerImagePhasePending, "", "")
+			return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhasePending, "", "")
 		}
 
-		pull = ctrl.startPull(ctx, logger, puller, containerID, ref, notifyCh)
-		ctrl.pulls[containerID] = pull
+		pull = ctrl.startPull(ctx, logger, puller, containerSpecID, imageRef, notifyCh)
+		ctrl.pulls[containerSpecID] = pull
 	}
 
-	digest, pullErr, done := pull.snapshot()
+	imageDigest, pullErr, done := pull.snapshot()
 
 	switch {
 	case !done:
 		logger.Debug(
 			"image pull in progress",
-			zap.String("container", containerID),
-			zap.String("image", ref),
+			zap.String("container", containerSpecID),
+			zap.String("image", imageRef),
 		)
 
-		return ctrl.writeStatus(ctx, r, containerID, ref, containers.ContainerImagePhasePulling, "", "")
+		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhasePulling, "", "")
 	case pullErr != nil:
-		return ctrl.writeStatus(ctx, r, containerID, ref, containers.ContainerImagePhaseFailed, "", pullErr.Error())
+		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseFailed, "", pullErr.Error())
 	default:
-		return ctrl.writeStatus(ctx, r, containerID, ref, containers.ContainerImagePhaseReady, digest, "")
+		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseReady, imageDigest, "")
 	}
 }
 
-// currentPull returns the existing pull for containerID, or nil if there is none.
+// currentPull returns the existing pull for containerSpecID, or nil if there is none.
 //
 // A changed reference invalidates an in-flight or completed pull: it is stopped and removed, and
 // nil is returned so the caller starts a fresh one.
-func (ctrl *ImageController) currentPull(logger *zap.Logger, containerID, ref string) *pullState {
-	pull, exists := ctrl.pulls[containerID]
+func (ctrl *ImageController) currentPull(logger *zap.Logger, containerSpecID, imageRef string) *pullState {
+	pull, exists := ctrl.pulls[containerSpecID]
 	if !exists {
 		return nil
 	}
 
-	if pull.ref == ref {
+	if pull.imageRef == imageRef {
 		return pull
 	}
 
 	logger.Info(
 		"container image reference changed, restarting the pull",
-		zap.String("container", containerID),
-		zap.String("from", pull.ref),
-		zap.String("to", ref),
+		zap.String("container", containerSpecID),
+		zap.String("from", pull.imageRef),
+		zap.String("to", imageRef),
 	)
 
 	pull.stop()
-	delete(ctrl.pulls, containerID)
+	delete(ctrl.pulls, containerSpecID)
 
 	return nil
 }
 
 // pruneAbandoned stops and removes pulls for containers that are no longer wanted.
 func (ctrl *ImageController) pruneAbandoned(logger *zap.Logger, wanted map[string]struct{}) {
-	for containerID, pull := range ctrl.pulls {
-		if _, exists := wanted[containerID]; exists {
+	for containerSpecID, pull := range ctrl.pulls {
+		if _, exists := wanted[containerSpecID]; exists {
 			continue
 		}
 
-		logger.Info("container is gone, abandoning its image pull", zap.String("container", containerID))
+		logger.Info("container is gone, abandoning its image pull", zap.String("container", containerSpecID))
 
 		pull.stop()
-		delete(ctrl.pulls, containerID)
+		delete(ctrl.pulls, containerSpecID)
 	}
 }
 
 func (ctrl *ImageController) writeStatus(
 	ctx context.Context,
-	r controller.Runtime,
-	containerID string,
-	ref string,
+	runtime controller.Runtime,
+	containerSpecID string,
+	imageRef string,
 	phase containers.ContainerImagePhase,
-	digest string,
+	imageDigest string,
 	errText string,
 ) error {
 	if err := safe.WriterModify(
-		ctx, r,
-		containers.NewContainerImageStatus(containers.NamespaceName, containerID),
+		ctx, runtime,
+		containers.NewContainerImageStatus(containers.NamespaceName, containerSpecID),
 		func(res *containers.ContainerImageStatus) error {
 			res.TypedSpec().Phase = phase
-			res.TypedSpec().Image = ref
-			res.TypedSpec().Digest = digest
+			res.TypedSpec().Image = imageRef
+			res.TypedSpec().Digest = imageDigest
 			res.TypedSpec().Error = errText
 
 			return nil
 		},
 	); err != nil {
-		return fmt.Errorf("failed to write image status %q: %w", containerID, err)
+		return fmt.Errorf("failed to write image status %q: %w", containerSpecID, err)
 	}
 
 	return nil
@@ -363,10 +363,10 @@ func (ctrl *ImageController) startPull(
 	ctx context.Context,
 	logger *zap.Logger,
 	puller Puller,
-	containerID, ref string,
+	containerSpecID, imageRef string,
 	notifyCh chan struct{},
 ) *pullState {
-	pull := &pullState{ref: ref}
+	pull := &pullState{imageRef: imageRef}
 
 	pullCtx, cancel := context.WithCancel(ctx)
 	pull.cancel = cancel
@@ -374,36 +374,36 @@ func (ctrl *ImageController) startPull(
 	pull.wg.Go(func() {
 		defer channel.SendWithContext(pullCtx, notifyCh, struct{}{})
 
-		logger.Info("pulling container image", zap.String("container", containerID), zap.String("image", ref))
+		logger.Info("pulling container image", zap.String("container", containerSpecID), zap.String("image", imageRef))
 
-		var digest string
+		var imageDigest string
 
 		// A panic in a pull must not take down machined.
 		err := panicsafe.RunErr(func() error {
 			var pullErr error
 
-			digest, pullErr = puller.Pull(pullCtx, logger, ref)
+			imageDigest, pullErr = puller.Pull(pullCtx, logger, imageRef)
 
 			return pullErr
 		})
 
-		pull.finish(digest, err)
+		pull.finish(imageDigest, err)
 
 		switch {
 		case panicsafe.IsPanic(err):
-			logger.Error("image pull panicked", zap.String("container", containerID), zap.Error(err))
+			logger.Error("image pull panicked", zap.String("container", containerSpecID), zap.Error(err))
 		case err != nil:
 			logger.Error(
 				"image pull failed",
-				zap.String("container", containerID),
-				zap.String("image", ref),
+				zap.String("container", containerSpecID),
+				zap.String("image", imageRef),
 				zap.Error(err),
 			)
 		default:
 			logger.Info(
 				"image pulled",
-				zap.String("container", containerID),
-				zap.String("digest", digest),
+				zap.String("container", containerSpecID),
+				zap.String("digest", imageDigest),
 			)
 		}
 	})
@@ -431,7 +431,7 @@ type containerdPuller struct {
 	registryBuilder image.RegistriesBuilder
 }
 
-func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, ref string) (string, error) {
+func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, imageRef string) (string, error) {
 	// The taloscontainers namespace keeps these images away from both Kubernetes pods and Talos'
 	// own system images.
 	ctx = namespaces.WithNamespace(ctx, constants.TalosContainersContainerdNamespace)
@@ -445,7 +445,7 @@ func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, ref str
 	defer cancel()
 
 	img, err := image.PullWithRetriesAndTimeout(
-		ctx, p.registryBuilder, p.state, p.client, ref,
+		ctx, p.registryBuilder, p.state, p.client, imageRef,
 		// IfNotPresent semantics: an image already on the node is not re-fetched, which also keeps a
 		// crash-looping container from hammering the registry on every restart.
 		image.WithSkipIfAlreadyPulled(),

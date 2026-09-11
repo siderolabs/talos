@@ -64,9 +64,6 @@ type ContainerSpecSpec struct {
 // and how soon to recheck them.
 //
 // containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
-//
-// dependsOn.containers is not checked here: it would need the aggregated ContainerStatus, which
-// only arrives with ContainerStatusController (github.com/siderolabs/talos/issues/14104).
 func (containerSpec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, containerID string) ([]string, optional.Optional[time.Duration], error) {
 	var waitingFor []string
 
@@ -282,6 +279,14 @@ func (dependsOn ContainerDependsOnSpec) Ready(
 		}
 	}
 
+	// dependsOn.containers
+	unmetContainers, err := dependsOn.ContainersReady(ctx, r)
+	if err != nil {
+		return nil, optional.None[time.Duration](), fmt.Errorf("failed to check container dependency readiness: %w", err)
+	}
+
+	waitingFor = append(waitingFor, unmetContainers...)
+
 	var wakeUpAfter optional.Optional[time.Duration]
 	if len(dependsOn.Paths) > 0 {
 		// Paths have no event to wake us, so poll while any are declared.
@@ -336,6 +341,33 @@ func (dependsOn ContainerDependsOnSpec) NetworksReady(ctx context.Context, r con
 	for _, condition := range dependsOn.Networks {
 		if !dependsOn.NetworkConditionMet(status, condition) {
 			waitingFor = append(waitingFor, "network: "+condition)
+		}
+	}
+
+	return waitingFor, nil
+}
+
+// ContainersReady reports the declared dependsOn.containers entries that are not yet healthy.
+//
+// A container with no ContainerStatus yet counts as not satisfied, same as a network or time status
+// that hasn't arrived: waiting is the correct answer, not an error.
+func (dependsOn ContainerDependsOnSpec) ContainersReady(ctx context.Context, r controller.Reader) ([]string, error) {
+	var waitingFor []string
+
+	for _, name := range dependsOn.Containers {
+		status, err := safe.ReaderGetByID[*ContainerStatus](ctx, r, name)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				waitingFor = append(waitingFor, "container: "+name)
+
+				continue
+			}
+
+			return nil, fmt.Errorf("failed to get container status %q: %w", name, err)
+		}
+
+		if status.TypedSpec().Health != ContainerHealthHealthy {
+			waitingFor = append(waitingFor, "container: "+name)
 		}
 	}
 
