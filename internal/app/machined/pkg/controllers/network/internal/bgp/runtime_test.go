@@ -66,6 +66,9 @@ func TestRuntimeStateResolve(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "vrf-blue", resolved.Spec.VRF)
+	// The VRF's kernel index travels with the resolved config: the listening socket is bound to
+	// that device, so a VRF replaced under the same name must not reuse the running server.
+	assert.EqualValues(t, 10, resolved.VRFIndex)
 	assert.Equal(t, []string{"dummy0"}, resolved.Spec.AdvertiseLinks)
 	assert.Equal(t, "eth1", resolved.Spec.Neighbors[0].Link)
 	assert.Equal(t, []netip.Prefix{

@@ -366,8 +366,8 @@ func addrFamily(addr netip.Addr) nethelpers.Family {
 }
 
 // ServerKey returns a deterministic representation of server-level configuration.
-func ServerKey(localASN uint32, routerID netip.Addr, multipath bool, maxPaths uint8, vrf string, table nethelpers.RoutingTable, listenPort int32) string {
-	return fmt.Sprintf("asn=%d;router=%s;multipath=%t;maxpaths=%d;vrf=%s;table=%s;listen=%d;", localASN, routerID, multipath, maxPaths, vrf, table, listenPort)
+func ServerKey(localASN uint32, routerID netip.Addr, multipath bool, maxPaths uint8, vrf string, vrfIndex uint32, table nethelpers.RoutingTable, listenPort int32) string {
+	return fmt.Sprintf("asn=%d;router=%s;multipath=%t;maxpaths=%d;vrf=%s@%d;table=%s;listen=%d;", localASN, routerID, multipath, maxPaths, vrf, vrfIndex, table, listenPort)
 }
 
 // PeerKey returns a deterministic representation of a peer's configuration.

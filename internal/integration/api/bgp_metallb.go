@@ -168,7 +168,11 @@ func (suite *BGPMetalLBSuite) TestMetalLBVRFBGP() { //nolint:gocyclo
 	workloadBGP.BGPNeighborConfigs = []network.BGPNeighborConfig{{
 		NeighborAddressConfig: meta.Addr{Addr: metalLBSpeakerPrefix.Addr()},
 		NeighborPeerASN:       metalLBSpeakerASN,
-		NeighborHoldTime:      9 * time.Second,
+		// frr-k8s runs bgpd with -p 0, so the speaker never listens: only it may initiate. Dialing
+		// it lands on the node's own default-VRF wildcard listener instead, which rejects the
+		// unknown peer and resets the session every retry.
+		NeighborPassive:  true,
+		NeighborHoldTime: 9 * time.Second,
 	}}
 
 	fabricPatch := network.NewBGPInstanceConfigV1Alpha1(metalLBFabricName)
