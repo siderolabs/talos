@@ -131,6 +131,8 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			SDBootPath: i.sdBootPath,
 
 			SDBootSecureBootEnrollKeys: isoOptions.SDBootEnrollKeys.String(),
+			BootMenuTimeout:            i.prof.Output.BootMenuTimeout,
+			DisableResetOption:         i.prof.Output.DisableResetMenu,
 
 			UKISigningCertDerPath: derCrtPath,
 
@@ -168,6 +170,8 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			SDBootPath: i.sdBootPath,
 
 			SDBootSecureBootEnrollKeys: "off",
+			BootMenuTimeout:            i.prof.Output.BootMenuTimeout,
+			DisableResetOption:         i.prof.Output.DisableResetMenu,
 
 			Arch:    i.prof.Arch,
 			Version: i.prof.Version,
@@ -205,6 +209,8 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			SDBootPath: i.sdBootPath,
 
 			SDBootSecureBootEnrollKeys: "off",
+			BootMenuTimeout:            i.prof.Output.BootMenuTimeout,
+			DisableResetOption:         i.prof.Output.DisableResetMenu,
 
 			Arch:    i.prof.Arch,
 			Version: i.prof.Version,
@@ -374,6 +380,8 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		ImageSecureboot:     i.prof.SecureBootEnabled(),
 		DiskImageBootloader: i.prof.Output.ImageOptions.Bootloader.String(),
 		ImageSectorSize:     i.prof.Output.ImageOptions.DiskSectorSize,
+		BootMenuTimeout:     i.prof.Output.BootMenuTimeout,
+		DisableResetMenu:    i.prof.Output.DisableResetMenu,
 		Version:             i.prof.Version,
 		BootAssets: options.BootAssets{
 			KernelPath:    i.prof.Input.Kernel.Path,

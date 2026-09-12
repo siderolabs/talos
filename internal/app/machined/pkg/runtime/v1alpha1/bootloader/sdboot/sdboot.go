@@ -541,6 +541,10 @@ func (c *Config) copyAssets(opts options.InstallOptions, ukiFileName string) err
 
 	loaderConf := LoaderConfBytes
 
+	if opts.BootMenuTimeout != nil {
+		loaderConf = []byte(strings.Replace(string(loaderConf), "timeout 10", fmt.Sprintf("timeout %d", *opts.BootMenuTimeout), 1))
+	}
+
 	if opts.SecureBootEnrollKeys != "" {
 		loaderConf = slices.Concat(loaderConf, []byte("\nsecure-boot-enroll "+opts.SecureBootEnrollKeys+"\n"))
 

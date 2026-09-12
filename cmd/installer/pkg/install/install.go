@@ -73,10 +73,12 @@ type Options struct {
 	DiskImageBootloader string
 	ImageSectorSize     uint
 
-	Version     string
-	BootAssets  bootloaderoptions.BootAssets
-	Printf      func(string, ...any)
-	MountPrefix string
+	Version          string
+	BootAssets       bootloaderoptions.BootAssets
+	BootMenuTimeout  *uint
+	DisableResetMenu bool
+	Printf           func(string, ...any)
+	MountPrefix      string
 
 	// SecureBoot key auto-enrollment (image creation mode only).
 	//
@@ -542,16 +544,18 @@ func (i *Installer) handleMeta(ctx context.Context, mode Mode, previousLabel str
 
 func (i *Installer) generateBootloaderOptions(ctx context.Context, mode Mode, info *blkid.Info) bootloaderoptions.InstallOptions {
 	return bootloaderoptions.InstallOptions{
-		BootDisk:          i.options.DiskPath,
-		Arch:              i.options.Arch,
-		Cmdline:           i.cmdline.String(),
-		GrubUseUKICmdline: i.options.GrubUseUKICmdline,
-		Version:           i.options.Version,
-		ImageMode:         mode.IsImage(),
-		BootAssets:        i.options.BootAssets,
-		Printf:            i.options.Printf,
-		MountPrefix:       i.options.MountPrefix,
-		BlkidInfo:         info,
+		BootDisk:           i.options.DiskPath,
+		Arch:               i.options.Arch,
+		Cmdline:            i.cmdline.String(),
+		GrubUseUKICmdline:  i.options.GrubUseUKICmdline,
+		Version:            i.options.Version,
+		ImageMode:          mode.IsImage(),
+		BootAssets:         i.options.BootAssets,
+		BootMenuTimeout:    i.options.BootMenuTimeout,
+		DisableResetOption: i.options.DisableResetMenu,
+		Printf:             i.options.Printf,
+		MountPrefix:        i.options.MountPrefix,
+		BlkidInfo:          info,
 
 		SecureBootEnrollKeys: i.options.SecureBootEnrollKeys,
 		PlatformKeyPath:      i.options.PlatformKeyPath,
