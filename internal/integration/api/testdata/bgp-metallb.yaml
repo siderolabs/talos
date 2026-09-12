@@ -18,6 +18,9 @@ spec:
   peerAddress: "{{ .RouterAddress }}"
   sourceAddress: "{{ .SpeakerAddress }}"
   holdTime: "9s"
+  # Talos peers passively, so the speaker is the only side that dials. Left at FRR's default the
+  # next attempt after a missed connection lands outside the test's wait, so keep it short.
+  connectTime: "3s"
   dualStackAddressFamily: true
   nodeSelectors:
     - matchLabels:
