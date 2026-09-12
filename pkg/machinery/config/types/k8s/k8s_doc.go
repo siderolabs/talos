@@ -589,6 +589,13 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Deploys kube-network-policies along with Flannel." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "kubeNetworkPoliciesVerbose",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enables verbose logging for kube-network-policies.\n\nThis enables verbose logging for the kube-network-policies container.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enables verbose logging for kube-network-policies." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

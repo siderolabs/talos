@@ -311,13 +311,18 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.O
 	}
 
 	if spec.FlannelKubeNetworkPoliciesEnabled {
+		verbosity := "--v=0"
+		if spec.FlannelKubeNetworkPoliciesVerbose {
+			verbosity = "--v=2"
+		}
+
 		containers = append(containers, corev1.Container{
 			Name:  "kube-network-policies",
 			Image: spec.FlannelKubeNetworkPoliciesImage,
 			Command: []string{
 				"/bin/netpol",
 				"--hostname-override=$(MY_NODE_NAME)",
-				"--v=2",
+				verbosity,
 			},
 			Env: []corev1.EnvVar{
 				{

@@ -38,6 +38,7 @@ extraArgs:
     - --iface-can-reach=192.168.1.1
 {{< /highlight >}}</details> | |
 |`kubeNetworkPoliciesEnabled` |bool |Deploys kube-network-policies along with Flannel.<br><br>This enables Kubernetes Network Policies support in the cluster.  | |
+|`kubeNetworkPoliciesVerbose` |bool |Enables verbose logging for kube-network-policies.<br><br>This enables verbose logging for the kube-network-policies container.  | |
 
 
 
