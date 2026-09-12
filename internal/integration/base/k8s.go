@@ -239,9 +239,11 @@ type podInfo interface {
 	WithQuiet(quiet bool) podInfo
 	WithNamespace(namespace string) podInfo
 	WithHostVolumeMount(hostPath, mountPath string) podInfo
+	WithCommand(command string) podInfo
 	Create(ctx context.Context, waitTimeout time.Duration) error
 	Delete(ctx context.Context) error
 	Exec(ctx context.Context, command string) (string, string, error)
+	Output(ctx context.Context, waitTimeout time.Duration) (string, error)
 }
 
 type pod struct {
@@ -296,6 +298,16 @@ func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
 	return p
 }
 
+// WithCommand runs a single command to completion instead of idling, so its result can be read
+// from the pod's logs.
+func (p *pod) WithCommand(command string) podInfo {
+	p.pod.Spec.RestartPolicy = corev1.RestartPolicyNever
+	p.pod.Spec.Containers[0].Command = []string{"/bin/sh", "-c", command}
+	p.pod.Spec.Containers[0].Args = nil
+
+	return p
+}
+
 func (p *pod) Create(ctx context.Context, waitTimeout time.Duration) error {
 	_, err := p.suite.Clientset.CoreV1().Pods(p.namespace).Create(ctx, p.pod, metav1.CreateOptions{})
 	if err != nil {
@@ -303,6 +315,23 @@ func (p *pod) Create(ctx context.Context, waitTimeout time.Duration) error {
 	}
 
 	return p.suite.WaitForPodToBeRunning(ctx, waitTimeout, p.namespace, p.name)
+}
+
+// Output runs a pod built with WithCommand to completion and returns its combined output.
+//
+// Exec would need a streaming upgrade, which is not replayable: a connection the API server pooled
+// to a kubelet whose CRI has since restarted fails the request outright. Reading logs is a plain
+// GET, which the HTTP transport re-dials transparently.
+func (p *pod) Output(ctx context.Context, waitTimeout time.Duration) (string, error) {
+	if _, err := p.suite.Clientset.CoreV1().Pods(p.namespace).Create(ctx, p.pod, metav1.CreateOptions{}); err != nil {
+		return "", err
+	}
+
+	if err := p.suite.WaitForPodToSucceed(ctx, waitTimeout, p.namespace, p.name); err != nil {
+		return "", err
+	}
+
+	return p.suite.PodLogs(ctx, p.namespace, p.name)
 }
 
 func (p *pod) Exec(ctx context.Context, command string) (string, string, error) {
@@ -670,6 +699,82 @@ func (k8sSuite *K8sSuite) LogPodLogsByLabel(ctx context.Context, namespace, labe
 	for _, pod := range podList.Items {
 		k8sSuite.LogPodLogs(ctx, namespace, pod.Name)
 	}
+}
+
+// WaitForPodToSucceed waits for the pod with the given namespace and name to terminate
+// successfully.
+func (k8sSuite *K8sSuite) WaitForPodToSucceed(ctx context.Context, timeout time.Duration, namespace, podName string) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	watcher, err := k8sSuite.Clientset.CoreV1().Pods(namespace).Watch(ctx, metav1.ListOptions{
+		FieldSelector: fields.OneTermEqualSelector("metadata.name", podName).String(),
+	})
+	if err != nil {
+		return err
+	}
+
+	defer watcher.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event, ok := <-watcher.ResultChan():
+			if !ok {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+
+				return fmt.Errorf("watcher closed waiting for pod %s/%s", namespace, podName)
+			}
+
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching pod: %v", event.Object)
+			}
+
+			pod, ok := event.Object.(*corev1.Pod)
+			if !ok {
+				continue
+			}
+
+			done, err := podTerminated(namespace, podName, pod)
+			if done {
+				return err
+			}
+		}
+	}
+}
+
+// podTerminated reports whether the pod reached a terminal phase, and why it failed if it did.
+func podTerminated(namespace, podName string, pod *corev1.Pod) (bool, error) {
+	switch pod.Status.Phase {
+	case corev1.PodSucceeded:
+		return true, nil
+	case corev1.PodFailed:
+		return true, fmt.Errorf("pod %s/%s failed: %s", namespace, podName, pod.Status.Reason)
+	case corev1.PodPending, corev1.PodRunning, corev1.PodUnknown:
+		return false, nil
+	default:
+		return false, nil
+	}
+}
+
+// PodLogs returns the logs of the pod with the given namespace and name.
+func (k8sSuite *K8sSuite) PodLogs(ctx context.Context, namespace, podName string) (string, error) {
+	readCloser, err := k8sSuite.Clientset.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{}).Stream(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	defer readCloser.Close() //nolint:errcheck
+
+	contents, err := io.ReadAll(readCloser)
+	if err != nil {
+		return "", err
+	}
+
+	return string(contents), nil
 }
 
 // LogPodLogs logs the logs of the pod with the given namespace and name.

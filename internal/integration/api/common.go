@@ -236,14 +236,7 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 		suite.T().Skip("skipping ulimits test since provisioner is docker")
 	}
 
-	nodeType := machine.TypeWorker
-
-	if suite.BGPCLOSEnabled {
-		// Keep the CRI restart away from the worker used by the BGP CLOS tests.
-		nodeType = machine.TypeControlPlane
-	}
-
-	node := suite.RandomDiscoveredNodeInternalIP(nodeType)
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
@@ -286,19 +279,13 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 	ociUlimits1PodDef, err := suite.NewPod("oci-ulimits-test-1")
 	suite.Require().NoError(err)
 
-	ociUlimits1PodDef = ociUlimits1PodDef.WithNodeName(nodeName)
-
-	suite.Require().NoError(ociUlimits1PodDef.Create(suite.ctx, 5*time.Minute))
+	ociUlimits1PodDef = ociUlimits1PodDef.WithNodeName(nodeName).WithCommand("ulimit -n")
 
 	defer func() { suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx)) }()
 
-	stdout, stderr, err := ociUlimits1PodDef.Exec(
-		suite.ctx,
-		"ulimit -n",
-	)
+	stdout, err := ociUlimits1PodDef.Output(suite.ctx, 5*time.Minute)
 	suite.Require().NoError(err)
 
-	suite.Require().Equal("", stderr)
 	suite.Require().Equal("1024\n", stdout)
 
 	// Delete immediately before removing the CRIBaseRuntimeSpecConfig document.
@@ -313,19 +300,13 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 	ociUlimits2PodDef, err := suite.NewPod("oci-ulimits-test-2")
 	suite.Require().NoError(err)
 
-	ociUlimits2PodDef = ociUlimits2PodDef.WithNodeName(nodeName)
-
-	suite.Require().NoError(ociUlimits2PodDef.Create(suite.ctx, 5*time.Minute))
+	ociUlimits2PodDef = ociUlimits2PodDef.WithNodeName(nodeName).WithCommand("ulimit -n")
 
 	defer func() { suite.Assert().NoError(ociUlimits2PodDef.Delete(suite.ctx)) }()
 
-	stdout, stderr, err = ociUlimits2PodDef.Exec(
-		suite.ctx,
-		"ulimit -n",
-	)
+	stdout, err = ociUlimits2PodDef.Output(suite.ctx, 5*time.Minute)
 	suite.Require().NoError(err)
 
-	suite.Require().Equal("", stderr)
 	suite.Require().Equal("1048576\n", stdout)
 }
 
