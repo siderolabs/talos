@@ -566,6 +566,12 @@ func (suite *NetworkConfigSuite) TestMacVLANWithDHCP() {
 		suite.T().Skip("skipping if no extra DHCP records are configured")
 	}
 
+	if suite.BGPCLOSEnabled {
+		// A full-CLOS node has no net0 to parent the macvlan on: it reaches the cluster over its
+		// fabric uplinks and a BGP-advertised loopback, and the DHCP server is not on that path.
+		suite.T().Skip("skipping macvlan DHCP test on a full-CLOS cluster")
+	}
+
 	dhcpRecord := suite.Cluster.Info().Network.ExtraDHCPRecords[0]
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
