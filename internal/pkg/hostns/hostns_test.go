@@ -37,20 +37,8 @@ func TestSetupTeardownNoLeak(t *testing.T) {
 	require.NoError(t, unix.Unshare(unix.CLONE_NEWNS))
 	require.NoError(t, unix.Mount("", "/", "", unix.MS_REC|unix.MS_PRIVATE, ""))
 
-	// Setup recursively bind-mounts /sys into the debug root and makes that bind
-	// shared. Keep the source shared too, matching Talos, so an unsafe teardown of
-	// the bind propagates back and unmounts the host source.
-	require.NoError(t, unix.Mount("", "/sys", "", unix.MS_REC|unix.MS_SHARED, ""))
-
 	tmp := t.TempDir()
-
-	// Replace /etc inside this private mount namespace with a marker-bearing host mount.
-	// The overlay lowerdir=/ sees only the underlying mount-point directory, so the marker
-	// is visible in the debug root only when Setup explicitly bind-mounts the live /etc.
-	hostEtc := filepath.Join(tmp, "host-etc")
-	require.NoError(t, os.MkdirAll(hostEtc, 0o755))
-	require.NoError(t, os.WriteFile(filepath.Join(hostEtc, "hostns-marker"), []byte("host-etc"), 0o644))
-	require.NoError(t, unix.Mount(hostEtc, "/etc", "", unix.MS_BIND|unix.MS_REC, ""))
+	assertHostFixtures := hostFixtures(t, tmp)
 
 	// Fake image snapshot: overlayfs needs at least two lower layers (a real Nix image
 	// has ~70). The top layer carries /nix/bin/tool.
@@ -64,8 +52,6 @@ func TestSetupTeardownNoLeak(t *testing.T) {
 
 	baseDir := filepath.Join(tmp, "base")
 	varBase := filepath.Join(tmp, "var")
-
-	baseline := len(mountTargets(t))
 
 	merged, teardown, err := hostns.Setup(snap, baseDir, varBase)
 	require.NoError(t, err)
@@ -111,13 +97,8 @@ func TestSetupTeardownNoLeak(t *testing.T) {
 	torndown = true
 
 	assert.Zero(t, countUnder(t, baseDir), "no scratch mounts remain under baseDir")
-	assert.True(t, isMounted(t, "/proc"), "host /proc survived teardown")
-	assert.True(t, isMounted(t, "/sys"), "host /sys survived teardown")
-
-	marker, err = os.ReadFile("/etc/hostns-marker")
-	require.NoError(t, err)
-	assert.Equal(t, "host-etc", string(marker), "host /etc survived teardown")
-	assert.Equal(t, baseline, len(mountTargets(t)), "mount table returned to baseline — nothing leaked")
+	assert.Zero(t, countUnder(t, varBase), "no scratch mounts remain under varBase")
+	assertHostFixtures()
 }
 
 // TestSetupRollbackOnError verifies a failed Setup leaves no mounts behind.
@@ -135,15 +116,82 @@ func TestSetupRollbackOnError(t *testing.T) {
 	baseDir := filepath.Join(tmp, "base")
 	varBase := filepath.Join(tmp, "var")
 
-	baseline := len(mountTargets(t))
+	assertHostFixtures := hostFixtures(t, tmp)
 
-	// A snapshot whose lower dir does not exist makes the image overlay mount fail.
-	snap := []mount.Mount{{Type: "overlay", Source: "overlay", Options: []string{"lowerdir=" + filepath.Join(tmp, "does-not-exist")}}}
+	// A file at varBase prevents creation of the root overlay's upper/work dirs.
+	// The image has already mounted, so this exercises actual partial rollback.
+	require.NoError(t, os.WriteFile(varBase, nil, 0o644))
+
+	img := filepath.Join(tmp, "img")
+	require.NoError(t, os.MkdirAll(filepath.Join(img, "nix"), 0o755))
+
+	lower := filepath.Join(tmp, "lower")
+	require.NoError(t, os.Mkdir(lower, 0o755))
+
+	snap := []mount.Mount{{Type: "overlay", Source: "overlay", Options: []string{"lowerdir=" + img + ":" + lower}}}
 
 	_, _, err := hostns.Setup(snap, baseDir, varBase)
-	require.Error(t, err)
+	require.ErrorContains(t, err, "mount overlay root:")
 
-	assert.Equal(t, baseline, len(mountTargets(t)), "failed Setup left no mounts behind")
+	assert.Zero(t, countUnder(t, baseDir), "rollback left scratch mounts under baseDir")
+	assert.Zero(t, countUnder(t, varBase), "rollback left scratch mounts under varBase")
+	assertHostFixtures()
+}
+
+// hostFixtures installs mounts owned by this test in its private namespace.
+// Do not compare the entire mount table: another namespace can unmount and rmdir
+// a foreign mountpoint, detaching its copies even across private namespaces.
+func hostFixtures(t *testing.T, tmp string) func() {
+	t.Helper()
+
+	// A nested shared mount, not just the bind root, detects recursive unmount
+	// propagation if cleanup forgets to make the merged subtree recursively private.
+	require.NoError(t, unix.Mount("hostns-sys", "/sys", "tmpfs", 0, ""))
+	require.NoError(t, os.Mkdir("/sys/hostns-nested", 0o755))
+	require.NoError(t, unix.Mount("hostns-nested", "/sys/hostns-nested", "tmpfs", 0, ""))
+	require.NoError(t, os.WriteFile("/sys/hostns-nested/marker", []byte("nested"), 0o644))
+	require.NoError(t, unix.Mount("", "/sys", "", unix.MS_SHARED|unix.MS_REC, ""))
+
+	// The root overlay alone cannot expose this live /etc marker: Setup must bind it.
+	hostEtc := filepath.Join(tmp, "host-etc")
+	require.NoError(t, os.Mkdir(hostEtc, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(hostEtc, "hostns-marker"), []byte("host-etc"), 0o644))
+	require.NoError(t, unix.Mount(hostEtc, "/etc", "", unix.MS_BIND, ""))
+
+	// Compare IDs as well as counts at owned targets: a replacement or hidden
+	// overmount must not mask a lost mount. Ignore propagation flags and all
+	// unrelated mounts.
+	ownedMounts := func() []string {
+		data, err := os.ReadFile("/proc/thread-self/mountinfo")
+		require.NoError(t, err)
+
+		var owned []string
+
+		for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
+			fields := strings.Fields(line)
+			if len(fields) >= 5 && slices.Contains([]string{"/sys", "/sys/hostns-nested", "/etc"}, fields[4]) {
+				owned = append(owned, fields[0]+" "+fields[4])
+			}
+		}
+
+		return owned
+	}
+	baseline := ownedMounts()
+
+	return func() {
+		t.Helper()
+
+		assert.ElementsMatch(t, baseline, ownedMounts(), "host fixture mount identities survived cleanup")
+
+		for path, want := range map[string]string{
+			"/etc/hostns-marker":        "host-etc",
+			"/sys/hostns-nested/marker": "nested",
+		} {
+			marker, err := os.ReadFile(path)
+			assert.NoError(t, err, "host fixture marker survived cleanup")
+			assert.Equal(t, want, string(marker), "host fixture content at %s", path)
+		}
+	}
 }
 
 func mountTargets(t *testing.T) []string {
@@ -204,7 +252,7 @@ func countUnder(t *testing.T, prefix string) int {
 	n := 0
 
 	for _, m := range mountTargets(t) {
-		if strings.HasPrefix(m, prefix) {
+		if m == prefix || strings.HasPrefix(m, prefix+"/") {
 			n++
 		}
 	}
