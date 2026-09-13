@@ -85,10 +85,21 @@ func setSelfOOMScoreAdj(adj int) {
 	}
 }
 
+func ignoreTerminationSignals() func() {
+	// Catch rather than SIG_IGN: exec resets caught signals to their defaults,
+	// whereas ignored dispositions would leak into services and their children.
+	// Notify installs the handlers synchronously and never blocks on delivery.
+	// Intentionally leave the channel unconsumed to discard every notification.
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT)
+
+	return func() { signal.Stop(signals) }
+}
+
 // Main is the entry point for the sandboxd subprocess. It is PID 1 of
 // the sandbox PID+mount namespace and:
 //  1. protects itself from the OOM killer and scopes /proc to this PID namespace,
-//  2. ignores namespace-local termination signals and reaps orphaned children,
+//  2. catches and discards termination signals and reaps orphaned children,
 //  3. serves launch requests from machined, forking each service directly into
 //     this namespace (no setns).
 func Main() {
@@ -112,13 +123,6 @@ func Main() {
 	// Never let the control socket leak into a forked service.
 	syscall.CloseOnExec(controlFD)
 
-	// As PID 1 of the sandbox namespace, ignore the catchable termination
-	// signals. The kernel already blocks SIGKILL/SIGSTOP to a namespace init from
-	// within its own namespace; ignoring TERM/INT/HUP/QUIT (which the Go runtime
-	// would otherwise turn into an exit) makes in-namespace `kill 1` a no-op, so
-	// only machined (the parent) can tear it down via SIGKILL.
-	signal.Ignore(syscall.SIGTERM, syscall.SIGINT, syscall.SIGHUP, syscall.SIGQUIT)
-
 	// Wrap the control socket before starting the reaper, so a failure here can
 	// os.Exit without skipping a deferred reaper.Shutdown().
 	controlConn, err := unixConn(os.NewFile(controlFD, "sandboxd-control"))
@@ -126,6 +130,13 @@ func Main() {
 		logf("wrap control socket: %v", err)
 		os.Exit(1)
 	}
+
+	// As PID 1, catch and discard TERM/INT/HUP/QUIT so in-namespace `kill 1`
+	// is a no-op without passing SIG_IGN to children. The kernel already blocks
+	// namespace-local SIGKILL/SIGSTOP; machined can still tear us down via SIGKILL.
+	// Install handlers before launching any children and release them on exit.
+	stopSignals := ignoreTerminationSignals()
+	defer stopSignals()
 
 	// Reap orphaned children (e.g. containerd shims left behind when CRI is killed)
 	// and the services this init forks.
