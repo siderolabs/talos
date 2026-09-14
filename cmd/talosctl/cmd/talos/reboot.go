@@ -77,16 +77,23 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 		return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 	}
 
-	nodeNames, err := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rep)
-	if err != nil {
-		return fmt.Errorf("error draining nodes: %w", err)
-	}
+	nodeNames, drainErr := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rep)
 
+	// Registered before the error check so that an aborted reboot still restores
+	// whatever the drain had already cordoned.
 	defer func() {
-		if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, rebootCmdFlags.timeout, rep); uncordonErr != nil {
-			retErr = errors.Join(retErr, uncordonErr)
+		if len(nodeNames) > 0 {
+			if uncordonErr := uncordonNodes(
+				ctx, clientFactory, nodeNames, rebootCmdFlags.timeout, drainErr != nil, rep,
+			); uncordonErr != nil {
+				retErr = errors.Join(retErr, uncordonErr)
+			}
 		}
 	}()
+
+	if drainErr != nil {
+		return fmt.Errorf("error draining nodes: %w", drainErr)
+	}
 
 	return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 }
