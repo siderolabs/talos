@@ -407,6 +407,32 @@ func (suite *GenSuite) TestGenConfigMultipleTypesToDirectory() {
 	suite.Assert().NoFileExists(filepath.Join(tempDir, "talosconfig"))
 }
 
+// TestGenConfigOutputConflicts verifies that output conflicts are checked before writing files.
+func (suite *GenSuite) TestGenConfigOutputConflicts() {
+	tempDir := suite.T().TempDir()
+	workerPath := filepath.Join(tempDir, "worker.yaml")
+
+	suite.Require().NoError(os.WriteFile(workerPath, []byte("existing"), 0o600))
+
+	suite.RunCLI(
+		[]string{
+			"gen", "config",
+			"foo", "https://192.168.0.1:6443",
+			"--output", tempDir,
+		},
+		base.StdoutEmpty(),
+		base.ShouldFail(),
+		base.StderrShouldMatch(regexp.MustCompile(`worker\.yaml" already exists`)),
+	)
+
+	suite.Assert().NoFileExists(filepath.Join(tempDir, "controlplane.yaml"))
+	suite.Assert().NoFileExists(filepath.Join(tempDir, "talosconfig"))
+
+	data, err := os.ReadFile(workerPath)
+	suite.Require().NoError(err)
+	suite.Assert().Equal("existing", string(data))
+}
+
 // TestGenConfigSingleTypeToFile tests that the gen config command treats
 // the output flag as a file path and not as a directory when a single output type is requested.
 func (suite *GenSuite) TestGenConfigSingleTypeToFile() {

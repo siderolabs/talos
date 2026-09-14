@@ -183,6 +183,10 @@ func writeConfig(args []string) error {
 		return err
 	}
 
+	if err = validateConfigOutputPaths(paths); err != nil {
+		return err
+	}
+
 	var genOptions []generate.Option //nolint:prealloc
 
 	for _, registryMirror := range genConfigCmdFlags.registryMirrors {
@@ -264,6 +268,26 @@ func writeConfig(args []string) error {
 	}
 
 	return writeConfigBundle(configBundle, paths, commentsFlags)
+}
+
+func validateConfigOutputPaths(outputPaths configOutputPaths) error {
+	outputTypesSet := xslices.ToSet(genConfigCmdFlags.outputTypes)
+
+	var files []string
+
+	if _, ok := outputTypesSet[controlPlaneOutputType]; ok && outputPaths.controlPlane != stdoutOutput {
+		files = append(files, outputPaths.controlPlane)
+	}
+
+	if _, ok := outputTypesSet[workerOutputType]; ok && outputPaths.worker != stdoutOutput {
+		files = append(files, outputPaths.worker)
+	}
+
+	if _, ok := outputTypesSet[talosconfigOutputType]; ok && outputPaths.talosconfig != stdoutOutput {
+		files = append(files, outputPaths.talosconfig)
+	}
+
+	return validateFilesExists(files)
 }
 
 func validateFlags() error {
