@@ -68,6 +68,12 @@ case "${WITH_KUBESPAN:-false}" in
     ;;
 esac
 
+case "${WITH_LLDP:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-lldp")
+    ;;
+esac
+
 case "${WITH_BGP:-false}" in
   true)
     # The fabric NIC shares a segment with the management NIC, so ARP has to be restricted to the

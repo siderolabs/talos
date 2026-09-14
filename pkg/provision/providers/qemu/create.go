@@ -117,6 +117,14 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
+	if options.LLDPEnabled {
+		fmt.Fprintln(options.LogWriter, "creating LLDP test advertiser")
+
+		if err = p.CreateLLDP(state, request); err != nil {
+			return nil, fmt.Errorf("error creating LLDP test advertiser: %w", err)
+		}
+	}
+
 	if options.BGPEnabled {
 		fmt.Fprintln(options.LogWriter, "creating BGP fabric peer")
 

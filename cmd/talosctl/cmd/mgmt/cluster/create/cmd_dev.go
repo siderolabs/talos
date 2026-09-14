@@ -262,6 +262,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 			"specify percent of corrupt packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
 		qemu.IntVar(&qOps.Bandwidth, bandwidthFlag, qOps.Bandwidth, "specify bandwidth restriction (in kbps) on the bridge interface")
 		qemu.StringVar(&qOps.WithFirewall, firewallFlag, qOps.WithFirewall, "inject firewall rules into the cluster, value is default policy - accept/block")
+		qemu.BoolVar(&qOps.WithLLDP, "with-lldp", qOps.WithLLDP, "run a continuous LLDP receive-test advertiser on the QEMU host")
 		qemu.BoolVar(&qOps.WithBGP, bgpFlag, qOps.WithBGP, "run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP")
 		qemu.BoolVar(&qOps.WithBGPCLOS, bgpCLOSFlag, qOps.WithBGPCLOS, "full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback")
 		qemu.BoolVar(&qOps.WithNFS, nfsFlag, qOps.WithNFS, "run an embedded userspace NFS server and mount NFSv3 and NFSv4 test volumes")

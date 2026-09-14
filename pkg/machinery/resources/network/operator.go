@@ -14,4 +14,5 @@ const (
 	OperatorDHCP4 Operator = iota // dhcp4
 	OperatorDHCP6                 // dhcp6
 	OperatorVIP                   // vip
+	OperatorLLDP                  // lldp
 )

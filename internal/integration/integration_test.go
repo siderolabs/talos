@@ -40,6 +40,7 @@ var (
 	extensionsQEMU      bool
 	extensionsLibvirt   bool
 	extensionsNvidia    bool
+	lldpEnabled         bool
 	bgpEnabled          bool
 	bgpCLOSEnabled      bool
 	ciliumBGPEnabled    bool
@@ -139,6 +140,7 @@ func TestIntegration(t *testing.T) {
 				ExtensionsQEMU:         extensionsQEMU,
 				ExtensionsLibvirt:      extensionsLibvirt,
 				ExtensionsNvidia:       extensionsNvidia,
+				LLDPEnabled:            lldpEnabled,
 				BGPEnabled:             bgpEnabled,
 				BGPCLOSEnabled:         bgpCLOSEnabled,
 				CiliumBGPEnabled:       ciliumBGPEnabled,
@@ -189,6 +191,7 @@ func init() {
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsLibvirt, "talos.extensions.libvirt", false, "enable tests for libvirt extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.BoolVar(&lldpEnabled, "talos.lldp", false, "enable LLDP receive tests (requires a cluster created with --with-lldp)")
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")
 	flag.BoolVar(&ciliumBGPEnabled, "talos.bgp.cilium", false, "enable the Cilium BGP-to-fabric test (requires Cilium CNI with BGP Control Plane and --with-bgp-clos)")
