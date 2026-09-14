@@ -6,6 +6,8 @@
 package network
 
 import (
+	"slices"
+
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -33,7 +35,11 @@ func NewTimeServerMergeController() controller.Controller {
 
 				if spec.TypedSpec().ConfigLayer == final.ConfigLayer && final.NTPServers != nil {
 					// merge server lists on the same level
-					final.NTPServers = append(final.NTPServers, spec.TypedSpec().NTPServers...)
+					for _, s := range spec.TypedSpec().NTPServers {
+						if !slices.Contains(final.NTPServers, s) {
+							final.NTPServers = append(final.NTPServers, s)
+						}
+					}
 					final.UseNTS = final.UseNTS && spec.TypedSpec().UseNTS
 				} else {
 					// otherwise, replace the lists
