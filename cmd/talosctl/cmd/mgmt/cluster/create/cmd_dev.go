@@ -338,10 +338,10 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 	}
 	createCmd.Flags().IntVar(&legacyOps.clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
 	createCmd.Flags().StringVar(&legacyOps.clusterDiskDriver, clusterDiskDriverFlag, "virtio",
-		"driver for the primary (system) disks (virtio, ide, ahci, scsi, nvme, megaraid, usb)")
+		"driver for the primary (system) disks (virtio, ide, ahci, scsi, nvme, megaraid, usb, mmc)")
 	createCmd.Flags().IntVar(&qOps.PrimaryDisks, primaryDisksFlag, qOps.PrimaryDisks, "number of primary disks to create for each VM (each sized by --disk)")
 	createCmd.Flags().IntVar(&legacyOps.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
-	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, extraDisksDriversFlag, nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid, usb, virtiofs)")
+	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, extraDisksDriversFlag, nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid, usb, mmc, virtiofs)")
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksTags, extraDisksTagsFlag, nil, "tags for each extra disk (only used by virtiofs)")
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksSerials, extraDisksSerialsFlag, nil, "serials for each extra disk")
 	createCmd.Flags().IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")

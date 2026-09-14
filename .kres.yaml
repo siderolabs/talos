@@ -1149,6 +1149,8 @@ spec:
             extraTestArgs: -talos.verifyukibooted=false
           - test: e2e-usb-disk
             qemuSystemDiskDriver: "usb"
+          - test: e2e-mmc-disk
+            qemuSystemDiskDriver: "mmc"
           - test: e2e-node-address-v2
             withConfigPatch: "@hack/test/patches/node-address-v2.yaml"
           - test: e2e-tpm1_2

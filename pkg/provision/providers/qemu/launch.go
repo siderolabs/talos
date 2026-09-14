@@ -298,6 +298,18 @@ func launchVM(config *LaunchConfig) error {
 				"-device", fmt.Sprintf("usb-storage,bus=%s.0,drive=usb%d,logical_block_size=%d,physical_block_size=%d%s", xhciID, i, blockSize, blockSize, serial),
 			)
 
+		case "mmc":
+			// an SDHCI controller has a single slot, so each card gets its own controller;
+			// QEMU attaches the card to the first SD bus with a free slot, i.e. the controller just added
+			//
+			// SD cards have a fixed 512-byte block size, and the image size must be a power of two (see CreateDisks)
+			args = append(
+				args,
+				"-device", fmt.Sprintf("sdhci-pci,id=sdhci%d", i),
+				"-drive", fmt.Sprintf("id=mmc%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
+				"-device", fmt.Sprintf("sd-card,drive=mmc%d", i),
+			)
+
 		case "virtiofs":
 			if runtime.GOOS != "linux" {
 				return fmt.Errorf("virtiofs driver is only supported on linux hosts")
