@@ -57,7 +57,15 @@ func (sc *serviceCondition) waitEvent(ctx context.Context, svcrunner *ServiceRun
 
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		// keep the bare context.Canceled, as conditions.WaitForAll relies on
+		// the exact match to collapse cancellations into the sentinel; only
+		// deadline errors carry the condition description, so that a boot
+		// timeout names the services which never reached the expected state
+		if ctx.Err() == context.Canceled {
+			return ctx.Err()
+		}
+
+		return fmt.Errorf("%s: %w", sc.String(), ctx.Err())
 	case <-notifyCh:
 		return nil
 	}
@@ -84,7 +92,11 @@ func (sc *serviceCondition) waitRegister(ctx context.Context) error {
 
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			if ctx.Err() == context.Canceled {
+				return ctx.Err()
+			}
+
+			return fmt.Errorf("%s: %w", sc.String(), ctx.Err())
 		case <-ticker.C:
 		}
 	}
