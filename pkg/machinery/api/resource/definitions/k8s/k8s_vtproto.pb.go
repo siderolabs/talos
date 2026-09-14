@@ -565,6 +565,18 @@ func (m *BootstrapManifestsConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int,
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.FlannelKubeNetworkPoliciesVerbose {
+		i--
+		if m.FlannelKubeNetworkPoliciesVerbose {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xf0
+	}
 	if len(m.ProxyConfigChecksum) > 0 {
 		i -= len(m.ProxyConfigChecksum)
 		copy(dAtA[i:], m.ProxyConfigChecksum)
@@ -3166,6 +3178,9 @@ func (m *BootstrapManifestsConfigSpec) SizeVT() (n int) {
 	l = len(m.ProxyConfigChecksum)
 	if l > 0 {
 		n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.FlannelKubeNetworkPoliciesVerbose {
+		n += 3
 	}
 	n += len(m.unknownFields)
 	return n
@@ -6202,6 +6217,26 @@ func (m *BootstrapManifestsConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.ProxyConfigChecksum = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 30:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FlannelKubeNetworkPoliciesVerbose", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.FlannelKubeNetworkPoliciesVerbose = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

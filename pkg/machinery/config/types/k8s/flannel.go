@@ -96,6 +96,11 @@ type KubeFlannelCNIConfigV1Alpha1 struct {
 	//
 	//     This enables Kubernetes Network Policies support in the cluster.
 	FlannelKubeNetworkPoliciesEnabled *bool `yaml:"kubeNetworkPoliciesEnabled,omitempty"`
+	//   description: |
+	//     Enables verbose logging for kube-network-policies.
+	//
+	//     This enables verbose logging for the kube-network-policies container.
+	FlannelKubeNetworkPoliciesVerbose *bool `yaml:"kubeNetworkPoliciesVerbose,omitempty"`
 }
 
 // NewKubeFlannelCNIConfigV1Alpha1 creates a new KubeFlannelCNIConfig config document.
@@ -192,6 +197,15 @@ func (s *KubeFlannelCNIConfigV1Alpha1) ExtraArgs() []string {
 // KubeNetworkPoliciesEnabled implements config.K8sFlannelCNIConfig interface.
 func (s *KubeFlannelCNIConfigV1Alpha1) KubeNetworkPoliciesEnabled() bool {
 	return pointer.SafeDeref(s.FlannelKubeNetworkPoliciesEnabled)
+}
+
+// KubeNetworkPoliciesVerbose implements config.K8sFlannelCNIConfig interface.
+func (s *KubeFlannelCNIConfigV1Alpha1) KubeNetworkPoliciesVerbose() bool {
+	if s.FlannelKubeNetworkPoliciesVerbose == nil {
+		return true
+	}
+
+	return *s.FlannelKubeNetworkPoliciesVerbose
 }
 
 // ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
