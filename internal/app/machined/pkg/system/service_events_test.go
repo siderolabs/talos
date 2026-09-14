@@ -136,3 +136,35 @@ func TestServiceConditionString(t *testing.T) {
 		`service "foo" to be up/finished`,
 		system.WaitForServiceAnyEventWithInstance(nil, upOrFinished(), "foo").String())
 }
+
+// TestServiceConditionDeadlineErrorMessage asserts that a condition which
+// expires with the context carries its description in the error, so that a
+// boot timeout names the services which never reached the expected state.
+func TestServiceConditionDeadlineErrorMessage(t *testing.T) {
+	services := system.NewServices(newRuntime(t))
+	t.Cleanup(func() { services.Shutdown(context.Background()) })
+
+	// a loaded service held in StateWaiting by its own condition (waitEvent path)
+	cond := NewMockCondition("gate")
+
+	services.LoadAndStart(&MockService{name: "gated-service", condition: cond, runner: MockFinishingRunner{}})
+
+	waitForServiceState(t, services, "gated-service", events.StateWaiting)
+
+	waitCtx, waitCancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer waitCancel()
+
+	err := system.WaitForServiceAnyEventWithInstance(services, upOrFinished(), "gated-service").Wait(waitCtx)
+
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Contains(t, err.Error(), `service "gated-service" to be up/finished`)
+
+	// a service which was never registered (waitRegister path)
+	regCtx, regCancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer regCancel()
+
+	err = system.WaitForServiceAnyEventWithInstance(services, upOrFinished(), "unregistered-service").Wait(regCtx)
+
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.Contains(t, err.Error(), `service "unregistered-service" to be registered`)
+}

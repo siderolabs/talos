@@ -57,7 +57,9 @@ func (sc *serviceCondition) waitEvent(ctx context.Context, svcrunner *ServiceRun
 
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		// carry the condition description in the error, so that a boot timeout
+		// names the services which never reached the expected state
+		return fmt.Errorf("%s: %w", sc.String(), ctx.Err())
 	case <-notifyCh:
 		return nil
 	}
@@ -84,7 +86,7 @@ func (sc *serviceCondition) waitRegister(ctx context.Context) error {
 
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return fmt.Errorf("%s: %w", sc.String(), ctx.Err())
 		case <-ticker.C:
 		}
 	}
