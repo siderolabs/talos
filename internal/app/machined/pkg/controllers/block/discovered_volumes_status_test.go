@@ -32,7 +32,7 @@ func TestDiscoveredVolumesStatusSuite(t *testing.T) {
 			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
-					WaitForUSB: func(context.Context, *zap.Logger) error { return nil },
+					WaitForDevices: func(context.Context, *zap.Logger) error { return nil },
 				}))
 			},
 		},
@@ -139,31 +139,31 @@ func (suite *DiscoveredVolumesStatusSuite) TestReadyDoesNotResetWhenDevicesBecom
 	})
 }
 
-// DiscoveredVolumesStatusUSBSuite checks that the discovery refresh is not requested before the USB
-// bus is enumerated: a USB-attached system disk shows up long after udevd settles, and if the refresh
+// DiscoveredVolumesStatusSettleSuite checks that the discovery refresh is not requested before the storage
+// devices settle: a USB- or SD-attached system disk shows up after udevd settles, and if the refresh
 // runs without it, the volume manager declares META/STATE missing and the node drops to maintenance.
-type DiscoveredVolumesStatusUSBSuite struct {
+type DiscoveredVolumesStatusSettleSuite struct {
 	ctest.DefaultSuite
 
-	usbSettled chan struct{}
+	devicesSettled chan struct{}
 }
 
-func TestDiscoveredVolumesStatusUSBSuite(t *testing.T) {
+func TestDiscoveredVolumesStatusSettleSuite(t *testing.T) {
 	t.Parallel()
 
-	s := &DiscoveredVolumesStatusUSBSuite{
-		usbSettled: make(chan struct{}),
+	s := &DiscoveredVolumesStatusSettleSuite{
+		devicesSettled: make(chan struct{}),
 	}
 
 	s.DefaultSuite = ctest.DefaultSuite{
 		Timeout: 5 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
-				WaitForUSB: func(ctx context.Context, _ *zap.Logger) error {
+				WaitForDevices: func(ctx context.Context, _ *zap.Logger) error {
 					select {
 					case <-ctx.Done():
 						return ctx.Err()
-					case <-s.usbSettled:
+					case <-s.devicesSettled:
 						return nil
 					}
 				},
@@ -174,12 +174,12 @@ func TestDiscoveredVolumesStatusUSBSuite(t *testing.T) {
 	suite.Run(t, s)
 }
 
-func (suite *DiscoveredVolumesStatusUSBSuite) TestWaitsForUSB() {
+func (suite *DiscoveredVolumesStatusSettleSuite) TestWaitsForDevices() {
 	devicesStatus := runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID)
 	devicesStatus.TypedSpec().Ready = true
 	suite.Create(devicesStatus)
 
-	// udevd settled, but the USB bus is still enumerating: no discovery refresh yet
+	// udevd settled, but the storage devices are still enumerating: no discovery refresh yet
 	ctx, st := suite.Ctx(), suite.State()
 	suite.Assert().Never(func() bool {
 		_, err := safe.StateGetByID[*block.DiscoveryRefreshRequest](ctx, st, block.RefreshID)
@@ -187,7 +187,7 @@ func (suite *DiscoveredVolumesStatusUSBSuite) TestWaitsForUSB() {
 		return err == nil
 	}, time.Second, 100*time.Millisecond)
 
-	close(suite.usbSettled)
+	close(suite.devicesSettled)
 
 	ctest.AssertResource(suite, block.RefreshID, func(r *block.DiscoveryRefreshRequest, asrt *assert.Assertions) {
 		asrt.Equal(1, r.TypedSpec().Request)

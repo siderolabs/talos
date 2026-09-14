@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/usbsettle"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/devsettle"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -25,13 +25,14 @@ import (
 type DiscoveredVolumesStatusController struct {
 	V1Alpha1Mode machineruntime.Mode
 
-	// WaitForUSB waits for the USB bus to be enumerated, defaults to usbsettle.Settler.
+	// WaitForDevices waits for the storage devices to be enumerated, defaults to devsettle.Settler.
 	//
-	// udevd settling is not enough: the USB host controller, hub and storage drivers are separate
-	// kernel modules loaded one after another, so a USB-attached disk shows up seconds after
-	// `udevadm settle` returns. Without this wait a USB system disk is not discovered before
-	// DiscoveredVolumesStatus goes ready, and the volume manager declares META/STATE missing.
-	WaitForUSB func(ctx context.Context, logger *zap.Logger) error
+	// udevd settling is not enough: the kernel keeps enumerating devices asynchronously after
+	// `udevadm settle` returns (USB bus scan, SD card initialization, NVMe and SCSI scans), so a
+	// system disk on such a transport shows up a bit later. Without this wait the system disk is
+	// not discovered before DiscoveredVolumesStatus goes ready, and the volume manager declares
+	// META/STATE missing.
+	WaitForDevices func(ctx context.Context, logger *zap.Logger) error
 }
 
 // Name implements controller.Controller interface.
@@ -100,14 +101,14 @@ func (ctrl *DiscoveredVolumesStatusController) Run(ctx context.Context, r contro
 		if devicesReady && !devicesReadyObserved {
 			devicesReadyObserved = true
 
-			// udevd is settled, but the USB bus might still be enumerating, and USB disks
-			// should be discovered before the volumes are declared missing
-			if err = ctrl.waitForUSB(ctx, logger); err != nil {
+			// udevd is settled, but the kernel might still be enumerating storage devices, and
+			// the system disk should be discovered before the volumes are declared missing
+			if err = ctrl.waitForDevices(ctx, logger); err != nil {
 				if errors.Is(err, context.Canceled) {
 					return nil
 				}
 
-				return fmt.Errorf("error waiting for the USB bus to settle: %w", err)
+				return fmt.Errorf("error waiting for the storage devices to settle: %w", err)
 			}
 
 			// udevd reports that devices are ready, now it's time to refresh the discovery volumes
@@ -141,9 +142,9 @@ func (ctrl *DiscoveredVolumesStatusController) Run(ctx context.Context, r contro
 	}
 }
 
-func (ctrl *DiscoveredVolumesStatusController) waitForUSB(ctx context.Context, logger *zap.Logger) error {
-	if ctrl.WaitForUSB != nil {
-		return ctrl.WaitForUSB(ctx, logger)
+func (ctrl *DiscoveredVolumesStatusController) waitForDevices(ctx context.Context, logger *zap.Logger) error {
+	if ctrl.WaitForDevices != nil {
+		return ctrl.WaitForDevices(ctx, logger)
 	}
 
 	// in container mode we don't own the devices, and sysfs is the host's one
@@ -151,5 +152,5 @@ func (ctrl *DiscoveredVolumesStatusController) waitForUSB(ctx context.Context, l
 		return nil
 	}
 
-	return (&usbsettle.Settler{}).Wait(ctx, logger)
+	return (&devsettle.Settler{}).Wait(ctx, logger)
 }

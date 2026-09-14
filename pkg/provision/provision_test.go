@@ -37,6 +37,22 @@ func TestHTTPProbeRequestNormalize(t *testing.T) {
 	require.Equal(t, provision.HTTPProbeMaxTimeout, normalized.Timeout)
 }
 
+func TestClusterRequestHasDiskDriver(t *testing.T) {
+	t.Parallel()
+
+	req := provision.ClusterRequest{
+		Nodes: provision.NodeRequests{
+			{Disks: []*provision.Disk{{Driver: "virtio"}}},
+			{Disks: []*provision.Disk{{Driver: "virtio"}, {Driver: "mmc"}}},
+		},
+	}
+
+	assert.True(t, req.HasDiskDriver("virtio"))
+	assert.True(t, req.HasDiskDriver("mmc"))
+	assert.False(t, req.HasDiskDriver("nvme"))
+	assert.False(t, (&provision.ClusterRequest{}).HasDiskDriver("virtio"))
+}
+
 func TestClusterRequestInstallDiskPath(t *testing.T) {
 	t.Parallel()
 
@@ -63,6 +79,11 @@ func TestClusterRequestInstallDiskPath(t *testing.T) {
 			name:     "nvme",
 			disks:    []*provision.Disk{{Driver: "nvme"}},
 			expected: "/dev/nvme0n1",
+		},
+		{
+			name:     "mmc",
+			disks:    []*provision.Disk{{Driver: "mmc"}, {Driver: "virtio"}},
+			expected: "/dev/mmcblk0",
 		},
 		{
 			name:     "unknown driver",

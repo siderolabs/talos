@@ -38,6 +38,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
 	remoteprovisionpb "github.com/siderolabs/talos/pkg/provision/api"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // ProviderName is the name of the remote provisioner.
@@ -381,6 +382,9 @@ func (p *Provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *
 			),
 		)
 	}
+
+	// the remote server runs QEMU, so the QEMU-emulated SD card workaround applies as well
+	bundleOpts = append(bundleOpts, vm.MMCDiscardWorkaroundOptions(clusterReq, contract)...)
 
 	if !contract.GrubUseUKICmdlineDefault() {
 		genOpts = append(

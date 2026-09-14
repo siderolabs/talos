@@ -114,6 +114,8 @@ func (p *provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *
 		)
 	}
 
+	bundleOpts = append(bundleOpts, vm.MMCDiscardWorkaroundOptions(clusterReq, contract)...)
+
 	if !contract.GrubUseUKICmdlineDefault() {
 		genOpts = append(
 			genOpts,
