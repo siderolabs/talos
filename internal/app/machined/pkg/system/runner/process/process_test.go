@@ -512,8 +512,9 @@ func (l *mockSandboxLauncher) Launch(cfg runtime.LaunchConfig) (runtime.SandboxH
 	return l.handle, nil
 }
 
-// TestSandboxUnavailable verifies that when the sandbox launcher getter returns
-// nil (namespace not up yet), Run fails fast instead of launching on the host.
+// TestSandboxUnavailable verifies that when the sandbox launcher getter keeps
+// returning nil (namespace not up yet), Run waits instead of launching on the
+// host, and reports the context error once it expires.
 func (suite *ProcessSuite) TestSandboxUnavailable() {
 	r := process.NewRunner(false, &runner.Args{
 		ID:          "sb-unavail",
@@ -527,9 +528,57 @@ func (suite *ProcessSuite) TestSandboxUnavailable() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	_, err := r.Run(context.Background(), MockEventSink(suite.T()), nil)
-	suite.Assert().Error(err)
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	_, err := r.Run(ctx, MockEventSink(suite.T()), nil)
+	suite.Assert().ErrorIs(err, context.DeadlineExceeded)
 	suite.Assert().Contains(err.Error(), "sandbox namespace not available")
+}
+
+// TestSandboxWaitForLauncher verifies that Run launched with the launcher still
+// absent succeeds once the getter starts returning it, emitting a Waiting state
+// for the duration of the wait.
+func (suite *ProcessSuite) TestSandboxWaitForLauncher() {
+	handle := newMockSandboxHandle(424242)
+	close(handle.unblock) // Wait returns immediately (clean exit)
+
+	launcher := &mockSandboxLauncher{handle: handle, launched: make(chan runtime.LaunchConfig, 1)}
+
+	var ready atomic.Bool
+
+	getter := func() runtime.SandboxLauncher {
+		if !ready.Load() {
+			return nil
+		}
+
+		return launcher
+	}
+
+	r := process.NewRunner(false, &runner.Args{
+		ID:          "sb-wait",
+		ProcessArgs: []string{"/bin/true"},
+	},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithSandbox(getter),
+	)
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	time.AfterFunc(300*time.Millisecond, func() { ready.Store(true) })
+
+	var states []events.ServiceState
+
+	_, err := r.Run(context.Background(), func(state events.ServiceState, _ string, _ ...any) {
+		states = append(states, state)
+	}, nil)
+
+	suite.Require().NoError(err)
+
+	suite.Assert().Contains(states, events.StateWaiting, "a Waiting state should be recorded while waiting for the namespace")
+	suite.Assert().True(handle.isClosed(), "handle should be closed on Run return")
 }
 
 // TestSandboxRetryWhenUnavailable verifies the launcher getter is re-resolved on

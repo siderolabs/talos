@@ -516,10 +516,25 @@ func (p *processRunner) runInSandbox(
 	var status runner.Status
 
 	// Resolve the launcher fresh on every (re)launch so that a recreated sandbox
-	// namespace is picked up after the previous one was torn down.
+	// namespace is picked up after the previous one was torn down. The launcher
+	// is published asynchronously by the sandboxd service runner, so the first
+	// launch of a boot may arrive before it exists — wait instead of failing,
+	// otherwise the service enters a noisy fail/restart loop and may end up
+	// failing the whole boot phase.
 	wns := p.opts.Sandbox()
 	if wns == nil {
-		return status, fmt.Errorf("sandbox namespace not available yet")
+		const sandboxWaitInterval = 500 * time.Millisecond
+
+		eventSink(events.StateWaiting, "Waiting for the sandbox namespace to become available")
+
+		for wns == nil {
+			select {
+			case <-ctx.Done():
+				return status, fmt.Errorf("sandbox namespace not available: %w", ctx.Err())
+			case <-time.After(sandboxWaitInterval):
+				wns = p.opts.Sandbox()
+			}
+		}
 	}
 
 	env := slices.Concat([]string{constants.EnvPath}, p.opts.Env, os.Environ())
