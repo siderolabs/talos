@@ -11,6 +11,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -80,14 +81,25 @@ func (ec *EventCallback[T]) Emit(event T) {
 	ec.onEvent(event)
 }
 
+const (
+	// monitorStderrLimit caps the stderr kept for classifying a monitor exit.
+	// mdadm prints the reason for exiting last, so only the tail is kept.
+	monitorStderrLimit = 64 * 1024
+
+	// monitorLineLimit caps a single buffered output line. The rest of a longer
+	// line is dropped.
+	monitorLineLimit = 4 * 1024
+)
+
 // Monitor runs mdadm monitor and calls onEvent for each emitted event line.
 //
-// onEvent receives only stdout event lines. Errors are not delivered through the
-// callback: stderr is buffered and classified via the process exit, so the
-// terminal "no array" condition surfaces once, as the (quiet) ErrNotFound return
-// value, rather than also being logged as a warning per restart.
+// onEvent receives stdout lines and recognized stderr event lines: mdadm's
+// monitor emits events on stderr. Other stderr remains classification-only, so
+// the terminal "no array" condition surfaces once, as the quiet ErrNotFound
+// return value, rather than also being logged per restart. Only the last
+// monitorStderrLimit bytes of stderr are kept for that classification.
 func (md *MD) Monitor(ctx context.Context, onEvent func(string)) error {
-	var stderr bytes.Buffer
+	stderr := newTailBuffer(monitorStderrLimit)
 
 	ec := NewEventCallback(onEvent)
 
@@ -99,8 +111,11 @@ func (md *MD) Monitor(ctx context.Context, onEvent func(string)) error {
 			ec.Emit(s)
 		})),
 		cmd.WithStderr(newLineWriter(func(s string) {
-			stderr.WriteString(s)
-			stderr.WriteByte('\n')
+			stderr.WriteLine(s)
+
+			if strings.Contains(s, " event detected ") {
+				ec.Emit(s)
+			}
 		})),
 	)
 	if err != nil {
@@ -136,7 +151,7 @@ func (w *lineWriter) Write(p []byte) (int, error) {
 
 	for len(p) > 0 {
 		if i := bytes.IndexByte(p, '\n'); i >= 0 {
-			w.buf.Write(p[:i])
+			w.append(p[:i])
 			w.onEvent(w.buf.String())
 			w.buf.Reset()
 
@@ -145,12 +160,51 @@ func (w *lineWriter) Write(p []byte) (int, error) {
 			continue
 		}
 
-		w.buf.Write(p)
+		w.append(p)
 
 		break
 	}
 
 	return n, nil
+}
+
+// append adds p to the current line, dropping whatever exceeds monitorLineLimit.
+func (w *lineWriter) append(p []byte) {
+	if room := monitorLineLimit - w.buf.Len(); len(p) > room {
+		p = p[:max(room, 0)]
+	}
+
+	w.buf.Write(p)
+}
+
+// tailBuffer keeps the last limit bytes of whole lines written to it.
+type tailBuffer struct {
+	limit int
+	buf   []byte
+}
+
+func newTailBuffer(limit int) *tailBuffer {
+	return &tailBuffer{limit: limit}
+}
+
+// WriteLine appends s and a newline, then drops the oldest lines beyond the limit.
+func (b *tailBuffer) WriteLine(s string) {
+	b.buf = append(b.buf, s...)
+	b.buf = append(b.buf, '\n')
+
+	if excess := len(b.buf) - b.limit; excess > 0 {
+		// drop through the end of the line that the cut lands in
+		if i := bytes.IndexByte(b.buf[excess:], '\n'); i >= 0 && excess+i+1 < len(b.buf) {
+			excess += i + 1
+		}
+
+		b.buf = append(b.buf[:0], b.buf[excess:]...)
+	}
+}
+
+// Bytes returns the kept tail.
+func (b *tailBuffer) Bytes() []byte {
+	return b.buf
 }
 
 func classifyProcessError(err error, stderr []byte) error {
