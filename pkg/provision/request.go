@@ -196,7 +196,7 @@ type Disk struct {
 	SkipPreallocate bool
 	// Driver for the disk.
 	//
-	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "usb", "virtiofs" (special).
+	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "usb", "mmc", "virtiofs" (special).
 	Driver string
 	// Block size for the disk, defaults to 512 if not set.
 	BlockSize uint
@@ -318,6 +318,16 @@ var installDiskPaths = map[string]string{
 	"megaraid": "/dev/sda",
 	"usb":      "/dev/sda",
 	"nvme":     "/dev/nvme0n1",
+	"mmc":      "/dev/mmcblk0",
+}
+
+// HasDiskDriver reports whether any node has a disk with the given driver.
+func (reqs *ClusterRequest) HasDiskDriver(driver string) bool {
+	return slices.ContainsFunc(reqs.Nodes, func(node NodeRequest) bool {
+		return slices.ContainsFunc(node.Disks, func(disk *Disk) bool {
+			return disk.Driver == driver
+		})
+	})
 }
 
 // InstallDiskPath returns the guest device path Talos should be installed to, derived from the
