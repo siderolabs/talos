@@ -10,7 +10,7 @@ package k8s
 const (
 	// RookCephHelmChartVersion is the version of the Rook Ceph Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=rook-ceph registryUrl=https://charts.rook.io/release
-	RookCephHelmChartVersion = "v1.20.3"
+	RookCephHelmChartVersion = "v1.20.7"
 	// CephCSIDriversHelmChartVersion is the version of the Ceph-CSI drivers Helm chart to use.
 	// Starting with Rook v1.20 the CSI drivers are no longer deployed by the operator chart and
 	// have to be installed separately via the ceph-csi-drivers chart.
@@ -18,7 +18,7 @@ const (
 	CephCSIDriversHelmChartVersion = "1.0.5"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
-	LongHornHelmChartVersion = "1.12.0"
+	LongHornHelmChartVersion = "1.12.1"
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
 	OpenEBSChartVersion = "4.6.1"
