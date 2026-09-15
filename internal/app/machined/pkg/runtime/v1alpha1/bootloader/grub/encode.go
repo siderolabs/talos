@@ -43,15 +43,20 @@ func (c *Config) Encode(wr io.Writer) error {
 		fmt.Fprintf(wr, "set fallback=\"%s\"\n", fallback.Name)
 	}
 
-	fmt.Fprint(wr, `
-set timeout=3
+	timeout := uint(3)
+	if c.Timeout != nil {
+		timeout = *c.Timeout
+	}
+
+	fmt.Fprintf(wr, `
+set timeout=%d
 
 insmod all_video
 
 terminal_input console
 terminal_output console
 
-`)
+`, timeout)
 
 	for _, entry := range c.Entries {
 		fmt.Fprintf(wr, `menuentry "%s" {

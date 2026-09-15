@@ -30,6 +30,7 @@ type Config struct {
 	Fallback       BootLabel
 	Entries        map[BootLabel]MenuEntry
 	AddResetOption bool
+	Timeout        *uint
 }
 
 // MenuEntry represents a grub menu entry in the grub config file.
