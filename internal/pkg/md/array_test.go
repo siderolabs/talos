@@ -10,10 +10,13 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 )
 
 func TestParseDetailExport(t *testing.T) {
@@ -142,6 +145,153 @@ printf 'mdadm: RebuildFinished event detected on md device /dev/md0\n'
 	}, events)
 }
 
+// stderrMonitorScript emits recognized events and one ordinary line on fd 2,
+// then blocks until the test writes a terminal action to the control FIFO.
+// Only shell builtins are used: the producer stays alive in read, with no
+// sleep descendant holding its output pipes during cancellation.
+const stderrMonitorScript = `#!/bin/sh
+printf '%s\n' "$*" > "$MDADM_ARGS"
+exec 3< "$MDADM_CONTROL"
+printf 'mdadm: PRIVATE_NON_EVENT_CANARY\n' >&2
+printf 'mdadm: NewArray event detected on md device /dev/md0\n' >&2
+printf 'mdadm: RebuildStarted event detected on md device /dev/md0\n' >&2
+printf 'mdadm: RebuildFinished event det' >&2
+printf 'ected on md device /dev/md0\n' >&2
+read -r terminal <&3
+case "$terminal" in
+  command-error) printf 'mdadm: invalid option PRIVATE_ERROR_CANARY\n' >&2; exit 17 ;;
+  exit) exit 0 ;;
+  *) exit 18 ;;
+esac
+`
+
+type stderrMonitorRun struct {
+	dir     string
+	control *os.File
+	cancel  context.CancelFunc
+	events  chan string
+	done    chan struct{}
+	err     error
+}
+
+func startStderrMonitor(t *testing.T) *stderrMonitorRun {
+	t.Helper()
+
+	run := &stderrMonitorRun{
+		dir:    t.TempDir(),
+		events: make(chan string, 8),
+		done:   make(chan struct{}),
+	}
+
+	controlPath := filepath.Join(run.dir, "control")
+	require.NoError(t, unix.Mkfifo(controlPath, 0o600))
+
+	control, err := os.OpenFile(controlPath, os.O_RDWR, 0)
+	require.NoError(t, err)
+
+	run.control = control
+
+	t.Cleanup(func() { require.NoError(t, control.Close()) })
+	t.Setenv("MDADM_CONTROL", controlPath)
+	t.Setenv("MDADM_ARGS", filepath.Join(run.dir, "args"))
+
+	script := filepath.Join(run.dir, "mdadm")
+	require.NoError(t, os.WriteFile(script, []byte(stderrMonitorScript), 0o700))
+
+	monitor, err := New(WithMdadmPath(script))
+	require.NoError(t, err)
+
+	var ctx context.Context
+
+	ctx, run.cancel = context.WithCancel(context.Background())
+
+	go func() {
+		defer close(run.done)
+
+		run.err = monitor.Monitor(ctx, func(event string) { run.events <- event })
+	}()
+
+	t.Cleanup(func() {
+		run.cancel()
+
+		select {
+		case <-run.done:
+		case <-time.After(3 * time.Second):
+			t.Error("monitor did not stop after cancellation")
+		}
+	})
+
+	return run
+}
+
+func (run *stderrMonitorRun) requireLiveEvents(t *testing.T) {
+	t.Helper()
+
+	for _, event := range []string{"NewArray", "RebuildStarted", "RebuildFinished"} {
+		select {
+		case actual := <-run.events:
+			require.Equal(t, "mdadm: "+event+" event detected on md device /dev/md0", actual)
+		case <-run.done:
+			t.Fatal("producer exited before release")
+		case <-time.After(3 * time.Second):
+			t.Fatal("stderr event was not delivered while producer remained alive")
+		}
+	}
+
+	select {
+	case <-run.done:
+		t.Fatal("producer must still be blocked before release")
+	default:
+	}
+}
+
+func (run *stderrMonitorRun) release(t *testing.T, terminal string) {
+	t.Helper()
+
+	if terminal == "cancel" {
+		run.cancel()
+	} else {
+		_, err := run.control.WriteString(terminal + "\n")
+		require.NoError(t, err)
+	}
+
+	select {
+	case <-run.done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("monitor did not return after release")
+	}
+}
+
+func TestMonitorStreamsStderrBeforeExit(t *testing.T) {
+	for _, terminal := range []string{"exit", "command-error", "cancel"} {
+		t.Run(terminal, func(t *testing.T) {
+			run := startStderrMonitor(t)
+			run.requireLiveEvents(t)
+
+			args, err := os.ReadFile(filepath.Join(run.dir, "args"))
+			require.NoError(t, err)
+			require.Equal(t, "--monitor --scan --mail=talos@local\n", string(args))
+
+			run.release(t, terminal)
+
+			if terminal == "command-error" {
+				require.ErrorIs(t, run.err, ErrInvalidArgument)
+
+				var classified *ExecError
+
+				require.ErrorAs(t, run.err, &classified)
+				assert.Equal(t, 17, classified.ExitCode)
+				assert.Contains(t, string(classified.Stderr), "PRIVATE_ERROR_CANARY")
+				assert.NotContains(t, run.err.Error(), "PRIVATE_ERROR_CANARY")
+			} else {
+				require.NoError(t, run.err)
+			}
+
+			assert.Empty(t, run.events, "ordinary stderr must not reach the callback")
+		})
+	}
+}
+
 func TestMonitorNoArrayIsNotFound(t *testing.T) {
 	script := filepath.Join(t.TempDir(), "mdadm")
 	scriptBody := `#!/bin/sh
@@ -161,6 +311,100 @@ exit 1
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrNotFound))
 	assert.False(t, called, "callback must not fire for the no-array condition")
+}
+
+func newScriptMonitor(t *testing.T, body string) *MD {
+	t.Helper()
+
+	script := filepath.Join(t.TempDir(), "mdadm")
+	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\n"+body), 0o700))
+
+	m, err := New(WithMdadmPath(script))
+	require.NoError(t, err)
+
+	return m
+}
+
+func TestMonitorIgnoresMalformedStderr(t *testing.T) {
+	t.Setenv("MDADM_LONG", strings.Repeat("x", 1024))
+
+	// Only the well-formed DegradedArray line is an event. The overlong line
+	// carries the token past the line limit, so it must not count either.
+	m := newScriptMonitor(t, `
+printf '\n' >&2
+printf '\001\377\376garbage\033[0m\n' >&2
+printf 'mdadm: event detected\n' >&2
+printf 'mdadm:Fail event detected\n' >&2
+printf 'mdadm: Fail EVENT DETECTED on md device /dev/md1\n' >&2
+i=0
+while [ $i -lt 64 ]; do printf '%s' "$MDADM_LONG" >&2; i=$((i+1)); done
+printf ' event detected on md device /dev/md2\n' >&2
+printf 'mdadm: DegradedArray event detected on md device /dev/md0\n' >&2
+printf 'unterminated garbage' >&2
+`)
+
+	var events []string
+
+	require.NoError(t, m.Monitor(context.Background(), func(event string) {
+		events = append(events, event)
+	}))
+
+	assert.Equal(t, []string{"mdadm: DegradedArray event detected on md device /dev/md0"}, events)
+}
+
+func TestMonitorStderrTailIsBounded(t *testing.T) {
+	t.Setenv("MDADM_LONG", strings.Repeat("y", 1023))
+
+	m := newScriptMonitor(t, `
+printf 'mdadm: PRIVATE_FIRST_LINE\n' >&2
+i=0
+while [ $i -lt 256 ]; do printf 'filler %s\n' "$MDADM_LONG" >&2; i=$((i+1)); done
+printf 'mdadm: No array with redundancy detected, stopping\n' >&2
+exit 1
+`)
+
+	called := false
+	err := m.Monitor(context.Background(), func(string) { called = true })
+	require.ErrorIs(t, err, ErrNotFound)
+	assert.False(t, called)
+
+	var classified *ExecError
+
+	require.ErrorAs(t, err, &classified)
+	assert.Equal(t, 1, classified.ExitCode)
+	assert.LessOrEqual(t, len(classified.Stderr), 64*1024)
+	assert.True(t, strings.HasPrefix(string(classified.Stderr), "filler "), "the tail must start on a line boundary")
+	assert.True(t, strings.HasSuffix(string(classified.Stderr), "mdadm: No array with redundancy detected, stopping\n"))
+	assert.NotContains(t, string(classified.Stderr), "PRIVATE_FIRST_LINE")
+}
+
+func TestMonitorRestartDoesNotRepeatEvents(t *testing.T) {
+	t.Setenv("MDADM_STARTED", filepath.Join(t.TempDir(), "started"))
+
+	// The first run ends inside a line. The second run must neither replay the
+	// first run's events nor complete its partial line.
+	m := newScriptMonitor(t, `
+if [ ! -e "$MDADM_STARTED" ]; then
+  : > "$MDADM_STARTED"
+  printf 'mdadm: RebuildStarted event detected on md device /dev/md0\n' >&2
+  printf 'mdadm: RebuildFinished event det' >&2
+  exit 0
+fi
+printf 'ected on md device /dev/md0\n' >&2
+printf 'mdadm: RebuildFinished event detected on md device /dev/md0\n' >&2
+`)
+
+	var events []string
+
+	onEvent := func(event string) { events = append(events, event) }
+
+	require.NoError(t, m.Monitor(context.Background(), onEvent))
+	require.NoError(t, m.Monitor(context.Background(), onEvent))
+
+	assert.Equal(t, []string{
+		"mdadm: RebuildStarted event detected on md device /dev/md0",
+		"mdadm: RebuildFinished event detected on md device /dev/md0",
+	}, events)
 }
 
 func TestCommandArguments(t *testing.T) {
