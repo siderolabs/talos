@@ -1029,10 +1029,16 @@ FROM ${GENERATE_VEX_PREFIX}:${GENERATE_VEX} AS talos-vex
 
 FROM build-go AS vex-generate
 ARG TAG
-RUN --mount=type=bind,from=talos-vex,source=/generate-vex,target=/generate-vex /generate-vex gen --target-version $TAG > /talos.vex.json
+RUN --mount=type=bind,from=talos-vex,source=/generate-vex,target=/generate-vex --mount=type=bind,from=pkg-kernel-amd64,source=/usr/lib/modules,target=/usr/lib/modules <<EOF
+set -euo pipefail
+
+KERNEL_VERSION=$(ls /usr/lib/modules | sed s/-talos//)
+
+/generate-vex gen --target-version $TAG --kernel-version ${KERNEL_VERSION} > /talos.vex.json
 # This config contains IDs of the tracked, but affected vulnerabilities.
 # Once an advisory is made, the CI should go back to passing status.
-RUN --mount=type=bind,from=talos-vex,source=/generate-vex,target=/generate-vex /generate-vex grype-config --target-version $TAG > /talos.grype.yaml
+/generate-vex grype-config --target-version $TAG  --kernel-version=${KERNEL_VERSION} > /talos.grype.yaml
+EOF
 
 FROM scratch AS vex
 COPY --link --from=vex-generate /talos.vex.json /talos.vex.json
