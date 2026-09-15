@@ -28,6 +28,10 @@ import (
 
 const keyHandlerTimeout = time.Second * 20
 
+// pbkdfMemoryKiB caps the Argon2id memory cost, in kilobytes, as passed to
+// cryptsetup's --pbkdf-memory.
+const pbkdfMemoryKiB = 64 * 1024
+
 // Helpers provides helper methods for encryption handling.
 type Helpers struct {
 	GetSystemInformation helpers.SystemInformationGetter
@@ -65,6 +69,23 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers 
 	if encryptionConfig.AllowDiscards {
 		opts = append(opts, luks.WithAllowDiscards())
 	}
+
+	// Bound the Argon2id memory cost.
+	//
+	// cryptsetup sizes the memory cost by benchmarking against available RAM to
+	// hit --iter-time (2s by default), which lands close to a gigabyte on an
+	// ordinary machine. On a memory-constrained board that single allocation is
+	// the largest of the whole boot, and on a 4 GiB rk3399 it reliably faults
+	// while the kernel zeroes the freshly allocated pages (clear_page from
+	// post_alloc_hook), taking the node down mid-format and leaving a LUKS2
+	// header with no keyslots -- an unrecoverable volume.
+	//
+	// 64 MiB is not an arbitrary floor: it is RFC 9106's SECOND RECOMMENDED
+	// option for Argon2id (t=3, p=4, m=2^16), described there as "suggested as
+	// a default setting for memory-constrained environments". It cuts the burst
+	// by more than an order of magnitude while staying on a parameter set the
+	// RFC calls uniformly safe.
+	opts = append(opts, luks.WithPBKDFMemory(pbkdfMemoryKiB))
 
 	keyHandlers := make([]keys.Handler, 0, len(encryptionConfig.Keys))
 
