@@ -5,15 +5,19 @@
 package makers
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/netip"
 	"net/url"
+	"os"
 	"slices"
 	"strings"
 	"time"
 
+	"github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -28,6 +32,7 @@ import (
 	configbase "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
@@ -247,6 +252,9 @@ func (m *Qemu) AddExtraProvisionOpts() error {
 	})
 
 	externalKubernetesEndpoint := m.Provisioner.GetExternalKubernetesControlPlaneEndpoint(m.ClusterRequest.Network, m.Ops.ControlPlanePort)
+	if os.Getenv("TALOS_QEMU_STATIC_IP") == "1" {
+		externalKubernetesEndpoint = m.directKubernetesEndpoint()
+	}
 
 	// full-CLOS uses the BGP-advertised anycast VIP as the k8s endpoint (reachable via the host zebra
 	// route), not the provisioner's host-side load balancer.
@@ -340,6 +348,9 @@ func (m *Qemu) ModifyClusterRequest() error {
 	m.ClusterRequest.Network.ImageCacheTLSCertFile = m.EOps.ImageCacheTLSCertFile
 	m.ClusterRequest.Network.ImageCacheTLSKeyFile = m.EOps.ImageCacheTLSKeyFile
 	m.ClusterRequest.Network.ImageCachePort = m.EOps.ImageCachePort
+	if os.Getenv("TALOS_QEMU_STATIC_IP") == "1" {
+		m.ClusterRequest.Network.NoDHCP = true
+	}
 
 	m.ClusterRequest.KernelPath = m.EOps.NodeVmlinuzPath
 	m.ClusterRequest.InitramfsPath = m.EOps.NodeInitramfsPath
@@ -394,6 +405,10 @@ func (m *Qemu) ModifyNodes() error {
 		return err
 	}
 
+	if os.Getenv("TALOS_QEMU_STATIC_IP") == "1" {
+		m.InClusterEndpoint = m.directKubernetesEndpoint()
+	}
+
 	for i := range m.ClusterRequest.Nodes {
 		node := &m.ClusterRequest.Nodes[i]
 
@@ -407,9 +422,120 @@ func (m *Qemu) ModifyNodes() error {
 		node.SkipInjectingConfig = m.Ops.SkipInjectingConfig
 		node.BadRTC = m.EOps.BadRTC
 		node.ExtraKernelArgs = extraKernelArgs
+
+		if os.Getenv("TALOS_QEMU_STATIC_IP") == "1" {
+			if err = m.configureStaticIPv4(i, node); err != nil {
+				return err
+			}
+		}
 	}
 
 	m.ClusterRequest.SiderolinkRequest = m.SideroLinkBuilder.SiderolinkRequest()
+
+	return nil
+}
+
+func (m *Qemu) directKubernetesEndpoint() string {
+	controlPlane := m.ClusterRequest.Nodes.ControlPlaneNodes()[0]
+
+	return "https://" + nethelpers.JoinHostPort(firstIPv4(controlPlane.IPs).String(), m.Ops.ControlPlanePort)
+}
+
+// configureStaticIPv4 bypasses the host-side DHCP server for environments where
+// macOS endpoint security prevents broadcast DHCP packets from reaching the
+// talosctl child process. It is deliberately opt-in and leaves the normal QEMU
+// networking path unchanged.
+func (m *Qemu) configureStaticIPv4(nodeIndex int, node *provision.NodeRequest) error {
+	var (
+		nodeIP     netip.Addr
+		nodePrefix netip.Prefix
+		gateway    netip.Addr
+		nameserver netip.Addr
+	)
+
+	for i, ip := range node.IPs {
+		if ip.Is4() {
+			nodeIP = ip
+			nodePrefix = netip.PrefixFrom(ip, m.Cidrs[i].Bits())
+			gateway = m.GatewayIPs[i]
+
+			break
+		}
+	}
+
+	if !nodeIP.IsValid() {
+		return fmt.Errorf("TALOS_QEMU_STATIC_IP requires an IPv4 cluster network")
+	}
+
+	for _, candidate := range m.ClusterRequest.Network.Nameservers {
+		if candidate.Is4() {
+			nameserver = candidate
+
+			break
+		}
+	}
+
+	if !nameserver.IsValid() {
+		nameserver = gateway
+	}
+
+	link := networkcfg.NewLinkConfigV1Alpha1("net0")
+	link.LinkAddresses = []networkcfg.AddressConfig{{AddressAddress: nodePrefix}}
+	link.LinkRoutes = []networkcfg.RouteConfig{{RouteGateway: metacfg.Addr{Addr: gateway}}}
+
+	alias := networkcfg.NewLinkAliasConfigV1Alpha1("net0")
+	alias.Selector = networkcfg.LinkSelector{
+		Match: cel.MustExpression(cel.ParseBooleanExpression(`link.driver == "virtio_net"`, celenv.LinkLocator())),
+	}
+
+	resolver := networkcfg.NewResolverConfigV1Alpha1()
+	resolver.ResolverNameservers = []networkcfg.NameserverConfig{{Address: metacfg.Addr{Addr: nameserver}}}
+
+	// virtio_net is a module in recent Talos kernels, so the management NIC does
+	// not exist while Linux's built-in ip= autoconfiguration runs. Feed Talos a
+	// compact, partial early config instead: once udev loads the NIC driver, the
+	// normal network controllers apply the address before maintenance mode starts.
+	earlyConfig, err := container.New(alias, link, resolver)
+	if err != nil {
+		return fmt.Errorf("building early static network config for node %d: %w", nodeIndex, err)
+	}
+
+	earlyConfigBytes, err := earlyConfig.EncodeBytes(encoder.WithComments(encoder.CommentsDisabled))
+	if err != nil {
+		return fmt.Errorf("encoding early static network config for node %d: %w", nodeIndex, err)
+	}
+
+	var compressed bytes.Buffer
+
+	zencoder, err := zstd.NewWriter(&compressed)
+	if err != nil {
+		return fmt.Errorf("creating early static network config encoder for node %d: %w", nodeIndex, err)
+	}
+
+	if _, err = zencoder.Write(earlyConfigBytes); err != nil {
+		return fmt.Errorf("compressing early static network config for node %d: %w", nodeIndex, err)
+	}
+
+	if err = zencoder.Close(); err != nil {
+		return fmt.Errorf("closing early static network config encoder for node %d: %w", nodeIndex, err)
+	}
+
+	node.SDStubKernelArgs = procfs.NewCmdline("")
+	node.SDStubKernelArgs.Append(constants.KernelParamConfigEarly, base64.StdEncoding.EncodeToString(compressed.Bytes()))
+
+	ctr, err := container.New(link)
+	if err != nil {
+		return fmt.Errorf("building static network config for node %d: %w", nodeIndex, err)
+	}
+
+	if m.PerNodePatches == nil {
+		m.PerNodePatches = map[int][]configpatcher.Patch{}
+	}
+
+	m.PerNodePatches[nodeIndex] = append(
+		m.PerNodePatches[nodeIndex],
+		configpatcher.NewStrategicMergePatch(ctr),
+	)
 
 	return nil
 }
