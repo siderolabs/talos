@@ -734,6 +734,110 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 	})
 }
 
+// TestDependsOnContainers verifies that a container declaring dependsOn.containers waits for the
+// named container to report healthy, and starts once it does.
+func (suite *ContainersSuite) TestDependsOnContainers() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	ctx, base, node := suite.setupContainer("dependson-containers")
+
+	dependency, waiter, writer := base+"-dep", base+"-waiter", base+"-writer"
+
+	// The dependency has to be configured from the start. A dependsOn.containers entry naming a
+	// container that is not in the configuration is rejected by config validation.
+	markerName := base + "-marker"
+	marker := "/var/" + markerName
+
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(
+			client.WithNode(context.Background(), node),
+			containercfg.ContainerConfigKind, dependency, waiter, writer,
+		)
+	})
+
+	dependencyDoc := suite.newContainer(dependency, containerPauseImage)
+	dependencyDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		PathsConfig: []string{marker},
+	}
+
+	waiterDoc := suite.newContainer(waiter, containerPauseImage)
+	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		ContainersConfig: []string{dependency},
+	}
+
+	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
+
+	// Wait for the image. We want the instance to be blocked by dependsOn.containers, not by an unfinished image pull.
+	suite.assertImageReady(ctx, waiter)
+	suite.assertNoInstance(ctx, dependency)
+	suite.assertNoInstance(ctx, waiter)
+
+	suite.T().Logf("starting container %q to create %s, which unblocks %q", writer, marker, dependency)
+
+	const writerMountPoint = "/hostvar"
+
+	writerDoc := suite.shellContainer(writer,
+		"touch "+writerMountPoint+"/"+markerName+" && echo marker-created")
+	writerDoc.MountsConfig = []containercfg.ContainerMount{
+		{
+			HostPathMount: &containercfg.HostPathMount{
+				MountSource:      "/var",
+				MountDestination: writerMountPoint,
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, writerDoc)
+
+	suite.assertContainerLogged(ctx, writer, "marker-created")
+
+	suite.assertContainerRunning(ctx, dependency, "the dependency, after the path it waits for appeared")
+
+	suite.assertContainerRunning(ctx, waiter, "after its dependency became healthy")
+}
+
+// TestDependsOnFailingContainer verifies that a container declaring dependsOn.containers stays
+// blocked while the named dependency keeps failing to start, rather than racing into Running the
+// instant the dependency's process is forked and before its exit is observed.
+func (suite *ContainersSuite) TestDependsOnFailingContainer() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	ctx, base, node := suite.setupContainer("dependson-failing")
+
+	dependency, waiter := base+"-dep", base+"-waiter"
+
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(
+			client.WithNode(context.Background(), node),
+			containercfg.ContainerConfigKind, dependency, waiter,
+		)
+	})
+
+	// Fails immediately every run: mirrors a misconfigured entrypoint (bad CLI flag, missing
+	// capability) rather than a slow-starting one. shellContainer restarts it in a crash loop.
+	dependencyDoc := suite.shellContainer(dependency, "exit 1")
+
+	waiterDoc := suite.newContainer(waiter, containerPauseImage)
+	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		ContainersConfig: []string{dependency},
+	}
+
+	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
+
+	// Wait for the image first: without it "no instance yet" would also be true of a pull still in
+	// flight, and the test would pass without the dependsOn gate doing anything.
+	suite.assertImageReady(ctx, waiter)
+
+	// The dependency never reports sustained health -- it restarts in a crash loop. Held long enough
+	// to span several restart/backoff cycles, so a start that only wins the race after one particular
+	// restart is still caught, not just the first one.
+	suite.assertNoInstanceFor(ctx, waiter, 30*time.Second)
+}
+
 // TestMultipleContainers verifies that containers declared side by side are independent of each other.
 func (suite *ContainersSuite) TestMultipleContainers() {
 	ctx, base, node := suite.setupContainer("multi")
@@ -1257,6 +1361,12 @@ func (suite *ContainersSuite) assertImageReady(ctx context.Context, containerNam
 // assertNoInstance verifies that no instance is created for containerName, and keeps checking for long
 // enough that a merely slow creation would be caught.
 func (suite *ContainersSuite) assertNoInstance(ctx context.Context, containerName string) {
+	suite.assertNoInstanceFor(ctx, containerName, 30*time.Second)
+}
+
+// assertNoInstanceFor is assertNoInstance with an explicit observation window, for callers that need to
+// span more restart/backoff cycles of a crash-looping dependency than the default window would catch.
+func (suite *ContainersSuite) assertNoInstanceFor(ctx context.Context, containerName string, duration time.Duration) {
 	suite.T().Logf("verifying container %q stays pending", containerName)
 
 	suite.Require().Never(func() bool {
@@ -1274,7 +1384,7 @@ func (suite *ContainersSuite) assertNoInstance(ctx context.Context, containerNam
 		}
 
 		return false
-	}, 30*time.Second, time.Second)
+	}, duration, time.Second)
 }
 
 // assertContainerLogged waits until the container's log contains any of wants, and returns the log.

@@ -692,27 +692,7 @@ func (widget *ResourceExplorerGrid) selectResource(row int) {
 
 // showResourceYAML renders the YAML of the given resource and shows the YAML view.
 func (widget *ResourceExplorerGrid) showResourceYAML(res resource.Resource) {
-	out, err := resource.MarshalYAML(res)
-	if err != nil {
-		widget.yamlView.SetText(tview.Escape(fmt.Sprintf("Error marshaling resource: %v", err)))
-	} else {
-		outBytes, marshalErr := yaml.Marshal(out)
-		if marshalErr != nil {
-			widget.yamlView.SetText(tview.Escape(fmt.Sprintf("Error encoding YAML: %v", marshalErr)))
-		} else {
-			var node yaml.Node
-
-			if unmarshalErr := yaml.Unmarshal(outBytes, &node); unmarshalErr != nil {
-				widget.yamlView.SetText(tview.Escape(fmt.Sprintf("Error encoding YAML: %v", unmarshalErr)))
-			} else {
-				var sb strings.Builder
-
-				renderYAMLNode(&sb, &node, 0, false)
-				widget.yamlView.SetText(sb.String())
-			}
-		}
-	}
-
+	widget.yamlView.SetText(resourceYAMLText(res))
 	widget.yamlView.SetTitle(fmt.Sprintf(" %s / %s (Esc: back) ", res.Metadata().Namespace(), res.Metadata().ID()))
 	widget.yamlView.ScrollToBeginning()
 	widget.level = 2
@@ -746,6 +726,32 @@ func formatError(err error) string {
 	}
 
 	return err.Error()
+}
+
+// resourceYAMLText renders a resource as tview-colored YAML, or an error message when it cannot
+// be marshaled.
+func resourceYAMLText(res resource.Resource) string {
+	out, err := resource.MarshalYAML(res)
+	if err != nil {
+		return tview.Escape(fmt.Sprintf("Error marshaling resource: %v", err))
+	}
+
+	outBytes, err := yaml.Marshal(out)
+	if err != nil {
+		return tview.Escape(fmt.Sprintf("Error encoding YAML: %v", err))
+	}
+
+	var node yaml.Node
+
+	if err = yaml.Unmarshal(outBytes, &node); err != nil {
+		return tview.Escape(fmt.Sprintf("Error encoding YAML: %v", err))
+	}
+
+	var sb strings.Builder
+
+	renderYAMLNode(&sb, &node, 0, false)
+
+	return sb.String()
 }
 
 // renderYAMLNode walks a yaml.Node AST and writes a tview-colored representation

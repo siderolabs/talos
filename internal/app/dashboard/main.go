@@ -72,7 +72,7 @@ func dashboardMain() error {
 		}
 	}
 
-	screens = append(screens, dashboard.ScreenResourceExplorer)
+	screens = append(screens, dashboard.ScreenContainers, dashboard.ScreenResourceExplorer)
 
 	return dashboard.Run(ctx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
 }

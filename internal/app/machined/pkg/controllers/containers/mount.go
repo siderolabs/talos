@@ -97,21 +97,21 @@ func (ctrl *MountController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *MountController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-r.EventCh():
+		case <-runtime.EventCh():
 		}
 
-		if err := ctrl.reconcile(ctx, r, logger); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger); err != nil {
 			logger.Error("failed to reconcile container mounts", zap.Error(err))
 
 			return err
 		}
 
-		r.ResetRestartBackoff()
+		runtime.ResetRestartBackoff()
 	}
 }
 
@@ -121,13 +121,13 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 // one stopping does not release the other's mount. Slash-separated because container and volume names
 // both contain hyphens, which would make a hyphen-joined ID ambiguous and let two containers collide
 // on one request.
-func (ctrl *MountController) mountRequestID(containerID, volumeID string) string {
-	return ctrl.Name() + "/" + containerID + "/" + volumeID
+func (ctrl *MountController) mountRequestID(containerSpecID, volumeID string) string {
+	return ctrl.Name() + "/" + containerSpecID + "/" + volumeID
 }
 
 //nolint:gocyclo
-func (ctrl *MountController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	lifecycle, err := readContainerLifecycle(ctx, r)
+func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
+	containerLifecycle, err := readContainerLifecycle(ctx, runtime)
 	if err != nil {
 		return err
 	}
@@ -136,85 +136,85 @@ func (ctrl *MountController) reconcile(ctx context.Context, r controller.Runtime
 	// here and nothing is requested again. Releasing without waiting for containers to stop is safe
 	// because it does not unmount anything by itself: the stopContainers phase runs before the
 	// unmount phases, so the volumes are still mounted for as long as the containers need them.
-	if lifecycle == nil || lifecycle.Metadata().Phase() == resource.PhaseTearingDown {
-		held, err := ctrl.releaseAll(ctx, r, logger)
+	if containerLifecycle == nil || containerLifecycle.Metadata().Phase() == resource.PhaseTearingDown {
+		held, err := ctrl.releaseAll(ctx, runtime, logger)
 		if err != nil {
 			return err
 		}
 
-		return reconcileLifecycle(ctx, r, logger, lifecycle, ctrl.Name(), held == 0)
+		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), held == 0)
 	}
 
-	specs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
+	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
 	if err != nil {
 		return fmt.Errorf("failed to list container specs: %w", err)
 	}
 
-	live, err := ctrl.liveContainers(ctx, r)
+	live, err := ctrl.liveContainers(ctx, runtime)
 	if err != nil {
 		return err
 	}
 
-	r.StartTrackingOutputs()
+	runtime.StartTrackingOutputs()
 
 	wanted := map[string]struct{}{}
 
-	for spec := range specs.All() {
-		containerID := spec.Metadata().ID()
+	for containerSpec := range containerSpecs.All() {
+		containerSpecID := containerSpec.Metadata().ID()
 
-		resolved, ready, reason, err := ctrl.reconcileContainer(ctx, r, logger, spec, wanted)
+		resolvedMounts, ready, reason, err := ctrl.reconcileContainer(ctx, runtime, logger, containerSpec, wanted)
 		if err != nil {
 			return err
 		}
 
-		if err := safe.WriterModify(ctx, r,
-			containers.NewContainerMountStatus(containers.NamespaceName, containerID),
+		if err := safe.WriterModify(ctx, runtime,
+			containers.NewContainerMountStatus(containers.NamespaceName, containerSpecID),
 			func(res *containers.ContainerMountStatus) error {
 				res.TypedSpec().Ready = ready
-				res.TypedSpec().Mounts = resolved
+				res.TypedSpec().Mounts = resolvedMounts
 				res.TypedSpec().Error = reason
 
 				return nil
 			},
 		); err != nil {
-			return fmt.Errorf("failed to write mount status %q: %w", containerID, err)
+			return fmt.Errorf("failed to write mount status %q: %w", containerSpecID, err)
 		}
 	}
 
-	if err := ctrl.releaseUnwanted(ctx, r, logger, wanted, live); err != nil {
+	if err := ctrl.releaseUnwanted(ctx, runtime, logger, wanted, live); err != nil {
 		return err
 	}
 
-	if err := safe.CleanupOutputs[*containers.ContainerMountStatus](ctx, r); err != nil {
+	if err := safe.CleanupOutputs[*containers.ContainerMountStatus](ctx, runtime); err != nil {
 		return fmt.Errorf("failed to clean up outputs: %w", err)
 	}
 
-	return reconcileLifecycle(ctx, r, logger, lifecycle, ctrl.Name(), len(wanted) == 0)
+	return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(wanted) == 0)
 }
 
 // liveContainers returns the containers which may still be using their mounts.
-func (ctrl *MountController) liveContainers(ctx context.Context, r controller.Runtime) (map[string]struct{}, error) {
+func (ctrl *MountController) liveContainers(ctx context.Context, runtime controller.Runtime) (map[string]struct{}, error) {
 	live := map[string]struct{}{}
 
-	instances, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, r)
+	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance specs: %w", err)
 	}
 
 	// An instance that exists is either running or on its way to it, so its mounts are in use even
 	// before any status has been written.
-	for instance := range instances.All() {
-		live[instance.TypedSpec().ContainerID] = struct{}{}
+	for containerInstanceSpec := range containerInstanceSpecs.All() {
+		live[containerInstanceSpec.TypedSpec().ContainerID] = struct{}{}
 	}
 
-	statuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, r)
+	containerInstanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, runtime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance statuses: %w", err)
 	}
 
-	for status := range statuses.All() {
-		if !status.TypedSpec().Phase.Done() {
-			live[status.TypedSpec().ContainerID] = struct{}{}
+	for containerInstanceStatus := range containerInstanceStatuses.All() {
+		if !containerInstanceStatus.TypedSpec().Phase.Done() {
+			live[containerInstanceStatus.TypedSpec().ContainerID] = struct{}{}
 		}
 	}
 
@@ -226,44 +226,44 @@ func (ctrl *MountController) liveContainers(ctx context.Context, r controller.Ru
 //nolint:gocyclo,cyclop
 func (ctrl *MountController) reconcileContainer(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
-	spec *containers.ContainerSpec,
+	containerSpec *containers.ContainerSpec,
 	wanted map[string]struct{},
-) (resolved []containers.ResolvedMountSpec, ready bool, reason string, err error) {
-	containerID := spec.Metadata().ID()
+) (resolvedMounts []containers.ResolvedMountSpec, ready bool, reason string, err error) {
+	containerSpecID := containerSpec.Metadata().ID()
 	ready = true
 
 	var reasons []string
 
-	for _, mount := range spec.TypedSpec().Mounts {
-		if mount.Kind != containers.MountKindUserVolume {
+	for _, containerMountSpec := range containerSpec.TypedSpec().Mounts {
+		if containerMountSpec.Kind != containers.MountKindUserVolume {
 			// tmpfs and hostPath need nothing from the block subsystem: the source is either nothing
 			// at all or a path which must already exist.
-			resolved = append(resolved, containers.ResolvedMountSpec{
-				Kind:        mount.Kind,
-				Source:      mount.Source,
-				Destination: mount.Destination,
-				Size:        mount.Size,
-				Options:     mount.Options,
+			resolvedMounts = append(resolvedMounts, containers.ResolvedMountSpec{
+				Kind:        containerMountSpec.Kind,
+				Source:      containerMountSpec.Source,
+				Destination: containerMountSpec.Destination,
+				Size:        containerMountSpec.Size,
+				Options:     containerMountSpec.Options,
 			})
 
 			continue
 		}
 
-		requestID := ctrl.mountRequestID(containerID, mount.VolumeID)
+		requestID := ctrl.mountRequestID(containerSpecID, containerMountSpec.VolumeID)
 		wanted[requestID] = struct{}{}
 
 		// Writable unless the options say otherwise; the writable default is already applied by
 		// ConfigController.
-		readOnly := slices.Contains(mount.Options, "ro")
+		readOnly := slices.Contains(containerMountSpec.Options, "ro")
 
-		if err = safe.WriterModify(ctx, r,
+		if err = safe.WriterModify(ctx, runtime,
 			block.NewVolumeMountRequest(block.NamespaceName, requestID),
 			func(res *block.VolumeMountRequest) error {
-				res.Metadata().Labels().Set(containerLabel, containerID)
+				res.Metadata().Labels().Set(containerLabel, containerSpecID)
 
-				res.TypedSpec().VolumeID = mount.VolumeID
+				res.TypedSpec().VolumeID = containerMountSpec.VolumeID
 				res.TypedSpec().Requester = ctrl.Name()
 				res.TypedSpec().ReadOnly = readOnly
 				// Detached must stay false: a detached mount is reachable only through a file
@@ -276,7 +276,7 @@ func (ctrl *MountController) reconcileContainer(
 			return nil, false, "", fmt.Errorf("failed to write mount request %q: %w", requestID, err)
 		}
 
-		mountStatus, getErr := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, requestID)
+		volumeMountStatus, getErr := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, runtime, requestID)
 		if getErr != nil {
 			if !state.IsNotFoundError(getErr) {
 				return nil, false, "", fmt.Errorf("failed to get mount status %q: %w", requestID, getErr)
@@ -284,91 +284,91 @@ func (ctrl *MountController) reconcileContainer(
 
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("waiting for volume %q to be mounted", mount.VolumeID))
+			reasons = append(reasons, fmt.Sprintf("waiting for volume %q to be mounted", containerMountSpec.VolumeID))
 
 			continue
 		}
 
-		if mountStatus.Metadata().Phase() != resource.PhaseRunning {
+		if volumeMountStatus.Metadata().Phase() != resource.PhaseRunning {
 			// Either the volume is going away, or this status is left over from a previous generation
 			// and is still tearing down. Adding a finalizer now would block that teardown forever, so
 			// report not-ready instead so the container won't start/restart while the volume is unavailable.
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("volume %q is being unmounted", mount.VolumeID))
+			reasons = append(reasons, fmt.Sprintf("volume %q is being unmounted", containerMountSpec.VolumeID))
 
 			continue
 		}
 
-		if mountStatus.TypedSpec().ReadOnly && !readOnly {
+		if volumeMountStatus.TypedSpec().ReadOnly && !readOnly {
 			// Mount requests are merged per volume and end up read-only if every requester asked for
 			// read-only, so another holder can leave this one with less access than it asked for.
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("volume %q is mounted read-only", mount.VolumeID))
+			reasons = append(reasons, fmt.Sprintf("volume %q is mounted read-only", containerMountSpec.VolumeID))
 
 			continue
 		}
 
-		if !mountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
-			if err = r.AddFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
+		if !volumeMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+			if err = runtime.AddFinalizer(ctx, volumeMountStatus.Metadata(), ctrl.Name()); err != nil {
 				return nil, false, "", fmt.Errorf("failed to add finalizer on %q: %w", requestID, err)
 			}
 
 			logger.Info("holding volume mount for container",
-				zap.String("container", containerID),
-				zap.String("volume", mount.VolumeID),
-				zap.String("target", mountStatus.TypedSpec().Target),
+				zap.String("container", containerSpecID),
+				zap.String("volume", containerMountSpec.VolumeID),
+				zap.String("target", volumeMountStatus.TypedSpec().Target),
 				zap.Bool("readOnly", readOnly),
 			)
 		}
 
-		resolved = append(resolved, containers.ResolvedMountSpec{
-			Kind:        mount.Kind,
-			Source:      mountStatus.TypedSpec().Target,
-			Destination: mount.Destination,
-			Options:     mount.Options,
-			VolumeID:    mount.VolumeID,
+		resolvedMounts = append(resolvedMounts, containers.ResolvedMountSpec{
+			Kind:        containerMountSpec.Kind,
+			Source:      volumeMountStatus.TypedSpec().Target,
+			Destination: containerMountSpec.Destination,
+			Options:     containerMountSpec.Options,
+			VolumeID:    containerMountSpec.VolumeID,
 		})
 	}
 
-	return resolved, ready, strings.Join(reasons, "; "), nil
+	return resolvedMounts, ready, strings.Join(reasons, "; "), nil
 }
 
 // releaseUnwanted releases the mounts no container needs any more.
 func (ctrl *MountController) releaseUnwanted(
 	ctx context.Context,
-	r controller.Runtime,
+	runtime controller.Runtime,
 	logger *zap.Logger,
 	wanted map[string]struct{},
 	live map[string]struct{},
 ) error {
-	ours, err := ctrl.ownedRequests(ctx, r)
+	ownedVolumeMountRequests, err := ctrl.ownedRequests(ctx, runtime)
 	if err != nil {
 		return err
 	}
 
-	for _, request := range ours {
-		requestID := request.Metadata().ID()
+	for _, volumeMountRequest := range ownedVolumeMountRequests {
+		requestID := volumeMountRequest.Metadata().ID()
 
 		if _, stillWanted := wanted[requestID]; stillWanted {
 			continue
 		}
 
-		containerID, _ := request.Metadata().Labels().Get(containerLabel)
+		containerSpecID, _ := volumeMountRequest.Metadata().Labels().Get(containerLabel)
 
 		// The spec may no longer list the mount while the task still has the path open, so the hold
 		// outlives the request for as long as anything is running.
-		if _, isLive := live[containerID]; isLive {
+		if _, isLive := live[containerSpecID]; isLive {
 			logger.Debug("deferring volume mount release until the container stops",
-				zap.String("container", containerID),
+				zap.String("container", containerSpecID),
 				zap.String("request", requestID),
 			)
 
 			continue
 		}
 
-		if err := ctrl.release(ctx, r, logger, requestID); err != nil {
+		if err := ctrl.release(ctx, runtime, logger, requestID); err != nil {
 			return err
 		}
 	}
@@ -377,21 +377,21 @@ func (ctrl *MountController) releaseUnwanted(
 }
 
 // releaseAll releases every mount this controller holds, reporting how many are still held.
-func (ctrl *MountController) releaseAll(ctx context.Context, r controller.Runtime, logger *zap.Logger) (int, error) {
-	ours, err := ctrl.ownedRequests(ctx, r)
+func (ctrl *MountController) releaseAll(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) (int, error) {
+	ownedVolumeMountRequests, err := ctrl.ownedRequests(ctx, runtime)
 	if err != nil {
 		return 0, err
 	}
 
-	for _, request := range ours {
-		if err := ctrl.release(ctx, r, logger, request.Metadata().ID()); err != nil {
+	for _, volumeMountRequest := range ownedVolumeMountRequests {
+		if err := ctrl.release(ctx, runtime, logger, volumeMountRequest.Metadata().ID()); err != nil {
 			return 0, err
 		}
 	}
 
 	// Counted after the pass: a request whose teardown is still waiting on another finalizer is
 	// still held, and the shutdown barrier has to keep waiting for it.
-	remaining, err := ctrl.ownedRequests(ctx, r)
+	remaining, err := ctrl.ownedRequests(ctx, runtime)
 	if err != nil {
 		return 0, err
 	}
@@ -400,35 +400,35 @@ func (ctrl *MountController) releaseAll(ctx context.Context, r controller.Runtim
 }
 
 // ownedRequests returns the mount requests created by this controller.
-func (ctrl *MountController) ownedRequests(ctx context.Context, r controller.Runtime) ([]*block.VolumeMountRequest, error) {
-	requests, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, r)
+func (ctrl *MountController) ownedRequests(ctx context.Context, runtime controller.Runtime) ([]*block.VolumeMountRequest, error) {
+	volumeMountRequests, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, runtime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mount requests: %w", err)
 	}
 
-	var ours []*block.VolumeMountRequest
+	var ownedVolumeMountRequests []*block.VolumeMountRequest
 
-	for request := range requests.All() {
-		if request.TypedSpec().Requester == ctrl.Name() {
-			ours = append(ours, request)
+	for volumeMountRequest := range volumeMountRequests.All() {
+		if volumeMountRequest.TypedSpec().Requester == ctrl.Name() {
+			ownedVolumeMountRequests = append(ownedVolumeMountRequests, volumeMountRequest)
 		}
 	}
 
-	return ours, nil
+	return ownedVolumeMountRequests, nil
 }
 
 // release gives back one mount: the finalizer first, then the request itself.
-func (ctrl *MountController) release(ctx context.Context, r controller.Runtime, logger *zap.Logger, requestID string) error {
-	if err := ctrl.releaseFinalizer(ctx, r, logger, requestID); err != nil {
+func (ctrl *MountController) release(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestID string) error {
+	if err := ctrl.releaseFinalizer(ctx, runtime, logger, requestID); err != nil {
 		return err
 	}
 
-	return ctrl.destroyRequest(ctx, r, logger, requestID)
+	return ctrl.destroyRequest(ctx, runtime, logger, requestID)
 }
 
 // releaseFinalizer drops this controller's hold on the mount status, if it holds one.
-func (ctrl *MountController) releaseFinalizer(ctx context.Context, r controller.Runtime, logger *zap.Logger, requestID string) error {
-	mountStatus, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, requestID)
+func (ctrl *MountController) releaseFinalizer(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestID string) error {
+	volumeMountStatus, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, runtime, requestID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil
@@ -437,11 +437,11 @@ func (ctrl *MountController) releaseFinalizer(ctx context.Context, r controller.
 		return fmt.Errorf("failed to get mount status %q: %w", requestID, err)
 	}
 
-	if !mountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+	if !volumeMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
 		return nil
 	}
 
-	if err := r.RemoveFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
+	if err := runtime.RemoveFinalizer(ctx, volumeMountStatus.Metadata(), ctrl.Name()); err != nil {
 		return fmt.Errorf("failed to remove finalizer on %q: %w", requestID, err)
 	}
 
@@ -451,10 +451,10 @@ func (ctrl *MountController) releaseFinalizer(ctx context.Context, r controller.
 }
 
 // destroyRequest tears down the mount request and destroys it once nothing holds it.
-func (ctrl *MountController) destroyRequest(ctx context.Context, r controller.Runtime, logger *zap.Logger, requestID string) error {
+func (ctrl *MountController) destroyRequest(ctx context.Context, runtime controller.Runtime, logger *zap.Logger, requestID string) error {
 	requestMD := block.NewVolumeMountRequest(block.NamespaceName, requestID).Metadata()
 
-	okToDestroy, err := r.Teardown(ctx, requestMD)
+	okToDestroy, err := runtime.Teardown(ctx, requestMD)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil
@@ -469,7 +469,7 @@ func (ctrl *MountController) destroyRequest(ctx context.Context, r controller.Ru
 		return nil
 	}
 
-	if err := r.Destroy(ctx, requestMD); err != nil && !state.IsNotFoundError(err) {
+	if err := runtime.Destroy(ctx, requestMD); err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("failed to destroy mount request %q: %w", requestID, err)
 	}
 
