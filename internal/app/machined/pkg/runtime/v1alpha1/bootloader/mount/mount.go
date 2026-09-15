@@ -6,12 +6,12 @@
 package mount
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
-	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
@@ -31,6 +31,8 @@ type Spec struct {
 type NotFoundTag struct{}
 
 // PartitionOp mounts specified partitions with the specified label, executes the operation func, and unmounts the partition(s).
+//
+//nolint:gocyclo
 func PartitionOp(
 	disk string, specs []Spec, opFunc func() error,
 	probeOptions []blkid.ProbeOption,
@@ -47,6 +49,10 @@ func PartitionOp(
 		}
 	}
 
+	if info.BlockDevice == nil {
+		return errors.New("block device was not populated for a PartitionOp")
+	}
+
 	var managers mount.Managers
 
 	for _, spec := range specs {
@@ -58,6 +64,11 @@ func PartitionOp(
 					return xerrors.NewTaggedf[NotFoundTag]("partition %d with label %s is not of type %s (actual %q)", partition.PartitionIndex, *partition.PartitionLabel, spec.FilesystemType, partition.Name)
 				}
 
+				source, err := info.BlockDevice.GetPartitionDevName(partition.PartitionIndex)
+				if err != nil {
+					return fmt.Errorf("error getting partition device name for partition %d: %w", partition.PartitionIndex, err)
+				}
+
 				manager := mount.NewManager(slices.Concat(
 					[]mount.ManagerOption{
 						mount.WithTarget(spec.MountTarget),
@@ -65,7 +76,7 @@ func PartitionOp(
 							spec.FilesystemType,
 							slices.Concat(
 								[]fsopen.Option{
-									fsopen.WithSource(partitioning.DevName(disk, partition.PartitionIndex)),
+									fsopen.WithSource(source),
 								},
 								filesystemOptions,
 							)...,

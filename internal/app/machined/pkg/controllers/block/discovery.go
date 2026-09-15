@@ -15,9 +15,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
-	"github.com/siderolabs/go-blockdevice/v2/partitioning"
+	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -187,92 +189,17 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 			return nil, fmt.Errorf("failed to get device: %w", err)
 		}
 
-		info, err := blkid.ProbePath(filepath.Join("/dev", id), blkid.WithProbeLogger(logger.With(zap.String("device", id))))
+		err = ctrl.probeDevice(ctx, r, logger, id, device, touchedIDs)
 		if err != nil {
-			if errors.Is(err, blkid.ErrFailedLock) {
-				// failed to lock the blockdevice, retry later
-				logger.Debug("failed to lock device, retrying later", zap.String("id", id))
-
+			switch {
+			case xerrors.TagIs[errFailedLock](err):
+				// failed to lock the blockdevice, retry late
 				nextRescan[id] = struct{}{}
-			} else {
-				logger.Debug("failed to probe device", zap.String("id", id), zap.Error(err))
-
+			case xerrors.TagIs[errProbeFailure](err):
 				failedIDs[id] = struct{}{}
+			default:
+				return nil, fmt.Errorf("failed to process device %s: %w", id, err)
 			}
-
-			continue
-		}
-
-		logger.Debug("probed device", zap.String("id", id), zap.Any("info", info))
-
-		if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, id), func(dv *block.DiscoveredVolume) error {
-			dv.TypedSpec().DevPath = filepath.Join("/dev", id)
-			dv.TypedSpec().Type = device.TypedSpec().Type
-			dv.TypedSpec().DevicePath = device.TypedSpec().DevicePath
-			dv.TypedSpec().Parent = device.TypedSpec().Parent
-
-			if device.TypedSpec().Parent != "" {
-				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
-			}
-
-			dv.TypedSpec().Offset = 0
-			dv.TypedSpec().SetSize(info.Size)
-			dv.TypedSpec().SectorSize = info.SectorSize
-			dv.TypedSpec().IOSize = info.IOSize
-
-			ctrl.fillDiscoveredVolumeFromInfo(dv, info.ProbeResult)
-
-			return nil
-		}); err != nil {
-			return nil, fmt.Errorf("failed to write discovered volume: %w", err)
-		}
-
-		touchedIDs[id] = struct{}{}
-
-		for _, nested := range info.Parts {
-			partID := partitioning.DevName(id, nested.PartitionIndex)
-
-			if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, partID), func(dv *block.DiscoveredVolume) error {
-				dv.TypedSpec().Type = "partition"
-				dv.TypedSpec().DevPath = filepath.Join("/dev", partID)
-				dv.TypedSpec().DevicePath = filepath.Join(device.TypedSpec().DevicePath, partID)
-				dv.TypedSpec().Parent = id
-				dv.TypedSpec().ParentDevPath = filepath.Join("/dev", id)
-
-				dv.TypedSpec().Offset = nested.PartitionOffset
-				dv.TypedSpec().SetSize(nested.PartitionSize)
-
-				dv.TypedSpec().SectorSize = info.SectorSize
-				dv.TypedSpec().IOSize = info.IOSize
-
-				ctrl.fillDiscoveredVolumeFromInfo(dv, nested.ProbeResult)
-
-				if nested.PartitionUUID != nil {
-					dv.TypedSpec().PartitionUUID = nested.PartitionUUID.String()
-				} else {
-					dv.TypedSpec().PartitionUUID = ""
-				}
-
-				if nested.PartitionType != nil {
-					dv.TypedSpec().PartitionType = nested.PartitionType.String()
-				} else {
-					dv.TypedSpec().PartitionType = ""
-				}
-
-				if nested.PartitionLabel != nil {
-					dv.TypedSpec().PartitionLabel = *nested.PartitionLabel
-				} else {
-					dv.TypedSpec().PartitionLabel = ""
-				}
-
-				dv.TypedSpec().PartitionIndex = nested.PartitionIndex
-
-				return nil
-			}); err != nil {
-				return nil, fmt.Errorf("failed to write discovered volume: %w", err)
-			}
-
-			touchedIDs[partID] = struct{}{}
 		}
 	}
 
@@ -306,6 +233,136 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 	}
 
 	return nextRescan, nil
+}
+
+// Tags used internally to classify errors.
+type (
+	errFailedLock   struct{}
+	errProbeFailure struct{}
+)
+
+//nolint:gocyclo
+func (ctrl *DiscoveryController) probeDevice(ctx context.Context, r controller.Runtime, logger *zap.Logger, id string, device *block.Device, touchedIDs map[string]struct{}) error {
+	logger = logger.With(zap.String("device", id))
+	devPath := filepath.Join("/dev", id)
+
+	bd, err := blockdev.NewFromPath(devPath)
+	if err != nil {
+		return fmt.Errorf("failed to open blockdevice %s: %w", devPath, err)
+	}
+
+	defer bd.Close() //nolint:errcheck
+
+	if err = bd.Lock(false); err != nil {
+		if errors.Is(err, unix.EWOULDBLOCK) {
+			logger.Debug("failed to lock device, retrying later")
+
+			return xerrors.NewTaggedf[errFailedLock]("failed to lock blockdevice %s: %w", devPath, err)
+		}
+
+		return err
+	}
+
+	defer bd.Unlock() //nolint:errcheck
+
+	info, err := blkid.Probe(
+		bd.File(),
+		blkid.WithProbeLogger(logger),
+		blkid.WithSkipLocking(true),
+	)
+	if err != nil {
+		logger.Debug("failed to probe device", zap.Error(err))
+
+		return xerrors.NewTaggedf[errProbeFailure]("failed to probe blockdevice %s: %w", devPath, err)
+	}
+
+	logger.Debug("probed device", zap.Any("info", info))
+
+	if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, id), func(dv *block.DiscoveredVolume) error {
+		dv.TypedSpec().DevPath = devPath
+		dv.TypedSpec().Type = device.TypedSpec().Type
+		dv.TypedSpec().DevicePath = device.TypedSpec().DevicePath
+		dv.TypedSpec().Parent = device.TypedSpec().Parent
+
+		if device.TypedSpec().Parent != "" {
+			dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
+		}
+
+		dv.TypedSpec().Offset = 0
+		dv.TypedSpec().SetSize(info.Size)
+		dv.TypedSpec().SectorSize = info.SectorSize
+		dv.TypedSpec().IOSize = info.IOSize
+
+		ctrl.fillDiscoveredVolumeFromInfo(dv, info.ProbeResult)
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to write discovered volume: %w", err)
+	}
+
+	touchedIDs[id] = struct{}{}
+
+	var devicePartitions map[uint]string
+
+	for _, nested := range info.Parts {
+		if devicePartitions == nil {
+			devicePartitions, err = bd.GetPartitionDevices()
+			if err != nil {
+				return fmt.Errorf("failed to get partition devices: %w", err)
+			}
+		}
+
+		partID, ok := devicePartitions[nested.PartitionIndex]
+		if !ok {
+			logger.Debug("failed to find partition device for index", zap.Uint("index", nested.PartitionIndex))
+
+			return xerrors.NewTaggedf[errProbeFailure]("failed to find partition device for index %d on blockdevice %s", nested.PartitionIndex, devPath)
+		}
+
+		if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, partID), func(dv *block.DiscoveredVolume) error {
+			dv.TypedSpec().Type = "partition"
+			dv.TypedSpec().DevPath = filepath.Join("/dev", partID)
+			dv.TypedSpec().DevicePath = filepath.Join(device.TypedSpec().DevicePath, partID)
+			dv.TypedSpec().Parent = id
+			dv.TypedSpec().ParentDevPath = devPath
+
+			dv.TypedSpec().Offset = nested.PartitionOffset
+			dv.TypedSpec().SetSize(nested.PartitionSize)
+
+			dv.TypedSpec().SectorSize = info.SectorSize
+			dv.TypedSpec().IOSize = info.IOSize
+
+			ctrl.fillDiscoveredVolumeFromInfo(dv, nested.ProbeResult)
+
+			if nested.PartitionUUID != nil {
+				dv.TypedSpec().PartitionUUID = nested.PartitionUUID.String()
+			} else {
+				dv.TypedSpec().PartitionUUID = ""
+			}
+
+			if nested.PartitionType != nil {
+				dv.TypedSpec().PartitionType = nested.PartitionType.String()
+			} else {
+				dv.TypedSpec().PartitionType = ""
+			}
+
+			if nested.PartitionLabel != nil {
+				dv.TypedSpec().PartitionLabel = *nested.PartitionLabel
+			} else {
+				dv.TypedSpec().PartitionLabel = ""
+			}
+
+			dv.TypedSpec().PartitionIndex = nested.PartitionIndex
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to write discovered volume: %w", err)
+		}
+
+		touchedIDs[partID] = struct{}{}
+	}
+
+	return nil
 }
 
 func (ctrl *DiscoveryController) fillDiscoveredVolumeFromInfo(dv *block.DiscoveredVolume, info blkid.ProbeResult) {
