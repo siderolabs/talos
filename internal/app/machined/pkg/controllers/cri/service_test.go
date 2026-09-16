@@ -17,7 +17,11 @@ import (
 	crictrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -126,6 +130,16 @@ func TestCRIServiceSuite(t *testing.T) {
 	})
 }
 
+// machineConfig builds an active machine config resource carrying a v1alpha1 document.
+func machineConfig() *config.MachineConfig {
+	return config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "worker",
+		},
+	}))
+}
+
 func (suite *CRIServiceSuite) TestStartAndRestart() {
 	suite.serviceManager.reset()
 
@@ -138,6 +152,12 @@ func (suite *CRIServiceSuite) TestStartAndRestart() {
 	baseSpecStatus := files.NewEtcFileStatus(files.NamespaceName, constants.CRIBaseRuntimeSpec)
 	baseSpecStatus.TypedSpec().SpecVersion = "1"
 	suite.Create(baseSpecStatus)
+
+	// the CRI config files are rendered from defaults, so they show up before the
+	// machine config: CRI must not be started until the v1alpha1 config is there.
+	suite.Never(func() bool { return len(suite.serviceManager.snapshot()) > 0 }, 200*time.Millisecond, 10*time.Millisecond)
+
+	suite.Create(machineConfig())
 
 	suite.Eventually(func() bool {
 		return slices.Equal([]string{"load", "start"}, suite.serviceManager.snapshot())
@@ -165,4 +185,31 @@ func (suite *CRIServiceSuite) TestStartAndRestart() {
 	suite.Eventually(func() bool {
 		return slices.Equal([]string{"load", "start", "stop", "start", "stop", "start"}, suite.serviceManager.snapshot())
 	}, time.Second, 10*time.Millisecond)
+}
+
+// TestNoV1Alpha1Config asserts that a machine config carrying only non-v1alpha1
+// documents (as can be applied in maintenance mode) does not start CRI. The v1alpha1
+// config is what gates the EPHEMERAL volume that all of CRI's volumes hang off, so
+// starting CRI without it would only park the service runner on a wait it cannot
+// pass, with its dependencies already evaluated.
+func (suite *CRIServiceSuite) TestNoV1Alpha1Config() {
+	suite.serviceManager.reset()
+
+	configStatus := files.NewEtcFileStatus(files.NamespaceName, constants.CRIConfig)
+	configStatus.TypedSpec().SpecVersion = "1"
+	suite.Create(configStatus)
+
+	baseSpecStatus := files.NewEtcFileStatus(files.NamespaceName, constants.CRIBaseRuntimeSpec)
+	baseSpecStatus.TypedSpec().SpecVersion = "1"
+	suite.Create(baseSpecStatus)
+
+	securityProfile := runtime.NewSecurityProfileConfigV1Alpha1()
+	securityProfile.WorkloadIsolationEnabled = new(true)
+
+	ctr, err := container.New(securityProfile)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	suite.Never(func() bool { return len(suite.serviceManager.snapshot()) > 0 }, 500*time.Millisecond, 10*time.Millisecond)
 }

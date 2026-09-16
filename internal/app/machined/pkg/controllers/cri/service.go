@@ -12,10 +12,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -36,6 +38,12 @@ func (ctrl *ServiceController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *ServiceController) Inputs() []controller.Input {
 	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
@@ -66,7 +74,13 @@ func (ctrl *ServiceController) Run(ctx context.Context, r controller.Runtime, _ 
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *ServiceController) reconcile(ctx context.Context, r controller.Runtime) error {
+	configured, err := machineConfigured(ctx, r)
+	if err != nil || !configured {
+		return err
+	}
+
 	versions, ready, err := readVersions(ctx, r)
 	if err != nil || !ready {
 		return err
@@ -106,6 +120,30 @@ func (ctrl *ServiceController) initialize(running bool, versions map[string]stri
 	ctrl.versions = versions
 
 	return nil
+}
+
+// machineConfigured reports whether the v1alpha1 machine configuration is available.
+//
+// The CRI config files this controller watches are rendered from defaults, so they
+// appear long before the machine config is loaded. Starting CRI that early would let
+// the service runner evaluate its dependencies and conditions against a nil config,
+// while the runner itself is only created once the volumes (which need the config)
+// are mounted — so the two would disagree on whether workload isolation is on.
+//
+// Gating on the v1alpha1 config makes the dependency explicit: it is the same
+// condition that gates the EPHEMERAL volume, CRI's transitive parent volume, so
+// nothing is delayed that was not already waiting for it.
+func machineConfigured(ctx context.Context, r controller.Reader) (bool, error) {
+	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get machine config: %w", err)
+	}
+
+	return cfg.Config().Machine() != nil, nil
 }
 
 func readVersions(ctx context.Context, r controller.Reader) (map[string]string, bool, error) {

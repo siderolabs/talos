@@ -93,6 +93,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			StartAuditd,
 			StartSyslogd,
 			StartContainerd,
+			StartSandboxd,
 		).Append(
 			"meta",
 			ReloadMeta,
