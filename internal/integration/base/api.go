@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
@@ -333,20 +332,78 @@ func (apiSuite *APISuite) AssertBootIDChanged(nodeCtx context.Context, bootIDBef
 }
 
 // WaitForBootDone waits for boot phase done event.
+//
+// Any API error is treated as retryable: the node might be still rebooting (or might reboot once
+// again if another reboot is still in flight), so its API is not guaranteed to be available for
+// the whole duration of the wait.
 func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
 	apiSuite.ClearConnectionRefused(ctx, apiSuite.DiscoverNodeInternalIPs(ctx)...)
 
 	for _, node := range apiSuite.DiscoverNodeInternalIPs(ctx) {
-		rtestutils.AssertResource(
-			client.WithNode(ctx, node),
-			apiSuite.T(),
-			apiSuite.Client.COSI,
-			runtimeres.MachineStatusID,
-			func(machineStatus *runtimeres.MachineStatus, asrt *assert.Assertions) {
-				asrt.Equal(runtimeres.MachineStageRunning, machineStatus.TypedSpec().Stage)
-			},
+		nodeCtx := client.WithNode(ctx, node)
+
+		apiSuite.Require().NoError(
+			retry.Constant(10*time.Minute, retry.WithUnits(time.Second)).RetryWithContext(nodeCtx, func(ctx context.Context) error {
+				reqCtx, reqCtxCancel := context.WithTimeout(ctx, 30*time.Second)
+				defer reqCtxCancel()
+
+				machineStatus, err := safe.StateGetByID[*runtimeres.MachineStatus](reqCtx, apiSuite.Client.COSI, runtimeres.MachineStatusID)
+				if err != nil {
+					return retry.ExpectedErrorf("error reading machine status of node %q: %w", node, err)
+				}
+
+				if stage := machineStatus.TypedSpec().Stage; stage != runtimeres.MachineStageRunning {
+					return retry.ExpectedErrorf("node %q is in stage %q, expected %q", node, stage, runtimeres.MachineStageRunning)
+				}
+
+				return nil
+			}),
 		)
 	}
+}
+
+// WaitForBootIDStable waits for the node boot ID to stay stable for a number of consecutive reads.
+//
+// This makes sure that no reboot is still in flight before running further assertions against the node.
+//
+// Context provided should have the node attached for API calls.
+func (apiSuite *APISuite) WaitForBootIDStable(nodeCtx context.Context, node string, timeout time.Duration) string {
+	// the node is considered settled if it reports the same boot ID for that many consecutive reads
+	const stableReads = 10
+
+	var (
+		lastBootID string
+		numStable  int
+	)
+
+	apiSuite.Require().NoError(
+		retry.Constant(timeout, retry.WithUnits(time.Second)).RetryWithContext(nodeCtx, func(ctx context.Context) error {
+			bootID, err := apiSuite.ReadBootID(ctx)
+			if err != nil || bootID == "" {
+				lastBootID, numStable = "", 0
+
+				if err != nil {
+					return retry.ExpectedErrorf("error reading bootID for node %q: %w", node, err)
+				}
+
+				return retry.ExpectedErrorf("bootID is empty for node %q", node)
+			}
+
+			if bootID != lastBootID {
+				lastBootID, numStable = bootID, 1
+			} else {
+				numStable++
+			}
+
+			if numStable < stableReads {
+				return retry.ExpectedErrorf("bootID %q of node %q is stable for %d read(s) out of %d", bootID, node, numStable, stableReads)
+			}
+
+			return nil
+		}),
+	)
+
+	return lastBootID
 }
 
 // ClearConnectionRefused clears cached connection refused errors which might be left after node reboot.
