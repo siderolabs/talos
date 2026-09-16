@@ -18,6 +18,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // RestartInterval is how long to wait after an instance terminates before starting the next one.
@@ -34,21 +37,58 @@ func (ctrl *InstanceController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *InstanceController) Inputs() []controller.Input {
-	return append(containerCreationGateInputs(),
+	return []controller.Input{
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerSpecType,
+			Kind:      controller.InputWeak,
+		},
+		// Gates on the image having a usable digest.
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerImageStatusType,
+			Kind:      controller.InputWeak,
+		},
+		// Gates on the declared mounts having been resolved.
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerMountStatusType,
+			Kind:      controller.InputWeak,
+		},
+		// Gates on dependsOn.containers: another container's aggregated Health.
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerStatusType,
+			Kind:      controller.InputWeak,
+		},
+		// Gate on dependsOn.networks.
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.StatusType,
+			ID:        optional.Some(network.StatusID),
+			Kind:      controller.InputWeak,
+		},
+		// Gate on dependsOn.time.
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      timeres.StatusType,
+			ID:        optional.Some(timeres.StatusID),
+			Kind:      controller.InputWeak,
+		},
 		// Restarts are paced off the previous instance's outcome.
-		controller.Input{
+		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceStatusType,
 			Kind:      controller.InputWeak,
 		},
 		// This controller's own output: DestroyReady, because an instance being replaced is torn
 		// down here and must not be destroyed until RuntimeController has released it.
-		controller.Input{
+		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceSpecType,
 			Kind:      controller.InputDestroyReady,
 		},
-	)
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -56,6 +96,10 @@ func (ctrl *InstanceController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
 			Type: containers.ContainerInstanceSpecType,
+			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: containers.ContainerDependencyStatusType,
 			Kind: controller.OutputExclusive,
 		},
 	}
@@ -77,6 +121,8 @@ func (ctrl *InstanceController) Run(ctx context.Context, runtime controller.Runt
 //
 //nolint:gocyclo,cyclop
 func (ctrl *InstanceController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) (optional.Optional[time.Duration], error) {
+	runtime.StartTrackingOutputs()
+
 	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
 	if err != nil {
 		return optional.None[time.Duration](), fmt.Errorf("failed to list container specs: %w", err)
@@ -109,8 +155,12 @@ func (ctrl *InstanceController) reconcile(ctx context.Context, runtime controlle
 	for containerSpec := range containerSpecs.All() {
 		wantedContainers[containerSpec.Metadata().ID()] = struct{}{}
 
-		wakeAfter, err := ctrl.reconcileInstance(ctx, runtime, logger, containerSpec, containerSpecIDToInstanceSpecs[containerSpec.Metadata().ID()])
+		waitingFor, wakeAfter, err := ctrl.reconcileInstance(ctx, runtime, logger, containerSpec, containerSpecIDToInstanceSpecs[containerSpec.Metadata().ID()])
 		if err != nil {
+			return optional.None[time.Duration](), err
+		}
+
+		if err := ctrl.publishDependencyStatus(ctx, runtime, containerSpec.Metadata().ID(), waitingFor); err != nil {
 			return optional.None[time.Duration](), err
 		}
 
@@ -121,9 +171,39 @@ func (ctrl *InstanceController) reconcile(ctx context.Context, runtime controlle
 		return optional.None[time.Duration](), err
 	}
 
+	if err := safe.CleanupOutputs[*containers.ContainerDependencyStatus](ctx, runtime); err != nil {
+		return optional.None[time.Duration](), fmt.Errorf("failed to clean up outputs: %w", err)
+	}
+
 	return wakeCtrlAfter, nil
 }
 
+// publishDependencyStatus records what this container's next execution is waiting on, so that
+// nothing downstream has to re-derive the same verdict from the same inputs.
+func (ctrl *InstanceController) publishDependencyStatus(
+	ctx context.Context,
+	runtime controller.Runtime,
+	containerSpecID string,
+	waitingFor []string,
+) error {
+	if err := safe.WriterModify(ctx, runtime,
+		containers.NewContainerDependencyStatus(containers.NamespaceName, containerSpecID),
+		func(res *containers.ContainerDependencyStatus) error {
+			res.Metadata().Labels().Set(containers.ContainerSpecIdLabel, containerSpecID)
+
+			res.TypedSpec().WaitingFor = waitingFor
+
+			return nil
+		},
+	); err != nil {
+		return fmt.Errorf("failed to write dependency status %q: %w", containerSpecID, err)
+	}
+
+	return nil
+}
+
+// reconcileInstance returns the gates standing between this container and its next execution, and how long until the controller needs to look again.
+//
 //nolint:gocyclo,cyclop
 func (ctrl *InstanceController) reconcileInstance(
 	ctx context.Context,
@@ -131,7 +211,7 @@ func (ctrl *InstanceController) reconcileInstance(
 	logger *zap.Logger,
 	containerSpec *containers.ContainerSpec,
 	containerInstanceSpecs []*containers.ContainerInstanceSpec,
-) (optional.Optional[time.Duration], error) {
+) ([]string, optional.Optional[time.Duration], error) {
 	var currentContainerInstanceSpec *containers.ContainerInstanceSpec
 	if len(containerInstanceSpecs) > 0 {
 		currentContainerInstanceSpec = containerInstanceSpecs[len(containerInstanceSpecs)-1]
@@ -143,13 +223,13 @@ func (ctrl *InstanceController) reconcileInstance(
 
 	// Babysit the existing instance until the spec changes.
 	if currentContainerInstanceSpec != nil {
-		wasDestroyed, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, runtime, logger, containerSpec, currentContainerInstanceSpec)
+		wasDestroyed, waitingFor, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, runtime, logger, containerSpec, currentContainerInstanceSpec)
 		if err != nil {
-			return optional.None[time.Duration](), err
+			return nil, optional.None[time.Duration](), err
 		}
 
 		if !wasDestroyed {
-			return wakeUpAfter, nil
+			return waitingFor, wakeUpAfter, nil
 		}
 
 		nextGeneration = currentContainerInstanceSpec.TypedSpec().Generation + 1
@@ -158,7 +238,7 @@ func (ctrl *InstanceController) reconcileInstance(
 	// No container exists now, but dependencies may be unmet.
 	waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, runtime, containerSpecID)
 	if err != nil {
-		return optional.None[time.Duration](), err
+		return nil, optional.None[time.Duration](), err
 	}
 
 	if len(waitingFor) > 0 {
@@ -167,27 +247,27 @@ func (ctrl *InstanceController) reconcileInstance(
 			zap.Strings("waitingFor", waitingFor),
 		)
 
-		return wakeUpAfter, nil
+		return waitingFor, wakeUpAfter, nil
 	}
 
 	// We're good to create a new instance.
 	imageDigest, err := containers.GetImageDigest(ctx, runtime, containerSpecID, containerSpec.TypedSpec().Image.Ref)
 	if err != nil {
-		return optional.None[time.Duration](), err
+		return nil, optional.None[time.Duration](), err
 	}
 
 	resolvedMounts, err := containerSpec.TypedSpec().GetResolvedMounts(ctx, runtime, containerSpecID)
 	if err != nil {
-		return optional.None[time.Duration](), err
+		return nil, optional.None[time.Duration](), err
 	}
 
 	if err := ctrl.createInstanceSpec(ctx, runtime, containerSpec, nextGeneration, imageDigest, resolvedMounts); err != nil {
-		return optional.None[time.Duration](), err
+		return nil, optional.None[time.Duration](), err
 	}
 
 	logger.Info("container instance created", zap.String("container", containerSpecID), zap.Uint64("generation", nextGeneration), zap.String("image", imageDigest))
 
-	return optional.None[time.Duration](), nil
+	return nil, optional.None[time.Duration](), nil
 }
 
 // destroyOrphanedInstances removes instances for containers whose spec no longer exists.
@@ -257,35 +337,40 @@ func (ctrl *InstanceController) destroyInstance(
 
 // reconcileExistingInstance checks whether the next generation should be created now.
 //
-// Returns (proceed, wakeUpAfter, error). A false proceed means the instance is to be left where it
-// is for now, either because it matches the spec, because it terminated but the restart interval has
-// not elapsed, or because its replacement cannot start yet. A true proceed means it is gone: a
-// replacement is only ever created once the instance it replaces has been destroyed, so a container
-// has at most one instance at a time and no terminated ones are kept around.
+// Returns (proceed, waitingFor, wakeUpAfter, error). A false proceed means the instance is to be
+// left where it is for now, either because it matches the spec, because it terminated but the
+// restart interval has not elapsed, or because its replacement cannot start yet. A true proceed
+// means it is gone: a replacement is only ever created once the instance it replaces has been
+// destroyed, so a container has at most one instance at a time and no terminated ones are kept
+// around.
+//
+// waitingFor is populated only on the one path that evaluates the gates, i.e. a spec change whose
+// replacement is blocked. Every other path leaves the running instance alone and so is not waiting
+// on anything.
 func (ctrl *InstanceController) reconcileExistingInstance(
 	ctx context.Context,
 	runtime controller.Runtime,
 	logger *zap.Logger,
 	containerSpec *containers.ContainerSpec,
 	newestContainerInstanceSpec *containers.ContainerInstanceSpec,
-) (bool, optional.Optional[time.Duration], error) {
+) (bool, []string, optional.Optional[time.Duration], error) {
 	containerSpecID := containerSpec.Metadata().ID()
 
 	// An instance already being torn down is finished regardless of the spec.
 	if newestContainerInstanceSpec.Metadata().Phase() != resource.PhaseTearingDown {
 		inSync, err := newestContainerInstanceSpec.TypedSpec().InSyncWithContainerSpec(ctx, runtime, containerSpec.TypedSpec())
 		if err != nil {
-			return false, optional.None[time.Duration](), err
+			return false, nil, optional.None[time.Duration](), err
 		}
 
 		if inSync {
 			restartDue, wakeUpAfter, err := ctrl.checkRestartDue(ctx, runtime, newestContainerInstanceSpec)
 			if err != nil {
-				return false, optional.None[time.Duration](), err
+				return false, nil, optional.None[time.Duration](), err
 			}
 
 			if !restartDue {
-				return false, wakeUpAfter, nil
+				return false, nil, wakeUpAfter, nil
 			}
 
 			logger.Info("container terminated, restart interval elapsed, replacing the instance",
@@ -296,7 +381,7 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 			// A spec change invalidates the existing instance.
 			waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, runtime, containerSpecID)
 			if err != nil {
-				return false, optional.None[time.Duration](), err
+				return false, nil, optional.None[time.Duration](), err
 			}
 
 			if len(waitingFor) > 0 {
@@ -305,7 +390,7 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 					zap.Strings("waitingFor", waitingFor),
 				)
 
-				return false, wakeUpAfter, nil
+				return false, waitingFor, wakeUpAfter, nil
 			}
 
 			logger.Info("container spec changed, replacing the instance",
@@ -317,16 +402,16 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 
 	destroyed, err := ctrl.destroyInstance(ctx, runtime, logger, newestContainerInstanceSpec)
 	if err != nil {
-		return false, optional.None[time.Duration](), err
+		return false, nil, optional.None[time.Duration](), err
 	}
 
 	if !destroyed {
 		// Still tearing down. InputDestroyReady wakes us when it is gone, and this pass repeats
 		// with the same outcome until then.
-		return false, optional.None[time.Duration](), nil
+		return false, nil, optional.None[time.Duration](), nil
 	}
 
-	return true, optional.None[time.Duration](), nil
+	return true, nil, optional.None[time.Duration](), nil
 }
 
 // checkRestartDue reports whether a terminated instance should be replaced now.

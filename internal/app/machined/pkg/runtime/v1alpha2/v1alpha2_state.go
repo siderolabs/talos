@@ -124,6 +124,7 @@ func NewState() (*State, error) {
 		&containers.ContainerSpec{},
 		&containers.ContainerImageStatus{},
 		&containers.ContainerMountStatus{},
+		&containers.ContainerDependencyStatus{},
 		&containers.ContainerInstanceSpec{},
 		&containers.ContainerInstanceStatus{},
 		&containers.ContainerLifecycle{},

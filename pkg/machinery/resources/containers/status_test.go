@@ -6,7 +6,6 @@ package containers_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
@@ -17,12 +16,9 @@ import (
 func TestResolveContainerState(t *testing.T) {
 	t.Parallel()
 
-	const restartInterval = 5 * time.Second
-
-	newInstanceStatus := func(phase containers.ContainerInstancePhase, finishedAt time.Time) *containers.ContainerInstanceStatus {
+	newInstanceStatus := func(phase containers.ContainerInstancePhase) *containers.ContainerInstanceStatus {
 		status := containers.NewContainerInstanceStatus(containers.NamespaceName, "nginx-0")
 		status.TypedSpec().Phase = phase
-		status.TypedSpec().FinishedAt = finishedAt
 
 		return status
 	}
@@ -76,39 +72,29 @@ func TestResolveContainerState(t *testing.T) {
 		},
 		{
 			name:                    "isStopping wins over instance phase",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseRunning, time.Time{}),
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseRunning),
 			isStopping:              true,
 			want:                    containers.ContainerStateStopping,
 		},
 		{
 			name:                    "instance created",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseCreated, time.Time{}),
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseCreated),
 			want:                    containers.ContainerStateStarting,
 		},
 		{
 			name:                    "instance running",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseRunning, time.Time{}),
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseRunning),
 			want:                    containers.ContainerStateRunning,
 		},
 		{
-			name:                    "instance terminated, still inside restart window",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseTerminated, time.Now()),
+			name:                    "instance terminated",
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseTerminated),
 			want:                    containers.ContainerStateExited,
 		},
 		{
-			name:                    "instance terminated, restart window elapsed",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseTerminated, time.Now().Add(-2*restartInterval)),
-			want:                    containers.ContainerStateBackoff,
-		},
-		{
-			name:                    "instance failed, still inside restart window",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseFailed, time.Now()),
+			name:                    "instance failed",
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseFailed),
 			want:                    containers.ContainerStateExited,
-		},
-		{
-			name:                    "instance failed, restart window elapsed",
-			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseFailed, time.Now().Add(-2*restartInterval)),
-			want:                    containers.ContainerStateBackoff,
 		},
 	}
 
@@ -116,7 +102,7 @@ func TestResolveContainerState(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := containers.ResolveContainerState(tt.containerInstanceStatus, tt.containerImageStatus, tt.gatesReady, tt.isStopping, restartInterval)
+			got := containers.ResolveContainerState(tt.containerInstanceStatus, tt.containerImageStatus, tt.gatesReady, tt.isStopping)
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -184,9 +170,8 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 	t.Parallel()
 
 	const (
-		imageRef        = "docker.io/library/nginx:latest"
-		digest          = "sha256:new"
-		restartInterval = 5 * time.Second
+		imageRef = "docker.io/library/nginx:latest"
+		digest   = "sha256:new"
 	)
 
 	newContainerSpec := func() *containers.ContainerSpec {
@@ -227,7 +212,9 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 		containerInstanceSpec   *containers.ContainerInstanceSpec
 		imageDigest             string
 		waitingFor              []string
-		want                    containers.ContainerStatusSpec
+		// Helps distinguish gates unmet, from gates that were not yet published.
+		gatesUnknown bool
+		want         containers.ContainerStatusSpec
 	}{
 		{
 			name:       "fresh container waiting on its gates",
@@ -263,7 +250,6 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				spec.Generation = 1
 				spec.PID = 42
 				spec.ExitCode = 1
-				spec.FinishedAt = time.Now()
 			}),
 			containerInstanceSpec: newInstanceSpec("", resource.PhaseRunning),
 			want: containers.ContainerStatusSpec{
@@ -377,7 +363,6 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 			containerInstanceStatus: newInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
 				spec.Phase = containers.ContainerInstancePhaseTerminated
 				spec.ExitCode = 2
-				spec.FinishedAt = time.Now()
 			}),
 			containerInstanceSpec: newInstanceSpec(digest, resource.PhaseTearingDown),
 			want: containers.ContainerStatusSpec{
@@ -417,7 +402,6 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 			containerInstanceStatus: newInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
 				spec.Phase = containers.ContainerInstancePhaseTerminated
 				spec.ExitCode = 2
-				spec.FinishedAt = time.Now()
 			}),
 			imageDigest: digest,
 			want: containers.ContainerStatusSpec{
@@ -436,6 +420,15 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				Health: containers.ContainerHealthDegraded,
 				Image:  imageRef,
 				Error:  "pull failed",
+			},
+		},
+		{
+			name:         "gates that have not been published yet are not gates that are met",
+			gatesUnknown: true,
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStatePending,
+				Health: containers.ContainerHealthPending,
+				Image:  imageRef,
 			},
 		},
 		{
@@ -459,6 +452,13 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			var containerDependencyStatus *containers.ContainerDependencyStatus
+
+			if !tt.gatesUnknown {
+				containerDependencyStatus = containers.NewContainerDependencyStatus(containers.NamespaceName, "nginx")
+				containerDependencyStatus.TypedSpec().WaitingFor = tt.waitingFor
+			}
+
 			got := tt.prev
 
 			got.Update(
@@ -467,8 +467,7 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				tt.containerInstanceStatus,
 				tt.containerInstanceSpec,
 				tt.imageDigest,
-				tt.waitingFor,
-				restartInterval,
+				containerDependencyStatus,
 			)
 
 			assert.Equal(t, tt.want, got)

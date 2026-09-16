@@ -49,6 +49,14 @@ func (suite *StatusSuite) createSpec(mutate ...func(*containers.ContainerSpecSpe
 }
 
 func (suite *StatusSuite) createNamedSpec(name string, mutate ...func(*containers.ContainerSpecSpec)) {
+	suite.createSpecWithoutGates(name, mutate...)
+
+	suite.setWaitingFor(name)
+}
+
+// createSpecWithoutGates creates a ContainerSpec with no dependency status behind it, i.e. a
+// container InstanceController has not reached yet.
+func (suite *StatusSuite) createSpecWithoutGates(name string, mutate ...func(*containers.ContainerSpecSpec)) {
 	spec := containers.NewContainerSpec(containers.NamespaceName, name)
 	spec.TypedSpec().Image = containers.ContainerImageSpec{Ref: statusTestImageRef}
 
@@ -57,6 +65,31 @@ func (suite *StatusSuite) createNamedSpec(name string, mutate ...func(*container
 	}
 
 	suite.Create(spec)
+}
+
+// setWaitingFor stands in for InstanceController's verdict on a container's readiness gates. Passing
+// no gates means nothing is blocking the container.
+func (suite *StatusSuite) setWaitingFor(name string, waitingFor ...string) {
+	md := containers.NewContainerDependencyStatus(containers.NamespaceName, name).Metadata()
+
+	existing, err := suite.State().Get(suite.Ctx(), md)
+	if err == nil {
+		dependencyStatus := existing.(*containers.ContainerDependencyStatus) //nolint:forcetypeassert,errcheck
+		dependencyStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, name)
+		dependencyStatus.TypedSpec().WaitingFor = waitingFor
+
+		suite.Update(dependencyStatus)
+
+		return
+	}
+
+	suite.Require().True(state.IsNotFoundError(err))
+
+	dependencyStatus := containers.NewContainerDependencyStatus(containers.NamespaceName, name)
+	dependencyStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, name)
+	dependencyStatus.TypedSpec().WaitingFor = waitingFor
+
+	suite.Create(dependencyStatus)
 }
 
 // markImageReady fakes the image controller's output for statusTestContainer.
@@ -126,6 +159,7 @@ func (suite *StatusSuite) assertStatus(check func(*containers.ContainerStatus, *
 // so it is waiting, not merely uninitialized.
 func (suite *StatusSuite) TestPendingWithoutImage() {
 	suite.createSpec()
+	suite.setWaitingFor(statusTestContainer, "image")
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerStatePending, status.TypedSpec().State)
@@ -232,9 +266,10 @@ func (suite *StatusSuite) TestImageIgnoresStatusForAnotherRef() {
 	})
 }
 
-// TestBackoffReflectsTerminatedInstance covers a terminated instance: the container is not running,
-// but nothing about it is terminal, so it reports degraded rather than stopped.
-func (suite *StatusSuite) TestBackoffReflectsTerminatedInstance() {
+// TestExitedReflectsTerminatedInstance covers a terminated instance: the container is not running,
+// but nothing about it is terminal, so it reports degraded rather than stopped. It stays exited
+// until InstanceController replaces the instance, which is the write that moves this on.
+func (suite *StatusSuite) TestExitedReflectsTerminatedInstance() {
 	suite.createSpec()
 	suite.markImageReady()
 
@@ -243,54 +278,16 @@ func (suite *StatusSuite) TestBackoffReflectsTerminatedInstance() {
 		spec.Phase = containers.ContainerInstancePhaseTerminated
 		spec.ExitCode = 137
 		spec.Error = "signal: killed"
-	})
-
-	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
-		asrt.Equal(containers.ContainerStateBackoff, status.TypedSpec().State)
-		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
-		asrt.Equal(uint32(0), status.TypedSpec().PID)
-		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
-		asrt.Equal(uint64(3), status.TypedSpec().RestartCount)
-		asrt.Equal("signal: killed", status.TypedSpec().Error)
-	})
-}
-
-// TestExitedRightAfterTermination covers the transient window right after a task exits, before the
-// restart interval has elapsed: the container is between attempts, not yet cycling.
-func (suite *StatusSuite) TestExitedRightAfterTermination() {
-	suite.createSpec()
-	suite.markImageReady()
-
-	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
-		spec.Phase = containers.ContainerInstancePhaseTerminated
 		spec.FinishedAt = time.Now()
 	})
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerStateExited, status.TypedSpec().State)
-	})
-}
-
-// TestBackoffOnceRestartIntervalElapses covers the Exited-to-Backoff flip happening on its own: it
-// is driven by the clock rather than by another resource, so nothing else will trigger the pass that
-// notices it.
-//
-// The Exited state this starts in is asserted by TestExitedRightAfterTermination instead, and
-// deliberately not here: it only holds for RestartInterval after FinishedAt, so an assertion on it
-// would share this test's single 5s window and become unsatisfiable on the first slow scheduling
-// stall. Backoff on its own carries the claim regardless — no other write can produce it.
-func (suite *StatusSuite) TestBackoffOnceRestartIntervalElapses() {
-	suite.createSpec()
-	suite.markImageReady()
-
-	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
-		spec.Phase = containers.ContainerInstancePhaseTerminated
-		spec.FinishedAt = time.Now()
-	})
-
-	// No further writes: only the controller's own wake-up can move this.
-	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
-		asrt.Equal(containers.ContainerStateBackoff, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
+		asrt.Equal(uint32(0), status.TypedSpec().PID)
+		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
+		asrt.Equal(uint64(3), status.TypedSpec().RestartCount)
+		asrt.Equal("signal: killed", status.TypedSpec().Error)
 	})
 }
 
@@ -395,10 +392,10 @@ func (suite *StatusSuite) TestStoppingWhileInstanceSpecIsGone() {
 	})
 }
 
-// TestBackoffReflectsFailedInstance covers ContainerInstancePhaseFailed reporting the same degraded
+// TestExitedReflectsFailedInstance covers ContainerInstancePhaseFailed reporting the same degraded
 // aggregate as ContainerInstancePhaseTerminated: the two share every consequence downstream, and
-// TestBackoffReflectsTerminatedInstance alone would leave this phase unexercised.
-func (suite *StatusSuite) TestBackoffReflectsFailedInstance() {
+// TestExitedReflectsTerminatedInstance alone would leave this phase unexercised.
+func (suite *StatusSuite) TestExitedReflectsFailedInstance() {
 	suite.createSpec()
 	suite.markImageReady()
 
@@ -409,7 +406,7 @@ func (suite *StatusSuite) TestBackoffReflectsFailedInstance() {
 	})
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
-		asrt.Equal(containers.ContainerStateBackoff, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerStateExited, status.TypedSpec().State)
 		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
 		asrt.Equal("failed to start", status.TypedSpec().Error)
 	})
@@ -468,6 +465,8 @@ func (suite *StatusSuite) TestStaleImageStatusIgnored() {
 	imageStatus.TypedSpec().Error = "signature verification denied"
 	suite.Create(imageStatus)
 
+	suite.setWaitingFor(statusTestContainer, "image")
+
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerStatePending, status.TypedSpec().State)
 		asrt.Contains(status.TypedSpec().WaitingFor, "image")
@@ -475,37 +474,65 @@ func (suite *StatusSuite) TestStaleImageStatusIgnored() {
 	})
 }
 
-// TestWaitingOnContainerDependency covers dependsOn.containers: a container naming another one is
-// pending until that other container reports healthy.
-func (suite *StatusSuite) TestWaitingOnContainerDependency() {
-	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
-		spec.DependsOn.Containers = []string{"other"}
-	})
+// TestGatesClearing covers a container whose gates go from unmet to met: the aggregate follows the
+// verdict it is handed rather than holding on to the last one it saw.
+//
+// Which gate it was is InstanceController's business; whether the gate strings are derived correctly
+// is covered by TestContainersReady in the resources package.
+func (suite *StatusSuite) TestGatesClearing() {
+	suite.createSpec()
 	suite.markImageReady()
+	suite.setWaitingFor(statusTestContainer, "container: other")
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerStatePending, status.TypedSpec().State)
 		asrt.Contains(status.TypedSpec().WaitingFor, "container: other")
 	})
 
-	other := containers.NewContainerStatus(containers.NamespaceName, "other")
-	other.TypedSpec().Health = containers.ContainerHealthHealthy
-	other.TypedSpec().State = containers.ContainerStateRunning
-	suite.Create(other)
-
-	// Health alone is not enough: dependsOn.containers also requires the dependency's current
-	// instance to have stayed Running for a while, so a dependency that starts and crashes right back
-	// out cannot momentarily unblock a dependent that then never gets re-gated. Backdating StartedAt
-	// clears that gate without the test having to wait out the real stability window.
-	otherInstance := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID("other", 0))
-	otherInstance.TypedSpec().ContainerID = "other"
-	otherInstance.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
-	otherInstance.TypedSpec().StartedAt = time.Now().Add(-time.Hour)
-	otherInstance.Metadata().Labels().Set(containers.ContainerSpecIdLabel, "other")
-	suite.Create(otherInstance)
+	suite.setWaitingFor(statusTestContainer)
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerStateStarting, status.TypedSpec().State)
+		asrt.Empty(status.TypedSpec().WaitingFor)
+	})
+}
+
+// TestPendingUntilGatesPublished covers a container InstanceController has not reached yet: the
+// aggregate is written all the same, and reports pending until the verdict is in rather than passing
+// the container off as ready to start on gates nobody has looked at.
+func (suite *StatusSuite) TestPendingUntilGatesPublished() {
+	suite.createSpecWithoutGates(statusTestContainer)
+	suite.markImageReady()
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStatePending, status.TypedSpec().State)
+		// Nothing has established what it is waiting on, so there is nothing to name.
+		asrt.Empty(status.TypedSpec().WaitingFor)
+	})
+
+	suite.setWaitingFor(statusTestContainer)
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateStarting, status.TypedSpec().State)
+	})
+}
+
+// TestStatusSurvivesDependencyStatusRemoval covers the verdict going away under a container that
+// already has an aggregate, which is what an InstanceController pass that stops on an earlier
+// container looks like from here: the container still exists, so its user-facing status stays put
+// instead of being cleaned up along with the verdict.
+func (suite *StatusSuite) TestStatusSurvivesDependencyStatusRemoval() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateStarting, status.TypedSpec().State)
+	})
+
+	suite.Destroy(containers.NewContainerDependencyStatus(containers.NamespaceName, statusTestContainer))
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStatePending, status.TypedSpec().State)
 	})
 }
 

@@ -7,7 +7,6 @@ package containers
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"slices"
 	"time"
 
@@ -24,20 +23,8 @@ import (
 )
 
 // InstanceID builds the ID of a ContainerInstanceSpec from a container name and generation.
-//
-// Generations are numbered rather than reusing the container name so that each execution attempt has
-// an identity of its own: a status then refers unambiguously to one attempt, and the instance created
-// to replace another cannot be confused with it, nor collide with a destruction still in flight.
 func InstanceID(container string, generation uint64) resource.ID {
 	return fmt.Sprintf("%s-%d", container, generation)
-}
-
-// InstanceIDQuery matches the IDs of every instance resource belonging to one container.
-//
-// The generation suffix is anchored and digits-only, so a query for "a" cannot pick up "a-1-2":
-// that ID belongs to container "a-1".
-func InstanceIDQuery(container string) resource.IDQueryOption {
-	return resource.IDRegexpMatch(regexp.MustCompile(`^` + regexp.QuoteMeta(container) + `-\d+$`))
 }
 
 // ContainerInstanceSpecType is type of ContainerInstanceSpec resource.
@@ -45,9 +32,7 @@ const ContainerInstanceSpecType = resource.Type("ContainerInstanceSpecs.containe
 
 // ContainerInstanceSpec resource represents a single execution attempt of a container.
 //
-// Its existence is the instruction to run; its destruction is the instruction to stop. Restart is
-// therefore a resource event rather than a loop inside a goroutine: the previous instance
-// terminates, and the next generation replaces it.
+// Its existence is the instruction to run; its destruction is the instruction to stop.
 //
 // The ID is <container>-<generation>; see InstanceID.
 type ContainerInstanceSpec = typed.Resource[ContainerInstanceSpecSpec, ContainerInstanceSpecExtension]
@@ -141,9 +126,7 @@ func init() {
 // ContainerInstanceStatusType is type of ContainerInstanceStatus resource.
 const ContainerInstanceStatusType = resource.Type("ContainerInstanceStatuses.containers.talos.dev")
 
-// ContainerSpecIdLabel is the label key for the owning container's ID, set on both
-// ContainerInstanceSpec and ContainerInstanceStatus resources so that either can be looked up by
-// container without scanning every instance.
+// ContainerSpecIdLabel is the label key for the container's ID owning the labeled resource.
 const ContainerSpecIdLabel = "container-spec-id"
 
 // ContainerInstanceStatus resource reports the execution state of a ContainerInstanceSpec.

@@ -115,6 +115,64 @@ func (suite *InstanceSuite) updateImageStatus(mutate func(*containers.ContainerI
 		})
 }
 
+// assertWaitingFor asserts the testContainer is waiting for the expected set of gates.
+func (suite *InstanceSuite) assertWaitingFor(waitingFor ...string) {
+	ctest.AssertResource(suite, testContainer,
+		func(dependencyStatus *containers.ContainerDependencyStatus, asrt *assert.Assertions) {
+			// The verdict is looked up by owning container through this label, so it has to be there
+			// on every write.
+			containerID, ok := dependencyStatus.Metadata().Labels().Get(containers.ContainerSpecIdLabel)
+			asrt.True(ok)
+			asrt.Equal(testContainer, containerID)
+
+			if len(waitingFor) == 0 {
+				asrt.Empty(dependencyStatus.TypedSpec().WaitingFor)
+
+				return
+			}
+
+			asrt.Equal(waitingFor, dependencyStatus.TypedSpec().WaitingFor)
+		})
+}
+
+// TestDependencyStatusReportsUnmetGates tests that:
+// - while a gate is unmet, ContainerDependencyStatus list the unmet gates.
+// - when the gate is met, ContainerDependencyStatus reflects that through empty WaitingFor, and that the container instance has been created.
+func (suite *InstanceSuite) TestDependencyStatusReportsUnmetGates() {
+	suite.createSpec()
+
+	suite.assertWaitingFor("image")
+
+	suite.markImageReady()
+
+	suite.assertWaitingFor()
+	suite.assertInstance(0)
+}
+
+// TestDependencyStatusEmptyWhileInstanceRuns covers a gate going unmet under a container that is
+// already running.
+func (suite *InstanceSuite) TestDependencyStatusEmptyWhileInstanceRuns() {
+	path := filepath.Join(suite.T().TempDir(), "gate")
+
+	suite.Require().NoError(os.WriteFile(path, nil, 0o600))
+
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.DependsOn.Paths = []string{path}
+	})
+	suite.markImageReady()
+
+	suite.assertInstance(0)
+	suite.assertWaitingFor()
+
+	suite.Require().NoError(os.Remove(path))
+
+	// The clock container proves a pass ran after the gate went away, so an empty verdict here is a
+	// decision rather than a status nobody has revisited yet.
+	suite.tick()
+
+	suite.assertWaitingFor()
+}
+
 // assertInstance asserts that the given generation of testContainer's instance exists.
 func (suite *InstanceSuite) assertInstance(generation uint64) {
 	ctest.AssertResource(suite, containers.InstanceID(testContainer, generation),

@@ -421,6 +421,7 @@ description: Talos gRPC API reference.
     - [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint)
   
 - [resource/definitions/containers/containers.proto](#resource/definitions/containers/containers.proto)
+    - [ContainerDependencyStatusSpec](#talos.resource.definitions.containers.ContainerDependencyStatusSpec)
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
@@ -7505,6 +7506,21 @@ ServiceEndpoint describes a service endpoint for discovery.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/containers/containers.proto
+
+
+
+<a name="talos.resource.definitions.containers.ContainerDependencyStatusSpec"></a>
+
+### ContainerDependencyStatusSpec
+ContainerDependencyStatusSpec is the spec for ContainerDependencyStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| waiting_for | [string](#string) | repeated | WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries). |
+
+
+
 
 
 

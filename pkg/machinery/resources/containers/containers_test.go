@@ -35,6 +35,7 @@ func TestRegisterResource(t *testing.T) {
 		&containers.ContainerMountStatus{},
 		&containers.ContainerLifecycle{},
 		&containers.ContainerStatus{},
+		&containers.ContainerDependencyStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -213,6 +214,18 @@ func TestStatusProtobufRoundTrip(t *testing.T) {
 	assertRoundTrip(t, status)
 }
 
+// TestDependencyStatusProtobufRoundTrip guards the protobuf tags on ContainerDependencyStatusSpec.
+func TestDependencyStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerDependencyStatus(containers.NamespaceName, "nginx")
+	*status.TypedSpec() = containers.ContainerDependencyStatusSpec{
+		WaitingFor: []string{"image", "mounts", "container: other"},
+	}
+
+	assertRoundTrip(t, status)
+}
+
 // TestLifecycleProtobufRoundTrip guards the (empty) protobuf tags on ContainerLifecycleSpec.
 func TestLifecycleProtobufRoundTrip(t *testing.T) {
 	t.Parallel()
@@ -240,39 +253,4 @@ func assertRoundTrip[T resource.Resource](t *testing.T, res T) {
 	assert.Equal(t, res.Metadata().ID(), decoded.Metadata().ID())
 	assert.Equal(t, res.Metadata().Type(), decoded.Metadata().Type())
 	assert.Equal(t, res.Spec(), decoded.Spec())
-}
-
-// TestInstanceIDQuery guards that the query selects exactly one container's instances. The anchored,
-// digits-only generation suffix is what keeps a query for "nginx" off the instances of "nginx-1",
-// and what keeps a container name from being read as a pattern.
-func TestInstanceIDQuery(t *testing.T) {
-	t.Parallel()
-
-	for _, test := range []struct {
-		container string
-		id        resource.ID
-		matches   bool
-	}{
-		{container: "nginx", id: containers.InstanceID("nginx", 0), matches: true},
-		{container: "nginx", id: containers.InstanceID("nginx", 7), matches: true},
-		{container: "nginx", id: containers.InstanceID("nginx", 1234567890), matches: true},
-		{container: "nginx", id: "nginx"},
-		{container: "nginx", id: containers.InstanceID("nginx-1", 2)},
-		{container: "nginx", id: containers.InstanceID("kube-apiserver", 1)},
-		{container: "nginx-1", id: containers.InstanceID("nginx-1", 2), matches: true},
-		{container: "nginx-1", id: containers.InstanceID("nginx", 12)},
-		{container: "a.c", id: containers.InstanceID("abc", 1)},
-	} {
-		t.Run(test.container+"/"+test.id, func(t *testing.T) {
-			t.Parallel()
-
-			var opts state.ListOptions
-
-			state.WithIDQuery(containers.InstanceIDQuery(test.container))(&opts)
-
-			assert.Equal(t, test.matches, opts.IDQuery.Matches(
-				resource.NewMetadata(containers.NamespaceName, containers.ContainerInstanceStatusType, test.id, resource.VersionUndefined),
-			))
-		})
-	}
 }

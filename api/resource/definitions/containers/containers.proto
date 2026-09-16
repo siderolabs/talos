@@ -8,6 +8,12 @@ option java_package = "dev.talos.api.resource.definitions.containers";
 import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
+// ContainerDependencyStatusSpec is the spec for ContainerDependencyStatus.
+message ContainerDependencyStatusSpec {
+  // WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries).
+  repeated string waiting_for = 1;
+}
+
 // ContainerDependsOnSpec is the resolved dependency set.
 message ContainerDependsOnSpec {
   repeated string paths = 1;

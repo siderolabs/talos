@@ -5,8 +5,6 @@
 package containers
 
 import (
-	"time"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -95,17 +93,14 @@ func init() {
 
 // Update derives the aggregated status for one container from its already-resolved inputs.
 //
-// Most of it is recomputed from scratch, but the few values whose source disappears from under them
-// — Health while an instance is on its way out, and the last execution's outcome between instances —
-// carry over from the value this one replaces.
+//nolint:gocyclo
 func (containerStatusSpec *ContainerStatusSpec) Update(
 	containerSpec *ContainerSpec,
 	containerImageStatus *ContainerImageStatus,
 	containerInstanceStatus *ContainerInstanceStatus,
 	containerInstanceSpec *ContainerInstanceSpec,
 	imageDigest string,
-	waitingFor []string,
-	restartInterval time.Duration,
+	containerDependencyStatus *ContainerDependencyStatus,
 ) {
 	prev := *containerStatusSpec
 
@@ -139,12 +134,15 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 		}
 	}
 
-	containerStatusSpec.State = ResolveContainerState(containerInstanceStatus, containerImageStatus, len(waitingFor) == 0, isStopping, restartInterval)
+	// At this point we can't say the dependencies are met, until InstanceController has published ContainerDependencyStatus. Stay in "pending" until we get more info.
+	gatesReady := containerDependencyStatus != nil && len(containerDependencyStatus.TypedSpec().WaitingFor) == 0
+
+	containerStatusSpec.State = ResolveContainerState(containerInstanceStatus, containerImageStatus, gatesReady, isStopping)
 
 	containerStatusSpec.Health = containerStatusSpec.State.Health(prev.Health)
 
-	if containerStatusSpec.State == ContainerStatePending {
-		containerStatusSpec.WaitingFor = waitingFor
+	if containerStatusSpec.State == ContainerStatePending && containerDependencyStatus != nil {
+		containerStatusSpec.WaitingFor = containerDependencyStatus.TypedSpec().WaitingFor
 	}
 
 	containerStatusSpec.Error = DeriveReportedError(containerInstanceStatus, containerImageStatus)
@@ -171,21 +169,20 @@ func ResolveReportedImage(containerSpec *ContainerSpec, containerInstanceSpec *C
 
 // ResolveContainerState maps the observable resources onto a container state.
 //
-// There is no terminal state: a finished instance means a restart is pending, which is exited while
-// it is still fresh and backoff once restartInterval has elapsed waiting for it.
+// There is no terminal state: a finished instance means a restart is pending, so it reports exited
+// until InstanceController replaces it, at which point the new instance speaks for itself.
 func ResolveContainerState(
 	containerInstanceStatus *ContainerInstanceStatus,
 	containerImageStatus *ContainerImageStatus,
 	gatesReady bool,
 	isStopping bool,
-	restartInterval time.Duration,
 ) ContainerState {
 	if containerInstanceStatus != nil {
 		if isStopping {
 			return ContainerStateStopping
 		}
 
-		return resolveInstanceState(containerInstanceStatus, restartInterval)
+		return resolveInstanceState(containerInstanceStatus)
 	}
 
 	// Only the phases that say something the gate check cannot: an image still coming down, or one
@@ -208,18 +205,14 @@ func ResolveContainerState(
 	return ContainerStateStarting
 }
 
-func resolveInstanceState(containerInstanceStatus *ContainerInstanceStatus, restartInterval time.Duration) ContainerState {
+func resolveInstanceState(containerInstanceStatus *ContainerInstanceStatus) ContainerState {
 	switch containerInstanceStatus.TypedSpec().Phase {
 	case ContainerInstancePhaseCreated:
 		return ContainerStateStarting
 	case ContainerInstancePhaseRunning:
 		return ContainerStateRunning
 	case ContainerInstancePhaseTerminated, ContainerInstancePhaseFailed:
-		if _, stillInWindow := containerInstanceStatus.TypedSpec().RestartWindowWakeAfter(restartInterval).Get(); stillInWindow {
-			return ContainerStateExited
-		}
-
-		return ContainerStateBackoff
+		return ContainerStateExited
 	}
 
 	return ContainerStateStarting
