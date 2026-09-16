@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/bootpartition"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/internal/pkg/encryption"
 	"github.com/siderolabs/talos/internal/pkg/encryption/helpers"
@@ -31,11 +32,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // VolumeManagerController manages volumes in the system, converting VolumeConfig resources to VolumeStatuses.
-type VolumeManagerController struct{}
+type VolumeManagerController struct {
+	// BootPartitionWaitTimeout bounds the wait for the boot partition to be discovered before the volumes
+	// might be declared missing, defaults to bootpartition.DefaultWaitTimeout.
+	BootPartitionWaitTimeout time.Duration
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *VolumeManagerController) Name() string {
@@ -75,6 +81,12 @@ func (ctrl *VolumeManagerController) Inputs() []controller.Input {
 			Namespace: block.NamespaceName,
 			Type:      block.DiscoveredVolumesStatusType,
 			ID:        optional.Some(block.DiscoveredVolumesStatusID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtime.NamespaceName,
+			Type:      runtime.BootPartitionStatusType,
+			ID:        optional.Some(runtime.BootPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -122,11 +134,15 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 
 	shouldRetry := false
 
+	bootPartition := bootpartition.NewWaiter(ctrl.BootPartitionWaitTimeout)
+	defer bootPartition.Stop()
+
 	for {
 		select {
 		case <-r.EventCh():
 		case <-ctx.Done():
 			return nil
+		case <-bootPartition.TimerC():
 		case <-retryTicker.C:
 			if !shouldRetry {
 				continue
@@ -145,6 +161,23 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 		if err != nil {
 			return fmt.Errorf("error fetching discovered volumes: %w", err)
+		}
+
+		// the devices are ready, but the disk the machine was booted from might still be enumerating:
+		// don't declare the volumes missing before the boot partition is discovered
+		if devicesReady {
+			bootPartitionUUID, err := ctrl.bootPartitionUUID(ctx, r)
+			if err != nil {
+				return err
+			}
+
+			devicesReady = bootPartition.Discovered(logger, bootPartitionUUID, func(yield func(string) bool) {
+				for dv := range discoveredVolumes.All() {
+					if !yield(dv.TypedSpec().PartitionUUID) {
+						return
+					}
+				}
+			})
 		}
 
 		discoveredVolumesSpecs, err := safe.Map(discoveredVolumes, func(dv *block.DiscoveredVolume) (*blockpb.DiscoveredVolumeSpec, error) {
@@ -650,4 +683,18 @@ func (ctrl *VolumeManagerController) getSaltGetter(r controller.Reader) helpers.
 
 		return salt.TypedSpec().DiskSalt, nil
 	}
+}
+
+// bootPartitionUUID returns the partition UUID of the boot partition, or an empty string if it's not known.
+func (ctrl *VolumeManagerController) bootPartitionUUID(ctx context.Context, r controller.Reader) (string, error) {
+	bootPartition, err := safe.ReaderGetByID[*runtime.BootPartitionStatus](ctx, r, runtime.BootPartitionStatusID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return "", nil
+		}
+
+		return "", fmt.Errorf("error fetching boot partition status: %w", err)
+	}
+
+	return bootPartition.TypedSpec().PartitionUUID, nil
 }

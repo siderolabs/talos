@@ -95,6 +95,7 @@ func New(bootloader, talosVersion, arch string) (Bootloader, error) {
 	case imageropts.BootLoaderKindGrub.String():
 		g := grub.NewConfig()
 		g.AddResetOption = quirks.New(talosVersion).SupportsResetGRUBOption()
+		g.AppendBootPartitionUUID = quirks.New(talosVersion).SupportsBootPartitionKernelArg()
 
 		return g, nil
 	case imageropts.BootLoaderKindSDBoot.String():

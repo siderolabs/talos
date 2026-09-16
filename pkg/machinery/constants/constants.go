@@ -80,6 +80,12 @@ const (
 	// extra device settle timeout.
 	KernelParamDeviceSettleTime = "talos.device.settle_time"
 
+	// KernelParamBootPartitionUUID is the kernel parameter name for specifying the
+	// partition UUID of the boot partition (the partition the bootloader was loaded from).
+	//
+	// Talos waits for this partition to be discovered before declaring the system volumes missing.
+	KernelParamBootPartitionUUID = "talos.boot.partuuid"
+
 	// KernelParamCGroups is the legacy kernel parameter not supported anymore.
 	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
 

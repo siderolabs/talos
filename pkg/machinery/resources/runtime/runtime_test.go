@@ -26,6 +26,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []meta.ResourceWithRD{
 		&runtime.APIServiceConfig{},
 		&runtime.BootID{},
+		&runtime.BootPartitionStatus{},
 		&runtime.BootedEntry{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},

@@ -22,6 +22,12 @@ message BootIDSpec {
   string boot_id = 1;
 }
 
+// BootPartitionStatusSpec describes the partition the machine was booted from.
+message BootPartitionStatusSpec {
+  // PartitionUUID is the GPT partition UUID of the boot partition.
+  string partition_uuid = 1;
+}
+
 // BootedEntrySpec describes the booted entry resource properties.
 message BootedEntrySpec {
   string booted_entry = 1;

@@ -122,6 +122,7 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 		"search",
 		"search_fs_uuid",
 		"search_fs_file",
+		"probe",
 		"ls",
 		"cat",
 		"echo",

@@ -6,6 +6,7 @@
 package grub
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -13,7 +14,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/kexec"
@@ -21,8 +25,17 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
+
+// BootPartitionVariable is the GRUB variable holding the partition UUID of the partition GRUB was loaded from (BOOT).
+//
+// It is set by `probe --part-uuid $root` in the generated config, and passed to the kernel via constants.KernelParamBootPartitionUUID.
+const BootPartitionVariable = "talos_bootpart"
+
+// bootPartitionCmdlineArg is the kernel argument appended to the `linux` command, expanded by GRUB at boot.
+const bootPartitionCmdlineArg = constants.KernelParamBootPartitionUUID + "=$" + BootPartitionVariable
 
 // Config represents a grub configuration file (grub.cfg).
 type Config struct {
@@ -30,6 +43,9 @@ type Config struct {
 	Fallback       BootLabel
 	Entries        map[BootLabel]MenuEntry
 	AddResetOption bool
+	// AppendBootPartitionUUID makes GRUB probe the partition it was loaded from (BOOT) and pass its UUID
+	// to the kernel via the `talos.boot.partuuid` argument.
+	AppendBootPartitionUUID bool
 }
 
 // MenuEntry represents a grub menu entry in the grub config file.
@@ -47,9 +63,10 @@ func (e bootloaderNotInstalledError) Error() string {
 // NewConfig creates a new grub configuration (nothing is written to disk).
 func NewConfig() *Config {
 	return &Config{
-		Default:        BootA,
-		Entries:        map[BootLabel]MenuEntry{},
-		AddResetOption: true,
+		Default:                 BootA,
+		Entries:                 map[BootLabel]MenuEntry{},
+		AddResetOption:          true,
+		AppendBootPartitionUUID: true,
 	}
 }
 
@@ -80,6 +97,12 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 		defer initrd.Close() //nolint:errcheck
 
 		cmdline := strings.TrimSpace(defaultEntry.Cmdline)
+
+		// GRUB is skipped on kexec, so the boot partition UUID it would have probed is round-tripped
+		// from the current boot (if it is known)
+		if c.AppendBootPartitionUUID {
+			cmdline = AppendBootPartitionUUID(cmdline, bootPartitionUUID(r))
+		}
 
 		if err = kexec.Load(r, kernel, int(initrd.Fd()), cmdline); err != nil {
 			return err
@@ -195,4 +218,32 @@ func buildMenuEntry(entry BootLabel, cmdline, versionTag string) MenuEntry {
 		Cmdline: cmdline,
 		Initrd:  filepath.Join("/", string(entry), constants.InitramfsAsset),
 	}
+}
+
+// bootPartitionUUID returns the boot partition UUID detected on the current boot, or an empty string if it's not known.
+func bootPartitionUUID(r runtime.Runtime) string {
+	status, err := safe.StateGetByID[*runtimeres.BootPartitionStatus](context.Background(), r.State().V1Alpha2().Resources(), runtimeres.BootPartitionStatusID)
+	if err != nil {
+		if !state.IsNotFoundError(err) {
+			log.Printf("error getting the boot partition status: %s", err)
+		}
+
+		return ""
+	}
+
+	return status.TypedSpec().PartitionUUID
+}
+
+// AppendBootPartitionUUID sets the boot partition kernel argument (replacing any existing value), unless the UUID is empty.
+//
+// It is used on kexec, when GRUB is skipped and can't probe the partition itself.
+func AppendBootPartitionUUID(cmdline, partitionUUID string) string {
+	if partitionUUID == "" {
+		return cmdline
+	}
+
+	parsed := procfs.NewCmdline(cmdline)
+	parsed.Set(constants.KernelParamBootPartitionUUID, procfs.NewParameter(constants.KernelParamBootPartitionUUID).Append(partitionUUID))
+
+	return parsed.String()
 }

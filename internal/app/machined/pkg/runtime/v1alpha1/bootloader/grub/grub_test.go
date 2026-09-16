@@ -26,6 +26,9 @@ var (
 	//go:embed testdata/grub_parse_test.cfg
 	grubCfg []byte
 
+	//go:embed testdata/grub_parse_bootpart_test.cfg
+	grubCfgBootPartition []byte
+
 	//go:embed testdata/grub_write_test.cfg
 	newConfig string
 
@@ -267,9 +270,23 @@ func TestBackwardsCompat(t *testing.T) {
 	entry, err := oldParser(&buf)
 	require.NoError(t, err)
 
+	// an older Talos passes the (unexpanded) boot partition argument through verbatim, which is harmless
 	assert.Equal(t, &bootEntry{
 		Linux:   "/B/vmlinuz",
 		Initrd:  "/B/initramfs.xz",
-		Cmdline: "cmdline B",
+		Cmdline: "cmdline B talos.boot.partuuid=$talos_bootpart",
 	}, entry)
+}
+
+func TestDecodeBootPartition(t *testing.T) {
+	conf, err := grub.Decode(grubCfgBootPartition)
+	assert.NoError(t, err)
+
+	a := conf.Entries[grub.BootA]
+	assert.Equal(t, "/A/vmlinuz", a.Linux)
+	// the boot partition argument is stripped, it is added back by the encoder
+	assert.Equal(t, "cmdline A", a.Cmdline)
+
+	assert.True(t, conf.AddResetOption)
+	assert.True(t, conf.AppendBootPartitionUUID)
 }

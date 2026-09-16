@@ -389,3 +389,16 @@ func (q Quirks) ForcesLockdownConfidentiality() bool {
 
 	return q.v.LT(maxTalosVersionForceLockdownConfidentiality)
 }
+
+var minVersionBootPartitionKernelArg = semver.MustParse("1.15.0")
+
+// SupportsBootPartitionKernelArg returns true if the Talos version supports the `talos.boot.partuuid` kernel argument
+// (set by the generated GRUB config to point Talos at the partition it was booted from).
+func (q Quirks) SupportsBootPartitionKernelArg() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionBootPartitionKernelArg)
+}

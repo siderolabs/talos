@@ -552,6 +552,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
     - [APIServiceConfigSpec](#talos.resource.definitions.runtime.APIServiceConfigSpec)
     - [BootIDSpec](#talos.resource.definitions.runtime.BootIDSpec)
+    - [BootPartitionStatusSpec](#talos.resource.definitions.runtime.BootPartitionStatusSpec)
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
@@ -9654,6 +9655,21 @@ BootIDSpec presents the kernel boot ID (contents of /proc/sys/kernel/random/boot
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | boot_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.BootPartitionStatusSpec"></a>
+
+### BootPartitionStatusSpec
+BootPartitionStatusSpec describes the partition the machine was booted from.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| partition_uuid | [string](#string) |  | PartitionUUID is the GPT partition UUID of the boot partition. |
 
 
 

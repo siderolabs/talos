@@ -239,6 +239,7 @@ func NewState() (*State, error) {
 		&runtime.APIServiceConfig{},
 		&runtime.BootedEntry{},
 		&runtime.BootID{},
+		&runtime.BootPartitionStatus{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.Environment{},

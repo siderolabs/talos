@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 )
 
 var (
@@ -79,6 +80,9 @@ func Decode(c []byte) (*Config, error) {
 		Fallback:       fallbackEntry,
 		Entries:        entries,
 		AddResetOption: hasResetOption,
+		// the boot partition argument is a property of the installer, not of the existing config:
+		// the decoded config is used to upgrade an existing installation with the current (supporting) version
+		AppendBootPartitionUUID: true,
 	}
 
 	return &conf, nil
@@ -141,6 +145,9 @@ func parseConfBlock(block []byte) (linux, cmdline, initrd string, err error) {
 
 	linux = string(linuxMatches[0][1])
 	cmdline = string(linuxMatches[0][2])
+
+	// the boot partition argument is added back by the encoder (and resolved on kexec), so it's not part of the cmdline
+	cmdline = strings.TrimSpace(strings.TrimSuffix(cmdline, " "+bootPartitionCmdlineArg))
 
 	initrdMatches := initrdRegex.FindAllSubmatch(block, -1)
 	if len(initrdMatches) != 1 {

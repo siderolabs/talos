@@ -34,6 +34,16 @@ CoreDNS: 1.14.7
 Talos is built with Go 1.27.1.
 """
 
+    [notes.boot_partition]
+        title = "Boot Partition Wait"
+        description = """\
+Talos now waits for the partition it was booted from to be discovered before declaring the system volumes (`META`, `STATE`) missing
+and entering maintenance mode, so that disks enumerated late (SD cards, USB, some RAID controllers) are not mistaken for a fresh machine.
+
+On UEFI systems booted via `systemd-boot` the boot partition comes from the `LoaderDevicePartUUID` EFI variable, while the GRUB configuration
+now passes the `talos.boot.partuuid=<UUID>` kernel argument (probed by GRUB at boot). The detected boot partition is published as the `bootpartition` resource.
+"""
+
     [notes.kubespan_peer_endpoint_filters]
         title = "KubeSpan Peer Endpoint Filters"
         description = """\
