@@ -52,6 +52,10 @@ func (suite *RebootSuite) SetupTest() {
 
 	// make sure we abort at some point in time, but give enough room for reboots
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
+
+	// a previous test might have left a reboot in flight, so make sure the cluster is fully
+	// booted before the test starts
+	suite.WaitForBootDone(suite.ctx)
 }
 
 // TearDownTest ...
@@ -163,7 +167,11 @@ func (suite *RebootSuite) TestRebootMultipleTimes() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
+	suite.T().Log("rebooting node", node)
+
 	bootID := suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
+
+	suite.T().Logf("initial bootID for node %s: %s", node, bootID)
 
 	// Issue reboot.
 	suite.Require().NoError(base.IgnoreGRPCUnavailable(
@@ -178,6 +186,8 @@ func (suite *RebootSuite) TestRebootMultipleTimes() {
 	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*7)
 
 	bootID = suite.ReadBootIDWithRetry(nodeCtx, time.Minute*5)
+
+	suite.T().Logf("new bootID for node %s: %s", node, bootID)
 
 	suite.Require().NoError(retry.Constant(time.Second * 5).Retry(func() error {
 		// Issue reboot while the node is still booting.
@@ -195,6 +205,13 @@ func (suite *RebootSuite) TestRebootMultipleTimes() {
 	}))
 
 	suite.AssertBootIDChanged(nodeCtx, bootID, node, time.Minute*7)
+
+	// the assertion above is satisfied by the first boot ID change, while another reboot might be
+	// still in flight, so wait for the node to settle before asserting that it is fully booted
+	bootID = suite.WaitForBootIDStable(nodeCtx, node, time.Minute*5)
+
+	suite.T().Logf("after 2nd reboot bootID for node %s: %s", node, bootID)
+
 	suite.WaitForBootDone(suite.ctx)
 }
 
@@ -288,6 +305,8 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 	}
 
 	suite.ClearConnectionRefused(suite.ctx, nodes...)
+
+	suite.WaitForBootDone(suite.ctx)
 
 	if suite.Cluster != nil {
 		// without cluster state we can't do deep checks, but basic reboot test still works
