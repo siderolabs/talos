@@ -263,6 +263,26 @@ func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string
 	}, "startMachined"
 }
 
+// StartSandboxd represents the task to start sandboxd, which owns the sandbox
+// PID+mount namespace that the container plane runs inside.
+//
+// sandboxd takes no configuration, so it is started here, before the machine
+// config is loaded: this guarantees that the sandbox launcher is published
+// before CRI (which is started by cri.ServiceController, independently of this
+// sequence) can reach its first launch. Whether CRI actually enters the
+// namespace is decided separately from the SecurityProfileConfig document.
+func StartSandboxd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+		if !sandboxd.ServiceEnabled(r) {
+			return nil
+		}
+
+		system.Services(r).LoadAndStart(&services.Sandboxd{})
+
+		return nil
+	}, "startSandboxd"
+}
+
 // StartSyslogd represents the task to start syslogd.
 func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
@@ -330,13 +350,6 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 		svcs := system.Services(r)
 
 		serviceList := []system.Service{}
-
-		// When workload isolation is enabled (SecurityProfileConfig), the sandbox
-		// PID+mount namespace must be up before CRI (which DependsOn it and runs
-		// inside it). Skipped in container mode or when isolation is disabled/absent.
-		if sandboxd.Enabled(r) {
-			serviceList = append(serviceList, &services.Sandboxd{})
-		}
 
 		shouldStartEtcd := r.Config() != nil && r.Config().Cluster() != nil && r.Config().Cluster().Etcd().CA() != nil
 

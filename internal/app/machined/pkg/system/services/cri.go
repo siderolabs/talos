@@ -124,11 +124,17 @@ func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 
 // DependsOn implements the Service interface.
 func (c *CRI) DependsOn(r runtime.Runtime) []string {
-	if !sandboxd.Enabled(r) {
+	if !sandboxd.ServiceEnabled(r) {
 		return nil
 	}
 
-	// CRI runs inside the sandbox namespace, which the sandboxd service owns.
+	// CRI may run inside the sandbox namespace, which the sandboxd service owns.
+	//
+	// This is deliberately not conditioned on workload isolation being enabled:
+	// the service runner evaluates DependsOn once, up front, but only creates the
+	// runner (and with it decides whether to enter the namespace, see Runner) after
+	// its conditions are met. Depending on sandboxd whenever it runs at all keeps
+	// the two consistent regardless of what happens in between.
 	return []string{sandboxd.ServiceID}
 }
 
@@ -184,12 +190,18 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// PID+mount namespace. The launcher is resolved per launch (getter), so if
 	// sandboxd is recreated, CRI's restart re-enters the new namespace. When
 	// isolation is disabled/absent (or in container mode) CRI runs on the host.
-	if sandboxd.Enabled(r) {
+	if sandboxd.IsolationEnabled(r) {
 		opts = append(opts, runner.WithSandbox(r.Sandbox))
 	}
 
+	var debug bool
+
+	if cfg := r.Config(); cfg != nil {
+		debug = cfg.Debug()
+	}
+
 	return restart.New(
-		process.NewRunner(r.Config().Debug(), args, opts...),
+		process.NewRunner(debug, args, opts...),
 		restart.WithType(restart.Forever),
 	), nil
 }
