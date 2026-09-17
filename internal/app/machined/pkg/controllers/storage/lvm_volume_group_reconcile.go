@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -33,6 +34,9 @@ type LVMProvisioner interface {
 type LVMVolumeGroupReconcileController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          LVMProvisioner
+
+	RetryInitialInterval time.Duration
+	RetryMaxInterval     time.Duration
 }
 
 // Name implements controller.Controller interface.
@@ -79,11 +83,16 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		return errors.New("LVM provisioner not configured")
 	}
 
+	retry := newLVMReconcileRetry(ctrl.RetryInitialInterval, ctrl.RetryMaxInterval)
+	defer retry.stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		case <-retry.channel():
+			retry.fired()
 		}
 
 		vgSpecs, err := safe.ReaderListAll[*storage.LVMVolumeGroupSpec](ctx, r)
@@ -127,9 +136,13 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		}
 
 		if err := reconcileErrs.ErrorOrNil(); err != nil {
-			// Log and retry on next event.
+			retry.schedule()
 			logger.Warn("LVM reconcile encountered errors", zap.Error(err))
+
+			continue
 		}
+
+		retry.reset()
 	}
 }
 
