@@ -37,7 +37,9 @@ func (KubeAdmissionControlConfigV1Alpha1) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.AddExample("", exampleKubeAdmissionControlConfigV1Alpha1())
+	doc.AddExample("Default PodSecurity admission control plugin configuration.", exampleKubeAdmissionControlConfigV1Alpha1())
+
+	doc.AddExample("Configuration patch example for exempting a namespace from PodSecurity admission control plugin.", exampleKubeAdmissionControlConfigV1Alpha2())
 
 	return doc
 }
@@ -534,7 +536,7 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeFlannelCNIConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeFlannelCNIConfig deploys Flannel CNI to the cluster." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeFlannelCNIConfig deploys Flannel CNI to the cluster.",
+		Description: "KubeFlannelCNIConfig deploys Flannel CNI to the cluster.\nFlannel CNI is a simple and easy way to configure a layer 3 network fabric designed for Kubernetes.\nDelete this document to disable Flannel CNI in the cluster.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

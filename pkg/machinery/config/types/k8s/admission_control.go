@@ -44,6 +44,9 @@ var (
 //
 //	examples:
 //	  - value: exampleKubeAdmissionControlConfigV1Alpha1()
+//	    name: Default PodSecurity admission control plugin configuration.
+//	  - value: exampleKubeAdmissionControlConfigV1Alpha2()
+//	    name: Configuration patch example for exempting a namespace from PodSecurity admission control plugin.
 //	alias: KubeAdmissionControlConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/KubeAdmissionControlConfig
@@ -99,6 +102,21 @@ func DefaultPodSecurityAdmissionControlConfig() *KubeAdmissionControlConfigV1Alp
 
 func exampleKubeAdmissionControlConfigV1Alpha1() *KubeAdmissionControlConfigV1Alpha1 {
 	return DefaultPodSecurityAdmissionControlConfig()
+}
+
+func exampleKubeAdmissionControlConfigV1Alpha2() *KubeAdmissionControlConfigV1Alpha1 {
+	cfg := NewKubeAdmissionControlConfigV1Alpha1()
+	cfg.MetaName = "PodSecurity"
+
+	cfg.PluginConfig.Object = map[string]any{
+		"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
+		"kind":       "PodSecurityConfiguration",
+		"exemptions": map[string]any{
+			"namespaces": []any{"rook-ceph"},
+		},
+	}
+
+	return cfg
 }
 
 // Clone implements config.Document interface.

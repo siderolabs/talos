@@ -1,5 +1,8 @@
 ---
-description: KubeFlannelCNIConfig deploys Flannel CNI to the cluster.
+description: |
+    KubeFlannelCNIConfig deploys Flannel CNI to the cluster.
+    Flannel CNI is a simple and easy way to configure a layer 3 network fabric designed for Kubernetes.
+    Delete this document to disable Flannel CNI in the cluster.
 title: KubeFlannelCNIConfig
 ---
 
