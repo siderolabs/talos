@@ -3,7 +3,7 @@ description: |
     ExternalVolumeConfig is an external disk mount configuration document.
     External volumes allow to mount volumes that were created outside of Talos,
     over the network or API. Volume will be mounted under `/var/mnt/<name>`.
-    The external volume config name should not conflict with user volume names.
+    The name must not be taken by a user or existing volume.
 title: ExternalVolumeConfig
 ---
 

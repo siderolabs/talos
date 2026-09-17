@@ -272,6 +272,12 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	// A volume backs a single content library, and must not be read-only. A per-document Validate()
+	// cannot see the other documents, so this is a container-level check.
+	if err := validateContentLibraryBackingVolumes(container); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
 	// or by a DiscoveryIdentityConfig document. The identity may live in a separate document, so this
 	// cross-document check is done at the container level.

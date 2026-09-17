@@ -24,6 +24,7 @@ import (
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
@@ -165,6 +166,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "container",
 					fileDoc: containercfg.GetFileDoc(),
+				},
+				{
+					name:    "hypervisor",
+					fileDoc: hypervisor.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

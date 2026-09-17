@@ -453,6 +453,11 @@ func (container *Container) ContainerConfigs() []config.ContainerConfig {
 	return findMatchingDocs[config.ContainerConfig](container.documents)
 }
 
+// ContentLibraryConfigs implements config.Config interface.
+func (container *Container) ContentLibraryConfigs() []config.ContentLibraryConfig {
+	return findMatchingDocs[config.ContentLibraryConfig](container.documents)
+}
+
 // UserVolumeConfigs implements config.Config interface.
 func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)

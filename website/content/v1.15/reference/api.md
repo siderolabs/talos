@@ -480,6 +480,9 @@ description: Talos gRPC API reference.
     - [ProcessorSpec](#talos.resource.definitions.hardware.ProcessorSpec)
     - [SystemInformationSpec](#talos.resource.definitions.hardware.SystemInformationSpec)
   
+- [resource/definitions/hypervisor/hypervisor.proto](#resource/definitions/hypervisor/hypervisor.proto)
+    - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
+  
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
     - [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping)
     - [Mount](#talos.resource.definitions.proto.Mount)
@@ -8471,6 +8474,40 @@ SystemInformationSpec represents the system information obtained from smbios.
 | wake_up_type | [string](#string) |  |  |
 | sku_number | [string](#string) |  |  |
 | bios_version | [string](#string) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="resource/definitions/hypervisor/hypervisor.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/hypervisor/hypervisor.proto
+
+
+
+<a name="talos.resource.definitions.hypervisor.ContentLibraryStatusSpec"></a>
+
+### ContentLibraryStatusSpec
+ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  | VolumeID is the ID of the volume backing the library. |
+| path | [string](#string) |  | Path is the absolute path of the library's contents, the target the backing volume is mounted at.<br><br>Only meaningful when Ready. |
+| ready | [bool](#bool) |  | Ready is true once the backing volume is mounted. |
+| error | [string](#string) |  | Error describes why the library is not ready. |
 
 
 

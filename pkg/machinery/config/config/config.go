@@ -69,6 +69,9 @@ type Config interface { //nolint:interfacebloat
 	// - containers:
 	ContainerConfigs() []ContainerConfig
 
+	// - hypervisor:
+	ContentLibraryConfigs() []ContentLibraryConfig
+
 	// - block devices/storage:
 	Volumes() VolumesConfig
 	UserVolumeConfigs() []UserVolumeConfig

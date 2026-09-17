@@ -42,6 +42,7 @@ func init() {
 // Check interfaces.
 var (
 	_ config.ExternalVolumeConfig = &ExternalVolumeConfigV1Alpha1{}
+	_ config.ConflictingDocument  = &ExternalVolumeConfigV1Alpha1{}
 	_ config.NamedDocument        = &ExternalVolumeConfigV1Alpha1{}
 	_ config.Validator            = &ExternalVolumeConfigV1Alpha1{}
 )
@@ -71,7 +72,7 @@ type NFSTransport = block.NFSTransport
 //	description: |
 //	  External volumes allow to mount volumes that were created outside of Talos,
 //	  over the network or API. Volume will be mounted under `/var/mnt/<name>`.
-//	  The external volume config name should not conflict with user volume names.
+//	  The name must not be taken by a user or existing volume.
 //	examples:
 //	  - value: exampleExternalVolumeConfigV1Alpha1Virtiofs()
 //	  - value: exampleExternalVolumeConfigV1Alpha1NFS()
@@ -249,6 +250,11 @@ func (s *ExternalVolumeConfigV1Alpha1) Name() string {
 // Clone implements config.Document interface.
 func (s *ExternalVolumeConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
+}
+
+// ConflictsWithKinds implements config.ConflictingDocument interface.
+func (s *ExternalVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
+	return conflictingVolumeKinds(ExternalVolumeConfigKind)
 }
 
 // Validate implements config.Validator interface.

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package talos.resource.definitions.hypervisor;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisor";
+option java_package = "dev.talos.api.resource.definitions.hypervisor";
+
+// ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
+message ContentLibraryStatusSpec {
+  // VolumeID is the ID of the volume backing the library.
+  string volume_id = 1;
+  // Path is the absolute path of the library's contents, the target the backing volume is mounted at.
+  //
+  // Only meaningful when Ready.
+  string path = 2;
+  // Ready is true once the backing volume is mounted.
+  bool ready = 3;
+  // Error describes why the library is not ready.
+  string error = 4;
+}
+

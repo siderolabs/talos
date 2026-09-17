@@ -58,6 +58,7 @@ type VolumeType = block.VolumeType
 //	  User volume is automatically allocated as a partition on the specified disk
 //	  and mounted under `/var/mnt/<name>`.
 //	  The partition label is automatically generated as `u-<name>`.
+//	  The name must not be taken by an existing or external volume.
 //	examples:
 //	  - value: exampleUserVolumeConfigV1Alpha1Directory()
 //	  - value: exampleUserVolumeConfigV1Alpha1Disk()
@@ -215,7 +216,7 @@ func (s *UserVolumeConfigV1Alpha1) Redact(replacement string) {
 
 // ConflictsWithKinds implements config.ConflictingDocument interface.
 func (s *UserVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
-	return []string{ExistingVolumeConfigKind}
+	return conflictingVolumeKinds(UserVolumeConfigKind)
 }
 
 // Validate implements config.Validator interface.

@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubeaccess"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -90,6 +91,7 @@ func NewState() (*State, error) {
 		{network.ConfigNamespaceName, "Networking configuration resources."},
 		{cri.NamespaceName, "CRI Seccomp resources."},
 		{containers.NamespaceName, "Talos-managed container resources."},
+		{hypervisor.NamespaceName, "Talos hypervisor resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
 		{security.NamespaceName, "Security resources."},
 		{perf.NamespaceName, "Stats resources."},
@@ -129,6 +131,7 @@ func NewState() (*State, error) {
 		&containers.ContainerInstanceStatus{},
 		&containers.ContainerLifecycle{},
 		&containers.ContainerStatus{},
+		&hypervisor.ContentLibraryStatus{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},
 		&cluster.Affiliate{},

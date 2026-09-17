@@ -12,6 +12,9 @@ import "github.com/siderolabs/gen/optional"
 type ContainerConfig interface {
 	NamedDocument
 
+	// Marker for findMatchingDocs[T]
+	ContainerConfigSignal()
+
 	// Image is the OCI reference in canonical form.
 	Image() string
 	// Entrypoint overrides the image ENTRYPOINT; nil means use the image.

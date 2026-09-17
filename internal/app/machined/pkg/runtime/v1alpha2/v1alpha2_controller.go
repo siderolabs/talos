@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hardware"
+	hypervisorctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubeaccess"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
@@ -267,6 +268,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			Runtime: ctrl.v1alpha1Runtime,
 		},
 		&containerctrls.StatusController{},
+		&hypervisorctrls.ContentLibraryController{},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", constants.SystemContainerdNamespace, nil),
 		cri.NewImageGCController("cri", constants.SystemContainerdNamespace, cri.KubernetesRefsToRetain),

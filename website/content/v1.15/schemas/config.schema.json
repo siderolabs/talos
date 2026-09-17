@@ -332,7 +332,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "ExistingVolumeConfig is an existing volume configuration document.\\nExisting volumes allow to mount partitions (or whole disks) that were created\\noutside of Talos. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe existing volume config name should not conflict with user volume names.\\n"
+      "description": "ExistingVolumeConfig is an existing volume configuration document.\\nExisting volumes allow to mount partitions (or whole disks) that were created\\noutside of Talos. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe name must not be taken by a user or external volume.\\n"
     },
     "block.ExternalMountSpec": {
       "properties": {
@@ -427,7 +427,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "ExternalVolumeConfig is an external disk mount configuration document.\\nExternal volumes allow to mount volumes that were created outside of Talos,\\nover the network or API. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe external volume config name should not conflict with user volume names.\\n"
+      "description": "ExternalVolumeConfig is an external disk mount configuration document.\\nExternal volumes allow to mount volumes that were created outside of Talos,\\nover the network or API. Volume will be mounted under `/var/mnt/\u003cname\u003e`.\\nThe name must not be taken by a user or existing volume.\\n"
     },
     "block.FilesystemScrubConfigV1Alpha1": {
       "properties": {
@@ -1001,7 +1001,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "UserVolumeConfig is a user volume configuration document.\\nUser volume is automatically allocated as a partition on the specified disk\\nand mounted under `/var/mnt/\u003cname\u003e`.\\nThe partition label is automatically generated as `u-\u003cname\u003e`.\\n"
+      "description": "UserVolumeConfig is a user volume configuration document.\\nUser volume is automatically allocated as a partition on the specified disk\\nand mounted under `/var/mnt/\u003cname\u003e`.\\nThe partition label is automatically generated as `u-\u003cname\u003e`.\\nThe name must not be taken by an existing or external volume.\\n"
     },
     "block.VirtiofsMountSpec": {
       "properties": {
@@ -2157,6 +2157,63 @@
         "targetDriver"
       ],
       "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
+    },
+    "hypervisor.ContentLibraryBacking": {
+      "properties": {
+        "volume": {
+          "type": "string",
+          "title": "volume",
+          "description": "Name of the volume storing the library’s contents.\n\nThe name of a UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig\ndocument, as that document declares it, not the u-/e-/x- prefixed ID Talos\nderives from the kind and the name. Volume names are unique across those kinds, so\nthe name resolves to one volume.\n\nThe volume is declared separately and is not provisioned by this document; the\nlibrary becomes ready only once the volume is mounted. Uploads write into the\nlibrary, so a volume declared read-only cannot back one.\n",
+          "markdownDescription": "Name of the volume storing the library's contents.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig`\ndocument, as that document declares it, not the `u-`/`e-`/`x-` prefixed ID Talos\nderives from the kind and the name. Volume names are unique across those kinds, so\nthe name resolves to one volume.\n\nThe volume is declared separately and is not provisioned by this document; the\nlibrary becomes ready only once the volume is mounted. Uploads write into the\nlibrary, so a volume declared read-only cannot back one.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume storing the library\u0026rsquo;s contents.\u003c/p\u003e\n\n\u003cp\u003eThe name of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e\ndocument, as that document declares it, not the \u003ccode\u003eu-\u003c/code\u003e/\u003ccode\u003ee-\u003c/code\u003e/\u003ccode\u003ex-\u003c/code\u003e prefixed ID Talos\nderives from the kind and the name. Volume names are unique across those kinds, so\nthe name resolves to one volume.\u003c/p\u003e\n\n\u003cp\u003eThe volume is declared separately and is not provisioned by this document; the\nlibrary becomes ready only once the volume is mounted. Uploads write into the\nlibrary, so a volume declared read-only cannot back one.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContentLibraryBacking describes the storage backing a content library."
+    },
+    "hypervisor.ContentLibraryConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "ContentLibraryConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the content library.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the library over the API.\n",
+          "markdownDescription": "Name of the content library.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the library over the API.",
+          "x-intellij-html-description": "\u003cp\u003eName of the content library.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the library over the API.\u003c/p\u003e\n"
+        },
+        "backing": {
+          "$ref": "#/$defs/hypervisor.ContentLibraryBacking",
+          "title": "backing",
+          "description": "Volume backing the content library.\n",
+          "markdownDescription": "Volume backing the content library.",
+          "x-intellij-html-description": "\u003cp\u003eVolume backing the content library.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "ContentLibraryConfig is a content library configuration document.\\nContentLibraryConfig declares a content library: a store for virtual machine images\\nkept on a volume.\\n\\nThe library is the root of the backing volume, so a library backed by the user volume\\n`vm-images` keeps its images directly in `/var/mnt/vm-images`. A volume backs exactly\\none library: two libraries pointed at the same volume are rejected.\\n\\nContents are managed over the API with `talosctl hv content-library`, never by editing\\nthe machine configuration. Status is reported via `ContentLibraryStatus`.\\n"
     },
     "k8s.AcceptedServiceAccountConfig": {
       "properties": {
@@ -8182,6 +8239,9 @@
     },
     {
       "$ref": "#/$defs/hardware.PCIDriverRebindConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/hypervisor.ContentLibraryConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeAdmissionControlConfigV1Alpha1"

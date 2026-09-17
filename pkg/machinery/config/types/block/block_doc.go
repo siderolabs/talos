@@ -318,7 +318,7 @@ func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExistingVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExistingVolumeConfig is an existing volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExistingVolumeConfig is an existing volume configuration document.\nExisting volumes allow to mount partitions (or whole disks) that were created\noutside of Talos. Volume will be mounted under `/var/mnt/<name>`.\nThe existing volume config name should not conflict with user volume names.\n",
+		Description: "ExistingVolumeConfig is an existing volume configuration document.\nExisting volumes allow to mount partitions (or whole disks) that were created\noutside of Talos. Volume will be mounted under `/var/mnt/<name>`.\nThe name must not be taken by a user or external volume.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -463,7 +463,7 @@ func (ExternalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExternalVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExternalVolumeConfig is an external disk mount configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExternalVolumeConfig is an external disk mount configuration document.\nExternal volumes allow to mount volumes that were created outside of Talos,\nover the network or API. Volume will be mounted under `/var/mnt/<name>`.\nThe external volume config name should not conflict with user volume names.\n",
+		Description: "ExternalVolumeConfig is an external disk mount configuration document.\nExternal volumes allow to mount volumes that were created outside of Talos,\nover the network or API. Volume will be mounted under `/var/mnt/<name>`.\nThe name must not be taken by a user or existing volume.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -955,7 +955,7 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "UserVolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "UserVolumeConfig is a user volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "UserVolumeConfig is a user volume configuration document.\nUser volume is automatically allocated as a partition on the specified disk\nand mounted under `/var/mnt/<name>`.\nThe partition label is automatically generated as `u-<name>`.\n",
+		Description: "UserVolumeConfig is a user volume configuration document.\nUser volume is automatically allocated as a partition on the specified disk\nand mounted under `/var/mnt/<name>`.\nThe partition label is automatically generated as `u-<name>`.\nThe name must not be taken by an existing or external volume.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

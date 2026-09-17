@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: ContentLibraryConfig
+name: found
+backing:
+    volume: found-images

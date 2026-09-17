@@ -3,7 +3,7 @@ description: |
     ExistingVolumeConfig is an existing volume configuration document.
     Existing volumes allow to mount partitions (or whole disks) that were created
     outside of Talos. Volume will be mounted under `/var/mnt/<name>`.
-    The existing volume config name should not conflict with user volume names.
+    The name must not be taken by a user or external volume.
 title: ExistingVolumeConfig
 ---
 

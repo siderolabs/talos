@@ -141,6 +141,20 @@ func TestNewConflict(t *testing.T) {
 
 	_, err = container.New(ev2, ev1, uv1, uv2)
 	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and UserVolumeConfig/my-user-volume-1")
+
+	// External volumes share the name namespace too: all three kinds mount at /var/mnt/<name>, and a
+	// name has to identify one volume for anything referring to a volume by name to resolve.
+	xv1 := block.NewExternalVolumeConfigV1Alpha1()
+	xv1.MetaName = "my-user-volume-1"
+
+	_, err = container.New(uv1, xv1)
+	assert.EqualError(t, err, "conflicting documents: UserVolumeConfig/my-user-volume-1 and ExternalVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(ev1, xv1)
+	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and ExternalVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(xv1, uv2)
+	require.NoError(t, err)
 }
 
 func TestCRICustomizationConfigs(t *testing.T) {
