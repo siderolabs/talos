@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -21,7 +20,7 @@ import (
 func TestEtcFileConditionWaitsForEveryFile(t *testing.T) {
 	t.Parallel()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	require.NoError(t, st.Create(t.Context(), files.NewEtcFileStatus(files.NamespaceName, constants.CRIConfig)))
 

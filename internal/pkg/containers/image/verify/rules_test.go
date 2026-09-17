@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +28,7 @@ func TestRuleMatcher(t *testing.T) {
 		"index.docker.io*",
 	}
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	for idx, pattern := range patterns {
 		rule := security.NewImageVerificationRule(fmt.Sprintf("%04d", idx))

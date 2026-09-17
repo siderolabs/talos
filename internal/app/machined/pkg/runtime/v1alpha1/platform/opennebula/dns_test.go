@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -20,7 +19,7 @@ func TestDNSMerge(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	mac := `ETH0_MAC = "02:00:c0:a8:01:5c"
 ETH0_IP = "192.168.1.92"
@@ -117,7 +116,7 @@ func TestDNSMergeError(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	base := `ETH0_MAC = "02:00:c0:a8:01:5c"
 ETH0_IP = "192.168.1.92"
