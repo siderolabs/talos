@@ -366,7 +366,15 @@ func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []
 	phases := PhaseList{}.Append(
 		"storeShutdown",
 		StoreShutdownEmergency,
-	).AppendWhen(
+	)
+
+	if in.GetMode() == machineapi.ShutdownRequest_FORCE {
+		// power off without stopping anything first, mirroring Reboot's FORCE mode:
+		// the escape hatch for a node whose services will not stop
+		return phases.Append("shutdown", Shutdown)
+	}
+
+	phases = phases.AppendWhen(
 		!in.GetForce() && !skipNodeRegistration,
 		"drain",
 		CordonAndDrainNode,

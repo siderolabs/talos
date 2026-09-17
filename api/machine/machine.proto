@@ -343,8 +343,15 @@ message Shutdown {
 }
 
 message ShutdownRequest {
+  enum Mode {
+    DEFAULT = 0;
+    FORCE = 1;
+  }
   // Force indicates whether node should shutdown without first cordening and draining
   bool force = 1;
+  // Mode FORCE powers the node off without stopping the services first, the way
+  // RebootRequest.Mode FORCE reboots without stopping them.
+  Mode mode = 2;
 }
 
 message ShutdownResponse {

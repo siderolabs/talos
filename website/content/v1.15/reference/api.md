@@ -283,6 +283,7 @@ description: Talos gRPC API reference.
     - [ResetRequest.WipeMode](#machine.ResetRequest.WipeMode)
     - [SequenceEvent.Action](#machine.SequenceEvent.Action)
     - [ServiceStateEvent.Action](#machine.ServiceStateEvent.Action)
+    - [ShutdownRequest.Mode](#machine.ShutdownRequest.Mode)
     - [TaskEvent.Action](#machine.TaskEvent.Action)
     - [UpgradeRequest.RebootMode](#machine.UpgradeRequest.RebootMode)
   
@@ -4537,6 +4538,7 @@ The messages message containing the shutdown status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | force | [bool](#bool) |  | Force indicates whether node should shutdown without first cordening and draining |
+| mode | [ShutdownRequest.Mode](#machine.ShutdownRequest.Mode) |  | Mode FORCE powers the node off without stopping the services first, the way RebootRequest.Mode FORCE reboots without stopping them. |
 
 
 
@@ -5019,6 +5021,18 @@ File type.
 | FAILED | 6 |  |
 | SKIPPED | 7 |  |
 | STARTING | 8 |  |
+
+
+
+<a name="machine.ShutdownRequest.Mode"></a>
+
+### ShutdownRequest.Mode
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DEFAULT | 0 |  |
+| FORCE | 1 |  |
 
 
 

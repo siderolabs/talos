@@ -406,6 +406,13 @@ func WithShutdownForce(force bool) ShutdownOption {
 	}
 }
 
+// WithShutdownMode sets the shutdown mode for the Shutdown API call.
+func WithShutdownMode(mode machineapi.ShutdownRequest_Mode) ShutdownOption {
+	return func(req *machineapi.ShutdownRequest) {
+		req.Mode = mode
+	}
+}
+
 // Shutdown implements the proto.MachineServiceClient interface.
 func (c *Client) Shutdown(ctx context.Context, opts ...ShutdownOption) error {
 	_, err := c.ShutdownWithResponse(ctx, opts...)

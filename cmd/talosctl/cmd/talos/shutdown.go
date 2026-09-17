@@ -8,19 +8,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/pkg/flags"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
-var shutdownCmdFlags struct {
+var shutdownCmdFlags = struct {
 	trackableActionCmdFlags
 
-	force bool
+	shutdownMode flags.PflagExtended[machine.ShutdownRequest_Mode]
+	force        bool
+}{
+	shutdownMode: flags.ProtoEnum(machine.ShutdownRequest_DEFAULT, machine.ShutdownRequest_Mode_value, machine.ShutdownRequest_Mode_name),
 }
 
 // shutdownCmd represents the shutdown command.
@@ -36,6 +42,7 @@ var shutdownCmd = &cobra.Command{
 
 		opts := []client.ShutdownOption{
 			client.WithShutdownForce(shutdownCmdFlags.force),
+			client.WithShutdownMode(shutdownCmdFlags.shutdownMode.Value()),
 		}
 
 		ctx := cmd.Context()
@@ -81,7 +88,10 @@ var shutdownCmd = &cobra.Command{
 }
 
 func shutdownGetActorID(ctx context.Context, c *client.Client) (string, error) {
-	resp, err := c.ShutdownWithResponse(ctx, client.WithShutdownForce(shutdownCmdFlags.force))
+	resp, err := c.ShutdownWithResponse(ctx,
+		client.WithShutdownForce(shutdownCmdFlags.force),
+		client.WithShutdownMode(shutdownCmdFlags.shutdownMode.Value()),
+	)
 	if err != nil {
 		return "", err
 	}
@@ -95,6 +105,14 @@ func shutdownGetActorID(ctx context.Context, c *client.Client) (string, error) {
 
 func init() {
 	shutdownCmd.Flags().BoolVar(&shutdownCmdFlags.force, "force", false, "if true, force a node to shutdown without a cordon/drain")
+	shutdownCmd.Flags().VarP(
+		shutdownCmdFlags.shutdownMode, "mode", "m",
+		fmt.Sprintf(
+			"select the shutdown mode. Mode %q powers the node off without stopping the services first. Values: %v",
+			strings.ToLower(machine.ShutdownRequest_FORCE.String()),
+			shutdownCmdFlags.shutdownMode.Options(),
+		),
+	)
 	shutdownCmdFlags.addTrackActionFlags(shutdownCmd)
 	addCommand(shutdownCmd)
 }

@@ -3377,6 +3377,7 @@ talosctl shutdown [flags]
   -e, --endpoints strings          override default endpoints in Talos configuration
       --force                      if true, force a node to shutdown without a cordon/drain
   -h, --help                       help for shutdown
+  -m, --mode string                select the shutdown mode. Mode "force" powers the node off without stopping the services first. Values: [default force] (default "default")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
