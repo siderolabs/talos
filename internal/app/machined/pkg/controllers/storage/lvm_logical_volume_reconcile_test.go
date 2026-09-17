@@ -23,10 +23,11 @@ import (
 
 // fakeLVProvisioner records LVCreate / LVExtend calls keyed by "vg/lv".
 type fakeLVProvisioner struct {
-	mu       sync.Mutex
-	created  map[string]lvm.LVCreateOptions
-	extended map[string]lvm.LVExtendOptions
-	err      error
+	mu          sync.Mutex
+	created     map[string]lvm.LVCreateOptions
+	extended    map[string]lvm.LVExtendOptions
+	err         error
+	createCalls int
 }
 
 func newFakeLVProvisioner() *fakeLVProvisioner {
@@ -39,6 +40,8 @@ func newFakeLVProvisioner() *fakeLVProvisioner {
 func (f *fakeLVProvisioner) LVCreate(_ context.Context, vg, lv string, opts lvm.LVCreateOptions) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+
+	f.createCalls++
 
 	if f.err != nil {
 		return f.err
@@ -94,6 +97,22 @@ func (f *fakeLVProvisioner) reset() {
 
 	f.created = map[string]lvm.LVCreateOptions{}
 	f.extended = map[string]lvm.LVExtendOptions{}
+	f.createCalls = 0
+	f.err = nil
+}
+
+func (f *fakeLVProvisioner) setError(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.err = err
+}
+
+func (f *fakeLVProvisioner) createCallCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.createCalls
 }
 
 type LVMLogicalVolumeReconcileSuite struct {
@@ -402,6 +421,35 @@ func (suite *LVMLogicalVolumeReconcileSuite) TestPercentNoGrowWhenAtTarget() {
 	suite.Assert().False(ok)
 }
 
+func (suite *LVMLogicalVolumeReconcileSuite) TestRetriesTransientFailureWithoutNewEvent() {
+	suite.provisioner.setError(context.DeadlineExceeded)
+	suite.createVGStatus("vg-pool")
+	suite.createLVSpec("vg-pool", "lv-data", storageres.LVMLogicalVolumeTypeLinear, 1<<30, 0)
+
+	suite.eventually(func() bool { return suite.provisioner.createCallCount() >= 1 })
+	suite.provisioner.setError(nil)
+
+	// No resource event is emitted after backend recovery.
+	suite.eventually(func() bool {
+		_, ok := suite.provisioner.get("vg-pool/lv-data")
+
+		return ok
+	})
+
+	suite.Assert().GreaterOrEqual(suite.provisioner.createCallCount(), 2)
+}
+
+func (suite *LVMLogicalVolumeReconcileSuite) TestPersistentFailureKeepsRetrying() {
+	suite.provisioner.setError(context.DeadlineExceeded)
+	defer suite.provisioner.setError(nil)
+
+	suite.createVGStatus("vg-pool")
+	suite.createLVSpec("vg-pool", "lv-data", storageres.LVMLogicalVolumeTypeLinear, 1<<30, 0)
+
+	// A persistent operational error continues to retry without event input.
+	suite.eventually(func() bool { return suite.provisioner.createCallCount() >= 3 })
+}
+
 func TestLVMLogicalVolumeReconcileSuite(t *testing.T) {
 	t.Parallel()
 
@@ -413,7 +461,9 @@ func TestLVMLogicalVolumeReconcileSuite(t *testing.T) {
 		Timeout: 5 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.LVMLogicalVolumeReconcileController{
-				LVM: provisioner,
+				LVM:                  provisioner,
+				RetryInitialInterval: 10 * time.Millisecond,
+				RetryMaxInterval:     40 * time.Millisecond,
 			}))
 		},
 	}
