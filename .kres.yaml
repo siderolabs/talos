@@ -1390,6 +1390,52 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-hypervisor
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/hypervisor
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: e2e-hypervisor
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-hypervisor
+            # The hypervisor APIs need neither etcd nor Kubernetes, so the cluster runs without
+            # them: a control plane and a worker. The spare disk the content libraries are
+            # provisioned on is attached to the worker, as extra disks never land on control
+            # planes, and the second node is what lets the tests which need more than one run.
+            QEMU_CONTROLPLANES: 1
+            QEMU_WORKERS: 1
+            QEMU_EXTRA_DISKS: 1
+            WITH_SKIP_ETCD_K8S: true
+            TEST_MODE: skip-etcd-k8s
+            WITH_CONFIG_PATCH: "@hack/test/patches/content-library.yaml"
+            INTEGRATION_TEST_RUN: "TestIntegration/api.ContentLibrarySuite|TestIntegration/cli.ContentLibrarySuite"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-hypervisor
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-extensions
       buildxOptions:
         enabled: true

@@ -42,6 +42,17 @@ description: Talos gRPC API reference.
   
     - [InspectService](#inspect.InspectService)
   
+- [machine/contentlibrary.proto](#machine/contentlibrary.proto)
+    - [ContentLibraryServiceDeleteRequest](#machine.ContentLibraryServiceDeleteRequest)
+    - [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse)
+    - [ContentLibraryServiceListRequest](#machine.ContentLibraryServiceListRequest)
+    - [ContentLibraryServiceListResponse](#machine.ContentLibraryServiceListResponse)
+    - [ContentLibraryServiceUploadInfo](#machine.ContentLibraryServiceUploadInfo)
+    - [ContentLibraryServiceUploadRequest](#machine.ContentLibraryServiceUploadRequest)
+    - [ContentLibraryServiceUploadResponse](#machine.ContentLibraryServiceUploadResponse)
+  
+    - [ContentLibraryService](#machine.ContentLibraryService)
+  
 - [machine/debug.proto](#machine/debug.proto)
     - [DebugContainerRunRequest](#machine.DebugContainerRunRequest)
     - [DebugContainerRunRequestSpec](#machine.DebugContainerRunRequestSpec)
@@ -1205,6 +1216,146 @@ InspectService provides auxiliary API to inspect OS internals.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ControllerRuntimeDependencies | [.google.protobuf.Empty](#google.protobuf.Empty) | [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="machine/contentlibrary.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/contentlibrary.proto
+
+
+
+<a name="machine.ContentLibraryServiceDeleteRequest"></a>
+
+### ContentLibraryServiceDeleteRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library_id | [string](#string) |  | ID of the content library to delete from. |
+| name | [string](#string) |  | Name of the file within the library. |
+
+
+
+
+
+
+<a name="machine.ContentLibraryServiceDeleteResponse"></a>
+
+### ContentLibraryServiceDeleteResponse
+
+
+
+
+
+
+
+<a name="machine.ContentLibraryServiceListRequest"></a>
+
+### ContentLibraryServiceListRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library_id | [string](#string) |  | ID of the content library to list. |
+
+
+
+
+
+
+<a name="machine.ContentLibraryServiceListResponse"></a>
+
+### ContentLibraryServiceListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the file within the library. |
+| size | [uint64](#uint64) |  | Size of the file in bytes. |
+| modified_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Time the file was last modified. |
+
+
+
+
+
+
+<a name="machine.ContentLibraryServiceUploadInfo"></a>
+
+### ContentLibraryServiceUploadInfo
+ContentLibraryServiceUploadInfo is the metadata of an upload.
+
+It is sent as the first message of the Upload stream.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library_id | [string](#string) |  | ID of the content library to upload to. |
+| name | [string](#string) |  | Name of the file within the library. |
+| overwrite | [bool](#bool) |  | Overwrite an existing file with the same name. |
+
+
+
+
+
+
+<a name="machine.ContentLibraryServiceUploadRequest"></a>
+
+### ContentLibraryServiceUploadRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| info | [ContentLibraryServiceUploadInfo](#machine.ContentLibraryServiceUploadInfo) |  | Metadata of the upload, sent as the first message. |
+| chunk | [common.Data](#common.Data) |  | Chunk of the file contents. |
+
+
+
+
+
+
+<a name="machine.ContentLibraryServiceUploadResponse"></a>
+
+### ContentLibraryServiceUploadResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the uploaded file. |
+| size | [uint64](#uint64) |  | Size of the uploaded file in bytes. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.ContentLibraryService"></a>
+
+### ContentLibraryService
+The ContentLibraryService manages the contents of content libraries.
+
+Content libraries store virtual machine images; they are declared with the
+ContentLibraryConfig document and backed by a volume.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| List | [ContentLibraryServiceListRequest](#machine.ContentLibraryServiceListRequest) | [ContentLibraryServiceListResponse](#machine.ContentLibraryServiceListResponse) stream | List files stored in a content library. |
+| Upload | [ContentLibraryServiceUploadRequest](#machine.ContentLibraryServiceUploadRequest) stream | [ContentLibraryServiceUploadResponse](#machine.ContentLibraryServiceUploadResponse) | Upload a file to a content library. |
+| Delete | [ContentLibraryServiceDeleteRequest](#machine.ContentLibraryServiceDeleteRequest) | [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse) | Delete a file from a content library. |
 
  <!-- end services -->
 

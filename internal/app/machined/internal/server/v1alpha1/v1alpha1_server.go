@@ -54,6 +54,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/internal/app/contentlibrary"
 	"github.com/siderolabs/talos/internal/app/debug"
 	"github.com/siderolabs/talos/internal/app/images"
 	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
@@ -158,6 +159,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterStorageServiceServer(obj, machinestorage.NewService())
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
+	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(resourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})

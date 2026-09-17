@@ -98,6 +98,8 @@ func runService(ctx context.Context, resources state.State, config *runtime.APIS
 		"/machine.MachineService/Logs",
 		"/machine.MachineService/PacketCapture",
 		"/machine.MachineService/Read",
+		"/machine.ContentLibraryService/List",
+		"/machine.ContentLibraryService/Upload",
 		"/machine.LifecycleService/Install",
 		"/machine.LifecycleService/Upgrade",
 		"/os.OSService/Dmesg",

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -19,6 +18,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -465,7 +465,7 @@ func (ctrl *ContentLibraryController) sweepStagedUploads(logger *zap.Logger, lib
 	for _, entry := range entries {
 		name := entry.Name()
 
-		if !strings.HasPrefix(name, ".") || !strings.HasSuffix(name, constants.ContentLibraryInflightUploadSuffix) {
+		if !staging.IsName(name) {
 			continue
 		}
 

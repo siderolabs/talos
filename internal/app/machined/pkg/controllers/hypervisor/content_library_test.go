@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
+	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
@@ -282,7 +283,9 @@ func (suite *ContentLibrarySuite) TestBecomesReady() {
 func (suite *ContentLibrarySuite) TestSweepsStagedUploads() {
 	target := suite.T().TempDir()
 
-	staged := filepath.Join(target, ".image"+constants.ContentLibraryInflightUploadSuffix)
+	// Deliberately not staging.Name: the sweep has to match anything staged-looking, not only what
+	// today's uploads name themselves.
+	staged := filepath.Join(target, staging.Prefix+"image"+staging.Suffix)
 	suite.Require().NoError(os.WriteFile(staged, nil, 0o644))
 
 	kept := filepath.Join(target, "image")

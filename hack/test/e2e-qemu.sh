@@ -310,6 +310,16 @@ case "${WITH_TALOS_VERSION:-none}" in
     ;;
 esac
 
+# A cluster without etcd and Kubernetes: the machine configuration carries neither, so nothing but
+# Talos itself comes up. Used by the tests which only exercise Talos APIs.
+case "${WITH_SKIP_ETCD_K8S:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--skip-etcd-k8s" "--skip-kubeconfig" "--skip-k8s-node-readiness-check")
+    ;;
+esac
+
 case "${WITH_ENFORCING:-false}" in
   false)
     ;;
@@ -415,6 +425,10 @@ esac
 case "${TEST_MODE:-default}" in
   fast-conformance)
     run_kubernetes_conformance_test fast
+    ;;
+  skip-etcd-k8s)
+    # There is no Kubernetes to fetch a kubeconfig from, or to run the Kubernetes tests against.
+    run_talos_integration_test
     ;;
   *)
     get_kubeconfig

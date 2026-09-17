@@ -50,6 +50,7 @@ type Client struct {
 	ImageClient          machineapi.ImageServiceClient
 	DebugClient          machineapi.DebugServiceClient
 	LifecycleClient      machineapi.LifecycleServiceClient
+	ContentLibraryClient machineapi.ContentLibraryServiceClient
 
 	COSI state.State
 
@@ -181,6 +182,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
 	c.LifecycleClient = machineapi.NewLifecycleServiceClient(c.conn)
+	c.ContentLibraryClient = machineapi.NewContentLibraryServiceClient(c.conn)
 
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))

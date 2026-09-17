@@ -38,6 +38,13 @@ const (
 	// MetaWriter defines Talos role that allows mutating META values (write and delete).
 	MetaWriter = Role(Prefix + "meta:writer")
 
+	// ContentLibraryReader defines Talos role that allows listing the contents of content libraries.
+	ContentLibraryReader = Role(Prefix + "content-library:reader")
+
+	// ContentLibraryWriter defines Talos role that allows mutating the contents of content libraries
+	// (upload and delete), in addition to listing them.
+	ContentLibraryWriter = Role(Prefix + "content-library:writer")
+
 	// Impersonator defines Talos role for impersonating another user (and their role).
 	// Used internally, but may also be granted to the user.
 	Impersonator = Role(Prefix + "impersonator")
@@ -50,7 +57,7 @@ type Set struct {
 
 var (
 	// All roles that can be granted to users.
-	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, Impersonator)
+	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, ContentLibraryReader, ContentLibraryWriter, Impersonator)
 
 	// Zero is an empty set of roles.
 	Zero = MakeSet()

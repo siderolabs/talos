@@ -2234,6 +2234,156 @@ talosctl health [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl hypervisor content-library delete
+
+Delete a file from a content library
+
+```
+talosctl hypervisor content-library delete <library_id> <filename> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for delete
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
+
+## talosctl hypervisor content-library list
+
+List the files stored in a content library
+
+```
+talosctl hypervisor content-library list <library_id> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for list
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
+
+## talosctl hypervisor content-library upload
+
+Upload a file to a content library
+
+### Synopsis
+
+Uploads a local file to a content library, under its own name.
+
+If '-' is given for <filename>, the contents are read from stdin, and --name is required
+to say what the file should be called within the library.
+
+```
+talosctl hypervisor content-library upload <library_id> <filename> [flags]
+```
+
+### Options
+
+```
+  -h, --help          help for upload
+      --name string   name of the file within the library (defaults to the base name of <filename>)
+      --overwrite     replace a file of the same name if it already exists
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
+
+## talosctl hypervisor content-library
+
+Manage the contents of content libraries
+
+### Synopsis
+
+Content libraries store virtual machine images. They are declared with the
+ContentLibraryConfig document; this command manages what is stored in them.
+
+### Options
+
+```
+  -h, --help   help for content-library
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
+* [talosctl hypervisor content-library delete](#talosctl-hypervisor-content-library-delete)	 - Delete a file from a content library
+* [talosctl hypervisor content-library list](#talosctl-hypervisor-content-library-list)	 - List the files stored in a content library
+* [talosctl hypervisor content-library upload](#talosctl-hypervisor-content-library-upload)	 - Upload a file to a content library
+
+## talosctl hypervisor
+
+Manage the Talos hypervisor
+
+### Options
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -h, --help                       help for hypervisor
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
+
 ## talosctl image cache-cert-gen
 
 Generate TLS certificates and CA patch required for securing image cache to Talos communication
@@ -3905,6 +4055,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
 * [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
 * [talosctl health](#talosctl-health)	 - Check cluster health
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
 * [talosctl image](#talosctl-image)	 - Manage container images
 * [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos

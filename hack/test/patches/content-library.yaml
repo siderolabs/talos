@@ -1,0 +1,11 @@
+# A default content library, backed by a directory user volume so it needs no disk of its own.
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: vm-images
+volumeType: directory
+---
+apiVersion: v1alpha1
+kind: ContentLibraryConfig
+name: test-content-library
+backing:
+  volume: vm-images

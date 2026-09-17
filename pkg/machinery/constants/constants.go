@@ -1451,11 +1451,6 @@ const (
 	// SwapVolumePrefix is the prefix for the swap volumes.
 	SwapVolumePrefix = "s-"
 
-	// ContentLibraryInflightUploadSuffix ends the name an in-flight upload is staged under inside a content
-	// library. Staged names are also dot-prefixed, which keeps them out of the content library API
-	// entirely; the suffix is what lets the leftovers of an interrupted upload be swept.
-	ContentLibraryInflightUploadSuffix = ".upload"
-
 	// ContainerServicePIDPrefix distinguishes container PIDs from Talos service PIDs in the ServicePID
 	// namespace, parallel to the "ext-" prefix extension services use, so an AllowedServices glob can
 	// target containers without risking a collision with an unrelated service name.
