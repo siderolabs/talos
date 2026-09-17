@@ -36,6 +36,19 @@ configuration:
     kind: PodSecurityConfiguration
 {{< /highlight >}}
 
+{{< highlight yaml >}}
+apiVersion: v1alpha1
+kind: KubeAdmissionControlConfig
+name: PodSecurity # Admission control plugin name, should be a valid Kubernetes admission control plugin name.
+# Kubernetes API server [admission control plugins](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/).
+configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    exemptions:
+        namespaces:
+            - rook-ceph
+    kind: PodSecurityConfiguration
+{{< /highlight >}}
+
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
