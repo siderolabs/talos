@@ -467,6 +467,14 @@ func (svcrunner *ServiceRunner) notifyEvent(event StateEvent) {
 	}
 }
 
+// inState reports whether the service runner is currently in the given state event.
+func (svcrunner *ServiceRunner) inState(event StateEvent) bool {
+	svcrunner.mu.Lock()
+	defer svcrunner.mu.Unlock()
+
+	return svcrunner.inStateLocked(event)
+}
+
 func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:

@@ -25,6 +25,10 @@ import (
 	"github.com/siderolabs/talos/pkg/conditions"
 )
 
+// stopServicesTimeout bounds a single stopServices call: the wait for reverse
+// dependencies to stop, and the wait for the services themselves.
+const stopServicesTimeout = 30 * time.Second
+
 // singleton the system services API interface.
 type singleton struct {
 	runtime runtime.Runtime
@@ -378,8 +382,9 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 	// shutdown all the services waiting for rev deps
 	var shutdownWg sync.WaitGroup
 
-	// wait max 30 seconds for reverse deps to shut down
-	shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, 30*time.Second)
+	// bound the whole stop: the wait for reverse dependencies below, and the wait
+	// for the services themselves at the end of this function
+	shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, stopServicesTimeout)
 	defer shutdownCtxCancel()
 
 	stoppedConds := make([]conditions.Condition, 0, len(servicesToStop))
@@ -405,7 +410,29 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 
 	shutdownWg.Wait()
 
-	return conditions.WaitForAll(stoppedConds...).Wait(ctx)
+	// This final wait needs a deadline as much as the per-service waits above do.
+	// A service which does not stop -- a containerd shim which will not go away,
+	// for example -- would otherwise block here forever, and the callers on the
+	// shutdown and reboot paths (Controller.runTask) attach no deadline of their
+	// own. The cost of blocking is the rest of the sequence: the filesystems are
+	// never unmounted and the machine is never powered off. Give up instead, name
+	// what did not stop, and let the sequence carry on.
+	if err := conditions.WaitForAll(stoppedConds...).Wait(shutdownCtx); err != nil {
+		if ctx.Err() != nil {
+			// the caller gave up, not us: report that
+			return err
+		}
+
+		notStopped := xslices.Filter(maps.Keys(servicesToStop), func(name string) bool {
+			return !servicesToStop[name].inState(StateEventDown)
+		})
+
+		slices.Sort(notStopped)
+
+		log.Printf("gave up waiting for %s to stop after %s, continuing", strings.Join(notStopped, ", "), stopServicesTimeout)
+	}
+
+	return nil
 }
 
 // List returns snapshot of ServiceRunner instances.
