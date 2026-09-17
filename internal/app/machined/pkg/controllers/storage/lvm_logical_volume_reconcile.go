@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -50,6 +51,9 @@ type LVMLogicalVolumeProvisioner interface {
 type LVMLogicalVolumeReconcileController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          LVMLogicalVolumeProvisioner
+
+	RetryInitialInterval time.Duration
+	RetryMaxInterval     time.Duration
 }
 
 // Name implements controller.Controller interface.
@@ -193,9 +197,10 @@ func (ctrl *LVMLogicalVolumeReconcileController) Run(ctx context.Context, r cont
 		}
 
 		if err := reconcileErrs.ErrorOrNil(); err != nil {
-			// Log and retry on next event.
-			logger.Warn("LVM logical volume reconcile encountered errors", zap.Error(err))
+			return fmt.Errorf("reconcile LVM logical volumes: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

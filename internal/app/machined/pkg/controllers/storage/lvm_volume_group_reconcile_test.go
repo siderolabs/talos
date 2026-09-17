@@ -32,9 +32,10 @@ type fakeProvisioner struct {
 	vgCreates map[string][]string
 	vgExtends map[string]map[string]struct{}
 
-	pvCreateErr error
-	vgCreateErr error
-	vgExtendErr error
+	pvCreateErr   error
+	vgCreateErr   error
+	vgExtendErr   error
+	pvCreateCalls int
 }
 
 func newFakeProvisioner() *fakeProvisioner {
@@ -50,6 +51,7 @@ func (f *fakeProvisioner) PVCreate(_ context.Context, device string) error {
 	defer f.mu.Unlock()
 
 	f.pvCreates[device] = struct{}{}
+	f.pvCreateCalls++
 
 	return f.pvCreateErr
 }
@@ -121,6 +123,20 @@ func (f *fakeProvisioner) vgExtended(vg string) []string {
 	return out
 }
 
+func (f *fakeProvisioner) setPVCreateError(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.pvCreateErr = err
+}
+
+func (f *fakeProvisioner) pvCreateCallCount() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.pvCreateCalls
+}
+
 type LVMVolumeGroupReconcileSuite struct {
 	ctest.DefaultSuite
 
@@ -134,6 +150,10 @@ func (f *fakeProvisioner) reset() {
 	f.pvCreates = map[string]struct{}{}
 	f.vgCreates = map[string][]string{}
 	f.vgExtends = map[string]map[string]struct{}{}
+	f.pvCreateCalls = 0
+	f.pvCreateErr = nil
+	f.vgCreateErr = nil
+	f.vgExtendErr = nil
 }
 
 func (suite *LVMVolumeGroupReconcileSuite) SetupTest() {
@@ -234,6 +254,33 @@ func (suite *LVMVolumeGroupReconcileSuite) TestNoOpWhenObservedMatchesDesired() 
 	suite.Assert().False(vgCreated)
 }
 
+func (suite *LVMVolumeGroupReconcileSuite) TestRetriesTransientFailureWithoutNewEvent() {
+	suite.provisioner.setPVCreateError(context.DeadlineExceeded)
+	suite.createVGSpec("/dev/nvme0n1")
+
+	suite.eventually(func() bool { return suite.provisioner.pvCreateCallCount() >= 1 })
+	suite.provisioner.setPVCreateError(nil)
+
+	// No resource event is emitted after backend recovery.
+	suite.eventually(func() bool {
+		_, ok := suite.provisioner.vgCreated()
+
+		return ok
+	})
+
+	suite.Assert().GreaterOrEqual(suite.provisioner.pvCreateCallCount(), 2)
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestPersistentFailureKeepsRetrying() {
+	suite.provisioner.setPVCreateError(context.DeadlineExceeded)
+	defer suite.provisioner.setPVCreateError(nil)
+
+	suite.createVGSpec("/dev/nvme0n1")
+
+	// A persistent operational error continues to retry without event input.
+	suite.eventually(func() bool { return suite.provisioner.pvCreateCallCount() >= 3 })
+}
+
 func TestLVMVolumeGroupReconcileSuite(t *testing.T) {
 	t.Parallel()
 
@@ -245,7 +292,9 @@ func TestLVMVolumeGroupReconcileSuite(t *testing.T) {
 		Timeout: 5 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.LVMVolumeGroupReconcileController{
-				LVM: provisioner,
+				LVM:                  provisioner,
+				RetryInitialInterval: 10 * time.Millisecond,
+				RetryMaxInterval:     40 * time.Millisecond,
 			}))
 		},
 	}
