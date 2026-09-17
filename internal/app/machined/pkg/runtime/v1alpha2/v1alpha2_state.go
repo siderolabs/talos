@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 
+	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -52,7 +53,7 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(namespaced.NewState(
+	s.resources = state.WrapCore(ctrltrace.WrapState(namespaced.NewState(
 		func(ns string) state.CoreState {
 			return inmem.NewStateWithOptions(
 				inmem.WithHistoryInitialCapacity(8),
@@ -60,7 +61,7 @@ func NewState() (*State, error) {
 				inmem.WithHistoryGap(4),
 			)(ns)
 		},
-	))
+	)))
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 

@@ -44,6 +44,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/internal/pkg/md"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -603,9 +604,18 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Events: ctrl.v1alpha1Runtime.Events(),
 		},
 	} {
-		if err := ctrl.controllerRuntime.RegisterController(c); err != nil {
+		if err := ctrl.controllerRuntime.RegisterController(ctrltrace.WrapController(c)); err != nil {
 			return err
 		}
+	}
+
+	if ctrltrace.Enabled() {
+		graph, err := ctrl.controllerRuntime.GetDependencyGraph()
+		if err != nil {
+			return err
+		}
+
+		ctrltrace.EmitGraph(graph)
 	}
 
 	return ctrl.controllerRuntime.Run(ctx)

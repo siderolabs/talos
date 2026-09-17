@@ -1,0 +1,1320 @@
+<title>Reconciliation Theatre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<style>
+:root{
+  color-scheme: light;
+  --ground:#F2F5F7;
+  --stage:#FFFFFF;
+  --panel:#FAFBFC;
+  --hairline:#DCE4EA;
+  --hairline-soft:#EAEFF3;
+  --ink:#0F1820;
+  --ink-2:#48596A;
+  --ink-3:#7B8C9A;
+  --res:#2a78d6;
+  --ctrl:#eb6834;
+  --seed:#1baf7a;
+  --good:#0ca30c;
+  --critical:#d03b3b;
+  --warning:#fab219;
+  --glow:#0F1820;
+  --shadow:0 1px 2px rgba(15,24,32,.06), 0 8px 24px rgba(15,24,32,.06);
+  /* multiplier for everything drawn on the canvas: strokes, node radii, label sizes */
+  --boost:1;
+  /* how far the unselected context recedes: node fill, then edge stroke */
+  --dim:.12;
+  --context:.25;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]):not([data-viz-theme]){
+    color-scheme: dark;
+    --ground:#080C11;
+    --stage:#0E1319;
+    --panel:#121A22;
+    --hairline:#22303C;
+    --hairline-soft:#18232C;
+    --ink:#E4ECF2;
+    --ink-2:#93A5B4;
+    --ink-3:#6B7D8C;
+    --res:#3987e5;
+    --ctrl:#d95926;
+    --seed:#199e70;
+    --good:#0ca30c;
+    --critical:#d03b3b;
+    --warning:#fab219;
+    --glow:#FFFFFF;
+    --shadow:0 1px 0 rgba(255,255,255,.04), 0 12px 32px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]:not([data-viz-theme]){
+  color-scheme: dark;
+  --ground:#080C11;
+  --stage:#0E1319;
+  --panel:#121A22;
+  --hairline:#22303C;
+  --hairline-soft:#18232C;
+  --ink:#E4ECF2;
+  --ink-2:#93A5B4;
+  --ink-3:#6B7D8C;
+  --res:#3987e5;
+  --ctrl:#d95926;
+  --seed:#199e70;
+  --good:#0ca30c;
+  --critical:#d03b3b;
+  --warning:#fab219;
+  --glow:#FFFFFF;
+  --shadow:0 1px 0 rgba(255,255,255,.04), 0 12px 32px rgba(0,0,0,.5);
+}
+
+/* ---------- explicit theme choices (the Theme control) ---------- */
+:root[data-viz-theme="light"]{ color-scheme: light }
+
+:root[data-viz-theme="dark"]{
+  color-scheme: dark;
+    --ground:#080C11;
+    --stage:#0E1319;
+    --panel:#121A22;
+    --hairline:#22303C;
+    --hairline-soft:#18232C;
+    --ink:#E4ECF2;
+    --ink-2:#93A5B4;
+    --ink-3:#6B7D8C;
+    --res:#3987e5;
+    --ctrl:#d95926;
+    --seed:#199e70;
+    --good:#0ca30c;
+    --critical:#d03b3b;
+    --warning:#fab219;
+    --glow:#FFFFFF;
+    --shadow:0 1px 0 rgba(255,255,255,.04), 0 12px 32px rgba(0,0,0,.5);
+}
+
+/* Projector: white ground, ink-dark marks, heavier strokes and larger type.
+   Lecture-hall projectors crush low contrast, so the greys that read as "quiet"
+   on a laptop disappear entirely — everything here is pushed toward black. */
+:root[data-viz-theme="projector"]{
+  color-scheme: light;
+  --ground:#FFFFFF;
+  --stage:#FFFFFF;
+  --panel:#FFFFFF;
+  --hairline:#6B7885;
+  --hairline-soft:#9AA5B0;
+  --ink:#000000;
+  --ink-2:#1B242D;
+  --ink-3:#414D58;
+  --res:#0B4FA8;
+  --ctrl:#B03A00;
+  --seed:#046A04;
+  --good:#046A04;
+  --critical:#A80000;
+  --warning:#8A5A00;
+  --glow:#000000;
+  --shadow:0 2px 0 rgba(0,0,0,.18);
+  --boost:1.45;
+  /* nodes stay legible, but the edge mesh is already 1.45x thicker here - so it wants
+     less alpha than a screen does, not more, or it swamps the selection's arrows */
+  --dim:.3;
+  --context:.18;
+}
+:root[data-viz-theme="projector"] body{font-size:15.5px}
+:root[data-viz-theme="projector"] .stat b{font-size:21px}
+:root[data-viz-theme="projector"] .stat span{font-size:11px;color:var(--ink-2)}
+:root[data-viz-theme="projector"] .eyebrow,
+:root[data-viz-theme="projector"] .sect h2{color:var(--ink-2);font-size:12px}
+:root[data-viz-theme="projector"] .detail-name{font-size:15px}
+:root[data-viz-theme="projector"] .dl{font-size:13.5px}
+:root[data-viz-theme="projector"] .dl dt{font-size:11.5px;color:var(--ink-2)}
+:root[data-viz-theme="projector"] .chip{font-size:12.5px;border-color:var(--ink-3)}
+:root[data-viz-theme="projector"] .inst{font-size:13.5px}
+:root[data-viz-theme="projector"] .spec{font-size:12.5px;color:var(--ink)}
+:root[data-viz-theme="projector"] .stage-note{font-size:13px;color:var(--ink-2)}
+:root[data-viz-theme="projector"] .nsrow{font-size:13.5px}
+:root[data-viz-theme="projector"] button{border-color:var(--ink-3)}
+:root[data-viz-theme="projector"] #app{background:var(--ink-3)}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:14px;
+  line-height:1.5;
+  overflow:hidden;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{
+  font-family:"IBM Plex Sans Condensed",system-ui,sans-serif;
+  font-weight:600;text-transform:uppercase;letter-spacing:.09em;
+  font-size:10.5px;color:var(--ink-3);
+}
+
+/* ---------- shell ---------- */
+#app{
+  height:100%;
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto;
+  grid-template-columns:minmax(0,1fr) 336px;
+  grid-template-areas:"head head" "stage side" "foot foot";
+  gap:1px;
+  background:var(--hairline);
+}
+
+/* ---------- header ---------- */
+header{
+  grid-area:head;background:var(--panel);
+  display:flex;align-items:center;gap:20px;
+  padding:10px 18px;
+  padding-top:calc(10px + env(safe-area-inset-top,0px));
+  flex-wrap:wrap;
+}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand h1{
+  font-family:"IBM Plex Sans Condensed",system-ui,sans-serif;
+  font-weight:700;font-size:17px;margin:0;letter-spacing:-.01em;white-space:nowrap;
+}
+.brand .sub{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;gap:1px;min-width:62px}
+.stat b{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;font-size:17px;font-weight:600;line-height:1.1}
+.stat span{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.stat.clock b{color:var(--ink)}
+
+/* ---------- stage ---------- */
+#stage{grid-area:stage;position:relative;background:var(--stage);overflow:hidden}
+#graph{display:block;width:100%;height:100%;cursor:grab;touch-action:none}
+#graph.dragging{cursor:grabbing}
+#tooltip{
+  position:absolute;pointer-events:none;z-index:6;opacity:0;transition:opacity .12s;
+  background:var(--panel);border:1px solid var(--hairline);border-radius:7px;
+  padding:7px 10px;max-width:290px;box-shadow:var(--shadow);
+}
+#tooltip.on{opacity:1}
+#tooltip .tt-k{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-family:"IBM Plex Sans Condensed",sans-serif;font-weight:600}
+#tooltip .tt-n{font-family:"IBM Plex Mono",monospace;font-size:12.5px;word-break:break-all;margin-top:1px}
+.stage-note{
+  position:absolute;left:16px;bottom:14px;z-index:5;
+  display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  font-size:11.5px;color:var(--ink-3);
+}
+.key{display:inline-flex;align-items:center;gap:6px}
+.key[hidden]{display:none}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--res);flex:none}
+.sq{width:9px;height:9px;border-radius:2.5px;background:var(--ctrl);flex:none}
+.arr{width:18px;height:2px;flex:none;position:relative;background:var(--ctrl)}
+.arr.r{background:var(--res);height:1.5px}
+.arr::after{content:"";position:absolute;right:-1px;top:50%;translate:0 -50%;
+  border:4px solid transparent;border-left-color:var(--ctrl);border-right:0}
+.arr.r::after{border-left-color:var(--res);border-width:3.5px}
+.zoomers{position:absolute;right:12px;top:12px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.zoomers button{width:32px;height:30px;padding:0;font-size:13px;justify-content:center}
+
+/* ---------- side panel ---------- */
+#side{grid-area:side;background:var(--panel);overflow-y:auto;overscroll-behavior:contain}
+.sect{border-bottom:1px solid var(--hairline-soft);padding:14px 16px}
+.sect h2{margin:0 0 9px;font-family:"IBM Plex Sans Condensed",sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+#search{
+  width:100%;padding:7px 9px;border-radius:6px;border:1px solid var(--hairline);
+  background:var(--stage);color:var(--ink);font-family:"IBM Plex Mono",monospace;font-size:12px;
+}
+#search:focus-visible{outline:2px solid var(--res);outline-offset:1px}
+.nslist{display:flex;flex-direction:column;gap:2px;max-height:216px;overflow-y:auto;margin:0 -4px}
+.nsrow{
+  display:flex;align-items:center;gap:8px;padding:3px 4px;border-radius:5px;cursor:pointer;
+  font-size:12.5px;user-select:none;
+}
+.nsrow:hover{background:var(--hairline-soft)}
+.nsrow input{margin:0;accent-color:var(--res)}
+.nsrow .nm{font-family:"IBM Plex Mono",monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.nsrow .ct{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3)}
+.nsrow.off .nm,.nsrow.off .ct{opacity:.4}
+
+.detail-empty{color:var(--ink-3);font-size:12.5px}
+.dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;font-size:12.5px;align-items:baseline}
+.dl dt{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);padding-top:2px}
+.dl dd{margin:0;font-family:"IBM Plex Mono",monospace;word-break:break-all}
+.title-row{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
+.title-row .badge{flex:none;margin-top:4px}
+.badge{width:11px;height:11px;border-radius:50%}
+.badge.c{border-radius:3px}
+.detail-name{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;font-weight:600;word-break:break-all;line-height:1.35}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.chip{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;padding:1.5px 6px;border-radius:4px;
+  border:1px solid var(--hairline);color:var(--ink-2);background:var(--stage);
+}
+.chip.io{border-color:transparent;background:color-mix(in srgb,var(--res) 14%,transparent)}
+.chip.oo{border-color:transparent;background:color-mix(in srgb,var(--ctrl) 16%,transparent)}
+.inst{display:flex;align-items:center;gap:7px;padding:4px 2px;font-size:12px;width:100%;
+  border:0;border-top:1px solid var(--hairline-soft);border-radius:0;background:none;
+  color:inherit;text-align:left;cursor:pointer}
+.inst:first-of-type{border-top:0}
+button.inst:hover{background:var(--hairline-soft);border-color:var(--hairline-soft)}
+button.inst:focus-visible{outline:2px solid var(--res);outline-offset:-2px}
+.caret{width:0;height:0;flex:none;border:4px solid transparent;border-left-color:var(--ink-3);
+  border-right:0;margin-left:1px;transition:rotate .12s}
+.caret.open{rotate:90deg}
+.spec{margin:0 0 6px;padding:8px 9px;background:var(--stage);border:1px solid var(--hairline);
+  border-radius:6px;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:11.5px;
+  line-height:1.45;white-space:pre-wrap;word-break:break-word;color:var(--ink-2);
+  max-height:260px;overflow:auto;overscroll-behavior:contain}
+.spec-none{margin:0 0 6px;font-size:11.5px;color:var(--ink-3)}
+@media (prefers-reduced-motion:reduce){ .caret{transition:none} }
+.inst .id{font-family:"IBM Plex Mono",monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.inst .v{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3)}
+.ph{width:7px;height:7px;border-radius:50%;background:var(--good);flex:none}
+.ph.td{background:var(--critical)}
+.ph.gone{background:var(--ink-3);opacity:.5}
+
+/* ---------- footer transport ---------- */
+footer{
+  grid-area:foot;background:var(--panel);
+  padding:9px 16px;
+  padding-bottom:calc(9px + env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:column;gap:7px;
+}
+.track{position:relative;height:58px}
+#timeline{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+button{
+  font:inherit;font-size:12.5px;color:var(--ink);background:var(--stage);
+  border:1px solid var(--hairline);border-radius:6px;padding:5px 11px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+}
+button:hover{border-color:var(--ink-3)}
+button:focus-visible{outline:2px solid var(--res);outline-offset:1px}
+button[aria-pressed="true"]{background:var(--ink);color:var(--stage);border-color:var(--ink)}
+#play{min-width:86px;justify-content:center;font-weight:600}
+.speeds{display:inline-flex;border:1px solid var(--hairline);border-radius:6px;overflow:hidden}
+.speeds button{border:0;border-radius:0;border-left:1px solid var(--hairline);padding:5px 9px;font-family:"IBM Plex Mono",monospace;font-size:12px}
+.speeds button:first-child{border-left:0}
+.spacer{flex:1}
+.hint{font-size:11.5px;color:var(--ink-3)}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+
+/* ---------- drop overlay ---------- */
+#drop{
+  position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+  background:color-mix(in srgb,var(--ground) 86%,transparent);backdrop-filter:blur(2px);
+}
+#drop.on{display:flex}
+#drop .box{
+  border:2px dashed var(--res);border-radius:12px;padding:34px 44px;text-align:center;background:var(--panel);
+}
+#boot{
+  position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;
+  background:var(--stage);color:var(--ink-3);font-size:13px;gap:10px;
+}
+#boot.done{display:none}
+
+@media (max-width:900px){
+  #app{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "stage" "side" "foot";grid-template-rows:auto minmax(220px,1fr) auto auto}
+  #side{max-height:38vh}
+  .stats{width:100%;margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){
+  #tooltip{transition:none}
+}
+</style>
+
+<div id="app">
+  <header>
+    <div class="brand">
+      <h1>Reconciliation Theatre</h1>
+      <span class="sub" id="source">Talos&nbsp;Linux · controller runtime trace</span>
+    </div>
+    <div class="stats">
+      <div class="stat clock"><b id="s-clock">0.00s</b><span>boot clock</span></div>
+      <div class="stat"><b id="s-res">0</b><span>resources</span></div>
+      <div class="stat"><b id="s-ctrl">0</b><span>reconciling</span></div>
+      <div class="stat"><b id="s-rate">0</b><span>ops/sec</span></div>
+      <div class="stat"><b id="s-ev">0</b><span>events</span></div>
+    </div>
+  </header>
+
+  <div id="stage">
+    <canvas id="graph"></canvas>
+    <div id="tooltip"><div class="tt-k"></div><div class="tt-n"></div></div>
+    <div class="zoomers">
+      <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+      <button id="zout" title="Zoom out" aria-label="Zoom out">-</button>
+      <button id="zfit" title="Fit to view" aria-label="Fit to view">fit</button>
+    </div>
+    <div class="stage-note">
+      <span class="key"><i class="sq"></i> controller</span>
+      <span class="key"><i class="dot"></i> resource type</span>
+      <span class="key">size = live instances</span>
+      <span class="key">flash = reconcile</span>
+      <span class="key sel-key" hidden><i class="arr w"></i> written by</span>
+      <span class="key sel-key" hidden><i class="arr r"></i> read by</span>
+    </div>
+    <div id="boot"><span>Loading the boot trace…</span></div>
+  </div>
+
+  <aside id="side">
+    <div class="sect">
+      <h2>Find</h2>
+      <input id="search" type="search" placeholder="kubelet, VolumeStatuses, secrets…" autocomplete="off">
+    </div>
+    <div class="sect">
+      <h2>Selection</h2>
+      <div id="detail"><p class="detail-empty">Click any node on the stage. Controllers show what they read and write; resource types show their live instances, owner and versions — all of it following the playhead.</p></div>
+    </div>
+    <div class="sect">
+      <h2>Namespaces</h2>
+      <div class="nslist" id="nslist"></div>
+    </div>
+    <div class="sect">
+      <h2>Trace</h2>
+      <div class="dl" id="meta"></div>
+    </div>
+  </aside>
+
+  <footer>
+    <div class="track"><canvas id="timeline"></canvas></div>
+    <div class="controls">
+      <button id="play" aria-pressed="false">Play</button>
+      <button id="restart" title="Back to t=0">Restart</button>
+      <div class="speeds" role="group" aria-label="Playback speed">
+        <button data-speed="0.1">0.1x</button>
+        <button data-speed="0.25">0.25x</button>
+        <button data-speed="0.5">0.5x</button>
+        <button data-speed="1">1x</button>
+        <button data-speed="2" aria-pressed="true">2x</button>
+        <button data-speed="4">4x</button>
+        <button data-speed="8">8x</button>
+      </div>
+      <button id="reads" aria-pressed="true" title="Draw the faint pulses for Get/List">Reads</button>
+      <button id="trails" aria-pressed="true" title="Leave a fading heat trail on active nodes">Heat</button>
+      <div class="speeds" role="group" aria-label="Theme">
+        <button data-theme-set="" title="Follow the viewer's theme">Auto</button>
+        <button data-theme-set="light">Light</button>
+        <button data-theme-set="dark">Dark</button>
+        <button data-theme-set="projector" title="White ground, heavy strokes, large type - for a projector">Projector</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="file-btn">Load a trace<input id="file" type="file" accept=".jsonl,.json,.ndjson,.log,text/plain" aria-label="Load a trace file"></button>
+      <span class="hint">or drop <span class="mono">talos-trace.jsonl</span> anywhere</span>
+    </div>
+  </footer>
+</div>
+
+<div id="drop"><div class="box"><div class="eyebrow">Release to load</div><div style="margin-top:6px">A JSONL capture from <span class="mono">talos.trace=1</span></div></div></div>
+
+<script>
+"use strict";
+/* ------------------------------------------------------------------ palette */
+const REDACTED = "<redacted: sensitive resource>";
+// rects of the controls floating over the canvas, so labels are never placed under them
+// (declared up here: applyTheme() re-measures during init, before the boot section runs)
+let chromeRects = [];
+const CSSV = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let P = {};
+function readPalette(){
+  P = {
+    stage:CSSV("--stage"), ink:CSSV("--ink"), ink2:CSSV("--ink-2"), ink3:CSSV("--ink-3"),
+    hair:CSSV("--hairline"), hairSoft:CSSV("--hairline-soft"),
+    res:CSSV("--res"), ctrl:CSSV("--ctrl"), seed:CSSV("--seed"),
+    good:CSSV("--good"), critical:CSSV("--critical"), warning:CSSV("--warning"),
+    glow:CSSV("--glow"),
+    boost: parseFloat(CSSV("--boost")) || 1,
+    dim: parseFloat(CSSV("--dim")) || .12,
+    context: parseFloat(CSSV("--context")) || .25,
+    dark: getComputedStyle(document.documentElement).colorScheme.includes("dark"),
+  };
+}
+readPalette();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", ()=>{readPalette();drawTimeline();});
+new MutationObserver(()=>{readPalette();drawTimeline();})
+  .observe(document.documentElement,{attributes:true,attributeFilter:["data-theme","data-viz-theme"]});
+
+// Theme choice is a per-viewer convenience, so it lives in localStorage - which can throw
+// or come back empty (private window, blocked site data), hence the try/catch either way.
+function applyTheme(name, remember){
+  const root = document.documentElement;
+  if (name) root.setAttribute("data-viz-theme", name);
+  else root.removeAttribute("data-viz-theme");
+  document.querySelectorAll("[data-theme-set]").forEach(b =>
+    b.setAttribute("aria-pressed", String((b.dataset.themeSet || "") === (name || ""))));
+  readPalette();
+  measureChrome();
+  if (remember){ try { localStorage.setItem("viz-theme", name || ""); } catch(_){} }
+}
+function storedTheme(){
+  try { return localStorage.getItem("viz-theme") || ""; } catch(_){ return ""; }
+}
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------------------------------------------------------------- namespace */
+const NS_FALLBACK = [
+  [".block.talos.dev","runtime"],[".net.talos.dev","network"],[".hardware.talos.dev","hardware"],
+  [".perf.talos.dev","runtime"],[".secrets.talos.dev","secrets"],[".kubernetes.talos.dev","k8s"],
+  [".k8s.talos.dev","k8s"],[".cluster.talos.dev","cluster"],[".files.talos.dev","files"],
+  [".time.talos.dev","runtime"],[".cri.talos.dev","cri"],[".containers.talos.dev","containers"],
+  [".etcd.talos.dev","etcd"],[".kubespan.talos.dev","kubespan"],[".security.talos.dev","security"],
+  [".siderolink.talos.dev","runtime"],[".v1alpha1.talos.dev","runtime"],[".runtime.talos.dev","runtime"],
+];
+const typeNS = new Map();
+function nsForType(rt){
+  if (typeNS.has(rt)) return typeNS.get(rt);
+  for (const [sfx,ns] of NS_FALLBACK) if (rt.endsWith(sfx)) return ns;
+  return "runtime";
+}
+
+/* -------------------------------------------------------------------- model */
+const M = {
+  meta:null, events:[], duration:1,
+  nodes:[], byKey:new Map(), links:[], linkKeys:new Set(),
+  namespaces:[], hidden:new Set(), buckets:[], bucketMs:1,
+};
+const key = (ns,rt) => ns+"/"+rt;
+
+function node(id, kind, label, ns){
+  let n = M.byKey.get(id);
+  if (n) return n;
+  n = {id, kind, label, ns, idx:M.nodes.length,
+       instances:new Map(), live:0, peak:0, heat:0, wakes:0, ops:0,
+       born:Infinity, died:Infinity, r:kind==="ctrl"?5.5:4.5,
+       inputs:new Set(), outputs:new Set(), readers:new Set(), writers:new Set(),
+       x:0, y:0, vis:0};
+  M.nodes.push(n); M.byKey.set(id, n);
+  return n;
+}
+function link(a,b,kind){
+  const k = a.id+"→"+b.id;
+  if (M.linkKeys.has(k)) return;
+  M.linkKeys.add(k);
+  M.links.push({source:a, target:b, kind});
+}
+
+function buildModel(records){
+  M.meta = null; M.metaStop = null; M.events = []; M.nodes = []; M.byKey = new Map();
+  M.links = []; M.linkKeys = new Set(); typeNS.clear();
+
+  let graphEdges = [];
+  for (const r of records){
+    if (r.k === "meta" && r.op === "start") M.meta = r.x || {};
+    else if (r.k === "meta" && r.op === "stop") M.metaStop = r.x || {};
+    else if (r.k === "graph") graphEdges = (r.x && r.x.edges) || [];
+    else M.events.push(r);
+  }
+  M.events.sort((a,b)=>a.t-b.t);
+
+  // resolve namespaces: observed events are authoritative, graph inputs fill the rest
+  for (const e of M.events) if (e.rt && e.ns) typeNS.set(e.rt, e.ns);
+  for (const e of graphEdges) if (e.rt && e.ns && !typeNS.has(e.rt)) typeNS.set(e.rt, e.ns);
+
+  for (const e of graphEdges){
+    const c = node("c:"+e.ctrl, "ctrl", e.ctrl, ctrlNS(e.ctrl));
+    const ns = e.ns || nsForType(e.rt);
+    const t = node("r:"+key(ns,e.rt), "res", e.rt, ns);
+    if (e.type.startsWith("output")){ c.outputs.add(t.id); t.writers.add(c.id); link(c,t,"out"); }
+    else { c.inputs.add(t.id); t.readers.add(c.id); link(t,c,"in"); }
+  }
+  for (const e of M.events){
+    const c = e.ctrl && e.ctrl !== "runtime" ? node("c:"+e.ctrl,"ctrl",e.ctrl,ctrlNS(e.ctrl)) : null;
+    if (!e.rt) continue;
+    const ns = e.ns || nsForType(e.rt);
+    const t = node("r:"+key(ns, e.rt), "res", e.rt, ns);
+    if (!c || e.k !== "op") continue;
+    if (e.op === "create" || e.op === "update" || e.op === "destroy"){
+      c.outputs.add(t.id); t.writers.add(c.id); link(c,t,"out");
+    } else if (e.op === "get" || e.op === "list"){
+      c.inputs.add(t.id); t.readers.add(c.id); link(t,c,"in");
+    }
+  }
+
+  M.duration = M.events.length ? M.events[M.events.length-1].t : 1;
+  const nsCount = new Map();
+  for (const n of M.nodes) nsCount.set(n.ns, (nsCount.get(n.ns)||0)+1);
+  M.namespaces = [...nsCount].sort((a,b)=>b[1]-a[1]);
+  M.hidden = new Set();
+
+  // activity histogram
+  const B = 240;
+  M.bucketMs = M.duration / B;
+  M.buckets = new Array(B).fill(0);
+  for (const e of M.events){
+    const i = Math.min(B-1, Math.floor(e.t / M.bucketMs));
+    if (e.k === "op") M.buckets[i]++;
+  }
+}
+function ctrlNS(name){
+  const p = name.split(".")[0];
+  const map = {v1alpha1:"runtime", runtime:"runtime", block:"runtime", perf:"runtime",
+    siderolink:"runtime", storage:"storage", network:"network", k8s:"k8s",
+    secrets:"secrets", cluster:"cluster", config:"config", etcd:"etcd", cri:"cri",
+    containers:"containers", kubespan:"kubespan", kubeaccess:"k8s", files:"files",
+    hardware:"hardware", security:"security", time:"runtime"};
+  if (map[p]) return map[p];
+  if (name.includes(".talos.dev")) return nsForType(name);
+  return "runtime";
+}
+
+/* ------------------------------------------------------------------- layout */
+function layout(){
+  const nss = M.namespaces.map(d=>d[0]);
+  const R = 560, cx = 0, cy = 0;
+  const centres = new Map();
+  nss.forEach((ns,i)=>{
+    const a = (i / nss.length) * Math.PI * 2 - Math.PI/2;
+    const rr = R * (0.45 + 0.55 * Math.min(1, Math.sqrt((M.namespaces[i][1])/70)));
+    centres.set(ns, [cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]);
+  });
+  for (const n of M.nodes){
+    const c = centres.get(n.ns) || [0,0];
+    n.x = c[0] + (Math.random()-.5)*80;
+    n.y = c[1] + (Math.random()-.5)*80;
+    n.cx = c[0]; n.cy = c[1];
+  }
+  const sim = d3.forceSimulation(M.nodes)
+    .force("link", d3.forceLink(M.links).id(d=>d.id).distance(26).strength(.10))
+    .force("charge", d3.forceManyBody().strength(-42).distanceMax(190))
+    .force("x", d3.forceX(d=>d.cx).strength(.55))
+    .force("y", d3.forceY(d=>d.cy).strength(.55))
+    .force("collide", d3.forceCollide(d=>d.r+4).strength(.85))
+    .stop();
+  for (let i=0;i<320;i++) sim.tick();
+
+  // label each namespace where its nodes actually settled, not where they started
+  const acc = new Map();
+  for (const n of M.nodes){
+    const a = acc.get(n.ns) || [0,0,0,Infinity];
+    a[0]+=n.x; a[1]+=n.y; a[2]++; a[3]=Math.min(a[3], n.y);
+    acc.set(n.ns, a);
+  }
+  M.centres = new Map([...acc].map(([ns,a])=>[ns,[a[0]/a[2], a[3]-13]]));
+  fit();
+}
+
+/* ------------------------------------------------------------------- canvas */
+const cv = document.getElementById("graph"), ctx = cv.getContext("2d");
+let W=0, H=0, DPR=1;
+let view = {k:1, x:0, y:0};
+function resize(){
+  const r = cv.getBoundingClientRect();
+  DPR = Math.min(2, window.devicePixelRatio||1);
+  W = Math.max(1, r.width); H = Math.max(1, r.height);
+  cv.width = Math.round(W*DPR); cv.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function fit(){
+  if (!M.nodes.length) return;
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  for (const n of M.nodes){ x0=Math.min(x0,n.x); y0=Math.min(y0,n.y); x1=Math.max(x1,n.x); y1=Math.max(y1,n.y); }
+  const pad = 40;
+  const k = Math.min((W-pad*2)/Math.max(1,x1-x0), (H-pad*2)/Math.max(1,y1-y0));
+  view.k = Math.min(3, Math.max(.12, k));
+  view.x = W/2 - ((x0+x1)/2)*view.k;
+  view.y = H/2 - ((y0+y1)/2)*view.k;
+}
+const sx = n => n.x*view.k + view.x;
+const sy = n => n.y*view.k + view.y;
+
+/* ----------------------------------------------------------------- playback */
+const S = {
+  t:0, playing:false, speed:2, cursor:0, last:0,
+  pulses:[], rings:[], selected:null, hover:null, query:"",
+  showReads:true, heat:true, live:0, awake:0, opsWindow:[],
+  detailSig:null, lastDetail:0, openInstance:null,
+};
+function reset(){
+  S.t = 0; S.cursor = 0; S.pulses.length = 0; S.rings.length = 0; S.opsWindow.length = 0;
+  for (const n of M.nodes){ n.instances.clear(); n.live = 0; n.heat = 0; n.wakes = 0; n.ops = 0; n.vis = 0; n.born = Infinity; }
+  S.live = 0;
+}
+function seek(t){
+  const back = t < S.t;
+  if (back) reset();
+  S.t = t;
+  while (S.cursor < M.events.length && M.events[S.cursor].t <= S.t){
+    apply(M.events[S.cursor++], true);
+  }
+}
+function apply(e, silent){
+  const cn = e.ctrl && e.ctrl !== "runtime" ? M.byKey.get("c:"+e.ctrl) : null;
+  if (cn && cn.born === Infinity) cn.born = e.t;
+  if (e.k === "ctrl"){
+    if (!cn) return;
+    if (e.op === "wake"){ cn.wakes++; if(!silent){ cn.heat = 1; } }
+    else if (e.op === "crash" || e.op === "stop"){ if(!silent) ring(cn, e.op === "crash" ? P.warning : P.ink3); }
+    return;
+  }
+  if (e.k !== "op") return;
+  if (cn) cn.ops++;
+  if (!e.rt) return;
+  const rn = M.byKey.get("r:"+key(e.ns||nsForType(e.rt), e.rt));
+  if (!rn) return;
+  if (rn.born === Infinity && (e.op==="create"||e.op==="update")) rn.born = e.t;
+
+  if (e.op === "create" || e.op === "update"){
+    const id = e.id || "—";
+    const prev = rn.instances.get(id);
+    rn.instances.set(id, {id, ver:e.ver||"1", phase:e.ph||"running", owner:e.own||e.ctrl||"",
+                         t:e.t, fin:e.fin||null, spec:e.spec||""});
+    if (!prev) { rn.live++; S.live++; }
+    rn.peak = Math.max(rn.peak, rn.live);
+    if (!silent){
+      rn.heat = 1;
+      if (cn) pulse(cn, rn, "write");
+      ring(rn, prev ? P.res : P.good, prev ? 1 : 1.45);
+    }
+  } else if (e.op === "destroy"){
+    const had = rn.instances.delete(e.id);
+    if (had){ rn.live = Math.max(0, rn.live-1); S.live = Math.max(0, S.live-1); }
+    if (!silent){ rn.heat = 1; ring(rn, P.critical, 1.6); if (cn) pulse(cn, rn, "write"); }
+  } else if ((e.op === "get" || e.op === "list") && cn){
+    if (!silent && S.showReads){ pulse(rn, cn, "read"); cn.heat = Math.max(cn.heat, .55); rn.heat = Math.max(rn.heat, .3); }
+  }
+  if (!silent) S.opsWindow.push(e.t);
+}
+function pulse(a,b,kind){
+  if (S.pulses.length > 520) S.pulses.shift();
+  S.pulses.push({a,b,kind,p:0,sp: kind==="read" ? 2.6 : 1.9});
+}
+function ring(n,color,scale){
+  if (S.rings.length > 260) S.rings.shift();
+  S.rings.push({n,color,p:0,scale:scale||1});
+}
+
+/* --------------------------------------------------------------------- draw */
+function visible(n){
+  if (M.hidden.has(n.ns)) return false;
+  return true;
+}
+function matches(n){
+  return S.query && n.label.toLowerCase().includes(S.query);
+}
+function draw(dt){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle = P.stage; ctx.fillRect(0,0,W,H);
+
+  const decay = REDUCED ? 1 : Math.exp(-dt*(S.heat?2.1:9));
+  const focus = S.selected;
+  const focusSet = focus ? new Set([focus.id, ...neighbours(focus)]) : null;
+
+  // namespace labels
+  if (M.centres && view.k > .22){
+    ctx.font = `600 ${(11*P.boost).toFixed(1)}px "IBM Plex Sans Condensed", sans-serif`;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    for (const [ns,c] of M.centres){
+      if (M.hidden.has(ns)) continue;
+      const lx = c[0]*view.k+view.x, ly = c[1]*view.k+view.y;
+      const w = ctx.measureText(ns.toUpperCase()).width;
+      ctx.fillStyle = P.stage; ctx.globalAlpha = .78;
+      roundRect(ctx, lx-w/2-5, ly-8, w+10, 16, 3); ctx.fill();
+      ctx.globalAlpha = .85; ctx.fillStyle = P.ink3;
+      ctx.fillText(ns.toUpperCase(), lx, ly);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  // edges
+  ctx.lineWidth = 1 * P.boost;
+  for (const pass of [0,1]){
+    ctx.strokeStyle = pass ? P.hair : P.hairSoft;
+    ctx.globalAlpha = (pass ? (view.k > .6 ? 1 : .7) : .85) * (focusSet ? P.context : 1);
+    ctx.beginPath();
+    for (const l of M.links){
+      const a=l.source, b=l.target;
+      if (!visible(a)||!visible(b)) continue;
+      const alive = a.born<=S.t && b.born<=S.t;
+      if (alive !== !!pass) continue;
+      if (focusSet && focusSet.has(a.id) && focusSet.has(b.id)) continue; // drawn as an arrow below
+      ctx.moveTo(sx(a),sy(a)); ctx.lineTo(sx(b),sy(b));
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // the selection's own edges, drawn as arrows in the direction the data flows:
+  // a controller writes out to a resource, and reads in from one.
+  if (focusSet){
+    for (const l of M.links){
+      const a=l.source, b=l.target;
+      if (!visible(a)||!visible(b)) continue;
+      if (!(focusSet.has(a.id) && focusSet.has(b.id))) continue;
+      const write = l.kind === "out";
+      ctx.strokeStyle = ctx.fillStyle = write ? P.ctrl : P.res;
+      ctx.globalAlpha = .9;
+      ctx.lineWidth = (write ? 1.8 : 1.3) * P.boost;
+      arrow(sx(a), sy(a), sx(b), sy(b), nodeRadius(b) + 3, write);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // pulses
+  for (let i=S.pulses.length-1;i>=0;i--){
+    const p = S.pulses[i];
+    p.p += dt*p.sp;
+    if (p.p>=1){ S.pulses.splice(i,1); continue; }
+    if (!visible(p.a)||!visible(p.b)) continue;
+    const ax=sx(p.a), ay=sy(p.a), bx=sx(p.b), by=sy(p.b);
+    const x = ax+(bx-ax)*p.p, y = ay+(by-ay)*p.p;
+    const isRead = p.kind==="read";
+    ctx.globalAlpha = isRead ? .45*(1-p.p*.7) : .95*(1-p.p*.35);
+    ctx.fillStyle = isRead ? P.ink3 : P.ctrl;
+    ctx.beginPath(); ctx.arc(x,y, (isRead?1.5:2.6)*P.boost, 0, 6.2832); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // rings
+  for (let i=S.rings.length-1;i>=0;i--){
+    const r = S.rings[i];
+    r.p += dt*1.5;
+    if (r.p>=1){ S.rings.splice(i,1); continue; }
+    if (!visible(r.n)) continue;
+    const rad = (r.n.r + 3 + r.p*16*r.scale)*Math.max(.55,view.k);
+    ctx.globalAlpha = (1-r.p)*.8;
+    ctx.strokeStyle = r.color; ctx.lineWidth = (2*(1-r.p)+.6) * P.boost;
+    ctx.beginPath(); ctx.arc(sx(r.n),sy(r.n), rad, 0, 6.2832); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // nodes
+  let awake = 0;
+  for (const n of M.nodes){
+    n.heat *= decay;
+    if (n.heat > .06) awake++;
+    if (!visible(n)) continue;
+    const seen = n.born <= S.t;
+    n.vis += ((seen?1:0) - n.vis) * Math.min(1, dt*6);
+    const dim = focusSet && !focusSet.has(n.id);
+    const x=sx(n), y=sy(n);
+    const base = n.kind==="ctrl" ? P.ctrl : P.res;
+    const rad = nodeRadius(n);
+    const hit = matches(n);
+
+    if (n.heat > .04 && !dim){
+      ctx.globalAlpha = Math.min(.5, n.heat*.5);
+      ctx.fillStyle = base;
+      ctx.beginPath(); ctx.arc(x,y, rad + 5 + n.heat*9, 0, 6.2832); ctx.fill();
+    }
+    // not yet reached by the trace: drawn as an empty socket waiting to be filled
+    ctx.globalAlpha = dim ? P.dim : 1;
+    if (n.kind === "ctrl"){
+      const s = rad*1.75;
+      roundRect(ctx, x-s/2, y-s/2, s, s, Math.min(3, s*.28));
+    } else {
+      ctx.beginPath(); ctx.arc(x,y,rad,0,6.2832);
+    }
+    if (n.vis > .02){
+      ctx.globalAlpha = (dim ? P.dim : 1) * n.vis;
+      ctx.fillStyle = base; ctx.fill();
+    }
+    if (n.vis < .98){
+      ctx.globalAlpha = (dim ? P.dim : 1) * (1 - n.vis) * .85;
+      ctx.strokeStyle = P.ink3; ctx.lineWidth = 1 * P.boost; ctx.stroke();
+    }
+    if (n.heat > .2 && !dim){
+      ctx.globalAlpha = Math.min(1, n.heat);
+      ctx.strokeStyle = P.glow; ctx.lineWidth = 1.2 * P.boost;
+      ctx.beginPath(); ctx.arc(x,y,rad+1.6,0,6.2832); ctx.stroke();
+    }
+    if (hit || n === S.selected || n === S.hover){
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = n===S.selected ? P.ink : (hit ? P.warning : P.ink2);
+      ctx.lineWidth = (n===S.selected ? 2 : 1.5) * P.boost;
+      ctx.beginPath(); ctx.arc(x,y,rad+4,0,6.2832); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Labels, in priority order, skipping any that would land on one already placed.
+  // Without this the stage turns into a wall of overlapping text as soon as you zoom in.
+  const labelPx = 10.5 * P.boost;
+  ctx.font = `600 ${labelPx.toFixed(1)}px "IBM Plex Mono", ui-monospace, monospace`;
+  ctx.textAlign = "left"; ctx.textBaseline = "middle";
+
+  const cands = [];
+  for (const n of M.nodes){
+    if (!visible(n)) continue;
+    let prio = -1;
+    if (n === S.selected) prio = 0;
+    else if (n === S.hover) prio = 1;
+    else if (matches(n)) prio = 2;
+    else if (focusSet && focusSet.has(n.id)) prio = view.k > .5 ? 3 : -1;
+    // a selection is a question about one neighbourhood; don't answer it with the whole map
+    else if (!focusSet && view.k > .95 && (n.kind==="res" ? n.live >= 3 : n.wakes >= 6)) prio = 4;
+    if (prio < 0) continue;
+    cands.push({n, prio, d: Math.abs(sx(n)-W/2) + Math.abs(sy(n)-H/2)});
+  }
+  cands.sort((a,b)=> a.prio - b.prio || a.d - b.d);
+
+  const placed = chromeRects.slice();
+  const clear = (x,y,w,h) => {
+    for (const r of placed)
+      if (x < r.x+r.w && x+w > r.x && y < r.y+r.h && y+h > r.y) return false;
+    return true;
+  };
+  for (const c of cands.slice(0, 90)){
+    const n = c.n, x = sx(n)+nodeRadius(n)+7, y = sy(n);
+    if (x < -80 || x > W+80 || y < -20 || y > H+20) continue;
+    const txt = n.kind==="res" ? n.label.split(".")[0] : n.label;
+    const w = ctx.measureText(txt).width + 6*P.boost, h = labelPx + 4.5;
+    if (!clear(x-3, y-h/2, w, h)) continue;
+    placed.push({x:x-3, y:y-h/2, w, h});
+    ctx.fillStyle = P.stage; ctx.globalAlpha = .85;
+    roundRect(ctx, x-3, y-h/2, w, h, 3); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = c.prio <= 2 ? P.ink : P.ink2;
+    ctx.fillText(txt, x, y);
+  }
+  S.awake = awake;
+}
+function nodeRadius(n){
+  const grow = n.kind==="res" ? Math.min(7, Math.sqrt(Math.max(0,n.live))*2.1) : 0;
+  return (n.r + grow) * Math.max(.5, Math.min(1.7, view.k*1.05)) * P.boost;
+}
+// every node a controller reads from or writes to, and vice versa
+function neighbours(n){
+  return n.kind==="ctrl" ? [...n.inputs, ...n.outputs] : [...n.readers, ...n.writers];
+}
+// a line that stops short of the target node, with a head showing which way the data moves
+function arrow(x0,y0,x1,y1,pad,heavy){
+  const dx = x1-x0, dy = y1-y0, len = Math.hypot(dx,dy);
+  if (len < pad+2) return;
+  const ux = dx/len, uy = dy/len;
+  const ex = x1-ux*pad, ey = y1-uy*pad;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(ex,ey); ctx.stroke();
+  const h = (heavy ? 7 : 5.5) * P.boost, w = (heavy ? 3.2 : 2.6) * P.boost;
+  ctx.beginPath();
+  ctx.moveTo(ex,ey);
+  ctx.lineTo(ex-ux*h - uy*w, ey-uy*h + ux*w);
+  ctx.lineTo(ex-ux*h + uy*w, ey-uy*h - ux*w);
+  ctx.closePath(); ctx.fill();
+}
+function roundRect(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r);
+  c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath();
+}
+
+/* ----------------------------------------------------------------- timeline */
+const tl = document.getElementById("timeline"), tctx = tl.getContext("2d");
+let TW=0, TH=0;
+function resizeTL(){
+  const r = tl.getBoundingClientRect();
+  TW = Math.max(1,r.width); TH = Math.max(1,r.height);
+  tl.width = Math.round(TW*DPR); tl.height = Math.round(TH*DPR);
+  tctx.setTransform(DPR,0,0,DPR,0,0);
+}
+function drawTimeline(){
+  if (!M.buckets.length) return;
+  tctx.clearRect(0,0,TW,TH);
+  const secPerBucket = M.bucketMs/1e6;
+  const rate = M.buckets.map(v => v/secPerBucket);        // ops per second
+  const max = Math.max(1, ...rate);
+  const n = rate.length, bw = TW/n, base = TH-14, top = 11, plot = base-top;
+  // a boot is heavy-tailed - the runtime registers ~500 watches in the first second.
+  // square-root heights keep the quiet stretches readable; the gridlines name real rates.
+  const yOf = v => base - Math.sqrt(Math.max(0,v)/max)*plot;
+
+  // gridlines at round rates the trace actually reaches
+  const ladder = [10,25,50,100,250,500,1000,2500,5000,10000,25000,50000];
+  const cand = ladder.filter(v => v < max*0.92 && v > max*0.02);
+  const lines = [];
+  for (let i=cand.length-1; i>=0 && lines.length<2; i--){
+    if (!lines.length || Math.abs(yOf(cand[i]) - yOf(lines[0])) > 13) lines.unshift(cand[i]);
+  }
+  tctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace';
+  tctx.textBaseline = "bottom"; tctx.textAlign = "left";
+  for (const v of lines){
+    const y = yOf(v);
+    tctx.strokeStyle = P.hairSoft; tctx.lineWidth = 1;
+    tctx.beginPath(); tctx.moveTo(0, y+.5); tctx.lineTo(TW, y+.5); tctx.stroke();
+    tctx.fillStyle = P.ink3;
+    tctx.fillText(v >= 1000 ? (v/1000)+"k" : String(v), 2, y-1);
+  }
+
+  // activity area
+  tctx.beginPath(); tctx.moveTo(0, base);
+  for (let i=0;i<n;i++){
+    const y = yOf(rate[i]);
+    tctx.lineTo(i*bw, y); tctx.lineTo((i+1)*bw, y);
+  }
+  tctx.lineTo(TW, base); tctx.closePath();
+  tctx.fillStyle = P.res; tctx.globalAlpha = Math.min(.4, .2 * P.boost); tctx.fill();
+  tctx.globalAlpha = 1; tctx.strokeStyle = P.res; tctx.lineWidth = 2 * P.boost; tctx.stroke();
+
+  // baseline + time ticks
+  tctx.strokeStyle = P.hair; tctx.lineWidth = 1;
+  tctx.beginPath(); tctx.moveTo(0,base+.5); tctx.lineTo(TW,base+.5); tctx.stroke();
+  const secs = M.duration/1e6;
+  const step = secs>120?30:secs>60?15:secs>20?10:secs>8?5:1;
+  tctx.font = `400 ${(10*P.boost).toFixed(1)}px "IBM Plex Mono", ui-monospace, monospace`;
+  tctx.fillStyle = P.ink3; tctx.textAlign="center"; tctx.textBaseline="top";
+  for (let sec=0; sec<=secs; sec+=step){
+    const x = (sec/secs)*TW;
+    tctx.strokeStyle = P.hairSoft;
+    tctx.beginPath(); tctx.moveTo(x,base); tctx.lineTo(x,base+3); tctx.stroke();
+    if (x < TW-16) tctx.fillText(sec+"s", Math.max(9,Math.min(TW-9,x)), base+4);
+  }
+
+  // caption: what the track is
+  tctx.textAlign = "right"; tctx.textBaseline = "top";
+  tctx.fillStyle = P.ink3;
+  tctx.font = '400 9.5px "IBM Plex Mono", ui-monospace, monospace';
+  tctx.fillText("state ops/sec, \u221a scale \u00b7 peak " +
+    (max>=1000 ? (max/1000).toFixed(1)+"k" : Math.round(max)), TW-2, 0);
+
+  // playhead
+  const hx = (S.t/M.duration)*TW;
+  tctx.strokeStyle = P.ctrl; tctx.lineWidth = 2 * P.boost;
+  tctx.beginPath(); tctx.moveTo(hx,0); tctx.lineTo(hx,base); tctx.stroke();
+  tctx.fillStyle = P.ctrl;
+  tctx.beginPath(); tctx.arc(hx, base, 3.2, 0, 6.2832); tctx.fill();
+}
+
+/* -------------------------------------------------------------------- stats */
+const el = id => document.getElementById(id);
+function stats(){
+  const secs = S.t/1e6;
+  el("s-clock").textContent = secs.toFixed(2)+"s";
+  el("s-res").textContent = S.live.toLocaleString();
+  el("s-ctrl").textContent = S.awake.toLocaleString();
+  while (S.opsWindow.length && S.opsWindow[0] < S.t - 1e6) S.opsWindow.shift();
+  el("s-rate").textContent = S.opsWindow.length.toLocaleString();
+  el("s-ev").textContent = S.cursor.toLocaleString();
+}
+
+/* --------------------------------------------------------------------- loop */
+let prev = performance.now();
+function frame(now){
+  const dt = Math.min(.1, (now-prev)/1000); prev = now;
+  if (S.playing){
+    S.t += dt*1e6*S.speed;
+    if (S.t >= M.duration){ S.t = M.duration; setPlaying(false); }
+    while (S.cursor < M.events.length && M.events[S.cursor].t <= S.t) apply(M.events[S.cursor++], false);
+    drawTimeline();
+  }
+  draw(dt);
+  stats();
+  if (now - S.lastDetail > 120){ S.lastDetail = now; renderDetail(); }
+  requestAnimationFrame(frame);
+}
+
+/* ------------------------------------------------------------------- inputs */
+function setPlaying(v){
+  S.playing = v;
+  const b = el("play");
+  b.textContent = v ? "Pause" : "Play";
+  b.setAttribute("aria-pressed", String(v));
+}
+el("play").onclick = ()=>{ if (S.t >= M.duration) { seek(0); } setPlaying(!S.playing); };
+el("restart").onclick = ()=>{ seek(0); drawTimeline(); };
+document.querySelectorAll(".speeds button").forEach(b=>{
+  b.onclick = ()=>{
+    S.speed = parseFloat(b.dataset.speed);
+    document.querySelectorAll(".speeds button").forEach(o=>o.setAttribute("aria-pressed", String(o===b)));
+  };
+});
+el("reads").onclick = e => { S.showReads = !S.showReads; e.currentTarget.setAttribute("aria-pressed", String(S.showReads)); };
+el("trails").onclick = e => { S.heat = !S.heat; e.currentTarget.setAttribute("aria-pressed", String(S.heat)); };
+el("search").oninput = e => { S.query = e.target.value.trim().toLowerCase(); };
+
+document.querySelectorAll("[data-theme-set]").forEach(b=>{
+  b.onclick = () => applyTheme(b.dataset.themeSet, true);
+});
+applyTheme(storedTheme(), false);
+
+el("zin").onclick = ()=>zoomBy(1.35);
+el("zout").onclick = ()=>zoomBy(1/1.35);
+el("zfit").onclick = ()=>{ fit(); };
+function zoomBy(f){
+  const k = Math.min(6, Math.max(.08, view.k*f));
+  view.x = W/2 - (W/2 - view.x)*(k/view.k);
+  view.y = H/2 - (H/2 - view.y)*(k/view.k);
+  view.k = k;
+}
+
+// pan / zoom / pick
+let drag = null;
+cv.addEventListener("pointerdown", e=>{
+  cv.setPointerCapture(e.pointerId);
+  drag = {x:e.clientX, y:e.clientY, vx:view.x, vy:view.y, moved:false};
+  cv.classList.add("dragging");
+});
+cv.addEventListener("pointermove", e=>{
+  const r = cv.getBoundingClientRect();
+  if (drag){
+    const dx = e.clientX-drag.x, dy = e.clientY-drag.y;
+    if (Math.abs(dx)+Math.abs(dy) > 3) drag.moved = true;
+    view.x = drag.vx+dx; view.y = drag.vy+dy;
+    return;
+  }
+  const n = pick(e.clientX-r.left, e.clientY-r.top);
+  S.hover = n;
+  const tt = el("tooltip");
+  if (n){
+    tt.classList.add("on");
+    tt.querySelector(".tt-k").textContent = n.kind==="ctrl" ? "Controller" : n.ns+" · "+n.live+" live";
+    tt.querySelector(".tt-n").textContent = n.label;
+    const w = tt.offsetWidth, h = tt.offsetHeight;
+    tt.style.left = Math.min(W-w-8, Math.max(8, e.clientX-r.left+14))+"px";
+    tt.style.top  = Math.min(H-h-8, Math.max(8, e.clientY-r.top+14))+"px";
+  } else tt.classList.remove("on");
+});
+cv.addEventListener("pointerup", e=>{
+  cv.classList.remove("dragging");
+  if (drag && !drag.moved){
+    const r = cv.getBoundingClientRect();
+    select(pick(e.clientX-r.left, e.clientY-r.top));
+  }
+  drag = null;
+});
+cv.addEventListener("wheel", e=>{
+  e.preventDefault();
+  const r = cv.getBoundingClientRect(), mx = e.clientX-r.left, my = e.clientY-r.top;
+  const k = Math.min(6, Math.max(.08, view.k*Math.pow(.999, e.deltaY)));
+  view.x = mx - (mx-view.x)*(k/view.k);
+  view.y = my - (my-view.y)*(k/view.k);
+  view.k = k;
+}, {passive:false});
+function pick(mx,my){
+  let best=null, bd=18*18;
+  for (const n of M.nodes){
+    if (!visible(n)) continue;
+    const dx = sx(n)-mx, dy = sy(n)-my, d = dx*dx+dy*dy;
+    if (d < bd){ bd = d; best = n; }
+  }
+  return best;
+}
+
+// timeline scrub
+let tdrag=false;
+function scrubAt(clientX){
+  const r = tl.getBoundingClientRect();
+  const p = Math.max(0, Math.min(1, (clientX-r.left)/r.width));
+  seek(p*M.duration); drawTimeline();
+}
+tl.addEventListener("pointerdown", e=>{ tdrag=true; tl.setPointerCapture(e.pointerId); scrubAt(e.clientX); });
+tl.addEventListener("pointermove", e=>{ if(tdrag) scrubAt(e.clientX); });
+tl.addEventListener("pointerup", ()=>{ tdrag=false; });
+
+document.addEventListener("keydown", e=>{
+  if (e.target.closest("input, button, [contenteditable]")) return;
+  if (e.code === "Space"){ e.preventDefault(); el("play").click(); }
+  if (e.key === "ArrowRight"){ seek(Math.min(M.duration, S.t + 1e6)); drawTimeline(); }
+  if (e.key === "ArrowLeft"){ seek(Math.max(0, S.t - 1e6)); drawTimeline(); }
+  if (e.key === "Escape"){ select(null); }
+  if (e.key === "t" || e.key === "T"){
+    const order = ["", "light", "dark", "projector"];
+    const cur = document.documentElement.getAttribute("data-viz-theme") || "";
+    applyTheme(order[(order.indexOf(cur) + 1) % order.length], true);
+  }
+});
+
+/* ------------------------------------------------------------------ details */
+function select(n){
+  S.selected = n;
+  S.openInstance = null;
+  S.detailSig = null;              // force a repaint of the panel
+  document.querySelectorAll(".sel-key").forEach(e => { e.hidden = !n; });
+  measureChrome();
+  renderDetail();
+}
+
+// The panel shows live state, so it has to follow the playhead rather than the last click.
+// Rebuilding is cheap but not free, so it only happens when something it displays changed.
+function detailSig(n){
+  if (!n) return "";
+  let v = "";
+  for (const i of n.instances.values()) v += i.id+":"+i.ver+":"+i.phase+";";
+  return n.kind+"|"+n.live+"|"+n.wakes+"|"+n.ops+"|"+(n.born<=S.t?n.born:-1)+"|"+S.openInstance+"|"+v;
+}
+function renderDetail(){
+  const n = S.selected, d = el("detail");
+  const sig = detailSig(n);
+  if (sig === S.detailSig) return;
+  S.detailSig = sig;
+
+  // an open spec is rebuilt whenever its resource is updated; don't yank the reader
+  // back to the top of it mid-playback
+  const openSpec = d.querySelector(".spec");
+  const specScroll = openSpec ? openSpec.scrollTop : 0;
+
+  if (!n){
+    d.innerHTML = '<p class="detail-empty">Click any node on the stage. Controllers show what they read and write; resource types show their live instances, owner and versions — all of it following the playhead.</p>';
+    return;
+  }
+  const isCtrl = n.kind === "ctrl";
+  const swatch = `<span class="badge ${isCtrl?"c":""}" style="background:${isCtrl?"var(--ctrl)":"var(--res)"}"></span>`;
+  let html = `<div class="title-row">${swatch}<div class="detail-name">${esc(n.label)}</div></div>`;
+
+  if (isCtrl){
+    html += `<dl class="dl">
+      <dt>Reconciles</dt><dd>${n.wakes}</dd>
+      <dt>State ops</dt><dd>${n.ops}</dd>
+      <dt>First seen</dt><dd>${n.born<=S.t?(n.born/1e6).toFixed(3)+"s":"not yet"}</dd></dl>`;
+    const outs = [...n.outputs].map(id=>M.byKey.get(id)).filter(Boolean);
+    const ins  = [...n.inputs].map(id=>M.byKey.get(id)).filter(Boolean);
+    if (outs.length) html += section("Writes", outs, "oo");
+    if (ins.length)  html += section("Reads", ins, "io");
+  } else {
+    const owners = new Set([...n.instances.values()].map(i=>i.owner).filter(Boolean));
+    html += `<dl class="dl">
+      <dt>Namespace</dt><dd>${esc(n.ns)}</dd>
+      <dt>Live</dt><dd>${n.live} <span style="color:var(--ink-3)">(peak ${n.peak})</span></dd>
+      <dt>Owner</dt><dd>${owners.size?esc([...owners].join(", ")):"—"}</dd>
+      <dt>First seen</dt><dd>${n.born<=S.t?(n.born/1e6).toFixed(3)+"s":"not yet"}</dd></dl>`;
+
+    const writers = [...n.writers].map(id=>M.byKey.get(id)).filter(Boolean);
+    const readers = [...n.readers].map(id=>M.byKey.get(id)).filter(Boolean);
+    if (writers.length) html += section("Written by", writers, "oo");
+    if (readers.length) html += section("Read by", readers, "io");
+
+    const all = [...n.instances.values()];
+    if (all.length){
+      html += `<h2 style="margin:12px 0 5px" class="eyebrow">Instances · ${all.length}</h2>`;
+      for (const i of all.slice(0,40)){
+        const td = (i.phase||"").startsWith("tearing");
+        const open = S.openInstance === i.id;
+        html += `<button type="button" class="inst" data-inst="${esc(i.id)}" aria-expanded="${open}">
+          <span class="caret${open?" open":""}"></span>
+          <span class="ph ${td?"td":""}"></span>
+          <span class="id">${esc(i.id)}</span>
+          <span class="v">v${esc(i.ver)}${i.fin?" · "+i.fin.length+"f":""}</span></button>`;
+        if (open){
+          if (i.spec === REDACTED)
+            html += `<p class="spec-none">Spec withheld — Talos marks this resource type sensitive, and it was stripped from this published capture.</p>`;
+          else if (i.spec)
+            html += `<pre class="spec">${esc(i.spec)}</pre>`;
+          else
+            html += `<p class="spec-none">No spec in this trace. Re-capture with <span class="mono">talos.trace.specs=1</span> to record resource specs.</p>`;
+        }
+      }
+      if (all.length > 40) html += `<div class="inst"><span class="id" style="color:var(--ink-3)">+${all.length-40} more</span></div>`;
+    } else {
+      html += `<p class="detail-empty" style="margin:10px 0 0">No live instances at ${(S.t/1e6).toFixed(2)}s.</p>`;
+    }
+  }
+  d.innerHTML = html;
+
+  if (specScroll){
+    const reopened = d.querySelector(".spec");
+    if (reopened) reopened.scrollTop = specScroll;
+  }
+}
+function section(title, nodes, cls){
+  const LIMIT = 24;
+  const shown = [...nodes].sort((a,b)=>a.label.localeCompare(b.label)).slice(0, LIMIT);
+  const chips = shown.map(t=>
+    `<span class="chip ${cls}">${esc(t.kind === "ctrl" ? t.label : t.label.split(".")[0])}</span>`).join("");
+  const more = nodes.length > LIMIT
+    ? `<span class="chip" style="border-style:dashed">+${nodes.length-LIMIT} more</span>` : "";
+  return `<h2 style="margin:12px 0 5px" class="eyebrow">${title} · ${nodes.length}</h2><div class="chips">${chips}${more}</div>`;
+}
+el("detail").addEventListener("click", e => {
+  const row = e.target.closest("[data-inst]");
+  if (!row) return;
+  const id = row.dataset.inst;
+  S.openInstance = S.openInstance === id ? null : id;
+  S.detailSig = null;
+  renderDetail();
+});
+const esc = s => String(s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* -------------------------------------------------------------- namespaces */
+function renderNS(){
+  const box = el("nslist"); box.innerHTML = "";
+  for (const [ns,count] of M.namespaces){
+    const row = document.createElement("label");
+    row.className = "nsrow";
+    row.innerHTML = `<input type="checkbox" checked><span class="nm">${esc(ns)}</span><span class="ct">${count}</span>`;
+    const cb = row.querySelector("input");
+    cb.onchange = ()=>{
+      if (cb.checked) M.hidden.delete(ns); else M.hidden.add(ns);
+      row.classList.toggle("off", !cb.checked);
+    };
+    box.appendChild(row);
+  }
+}
+function renderMeta(){
+  const m = M.meta || {};
+  const rows = [
+    ["Source", M.sourceName || "demo"],
+    ["Talos", m.talos_version || "—"],
+    ["Captured", m.wall_clock ? m.wall_clock.replace("T"," ").replace(/\..*/,"") + " UTC" : "—"],
+    ["Span", (M.duration/1e6).toFixed(1)+"s"],
+    ["Events", M.events.length.toLocaleString()],
+    ["Controllers", M.nodes.filter(n=>n.kind==="ctrl").length],
+    ["Resource types", M.nodes.filter(n=>n.kind==="res").length],
+  ];
+  if (M.metaStop && M.metaStop.dropped) rows.push(["Dropped", M.metaStop.dropped.toLocaleString()]);
+  el("meta").innerHTML = rows.map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
+}
+
+/* ------------------------------------------------------------------ loading */
+function parseJSONL(text){
+  const out = [];
+  for (const line of text.split("\n")){
+    const s = line.trim();
+    if (!s) continue;
+    try { out.push(JSON.parse(s)); } catch(_) { /* tolerate a truncated tail */ }
+  }
+  return out;
+}
+function load(records, name){
+  buildModel(records);
+  M.sourceName = name;
+  layout();
+  reset();
+  renderNS(); renderMeta(); select(null);
+  resizeTL(); drawTimeline();
+  el("source").textContent = name;
+  el("boot").classList.add("done");
+}
+
+const fileInput = el("file");
+fileInput.onchange = async () => {
+  const f = fileInput.files[0];
+  if (!f) return;
+  el("boot").classList.remove("done");
+  el("boot").firstChild.textContent = "Reading "+f.name+"…";
+  setPlaying(false);
+  const text = await f.text();
+  load(parseJSONL(text), f.name);
+};
+const dropEl = el("drop");
+window.addEventListener("dragover", e=>{ e.preventDefault(); dropEl.classList.add("on"); });
+window.addEventListener("dragleave", e=>{ if (e.relatedTarget === null) dropEl.classList.remove("on"); });
+window.addEventListener("drop", async e=>{
+  e.preventDefault(); dropEl.classList.remove("on");
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  setPlaying(false);
+  el("boot").classList.remove("done");
+  const text = await f.text();
+  load(parseJSONL(text), f.name);
+});
+
+/* --------------------------------------------------------------------- boot */
+function measureChrome(){
+  const base = cv.getBoundingClientRect();
+  chromeRects = [...document.querySelectorAll(".zoomers, .stage-note")].map(e=>{
+    const r = e.getBoundingClientRect();
+    return {x:r.left-base.left-4, y:r.top-base.top-4, w:r.width+8, h:r.height+8};
+  });
+}
+function onResize(){ resize(); resizeTL(); measureChrome(); drawTimeline(); }
+window.addEventListener("resize", onResize);
+resize(); resizeTL(); measureChrome();
+requestAnimationFrame(frame);
+
+fetch("talos-boot.jsonl")
+  .then(r=>{ if(!r.ok) throw new Error(r.status); return r.text(); })
+  .then(t=>{
+    load(parseJSONL(t), "talos-boot.jsonl");
+    setTimeout(()=>{ if (!S.playing && S.t === 0) setPlaying(true); }, 700);
+  })
+  .catch(()=>{
+    el("boot").firstChild.textContent =
+      'Drop a talos-trace.jsonl file anywhere, or use "Load a trace" below.';
+  });
+</script>
