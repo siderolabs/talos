@@ -103,6 +103,14 @@ message DiskSpec {
   string uuid = 17;
   repeated string symlinks = 18;
   string firmware_version = 19;
+  // DeviceMapperName, DeviceMapperUUID and DeviceMapperKind identify a device-mapper disk, and
+  // are empty for any other disk.
+  //
+  // DeviceMapperKind is one of mpath, lvm, crypt or dm, so that a selector can pick out, say,
+  // multipath disks without matching every device-mapper device.
+  string device_mapper_name = 20;
+  string device_mapper_uuid = 21;
+  string device_mapper_kind = 22;
 }
 
 // EncryptionKey is the spec for volume encryption key.

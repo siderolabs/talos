@@ -21,7 +21,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	"github.com/siderolabs/go-blockdevice/v2/block"
-	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -380,7 +379,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		return fmt.Errorf("failed to create partitions: %w", err)
 	}
 
-	if err := i.formatPartitions(ctx, mode, partitionOptions); err != nil {
+	if err := i.formatPartitions(ctx, bd, mode, partitionOptions); err != nil {
 		return fmt.Errorf("failed to format partitions: %w", err)
 	}
 
@@ -403,7 +402,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		return fmt.Errorf("failed to install bootloader: %w", err)
 	}
 
-	if err = i.handleMeta(ctx, mode, bootInstallResult.PreviousLabel, info); err != nil {
+	if err = i.handleMeta(ctx, bd, mode, bootInstallResult.PreviousLabel, info); err != nil {
 		return fmt.Errorf("failed to handle META partition: %w", err)
 	}
 
@@ -411,14 +410,19 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 }
 
 //nolint:gocyclo,cyclop
-func (i *Installer) handleMeta(ctx context.Context, mode Mode, previousLabel string, info *blkid.Info) error {
+func (i *Installer) handleMeta(ctx context.Context, bd *block.Device, mode Mode, previousLabel string, info *blkid.Info) error {
 	switch mode {
 	case ModeInstall, ModeUpgrade:
 		var metaPartitionName string
 
 		for _, partition := range info.Parts {
 			if pointer.SafeDeref(partition.PartitionLabel) == constants.MetaPartitionLabel {
-				metaPartitionName = partitioning.DevName(i.options.DiskPath, partition.PartitionIndex)
+				var err error
+
+				metaPartitionName, err = bd.GetPartitionDevName(partition.PartitionIndex)
+				if err != nil {
+					return fmt.Errorf("failed to get META partition device name: %w", err)
+				}
 
 				break
 			}
@@ -685,12 +689,15 @@ func (i *Installer) createPartitions(ctx context.Context, mode Mode, bd *block.D
 // formatPartitions formats the created partitions populating them with filesystems and data as required.
 //
 //nolint:gocyclo
-func (i *Installer) formatPartitions(ctx context.Context, mode Mode, parts []partition.Options) error {
+func (i *Installer) formatPartitions(ctx context.Context, bd *block.Device, mode Mode, parts []partition.Options) error {
 	switch mode {
 	case ModeInstall:
 		// format also populates partitions, so we need to make sure source directories are set
 		for idx, p := range parts {
-			devName := partitioning.DevName(i.options.DiskPath, uint(idx+1))
+			devName, err := bd.GetPartitionDevName(uint(idx + 1))
+			if err != nil {
+				return fmt.Errorf("failed to get partition device name for partition %s: %w", p.Label, err)
+			}
 
 			if err := partition.Format(ctx, devName, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
 				return fmt.Errorf("failed to format partition %s: %w", devName, err)

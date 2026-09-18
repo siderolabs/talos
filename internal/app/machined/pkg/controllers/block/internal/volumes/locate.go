@@ -11,7 +11,6 @@ import (
 
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xerrors"
-	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"go.uber.org/zap"
 
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
@@ -326,7 +325,7 @@ func applyProvisioning(ctx context.Context, logger *zap.Logger, vc ManagerContex
 		}
 
 		vc.Status.Phase = block.VolumePhaseProvisioned
-		vc.Status.Location = partitioning.DevName(disk, uint(partRes.PartitionIdx))
+		vc.Status.Location = partRes.PartitionDevName
 		vc.Status.PartitionIndex = partRes.PartitionIdx
 		vc.Status.ParentLocation = disk
 		vc.Status.PartitionUUID = partRes.Partition.PartGUID.String()
