@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: StoragePool
+name: vm-images
+volume:
+  name: x-vm-data
+---
+apiVersion: v1alpha1
+kind: ExternalVolumeConfig
+name: vm-data
+filesystemType: virtiofs
+mount:
+  virtiofs:
+    tag: Data

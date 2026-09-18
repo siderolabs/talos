@@ -86,6 +86,7 @@ type Config interface { //nolint:interfacebloat
 	LVMVolumeGroupConfigs() []LVMVolumeGroupConfig
 	LVMLogicalVolumeConfigs() []LVMLogicalVolumeConfig
 	RAIDArrayConfigs() []RAIDArrayConfig
+	StoragePoolConfigs() []StoragePoolConfig
 
 	// - cri:
 	RegistryMirrorConfigs() map[string]RegistryMirrorConfig
