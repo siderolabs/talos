@@ -340,6 +340,10 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 
 // TestResetDuringBoot resets the node while it is in boot sequence.
 func (suite *ResetSuite) TestResetDuringBoot() {
+	if !suite.Capabilities().SupportsKubernetes {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubelet cert to compare across the reset")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 

@@ -47,6 +47,43 @@ func (suite *CGroupsSuite) TearDownTest() {
 
 // TestCGroupsVersion tests that cgroups mount match expected version.
 func (suite *CGroupsSuite) TestCGroupsVersion() {
+	names := suite.listRootCgroup()
+
+	suite.T().Log("detected cgroups v2")
+
+	for _, subpath := range []string{
+		"cgroup.controllers",
+		"cgroup.max.depth",
+		"cgroup.max.descendants",
+		"cgroup.procs",
+		"cgroup.stat",
+		"cgroup.subtree_control",
+		"cgroup.threads",
+		"cpu.stat",
+		"cpuset.cpus.effective",
+		"cpuset.mems.effective",
+		"init",
+		"io.stat",
+		"memory.numa_stat",
+		"memory.stat",
+		"podruntime",
+		"system",
+	} {
+		suite.Assert().Contains(names, subpath)
+	}
+}
+
+// TestCGroupsKubepods tests that kubelet creates the root cgroup for pods.
+func (suite *CGroupsSuite) TestCGroupsKubepods() {
+	if !suite.Capabilities().SupportsKubernetes {
+		suite.T().Skip("cluster doesn't run Kubernetes, so kubelet never creates the kubepods cgroup")
+	}
+
+	suite.Assert().Contains(suite.listRootCgroup(), constants.CgroupKubepods)
+}
+
+// listRootCgroup returns the names of the entries in the root cgroup of a random node.
+func (suite *CGroupsSuite) listRootCgroup() map[string]struct{} {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
@@ -70,29 +107,7 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 		names[filepath.Base(info.Name)] = struct{}{}
 	}
 
-	suite.T().Log("detected cgroups v2")
-
-	for _, subpath := range []string{
-		"cgroup.controllers",
-		"cgroup.max.depth",
-		"cgroup.max.descendants",
-		"cgroup.procs",
-		"cgroup.stat",
-		"cgroup.subtree_control",
-		"cgroup.threads",
-		"cpu.stat",
-		"cpuset.cpus.effective",
-		"cpuset.mems.effective",
-		"init",
-		"io.stat",
-		"kubepods",
-		"memory.numa_stat",
-		"memory.stat",
-		"podruntime",
-		"system",
-	} {
-		suite.Assert().Contains(names, subpath)
-	}
+	return names
 }
 
 func init() {

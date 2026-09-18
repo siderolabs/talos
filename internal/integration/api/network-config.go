@@ -324,6 +324,10 @@ func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
 		suite.T().Skip("skipping if cluster is not qemu")
 	}
 
+	if !suite.SupportsEtcd() {
+		suite.T().Skip("cluster doesn't run etcd, which the VIP waits for")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	nodeCtx := client.WithNode(suite.ctx, node)
 

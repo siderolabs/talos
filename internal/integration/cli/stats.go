@@ -37,6 +37,10 @@ func (suite *StatsSuite) TestContainerd() {
 
 // TestCRI inspects stats via CRI driver.
 func (suite *StatsSuite) TestCRI() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there are no Kubernetes containers")
+	}
+
 	suite.RunCLI(
 		[]string{"stats", "--namespace", "cri", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),
@@ -48,6 +52,10 @@ func (suite *StatsSuite) TestCRI() {
 // TestKubernetesFlagDeprecated covers the deprecated -k/--kubernetes alias: it still has to behave
 // exactly like --namespace cri, and using it has to warn, not just silently keep working forever.
 func (suite *StatsSuite) TestKubernetesFlagDeprecated() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there are no Kubernetes containers")
+	}
+
 	suite.RunCLI(
 		[]string{"stats", "-k", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`CPU`)),

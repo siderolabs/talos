@@ -69,6 +69,11 @@ type K8sSuite struct {
 func (k8sSuite *K8sSuite) SetupSuite() {
 	k8sSuite.APISuite.SetupSuite()
 
+	// A cluster can be created without Kubernetes at all, and then there is no kubeconfig to build a client from.
+	if !k8sSuite.Capabilities().SupportsKubernetes {
+		k8sSuite.T().Skip("cluster doesn't run Kubernetes")
+	}
+
 	kubeconfig, err := k8sSuite.Client.Kubeconfig(context.Background())
 	k8sSuite.Require().NoError(err)
 

@@ -1415,16 +1415,20 @@ spec:
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-hypervisor
             # The hypervisor APIs need neither etcd nor Kubernetes, so the cluster runs without
-            # them: a control plane and a worker. The spare disk the content libraries are
-            # provisioned on is attached to the worker, as extra disks never land on control
-            # planes, and the second node is what lets the tests which need more than one run.
-            QEMU_CONTROLPLANES: 1
-            QEMU_WORKERS: 1
+            # them: two control planes and no workers, a worker being a Kubernetes concept which
+            # means nothing here. We use two nodes, as some tests need more than one node.
+            # Extra disks go to workers by default, so with no workers they are attached to the
+            # control planes instead.
+            # Every integration suite runs; those needing etcd, Kubernetes or worker nodes skip
+            # themselves on this cluster.
+            QEMU_CONTROLPLANES: 2
+            QEMU_WORKERS: 0
             QEMU_EXTRA_DISKS: 1
+            QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@hack/test/patches/content-library.yaml"
-            INTEGRATION_TEST_RUN: "TestIntegration/api.ContentLibrarySuite|TestIntegration/cli.ContentLibrarySuite"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:

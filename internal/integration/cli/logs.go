@@ -36,7 +36,7 @@ func (suite *LogsSuite) SuiteName() string {
 
 // TestServiceLogs verifies that logs are displayed.
 func (suite *LogsSuite) TestServiceLogs() {
-	suite.RunCLI([]string{"logs", "kubelet", "--nodes", suite.RandomDiscoveredNodeInternalIP()}) // default checks for stdout not empty
+	suite.RunCLI([]string{"logs", "machined", "--nodes", suite.RandomDiscoveredNodeInternalIP()}) // default checks for stdout not empty
 }
 
 // TestTailLogs verifies that logs can be displayed with tail lines.

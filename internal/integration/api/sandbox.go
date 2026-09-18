@@ -48,6 +48,10 @@ func (suite *SandboxImageSuite) TearDownTest() {
 
 // TestSandboxImage verifies sandbox image.
 func (suite *SandboxImageSuite) TestSandboxImage() {
+	if !suite.Capabilities().SupportsKubernetes {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there are no pod sandboxes")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	ctx := client.WithNode(suite.ctx, node)
 

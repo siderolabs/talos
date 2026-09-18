@@ -4,7 +4,7 @@
 
 //go:build integration_api
 
-package api
+package hypervisor
 
 import (
 	"bytes"
@@ -45,7 +45,7 @@ type ContentLibrarySuite struct {
 
 // SuiteName ...
 func (suite *ContentLibrarySuite) SuiteName() string {
-	return "api.ContentLibrarySuite"
+	return "hypervisor.ContentLibrarySuite"
 }
 
 // SetupTest ...

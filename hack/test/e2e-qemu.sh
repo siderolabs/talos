@@ -320,6 +320,15 @@ case "${WITH_SKIP_ETCD_K8S:-false}" in
     ;;
 esac
 
+# Extra disks are attached to workers only by default; this attaches them to control planes as well.
+case "${QEMU_EXTRA_DISKS_ON_CONTROLPLANES:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--extra-disks-on-controlplanes")
+    ;;
+esac
+
 case "${WITH_ENFORCING:-false}" in
   false)
     ;;

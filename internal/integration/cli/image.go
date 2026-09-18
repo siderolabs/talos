@@ -104,6 +104,10 @@ func (suite *ImageSuite) TestTalosBundle() {
 
 // TestList verifies listing images in the CRI.
 func (suite *ImageSuite) TestList() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so no Kubernetes images are pulled")
+	}
+
 	suite.RunCLI(
 		[]string{"image", "ls", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)},
 		base.StdoutShouldMatch(regexp.MustCompile(`IMAGE\s+DIGEST\s+SIZE`)),

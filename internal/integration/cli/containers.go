@@ -91,6 +91,10 @@ func (suite *ContainersSuite) TestContainerd() {
 
 // TestCRI inspects containers via CRI driver.
 func (suite *ContainersSuite) TestCRI() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there are no Kubernetes containers")
+	}
+
 	suite.RunCLI(
 		[]string{
 			"containers", "--namespace", "cri", "--nodes",
@@ -103,6 +107,10 @@ func (suite *ContainersSuite) TestCRI() {
 // TestKubernetesFlagDeprecated covers the deprecated -k/--kubernetes alias: it still has to behave
 // exactly like --namespace cri, and using it has to warn, not just silently keep working forever.
 func (suite *ContainersSuite) TestKubernetesFlagDeprecated() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there are no Kubernetes containers")
+	}
+
 	suite.RunCLI(
 		[]string{
 			"containers", "-k", "--nodes",

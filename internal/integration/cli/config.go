@@ -132,6 +132,11 @@ func (suite *TalosconfigSuite) TestMerge() {
 
 // TestNewTTL checks `talosctl config new --crt-ttl`.
 func (suite *TalosconfigSuite) TestNewTTL() {
+	// The generated talosconfig context is named after the Kubernetes cluster.
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no cluster name to generate a talosconfig with")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
@@ -145,7 +150,14 @@ func (suite *TalosconfigSuite) TestNewTTL() {
 }
 
 // TestNew checks `talosctl config new`.
+//
+//nolint:gocyclo
 func (suite *TalosconfigSuite) TestNew() {
+	// The admin talosconfig is checked by fetching a kubeconfig and disarming etcd alarms.
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubeconfig to fetch")
+	}
+
 	stdout, _ := suite.RunCLI([]string{"version", "--json", "--nodes", suite.RandomDiscoveredNodeInternalIP()})
 
 	var v machineapi.Version

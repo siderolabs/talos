@@ -16,6 +16,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/fatih/color"
 	"github.com/gosuri/uiprogress"
 	"github.com/siderolabs/go-talos-support/support"
@@ -33,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/kubeconfig"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	k8sres "github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 var supportCmdFlags struct {
@@ -180,9 +182,14 @@ func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progr
 		return err
 	}
 
-	clientset, err := getKubernetesClient(nodeCtx, c)
-	if err != nil {
-		errs = errors.Join(errs, fmt.Errorf("failed to create kubernetes client: %w", err))
+	var clientset *k8s.Clientset
+
+	// without Kubernetes configured, the Kubernetes collectors are skipped.
+	if kubernetesConfigured(nodeCtx, c) {
+		clientset, err = getKubernetesClient(nodeCtx, c)
+		if err != nil {
+			errs = errors.Join(errs, fmt.Errorf("failed to create kubernetes client: %w", err))
+		}
 	}
 
 	opts := []bundle.Option{
@@ -206,6 +213,17 @@ func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progr
 	}
 
 	return errors.Join(errs, support.CreateSupportBundle(ctx, options, collectors...))
+}
+
+// kubernetesConfigured reports whether the node runs Kubernetes: the kubelet configuration is
+// derived from the machine config on every Kubernetes node, and never appears otherwise.
+//
+// If the check fails for any other reason, Kubernetes is assumed to be configured, so that its data
+// is still collected, and a real problem is reported when the Kubernetes client is created.
+func kubernetesConfigured(ctx context.Context, c *client.Client) bool {
+	_, err := safe.StateGetByID[*k8sres.KubeletConfig](ctx, c.COSI, k8sres.KubeletID)
+
+	return !state.IsNotFoundError(err)
 }
 
 func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset, error) {

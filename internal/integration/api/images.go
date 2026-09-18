@@ -11,7 +11,6 @@ import (
 	_ "embed"
 	"errors"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -63,6 +62,10 @@ func (suite *ImagesSuite) TestList() {
 
 	suite.T().Logf("using node %s", node)
 
+	// Nothing is guaranteed to be in the CRI namespace (a cluster without Kubernetes runs no pods),
+	// so pull an image first rather than rely on one being there.
+	pulledImage := suite.pullImage(ctx, pullTestImage)
+
 	rcv, err := suite.Client.ImageClient.List(ctx, &machine.ImageServiceListRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
@@ -86,15 +89,7 @@ func (suite *ImagesSuite) TestList() {
 		imageNames = append(imageNames, msg.GetName())
 	}
 
-	suite.Require().NotEmpty(imageNames, "expected to receive at least one image from List()")
-
-	for _, name := range imageNames {
-		if strings.Contains(name, "registry.k8s.io/pause") {
-			return
-		}
-	}
-
-	suite.Fail("expected to find pause image in the list")
+	suite.Assert().Contains(imageNames, pulledImage, "expected the pulled image in the list")
 }
 
 // TestPull tests ImageService.Pull().
@@ -104,17 +99,26 @@ func (suite *ImagesSuite) TestPull() {
 
 	suite.T().Logf("using node %s", node)
 
-	const (
-		image         = "registry.k8s.io/kube-apiserver:v1.27.1"
-		digestedImage = "registry.k8s.io/kube-apiserver@sha256:a6daed8429c54f0008910fc4ecc17aefa1dfcd7cc2ff0089570854d4f95213ed"
-	)
+	pulledImage := suite.pullImage(ctx, pullTestImage)
 
+	// depending on whether the image verification is enabled or not, the pulled image ref can be either the original one (without digest) or the digested one, so we should accept both
+	suite.Assert().Contains([]string{pullTestDigestedImage, pullTestImage}, pulledImage, "pulled image name should match requested image")
+}
+
+const (
+	pullTestImage         = "registry.k8s.io/kube-apiserver:v1.27.1"
+	pullTestDigestedImage = "registry.k8s.io/kube-apiserver@sha256:a6daed8429c54f0008910fc4ecc17aefa1dfcd7cc2ff0089570854d4f95213ed"
+)
+
+// pullImage pulls an image into the CRI namespace and returns the name Pull reports it stored the
+// image under.
+func (suite *ImagesSuite) pullImage(ctx context.Context, ref string) string {
 	rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_CRI,
 		},
-		ImageRef: image,
+		ImageRef: ref,
 	})
 	suite.Require().NoError(err)
 
@@ -135,8 +139,8 @@ func (suite *ImagesSuite) TestPull() {
 	}
 
 	suite.Require().NotEmpty(pulledImage, "expected pulled image name in the response")
-	// depending on whether the image verification is enabled or not, the pulled image ref can be either the original one (without digest) or the digested one, so we should accept both
-	suite.Assert().Contains([]string{digestedImage, image}, pulledImage, "pulled image name should match requested image")
+
+	return pulledImage
 }
 
 //go:embed testdata/pause.tar

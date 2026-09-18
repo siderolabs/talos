@@ -318,6 +318,27 @@ DrainLoop:
 
 // TestPersistent confirms there are persistent logs stored in /var/log.
 func (suite *LogsSuite) TestPersistent() {
+	sizes := suite.listPersistentLogs()
+
+	for _, name := range []string{
+		"machined.log",
+		"controller-runtime.log",
+	} {
+		suite.assertPersistentLog(sizes, name)
+	}
+}
+
+// TestPersistentKubelet confirms the kubelet log is stored in /var/log.
+func (suite *LogsSuite) TestPersistentKubelet() {
+	if !suite.Capabilities().SupportsKubernetes {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubelet log to check")
+	}
+
+	suite.assertPersistentLog(suite.listPersistentLogs(), "kubelet.log")
+}
+
+// listPersistentLogs returns the sizes of the files in /var/log of a random node, by file name.
+func (suite *LogsSuite) listPersistentLogs() map[string]int64 {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
@@ -341,20 +362,20 @@ func (suite *LogsSuite) TestPersistent() {
 		sizes[filepath.Base(info.Name)] = info.Size
 	}
 
-	for _, name := range []string{
-		"machined.log",
-		"controller-runtime.log",
-		"kubelet.log",
-	} {
-		suite.Assert().Contains(sizes, name)
+	return sizes
+}
 
-		rotatedSize, rotated := sizes[name+".1"]
-		suite.Assert().Truef(
-			sizes[name] > 1000 || (rotated && rotatedSize > 10000),
-			"Expected either more than 1000 bytes in the log file or a rotated file for %s",
-			name,
-		)
-	}
+// assertPersistentLog asserts that a log file exists and holds some content, either in itself or
+// in its rotated predecessor.
+func (suite *LogsSuite) assertPersistentLog(sizes map[string]int64, name string) {
+	suite.Assert().Contains(sizes, name)
+
+	rotatedSize, rotated := sizes[name+".1"]
+	suite.Assert().Truef(
+		sizes[name] > 1000 || (rotated && rotatedSize > 10000),
+		"Expected either more than 1000 bytes in the log file or a rotated file for %s",
+		name,
+	)
 }
 
 func init() {

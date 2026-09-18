@@ -44,6 +44,10 @@ func (suite *ServicesSuite) TestStatus() {
 
 // TestRestart verifies kubelet restart.
 func (suite *ServicesSuite) TestRestart() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubelet service")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP()
 
 	suite.RunCLI([]string{"service", "kubelet", "restart", "--nodes", node})

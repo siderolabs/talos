@@ -44,7 +44,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
+	k8sres "github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 )
@@ -157,6 +159,12 @@ func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 		}
 	}
 
+	if len(nodes) == 0 && apiSuite.Cluster != nil {
+		// The provisioner state lists every node the cluster has, so no match means the cluster
+		// was created without nodes of this type, not that discovery missed them.
+		apiSuite.T().Skipf("cluster has no nodes of type %v", types)
+	}
+
 	apiSuite.Require().NotEmpty(nodes)
 
 	return nodes[rand.IntN(len(nodes))].InternalIP.String()
@@ -164,12 +172,13 @@ func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 
 // Capabilities describes current cluster allowed actions.
 type Capabilities struct {
-	RunsTalosKernel bool
-	SupportsReboot  bool
-	SupportsRecover bool
-	SupportsVolumes bool
-	SupportsMETA    bool
-	SecureBooted    bool
+	RunsTalosKernel    bool
+	SupportsReboot     bool
+	SupportsRecover    bool
+	SupportsVolumes    bool
+	SupportsMETA       bool
+	SecureBooted       bool
+	SupportsKubernetes bool
 }
 
 // Capabilities returns a set of capabilities to skip tests for different environments.
@@ -206,7 +215,37 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 
 	caps.SecureBooted = securityResource.TypedSpec().SecureBoot
 
+	// Kubernetes is configured only when the machine config carries a cluster section: a cluster
+	// created with --skip-etcd-k8s runs Talos on its own, and the kubelet configuration which every
+	// Kubernetes node has never appears.
+	_, err = safe.StateGetByID[*k8sres.KubeletConfig](ctx, apiSuite.Client.COSI, k8sres.KubeletID)
+
+	switch {
+	case err == nil:
+		caps.SupportsKubernetes = true
+	case state.IsNotFoundError(err):
+	default:
+		apiSuite.Require().NoError(err)
+	}
+
 	return caps
+}
+
+// SupportsEtcd reports whether the cluster runs etcd.
+func (apiSuite *APISuite) SupportsEtcd() bool {
+	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
+	defer ctxCancel()
+
+	nodeCtx := client.WithNode(ctx, apiSuite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane))
+
+	_, err := safe.StateGetByID[*secrets.EtcdRoot](nodeCtx, apiSuite.Client.COSI, secrets.EtcdRootID)
+	if state.IsNotFoundError(err) {
+		return false
+	}
+
+	apiSuite.Require().NoError(err)
+
+	return true
 }
 
 // AssertClusterHealthy verifies that cluster is healthy using provisioning checks.
