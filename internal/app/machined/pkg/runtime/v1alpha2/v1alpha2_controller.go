@@ -201,6 +201,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 			LVM:          lvmProvisioner,
 		},
+		&storage.StoragePoolSpecController{},
+		&storage.StoragePoolController{},
 		&storage.LVMLogicalVolumeSpecController{},
 		&storage.LVMPhysicalVolumeSpecController{},
 		&storage.LVMRefreshTriggerController{

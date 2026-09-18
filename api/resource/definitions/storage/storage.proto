@@ -278,3 +278,16 @@ message MDRefreshRequestSpec {
   int64 request = 1;
 }
 
+// StoragePoolSpecSpec identifies the backing volume; the resource ID identifies the pool.
+message StoragePoolSpecSpec {
+  string volume_id = 1;
+}
+
+// StoragePoolStatusSpec reports the pool's backing volume, directory and readiness.
+message StoragePoolStatusSpec {
+  string volume_id = 1;
+  string target_path = 2;
+  bool ready = 3;
+  string error = 4;
+}
+

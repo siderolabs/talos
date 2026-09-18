@@ -20,7 +20,6 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -147,7 +146,7 @@ func (ctrl *ContentLibraryController) reconcileLibrary(
 	libraryID := contentLibraryConfig.Name()
 	volumeName := contentLibraryConfig.BackingVolumeName()
 
-	backing, resolved := resolveBackingVolume(cfg, volumeName)
+	backing, resolved := configcfg.ResolveBackingVolume(cfg, volumeName)
 
 	var (
 		requestID string
@@ -162,16 +161,16 @@ func (ctrl *ContentLibraryController) reconcileLibrary(
 		// validation rejects a backing volume nothing declares, so this is what a library says while
 		// its status is written before it.
 		reason = fmt.Sprintf("no user, existing or external volume named %q is configured", volumeName)
-	case backing.readOnly:
+	case backing.ReadOnly:
 		// Nothing is asked for: a mount is read-only only while every requester asks for it, so the
 		// read-write mount a library needs would remount the volume against what the user declared.
 		reason = fmt.Sprintf("backing volume %q is configured read-only", volumeName)
 	default:
-		requestID = ctrl.mountRequestID(libraryID, backing.id)
+		requestID = ctrl.mountRequestID(libraryID, backing.ID)
 
 		var err error
 
-		if path, reason, err = ctrl.mount(ctx, runtime, logger, libraryID, backing.id, requestID); err != nil {
+		if path, reason, err = ctrl.mount(ctx, runtime, logger, libraryID, backing.ID, requestID); err != nil {
 			return "", err
 		}
 	}
@@ -180,12 +179,13 @@ func (ctrl *ContentLibraryController) reconcileLibrary(
 	// previous status is still readable.
 	var becameReady bool
 
-	if err := safe.WriterModify(ctx, runtime,
+	if err := safe.WriterModify(
+		ctx, runtime,
 		hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryID),
 		func(res *hypervisor.ContentLibraryStatus) error {
 			becameReady = reason == "" && !res.TypedSpec().Ready
 
-			res.TypedSpec().VolumeID = backing.id
+			res.TypedSpec().VolumeID = backing.ID
 			res.TypedSpec().Path = path
 			res.TypedSpec().Ready = reason == ""
 			res.TypedSpec().Error = reason
@@ -243,7 +243,8 @@ func (ctrl *ContentLibraryController) mount(
 //
 // Written whether or not the volume is ready: the request is what makes it mounted once it is.
 func (ctrl *ContentLibraryController) requestMount(ctx context.Context, runtime controller.Runtime, volumeID, requestID string) error {
-	if err := safe.WriterModify(ctx, runtime,
+	if err := safe.WriterModify(
+		ctx, runtime,
 		block.NewVolumeMountRequest(block.NamespaceName, requestID),
 		func(res *block.VolumeMountRequest) error {
 			res.TypedSpec().Requester = ctrl.Name()
@@ -304,7 +305,8 @@ func (ctrl *ContentLibraryController) setMountFinalizer(
 			return "", "", fmt.Errorf("failed to add finalizer on %q: %w", requestID, err)
 		}
 
-		logger.Info("holding the volume mount for the content library",
+		logger.Info(
+			"holding the volume mount for the content library",
 			zap.String("library", libraryID),
 			zap.String("volume", volumeID),
 			zap.String("target", volumeMountStatus.TypedSpec().Target),
@@ -405,48 +407,6 @@ func (ctrl *ContentLibraryController) destroyRequest(ctx context.Context, runtim
 	return nil
 }
 
-// backingVolume is the volume a content library's backing volume name resolves to.
-type backingVolume struct {
-	// id is what the block subsystem knows the volume by.
-	id string
-	// readOnly is the mount policy the volume was declared with.
-	readOnly bool
-}
-
-// resolveBackingVolume maps a content library's backing volume name to the volume behind it.
-//
-// The name is what the user declared the volume under; the document kind declaring it decides the
-// prefix and carries the mount policy. Volume names are unique across the kinds mounted at
-// `/var/mnt/<name>`, so at most one can match.
-func resolveBackingVolume(cfg configcfg.Config, volumeName string) (backingVolume, bool) {
-	for _, userVolumeConfig := range cfg.UserVolumeConfigs() {
-		if userVolumeConfig.Name() == volumeName {
-			// A user volume is never declared read-only.
-			return backingVolume{id: constants.UserVolumePrefix + volumeName}, true
-		}
-	}
-
-	for _, existingVolumeConfig := range cfg.ExistingVolumeConfigs() {
-		if existingVolumeConfig.Name() == volumeName {
-			return backingVolume{
-				id:       constants.ExistingVolumePrefix + volumeName,
-				readOnly: existingVolumeConfig.Mount().ReadOnly(),
-			}, true
-		}
-	}
-
-	for _, externalVolumeConfig := range cfg.ExternalVolumeConfigs() {
-		if externalVolumeConfig.Name() == volumeName {
-			return backingVolume{
-				id:       constants.ExternalVolumePrefix + volumeName,
-				readOnly: externalVolumeConfig.Mount().ReadOnly(),
-			}, true
-		}
-	}
-
-	return backingVolume{}, false
-}
-
 // sweepStagedUploads removes what interrupted uploads left staged in a library.
 //
 // Staged names are dot-prefixed, so they are invisible to List and unaddressable by Delete: the
@@ -475,7 +435,8 @@ func (ctrl *ContentLibraryController) sweepStagedUploads(logger *zap.Logger, lib
 			continue
 		}
 
-		logger.Info("removed a staged upload left behind by an interrupted upload",
+		logger.Info(
+			"removed a staged upload left behind by an interrupted upload",
 			zap.String("library", libraryID),
 			zap.String("name", name),
 		)

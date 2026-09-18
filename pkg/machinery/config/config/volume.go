@@ -14,6 +14,37 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+// BackingVolume is a filesystem volume resolved from its literal document name.
+type BackingVolume struct {
+	ID       string
+	ReadOnly bool
+}
+
+// ResolveBackingVolume resolves a user, existing, or external volume by document name.
+// The document kind determines the runtime ID prefix; names are never stripped or guessed.
+// Raw and swap volumes cannot back a filesystem consumer.
+func ResolveBackingVolume(cfg Config, name string) (BackingVolume, bool) {
+	for _, volume := range cfg.UserVolumeConfigs() {
+		if volume.Name() == name {
+			return BackingVolume{ID: constants.UserVolumePrefix + name}, true
+		}
+	}
+
+	for _, volume := range cfg.ExistingVolumeConfigs() {
+		if volume.Name() == name {
+			return BackingVolume{ID: constants.ExistingVolumePrefix + name, ReadOnly: volume.Mount().ReadOnly()}, true
+		}
+	}
+
+	for _, volume := range cfg.ExternalVolumeConfigs() {
+		if volume.Name() == name {
+			return BackingVolume{ID: constants.ExternalVolumePrefix + name, ReadOnly: volume.Mount().ReadOnly()}, true
+		}
+	}
+
+	return BackingVolume{}, false
+}
+
 // PromotableSystemVolumeNames are the system volumes that default to a directory under the
 // EPHEMERAL volume but may instead be placed on a dedicated partition (via provisioning) at
 // cluster creation. The backing (directory vs. dedicated partition) is fixed at creation time.

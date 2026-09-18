@@ -278,6 +278,10 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	if err := container.validateStoragePools(); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// A virtual machine disk provisioned from an image names the content library holding it, which
 	// only the rest of the configuration can resolve.
 	if err := validateVirtualMachineImageReferences(container); err != nil {

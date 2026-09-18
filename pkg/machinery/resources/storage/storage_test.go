@@ -29,6 +29,8 @@ func TestRegisterResource(t *testing.T) {
 		&storage.LVMPhysicalVolumeStatus{},
 		&storage.LVMRefreshRequest{},
 		&storage.MDRefreshRequest{},
+		&storage.StoragePoolSpec{},
+		&storage.StoragePoolStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

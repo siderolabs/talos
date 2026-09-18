@@ -56,17 +56,20 @@ func validateContentLibraryBackingVolumes(container *Container) error {
 		case !declared:
 			errs = multierror.Append(errs, fmt.Errorf(
 				"content library %q cannot be backed by volume %q: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares that volume",
-				contentLibraryConfig.Name(), volumeName))
+				contentLibraryConfig.Name(), volumeName,
+			))
 		case readOnly:
 			errs = multierror.Append(errs, fmt.Errorf(
 				"content library %q cannot be backed by volume %q: the volume is configured read-only, and uploads write into the library",
-				contentLibraryConfig.Name(), volumeName))
+				contentLibraryConfig.Name(), volumeName,
+			))
 		}
 
 		if owner, taken := backedBy[volumeName]; taken {
 			errs = multierror.Append(errs, fmt.Errorf(
 				"content library %q cannot be backed by volume %q: content library %q is already backed by it",
-				contentLibraryConfig.Name(), volumeName, owner))
+				contentLibraryConfig.Name(), volumeName, owner,
+			))
 
 			continue
 		}
@@ -77,11 +80,11 @@ func validateContentLibraryBackingVolumes(container *Container) error {
 	return errs.ErrorOrNil()
 }
 
-// backingVolumeCandidates maps the name of every volume which can back a content library to its
-// read-only mount policy.
+// backingVolumeCandidates maps the name of every volume which can back a content library or
+// storage pool to its read-only mount policy.
 //
-// These are the kinds mounted at `/var/mnt/<name>`, the ones a library resolves its backing volume
-// name against. The name is taken as the document declares it: the internal ID is derived from the
+// These are the kinds mounted at `/var/mnt/<name>`, which consumers resolve backing volume
+// names against. The name is taken as the document declares it: the internal ID is derived from the
 // kind and the name, so a volume declared `u-images` is a volume of its own and not the ID of one
 // declared `images`. A user volume is never read-only, as the kind carries no such option.
 func backingVolumeCandidates(container *Container) map[string]bool {

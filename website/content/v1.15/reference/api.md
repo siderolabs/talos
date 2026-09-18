@@ -745,6 +745,8 @@ description: Talos gRPC API reference.
     - [MDArraySpecSpec](#talos.resource.definitions.storage.MDArraySpecSpec)
     - [MDArrayStatusSpec](#talos.resource.definitions.storage.MDArrayStatusSpec)
     - [MDRefreshRequestSpec](#talos.resource.definitions.storage.MDRefreshRequestSpec)
+    - [StoragePoolSpecSpec](#talos.resource.definitions.storage.StoragePoolSpecSpec)
+    - [StoragePoolStatusSpec](#talos.resource.definitions.storage.StoragePoolStatusSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
@@ -13110,6 +13112,39 @@ MDRefreshRequestSpec is the spec for MDRefreshRequest.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | request | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.StoragePoolSpecSpec"></a>
+
+### StoragePoolSpecSpec
+StoragePoolSpecSpec identifies the backing volume; the resource ID identifies the pool.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.StoragePoolStatusSpec"></a>
+
+### StoragePoolStatusSpec
+StoragePoolStatusSpec reports the pool's backing volume, directory and readiness.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_id | [string](#string) |  |  |
+| target_path | [string](#string) |  |  |
+| ready | [bool](#bool) |  |  |
+| error | [string](#string) |  |  |
 
 
 
