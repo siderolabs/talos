@@ -52,6 +52,7 @@ type BootstrapManifestsConfigSpec struct {
 	FlannelKubeServicePort            string         `yaml:"flannelKubeServicePort" protobuf:"18"`
 	FlannelKubeNetworkPoliciesEnabled bool           `yaml:"flannelKubeNetworkPoliciesEnabled" protobuf:"19"`
 	FlannelKubeNetworkPoliciesImage   string         `yaml:"flannelKubeNetworkPoliciesImage" protobuf:"20"`
+	FlannelKubeNetworkPoliciesVerbose bool           `yaml:"flannelKubeNetworkPoliciesVerbose" protobuf:"30"`
 	FlannelBackendType                string         `yaml:"flannelBackendType" protobuf:"23"`
 	FlannelBackendPort                uint16         `yaml:"flannelBackendPort" protobuf:"24"`
 	FlannelBackendMTU                 uint32         `yaml:"flannelBackendMTU" protobuf:"22"`
