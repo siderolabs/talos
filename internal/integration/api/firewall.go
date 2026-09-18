@@ -12,20 +12,27 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"math/rand/v2"
 	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-cleanhttp"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -265,6 +272,183 @@ func (suite *FirewallSuite) describeTestNginx() {
 			suite.T().Logf("  event %s %s: %s", ev.Type, ev.Reason, ev.Message)
 		}
 	}
+}
+
+const managementLinkAlias = "net0"
+
+// TestLinkIngress verifies that the link ingress filter works as expected.
+//
+//nolint:gocyclo
+func (suite *FirewallSuite) TestLinkIngress() {
+	if suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping LinkIngress tests on non qemu provisioner")
+	}
+
+	target := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	targetCtx := client.WithNode(suite.ctx, target)
+
+	var prober string
+
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		if node != target {
+			prober = node
+
+			break
+		}
+	}
+
+	suite.Require().NotEmpty(prober, "expected at least two nodes")
+
+	targetCfg, err := suite.ReadConfigFromNode(targetCtx)
+	suite.Require().NoError(err)
+
+	for _, doc := range targetCfg.Documents() {
+		if doc.Kind() == networkcfg.LinkIngressKind {
+			suite.T().Skipf("node %q already has link ingress filtering configured", target)
+		}
+	}
+
+	targetAddr, err := netip.ParseAddr(target)
+	suite.Require().NoError(err)
+
+	targetNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, target)
+	suite.Require().NoError(err)
+
+	pods, err := suite.Clientset.CoreV1().Pods("").List(suite.ctx, metav1.ListOptions{
+		FieldSelector: "spec.nodeName=" + targetNode.Name + ",status.phase=Running",
+	})
+	suite.Require().NoError(err)
+
+	// filter out host network pods (not applicable for this tests as they answer on the node's own address)
+	probeCandidates := xslices.Filter(pods.Items, func(pod corev1.Pod) bool {
+		return !pod.Spec.HostNetwork && pod.Status.PodIP != ""
+	})
+
+	if len(probeCandidates) == 0 {
+		suite.T().Errorf("no pod with its own address is running on node %q", target)
+	}
+
+	probeTarget := probeCandidates[rand.IntN(len(probeCandidates))]
+
+	probeAddr, err := netip.ParseAddr(probeTarget.Status.PodIP)
+	suite.Require().NoError(err)
+
+	links, err := safe.ReaderListAll[*network.LinkStatus](targetCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var linkName string
+
+	for link := range links.All() {
+		if link.TypedSpec().Alias == managementLinkAlias {
+			linkName = link.Metadata().ID()
+
+			break
+		}
+	}
+
+	suite.Require().NotEmpty(linkName, "expected to find a link aliased %q", managementLinkAlias)
+
+	suite.T().Logf(
+		"filtering link %q on node %q, probing pod %s/%s (%s) from node %q",
+		linkName, target, probeTarget.Namespace, probeTarget.Name, probeAddr, prober,
+	)
+
+	proberNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, prober)
+	suite.Require().NoError(err)
+
+	probePod, err := suite.NewPrivilegedPod("link-ingress-probe")
+	suite.Require().NoError(err)
+
+	probePod = probePod.WithNodeName(proberNode.Name).WithQuiet(true)
+
+	suite.Require().NoError(probePod.Create(suite.ctx, time.Minute))
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+
+		probePod.Delete(cleanupCtx) //nolint:errcheck
+	})
+
+	probePrefix := netip.PrefixFrom(probeAddr, probeAddr.BitLen())
+
+	proberLinkCfg := networkcfg.NewLinkConfigV1Alpha1(managementLinkAlias)
+	proberLinkCfg.LinkRoutes = []networkcfg.RouteConfig{
+		{
+			RouteDestination: meta.Prefix{Prefix: probePrefix},
+			RouteGateway:     meta.Addr{Addr: targetAddr},
+		},
+	}
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+
+		// drop just the route the test added
+		suite.PatchMachineConfig(client.WithNode(cleanupCtx, prober), map[string]any{
+			"apiVersion": "v1alpha1",
+			"kind":       networkcfg.LinkKind,
+			"name":       managementLinkAlias,
+			"routes": []any{
+				map[string]any{
+					"destination": probePrefix.String(),
+					"$patch":      "delete",
+				},
+			},
+		})
+	})
+
+	suite.PatchMachineConfig(client.WithNode(suite.ctx, prober), proberLinkCfg)
+
+	assertProbe := func(expectReachable bool) {
+		suite.Require().NoError(retry.Constant(30*time.Second, retry.WithUnits(time.Second)).RetryWithContext(
+			suite.ctx,
+			func(ctx context.Context) error {
+				_, _, err := probePod.Exec(ctx, fmt.Sprintf("ping -c 1 -W 1 %s", probeAddr))
+
+				switch {
+				case expectReachable && err != nil:
+					return retry.ExpectedErrorf("probe address is not reachable yet: %s", err)
+				case !expectReachable && err == nil:
+					return retry.ExpectedErrorf("probe address is still reachable")
+				}
+
+				return nil
+			},
+		))
+	}
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+
+		nodeCtx := client.WithNode(cleanupCtx, target)
+
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, networkcfg.LinkIngressKind, linkName)
+	})
+
+	// the pod answers before the filter is turned on
+	assertProbe(true)
+
+	linkIngressCfg := networkcfg.NewLinkIngressConfigV1Alpha1(linkName)
+
+	// turn the filter on: the probe address is not one of the node's accepted addresses anymore
+	suite.PatchMachineConfig(targetCtx, linkIngressCfg)
+	assertProbe(false)
+
+	// allow the probe address: should now pass
+	linkIngressCfg.DestinationAddressesConfig = []meta.Prefix{
+		{Prefix: netip.PrefixFrom(probeAddr, probeAddr.BitLen())},
+		// allow node's own address, otherwise access to the node is lost
+		{Prefix: netip.PrefixFrom(targetAddr, targetAddr.BitLen())},
+	}
+
+	suite.PatchMachineConfig(targetCtx, linkIngressCfg)
+	assertProbe(true)
+
+	// remove link ingress, should still pass
+	suite.RemoveMachineConfigDocumentsByName(targetCtx, networkcfg.LinkIngressKind, linkName)
+	assertProbe(true)
 }
 
 func init() {

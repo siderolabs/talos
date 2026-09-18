@@ -54,6 +54,11 @@ func (ctrl *NfTablesChainConfigController) Inputs() []controller.Input {
 			Type:      network.NodeAddressType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -99,15 +104,25 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && !(cfg.Config().NetworkRules().DefaultAction() == nethelpers.DefaultActionAccept && cfg.Config().NetworkRules().Rules() == nil) {
-			if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, IngressChainName), ctrl.buildIngressChain(cfg)); err != nil {
-				return err
-			}
-
-			if nodeAddresses != nil {
-				if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, PreroutingChainName), ctrl.buildPreroutingChain(cfg, nodeAddresses)); err != nil {
+		if cfg != nil {
+			acceptAllIngress := cfg.Config().NetworkRules().DefaultAction() == nethelpers.DefaultActionAccept && cfg.Config().NetworkRules().Rules() == nil
+			if !acceptAllIngress {
+				if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, IngressChainName), ctrl.buildIngressChain(cfg)); err != nil {
 					return err
 				}
+			}
+
+			linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+			if err != nil {
+				return fmt.Errorf("error listing link statuses: %w", err)
+			}
+
+			linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
+			// built even when the node addresses are not known yet, so that link ingress filtering
+			// fails closed in that window
+			if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, PreroutingChainName), ctrl.buildPreroutingChain(cfg, nodeAddresses, linkNameResolver)); err != nil {
+				return err
 			}
 		}
 
@@ -309,14 +324,22 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 	}
 }
 
-func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.MachineConfig, nodeAddresses *network.NodeAddress) func(*network.NfTablesChain) error {
+func (ctrl *NfTablesChainConfigController) buildPreroutingChain(
+	cfg *config.MachineConfig,
+	nodeAddresses *network.NodeAddress,
+	linkNameResolver *network.LinkResolver,
+) func(*network.NfTablesChain) error {
 	// convert CIDRs to /32 (/128) prefixes matching only the address itself
-	myAddresses := xslices.Map(
-		nodeAddresses.TypedSpec().Addresses,
-		func(addr netip.Prefix) netip.Prefix {
-			return netip.PrefixFrom(addr.Addr(), addr.Addr().BitLen())
-		},
-	)
+	var myAddresses []netip.Prefix
+
+	if nodeAddresses != nil {
+		myAddresses = xslices.Map(
+			nodeAddresses.TypedSpec().Addresses,
+			func(addr netip.Prefix) netip.Prefix {
+				return netip.PrefixFrom(addr.Addr(), addr.Addr().BitLen())
+			},
+		)
+	}
 
 	return func(chain *network.NfTablesChain) error {
 		spec := chain.TypedSpec()
@@ -345,18 +368,22 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 			},
 		}
 
+		for _, linkIngress := range cfg.Config().NetworkLinkIngressConfigs() {
+			spec.Rules = append(spec.Rules, networkLinkIngressRule(linkIngress, myAddresses, linkNameResolver))
+		}
+
 		// if the traffic is not addressed to the machine, ignore (accept it)
-		spec.Rules = append(
-			spec.Rules,
-			network.NfTablesRule{
-				MatchDestinationAddress: &network.NfTablesAddressMatch{
-					IncludeSubnets: myAddresses,
-					Invert:         true,
-				},
-				AnonCounter: true,
-				Verdict:     new(nethelpers.VerdictAccept),
-			},
-		)
+		if len(myAddresses) > 0 {
+			spec.Rules = append(spec.Rules,
+				network.NfTablesRule{
+					MatchDestinationAddress: &network.NfTablesAddressMatch{
+						IncludeSubnets: myAddresses,
+						Invert:         true,
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictAccept),
+				})
+		}
 
 		// drop any 'new' connections to ports outside of the allowed ranges
 		for _, rule := range cfg.Config().NetworkRules().Rules() {
@@ -433,6 +460,37 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 
 		return nil
 	}
+}
+
+// networkLinkIngressRule builds a rule dropping the packets arriving on the link which are not
+// destined to one of the allowed destination addresses.
+func networkLinkIngressRule(linkIngress cfg.NetworkLinkIngressConfig, myAddresses []netip.Prefix, linkNameResolver *network.LinkResolver) network.NfTablesRule {
+	destinations := linkIngress.DestinationAddresses()
+
+	if destinations == nil {
+		destinations = myAddresses
+	}
+
+	rule := network.NfTablesRule{
+		MatchIIfName: &network.NfTablesIfNameMatch{
+			InterfaceNames: []string{linkNameResolver.Resolve(linkIngress.Name())},
+			Operator:       nethelpers.OperatorEqual,
+		},
+		AnonCounter: true,
+		Verdict:     new(nethelpers.VerdictDrop),
+	}
+
+	// no allowed destinations: drop everything arriving on the link, matching on the link alone
+	if len(destinations) == 0 {
+		return rule
+	}
+
+	rule.MatchDestinationAddress = &network.NfTablesAddressMatch{
+		IncludeSubnets: destinations,
+		Invert:         true,
+	}
+
+	return rule
 }
 
 func hostDNSSubnets(k8sNetwork cfg.K8sNetworkConfig) []netip.Prefix {
