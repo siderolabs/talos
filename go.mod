@@ -74,6 +74,7 @@ require (
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.16.3
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
+	github.com/digitalocean/go-libvirt v0.0.0-20260814190004-1a83157e1858
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v29.7.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
@@ -205,6 +206,7 @@ require (
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.140.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
+	libvirt.org/go/libvirtxml v1.12007.0
 	sigs.k8s.io/hydrophone v0.7.0
 	sigs.k8s.io/yaml v1.6.0
 )

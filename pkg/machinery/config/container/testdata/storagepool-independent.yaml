@@ -1,0 +1,21 @@
+apiVersion: v1alpha1
+kind: StoragePool
+name: vm-images
+volume:
+  name: u-vm-data
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: vm-data
+volumeType: directory
+---
+apiVersion: v1alpha1
+kind: StoragePool
+name: other-pool
+volume:
+  name: u-other-data
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: other-data
+volumeType: directory

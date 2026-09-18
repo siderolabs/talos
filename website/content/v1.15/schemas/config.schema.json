@@ -7807,6 +7807,63 @@
       "type": "object",
       "description": "RAIDVolumeSelector matches member disks with CEL."
     },
+    "storage.StoragePoolV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "StoragePool"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Pool name: 1-63 ASCII letters, digits, hyphens or underscores, starting with a letter or digit.\n",
+          "markdownDescription": "Pool name: 1-63 ASCII letters, digits, hyphens or underscores, starting with a letter or digit.",
+          "x-intellij-html-description": "\u003cp\u003ePool name: 1-63 ASCII letters, digits, hyphens or underscores, starting with a letter or digit.\u003c/p\u003e\n"
+        },
+        "volume": {
+          "$ref": "#/$defs/storage.StoragePoolVolume",
+          "title": "volume",
+          "description": "Reference to the writable filesystem volume backing this pool.\n",
+          "markdownDescription": "Reference to the writable filesystem volume backing this pool.",
+          "x-intellij-html-description": "\u003cp\u003eReference to the writable filesystem volume backing this pool.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "StoragePool defines a directory storage pool on a configured filesystem volume.\\nDefines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,\\nor ExternalVolumeConfig. The backing volume must be writable and filesystem-backed.\\nOnly one pool may reference a backing volume. The pool directory is named after\\nthe pool beneath the volume mount target. Removing the configuration stops and\\nundefines the pool, but never deletes its files or backing volume.\\nRequires the libvirtd system extension. Changing the backing volume changes\\nthe pool target; it does not migrate existing disk images.\\n"
+    },
+    "storage.StoragePoolVolume": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Runtime volume ID: u-\u0026lt;name\u0026gt; for UserVolumeConfig, e-\u0026lt;name\u0026gt; for ExistingVolumeConfig,\nor x-\u0026lt;name\u0026gt; for ExternalVolumeConfig, where \u0026lt;name\u0026gt; is the document name.\nThe prefix is required, even when the document name is unique.\n",
+          "markdownDescription": "Runtime volume ID: `u-\u003cname\u003e` for UserVolumeConfig, `e-\u003cname\u003e` for ExistingVolumeConfig,\nor `x-\u003cname\u003e` for ExternalVolumeConfig, where `\u003cname\u003e` is the document name.\nThe prefix is required, even when the document name is unique.",
+          "x-intellij-html-description": "\u003cp\u003eRuntime volume ID: \u003ccode\u003eu-\u0026lt;name\u0026gt;\u003c/code\u003e for UserVolumeConfig, \u003ccode\u003ee-\u0026lt;name\u0026gt;\u003c/code\u003e for ExistingVolumeConfig,\nor \u003ccode\u003ex-\u0026lt;name\u0026gt;\u003c/code\u003e for ExternalVolumeConfig, where \u003ccode\u003e\u0026lt;name\u0026gt;\u003c/code\u003e is the document name.\nThe prefix is required, even when the document name is unique.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "StoragePoolVolume references a backing volume by its runtime volume ID."
+    },
     "v1alpha1.AdminKubeconfigConfig": {
       "properties": {
         "certLifetime": {
@@ -8452,6 +8509,9 @@
     },
     {
       "$ref": "#/$defs/storage.RAIDArrayConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/storage.StoragePoolV1Alpha1"
     },
     {
       "$ref": "#/$defs/v1alpha1.Config"

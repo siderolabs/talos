@@ -483,6 +483,11 @@ func (container *Container) SwapVolumeConfigs() []config.SwapVolumeConfig {
 	return findMatchingDocs[config.SwapVolumeConfig](container.documents)
 }
 
+// StoragePoolConfigs implements config.Config interface.
+func (container *Container) StoragePoolConfigs() []config.StoragePoolConfig {
+	return findMatchingDocs[config.StoragePoolConfig](container.documents)
+}
+
 // LVMVolumeGroupConfigs implements config.Config interface.
 func (container *Container) LVMVolumeGroupConfigs() []config.LVMVolumeGroupConfig {
 	return findMatchingDocs[config.LVMVolumeGroupConfig](container.documents)
