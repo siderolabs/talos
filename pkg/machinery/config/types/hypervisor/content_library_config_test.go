@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 )
 
+//nolint:dupl
 func TestContentLibraryConfigMarshalUnmarshal(t *testing.T) {
 	t.Parallel()
 

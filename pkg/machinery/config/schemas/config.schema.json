@@ -2215,6 +2215,114 @@
       ],
       "description": "ContentLibraryConfig is a content library configuration document.\\nContentLibraryConfig declares a content library: a store for virtual machine images\\nkept on a volume.\\n\\nThe library is the root of the backing volume, so a library backed by the user volume\\n`vm-images` keeps its images directly in `/var/mnt/vm-images`. A volume backs exactly\\none library: two libraries pointed at the same volume are rejected.\\n\\nContents are managed over the API with `talosctl hv content-library`, never by editing\\nthe machine configuration. Status is reported via `ContentLibraryStatus`.\\n"
     },
+    "hypervisor.VirtualMachineBallooning": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.\n\nBallooning only shrinks the guest below memory.size; growing beyond it is memory\nhot-add, which is a separate mechanism.\n\nOptional; defaults to disabled.\n",
+          "markdownDescription": "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.\n\nBallooning only shrinks the guest below `memory.size`; growing beyond it is memory\nhot-add, which is a separate mechanism.\n\nOptional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003eAttach a virtio-balloon device, letting the host reclaim memory the guest is not using.\u003c/p\u003e\n\n\u003cp\u003eBallooning only shrinks the guest below \u003ccode\u003ememory.size\u003c/code\u003e; growing beyond it is memory\nhot-add, which is a separate mechanism.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineBallooning describes the virtio-balloon settings for a virtual machine."
+    },
+    "hypervisor.VirtualMachineCPU": {
+      "properties": {
+        "count": {
+          "type": "integer",
+          "title": "count",
+          "description": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.\n",
+          "markdownDescription": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of virtual CPUs presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "count"
+      ],
+      "description": "VirtualMachineCPU describes the processors presented to the guest."
+    },
+    "hypervisor.VirtualMachineConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "VirtualMachineConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.\n",
+          "markdownDescription": "Name of the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.",
+          "x-intellij-html-description": "\u003cp\u003eName of the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.\u003c/p\u003e\n"
+        },
+        "cpu": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineCPU",
+          "title": "cpu",
+          "description": "Processor settings for the virtual machine.\n",
+          "markdownDescription": "Processor settings for the virtual machine.",
+          "x-intellij-html-description": "\u003cp\u003eProcessor settings for the virtual machine.\u003c/p\u003e\n"
+        },
+        "memory": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineMemory",
+          "title": "memory",
+          "description": "Memory settings for the virtual machine.\n",
+          "markdownDescription": "Memory settings for the virtual machine.",
+          "x-intellij-html-description": "\u003cp\u003eMemory settings for the virtual machine.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "cpu",
+        "kind",
+        "memory",
+        "name"
+      ],
+      "description": "VirtualMachineConfig is a virtual machine configuration document.\\nVirtualMachineConfig declares a virtual machine run by Talos.\\n\\nThis document is the skeleton of the virtual machine: the rest of the machine's shape\\n(firmware, disks, network interfaces, guest seeding, consoles) is added to it over time,\\nand every addition is a new field rather than a change to an existing one.\\n\\nStatus is reported via `VirtualMachineStatus`.\\n"
+    },
+    "hypervisor.VirtualMachineMemory": {
+      "properties": {
+        "size": {
+          "type": "string",
+          "title": "size",
+          "description": "Memory allocated to the guest at boot.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 4GiB.\n",
+          "markdownDescription": "Memory allocated to the guest at boot.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 4GiB.",
+          "x-intellij-html-description": "\u003cp\u003eMemory allocated to the guest at boot.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 4GiB.\u003c/p\u003e\n"
+        },
+        "ballooning": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineBallooning",
+          "title": "ballooning",
+          "description": "Memory ballooning settings.\n\nOptional; ballooning is disabled when this section is omitted.\n",
+          "markdownDescription": "Memory ballooning settings.\n\nOptional; ballooning is disabled when this section is omitted.",
+          "x-intellij-html-description": "\u003cp\u003eMemory ballooning settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; ballooning is disabled when this section is omitted.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "size"
+      ],
+      "description": "VirtualMachineMemory describes the memory presented to the guest."
+    },
     "k8s.AcceptedServiceAccountConfig": {
       "properties": {
         "publicKeys": {
@@ -8242,6 +8350,9 @@
     },
     {
       "$ref": "#/$defs/hypervisor.ContentLibraryConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/hypervisor.VirtualMachineConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeAdmissionControlConfigV1Alpha1"

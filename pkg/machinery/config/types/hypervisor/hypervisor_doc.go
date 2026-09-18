@@ -69,6 +69,131 @@ func (ContentLibraryBacking) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineConfig is a virtual machine configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineConfig is a virtual machine configuration document.\nVirtualMachineConfig declares a virtual machine run by Talos.\n\nThis document is the skeleton of the virtual machine: the rest of the machine's shape\n(firmware, disks, network interfaces, guest seeding, consoles) is added to it over time,\nand every addition is a new field rather than a change to an existing one.\n\nStatus is reported via `VirtualMachineStatus`.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cpu",
+				Type:        "VirtualMachineCPU",
+				Note:        "",
+				Description: "Processor settings for the virtual machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Processor settings for the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "memory",
+				Type:        "VirtualMachineMemory",
+				Note:        "",
+				Description: "Memory settings for the virtual machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory settings for the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVirtualMachineConfigV1Alpha1())
+
+	return doc
+}
+
+func (VirtualMachineCPU) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineCPU",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineCPU describes the processors presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineCPU describes the processors presented to the guest.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "cpu",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "count",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of virtual CPUs presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", 4)
+
+	return doc
+}
+
+func (VirtualMachineMemory) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineMemory",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineMemory describes the memory presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineMemory describes the memory presented to the guest.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "memory",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "size",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "Memory allocated to the guest at boot.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 4GiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory allocated to the guest at boot." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "ballooning",
+				Type:        "VirtualMachineBallooning",
+				Note:        "",
+				Description: "Memory ballooning settings.\n\nOptional; ballooning is disabled when this section is omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory ballooning settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "4GiB")
+
+	return doc
+}
+
+func (VirtualMachineBallooning) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineBallooning",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineBallooning describes the virtio-balloon settings for a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineBallooning describes the virtio-balloon settings for a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineMemory",
+				FieldName: "ballooning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.\n\nBallooning only shrinks the guest below `memory.size`; growing beyond it is memory\nhot-add, which is a separate mechanism.\n\nOptional; defaults to disabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file hypervisor_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -77,6 +202,10 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			ContentLibraryConfigV1Alpha1{}.Doc(),
 			ContentLibraryBacking{}.Doc(),
+			VirtualMachineConfigV1Alpha1{}.Doc(),
+			VirtualMachineCPU{}.Doc(),
+			VirtualMachineMemory{}.Doc(),
+			VirtualMachineBallooning{}.Doc(),
 		},
 	}
 }
