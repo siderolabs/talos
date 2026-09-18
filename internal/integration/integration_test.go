@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/api"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/internal/integration/cli"
+	"github.com/siderolabs/talos/internal/integration/hypervisor"
 	"github.com/siderolabs/talos/internal/integration/k8s"
 	provision_test "github.com/siderolabs/talos/internal/integration/provision"
 	"github.com/siderolabs/talos/pkg/images"
@@ -246,5 +247,5 @@ func init() {
 		provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
 	flag.StringVar(&provision_test.DefaultSettings.CNIBundleURL, "talos.provision.cni-bundle-url", provision_test.DefaultSettings.CNIBundleURL, "URL to download CNI bundle from")
 
-	allSuites = slices.Concat(api.GetAllSuites(), cli.GetAllSuites(), k8s.GetAllSuites(), provision_test.GetAllSuites())
+	allSuites = slices.Concat(api.GetAllSuites(), cli.GetAllSuites(), hypervisor.GetAllSuites(), k8s.GetAllSuites(), provision_test.GetAllSuites())
 }
