@@ -458,6 +458,11 @@ func (container *Container) ContentLibraryConfigs() []config.ContentLibraryConfi
 	return findMatchingDocs[config.ContentLibraryConfig](container.documents)
 }
 
+// VirtualMachineConfigs implements config.Config interface.
+func (container *Container) VirtualMachineConfigs() []config.VirtualMachineConfig {
+	return findMatchingDocs[config.VirtualMachineConfig](container.documents)
+}
+
 // UserVolumeConfigs implements config.Config interface.
 func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)
