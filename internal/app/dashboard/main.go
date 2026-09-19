@@ -45,7 +45,7 @@ func dashboardMain() error {
 	go runDebugServer(ctx)
 
 	md := metadata.Pairs()
-	authz.SetMetadata(md, role.MakeSet(role.Reader, role.MetaWriter))
+	authz.SetMetadata(md, role.MakeSet(role.Reader, role.MetaWriter, role.RecoveryKeySupplier))
 
 	ctx = metadata.NewOutgoingContext(ctx, md)
 
@@ -73,6 +73,9 @@ func dashboardMain() error {
 	}
 
 	screens = append(screens, dashboard.ScreenResourceExplorer)
+
+	// recovery key screen is the last one (so existing screens keep their keys), it is also shown automatically when a volume is locked
+	screens = append(screens, dashboard.ScreenRecoveryKey)
 
 	return dashboard.Run(ctx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
 }

@@ -80,7 +80,7 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/EtcdLeaveCluster":            role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdMemberList":              role.MakeSet(role.Admin, role.Operator, role.Reader, role.EtcdBackup),
 	"/machine.MachineService/EtcdRecover":                 role.MakeSet(role.Admin),
-	"/machine.MachineService/EncryptionRecoveryKeySupply": role.MakeSet(role.Admin),
+	"/machine.MachineService/EncryptionRecoveryKeySupply": role.MakeSet(role.Admin, role.RecoveryKeySupplier),
 	"/machine.MachineService/EncryptionRecoveryKeyVerify": role.MakeSet(role.Admin),
 	"/machine.MachineService/EncryptionRecoveryKeyFetch":  role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdRemoveMemberByID":        role.MakeSet(role.Admin),
@@ -212,7 +212,7 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 			{
 				// internal dashboard
 				Pattern:      "dashboard",
-				AllowedRoles: role.MakeSet(role.Reader, role.MetaWriter),
+				AllowedRoles: role.MakeSet(role.Reader, role.MetaWriter, role.RecoveryKeySupplier),
 			},
 			{
 				// installer access during installation/upgrade

@@ -38,6 +38,9 @@ const (
 	// MetaWriter defines Talos role that allows mutating META values (write and delete).
 	MetaWriter = Role(Prefix + "meta:writer")
 
+	// RecoveryKeySupplier defines Talos role that allows supplying disk encryption recovery keys.
+	RecoveryKeySupplier = Role(Prefix + "recovery-key:supplier")
+
 	// ContentLibraryReader defines Talos role that allows listing the contents of content libraries.
 	ContentLibraryReader = Role(Prefix + "content-library:reader")
 
@@ -57,7 +60,7 @@ type Set struct {
 
 var (
 	// All roles that can be granted to users.
-	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, ContentLibraryReader, ContentLibraryWriter, Impersonator)
+	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, RecoveryKeySupplier, ContentLibraryReader, ContentLibraryWriter, Impersonator)
 
 	// Zero is an empty set of roles.
 	Zero = MakeSet()
