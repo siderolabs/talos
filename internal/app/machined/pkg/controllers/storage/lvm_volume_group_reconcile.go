@@ -9,12 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage/internal/retry"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -33,6 +35,9 @@ type LVMProvisioner interface {
 type LVMVolumeGroupReconcileController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          LVMProvisioner
+
+	RetryInitialInterval time.Duration
+	RetryMaxInterval     time.Duration
 }
 
 // Name implements controller.Controller interface.
@@ -79,11 +84,16 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		return errors.New("LVM provisioner not configured")
 	}
 
+	retryTimer := retry.NewTimer(ctrl.RetryInitialInterval, ctrl.RetryMaxInterval)
+	defer retryTimer.Stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		case <-retryTimer.C():
+			retryTimer.Fired()
 		}
 
 		vgSpecs, err := safe.ReaderListAll[*storage.LVMVolumeGroupSpec](ctx, r)
@@ -127,9 +137,13 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		}
 
 		if err := reconcileErrs.ErrorOrNil(); err != nil {
-			// Log and retry on next event.
+			retryTimer.Schedule()
 			logger.Warn("LVM reconcile encountered errors", zap.Error(err))
+
+			continue
 		}
+
+		retryTimer.Reset()
 	}
 }
 
