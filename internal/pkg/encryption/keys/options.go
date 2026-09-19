@@ -15,6 +15,8 @@ type KeyOptions struct {
 	GetSystemInformation helpers.SystemInformationGetter
 	TPMLocker            helpers.TPMLockFunc
 	SaltGetter           helpers.SaltGetter
+	RecoveryKeyGetter    helpers.RecoveryKeyGetter
+	RecoveryKeyPublisher helpers.RecoveryKeyPublisher
 }
 
 // WithVolumeID passes the partition label to the key handler.
@@ -48,6 +50,24 @@ func WithTPMLocker(locker helpers.TPMLockFunc) KeyOption {
 func WithSaltGetter(getter helpers.SaltGetter) KeyOption {
 	return func(o *KeyOptions) error {
 		o.SaltGetter = getter
+
+		return nil
+	}
+}
+
+// WithRecoveryKeyGetter passes the recovery key getter to the key handler.
+func WithRecoveryKeyGetter(getter helpers.RecoveryKeyGetter) KeyOption {
+	return func(o *KeyOptions) error {
+		o.RecoveryKeyGetter = getter
+
+		return nil
+	}
+}
+
+// WithRecoveryKeyPublisher passes the recovery key publisher to the key handler.
+func WithRecoveryKeyPublisher(publisher helpers.RecoveryKeyPublisher) KeyOption {
+	return func(o *KeyOptions) error {
+		o.RecoveryKeyPublisher = publisher
 
 		return nil
 	}

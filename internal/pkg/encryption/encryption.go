@@ -33,6 +33,7 @@ type Helpers struct {
 	GetSystemInformation helpers.SystemInformationGetter
 	TPMLocker            helpers.TPMLockFunc
 	SaltGetter           helpers.SaltGetter
+	RecoveryKeyGetter    helpers.RecoveryKeyGetter
 }
 
 // NewHandler creates new Handler.
@@ -75,6 +76,7 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers 
 			keys.WithSystemInformationGetter(helpers.GetSystemInformation),
 			keys.WithTPMLocker(helpers.TPMLocker),
 			keys.WithSaltGetter(helpers.SaltGetter),
+			keys.WithRecoveryKeyGetter(helpers.RecoveryKeyGetter),
 		)
 		if err != nil {
 			return nil, err
@@ -194,6 +196,13 @@ func (h *Handler) FormatAndEncrypt(ctx context.Context, logger *zap.Logger, path
 		}
 
 		if err := h.addKey(ctx, path, key, handler); err != nil {
+			if errors.Is(err, keys.ErrKeyNotAvailable) {
+				// the key has to be enrolled later by the operator
+				logger.Info("skipping key slot, key not available", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
+
+				continue
+			}
+
 			return err
 		}
 	}
@@ -220,24 +229,12 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 			continue
 		}
 
-		// keyslot exists
 		if _, ok := keyslots.Keyslots[slot]; ok {
-			if err = h.updateKey(ctx, path, k, handler); err != nil {
-				logger.Error("failed to update key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
-
-				failedSyncs = append(failedSyncs, fmt.Sprintf("error updating key slot %s %T: %s", slot, handler, err))
-			} else {
-				logger.Info("updated encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
-			}
+			// keyslot exists, verify (and re-enroll if needed) the key
+			failedSyncs = recordKeySync(logger, failedSyncs, h.updateKey(ctx, path, k, handler), handler, "update", "updated encryption key")
 		} else {
 			// keyslot does not exist so just add the key
-			if err = h.addKey(ctx, path, k, handler); err != nil {
-				logger.Error("failed to add key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
-
-				failedSyncs = append(failedSyncs, fmt.Sprintf("error adding key slot %s %T: %s", slot, handler, err))
-			} else {
-				logger.Info("added encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
-			}
+			failedSyncs = recordKeySync(logger, failedSyncs, h.addKey(ctx, path, k, handler), handler, "add", "added encryption key")
 		}
 	}
 
@@ -260,6 +257,28 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 	}
 
 	return failedSyncs, nil
+}
+
+// recordKeySync logs the outcome of syncing a key slot, and records the failure if any.
+//
+// A key which is not available (it has to come from the operator) is not a failure: the slot is left as is.
+func recordKeySync(logger *zap.Logger, failedSyncs []string, err error, handler keys.Handler, action, successMessage string) []string {
+	fields := []zap.Field{zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler))}
+
+	switch {
+	case errors.Is(err, keys.ErrKeyNotAvailable):
+		logger.Debug("skipping key slot "+action+", key not available", fields...)
+
+		return failedSyncs
+	case err != nil:
+		logger.Error("failed to "+action+" key", append(fields, zap.Error(err))...)
+
+		return append(failedSyncs, fmt.Sprintf("error %s key slot %d %T: %s", action, handler.Slot(), handler, err))
+	default:
+		logger.Info(successMessage, fields...)
+
+		return failedSyncs
+	}
 }
 
 func (h *Handler) updateKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) error {
@@ -351,7 +370,11 @@ func (h *Handler) tryHandlers(
 		if err != nil {
 			errs = multierror.Append(errs, err)
 
-			logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)), zap.Error(err))
+			if errors.Is(err, keys.ErrKeyNotAvailable) {
+				logger.Debug("skipping key handler, key not available", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)))
+			} else {
+				logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)), zap.Error(err))
+			}
 
 			continue
 		}

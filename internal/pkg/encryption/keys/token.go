@@ -9,4 +9,6 @@ const (
 	TokenTypeKMS = "sideroKMS"
 	// TokenTypeTPM is TPM assisted encryption token.
 	TokenTypeTPM = "talos-tpm2"
+	// TokenTypeRecovery is the operator-held recovery key token.
+	TokenTypeRecovery = "talos-recovery"
 )
