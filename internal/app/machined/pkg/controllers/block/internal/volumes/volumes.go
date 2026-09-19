@@ -73,6 +73,12 @@ func cmpBool(a, b bool) int {
 // Retryable is an error tag.
 type Retryable struct{}
 
+// Locked is an error tag: the volume can't be unlocked with any of the automatic keys,
+// but a recovery key is configured, so the operator can unlock it.
+//
+// Locked errors are always retried.
+type Locked struct{}
+
 // DiskContext captures the context of a disk.
 type DiskContext struct {
 	Disk       *blockpb.DiskSpec

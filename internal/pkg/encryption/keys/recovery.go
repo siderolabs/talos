@@ -43,6 +43,22 @@ type RecoveryKeyHandler struct {
 	publisher helpers.RecoveryKeyPublisher
 }
 
+// IsRecovery reports whether the handler is a RecoveryKeyHandler, possibly wrapped (e.g. by a SaltedHandler).
+func IsRecovery(h Handler) bool {
+	for {
+		if _, ok := h.(*RecoveryKeyHandler); ok {
+			return true
+		}
+
+		wrapper, ok := h.(interface{ Unwrap() Handler })
+		if !ok {
+			return false
+		}
+
+		h = wrapper.Unwrap()
+	}
+}
+
 // NewRecoveryKeyHandler creates new RecoveryKeyHandler.
 //
 // The getter supplies the operator-provided key for unlocking, the publisher hands generated keys over

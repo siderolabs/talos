@@ -4308,6 +4308,7 @@ const (
 	BlockVolumePhase_VOLUME_PHASE_PREPARED    BlockVolumePhase = 5
 	BlockVolumePhase_VOLUME_PHASE_READY       BlockVolumePhase = 6
 	BlockVolumePhase_VOLUME_PHASE_CLOSED      BlockVolumePhase = 7
+	BlockVolumePhase_VOLUME_PHASE_LOCKED      BlockVolumePhase = 8
 )
 
 // Enum value maps for BlockVolumePhase.
@@ -4321,6 +4322,7 @@ var (
 		5: "VOLUME_PHASE_PREPARED",
 		6: "VOLUME_PHASE_READY",
 		7: "VOLUME_PHASE_CLOSED",
+		8: "VOLUME_PHASE_LOCKED",
 	}
 	BlockVolumePhase_value = map[string]int32{
 		"VOLUME_PHASE_WAITING":     0,
@@ -4331,6 +4333,7 @@ var (
 		"VOLUME_PHASE_PREPARED":    5,
 		"VOLUME_PHASE_READY":       6,
 		"VOLUME_PHASE_CLOSED":      7,
+		"VOLUME_PHASE_LOCKED":      8,
 	}
 )
 
@@ -5823,7 +5826,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x11NFS_TRANSPORT_TCP\x10\x00\x12\x16\n" +
 	"\x12NFS_TRANSPORT_TCP6\x10\x01\x12\x15\n" +
 	"\x11NFS_TRANSPORT_UDP\x10\x02\x12\x16\n" +
-	"\x12NFS_TRANSPORT_UDP6\x10\x03*\xe3\x01\n" +
+	"\x12NFS_TRANSPORT_UDP6\x10\x03*\xfc\x01\n" +
 	"\x10BlockVolumePhase\x12\x18\n" +
 	"\x14VOLUME_PHASE_WAITING\x10\x00\x12\x17\n" +
 	"\x13VOLUME_PHASE_FAILED\x10\x01\x12\x18\n" +
@@ -5832,7 +5835,8 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x18VOLUME_PHASE_PROVISIONED\x10\x04\x12\x19\n" +
 	"\x15VOLUME_PHASE_PREPARED\x10\x05\x12\x16\n" +
 	"\x12VOLUME_PHASE_READY\x10\x06\x12\x17\n" +
-	"\x13VOLUME_PHASE_CLOSED\x10\a*\xc0\x01\n" +
+	"\x13VOLUME_PHASE_CLOSED\x10\a\x12\x17\n" +
+	"\x13VOLUME_PHASE_LOCKED\x10\b*\xc0\x01\n" +
 	"\x0fBlockVolumeType\x12\x19\n" +
 	"\x15VOLUME_TYPE_PARTITION\x10\x00\x12\x14\n" +
 	"\x10VOLUME_TYPE_DISK\x10\x01\x12\x15\n" +

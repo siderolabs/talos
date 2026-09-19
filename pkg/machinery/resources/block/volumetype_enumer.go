@@ -109,11 +109,11 @@ func (i *VolumeType) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _VolumePhaseName = "waitingfailedmissinglocatedprovisionedpreparedreadyclosed"
+const _VolumePhaseName = "waitingfailedmissinglocatedprovisionedpreparedreadyclosedlocked"
 
-var _VolumePhaseIndex = [...]uint8{0, 7, 13, 20, 27, 38, 46, 51, 57}
+var _VolumePhaseIndex = [...]uint8{0, 7, 13, 20, 27, 38, 46, 51, 57, 63}
 
-const _VolumePhaseLowerName = "waitingfailedmissinglocatedprovisionedpreparedreadyclosed"
+const _VolumePhaseLowerName = "waitingfailedmissinglocatedprovisionedpreparedreadyclosedlocked"
 
 func (i VolumePhase) String() string {
 	if i < 0 || i >= VolumePhase(len(_VolumePhaseIndex)-1) {
@@ -134,9 +134,10 @@ func _VolumePhaseNoOp() {
 	_ = x[VolumePhasePrepared-(5)]
 	_ = x[VolumePhaseReady-(6)]
 	_ = x[VolumePhaseClosed-(7)]
+	_ = x[VolumePhaseLocked-(8)]
 }
 
-var _VolumePhaseValues = []VolumePhase{VolumePhaseWaiting, VolumePhaseFailed, VolumePhaseMissing, VolumePhaseLocated, VolumePhaseProvisioned, VolumePhasePrepared, VolumePhaseReady, VolumePhaseClosed}
+var _VolumePhaseValues = []VolumePhase{VolumePhaseWaiting, VolumePhaseFailed, VolumePhaseMissing, VolumePhaseLocated, VolumePhaseProvisioned, VolumePhasePrepared, VolumePhaseReady, VolumePhaseClosed, VolumePhaseLocked}
 
 var _VolumePhaseNameToValueMap = map[string]VolumePhase{
 	_VolumePhaseName[0:7]:        VolumePhaseWaiting,
@@ -155,6 +156,8 @@ var _VolumePhaseNameToValueMap = map[string]VolumePhase{
 	_VolumePhaseLowerName[46:51]: VolumePhaseReady,
 	_VolumePhaseName[51:57]:      VolumePhaseClosed,
 	_VolumePhaseLowerName[51:57]: VolumePhaseClosed,
+	_VolumePhaseName[57:63]:      VolumePhaseLocked,
+	_VolumePhaseLowerName[57:63]: VolumePhaseLocked,
 }
 
 var _VolumePhaseNames = []string{
@@ -166,6 +169,7 @@ var _VolumePhaseNames = []string{
 	_VolumePhaseName[38:46],
 	_VolumePhaseName[46:51],
 	_VolumePhaseName[51:57],
+	_VolumePhaseName[57:63],
 }
 
 // VolumePhaseString retrieves an enum value from the enum constants string name.

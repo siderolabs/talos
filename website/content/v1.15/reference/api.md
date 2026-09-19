@@ -713,6 +713,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
     - [APICertsSpec](#talos.resource.definitions.secrets.APICertsSpec)
     - [CertSANSpec](#talos.resource.definitions.secrets.CertSANSpec)
+    - [EncryptionRecoveryKeySpec](#talos.resource.definitions.secrets.EncryptionRecoveryKeySpec)
     - [EncryptionSaltSpec](#talos.resource.definitions.secrets.EncryptionSaltSpec)
     - [EtcdCertsSpec](#talos.resource.definitions.secrets.EtcdCertsSpec)
     - [EtcdRootSpec](#talos.resource.definitions.secrets.EtcdRootSpec)
@@ -5622,6 +5623,7 @@ BlockVolumePhase describes volume phase.
 | VOLUME_PHASE_PREPARED | 5 |  |
 | VOLUME_PHASE_READY | 6 |  |
 | VOLUME_PHASE_CLOSED | 7 |  |
+| VOLUME_PHASE_LOCKED | 8 |  |
 
 
 
@@ -7564,6 +7566,7 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
 | scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
 | scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
+| pending_encryption_keys | [string](#string) | repeated | PendingEncryptionKeys is the list of configured encryption keys which are not enrolled (yet) in the volume. |
 
 
 
@@ -12548,6 +12551,21 @@ CertSANSpec describes fields of the cert SANs.
 | i_ps | [common.NetIP](#common.NetIP) | repeated |  |
 | dns_names | [string](#string) | repeated |  |
 | fqdn | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.secrets.EncryptionRecoveryKeySpec"></a>
+
+### EncryptionRecoveryKeySpec
+EncryptionRecoveryKeySpec describes the recovery key.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [bytes](#bytes) |  |  |
 
 
 

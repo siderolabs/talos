@@ -67,3 +67,8 @@ func (k *SaltedHandler) GetKey(ctx context.Context, token token.Token) (*encrypt
 func (k *SaltedHandler) Slot() int {
 	return k.wrapped.Slot()
 }
+
+// Unwrap returns the wrapped handler.
+func (k *SaltedHandler) Unwrap() Handler {
+	return k.wrapped
+}

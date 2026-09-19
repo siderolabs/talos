@@ -2791,8 +2791,12 @@ type VolumeStatusSpec struct {
 	ScrubEnabled bool `protobuf:"varint,26,opt,name=scrub_enabled,json=scrubEnabled,proto3" json:"scrub_enabled,omitempty"`
 	// ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
 	ScrubInterval *durationpb.Duration `protobuf:"bytes,27,opt,name=scrub_interval,json=scrubInterval,proto3" json:"scrub_interval,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// EnrolledEncryptionKeys is the list of encryption key types which are enrolled in the volume (present in the LUKS header).
+	//
+	// A configured key type which is not enrolled is a pending key, e.g. a recovery key which was not supplied yet.
+	EnrolledEncryptionKeys []string `protobuf:"bytes,28,rep,name=enrolled_encryption_keys,json=enrolledEncryptionKeys,proto3" json:"enrolled_encryption_keys,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *VolumeStatusSpec) Reset() {
@@ -3010,6 +3014,13 @@ func (x *VolumeStatusSpec) GetScrubEnabled() bool {
 func (x *VolumeStatusSpec) GetScrubInterval() *durationpb.Duration {
 	if x != nil {
 		return x.ScrubInterval
+	}
+	return nil
+}
+
+func (x *VolumeStatusSpec) GetEnrolledEncryptionKeys() []string {
+	if x != nil {
+		return x.EnrolledEncryptionKeys
 	}
 	return nil
 }
@@ -3463,7 +3474,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\bdetached\x18\x05 \x01(\bR\bdetached\x12.\n" +
 	"\x13disable_access_time\x18\x06 \x01(\bR\x11disableAccessTime\x12\x16\n" +
 	"\x06secure\x18\a \x01(\bR\x06secure\x12\x17\n" +
-	"\ano_exec\x18\b \x01(\bR\x06noExec\"\x89\f\n" +
+	"\ano_exec\x18\b \x01(\bR\x06noExec\"\xc3\f\n" +
 	"\x10VolumeStatusSpec\x12H\n" +
 	"\x05phase\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.BlockVolumePhaseR\x05phase\x12\x1a\n" +
 	"\blocation\x18\x02 \x01(\tR\blocation\x12#\n" +
@@ -3496,7 +3507,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\ftrim_enabled\x18\x18 \x01(\bR\vtrimEnabled\x12>\n" +
 	"\rtrim_interval\x18\x19 \x01(\v2\x19.google.protobuf.DurationR\ftrimInterval\x12#\n" +
 	"\rscrub_enabled\x18\x1a \x01(\bR\fscrubEnabled\x12@\n" +
-	"\x0escrub_interval\x18\x1b \x01(\v2\x19.google.protobuf.DurationR\rscrubInterval\"\xdf\x01\n" +
+	"\x0escrub_interval\x18\x1b \x01(\v2\x19.google.protobuf.DurationR\rscrubInterval\x128\n" +
+	"\x18enrolled_encryption_keys\x18\x1c \x03(\tR\x16enrolledEncryptionKeys\"\xdf\x01\n" +
 	"\x16VolumeTrimScheduleSpec\x12U\n" +
 	"\n" +
 	"filesystem\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\n" +

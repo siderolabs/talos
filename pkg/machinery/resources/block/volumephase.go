@@ -19,4 +19,5 @@ const (
 	VolumePhasePrepared                       // prepared
 	VolumePhaseReady                          // ready
 	VolumePhaseClosed                         // closed
+	VolumePhaseLocked                         // locked
 )

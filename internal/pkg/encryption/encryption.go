@@ -34,6 +34,7 @@ type Helpers struct {
 	TPMLocker            helpers.TPMLockFunc
 	SaltGetter           helpers.SaltGetter
 	RecoveryKeyGetter    helpers.RecoveryKeyGetter
+	RecoveryKeyPublisher helpers.RecoveryKeyPublisher
 }
 
 // NewHandler creates new Handler.
@@ -77,6 +78,7 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers 
 			keys.WithTPMLocker(helpers.TPMLocker),
 			keys.WithSaltGetter(helpers.SaltGetter),
 			keys.WithRecoveryKeyGetter(helpers.RecoveryKeyGetter),
+			keys.WithRecoveryKeyPublisher(helpers.RecoveryKeyPublisher),
 		)
 		if err != nil {
 			return nil, err
@@ -156,6 +158,24 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mapp
 	}
 
 	return path, usedKey.Slot, failedSyncs, nil
+}
+
+// PendingSlots returns the configured key slots which are not enrolled (yet) in the encrypted partition.
+func (h *Handler) PendingSlots(devicePath string) ([]int, error) {
+	keyslots, err := h.encryptionProvider.ReadKeyslots(devicePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var pending []int
+
+	for _, handler := range h.keyHandlers {
+		if _, ok := keyslots.Keyslots[strconv.Itoa(handler.Slot())]; !ok {
+			pending = append(pending, handler.Slot())
+		}
+	}
+
+	return pending, nil
 }
 
 // Close encrypted partition.
@@ -320,7 +340,20 @@ func (h *Handler) checkKey(ctx context.Context, path string, handler keys.Handle
 		return false, err
 	}
 
-	return h.encryptionProvider.CheckKey(ctx, path, key)
+	valid, err := h.encryptionProvider.CheckKey(ctx, path, key)
+	if err != nil {
+		return false, err
+	}
+
+	if !valid {
+		if keys.IsRecovery(handler) {
+			// the key was typed in by the operator: a mismatch is most likely a typo,
+			// never a reason to throw away the enrolled recovery key
+			return true, nil
+		}
+	}
+
+	return valid, nil
 }
 
 func (h *Handler) addKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) error {
@@ -408,6 +441,17 @@ func (h *Handler) readToken(ctx context.Context, path string, id int) (token.Tok
 		return &luks.Token[*keys.KMSToken]{
 			Type:     token.Type,
 			UserData: kmsData,
+		}, nil
+	case keys.TokenTypeRecovery:
+		recoveryData := &keys.RecoveryToken{}
+
+		if err = json.Unmarshal(token.UserData, &recoveryData); err != nil {
+			return nil, err
+		}
+
+		return &luks.Token[*keys.RecoveryToken]{
+			Type:     token.Type,
+			UserData: recoveryData,
 		}, nil
 	case keys.TokenTypeTPM:
 		tpmData := &keys.TPMToken{}

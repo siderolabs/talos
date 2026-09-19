@@ -285,3 +285,72 @@ func TestRecoveryKeyOpen(t *testing.T) {
 	assert.Equal(t, []int{0}, provider.added)
 	assert.Equal(t, []byte("new-key"), provider.slots[0])
 }
+
+func TestSyncAndPendingSlots(t *testing.T) {
+	t.Parallel()
+
+	const (
+		unlockKey   = "unlock-key"
+		recoveryKey = "correct horse battery staple"
+	)
+
+	// the volume was formatted with the automatic key only, the recovery slot is pending
+	provider := newFakeProvider(map[int][]byte{
+		0: []byte(unlockKey),
+	})
+
+	var suppliedKey []byte
+
+	h := &Handler{
+		encryptionProvider: provider,
+		keyHandlers: []keys.Handler{
+			staticHandler(t, 0, unlockKey),
+			recoveryHandler(t, 1, &suppliedKey),
+		},
+	}
+
+	pending, err := h.PendingSlots("/dev/null")
+	require.NoError(t, err)
+	assert.Equal(t, []int{1}, pending)
+
+	// sync without the recovery key: nothing to do
+	failedSyncs, err := h.Sync(t.Context(), zaptest.NewLogger(t), "/dev/null")
+	require.NoError(t, err)
+	assert.Empty(t, failedSyncs)
+	assert.Empty(t, provider.added)
+
+	// the operator supplies the key: the recovery slot is enrolled using the automatic key as the existing key
+	suppliedKey = []byte(recoveryKey)
+
+	failedSyncs, err = h.Sync(t.Context(), zaptest.NewLogger(t), "/dev/null")
+	require.NoError(t, err)
+	assert.Empty(t, failedSyncs)
+	assert.Equal(t, []int{1}, provider.added)
+	assert.Equal(t, []byte(recoveryKey), provider.slots[1])
+
+	pending, err = h.PendingSlots("/dev/null")
+	require.NoError(t, err)
+	assert.Empty(t, pending)
+}
+
+func TestSyncNoValidKey(t *testing.T) {
+	t.Parallel()
+
+	// none of the configured keys matches the volume
+	provider := newFakeProvider(map[int][]byte{
+		0: []byte("old-key"),
+	})
+
+	h := &Handler{
+		encryptionProvider: provider,
+		keyHandlers: []keys.Handler{
+			staticHandler(t, 0, "new-key"),
+			recoveryHandler(t, 1, nil),
+		},
+	}
+
+	_, err := h.Sync(t.Context(), zaptest.NewLogger(t), "/dev/null")
+	require.Error(t, err)
+	assert.Empty(t, provider.added)
+	assert.Empty(t, provider.removed)
+}
