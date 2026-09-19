@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage/internal/retry"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -83,16 +84,16 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		return errors.New("LVM provisioner not configured")
 	}
 
-	retry := newLVMReconcileRetry(ctrl.RetryInitialInterval, ctrl.RetryMaxInterval)
-	defer retry.stop()
+	retryTimer := retry.NewTimer(ctrl.RetryInitialInterval, ctrl.RetryMaxInterval)
+	defer retryTimer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case <-retry.channel():
-			retry.fired()
+		case <-retryTimer.C():
+			retryTimer.Fired()
 		}
 
 		vgSpecs, err := safe.ReaderListAll[*storage.LVMVolumeGroupSpec](ctx, r)
@@ -136,13 +137,13 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		}
 
 		if err := reconcileErrs.ErrorOrNil(); err != nil {
-			retry.schedule()
+			retryTimer.Schedule()
 			logger.Warn("LVM reconcile encountered errors", zap.Error(err))
 
 			continue
 		}
 
-		retry.reset()
+		retryTimer.Reset()
 	}
 }
 
