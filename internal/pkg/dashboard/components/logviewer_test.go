@@ -6,6 +6,7 @@
 package components
 
 import (
+	"strings"
 	"testing"
 	"unicode/utf8"
 
@@ -243,6 +244,49 @@ func TestDeactivateSearchClearFilter(t *testing.T) {
 
 	if viewer.filterInput.GetText() != "" {
 		t.Fatalf("filterInput text = %q, expected empty", viewer.filterInput.GetText())
+	}
+}
+
+// TestResetClearsFilter verifies that pointing the viewer at another log stream drops the filter
+// that was typed for the previous one: keeping it would hide the new stream's lines with the filter
+// input itself no longer on screen.
+func TestResetClearsFilter(t *testing.T) {
+	app := tview.NewApplication()
+	defer app.Stop()
+
+	viewer := NewLogViewer(app)
+
+	// Manually set up the filtered state as activateSearch would.
+	viewer.filterText = "container-a"
+	viewer.filterActive = true
+	viewer.filterInput.SetText("container-a")
+	viewer.SetRows(1, 0, 1)
+	viewer.AddItem(viewer.filterInput, 2, 0, 1, 1, 0, 0, true)
+	viewer.WriteLog("container-a line", "")
+
+	viewer.Reset()
+
+	if viewer.filterActive {
+		t.Fatalf("filterActive = %v, expected false (input row should be hidden)", viewer.filterActive)
+	}
+
+	if viewer.filterText != "" {
+		t.Fatalf("filterText = %q, expected empty", viewer.filterText)
+	}
+
+	if viewer.filterInput.GetText() != "" {
+		t.Fatalf("filterInput text = %q, expected empty", viewer.filterInput.GetText())
+	}
+
+	if len(viewer.entries) != 0 {
+		t.Fatalf("entries = %d, expected none", len(viewer.entries))
+	}
+
+	// A line of the new stream, which the dropped filter does not match, is displayed.
+	viewer.WriteLog("container-b line", "")
+
+	if text := viewer.logs.GetText(true); !strings.Contains(text, "container-b line") {
+		t.Fatalf("logs text = %q, expected it to contain the new stream's line", text)
 	}
 }
 

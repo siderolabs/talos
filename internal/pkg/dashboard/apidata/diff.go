@@ -73,6 +73,25 @@ func diskStatDiff(old, next *machine.DiskStat) *machine.DiskStat {
 	}
 }
 
+// statCPUDiff returns the CPU-time consumed by a container since the previous poll, and whether a
+// delta exists at all.
+//
+// A container that only appeared in this poll has no previous sample to subtract, so it reports no
+// delta rather than a zero the renderer would show as an idle 0.0%. A container restarted in
+// between has its counter reset by containerd, which does report zero: that is a reading, and the
+// alternative would be a spike.
+func statCPUDiff(old, next *machine.Stat) (uint64, bool) {
+	if old == nil || next == nil {
+		return 0, false
+	}
+
+	if next.CpuUsage < old.CpuUsage {
+		return 0, true
+	}
+
+	return next.CpuUsage - old.CpuUsage, true
+}
+
 func procDiff(old, next *machine.ProcessInfo) float64 {
 	if old == nil || next == nil {
 		return 0
