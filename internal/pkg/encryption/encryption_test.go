@@ -2,27 +2,31 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package encryption
+package encryption_test
 
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strconv"
 	"testing"
 
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
+	"github.com/siderolabs/go-blockdevice/v2/encryption/luks"
 	"github.com/siderolabs/go-blockdevice/v2/encryption/token"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
+	talosencryption "github.com/siderolabs/talos/internal/pkg/encryption"
 	"github.com/siderolabs/talos/internal/pkg/encryption/keys"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-// fakeProvider is an in-memory encryption provider which tracks keyslots and the operations performed on them.
+// fakeProvider is an in-memory encryption provider which tracks keyslots, tokens and the operations performed on them.
 type fakeProvider struct {
-	slots map[int][]byte
+	slots  map[int][]byte
+	tokens map[int][]byte
 
 	encrypted bool
 	removed   []int
@@ -30,7 +34,7 @@ type fakeProvider struct {
 }
 
 func newFakeProvider(slots map[int][]byte) *fakeProvider {
-	return &fakeProvider{slots: slots}
+	return &fakeProvider{slots: slots, tokens: map[int][]byte{}}
 }
 
 func (p *fakeProvider) Encrypt(_ context.Context, _ string, key *encryption.Key) error {
@@ -73,6 +77,7 @@ func (p *fakeProvider) CheckKey(_ context.Context, _ string, key *encryption.Key
 
 func (p *fakeProvider) RemoveKey(_ context.Context, _ string, slot int, _ *encryption.Key) error {
 	delete(p.slots, slot)
+	delete(p.tokens, slot)
 	p.removed = append(p.removed, slot)
 
 	return nil
@@ -88,13 +93,46 @@ func (p *fakeProvider) ReadKeyslots(string) (*encryption.Keyslots, error) {
 	return keyslots, nil
 }
 
-func (p *fakeProvider) SetToken(context.Context, string, int, token.Token) error { return nil }
+func (p *fakeProvider) SetToken(_ context.Context, _ string, slot int, t token.Token) error {
+	data, err := t.Bytes()
+	if err != nil {
+		return err
+	}
 
-func (p *fakeProvider) ReadToken(context.Context, string, int, token.Token) error {
-	return encryption.ErrTokenNotFound
+	p.tokens[slot] = data
+
+	return nil
 }
 
-func (p *fakeProvider) RemoveToken(context.Context, string, int) error { return nil }
+func (p *fakeProvider) ReadToken(_ context.Context, _ string, slot int, t token.Token) error {
+	data, ok := p.tokens[slot]
+	if !ok {
+		return encryption.ErrTokenNotFound
+	}
+
+	return t.Decode(data)
+}
+
+func (p *fakeProvider) RemoveToken(_ context.Context, _ string, slot int) error {
+	delete(p.tokens, slot)
+
+	return nil
+}
+
+// recoveryToken returns the recovery token stored for the slot, if any.
+func (p *fakeProvider) recoveryToken(t *testing.T, slot int) *keys.RecoveryToken {
+	t.Helper()
+
+	data, ok := p.tokens[slot]
+	if !ok {
+		return nil
+	}
+
+	tok := &luks.Token[*keys.RecoveryToken]{}
+	require.NoError(t, tok.Decode(data))
+
+	return tok.UserData
+}
 
 // recoveryGetter returns a recovery key getter which returns the key only if it's set.
 func recoveryGetter(key *[]byte) func(context.Context, string) ([]byte, bool, error) {
@@ -107,11 +145,20 @@ func recoveryGetter(key *[]byte) func(context.Context, string) ([]byte, bool, er
 	}
 }
 
-func staticHandler(t *testing.T, slot int, passphrase string) keys.Handler {
+// recoveryPublisher returns a recovery key publisher which records the published key.
+func recoveryPublisher(published *[]byte) func(context.Context, string, []byte) error {
+	return func(_ context.Context, _ string, key []byte) error {
+		*published = key
+
+		return nil
+	}
+}
+
+func staticHandler(t *testing.T, passphrase string) keys.Handler {
 	t.Helper()
 
 	handler, err := keys.NewHandler(block.EncryptionKey{
-		Slot:             slot,
+		Slot:             0,
 		Type:             block.EncryptionKeyStatic,
 		StaticPassphrase: []byte(passphrase),
 	})
@@ -120,13 +167,26 @@ func staticHandler(t *testing.T, slot int, passphrase string) keys.Handler {
 	return handler
 }
 
-func recoveryHandler(t *testing.T, slot int, key *[]byte) keys.Handler {
+func recoveryHandler(t *testing.T, supplied, published *[]byte, salt []byte) keys.Handler {
 	t.Helper()
 
+	opts := []keys.KeyOption{
+		keys.WithVolumeID("STATE"),
+		keys.WithRecoveryKeyGetter(recoveryGetter(supplied)),
+		keys.WithSaltGetter(func(context.Context) ([]byte, error) {
+			return salt, nil
+		}),
+	}
+
+	if published != nil {
+		opts = append(opts, keys.WithRecoveryKeyPublisher(recoveryPublisher(published)))
+	}
+
 	handler, err := keys.NewHandler(block.EncryptionKey{
-		Slot: slot,
-		Type: block.EncryptionKeyRecovery,
-	}, keys.WithVolumeID("STATE"), keys.WithRecoveryKeyGetter(recoveryGetter(key)))
+		Slot:        1,
+		Type:        block.EncryptionKeyRecovery,
+		LockToSTATE: salt != nil,
+	}, opts...)
 	require.NoError(t, err)
 
 	return handler
@@ -135,23 +195,47 @@ func recoveryHandler(t *testing.T, slot int, key *[]byte) keys.Handler {
 func TestRecoveryKeyFormatAndEncrypt(t *testing.T) {
 	t.Parallel()
 
-	provider := newFakeProvider(map[int][]byte{})
+	t.Run("generated at format time", func(t *testing.T) {
+		t.Parallel()
 
-	h := &Handler{
-		encryptionProvider: provider,
-		keyHandlers: []keys.Handler{
-			staticHandler(t, 0, "static-key"),
-			recoveryHandler(t, 1, nil),
-		},
-	}
+		var published []byte
 
-	// the recovery key is not available at format time: the volume should still be formatted,
-	// and the recovery slot left empty
-	require.NoError(t, h.FormatAndEncrypt(t.Context(), zaptest.NewLogger(t), "/dev/null"))
+		provider := newFakeProvider(map[int][]byte{})
 
-	assert.True(t, provider.encrypted)
-	assert.Len(t, provider.slots, 1)
-	assert.Empty(t, provider.added)
+		h := talosencryption.NewTestHandler(provider, []keys.Handler{
+			staticHandler(t, "static-key"),
+			recoveryHandler(t, nil, &published, nil),
+		})
+
+		require.NoError(t, h.FormatAndEncrypt(t.Context(), zaptest.NewLogger(t), "/dev/null"))
+
+		assert.True(t, provider.encrypted)
+		assert.Len(t, provider.slots, 2)
+		assert.Equal(t, []int{1}, provider.added)
+		assert.Equal(t, published, provider.slots[1])
+
+		tok := provider.recoveryToken(t, 1)
+		require.NotNil(t, tok)
+		assert.False(t, tok.Fetched)
+	})
+
+	t.Run("no publisher", func(t *testing.T) {
+		t.Parallel()
+
+		provider := newFakeProvider(map[int][]byte{})
+
+		h := talosencryption.NewTestHandler(provider, []keys.Handler{
+			staticHandler(t, "static-key"),
+			recoveryHandler(t, nil, nil, nil),
+		})
+
+		// the recovery slot can't be enrolled, the volume should still be formatted
+		require.NoError(t, h.FormatAndEncrypt(t.Context(), zaptest.NewLogger(t), "/dev/null"))
+
+		assert.True(t, provider.encrypted)
+		assert.Len(t, provider.slots, 1)
+		assert.Empty(t, provider.added)
+	})
 }
 
 func TestRecoveryKeySync(t *testing.T) {
@@ -167,79 +251,117 @@ func TestRecoveryKeySync(t *testing.T) {
 	for _, test := range []struct {
 		name string
 
-		recoverySlotEnrolled bool
-		recoveryKeySupplied  bool
+		enrolled    bool
+		fetched     bool
+		lockToState bool
+		suppliedKey string
 
-		expectedAdded []int
-		expectedSlots int
+		expectRotated bool
+		expectSlots   int
 	}{
 		{
-			name: "pending slot is left empty when the key is not supplied",
+			name: "pending slot is enrolled with a generated key",
 
-			expectedSlots: 1,
+			expectRotated: true, // added, not removed
+			expectSlots:   2,
 		},
 		{
-			name: "pending slot is enrolled when the key is supplied",
+			name: "enrolled but never fetched key is regenerated",
 
-			recoveryKeySupplied: true,
+			enrolled: true,
 
-			expectedAdded: []int{1},
-			expectedSlots: 2,
+			expectRotated: true,
+			expectSlots:   2,
 		},
 		{
-			name: "enrolled slot is preserved when the key is not supplied",
+			name: "fetched key is left alone",
 
-			recoverySlotEnrolled: true,
+			enrolled: true,
+			fetched:  true,
 
-			expectedSlots: 2,
+			expectSlots: 2,
 		},
 		{
-			name: "enrolled slot is verified and left alone when the key is supplied",
+			name: "fetched key is left alone when the supplied key matches",
 
-			recoverySlotEnrolled: true,
-			recoveryKeySupplied:  true,
+			enrolled:    true,
+			fetched:     true,
+			suppliedKey: recoveryKey,
 
-			expectedSlots: 2,
+			expectSlots: 2,
+		},
+		{
+			name: "fetched key is left alone when the supplied key is wrong",
+
+			enrolled:    true,
+			fetched:     true,
+			suppliedKey: "typo",
+
+			expectSlots: 2,
+		},
+		{
+			name: "fetched key locked to STATE is left alone when the supplied key is wrong",
+
+			enrolled:    true,
+			fetched:     true,
+			lockToState: true,
+			suppliedKey: "typo",
+
+			expectSlots: 2,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			slots := map[int][]byte{
+			provider := newFakeProvider(map[int][]byte{
 				0: []byte(unlockKey),
+			})
+
+			var salt []byte
+
+			if test.lockToState {
+				salt = []byte("salt")
 			}
 
-			if test.recoverySlotEnrolled {
-				slots[1] = []byte(recoveryKey)
+			enrolledKey := slices.Concat([]byte(recoveryKey), salt)
+
+			if test.enrolled {
+				provider.slots[1] = enrolledKey
+
+				require.NoError(t, provider.SetToken(t.Context(), "/dev/null", 1, &luks.Token[*keys.RecoveryToken]{
+					Type:     keys.TokenTypeRecovery,
+					UserData: &keys.RecoveryToken{KeySlots: []int{1}, Fetched: test.fetched},
+				}))
 			}
 
-			var suppliedKey []byte
+			var supplied, published []byte
 
-			if test.recoveryKeySupplied {
-				suppliedKey = []byte(recoveryKey)
+			if test.suppliedKey != "" {
+				supplied = []byte(test.suppliedKey)
 			}
 
-			provider := newFakeProvider(slots)
+			h := talosencryption.NewTestHandler(provider, []keys.Handler{
+				staticHandler(t, unlockKey),
+				recoveryHandler(t, &supplied, &published, salt),
+			})
 
-			h := &Handler{
-				encryptionProvider: provider,
-				keyHandlers: []keys.Handler{
-					staticHandler(t, 0, unlockKey),
-					recoveryHandler(t, 1, &suppliedKey),
-				},
-			}
-
-			failedSyncs, err := h.syncKeys(t.Context(), zaptest.NewLogger(t), "/dev/null", unlockedWith)
+			failedSyncs, err := h.SyncKeys(t.Context(), zaptest.NewLogger(t), "/dev/null", unlockedWith)
 			require.NoError(t, err)
 
 			// recovery key state is never a failed sync
 			assert.Empty(t, failedSyncs)
-			assert.Equal(t, test.expectedAdded, provider.added)
-			assert.Empty(t, provider.removed)
-			assert.Len(t, provider.slots, test.expectedSlots)
+			assert.Len(t, provider.slots, test.expectSlots)
 
-			if test.expectedSlots == 2 {
-				assert.Equal(t, []byte(recoveryKey), provider.slots[1])
+			if test.expectRotated {
+				assert.Equal(t, []int{1}, provider.added)
+				assert.Equal(t, published, provider.slots[1], "the new key should be published")
+				assert.NotEqual(t, []byte(recoveryKey), provider.slots[1])
+				assert.False(t, provider.recoveryToken(t, 1).Fetched)
+			} else {
+				assert.Empty(t, provider.added)
+				assert.Empty(t, provider.removed)
+				assert.Nil(t, published)
+				assert.Equal(t, enrolledKey, provider.slots[1])
 			}
 		})
 	}
@@ -256,24 +378,27 @@ func TestRecoveryKeyOpen(t *testing.T) {
 		1: []byte(recoveryKey),
 	})
 
-	var suppliedKey []byte
+	require.NoError(t, provider.SetToken(t.Context(), "/dev/null", 1, &luks.Token[*keys.RecoveryToken]{
+		Type:     keys.TokenTypeRecovery,
+		UserData: &keys.RecoveryToken{KeySlots: []int{1}, Fetched: true},
+	}))
 
-	h := &Handler{
-		encryptionProvider: provider,
-		keyHandlers: []keys.Handler{
-			staticHandler(t, 0, "new-key"),
-			recoveryHandler(t, 1, &suppliedKey),
-		},
-	}
+	var supplied, published []byte
+
+	h := talosencryption.NewTestHandler(provider, []keys.Handler{
+		staticHandler(t, "new-key"),
+		recoveryHandler(t, &supplied, &published, nil),
+	})
 
 	// without the recovery key, the volume can't be opened
-	_, _, _, err := h.Open(t.Context(), zaptest.NewLogger(t), "/dev/null", "luks-STATE")
+	_, _, failedSyncs, err := h.Open(t.Context(), zaptest.NewLogger(t), "/dev/null", "luks-STATE")
 	require.Error(t, err)
 	require.ErrorIs(t, err, keys.ErrKeyNotAvailable)
+	assert.Empty(t, failedSyncs)
 
 	// once the operator supplies the key, the volume opens with the recovery slot,
 	// and the stale automatic slot is re-enrolled
-	suppliedKey = []byte(recoveryKey)
+	supplied = []byte(recoveryKey)
 
 	path, usedSlot, failedSyncs, err := h.Open(t.Context(), zaptest.NewLogger(t), "/dev/null", "luks-STATE")
 	require.NoError(t, err)
@@ -284,73 +409,9 @@ func TestRecoveryKeyOpen(t *testing.T) {
 	assert.Equal(t, []int{0}, provider.removed)
 	assert.Equal(t, []int{0}, provider.added)
 	assert.Equal(t, []byte("new-key"), provider.slots[0])
-}
-
-func TestSyncAndPendingSlots(t *testing.T) {
-	t.Parallel()
-
-	const (
-		unlockKey   = "unlock-key"
-		recoveryKey = "correct horse battery staple"
-	)
-
-	// the volume was formatted with the automatic key only, the recovery slot is pending
-	provider := newFakeProvider(map[int][]byte{
-		0: []byte(unlockKey),
-	})
-
-	var suppliedKey []byte
-
-	h := &Handler{
-		encryptionProvider: provider,
-		keyHandlers: []keys.Handler{
-			staticHandler(t, 0, unlockKey),
-			recoveryHandler(t, 1, &suppliedKey),
-		},
-	}
+	assert.Nil(t, published, "the recovery key must not be regenerated")
 
 	pending, err := h.PendingSlots("/dev/null")
 	require.NoError(t, err)
-	assert.Equal(t, []int{1}, pending)
-
-	// sync without the recovery key: nothing to do
-	failedSyncs, err := h.Sync(t.Context(), zaptest.NewLogger(t), "/dev/null")
-	require.NoError(t, err)
-	assert.Empty(t, failedSyncs)
-	assert.Empty(t, provider.added)
-
-	// the operator supplies the key: the recovery slot is enrolled using the automatic key as the existing key
-	suppliedKey = []byte(recoveryKey)
-
-	failedSyncs, err = h.Sync(t.Context(), zaptest.NewLogger(t), "/dev/null")
-	require.NoError(t, err)
-	assert.Empty(t, failedSyncs)
-	assert.Equal(t, []int{1}, provider.added)
-	assert.Equal(t, []byte(recoveryKey), provider.slots[1])
-
-	pending, err = h.PendingSlots("/dev/null")
-	require.NoError(t, err)
 	assert.Empty(t, pending)
-}
-
-func TestSyncNoValidKey(t *testing.T) {
-	t.Parallel()
-
-	// none of the configured keys matches the volume
-	provider := newFakeProvider(map[int][]byte{
-		0: []byte("old-key"),
-	})
-
-	h := &Handler{
-		encryptionProvider: provider,
-		keyHandlers: []keys.Handler{
-			staticHandler(t, 0, "new-key"),
-			recoveryHandler(t, 1, nil),
-		},
-	}
-
-	_, err := h.Sync(t.Context(), zaptest.NewLogger(t), "/dev/null")
-	require.Error(t, err)
-	assert.Empty(t, provider.added)
-	assert.Empty(t, provider.removed)
 }
