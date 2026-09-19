@@ -7,6 +7,7 @@ package block
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
@@ -121,6 +122,19 @@ type EncryptionKey struct {
 	//     Enable TPM based disk encryption.
 	KeyTPM *EncryptionKeyTPM `yaml:"tpm,omitempty"`
 	//   description: >
+	//     Recovery key which is held by the operator and never stored on the node.
+	//
+	//     The node generates the key when it enrolls the slot (while the volume is unlocked
+	//     with another key), and keeps it in memory until it is fetched once with
+	//     `talosctl recovery-key fetch`. The operator supplies the key whenever the volume
+	//     can't be unlocked with any of the other keys (e.g. the TPM state changed after a
+	//     firmware update, or the KMS is not reachable), from the console dashboard or with
+	//     `talosctl recovery-key unlock`.
+	//
+	//     If the recovery key is the only key configured, the volume can't be unlocked
+	//     without operator intervention on every boot.
+	KeyRecovery *EncryptionKeyRecovery `yaml:"recovery,omitempty"`
+	//   description: >
 	//     Lock the disk encryption key to the random salt stored in the STATE partition.
 	//     This is useful to prevent the volume from being unlocked if STATE partition is compromised
 	//     or replaced. It is recommended to use this option with TPM disk encryption for
@@ -169,6 +183,9 @@ type EncryptionKeyTPMOptions struct {
 // EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
 type EncryptionKeyNodeID struct{}
 
+// EncryptionKeyRecovery represents a key which is held by the operator and never stored on the node.
+type EncryptionKeyRecovery struct{}
+
 func exampleKMSKey() *EncryptionKeyKMS {
 	return &EncryptionKeyKMS{
 		KMSEndpoint: "https://192.168.88.21:4443",
@@ -199,6 +216,8 @@ func (s EncryptionSpec) Validate() ([]string, error) {
 
 	slotsInUse := make(map[int]struct{}, len(s.EncryptionKeys))
 
+	var recoveryKeys, automaticKeys int
+
 	for _, key := range s.EncryptionKeys {
 		if _, ok := slotsInUse[key.KeySlot]; ok {
 			errs = errors.Join(errs, fmt.Errorf("duplicate key slot %d", key.KeySlot))
@@ -206,20 +225,47 @@ func (s EncryptionSpec) Validate() ([]string, error) {
 
 		slotsInUse[key.KeySlot] = struct{}{}
 
-		if key.KeyStatic == nil && key.KeyNodeID == nil && key.KeyKMS == nil && key.KeyTPM == nil {
-			errs = errors.Join(errs, fmt.Errorf("at least one encryption key type must be specified for slot %d", key.KeySlot))
-		}
+		errs = errors.Join(errs, key.validate())
 
-		if key.KeyTPM != nil && key.KeyTPM.TPMOptions != nil {
-			for _, pcr := range key.KeyTPM.TPMOptions.PCRs {
-				if pcr < 0 || pcr > 23 {
-					errs = errors.Join(errs, fmt.Errorf("TPM PCR %d is out of range (0-23)", pcr))
-				}
+		if key.KeyRecovery != nil {
+			recoveryKeys++
+		} else {
+			automaticKeys++
+		}
+	}
+
+	var warnings []string
+
+	if recoveryKeys > 1 {
+		errs = errors.Join(errs, errors.New("at most one recovery key can be configured"))
+	}
+
+	if recoveryKeys > 0 && automaticKeys == 0 {
+		warnings = append(warnings, "recovery key is the only encryption key configured: the volume can't be unlocked without operator intervention on every boot")
+	}
+
+	return warnings, errs
+}
+
+// validate checks a single encryption key configuration.
+func (k EncryptionKey) validate() error {
+	var errs error
+
+	keyTypes := []bool{k.KeyStatic != nil, k.KeyNodeID != nil, k.KeyKMS != nil, k.KeyTPM != nil, k.KeyRecovery != nil}
+
+	if !slices.Contains(keyTypes, true) {
+		errs = errors.Join(errs, fmt.Errorf("at least one encryption key type must be specified for slot %d", k.KeySlot))
+	}
+
+	if k.KeyTPM != nil && k.KeyTPM.TPMOptions != nil {
+		for _, pcr := range k.KeyTPM.TPMOptions.PCRs {
+			if pcr < 0 || pcr > 23 {
+				errs = errors.Join(errs, fmt.Errorf("TPM PCR %d is out of range (0-23)", pcr))
 			}
 		}
 	}
 
-	return nil, errs
+	return errs
 }
 
 // Provider implements the config.Provider interface.
@@ -301,6 +347,11 @@ func (k EncryptionKey) TPM() config.EncryptionKeyTPM {
 	}
 
 	return k.KeyTPM
+}
+
+// Recovery implements the config.Provider interface.
+func (k EncryptionKey) Recovery() bool {
+	return k.KeyRecovery != nil
 }
 
 // String implements the config.Provider interface.

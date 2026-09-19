@@ -697,3 +697,101 @@ func (validationMode) RequiresInstall() bool {
 func (validationMode) InContainer() bool {
 	return false
 }
+
+func TestVolumeConfigRecoveryKey(t *testing.T) {
+	t.Parallel()
+
+	marshaled, err := os.ReadFile(filepath.Join("testdata", "volumeconfig_recovery_encryption.yaml"))
+	require.NoError(t, err)
+
+	provider, err := configloader.NewFromBytes(marshaled)
+	require.NoError(t, err)
+
+	docs := provider.Documents()
+	require.Len(t, docs, 1)
+
+	cfg, ok := docs[0].(*block.VolumeConfigV1Alpha1)
+	require.True(t, ok)
+
+	keys := cfg.Encryption().Keys()
+	require.Len(t, keys, 2)
+
+	assert.NotNil(t, keys[0].TPM())
+	assert.False(t, keys[0].Recovery())
+
+	assert.Nil(t, keys[1].TPM())
+	assert.True(t, keys[1].Recovery())
+	assert.Equal(t, 1, keys[1].Slot())
+
+	// recovery key alongside an automatic key: no warnings
+	warnings, err := cfg.Validate(validationMode{})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+}
+
+func TestVolumeConfigRecoveryKeyValidation(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		keys []block.EncryptionKey
+
+		expectedWarnings []string
+		expectedError    string
+	}{
+		{
+			name: "recovery key only",
+
+			keys: []block.EncryptionKey{
+				{
+					KeySlot:     0,
+					KeyRecovery: &block.EncryptionKeyRecovery{},
+				},
+			},
+
+			expectedWarnings: []string{
+				"recovery key is the only encryption key configured: the volume can't be unlocked without operator intervention on every boot",
+			},
+		},
+		{
+			name: "multiple recovery keys",
+
+			keys: []block.EncryptionKey{
+				{
+					KeySlot: 0,
+					KeyTPM:  &block.EncryptionKeyTPM{},
+				},
+				{
+					KeySlot:     1,
+					KeyRecovery: &block.EncryptionKeyRecovery{},
+				},
+				{
+					KeySlot:     2,
+					KeyRecovery: &block.EncryptionKeyRecovery{},
+				},
+			},
+
+			expectedError: "at most one recovery key can be configured",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := block.NewVolumeConfigV1Alpha1()
+			c.MetaName = constants.StatePartitionLabel
+			c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+			c.EncryptionSpec.EncryptionKeys = test.keys
+
+			warnings, err := c.Validate(validationMode{})
+
+			if test.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, test.expectedError)
+			}
+
+			assert.Equal(t, test.expectedWarnings, warnings)
+		})
+	}
+}

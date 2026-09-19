@@ -5494,6 +5494,7 @@ BlockEncryptionKeyType describes encryption key type.
 | ENCRYPTION_KEY_NODE_ID | 1 |  |
 | ENCRYPTION_KEY_KMS | 2 |  |
 | ENCRYPTION_KEY_TPM | 3 |  |
+| ENCRYPTION_KEY_RECOVERY | 4 |  |
 
 
 
