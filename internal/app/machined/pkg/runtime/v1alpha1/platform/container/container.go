@@ -65,7 +65,9 @@ func (c *Container) NetworkConfiguration(ctx context.Context, _ state.State, ch 
 		return err
 	}
 
-	networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	if hostnameSpec.Hostname != "" {
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
 
 	resolverSpec, err := files.ReadResolvConf("/etc/resolv.conf")
 	if err != nil {

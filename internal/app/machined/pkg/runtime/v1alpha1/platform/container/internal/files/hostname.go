@@ -7,6 +7,7 @@ package files
 
 import (
 	"bytes"
+	"errors"
 	"os"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -14,15 +15,23 @@ import (
 
 // ReadHostname reads and parses /etc/hostname file.
 func ReadHostname(path string) (network.HostnameSpecSpec, error) {
+	hostnameSpec := network.HostnameSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+	}
+
 	hostname, err := os.ReadFile(path)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return hostnameSpec, nil
+		}
+
 		return network.HostnameSpecSpec{}, err
 	}
 
 	hostname = bytes.TrimSpace(hostname)
 
-	hostnameSpec := network.HostnameSpecSpec{
-		ConfigLayer: network.ConfigPlatform,
+	if len(hostname) == 0 {
+		return hostnameSpec, nil
 	}
 
 	if err = hostnameSpec.ParseFQDN(string(hostname)); err != nil {
