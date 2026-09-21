@@ -100,6 +100,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Memory settings for the virtual machine.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory settings for the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "disks",
+				Type:        "[]VirtualMachineDisk",
+				Note:        "",
+				Description: "Disks attached to the virtual machine.\n\nRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\n\nA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Disks attached to the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -194,6 +201,199 @@ func (VirtualMachineBallooning) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineDisk) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineDisk",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDisk describes a single disk attached to a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDisk describes a single disk attached to a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "disks",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the disk, unique within the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It names the volume created in the storage pool.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the disk, unique within the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "pool",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePoolConfig` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "size",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Size of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "format",
+				Type:        "VirtualMachineDiskFormat",
+				Note:        "",
+				Description: "On-disk format of the volume.\n\nThis is not cosmetic: `provision.fromImage.mode: linked` requires `qcow2`, since backing\nchains are a qcow2 feature, while `raw` is faster on block-backed pools.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "On-disk format of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"raw",
+					"qcow2",
+				},
+			},
+			{
+				Name:        "bus",
+				Type:        "VirtualMachineDiskBus",
+				Note:        "",
+				Description: "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot\nbe attached to `virtio`, which presents no ejectable media.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Controller the disk is attached to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"virtio",
+					"scsi",
+					"sata",
+					"nvme",
+				},
+			},
+			{
+				Name:        "type",
+				Type:        "VirtualMachineDiskType",
+				Note:        "",
+				Description: "Kind of device the disk is presented as.\n\nA `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to `disk`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kind of device the disk is presented as." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"disk",
+					"cdrom",
+				},
+			},
+			{
+				Name:        "bootOrder",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Position of this disk in the guest's boot order, lowest first.\n\nValues must be unique across everything the virtual machine can boot from. Only disks\nare bootable today, so that is only the disks; network interfaces will share this\nnamespace once they are configurable.\n\nOptional; a disk without a boot order is not booted from.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Position of this disk in the guest's boot order, lowest first." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provision",
+				Type:        "VirtualMachineDiskProvision",
+				Note:        "",
+				Description: "Where the volume's contents come from.\n\nExactly one source must be set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Where the volume's contents come from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[1].AddExample("", "pool1")
+
+	return doc
+}
+
+func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineDiskProvision",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskProvision describes where a disk's contents come from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskProvision describes where a disk's contents come from.\n\nExactly one source must be set.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineDisk",
+				FieldName: "provision",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "blank",
+				Type:        "VirtualMachineDiskBlank",
+				Note:        "",
+				Description: "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Create an empty volume, formatted per `format`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "fromImage",
+				Type:        "VirtualMachineDiskFromImage",
+				Note:        "",
+				Description: "Derive the volume from an image held in a content library.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Derive the volume from an image held in a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineDiskBlank) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineDiskBlank",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskBlank provisions an empty volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineDiskProvision",
+				FieldName: "blank",
+			},
+		},
+		Fields: []encoder.Doc{},
+	}
+
+	return doc
+}
+
+func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineDiskFromImage",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskFromImage derives a volume from a content library image." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskFromImage derives a volume from a content library image.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineDiskProvision",
+				FieldName: "fromImage",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "library",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the `ContentLibraryConfig` document holding the image.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `ContentLibraryConfig` document holding the image." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "file",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the file within that library.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the file within that library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "digest",
+				Type:        "string",
+				Note:        "",
+				Description: "Integrity check of the library file, verified before the volume is provisioned.\n\nWritten as `<algorithm>:<hex>`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Integrity check of the library file, verified before the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "VirtualMachineDiskImageMode",
+				Note:        "",
+				Description: "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How the volume is derived from the image." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"copy",
+					"linked",
+				},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "images")
+	doc.Fields[1].AddExample("", "talos-1.14.qcow2")
+	doc.Fields[2].AddExample("", "sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file hypervisor_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -206,6 +406,10 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineCPU{}.Doc(),
 			VirtualMachineMemory{}.Doc(),
 			VirtualMachineBallooning{}.Doc(),
+			VirtualMachineDisk{}.Doc(),
+			VirtualMachineDiskProvision{}.Doc(),
+			VirtualMachineDiskBlank{}.Doc(),
+			VirtualMachineDiskFromImage{}.Doc(),
 		},
 	}
 }

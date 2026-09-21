@@ -2286,6 +2286,16 @@
           "description": "Memory settings for the virtual machine.\n",
           "markdownDescription": "Memory settings for the virtual machine.",
           "x-intellij-html-description": "\u003cp\u003eMemory settings for the virtual machine.\u003c/p\u003e\n"
+        },
+        "disks": {
+          "items": {
+            "$ref": "#/$defs/hypervisor.VirtualMachineDisk"
+          },
+          "type": "array",
+          "title": "disks",
+          "description": "Disks attached to the virtual machine.\n\nRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\n\nA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.\n",
+          "markdownDescription": "Disks attached to the virtual machine.\n\nRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\n\nA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.",
+          "x-intellij-html-description": "\u003cp\u003eDisks attached to the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\u003c/p\u003e\n\n\u003cp\u003eA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2298,6 +2308,140 @@
         "name"
       ],
       "description": "VirtualMachineConfig is a virtual machine configuration document.\\nVirtualMachineConfig declares a virtual machine run by Talos.\\n\\nThis document is the skeleton of the virtual machine: the rest of the machine's shape\\n(firmware, disks, network interfaces, guest seeding, consoles) is added to it over time,\\nand every addition is a new field rather than a change to an existing one.\\n\\nStatus is reported via `VirtualMachineStatus`.\\n"
+    },
+    "hypervisor.VirtualMachineDisk": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the disk, unique within the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It names the volume created in the storage pool.\n",
+          "markdownDescription": "Name of the disk, unique within the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It names the volume created in the storage pool.",
+          "x-intellij-html-description": "\u003cp\u003eName of the disk, unique within the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It names the volume created in the storage pool.\u003c/p\u003e\n"
+        },
+        "pool": {
+          "type": "string",
+          "title": "pool",
+          "description": "Name of the StoragePoolConfig document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n",
+          "markdownDescription": "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\u003c/p\u003e\n"
+        },
+        "size": {
+          "type": "string",
+          "title": "size",
+          "description": "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a disk, and not allowed on a cdrom, whose size is that of its image.\n",
+          "markdownDescription": "Size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.",
+          "x-intellij-html-description": "\u003cp\u003eSize of the volume.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose size is that of its image.\u003c/p\u003e\n"
+        },
+        "format": {
+          "type": "string",
+          "title": "format",
+          "description": "On-disk format of the volume.\n\nThis is not cosmetic: provision.fromImage.mode: linked requires qcow2, since backing\nchains are a qcow2 feature, while raw is faster on block-backed pools.\n\nOptional; defaults to qcow2. Not allowed on a cdrom, which is used as-is.\n",
+          "markdownDescription": "On-disk format of the volume.\n\nThis is not cosmetic: `provision.fromImage.mode: linked` requires `qcow2`, since backing\nchains are a qcow2 feature, while `raw` is faster on block-backed pools.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
+          "x-intellij-html-description": "\u003cp\u003eOn-disk format of the volume.\u003c/p\u003e\n\n\u003cp\u003eThis is not cosmetic: \u003ccode\u003eprovision.fromImage.mode: linked\u003c/code\u003e requires \u003ccode\u003eqcow2\u003c/code\u003e, since backing\nchains are a qcow2 feature, while \u003ccode\u003eraw\u003c/code\u003e is faster on block-backed pools.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003eqcow2\u003c/code\u003e. Not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which is used as-is.\u003c/p\u003e\n"
+        },
+        "bus": {
+          "type": "string",
+          "title": "bus",
+          "description": "Controller the disk is attached to.\n\nvirtio for anything modern; sata for guests without virtio drivers at install time.\n\nOptional; defaults to virtio on a disk and to sata on a cdrom. A cdrom cannot\nbe attached to virtio, which presents no ejectable media.\n",
+          "markdownDescription": "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot\nbe attached to `virtio`, which presents no ejectable media.",
+          "x-intellij-html-description": "\u003cp\u003eController the disk is attached to.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003evirtio\u003c/code\u003e for anything modern; \u003ccode\u003esata\u003c/code\u003e for guests without virtio drivers at install time.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003evirtio\u003c/code\u003e on a \u003ccode\u003edisk\u003c/code\u003e and to \u003ccode\u003esata\u003c/code\u003e on a \u003ccode\u003ecdrom\u003c/code\u003e. A \u003ccode\u003ecdrom\u003c/code\u003e cannot\nbe attached to \u003ccode\u003evirtio\u003c/code\u003e, which presents no ejectable media.\u003c/p\u003e\n"
+        },
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Kind of device the disk is presented as.\n\nA cdrom is read-only – QEMU emulates no CD burner – so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to disk.\n",
+          "markdownDescription": "Kind of device the disk is presented as.\n\nA `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to `disk`.",
+          "x-intellij-html-description": "\u003cp\u003eKind of device the disk is presented as.\u003c/p\u003e\n\n\u003cp\u003eA \u003ccode\u003ecdrom\u003c/code\u003e is read-only \u0026ndash; QEMU emulates no CD burner \u0026ndash; so its contents are required and\nit has no size and no format of its own.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003edisk\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "bootOrder": {
+          "type": "integer",
+          "title": "bootOrder",
+          "description": "Position of this disk in the guest’s boot order, lowest first.\n\nValues must be unique across everything the virtual machine can boot from. Only disks\nare bootable today, so that is only the disks; network interfaces will share this\nnamespace once they are configurable.\n\nOptional; a disk without a boot order is not booted from.\n",
+          "markdownDescription": "Position of this disk in the guest's boot order, lowest first.\n\nValues must be unique across everything the virtual machine can boot from. Only disks\nare bootable today, so that is only the disks; network interfaces will share this\nnamespace once they are configurable.\n\nOptional; a disk without a boot order is not booted from.",
+          "x-intellij-html-description": "\u003cp\u003ePosition of this disk in the guest\u0026rsquo;s boot order, lowest first.\u003c/p\u003e\n\n\u003cp\u003eValues must be unique across everything the virtual machine can boot from. Only disks\nare bootable today, so that is only the disks; network interfaces will share this\nnamespace once they are configurable.\u003c/p\u003e\n\n\u003cp\u003eOptional; a disk without a boot order is not booted from.\u003c/p\u003e\n"
+        },
+        "provision": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineDiskProvision",
+          "title": "provision",
+          "description": "Where the volume’s contents come from.\n\nExactly one source must be set.\n",
+          "markdownDescription": "Where the volume's contents come from.\n\nExactly one source must be set.",
+          "x-intellij-html-description": "\u003cp\u003eWhere the volume\u0026rsquo;s contents come from.\u003c/p\u003e\n\n\u003cp\u003eExactly one source must be set.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "pool",
+        "provision"
+      ],
+      "description": "VirtualMachineDisk describes a single disk attached to a virtual machine."
+    },
+    "hypervisor.VirtualMachineDiskBlank": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineDiskBlank provisions an empty volume."
+    },
+    "hypervisor.VirtualMachineDiskFromImage": {
+      "properties": {
+        "library": {
+          "type": "string",
+          "title": "library",
+          "description": "Name of the ContentLibraryConfig document holding the image.\n",
+          "markdownDescription": "Name of the `ContentLibraryConfig` document holding the image.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eContentLibraryConfig\u003c/code\u003e document holding the image.\u003c/p\u003e\n"
+        },
+        "file": {
+          "type": "string",
+          "title": "file",
+          "description": "Name of the file within that library.\n",
+          "markdownDescription": "Name of the file within that library.",
+          "x-intellij-html-description": "\u003cp\u003eName of the file within that library.\u003c/p\u003e\n"
+        },
+        "digest": {
+          "type": "string",
+          "title": "digest",
+          "description": "Integrity check of the library file, verified before the volume is provisioned.\n\nWritten as \u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;, under either sha256 or sha512.\n\nOptional; the file is used as-is when this is unset.\n",
+          "markdownDescription": "Integrity check of the library file, verified before the volume is provisioned.\n\nWritten as `\u003calgorithm\u003e:\u003chex\u003e`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
+          "x-intellij-html-description": "\u003cp\u003eIntegrity check of the library file, verified before the volume is provisioned.\u003c/p\u003e\n\n\u003cp\u003eWritten as \u003ccode\u003e\u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;\u003c/code\u003e, under either \u003ccode\u003esha256\u003c/code\u003e or \u003ccode\u003esha512\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; the file is used as-is when this is unset.\u003c/p\u003e\n"
+        },
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "How the volume is derived from the image.\n\ncopy makes a full, independent copy. linked makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires format: qcow2.\n\nOptional; defaults to copy.\n",
+          "markdownDescription": "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`.",
+          "x-intellij-html-description": "\u003cp\u003eHow the volume is derived from the image.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003ecopy\u003c/code\u003e makes a full, independent copy. \u003ccode\u003elinked\u003c/code\u003e makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires \u003ccode\u003eformat: qcow2\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003ecopy\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "file",
+        "library"
+      ],
+      "description": "VirtualMachineDiskFromImage derives a volume from a content library image."
+    },
+    "hypervisor.VirtualMachineDiskProvision": {
+      "properties": {
+        "blank": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineDiskBlank",
+          "title": "blank",
+          "description": "Create an empty volume, formatted per format.\n\nNot allowed on a cdrom, which has no meaningful empty contents.\n",
+          "markdownDescription": "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
+          "x-intellij-html-description": "\u003cp\u003eCreate an empty volume, formatted per \u003ccode\u003eformat\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eNot allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which has no meaningful empty contents.\u003c/p\u003e\n"
+        },
+        "fromImage": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineDiskFromImage",
+          "title": "fromImage",
+          "description": "Derive the volume from an image held in a content library.\n",
+          "markdownDescription": "Derive the volume from an image held in a content library.",
+          "x-intellij-html-description": "\u003cp\u003eDerive the volume from an image held in a content library.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineDiskProvision describes where a disk's contents come from.\\n\\nExactly one source must be set.\\n"
     },
     "hypervisor.VirtualMachineMemory": {
       "properties": {

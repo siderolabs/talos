@@ -24,5 +24,20 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 			*cp.MemoryConfig.BallooningConfig.BallooningEnabled = *o.MemoryConfig.BallooningConfig.BallooningEnabled
 		}
 	}
+	if o.DisksConfig != nil {
+		cp.DisksConfig = make([]VirtualMachineDisk, len(o.DisksConfig))
+		copy(cp.DisksConfig, o.DisksConfig)
+		for i2 := range o.DisksConfig {
+			cp.DisksConfig[i2].DiskSize = o.DisksConfig[i2].DiskSize.DeepCopy()
+			if o.DisksConfig[i2].ProvisionConfig.BlankConfig != nil {
+				cp.DisksConfig[i2].ProvisionConfig.BlankConfig = new(VirtualMachineDiskBlank)
+				*cp.DisksConfig[i2].ProvisionConfig.BlankConfig = *o.DisksConfig[i2].ProvisionConfig.BlankConfig
+			}
+			if o.DisksConfig[i2].ProvisionConfig.FromImageConfig != nil {
+				cp.DisksConfig[i2].ProvisionConfig.FromImageConfig = new(VirtualMachineDiskFromImage)
+				*cp.DisksConfig[i2].ProvisionConfig.FromImageConfig = *o.DisksConfig[i2].ProvisionConfig.FromImageConfig
+			}
+		}
+	}
 	return &cp
 }

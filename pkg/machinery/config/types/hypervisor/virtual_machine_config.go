@@ -8,6 +8,7 @@ package hypervisor
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/siderolabs/go-pointer"
 
@@ -74,6 +75,16 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     Memory settings for the virtual machine.
 	//   schemaRequired: true
 	MemoryConfig VirtualMachineMemory `yaml:"memory"`
+	//   description: |
+	//     Disks attached to the virtual machine.
+	//
+	//     Removing a disk detaches it from the virtual machine; the volume backing it stays in
+	//     its storage pool and is deleted separately.
+	//
+	//     A configuration patch merges into this list by disk name: a patch entry naming an
+	//     existing disk updates that disk, and any other entry is appended. Removing a disk
+	//     requires supplying the document in full.
+	DisksConfig VirtualMachineDiskList `yaml:"disks,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest.
@@ -143,6 +154,41 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 			BallooningEnabled: new(true),
 		},
 	}
+	cfg.DisksConfig = []VirtualMachineDisk{
+		{
+			DiskName:      "system",
+			DiskPool:      "pool1",
+			DiskSize:      meta.MustByteSize("20GiB"),
+			DiskBootOrder: 1,
+			ProvisionConfig: VirtualMachineDiskProvision{
+				FromImageConfig: &VirtualMachineDiskFromImage{
+					ImageLibrary: "images",
+					ImageFile:    "talos-1.14.qcow2",
+					ImageMode:    config.VirtualMachineDiskImageModeLinked,
+				},
+			},
+		},
+		{
+			DiskName: "data",
+			DiskPool: "pool1",
+			DiskSize: meta.MustByteSize("100GiB"),
+			ProvisionConfig: VirtualMachineDiskProvision{
+				BlankConfig: &VirtualMachineDiskBlank{},
+			},
+		},
+		{
+			DiskName:      "install",
+			DiskPool:      "pool1",
+			DiskType:      config.VirtualMachineDiskTypeCDROM,
+			DiskBootOrder: 2,
+			ProvisionConfig: VirtualMachineDiskProvision{
+				FromImageConfig: &VirtualMachineDiskFromImage{
+					ImageLibrary: "images",
+					ImageFile:    "ubuntu-24.04.iso",
+				},
+			},
+		},
+	}
 
 	return cfg
 }
@@ -194,6 +240,17 @@ func (b *VirtualMachineBallooning) Enabled() bool {
 	return pointer.SafeDeref(b.BallooningEnabled)
 }
 
+// Disks implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Disks() []config.VirtualMachineDiskConfig {
+	out := make([]config.VirtualMachineDiskConfig, 0, len(c.DisksConfig))
+
+	for i := range c.DisksConfig {
+		out = append(out, &c.DisksConfig[i])
+	}
+
+	return out
+}
+
 // Validate implements config.Validator interface.
 func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
@@ -201,6 +258,7 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	validationErrors = errors.Join(validationErrors, c.ValidateName())
 	validationErrors = errors.Join(validationErrors, c.ValidateCPU())
 	validationErrors = errors.Join(validationErrors, c.ValidateMemory())
+	validationErrors = errors.Join(validationErrors, c.ValidateDisks())
 
 	return nil, validationErrors
 }
@@ -231,4 +289,40 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateMemory() error {
 	}
 
 	return nil
+}
+
+// ValidateDisks checks the disks attached to the virtual machine.
+func (c *VirtualMachineConfigV1Alpha1) ValidateDisks() error {
+	var validationErrors error
+
+	names := map[string]struct{}{}
+	bootOrders := map[uint32]struct{}{}
+
+	for i := range c.DisksConfig {
+		disk := &c.DisksConfig[i]
+
+		name, err := disk.Validate(i)
+		if err != nil {
+			validationErrors = errors.Join(validationErrors, err)
+		}
+
+		if _, exists := names[name]; exists {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: duplicate disk name %q", i, name))
+		} else {
+			names[name] = struct{}{}
+		}
+
+		if disk.DiskBootOrder == 0 {
+			continue
+		}
+
+		if _, exists := bootOrders[disk.DiskBootOrder]; exists {
+			validationErrors = errors.Join(validationErrors,
+				fmt.Errorf("disks[%d]: duplicate bootOrder %d", i, disk.DiskBootOrder))
+		}
+
+		bootOrders[disk.DiskBootOrder] = struct{}{}
+	}
+
+	return validationErrors
 }
