@@ -84,6 +84,7 @@ type Maker[ExtraOps any] struct {
 	EOps ExtraOps
 
 	extraOptionsProvider ExtraOptionsProvider
+	userConfigBundleOps  []bundle.Option
 }
 
 // SetExtraOptionsProvider sets extra options provider containing the provider specific logic.
@@ -202,7 +203,8 @@ func (m *Maker[T]) initConfigBundleOps() error {
 		return err
 	}
 
-	m.ConfigBundleOps = slices.Clone(configPatchBundleOps)
+	m.ConfigBundleOps = []bundle.Option{}
+	m.userConfigBundleOps = configPatchBundleOps
 
 	return nil
 }
@@ -287,7 +289,7 @@ func (m *Maker[T]) finalizeMachineConfigs() (*bundle.Bundle, error) {
 	// These options needs to be generated after the implementing maker has made changes to the cluster request.
 	provisionGenOps, provisionBundleOps := m.Provisioner.GenOptions(m.ClusterRequest, m.VersionContract)
 	m.GenOps = slices.Concat(m.GenOps, provisionGenOps)
-	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, provisionBundleOps)
+	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, provisionBundleOps, m.userConfigBundleOps)
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithEndpointList(m.Endpoints)})
 
 	m.ConfigBundleOps = append(

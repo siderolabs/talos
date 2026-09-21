@@ -7,6 +7,7 @@ package makers_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	sideronet "github.com/siderolabs/net"
@@ -18,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/flags"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -25,6 +27,16 @@ import (
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/provision"
 )
+
+func qemuDefaultGenOps() []generate.Option {
+	if runtime.GOARCH != "arm64" {
+		return nil
+	}
+
+	return []generate.Option{
+		generate.WithSysctls(map[string]string{"kernel.kexec_load_disabled": "1"}),
+	}
+}
 
 func TestQemuMaker_MachineConfig(t *testing.T) {
 	cOps := clusterops.GetCommon()
@@ -37,7 +49,7 @@ func TestQemuMaker_MachineConfig(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	assertConfigDefaultness(t, cOps, *m.Maker, nil)
+	assertConfigDefaultness(t, cOps, *m.Maker, qemuDefaultGenOps())
 }
 
 func TestQemuMaker_RegistryAuth(t *testing.T) {
@@ -65,7 +77,7 @@ func TestQemuMaker_RegistryAuth(t *testing.T) {
 	ctr, err := container.New(registryAuthConfig)
 	require.NoError(t, err)
 
-	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
+	assertConfigDefaultness(t, cOps, *m.Maker, qemuDefaultGenOps(), configpatcher.NewStrategicMergePatch(ctr))
 }
 
 func TestQemuMaker_NFSDoesNotAddConfigDocuments(t *testing.T) {
@@ -242,7 +254,7 @@ func TestQemuMaker_DiskEncryption_StatePartition(t *testing.T) {
 	ctr, err := container.New(blockCfg)
 	require.NoError(t, err)
 
-	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
+	assertConfigDefaultness(t, cOps, *m.Maker, qemuDefaultGenOps(), configpatcher.NewStrategicMergePatch(ctr))
 }
 
 func TestQemuMaker_DiskEncryption_EphemeralPartition(t *testing.T) {
@@ -274,7 +286,7 @@ func TestQemuMaker_DiskEncryption_EphemeralPartition(t *testing.T) {
 	ctr, err := container.New(blockCfg)
 	require.NoError(t, err)
 
-	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
+	assertConfigDefaultness(t, cOps, *m.Maker, qemuDefaultGenOps(), configpatcher.NewStrategicMergePatch(ctr))
 }
 
 func TestQemuMaker_DiskEncryption_BothPartitions(t *testing.T) {
@@ -325,7 +337,7 @@ func TestQemuMaker_DiskEncryption_BothPartitions(t *testing.T) {
 	require.NoError(t, err)
 
 	assertConfigDefaultness(
-		t, cOps, *m.Maker, nil,
+		t, cOps, *m.Maker, qemuDefaultGenOps(),
 		configpatcher.NewStrategicMergePatch(stateCtr),
 		configpatcher.NewStrategicMergePatch(ephemeralCtr),
 	)
@@ -365,7 +377,7 @@ func TestQemuMaker_DiskEncryption_KMSKeyType(t *testing.T) {
 	ctr, err := container.New(blockCfg)
 	require.NoError(t, err)
 
-	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
+	assertConfigDefaultness(t, cOps, *m.Maker, qemuDefaultGenOps(), configpatcher.NewStrategicMergePatch(ctr))
 }
 
 func TestQemuMaker_DiskEncryption_MultipleKeyTypes(t *testing.T) {
@@ -402,7 +414,7 @@ func TestQemuMaker_DiskEncryption_MultipleKeyTypes(t *testing.T) {
 	ctr, err := container.New(blockCfg)
 	require.NoError(t, err)
 
-	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
+	assertConfigDefaultness(t, cOps, *m.Maker, qemuDefaultGenOps(), configpatcher.NewStrategicMergePatch(ctr))
 }
 
 func TestQemuMaker_DiskEncryption_LegacyVersion(t *testing.T) {
