@@ -53,7 +53,6 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 
 	localBlockStoreID, err := store.CreateBlockStore(ctx, &models.BlockStoreConfig{
 		Name: nfsMemoryStore,
-		Kind: models.BlockStoreKindLocal,
 		Type: nfsMemoryStore,
 	})
 	if err != nil {
@@ -63,7 +62,7 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 	if _, err = store.CreateShare(ctx, &models.Share{
 		Name:              NFSExport,
 		MetadataStoreID:   metadataStoreID,
-		LocalBlockStoreID: localBlockStoreID,
+		BlockStoreID:      localBlockStoreID,
 		DefaultPermission: "read-write",
 		Enabled:           true,
 	}); err != nil {
@@ -78,7 +77,7 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 	if err = runtime.AddShare(ctx, &dittoruntime.ShareConfig{
 		Name:              NFSExport,
 		MetadataStore:     nfsMemoryStore,
-		LocalBlockStoreID: localBlockStoreID,
+		BlockStoreID:      localBlockStoreID,
 		DefaultPermission: "read-write",
 		Enabled:           true,
 		// An unset squash mode normalizes to root_to_guest, which maps the client's root to

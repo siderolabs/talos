@@ -6,6 +6,7 @@ go 1.26.8
 replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero
 
 require (
+	cel.dev/cel-go v0.32.0
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.13
 	github.com/cosi-project/runtime v1.16.3
@@ -13,7 +14,6 @@ require (
 	github.com/emicklei/dot v1.11.0
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/cel-go v0.31.0
 	github.com/google/go-containerregistry v0.21.7
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260802200809-43bafec815b3
