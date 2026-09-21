@@ -107,6 +107,28 @@ Certificate expires: 10 years from now (2031-07-03)
 	}
 }
 
+func TestConfigInfoUsesContextOverride(t *testing.T) {
+	config, err := clientconfig.FromString(`
+context: first
+contexts:
+  first:
+    endpoints: [192.0.2.1]
+  second:
+    endpoints: [192.0.2.2]
+`)
+	require.NoError(t, err)
+
+	previousContext := GlobalArgs.CmdContext
+	GlobalArgs.CmdContext = "second"
+
+	t.Cleanup(func() { GlobalArgs.CmdContext = previousContext })
+
+	info, err := configInfo(config, time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, "second", info.Context)
+	assert.Equal(t, []string{"192.0.2.2"}, info.Endpoints)
+}
+
 func TestConfigProxyURLCmd(t *testing.T) {
 	const talosconfigYAML = `
 context: test

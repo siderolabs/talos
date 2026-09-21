@@ -70,7 +70,7 @@ var configEndpointCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := openConfigAndContext("")
+		c, err := openConfigAndContext(GlobalArgs.CmdContext)
 		if err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ var configNodeCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.ArbitraryArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := openConfigAndContext("")
+		c, err := openConfigAndContext(GlobalArgs.CmdContext)
 		if err != nil {
 			return err
 		}
@@ -138,7 +138,7 @@ Pass an empty string to clear the proxy URL.
 Omit the argument to display the current proxy URL.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := openConfigAndContext("")
+		c, err := openConfigAndContext(GlobalArgs.CmdContext)
 		if err != nil {
 			return err
 		}
@@ -560,7 +560,7 @@ func configInfo(config *clientconfig.Config, now time.Time) (talosconfigInfo, er
 	}
 
 	return talosconfigInfo{
-		Context:      config.Context,
+		Context:      configContextName(config),
 		Nodes:        cfgContext.Nodes,
 		Endpoints:    cfgContext.Endpoints,
 		Roles:        roles.Strings(),
@@ -593,7 +593,7 @@ var configInfoCmd = &cobra.Command{
 	Short: "Show information about the current context",
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		c, err := openConfigAndContext("")
+		c, err := openConfigAndContext(GlobalArgs.CmdContext)
 		if err != nil {
 			return err
 		}
@@ -681,12 +681,18 @@ func init() {
 	addCommand(configCmd)
 }
 
-func getContextData(c *clientconfig.Config) (*clientconfig.Context, error) {
+func configContextName(c *clientconfig.Config) string {
 	contextName := c.Context
 
 	if GlobalArgs.CmdContext != "" {
 		contextName = GlobalArgs.CmdContext
 	}
+
+	return contextName
+}
+
+func getContextData(c *clientconfig.Config) (*clientconfig.Context, error) {
+	contextName := configContextName(c)
 
 	ctxData, ok := c.Contexts[contextName]
 	if !ok {
