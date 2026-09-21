@@ -14,7 +14,6 @@ import (
 	"golang.org/x/sys/unix"
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
-	"github.com/siderolabs/talos/internal/pkg/containermode"
 	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/xfs"
@@ -30,7 +29,7 @@ const etcRootPath = "/etc"
 // static defaults, the lower) into a single WRITABLE overlay. machined keeps that overlay's
 // detached mount (the returned xfs.Root) and controllers write managed files THROUGH it (into the
 // upper).
-func setupEtcOverlay(etcPath string, upperFSOpts []fsopen.Option, logger *zap.Logger) (xfs.Root, func() error, error) {
+func setupEtcOverlay(etcPath string, inContainer bool, upperFSOpts []fsopen.Option, logger *zap.Logger) (xfs.Root, func() error, error) {
 	printer := logger.Sugar().Infof
 
 	// Clone the static rootfs /etc as the detached lower layer (squashfs, read-only).
@@ -46,19 +45,8 @@ func setupEtcOverlay(etcPath string, upperFSOpts []fsopen.Option, logger *zap.Lo
 		return nil, nil, fmt.Errorf("failed to compose writable /etc overlay: %w", err)
 	}
 
-	// /etc/extensions.yaml is provided in initramfs via a bind that the overlay lower ignores
-	// (overlayfs does not cross submounts inside a lower); seed its content into the upper through
-	// etcRoot so extension detection still works.
-	if err := seedBindMountFile(etcRoot, etcPath, "extensions.yaml"); err != nil {
-		return nil, nil, fmt.Errorf("failed to seed extensions config: %w", err)
-	}
-
-	// In container mode the runtime bind-mounts /etc/resolv.conf into the container with
-	// the resolvers to use; the network controller intentionally does not manage resolv.conf then.
-	if containermode.InContainer() {
-		if err := seedBindMountFile(etcRoot, etcPath, "resolv.conf"); err != nil {
-			return nil, nil, fmt.Errorf("failed to seed container /etc/resolv.conf: %w", err)
-		}
+	if err := seedBindMountFiles(etcRoot, etcPath, inContainer); err != nil {
+		return nil, nil, err
 	}
 
 	overlayFd, err := etcRoot.Fd()
@@ -94,6 +82,33 @@ func setupEtcOverlay(etcPath string, upperFSOpts []fsopen.Option, logger *zap.Lo
 	}
 
 	return etcRoot, unmount, nil
+}
+
+// seedBindMountFiles seeds the files that are bind-mounted into /etc from outside the rootfs.
+//
+// Such a file is a submount of /etc, and the overlay lower does not carry it: the lower is cloned
+// with OPEN_TREE_CLONE (no AT_RECURSIVE) and overlayfs does not cross submounts inside a lower
+// either. Without seeding, the overlay would expose the empty placeholder shipped in the rootfs
+// instead of the bind-mounted content.
+func seedBindMountFiles(etcRoot xfs.Root, etcPath string, inContainer bool) error {
+	// extensions.yaml is bound in from the initramfs, so extension detection needs it.
+	names := []string{"extensions.yaml"}
+
+	// In container mode the runtime binds in resolv.conf (the resolvers to use) and hostname (the
+	// container name). No controller manages either one then, and the container platform reads
+	// hostname back off the file to publish the platform hostname, so both must survive the
+	// compose or the machine comes up on a generated hostname.
+	if inContainer {
+		names = append(names, "resolv.conf", "hostname")
+	}
+
+	for _, name := range names {
+		if err := seedBindMountFile(etcRoot, etcPath, name); err != nil {
+			return fmt.Errorf("failed to seed /etc/%s: %w", name, err)
+		}
+	}
+
+	return nil
 }
 
 // seedBindMountFile copies /<name> from etcPath into the writable xfs.Root
