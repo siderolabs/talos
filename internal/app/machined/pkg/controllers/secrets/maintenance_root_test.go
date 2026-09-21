@@ -19,10 +19,8 @@ import (
 
 func TestMaintenanceRootSuite(t *testing.T) {
 	suite.Run(t, &MaintenanceRootSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.MaintenanceRootController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.MaintenanceRootController{}))
 		},
 	})
 }

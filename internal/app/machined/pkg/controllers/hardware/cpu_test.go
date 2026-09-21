@@ -77,9 +77,7 @@ func TestCPUInfoSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &CPUInfoSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	})
 }
 

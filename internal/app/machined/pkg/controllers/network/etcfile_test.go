@@ -380,9 +380,7 @@ func TestEtcFileConfigSuite(t *testing.T) {
 	}
 
 	s := &EtcFileConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	}
 
 	s.AfterSetup = func(*ctest.DefaultSuite) {

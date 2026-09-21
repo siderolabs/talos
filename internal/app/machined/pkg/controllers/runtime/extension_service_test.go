@@ -251,8 +251,6 @@ func TestExtensionServiceSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ExtensionServiceSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-		},
+		Timeout: 30 * time.Second,
 	})
 }

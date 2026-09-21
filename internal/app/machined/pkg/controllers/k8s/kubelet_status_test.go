@@ -49,10 +49,8 @@ func TestKubeletStatusControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KubeletStatusControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewKubeletStatusController()))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewKubeletStatusController()))
 		},
 	})
 }

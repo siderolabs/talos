@@ -50,20 +50,16 @@ func TestSetBootEntry(t *testing.T) {
 	require.NoError(t, err)
 
 	blkidInfo := &blkid.Info{
-		ProbeResult: blkid.ProbeResult{
-			Name: "loop0",
-		},
+		Name:       "loop0",
 		SectorSize: 512,
 		Parts: []blkid.NestedProbeResult{
 			{
-				NestedResult: blkid.NestedResult{
-					PartitionUUID:   new(uuid.MustParse("3c8f4e2e-1dd2-4a5b-9f6d-8f3c9e6d7c3b")),
-					PartitionLabel:  new(constants.EFIPartitionLabel),
-					PartitionOffset: 2048,
-					PartitionSize:   409600,
-					PartitionIndex:  1,
-					PartitionType:   new(uuid.MustParse("c12a7328-f81f-11d2-ba4b-00a0c93ec93b")),
-				},
+				PartitionUUID:   new(uuid.MustParse("3c8f4e2e-1dd2-4a5b-9f6d-8f3c9e6d7c3b")),
+				PartitionLabel:  new(constants.EFIPartitionLabel),
+				PartitionOffset: 2048,
+				PartitionSize:   409600,
+				PartitionIndex:  1,
+				PartitionType:   new(uuid.MustParse("c12a7328-f81f-11d2-ba4b-00a0c93ec93b")),
 			},
 		},
 	}

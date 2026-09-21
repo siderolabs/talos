@@ -31,11 +31,9 @@ func TestUserDiskConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &UserDiskConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.UserDiskConfigController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.UserDiskConfigController{}))
 		},
 	})
 }

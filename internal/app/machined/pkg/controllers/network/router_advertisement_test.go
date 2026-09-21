@@ -53,11 +53,9 @@ func TestRouterAdvertisementControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &RouterAdvertisementControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.RouterAdvertisementController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.RouterAdvertisementController{}))
 		},
 	})
 }

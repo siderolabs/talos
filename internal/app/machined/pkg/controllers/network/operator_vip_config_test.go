@@ -203,12 +203,10 @@ func TestOperatorVIPConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &OperatorVIPConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.OperatorVIPConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.OperatorVIPConfigController{}))
 		},
 	})
 }

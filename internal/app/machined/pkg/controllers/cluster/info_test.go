@@ -59,11 +59,9 @@ func TestInfoSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &InfoSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewInfoController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewInfoController()))
 		},
 	})
 }

@@ -54,28 +54,26 @@ func TestVolumeConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &VolumeConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				tmpDir := suite.T().TempDir()
-				path := filepath.Join(tmpDir, "meta")
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			tmpDir := suite.T().TempDir()
+			path := filepath.Join(tmpDir, "meta")
 
-				f, err := os.Create(path)
-				suite.Require().NoError(err)
-				suite.Require().NoError(f.Truncate(1024 * 1024))
-				suite.Require().NoError(f.Close())
+			f, err := os.Create(path)
+			suite.Require().NoError(err)
+			suite.Require().NoError(f.Truncate(1024 * 1024))
+			suite.Require().NoError(f.Close())
 
-				st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-				m, err := intmeta.New(t.Context(), st, intmeta.WithFixedPath(path))
-				suite.Require().NoError(err)
+			m, err := intmeta.New(t.Context(), st, intmeta.WithFixedPath(path))
+			suite.Require().NoError(err)
 
-				suite.Require().NoError(suite.Runtime().RegisterController(
-					&blockctrls.VolumeConfigController{
-						MetaProvider: metaProvider{meta: m},
-					},
-				))
-			},
+			suite.Require().NoError(suite.Runtime().RegisterController(
+				&blockctrls.VolumeConfigController{
+					MetaProvider: metaProvider{meta: m},
+				},
+			))
 		},
 	})
 }

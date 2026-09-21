@@ -264,8 +264,6 @@ func (suite *AddressConfigSuite) TestVethMachineConfiguration() {
 
 func TestAddressConfigSuite(t *testing.T) {
 	suite.Run(t, &AddressConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

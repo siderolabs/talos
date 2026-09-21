@@ -1385,18 +1385,16 @@ func TestLinkSpecSuite(t *testing.T) {
 
 	suite.Run(t, &LinkSpecSuite{
 		observedLogs: observedLogs,
-		DefaultSuite: ctest.DefaultSuite{
-			Logger:  logger,
-			Timeout: 15 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				// create fake device ready status
-				deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
-				deviceStatus.TypedSpec().Ready = true
-				suite.Create(deviceStatus)
+		Logger:       logger,
+		Timeout:      15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			// create fake device ready status
+			deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
+			deviceStatus.TypedSpec().Ready = true
+			suite.Create(deviceStatus)
 
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkSpecController{}))
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkStatusController{}))
-			},
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkSpecController{}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkStatusController{}))
 		},
 	})
 }

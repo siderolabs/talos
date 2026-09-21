@@ -148,8 +148,6 @@ func TestTimeServerConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &TimeServerConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	})
 }

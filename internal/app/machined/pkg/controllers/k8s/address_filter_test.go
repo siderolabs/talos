@@ -142,11 +142,9 @@ func TestK8sAddressFilterSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &K8sAddressFilterSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.AddressFilterController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.AddressFilterController{}))
 		},
 	})
 }

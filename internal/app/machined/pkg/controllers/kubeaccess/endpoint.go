@@ -176,13 +176,11 @@ func (ctrl *EndpointController) ensureTalosService(ctx context.Context, client *
 
 	// create the service if it does not exist
 	newService := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      constants.KubernetesTalosAPIServiceName,
-			Namespace: constants.KubernetesTalosAPIServiceNamespace,
-			Labels: map[string]string{
-				"provider":  constants.KubernetesTalosProvider,
-				"component": "apid",
-			},
+		Name:      constants.KubernetesTalosAPIServiceName,
+		Namespace: constants.KubernetesTalosAPIServiceNamespace,
+		Labels: map[string]string{
+			"provider":  constants.KubernetesTalosProvider,
+			"component": "apid",
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -281,14 +279,12 @@ func (ctrl *EndpointController) ensureTalosEndpointSlicesTyped(
 
 		if apierrors.IsNotFound(err) {
 			newEndpointSlice = &discoveryv1.EndpointSlice{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:      name,
-					Namespace: constants.KubernetesTalosAPIServiceNamespace,
-					Labels: map[string]string{
-						"kubernetes.io/service-name": constants.KubernetesTalosAPIServiceName,
-						"provider":                   constants.KubernetesTalosProvider,
-						"component":                  "apid",
-					},
+				Name:      name,
+				Namespace: constants.KubernetesTalosAPIServiceNamespace,
+				Labels: map[string]string{
+					"kubernetes.io/service-name": constants.KubernetesTalosAPIServiceName,
+					"provider":                   constants.KubernetesTalosProvider,
+					"component":                  "apid",
 				},
 				AddressType: addressType,
 			}

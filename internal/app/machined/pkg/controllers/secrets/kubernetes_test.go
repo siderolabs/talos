@@ -27,11 +27,9 @@ import (
 
 func TestKubernetesSuite(t *testing.T) {
 	suite.Run(t, &KubernetesSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesController{}))
 		},
 	})
 }

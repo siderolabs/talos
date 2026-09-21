@@ -31,9 +31,7 @@ type provisioner struct {
 // NewProvisioner initializes qemu provisioner.
 func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 	p := &provisioner{
-		Provisioner: vm.Provisioner{
-			Name: "qemu",
-		},
+		Name: "qemu",
 	}
 
 	return p, nil

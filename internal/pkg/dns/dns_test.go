@@ -321,10 +321,8 @@ func newManager(t *testing.T, nameservers ...string) func() {
 
 func createQuery(name string) *dnssrv.Msg {
 	return &dnssrv.Msg{
-		MsgHdr: dnssrv.MsgHdr{
-			Id:               dnssrv.Id(),
-			RecursionDesired: true,
-		},
+		Id:               dnssrv.Id(),
+		RecursionDesired: true,
 		Question: []dnssrv.Question{
 			{
 				Name:   dnssrv.Fqdn(name),

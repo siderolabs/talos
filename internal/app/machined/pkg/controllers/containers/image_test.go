@@ -121,14 +121,12 @@ func TestImageSuite(t *testing.T) {
 	puller := newFakePuller()
 
 	suite.Run(t, &ImageSuite{
-		puller: puller,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&containersctrl.ImageController{
-					PullerProvider: func() (containersctrl.Puller, error) { return puller, nil },
-				}))
-			},
+		puller:  puller,
+		Timeout: 15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&containersctrl.ImageController{
+				PullerProvider: func() (containersctrl.Puller, error) { return puller, nil },
+			}))
 		},
 	})
 }

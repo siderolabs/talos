@@ -119,13 +119,11 @@ func TestCRIServiceSuite(t *testing.T) {
 
 	suite.Run(t, &CRIServiceSuite{
 		serviceManager: serviceManager,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&crictrl.ServiceController{
-					V1Alpha1Services: serviceManager,
-				}))
-			},
+		Timeout:        10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&crictrl.ServiceController{
+				V1Alpha1Services: serviceManager,
+			}))
 		},
 	})
 }

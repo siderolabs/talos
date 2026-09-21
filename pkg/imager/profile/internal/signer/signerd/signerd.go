@@ -104,7 +104,7 @@ func NewPCRSigner(ctx context.Context, address string) (s *PCRSigner, err error)
 	}
 
 	return &PCRSigner{
-		rsaSigner: rsaSigner{conn: conn, client: client, pubKey: pubKey},
+		conn: conn, client: client, pubKey: pubKey,
 	}, nil
 }
 
@@ -155,8 +155,8 @@ func NewSecureBootSigner(ctx context.Context, address string) (s *SecureBootSign
 	}
 
 	return &SecureBootSigner{
-		rsaSigner: rsaSigner{conn: conn, client: client, pubKey: pubKey},
-		cert:      cert,
+		conn: conn, client: client, pubKey: pubKey,
+		cert: cert,
 	}, nil
 }
 

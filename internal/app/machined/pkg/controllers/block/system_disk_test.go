@@ -25,11 +25,9 @@ func TestSystemDiskSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &SystemDiskSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.SystemDiskController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.SystemDiskController{}))
 		},
 	})
 }

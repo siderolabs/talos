@@ -144,8 +144,6 @@ func TestKernelModuleConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KernelModuleConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

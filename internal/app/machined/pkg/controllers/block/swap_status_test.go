@@ -27,10 +27,8 @@ func TestSwapStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &SwapStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout:    3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {},
-		},
+		Timeout:    3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {},
 	})
 }
 

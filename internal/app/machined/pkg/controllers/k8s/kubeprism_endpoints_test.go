@@ -121,10 +121,8 @@ func TestEndpointsBalancerControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KubePrismControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewKubePrismEndpointsController()))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewKubePrismEndpointsController()))
 		},
 	})
 }

@@ -459,16 +459,14 @@ func TestManagerSuite(t *testing.T) {
 
 	suite.Run(t, &ManagerSuite{
 		mockWireguard: mockWireguard,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&kubespanctrl.ManagerController{
-					WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
-						return mockWireguard, nil
-					},
-					PeerReconcileInterval: time.Second,
-				}))
-			},
+		Timeout:       5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&kubespanctrl.ManagerController{
+				WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
+					return mockWireguard, nil
+				},
+				PeerReconcileInterval: time.Second,
+			}))
 		},
 	})
 }

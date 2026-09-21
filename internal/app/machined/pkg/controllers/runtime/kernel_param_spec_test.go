@@ -79,8 +79,6 @@ func TestKernelParamSpecSuite(t *testing.T) {
 	}
 
 	suite.Run(t, &KernelParamSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-		},
+		Timeout: 15 * time.Second,
 	})
 }

@@ -61,13 +61,11 @@ func TestVolumeTrimSuite(t *testing.T) {
 
 	suite.Run(t, &VolumeTrimSuite{
 		tracker: tracker,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeTrimController{
-					TrimFunc: tracker.trim,
-				}))
-			},
+		Timeout: 15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeTrimController{
+				TrimFunc: tracker.trim,
+			}))
 		},
 	})
 }

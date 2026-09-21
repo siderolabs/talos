@@ -367,11 +367,9 @@ func TestResolverMergeSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ResolverMergeSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewResolverMergeController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(netctrl.NewResolverMergeController()))
 		},
 	})
 }

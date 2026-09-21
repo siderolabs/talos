@@ -685,11 +685,9 @@ func TestOperatorConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &OperatorConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
 		},
 	})
 }

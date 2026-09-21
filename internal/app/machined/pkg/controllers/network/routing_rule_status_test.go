@@ -45,11 +45,9 @@ func TestRoutingRuleStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &RoutingRuleStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleStatusController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleStatusController{}))
 		},
 	})
 }

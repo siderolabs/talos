@@ -77,11 +77,9 @@ func TestHardwareAddrSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &HardwareAddrSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HardwareAddrController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HardwareAddrController{}))
 		},
 	})
 }

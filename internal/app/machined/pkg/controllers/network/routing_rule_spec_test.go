@@ -607,11 +607,9 @@ func TestRoutingRuleSpecSuite(t *testing.T) {
 	}
 
 	suite.Run(t, &RoutingRuleSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleSpecController{}))
-			},
+		Timeout: 15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleSpecController{}))
 		},
 	})
 }

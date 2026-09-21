@@ -32,12 +32,10 @@ func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&siderolinkctrl.ConfigController{}))
-			},
-			Timeout: time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&siderolinkctrl.ConfigController{}))
 		},
+		Timeout: time.Second,
 	})
 }
 

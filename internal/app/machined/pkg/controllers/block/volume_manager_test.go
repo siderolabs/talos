@@ -28,11 +28,9 @@ type VolumeManagerSuite struct {
 
 func TestVolumeManagerSuite(t *testing.T) {
 	suite.Run(t, &VolumeManagerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeManagerController{}))
-			},
+		Timeout: 30 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeManagerController{}))
 		},
 	})
 }
@@ -223,13 +221,11 @@ type VolumeManagerBootPartitionSuite struct {
 
 func TestVolumeManagerBootPartitionSuite(t *testing.T) {
 	suite.Run(t, &VolumeManagerBootPartitionSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeManagerController{
-					BootPartitionWaitTimeout: 10 * time.Second,
-				}))
-			},
+		Timeout: 30 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeManagerController{
+				BootPartitionWaitTimeout: 10 * time.Second,
+			}))
 		},
 	})
 }
@@ -267,13 +263,11 @@ type VolumeManagerBootPartitionTimeoutSuite struct {
 
 func TestVolumeManagerBootPartitionTimeoutSuite(t *testing.T) {
 	suite.Run(t, &VolumeManagerBootPartitionTimeoutSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeManagerController{
-					BootPartitionWaitTimeout: time.Second,
-				}))
-			},
+		Timeout: 30 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeManagerController{
+				BootPartitionWaitTimeout: time.Second,
+			}))
 		},
 	})
 }

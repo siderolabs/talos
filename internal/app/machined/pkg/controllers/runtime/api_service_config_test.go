@@ -25,11 +25,9 @@ func TestAPIServiceConfigControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &APIServiceConfigControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&runtime.APIServiceConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&runtime.APIServiceConfigController{}))
 		},
 	})
 }

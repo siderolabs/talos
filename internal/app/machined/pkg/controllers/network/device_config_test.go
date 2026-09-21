@@ -246,11 +246,9 @@ func (suite *DeviceConfigSpecSuite) TestBondSelectors() {
 
 func TestDeviceConfigSpecSuite(t *testing.T) {
 	suite.Run(t, &DeviceConfigSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
 		},
 	})
 }

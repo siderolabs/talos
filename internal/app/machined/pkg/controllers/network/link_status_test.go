@@ -396,16 +396,14 @@ func encodeBridgeData(stpEnabled bool) ([]byte, error) {
 
 func TestLinkStatusSuite(t *testing.T) {
 	suite.Run(t, &LinkStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				// create fake device ready status
-				deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
-				deviceStatus.TypedSpec().Ready = true
-				s.Require().NoError(s.State().Create(s.Ctx(), deviceStatus))
+		Timeout: 15 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			// create fake device ready status
+			deviceStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
+			deviceStatus.TypedSpec().Ready = true
+			s.Require().NoError(s.State().Create(s.Ctx(), deviceStatus))
 
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.LinkStatusController{}))
-			},
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.LinkStatusController{}))
 		},
 	})
 }

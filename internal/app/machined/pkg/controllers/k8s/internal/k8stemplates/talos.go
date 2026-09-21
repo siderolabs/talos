@@ -6,7 +6,6 @@ package k8stemplates
 
 import (
 	rbacv1 "k8s.io/api/rbac/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -15,18 +14,14 @@ import (
 // endpoints for the internal discovery.
 func TalosNodesRBACClusterRoleBinding() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterRoleBinding",
-			APIVersion: rbacv1.SchemeGroupVersion.String(),
+		Kind:       "ClusterRoleBinding",
+		APIVersion: rbacv1.SchemeGroupVersion.String(),
+		Name:       "system:talos-nodes",
+		Labels: map[string]string{
+			"kubernetes.io/bootstrapping": "rbac-defaults",
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "system:talos-nodes",
-			Labels: map[string]string{
-				"kubernetes.io/bootstrapping": "rbac-defaults",
-			},
-			Annotations: map[string]string{
-				"rbac.authorization.kubernetes.io/autoupdate": "true",
-			},
+		Annotations: map[string]string{
+			"rbac.authorization.kubernetes.io/autoupdate": "true",
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.GroupName,
@@ -48,15 +43,11 @@ func TalosNodesRBACClusterRoleBinding() runtime.Object {
 // endpoints for the internal discovery.
 func TalosNodesRBACClusterRole() runtime.Object {
 	return &rbacv1.ClusterRole{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterRole",
-			APIVersion: rbacv1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "system:talos-nodes",
-			Labels: map[string]string{
-				"kubernetes.io/bootstrapping": "rbac-defaults",
-			},
+		Kind:       "ClusterRole",
+		APIVersion: rbacv1.SchemeGroupVersion.String(),
+		Name:       "system:talos-nodes",
+		Labels: map[string]string{
+			"kubernetes.io/bootstrapping": "rbac-defaults",
 		},
 		Rules: []rbacv1.PolicyRule{
 			{

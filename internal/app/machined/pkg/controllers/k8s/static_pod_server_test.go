@@ -79,11 +79,9 @@ func TestStaticPodListSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &StaticPodListSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.StaticPodServerController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.StaticPodServerController{}))
 		},
 	})
 }

@@ -78,8 +78,6 @@ func TestEndpointSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &EndpointSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

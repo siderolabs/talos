@@ -315,10 +315,8 @@ func injectToVolumes(name string, volumes []corev1.Volume) []corev1.Volume {
 
 	result = append(result, corev1.Volume{
 		Name: volumeName,
-		VolumeSource: corev1.VolumeSource{
-			Secret: &corev1.SecretVolumeSource{
-				SecretName: name,
-			},
+		Secret: &corev1.SecretVolumeSource{
+			SecretName: name,
 		},
 	})
 

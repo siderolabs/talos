@@ -185,11 +185,9 @@ func TestBGPControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &BGPControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.BGPController{ListenPort: -1}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.BGPController{ListenPort: -1}))
 		},
 	})
 }

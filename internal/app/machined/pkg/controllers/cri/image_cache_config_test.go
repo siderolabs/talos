@@ -443,9 +443,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithEncryptionConfig() {
 
 func TestImageCacheConfigSuite(t *testing.T) {
 	s := &ImageCacheConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	}
 
 	s.AfterSetup = func(suite *ctest.DefaultSuite) {

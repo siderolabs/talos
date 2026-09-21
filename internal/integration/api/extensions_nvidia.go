@@ -83,11 +83,9 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	}
 
 	_, err := suite.Clientset.CoreV1().Namespaces().Create(suite.ctx, &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "gpu-operator",
-			Labels: map[string]string{
-				"pod-security.kubernetes.io/enforce": "privileged",
-			},
+		Name: "gpu-operator",
+		Labels: map[string]string{
+			"pod-security.kubernetes.io/enforce": "privileged",
 		},
 	}, metav1.CreateOptions{})
 	defer suite.Clientset.CoreV1().Namespaces().Delete(suite.ctx, "gpu-operator", metav1.DeleteOptions{}) //nolint:errcheck
@@ -295,9 +293,7 @@ func (suite *ExtensionsSuiteNVIDIA) getNVIDIANodes(labelQuery string) []string {
 
 func nvidiaCUDATestJob() *batchv1.Job {
 	return &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "cuda-test",
-		},
+		Name: "cuda-test",
 		Spec: batchv1.JobSpec{
 			Completions: new(int32(1)),
 			Template: corev1.PodTemplateSpec{

@@ -61,12 +61,10 @@ func TestCRIConfigSuite(t *testing.T) {
 	))
 
 	suite.Run(t, &CRIConfigSuite{
-		root: root,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.CRIConfigController{EtcRoot: root}))
-			},
+		root:    root,
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.CRIConfigController{EtcRoot: root}))
 		},
 	})
 }

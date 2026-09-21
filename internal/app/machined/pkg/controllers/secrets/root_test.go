@@ -27,13 +27,11 @@ func TestRootSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &RootSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootEtcdController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootKubernetesController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootOSController()))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootEtcdController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootKubernetesController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewRootOSController()))
 		},
 	})
 }

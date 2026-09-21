@@ -116,11 +116,9 @@ func GenerateHosts(cfg cri.Registries, basePath string) (*HostsConfig, error) {
 			}
 
 			hostEntry := HostEntry{
-				Host: endpoint.Endpoint(),
-				HostToml: HostToml{
-					Capabilities: []string{"pull", "resolve"}, // TODO: we should make it configurable eventually
-					OverridePath: endpoint.OverridePath(),
-				},
+				Host:         endpoint.Endpoint(),
+				Capabilities: []string{"pull", "resolve"}, // TODO: we should make it configurable eventually
+				OverridePath: endpoint.OverridePath(),
 			}
 
 			configureEndpoint(u.Host, directoryName, &hostEntry.HostToml, directory)

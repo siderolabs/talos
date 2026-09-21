@@ -93,10 +93,8 @@ func TestStaticEndpointControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &StaticEndpointControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.StaticEndpointController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.StaticEndpointController{}))
 		},
 	})
 }

@@ -105,8 +105,6 @@ func TestBootPartitionStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &BootPartitionStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

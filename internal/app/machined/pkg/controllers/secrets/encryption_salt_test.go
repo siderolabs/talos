@@ -100,10 +100,8 @@ func TestEncryptionSaltSuite(t *testing.T) {
 	}
 
 	suite.Run(t, &EncryptionSaltSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.EncryptionSaltController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.EncryptionSaltController{}))
 		},
 	})
 }

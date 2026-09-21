@@ -6,7 +6,6 @@ package k8stemplates
 
 import (
 	apiextensions "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -16,13 +15,9 @@ import (
 // allows injecting Talos API credentials for Kubernetes pods.
 func TalosServiceAccountCRDTemplate() runtime.Object {
 	return &apiextensions.CustomResourceDefinition{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: apiextensions.SchemeGroupVersion.String(),
-			Kind:       "CustomResourceDefinition",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: constants.ServiceAccountResourcePlural + "." + constants.ServiceAccountResourceGroup,
-		},
+		APIVersion: apiextensions.SchemeGroupVersion.String(),
+		Kind:       "CustomResourceDefinition",
+		Name:       constants.ServiceAccountResourcePlural + "." + constants.ServiceAccountResourceGroup,
 		Spec: apiextensions.CustomResourceDefinitionSpec{
 			Conversion: &apiextensions.CustomResourceConversion{
 				Strategy: apiextensions.NoneConverter,

@@ -51,11 +51,9 @@ func TestContentLibrarySuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ContentLibrarySuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.ContentLibraryController{}))
-			},
+		Timeout: 15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.ContentLibraryController{}))
 		},
 	})
 }

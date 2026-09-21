@@ -99,15 +99,13 @@ func (suite *StatusSuite) TestEtcFiles() {
 
 func TestStatusSuite(t *testing.T) {
 	suite.Run(t, &StatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(
-					&netctrl.StatusController{
-						V1Alpha1Mode: runtime.ModeMetal,
-					},
-				))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(
+				&netctrl.StatusController{
+					V1Alpha1Mode: runtime.ModeMetal,
+				},
+			))
 		},
 	})
 }

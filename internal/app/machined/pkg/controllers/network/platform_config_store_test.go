@@ -93,13 +93,11 @@ func TestPlatformConfigStoreSuite(t *testing.T) {
 	}
 
 	suite.Run(t, &PlatformConfigStoreSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(
-					suite.Runtime().RegisterController(&netctrl.PlatformConfigStoreController{}),
-				)
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(
+				suite.Runtime().RegisterController(&netctrl.PlatformConfigStoreController{}),
+			)
 		},
 	})
 }

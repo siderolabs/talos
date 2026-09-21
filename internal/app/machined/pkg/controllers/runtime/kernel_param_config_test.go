@@ -128,8 +128,6 @@ func TestKernelParamConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KernelParamConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

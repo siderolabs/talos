@@ -24,11 +24,9 @@ import (
 
 func TestMaintenanceCertSANsSuite(t *testing.T) {
 	suite.Run(t, &MaintenanceCertSANsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 2 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.MaintenanceCertSANsController{}))
-			},
+		Timeout: 2 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.MaintenanceCertSANsController{}))
 		},
 	})
 }

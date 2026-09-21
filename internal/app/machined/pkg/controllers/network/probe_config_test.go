@@ -219,11 +219,9 @@ func TestProbeConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ProbeConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ProbeConfigController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ProbeConfigController{}))
 		},
 	})
 }

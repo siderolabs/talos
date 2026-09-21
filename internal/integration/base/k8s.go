@@ -280,11 +280,9 @@ func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
 
 	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, corev1.Volume{
 		Name: name,
-		VolumeSource: corev1.VolumeSource{
-			HostPath: &corev1.HostPathVolumeSource{
-				Path: hostPath,
-				Type: new(corev1.HostPathDirectoryOrCreate),
-			},
+		HostPath: &corev1.HostPathVolumeSource{
+			Path: hostPath,
+			Type: new(corev1.HostPathDirectoryOrCreate),
 		},
 	})
 
@@ -380,9 +378,7 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 		name:      podName,
 		namespace: "kube-system",
 		pod: &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: podName,
-			},
+			Name: podName,
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
@@ -416,18 +412,14 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 				Volumes: []corev1.Volume{
 					{
 						Name: "dev",
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{
-								Path: "/dev",
-							},
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev",
 						},
 					},
 					{
 						Name: "host",
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{
-								Path: "/",
-							},
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/",
 						},
 					},
 				},
@@ -456,9 +448,7 @@ func (k8sSuite *K8sSuite) NewPod(name string) (podInfo, error) {
 		name:      podName,
 		namespace: "default",
 		pod: &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: podName,
-			},
+			Name: podName,
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{

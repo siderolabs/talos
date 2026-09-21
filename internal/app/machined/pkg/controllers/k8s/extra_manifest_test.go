@@ -71,11 +71,9 @@ func TestExtraManifestSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ExtraManifestSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ExtraManifestController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ExtraManifestController{}))
 		},
 	})
 }

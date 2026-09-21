@@ -6,7 +6,6 @@ package k8stemplates
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -15,15 +14,11 @@ import (
 // KubeletBootstrapTokenSecret returns the kubelet bootstrap token secret.
 func KubeletBootstrapTokenSecret(secrets *secrets.KubernetesRootSpec) runtime.Object {
 	return &corev1.Secret{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "Secret",
-			APIVersion: corev1.SchemeGroupVersion.Version,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "bootstrap-token-" + secrets.BootstrapTokenID,
-			Namespace: "kube-system",
-		},
-		Type: corev1.SecretType("bootstrap.kubernetes.io/token"),
+		Kind:       "Secret",
+		APIVersion: corev1.SchemeGroupVersion.Version,
+		Name:       "bootstrap-token-" + secrets.BootstrapTokenID,
+		Namespace:  "kube-system",
+		Type:       corev1.SecretType("bootstrap.kubernetes.io/token"),
 		StringData: map[string]string{
 			"token-id":                       secrets.BootstrapTokenID,
 			"token-secret":                   secrets.BootstrapTokenSecret,

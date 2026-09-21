@@ -100,12 +100,10 @@ func TestSeccompProfileFileSuite(t *testing.T) {
 	seccompProfiesDirectory := t.TempDir()
 
 	suite.Run(t, &CRISeccompProfileFileSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&cri.SeccompProfileFileController{
-					SeccompProfilesDirectory: seccompProfiesDirectory,
-				}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&cri.SeccompProfileFileController{
+				SeccompProfilesDirectory: seccompProfiesDirectory,
+			}))
 		},
 		seccompProfilesDirectory: seccompProfiesDirectory,
 	})

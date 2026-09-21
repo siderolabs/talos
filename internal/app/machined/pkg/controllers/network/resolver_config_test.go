@@ -337,8 +337,6 @@ func TestResolverConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ResolverConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	})
 }

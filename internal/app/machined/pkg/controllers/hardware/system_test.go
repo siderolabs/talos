@@ -223,8 +223,6 @@ func TestSystemInfoSyncSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &SystemInfoSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	})
 }

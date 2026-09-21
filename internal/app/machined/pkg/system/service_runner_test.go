@@ -134,9 +134,7 @@ func TestServiceRunnerPublishesHealthReadyBeforeRunning(t *testing.T) {
 	}
 
 	svc := &blockedHealthcheckedService{
-		MockService: MockService{
-			runner: runnr,
-		},
+		runner:             runnr,
 		healthCheckStarted: healthCheckStarted,
 		healthStateUpdated: healthStateUpdated,
 		allowHealthCheck:   allowHealthCheck,
@@ -292,9 +290,7 @@ func (runnr *blockedRunningRunner) String() string {
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 	m := MockHealthcheckedService{
-		MockService: MockService{
-			condition: conditions.None(),
-		},
+		condition: conditions.None(),
 	}
 	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), &m, newRuntime(suite.T()))
 

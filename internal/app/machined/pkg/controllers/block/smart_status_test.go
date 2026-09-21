@@ -53,9 +53,7 @@ func TestSMARTStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &SMARTStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-		},
+		Timeout: 3 * time.Second,
 	})
 }
 

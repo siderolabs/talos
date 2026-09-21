@@ -683,19 +683,17 @@ func TestNftablesChainSuite(t *testing.T) {
 	}
 
 	suite.Run(t, &NfTablesChainSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				// try to see if the table is there
-				if exec.CommandContext(s.Ctx(), "nft", "list", "table", "inet", "talos-test").Run() == nil {
-					s.Require().NoError(exec.CommandContext(s.Ctx(), "nft", "delete", "table", "inet", "talos-test").Run())
-				}
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			// try to see if the table is there
+			if exec.CommandContext(s.Ctx(), "nft", "list", "table", "inet", "talos-test").Run() == nil {
+				s.Require().NoError(exec.CommandContext(s.Ctx(), "nft", "delete", "table", "inet", "talos-test").Run())
+			}
 
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.NfTablesChainController{TableName: "talos-test"}))
-			},
-			AfterTearDown: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(exec.CommandContext(s.T().Context(), "nft", "delete", "table", "inet", "talos-test").Run())
-			},
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.NfTablesChainController{TableName: "talos-test"}))
+		},
+		AfterTearDown: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(exec.CommandContext(s.T().Context(), "nft", "delete", "table", "inet", "talos-test").Run())
 		},
 	})
 }

@@ -238,10 +238,8 @@ func (suite *TinkSuite) TestDeploy() {
 	})
 
 	clusterAccess := &tinkClusterAccess{
-		KubernetesClient: cluster.KubernetesClient{
-			ClientProvider: &cluster.ConfigClientProvider{
-				TalosConfig: talosconfig,
-			},
+		ClientProvider: &cluster.ConfigClientProvider{
+			TalosConfig: talosconfig,
 		},
 
 		nodeIP: podIP,
@@ -312,26 +310,18 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 
 	tinkManifests := []runtime.Object{ //nolint:prealloc // this is a test
 		&corev1.Namespace{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Namespace",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-				Labels: map[string]string{
-					podsecurity.EnforceLevelLabel: string(podsecurity.LevelPrivileged),
-				},
+			Kind:       "Namespace",
+			APIVersion: "v1",
+			Name:       namespace,
+			Labels: map[string]string{
+				podsecurity.EnforceLevelLabel: string(podsecurity.LevelPrivileged),
 			},
 		},
 		&corev1.Service{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Service",
-				APIVersion: "v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      serviceName,
-				Namespace: namespace,
-			},
+			Kind:       "Service",
+			APIVersion: "v1",
+			Name:       serviceName,
+			Namespace:  namespace,
 			Spec: corev1.ServiceSpec{
 				Type:     corev1.ServiceTypeNodePort,
 				Selector: labels,
@@ -354,14 +344,10 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 	}
 
 	statefulSet := &appsv1.StatefulSet{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "StatefulSet",
-			APIVersion: "apps/v1",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      ssName,
-			Namespace: namespace,
-		},
+		Kind:       "StatefulSet",
+		APIVersion: "apps/v1",
+		Name:       ssName,
+		Namespace:  namespace,
 		Spec: appsv1.StatefulSetSpec{
 			ServiceName: serviceName,
 			Replicas:    new(int32(1)),
@@ -426,10 +412,8 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 		statefulSet.Spec.Template.Spec.Volumes = append(
 			statefulSet.Spec.Template.Spec.Volumes,
 			corev1.Volume{
-				Name: ephemeralMount,
-				VolumeSource: corev1.VolumeSource{
-					EmptyDir: &corev1.EmptyDirVolumeSource{},
-				},
+				Name:     ephemeralMount,
+				EmptyDir: &corev1.EmptyDirVolumeSource{},
 			},
 		)
 	}
@@ -462,9 +446,7 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 		statefulSet.Spec.VolumeClaimTemplates = append(
 			statefulSet.Spec.VolumeClaimTemplates,
 			corev1.PersistentVolumeClaim{
-				ObjectMeta: metav1.ObjectMeta{
-					Name: name,
-				},
+				Name: name,
 				Spec: corev1.PersistentVolumeClaimSpec{
 					AccessModes: []corev1.PersistentVolumeAccessMode{
 						corev1.ReadWriteOnce,

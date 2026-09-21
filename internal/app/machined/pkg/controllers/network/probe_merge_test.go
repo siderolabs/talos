@@ -80,11 +80,9 @@ func TestProbeMergeSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ProbeMergeSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewProbeMergeController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(netctrl.NewProbeMergeController()))
 		},
 	})
 }

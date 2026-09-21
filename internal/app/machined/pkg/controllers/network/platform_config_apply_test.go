@@ -314,17 +314,15 @@ func TestPlatformConfigApplySuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &PlatformConfigApplySuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(
-					suite.Runtime().RegisterController(
-						&netctrl.PlatformConfigApplyController{
-							V1alpha1Platform: &metal.Metal{},
-						},
-					),
-				)
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(
+				suite.Runtime().RegisterController(
+					&netctrl.PlatformConfigApplyController{
+						V1alpha1Platform: &metal.Metal{},
+					},
+				),
+			)
 		},
 	})
 }

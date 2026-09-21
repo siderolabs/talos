@@ -28,12 +28,10 @@ func TestExtensionServiceConfigFilesSuite(t *testing.T) {
 	extensionsConfigDir := t.TempDir()
 
 	suite.Run(t, &ExtensionServiceConfigFilesSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServiceConfigFilesController{
-					ExtensionsConfigBaseDir: extensionsConfigDir,
-				}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServiceConfigFilesController{
+				ExtensionsConfigBaseDir: extensionsConfigDir,
+			}))
 		},
 		extensionsConfigDir: extensionsConfigDir,
 	})

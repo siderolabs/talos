@@ -218,11 +218,9 @@ func TestPeerSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &PeerSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.PeerSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.PeerSpecController{}))
 		},
 	})
 }
@@ -280,11 +278,9 @@ func TestPeerSpecFilterSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &PeerSpecFilterSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.PeerSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.PeerSpecController{}))
 		},
 	})
 }

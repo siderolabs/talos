@@ -323,11 +323,9 @@ func (suite *BGPCiliumSuite) ciliumBGPObjects(nodeName string) []unstructured.Un
 
 func (suite *BGPCiliumSuite) ciliumCreateService() {
 	_, err := suite.Clientset.CoreV1().Services(corev1.NamespaceDefault).Create(suite.ctx, &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: ciliumServiceName,
-			Labels: map[string]string{
-				ciliumServiceLabel: ciliumTestLabelValue,
-			},
+		Name: ciliumServiceName,
+		Labels: map[string]string{
+			ciliumServiceLabel: ciliumTestLabelValue,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:              map[string]string{"app": ciliumBackendName},

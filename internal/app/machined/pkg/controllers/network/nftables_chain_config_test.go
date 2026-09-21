@@ -523,11 +523,9 @@ func TestNfTablesChainConfig(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &NfTablesChainConfigTestSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.NfTablesChainConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.NfTablesChainConfigController{}))
 		},
 	})
 }

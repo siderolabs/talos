@@ -25,10 +25,8 @@ func TestKubeletSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KubeletSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewKubeletController()))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewKubeletController()))
 		},
 	})
 }

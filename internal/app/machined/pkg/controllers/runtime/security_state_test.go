@@ -180,16 +180,14 @@ func TestSecurityStateContainerSuite(t *testing.T) {
 	lockdownPath := filepath.Join(t.TempDir(), "lockdown")
 
 	suite.Run(t, &SecurityStateContainerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(os.WriteFile(lockdownPath, renderLockdownFile(runtime.LockdownStateConfidentiality), 0o644))
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(os.WriteFile(lockdownPath, renderLockdownFile(runtime.LockdownStateConfidentiality), 0o644))
 
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.SecurityStateController{
-					V1Alpha1Mode: machineruntime.ModeContainer,
-					LockdownPath: lockdownPath,
-				}))
-			},
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.SecurityStateController{
+				V1Alpha1Mode: machineruntime.ModeContainer,
+				LockdownPath: lockdownPath,
+			}))
 		},
 	})
 }

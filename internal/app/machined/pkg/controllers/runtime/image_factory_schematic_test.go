@@ -25,11 +25,9 @@ func TestImageFactorySchematicSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ImageFactorySchematicSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.ImageFactorySchematicController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.ImageFactorySchematicController{}))
 		},
 	})
 }

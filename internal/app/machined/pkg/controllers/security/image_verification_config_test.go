@@ -106,11 +106,9 @@ func TestImageVerificationConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ImageVerificationConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&securityctrl.ImageVerificationConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&securityctrl.ImageVerificationConfigController{}))
 		},
 	})
 }

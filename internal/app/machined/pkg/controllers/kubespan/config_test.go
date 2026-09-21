@@ -162,11 +162,9 @@ func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(kubespanctrl.NewConfigController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(kubespanctrl.NewConfigController()))
 		},
 	})
 }

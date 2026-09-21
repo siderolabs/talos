@@ -54,17 +54,13 @@ func KubeProxyConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 	}
 
 	return &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      kubeProxyConfigMapName(spec.ProxyConfigChecksum),
-			Namespace: "kube-system",
-			Labels: map[string]string{
-				"tier":    "node",
-				"k8s-app": "kube-proxy",
-			},
+		APIVersion: corev1.SchemeGroupVersion.String(),
+		Kind:       "ConfigMap",
+		Name:       kubeProxyConfigMapName(spec.ProxyConfigChecksum),
+		Namespace:  "kube-system",
+		Labels: map[string]string{
+			"tier":    "node",
+			"k8s-app": "kube-proxy",
 		},
 		Data: map[string]string{
 			kubeProxyConfigFileName: string(configYAML),
@@ -100,28 +96,20 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 	volumes := []corev1.Volume{
 		{
 			Name: "lib-modules",
-			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/usr/lib/modules",
-				},
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/usr/lib/modules",
 			},
 		},
 		{
 			Name: "ssl-certs-host",
-			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: "/etc/ssl/certs",
-				},
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: "/etc/ssl/certs",
 			},
 		},
 		{
 			Name: "kubeconfig",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: "kubeconfig-in-cluster",
-					},
-				},
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				Name: "kubeconfig-in-cluster",
 			},
 		},
 	}
@@ -135,14 +123,10 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 
 		volumes = append(volumes, corev1.Volume{
 			Name: "config",
-			VolumeSource: corev1.VolumeSource{
-				ConfigMap: &corev1.ConfigMapVolumeSource{
-					// The name carries a content-based checksum suffix, so a config change references a
-					// new ConfigMap and rolls the DaemonSet, guaranteeing each revision mounts its own config.
-					LocalObjectReference: corev1.LocalObjectReference{
-						Name: kubeProxyConfigMapName(spec.ProxyConfigChecksum),
-					},
-				},
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				// The name carries a content-based checksum suffix, so a config change references a
+				// new ConfigMap and rolls the DaemonSet, guaranteeing each revision mounts its own config.
+				Name: kubeProxyConfigMapName(spec.ProxyConfigChecksum),
 			},
 		})
 	}
@@ -184,17 +168,13 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 	}
 
 	return &appsv1.DaemonSet{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "DaemonSet",
-			APIVersion: appsv1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kube-proxy",
-			Namespace: "kube-system",
-			Labels: map[string]string{
-				"tier":    "node",
-				"k8s-app": "kube-proxy",
-			},
+		Kind:       "DaemonSet",
+		APIVersion: appsv1.SchemeGroupVersion.String(),
+		Name:       "kube-proxy",
+		Namespace:  "kube-system",
+		Labels: map[string]string{
+			"tier":    "node",
+			"k8s-app": "kube-proxy",
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{
@@ -246,27 +226,19 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 // KubeProxyServiceAccount returns the ServiceAccount for kube-proxy.
 func KubeProxyServiceAccount() runtime.Object {
 	return &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ServiceAccount",
-			APIVersion: corev1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kube-proxy",
-			Namespace: "kube-system",
-		},
+		Kind:       "ServiceAccount",
+		APIVersion: corev1.SchemeGroupVersion.String(),
+		Name:       "kube-proxy",
+		Namespace:  "kube-system",
 	}
 }
 
 // KubeProxyClusterRoleBinding returns the ClusterRoleBinding for kube-proxy.
 func KubeProxyClusterRoleBinding() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "ClusterRoleBinding",
-			APIVersion: rbacv1.SchemeGroupVersion.String(),
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "kube-proxy",
-		},
+		Kind:       "ClusterRoleBinding",
+		APIVersion: rbacv1.SchemeGroupVersion.String(),
+		Name:       "kube-proxy",
 		Subjects: []rbacv1.Subject{
 			{
 				Kind:      "ServiceAccount",

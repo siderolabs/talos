@@ -385,11 +385,9 @@ func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&cri.RegistriesConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&cri.RegistriesConfigController{}))
 		},
 	})
 }

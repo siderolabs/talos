@@ -36,8 +36,6 @@ func TestPerfSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &PerfSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	})
 }

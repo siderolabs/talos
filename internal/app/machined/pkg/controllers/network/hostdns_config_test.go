@@ -302,11 +302,9 @@ func TestHostDNSConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &HostDNSConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.HostDNSConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.HostDNSConfigController{}))
 		},
 	})
 }

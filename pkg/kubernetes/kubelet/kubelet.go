@@ -33,17 +33,13 @@ type Client struct {
 // NewClient creates new kubelet API client.
 func NewClient(nodename string, clientCert, clientKey, caPEM []byte) (*Client, error) {
 	config := &rest.Config{
-		Host: fmt.Sprintf("https://127.0.0.1:%d/", constants.KubeletPort),
-		ContentConfig: rest.ContentConfig{
-			NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs},
-		},
+		Host:                 fmt.Sprintf("https://127.0.0.1:%d/", constants.KubeletPort),
+		NegotiatedSerializer: serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs},
 
-		TLSClientConfig: rest.TLSClientConfig{
-			CertData:   clientCert,
-			KeyData:    clientKey,
-			CAData:     caPEM,
-			ServerName: nodename,
-		},
+		CertData:   clientCert,
+		KeyData:    clientKey,
+		CAData:     caPEM,
+		ServerName: nodename,
 	}
 
 	kubeletCert, err := os.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))

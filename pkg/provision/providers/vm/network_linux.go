@@ -271,24 +271,20 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 		buffer := uint32(1000000.0 * float64(burst) / float64(rate) * ticksInUsec)
 
 		qdisc := tc.Object{
-			Msg: tc.Msg{
-				Family:  unix.AF_UNSPEC,
-				Ifindex: uint32(link.Index),
-				Handle:  core.BuildHandle(tc.HandleRoot, 0x0),
-				Parent:  tc.HandleRoot,
-				Info:    0,
-			},
-			Attribute: tc.Attribute{
-				Kind: "tbf",
-				Tbf: &tc.Tbf{
-					Parms: &tc.TbfQopt{
-						Limit: limit,
-						Rate: tc.RateSpec{
-							Rate:      uint32(rate),
-							Linklayer: 1,
-						},
-						Buffer: buffer,
+			Family:  unix.AF_UNSPEC,
+			Ifindex: uint32(link.Index),
+			Handle:  core.BuildHandle(tc.HandleRoot, 0x0),
+			Parent:  tc.HandleRoot,
+			Info:    0,
+			Kind:    "tbf",
+			Tbf: &tc.Tbf{
+				Parms: &tc.TbfQopt{
+					Limit: limit,
+					Rate: tc.RateSpec{
+						Rate:      uint32(rate),
+						Linklayer: 1,
 					},
+					Buffer: buffer,
 				},
 			},
 		}
@@ -308,28 +304,24 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 		fmt.Fprintf(options.LogWriter, "  packet corruption: %4v%%\n", packetCorrupt)
 
 		qdisc := tc.Object{
-			Msg: tc.Msg{
-				Family:  unix.AF_UNSPEC,
-				Ifindex: uint32(link.Index),
-				Handle:  core.BuildHandle(tc.HandleRoot, 0x0),
-				Parent:  tc.HandleRoot,
-				Info:    0,
-			},
-			Attribute: tc.Attribute{
-				Kind: "netem",
-				Netem: &tc.Netem{
-					Jitter64:  new(int64(network.Jitter)),
-					Latency64: new(int64(network.Latency)),
-					Qopt: tc.NetemQopt{
-						Limit: 1000,
-						Loss:  uint32(packetLoss / 100 * math.MaxUint32),
-					},
-					Corrupt: &tc.NetemCorrupt{
-						Probability: uint32(packetCorrupt / 100 * math.MaxUint32),
-					},
-					Reorder: &tc.NetemReorder{
-						Probability: uint32(packetReorder / 100 * math.MaxUint32),
-					},
+			Family:  unix.AF_UNSPEC,
+			Ifindex: uint32(link.Index),
+			Handle:  core.BuildHandle(tc.HandleRoot, 0x0),
+			Parent:  tc.HandleRoot,
+			Info:    0,
+			Kind:    "netem",
+			Netem: &tc.Netem{
+				Jitter64:  new(int64(network.Jitter)),
+				Latency64: new(int64(network.Latency)),
+				Qopt: tc.NetemQopt{
+					Limit: 1000,
+					Loss:  uint32(packetLoss / 100 * math.MaxUint32),
+				},
+				Corrupt: &tc.NetemCorrupt{
+					Probability: uint32(packetCorrupt / 100 * math.MaxUint32),
+				},
+				Reorder: &tc.NetemReorder{
+					Probability: uint32(packetReorder / 100 * math.MaxUint32),
 				},
 			},
 		}

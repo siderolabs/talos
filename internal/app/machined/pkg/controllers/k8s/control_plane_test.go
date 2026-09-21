@@ -956,18 +956,16 @@ func TestK8sControlPlaneSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &K8sControlPlaneSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAPIServerController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAdmissionControlController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuditPolicyController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuthorizationController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneBootstrapManifestsController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneControllerManagerController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneExtraManifestsController()))
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneSchedulerController()))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAPIServerController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAdmissionControlController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuditPolicyController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuthorizationController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneBootstrapManifestsController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneControllerManagerController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneExtraManifestsController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneSchedulerController()))
 		},
 	})
 }

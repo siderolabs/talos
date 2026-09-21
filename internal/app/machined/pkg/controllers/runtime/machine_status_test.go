@@ -35,13 +35,11 @@ func TestMachineStatusSuite(t *testing.T) {
 
 	suite.Run(t, &MachineStatusSuite{
 		eventCh: eventCh,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MachineStatusController{
-					V1Alpha1Events: &mockWatcher{eventCh: eventCh},
-				}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MachineStatusController{
+				V1Alpha1Events: &mockWatcher{eventCh: eventCh},
+			}))
 		},
 	})
 }
@@ -77,11 +75,9 @@ func (suite *MachineStatusSuite) TestReconcile() {
 	suite.assertMachineStatus(runtime.MachineStageUnknown, true, nil)
 
 	suite.eventCh <- v1alpha1runtime.EventInfo{
-		Event: v1alpha1runtime.Event{
-			Payload: &machineapi.SequenceEvent{
-				Sequence: v1alpha1runtime.SequenceInitialize.String(),
-				Action:   machineapi.SequenceEvent_START,
-			},
+		Payload: &machineapi.SequenceEvent{
+			Sequence: v1alpha1runtime.SequenceInitialize.String(),
+			Action:   machineapi.SequenceEvent_START,
 		},
 	}
 
@@ -98,22 +94,18 @@ func (suite *MachineStatusSuite) TestReconcile() {
 	suite.Create(timeStatus)
 
 	suite.eventCh <- v1alpha1runtime.EventInfo{
-		Event: v1alpha1runtime.Event{
-			Payload: &machineapi.SequenceEvent{
-				Sequence: v1alpha1runtime.SequenceBoot.String(),
-				Action:   machineapi.SequenceEvent_START,
-			},
+		Payload: &machineapi.SequenceEvent{
+			Sequence: v1alpha1runtime.SequenceBoot.String(),
+			Action:   machineapi.SequenceEvent_START,
 		},
 	}
 
 	suite.assertMachineStatus(runtime.MachineStageBooting, false, []string{"network", "services"})
 
 	suite.eventCh <- v1alpha1runtime.EventInfo{
-		Event: v1alpha1runtime.Event{
-			Payload: &machineapi.SequenceEvent{
-				Sequence: v1alpha1runtime.SequenceBoot.String(),
-				Action:   machineapi.SequenceEvent_STOP,
-			},
+		Payload: &machineapi.SequenceEvent{
+			Sequence: v1alpha1runtime.SequenceBoot.String(),
+			Action:   machineapi.SequenceEvent_STOP,
 		},
 	}
 
@@ -152,11 +144,9 @@ func (suite *MachineStatusSuite) TestReconcile() {
 	suite.assertMachineStatus(runtime.MachineStageRunning, true, nil)
 
 	suite.eventCh <- v1alpha1runtime.EventInfo{
-		Event: v1alpha1runtime.Event{
-			Payload: &machineapi.SequenceEvent{
-				Sequence: v1alpha1runtime.SequenceReboot.String(),
-				Action:   machineapi.SequenceEvent_START,
-			},
+		Payload: &machineapi.SequenceEvent{
+			Sequence: v1alpha1runtime.SequenceReboot.String(),
+			Action:   machineapi.SequenceEvent_START,
 		},
 	}
 
@@ -166,25 +156,21 @@ func (suite *MachineStatusSuite) TestReconcile() {
 	// sequencer publishes as a NOOP event with Code_FATAL. The stage should stay at "shutting down"
 	// throughout, not flip to "rebooting".
 	suite.eventCh <- v1alpha1runtime.EventInfo{
-		Event: v1alpha1runtime.Event{
-			Payload: &machineapi.SequenceEvent{
-				Sequence: v1alpha1runtime.SequenceShutdown.String(),
-				Action:   machineapi.SequenceEvent_START,
-			},
+		Payload: &machineapi.SequenceEvent{
+			Sequence: v1alpha1runtime.SequenceShutdown.String(),
+			Action:   machineapi.SequenceEvent_START,
 		},
 	}
 
 	suite.assertMachineStatus(runtime.MachineStageShuttingDown, true, nil)
 
 	suite.eventCh <- v1alpha1runtime.EventInfo{
-		Event: v1alpha1runtime.Event{
-			Payload: &machineapi.SequenceEvent{
-				Sequence: v1alpha1runtime.SequenceShutdown.String(),
-				Action:   machineapi.SequenceEvent_NOOP,
-				Error: &common.Error{
-					Code:    common.Code_FATAL,
-					Message: "sequence failed: unix.Reboot(4321fedc)",
-				},
+		Payload: &machineapi.SequenceEvent{
+			Sequence: v1alpha1runtime.SequenceShutdown.String(),
+			Action:   machineapi.SequenceEvent_NOOP,
+			Error: &common.Error{
+				Code:    common.Code_FATAL,
+				Message: "sequence failed: unix.Reboot(4321fedc)",
 			},
 		},
 	}

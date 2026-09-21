@@ -17,6 +17,7 @@ import (
 	dittonfs "github.com/marmos91/dittofs/pkg/adapter/nfs"
 	"github.com/marmos91/dittofs/pkg/controlplane/models"
 	dittoruntime "github.com/marmos91/dittofs/pkg/controlplane/runtime"
+	dittoshares "github.com/marmos91/dittofs/pkg/controlplane/runtime/shares"
 	controlplanestore "github.com/marmos91/dittofs/pkg/controlplane/store"
 	metadatamemory "github.com/marmos91/dittofs/pkg/metadata/store/memory"
 
@@ -32,6 +33,16 @@ const (
 
 // NFSd serves an in-memory NFS export supporting NFSv3 and NFSv4.
 func NFSd(ctx context.Context, bindAddress string, port int) error {
+	// Every share journals its blocks to disk, so the export needs a journal root even though
+	// its metadata store is in-memory. The journal is as ephemeral as that metadata: it is
+	// meaningless without it, so it lives in a temporary directory removed when the server exits.
+	journalRoot, err := os.MkdirTemp("", "talos-nfsd-")
+	if err != nil {
+		return fmt.Errorf("create NFS journal root: %w", err)
+	}
+
+	defer os.RemoveAll(journalRoot) //nolint:errcheck
+
 	store, err := controlplanestore.New(&controlplanestore.Config{
 		Type: controlplanestore.DatabaseTypeSQLite,
 		SQLite: controlplanestore.SQLiteConfig{
@@ -51,7 +62,9 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 		return fmt.Errorf("create NFS metadata store: %w", err)
 	}
 
-	localBlockStoreID, err := store.CreateBlockStore(ctx, &models.BlockStoreConfig{
+	// The block store a share points at is its backing tier behind the journal: in-memory here,
+	// so nothing but the journal touches the disk.
+	blockStoreID, err := store.CreateBlockStore(ctx, &models.BlockStoreConfig{
 		Name: nfsMemoryStore,
 		Type: nfsMemoryStore,
 	})
@@ -62,7 +75,7 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 	if _, err = store.CreateShare(ctx, &models.Share{
 		Name:              NFSExport,
 		MetadataStoreID:   metadataStoreID,
-		BlockStoreID:      localBlockStoreID,
+		BlockStoreID:      blockStoreID,
 		DefaultPermission: "read-write",
 		Enabled:           true,
 	}); err != nil {
@@ -70,6 +83,11 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 	}
 
 	runtime := dittoruntime.New(store)
+	// Must be set before the share is added: AddShare opens the share's journal beneath this root.
+	runtime.SetLocalStoreDefaults(&dittoshares.LocalStoreDefaults{
+		JournalRoot: journalRoot,
+	})
+
 	if err = runtime.RegisterMetadataStore(nfsMemoryStore, metadatamemory.NewMemoryMetadataStoreWithDefaults()); err != nil {
 		return fmt.Errorf("register NFS metadata store: %w", err)
 	}
@@ -77,7 +95,7 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 	if err = runtime.AddShare(ctx, &dittoruntime.ShareConfig{
 		Name:              NFSExport,
 		MetadataStore:     nfsMemoryStore,
-		BlockStoreID:      localBlockStoreID,
+		BlockStoreID:      blockStoreID,
 		DefaultPermission: "read-write",
 		Enabled:           true,
 		// An unset squash mode normalizes to root_to_guest, which maps the client's root to

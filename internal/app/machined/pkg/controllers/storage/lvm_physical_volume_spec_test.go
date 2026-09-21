@@ -452,11 +452,9 @@ func TestLVMPhysicalVolumeSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &LVMPhysicalVolumeSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&storagectrl.LVMPhysicalVolumeSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&storagectrl.LVMPhysicalVolumeSpecController{}))
 		},
 	})
 }

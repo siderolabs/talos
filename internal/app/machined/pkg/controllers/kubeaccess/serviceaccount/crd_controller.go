@@ -611,11 +611,9 @@ func (t *CRDController) newSecret(talosSA *unstructured.Unstructured, roles role
 	}
 
 	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: talosSA.GetName(),
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(talosSA, talosSAGVK),
-			},
+		Name: talosSA.GetName(),
+		OwnerReferences: []metav1.OwnerReference{
+			*metav1.NewControllerRef(talosSA, talosSAGVK),
 		},
 		Data: map[string][]byte{
 			constants.TalosconfigFilename: config,

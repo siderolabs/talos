@@ -40,10 +40,8 @@ func APIServerEncryptionConfig(rootK8sSecrets *secrets.KubernetesRootSpec) (runt
 
 	// legacy path, pre-multidoc Kubernetes config, generated fixed configuration based on the secrets available.
 	obj := apiserverv1.EncryptionConfiguration{
-		TypeMeta: metav1.TypeMeta{
-			Kind:       "EncryptionConfig",
-			APIVersion: apiserverv1.SchemeGroupVersion.Version,
-		},
+		Kind:       "EncryptionConfig",
+		APIVersion: apiserverv1.SchemeGroupVersion.Version,
 		Resources: []apiserverv1.ResourceConfiguration{
 			{
 				Resources: []string{"secrets"},
@@ -110,13 +108,11 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 	if cfg.StartupProbesEnabled {
 		// Probe configuration follows kubeadm defaults.
 		startupProbe = &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/livez",
-					Host:   "localhost",
-					Port:   intstr.FromInt(cfg.LocalPort),
-					Scheme: corev1.URISchemeHTTPS,
-				},
+			HTTPGet: &corev1.HTTPGetAction{
+				Path:   "/livez",
+				Host:   "localhost",
+				Port:   intstr.FromInt(cfg.LocalPort),
+				Scheme: corev1.URISchemeHTTPS,
 			},
 			InitialDelaySeconds: 10,
 			PeriodSeconds:       10,
@@ -125,13 +121,11 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 		}
 
 		readinessProbe = &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/readyz",
-					Host:   "localhost",
-					Port:   intstr.FromInt(cfg.LocalPort),
-					Scheme: corev1.URISchemeHTTPS,
-				},
+			HTTPGet: &corev1.HTTPGetAction{
+				Path:   "/readyz",
+				Host:   "localhost",
+				Port:   intstr.FromInt(cfg.LocalPort),
+				Scheme: corev1.URISchemeHTTPS,
 			},
 			InitialDelaySeconds: 0,
 			PeriodSeconds:       1,
@@ -140,13 +134,11 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 		}
 
 		livenessProbe = &corev1.Probe{
-			ProbeHandler: corev1.ProbeHandler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/livez",
-					Host:   "localhost",
-					Port:   intstr.FromInt(cfg.LocalPort),
-					Scheme: corev1.URISchemeHTTPS,
-				},
+			HTTPGet: &corev1.HTTPGetAction{
+				Path:   "/livez",
+				Host:   "localhost",
+				Port:   intstr.FromInt(cfg.LocalPort),
+				Scheme: corev1.URISchemeHTTPS,
 			},
 			InitialDelaySeconds: 10,
 			PeriodSeconds:       10,
@@ -156,27 +148,23 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 	}
 
 	return &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Pod",
+		APIVersion: "v1",
+		Kind:       "Pod",
+		Name:       k8s.APIServerID,
+		Namespace:  "kube-system",
+		Annotations: map[string]string{
+			constants.AnnotationStaticPodSecretsVersion:    secretsVersion,
+			constants.AnnotationStaticPodConfigFileVersion: configVersion,
+			constants.AnnotationStaticPodConfigVersion:     configResource.Metadata().Version().String(),
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      k8s.APIServerID,
-			Namespace: "kube-system",
-			Annotations: map[string]string{
-				constants.AnnotationStaticPodSecretsVersion:    secretsVersion,
-				constants.AnnotationStaticPodConfigFileVersion: configVersion,
-				constants.AnnotationStaticPodConfigVersion:     configResource.Metadata().Version().String(),
-			},
-			Labels: map[string]string{
-				"tier":                         "control-plane",
-				"k8s-app":                      k8s.APIServerID,
-				"component":                    k8s.APIServerID,
-				"app.kubernetes.io/name":       k8s.APIServerID,
-				"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
-				"app.kubernetes.io/component":  "control-plane",
-				"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
-			},
+		Labels: map[string]string{
+			"tier":                         "control-plane",
+			"k8s-app":                      k8s.APIServerID,
+			"component":                    k8s.APIServerID,
+			"app.kubernetes.io/name":       k8s.APIServerID,
+			"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
+			"app.kubernetes.io/component":  "control-plane",
+			"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 		},
 		Spec: corev1.PodSpec{
 			Priority:          new(SystemCriticalPriority),
@@ -245,26 +233,20 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 			Volumes: append([]corev1.Volume{
 				{
 					Name: "secrets",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: constants.KubernetesAPIServerSecretsDir,
-						},
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: constants.KubernetesAPIServerSecretsDir,
 					},
 				},
 				{
 					Name: "config",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: constants.KubernetesAPIServerConfigDir,
-						},
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: constants.KubernetesAPIServerConfigDir,
 					},
 				},
 				{
 					Name: "audit",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: constants.KubernetesAuditLogDir,
-						},
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: constants.KubernetesAuditLogDir,
 					},
 				},
 			}, append(EphemeralWritableVolumes(), Volumes(cfg.ExtraVolumes)...)...),

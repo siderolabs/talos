@@ -34,11 +34,9 @@ func TestNodeTaintsSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &NodeTaintsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeTaintSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeTaintSpecController{}))
 		},
 	})
 }

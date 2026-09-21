@@ -21,11 +21,9 @@ func TestBootIDSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &BootIDSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.BootIDController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.BootIDController{}))
 		},
 	})
 }

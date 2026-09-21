@@ -34,11 +34,9 @@ func TestNodeLabelsSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &NodeLabelsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeLabelSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeLabelSpecController{}))
 		},
 	})
 }

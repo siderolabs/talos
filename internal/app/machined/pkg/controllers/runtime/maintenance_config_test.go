@@ -24,11 +24,9 @@ import (
 
 func TestMaintenanceConfigSuite(t *testing.T) {
 	suite.Run(t, &MaintenanceConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MaintenanceConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.MaintenanceConfigController{}))
 		},
 	})
 }

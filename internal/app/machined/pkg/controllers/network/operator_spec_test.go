@@ -645,7 +645,7 @@ func TestLLDPOperatorSpecSuite(t *testing.T) {
 		// synctest forbids T.Run, so invoke the suite lifecycle directly rather
 		// than using suite.Run. The runtime must be created inside the bubble.
 		operatorSuite := &LLDPOperatorSpecSuite{
-			DefaultSuite: ctest.DefaultSuite{Timeout: time.Minute},
+			Timeout: time.Minute,
 		}
 		operatorSuite.SetT(t)
 
@@ -660,9 +660,7 @@ func TestOperatorSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	operatorSuite := &OperatorSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	}
 
 	operatorSuite.DefaultSuite.AfterSetup = func(suite *ctest.DefaultSuite) {

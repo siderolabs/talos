@@ -71,11 +71,9 @@ func TestLVMVolumeGroupSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &LVMVolumeGroupSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&storagectrl.LVMVolumeGroupSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&storagectrl.LVMVolumeGroupSpecController{}))
 		},
 	})
 }

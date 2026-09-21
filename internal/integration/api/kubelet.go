@@ -87,13 +87,11 @@ func (suite *KubeletSuite) TestProjectedVolumeUpdatesSurviveKubeletRestart() {
 	podName := fmt.Sprintf("kubelet-restart-%x", randomSuffix)
 
 	pod := &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      podName,
-			Namespace: namespace,
-			Labels: map[string]string{
-				"app":     podName,
-				"version": "v1",
-			},
+		Name:      podName,
+		Namespace: namespace,
+		Labels: map[string]string{
+			"app":     podName,
+			"version": "v1",
 		},
 		Spec: corev1.PodSpec{
 			NodeName:      k8sNode.Name,
@@ -125,17 +123,15 @@ func (suite *KubeletSuite) TestProjectedVolumeUpdatesSurviveKubeletRestart() {
 			Volumes: []corev1.Volume{
 				{
 					Name: "podinfo",
-					VolumeSource: corev1.VolumeSource{
-						Projected: &corev1.ProjectedVolumeSource{
-							Sources: []corev1.VolumeProjection{
-								{
-									DownwardAPI: &corev1.DownwardAPIProjection{
-										Items: []corev1.DownwardAPIVolumeFile{
-											{
-												Path: "labels",
-												FieldRef: &corev1.ObjectFieldSelector{
-													FieldPath: "metadata.labels",
-												},
+					Projected: &corev1.ProjectedVolumeSource{
+						Sources: []corev1.VolumeProjection{
+							{
+								DownwardAPI: &corev1.DownwardAPIProjection{
+									Items: []corev1.DownwardAPIVolumeFile{
+										{
+											Path: "labels",
+											FieldRef: &corev1.ObjectFieldSelector{
+												FieldPath: "metadata.labels",
 											},
 										},
 									},
