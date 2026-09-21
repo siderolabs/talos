@@ -303,6 +303,7 @@ Available presets:
   - maintenance: Skip applying machine configuration and leave the machines in maintenance mode. The machine configuration files are written to the working directory.
 
 Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.
+See the 'talosctl cluster create dev' command for more advanced QEMU options.
 
 
 ```
