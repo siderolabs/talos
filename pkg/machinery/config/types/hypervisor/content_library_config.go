@@ -9,7 +9,6 @@ package hypervisor
 import (
 	"errors"
 	"fmt"
-	"regexp"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -19,13 +18,6 @@ import (
 
 // ContentLibraryConfigKind is a config document kind.
 const ContentLibraryConfigKind = "ContentLibraryConfig"
-
-// maxNameLength is the maximum length of a content library name.
-// Way lower than NAME_MAX (255), to give us headroom for prefixes/suffixes down the reconciliation path.
-const maxNameLength = 63
-
-// validNamePattern matches the characters a content library name may contain.
-var validNamePattern = regexp.MustCompile(`^[A-Za-z0-9-]+$`)
 
 func init() {
 	registry.Register(ContentLibraryConfigKind, func(version string) config.Document {
@@ -144,16 +136,7 @@ func (c *ContentLibraryConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 
 // ValidateName checks the content library name.
 func (c *ContentLibraryConfigV1Alpha1) ValidateName() error {
-	switch {
-	case c.MetaName == "":
-		return errors.New("name is required")
-	case len(c.MetaName) > maxNameLength:
-		return fmt.Errorf("name %q must be %d characters or fewer", c.MetaName, maxNameLength)
-	case !validNamePattern.MatchString(c.MetaName):
-		return fmt.Errorf("name %q: name can only contain ASCII letters, digits and hyphens", c.MetaName)
-	}
-
-	return nil
+	return validateName(c.MetaName)
 }
 
 // ValidateBackingVolume checks the volume backing the content library.

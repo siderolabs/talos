@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm2
+cpu:
+    count: 1
+memory:
+    size: 512MiB
