@@ -2215,6 +2215,20 @@
       ],
       "description": "ContentLibraryConfig is a content library configuration document.\\nContentLibraryConfig declares a content library: a store for virtual machine images\\nkept on a volume.\\n\\nThe library is the root of the backing volume, so a library backed by the user volume\\n`vm-images` keeps its images directly in `/var/mnt/vm-images`. A volume backs exactly\\none library: two libraries pointed at the same volume are rejected.\\n\\nContents are managed over the API with `talosctl hv content-library`, never by editing\\nthe machine configuration. Status is reported via `ContentLibraryStatus`.\\n"
     },
+    "hypervisor.VirtualMachineAgent": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "description: |\n    Attach the qemu-guest-agent virtio channel.\n\nWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\n\n\nreport the addresses the guest holds. The agent has to be installed and running inside\n    the guest for the channel to be of any use.\n\nOptional; defaults to disabled.\n\n",
+          "markdownDescription": "description: |\n    Attach the qemu-guest-agent virtio channel.\n\n    Without the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\n   report the addresses the guest holds. The agent has to be installed and running inside\n    the guest for the channel to be of any use.\n\n    Optional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Attach the qemu-guest-agent virtio channel.\u003c/p\u003e\n\n\u003cpre\u003e\u003ccode\u003eWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\n\u003c/code\u003e\u003c/pre\u003e\n\n\u003cp\u003ereport the addresses the guest holds. The agent has to be installed and running inside\n    the guest for the channel to be of any use.\u003c/p\u003e\n\n\u003cpre\u003e\u003ccode\u003eOptional; defaults to disabled.\n\u003c/code\u003e\u003c/pre\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machine."
+    },
     "hypervisor.VirtualMachineBallooning": {
       "properties": {
         "enabled": {
@@ -2245,6 +2259,34 @@
         "count"
       ],
       "description": "VirtualMachineCPU describes the processors presented to the guest."
+    },
+    "hypervisor.VirtualMachineCloudInit": {
+      "properties": {
+        "metaData": {
+          "type": "string",
+          "title": "metaData",
+          "description": "Contents of the seed’s meta-data file, carrying the guest’s identity.\n\ninstance-id is what decides whether a boot is a reboot or a new instance. An unchanged\nid means edits to userData are inert; a changed id re-runs provisioning, which\nregenerates the SSH host keys in most images.\n\nMust be valid YAML.\n",
+          "markdownDescription": "Contents of the seed's `meta-data` file, carrying the guest's identity.\n\n`instance-id` is what decides whether a boot is a reboot or a new instance. An unchanged\nid means edits to `userData` are inert; a changed id re-runs provisioning, which\nregenerates the SSH host keys in most images.\n\nMust be valid YAML.",
+          "x-intellij-html-description": "\u003cp\u003eContents of the seed\u0026rsquo;s \u003ccode\u003emeta-data\u003c/code\u003e file, carrying the guest\u0026rsquo;s identity.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003einstance-id\u003c/code\u003e is what decides whether a boot is a reboot or a new instance. An unchanged\nid means edits to \u003ccode\u003euserData\u003c/code\u003e are inert; a changed id re-runs provisioning, which\nregenerates the SSH host keys in most images.\u003c/p\u003e\n\n\u003cp\u003eMust be valid YAML.\u003c/p\u003e\n"
+        },
+        "userData": {
+          "type": "string",
+          "title": "userData",
+          "description": "Contents of the seed’s user-data file, carrying what the operator wants done.\n\nFor a distro image this is a cloud-init document, usually starting with #cloud-config,\nthough a script or a MIME archive is equally valid – it is not parsed here. For a Talos\nguest this is the guest’s own machine configuration.\n\nCarries SSH keys, passwords and tokens in practice, and is redacted from the\nconfiguration as read back over the API.\n",
+          "markdownDescription": "Contents of the seed's `user-data` file, carrying what the operator wants done.\n\nFor a distro image this is a cloud-init document, usually starting with `#cloud-config`,\nthough a script or a MIME archive is equally valid -- it is not parsed here. For a Talos\nguest this is the guest's own machine configuration.\n\nCarries SSH keys, passwords and tokens in practice, and is redacted from the\nconfiguration as read back over the API.",
+          "x-intellij-html-description": "\u003cp\u003eContents of the seed\u0026rsquo;s \u003ccode\u003euser-data\u003c/code\u003e file, carrying what the operator wants done.\u003c/p\u003e\n\n\u003cp\u003eFor a distro image this is a cloud-init document, usually starting with \u003ccode\u003e#cloud-config\u003c/code\u003e,\nthough a script or a MIME archive is equally valid \u0026ndash; it is not parsed here. For a Talos\nguest this is the guest\u0026rsquo;s own machine configuration.\u003c/p\u003e\n\n\u003cp\u003eCarries SSH keys, passwords and tokens in practice, and is redacted from the\nconfiguration as read back over the API.\u003c/p\u003e\n"
+        },
+        "networkConfig": {
+          "type": "string",
+          "title": "networkConfig",
+          "description": "Contents of the seed’s network-config file, carrying the guest’s network settings.\n\nNeeded by guests which cannot configure themselves over DHCP. Unset leaves the guest to\nits own defaults.\n\nMust be valid YAML.\n",
+          "markdownDescription": "Contents of the seed's `network-config` file, carrying the guest's network settings.\n\nNeeded by guests which cannot configure themselves over DHCP. Unset leaves the guest to\nits own defaults.\n\nMust be valid YAML.",
+          "x-intellij-html-description": "\u003cp\u003eContents of the seed\u0026rsquo;s \u003ccode\u003enetwork-config\u003c/code\u003e file, carrying the guest\u0026rsquo;s network settings.\u003c/p\u003e\n\n\u003cp\u003eNeeded by guests which cannot configure themselves over DHCP. Unset leaves the guest to\nits own defaults.\u003c/p\u003e\n\n\u003cp\u003eMust be valid YAML.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineCloudInit describes the NoCloud seed handed to the guest."
     },
     "hypervisor.VirtualMachineConfigV1Alpha1": {
       "properties": {
@@ -2328,6 +2370,13 @@
           "description": "Networking settings for the virtual machine.\n\nOptional; a virtual machine with no interfaces has no network connectivity at all.\n",
           "markdownDescription": "Networking settings for the virtual machine.\n\nOptional; a virtual machine with no interfaces has no network connectivity at all.",
           "x-intellij-html-description": "\u003cp\u003eNetworking settings for the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eOptional; a virtual machine with no interfaces has no network connectivity at all.\u003c/p\u003e\n"
+        },
+        "guest": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineGuest",
+          "title": "guest",
+          "description": "Settings which apply inside the guest.\n\nOptional; omitting it leaves the guest to boot its image unmodified.\n",
+          "markdownDescription": "Settings which apply inside the guest.\n\nOptional; omitting it leaves the guest to boot its image unmodified.",
+          "x-intellij-html-description": "\u003cp\u003eSettings which apply inside the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves the guest to boot its image unmodified.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2552,6 +2601,27 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VirtualMachineFirmwareSecureBoot describes the secure boot settings of a virtual machine."
+    },
+    "hypervisor.VirtualMachineGuest": {
+      "properties": {
+        "cloudInit": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineCloudInit",
+          "title": "cloudInit",
+          "description": "Seed handed to the guest on first boot.\n",
+          "markdownDescription": "Seed handed to the guest on first boot.",
+          "x-intellij-html-description": "\u003cp\u003eSeed handed to the guest on first boot.\u003c/p\u003e\n"
+        },
+        "agent": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineAgent",
+          "title": "agent",
+          "description": "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.\n",
+          "markdownDescription": "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.",
+          "x-intellij-html-description": "\u003cp\u003eqemu-guest-agent settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; the agent channel is not attached when this section is omitted.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineGuest describes the settings which apply inside the guest."
     },
     "hypervisor.VirtualMachineInterface": {
       "properties": {

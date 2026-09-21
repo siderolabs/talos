@@ -82,7 +82,10 @@ func TestRegistryRedactAudit(t *testing.T) {
 // secretKeywords is the case-insensitive substring set used to flag suspect yaml tags.
 // Deliberately narrow: bare "auth" and "key" would generate false positives
 // (authorizationConfig, publicKey, encryptionKeySize, ...).
-var secretKeywords = regexp.MustCompile(`(?i)(password|passphrase|token|secret|privatekey|presharedkey|apikey)`)
+//
+// "userdata" is the odd one out: it names an opaque operator-supplied blob rather than a kind of
+// secret, and such a blob carries credentials in practice, so it is treated as one.
+var secretKeywords = regexp.MustCompile(`(?i)(password|passphrase|token|secret|privatekey|presharedkey|apikey|userdata)`)
 
 // finding holds a single leaf field flagged by the heuristic, with closures to
 // read and write its value through whatever pointer/slice chain leads to it.

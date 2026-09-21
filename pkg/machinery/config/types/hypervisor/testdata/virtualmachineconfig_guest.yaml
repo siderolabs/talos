@@ -1,0 +1,31 @@
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+powerState: running
+cpu:
+    count: 4
+memory:
+    size: 4GiB
+firmware:
+    type: uefi
+guest:
+    cloudInit:
+        metaData: |
+            instance-id: vm1-001
+            local-hostname: vm1
+        userData: |
+            #cloud-config
+            users:
+              - name: op
+                sudo: ALL=(ALL) NOPASSWD:ALL
+                ssh_authorized_keys:
+                  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...
+        networkConfig: |
+            version: 2
+            ethernets:
+                eth0:
+                    addresses:
+                      - 10.0.0.10/24
+                    gateway4: 10.0.0.1
+    agent:
+        enabled: true
