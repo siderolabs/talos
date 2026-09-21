@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2"
 	"github.com/siderolabs/talos/pkg/xfs"
@@ -73,6 +74,29 @@ func TestEtcOverlay(t *testing.T) {
 		assert.Equal(t, "nameserver 8.8.8.8", readEtc(t, etc, "resolv.conf"))
 	})
 
+	// Regression: under Docker the runtime bind-mounts /etc/hostname (and /etc/resolv.conf) as
+	// file submounts of /etc. OPEN_TREE_CLONE without AT_RECURSIVE drops them from the lower, and
+	// overlayfs does not cross submounts inside a lower either, so without the container-mode seed
+	// the overlay exposes the empty rootfs file instead of the container name — leaving the
+	// container platform, which reads /etc/hostname, to fall back to a generated hostname.
+	t.Run("container bind-mounted files survive the overlay compose", func(t *testing.T) {
+		etc := newEtcOverlayWithBinds(t, map[string]string{
+			"hostname":    "test-docker-controlplane-1",
+			"resolv.conf": "nameserver 172.20.0.1",
+		})
+
+		assert.Equal(t, "test-docker-controlplane-1", readEtc(t, etc, "hostname"))
+		assert.Equal(t, "nameserver 172.20.0.1", readEtc(t, etc, "resolv.conf"))
+	})
+
+	// Outside a container those files are not bind mounts and are not seeded: the lower shows
+	// through as-is, and hostname stays the empty rootfs default.
+	t.Run("non-container mode does not seed the runtime binds", func(t *testing.T) {
+		etc, _ := newEtcOverlay(t, nil)
+
+		assert.Equal(t, "", readEtc(t, etc, "hostname"))
+	})
+
 	// /etc is read-only at the path level: a write via the path fails even though the overlay is
 	// writable through the returned root.
 	t.Run("etc is read-only at the path level", func(t *testing.T) {
@@ -83,18 +107,19 @@ func TestEtcOverlay(t *testing.T) {
 }
 
 // newEtcOverlay populates a throwaway rootfs /etc with the given static files, then composes the
-// real setupEtcOverlay over it. It returns the overlay mountpoint (read through it) and the
-// writable overlay root (write through it, as controllers do).
+// real setupEtcOverlay over it in non-container mode. It returns the overlay mountpoint (read
+// through it) and the writable overlay root (write through it, as controllers do).
+// Use newEtcOverlayWithBinds for the container case.
 func newEtcOverlay(t *testing.T, staticFiles map[string]string) (string, xfs.Root) {
 	t.Helper()
 
 	etcPath := filepath.Join(t.TempDir(), "etc")
 	require.NoError(t, os.MkdirAll(etcPath, 0o755))
 
-	// setupEtcOverlay seeds bind-mounted files under /etc: extensions.yaml (initramfs bind) always,
-	// and resolv.conf (runtime bind) in container mode — which is how CI runs these unit tests.
-	// Provide both so the seed finds them regardless of the detected environment.
-	for _, f := range []string{"extensions.yaml", "resolv.conf"} {
+	// setupEtcOverlay seeds the files the runtime bind-mounts under /etc: extensions.yaml
+	// (initramfs bind) always, plus resolv.conf and hostname (runtime binds) in container mode.
+	// The seed reads each one, so they have to exist in the lower whatever the mode.
+	for _, f := range []string{"extensions.yaml", "resolv.conf", "hostname"} {
 		require.NoError(t, os.WriteFile(filepath.Join(etcPath, f), nil, 0o644))
 	}
 
@@ -109,7 +134,7 @@ func newEtcOverlay(t *testing.T, staticFiles map[string]string) (string, xfs.Roo
 		require.NoError(t, os.WriteFile(filepath.Join(etcPath, path), []byte(contents), 0o644))
 	}
 
-	etcRoot, unmount, err := v1alpha2.SetupEtcOverlay(etcPath, []fsopen.Option{
+	etcRoot, unmount, err := v1alpha2.SetupEtcOverlay(etcPath, false, []fsopen.Option{
 		fsopen.WithStringParameter("mode", "0755"),
 		fsopen.WithStringParameter("size", "8M"),
 	}, zaptest.NewLogger(t))
@@ -126,4 +151,53 @@ func readEtc(t *testing.T, etc, name string) string {
 	require.NoError(t, err)
 
 	return string(contents)
+}
+
+// newEtcOverlayWithBinds reproduces the container layout: each named file is a bind mount over an
+// otherwise-empty file in the throwaway rootfs /etc, the way Docker mounts
+// /var/lib/docker/containers/<id>/hostname onto /etc/hostname. The overlay is composed in
+// container mode, so the runtime binds get seeded. It returns the overlay mountpoint.
+func newEtcOverlayWithBinds(t *testing.T, binds map[string]string) string {
+	t.Helper()
+
+	// The bind sources live outside the /etc that gets cloned as the overlay lower.
+	srcDir := t.TempDir()
+
+	etcPath := filepath.Join(t.TempDir(), "etc")
+	require.NoError(t, os.MkdirAll(etcPath, 0o755))
+
+	for _, f := range []string{"extensions.yaml", "resolv.conf", "hostname"} {
+		require.NoError(t, os.WriteFile(filepath.Join(etcPath, f), nil, 0o644))
+	}
+
+	for _, d := range []string{"cni/net.d", "kubernetes/manifests"} {
+		require.NoError(t, os.MkdirAll(filepath.Join(etcPath, d), 0o755))
+	}
+
+	for name, contents := range binds {
+		src := filepath.Join(srcDir, name)
+		require.NoError(t, os.WriteFile(src, []byte(contents), 0o644))
+
+		target := filepath.Join(etcPath, name)
+		require.NoError(t, unix.Mount(src, target, "", unix.MS_BIND, ""))
+
+		t.Cleanup(func() { unix.Unmount(target, unix.MNT_DETACH) }) //nolint:errcheck
+	}
+
+	// Sanity: the binds are in place before the overlay is composed, so a failure in the assertions
+	// is the overlay dropping them rather than a broken fixture.
+	for name, contents := range binds {
+		require.Equal(t, contents, readEtc(t, etcPath, name))
+	}
+
+	etcRoot, unmount, err := v1alpha2.SetupEtcOverlay(etcPath, true, []fsopen.Option{
+		fsopen.WithStringParameter("mode", "0755"),
+		fsopen.WithStringParameter("size", "8M"),
+	}, zaptest.NewLogger(t))
+	require.NoError(t, err)
+
+	t.Cleanup(func() { unmount() })       //nolint:errcheck
+	t.Cleanup(func() { etcRoot.Close() }) //nolint:errcheck
+
+	return etcPath
 }
