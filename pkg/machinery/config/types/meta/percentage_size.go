@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package block
+package meta
 
 import (
 	"bytes"
@@ -23,6 +23,8 @@ var (
 )
 
 // PercentageSize is a size in percents.
+//
+//docgen:nodoc
 type PercentageSize struct {
 	value    *uint64
 	raw      []byte
@@ -37,7 +39,8 @@ func (ps PercentageSize) Value() uint64 {
 // MarshalText implements encoding.TextMarshaler.
 func (ps PercentageSize) MarshalText() ([]byte, error) {
 	if ps.raw != nil {
-		return ps.raw, nil
+		// the internal buffer is never handed out, as the caller might mutate it.
+		return slices.Clone(ps.raw), nil
 	}
 
 	if ps.value != nil {
@@ -95,14 +98,36 @@ func (ps PercentageSize) IsNegative() bool {
 }
 
 // Merge implements merger interface.
+//
+// A zero value is skipped: the generic merge consults this interface before its own
+// zero check, so a patch which omits the field must not erase the base value.
 func (ps *PercentageSize) Merge(other any) error {
 	otherPS, ok := other.(PercentageSize)
 	if !ok {
 		return fmt.Errorf("cannot merge %T with %T", ps, other)
 	}
 
-	ps.raw = otherPS.raw
-	ps.value = otherPS.value
+	if otherPS.IsZero() {
+		return nil
+	}
+
+	*ps = otherPS.DeepCopy()
 
 	return nil
+}
+
+// DeepCopy generates a deep copy of PercentageSize.
+//
+// The unexported fields are not reachable from other packages, so the deep copy generator
+// cannot copy them on its own: it reuses this method instead.
+func (ps PercentageSize) DeepCopy() PercentageSize {
+	cp := ps
+
+	if ps.value != nil {
+		cp.value = new(*ps.value)
+	}
+
+	cp.raw = slices.Clone(ps.raw)
+
+	return cp
 }

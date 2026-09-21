@@ -17,9 +17,6 @@ type LVMVolumeGroupConfig interface {
 }
 
 // LVMLogicalVolumeConfig exposes an LVM logical volume config document.
-//
-// Sizes are exposed as resolved primitives (not config/types/block.Size) to
-// avoid an import cycle: config/types/block depends on this package.
 type LVMLogicalVolumeConfig interface {
 	NamedDocument
 	LVMLogicalVolumeConfigSignal()

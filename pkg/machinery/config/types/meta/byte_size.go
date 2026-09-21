@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package block
+package meta
 
 import (
 	"bytes"
@@ -25,6 +25,8 @@ var (
 
 // ByteSize is a byte size which can be conveniently represented as a human readable string
 // with IEC sizes, e.g. 100MB.
+//
+//docgen:nodoc
 type ByteSize struct {
 	value    *uint64
 	raw      []byte
@@ -39,7 +41,8 @@ func (bs ByteSize) Value() uint64 {
 // MarshalText implements encoding.TextMarshaler.
 func (bs ByteSize) MarshalText() ([]byte, error) {
 	if bs.raw != nil {
-		return bs.raw, nil
+		// the internal buffer is never handed out, as the caller might mutate it.
+		return slices.Clone(bs.raw), nil
 	}
 
 	negative := ""
@@ -84,14 +87,20 @@ func (bs ByteSize) IsZero() bool {
 }
 
 // Merge implements merger interface.
+//
+// A zero value is skipped: the generic merge consults this interface before its own
+// zero check, so a patch which omits the field must not erase the base value.
 func (bs *ByteSize) Merge(other any) error {
 	otherBS, ok := other.(ByteSize)
 	if !ok {
 		return fmt.Errorf("cannot merge %T with %T", bs, other)
 	}
 
-	bs.raw = otherBS.raw
-	bs.value = otherBS.value
+	if otherBS.IsZero() {
+		return nil
+	}
+
+	*bs = otherBS.DeepCopy()
 
 	return nil
 }
@@ -99,4 +108,17 @@ func (bs *ByteSize) Merge(other any) error {
 // IsNegative returns true if the value is negative.
 func (bs ByteSize) IsNegative() bool {
 	return bs.negative
+}
+
+// DeepCopy generates a deep copy of ByteSize.
+func (bs ByteSize) DeepCopy() ByteSize {
+	cp := bs
+
+	if bs.value != nil {
+		cp.value = new(*bs.value)
+	}
+
+	cp.raw = slices.Clone(bs.raw)
+
+	return cp
 }

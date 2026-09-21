@@ -13,7 +13,6 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -98,7 +97,7 @@ type LVMLogicalVolumeProvisioningSpec struct {
 	//    Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB.
 	//  schema:
 	//    type: string
-	ProvisioningMinSize block.ByteSize `yaml:"minSize,omitempty"`
+	ProvisioningMinSize meta.ByteSize `yaml:"minSize,omitempty"`
 	//  description: |
 	//    The maximum size of the volume.
 	//
@@ -106,7 +105,7 @@ type LVMLogicalVolumeProvisioningSpec struct {
 	//    It can be expressed in human readable format, e.g. 100MB or 80%.
 	//  schema:
 	//    type: string
-	ProvisioningMaxSize block.Size `yaml:"maxSize,omitempty"`
+	ProvisioningMaxSize meta.Size `yaml:"maxSize,omitempty"`
 }
 
 // NewLVMLogicalVolumeConfigV1Alpha1 creates a new LVMLogicalVolumeConfig document.
@@ -125,7 +124,7 @@ func exampleLVMLogicalVolumeConfigV1Alpha1() *LVMLogicalVolumeConfigV1Alpha1 {
 	cfg.LVType = storageres.LVMLogicalVolumeTypeLinear
 	cfg.Provisioning = LVMLogicalVolumeProvisioningSpec{
 		VolumeGroup:         "vg-pool",
-		ProvisioningMaxSize: block.MustSize("50GiB"),
+		ProvisioningMaxSize: meta.MustSize("50GiB"),
 	}
 
 	return cfg

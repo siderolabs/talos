@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package block_test
+package meta_test
 
 import (
 	"strings"
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 )
 
 func TestSizeUnmarshal(t *testing.T) {
@@ -43,7 +43,7 @@ func TestSizeUnmarshal(t *testing.T) {
 		t.Run(test.in, func(t *testing.T) {
 			t.Parallel()
 
-			var s block.Size
+			var s meta.Size
 
 			require.NoError(t, s.UnmarshalText([]byte(test.in)))
 

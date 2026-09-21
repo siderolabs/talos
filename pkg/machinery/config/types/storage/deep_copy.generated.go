@@ -6,10 +6,6 @@
 
 package storage
 
-import (
-	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
-)
-
 // DeepCopy generates a deep copy of *LVMVolumeGroupConfigV1Alpha1.
 func (o *LVMVolumeGroupConfigV1Alpha1) DeepCopy() *LVMVolumeGroupConfigV1Alpha1 {
 	var cp LVMVolumeGroupConfigV1Alpha1 = *o
@@ -27,14 +23,8 @@ func (o *LVMLogicalVolumeConfigV1Alpha1) DeepCopy() *LVMLogicalVolumeConfigV1Alp
 		cp.LVStripes = new(uint32)
 		*cp.LVStripes = *o.LVStripes
 	}
-	if o.Provisioning.ProvisioningMaxSize.PercentageSize != nil {
-		cp.Provisioning.ProvisioningMaxSize.PercentageSize = new(block.PercentageSize)
-		*cp.Provisioning.ProvisioningMaxSize.PercentageSize = *o.Provisioning.ProvisioningMaxSize.PercentageSize
-	}
-	if o.Provisioning.ProvisioningMaxSize.ByteSize != nil {
-		cp.Provisioning.ProvisioningMaxSize.ByteSize = new(block.ByteSize)
-		*cp.Provisioning.ProvisioningMaxSize.ByteSize = *o.Provisioning.ProvisioningMaxSize.ByteSize
-	}
+	cp.Provisioning.ProvisioningMinSize = o.Provisioning.ProvisioningMinSize.DeepCopy()
+	cp.Provisioning.ProvisioningMaxSize = o.Provisioning.ProvisioningMaxSize.DeepCopy()
 	return &cp
 }
 

@@ -65,38 +65,8 @@ func (o *RawVolumeConfigV1Alpha1) DeepCopy() *RawVolumeConfigV1Alpha1 {
 		cp.ProvisioningSpec.ProvisioningGrow = new(bool)
 		*cp.ProvisioningSpec.ProvisioningGrow = *o.ProvisioningSpec.ProvisioningGrow
 	}
-	if o.ProvisioningSpec.ProvisioningMinSize.value != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.value = new(uint64)
-		*cp.ProvisioningSpec.ProvisioningMinSize.value = *o.ProvisioningSpec.ProvisioningMinSize.value
-	}
-	if o.ProvisioningSpec.ProvisioningMinSize.raw != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMinSize.raw))
-		copy(cp.ProvisioningSpec.ProvisioningMinSize.raw, o.ProvisioningSpec.ProvisioningMinSize.raw)
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = new(PercentageSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw)
-		}
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = new(ByteSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw)
-		}
-	}
+	cp.ProvisioningSpec.ProvisioningMinSize = o.ProvisioningSpec.ProvisioningMinSize.DeepCopy()
+	cp.ProvisioningSpec.ProvisioningMaxSize = o.ProvisioningSpec.ProvisioningMaxSize.DeepCopy()
 	if o.EncryptionSpec.EncryptionKeys != nil {
 		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))
 		copy(cp.EncryptionSpec.EncryptionKeys, o.EncryptionSpec.EncryptionKeys)
@@ -153,38 +123,8 @@ func (o *SwapVolumeConfigV1Alpha1) DeepCopy() *SwapVolumeConfigV1Alpha1 {
 		cp.ProvisioningSpec.ProvisioningGrow = new(bool)
 		*cp.ProvisioningSpec.ProvisioningGrow = *o.ProvisioningSpec.ProvisioningGrow
 	}
-	if o.ProvisioningSpec.ProvisioningMinSize.value != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.value = new(uint64)
-		*cp.ProvisioningSpec.ProvisioningMinSize.value = *o.ProvisioningSpec.ProvisioningMinSize.value
-	}
-	if o.ProvisioningSpec.ProvisioningMinSize.raw != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMinSize.raw))
-		copy(cp.ProvisioningSpec.ProvisioningMinSize.raw, o.ProvisioningSpec.ProvisioningMinSize.raw)
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = new(PercentageSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw)
-		}
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = new(ByteSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw)
-		}
-	}
+	cp.ProvisioningSpec.ProvisioningMinSize = o.ProvisioningSpec.ProvisioningMinSize.DeepCopy()
+	cp.ProvisioningSpec.ProvisioningMaxSize = o.ProvisioningSpec.ProvisioningMaxSize.DeepCopy()
 	if o.EncryptionSpec.EncryptionKeys != nil {
 		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))
 		copy(cp.EncryptionSpec.EncryptionKeys, o.EncryptionSpec.EncryptionKeys)
@@ -245,38 +185,8 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 		cp.ProvisioningSpec.ProvisioningGrow = new(bool)
 		*cp.ProvisioningSpec.ProvisioningGrow = *o.ProvisioningSpec.ProvisioningGrow
 	}
-	if o.ProvisioningSpec.ProvisioningMinSize.value != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.value = new(uint64)
-		*cp.ProvisioningSpec.ProvisioningMinSize.value = *o.ProvisioningSpec.ProvisioningMinSize.value
-	}
-	if o.ProvisioningSpec.ProvisioningMinSize.raw != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMinSize.raw))
-		copy(cp.ProvisioningSpec.ProvisioningMinSize.raw, o.ProvisioningSpec.ProvisioningMinSize.raw)
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = new(PercentageSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw)
-		}
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = new(ByteSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw)
-		}
-	}
+	cp.ProvisioningSpec.ProvisioningMinSize = o.ProvisioningSpec.ProvisioningMinSize.DeepCopy()
+	cp.ProvisioningSpec.ProvisioningMaxSize = o.ProvisioningSpec.ProvisioningMaxSize.DeepCopy()
 	if o.FilesystemSpec.ProjectQuotaSupportConfig != nil {
 		cp.FilesystemSpec.ProjectQuotaSupportConfig = new(bool)
 		*cp.FilesystemSpec.ProjectQuotaSupportConfig = *o.FilesystemSpec.ProjectQuotaSupportConfig
@@ -284,14 +194,7 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 	if o.FilesystemSpec.XFSSpec != nil {
 		cp.FilesystemSpec.XFSSpec = new(XFSSpec)
 		*cp.FilesystemSpec.XFSSpec = *o.FilesystemSpec.XFSSpec
-		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value != nil {
-			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = new(uint64)
-			*cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = *o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value
-		}
-		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw != nil {
-			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw = make([]byte, len(o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw))
-			copy(cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw, o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw)
-		}
+		cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig = o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.DeepCopy()
 	}
 	if o.EncryptionSpec.EncryptionKeys != nil {
 		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))
@@ -427,49 +330,12 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 		cp.ProvisioningSpec.ProvisioningGrow = new(bool)
 		*cp.ProvisioningSpec.ProvisioningGrow = *o.ProvisioningSpec.ProvisioningGrow
 	}
-	if o.ProvisioningSpec.ProvisioningMinSize.value != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.value = new(uint64)
-		*cp.ProvisioningSpec.ProvisioningMinSize.value = *o.ProvisioningSpec.ProvisioningMinSize.value
-	}
-	if o.ProvisioningSpec.ProvisioningMinSize.raw != nil {
-		cp.ProvisioningSpec.ProvisioningMinSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMinSize.raw))
-		copy(cp.ProvisioningSpec.ProvisioningMinSize.raw, o.ProvisioningSpec.ProvisioningMinSize.raw)
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = new(PercentageSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.PercentageSize.raw)
-		}
-	}
-	if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize != nil {
-		cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = new(ByteSize)
-		*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = new(uint64)
-			*cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value = *o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.value
-		}
-		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw != nil {
-			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw))
-			copy(cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw)
-		}
-	}
+	cp.ProvisioningSpec.ProvisioningMinSize = o.ProvisioningSpec.ProvisioningMinSize.DeepCopy()
+	cp.ProvisioningSpec.ProvisioningMaxSize = o.ProvisioningSpec.ProvisioningMaxSize.DeepCopy()
 	if o.FilesystemSpec.XFSSpec != nil {
 		cp.FilesystemSpec.XFSSpec = new(XFSSpec)
 		*cp.FilesystemSpec.XFSSpec = *o.FilesystemSpec.XFSSpec
-		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value != nil {
-			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = new(uint64)
-			*cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = *o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value
-		}
-		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw != nil {
-			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw = make([]byte, len(o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw))
-			copy(cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw, o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw)
-		}
+		cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig = o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.DeepCopy()
 	}
 	if o.EncryptionSpec.EncryptionKeys != nil {
 		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))

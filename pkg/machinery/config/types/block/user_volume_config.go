@@ -415,7 +415,7 @@ type XFSSpec struct {
 	//        "128GiB"
 	//  schema:
 	//    type: string
-	MinAllocationGroupSizeConfig ByteSize `yaml:"minAllocationGroupSize,omitempty"`
+	MinAllocationGroupSizeConfig meta.ByteSize `yaml:"minAllocationGroupSize,omitempty"`
 }
 
 // IsZero checks if the filesystem spec is zero.
