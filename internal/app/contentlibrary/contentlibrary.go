@@ -12,10 +12,12 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/opencontainers/go-digest"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -103,6 +105,112 @@ func validateName(name string) error {
 	return nil
 }
 
+var supportedDigestAlgorithms = []digest.Algorithm{digest.SHA256, digest.SHA512}
+
+// parseDigest checks the digest an upload declared, if it declared one.
+//
+// An empty digest is what a client which does not know the digest of what it is uploading sends,
+// and leaves the contents unverified.
+func parseDigest(s string) (digest.Digest, error) {
+	if s == "" {
+		return "", nil
+	}
+
+	dgst, err := digest.Parse(s)
+	if err != nil {
+		return "", status.Errorf(codes.InvalidArgument, "digest %q is invalid: %v", s, err)
+	}
+
+	if !slices.Contains(supportedDigestAlgorithms, dgst.Algorithm()) {
+		return "", status.Errorf(
+			codes.InvalidArgument,
+			"digest algorithm %q is not supported, expected one of %v",
+			dgst.Algorithm(), supportedDigestAlgorithms,
+		)
+	}
+
+	return dgst, nil
+}
+
+// uploadSink is where the chunks of an upload are written: the file it is staged in, and a hash of
+// everything which goes into it under each algorithm the API can verify.
+//
+// Every upload is hashed under all of them, whether or not it declared a digest, so that what the
+// node received is reported back either way: a client which did not know the digest of what it was
+// uploading learns it, and one which did learns what it actually sent instead.
+type uploadSink struct {
+	io.Writer
+
+	digesters map[digest.Algorithm]digest.Digester
+}
+
+// newUploadSink returns a sink writing to w and hashing what passes through it.
+func newUploadSink(w io.Writer) uploadSink {
+	sink := uploadSink{digesters: make(map[digest.Algorithm]digest.Digester, len(supportedDigestAlgorithms))}
+
+	writers := make([]io.Writer, 0, 1+len(supportedDigestAlgorithms))
+	writers = append(writers, w)
+
+	for _, algorithm := range supportedDigestAlgorithms {
+		digester := algorithm.Digester()
+
+		sink.digesters[algorithm] = digester
+		writers = append(writers, digester.Hash())
+	}
+
+	sink.Writer = io.MultiWriter(writers...)
+
+	return sink
+}
+
+// digests returns the digests of everything written to the sink.
+func (sink uploadSink) digests() *machine.ContentLibraryServiceUploadDigests {
+	return &machine.ContentLibraryServiceUploadDigests{
+		Sha256: sink.digesters[digest.SHA256].Digest().String(),
+		Sha512: sink.digesters[digest.SHA512].Digest().String(),
+	}
+}
+
+// verify reports whether what was written is what the upload declared it would be.
+//
+// dgst has been through parseDigest, so its algorithm is one the sink hashed under.
+func (sink uploadSink) verify(expected digest.Digest) error {
+	if expected == "" {
+		return nil
+	}
+
+	if actual := sink.digesters[expected.Algorithm()].Digest(); actual != expected {
+		return status.Errorf(codes.DataLoss, "uploaded content's digest (%s) doesn't match the expected one (%s)", actual, expected)
+	}
+
+	return nil
+}
+
+// withDigests attaches the digests of an upload which completed to the error which refused it.
+//
+// A failed call carries no response, so this is the only way the client is told what the node
+// actually received, which is what it needs to tell a corrupted image from a mistyped digest.
+func withDigests(err error, digests *machine.ContentLibraryServiceUploadDigests) error {
+	if digests == nil {
+		// The upload never got as far as being hashed in full, so there is nothing to report.
+		return err
+	}
+
+	st, ok := status.FromError(err)
+	if !ok {
+		return err
+	}
+
+	withDetails, detailsErr := st.WithDetails(digests)
+	if detailsErr != nil {
+		// Whatever the status could not be made to carry, the refusal itself still has to reach
+		// the client.
+		return err
+	}
+
+	return withDetails.Err()
+}
+
 // List files stored in a content library.
 func (svc *Service) List(req *machine.ContentLibraryServiceListRequest, srv grpc.ServerStreamingServer[machine.ContentLibraryServiceListResponse]) error {
 	root, err := svc.openLibrary(srv.Context(), req.GetLibraryId())
@@ -175,6 +283,13 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 		return err
 	}
 
+	// Before the library is even resolved: a digest which cannot be met by any contents is the
+	// client's mistake, and saying so costs nothing.
+	dgst, err := parseDigest(info.GetDigest())
+	if err != nil {
+		return err
+	}
+
 	root, err := svc.openLibrary(srv.Context(), info.GetLibraryId())
 	if err != nil {
 		return err
@@ -193,20 +308,23 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 		}
 	}
 
-	written, err := svc.receiveFile(srv, root, info.GetName(), info.GetOverwrite())
+	written, digests, err := svc.receiveFile(srv, root, info.GetName(), info.GetOverwrite(), dgst)
 	if err != nil {
-		return err
+		return withDigests(err, digests)
 	}
 
 	svc.logger.Info("uploaded a file to a content library",
 		zap.String("library", info.GetLibraryId()),
 		zap.String("name", info.GetName()),
 		zap.Uint64("size", written),
+		zap.String("sha256", digests.GetSha256()),
+		zap.String("sha512", digests.GetSha512()),
 	)
 
 	return srv.SendAndClose(&machine.ContentLibraryServiceUploadResponse{
-		Name: info.GetName(),
-		Size: written,
+		Name:    info.GetName(),
+		Size:    written,
+		Digests: digests,
 	})
 }
 
@@ -214,7 +332,8 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 //
 // The contents are staged under a temporary name and only claim the name they were uploaded under
 // once the stream ends, so an interrupted upload leaves no half-written image behind under the name
-// it was meant to take.
+// it was meant to take. A non-empty dgst is checked before the staged file claims that name, so
+// contents which do not match it are never visible in the library at all.
 //
 //nolint:gocyclo
 func (svc *Service) receiveFile(
@@ -222,7 +341,8 @@ func (svc *Service) receiveFile(
 	root *os.Root,
 	name string,
 	overwrite bool,
-) (written uint64, err error) {
+	dgst digest.Digest,
+) (written uint64, digests *machine.ContentLibraryServiceUploadDigests, err error) {
 	// Whatever a failure leaves staged is swept by hypervisor.ContentLibraryController when it next
 	// brings the library up.
 	tmpName := staging.Name(name)
@@ -231,7 +351,7 @@ func (svc *Service) receiveFile(
 	// into another upload's file would be worse than failing.
 	f, err := root.OpenFile(tmpName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, uploadFileMode)
 	if err != nil {
-		return 0, status.Errorf(codes.Internal, "failed to create %q: %v", name, err)
+		return 0, nil, status.Errorf(codes.Internal, "failed to create %q: %v", name, err)
 	}
 
 	defer func() {
@@ -243,6 +363,10 @@ func (svc *Service) receiveFile(
 		}
 	}()
 
+	// The contents are hashed as they are written, so reporting and verifying them costs one pass
+	// over the stream and the hash state, whatever the size of the image.
+	sink := newUploadSink(f)
+
 	for {
 		var msg *machine.ContentLibraryServiceUploadRequest
 
@@ -252,39 +376,50 @@ func (svc *Service) receiveFile(
 				break
 			}
 
-			return 0, err
+			return 0, nil, err
 		}
 
 		chunk := msg.GetChunk()
 		if chunk == nil {
 			err = status.Error(codes.InvalidArgument, "only the first message may carry the upload info")
 
-			return 0, err
+			return 0, nil, err
 		}
 
 		var n int
 
-		if n, err = f.Write(chunk.GetBytes()); err != nil {
-			return 0, status.Errorf(codes.Internal, "failed to write %q: %v", name, err)
+		if n, err = sink.Write(chunk.GetBytes()); err != nil {
+			return 0, nil, status.Errorf(codes.Internal, "failed to write %q: %v", name, err)
 		}
 
 		written += uint64(n)
+	}
+
+	// The upload has completed, so from here on every outcome reports what the node received,
+	// whether it went on to store it or not.
+	digests = sink.digests()
+
+	// Before anything is flushed or the name is claimed: contents which are not what they were
+	// declared to be never become library contents, and the staged file the deferred cleanup above
+	// removes is all they leave behind.
+	if err = sink.verify(dgst); err != nil {
+		return 0, digests, err
 	}
 
 	// Virtual machine images are expected to survive a reboot of the node they were uploaded to, so
 	// both the contents and the directory entry naming them are flushed before the upload is
 	// reported as successful.
 	if err = f.Sync(); err != nil {
-		return 0, status.Errorf(codes.Internal, "failed to flush %q: %v", name, err)
+		return 0, digests, status.Errorf(codes.Internal, "failed to flush %q: %v", name, err)
 	}
 
 	if err = f.Close(); err != nil {
-		return 0, status.Errorf(codes.Internal, "failed to close %q: %v", name, err)
+		return 0, digests, status.Errorf(codes.Internal, "failed to close %q: %v", name, err)
 	}
 
 	if overwrite {
 		if err = root.Rename(tmpName, name); err != nil {
-			return 0, status.Errorf(codes.Internal, "failed to rename %q: %v", name, err)
+			return 0, digests, status.Errorf(codes.Internal, "failed to rename %q: %v", name, err)
 		}
 
 		// Cleared: the rename consumed the staged name, there is nothing left to clean up.
@@ -294,10 +429,10 @@ func (svc *Service) receiveFile(
 		// Upload, two concurrent uploads of the same name cannot both get past this one.
 		if err = root.Link(tmpName, name); err != nil {
 			if errors.Is(err, fs.ErrExist) {
-				return 0, status.Errorf(codes.AlreadyExists, "file %q already exists", name)
+				return 0, digests, status.Errorf(codes.AlreadyExists, "file %q already exists", name)
 			}
 
-			return 0, status.Errorf(codes.Internal, "failed to link %q: %v", name, err)
+			return 0, digests, status.Errorf(codes.Internal, "failed to link %q: %v", name, err)
 		}
 	}
 
@@ -326,7 +461,7 @@ func (svc *Service) receiveFile(
 		tmpName = ""
 	}
 
-	return written, nil
+	return written, digests, nil
 }
 
 // syncDir flushes the library directory itself, so that a name created in it survives a power loss.

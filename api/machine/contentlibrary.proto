@@ -45,6 +45,11 @@ message ContentLibraryServiceUploadInfo {
   string name = 2;
   // Overwrite an existing file with the same name.
   bool overwrite = 3;
+  // Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".
+  //
+  // Optional: when it is set, the upload is rejected unless the contents hash to it.
+  // The algorithms supported are sha256 and sha512.
+  string digest = 4;
 }
 
 message ContentLibraryServiceUploadRequest {
@@ -56,11 +61,25 @@ message ContentLibraryServiceUploadRequest {
   }
 }
 
+// ContentLibraryServiceUploadDigests are the digests of what an upload carried.
+//
+// They are computed over everything the node received, under every algorithm the API can verify,
+// whether or not the contents were stored: they are carried by the response of an upload which
+// succeeded, and by the details of the error of one which completed and was then refused.
+message ContentLibraryServiceUploadDigests {
+  // Digest of the contents, as "sha256:<hex>".
+  string sha256 = 1;
+  // Digest of the contents, as "sha512:<hex>".
+  string sha512 = 2;
+}
+
 message ContentLibraryServiceUploadResponse {
   // Name of the uploaded file.
   string name = 1;
   // Size of the uploaded file in bytes.
   uint64 size = 2;
+  // Digests of the contents stored.
+  ContentLibraryServiceUploadDigests digests = 3;
 }
 
 message ContentLibraryServiceDeleteRequest {

@@ -17,6 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
@@ -102,6 +103,10 @@ func (s *uploadStream) SendAndClose(resp *machine.ContentLibraryServiceUploadRes
 }
 
 func uploadRequests(libraryID, name string, overwrite bool, chunks ...string) []*machine.ContentLibraryServiceUploadRequest {
+	return uploadRequestsWithDigest(libraryID, name, overwrite, "", chunks...)
+}
+
+func uploadRequestsWithDigest(libraryID, name string, overwrite bool, dgst string, chunks ...string) []*machine.ContentLibraryServiceUploadRequest {
 	requests := make([]*machine.ContentLibraryServiceUploadRequest, 0, 1+len(chunks))
 
 	requests = append(requests, &machine.ContentLibraryServiceUploadRequest{
@@ -110,6 +115,7 @@ func uploadRequests(libraryID, name string, overwrite bool, chunks ...string) []
 				LibraryId: libraryID,
 				Name:      name,
 				Overwrite: overwrite,
+				Digest:    dgst,
 			},
 		},
 	})
@@ -128,7 +134,13 @@ func uploadRequests(libraryID, name string, overwrite bool, chunks ...string) []
 func upload(t *testing.T, svc *contentlibrary.Service, name string, overwrite bool, chunks ...string) error {
 	t.Helper()
 
-	return svc.Upload(&uploadStream{ctx: t.Context(), requests: uploadRequests(testLibrary, name, overwrite, chunks...)})
+	return uploadWithDigest(t, svc, name, overwrite, "", chunks...)
+}
+
+func uploadWithDigest(t *testing.T, svc *contentlibrary.Service, name string, overwrite bool, dgst string, chunks ...string) error {
+	t.Helper()
+
+	return svc.Upload(&uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, name, overwrite, dgst, chunks...)})
 }
 
 func list(t *testing.T, svc *contentlibrary.Service, libraryID string) ([]*machine.ContentLibraryServiceListResponse, error) {
@@ -322,6 +334,146 @@ func TestRejectsLongName(t *testing.T) {
 	assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 
 	require.NoError(t, upload(t, svc, strings.Repeat("a", 230), true, "payload"))
+}
+
+// TestDigestVerified covers an upload which declares what it is carrying: the node hashes what it
+// received and stores it, under every algorithm the API offers.
+func TestDigestVerified(t *testing.T) {
+	t.Parallel()
+
+	const contents = "talos-images"
+
+	for _, algorithm := range []digest.Algorithm{digest.SHA256, digest.SHA512} {
+		t.Run(algorithm.String(), func(t *testing.T) {
+			t.Parallel()
+
+			svc, path := setup(t, true)
+
+			// Computed rather than written out, so the expectation cannot drift from the chunks
+			// below, which are what it has to describe.
+			dgst := algorithm.FromString(contents)
+
+			require.NoError(t, uploadWithDigest(t, svc, "image.raw", false, dgst.String(), "talos", "-images"))
+
+			stored, err := os.ReadFile(filepath.Join(path, "image.raw"))
+			require.NoError(t, err)
+			assert.Equal(t, contents, string(stored))
+		})
+	}
+}
+
+// TestDigestsReported covers what the node says about an upload it was not asked to verify: the
+// contents are hashed under both algorithms either way, so a client which did not know the digest
+// of what it was uploading learns it.
+func TestDigestsReported(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := setup(t, true)
+
+	srv := &uploadStream{ctx: t.Context(), requests: uploadRequests(testLibrary, "image.raw", false, "talos", "-images")}
+	require.NoError(t, svc.Upload(srv))
+
+	assert.Equal(t, digest.SHA256.FromString("talos-images").String(), srv.response.GetDigests().GetSha256())
+	assert.Equal(t, digest.SHA512.FromString("talos-images").String(), srv.response.GetDigests().GetSha512())
+}
+
+// TestDigestMismatchReportsDigests covers an upload which was refused telling the client what it
+// actually received: there is no response to carry it, so the error has to.
+func TestDigestMismatchReportsDigests(t *testing.T) {
+	t.Parallel()
+
+	svc, _ := setup(t, true)
+
+	err := uploadWithDigest(t, svc, "image.raw", false, digest.FromString("something else").String(), "talos")
+	require.Equal(t, codes.DataLoss, grpcstatus.Code(err))
+
+	details := grpcstatus.Convert(err).Details()
+	require.Len(t, details, 1)
+
+	digests, ok := details[0].(*machine.ContentLibraryServiceUploadDigests)
+	require.True(t, ok, "the error should carry the digests, got %T", details[0])
+
+	assert.Equal(t, digest.SHA256.FromString("talos").String(), digests.GetSha256())
+	assert.Equal(t, digest.SHA512.FromString("talos").String(), digests.GetSha512())
+}
+
+// TestDigestMismatch covers contents which are not what the upload said they would be: the name
+// they were meant to take stays free, and nothing is left behind under any other.
+func TestDigestMismatch(t *testing.T) {
+	t.Parallel()
+
+	svc, path := setup(t, true)
+
+	err := uploadWithDigest(t, svc, "image.raw", false, digest.FromString("something else").String(), "talos")
+	assert.Equal(t, codes.DataLoss, grpcstatus.Code(err))
+
+	items, err := list(t, svc, testLibrary)
+	require.NoError(t, err)
+	assert.Empty(t, items)
+
+	// Not even staged: the upload cleans up after itself rather than leaving it for the controller.
+	entries, err := os.ReadDir(path)
+	require.NoError(t, err)
+	assert.Empty(t, entries)
+}
+
+// TestDigestMismatchDoesNotOverwrite covers why the digest is checked before the staged file claims
+// its name: an upload which turns out to be corrupt must not have destroyed the file it was
+// replacing.
+func TestDigestMismatchDoesNotOverwrite(t *testing.T) {
+	t.Parallel()
+
+	svc, path := setup(t, true)
+
+	require.NoError(t, upload(t, svc, "image.raw", false, "first"))
+
+	err := uploadWithDigest(t, svc, "image.raw", true, digest.FromString("first").String(), "second")
+	assert.Equal(t, codes.DataLoss, grpcstatus.Code(err))
+
+	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "first", string(contents))
+
+	entries, err := os.ReadDir(path)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "image.raw", entries[0].Name())
+}
+
+// TestRejectsDigests covers the digests which no contents could ever match: they are the caller's
+// mistake, and saying so is not the same as saying the upload was corrupt.
+func TestRejectsDigests(t *testing.T) {
+	t.Parallel()
+
+	svc, path := setup(t, true)
+
+	// In a cleanup so that it runs once the parallel subtests below are done, rather than the
+	// moment the loop has finished starting them, which would make it assert nothing.
+	t.Cleanup(func() {
+		entries, err := os.ReadDir(path)
+		assert.NoError(t, err)
+		assert.Empty(t, entries)
+	})
+
+	for _, dgst := range []string{
+		"sha256:",
+		"sha256:" + strings.Repeat("z", 64),
+		"sha256:abcd",
+		// A bare hex string names no algorithm, so there is nothing to hash with.
+		strings.Repeat("a", 64),
+		"md5:" + strings.Repeat("a", 32),
+		"sha1:" + strings.Repeat("a", 40),
+		// Registered by go-digest, deliberately not offered here.
+		"sha384:" + strings.Repeat("a", 96),
+		"SHA256:" + strings.Repeat("a", 64),
+	} {
+		t.Run(dgst, func(t *testing.T) {
+			t.Parallel()
+
+			err := uploadWithDigest(t, svc, "image.raw", true, dgst, "talos")
+			assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+		})
+	}
 }
 
 // TestInterruptedUploadLeavesNothing covers an upload which never completes: the name it was

@@ -143,7 +143,12 @@ type ContentLibraryServiceUploadInfo struct {
 	// Name of the file within the library.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// Overwrite an existing file with the same name.
-	Overwrite     bool `protobuf:"varint,3,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
+	Overwrite bool `protobuf:"varint,3,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
+	// Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".
+	//
+	// Optional: when it is set, the upload is rejected unless the contents hash to it.
+	// The algorithms supported are sha256 and sha512.
+	Digest        string `protobuf:"bytes,4,opt,name=digest,proto3" json:"digest,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -197,6 +202,13 @@ func (x *ContentLibraryServiceUploadInfo) GetOverwrite() bool {
 		return x.Overwrite
 	}
 	return false
+}
+
+func (x *ContentLibraryServiceUploadInfo) GetDigest() string {
+	if x != nil {
+		return x.Digest
+	}
+	return ""
 }
 
 type ContentLibraryServiceUploadRequest struct {
@@ -283,19 +295,80 @@ func (*ContentLibraryServiceUploadRequest_Info) isContentLibraryServiceUploadReq
 
 func (*ContentLibraryServiceUploadRequest_Chunk) isContentLibraryServiceUploadRequest_Request() {}
 
+// ContentLibraryServiceUploadDigests are the digests of what an upload carried.
+//
+// They are computed over everything the node received, under every algorithm the API can verify,
+// whether or not the contents were stored: they are carried by the response of an upload which
+// succeeded, and by the details of the error of one which completed and was then refused.
+type ContentLibraryServiceUploadDigests struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Digest of the contents, as "sha256:<hex>".
+	Sha256 string `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	// Digest of the contents, as "sha512:<hex>".
+	Sha512        string `protobuf:"bytes,2,opt,name=sha512,proto3" json:"sha512,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContentLibraryServiceUploadDigests) Reset() {
+	*x = ContentLibraryServiceUploadDigests{}
+	mi := &file_machine_contentlibrary_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContentLibraryServiceUploadDigests) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContentLibraryServiceUploadDigests) ProtoMessage() {}
+
+func (x *ContentLibraryServiceUploadDigests) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_contentlibrary_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContentLibraryServiceUploadDigests.ProtoReflect.Descriptor instead.
+func (*ContentLibraryServiceUploadDigests) Descriptor() ([]byte, []int) {
+	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *ContentLibraryServiceUploadDigests) GetSha256() string {
+	if x != nil {
+		return x.Sha256
+	}
+	return ""
+}
+
+func (x *ContentLibraryServiceUploadDigests) GetSha512() string {
+	if x != nil {
+		return x.Sha512
+	}
+	return ""
+}
+
 type ContentLibraryServiceUploadResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Name of the uploaded file.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// Size of the uploaded file in bytes.
-	Size          uint64 `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	Size uint64 `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
+	// Digests of the contents stored.
+	Digests       *ContentLibraryServiceUploadDigests `protobuf:"bytes,3,opt,name=digests,proto3" json:"digests,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ContentLibraryServiceUploadResponse) Reset() {
 	*x = ContentLibraryServiceUploadResponse{}
-	mi := &file_machine_contentlibrary_proto_msgTypes[4]
+	mi := &file_machine_contentlibrary_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -307,7 +380,7 @@ func (x *ContentLibraryServiceUploadResponse) String() string {
 func (*ContentLibraryServiceUploadResponse) ProtoMessage() {}
 
 func (x *ContentLibraryServiceUploadResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_contentlibrary_proto_msgTypes[4]
+	mi := &file_machine_contentlibrary_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -320,7 +393,7 @@ func (x *ContentLibraryServiceUploadResponse) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use ContentLibraryServiceUploadResponse.ProtoReflect.Descriptor instead.
 func (*ContentLibraryServiceUploadResponse) Descriptor() ([]byte, []int) {
-	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{4}
+	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ContentLibraryServiceUploadResponse) GetName() string {
@@ -337,6 +410,13 @@ func (x *ContentLibraryServiceUploadResponse) GetSize() uint64 {
 	return 0
 }
 
+func (x *ContentLibraryServiceUploadResponse) GetDigests() *ContentLibraryServiceUploadDigests {
+	if x != nil {
+		return x.Digests
+	}
+	return nil
+}
+
 type ContentLibraryServiceDeleteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID of the content library to delete from.
@@ -349,7 +429,7 @@ type ContentLibraryServiceDeleteRequest struct {
 
 func (x *ContentLibraryServiceDeleteRequest) Reset() {
 	*x = ContentLibraryServiceDeleteRequest{}
-	mi := &file_machine_contentlibrary_proto_msgTypes[5]
+	mi := &file_machine_contentlibrary_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -361,7 +441,7 @@ func (x *ContentLibraryServiceDeleteRequest) String() string {
 func (*ContentLibraryServiceDeleteRequest) ProtoMessage() {}
 
 func (x *ContentLibraryServiceDeleteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_contentlibrary_proto_msgTypes[5]
+	mi := &file_machine_contentlibrary_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -374,7 +454,7 @@ func (x *ContentLibraryServiceDeleteRequest) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use ContentLibraryServiceDeleteRequest.ProtoReflect.Descriptor instead.
 func (*ContentLibraryServiceDeleteRequest) Descriptor() ([]byte, []int) {
-	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{5}
+	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ContentLibraryServiceDeleteRequest) GetLibraryId() string {
@@ -399,7 +479,7 @@ type ContentLibraryServiceDeleteResponse struct {
 
 func (x *ContentLibraryServiceDeleteResponse) Reset() {
 	*x = ContentLibraryServiceDeleteResponse{}
-	mi := &file_machine_contentlibrary_proto_msgTypes[6]
+	mi := &file_machine_contentlibrary_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -411,7 +491,7 @@ func (x *ContentLibraryServiceDeleteResponse) String() string {
 func (*ContentLibraryServiceDeleteResponse) ProtoMessage() {}
 
 func (x *ContentLibraryServiceDeleteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_contentlibrary_proto_msgTypes[6]
+	mi := &file_machine_contentlibrary_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -424,7 +504,7 @@ func (x *ContentLibraryServiceDeleteResponse) ProtoReflect() protoreflect.Messag
 
 // Deprecated: Use ContentLibraryServiceDeleteResponse.ProtoReflect.Descriptor instead.
 func (*ContentLibraryServiceDeleteResponse) Descriptor() ([]byte, []int) {
-	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{6}
+	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{7}
 }
 
 var File_machine_contentlibrary_proto protoreflect.FileDescriptor
@@ -439,19 +519,24 @@ const file_machine_contentlibrary_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x04R\x04size\x12;\n" +
 	"\vmodified_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"modifiedAt\"r\n" +
+	"modifiedAt\"\x8a\x01\n" +
 	"\x1fContentLibraryServiceUploadInfo\x12\x1d\n" +
 	"\n" +
 	"library_id\x18\x01 \x01(\tR\tlibraryId\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
-	"\toverwrite\x18\x03 \x01(\bR\toverwrite\"\x95\x01\n" +
+	"\toverwrite\x18\x03 \x01(\bR\toverwrite\x12\x16\n" +
+	"\x06digest\x18\x04 \x01(\tR\x06digest\"\x95\x01\n" +
 	"\"ContentLibraryServiceUploadRequest\x12>\n" +
 	"\x04info\x18\x01 \x01(\v2(.machine.ContentLibraryServiceUploadInfoH\x00R\x04info\x12$\n" +
 	"\x05chunk\x18\x02 \x01(\v2\f.common.DataH\x00R\x05chunkB\t\n" +
-	"\arequest\"M\n" +
+	"\arequest\"T\n" +
+	"\"ContentLibraryServiceUploadDigests\x12\x16\n" +
+	"\x06sha256\x18\x01 \x01(\tR\x06sha256\x12\x16\n" +
+	"\x06sha512\x18\x02 \x01(\tR\x06sha512\"\x94\x01\n" +
 	"#ContentLibraryServiceUploadResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04size\x18\x02 \x01(\x04R\x04size\"W\n" +
+	"\x04size\x18\x02 \x01(\x04R\x04size\x12E\n" +
+	"\adigests\x18\x03 \x01(\v2+.machine.ContentLibraryServiceUploadDigestsR\adigests\"W\n" +
 	"\"ContentLibraryServiceDeleteRequest\x12\x1d\n" +
 	"\n" +
 	"library_id\x18\x01 \x01(\tR\tlibraryId\x12\x12\n" +
@@ -475,33 +560,35 @@ func file_machine_contentlibrary_proto_rawDescGZIP() []byte {
 	return file_machine_contentlibrary_proto_rawDescData
 }
 
-var file_machine_contentlibrary_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_machine_contentlibrary_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_machine_contentlibrary_proto_goTypes = []any{
 	(*ContentLibraryServiceListRequest)(nil),    // 0: machine.ContentLibraryServiceListRequest
 	(*ContentLibraryServiceListResponse)(nil),   // 1: machine.ContentLibraryServiceListResponse
 	(*ContentLibraryServiceUploadInfo)(nil),     // 2: machine.ContentLibraryServiceUploadInfo
 	(*ContentLibraryServiceUploadRequest)(nil),  // 3: machine.ContentLibraryServiceUploadRequest
-	(*ContentLibraryServiceUploadResponse)(nil), // 4: machine.ContentLibraryServiceUploadResponse
-	(*ContentLibraryServiceDeleteRequest)(nil),  // 5: machine.ContentLibraryServiceDeleteRequest
-	(*ContentLibraryServiceDeleteResponse)(nil), // 6: machine.ContentLibraryServiceDeleteResponse
-	(*timestamppb.Timestamp)(nil),               // 7: google.protobuf.Timestamp
-	(*common.Data)(nil),                         // 8: common.Data
+	(*ContentLibraryServiceUploadDigests)(nil),  // 4: machine.ContentLibraryServiceUploadDigests
+	(*ContentLibraryServiceUploadResponse)(nil), // 5: machine.ContentLibraryServiceUploadResponse
+	(*ContentLibraryServiceDeleteRequest)(nil),  // 6: machine.ContentLibraryServiceDeleteRequest
+	(*ContentLibraryServiceDeleteResponse)(nil), // 7: machine.ContentLibraryServiceDeleteResponse
+	(*timestamppb.Timestamp)(nil),               // 8: google.protobuf.Timestamp
+	(*common.Data)(nil),                         // 9: common.Data
 }
 var file_machine_contentlibrary_proto_depIdxs = []int32{
-	7, // 0: machine.ContentLibraryServiceListResponse.modified_at:type_name -> google.protobuf.Timestamp
+	8, // 0: machine.ContentLibraryServiceListResponse.modified_at:type_name -> google.protobuf.Timestamp
 	2, // 1: machine.ContentLibraryServiceUploadRequest.info:type_name -> machine.ContentLibraryServiceUploadInfo
-	8, // 2: machine.ContentLibraryServiceUploadRequest.chunk:type_name -> common.Data
-	0, // 3: machine.ContentLibraryService.List:input_type -> machine.ContentLibraryServiceListRequest
-	3, // 4: machine.ContentLibraryService.Upload:input_type -> machine.ContentLibraryServiceUploadRequest
-	5, // 5: machine.ContentLibraryService.Delete:input_type -> machine.ContentLibraryServiceDeleteRequest
-	1, // 6: machine.ContentLibraryService.List:output_type -> machine.ContentLibraryServiceListResponse
-	4, // 7: machine.ContentLibraryService.Upload:output_type -> machine.ContentLibraryServiceUploadResponse
-	6, // 8: machine.ContentLibraryService.Delete:output_type -> machine.ContentLibraryServiceDeleteResponse
-	6, // [6:9] is the sub-list for method output_type
-	3, // [3:6] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	9, // 2: machine.ContentLibraryServiceUploadRequest.chunk:type_name -> common.Data
+	4, // 3: machine.ContentLibraryServiceUploadResponse.digests:type_name -> machine.ContentLibraryServiceUploadDigests
+	0, // 4: machine.ContentLibraryService.List:input_type -> machine.ContentLibraryServiceListRequest
+	3, // 5: machine.ContentLibraryService.Upload:input_type -> machine.ContentLibraryServiceUploadRequest
+	6, // 6: machine.ContentLibraryService.Delete:input_type -> machine.ContentLibraryServiceDeleteRequest
+	1, // 7: machine.ContentLibraryService.List:output_type -> machine.ContentLibraryServiceListResponse
+	5, // 8: machine.ContentLibraryService.Upload:output_type -> machine.ContentLibraryServiceUploadResponse
+	7, // 9: machine.ContentLibraryService.Delete:output_type -> machine.ContentLibraryServiceDeleteResponse
+	7, // [7:10] is the sub-list for method output_type
+	4, // [4:7] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_machine_contentlibrary_proto_init() }
@@ -519,7 +606,7 @@ func file_machine_contentlibrary_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_contentlibrary_proto_rawDesc), len(file_machine_contentlibrary_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

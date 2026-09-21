@@ -15,9 +15,11 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -26,6 +28,7 @@ import (
 
 var contentLibraryUploadCmdFlags struct {
 	name      string
+	digest    string
 	overwrite bool
 }
 
@@ -130,7 +133,10 @@ var contentLibraryUploadCmd = &cobra.Command{
 	Long: `Uploads a local file to a content library, under its own name.
 
 If '-' is given for <filename>, the contents are read from stdin, and --name is required
-to say what the file should be called within the library.`,
+to say what the file should be called within the library.
+
+With --digest, the node verifies what it received before storing it, and refuses the
+upload unless the contents hash to the digest given.`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return contentLibraryUpload(cmd.Context(), args[0], args[1])
@@ -178,13 +184,35 @@ func contentLibraryUpload(ctx context.Context, libraryID, filename string) error
 		contents = f
 	}
 
-	resp, err := c.ContentLibraryUpload(ctx, libraryID, name, contentLibraryUploadCmdFlags.overwrite, contents)
+	resp, err := c.ContentLibraryUpload(ctx, libraryID, name, contentLibraryUploadCmdFlags.overwrite, contentLibraryUploadCmdFlags.digest, contents)
+
+	// Hashes computed on the node
+	if digests := client.ContentLibraryUploadDigests(resp, err); digests != nil {
+		safeout.Printf("Uploaded content's digests:\n%s\n%s\n", digests.GetSha256(), digests.GetSha512())
+	}
+
 	if err != nil {
-		return fmt.Errorf("error uploading to node %s: %w", node, err)
+		safeout.Flush() //nolint:errcheck
+
+		fmt.Fprintln(os.Stderr, color.RedString("error uploading to node %s: %s", safeout.Cell(node), safeout.String(err.Error()))) //nolint:forbidigo // colored by hand, see above
+
+		// Already reported, and reporting it again would print it a second time without the color.
+		common.SuppressErrors = true
+
+		return err
 	}
 
 	safeout.Printf("uploaded %s (%s) to the content library %q on node %s\n",
 		resp.GetName(), humanize.Bytes(resp.GetSize()), libraryID, node)
+
+	if contentLibraryUploadCmdFlags.digest != "" {
+		safeout.Flush() //nolint:errcheck
+
+		fmt.Fprintln(os.Stdout, color.GreenString( //nolint:forbidigo // colored by hand, see above
+			"integrity verified: uploaded content's digest matches the provided one (%s)",
+			safeout.Cell(contentLibraryUploadCmdFlags.digest),
+		))
+	}
 
 	return nil
 }
@@ -232,6 +260,8 @@ func contentLibraryDelete(ctx context.Context, libraryID, name string) error {
 
 func init() {
 	contentLibraryUploadCmd.Flags().StringVar(&contentLibraryUploadCmdFlags.name, "name", "", "name of the file within the library (defaults to the base name of <filename>)")
+	contentLibraryUploadCmd.Flags().StringVar(&contentLibraryUploadCmdFlags.digest, "digest", "",
+		"expected digest of the contents as <algorithm>:<hex>, e.g. sha256:2345cdef... (sha256 and sha512); the upload is refused unless the contents match it")
 	contentLibraryUploadCmd.Flags().BoolVar(&contentLibraryUploadCmdFlags.overwrite, "overwrite", false, "replace a file of the same name if it already exists")
 
 	contentLibraryCmd.AddCommand(contentLibraryListCmd)

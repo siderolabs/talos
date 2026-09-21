@@ -11,6 +11,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/opencontainers/go-digest"
+
 	"github.com/siderolabs/talos/internal/integration/base"
 )
 
@@ -79,15 +81,26 @@ func (suite *ContentLibrarySuite) TestRoundTrip() {
 		suite.T().Skipf("skipping test, node %s has no content library %q configured", node, testContentLibrary)
 	}
 
-	const name = "cli-test.raw"
+	const (
+		name     = "cli-test.raw"
+		contents = "talos"
+	)
 
 	nameRegexp := regexp.MustCompile(regexp.QuoteMeta(name))
 
 	// From stdin, which is the only way the upload takes a name of its own.
 	suite.RunCLI(
-		[]string{"hypervisor", "content-library", "upload", "--nodes", node, "--name", name, "--overwrite", testContentLibrary, "-"},
-		base.WithStdin(strings.NewReader("talos")),
+		[]string{
+			"hypervisor", "content-library", "upload", "--nodes", node,
+			"--name", name, "--digest", digest.FromString(contents).String(), "--overwrite", testContentLibrary, "-",
+		},
+		base.WithStdin(strings.NewReader(contents)),
 		base.StdoutShouldMatch(nameRegexp),
+		// The digests themselves, not the wording around them: they carry their own algorithm
+		// prefix and appear nowhere else in the output.
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA256.FromString(contents).String()))),
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA512.FromString(contents).String()))),
+		base.StdoutShouldMatch(regexp.MustCompile(`integrity verified`)),
 	)
 
 	suite.RunCLI(
@@ -103,6 +116,57 @@ func (suite *ContentLibrarySuite) TestRoundTrip() {
 	suite.RunCLI(
 		[]string{"hypervisor", "content-library", "list", "--nodes", node, testContentLibrary},
 		base.StdoutShouldNotMatch(nameRegexp),
+	)
+}
+
+// TestUploadDigestMismatch covers the CLI reporting an upload the node refused as corrupt, and the
+// library not gaining the file it was refused under.
+func (suite *ContentLibrarySuite) TestUploadDigestMismatch() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	if !suite.libraryConfigured(node) {
+		suite.T().Skipf("skipping test, node %s has no content library %q configured", node, testContentLibrary)
+	}
+
+	const name = "cli-mismatch.raw"
+
+	nameRegexp := regexp.MustCompile(regexp.QuoteMeta(name))
+
+	suite.RunCLI(
+		[]string{
+			"hypervisor", "content-library", "upload", "--nodes", node,
+			"--name", name, "--digest", digest.FromString("something else").String(), "--overwrite", testContentLibrary, "-",
+		},
+		base.WithStdin(strings.NewReader("talos")),
+		base.ShouldFail(),
+		base.StderrShouldMatch(regexp.MustCompile(`code = DataLoss`)),
+		// A refused upload still says what the node received, on stdout and in plain text.
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA256.FromString("talos").String()))),
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA512.FromString("talos").String()))),
+		base.StdoutShouldNotMatch(regexp.MustCompile(`integrity verified`)),
+	)
+
+	suite.RunCLI(
+		[]string{"hypervisor", "content-library", "list", "--nodes", node, testContentLibrary},
+		base.StdoutShouldNotMatch(nameRegexp),
+	)
+}
+
+// TestUploadRejectsDigest covers a digest the API does not offer. It is refused before the library
+// is resolved and before a chunk is read, so it needs no library, and there is nothing received
+// for the node to report the digests of.
+func (suite *ContentLibrarySuite) TestUploadRejectsDigest() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	suite.RunCLI(
+		[]string{
+			"hypervisor", "content-library", "upload", "--nodes", node,
+			"--name", "image.raw", "--digest", "sha384:" + strings.Repeat("a", 96), "not-a-library", "-",
+		},
+		base.WithStdin(strings.NewReader("talos")),
+		base.ShouldFail(),
+		base.StderrShouldMatch(regexp.MustCompile(`is not supported`)),
+		base.StdoutEmpty(),
 	)
 }
 

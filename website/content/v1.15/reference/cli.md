@@ -2304,6 +2304,9 @@ Uploads a local file to a content library, under its own name.
 If '-' is given for <filename>, the contents are read from stdin, and --name is required
 to say what the file should be called within the library.
 
+With --digest, the node verifies what it received before storing it, and refuses the
+upload unless the contents hash to the digest given.
+
 ```
 talosctl hypervisor content-library upload <library_id> <filename> [flags]
 ```
@@ -2311,9 +2314,10 @@ talosctl hypervisor content-library upload <library_id> <filename> [flags]
 ### Options
 
 ```
-  -h, --help          help for upload
-      --name string   name of the file within the library (defaults to the base name of <filename>)
-      --overwrite     replace a file of the same name if it already exists
+      --digest string   expected digest of the contents as <algorithm>:<hex>, e.g. sha256:2345cdef... (sha256 and sha512); the upload is refused unless the contents match it
+  -h, --help            help for upload
+      --name string     name of the file within the library (defaults to the base name of <filename>)
+      --overwrite       replace a file of the same name if it already exists
 ```
 
 ### Options inherited from parent commands

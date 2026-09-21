@@ -11,6 +11,7 @@ import (
 	"io"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -23,10 +24,14 @@ import (
 const contentLibraryUploadChunkSize = 1 << 20
 
 // ContentLibraryUpload uploads a file to a content library on the node.
+//
+// digest is optional: when it is a non-empty "<algorithm>:<hex>" string, the node rejects the
+// upload unless the contents it received hash to it.
 func (c *Client) ContentLibraryUpload(
 	ctx context.Context,
 	libraryID, name string,
 	overwrite bool,
+	digest string,
 	contents io.Reader,
 	callOptions ...grpc.CallOption,
 ) (*machineapi.ContentLibraryServiceUploadResponse, error) {
@@ -41,6 +46,7 @@ func (c *Client) ContentLibraryUpload(
 				LibraryId: libraryID,
 				Name:      name,
 				Overwrite: overwrite,
+				Digest:    digest,
 			},
 		},
 	}); err != nil && !errors.Is(err, io.EOF) {
@@ -81,4 +87,26 @@ func (c *Client) ContentLibraryUpload(
 	}
 
 	return cli.CloseAndRecv()
+}
+
+// ContentLibraryUploadDigests returns the digests of an upload which ran to completion.
+//
+// The node hashes everything it receives, so a call which succeeded carries them on its response
+// and one which completed and was then refused carries them in the details of its error; either
+// argument may be nil. It returns nil for an upload which never got that far.
+func ContentLibraryUploadDigests(
+	resp *machineapi.ContentLibraryServiceUploadResponse,
+	err error,
+) *machineapi.ContentLibraryServiceUploadDigests {
+	if digests := resp.GetDigests(); digests != nil {
+		return digests
+	}
+
+	for _, detail := range status.Convert(err).Details() {
+		if digests, ok := detail.(*machineapi.ContentLibraryServiceUploadDigests); ok {
+			return digests
+		}
+	}
+
+	return nil
 }

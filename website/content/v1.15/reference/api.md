@@ -47,6 +47,7 @@ description: Talos gRPC API reference.
     - [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse)
     - [ContentLibraryServiceListRequest](#machine.ContentLibraryServiceListRequest)
     - [ContentLibraryServiceListResponse](#machine.ContentLibraryServiceListResponse)
+    - [ContentLibraryServiceUploadDigests](#machine.ContentLibraryServiceUploadDigests)
     - [ContentLibraryServiceUploadInfo](#machine.ContentLibraryServiceUploadInfo)
     - [ContentLibraryServiceUploadRequest](#machine.ContentLibraryServiceUploadRequest)
     - [ContentLibraryServiceUploadResponse](#machine.ContentLibraryServiceUploadResponse)
@@ -1286,6 +1287,26 @@ InspectService provides auxiliary API to inspect OS internals.
 
 
 
+<a name="machine.ContentLibraryServiceUploadDigests"></a>
+
+### ContentLibraryServiceUploadDigests
+ContentLibraryServiceUploadDigests are the digests of what an upload carried.
+
+They are computed over everything the node received, under every algorithm the API can verify,
+whether or not the contents were stored: they are carried by the response of an upload which
+succeeded, and by the details of the error of one which completed and was then refused.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| sha256 | [string](#string) |  | Digest of the contents, as "sha256:<hex>". |
+| sha512 | [string](#string) |  | Digest of the contents, as "sha512:<hex>". |
+
+
+
+
+
+
 <a name="machine.ContentLibraryServiceUploadInfo"></a>
 
 ### ContentLibraryServiceUploadInfo
@@ -1299,6 +1320,7 @@ It is sent as the first message of the Upload stream.
 | library_id | [string](#string) |  | ID of the content library to upload to. |
 | name | [string](#string) |  | Name of the file within the library. |
 | overwrite | [bool](#bool) |  | Overwrite an existing file with the same name. |
+| digest | [string](#string) |  | Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".<br><br>Optional: when it is set, the upload is rejected unless the contents hash to it. The algorithms supported are sha256 and sha512. |
 
 
 
@@ -1331,6 +1353,7 @@ It is sent as the first message of the Upload stream.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | Name of the uploaded file. |
 | size | [uint64](#uint64) |  | Size of the uploaded file in bytes. |
+| digests | [ContentLibraryServiceUploadDigests](#machine.ContentLibraryServiceUploadDigests) |  | Digests of the contents stored. |
 
 
 
