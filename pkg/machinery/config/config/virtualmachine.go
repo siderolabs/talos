@@ -29,6 +29,8 @@ type VirtualMachineConfig interface {
 	Disks() []VirtualMachineDiskConfig
 	// Console settings.
 	Console() VirtualMachineConsoleConfig
+	// Networking settings.
+	Networking() VirtualMachineNetworkingConfig
 }
 
 // VirtualMachineCPUConfig defines the processors presented to the guest.
@@ -133,4 +135,20 @@ type VirtualMachineFirmwareConfig interface {
 type VirtualMachineFirmwareSecureBootConfig interface {
 	// Enabled reports whether the guest boots with secure boot, with the default applied.
 	Enabled() bool
+}
+
+// VirtualMachineNetworkingConfig defines the networking of a virtual machine.
+//
+//nolint:iface
+type VirtualMachineNetworkingConfig interface {
+	// Interfaces attached to the virtual machine, in declaration order.
+	Interfaces() []VirtualMachineInterfaceConfig
+}
+
+// VirtualMachineInterfaceConfig defines a single network interface of a virtual machine.
+type VirtualMachineInterfaceConfig interface {
+	// Name of the interface, unique within the virtual machine.
+	Name() string
+	// Link is the kernel name of the host link the interface is attached to.
+	Link() string
 }

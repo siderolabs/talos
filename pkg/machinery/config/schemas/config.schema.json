@@ -2321,6 +2321,13 @@
           "description": "Consoles attached to the virtual machine.\n\nOptional; omitting it leaves both consoles detached.\n",
           "markdownDescription": "Consoles attached to the virtual machine.\n\nOptional; omitting it leaves both consoles detached.",
           "x-intellij-html-description": "\u003cp\u003eConsoles attached to the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves both consoles detached.\u003c/p\u003e\n"
+        },
+        "networking": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineNetworking",
+          "title": "networking",
+          "description": "Networking settings for the virtual machine.\n\nOptional; a virtual machine with no interfaces has no network connectivity at all.\n",
+          "markdownDescription": "Networking settings for the virtual machine.\n\nOptional; a virtual machine with no interfaces has no network connectivity at all.",
+          "x-intellij-html-description": "\u003cp\u003eNetworking settings for the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eOptional; a virtual machine with no interfaces has no network connectivity at all.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2546,6 +2553,31 @@
       "type": "object",
       "description": "VirtualMachineFirmwareSecureBoot describes the secure boot settings of a virtual machine."
     },
+    "hypervisor.VirtualMachineInterface": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the interface, unique within the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. This is how the interface is addressed over the API; it is not the\ndevice name inside the guest, which the guest kernel chooses for itself.\n",
+          "markdownDescription": "Name of the interface, unique within the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. This is how the interface is addressed over the API; it is not the\ndevice name inside the guest, which the guest kernel chooses for itself.",
+          "x-intellij-html-description": "\u003cp\u003eName of the interface, unique within the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. This is how the interface is addressed over the API; it is not the\ndevice name inside the guest, which the guest kernel chooses for itself.\u003c/p\u003e\n"
+        },
+        "link": {
+          "type": "string",
+          "title": "link",
+          "description": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.\n",
+          "markdownDescription": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.",
+          "x-intellij-html-description": "\u003cp\u003eKernel name (or alias) of the host link the interface is attached to.\u003c/p\u003e\n\n\u003cp\u003eThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "link",
+        "name"
+      ],
+      "description": "VirtualMachineInterface describes a single network interface of a virtual machine."
+    },
     "hypervisor.VirtualMachineMemory": {
       "properties": {
         "size": {
@@ -2569,6 +2601,23 @@
         "size"
       ],
       "description": "VirtualMachineMemory describes the memory presented to the guest."
+    },
+    "hypervisor.VirtualMachineNetworking": {
+      "properties": {
+        "interfaces": {
+          "items": {
+            "$ref": "#/$defs/hypervisor.VirtualMachineInterface"
+          },
+          "type": "array",
+          "title": "interfaces",
+          "description": "Network interfaces presented to the guest.\n\nRemoving an interface from this list detaches it from the virtual machine.\n\nA configuration patch replaces this list as a whole rather than appending to it.\n",
+          "markdownDescription": "Network interfaces presented to the guest.\n\nRemoving an interface from this list detaches it from the virtual machine.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+          "x-intellij-html-description": "\u003cp\u003eNetwork interfaces presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eRemoving an interface from this list detaches it from the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eA configuration patch replaces this list as a whole rather than appending to it.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineNetworking describes the networking of a virtual machine."
     },
     "hypervisor.VirtualMachineSerial": {
       "properties": {

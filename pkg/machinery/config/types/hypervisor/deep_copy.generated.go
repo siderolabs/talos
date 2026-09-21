@@ -51,5 +51,9 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 		cp.ConsoleConfig.VNCConfig.VNCEnabled = new(bool)
 		*cp.ConsoleConfig.VNCConfig.VNCEnabled = *o.ConsoleConfig.VNCConfig.VNCEnabled
 	}
+	if o.NetworkingConfig.InterfacesConfig != nil {
+		cp.NetworkingConfig.InterfacesConfig = make([]VirtualMachineInterface, len(o.NetworkingConfig.InterfacesConfig))
+		copy(cp.NetworkingConfig.InterfacesConfig, o.NetworkingConfig.InterfacesConfig)
+	}
 	return &cp
 }

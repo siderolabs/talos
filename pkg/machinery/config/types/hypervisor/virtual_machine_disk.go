@@ -317,10 +317,6 @@ func (i *VirtualMachineDiskFromImage) Mode() hypervisorhelpers.VirtualMachineDis
 
 // Validate checks the disk and returns its name.
 //
-// The name is returned so that the caller can check it for uniqueness in the same pass. The index
-// is formatted into every error rather than wrapped around them all, because a disk can fail
-// several rules at once and errors.Join would leave all but the first one unattributed.
-//
 //nolint:gocyclo,cyclop
 func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 	var validationErrors error

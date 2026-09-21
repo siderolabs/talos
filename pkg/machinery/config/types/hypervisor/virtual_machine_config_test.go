@@ -144,6 +144,30 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "networking",
+			filename: "virtualmachineconfig_networking.yaml",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
+				c.MetaName = "vm1"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+				c.CPUConfig.CPUCount = 4
+				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{
+					{
+						InterfaceName: "net0",
+						InterfaceLink: "eth0",
+					},
+					{
+						InterfaceName: "net1",
+						InterfaceLink: "eth1",
+					},
+				}
+
+				return c
+			},
+		},
+		{
 			name:     "minimal",
 			filename: "virtualmachineconfig_minimal.yaml",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
@@ -519,8 +543,91 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "interface without a link",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0")}
+				c.NetworkingConfig.InterfacesConfig[0].InterfaceLink = ""
+
+				return c
+			},
+
+			expectedErrors: "networking.interfaces[0]: link is required",
+		},
+		{
+			name: "link too long",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0")}
+				c.NetworkingConfig.InterfacesConfig[0].InterfaceLink = "eth0123456789abc"
+
+				return c
+			},
+
+			expectedErrors: "networking.interfaces[0]: link \"eth0123456789abc\" must not exceed 15 bytes",
+		},
+		{
+			name: "link with a slash",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0")}
+				c.NetworkingConfig.InterfacesConfig[0].InterfaceLink = "eth0/1"
+
+				return c
+			},
+
+			expectedErrors: "networking.interfaces[0]: link \"eth0/1\" must not contain '/' or ':'",
+		},
+		{
+			name: "link with whitespace",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0")}
+				c.NetworkingConfig.InterfacesConfig[0].InterfaceLink = "eth 0"
+
+				return c
+			},
+
+			expectedErrors: "networking.interfaces[0]: link \"eth 0\" must not contain whitespace or non-printable characters",
+		},
+		{
+			name: "duplicate interface name",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0"), linkInterface("net0")}
+
+				return c
+			},
+
+			expectedErrors: `networking.interfaces[1]: duplicate interface name "net0"`,
+		},
+		{
+			name: "duplicate interface name after unrelated error",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0"), linkInterface("net0")}
+				c.NetworkingConfig.InterfacesConfig[0].InterfaceLink = ""
+
+				return c
+			},
+
+			expectedErrors: "networking.interfaces[0]: link is required\n" +
+				"networking.interfaces[1]: duplicate interface name \"net0\"",
+		},
+		{
 			name: "valid",
 			cfg:  validVirtualMachineConfig,
+		},
+		{
+			name: "valid with interfaces",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{
+					linkInterface("net0"), linkInterface("net1"), linkInterface("net2"),
+				}
+
+				return c
+			},
 		},
 		{
 			name: "valid with disks",
@@ -731,6 +838,13 @@ func blankDisk(name string) hypervisor.VirtualMachineDisk {
 		ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
 			BlankConfig: &hypervisor.VirtualMachineDiskBlank{},
 		},
+	}
+}
+
+func linkInterface(name string) hypervisor.VirtualMachineInterface {
+	return hypervisor.VirtualMachineInterface{
+		InterfaceName: name,
+		InterfaceLink: "eth0",
 	}
 }
 

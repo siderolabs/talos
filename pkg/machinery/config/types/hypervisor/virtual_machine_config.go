@@ -103,6 +103,11 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//
 	//     Optional; omitting it leaves both consoles detached.
 	ConsoleConfig VirtualMachineConsole `yaml:"console,omitempty"`
+	//   description: |
+	//     Networking settings for the virtual machine.
+	//
+	//     Optional; a virtual machine with no interfaces has no network connectivity at all.
+	NetworkingConfig VirtualMachineNetworking `yaml:"networking,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest.
@@ -214,6 +219,18 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 			},
 		},
 	}
+	cfg.NetworkingConfig = VirtualMachineNetworking{
+		InterfacesConfig: []VirtualMachineInterface{
+			{
+				InterfaceName: "net0",
+				InterfaceLink: "eth0",
+			},
+			{
+				InterfaceName: "net1",
+				InterfaceLink: "eth1",
+			},
+		},
+	}
 	cfg.ConsoleConfig = VirtualMachineConsole{
 		SerialConfig: VirtualMachineSerial{
 			SerialEnabled: new(true),
@@ -299,6 +316,11 @@ func (c *VirtualMachineConfigV1Alpha1) PowerState() hypervisorhelpers.PowerState
 	return c.PowerStateConfig
 }
 
+// Networking implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Networking() config.VirtualMachineNetworkingConfig {
+	return &c.NetworkingConfig
+}
+
 // Validate implements config.Validator interface.
 func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
@@ -309,6 +331,7 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	validationErrors = errors.Join(validationErrors, c.ValidateMemory())
 	validationErrors = errors.Join(validationErrors, c.ValidateFirmware())
 	validationErrors = errors.Join(validationErrors, c.ValidateDisks())
+	validationErrors = errors.Join(validationErrors, c.ValidateNetworking())
 
 	return nil, validationErrors
 }
@@ -372,6 +395,35 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateDisks() error {
 		}
 
 		bootOrders[disk.DiskBootOrder] = struct{}{}
+	}
+
+	return validationErrors
+}
+
+// ValidateNetworking checks the network interfaces of the virtual machine.
+func (c *VirtualMachineConfigV1Alpha1) ValidateNetworking() error {
+	var validationErrors error
+
+	names := map[string]struct{}{}
+
+	for i := range c.NetworkingConfig.InterfacesConfig {
+		iface := &c.NetworkingConfig.InterfacesConfig[i]
+
+		// The uniqueness check below runs whatever the interface's own validation said: an
+		// interface which fails a rule of its own still occupies its name, and skipping it would
+		// hide a collision until the other error is fixed.
+		name, err := iface.Validate(i)
+		validationErrors = errors.Join(validationErrors, err)
+
+		// An empty name is reported by the interface itself, so it is not also collided on.
+		if name != "" {
+			if _, exists := names[name]; exists {
+				validationErrors = errors.Join(validationErrors,
+					fmt.Errorf("networking.interfaces[%d]: duplicate interface name %q", i, name))
+			}
+
+			names[name] = struct{}{}
+		}
 	}
 
 	return validationErrors

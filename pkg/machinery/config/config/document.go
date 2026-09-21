@@ -15,6 +15,8 @@ type Document interface {
 }
 
 // NamedDocument is a configuration document which has a name.
+//
+//nolint:iface
 type NamedDocument interface {
 	// Name of the document.
 	Name() string

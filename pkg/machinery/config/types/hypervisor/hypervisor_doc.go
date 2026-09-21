@@ -133,6 +133,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Consoles attached to the virtual machine.\n\nOptional; omitting it leaves both consoles detached.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Consoles attached to the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "networking",
+				Type:        "VirtualMachineNetworking",
+				Note:        "",
+				Description: "Networking settings for the virtual machine.\n\nOptional; a virtual machine with no interfaces has no network connectivity at all.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Networking settings for the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -563,6 +570,66 @@ func (VirtualMachineVNC) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineNetworking) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineNetworking",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineNetworking describes the networking of a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineNetworking describes the networking of a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "networking",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "interfaces",
+				Type:        "[]VirtualMachineInterface",
+				Note:        "",
+				Description: "Network interfaces presented to the guest.\n\nRemoving an interface from this list detaches it from the virtual machine.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Network interfaces presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineInterface) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineInterface",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineInterface describes a single network interface of a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineInterface describes a single network interface of a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineNetworking",
+				FieldName: "interfaces",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the interface, unique within the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. This is how the interface is addressed over the API; it is not the\ndevice name inside the guest, which the guest kernel chooses for itself.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the interface, unique within the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "link",
+				Type:        "string",
+				Note:        "",
+				Description: "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kernel name (or alias) of the host link the interface is attached to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "net0")
+	doc.Fields[1].AddExample("", "eth0")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file hypervisor_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -584,6 +651,8 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineConsole{}.Doc(),
 			VirtualMachineSerial{}.Doc(),
 			VirtualMachineVNC{}.Doc(),
+			VirtualMachineNetworking{}.Doc(),
+			VirtualMachineInterface{}.Doc(),
 		},
 	}
 }

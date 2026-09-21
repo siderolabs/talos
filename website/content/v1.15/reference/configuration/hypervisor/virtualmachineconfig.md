@@ -85,6 +85,14 @@ console:
     # VNC console settings.
     vnc:
         enabled: true # Attach a VNC console.
+# Networking settings for the virtual machine.
+networking:
+    # Network interfaces presented to the guest.
+    interfaces:
+        - name: net0 # Name of the interface, unique within the virtual machine.
+          link: eth0 # Kernel name (or alias) of the host link the interface is attached to.
+        - name: net1 # Name of the interface, unique within the virtual machine.
+          link: eth1 # Kernel name (or alias) of the host link the interface is attached to.
 {{< /highlight >}}
 
 
@@ -97,6 +105,7 @@ console:
 |`firmware` |<a href="#VirtualMachineConfig.firmware">VirtualMachineFirmware</a> |Firmware the virtual machine boots.  | |
 |`disks` |<a href="#VirtualMachineConfig.disks.">[]VirtualMachineDisk</a> |Disks attached to the virtual machine.<br><br>Removing a disk detaches it from the virtual machine; the volume backing it stays in<br>its storage pool and is deleted separately.<br><br>A configuration patch merges into this list by disk name: a patch entry naming an<br>existing disk updates that disk, and any other entry is appended. Removing a disk<br>requires supplying the document in full.  | |
 |`console` |<a href="#VirtualMachineConfig.console">VirtualMachineConsole</a> |Consoles attached to the virtual machine.<br><br>Optional; omitting it leaves both consoles detached.  | |
+|`networking` |<a href="#VirtualMachineConfig.networking">VirtualMachineNetworking</a> |Networking settings for the virtual machine.<br><br>Optional; a virtual machine with no interfaces has no network connectivity at all.  | |
 
 
 
@@ -310,6 +319,43 @@ VirtualMachineVNC describes the VNC console of a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Attach a VNC console.<br><br>Optional; defaults to disabled.  | |
+
+
+
+
+
+
+
+
+## networking {#VirtualMachineConfig.networking}
+
+VirtualMachineNetworking describes the networking of a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`interfaces` |<a href="#VirtualMachineConfig.networking.interfaces.">[]VirtualMachineInterface</a> |Network interfaces presented to the guest.<br><br>Removing an interface from this list detaches it from the virtual machine.<br><br>A configuration patch replaces this list as a whole rather than appending to it.  | |
+
+
+
+
+### interfaces[] {#VirtualMachineConfig.networking.interfaces.}
+
+VirtualMachineInterface describes a single network interface of a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Name of the interface, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. This is how the interface is addressed over the API; it is not the<br>device name inside the guest, which the guest kernel chooses for itself. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+name: net0
+{{< /highlight >}}</details> | |
+|`link` |string |Kernel name (or alias) of the host link the interface is attached to.<br><br>The link must already exist on the host: it is attached to as is, and neither Talos nor<br>the hypervisor configures networking for it. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+link: eth0
+{{< /highlight >}}</details> | |
 
 
 
