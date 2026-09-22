@@ -113,6 +113,12 @@ func TestWireguardSpecDecodeStatus(t *testing.T) {
 		priv, err := wgtypes.GeneratePrivateKey()
 		require.NoError(t, err)
 
+		pub1, err := wgtypes.GeneratePrivateKey()
+		require.NoError(t, err)
+
+		psk, err := wgtypes.GenerateKey()
+		require.NoError(t, err)
+
 		var spec network.WireguardSpec
 
 		// decode in status mode
@@ -121,13 +127,38 @@ func TestWireguardSpecDecodeStatus(t *testing.T) {
 			PublicKey:    priv.PublicKey(),
 			ListenPort:   30000,
 			FirewallMark: 1,
+			Peers: []wgtypes.Peer{
+				{
+					PublicKey:    pub1.PublicKey(),
+					PresharedKey: psk,
+					Endpoint: &net.UDPAddr{
+						IP:   net.ParseIP("10.2.0.3"),
+						Port: 20000,
+					},
+					AllowedIPs: []net.IPNet{
+						{
+							IP:   net.ParseIP("172.24.0.0"),
+							Mask: net.IPv4Mask(255, 255, 0, 0),
+						},
+					},
+				},
+			},
 		}, true)
 
 		expected := network.WireguardSpec{
 			PublicKey:    priv.PublicKey().String(),
 			ListenPort:   30000,
 			FirewallMark: 1,
-			Peers:        []network.WireguardPeer{},
+			Peers: []network.WireguardPeer{
+				{
+					PublicKey:              pub1.PublicKey().String(),
+					PresharedKeyConfigured: true,
+					Endpoint:               "10.2.0.3:20000",
+					AllowedIPs: []netip.Prefix{
+						netip.MustParsePrefix("172.24.0.0/16"),
+					},
+				},
+			},
 		}
 
 		assert.Equal(t, expected, spec)

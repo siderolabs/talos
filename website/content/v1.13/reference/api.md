@@ -10221,6 +10221,7 @@ WireguardPeer describes a single peer.
 | endpoint | [string](#string) |  |  |
 | persistent_keepalive_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | allowed_ips | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| preshared_key_configured | [bool](#bool) |  |  |
 
 
 

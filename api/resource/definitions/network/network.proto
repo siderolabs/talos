@@ -599,6 +599,7 @@ message WireguardPeer {
   string endpoint = 3;
   google.protobuf.Duration persistent_keepalive_interval = 4;
   repeated common.NetIPPrefix allowed_ips = 5;
+  bool preshared_key_configured = 6;
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
