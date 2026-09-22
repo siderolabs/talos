@@ -23,8 +23,8 @@ import (
 
 	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // SeccompProfileFileController manages the Seccomp Profiles on the host.
@@ -55,8 +55,8 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 	// initially, wait for /var to be mounted
 	if err := r.UpdateInputs([]controller.Input{
 		{
-			Namespace: runtimeres.NamespaceName,
-			Type:      runtimeres.MountStatusType,
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
 			ID:        optional.Some(constants.EphemeralPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
@@ -71,7 +71,7 @@ func (ctrl *SeccompProfileFileController) Run(ctx context.Context, r controller.
 		case <-r.EventCh():
 		}
 
-		_, err := safe.ReaderGet[*runtimeres.MountStatus](ctx, r, resource.NewMetadata(runtimeres.NamespaceName, runtimeres.MountStatusType, constants.EphemeralPartitionLabel, resource.VersionUndefined))
+		_, err := safe.ReaderGet[*block.VolumeMountStatus](ctx, r, resource.NewMetadata(block.NamespaceName, block.VolumeMountStatusType, constants.EphemeralPartitionLabel, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				// in container mode EPHEMERAL is always mounted
