@@ -76,6 +76,10 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//   schemaRequired: true
 	MemoryConfig VirtualMachineMemory `yaml:"memory"`
 	//   description: |
+	//     Firmware the virtual machine boots.
+	//   schemaRequired: true
+	FirmwareConfig VirtualMachineFirmware `yaml:"firmware"`
+	//   description: |
 	//     Disks attached to the virtual machine.
 	//
 	//     Removing a disk detaches it from the virtual machine; the volume backing it stays in
@@ -157,6 +161,12 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 		MemorySize: meta.MustByteSize("4GiB"),
 		BallooningConfig: &VirtualMachineBallooning{
 			BallooningEnabled: new(true),
+		},
+	}
+	cfg.FirmwareConfig = VirtualMachineFirmware{
+		FirmwareType: config.VirtualMachineFirmwareTypeUEFI,
+		SecureBootConfig: VirtualMachineFirmwareSecureBoot{
+			SecureBootEnabled: new(true),
 		},
 	}
 	cfg.DisksConfig = []VirtualMachineDisk{
@@ -269,6 +279,11 @@ func (c *VirtualMachineConfigV1Alpha1) Console() config.VirtualMachineConsoleCon
 	return &c.ConsoleConfig
 }
 
+// Firmware implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Firmware() config.VirtualMachineFirmwareConfig {
+	return &c.FirmwareConfig
+}
+
 // Validate implements config.Validator interface.
 func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
@@ -276,6 +291,7 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	validationErrors = errors.Join(validationErrors, c.ValidateName())
 	validationErrors = errors.Join(validationErrors, c.ValidateCPU())
 	validationErrors = errors.Join(validationErrors, c.ValidateMemory())
+	validationErrors = errors.Join(validationErrors, c.ValidateFirmware())
 	validationErrors = errors.Join(validationErrors, c.ValidateDisks())
 
 	return nil, validationErrors
@@ -343,4 +359,9 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateDisks() error {
 	}
 
 	return validationErrors
+}
+
+// ValidateFirmware checks the firmware the virtual machine boots.
+func (c *VirtualMachineConfigV1Alpha1) ValidateFirmware() error {
+	return c.FirmwareConfig.validate()
 }

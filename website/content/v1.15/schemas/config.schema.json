@@ -2287,6 +2287,13 @@
           "markdownDescription": "Memory settings for the virtual machine.",
           "x-intellij-html-description": "\u003cp\u003eMemory settings for the virtual machine.\u003c/p\u003e\n"
         },
+        "firmware": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineFirmware",
+          "title": "firmware",
+          "description": "Firmware the virtual machine boots.\n",
+          "markdownDescription": "Firmware the virtual machine boots.",
+          "x-intellij-html-description": "\u003cp\u003eFirmware the virtual machine boots.\u003c/p\u003e\n"
+        },
         "disks": {
           "items": {
             "$ref": "#/$defs/hypervisor.VirtualMachineDisk"
@@ -2310,6 +2317,7 @@
       "required": [
         "apiVersion",
         "cpu",
+        "firmware",
         "kind",
         "memory",
         "name"
@@ -2470,6 +2478,44 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VirtualMachineDiskProvision describes where a disk's contents come from.\\n\\nExactly one source must be set.\\n"
+    },
+    "hypervisor.VirtualMachineFirmware": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Firmware the guest boots.\n\nRequired, and unchangeable for the life of the guest: a guest installed under one\nfirmware will not boot under the other. uefi is the only option on arm64, and the only\none secure boot can be used with.\n",
+          "markdownDescription": "Firmware the guest boots.\n\nRequired, and unchangeable for the life of the guest: a guest installed under one\nfirmware will not boot under the other. `uefi` is the only option on arm64, and the only\none secure boot can be used with.",
+          "x-intellij-html-description": "\u003cp\u003eFirmware the guest boots.\u003c/p\u003e\n\n\u003cp\u003eRequired, and unchangeable for the life of the guest: a guest installed under one\nfirmware will not boot under the other. \u003ccode\u003euefi\u003c/code\u003e is the only option on arm64, and the only\none secure boot can be used with.\u003c/p\u003e\n"
+        },
+        "secureBoot": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineFirmwareSecureBoot",
+          "title": "secureBoot",
+          "description": "Secure boot settings.\n\nOptional; secure boot is disabled when this section is omitted.\n",
+          "markdownDescription": "Secure boot settings.\n\nOptional; secure boot is disabled when this section is omitted.",
+          "x-intellij-html-description": "\u003cp\u003eSecure boot settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; secure boot is disabled when this section is omitted.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "description": "VirtualMachineFirmware describes the firmware a virtual machine boots."
+    },
+    "hypervisor.VirtualMachineFirmwareSecureBoot": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Boot the guest with secure boot.\n\nRequires type: uefi. Talos keeps a per-virtual-machine variable store alongside the\nrest of the machine’s identity, seeded from a signed firmware template and preserved for\nthe life of the guest, as it is where the enrolled keys live.\n\nOptional; defaults to disabled.\n",
+          "markdownDescription": "Boot the guest with secure boot.\n\nRequires `type: uefi`. Talos keeps a per-virtual-machine variable store alongside the\nrest of the machine's identity, seeded from a signed firmware template and preserved for\nthe life of the guest, as it is where the enrolled keys live.\n\nOptional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003eBoot the guest with secure boot.\u003c/p\u003e\n\n\u003cp\u003eRequires \u003ccode\u003etype: uefi\u003c/code\u003e. Talos keeps a per-virtual-machine variable store alongside the\nrest of the machine\u0026rsquo;s identity, seeded from a signed firmware template and preserved for\nthe life of the guest, as it is where the enrolled keys live.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineFirmwareSecureBoot describes the secure boot settings of a virtual machine."
     },
     "hypervisor.VirtualMachineMemory": {
       "properties": {

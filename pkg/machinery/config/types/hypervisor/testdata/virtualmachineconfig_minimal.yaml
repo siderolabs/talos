@@ -5,3 +5,5 @@ cpu:
     count: 1
 memory:
     size: 512MiB
+firmware:
+    type: bios

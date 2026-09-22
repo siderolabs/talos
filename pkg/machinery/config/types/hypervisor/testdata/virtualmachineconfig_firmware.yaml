@@ -5,7 +5,7 @@ cpu:
     count: 4
 memory:
     size: 4GiB
-    ballooning:
-        enabled: true
 firmware:
     type: uefi
+    secureBoot:
+        enabled: true

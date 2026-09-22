@@ -24,6 +24,10 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 			*cp.MemoryConfig.BallooningConfig.BallooningEnabled = *o.MemoryConfig.BallooningConfig.BallooningEnabled
 		}
 	}
+	if o.FirmwareConfig.SecureBootConfig.SecureBootEnabled != nil {
+		cp.FirmwareConfig.SecureBootConfig.SecureBootEnabled = new(bool)
+		*cp.FirmwareConfig.SecureBootConfig.SecureBootEnabled = *o.FirmwareConfig.SecureBootConfig.SecureBootEnabled
+	}
 	if o.DisksConfig != nil {
 		cp.DisksConfig = make([]VirtualMachineDisk, len(o.DisksConfig))
 		copy(cp.DisksConfig, o.DisksConfig)

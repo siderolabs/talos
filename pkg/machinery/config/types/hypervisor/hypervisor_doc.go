@@ -101,6 +101,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory settings for the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "firmware",
+				Type:        "VirtualMachineFirmware",
+				Note:        "",
+				Description: "Firmware the virtual machine boots.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Firmware the virtual machine boots." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "disks",
 				Type:        "[]VirtualMachineDisk",
 				Note:        "",
@@ -201,6 +208,67 @@ func (VirtualMachineBallooning) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.\n\nBallooning only shrinks the guest below `memory.size`; growing beyond it is memory\nhot-add, which is a separate mechanism.\n\nOptional; defaults to disabled.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineFirmware) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineFirmware",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineFirmware describes the firmware a virtual machine boots." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineFirmware describes the firmware a virtual machine boots.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "firmware",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "type",
+				Type:        "VirtualMachineFirmwareType",
+				Note:        "",
+				Description: "Firmware the guest boots.\n\nRequired, and unchangeable for the life of the guest: a guest installed under one\nfirmware will not boot under the other. `uefi` is the only option on arm64, and the only\none secure boot can be used with.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Firmware the guest boots." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"uefi",
+					"bios",
+				},
+			},
+			{
+				Name:        "secureBoot",
+				Type:        "VirtualMachineFirmwareSecureBoot",
+				Note:        "",
+				Description: "Secure boot settings.\n\nOptional; secure boot is disabled when this section is omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Secure boot settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineFirmwareSecureBoot) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineFirmwareSecureBoot",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineFirmwareSecureBoot describes the secure boot settings of a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineFirmwareSecureBoot describes the secure boot settings of a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineFirmware",
+				FieldName: "secureBoot",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Boot the guest with secure boot.\n\nRequires `type: uefi`. Talos keeps a per-virtual-machine variable store alongside the\nrest of the machine's identity, seeded from a signed firmware template and preserved for\nthe life of the guest, as it is where the enrolled keys live.\n\nOptional; defaults to disabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Boot the guest with secure boot." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -495,6 +563,8 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineCPU{}.Doc(),
 			VirtualMachineMemory{}.Doc(),
 			VirtualMachineBallooning{}.Doc(),
+			VirtualMachineFirmware{}.Doc(),
+			VirtualMachineFirmwareSecureBoot{}.Doc(),
 			VirtualMachineDisk{}.Doc(),
 			VirtualMachineDiskProvision{}.Doc(),
 			VirtualMachineDiskBlank{}.Doc(),

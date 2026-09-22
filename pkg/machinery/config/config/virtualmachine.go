@@ -17,6 +17,8 @@ type VirtualMachineConfig interface {
 	CPU() VirtualMachineCPUConfig
 	// Memory settings; never nil.
 	Memory() VirtualMachineMemoryConfig
+	// Firmware settings.
+	Firmware() VirtualMachineFirmwareConfig
 	// Disks attached to the virtual machine, in declaration order.
 	Disks() []VirtualMachineDiskConfig
 	// Console settings.
@@ -163,5 +165,34 @@ type VirtualMachineSerialConfig interface {
 //nolint:iface
 type VirtualMachineVNCConfig interface {
 	// Enabled reports whether the VNC console should be attached.
+	Enabled() bool
+}
+
+// VirtualMachineFirmwareType is the firmware a virtual machine boots.
+type VirtualMachineFirmwareType string
+
+// Virtual machine firmware types.
+const (
+	// VirtualMachineFirmwareTypeUEFI boots the guest with UEFI firmware. Required for secure boot,
+	// and the only thing arm64 has.
+	VirtualMachineFirmwareTypeUEFI VirtualMachineFirmwareType = "uefi"
+	// VirtualMachineFirmwareTypeBIOS boots the guest with legacy BIOS firmware, for guests which
+	// cannot boot any other way.
+	VirtualMachineFirmwareTypeBIOS VirtualMachineFirmwareType = "bios"
+)
+
+// VirtualMachineFirmwareConfig defines the firmware a virtual machine boots.
+type VirtualMachineFirmwareConfig interface {
+	// Type of firmware the guest boots.
+	Type() VirtualMachineFirmwareType
+	// SecureBoot settings.
+	SecureBoot() VirtualMachineFirmwareSecureBootConfig
+}
+
+// VirtualMachineFirmwareSecureBootConfig defines the secure boot settings of a virtual machine.
+//
+//nolint:iface
+type VirtualMachineFirmwareSecureBootConfig interface {
+	// Enabled reports whether the guest boots with secure boot, with the default applied.
 	Enabled() bool
 }

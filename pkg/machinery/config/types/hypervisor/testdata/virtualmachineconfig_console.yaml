@@ -5,6 +5,8 @@ cpu:
     count: 4
 memory:
     size: 4GiB
+firmware:
+    type: uefi
 console:
     serial:
         enabled: true

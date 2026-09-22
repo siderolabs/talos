@@ -47,6 +47,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MemoryConfig.BallooningConfig = &hypervisor.VirtualMachineBallooning{
 					BallooningEnabled: new(true),
 				}
+				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
 
 				return c
 			},
@@ -59,6 +60,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MetaName = "vm1"
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{
 					{
 						DiskName:      "system",
@@ -109,9 +111,28 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MetaName = "vm1"
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
 				c.ConsoleConfig = hypervisor.VirtualMachineConsole{
 					SerialConfig: hypervisor.VirtualMachineSerial{SerialEnabled: new(true)},
 					VNCConfig:    hypervisor.VirtualMachineVNC{VNCEnabled: new(true)},
+				}
+
+				return c
+			},
+		},
+		{
+			name:     "secure boot",
+			filename: "virtualmachineconfig_firmware.yaml",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
+				c.MetaName = "vm1"
+				c.CPUConfig.CPUCount = 4
+				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.FirmwareConfig = hypervisor.VirtualMachineFirmware{
+					FirmwareType: config.VirtualMachineFirmwareTypeUEFI,
+					SecureBootConfig: hypervisor.VirtualMachineFirmwareSecureBoot{
+						SecureBootEnabled: new(true),
+					},
 				}
 
 				return c
@@ -125,6 +146,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MetaName = "vm2"
 				c.CPUConfig.CPUCount = 1
 				c.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
+				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
 
 				return c
 			},
@@ -174,7 +196,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "empty",
 			cfg:  hypervisor.NewVirtualMachineConfigV1Alpha1,
 
-			expectedErrors: "name is required\ncpu.count is required\nmemory.size is required",
+			expectedErrors: "name is required\ncpu.count is required\nmemory.size is required\nfirmware.type is required",
 		},
 		{
 			name: "invalid name",
@@ -434,6 +456,43 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: `disks[0]: provision.fromImage.file "sub/talos.qcow2" must not contain a path separator`,
 		},
 		{
+			name: "unsupported firmware type",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.FirmwareConfig.FirmwareType = "seabios"
+
+				return c
+			},
+
+			expectedErrors: `unsupported firmware.type "seabios", expected uefi or bios`,
+		},
+		{
+			name: "secure boot on bios",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
+				c.FirmwareConfig.SecureBootConfig = hypervisor.VirtualMachineFirmwareSecureBoot{
+					SecureBootEnabled: new(true),
+				}
+
+				return c
+			},
+
+			expectedErrors: "firmware.secureBoot.enabled: secure boot requires firmware type uefi",
+		},
+		{
+			name: "secure boot off on bios",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
+				c.FirmwareConfig.SecureBootConfig = hypervisor.VirtualMachineFirmwareSecureBoot{
+					SecureBootEnabled: new(false),
+				}
+
+				return c
+			},
+		},
+		{
 			name: "valid",
 			cfg:  validVirtualMachineConfig,
 		},
@@ -632,6 +691,7 @@ func validVirtualMachineConfig() *hypervisor.VirtualMachineConfigV1Alpha1 {
 	c.MetaName = "vm1"
 	c.CPUConfig.CPUCount = 4
 	c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+	c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
 
 	return c
 }
@@ -690,5 +750,29 @@ func TestVirtualMachineConfigConsoleDefaults(t *testing.T) {
 		cfg.ConsoleConfig.VNCConfig = hypervisor.VirtualMachineVNC{VNCEnabled: new(true)}
 
 		assert.True(t, cfg.Console().VNC().Enabled())
+	})
+}
+
+func TestVirtualMachineConfigFirmwareDefaults(t *testing.T) {
+	t.Parallel()
+
+	t.Run("omitted secureBoot reports disabled", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := validVirtualMachineConfig()
+
+		assert.Equal(t, config.VirtualMachineFirmwareTypeUEFI, cfg.Firmware().Type())
+		assert.False(t, cfg.Firmware().SecureBoot().Enabled())
+	})
+
+	t.Run("secureBoot can be turned on", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := validVirtualMachineConfig()
+		cfg.FirmwareConfig.SecureBootConfig = hypervisor.VirtualMachineFirmwareSecureBoot{
+			SecureBootEnabled: new(true),
+		}
+
+		assert.True(t, cfg.Firmware().SecureBoot().Enabled())
 	})
 }

@@ -34,6 +34,12 @@ memory:
     # Memory ballooning settings.
     ballooning:
         enabled: true # Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.
+# Firmware the virtual machine boots.
+firmware:
+    type: uefi # Firmware the guest boots.
+    # Secure boot settings.
+    secureBoot:
+        enabled: true # Boot the guest with secure boot.
 # Disks attached to the virtual machine.
 disks:
     - name: system # Name of the disk, unique within the virtual machine.
@@ -86,6 +92,7 @@ console:
 |`name` |string |Name of the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It is the ID used to address the virtual machine over the API.  | |
 |`cpu` |<a href="#VirtualMachineConfig.cpu">VirtualMachineCPU</a> |Processor settings for the virtual machine.  | |
 |`memory` |<a href="#VirtualMachineConfig.memory">VirtualMachineMemory</a> |Memory settings for the virtual machine.  | |
+|`firmware` |<a href="#VirtualMachineConfig.firmware">VirtualMachineFirmware</a> |Firmware the virtual machine boots.  | |
 |`disks` |<a href="#VirtualMachineConfig.disks.">[]VirtualMachineDisk</a> |Disks attached to the virtual machine.<br><br>Removing a disk detaches it from the virtual machine; the volume backing it stays in<br>its storage pool and is deleted separately.<br><br>A configuration patch merges into this list by disk name: a patch entry naming an<br>existing disk updates that disk, and any other entry is appended. Removing a disk<br>requires supplying the document in full.  | |
 |`console` |<a href="#VirtualMachineConfig.console">VirtualMachineConsole</a> |Consoles attached to the virtual machine.<br><br>Optional; omitting it leaves both consoles detached.  | |
 
@@ -137,6 +144,39 @@ VirtualMachineBallooning describes the virtio-balloon settings for a virtual mac
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.<br><br>Ballooning only shrinks the guest below `memory.size`; growing beyond it is memory<br>hot-add, which is a separate mechanism.<br><br>Optional; defaults to disabled.  | |
+
+
+
+
+
+
+
+
+## firmware {#VirtualMachineConfig.firmware}
+
+VirtualMachineFirmware describes the firmware a virtual machine boots.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`type` |VirtualMachineFirmwareType |Firmware the guest boots.<br><br>Required, and unchangeable for the life of the guest: a guest installed under one<br>firmware will not boot under the other. `uefi` is the only option on arm64, and the only<br>one secure boot can be used with.  |`uefi`<br />`bios`<br /> |
+|`secureBoot` |<a href="#VirtualMachineConfig.firmware.secureBoot">VirtualMachineFirmwareSecureBoot</a> |Secure boot settings.<br><br>Optional; secure boot is disabled when this section is omitted.  | |
+
+
+
+
+### secureBoot {#VirtualMachineConfig.firmware.secureBoot}
+
+VirtualMachineFirmwareSecureBoot describes the secure boot settings of a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Boot the guest with secure boot.<br><br>Requires `type: uefi`. Talos keeps a per-virtual-machine variable store alongside the<br>rest of the machine's identity, seeded from a signed firmware template and preserved for<br>the life of the guest, as it is where the enrolled keys live.<br><br>Optional; defaults to disabled.  | |
 
 
 
