@@ -2296,6 +2296,13 @@
           "description": "Disks attached to the virtual machine.\n\nRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\n\nA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.\n",
           "markdownDescription": "Disks attached to the virtual machine.\n\nRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\n\nA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.",
           "x-intellij-html-description": "\u003cp\u003eDisks attached to the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\u003c/p\u003e\n\n\u003cp\u003eA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.\u003c/p\u003e\n"
+        },
+        "console": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineConsole",
+          "title": "console",
+          "description": "Consoles attached to the virtual machine.\n\nOptional; omitting it leaves both consoles detached.\n",
+          "markdownDescription": "Consoles attached to the virtual machine.\n\nOptional; omitting it leaves both consoles detached.",
+          "x-intellij-html-description": "\u003cp\u003eConsoles attached to the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves both consoles detached.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2308,6 +2315,27 @@
         "name"
       ],
       "description": "VirtualMachineConfig is a virtual machine configuration document.\\nVirtualMachineConfig declares a virtual machine run by Talos.\\n\\nThis document is the skeleton of the virtual machine: the rest of the machine's shape\\n(firmware, disks, network interfaces, guest seeding, consoles) is added to it over time,\\nand every addition is a new field rather than a change to an existing one.\\n\\nStatus is reported via `VirtualMachineStatus`.\\n"
+    },
+    "hypervisor.VirtualMachineConsole": {
+      "properties": {
+        "serial": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineSerial",
+          "title": "serial",
+          "description": "Serial console settings.\n",
+          "markdownDescription": "Serial console settings.",
+          "x-intellij-html-description": "\u003cp\u003eSerial console settings.\u003c/p\u003e\n"
+        },
+        "vnc": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineVNC",
+          "title": "vnc",
+          "description": "VNC console settings.\n",
+          "markdownDescription": "VNC console settings.",
+          "x-intellij-html-description": "\u003cp\u003eVNC console settings.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineConsole describes the consoles attached to a virtual machine."
     },
     "hypervisor.VirtualMachineDisk": {
       "properties": {
@@ -2466,6 +2494,34 @@
         "size"
       ],
       "description": "VirtualMachineMemory describes the memory presented to the guest."
+    },
+    "hypervisor.VirtualMachineSerial": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Attach a serial console.\n\nOptional; defaults to disabled.\n",
+          "markdownDescription": "Attach a serial console.\n\nOptional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003eAttach a serial console.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineSerial describes the serial console of a virtual machine."
+    },
+    "hypervisor.VirtualMachineVNC": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Attach a VNC console.\n\nOptional; defaults to disabled.\n",
+          "markdownDescription": "Attach a VNC console.\n\nOptional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003eAttach a VNC console.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineVNC describes the VNC console of a virtual machine."
     },
     "k8s.AcceptedServiceAccountConfig": {
       "properties": {

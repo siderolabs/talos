@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+cpu:
+    count: 4
+memory:
+    size: 4GiB
+console:
+    serial:
+        enabled: true
+    vnc:
+        enabled: true

@@ -39,5 +39,13 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 			}
 		}
 	}
+	if o.ConsoleConfig.SerialConfig.SerialEnabled != nil {
+		cp.ConsoleConfig.SerialConfig.SerialEnabled = new(bool)
+		*cp.ConsoleConfig.SerialConfig.SerialEnabled = *o.ConsoleConfig.SerialConfig.SerialEnabled
+	}
+	if o.ConsoleConfig.VNCConfig.VNCEnabled != nil {
+		cp.ConsoleConfig.VNCConfig.VNCEnabled = new(bool)
+		*cp.ConsoleConfig.VNCConfig.VNCEnabled = *o.ConsoleConfig.VNCConfig.VNCEnabled
+	}
 	return &cp
 }

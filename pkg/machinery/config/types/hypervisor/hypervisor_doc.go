@@ -107,6 +107,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Disks attached to the virtual machine.\n\nRemoving a disk detaches it from the virtual machine; the volume backing it stays in\nits storage pool and is deleted separately.\n\nA configuration patch merges into this list by disk name: a patch entry naming an\nexisting disk updates that disk, and any other entry is appended. Removing a disk\nrequires supplying the document in full.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Disks attached to the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "console",
+				Type:        "VirtualMachineConsole",
+				Note:        "",
+				Description: "Consoles attached to the virtual machine.\n\nOptional; omitting it leaves both consoles detached.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Consoles attached to the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -394,6 +401,88 @@ func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineConsole) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineConsole",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineConsole describes the consoles attached to a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineConsole describes the consoles attached to a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "console",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "serial",
+				Type:        "VirtualMachineSerial",
+				Note:        "",
+				Description: "Serial console settings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Serial console settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "vnc",
+				Type:        "VirtualMachineVNC",
+				Note:        "",
+				Description: "VNC console settings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "VNC console settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineSerial) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineSerial",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineSerial describes the serial console of a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineSerial describes the serial console of a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConsole",
+				FieldName: "serial",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Attach a serial console.\n\nOptional; defaults to disabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a serial console." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineVNC) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineVNC",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineVNC describes the VNC console of a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineVNC describes the VNC console of a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConsole",
+				FieldName: "vnc",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Attach a VNC console.\n\nOptional; defaults to disabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a VNC console." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file hypervisor_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -410,6 +499,9 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineDiskProvision{}.Doc(),
 			VirtualMachineDiskBlank{}.Doc(),
 			VirtualMachineDiskFromImage{}.Doc(),
+			VirtualMachineConsole{}.Doc(),
+			VirtualMachineSerial{}.Doc(),
+			VirtualMachineVNC{}.Doc(),
 		},
 	}
 }

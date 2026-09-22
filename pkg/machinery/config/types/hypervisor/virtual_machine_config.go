@@ -85,6 +85,11 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     existing disk updates that disk, and any other entry is appended. Removing a disk
 	//     requires supplying the document in full.
 	DisksConfig VirtualMachineDiskList `yaml:"disks,omitempty"`
+	//   description: |
+	//     Consoles attached to the virtual machine.
+	//
+	//     Optional; omitting it leaves both consoles detached.
+	ConsoleConfig VirtualMachineConsole `yaml:"console,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest.
@@ -189,6 +194,14 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 			},
 		},
 	}
+	cfg.ConsoleConfig = VirtualMachineConsole{
+		SerialConfig: VirtualMachineSerial{
+			SerialEnabled: new(true),
+		},
+		VNCConfig: VirtualMachineVNC{
+			VNCEnabled: new(true),
+		},
+	}
 
 	return cfg
 }
@@ -249,6 +262,11 @@ func (c *VirtualMachineConfigV1Alpha1) Disks() []config.VirtualMachineDiskConfig
 	}
 
 	return out
+}
+
+// Console implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Console() config.VirtualMachineConsoleConfig {
+	return &c.ConsoleConfig
 }
 
 // Validate implements config.Validator interface.

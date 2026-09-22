@@ -70,6 +70,14 @@ disks:
 
             # # Integrity check of the library file, verified before the volume is provisioned.
             # digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
+# Consoles attached to the virtual machine.
+console:
+    # Serial console settings.
+    serial:
+        enabled: true # Attach a serial console.
+    # VNC console settings.
+    vnc:
+        enabled: true # Attach a VNC console.
 {{< /highlight >}}
 
 
@@ -79,6 +87,7 @@ disks:
 |`cpu` |<a href="#VirtualMachineConfig.cpu">VirtualMachineCPU</a> |Processor settings for the virtual machine.  | |
 |`memory` |<a href="#VirtualMachineConfig.memory">VirtualMachineMemory</a> |Memory settings for the virtual machine.  | |
 |`disks` |<a href="#VirtualMachineConfig.disks.">[]VirtualMachineDisk</a> |Disks attached to the virtual machine.<br><br>Removing a disk detaches it from the virtual machine; the volume backing it stays in<br>its storage pool and is deleted separately.<br><br>A configuration patch merges into this list by disk name: a patch entry naming an<br>existing disk updates that disk, and any other entry is appended. Removing a disk<br>requires supplying the document in full.  | |
+|`console` |<a href="#VirtualMachineConfig.console">VirtualMachineConsole</a> |Consoles attached to the virtual machine.<br><br>Optional; omitting it leaves both consoles detached.  | |
 
 
 
@@ -210,6 +219,55 @@ digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
 |`mode` |VirtualMachineDiskImageMode |How the volume is derived from the image.<br><br>`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library<br>image: fast and space-cheap, but it pins that image for the lifetime of the disk, and it<br>requires `format: qcow2`.<br><br>Optional; defaults to `copy`.  |`copy`<br />`linked`<br /> |
 
 
+
+
+
+
+
+
+
+
+## console {#VirtualMachineConfig.console}
+
+VirtualMachineConsole describes the consoles attached to a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`serial` |<a href="#VirtualMachineConfig.console.serial">VirtualMachineSerial</a> |Serial console settings.  | |
+|`vnc` |<a href="#VirtualMachineConfig.console.vnc">VirtualMachineVNC</a> |VNC console settings.  | |
+
+
+
+
+### serial {#VirtualMachineConfig.console.serial}
+
+VirtualMachineSerial describes the serial console of a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Attach a serial console.<br><br>Optional; defaults to disabled.  | |
+
+
+
+
+
+
+### vnc {#VirtualMachineConfig.console.vnc}
+
+VirtualMachineVNC describes the VNC console of a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Attach a VNC console.<br><br>Optional; defaults to disabled.  | |
 
 
 

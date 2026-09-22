@@ -102,6 +102,22 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "console",
+			filename: "virtualmachineconfig_console.yaml",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
+				c.MetaName = "vm1"
+				c.CPUConfig.CPUCount = 4
+				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.ConsoleConfig = hypervisor.VirtualMachineConsole{
+					SerialConfig: hypervisor.VirtualMachineSerial{SerialEnabled: new(true)},
+					VNCConfig:    hypervisor.VirtualMachineVNC{VNCEnabled: new(true)},
+				}
+
+				return c
+			},
+		},
+		{
 			name:     "minimal",
 			filename: "virtualmachineconfig_minimal.yaml",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
@@ -644,4 +660,35 @@ func imageDisk(name string) hypervisor.VirtualMachineDisk {
 			},
 		},
 	}
+}
+
+func TestVirtualMachineConfigConsoleDefaults(t *testing.T) {
+	t.Parallel()
+
+	t.Run("omitted console detaches both consoles", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := hypervisor.NewVirtualMachineConfigV1Alpha1()
+
+		assert.False(t, cfg.Console().Serial().Enabled())
+		assert.False(t, cfg.Console().VNC().Enabled())
+	})
+
+	t.Run("serial can be turned on", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := hypervisor.NewVirtualMachineConfigV1Alpha1()
+		cfg.ConsoleConfig.SerialConfig = hypervisor.VirtualMachineSerial{SerialEnabled: new(true)}
+
+		assert.True(t, cfg.Console().Serial().Enabled())
+	})
+
+	t.Run("vnc can be turned on", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := hypervisor.NewVirtualMachineConfigV1Alpha1()
+		cfg.ConsoleConfig.VNCConfig = hypervisor.VirtualMachineVNC{VNCEnabled: new(true)}
+
+		assert.True(t, cfg.Console().VNC().Enabled())
+	})
 }

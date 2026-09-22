@@ -5,6 +5,6 @@
 // Package hypervisor provides hypervisor configuration documents.
 package hypervisor
 
-//go:generate go tool github.com/siderolabs/talos/tools/docgen -output hypervisor_doc.go hypervisor.go content_library_config.go virtual_machine_config.go virtual_machine_disk.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output hypervisor_doc.go hypervisor.go content_library_config.go virtual_machine_config.go virtual_machine_disk.go virtual_machine_console.go
 
 //go:generate go tool github.com/siderolabs/deep-copy -type ContentLibraryConfigV1Alpha1 -type VirtualMachineConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .

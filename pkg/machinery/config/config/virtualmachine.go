@@ -19,6 +19,8 @@ type VirtualMachineConfig interface {
 	Memory() VirtualMachineMemoryConfig
 	// Disks attached to the virtual machine, in declaration order.
 	Disks() []VirtualMachineDiskConfig
+	// Console settings.
+	Console() VirtualMachineConsoleConfig
 }
 
 // VirtualMachineCPUConfig defines the processors presented to the guest.
@@ -138,4 +140,28 @@ type VirtualMachineDiskFromImageConfig interface {
 	Digest() string
 	// Mode is how the volume is derived from the image, with the default applied.
 	Mode() VirtualMachineDiskImageMode
+}
+
+// VirtualMachineConsoleConfig defines the consoles attached to a virtual machine.
+type VirtualMachineConsoleConfig interface {
+	// Serial console settings
+	Serial() VirtualMachineSerialConfig
+	// VNC console settings
+	VNC() VirtualMachineVNCConfig
+}
+
+// VirtualMachineSerialConfig defines the serial console of a virtual machine.
+//
+//nolint:iface
+type VirtualMachineSerialConfig interface {
+	// Enabled reports whether the serial console should be attached.
+	Enabled() bool
+}
+
+// VirtualMachineVNCConfig defines the VNC console of a virtual machine.
+//
+//nolint:iface
+type VirtualMachineVNCConfig interface {
+	// Enabled reports whether the VNC console should be attached.
+	Enabled() bool
 }
