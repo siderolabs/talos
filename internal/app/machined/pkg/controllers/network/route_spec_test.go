@@ -35,9 +35,12 @@ func (suite *RouteSpecSuite) uniqueDummyInterface() string {
 	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
-func (suite *RouteSpecSuite) assertRoute(
-	destination netip.Prefix,
-	gateway netip.Addr,
+// assertSingleRoute lists the kernel routes, expects exactly one to satisfy match, and runs check on it.
+//
+// The description names the route in the retryable errors, e.g. "route to 10.0.0.0/8 via 10.0.0.1".
+func (suite *RouteSpecSuite) assertSingleRoute(
+	description string,
+	match func(*rtnetlink.RouteMessage) bool,
 	check func(rtnetlink.RouteMessage) error,
 ) error {
 	conn, err := rtnetlink.Dial(nil)
@@ -50,22 +53,14 @@ func (suite *RouteSpecSuite) assertRoute(
 
 	matching := 0
 
-	for _, route := range routes {
-		if !route.Attributes.Gateway.Equal(gateway.AsSlice()) {
-			continue
-		}
-
-		if !(int(route.DstLength) == destination.Bits() || (route.DstLength == 0 && destination.Bits() == -1)) {
-			continue
-		}
-
-		if !route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
+	for i := range routes {
+		if !match(&routes[i]) {
 			continue
 		}
 
 		matching++
 
-		if err = check(route); err != nil {
+		if err = check(routes[i]); err != nil {
 			return retry.ExpectedError(err)
 		}
 	}
@@ -74,10 +69,45 @@ func (suite *RouteSpecSuite) assertRoute(
 	case 1:
 		return nil
 	case 0:
-		return retry.ExpectedErrorf("route to %s via %s not found", destination, gateway)
+		return retry.ExpectedErrorf("%s not found", description)
 	default:
-		return retry.ExpectedErrorf("route to %s via %s found %d matches", destination, gateway, matching)
+		return retry.ExpectedErrorf("%s found %d matches", description, matching)
 	}
+}
+
+// assertRoute finds the single route to the destination via the gateway (any table) and runs check on it.
+func (suite *RouteSpecSuite) assertRoute(
+	destination netip.Prefix,
+	gateway netip.Addr,
+	check func(rtnetlink.RouteMessage) error,
+) error {
+	return suite.assertSingleRoute(
+		fmt.Sprintf("route to %s via %s", destination, gateway),
+		func(route *rtnetlink.RouteMessage) bool {
+			return route.Attributes.Gateway.Equal(gateway.AsSlice()) && netctrl.RouteDestinationMatches(route, destination)
+		},
+		check,
+	)
+}
+
+// assertMultipathRoute finds the single route of the family to the destination in the table and runs check on it.
+//
+// A multipath route carries no top-level gateway, so unlike assertRoute it is identified by its table.
+func (suite *RouteSpecSuite) assertMultipathRoute(
+	family nethelpers.Family,
+	destination netip.Prefix,
+	table nethelpers.RoutingTable,
+	check func(rtnetlink.RouteMessage) error,
+) error {
+	return suite.assertSingleRoute(
+		fmt.Sprintf("%s route to %s in table %s", family, destination, table),
+		func(route *rtnetlink.RouteMessage) bool {
+			return route.Family == uint8(family) &&
+				nethelpers.RoutingTable(route.Table) == table &&
+				netctrl.RouteDestinationMatches(route, destination)
+		},
+		check,
+	)
 }
 
 func (suite *RouteSpecSuite) assertNoRoute(destination netip.Prefix, gateway netip.Addr) error {
@@ -89,15 +119,57 @@ func (suite *RouteSpecSuite) assertNoRoute(destination netip.Prefix, gateway net
 	routes, err := conn.Route.List()
 	suite.Require().NoError(err)
 
-	for _, route := range routes {
-		if route.Attributes.Gateway.Equal(gateway.AsSlice()) &&
-			(destination.Bits() == int(route.DstLength) || (destination.Bits() == -1 && route.DstLength == 0)) &&
-			route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
+	for i := range routes {
+		if routes[i].Attributes.Gateway.Equal(gateway.AsSlice()) && netctrl.RouteDestinationMatches(&routes[i], destination) {
 			return retry.ExpectedErrorf("route to %s via %s is present", destination, gateway)
 		}
 	}
 
 	return nil
+}
+
+// createDummyInterface creates an up dummy link with a single address, returning the link index.
+//
+// The caller is responsible for deleting the link.
+func (suite *RouteSpecSuite) createDummyInterface(conn *rtnetlink.Conn, name string, address netip.Prefix) uint32 {
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type:   unix.ARPHRD_ETHER,
+				Flags:  unix.IFF_UP,
+				Change: unix.IFF_UP,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: name,
+					Info: &rtnetlink.LinkInfo{Kind: "dummy"},
+				},
+			},
+		),
+	)
+
+	iface, err := net.InterfaceByName(name)
+	suite.Require().NoError(err)
+
+	family := uint8(unix.AF_INET)
+	if address.Addr().Is6() {
+		family = unix.AF_INET6
+	}
+
+	suite.Require().NoError(
+		conn.Address.New(
+			&rtnetlink.AddressMessage{
+				Family:       family,
+				PrefixLength: uint8(address.Bits()),
+				Scope:        unix.RT_SCOPE_UNIVERSE,
+				Index:        uint32(iface.Index),
+				Attributes: &rtnetlink.AddressAttributes{
+					Address: address.Addr().AsSlice(),
+					Local:   address.Addr().AsSlice(),
+				},
+			},
+		),
+	)
+
+	return uint32(iface.Index)
 }
 
 func (suite *RouteSpecSuite) TestLoopback() {
@@ -252,41 +324,8 @@ func (suite *RouteSpecSuite) TestIPv6DefaultPriorityLifecycle() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(
-		conn.Link.New(
-			&rtnetlink.LinkMessage{
-				Type:   unix.ARPHRD_ETHER,
-				Flags:  unix.IFF_UP,
-				Change: unix.IFF_UP,
-				Attributes: &rtnetlink.LinkAttributes{
-					Name: dummyInterface,
-					Info: &rtnetlink.LinkInfo{Kind: "dummy"},
-				},
-			},
-		),
-	)
-
-	iface, err := net.InterfaceByName(dummyInterface)
-	suite.Require().NoError(err)
-
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
-
-	localIP := net.ParseIP("2001:db8:1399:1::2").To16()
-
-	suite.Require().NoError(
-		conn.Address.New(
-			&rtnetlink.AddressMessage{
-				Family:       unix.AF_INET6,
-				PrefixLength: 64,
-				Scope:        unix.RT_SCOPE_UNIVERSE,
-				Index:        uint32(iface.Index),
-				Attributes: &rtnetlink.AddressAttributes{
-					Address: localIP,
-					Local:   localIP,
-				},
-			},
-		),
-	)
+	ifaceIndex := suite.createDummyInterface(conn, dummyInterface, netip.MustParsePrefix("2001:db8:1399:1::2/64"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("2001:db8:1399:2::/64")
 	gateway := netip.MustParseAddr("2001:db8:1399:1::1")
@@ -340,44 +379,8 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(
-		conn.Link.New(
-			&rtnetlink.LinkMessage{
-				Type:   unix.ARPHRD_ETHER,
-				Flags:  unix.IFF_UP,
-				Change: unix.IFF_UP,
-				Attributes: &rtnetlink.LinkAttributes{
-					Name: dummyInterface,
-					MTU:  1400,
-					Info: &rtnetlink.LinkInfo{
-						Kind: "dummy",
-					},
-				},
-			},
-		),
-	)
-
-	iface, err := net.InterfaceByName(dummyInterface)
-	suite.Require().NoError(err)
-
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
-
-	localIP := net.ParseIP("10.28.0.27").To4()
-
-	suite.Require().NoError(
-		conn.Address.New(
-			&rtnetlink.AddressMessage{
-				Family:       unix.AF_INET,
-				PrefixLength: 32,
-				Scope:        unix.RT_SCOPE_UNIVERSE,
-				Index:        uint32(iface.Index),
-				Attributes: &rtnetlink.AddressAttributes{
-					Address: localIP,
-					Local:   localIP,
-				},
-			},
-		),
-	)
+	ifaceIndex := suite.createDummyInterface(conn, dummyInterface, netip.MustParsePrefix("10.28.0.27/32"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	def := network.NewRouteSpec(network.NamespaceName, "default")
 	*def.TypedSpec() = network.RouteSpecSpec{
@@ -456,44 +459,8 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(
-		conn.Link.New(
-			&rtnetlink.LinkMessage{
-				Type:   unix.ARPHRD_ETHER,
-				Flags:  unix.IFF_UP,
-				Change: unix.IFF_UP,
-				Attributes: &rtnetlink.LinkAttributes{
-					Name: dummyInterface,
-					MTU:  1500,
-					Info: &rtnetlink.LinkInfo{
-						Kind: "dummy",
-					},
-				},
-			},
-		),
-	)
-
-	iface, err := net.InterfaceByName(dummyInterface)
-	suite.Require().NoError(err)
-
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
-
-	localIP := net.ParseIP("10.28.0.27").To4()
-
-	suite.Require().NoError(
-		conn.Address.New(
-			&rtnetlink.AddressMessage{
-				Family:       unix.AF_INET,
-				PrefixLength: 24,
-				Scope:        unix.RT_SCOPE_UNIVERSE,
-				Index:        uint32(iface.Index),
-				Attributes: &rtnetlink.AddressAttributes{
-					Address: localIP,
-					Local:   localIP,
-				},
-			},
-		),
-	)
+	ifaceIndex := suite.createDummyInterface(conn, dummyInterface, netip.MustParsePrefix("10.28.0.27/24"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	ll := network.NewRouteSpec(network.NamespaceName, "ll")
 	*ll.TypedSpec() = network.RouteSpecSpec{
@@ -551,30 +518,12 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(
-		conn.Link.New(
-			&rtnetlink.LinkMessage{
-				Type:   unix.ARPHRD_ETHER,
-				Flags:  unix.IFF_UP,
-				Change: unix.IFF_UP,
-				Attributes: &rtnetlink.LinkAttributes{
-					Name: dummyInterface,
-					MTU:  1500,
-					Info: &rtnetlink.LinkInfo{
-						Kind: "dummy",
-					},
-				},
-			},
-		),
-	)
-
-	iface, err := net.InterfaceByName(dummyInterface)
-	suite.Require().NoError(err)
+	ifaceIndex := suite.createDummyInterface(conn, dummyInterface, netip.MustParsePrefix("10.28.0.27/24"))
 
 	suite.Require().NoError(
 		conn.Link.Set(
 			&rtnetlink.LinkMessage{
-				Index: uint32(iface.Index),
+				Index: ifaceIndex,
 				Attributes: &rtnetlink.LinkAttributes{
 					Alias: &dummyAlias,
 				},
@@ -582,24 +531,7 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 		),
 	)
 
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
-
-	localIP := net.ParseIP("10.28.0.27").To4()
-
-	suite.Require().NoError(
-		conn.Address.New(
-			&rtnetlink.AddressMessage{
-				Family:       unix.AF_INET,
-				PrefixLength: 24,
-				Scope:        unix.RT_SCOPE_UNIVERSE,
-				Index:        uint32(iface.Index),
-				Attributes: &rtnetlink.AddressAttributes{
-					Address: localIP,
-					Local:   localIP,
-				},
-			},
-		),
-	)
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	ll := network.NewRouteSpec(network.NamespaceName, "ll")
 	*ll.TypedSpec() = network.RouteSpecSpec{
@@ -648,13 +580,19 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 	)
 }
 
-// assertNoIPv6RouteChurn watches RTNLGRP_IPV6_ROUTE for the given duration and fails on the first
-// RTM_DELROUTE for the destination.
+// assertNoRouteChurn watches route changes of the given family for the given duration and fails on
+// the first RTM_DELROUTE for the destination.
 //
 // A spec the kernel never reports back verbatim makes the controller delete and re-add the route on
-// every reconcile, and since the controller watches RTMGRP_IPV6_ROUTE, its own writes wake it up again.
-func (suite *RouteSpecSuite) assertNoIPv6RouteChurn(destination netip.Prefix, duration time.Duration) {
-	conn, err := rtnetlink.Dial(&netlink.Config{Groups: unix.RTMGRP_IPV6_ROUTE})
+// every reconcile, and since the controller watches the route groups, its own writes wake it up again.
+func (suite *RouteSpecSuite) assertNoRouteChurn(family nethelpers.Family, destination netip.Prefix, duration time.Duration) {
+	group := uint32(unix.RTMGRP_IPV4_ROUTE)
+
+	if family == nethelpers.FamilyInet6 {
+		group = unix.RTMGRP_IPV6_ROUTE
+	}
+
+	conn, err := rtnetlink.Dial(&netlink.Config{Groups: group})
 	suite.Require().NoError(err)
 
 	defer conn.Close() //nolint:errcheck
@@ -679,7 +617,7 @@ func (suite *RouteSpecSuite) assertNoIPv6RouteChurn(destination netip.Prefix, du
 				continue
 			}
 
-			if int(route.DstLength) == destination.Bits() && route.Attributes.Dst.Equal(destination.Addr().AsSlice()) {
+			if netctrl.RouteDestinationMatches(route, destination) {
 				suite.Require().Failf(
 					"route churn",
 					"unexpected RTM_DELROUTE for %s: the route is being rewritten on every reconcile",
@@ -698,41 +636,8 @@ func (suite *RouteSpecSuite) TestIPv6GatewaylessRoute() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(
-		conn.Link.New(
-			&rtnetlink.LinkMessage{
-				Type:   unix.ARPHRD_ETHER,
-				Flags:  unix.IFF_UP,
-				Change: unix.IFF_UP,
-				Attributes: &rtnetlink.LinkAttributes{
-					Name: dummyInterface,
-					Info: &rtnetlink.LinkInfo{Kind: "dummy"},
-				},
-			},
-		),
-	)
-
-	iface, err := net.InterfaceByName(dummyInterface)
-	suite.Require().NoError(err)
-
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
-
-	localIP := net.ParseIP("2001:db8:1399:6::2").To16()
-
-	suite.Require().NoError(
-		conn.Address.New(
-			&rtnetlink.AddressMessage{
-				Family:       unix.AF_INET6,
-				PrefixLength: 64,
-				Scope:        unix.RT_SCOPE_UNIVERSE,
-				Index:        uint32(iface.Index),
-				Attributes: &rtnetlink.AddressAttributes{
-					Address: localIP,
-					Local:   localIP,
-				},
-			},
-		),
-	)
+	ifaceIndex := suite.createDummyInterface(conn, dummyInterface, netip.MustParsePrefix("2001:db8:1399:6::2/64"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("2001:db8:1399:7::/64")
 
@@ -771,12 +676,100 @@ func (suite *RouteSpecSuite) TestIPv6GatewaylessRoute() {
 		),
 	)
 
-	suite.assertNoIPv6RouteChurn(destination, time.Second)
+	suite.assertNoRouteChurn(nethelpers.FamilyInet6, destination, time.Second)
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
 	suite.Require().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error { return suite.assertNoRoute(destination, netip.Addr{}) },
+		),
+	)
+}
+
+// TestMultipathRouteNumberedNextHops covers ECMP next-hops which carry no out-link, as learned from
+// numbered (non-link-local) BGP peers: the kernel resolves the egress device from the gateway and
+// reports it back, and the controller must accept that instead of rewriting the route forever.
+//
+// See https://github.com/siderolabs/talos/issues/14416.
+func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	firstIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/31"))
+	defer conn.Link.Delete(firstIndex) //nolint:errcheck
+
+	secondIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.3/31"))
+	defer conn.Link.Delete(secondIndex) //nolint:errcheck
+
+	gateways := []netip.Addr{netip.MustParseAddr("192.0.2.0"), netip.MustParseAddr("192.0.2.2")}
+	indices := []uint32{firstIndex, secondIndex}
+
+	destination := netip.MustParsePrefix("0.0.0.0/0")
+	// a dedicated routing table keeps the test default route away from the host routing
+	table := nethelpers.RoutingTable(200)
+
+	route := network.NewRouteSpec(network.NamespaceName, "bgp-ecmp-numbered")
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: destination,
+		// no OutLinkName: a numbered peer doesn't resolve to an interface, the kernel picks one
+		NextHops: []network.RouteNextHop{
+			{Gateway: gateways[0]},
+			{Gateway: gateways[1]},
+		},
+		Table:       table,
+		Protocol:    nethelpers.ProtocolBGP,
+		Type:        nethelpers.TypeUnicast,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	suite.Create(route)
+
+	suite.Require().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+					if len(message.Attributes.Multipath) != len(gateways) {
+						return retry.ExpectedErrorf(
+							"expected %d next-hops, got %d",
+							len(gateways),
+							len(message.Attributes.Multipath),
+						)
+					}
+
+					for i, hop := range message.Attributes.Multipath {
+						if !hop.Gateway.Equal(gateways[i].AsSlice()) {
+							return retry.ExpectedErrorf("next-hop %d gateway expected %s, got %s", i, gateways[i], hop.Gateway)
+						}
+
+						// the kernel resolves the egress device from the gateway
+						if hop.Hop.IfIndex != indices[i] {
+							return retry.ExpectedErrorf("next-hop %d link expected %d, got %d", i, indices[i], hop.Hop.IfIndex)
+						}
+					}
+
+					return nil
+				})
+			},
+		),
+	)
+
+	suite.assertNoRouteChurn(nethelpers.FamilyInet4, destination, time.Second)
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+	suite.Require().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				err := suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(rtnetlink.RouteMessage) error { return nil })
+				if err == nil {
+					return retry.ExpectedErrorf("route to %s in table %s is still present", destination, table)
+				}
+
+				return nil
+			},
 		),
 	)
 }
@@ -791,42 +784,8 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 
 	defer conn.Close() //nolint:errcheck
 
-	suite.Require().NoError(
-		conn.Link.New(
-			&rtnetlink.LinkMessage{
-				Type:   unix.ARPHRD_ETHER,
-				Flags:  unix.IFF_UP,
-				Change: unix.IFF_UP,
-				Attributes: &rtnetlink.LinkAttributes{
-					Name: dummyInterface,
-					Info: &rtnetlink.LinkInfo{Kind: "dummy"},
-				},
-			},
-		),
-	)
-
-	iface, err := net.InterfaceByName(dummyInterface)
-	suite.Require().NoError(err)
-
-	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
-
-	localIP := net.ParseIP("10.28.0.2").To4()
-
-	suite.Require().NoError(
-		conn.Address.New(
-			&rtnetlink.AddressMessage{
-				Family:       unix.AF_INET,
-				PrefixLength: 24,
-				Scope:        unix.RT_SCOPE_UNIVERSE,
-				Index:        uint32(iface.Index),
-				Attributes: &rtnetlink.AddressAttributes{
-					Address:   localIP,
-					Local:     localIP,
-					Broadcast: net.ParseIP("10.28.0.255").To4(),
-				},
-			},
-		),
-	)
+	ifaceIndex := suite.createDummyInterface(conn, dummyInterface, netip.MustParsePrefix("10.28.0.2/24"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("10.29.0.0/24")
 
@@ -842,7 +801,7 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 				Type:      unix.RTN_UNICAST,
 				Attributes: rtnetlink.RouteAttributes{
 					Dst:      destination.Addr().AsSlice(),
-					OutIface: uint32(iface.Index),
+					OutIface: ifaceIndex,
 					Priority: network.DefaultRouteMetric,
 					Table:    unix.RT_TABLE_MAIN,
 				},
