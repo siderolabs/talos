@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -51,9 +50,6 @@ type LVMLogicalVolumeProvisioner interface {
 type LVMLogicalVolumeReconcileController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          LVMLogicalVolumeProvisioner
-
-	RetryInitialInterval time.Duration
-	RetryMaxInterval     time.Duration
 }
 
 // Name implements controller.Controller interface.

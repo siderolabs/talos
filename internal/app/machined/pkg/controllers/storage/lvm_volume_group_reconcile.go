@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -34,9 +33,6 @@ type LVMProvisioner interface {
 type LVMVolumeGroupReconcileController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          LVMProvisioner
-
-	RetryInitialInterval time.Duration
-	RetryMaxInterval     time.Duration
 }
 
 // Name implements controller.Controller interface.

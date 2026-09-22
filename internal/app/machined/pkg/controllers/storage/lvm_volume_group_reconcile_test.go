@@ -292,9 +292,7 @@ func TestLVMVolumeGroupReconcileSuite(t *testing.T) {
 		Timeout: 5 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.LVMVolumeGroupReconcileController{
-				LVM:                  provisioner,
-				RetryInitialInterval: 10 * time.Millisecond,
-				RetryMaxInterval:     40 * time.Millisecond,
+				LVM: provisioner,
 			}))
 		},
 	}
