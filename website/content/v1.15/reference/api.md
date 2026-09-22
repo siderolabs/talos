@@ -12020,10 +12020,11 @@ WireguardPeer describes a single peer.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | public_key | [string](#string) |  |  |
-| preshared_key | [string](#string) |  |  |
+| preshared_key | [string](#string) |  | PresharedKey is used to configure the link, present only in the LinkSpec. |
 | endpoint | [string](#string) |  |  |
 | persistent_keepalive_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | allowed_ips | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| preshared_key_configured | [bool](#bool) |  | PresharedKeyConfigured is only used in LinkStatus to show whether the pre-shared key is set. |
 
 
 

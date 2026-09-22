@@ -186,7 +186,11 @@ func (a wireguardSpec) Decode(dev *wgtypes.Device, isStatus bool) {
 		var zeroKey wgtypes.Key
 
 		if dev.Peers[i].PresharedKey != zeroKey {
-			spec.Peers[i].PresharedKey = dev.Peers[i].PresharedKey.String()
+			if isStatus {
+				spec.Peers[i].PresharedKeyConfigured = true
+			} else {
+				spec.Peers[i].PresharedKey = dev.Peers[i].PresharedKey.String()
+			}
 		}
 
 		spec.Peers[i].PersistentKeepaliveInterval = dev.Peers[i].PersistentKeepaliveInterval

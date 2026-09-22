@@ -6225,14 +6225,17 @@ func (x *VethSpec) GetPeerName() string {
 
 // WireguardPeer describes a single peer.
 type WireguardPeer struct {
-	state                       protoimpl.MessageState `protogen:"open.v1"`
-	PublicKey                   string                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	PresharedKey                string                 `protobuf:"bytes,2,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty"`
-	Endpoint                    string                 `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	PersistentKeepaliveInterval *durationpb.Duration   `protobuf:"bytes,4,opt,name=persistent_keepalive_interval,json=persistentKeepaliveInterval,proto3" json:"persistent_keepalive_interval,omitempty"`
-	AllowedIps                  []*common.NetIPPrefix  `protobuf:"bytes,5,rep,name=allowed_ips,json=allowedIps,proto3" json:"allowed_ips,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	PublicKey string                 `protobuf:"bytes,1,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	// PresharedKey is used to configure the link, present only in the LinkSpec.
+	PresharedKey                string                `protobuf:"bytes,2,opt,name=preshared_key,json=presharedKey,proto3" json:"preshared_key,omitempty"`
+	Endpoint                    string                `protobuf:"bytes,3,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	PersistentKeepaliveInterval *durationpb.Duration  `protobuf:"bytes,4,opt,name=persistent_keepalive_interval,json=persistentKeepaliveInterval,proto3" json:"persistent_keepalive_interval,omitempty"`
+	AllowedIps                  []*common.NetIPPrefix `protobuf:"bytes,5,rep,name=allowed_ips,json=allowedIps,proto3" json:"allowed_ips,omitempty"`
+	// PresharedKeyConfigured is only used in LinkStatus to show whether the pre-shared key is set.
+	PresharedKeyConfigured bool `protobuf:"varint,6,opt,name=preshared_key_configured,json=presharedKeyConfigured,proto3" json:"preshared_key_configured,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *WireguardPeer) Reset() {
@@ -6298,6 +6301,13 @@ func (x *WireguardPeer) GetAllowedIps() []*common.NetIPPrefix {
 		return x.AllowedIps
 	}
 	return nil
+}
+
+func (x *WireguardPeer) GetPresharedKeyConfigured() bool {
+	if x != nil {
+		return x.PresharedKeyConfigured
+	}
+	return false
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
@@ -6928,7 +6938,7 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x04port\x18\x04 \x01(\rR\x04port\x12\x1a\n" +
 	"\blearning\x18\x05 \x01(\bR\blearning\"'\n" +
 	"\bVethSpec\x12\x1b\n" +
-	"\tpeer_name\x18\x01 \x01(\tR\bpeerName\"\x84\x02\n" +
+	"\tpeer_name\x18\x01 \x01(\tR\bpeerName\"\xbe\x02\n" +
 	"\rWireguardPeer\x12\x1d\n" +
 	"\n" +
 	"public_key\x18\x01 \x01(\tR\tpublicKey\x12#\n" +
@@ -6936,7 +6946,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\bendpoint\x18\x03 \x01(\tR\bendpoint\x12]\n" +
 	"\x1dpersistent_keepalive_interval\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\x1bpersistentKeepaliveInterval\x124\n" +
 	"\vallowed_ips\x18\x05 \x03(\v2\x13.common.NetIPPrefixR\n" +
-	"allowedIps\"\xde\x01\n" +
+	"allowedIps\x128\n" +
+	"\x18preshared_key_configured\x18\x06 \x01(\bR\x16presharedKeyConfigured\"\xde\x01\n" +
 	"\rWireguardSpec\x12\x1f\n" +
 	"\vprivate_key\x18\x01 \x01(\tR\n" +
 	"privateKey\x12\x1d\n" +

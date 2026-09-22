@@ -849,10 +849,13 @@ message VethSpec {
 // WireguardPeer describes a single peer.
 message WireguardPeer {
   string public_key = 1;
+  // PresharedKey is used to configure the link, present only in the LinkSpec.
   string preshared_key = 2;
   string endpoint = 3;
   google.protobuf.Duration persistent_keepalive_interval = 4;
   repeated common.NetIPPrefix allowed_ips = 5;
+  // PresharedKeyConfigured is only used in LinkStatus to show whether the pre-shared key is set.
+  bool preshared_key_configured = 6;
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".

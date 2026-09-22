@@ -360,8 +360,11 @@ type WireguardSpec struct {
 //
 //gotagsrewrite:gen
 type WireguardPeer struct {
-	PublicKey                   string         `yaml:"publicKey" protobuf:"1"`
-	PresharedKey                string         `yaml:"presharedKey" protobuf:"2" redact:"replace"`
+	PublicKey string `yaml:"publicKey" protobuf:"1"`
+	// PresharedKey is used to configure the link, present only in the LinkSpec.
+	PresharedKey string `yaml:"presharedKey,omitempty" protobuf:"2" redact:"replace"`
+	// PresharedKeyConfigured is only used in LinkStatus to show whether the pre-shared key is set.
+	PresharedKeyConfigured      bool           `yaml:"presharedKeyConfigured,omitempty" protobuf:"6"`
 	Endpoint                    string         `yaml:"endpoint" protobuf:"3"`
 	PersistentKeepaliveInterval time.Duration  `yaml:"persistentKeepaliveInterval" protobuf:"4"`
 	AllowedIPs                  []netip.Prefix `yaml:"allowedIPs" protobuf:"5"`
