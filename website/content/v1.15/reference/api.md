@@ -491,6 +491,8 @@ description: Talos gRPC API reference.
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
     - [BMCDeviceSpec](#talos.resource.definitions.hardware.BMCDeviceSpec)
     - [CPUCoreSpec](#talos.resource.definitions.hardware.CPUCoreSpec)
+    - [CPUScalingSpecSpec](#talos.resource.definitions.hardware.CPUScalingSpecSpec)
+    - [CPUScalingStatusSpec](#talos.resource.definitions.hardware.CPUScalingStatusSpec)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
     - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
     - [PCIDriverRebindConfigSpec](#talos.resource.definitions.hardware.PCIDriverRebindConfigSpec)
@@ -8625,6 +8627,60 @@ CPUCoreSpec represents a single CPU core as seen by the Linux kernel.
 | bugs | [string](#string) | repeated | Bugs is the list of known CPU bugs. |
 | bogo_mips | [double](#double) |  | BogoMips is the kernel BogoMips measurement for the core. |
 | address_sizes | [string](#string) |  | AddressSizes describes the physical and virtual address sizes. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.CPUScalingSpecSpec"></a>
+
+### CPUScalingSpecSpec
+CPUScalingSpecSpec describes the cpufreq settings requested for a policy.
+
+An empty field leaves that attribute alone.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| governor | [string](#string) |  | Governor is the scaling governor to set. |
+| energy_performance_preference | [string](#string) |  | EnergyPerformancePreference is the energy performance preference to set. |
+| min_frequency_khz | [uint64](#uint64) |  | MinFrequencyKhz is the lower bound of the frequency window to set, in kHz. |
+| max_frequency_khz | [uint64](#uint64) |  | MaxFrequencyKhz is the upper bound of the frequency window to set, in kHz. |
+| config_name | [string](#string) |  | ConfigName is the CPUScalingConfig document these settings came from. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.CPUScalingStatusSpec"></a>
+
+### CPUScalingStatusSpec
+CPUScalingStatusSpec describes a cpufreq policy: which CPUs it drives, what its driver supports,
+and the governor, energy performance preference and frequency limits currently in effect.
+
+Only values which are stable unless something sets them are reported. The current and requested
+frequencies are left out: the kernel moves them continuously, and reporting them would rewrite
+this resource on every read.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| driver | [string](#string) |  | Driver is the cpufreq scaling driver backing the policy (e.g. `intel_pstate`, `intel_cpufreq`, `acpi-cpufreq`). |
+| affected_cp_us | [uint32](#uint32) | repeated | AffectedCPUs is the sorted list of online logical CPUs whose frequency this policy controls. |
+| related_cp_us | [uint32](#uint32) | repeated | RelatedCPUs is the sorted list of all logical CPUs belonging to this policy, online or not. |
+| available_governors | [string](#string) | repeated | AvailableGovernors is the list of scaling governors the driver offers for this policy. |
+| available_ep_ps | [string](#string) | repeated | AvailableEPPs is the list of energy performance preferences the driver offers, empty unless the driver implements them (HWP-enabled intel_pstate, amd-pstate in active mode). |
+| governor | [string](#string) |  | Governor is the scaling governor currently in effect. |
+| energy_performance_preference | [string](#string) |  | EnergyPerformancePreference is the energy performance preference currently in effect. |
+| cpu_info_min_frequency_khz | [uint64](#uint64) |  | CPUInfoMinFrequencyKhz is the lowest frequency the hardware supports, in kHz. |
+| cpu_info_max_frequency_khz | [uint64](#uint64) |  | CPUInfoMaxFrequencyKhz is the highest frequency the hardware supports, in kHz. |
+| base_frequency_khz | [uint64](#uint64) |  | BaseFrequencyKhz is the sustained (non-turbo) frequency, in kHz, reported only by some drivers. |
+| cpu_capacity | [uint32](#uint32) |  | CPUCapacity is the scheduler's capacity rating of the policy's first CPU, relative to 1024 for the most capable CPU in the system. On asymmetric systems it distinguishes big from little cores. |
+| core_type | [string](#string) |  | CoreType is `performance` or `efficiency` on CPUs with a hybrid topology, empty otherwise. |
+| scaling_min_frequency_khz | [uint64](#uint64) |  | ScalingMinFrequencyKhz is the lowest frequency the policy currently allows the governor to pick, in kHz. |
+| scaling_max_frequency_khz | [uint64](#uint64) |  | ScalingMaxFrequencyKhz is the highest frequency the policy currently allows the governor to pick, in kHz. |
 
 
 

@@ -15,6 +15,49 @@ preface = """
 """
 
 [notes]
+    [notes.cpu_scaling_config]
+        title = "CPU Scaling Configuration"
+        description = """\
+CPU frequency scaling can now be configured declaratively with the `CPUScalingConfig` document, instead of through kernel arguments
+or raw `SysfsConfig` keys:
+
+```yaml
+apiVersion: v1alpha1
+kind: CPUScalingConfig
+name: all-cores
+selector:
+  match: true
+governor: performance
+```
+
+Settings apply to the cpufreq policies matched by the selector, which targets cores by property rather than by index, so a machine
+whose cores are not uniform can be configured without hardcoding how many it has:
+
+```yaml
+apiVersion: v1alpha1
+kind: CPUScalingConfig
+name: performance-cores
+selector:
+  match: cpu.core_type == "performance"
+governor: performance
+---
+apiVersion: v1alpha1
+kind: CPUScalingConfig
+name: efficiency-cores
+selector:
+  match: cpu.core_type == "efficiency"
+governor: powersave
+```
+
+The selector matches against the fields of the `CPUScalingStatus` resource, and may also set `energyPerformancePreference`,
+`minFrequencyKhz` and `maxFrequencyKhz`. Where several documents match the same policy, the one whose name sorts first wins, and the
+document which claimed a policy is reported on the resulting `CPUScalingSpec` resource. Removing the configuration restores the
+values the machine booted with.
+
+Setting a cpufreq attribute through both `CPUScalingConfig` and `SysfsConfig` is rejected, as the two would otherwise overwrite each
+other continuously.
+"""
+
     [notes.lldp]
         title = "LLDP Neighbor Discovery"
         description = """\

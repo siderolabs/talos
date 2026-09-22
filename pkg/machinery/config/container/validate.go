@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -217,6 +218,19 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		warnings []string
 		errs     error
 	)
+
+	// A cpufreq attribute set both by CPUScalingConfig and through sysfs has two controllers writing
+	// it, each reverting the other on every reconcile. Reject that rather than let the machine flap.
+	if len(container.CPUScalingConfigs()) > 0 {
+		for key := range container.SysfsConfig() {
+			if strings.HasPrefix(key, "devices.system.cpu.") && strings.Contains(key, ".cpufreq.") {
+				errs = multierror.Append(errs, fmt.Errorf(
+					"sysfs key %q conflicts with CPUScalingConfig: configure CPU frequency scaling through one of them, not both",
+					key,
+				))
+			}
+		}
+	}
 
 	if mode.InContainer() {
 		// in container mode, HostDNS must be enabled and forward KubeDNS to host must be enabled as well

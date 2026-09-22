@@ -204,6 +204,7 @@ require (
 	k8s.io/kubectl v0.37.0
 	k8s.io/kubelet v0.37.0
 	k8s.io/pod-security-admission v0.37.0
+	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12007.0
 	sigs.k8s.io/hydrophone v0.8.0
@@ -508,7 +509,6 @@ require (
 	k8s.io/cli-runtime v0.37.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
 	k8s.io/streaming v0.37.0 // indirect
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.78 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 	modernc.org/libc v1.74.1 // indirect

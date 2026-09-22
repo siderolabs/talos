@@ -70,6 +70,61 @@ message CPUCoreSpec {
   string address_sizes = 16;
 }
 
+// CPUScalingSpecSpec describes the cpufreq settings requested for a policy.
+//
+// An empty field leaves that attribute alone.
+message CPUScalingSpecSpec {
+  // Governor is the scaling governor to set.
+  string governor = 1;
+  // EnergyPerformancePreference is the energy performance preference to set.
+  string energy_performance_preference = 2;
+  // MinFrequencyKhz is the lower bound of the frequency window to set, in kHz.
+  uint64 min_frequency_khz = 3;
+  // MaxFrequencyKhz is the upper bound of the frequency window to set, in kHz.
+  uint64 max_frequency_khz = 4;
+  // ConfigName is the CPUScalingConfig document these settings came from.
+  string config_name = 5;
+}
+
+// CPUScalingStatusSpec describes a cpufreq policy: which CPUs it drives, what its driver supports,
+// and the governor, energy performance preference and frequency limits currently in effect.
+//
+// Only values which are stable unless something sets them are reported. The current and requested
+// frequencies are left out: the kernel moves them continuously, and reporting them would rewrite
+// this resource on every read.
+message CPUScalingStatusSpec {
+  // Driver is the cpufreq scaling driver backing the policy (e.g. `intel_pstate`, `intel_cpufreq`, `acpi-cpufreq`).
+  string driver = 1;
+  // AffectedCPUs is the sorted list of online logical CPUs whose frequency this policy controls.
+  repeated uint32 affected_cp_us = 2;
+  // RelatedCPUs is the sorted list of all logical CPUs belonging to this policy, online or not.
+  repeated uint32 related_cp_us = 3;
+  // AvailableGovernors is the list of scaling governors the driver offers for this policy.
+  repeated string available_governors = 4;
+  // AvailableEPPs is the list of energy performance preferences the driver offers, empty unless
+  // the driver implements them (HWP-enabled intel_pstate, amd-pstate in active mode).
+  repeated string available_ep_ps = 5;
+  // Governor is the scaling governor currently in effect.
+  string governor = 6;
+  // EnergyPerformancePreference is the energy performance preference currently in effect.
+  string energy_performance_preference = 7;
+  // CPUInfoMinFrequencyKhz is the lowest frequency the hardware supports, in kHz.
+  uint64 cpu_info_min_frequency_khz = 8;
+  // CPUInfoMaxFrequencyKhz is the highest frequency the hardware supports, in kHz.
+  uint64 cpu_info_max_frequency_khz = 9;
+  // BaseFrequencyKhz is the sustained (non-turbo) frequency, in kHz, reported only by some drivers.
+  uint64 base_frequency_khz = 10;
+  // CPUCapacity is the scheduler's capacity rating of the policy's first CPU, relative to 1024
+  // for the most capable CPU in the system. On asymmetric systems it distinguishes big from little cores.
+  uint32 cpu_capacity = 11;
+  // CoreType is `performance` or `efficiency` on CPUs with a hybrid topology, empty otherwise.
+  string core_type = 12;
+  // ScalingMinFrequencyKhz is the lowest frequency the policy currently allows the governor to pick, in kHz.
+  uint64 scaling_min_frequency_khz = 13;
+  // ScalingMaxFrequencyKhz is the highest frequency the policy currently allows the governor to pick, in kHz.
+  uint64 scaling_max_frequency_khz = 14;
+}
+
 // MemoryModuleSpec represents a single Memory.
 message MemoryModuleSpec {
   uint32 size = 1;

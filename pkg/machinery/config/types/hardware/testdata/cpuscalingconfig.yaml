@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: CPUScalingConfig
+name: performance-cores
+selector:
+    match: cpu.core_type == "performance"
+governor: performance
+energyPerformancePreference: balance_performance
+minFrequencyKhz: 1200000
+maxFrequencyKhz: 3300000

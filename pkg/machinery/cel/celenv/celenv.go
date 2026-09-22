@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -118,6 +119,38 @@ var MemberVolumeLocator = sync.OnceValue(func() *cel.Env {
 				),
 			},
 			celUnitMultipliersConstants(),
+		)...,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return env
+})
+
+// CPUScalingLocator is a CPU frequency scaling policy locator CEL environment.
+//
+// The bound `cpu` is a cpufreq policy rather than a logical CPU, which is what makes a selector
+// able to target cores by property (core type, capacity, hardware frequency range) instead of by
+// index, on machines whose cores are not uniform.
+var CPUScalingLocator = sync.OnceValue(func() *cel.Env {
+	var cpuScalingStatusSpec hardware.CPUScalingStatusSpec
+
+	env, err := cel.NewEnv(
+		slices.Concat(
+			[]cel.EnvOption{
+				cel.Types(&cpuScalingStatusSpec),
+				cel.Variable("cpu", cel.ObjectType(string(cpuScalingStatusSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Function(
+					"glob", // glob(pattern, string) -> bool
+					cel.Overload(
+						"glob_string_string", []*cel.Type{cel.StringType, cel.StringType}, cel.BoolType,
+						cel.BinaryBinding(func(arg1, arg2 ref.Val) ref.Val {
+							return types.Bool(glob.Glob(string(arg1.(types.String)), string(arg2.(types.String))))
+						}),
+					),
+				),
+			},
 		)...,
 	)
 	if err != nil {

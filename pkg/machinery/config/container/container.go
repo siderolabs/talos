@@ -658,6 +658,11 @@ func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLin
 	return result
 }
 
+// CPUScalingConfigs implements config.Config interface.
+func (container *Container) CPUScalingConfigs() []config.CPUScalingConfig {
+	return findMatchingDocs[config.CPUScalingConfig](container.documents)
+}
+
 // NetworkLinkAliasConfigs implements config.Config interface.
 func (container *Container) NetworkLinkAliasConfigs() []config.NetworkLinkAliasConfig {
 	return findMatchingDocs[config.NetworkLinkAliasConfig](container.documents)

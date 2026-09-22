@@ -154,6 +154,8 @@ func NewState() (*State, error) {
 		&files.EtcFileStatus{},
 		&hardware.BMCDevice{},
 		&hardware.CPUCore{},
+		&hardware.CPUScalingSpec{},
+		&hardware.CPUScalingStatus{},
 		&hardware.MemoryModule{},
 		&hardware.PCIDevice{},
 		&hardware.PCIDriverRebindConfig{},

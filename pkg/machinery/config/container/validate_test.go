@@ -18,13 +18,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -606,4 +610,49 @@ func (validationMode) RequiresInstall() bool {
 
 func (v validationMode) InContainer() bool {
 	return v.inContainer
+}
+
+// TestCPUScalingSysfsConflict covers the case where CPU frequency scaling is configured twice over:
+// CPUScalingSpecController and KernelParamSpecController would each revert the other forever.
+func TestCPUScalingSysfsConflict(t *testing.T) {
+	t.Parallel()
+
+	scalingCfg := hardware.NewCPUScalingConfigV1Alpha1("all")
+	scalingCfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression(`true`, celenv.CPUScalingLocator()))
+	scalingCfg.ScalingGovernor = "performance"
+
+	for _, test := range []struct {
+		name      string
+		sysfsKeys map[string]string
+
+		expectedError string
+	}{
+		{
+			name:          "cpufreq key conflicts",
+			sysfsKeys:     map[string]string{"devices.system.cpu.cpu0.cpufreq.scaling_governor": "powersave"},
+			expectedError: `conflicts with CPUScalingConfig`,
+		},
+		{
+			name:      "unrelated sysfs key is fine",
+			sysfsKeys: map[string]string{"kernel.kexec_load_disabled": "1"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			sysfsCfg := runtime.NewSysfsConfigV1Alpha1()
+			sysfsCfg.Params = test.sysfsKeys
+
+			cfg, err := container.New(scalingCfg, sysfsCfg)
+			require.NoError(t, err)
+
+			_, err = cfg.ValidateAsClient(validationMode{})
+
+			if test.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, test.expectedError)
+			}
+		})
+	}
 }

@@ -2113,6 +2113,93 @@
       ],
       "description": "ExtensionServiceConfig is a extensionserviceconfig document."
     },
+    "hardware.CPUScalingConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "CPUScalingConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the config document.\n\nIt is used to tell apart several scaling policies, and is reported on the\nCPUScalingSpec resources the document produces.\n",
+          "markdownDescription": "Name of the config document.\n\nIt is used to tell apart several scaling policies, and is reported on the\n`CPUScalingSpec` resources the document produces.",
+          "x-intellij-html-description": "\u003cp\u003eName of the config document.\u003c/p\u003e\n\n\u003cp\u003eIt is used to tell apart several scaling policies, and is reported on the\n\u003ccode\u003eCPUScalingSpec\u003c/code\u003e resources the document produces.\u003c/p\u003e\n"
+        },
+        "selector": {
+          "$ref": "#/$defs/hardware.CPUScalingSelector",
+          "title": "selector",
+          "description": "Selector to match the cpufreq policies to configure.\n\nIf several documents match the same policy, the first one (in document order) wins.\n",
+          "markdownDescription": "Selector to match the cpufreq policies to configure.\n\nIf several documents match the same policy, the first one (in document order) wins.",
+          "x-intellij-html-description": "\u003cp\u003eSelector to match the cpufreq policies to configure.\u003c/p\u003e\n\n\u003cp\u003eIf several documents match the same policy, the first one (in document order) wins.\u003c/p\u003e\n"
+        },
+        "governor": {
+          "type": "string",
+          "title": "governor",
+          "description": "Scaling governor to set, e.g. performance, powersave or schedutil.\n\nThe governors a machine offers depend on its cpufreq driver, and are reported per policy\nin availableGovernors of the CPUScalingStatus resource.\n",
+          "markdownDescription": "Scaling governor to set, e.g. `performance`, `powersave` or `schedutil`.\n\nThe governors a machine offers depend on its cpufreq driver, and are reported per policy\nin `availableGovernors` of the `CPUScalingStatus` resource.",
+          "x-intellij-html-description": "\u003cp\u003eScaling governor to set, e.g. \u003ccode\u003eperformance\u003c/code\u003e, \u003ccode\u003epowersave\u003c/code\u003e or \u003ccode\u003eschedutil\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eThe governors a machine offers depend on its cpufreq driver, and are reported per policy\nin \u003ccode\u003eavailableGovernors\u003c/code\u003e of the \u003ccode\u003eCPUScalingStatus\u003c/code\u003e resource.\u003c/p\u003e\n"
+        },
+        "energyPerformancePreference": {
+          "type": "string",
+          "title": "energyPerformancePreference",
+          "description": "Energy performance preference to set, e.g. performance, balance_performance,\nbalance_power or power.\n\nOnly some drivers implement this (HWP-enabled intel_pstate, amd-pstate in active\nmode); the values a machine offers are reported per policy in availableEPPs of the\nCPUScalingStatus resource.\n",
+          "markdownDescription": "Energy performance preference to set, e.g. `performance`, `balance_performance`,\n`balance_power` or `power`.\n\nOnly some drivers implement this (HWP-enabled `intel_pstate`, `amd-pstate` in active\nmode); the values a machine offers are reported per policy in `availableEPPs` of the\n`CPUScalingStatus` resource.",
+          "x-intellij-html-description": "\u003cp\u003eEnergy performance preference to set, e.g. \u003ccode\u003eperformance\u003c/code\u003e, \u003ccode\u003ebalance_performance\u003c/code\u003e,\n\u003ccode\u003ebalance_power\u003c/code\u003e or \u003ccode\u003epower\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOnly some drivers implement this (HWP-enabled \u003ccode\u003eintel_pstate\u003c/code\u003e, \u003ccode\u003eamd-pstate\u003c/code\u003e in active\nmode); the values a machine offers are reported per policy in \u003ccode\u003eavailableEPPs\u003c/code\u003e of the\n\u003ccode\u003eCPUScalingStatus\u003c/code\u003e resource.\u003c/p\u003e\n"
+        },
+        "minFrequencyKhz": {
+          "type": "integer",
+          "title": "minFrequencyKhz",
+          "description": "Lower bound of the frequency window the governor may use, in kHz.\n\nLeft alone when not set.\n",
+          "markdownDescription": "Lower bound of the frequency window the governor may use, in kHz.\n\nLeft alone when not set.",
+          "x-intellij-html-description": "\u003cp\u003eLower bound of the frequency window the governor may use, in kHz.\u003c/p\u003e\n\n\u003cp\u003eLeft alone when not set.\u003c/p\u003e\n"
+        },
+        "maxFrequencyKhz": {
+          "type": "integer",
+          "title": "maxFrequencyKhz",
+          "description": "Upper bound of the frequency window the governor may use, in kHz.\n\nLeft alone when not set.\n",
+          "markdownDescription": "Upper bound of the frequency window the governor may use, in kHz.\n\nLeft alone when not set.",
+          "x-intellij-html-description": "\u003cp\u003eUpper bound of the frequency window the governor may use, in kHz.\u003c/p\u003e\n\n\u003cp\u003eLeft alone when not set.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "selector"
+      ],
+      "description": "CPUScalingConfig configures Linux CPU frequency scaling."
+    },
+    "hardware.CPUScalingSelector": {
+      "properties": {
+        "match": {
+          "type": "string",
+          "title": "match",
+          "description": "The Common Expression Language (CEL) expression to match the cpufreq policy.\n\nThe cpu variable is a cpufreq policy as reported by the CPUScalingStatus resource.\n",
+          "markdownDescription": "The Common Expression Language (CEL) expression to match the cpufreq policy.\n\nThe `cpu` variable is a cpufreq policy as reported by the `CPUScalingStatus` resource.",
+          "x-intellij-html-description": "\u003cp\u003eThe Common Expression Language (CEL) expression to match the cpufreq policy.\u003c/p\u003e\n\n\u003cp\u003eThe \u003ccode\u003ecpu\u003c/code\u003e variable is a cpufreq policy as reported by the \u003ccode\u003eCPUScalingStatus\u003c/code\u003e resource.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "CPUScalingSelector selects the cpufreq policies to configure."
+    },
     "hardware.PCIDriverRebindConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -8725,6 +8812,9 @@
     },
     {
       "$ref": "#/$defs/extensions.ServiceConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/hardware.CPUScalingConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/hardware.PCIDriverRebindConfigV1Alpha1"
