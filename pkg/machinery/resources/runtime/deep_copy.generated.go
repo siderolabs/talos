@@ -264,6 +264,10 @@ func (o RebootRequestSpec) DeepCopy() RebootRequestSpec {
 // DeepCopy generates a deep copy of SecurityStateSpec.
 func (o SecurityStateSpec) DeepCopy() SecurityStateSpec {
 	var cp SecurityStateSpec = o
+	if o.SecureBootAuthorityFingerprints != nil {
+		cp.SecureBootAuthorityFingerprints = make([]string, len(o.SecureBootAuthorityFingerprints))
+		copy(cp.SecureBootAuthorityFingerprints, o.SecureBootAuthorityFingerprints)
+	}
 	return cp
 }
 

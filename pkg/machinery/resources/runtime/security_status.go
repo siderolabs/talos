@@ -70,6 +70,9 @@ type SecurityStateSpec struct {
 	BootedWithUKI            bool          `yaml:"bootedWithUKI,omitempty" protobuf:"5"`
 	ModuleSignatureEnforced  bool          `yaml:"moduleSignatureEnforced,omitempty" protobuf:"7"`
 	LockdownState            LockdownState `yaml:"lockdownState,omitempty" protobuf:"8"`
+	// SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the
+	// firmware used to authorize the images loaded in this boot, as recorded in PCR 7.
+	SecureBootAuthorityFingerprints []string `yaml:"secureBootAuthorityFingerprints,omitempty" protobuf:"9"`
 }
 
 // NewSecurityStateSpec initializes a security state resource.
@@ -92,10 +95,6 @@ func (SecurityStateExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "SecureBoot",
 				JSONPath: `{.secureBoot}`,
-			},
-			{
-				Name:     "UKISigningKeyFingerprint",
-				JSONPath: `{.ukiSigningKeyFingerprint}`,
 			},
 			{
 				Name:     "PCRSigningKeyFingerprint",

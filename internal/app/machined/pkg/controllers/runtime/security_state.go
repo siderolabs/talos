@@ -25,11 +25,13 @@ import (
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/fsnotify/fsnotify"
 	"github.com/siderolabs/gen/panicsafe"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
+	"github.com/siderolabs/talos/internal/pkg/secureboot/eventlog"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
@@ -104,7 +106,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 		return publishSecurityState(ctx, r, runtimeres.SecurityStateSpec{FIPSState: getFIPSState()})
 	}
 
-	spec, err := bootTimeState()
+	spec, err := bootTimeState(logger)
 	if err != nil {
 		return err
 	}
@@ -138,11 +140,12 @@ func waitForMachined(ctx context.Context, r controller.Runtime) error {
 // the running kernel.
 //
 //nolint:gocyclo
-func bootTimeState() (runtimeres.SecurityStateSpec, error) {
+func bootTimeState(logger *zap.Logger) (runtimeres.SecurityStateSpec, error) {
 	var spec runtimeres.SecurityStateSpec
 
 	if efi.GetSecureBoot() && !efi.GetSetupMode() {
 		spec.SecureBoot = true
+		spec.SecureBootAuthorityFingerprints = secureBootAuthorityFingerprints(logger)
 	}
 
 	defaultEntry, err := sdboot.ReadVariable(sdboot.LoaderEntryDefaultName)
@@ -312,6 +315,26 @@ func readLockdownState(path string) (runtimeres.LockdownState, error) {
 	}
 
 	return runtimeres.LockdownStateNone, fmt.Errorf("failed to parse kernel lockdown level %q", string(contents))
+}
+
+// secureBootAuthorityFingerprints reports the `db` certificates which the firmware used to
+// authorize the images loaded in this boot, as recorded in PCR 7 of the TPM event log.
+//
+// This is best-effort: it needs a TPM, an event log handed over by the firmware and a PCR 7
+// which replays cleanly, none of which is guaranteed, so anything going wrong leaves the
+// field empty instead of failing the security state as a whole.
+func secureBootAuthorityFingerprints(logger *zap.Logger) []string {
+	certs, err := eventlog.SecureBootAuthorities()
+	if err != nil {
+		// a machine without a TPM has no event log, which is not worth warning about
+		if !errors.Is(err, os.ErrNotExist) {
+			logger.Warn("failed to determine SecureBoot authorities from the TPM event log", zap.Error(err))
+		}
+
+		return nil
+	}
+
+	return xslices.Map(certs, x509CertFingerprint)
 }
 
 func x509CertFingerprint(cert x509.Certificate) string {

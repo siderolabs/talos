@@ -1742,8 +1742,11 @@ type SecurityStateSpec struct {
 	FipsState                enums.RuntimeFIPSState     `protobuf:"varint,6,opt,name=fips_state,json=fipsState,proto3,enum=talos.resource.definitions.enums.RuntimeFIPSState" json:"fips_state,omitempty"`
 	ModuleSignatureEnforced  bool                       `protobuf:"varint,7,opt,name=module_signature_enforced,json=moduleSignatureEnforced,proto3" json:"module_signature_enforced,omitempty"`
 	LockdownState            enums.RuntimeLockdownState `protobuf:"varint,8,opt,name=lockdown_state,json=lockdownState,proto3,enum=talos.resource.definitions.enums.RuntimeLockdownState" json:"lockdown_state,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	// SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the
+	// firmware used to authorize the images loaded in this boot, as recorded in PCR 7.
+	SecureBootAuthorityFingerprints []string `protobuf:"bytes,9,rep,name=secure_boot_authority_fingerprints,json=secureBootAuthorityFingerprints,proto3" json:"secure_boot_authority_fingerprints,omitempty"`
+	unknownFields                   protoimpl.UnknownFields
+	sizeCache                       protoimpl.SizeCache
 }
 
 func (x *SecurityStateSpec) Reset() {
@@ -1830,6 +1833,13 @@ func (x *SecurityStateSpec) GetLockdownState() enums.RuntimeLockdownState {
 		return x.LockdownState
 	}
 	return enums.RuntimeLockdownState(0)
+}
+
+func (x *SecurityStateSpec) GetSecureBootAuthorityFingerprints() []string {
+	if x != nil {
+		return x.SecureBootAuthorityFingerprints
+	}
+	return nil
 }
 
 // ServicePIDSpec is the spec for the service PID.
@@ -2337,7 +2347,7 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\alicense\x18\x03 \x01(\tR\alicense\x12\x13\n" +
 	"\x05cp_es\x18\x04 \x03(\tR\x04cpEs\x12\x15\n" +
 	"\x06pur_ls\x18\x05 \x03(\tR\x05purLs\x12\x1c\n" +
-	"\textension\x18\x06 \x01(\bR\textension\"\xa5\x04\n" +
+	"\textension\x18\x06 \x01(\bR\textension\"\xf2\x04\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
@@ -2348,7 +2358,8 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\n" +
 	"fips_state\x18\x06 \x01(\x0e22.talos.resource.definitions.enums.RuntimeFIPSStateR\tfipsState\x12:\n" +
 	"\x19module_signature_enforced\x18\a \x01(\bR\x17moduleSignatureEnforced\x12]\n" +
-	"\x0elockdown_state\x18\b \x01(\x0e26.talos.resource.definitions.enums.RuntimeLockdownStateR\rlockdownState\"K\n" +
+	"\x0elockdown_state\x18\b \x01(\x0e26.talos.resource.definitions.enums.RuntimeLockdownStateR\rlockdownState\x12K\n" +
+	"\"secure_boot_authority_fingerprints\x18\t \x03(\tR\x1fsecureBootAuthorityFingerprints\"K\n" +
 	"\x0eServicePIDSpec\x12\x10\n" +
 	"\x03pid\x18\x01 \x01(\x05R\x03pid\x12'\n" +
 	"\x0fmount_namespace\x18\x02 \x01(\tR\x0emountNamespace\"\xa0\x01\n" +

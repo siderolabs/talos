@@ -64,6 +64,11 @@ func (suite *SecuritySuite) TestSecurityState() {
 				// enabled, which is why Talos does not pass `lockdown=` explicitly anymore
 				asrt.GreaterOrEqual(r.TypedSpec().LockdownState, runtimeres.LockdownStateIntegrity,
 					"kernel lockdown should be at least `integrity` with Secure Boot enabled, got %s", r.TypedSpec().LockdownState)
+
+				// every Secure Boot provisioning path also enables a TPM, so the firmware
+				// recorded the `db` entry it used in PCR 7 and it should have been picked up
+				asrt.NotEmpty(r.TypedSpec().SecureBootAuthorityFingerprints,
+					"the Secure Boot authority should have been read from the TPM event log")
 			}
 		},
 	)

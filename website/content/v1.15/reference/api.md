@@ -10352,6 +10352,7 @@ SecurityStateSpec describes the security state resource properties.
 | fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
 | module_signature_enforced | [bool](#bool) |  |  |
 | lockdown_state | [talos.resource.definitions.enums.RuntimeLockdownState](#talos.resource.definitions.enums.RuntimeLockdownState) |  |  |
+| secure_boot_authority_fingerprints | [string](#string) | repeated | SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the firmware used to authorize the images loaded in this boot, as recorded in PCR 7. |
 
 
 

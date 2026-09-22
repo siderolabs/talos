@@ -227,6 +227,9 @@ message SecurityStateSpec {
   talos.resource.definitions.enums.RuntimeFIPSState fips_state = 6;
   bool module_signature_enforced = 7;
   talos.resource.definitions.enums.RuntimeLockdownState lockdown_state = 8;
+  // SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the
+  // firmware used to authorize the images loaded in this boot, as recorded in PCR 7.
+  repeated string secure_boot_authority_fingerprints = 9;
 }
 
 // ServicePIDSpec is the spec for the service PID.
