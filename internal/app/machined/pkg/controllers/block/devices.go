@@ -6,6 +6,7 @@ package block
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -215,7 +216,13 @@ func (ctrl *DevicesController) processEvent(ctx context.Context, r controller.Ru
 		}
 
 		if err := inotifyWatcher.Add(devPath, unix.IN_CLOSE_WRITE); err != nil {
-			return fmt.Errorf("failed to add inotify watch for %q: %w", devPath, err)
+			// the device node might be missing: the device might have been removed in the meantime, or
+			// the device node might have never been created (e.g. device-mapper devices without udev running)
+			if !errors.Is(err, os.ErrNotExist) {
+				return fmt.Errorf("failed to add inotify watch for %q: %w", devPath, err)
+			}
+
+			logger.Debug("skipped inotify watch, as device node doesn't exist")
 		}
 	case kobject.ActionRemove:
 		if reStatErr == nil { // entry still exists, skip removing
