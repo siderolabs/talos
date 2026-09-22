@@ -116,7 +116,7 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 				switch volumeStatus.TypedSpec().Type {
 				case block.VolumeTypeDisk, block.VolumeTypePartition:
 					// can be encrypted
-				case block.VolumeTypeDirectory, block.VolumeTypeOverlay, block.VolumeTypeSymlink, block.VolumeTypeTmpfs, block.VolumeTypeExternal:
+				case block.VolumeTypeDirectory, block.VolumeTypeOverlay, block.VolumeTypeSymlink, block.VolumeTypeTmpfs, block.VolumeTypeExternal, block.VolumeTypeMemory:
 					// skip it, not encryptable
 					continue
 				}
@@ -145,7 +145,7 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 				switch volumeConfig.TypedSpec().Type {
 				case block.VolumeTypeDisk, block.VolumeTypePartition:
 					// can be encrypted
-				case block.VolumeTypeDirectory, block.VolumeTypeOverlay, block.VolumeTypeSymlink, block.VolumeTypeTmpfs, block.VolumeTypeExternal:
+				case block.VolumeTypeDirectory, block.VolumeTypeOverlay, block.VolumeTypeSymlink, block.VolumeTypeTmpfs, block.VolumeTypeExternal, block.VolumeTypeMemory:
 					// skip it, not encryptable
 					continue
 				}
