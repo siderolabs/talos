@@ -70,7 +70,7 @@ func (suite *EphemeralWorkersSuite) TestWorkerVolumesAreMemory() {
 			vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, id)
 			suite.Require().NoError(err, "worker %s volume %s", node, id)
 
-			suite.Assert().Equal(block.VolumeTypeMemory.String(), vs.TypedSpec().Type.String(),
+			suite.Assert().Equal(block.VolumeTypeTmpfs.String(), vs.TypedSpec().Type.String(),
 				"worker %s volume %s should be memory-backed", node, id)
 			suite.Assert().Equal(block.VolumePhaseReady, vs.TypedSpec().Phase,
 				"worker %s volume %s should be Ready", node, id)
@@ -82,7 +82,7 @@ func (suite *EphemeralWorkersSuite) TestWorkerVolumesAreMemory() {
 			client.WithNode(suite.ctx, node), suite.Client.COSI, constants.EphemeralPartitionLabel)
 		suite.Require().NoError(err, "controlplane %s volume %s", node, constants.EphemeralPartitionLabel)
 
-		suite.Assert().NotEqual(block.VolumeTypeMemory.String(), vs.TypedSpec().Type.String(),
+		suite.Assert().NotEqual(block.VolumeTypeTmpfs.String(), vs.TypedSpec().Type.String(),
 			"controlplane %s EPHEMERAL should be disk-backed", node)
 	}
 }

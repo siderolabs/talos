@@ -54,8 +54,8 @@ func (suite *EphemeralSuite) TearDownTest() {
 	}
 }
 
-// TestVolumesAreMemory asserts that both system volumes report VolumeTypeMemory.
-func (suite *EphemeralSuite) TestVolumesAreMemory() {
+// TestVolumesAreTmpfs asserts that both system volumes report VolumeTypeTmpfs.
+func (suite *EphemeralSuite) TestVolumesAreTmpfs() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	suite.Require().NotEmpty(nodes)
 
@@ -67,7 +67,7 @@ func (suite *EphemeralSuite) TestVolumesAreMemory() {
 			suite.Require().NoError(err, "node %s volume %s", node, id)
 
 			suite.Assert().Equal(
-				block.VolumeTypeMemory.String(),
+				block.VolumeTypeTmpfs.String(),
 				vs.TypedSpec().Type.String(),
 				"node %s volume %s should be memory-backed", node, id,
 			)
