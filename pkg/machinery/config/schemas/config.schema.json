@@ -2273,6 +2273,17 @@
           "markdownDescription": "Name of the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.",
           "x-intellij-html-description": "\u003cp\u003eName of the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.\u003c/p\u003e\n"
         },
+        "powerState": {
+          "enum": [
+            "running",
+            "stopped",
+            "suspended"
+          ],
+          "title": "powerState",
+          "description": "Power state the virtual machine is driven towards.\n",
+          "markdownDescription": "Power state the virtual machine is driven towards.",
+          "x-intellij-html-description": "\u003cp\u003ePower state the virtual machine is driven towards.\u003c/p\u003e\n"
+        },
         "cpu": {
           "$ref": "#/$defs/hypervisor.VirtualMachineCPU",
           "title": "cpu",
@@ -2320,7 +2331,8 @@
         "firmware",
         "kind",
         "memory",
-        "name"
+        "name",
+        "powerState"
       ],
       "description": "VirtualMachineConfig is a virtual machine configuration document.\\nVirtualMachineConfig declares a virtual machine run by Talos.\\n\\nThis document is the skeleton of the virtual machine: the rest of the machine's shape\\n(firmware, disks, network interfaces, guest seeding, consoles) is added to it over time,\\nand every addition is a new field rather than a change to an existing one.\\n\\nStatus is reported via `VirtualMachineStatus`.\\n"
     },

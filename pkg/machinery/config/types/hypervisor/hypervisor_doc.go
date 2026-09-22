@@ -87,6 +87,18 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "powerState",
+				Type:        "PowerState",
+				Note:        "",
+				Description: "Power state the virtual machine is driven towards.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Power state the virtual machine is driven towards." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"running",
+					"stopped",
+					"suspended",
+				},
+			},
+			{
 				Name:        "cpu",
 				Type:        "VirtualMachineCPU",
 				Note:        "",

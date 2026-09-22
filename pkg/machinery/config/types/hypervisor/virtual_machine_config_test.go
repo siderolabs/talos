@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // exampleDigest is a well-formed sha256 digest, used wherever a valid one is needed.
@@ -42,6 +44,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
 				c.MetaName = "vm1"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.MemoryConfig.BallooningConfig = &hypervisor.VirtualMachineBallooning{
@@ -58,6 +61,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
 				c.MetaName = "vm1"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
@@ -109,6 +113,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
 				c.MetaName = "vm1"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
@@ -126,6 +131,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
 				c.MetaName = "vm1"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.FirmwareConfig = hypervisor.VirtualMachineFirmware{
@@ -144,6 +150,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
 				c.MetaName = "vm2"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 1
 				c.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
 				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
@@ -196,7 +203,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "empty",
 			cfg:  hypervisor.NewVirtualMachineConfigV1Alpha1,
 
-			expectedErrors: "name is required\ncpu.count is required\nmemory.size is required\nfirmware.type is required",
+			expectedErrors: "name is required\npowerState is required\ncpu.count is required\nmemory.size is required\nfirmware.type is required",
 		},
 		{
 			name: "invalid name",
@@ -493,6 +500,26 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "power state outside the enum",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.PowerStateConfig = hypervisorhelpers.PowerState(99)
+
+				return c
+			},
+
+			expectedErrors: `unsupported powerState "PowerState(99)"`,
+		},
+		{
+			name: "suspended",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.PowerStateConfig = hypervisorhelpers.PowerStateSuspended
+
+				return c
+			},
+		},
+		{
 			name: "valid",
 			cfg:  validVirtualMachineConfig,
 		},
@@ -689,6 +716,7 @@ func TestVirtualMachineConfigClone(t *testing.T) {
 func validVirtualMachineConfig() *hypervisor.VirtualMachineConfigV1Alpha1 {
 	c := hypervisor.NewVirtualMachineConfigV1Alpha1()
 	c.MetaName = "vm1"
+	c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	c.CPUConfig.CPUCount = 4
 	c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 	c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
@@ -775,4 +803,64 @@ func TestVirtualMachineConfigFirmwareDefaults(t *testing.T) {
 
 		assert.True(t, cfg.Firmware().SecureBoot().Enabled())
 	})
+}
+
+func TestVirtualMachineConfigPowerStateUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name       string
+		powerState string
+	}{
+		{
+			name:       "not a power state",
+			powerState: "paused",
+		},
+		{
+			// the zero value of the enum exists only so that the generated protobuf has a member
+			// at 0: a document naming it is as wrong as a document naming anything else.
+			name:       "the zero value",
+			powerState: "unknown",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := fmt.Sprintf(`apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+powerState: %s
+cpu:
+    count: 1
+memory:
+    size: 512MiB
+firmware:
+    type: bios
+`, test.powerState)
+
+			_, err := configloader.NewFromBytes([]byte(cfg))
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.powerState+" does not belong to PowerState values")
+		})
+	}
+}
+
+// TestVirtualMachineConfigPowerStateDocValues guards the hand-written `values:` list in the
+// document against the enum it documents: docgen copies that list verbatim, so nothing else
+// notices when a power state is added to hypervisorhelpers and not to the comment.
+func TestVirtualMachineConfigPowerStateDocValues(t *testing.T) {
+	t.Parallel()
+
+	doc := hypervisor.VirtualMachineConfigV1Alpha1{}.Doc()
+
+	idx := slices.IndexFunc(doc.Fields, func(field encoder.Doc) bool { return field.Name == "powerState" })
+	require.GreaterOrEqual(t, idx, 0, "powerState field not found in the document's docs")
+
+	// the zero value of the enum is not a state a document may ask for, so it is not documented.
+	documentable := slices.DeleteFunc(
+		hypervisorhelpers.PowerStateStrings(),
+		func(name string) bool { return name == hypervisorhelpers.PowerStateUnknown.String() },
+	)
+
+	assert.Equal(t, documentable, doc.Fields[idx].Values)
 }

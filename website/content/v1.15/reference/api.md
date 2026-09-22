@@ -335,6 +335,7 @@ description: Talos gRPC API reference.
     - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
+    - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
     - [NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive)
@@ -5705,6 +5706,24 @@ CriImageCacheStatus describes image cache status type.
 | IMAGE_CACHE_STATUS_DISABLED | 1 |  |
 | IMAGE_CACHE_STATUS_PREPARING | 2 |  |
 | IMAGE_CACHE_STATUS_READY | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersPowerState"></a>
+
+### HypervisorhelpersPowerState
+HypervisorhelpersPowerState is the power state a virtual machine is driven towards.
+
+`running` starts the virtual machine, `stopped` stops it, and `suspended` suspends it.
+`suspended` is reachable only from `running`: a stopped machine is not started in order to
+suspend it.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| POWER_STATE_UNKNOWN | 0 |  |
+| POWER_STATE_RUNNING | 1 |  |
+| POWER_STATE_STOPPED | 2 |  |
+| POWER_STATE_SUSPENDED | 3 |  |
 
 
 

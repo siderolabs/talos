@@ -1,6 +1,7 @@
 apiVersion: v1alpha1
 kind: VirtualMachineConfig
 name: vm2
+powerState: running
 cpu:
     count: 1
 memory:

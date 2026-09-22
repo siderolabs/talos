@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // VirtualMachineConfigKind is a config document kind.
@@ -67,6 +68,14 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     digits and hyphens. It is the ID used to address the virtual machine over the API.
 	//   schemaRequired: true
 	MetaName string `yaml:"name"`
+	//   description: |
+	//     Power state the virtual machine is driven towards.
+	//   values:
+	//     - running
+	//     - stopped
+	//     - suspended
+	//   schemaRequired: true
+	PowerStateConfig hypervisorhelpers.PowerState `yaml:"powerState"`
 	//   description: |
 	//     Processor settings for the virtual machine.
 	//   schemaRequired: true
@@ -163,6 +172,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 			BallooningEnabled: new(true),
 		},
 	}
+	cfg.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	cfg.FirmwareConfig = VirtualMachineFirmware{
 		FirmwareType: config.VirtualMachineFirmwareTypeUEFI,
 		SecureBootConfig: VirtualMachineFirmwareSecureBoot{
@@ -284,11 +294,17 @@ func (c *VirtualMachineConfigV1Alpha1) Firmware() config.VirtualMachineFirmwareC
 	return &c.FirmwareConfig
 }
 
+// PowerState implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) PowerState() hypervisorhelpers.PowerState {
+	return c.PowerStateConfig
+}
+
 // Validate implements config.Validator interface.
 func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
 
 	validationErrors = errors.Join(validationErrors, c.ValidateName())
+	validationErrors = errors.Join(validationErrors, c.ValidatePowerState())
 	validationErrors = errors.Join(validationErrors, c.ValidateCPU())
 	validationErrors = errors.Join(validationErrors, c.ValidateMemory())
 	validationErrors = errors.Join(validationErrors, c.ValidateFirmware())
@@ -364,4 +380,19 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateDisks() error {
 // ValidateFirmware checks the firmware the virtual machine boots.
 func (c *VirtualMachineConfigV1Alpha1) ValidateFirmware() error {
 	return c.FirmwareConfig.validate()
+}
+
+// ValidatePowerState checks the power state the virtual machine is driven towards.
+//
+// Unmarshalling rejects any name outside the enum, so the only cases left are a field that was
+// never set and a value built in Go rather than decoded.
+func (c *VirtualMachineConfigV1Alpha1) ValidatePowerState() error {
+	switch {
+	case c.PowerStateConfig == hypervisorhelpers.PowerStateUnknown:
+		return errors.New("powerState is required")
+	case !c.PowerStateConfig.IsAPowerState():
+		return fmt.Errorf("unsupported powerState %q", c.PowerStateConfig)
+	}
+
+	return nil
 }

@@ -25,6 +25,7 @@ title: VirtualMachineConfig
 apiVersion: v1alpha1
 kind: VirtualMachineConfig
 name: vm1 # Name of the virtual machine.
+powerState: running # Power state the virtual machine is driven towards.
 # Processor settings for the virtual machine.
 cpu:
     count: 4 # Number of virtual CPUs presented to the guest.
@@ -90,6 +91,7 @@ console:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It is the ID used to address the virtual machine over the API.  | |
+|`powerState` |PowerState |Power state the virtual machine is driven towards.  |`running`<br />`stopped`<br />`suspended`<br /> |
 |`cpu` |<a href="#VirtualMachineConfig.cpu">VirtualMachineCPU</a> |Processor settings for the virtual machine.  | |
 |`memory` |<a href="#VirtualMachineConfig.memory">VirtualMachineMemory</a> |Memory settings for the virtual machine.  | |
 |`firmware` |<a href="#VirtualMachineConfig.firmware">VirtualMachineFirmware</a> |Firmware the virtual machine boots.  | |

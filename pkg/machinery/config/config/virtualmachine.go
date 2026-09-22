@@ -4,7 +4,11 @@
 
 package config
 
-import "github.com/siderolabs/gen/optional"
+import (
+	"github.com/siderolabs/gen/optional"
+
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+)
 
 // VirtualMachineConfig defines the interface to access virtual machine configuration.
 type VirtualMachineConfig interface {
@@ -13,6 +17,8 @@ type VirtualMachineConfig interface {
 	// Marker for findMatchingDocs[T]
 	VirtualMachineConfigSignal()
 
+	// PowerState the virtual machine is driven towards.
+	PowerState() hypervisorhelpers.PowerState
 	// CPU settings; never nil.
 	CPU() VirtualMachineCPUConfig
 	// Memory settings; never nil.
