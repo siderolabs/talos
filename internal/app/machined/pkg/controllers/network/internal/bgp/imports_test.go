@@ -25,9 +25,9 @@ import (
 func TestBGPRouteImportLifecycle(t *testing.T) {
 	ctx := t.Context()
 	fabricPort := freeBGPImportTestPort(t)
-	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1)
-	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1)
-	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort)
+	sourceServer := startBGPImportTestServer(t, ctx, 4200000000, "192.0.2.1", -1, false)
+	targetServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.2", -1, false)
+	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.3", fabricPort, false)
 	connectBGPImportTestFabric(t, ctx, targetServer, fabricServer, fabricPort)
 
 	prefix := netip.MustParsePrefix("198.51.100.100/32")
@@ -179,16 +179,18 @@ func TestBGPImportFamilies(t *testing.T) {
 	assert.Empty(t, internalbgp.ImportFamiliesForTest(nil))
 }
 
-func startBGPImportTestServer(t *testing.T, ctx context.Context, asn uint32, routerID string, listenPort int32) *gobgpsrv.BgpServer {
+// startBGPImportTestServer starts a GoBGP server; with multipath enabled it keeps all equal-cost paths as best.
+func startBGPImportTestServer(t *testing.T, ctx context.Context, asn uint32, routerID string, listenPort int32, multipath bool) *gobgpsrv.BgpServer {
 	t.Helper()
 
 	server := gobgpsrv.NewBgpServer()
 	go server.Serve()
 
 	require.NoError(t, server.StartBgp(ctx, &gobgpapi.StartBgpRequest{Global: &gobgpapi.Global{
-		Asn:        asn,
-		RouterId:   routerID,
-		ListenPort: listenPort,
+		Asn:              asn,
+		RouterId:         routerID,
+		ListenPort:       listenPort,
+		UseMultiplePaths: multipath,
 	}}))
 
 	t.Cleanup(server.Stop)
@@ -266,31 +268,43 @@ func freeBGPImportTestPort(t *testing.T) int32 {
 	return int32(port)
 }
 
+// newBGPImportTestPath builds an import candidate path from the numbered peer 192.0.2.10 with the given MED.
 func newBGPImportTestPath(t *testing.T, prefix netip.Prefix, med uint32) *apiutil.Path {
+	t.Helper()
+
+	peer := netip.MustParseAddr("192.0.2.10")
+
+	return newBGPNumberedTestPath(
+		t, prefix, peer, peer,
+		bgppacket.NewPathAttributeMultiExitDisc(med),
+		bgppacket.NewPathAttributeCommunities([]uint32{65000<<16 | 100}),
+	)
+}
+
+// newBGPNumberedTestPath builds an IPv4 path as advertised by a numbered peer, with optional extra attributes.
+func newBGPNumberedTestPath(t *testing.T, prefix netip.Prefix, peer, gateway netip.Addr, attrs ...bgppacket.PathAttributeInterface) *apiutil.Path {
 	t.Helper()
 
 	nlri, err := bgppacket.NewIPAddrPrefix(prefix)
 	require.NoError(t, err)
 
-	nexthop, err := bgppacket.NewPathAttributeNextHop(netip.MustParseAddr("192.0.2.10"))
+	nexthop, err := bgppacket.NewPathAttributeNextHop(gateway)
 	require.NoError(t, err)
 
 	return &apiutil.Path{
 		Family:         bgppacket.RF_IPv4_UC,
 		Nlri:           nlri,
 		PeerASN:        4200000001,
-		PeerID:         netip.MustParseAddr("192.0.2.10"),
-		PeerAddress:    netip.MustParseAddr("192.0.2.10"),
+		PeerID:         peer,
+		PeerAddress:    peer,
 		IsFromExternal: true,
-		Attrs: []bgppacket.PathAttributeInterface{
+		Attrs: append([]bgppacket.PathAttributeInterface{
 			bgppacket.NewPathAttributeOrigin(0),
 			bgppacket.NewPathAttributeAsPath([]bgppacket.AsPathParamInterface{
 				bgppacket.NewAs4PathParam(2, []uint32{4200000001}),
 			}),
 			nexthop,
-			bgppacket.NewPathAttributeMultiExitDisc(med),
-			bgppacket.NewPathAttributeCommunities([]uint32{65000<<16 | 100}),
-		},
+		}, attrs...),
 	}
 }
 

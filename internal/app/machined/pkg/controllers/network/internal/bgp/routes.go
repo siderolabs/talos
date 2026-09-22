@@ -79,7 +79,12 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 				nh := network.RouteNextHop{Gateway: nexthop}
 
 				if nexthop.IsLinkLocalUnicast() {
+					// a link-local gateway is only meaningful together with the egress link, which is known
+					// for unnumbered peers only; the kernel rejects a link-local gateway without a device
 					nh.OutLinkName = instance.peerIfaces[path.PeerAddress.WithZone("")]
+					if nh.OutLinkName == "" {
+						continue
+					}
 				}
 
 				learned[dst] = append(learned[dst], nh)
@@ -89,6 +94,13 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 			// Best-effort: ListPath may fail for a not-yet-active family.
 			continue
 		}
+	}
+
+	// GoBGP yields the paths of a destination in its own order, which is not guaranteed to be stable
+	// across calls, and several best paths may share a next-hop (e.g. the same route reflected by two
+	// route reflectors): canonicalize the ECMP set so that the RouteSpec is stable across reconciles.
+	for dst, nexthops := range learned {
+		learned[dst] = network.NormalizeNextHops(nexthops)
 	}
 
 	return learned

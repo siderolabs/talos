@@ -61,3 +61,8 @@ func ImportFamiliesForTest(selectors []netip.Prefix) []bgppacket.Family {
 func ListImportCandidatesForTest(instance *Instance, selectors []netip.Prefix) (map[netip.Prefix]*apiutil.Path, error) {
 	return instance.listImportCandidates(selectors)
 }
+
+// SetInstancePeerIfacesForTest replaces the learned link-local peer interface mapping.
+func SetInstancePeerIfacesForTest(instance *Instance, peerIfaces map[netip.Addr]string) {
+	instance.peerIfaces = peerIfaces
+}

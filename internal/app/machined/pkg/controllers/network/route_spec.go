@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -156,6 +157,29 @@ func RouteScopeMatches(actual uint8, expected *network.RouteSpecSpec) bool {
 	return actual == uint8(expected.Scope)
 }
 
+// RouteDestinationMatches reports whether an existing kernel route is a route to the expected destination.
+//
+// A default route (zero-length prefix) carries no RTA_DST in the kernel, so its Dst is nil; the
+// expected destination may be either the zero Prefix (nil) or an explicit 0.0.0.0/0 (non-nil).
+// The length match alone identifies it (a default is unique per family/table/priority).
+func RouteDestinationMatches(route *rtnetlink.RouteMessage, destination netip.Prefix) bool {
+	if int(route.DstLength) != netipPrefixBitsCorrected(destination) {
+		return false
+	}
+
+	return route.DstLength == 0 || route.Attributes.Dst.Equal(destination.Addr().AsSlice())
+}
+
+// linkIndexMatches reports whether the egress link the kernel reports matches the one the spec asked for.
+//
+// A spec with no out-link (link index zero, e.g. a route learned from a numbered BGP peer) matches
+// whatever egress device the kernel resolved from the gateway: the kernel always reports a resolved
+// interface index back, so comparing it verbatim would never match and the route would be deleted
+// and re-added on every reconcile.
+func linkIndexMatches(actual, expected uint32) bool {
+	return expected == 0 || actual == expected
+}
+
 func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
@@ -164,14 +188,7 @@ func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *netwo
 			continue
 		}
 
-		if int(route.DstLength) != netipPrefixBitsCorrected(expected.Destination) {
-			continue
-		}
-
-		// a default route (zero-length prefix) carries no RTA_DST in the kernel, so its Dst is nil; the
-		// expected destination may be either the zero Prefix (nil) or an explicit 0.0.0.0/0 (non-nil).
-		// The length match alone identifies it (a default is unique per family/table/priority).
-		if route.DstLength != 0 && !route.Attributes.Dst.Equal(expected.Destination.Addr().AsSlice()) {
+		if !RouteDestinationMatches(&existingRoutes[i], expected.Destination) {
 			continue
 		}
 
@@ -242,12 +259,15 @@ func routeGatewayMatches(existing *rtnetlink.RouteMessage, expected *network.Rou
 
 // buildMultipath builds rtnetlink multipath next-hops from the spec, resolving link names to indices.
 //
+// The next-hops are installed in the canonical order (see network.NormalizeNextHops), whatever order the
+// spec lists them in, so that the resulting kernel route doesn't depend on the producer.
+//
 // It returns false if any next-hop link cannot be resolved yet, in which case the route should be
 // retried once the link appears.
 func buildMultipath(family nethelpers.Family, links []rtnetlink.LinkMessage, nextHops []network.RouteNextHop) ([]rtnetlink.NextHop, bool) {
 	result := make([]rtnetlink.NextHop, 0, len(nextHops))
 
-	for _, nh := range nextHops {
+	for _, nh := range network.NormalizeNextHops(slices.Clone(nextHops)) {
 		ifIndex := resolveLinkName(links, nh.OutLinkName)
 		if ifIndex == 0 && nh.OutLinkName != "" {
 			return nil, false
@@ -278,21 +298,48 @@ func buildMultipath(family nethelpers.Family, links []rtnetlink.LinkMessage, nex
 }
 
 // multipathEqual reports whether an existing kernel multipath set matches the expected next-hops.
+//
+// The comparison is order-insensitive: the kernel keeps the next-hops in the order they were installed,
+// which is not necessarily the order the spec lists them in. Each expected next-hop has to be matched
+// by a distinct existing one, so the sets have to be equal as multisets.
+//
+// An expected next-hop with no out-link matches whatever egress device the kernel resolved from the
+// gateway (see linkIndexMatches), mirroring the single-gateway path in syncRoute.
 func multipathEqual(existing, expected []rtnetlink.NextHop) bool {
 	if len(existing) != len(expected) {
 		return false
 	}
 
-	for i := range expected {
-		if existing[i].Hop.IfIndex != expected[i].Hop.IfIndex ||
-			existing[i].Hop.Hops != expected[i].Hop.Hops ||
-			!existing[i].Gateway.Equal(expected[i].Gateway) ||
-			!viaEqual(existing[i].Via, expected[i].Via) {
+	matched := make([]bool, len(existing))
+
+	for _, want := range expected {
+		found := false
+
+		for i := range existing {
+			if matched[i] || !nextHopEqual(existing[i], want) {
+				continue
+			}
+
+			matched[i] = true
+			found = true
+
+			break
+		}
+
+		if !found {
 			return false
 		}
 	}
 
 	return true
+}
+
+// nextHopEqual reports whether an existing kernel next-hop matches the expected one.
+func nextHopEqual(existing, expected rtnetlink.NextHop) bool {
+	return linkIndexMatches(existing.Hop.IfIndex, expected.Hop.IfIndex) &&
+		existing.Hop.Hops == expected.Hop.Hops &&
+		existing.Gateway.Equal(expected.Gateway) &&
+		viaEqual(existing.Via, expected.Via)
 }
 
 //nolint:gocyclo,cyclop
@@ -371,8 +418,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			// check if existing route matches the spec: if it does, skip update
 			if RouteScopeMatches(existing.Scope, route.TypedSpec()) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
-				// when no out-link is requested, accept whatever egress device the kernel resolved
-				(linkIndex == 0 || existing.Attributes.OutIface == linkIndex) &&
+				linkIndexMatches(existing.Attributes.OutIface, linkIndex) &&
 				(value.IsZero(route.TypedSpec().Source) ||
 					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) &&
 				existingMTU == route.TypedSpec().MTU &&
