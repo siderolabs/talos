@@ -207,6 +207,33 @@ func (suite *PlatformConfigApplySuite) TestResolvers() {
 	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
+func (suite *PlatformConfigApplySuite) TestInvalidNames() {
+	platformConfig := network.NewPlatformConfig(network.NamespaceName, network.PlatformConfigActiveID)
+	platformConfig.TypedSpec().Hostnames = []network.HostnameSpecSpec{
+		{
+			Hostname:    "node1",
+			Domainname:  "poc.example\nregistry.k8s.io",
+			ConfigLayer: network.ConfigPlatform,
+		},
+	}
+	platformConfig.TypedSpec().Resolvers = []network.ResolverSpecSpec{
+		{
+			NameServers:   []network.NameServerSpec{{Addr: netip.MustParseAddr("1.1.1.1")}},
+			SearchDomains: []string{"legit.example", "poc.example foo.bar"},
+			ConfigLayer:   network.ConfigPlatform,
+		},
+	}
+	suite.Create(platformConfig)
+
+	// search domains are filtered
+	ctest.AssertResource(suite, "platform/resolvers", func(r *network.ResolverSpec, asrt *assert.Assertions) {
+		asrt.Equal([]string{"legit.example"}, r.TypedSpec().SearchDomains)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
+
+	// invalid hostname is not populated
+	ctest.AssertNoResource[*network.HostnameSpec](suite, "platform/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
+}
+
 func (suite *PlatformConfigApplySuite) TestTimeServers() {
 	platformConfig := network.NewPlatformConfig(network.NamespaceName, network.PlatformConfigActiveID)
 	platformConfig.TypedSpec().TimeServers = []network.TimeServerSpecSpec{

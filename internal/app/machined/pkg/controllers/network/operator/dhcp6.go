@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
-	"strings"
 	"sync"
 	"time"
 
@@ -24,6 +23,7 @@ import (
 	"go4.org/netipx"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/operator/internal/dhcpparse"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -197,14 +197,8 @@ func (d *DHCP6) parseReply(reply *dhcpv6.Message) (leaseTime time.Duration) {
 		d.resolvers = nil
 	}
 
-	if reply.Options.FQDN() != nil && len(reply.Options.FQDN().DomainName.Labels) > 0 && !d.skipHostnameRequest {
-		d.hostname = []network.HostnameSpecSpec{
-			{
-				Hostname:    reply.Options.FQDN().DomainName.Labels[0],
-				Domainname:  strings.Join(reply.Options.FQDN().DomainName.Labels[1:], "."),
-				ConfigLayer: network.ConfigOperator,
-			},
-		}
+	if !d.skipHostnameRequest {
+		d.hostname = dhcpparse.ParseDHCP6FQDN(reply.Options.FQDN())
 	} else {
 		d.hostname = nil
 	}

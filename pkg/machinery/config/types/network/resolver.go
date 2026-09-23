@@ -353,6 +353,13 @@ func (s *ResolverConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 		}
 	}
 
+	// this is a warning (and not an error) to keep accepting machine configuration which was valid before
+	for _, domain := range s.ResolverSearchDomains.SearchDomains {
+		if err := nethelpers.ValidateDNSNameChars(domain); err != nil {
+			warnings = append(warnings, fmt.Sprintf("searchDomains: %s, it will be ignored", err))
+		}
+	}
+
 	if nonRegularDNS > 0 && nonRegularDNS == len(s.ResolverNameservers) {
 		warnings = append(
 			warnings,

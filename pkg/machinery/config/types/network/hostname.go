@@ -113,7 +113,10 @@ func (s *HostnameConfigV1Alpha1) Clone() config.Document {
 //
 //nolint:gocyclo
 func (s *HostnameConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	var errs error
+	var (
+		warnings []string
+		errs     error
+	)
 
 	if s.ConfigAuto == nil && s.ConfigHostname == "" {
 		errs = errors.Join(errs, errors.New("either 'auto' or 'hostname' must be set"))
@@ -142,9 +145,14 @@ func (s *HostnameConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 		if len(hostname) == 0 || len(hostname) > 63 {
 			errs = errors.Join(errs, fmt.Errorf("invalid hostname %q", hostname))
 		}
+
+		// this is a warning (and not an error) to keep accepting machine configuration which was valid before
+		if err := nethelpers.ValidateDNSNameChars(s.ConfigHostname); err != nil {
+			warnings = append(warnings, fmt.Sprintf("hostname: %s, it will not be written to /etc/hosts", err))
+		}
 	}
 
-	return nil, errs
+	return warnings, errs
 }
 
 // V1Alpha1ConflictValidate implements container.V1Alpha1ConflictValidator interface.

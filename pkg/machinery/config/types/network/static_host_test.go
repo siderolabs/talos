@@ -78,6 +78,19 @@ func TestHostConfigValidate(t *testing.T) {
 				return cfg
 			},
 		},
+		{
+			name: "hostname with newline",
+			cfg: func() *network.StaticHostConfigV1Alpha1 {
+				cfg := network.NewStaticHostConfigV1Alpha1("10.5.0.2")
+				cfg.Hostnames = []string{"example.org", "example.com\nregistry.k8s.io"}
+
+				return cfg
+			},
+
+			expectedWarnings: []string{
+				"hostnames: name \"example.com\\nregistry.k8s.io\" contains invalid character '\\n' at position 11, it will be ignored",
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

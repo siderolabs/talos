@@ -119,6 +119,19 @@ func TestHostnameConfigValidate(t *testing.T) {
 			expectedError: "fqdn is too long: 320",
 		},
 		{
+			name: "hostname with space",
+			cfg: func() *network.HostnameConfigV1Alpha1 {
+				cfg := network.NewHostnameConfigV1Alpha1()
+				cfg.ConfigHostname = "my host"
+
+				return cfg
+			},
+
+			expectedWarnings: []string{
+				"hostname: name \"my host\" contains invalid character ' ' at position 2, it will not be written to /etc/hosts",
+			},
+		},
+		{
 			name: "valid 1",
 			cfg: func() *network.HostnameConfigV1Alpha1 {
 				cfg := network.NewHostnameConfigV1Alpha1()

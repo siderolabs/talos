@@ -8,12 +8,14 @@ package network
 
 import (
 	"errors"
+	"fmt"
 	"net/netip"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // StaticHostKind is a StaticHost config document kind.
@@ -86,7 +88,10 @@ func (s *StaticHostConfigV1Alpha1) Name() string {
 
 // Validate implements config.Validator interface.
 func (s *StaticHostConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	var errs error
+	var (
+		warnings []string
+		errs     error
+	)
 
 	if s.MetaName == "" {
 		errs = errors.Join(errs, errors.New("name is required"))
@@ -100,7 +105,14 @@ func (s *StaticHostConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		errs = errors.Join(errs, errors.New("at least one hostname is required"))
 	}
 
-	return nil, errs
+	// this is a warning (and not an error) to keep accepting machine configuration which was valid before
+	for _, hostname := range s.Hostnames {
+		if err := nethelpers.ValidateDNSNameChars(hostname); err != nil {
+			warnings = append(warnings, fmt.Sprintf("hostnames: %s, it will be ignored", err))
+		}
+	}
+
+	return warnings, errs
 }
 
 // IP implements ExtraHost interface.

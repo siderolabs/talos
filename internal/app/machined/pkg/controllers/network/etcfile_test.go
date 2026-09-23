@@ -356,6 +356,21 @@ func (suite *EtcFileConfigSuite) TestOnlyHostname() {
 	)
 }
 
+func (suite *EtcFileConfigSuite) TestInvalidNames() {
+	suite.hostnameStatus.TypedSpec().Hostname = "node1"
+	suite.hostnameStatus.TypedSpec().Domainname = "poc.example\n6.6.6.6 registry.k8s.io"
+	suite.resolverStatus.TypedSpec().SearchDomains = []string{"legit.example", "poc.example\nnameserver 6.6.6.6", "Corp_Example.com"}
+
+	suite.testFiles(
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
+		etcFileContents{
+			hosts:            "127.0.0.1 localhost\n::1       localhost ip6-localhost ip6-loopback\nff02::1   ip6-allnodes\nff02::2   ip6-allrouters\n",
+			resolvConf:       "nameserver 127.0.0.53\n\nsearch legit.example Corp_Example.com\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n\nsearch legit.example Corp_Example.com\n",
+		},
+	)
+}
+
 func (suite *EtcFileConfigSuite) ExtraTearDown() {
 	if _, err := os.Lstat(suite.podResolvConfPath); err == nil {
 		if suite.etcRoot.FSType() == "os" {

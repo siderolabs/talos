@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -130,7 +131,7 @@ func (ctrl *PlatformConfigApplyController) Run(ctx context.Context, r controller
 			}
 		}
 
-		if err := ctrl.apply(ctx, r, platformConfig); err != nil {
+		if err := ctrl.apply(ctx, r, logger, platformConfig); err != nil {
 			return err
 		}
 
@@ -139,8 +140,19 @@ func (ctrl *PlatformConfigApplyController) Run(ctx context.Context, r controller
 }
 
 //nolint:dupl,gocyclo
-func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controller.Runtime, platformConfig *network.PlatformConfig) error {
+func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controller.Runtime, logger *zap.Logger, platformConfig *network.PlatformConfig) error {
 	networkConfig := platformConfig.TypedSpec()
+
+	// filter any platform hostnames and search domains which are invalid
+	hostnames := xslices.Filter(networkConfig.Hostnames, func(spec network.HostnameSpecSpec) bool {
+		if err := spec.ValidateChars(); err != nil {
+			logger.Warn("ignoring invalid platform hostname", zap.Error(err))
+
+			return false
+		}
+
+		return true
+	})
 
 	metadataLength := 0
 
@@ -240,9 +252,9 @@ func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controll
 		},
 		// HostnameSpec
 		{
-			length: len(networkConfig.Hostnames),
+			length: len(hostnames),
 			getter: func(i int) any {
-				return networkConfig.Hostnames[i]
+				return hostnames[i]
 			},
 			idBuilder: func(spec any) (resource.ID, error) {
 				return network.LayeredID(network.ConfigPlatform, network.HostnameID), nil
@@ -280,6 +292,16 @@ func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controll
 					*spec = newSpec.(network.ResolverSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
 					spec.Convert() // convert deprecated fields for backward compatibility
+
+					spec.SearchDomains = xslices.Filter(spec.SearchDomains, func(domain string) bool {
+						if err := nethelpers.ValidateDNSNameChars(domain); err != nil {
+							logger.Warn("ignoring invalid platform search domain", zap.Error(err))
+
+							return false
+						}
+
+						return true
+					})
 
 					return nil
 				}
