@@ -336,6 +336,11 @@ description: Talos gRPC API reference.
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
+    - [HypervisorhelpersVirtualMachineDiskBus](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus)
+    - [HypervisorhelpersVirtualMachineDiskFormat](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat)
+    - [HypervisorhelpersVirtualMachineDiskImageMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskImageMode)
+    - [HypervisorhelpersVirtualMachineDiskType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType)
+    - [HypervisorhelpersVirtualMachineFirmwareType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineFirmwareType)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
     - [NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive)
@@ -5714,16 +5719,79 @@ CriImageCacheStatus describes image cache status type.
 ### HypervisorhelpersPowerState
 HypervisorhelpersPowerState is the power state a virtual machine is driven towards.
 
-`running` starts the virtual machine, `stopped` stops it, and `suspended` suspends it.
-`suspended` is reachable only from `running`: a stopped machine is not started in order to
-suspend it.
-
 | Name | Number | Description |
 | ---- | ------ | ----------- |
 | POWER_STATE_UNKNOWN | 0 |  |
 | POWER_STATE_RUNNING | 1 |  |
 | POWER_STATE_STOPPED | 2 |  |
 | POWER_STATE_SUSPENDED | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus"></a>
+
+### HypervisorhelpersVirtualMachineDiskBus
+HypervisorhelpersVirtualMachineDiskBus is the controller a disk is attached to.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_DISK_BUS_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_DISK_BUS_VIRTIO | 1 |  |
+| VIRTUAL_MACHINE_DISK_BUS_SCSI | 2 |  |
+| VIRTUAL_MACHINE_DISK_BUS_SATA | 3 |  |
+| VIRTUAL_MACHINE_DISK_BUS_NV_ME | 4 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat"></a>
+
+### HypervisorhelpersVirtualMachineDiskFormat
+HypervisorhelpersVirtualMachineDiskFormat is the on-disk format of a virtual machine disk.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_DISK_FORMAT_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_DISK_FORMAT_RAW | 1 |  |
+| VIRTUAL_MACHINE_DISK_FORMAT_QCOW2 | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskImageMode"></a>
+
+### HypervisorhelpersVirtualMachineDiskImageMode
+HypervisorhelpersVirtualMachineDiskImageMode is how a disk's contents are derived from a content library image.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_DISK_IMAGE_MODE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_DISK_IMAGE_MODE_COPY | 1 |  |
+| VIRTUAL_MACHINE_DISK_IMAGE_MODE_LINKED | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType"></a>
+
+### HypervisorhelpersVirtualMachineDiskType
+HypervisorhelpersVirtualMachineDiskType is the kind of device a disk is presented as.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_DISK_TYPE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_DISK_TYPE_DISK | 1 |  |
+| VIRTUAL_MACHINE_DISK_TYPE_CDROM | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineFirmwareType"></a>
+
+### HypervisorhelpersVirtualMachineFirmwareType
+HypervisorhelpersVirtualMachineFirmwareType is the firmware a virtual machine boots.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_FIRMWARE_TYPE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_FIRMWARE_TYPE_UEFI | 1 |  |
+| VIRTUAL_MACHINE_FIRMWARE_TYPE_BIOS | 2 |  |
 
 
 

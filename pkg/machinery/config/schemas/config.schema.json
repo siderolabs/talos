@@ -2381,21 +2381,32 @@
           "x-intellij-html-description": "\u003cp\u003eSize of the volume.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose size is that of its image.\u003c/p\u003e\n"
         },
         "format": {
-          "type": "string",
+          "enum": [
+            "raw",
+            "qcow2"
+          ],
           "title": "format",
           "description": "On-disk format of the volume.\n\nThis is not cosmetic: provision.fromImage.mode: linked requires qcow2, since backing\nchains are a qcow2 feature, while raw is faster on block-backed pools.\n\nOptional; defaults to qcow2. Not allowed on a cdrom, which is used as-is.\n",
           "markdownDescription": "On-disk format of the volume.\n\nThis is not cosmetic: `provision.fromImage.mode: linked` requires `qcow2`, since backing\nchains are a qcow2 feature, while `raw` is faster on block-backed pools.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
           "x-intellij-html-description": "\u003cp\u003eOn-disk format of the volume.\u003c/p\u003e\n\n\u003cp\u003eThis is not cosmetic: \u003ccode\u003eprovision.fromImage.mode: linked\u003c/code\u003e requires \u003ccode\u003eqcow2\u003c/code\u003e, since backing\nchains are a qcow2 feature, while \u003ccode\u003eraw\u003c/code\u003e is faster on block-backed pools.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003eqcow2\u003c/code\u003e. Not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which is used as-is.\u003c/p\u003e\n"
         },
         "bus": {
-          "type": "string",
+          "enum": [
+            "virtio",
+            "scsi",
+            "sata",
+            "nvme"
+          ],
           "title": "bus",
           "description": "Controller the disk is attached to.\n\nvirtio for anything modern; sata for guests without virtio drivers at install time.\n\nOptional; defaults to virtio on a disk and to sata on a cdrom. A cdrom cannot\nbe attached to virtio, which presents no ejectable media.\n",
           "markdownDescription": "Controller the disk is attached to.\n\n`virtio` for anything modern; `sata` for guests without virtio drivers at install time.\n\nOptional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot\nbe attached to `virtio`, which presents no ejectable media.",
           "x-intellij-html-description": "\u003cp\u003eController the disk is attached to.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003evirtio\u003c/code\u003e for anything modern; \u003ccode\u003esata\u003c/code\u003e for guests without virtio drivers at install time.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003evirtio\u003c/code\u003e on a \u003ccode\u003edisk\u003c/code\u003e and to \u003ccode\u003esata\u003c/code\u003e on a \u003ccode\u003ecdrom\u003c/code\u003e. A \u003ccode\u003ecdrom\u003c/code\u003e cannot\nbe attached to \u003ccode\u003evirtio\u003c/code\u003e, which presents no ejectable media.\u003c/p\u003e\n"
         },
         "type": {
-          "type": "string",
+          "enum": [
+            "disk",
+            "cdrom"
+          ],
           "title": "type",
           "description": "Kind of device the disk is presented as.\n\nA cdrom is read-only – QEMU emulates no CD burner – so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to disk.\n",
           "markdownDescription": "Kind of device the disk is presented as.\n\nA `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and\nit has no size and no format of its own.\n\nOptional; defaults to `disk`.",
@@ -2455,7 +2466,10 @@
           "x-intellij-html-description": "\u003cp\u003eIntegrity check of the library file, verified before the volume is provisioned.\u003c/p\u003e\n\n\u003cp\u003eWritten as \u003ccode\u003e\u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;\u003c/code\u003e, under either \u003ccode\u003esha256\u003c/code\u003e or \u003ccode\u003esha512\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; the file is used as-is when this is unset.\u003c/p\u003e\n"
         },
         "mode": {
-          "type": "string",
+          "enum": [
+            "copy",
+            "linked"
+          ],
           "title": "mode",
           "description": "How the volume is derived from the image.\n\ncopy makes a full, independent copy. linked makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires format: qcow2.\n\nOptional; defaults to copy.\n",
           "markdownDescription": "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`.",
@@ -2494,7 +2508,10 @@
     "hypervisor.VirtualMachineFirmware": {
       "properties": {
         "type": {
-          "type": "string",
+          "enum": [
+            "uefi",
+            "bios"
+          ],
           "title": "type",
           "description": "Firmware the guest boots.\n\nRequired, and unchangeable for the life of the guest: a guest installed under one\nfirmware will not boot under the other. uefi is the only option on arm64, and the only\none secure boot can be used with.\n",
           "markdownDescription": "Firmware the guest boots.\n\nRequired, and unchangeable for the life of the guest: a guest installed under one\nfirmware will not boot under the other. `uefi` is the only option on arm64, and the only\none secure boot can be used with.",

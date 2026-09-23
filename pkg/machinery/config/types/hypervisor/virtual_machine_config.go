@@ -174,7 +174,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 	}
 	cfg.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	cfg.FirmwareConfig = VirtualMachineFirmware{
-		FirmwareType: config.VirtualMachineFirmwareTypeUEFI,
+		FirmwareType: hypervisorhelpers.VirtualMachineFirmwareTypeUEFI,
 		SecureBootConfig: VirtualMachineFirmwareSecureBoot{
 			SecureBootEnabled: new(true),
 		},
@@ -189,7 +189,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 				FromImageConfig: &VirtualMachineDiskFromImage{
 					ImageLibrary: "images",
 					ImageFile:    "talos-1.14.qcow2",
-					ImageMode:    config.VirtualMachineDiskImageModeLinked,
+					ImageMode:    hypervisorhelpers.VirtualMachineDiskImageModeLinked,
 				},
 			},
 		},
@@ -204,7 +204,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 		{
 			DiskName:      "install",
 			DiskPool:      "pool1",
-			DiskType:      config.VirtualMachineDiskTypeCDROM,
+			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			DiskBootOrder: 2,
 			ProvisionConfig: VirtualMachineDiskProvision{
 				FromImageConfig: &VirtualMachineDiskFromImage{

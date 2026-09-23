@@ -5,4 +5,4 @@
 // Package hypervisorhelpers provides types and type wrappers to support hypervisor resources.
 package hypervisorhelpers
 
-//go:generate go tool github.com/dmarkham/enumer -type=PowerState -linecomment
+//go:generate go tool github.com/dmarkham/enumer -type=PowerState,VirtualMachineDiskBus,VirtualMachineDiskFormat,VirtualMachineDiskImageMode,VirtualMachineDiskType,VirtualMachineFirmwareType -linecomment -text

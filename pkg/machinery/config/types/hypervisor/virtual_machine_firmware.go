@@ -14,6 +14,7 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // Check interfaces.
@@ -34,10 +35,8 @@ type VirtualMachineFirmware struct {
 	//   values:
 	//     - uefi
 	//     - bios
-	//   schema:
-	//     type: string
 	//   schemaRequired: true
-	FirmwareType config.VirtualMachineFirmwareType `yaml:"type"`
+	FirmwareType hypervisorhelpers.VirtualMachineFirmwareType `yaml:"type"`
 	//   description: |
 	//     Secure boot settings.
 	//
@@ -67,7 +66,7 @@ func (s VirtualMachineFirmwareSecureBoot) IsZero() bool {
 //
 // The value is returned as written: it is required, so validation has already rejected an empty
 // one, and there is no default to apply.
-func (f *VirtualMachineFirmware) Type() config.VirtualMachineFirmwareType {
+func (f *VirtualMachineFirmware) Type() hypervisorhelpers.VirtualMachineFirmwareType {
 	return f.FirmwareType
 }
 
@@ -90,16 +89,16 @@ func (s *VirtualMachineFirmwareSecureBoot) Enabled() bool {
 func (f *VirtualMachineFirmware) validate() error {
 	var validationErrors error
 
-	switch f.FirmwareType {
-	case "":
+	switch {
+	case f.FirmwareType == hypervisorhelpers.VirtualMachineFirmwareTypeUnknown:
 		validationErrors = errors.Join(validationErrors, errors.New("firmware.type is required"))
-	case config.VirtualMachineFirmwareTypeUEFI, config.VirtualMachineFirmwareTypeBIOS:
-	default:
+	case !f.FirmwareType.IsAVirtualMachineFirmwareType():
 		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("unsupported firmware.type %q, expected uefi or bios", f.FirmwareType))
+			fmt.Errorf("unsupported firmware.type %q, expected %s", f.FirmwareType,
+				expectedValues(hypervisorhelpers.VirtualMachineFirmwareTypeStrings())))
 	}
 
-	if f.SecureBoot().Enabled() && f.FirmwareType == config.VirtualMachineFirmwareTypeBIOS {
+	if f.SecureBoot().Enabled() && f.FirmwareType == hypervisorhelpers.VirtualMachineFirmwareTypeBIOS {
 		validationErrors = errors.Join(validationErrors,
 			errors.New("firmware.secureBoot.enabled: secure boot requires firmware type uefi"))
 	}

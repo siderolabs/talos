@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -50,7 +49,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MemoryConfig.BallooningConfig = &hypervisor.VirtualMachineBallooning{
 					BallooningEnabled: new(true),
 				}
-				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 
 				return c
 			},
@@ -64,21 +63,21 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
-				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{
 					{
 						DiskName:      "system",
 						DiskPool:      "pool1",
 						DiskSize:      meta.MustByteSize("20GiB"),
-						DiskFormat:    config.VirtualMachineDiskFormatQCOW2,
-						DiskBus:       config.VirtualMachineDiskBusVirtio,
+						DiskFormat:    hypervisorhelpers.VirtualMachineDiskFormatQCOW2,
+						DiskBus:       hypervisorhelpers.VirtualMachineDiskBusVirtio,
 						DiskBootOrder: 1,
 						ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
 							FromImageConfig: &hypervisor.VirtualMachineDiskFromImage{
 								ImageLibrary: "images",
 								ImageFile:    "talos-1.14.qcow2",
 								ImageDigest:  exampleDigest,
-								ImageMode:    config.VirtualMachineDiskImageModeLinked,
+								ImageMode:    hypervisorhelpers.VirtualMachineDiskImageModeLinked,
 							},
 						},
 					},
@@ -93,7 +92,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 					{
 						DiskName:      "install",
 						DiskPool:      "pool1",
-						DiskType:      config.VirtualMachineDiskTypeCDROM,
+						DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 						DiskBootOrder: 2,
 						ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
 							FromImageConfig: &hypervisor.VirtualMachineDiskFromImage{
@@ -116,7 +115,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
-				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 				c.ConsoleConfig = hypervisor.VirtualMachineConsole{
 					SerialConfig: hypervisor.VirtualMachineSerial{SerialEnabled: new(true)},
 					VNCConfig:    hypervisor.VirtualMachineVNC{VNCEnabled: new(true)},
@@ -135,7 +134,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.CPUConfig.CPUCount = 4
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.FirmwareConfig = hypervisor.VirtualMachineFirmware{
-					FirmwareType: config.VirtualMachineFirmwareTypeUEFI,
+					FirmwareType: hypervisorhelpers.VirtualMachineFirmwareTypeUEFI,
 					SecureBootConfig: hypervisor.VirtualMachineFirmwareSecureBoot{
 						SecureBootEnabled: new(true),
 					},
@@ -153,7 +152,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 				c.CPUConfig.CPUCount = 1
 				c.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
-				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 
 				return c
 			},
@@ -343,8 +342,8 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
-				c.DisksConfig[0].DiskFormat = config.VirtualMachineDiskFormatRaw
-				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = config.VirtualMachineDiskImageModeLinked
+				c.DisksConfig[0].DiskFormat = hypervisorhelpers.VirtualMachineDiskFormatRaw
+				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = hypervisorhelpers.VirtualMachineDiskImageModeLinked
 
 				return c
 			},
@@ -356,9 +355,9 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("install")}
-				c.DisksConfig[0].DiskType = config.VirtualMachineDiskTypeCDROM
+				c.DisksConfig[0].DiskType = hypervisorhelpers.VirtualMachineDiskTypeCDROM
 				c.DisksConfig[0].DiskSize = meta.ByteSize{}
-				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = config.VirtualMachineDiskImageModeLinked
+				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = hypervisorhelpers.VirtualMachineDiskImageModeLinked
 
 				return c
 			},
@@ -370,7 +369,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("install")}
-				c.DisksConfig[0].DiskType = config.VirtualMachineDiskTypeCDROM
+				c.DisksConfig[0].DiskType = hypervisorhelpers.VirtualMachineDiskTypeCDROM
 
 				return c
 			},
@@ -382,9 +381,9 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("install")}
-				c.DisksConfig[0].DiskType = config.VirtualMachineDiskTypeCDROM
+				c.DisksConfig[0].DiskType = hypervisorhelpers.VirtualMachineDiskTypeCDROM
 				c.DisksConfig[0].DiskSize = meta.ByteSize{}
-				c.DisksConfig[0].DiskBus = config.VirtualMachineDiskBusVirtio
+				c.DisksConfig[0].DiskBus = hypervisorhelpers.VirtualMachineDiskBusVirtio
 
 				return c
 			},
@@ -396,7 +395,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("install")}
-				c.DisksConfig[0].DiskType = config.VirtualMachineDiskTypeCDROM
+				c.DisksConfig[0].DiskType = hypervisorhelpers.VirtualMachineDiskTypeCDROM
 				c.DisksConfig[0].DiskSize = meta.ByteSize{}
 
 				return c
@@ -405,16 +404,16 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: "disks[0]: provision.blank: a cdrom has no contents of its own",
 		},
 		{
-			name: "unsupported bus",
+			name: "bus outside the enum",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("system")}
-				c.DisksConfig[0].DiskBus = "ide"
+				c.DisksConfig[0].DiskBus = hypervisorhelpers.VirtualMachineDiskBus(99)
 
 				return c
 			},
 
-			expectedErrors: `disks[0]: unsupported bus "ide", expected virtio, scsi, sata or nvme`,
+			expectedErrors: `disks[0]: unsupported bus "VirtualMachineDiskBus(99)", expected virtio, scsi, sata or nvme`,
 		},
 		{
 			name: "malformed digest",
@@ -463,21 +462,21 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: `disks[0]: provision.fromImage.file "sub/talos.qcow2" must not contain a path separator`,
 		},
 		{
-			name: "unsupported firmware type",
+			name: "firmware type outside the enum",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.FirmwareConfig.FirmwareType = "seabios"
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareType(99)
 
 				return c
 			},
 
-			expectedErrors: `unsupported firmware.type "seabios", expected uefi or bios`,
+			expectedErrors: `unsupported firmware.type "VirtualMachineFirmwareType(99)", expected uefi or bios`,
 		},
 		{
 			name: "secure boot on bios",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 				c.FirmwareConfig.SecureBootConfig = hypervisor.VirtualMachineFirmwareSecureBoot{
 					SecureBootEnabled: new(true),
 				}
@@ -491,7 +490,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "secure boot off on bios",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeBIOS
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 				c.FirmwareConfig.SecureBootConfig = hypervisor.VirtualMachineFirmwareSecureBoot{
 					SecureBootEnabled: new(false),
 				}
@@ -556,36 +555,36 @@ func TestVirtualMachineDiskBusDefault(t *testing.T) {
 	for _, test := range []struct {
 		name string
 
-		diskType config.VirtualMachineDiskType
-		diskBus  config.VirtualMachineDiskBus
+		diskType hypervisorhelpers.VirtualMachineDiskType
+		diskBus  hypervisorhelpers.VirtualMachineDiskBus
 
-		expected config.VirtualMachineDiskBus
+		expected hypervisorhelpers.VirtualMachineDiskBus
 	}{
 		{
 			name:     "disk defaults to virtio",
-			expected: config.VirtualMachineDiskBusVirtio,
+			expected: hypervisorhelpers.VirtualMachineDiskBusVirtio,
 		},
 		{
 			name:     "explicit disk type defaults to virtio",
-			diskType: config.VirtualMachineDiskTypeDisk,
-			expected: config.VirtualMachineDiskBusVirtio,
+			diskType: hypervisorhelpers.VirtualMachineDiskTypeDisk,
+			expected: hypervisorhelpers.VirtualMachineDiskBusVirtio,
 		},
 		{
 			name:     "cdrom defaults to sata, not virtio",
-			diskType: config.VirtualMachineDiskTypeCDROM,
-			expected: config.VirtualMachineDiskBusSATA,
+			diskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			expected: hypervisorhelpers.VirtualMachineDiskBusSATA,
 		},
 		{
 			name:     "an explicit bus is left alone on a cdrom",
-			diskType: config.VirtualMachineDiskTypeCDROM,
-			diskBus:  config.VirtualMachineDiskBusSCSI,
-			expected: config.VirtualMachineDiskBusSCSI,
+			diskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			diskBus:  hypervisorhelpers.VirtualMachineDiskBusSCSI,
+			expected: hypervisorhelpers.VirtualMachineDiskBusSCSI,
 		},
 		{
 			name:    "an explicit bus is left alone on a disk",
-			diskBus: config.VirtualMachineDiskBusNVMe,
+			diskBus: hypervisorhelpers.VirtualMachineDiskBusNVMe,
 
-			expected: config.VirtualMachineDiskBusNVMe,
+			expected: hypervisorhelpers.VirtualMachineDiskBusNVMe,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -719,7 +718,7 @@ func validVirtualMachineConfig() *hypervisor.VirtualMachineConfigV1Alpha1 {
 	c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	c.CPUConfig.CPUCount = 4
 	c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
-	c.FirmwareConfig.FirmwareType = config.VirtualMachineFirmwareTypeUEFI
+	c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 
 	return c
 }
@@ -789,7 +788,7 @@ func TestVirtualMachineConfigFirmwareDefaults(t *testing.T) {
 
 		cfg := validVirtualMachineConfig()
 
-		assert.Equal(t, config.VirtualMachineFirmwareTypeUEFI, cfg.Firmware().Type())
+		assert.Equal(t, hypervisorhelpers.VirtualMachineFirmwareTypeUEFI, cfg.Firmware().Type())
 		assert.False(t, cfg.Firmware().SecureBoot().Enabled())
 	})
 
@@ -805,62 +804,153 @@ func TestVirtualMachineConfigFirmwareDefaults(t *testing.T) {
 	})
 }
 
-func TestVirtualMachineConfigPowerStateUnmarshal(t *testing.T) {
-	t.Parallel()
-
-	for _, test := range []struct {
-		name       string
-		powerState string
-	}{
-		{
-			name:       "not a power state",
-			powerState: "paused",
-		},
-		{
-			// the zero value of the enum exists only so that the generated protobuf has a member
-			// at 0: a document naming it is as wrong as a document naming anything else.
-			name:       "the zero value",
-			powerState: "unknown",
-		},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			cfg := fmt.Sprintf(`apiVersion: v1alpha1
+// enumDoc is a valid document naming every enum-typed field, so that a case below can spoil one
+// value at a time.
+const enumDoc = `apiVersion: v1alpha1
 kind: VirtualMachineConfig
 name: vm1
-powerState: %s
+powerState: running
 cpu:
     count: 1
 memory:
     size: 512MiB
 firmware:
-    type: bios
-`, test.powerState)
+    type: uefi
+disks:
+    - name: system
+      pool: pool1
+      size: 20GiB
+      format: qcow2
+      bus: virtio
+      type: disk
+      provision:
+        fromImage:
+            library: images
+            file: talos.qcow2
+            mode: copy
+`
+
+// TestVirtualMachineConfigEnumUnmarshal checks that a value outside an enum is refused while the
+// document is decoded, rather than carried into a struct and caught by validation later.
+func TestVirtualMachineConfigEnumUnmarshal(t *testing.T) {
+	t.Parallel()
+
+	_, err := configloader.NewFromBytes([]byte(enumDoc))
+	require.NoError(t, err, "the document every case below spoils must itself be valid")
+
+	for _, test := range []struct {
+		name     string
+		valid    string
+		spoiled  string
+		expected string
+	}{
+		{
+			name:     "power state",
+			valid:    "powerState: running",
+			spoiled:  "powerState: paused",
+			expected: "paused does not belong to PowerState values",
+		},
+		{
+			name:     "firmware type",
+			valid:    "type: uefi",
+			spoiled:  "type: seabios",
+			expected: "seabios does not belong to VirtualMachineFirmwareType values",
+		},
+		{
+			name:     "disk format",
+			valid:    "format: qcow2",
+			spoiled:  "format: vmdk",
+			expected: "vmdk does not belong to VirtualMachineDiskFormat values",
+		},
+		{
+			name:     "disk bus",
+			valid:    "bus: virtio",
+			spoiled:  "bus: ide",
+			expected: "ide does not belong to VirtualMachineDiskBus values",
+		},
+		{
+			name:     "disk type",
+			valid:    "type: disk",
+			spoiled:  "type: floppy",
+			expected: "floppy does not belong to VirtualMachineDiskType values",
+		},
+		{
+			name:     "image mode",
+			valid:    "mode: copy",
+			spoiled:  "mode: cow",
+			expected: "cow does not belong to VirtualMachineDiskImageMode values",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := strings.Replace(enumDoc, test.valid, test.spoiled, 1)
+			require.NotEqual(t, enumDoc, cfg, "%q not found in the document", test.valid)
 
 			_, err := configloader.NewFromBytes([]byte(cfg))
 			require.Error(t, err)
-			assert.Contains(t, err.Error(), test.powerState+" does not belong to PowerState values")
+			assert.Contains(t, err.Error(), test.expected)
 		})
 	}
 }
 
-// TestVirtualMachineConfigPowerStateDocValues guards the hand-written `values:` list in the
-// document against the enum it documents: docgen copies that list verbatim, so nothing else
-// notices when a power state is added to hypervisorhelpers and not to the comment.
-func TestVirtualMachineConfigPowerStateDocValues(t *testing.T) {
+// TestVirtualMachineConfigEnumDocValues guards the hand-written `values:` lists in the document
+// against the enums they document: docgen copies those lists verbatim, so nothing else notices
+// when a member is added to hypervisorhelpers and not to the comment. The zero member of each enum
+// stands for "unset" and is not a value a document may name, so it is not documented either.
+func TestVirtualMachineConfigEnumDocValues(t *testing.T) {
 	t.Parallel()
 
-	doc := hypervisor.VirtualMachineConfigV1Alpha1{}.Doc()
+	for _, test := range []struct {
+		name     string
+		doc      *encoder.Doc
+		field    string
+		expected []string
+	}{
+		{
+			name:     "power state",
+			doc:      hypervisor.VirtualMachineConfigV1Alpha1{}.Doc(),
+			field:    "powerState",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.PowerStateStrings()),
+		},
+		{
+			name:     "firmware type",
+			doc:      hypervisor.VirtualMachineFirmware{}.Doc(),
+			field:    "type",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineFirmwareTypeStrings()),
+		},
+		{
+			name:     "disk format",
+			doc:      hypervisor.VirtualMachineDisk{}.Doc(),
+			field:    "format",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskFormatStrings()),
+		},
+		{
+			name:     "disk bus",
+			doc:      hypervisor.VirtualMachineDisk{}.Doc(),
+			field:    "bus",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskBusStrings()),
+		},
+		{
+			name:     "disk type",
+			doc:      hypervisor.VirtualMachineDisk{}.Doc(),
+			field:    "type",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskTypeStrings()),
+		},
+		{
+			name:     "image mode",
+			doc:      hypervisor.VirtualMachineDiskFromImage{}.Doc(),
+			field:    "mode",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskImageModeStrings()),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 
-	idx := slices.IndexFunc(doc.Fields, func(field encoder.Doc) bool { return field.Name == "powerState" })
-	require.GreaterOrEqual(t, idx, 0, "powerState field not found in the document's docs")
+			idx := slices.IndexFunc(test.doc.Fields, func(field encoder.Doc) bool { return field.Name == test.field })
+			require.GreaterOrEqual(t, idx, 0, "%s field not found in the document's docs", test.field)
 
-	// the zero value of the enum is not a state a document may ask for, so it is not documented.
-	documentable := slices.DeleteFunc(
-		hypervisorhelpers.PowerStateStrings(),
-		func(name string) bool { return name == hypervisorhelpers.PowerStateUnknown.String() },
-	)
-
-	assert.Equal(t, documentable, doc.Fields[idx].Values)
+			assert.Equal(t, test.expected, test.doc.Fields[idx].Values)
+		})
+	}
 }

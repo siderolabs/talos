@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // maxFileNameLength bounds a content library file name at NAME_MAX.
@@ -119,9 +120,7 @@ type VirtualMachineDisk struct {
 	//   values:
 	//     - raw
 	//     - qcow2
-	//   schema:
-	//     type: string
-	DiskFormat config.VirtualMachineDiskFormat `yaml:"format,omitempty"`
+	DiskFormat hypervisorhelpers.VirtualMachineDiskFormat `yaml:"format,omitempty"`
 	//   description: |
 	//     Controller the disk is attached to.
 	//
@@ -134,9 +133,7 @@ type VirtualMachineDisk struct {
 	//     - scsi
 	//     - sata
 	//     - nvme
-	//   schema:
-	//     type: string
-	DiskBus config.VirtualMachineDiskBus `yaml:"bus,omitempty"`
+	DiskBus hypervisorhelpers.VirtualMachineDiskBus `yaml:"bus,omitempty"`
 	//   description: |
 	//     Kind of device the disk is presented as.
 	//
@@ -147,9 +144,7 @@ type VirtualMachineDisk struct {
 	//   values:
 	//     - disk
 	//     - cdrom
-	//   schema:
-	//     type: string
-	DiskType config.VirtualMachineDiskType `yaml:"type,omitempty"`
+	DiskType hypervisorhelpers.VirtualMachineDiskType `yaml:"type,omitempty"`
 	//   description: |
 	//     Position of this disk in the guest's boot order, lowest first.
 	//
@@ -220,9 +215,7 @@ type VirtualMachineDiskFromImage struct {
 	//   values:
 	//     - copy
 	//     - linked
-	//   schema:
-	//     type: string
-	ImageMode config.VirtualMachineDiskImageMode `yaml:"mode,omitempty"`
+	ImageMode hypervisorhelpers.VirtualMachineDiskImageMode `yaml:"mode,omitempty"`
 }
 
 // Name implements config.VirtualMachineDiskConfig interface.
@@ -241,9 +234,9 @@ func (d *VirtualMachineDisk) Size() uint64 {
 }
 
 // Format implements config.VirtualMachineDiskConfig interface.
-func (d *VirtualMachineDisk) Format() config.VirtualMachineDiskFormat {
-	if d.DiskFormat == "" {
-		return config.VirtualMachineDiskFormatQCOW2
+func (d *VirtualMachineDisk) Format() hypervisorhelpers.VirtualMachineDiskFormat {
+	if d.DiskFormat == hypervisorhelpers.VirtualMachineDiskFormatUnknown {
+		return hypervisorhelpers.VirtualMachineDiskFormatQCOW2
 	}
 
 	return d.DiskFormat
@@ -253,22 +246,22 @@ func (d *VirtualMachineDisk) Format() config.VirtualMachineDiskFormat {
 //
 // A cdrom defaults to SATA rather than virtio: virtio-blk presents no ejectable media, so
 // libvirt rejects the combination with "does not support ejectable media".
-func (d *VirtualMachineDisk) Bus() config.VirtualMachineDiskBus {
-	if d.DiskBus != "" {
+func (d *VirtualMachineDisk) Bus() hypervisorhelpers.VirtualMachineDiskBus {
+	if d.DiskBus != hypervisorhelpers.VirtualMachineDiskBusUnknown {
 		return d.DiskBus
 	}
 
-	if d.Type() == config.VirtualMachineDiskTypeCDROM {
-		return config.VirtualMachineDiskBusSATA
+	if d.Type() == hypervisorhelpers.VirtualMachineDiskTypeCDROM {
+		return hypervisorhelpers.VirtualMachineDiskBusSATA
 	}
 
-	return config.VirtualMachineDiskBusVirtio
+	return hypervisorhelpers.VirtualMachineDiskBusVirtio
 }
 
 // Type implements config.VirtualMachineDiskConfig interface.
-func (d *VirtualMachineDisk) Type() config.VirtualMachineDiskType {
-	if d.DiskType == "" {
-		return config.VirtualMachineDiskTypeDisk
+func (d *VirtualMachineDisk) Type() hypervisorhelpers.VirtualMachineDiskType {
+	if d.DiskType == hypervisorhelpers.VirtualMachineDiskTypeUnknown {
+		return hypervisorhelpers.VirtualMachineDiskTypeDisk
 	}
 
 	return d.DiskType
@@ -314,9 +307,9 @@ func (i *VirtualMachineDiskFromImage) Digest() string {
 }
 
 // Mode implements config.VirtualMachineDiskFromImageConfig interface.
-func (i *VirtualMachineDiskFromImage) Mode() config.VirtualMachineDiskImageMode {
-	if i.ImageMode == "" {
-		return config.VirtualMachineDiskImageModeCopy
+func (i *VirtualMachineDiskFromImage) Mode() hypervisorhelpers.VirtualMachineDiskImageMode {
+	if i.ImageMode == hypervisorhelpers.VirtualMachineDiskImageModeUnknown {
+		return hypervisorhelpers.VirtualMachineDiskImageModeCopy
 	}
 
 	return i.ImageMode
@@ -344,8 +337,9 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 			fmt.Errorf("disks[%d]: pool %q: pool name can only contain ASCII letters, digits and hyphens", index, d.DiskPool))
 	}
 
+	//nolint:exhaustive // Type() resolves the zero member to disk, so it never reaches this switch.
 	switch d.Type() {
-	case config.VirtualMachineDiskTypeDisk:
+	case hypervisorhelpers.VirtualMachineDiskTypeDisk:
 		switch {
 		case d.DiskSize.IsNegative():
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: size must not be negative", index))
@@ -354,40 +348,35 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 		case d.DiskSize.Value() == 0:
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: size must be greater than zero", index))
 		}
-	case config.VirtualMachineDiskTypeCDROM:
+	case hypervisorhelpers.VirtualMachineDiskTypeCDROM:
 		if !d.DiskSize.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: size is not allowed on a cdrom", index))
 		}
 
-		if d.DiskFormat != "" {
+		if d.DiskFormat != hypervisorhelpers.VirtualMachineDiskFormatUnknown {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: format is not allowed on a cdrom", index))
 		}
 
-		if d.DiskBus == config.VirtualMachineDiskBusVirtio {
+		if d.DiskBus == hypervisorhelpers.VirtualMachineDiskBusVirtio {
 			validationErrors = errors.Join(validationErrors,
 				fmt.Errorf("disks[%d]: bus virtio is not allowed on a cdrom, which presents ejectable media", index))
 		}
 	default:
 		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: unsupported type %q, expected disk or cdrom", index, d.DiskType))
+			fmt.Errorf("disks[%d]: unsupported type %q, expected %s", index, d.DiskType,
+				expectedValues(hypervisorhelpers.VirtualMachineDiskTypeStrings())))
 	}
 
-	switch d.DiskFormat {
-	case "", config.VirtualMachineDiskFormatRaw, config.VirtualMachineDiskFormatQCOW2:
-	default:
+	if d.DiskFormat != hypervisorhelpers.VirtualMachineDiskFormatUnknown && !d.DiskFormat.IsAVirtualMachineDiskFormat() {
 		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: unsupported format %q, expected raw or qcow2", index, d.DiskFormat))
+			fmt.Errorf("disks[%d]: unsupported format %q, expected %s", index, d.DiskFormat,
+				expectedValues(hypervisorhelpers.VirtualMachineDiskFormatStrings())))
 	}
 
-	switch d.DiskBus {
-	case "",
-		config.VirtualMachineDiskBusVirtio,
-		config.VirtualMachineDiskBusSCSI,
-		config.VirtualMachineDiskBusSATA,
-		config.VirtualMachineDiskBusNVMe:
-	default:
+	if d.DiskBus != hypervisorhelpers.VirtualMachineDiskBusUnknown && !d.DiskBus.IsAVirtualMachineDiskBus() {
 		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: unsupported bus %q, expected virtio, scsi, sata or nvme", index, d.DiskBus))
+			fmt.Errorf("disks[%d]: unsupported bus %q, expected %s", index, d.DiskBus,
+				expectedValues(hypervisorhelpers.VirtualMachineDiskBusStrings())))
 	}
 
 	validationErrors = errors.Join(validationErrors, d.validateProvision(index))
@@ -403,7 +392,7 @@ func (d *VirtualMachineDisk) validateProvision(index int) error {
 	case d.ProvisionConfig.BlankConfig == nil && d.ProvisionConfig.FromImageConfig == nil:
 		return fmt.Errorf("disks[%d]: provision: exactly one of blank or fromImage must be set", index)
 	case d.ProvisionConfig.BlankConfig != nil:
-		if d.Type() == config.VirtualMachineDiskTypeCDROM {
+		if d.Type() == hypervisorhelpers.VirtualMachineDiskTypeCDROM {
 			return fmt.Errorf("disks[%d]: provision.blank: a cdrom has no contents of its own", index)
 		}
 
@@ -418,7 +407,11 @@ func (d *VirtualMachineDisk) validateProvision(index int) error {
 // diskFormat is the disk's format as written, not as defaulted: `linked` needs a qcow2 volume, and
 // the default is already qcow2, so only an explicit `raw` conflicts. diskType is the disk's
 // defaulted type, used to reject `linked` on a cdrom, which has no backing chain of its own.
-func (i *VirtualMachineDiskFromImage) validate(index int, diskFormat config.VirtualMachineDiskFormat, diskType config.VirtualMachineDiskType) error {
+func (i *VirtualMachineDiskFromImage) validate(
+	index int,
+	diskFormat hypervisorhelpers.VirtualMachineDiskFormat,
+	diskType hypervisorhelpers.VirtualMachineDiskType,
+) error {
 	var validationErrors error
 
 	switch {
@@ -438,19 +431,20 @@ func (i *VirtualMachineDiskFromImage) validate(index int, diskFormat config.Virt
 	}
 
 	switch i.ImageMode {
-	case "", config.VirtualMachineDiskImageModeCopy:
-	case config.VirtualMachineDiskImageModeLinked:
+	case hypervisorhelpers.VirtualMachineDiskImageModeUnknown, hypervisorhelpers.VirtualMachineDiskImageModeCopy:
+	case hypervisorhelpers.VirtualMachineDiskImageModeLinked:
 		switch {
-		case diskType == config.VirtualMachineDiskTypeCDROM:
+		case diskType == hypervisorhelpers.VirtualMachineDiskTypeCDROM:
 			validationErrors = errors.Join(validationErrors,
 				fmt.Errorf("disks[%d]: provision.fromImage.mode: linked is not allowed on a cdrom, which has no backing chain of its own", index))
-		case diskFormat == config.VirtualMachineDiskFormatRaw:
+		case diskFormat == hypervisorhelpers.VirtualMachineDiskFormatRaw:
 			validationErrors = errors.Join(validationErrors,
 				fmt.Errorf("disks[%d]: provision.fromImage.mode: linked requires format qcow2, as backing chains are a qcow2 feature", index))
 		}
 	default:
 		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: unsupported provision.fromImage.mode %q, expected copy or linked", index, i.ImageMode))
+			fmt.Errorf("disks[%d]: unsupported provision.fromImage.mode %q, expected %s", index, i.ImageMode,
+				expectedValues(hypervisorhelpers.VirtualMachineDiskImageModeStrings())))
 	}
 
 	return validationErrors
