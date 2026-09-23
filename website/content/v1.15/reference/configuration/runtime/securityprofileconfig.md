@@ -4,9 +4,9 @@ description: |
     The security profile groups node-level security hardening features. Additional hardening options
     will be added to this document over time.
 
-    Currently it controls workload isolation: running the container runtime plane (CRI containerd, the
-    kubelet, and all pods) inside a dedicated PID and mount namespace anchored by the `sandboxd` service,
-    isolating them from `machined` (PID 1) and its file descriptors.
+    Workload isolation runs the container runtime plane (CRI containerd, the kubelet, and all pods)
+    inside a dedicated PID and mount namespace anchored by the `sandboxd` service, isolating them from
+    `machined` (PID 1) and its file descriptors.
 
     `talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new
     clusters are isolated by default; clusters upgraded from older versions do not have the document and
@@ -14,6 +14,10 @@ description: |
 
     Note: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not
     work (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.
+
+    By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
+    is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
+    option is applied. The option has no effect in container mode.
 title: SecurityProfileConfig
 ---
 
@@ -37,6 +41,7 @@ workloadIsolation: true # Enable workload isolation (run the container plane ins
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`workloadIsolation` |bool |Enable workload isolation (run the container plane inside the sandbox namespace).  | |
+|`ignoreCtrlAltDelete` |bool |Ignore Ctrl-Alt-Delete instead of rebooting the machine.  | |
 
 
 

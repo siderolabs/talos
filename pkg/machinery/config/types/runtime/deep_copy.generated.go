@@ -125,6 +125,10 @@ func (o *SecurityProfileConfigV1Alpha1) DeepCopy() *SecurityProfileConfigV1Alpha
 		cp.WorkloadIsolationEnabled = new(bool)
 		*cp.WorkloadIsolationEnabled = *o.WorkloadIsolationEnabled
 	}
+	if o.IgnoreCtrlAltDeleteEnabled != nil {
+		cp.IgnoreCtrlAltDeleteEnabled = new(bool)
+		*cp.IgnoreCtrlAltDeleteEnabled = *o.IgnoreCtrlAltDeleteEnabled
+	}
 	return &cp
 }
 

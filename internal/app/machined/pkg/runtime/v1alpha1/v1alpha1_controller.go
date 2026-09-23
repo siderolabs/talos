@@ -229,8 +229,25 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 	return eg.Wait()
 }
 
+//nolint:gocyclo
 func (c *Controller) listenForSignals(ctx context.Context, sigs chan os.Signal, allSignals []os.Signal) {
-	sig := <-sigs
+	var sig os.Signal
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case sig = <-sigs:
+		}
+
+		if sig == syscall.SIGINT && c.ignoreCtrlAltDelete() {
+			log.Printf("Ctrl-Alt-Delete ignored as per SecurityProfileConfig")
+
+			continue
+		}
+
+		break
+	}
 
 	switch sig {
 	case syscall.SIGTERM:
@@ -255,6 +272,17 @@ func (c *Controller) listenForSignals(ctx context.Context, sigs chan os.Signal, 
 
 	// ignore further signals, since we are already shutting down or rebooting
 	signal.Ignore(allSignals...)
+}
+
+func (c *Controller) ignoreCtrlAltDelete() bool {
+	cfg := c.r.Config()
+	if cfg == nil {
+		return false
+	}
+
+	securityProfile := cfg.SecurityProfileConfig()
+
+	return securityProfile != nil && securityProfile.IgnoreCtrlAltDelete()
 }
 
 func (c *Controller) listenForACPI(ctx context.Context) error {

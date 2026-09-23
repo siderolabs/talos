@@ -483,7 +483,7 @@ func (SecurityProfileConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "SecurityProfileConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "SecurityProfileConfig is a node security profile configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "SecurityProfileConfig is a node security profile configuration document.\nThe security profile groups node-level security hardening features. Additional hardening options\nwill be added to this document over time.\n\nCurrently it controls workload isolation: running the container runtime plane (CRI containerd, the\nkubelet, and all pods) inside a dedicated PID and mount namespace anchored by the `sandboxd` service,\nisolating them from `machined` (PID 1) and its file descriptors.\n\n`talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new\nclusters are isolated by default; clusters upgraded from older versions do not have the document and\nkeep the old (non-isolated) behavior unless it is added.\n\nNote: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not\nwork (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.\n",
+		Description: "SecurityProfileConfig is a node security profile configuration document.\nThe security profile groups node-level security hardening features. Additional hardening options\nwill be added to this document over time.\n\nWorkload isolation runs the container runtime plane (CRI containerd, the kubelet, and all pods)\ninside a dedicated PID and mount namespace anchored by the `sandboxd` service, isolating them from\n`machined` (PID 1) and its file descriptors.\n\n`talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new\nclusters are isolated by default; clusters upgraded from older versions do not have the document and\nkeep the old (non-isolated) behavior unless it is added.\n\nNote: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not\nwork (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.\n\nBy default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete\nis logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this\noption is applied. The option has no effect in container mode.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -495,6 +495,13 @@ func (SecurityProfileConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Enable workload isolation (run the container plane inside the sandbox namespace).",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable workload isolation (run the container plane inside the sandbox namespace)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "ignoreCtrlAltDelete",
+				Type:        "bool",
+				Note:        "",
+				Description: "Ignore Ctrl-Alt-Delete instead of rebooting the machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore Ctrl-Alt-Delete instead of rebooting the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
