@@ -47,3 +47,17 @@ func TestSecurityProfileConfigWorkloadIsolation(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Empty(t, warnings)
 }
+
+func TestSecurityProfileConfigIgnoreCtrlAltDelete(t *testing.T) {
+	t.Parallel()
+
+	// absent field -> reboot on Ctrl-Alt-Delete
+	assert.False(t, runtime.NewSecurityProfileConfigV1Alpha1().IgnoreCtrlAltDelete())
+
+	cfg := runtime.NewSecurityProfileConfigV1Alpha1()
+	cfg.IgnoreCtrlAltDeleteEnabled = new(true)
+	assert.True(t, cfg.IgnoreCtrlAltDelete())
+
+	cfg.IgnoreCtrlAltDeleteEnabled = new(false)
+	assert.False(t, cfg.IgnoreCtrlAltDelete())
+}

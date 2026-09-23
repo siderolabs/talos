@@ -106,6 +106,8 @@ type SecurityProfileConfig interface {
 	SecurityProfileConfigSignal()
 	// WorkloadIsolation reports whether the container plane should run inside the sandbox namespace.
 	WorkloadIsolation() bool
+	// IgnoreCtrlAltDelete reports whether Ctrl-Alt-Delete should be ignored.
+	IgnoreCtrlAltDelete() bool
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.

@@ -41,9 +41,9 @@ var (
 //	  The security profile groups node-level security hardening features. Additional hardening options
 //	  will be added to this document over time.
 //
-//	  Currently it controls workload isolation: running the container runtime plane (CRI containerd, the
-//	  kubelet, and all pods) inside a dedicated PID and mount namespace anchored by the `sandboxd` service,
-//	  isolating them from `machined` (PID 1) and its file descriptors.
+//	  Workload isolation runs the container runtime plane (CRI containerd, the kubelet, and all pods)
+//	  inside a dedicated PID and mount namespace anchored by the `sandboxd` service, isolating them from
+//	  `machined` (PID 1) and its file descriptors.
 //
 //	  `talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new
 //	  clusters are isolated by default; clusters upgraded from older versions do not have the document and
@@ -51,6 +51,10 @@ var (
 //
 //	  Note: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not
 //	  work (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.
+//
+//	  By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
+//	  is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
+//	  option is applied. The option has no effect in container mode.
 //	examples:
 //	  - value: exampleSecurityProfileConfigV1Alpha1()
 //	alias: SecurityProfileConfig
@@ -64,6 +68,11 @@ type SecurityProfileConfigV1Alpha1 struct {
 	//   schema:
 	//     type: boolean
 	WorkloadIsolationEnabled *bool `yaml:"workloadIsolation,omitempty"`
+	//   description: |
+	//     Ignore Ctrl-Alt-Delete instead of rebooting the machine.
+	//   schema:
+	//     type: boolean
+	IgnoreCtrlAltDeleteEnabled *bool `yaml:"ignoreCtrlAltDelete,omitempty"`
 }
 
 // NewSecurityProfileConfigV1Alpha1 creates a new security profile config document.
@@ -99,4 +108,9 @@ func (s *SecurityProfileConfigV1Alpha1) SecurityProfileConfigSignal() {}
 // WorkloadIsolation implements config.SecurityProfileConfig interface.
 func (s *SecurityProfileConfigV1Alpha1) WorkloadIsolation() bool {
 	return pointer.SafeDeref(s.WorkloadIsolationEnabled)
+}
+
+// IgnoreCtrlAltDelete implements config.SecurityProfileConfig interface.
+func (s *SecurityProfileConfigV1Alpha1) IgnoreCtrlAltDelete() bool {
+	return pointer.SafeDeref(s.IgnoreCtrlAltDeleteEnabled)
 }
