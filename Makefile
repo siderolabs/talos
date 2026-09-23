@@ -96,7 +96,7 @@ PKG_ZLIB ?= $(PKGS_PREFIX)/zlib:$(PKGS)
 PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.26
+GO_VERSION ?= 1.27
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.49.1
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
