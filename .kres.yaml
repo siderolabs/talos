@@ -1615,7 +1615,7 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
         - name: e2e-cilium
