@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<components origin="lvfs" version="0.9">
+  <component id="1738" type="firmware">
+    <id>com.WDC.guid3099e006.firmware</id>
+    <name>PC SN520 NVMe</name>
+    <summary>Dell PC SN520 NVMe SSD Firmware Update</summary>
+    <provides>
+      <firmware type="flashed">3099e006-2dd5-5285-80ec-2845d613dc53</firmware>
+    </provides>
+    <custom>
+      <value key="LVFS::VersionFormat">plain</value>
+      <value key="LVFS::UpdateProtocol">org.nvmexpress</value>
+    </custom>
+    <releases>
+      <release id="2100" version="20200000" timestamp="1540000000" urgency="medium">
+        <location>aaaa-20200000.cab</location>
+        <checksum type="sha256" filename="firmware.bin" target="content">1111111111111111111111111111111111111111111111111111111111111111</checksum>
+        <description><p>Older release.</p></description>
+      </release>
+      <release id="2194" version="20200012" timestamp="1551856497" urgency="high">
+        <location>b7514665fca835af4dbeb637893d0cee4407c613-20200012_v2.cab</location>
+        <checksum type="sha1" filename="firmware.bin" target="content">7a05308c12f9af5cc3581980c49661d11ac128b3</checksum>
+        <checksum type="sha256" filename="firmware.bin" target="content">03ce3e25e2fa54224a824fa35a38218f0a5a00f0837f8b63834c992e909b324f</checksum>
+        <description><p>Updating the PC SN520 Firmware for bug fix.</p></description>
+        <artifacts>
+          <artifact type="binary">
+            <location>https://fwupd.org/downloads/b7514665fca835af4dbeb637893d0cee4407c613-20200012_v2.cab</location>
+            <filename>20200012_v2.cab</filename>
+            <checksum type="sha1">5cf3550dab4721a8b1f449276405a57e55ce9d2c</checksum>
+            <checksum type="sha256">d0e6101bb95ef165a0aed6c5857c5d9f4d08f355e08ca0a17eaa3de74790c017</checksum>
+          </artifact>
+        </artifacts>
+      </release>
+    </releases>
+    <requires>
+      <firmware compare="regex" version="NVME:0x1C58|NVME:0x101C|NVME:0x15B7">vendor-id</firmware>
+    </requires>
+  </component>
+  <component id="99" type="firmware">
+    <id>com.example.uefi.firmware</id>
+    <name>Example System Firmware</name>
+    <provides>
+      <firmware type="flashed">deadbeef-0000-0000-0000-000000000000</firmware>
+    </provides>
+    <custom>
+      <value key="LVFS::UpdateProtocol">org.uefi.capsule</value>
+    </custom>
+    <releases>
+      <release id="1" version="1.2.3" timestamp="1600000000">
+        <location>https://fwupd.org/downloads/example.cab</location>
+        <checksum type="sha256" filename="example.cab" target="container">2222222222222222222222222222222222222222222222222222222222222222</checksum>
+      </release>
+    </releases>
+  </component>
+</components>
