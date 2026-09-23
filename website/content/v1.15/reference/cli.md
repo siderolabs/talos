@@ -1919,7 +1919,7 @@ talosctl gen crt [flags]
 ### Options
 
 ```
-      --ca string     path to the PEM encoded CERTIFICATE
+      --ca string     path prefix of the CA certificate and key, without .crt or .key
       --csr string    path to the PEM encoded CERTIFICATE REQUEST
   -h, --help          help for crt
       --hours int     the hours from now on which the certificate validity period ends (default 24)

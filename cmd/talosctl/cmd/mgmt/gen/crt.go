@@ -105,7 +105,7 @@ var genCrtCmd = &cobra.Command{
 func init() {
 	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.name, "name", "", "the basename of the generated file")
 	cli.Should(cobra.MarkFlagRequired(genCrtCmd.Flags(), "name"))
-	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.ca, "ca", "", "path to the PEM encoded CERTIFICATE")
+	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.ca, "ca", "", "path prefix of the CA certificate and key, without .crt or .key")
 	cli.Should(cobra.MarkFlagRequired(genCrtCmd.Flags(), "ca"))
 	genCrtCmd.Flags().StringVar(&genCrtCmdFlags.csr, "csr", "", "path to the PEM encoded CERTIFICATE REQUEST")
 	cli.Should(cobra.MarkFlagRequired(genCrtCmd.Flags(), "csr"))
