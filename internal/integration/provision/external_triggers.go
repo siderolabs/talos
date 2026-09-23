@@ -9,6 +9,8 @@ package provision
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -17,6 +19,8 @@ import (
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -126,6 +130,11 @@ func (suite *ExternalTriggerSuite) TestTriggers() {
 		}
 	})
 
+	suite.Run("ignore Ctrl+Alt+Delete", func() {
+		// using machine 1 for this test, before it is powered off
+		suite.ignoreCtrlAltDelete(maintenanceClients[1], suite.Cluster.Info().Nodes[1].Name)
+	})
+
 	suite.Run("trigger poweroff", func() {
 		suite.T().Logf("using node %s", suite.Cluster.Info().Nodes[1].Name)
 
@@ -158,6 +167,70 @@ func (suite *ExternalTriggerSuite) TestTriggers() {
 			}
 		}
 	})
+}
+
+// ignoreCtrlAltDelete verifies that Ctrl+Alt+Delete is logged and ignored with the SecurityProfileConfig option set.
+func (suite *ExternalTriggerSuite) ignoreCtrlAltDelete(c *client.Client, nodeName string) {
+	suite.T().Logf("using node %s", nodeName)
+
+	events := make(chan client.EventResult)
+
+	ctx, cancel := context.WithTimeout(suite.ctx, time.Minute)
+	defer cancel()
+
+	suite.Require().NoError(c.EventsWatchV2(ctx, events))
+
+	// a partial config is accepted in maintenance mode, and the node stays in maintenance mode
+	suite.applyIgnoreCtrlAltDelete(ctx, c)
+
+	suite.sendMonitorCommand(ctx, nodeName, "sendkey ctrl-alt-delete")
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		assert.Contains(collect, suite.readConsoleLog(nodeName), "Ctrl-Alt-Delete ignored as per SecurityProfileConfig")
+	}, 10*time.Second, time.Second, "Ctrl+Alt+Delete should be logged as ignored")
+
+	noRebootCtx, noRebootCancel := context.WithTimeout(ctx, 10*time.Second)
+	defer noRebootCancel()
+
+	for {
+		select {
+		case <-noRebootCtx.Done():
+			return
+		case event := <-events:
+			suite.Require().NoError(event.Error)
+
+			if taskEvent, ok := event.Event.Payload.(*machine.TaskEvent); ok && taskEvent.Task == "reboot" {
+				suite.FailNow("unexpected reboot on ignored Ctrl+Alt+Delete")
+			}
+		}
+	}
+}
+
+func (suite *ExternalTriggerSuite) applyIgnoreCtrlAltDelete(ctx context.Context, c *client.Client) {
+	securityProfile := runtimecfg.NewSecurityProfileConfigV1Alpha1()
+	securityProfile.IgnoreCtrlAltDeleteEnabled = new(true)
+
+	cfg, err := container.New(securityProfile)
+	suite.Require().NoError(err)
+
+	cfgBytes, err := cfg.Bytes()
+	suite.Require().NoError(err)
+
+	_, err = c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
+		Data: cfgBytes,
+		Mode: machine.ApplyConfigurationRequest_NO_REBOOT,
+	})
+	suite.Require().NoError(err)
+}
+
+func (suite *ExternalTriggerSuite) readConsoleLog(nodeName string) string {
+	statePath, err := suite.Cluster.StatePath()
+	suite.Require().NoError(err)
+
+	contents, err := os.ReadFile(filepath.Join(statePath, nodeName+".log"))
+	suite.Require().NoError(err)
+
+	return string(contents)
 }
 
 func init() {
