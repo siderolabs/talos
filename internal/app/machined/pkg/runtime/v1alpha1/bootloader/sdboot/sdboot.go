@@ -224,7 +224,17 @@ func Probe(disk string, options options.ProbeOptions) (*Config, error) {
 //
 //nolint:gocyclo
 func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
-	_, err := ProbeWithCallback(disk, options.ProbeOptions{}, func(conf *Config) error {
+	// sd-boot is skipped on kexec, and the LoaderDevicePartUUID EFI variable it set on the current boot
+	// can't be updated from the OS (volatile variables are read-only after ExitBootServices),
+	// so it might point to a different boot media (e.g. an ISO the machine was installed from).
+	//
+	// Pass the EFI partition of the disk the kexec'ed kernel comes from instead.
+	bootPartitionUUID, err := efiPartitionUUID(disk)
+	if err != nil {
+		log.Printf("failed to detect the EFI partition UUID on %q, skipping: %s", disk, err)
+	}
+
+	_, err = ProbeWithCallback(disk, options.ProbeOptions{}, func(conf *Config) error {
 		var kernelFd int
 
 		// kexec replaces the next firmware boot, so load the entry sd-boot would have booted,
@@ -288,16 +298,33 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 			}
 		}
 
-		if err := kexec.Load(r, kernelMemfd, initrdFd, cmdline.String()); err != nil {
+		kexecCmdline := kexec.AppendBootPartitionUUID(strings.TrimSpace(cmdline.String()), bootPartitionUUID)
+
+		if err := kexec.Load(r, kernelMemfd, initrdFd, kexecCmdline); err != nil {
 			return fmt.Errorf("failed to load kernel for kexec: %w", err)
 		}
 
-		log.Printf("prepared kexec environment with kernel and initrd extracted from uki, cmdline=%q", cmdline.String())
+		log.Printf("prepared kexec environment with kernel and initrd extracted from uki, cmdline=%q", kexecCmdline)
 
 		return nil
 	})
 
 	return err
+}
+
+// efiPartitionUUID returns the partition UUID of the EFI partition on the disk.
+func efiPartitionUUID(disk string) (string, error) {
+	blkidInfo, err := blkid.ProbePath(disk)
+	if err != nil {
+		return "", fmt.Errorf("failed to probe block device %s: %w", disk, err)
+	}
+
+	efiPart, err := findEFIPartition(blkidInfo)
+	if err != nil {
+		return "", err
+	}
+
+	return efiPart.PartitionUUID.String(), nil
 }
 
 // PrepareBootPartitions prepares the set of partitions to create for the bootloader.

@@ -52,8 +52,8 @@ func (suite *BootPartitionSuite) TearDownTest() {
 
 // TestBootPartitionDiscovered verifies that the boot partition (if known) is one of the discovered volumes.
 //
-// The boot partition is known for sd-boot (via the EFI variable) and for GRUB installed by Talos 1.15+
-// (via the kernel argument), but not e.g. when booting from an ISO or via PXE.
+// The boot partition is known for sd-boot (via the EFI variable), for GRUB installed by Talos 1.15+
+// and on kexec (via the kernel argument), but not e.g. when booting via PXE.
 func (suite *BootPartitionSuite) TestBootPartitionDiscovered() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)

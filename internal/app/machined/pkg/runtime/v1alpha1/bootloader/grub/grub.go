@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/kexec"
@@ -101,7 +100,7 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 		// GRUB is skipped on kexec, so the boot partition UUID it would have probed is round-tripped
 		// from the current boot (if it is known)
 		if c.AppendBootPartitionUUID {
-			cmdline = AppendBootPartitionUUID(cmdline, bootPartitionUUID(r))
+			cmdline = kexec.AppendBootPartitionUUID(cmdline, bootPartitionUUID(r))
 		}
 
 		if err = kexec.Load(r, kernel, int(initrd.Fd()), cmdline); err != nil {
@@ -232,18 +231,4 @@ func bootPartitionUUID(r runtime.Runtime) string {
 	}
 
 	return status.TypedSpec().PartitionUUID
-}
-
-// AppendBootPartitionUUID sets the boot partition kernel argument (replacing any existing value), unless the UUID is empty.
-//
-// It is used on kexec, when GRUB is skipped and can't probe the partition itself.
-func AppendBootPartitionUUID(cmdline, partitionUUID string) string {
-	if partitionUUID == "" {
-		return cmdline
-	}
-
-	parsed := procfs.NewCmdline(cmdline)
-	parsed.Set(constants.KernelParamBootPartitionUUID, procfs.NewParameter(constants.KernelParamBootPartitionUUID).Append(partitionUUID))
-
-	return parsed.String()
 }

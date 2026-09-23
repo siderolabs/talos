@@ -20,7 +20,8 @@ const BootPartitionStatusType = resource.Type("BootPartitionStatuses.runtime.tal
 //
 // The resource only exists if the boot partition is known: for sd-boot it comes from the
 // `LoaderDevicePartUUID` EFI variable (the ESP), for GRUB from the `talos.boot.partuuid` kernel
-// argument set by the generated GRUB config (the BOOT partition).
+// argument set by the generated GRUB config (the BOOT partition). On kexec, Talos passes the
+// `talos.boot.partuuid` kernel argument, which takes precedence over the EFI variable.
 type BootPartitionStatus = typed.Resource[BootPartitionStatusSpec, BootPartitionStatusExtension]
 
 // BootPartitionStatusID is the ID of BootPartitionStatus resource.
