@@ -37,6 +37,10 @@ func (suite *EnvironmentSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *EnvironmentSuite) SetupTest() {
+	if suite.EphemeralNode || suite.EphemeralWorkers {
+		suite.T().Skip("skipping: EnvironmentSuite reboots nodes and expects applied env vars to persist, which is incompatible with ephemeral nodes")
+	}
+
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
 }

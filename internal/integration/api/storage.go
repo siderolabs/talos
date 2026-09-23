@@ -52,6 +52,10 @@ func (suite *StorageSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *StorageSuite) SetupTest() {
+	if suite.EphemeralNode || suite.EphemeralWorkers {
+		suite.T().Skip("skipping: StorageSuite reboots nodes and expects runtime-applied LVM/RAID config to persist, which is incompatible with ephemeral nodes")
+	}
+
 	if !suite.Capabilities().SupportsVolumes {
 		suite.T().Skip("cluster doesn't support volumes")
 	}
