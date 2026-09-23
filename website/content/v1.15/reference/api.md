@@ -500,6 +500,16 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/hypervisor/hypervisor.proto](#resource/definitions/hypervisor/hypervisor.proto)
     - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
+    - [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec)
+    - [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec)
+    - [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec)
+    - [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec)
+    - [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec)
+    - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
+    - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
+    - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
+    - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
+    - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
   
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
     - [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping)
@@ -8769,6 +8779,175 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 | path | [string](#string) |  | Path is the absolute path of the library's contents, the target the backing volume is mounted at.<br><br>Only meaningful when Ready. |
 | ready | [bool](#bool) |  | Ready is true once the backing volume is mounted. |
 | error | [string](#string) |  | Error describes why the library is not ready. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineCPUSpec"></a>
+
+### VirtualMachineCPUSpec
+VirtualMachineCPUSpec describes the desired virtual CPUs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| count | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec"></a>
+
+### VirtualMachineConsoleSpec
+VirtualMachineConsoleSpec describes requested guest consoles.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| serial | [bool](#bool) |  |  |
+| vnc | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec"></a>
+
+### VirtualMachineDiskFromImageSpec
+VirtualMachineDiskFromImageSpec identifies an image in a content library.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library | [string](#string) |  |  |
+| file | [string](#string) |  |  |
+| digest | [string](#string) |  |  |
+| mode | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec"></a>
+
+### VirtualMachineDiskProvisionSpec
+VirtualMachineDiskProvisionSpec names exactly one volume-content source.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| blank | [bool](#bool) |  |  |
+| from_image | [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineDiskSpec"></a>
+
+### VirtualMachineDiskSpec
+VirtualMachineDiskSpec describes a disk before its volume has a host source.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| pool | [string](#string) |  |  |
+| size | [uint64](#uint64) |  |  |
+| format | [string](#string) |  |  |
+| bus | [string](#string) |  |  |
+| type | [string](#string) |  |  |
+| boot_order | [uint32](#uint32) |  |  |
+| provision | [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec"></a>
+
+### VirtualMachineDomainSpecSpec
+VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| domain_xml | [string](#string) |  | DomainXML is a libvirt domain definition, suitable for DomainDefineXML. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec"></a>
+
+### VirtualMachineFirmwareSpec
+VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [string](#string) |  |  |
+| secure_boot | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec"></a>
+
+### VirtualMachineMemoryBallooningSpec
+VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineMemorySpec"></a>
+
+### VirtualMachineMemorySpec
+VirtualMachineMemorySpec describes the desired guest memory.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [uint64](#uint64) |  | Size is the guest memory size in bytes. |
+| ballooning | [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineSpecSpec"></a>
+
+### VirtualMachineSpecSpec
+VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cpu | [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec) |  |  |
+| memory | [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec) |  |  |
+| power_state | [string](#string) |  |  |
+| firmware | [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec) |  |  |
+| console | [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec) |  |  |
+| disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated | Disks are logical volume intent, not libvirt source paths. Resolution and provisioning belong to a storage controller, not the XML renderer. |
 
 
 

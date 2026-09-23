@@ -202,6 +202,7 @@ require (
 	k8s.io/kubelet v0.37.0
 	k8s.io/pod-security-admission v0.37.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
+	libvirt.org/go/libvirtxml v1.12007.0
 	sigs.k8s.io/hydrophone v0.8.0
 	sigs.k8s.io/yaml v1.6.0
 )

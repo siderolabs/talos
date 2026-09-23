@@ -1,0 +1,15 @@
+<domain type="kvm">
+  <name>balloon</name>
+  <memory unit="bytes">4294967296</memory>
+  <vcpu>3</vcpu>
+  <os firmware="efi">
+    <type>hvm</type>
+    <firmware>
+      <feature enabled="no" name="secure-boot"></feature>
+      <feature enabled="no" name="enrolled-keys"></feature>
+    </firmware>
+  </os>
+  <devices>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>

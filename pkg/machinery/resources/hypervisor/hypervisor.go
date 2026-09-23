@@ -7,7 +7,7 @@ package hypervisor
 
 import "github.com/cosi-project/runtime/pkg/resource"
 
-//go:generate go tool github.com/siderolabs/deep-copy -type ContentLibraryStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type ContentLibraryStatusSpec -type VirtualMachineSpecSpec -type VirtualMachineDomainSpecSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // NamespaceName contains resources of the Talos hypervisor.
 const NamespaceName resource.Namespace = "hypervisor"

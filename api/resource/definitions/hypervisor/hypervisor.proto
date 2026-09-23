@@ -19,3 +19,76 @@ message ContentLibraryStatusSpec {
   string error = 4;
 }
 
+// VirtualMachineCPUSpec describes the desired virtual CPUs.
+message VirtualMachineCPUSpec {
+  uint32 count = 1;
+}
+
+// VirtualMachineConsoleSpec describes requested guest consoles.
+message VirtualMachineConsoleSpec {
+  bool serial = 1;
+  bool vnc = 2;
+}
+
+// VirtualMachineDiskFromImageSpec identifies an image in a content library.
+message VirtualMachineDiskFromImageSpec {
+  string library = 1;
+  string file = 2;
+  string digest = 3;
+  string mode = 4;
+}
+
+// VirtualMachineDiskProvisionSpec names exactly one volume-content source.
+message VirtualMachineDiskProvisionSpec {
+  bool blank = 1;
+  VirtualMachineDiskFromImageSpec from_image = 2;
+}
+
+// VirtualMachineDiskSpec describes a disk before its volume has a host source.
+message VirtualMachineDiskSpec {
+  string name = 1;
+  string pool = 2;
+  uint64 size = 3;
+  string format = 4;
+  string bus = 5;
+  string type = 6;
+  uint32 boot_order = 7;
+  VirtualMachineDiskProvisionSpec provision = 8;
+}
+
+// VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
+message VirtualMachineDomainSpecSpec {
+  // DomainXML is a libvirt domain definition, suitable for DomainDefineXML.
+  string domain_xml = 1;
+}
+
+// VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
+message VirtualMachineFirmwareSpec {
+  string type = 1;
+  bool secure_boot = 2;
+}
+
+// VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.
+message VirtualMachineMemoryBallooningSpec {
+  bool enabled = 1;
+}
+
+// VirtualMachineMemorySpec describes the desired guest memory.
+message VirtualMachineMemorySpec {
+  // Size is the guest memory size in bytes.
+  uint64 size = 1;
+  VirtualMachineMemoryBallooningSpec ballooning = 2;
+}
+
+// VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
+message VirtualMachineSpecSpec {
+  VirtualMachineCPUSpec cpu = 1;
+  VirtualMachineMemorySpec memory = 2;
+  string power_state = 3;
+  VirtualMachineFirmwareSpec firmware = 4;
+  VirtualMachineConsoleSpec console = 5;
+  // Disks are logical volume intent, not libvirt source paths. Resolution and
+  // provisioning belong to a storage controller, not the XML renderer.
+  repeated VirtualMachineDiskSpec disks = 6;
+}
+

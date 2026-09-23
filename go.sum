@@ -2552,6 +2552,8 @@ kernel.org/pub/linux/libs/security/libcap/cap v1.2.78 h1:jgqg4gyu2BaYW9L6uzEtGLf
 kernel.org/pub/linux/libs/security/libcap/cap v1.2.78/go.mod h1:VjuVda6m2qGkpCVfrFkpTGyvkdlZ2N5/yfo89tujlg8=
 kernel.org/pub/linux/libs/security/libcap/psx v1.2.78 h1:PC3yNs51cX5LZ7U57a7xielBcoXB3xnV+rXD8V0H0DQ=
 kernel.org/pub/linux/libs/security/libcap/psx v1.2.78/go.mod h1:+l6Ee2F59XiJ2I6WR5ObpC1utCQJZ/VLsEbQCD8RG24=
+libvirt.org/go/libvirtxml v1.12007.0 h1:gdomG2dDDsPSydxjela/I87YHdGsnkHXPLOAQ6iCQBQ=
+libvirt.org/go/libvirtxml v1.12007.0/go.mod h1:7Oq2BLDstLr/XtoQD8Fr3mfDNrzlI3utYKySXF2xkng=
 lukechampine.com/blake3 v1.4.1 h1:I3Smz7gso8w4/TunLKec6K2fn+kyKtDxr/xcQEN84Wg=
 lukechampine.com/blake3 v1.4.1/go.mod h1:QFosUxmjB8mnrWFSNwKmvxHpfY72bmD2tQ0kBMM3kwo=
 modernc.org/cc/v4 v4.29.0 h1:CXgwL8cvxmyzBQZzbSl/6xFtMCryb6u8IOqDci39cgc=

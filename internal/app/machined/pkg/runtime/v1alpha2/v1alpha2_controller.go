@@ -275,6 +275,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&containerctrls.StatusController{},
 		&hypervisorctrls.ContentLibraryController{},
+		&hypervisorctrls.VirtualMachineSpecController{},
+		&hypervisorctrls.VirtualMachineDomainSpecController{},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", constants.SystemContainerdNamespace, nil),
 		cri.NewImageGCController("cri", constants.SystemContainerdNamespace, cri.KubernetesRefsToRetain),

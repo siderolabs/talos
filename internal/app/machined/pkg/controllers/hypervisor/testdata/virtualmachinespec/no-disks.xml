@@ -1,0 +1,11 @@
+<domain type="kvm">
+  <name>active-only</name>
+  <memory unit="bytes">4294967296</memory>
+  <vcpu>3</vcpu>
+  <os>
+    <type>hvm</type>
+  </os>
+  <devices>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>
