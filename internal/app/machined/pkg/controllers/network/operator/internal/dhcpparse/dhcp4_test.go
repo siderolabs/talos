@@ -323,3 +323,93 @@ func TestParseDHCP4Ack(t *testing.T) {
 		require.Len(t, specs.Addresses, 1, "the leased address is still configured")
 	})
 }
+
+func TestParseDHCP4AckInvalidNames(t *testing.T) {
+	const (
+		linkName    = "eth0"
+		routeMetric = uint32(1024)
+	)
+
+	wire := func(t *testing.T, modifiers ...dhcpv4.Modifier) *dhcpv4.DHCPv4 {
+		t.Helper()
+
+		ack := must.Value(dhcpv4.New(
+			append([]dhcpv4.Modifier{
+				dhcpv4.WithMessageType(dhcpv4.MessageTypeAck),
+				dhcpv4.WithYourIP(net.IPv4(10, 0, 0, 5)),
+				dhcpv4.WithNetmask(net.CIDRMask(24, 32)),
+				dhcpv4.WithOption(dhcpv4.OptDNS(net.IPv4(8, 8, 8, 8))),
+			}, modifiers...)...,
+		))(t)
+
+		return must.Value(dhcpv4.FromBytes(ack.ToBytes()))(t)
+	}
+
+	t.Run("domain name with newline", func(t *testing.T) {
+		ack := wire(
+			t,
+			dhcpv4.WithOption(dhcpv4.OptHostName("node1")),
+			dhcpv4.WithOption(dhcpv4.OptDomainName("poc.example\nfoo.bar")),
+		)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true, true)
+
+		assert.Empty(t, specs.Hostname)
+
+		require.Len(t, specs.Resolvers, 1)
+		assert.Empty(t, specs.Resolvers[0].SearchDomains)
+	})
+
+	t.Run("domain search entry with space", func(t *testing.T) {
+		ack := wire(
+			t,
+			dhcpv4.WithDomainSearchList("legit.example another.example", "corp.example.com"),
+		)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true, true)
+
+		require.Len(t, specs.Resolvers, 1)
+		assert.Equal(t, []string{"corp.example.com"}, specs.Resolvers[0].SearchDomains)
+	})
+
+	t.Run("hostname with newline", func(t *testing.T) {
+		ack := wire(
+			t,
+			dhcpv4.WithOption(dhcpv4.OptHostName("node1\n192")),
+		)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true, true)
+
+		assert.Empty(t, specs.Hostname)
+	})
+
+	t.Run("hostname with injected domain part", func(t *testing.T) {
+		ack := wire(
+			t,
+			dhcpv4.WithOption(dhcpv4.OptHostName("node1.poc.example")),
+		)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true, true)
+
+		require.Len(t, specs.Hostname, 1)
+		assert.Equal(t, "node1", specs.Hostname[0].Hostname)
+		assert.Equal(t, "poc.example", specs.Hostname[0].Domainname)
+	})
+
+	t.Run("unusual but harmless names are kept", func(t *testing.T) {
+		ack := wire(
+			t,
+			dhcpv4.WithOption(dhcpv4.OptHostName("My_Node")),
+			dhcpv4.WithOption(dhcpv4.OptDomainName("Corp_Example.com")),
+		)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true, true)
+
+		require.Len(t, specs.Hostname, 1)
+		assert.Equal(t, "My_Node", specs.Hostname[0].Hostname)
+		assert.Equal(t, "Corp_Example.com", specs.Hostname[0].Domainname)
+
+		require.Len(t, specs.Resolvers, 1)
+		assert.Equal(t, []string{"Corp_Example.com"}, specs.Resolvers[0].SearchDomains)
+	})
+}

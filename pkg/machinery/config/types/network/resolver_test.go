@@ -396,6 +396,21 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			expectedError: "hostDNS.resolveMemberNames cannot be enabled when hostDNS.enabled is false",
 		},
 		{
+			name: "search domain with newline",
+			cfg: func() *network.ResolverConfigV1Alpha1 {
+				cfg := network.NewResolverConfigV1Alpha1()
+				cfg.ResolverSearchDomains = network.SearchDomainsConfig{
+					SearchDomains: network.SearchDomainList{"example.com", "poc.example\nanotherdomain"},
+				}
+
+				return cfg
+			},
+
+			expectedWarnings: []string{
+				"searchDomains: name \"poc.example\\nanotherdomain\" contains invalid character '\\n' at position 11, it will be ignored",
+			},
+		},
+		{
 			name: "hostDNS config valid",
 			cfg: func() *network.ResolverConfigV1Alpha1 {
 				cfg := network.NewResolverConfigV1Alpha1()

@@ -5,17 +5,13 @@
 package network
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"iter"
-	"maps"
 	"net/netip"
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
-	"text/tabwriter"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -26,6 +22,7 @@ import (
 	"go.uber.org/zap"
 
 	efiles "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/etcrender"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
@@ -151,7 +148,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			// in container mode, keep the original resolv.conf to use the resolvers supplied by the container runtime
 			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "resolv.conf"),
 				func(r *files.EtcFileSpec) error {
-					r.TypedSpec().Contents = renderResolvConf(
+					r.TypedSpec().Contents = etcrender.ResolvConf(
 						pickNameservers(hostDNSCfg, resolverStatus),
 						resolverStatus.TypedSpec().SearchDomains,
 					)
@@ -186,7 +183,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			src := "resolv.conf"
 			dst := filepath.Join(ctrl.BindMountTarget, src)
 
-			conf := renderResolvConf(slices.All(dnsServers), resolverStatus.TypedSpec().SearchDomains)
+			conf := etcrender.ResolvConf(slices.All(dnsServers), resolverStatus.TypedSpec().SearchDomains)
 
 			if err := efiles.UpdateFile(ctrl.EtcRoot, src, conf, 0o644, constants.EtcSelinuxLabel); err != nil {
 				return fmt.Errorf("error writing pod resolv.conf: %w", err)
@@ -205,7 +202,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 		if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "hosts"),
 			func(r *files.EtcFileSpec) error {
-				r.TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus, nodeAddressStatus, cfgProvider)
+				r.TypedSpec().Contents, err = etcrender.Hosts(hostnameStatus, nodeAddressStatus, cfgProvider)
 				r.TypedSpec().Mode = 0o644
 				r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
@@ -239,67 +236,6 @@ func pickNameservers(hostDNSCfg *network.HostDNSConfig, resolverStatus *network.
 			},
 		),
 	)
-}
-
-func renderResolvConf(nameservers iter.Seq2[int, netip.Addr], searchDomains []string) []byte {
-	var buf bytes.Buffer
-
-	for i, ns := range nameservers {
-		if i >= 3 {
-			// only use first 3 nameservers, see MAXNS in https://linux.die.net/man/5/resolv.conf
-			break
-		}
-
-		fmt.Fprintf(&buf, "nameserver %s\n", ns)
-	}
-
-	if len(searchDomains) > 0 {
-		fmt.Fprintf(&buf, "\nsearch %s\n", strings.Join(searchDomains, " "))
-	}
-
-	return buf.Bytes()
-}
-
-func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatus, nodeAddressStatus *network.NodeAddress, cfgProvider talosconfig.Config) ([]byte, error) {
-	var buf bytes.Buffer
-
-	tabW := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
-
-	write := func(s string) { tabW.Write([]byte(s)) } //nolint:errcheck
-
-	write("127.0.0.1\tlocalhost\n")
-
-	if nodeAddressStatus != nil && hostnameStatus != nil {
-		write(fmt.Sprintf("%s\t%s", nodeAddressStatus.TypedSpec().Addresses[0].Addr(), hostnameStatus.TypedSpec().FQDN()))
-
-		if hostnameStatus.TypedSpec().Hostname != hostnameStatus.TypedSpec().FQDN() {
-			write(" " + hostnameStatus.TypedSpec().Hostname)
-		}
-
-		write("\n")
-	}
-
-	write("::1\tlocalhost ip6-localhost ip6-loopback\n")
-	write("ff02::1\tip6-allnodes\n")
-	write("ff02::2\tip6-allrouters\n")
-
-	hostMap := map[string][]string{}
-
-	if cfgProvider != nil {
-		for _, extraHost := range cfgProvider.NetworkStaticHostConfig() {
-			hostMap[extraHost.IP()] = append(hostMap[extraHost.IP()], extraHost.Aliases()...)
-		}
-	}
-
-	for _, addr := range slices.Sorted(maps.Keys(hostMap)) {
-		write(fmt.Sprintf("%s\t%s\n", addr, strings.Join(hostMap[addr], " ")))
-	}
-
-	if err := tabW.Flush(); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 // createBindMountFileFd creates a common way to create a writable source file with a

@@ -44,7 +44,7 @@ type DHCP4AckSpecs struct {
 // `useRoutes` controls whether the routes carried by the ACK (the default
 // gateway and classless static routes) are installed at all.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useHostname bool, useRoutes bool) DHCP4AckSpecs {
 	var specs DHCP4AckSpecs
 
@@ -181,8 +181,12 @@ func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useH
 					spec.Domainname = domainName
 				}
 
-				specs.Hostname = []network.HostnameSpecSpec{
-					spec,
+				// hostname and domain name are rendered into /etc/hosts and /etc/resolv.conf,
+				// so validate them before emitting the spec.
+				if spec.Validate() == nil && spec.ValidateChars() == nil {
+					specs.Hostname = []network.HostnameSpecSpec{
+						spec,
+					}
 				}
 			}
 		}
@@ -226,14 +230,24 @@ func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useH
 	return specs
 }
 
+// dhcpSearchDomains returns search domains from DHCP options 119 (Domain Search) and 15 (Domain Name).
+//
+// Search domains which contain whitespace or control characters are skipped, as they
+// would allow to inject extra content into /etc/resolv.conf.
 func dhcpSearchDomains(ack *dhcpv4.DHCPv4) []string {
 	var searchDomains []string
 
 	if labels := ack.DomainSearch(); labels != nil {
-		searchDomains = append(searchDomains, labels.Labels...)
+		for _, domain := range labels.Labels {
+			if nethelpers.ValidateDNSNameChars(domain) == nil {
+				searchDomains = append(searchDomains, domain)
+			}
+		}
 	}
 
-	if domainName := strings.TrimRight(ack.DomainName(), "\x00"); domainName != "" && !slices.Contains(searchDomains, domainName) {
+	if domainName := strings.TrimRight(ack.DomainName(), "\x00"); domainName != "" &&
+		nethelpers.ValidateDNSNameChars(domainName) == nil &&
+		!slices.Contains(searchDomains, domainName) {
 		searchDomains = append(searchDomains, domainName)
 	}
 
