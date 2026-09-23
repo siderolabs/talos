@@ -15,8 +15,74 @@ import (
 	"golang.org/x/sys/unix"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+func TestNumberedBFDSource(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name, remote, local string
+	}{
+		{"IPv4", "192.0.2.2", "192.0.2.1/24"},
+		{"IPv6", "2001:db8::2", "2001:db8::1/64"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			state := internalbgp.NewRuntimeState(map[string]network.LinkStatusSpec{
+				"eth0": {Index: 2},
+				"lo":   {Index: 1},
+			}, []network.AddressStatusSpec{
+				{LinkName: "lo", LinkIndex: 1, Address: netip.MustParsePrefix("2001:db8::ffff/128")},
+				{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix(tt.local)},
+			})
+			peers, _ := internalbgp.NewNeighborResolver().ResolvePeers(network.BGPInstanceConfigSpec{
+				Neighbors: []network.BGPNeighborConfigSpec{{Address: netip.MustParseAddr(tt.remote), PeerASN: 65002}},
+			}, state, zap.NewNop())
+			require.Len(t, peers, 1)
+			assert.Equal(t, netip.MustParsePrefix(tt.local).Addr().String(), internalbgp.BuildPeer(peers[0], false).GetTransport().GetLocalAddress())
+		})
+	}
+}
+
+func TestNumberedSourceRoutingDomain(t *testing.T) {
+	t.Parallel()
+
+	addresses := []network.AddressStatusSpec{
+		{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix("192.0.2.20/24")},
+		{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix("192.0.2.10/24")},
+		{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix("192.0.2.40/25")},
+		{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix("192.0.2.1/30"), Flags: nethelpers.AddressFlags(nethelpers.AddressTentative)},
+		{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix("192.0.2.3/30"), Flags: nethelpers.AddressFlags(nethelpers.AddressDADFailed)},
+		{LinkName: "eth0", LinkIndex: 2, Address: netip.MustParsePrefix("192.0.2.4/29"), Flags: nethelpers.AddressFlags(nethelpers.AddressDeprecated)},
+		{LinkName: "eth1", LinkIndex: 3, Address: netip.MustParsePrefix("192.0.2.30/25")},
+	}
+	links := map[string]network.LinkStatusSpec{
+		"eth0":     {Index: 2},
+		"eth1":     {Index: 3, MasterIndex: 4},
+		"vrf-blue": {Index: 4, Kind: network.LinkKindVRF},
+	}
+
+	for _, tt := range []struct{ name, vrf, remote, want string }{
+		{"most specific ready prefix", "", "192.0.2.2", "192.0.2.40"},
+		{"default domain tie break", "", "192.0.2.200", "192.0.2.10"},
+		{"VRF domain", "vrf-blue", "192.0.2.2", "192.0.2.30"},
+		{"routed peer", "", "198.51.100.1", ""},
+		{"wrong family", "", "2001:db8::2", ""},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			peers, _ := internalbgp.NewNeighborResolver().ResolvePeers(network.BGPInstanceConfigSpec{
+				VRF:       tt.vrf,
+				Neighbors: []network.BGPNeighborConfigSpec{{Address: netip.MustParseAddr(tt.remote), PeerASN: 65002}},
+			}, internalbgp.NewRuntimeState(links, addresses), zap.NewNop())
+			require.Len(t, peers, 1)
+			assert.Equal(t, tt.want, internalbgp.BuildPeer(peers[0], false).GetTransport().GetLocalAddress())
+			oldKey := internalbgp.PeerKey(peers[0])
+			peers[0].LocalAddress = "192.0.2.99"
+			assert.NotEqual(t, oldKey, internalbgp.PeerKey(peers[0]))
+		})
+	}
+}
 
 func TestLinkLocalNeighbor(t *testing.T) {
 	t.Parallel()
