@@ -76,7 +76,7 @@ func TestResolverConfigUnmarshal(t *testing.T) {
 	}, docs[0])
 }
 
-func TestResolverV1Alpha1Validate(t *testing.T) {
+func TestResolverV1Alpha1ConflictValidate(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
@@ -135,6 +135,51 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			t.Parallel()
 
 			err := test.cfg().V1Alpha1ConflictValidate(test.v1alpha1Cfg)
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestResolverV1Alpha1Validate(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		cfg  func() *network.ResolverConfigV1Alpha1
+
+		expectedError    string
+		expectedWarnings []string
+	}{
+		{
+			name: "empty",
+			cfg:  network.NewResolverConfigV1Alpha1,
+		},
+		{
+			name: "search domain with newline",
+			cfg: func() *network.ResolverConfigV1Alpha1 {
+				cfg := network.NewResolverConfigV1Alpha1()
+				cfg.ResolverSearchDomains = network.SearchDomainsConfig{
+					SearchDomains: []string{"example.com", "poc.example\nanotherdomain"},
+				}
+
+				return cfg
+			},
+
+			expectedWarnings: []string{
+				"searchDomains: name \"poc.example\\nanotherdomain\" contains invalid character '\\n' at position 11, it will be ignored",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			warnings, err := test.cfg().Validate(validationMode{})
+			assert.Equal(t, test.expectedWarnings, warnings)
+
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)
 			} else {

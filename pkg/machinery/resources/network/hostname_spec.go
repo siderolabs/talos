@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -45,6 +46,23 @@ func (spec *HostnameSpecSpec) Validate() error {
 
 	if len(spec.FQDN()) > 253 {
 		return fmt.Errorf("fqdn is too long: %d", len(spec.FQDN()))
+	}
+
+	return nil
+}
+
+// ValidateChars checks that the hostname and domainname don't contain whitespace or control characters.
+//
+// This check is not part of Validate, as it is only enforced for hostnames coming from
+// sources outside of the machine configuration (DHCP, platform metadata), so that
+// existing machine configurations keep working as before.
+func (spec *HostnameSpecSpec) ValidateChars() error {
+	if err := nethelpers.ValidateDNSNameChars(spec.Hostname); err != nil {
+		return fmt.Errorf("invalid hostname: %w", err)
+	}
+
+	if err := nethelpers.ValidateDNSNameChars(spec.Domainname); err != nil {
+		return fmt.Errorf("invalid domainname: %w", err)
 	}
 
 	return nil

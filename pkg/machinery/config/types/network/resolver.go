@@ -8,6 +8,7 @@ package network
 
 import (
 	"errors"
+	"fmt"
 	"net/netip"
 	"slices"
 
@@ -19,6 +20,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // ResolverKind is a ResolverConfig document kind.
@@ -157,6 +160,22 @@ func (s *ResolverConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg *v1alpha1.
 	}
 
 	return nil
+}
+
+// Validate implements config.Validator interface.
+//
+//nolint:gocyclo
+func (s *ResolverConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
+	var warnings []string
+
+	// this is a warning (and not an error) to keep accepting machine configuration which was valid before
+	for _, domain := range s.ResolverSearchDomains.SearchDomains {
+		if err := nethelpers.ValidateDNSNameChars(domain); err != nil {
+			warnings = append(warnings, fmt.Sprintf("searchDomains: %s, it will be ignored", err))
+		}
+	}
+
+	return warnings, nil
 }
 
 // Resolvers implements NetworkResolverConfig interface.

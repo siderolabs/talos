@@ -418,8 +418,12 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) 
 					spec.Domainname = domainName
 				}
 
-				d.hostname = []network.HostnameSpecSpec{
-					spec,
+				// hostname and domain name are rendered into /etc/hosts and /etc/resolv.conf,
+				// so validate them before emitting the spec.
+				if spec.Validate() == nil && spec.ValidateChars() == nil {
+					d.hostname = []network.HostnameSpecSpec{
+						spec,
+					}
 				}
 			}
 		}
