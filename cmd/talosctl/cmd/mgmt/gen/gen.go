@@ -8,13 +8,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hashicorp/go-multierror"
 	"github.com/spf13/cobra"
-)
-
-const (
-	crtExt = ".crt"
-	keyExt = ".key"
 )
 
 var genCmdFlags struct {
@@ -24,7 +18,7 @@ var genCmdFlags struct {
 // Cmd represents the `gen` command.
 var Cmd = &cobra.Command{
 	Use:   "gen",
-	Short: "Generate CAs, certificates, and private keys",
+	Short: "Generate base secrets, machine configuration, and other files.",
 	Long:  ``,
 }
 
@@ -40,16 +34,4 @@ func validateFileExists(file string) error {
 	}
 
 	return nil
-}
-
-func validateFilesExists(files []string) error {
-	var combinedErr multierror.Error
-
-	for _, file := range files {
-		if err := validateFileExists(file); err != nil {
-			combinedErr.Errors = append(combinedErr.Errors, err)
-		}
-	}
-
-	return combinedErr.ErrorOrNil()
 }

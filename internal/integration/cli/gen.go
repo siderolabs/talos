@@ -52,61 +52,6 @@ func (suite *GenSuite) TearDownTest() {
 	}
 }
 
-// TestCA ...
-func (suite *GenSuite) TestCA() {
-	suite.RunCLI([]string{"gen", "ca", "--organization", "Foo"},
-		base.StdoutEmpty())
-
-	suite.Assert().FileExists("Foo.crt")
-	suite.Assert().FileExists("Foo.sha256")
-	suite.Assert().FileExists("Foo.key")
-}
-
-// TestKey ...
-func (suite *GenSuite) TestKey() {
-	suite.RunCLI([]string{"gen", "key", "--name", "Foo"},
-		base.StdoutEmpty())
-
-	suite.Assert().FileExists("Foo.key")
-}
-
-// TestCSR ...
-func (suite *GenSuite) TestCSR() {
-	suite.RunCLI([]string{"gen", "key", "--name", "Foo"},
-		base.StdoutEmpty())
-
-	suite.RunCLI([]string{"gen", "csr", "--key", "Foo.key", "--ip", "10.0.0.1"},
-		base.StdoutEmpty())
-
-	suite.Assert().FileExists("Foo.csr")
-}
-
-// TestCrt ...
-func (suite *GenSuite) TestCrt() {
-	suite.RunCLI([]string{"gen", "ca", "--organization", "Foo"},
-		base.StdoutEmpty())
-
-	suite.RunCLI([]string{"gen", "key", "--name", "Bar"},
-		base.StdoutEmpty())
-
-	suite.RunCLI([]string{"gen", "csr", "--key", "Bar.key", "--ip", "10.0.0.1"},
-		base.StdoutEmpty())
-
-	suite.RunCLI([]string{"gen", "crt", "--ca", "Foo", "--csr", "Bar.csr", "--name", "foobar"},
-		base.StdoutEmpty())
-
-	suite.Assert().FileExists("foobar.crt")
-}
-
-// TestKeypair ...
-func (suite *GenSuite) TestKeypair() {
-	suite.RunCLI([]string{"gen", "keypair", "--organization", "Foo", "--ip", "10.0.0.1"},
-		base.StdoutEmpty())
-
-	suite.Assert().FileExists("Foo.crt")
-	suite.Assert().FileExists("Foo.key")
-}
-
 // TestGenConfigURLValidation ...
 func (suite *GenSuite) TestGenConfigURLValidation() {
 	suite.RunCLI([]string{"gen", "config", "foo", "192.168.0.1"},

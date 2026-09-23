@@ -1832,33 +1832,6 @@ talosctl events [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
-## talosctl gen ca
-
-Generates a self-signed X.509 certificate authority
-
-```
-talosctl gen ca [flags]
-```
-
-### Options
-
-```
-  -h, --help                  help for ca
-      --hours int             the hours from now on which the certificate validity period ends (default 87600)
-      --organization string   X.509 distinguished name for the Organization
-      --rsa                   generate in RSA format
-```
-
-### Options inherited from parent commands
-
-```
-  -f, --force   will overwrite existing files
-```
-
-### SEE ALSO
-
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-
 ## talosctl gen config
 
 Generates a set of configuration files for Talos cluster
@@ -1906,113 +1879,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
 
 ### SEE ALSO
 
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-
-## talosctl gen crt
-
-Generates an X.509 Ed25519 certificate
-
-```
-talosctl gen crt [flags]
-```
-
-### Options
-
-```
-      --ca string     path to the PEM encoded CERTIFICATE
-      --csr string    path to the PEM encoded CERTIFICATE REQUEST
-  -h, --help          help for crt
-      --hours int     the hours from now on which the certificate validity period ends (default 24)
-      --name string   the basename of the generated file
-```
-
-### Options inherited from parent commands
-
-```
-  -f, --force   will overwrite existing files
-```
-
-### SEE ALSO
-
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-
-## talosctl gen csr
-
-Generates a CSR using an Ed25519 private key
-
-```
-talosctl gen csr [flags]
-```
-
-### Options
-
-```
-  -h, --help            help for csr
-      --ip string       generate the certificate for this IP address
-      --key string      path to the PEM encoded EC or RSA PRIVATE KEY
-      --roles strings   roles (default [os:admin])
-```
-
-### Options inherited from parent commands
-
-```
-  -f, --force   will overwrite existing files
-```
-
-### SEE ALSO
-
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-
-## talosctl gen key
-
-Generates an Ed25519 private key
-
-```
-talosctl gen key [flags]
-```
-
-### Options
-
-```
-  -h, --help          help for key
-      --name string   the basename of the generated file
-```
-
-### Options inherited from parent commands
-
-```
-  -f, --force   will overwrite existing files
-```
-
-### SEE ALSO
-
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
-
-## talosctl gen keypair
-
-Generates an X.509 Ed25519 key pair
-
-```
-talosctl gen keypair [flags]
-```
-
-### Options
-
-```
-  -h, --help                  help for keypair
-      --ip string             generate the certificate for this IP address
-      --organization string   X.509 distinguished name for the Organization
-```
-
-### Options inherited from parent commands
-
-```
-  -f, --force   will overwrite existing files
-```
-
-### SEE ALSO
-
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl gen](#talosctl-gen)	 - Generate base secrets, machine configuration, and other files.
 
 ## talosctl gen secrets
 
@@ -2041,7 +1908,7 @@ talosctl gen secrets [flags]
 
 ### SEE ALSO
 
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl gen](#talosctl-gen)	 - Generate base secrets, machine configuration, and other files.
 
 ## talosctl gen secureboot database
 
@@ -2142,14 +2009,14 @@ Generates secrets for the SecureBoot process
 
 ### SEE ALSO
 
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl gen](#talosctl-gen)	 - Generate base secrets, machine configuration, and other files.
 * [talosctl gen secureboot database](#talosctl-gen-secureboot-database)	 - Generates a UEFI database to enroll the signing certificate
 * [talosctl gen secureboot pcr](#talosctl-gen-secureboot-pcr)	 - Generates a key which is used to sign TPM PCR values
 * [talosctl gen secureboot uki](#talosctl-gen-secureboot-uki)	 - Generates a certificate which is used to sign boot assets (UKI)
 
 ## talosctl gen
 
-Generate CAs, certificates, and private keys
+Generate base secrets, machine configuration, and other files.
 
 ### Options
 
@@ -2161,12 +2028,7 @@ Generate CAs, certificates, and private keys
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
-* [talosctl gen ca](#talosctl-gen-ca)	 - Generates a self-signed X.509 certificate authority
 * [talosctl gen config](#talosctl-gen-config)	 - Generates a set of configuration files for Talos cluster
-* [talosctl gen crt](#talosctl-gen-crt)	 - Generates an X.509 Ed25519 certificate
-* [talosctl gen csr](#talosctl-gen-csr)	 - Generates a CSR using an Ed25519 private key
-* [talosctl gen key](#talosctl-gen-key)	 - Generates an Ed25519 private key
-* [talosctl gen keypair](#talosctl-gen-keypair)	 - Generates an X.509 Ed25519 key pair
 * [talosctl gen secrets](#talosctl-gen-secrets)	 - Generates a secrets bundle file which can later be used to generate a config
 * [talosctl gen secureboot](#talosctl-gen-secureboot)	 - Generates secrets for the SecureBoot process
 
@@ -4057,7 +3919,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl edit](#talosctl-edit)	 - Edit Talos node machine configuration with the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd
 * [talosctl events](#talosctl-events)	 - Stream runtime events
-* [talosctl gen](#talosctl-gen)	 - Generate CAs, certificates, and private keys
+* [talosctl gen](#talosctl-gen)	 - Generate base secrets, machine configuration, and other files.
 * [talosctl get](#talosctl-get)	 - Get a specific resource or list of resources (use 'talosctl get rd' to see all available resource types).
 * [talosctl health](#talosctl-health)	 - Check cluster health
 * [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor

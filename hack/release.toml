@@ -317,6 +317,21 @@ Common `mount` flags (`readOnly`, `disableAccessTime`, `secure`) apply as with o
 Validation rejects `mountPort`/`mountTransport`/`locking` outside NFSv3 and `udp` for NFSv4.
 """
 
+    [notes.gen-drop]
+        title = "talosctl gen removed subcommands"
+        description = """\
+The following `talosctl gen` subcommands have been removed:
+
+* `talosctl gen ca`
+* `talosctl gen crt`
+* `talosctl gen csr`
+* `talosctl gen key`
+* `talosctl gen keypair`
+
+These commands where historically used to generate pieces of Talos PKI, but they are no longer needed
+as `talosctl gen config` and `talosctl gen secrets` now generate all required PKI material automatically.
+"""
+
 [make_deps]
 
     [make_deps.tools]
