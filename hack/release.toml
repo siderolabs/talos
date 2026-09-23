@@ -26,10 +26,11 @@ The built-in listener does not transmit advertisements; use the `lldpd` system e
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.52
+Linux: 6.18.53
 Kubernetes: 1.37.0
 containerd: 2.3.5
 CoreDNS: 1.14.7
+systemd-udevd: 262
 
 Talos is built with Go 1.27.1.
 """
