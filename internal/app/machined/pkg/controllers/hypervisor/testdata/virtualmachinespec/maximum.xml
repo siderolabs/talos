@@ -2,6 +2,9 @@
   <name>maximum</name>
   <memory unit="bytes">9223372036854774784</memory>
   <vcpu>65535</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
   <os firmware="efi">
     <type>hvm</type>
     <firmware>

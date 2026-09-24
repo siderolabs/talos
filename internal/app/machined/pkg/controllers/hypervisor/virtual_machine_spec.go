@@ -107,6 +107,7 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 	spec := hypervisor.VirtualMachineSpecSpec{
 		CPU: hypervisor.VirtualMachineCPUSpec{
 			Count: vm.CPU().Count(),
+			Limit: vm.CPU().Limit().ValueOrZero(),
 		},
 		Memory: hypervisor.VirtualMachineMemorySpec{
 			Size: vm.Memory().Size(),

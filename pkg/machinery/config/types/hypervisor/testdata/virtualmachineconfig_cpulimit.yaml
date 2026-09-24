@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm3
+powerState: running
+cpu:
+    count: 4
+    limit: 3000m
+memory:
+    size: 4GiB
+firmware:
+    type: uefi

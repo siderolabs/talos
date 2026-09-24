@@ -29,6 +29,7 @@ powerState: running # Power state the virtual machine is driven towards.
 # Processor settings for the virtual machine.
 cpu:
     count: 4 # Number of virtual CPUs presented to the guest.
+    limit: 3000m # Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads
 # Memory settings for the virtual machine.
 memory:
     size: 4GiB # Memory allocated to the guest at boot.
@@ -112,7 +113,12 @@ networking:
 
 ## cpu {#VirtualMachineConfig.cpu}
 
-VirtualMachineCPU describes the processors presented to the guest.
+VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.
+
+There is deliberately no matching memory ceiling. Guest memory is already fixed by `memory.size`,
+and libvirt advises against a QEMU memory hard limit: the emulator's own footprint over guest RAM
+is not predictable, and a limit guessed too low has the kernel kill the virtual machine.
+
 
 
 
@@ -121,6 +127,9 @@ VirtualMachineCPU describes the processors presented to the guest.
 |-------|------|-------------|----------|
 |`count` |uint32 |Number of virtual CPUs presented to the guest.<br><br>This is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are<br>laid out into sockets, cores and threads is not configurable. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 count: 4
+{{< /highlight >}}</details> | |
+|`limit` |string |Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads<br>together, mapped onto the domain's global CFS quota.<br><br>`1000m` is one host core. The ceiling is independent of `count`: a guest with four<br>vCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores<br>of host time.<br><br>Optional; omitting it leaves the virtual machine bounded only by its vCPU count. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+limit: 3000m
 {{< /highlight >}}</details> | |
 
 

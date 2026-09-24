@@ -2,6 +2,9 @@
   <name>minimum</name>
   <memory unit="bytes">1024</memory>
   <vcpu>1</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
   <os firmware="efi">
     <type>hvm</type>
     <firmware>

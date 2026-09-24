@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -110,7 +111,11 @@ type VirtualMachineConfigV1Alpha1 struct {
 	NetworkingConfig VirtualMachineNetworking `yaml:"networking,omitempty"`
 }
 
-// VirtualMachineCPU describes the processors presented to the guest.
+// VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.
+//
+// There is deliberately no matching memory ceiling. Guest memory is already fixed by `memory.size`,
+// and libvirt advises against a QEMU memory hard limit: the emulator's own footprint over guest RAM
+// is not predictable, and a limit guessed too low has the kernel kill the virtual machine.
 type VirtualMachineCPU struct {
 	//   description: |
 	//     Number of virtual CPUs presented to the guest.
@@ -121,6 +126,20 @@ type VirtualMachineCPU struct {
 	//     - value: 4
 	//   schemaRequired: true
 	CPUCount uint32 `yaml:"count"`
+	//   description: |
+	//     Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads
+	//     together, mapped onto the domain's global CFS quota.
+	//
+	//     `1000m` is one host core. The ceiling is independent of `count`: a guest with four
+	//     vCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores
+	//     of host time.
+	//
+	//     Optional; omitting it leaves the virtual machine bounded only by its vCPU count.
+	//   examples:
+	//     - value: '"3000m"'
+	//   schema:
+	//     type: string
+	CPULimit string `yaml:"limit,omitempty"`
 }
 
 // VirtualMachineMemory describes the memory presented to the guest.
@@ -170,6 +189,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 	cfg.MetaName = "vm1"
 	cfg.CPUConfig = VirtualMachineCPU{
 		CPUCount: 4,
+		CPULimit: "3000m",
 	}
 	cfg.MemoryConfig = VirtualMachineMemory{
 		MemorySize: meta.MustByteSize("4GiB"),
@@ -271,6 +291,20 @@ func (c *VirtualMachineCPU) Count() uint32 {
 	return c.CPUCount
 }
 
+// Limit implements config.VirtualMachineCPUConfig interface.
+func (c *VirtualMachineCPU) Limit() optional.Optional[uint64] {
+	if c.CPULimit == "" {
+		return optional.None[uint64]()
+	}
+
+	millicores, err := meta.ParseMillicores(c.CPULimit)
+	if err != nil {
+		return optional.None[uint64]()
+	}
+
+	return optional.Some(millicores)
+}
+
 // Size implements config.VirtualMachineMemoryConfig interface.
 func (m *VirtualMachineMemory) Size() uint64 {
 	return m.MemorySize.Value()
@@ -343,11 +377,22 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateName() error {
 
 // ValidateCPU checks the processor settings.
 func (c *VirtualMachineConfigV1Alpha1) ValidateCPU() error {
+	var validationErrors error
+
 	if c.CPUConfig.CPUCount == 0 {
-		return errors.New("cpu.count is required")
+		validationErrors = errors.Join(validationErrors, errors.New("cpu.count is required"))
 	}
 
-	return nil
+	if c.CPUConfig.CPULimit != "" {
+		if limit, err := meta.ParseMillicores(c.CPUConfig.CPULimit); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("cpu.limit %w", err))
+		} else if limit < hypervisorhelpers.MinCPULimitMillicores || limit > hypervisorhelpers.MaxCPULimitMillicores {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("cpu.limit must be between %d and %d millicores",
+				hypervisorhelpers.MinCPULimitMillicores, hypervisorhelpers.MaxCPULimitMillicores))
+		}
+	}
+
+	return validationErrors
 }
 
 // ValidateMemory checks the memory settings.

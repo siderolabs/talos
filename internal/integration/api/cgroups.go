@@ -68,6 +68,8 @@ func (suite *CGroupsSuite) TestCGroupsVersion() {
 		"memory.stat",
 		"podruntime",
 		"system",
+		constants.CgroupTalosContainersRoot,
+		constants.CgroupVirtualMachines,
 	} {
 		suite.Assert().Contains(names, subpath)
 	}

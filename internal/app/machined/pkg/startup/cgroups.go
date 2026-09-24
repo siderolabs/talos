@@ -41,6 +41,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 		constants.CgroupPodRuntimeRoot,
 		constants.CgroupPodRuntimeShim,
 		constants.CgroupTalosContainersRoot,
+		constants.CgroupVirtualMachines,
 	}
 
 	for _, c := range groups {
@@ -57,6 +58,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 			constants.CgroupPodRuntimeRoot,
 			constants.CgroupSystem,
 			constants.CgroupTalosContainersRoot,
+			constants.CgroupVirtualMachines,
 		}
 
 		for _, c := range groupsToCleanup {

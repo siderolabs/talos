@@ -2,6 +2,9 @@
   <name>vm-integration</name>
   <memory unit="bytes">536870912</memory>
   <vcpu>1</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
   <os firmware="efi">
     <type>hvm</type>
     <firmware>
