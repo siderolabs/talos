@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/libvirtstorage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -36,6 +37,8 @@ var errPoolPending = errors.New("pool pending")
 // Like other mount consumers, it holds a finalizer on the VolumeMountStatus while
 // the pool uses it and releases the hold once the pool is stopped.
 type StoragePoolController struct {
+	V1Alpha1Mode machineruntime.Mode
+
 	// Open is injectable for deterministic reconciliation tests.
 	Open func(context.Context) (libvirtstorage.Client, error)
 }
@@ -81,6 +84,10 @@ func (ctrl *StoragePoolController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+	if ctrl.V1Alpha1Mode.InContainer() {
+		return nil
+	}
+
 	if ctrl.Open == nil {
 		ctrl.Open = libvirtstorage.Open
 	}
