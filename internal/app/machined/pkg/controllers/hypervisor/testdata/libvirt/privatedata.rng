@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <!-- This schema is provides scaffolding for having proper schema for private
+       data elements used by libvirt internally.
+
+       Public schema must not implement any of the defines below.
+
+       To override the definitions below use:
+
+         <define name="..." combine="choice">
+    -->
+
+  <define name="privateDataStorageSource">
+    <optional>
+      <element name="privateData">
+        <notAllowed/>
+      </element>
+    </optional>
+  </define>
+
+  <define name="privateDataDeviceDisk">
+    <optional>
+      <element name="privateData">
+        <notAllowed/>
+      </element>
+    </optional>
+  </define>
+
+</grammar>

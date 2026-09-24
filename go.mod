@@ -95,6 +95,7 @@ require (
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.20.0
 	github.com/klauspost/cpuid/v2 v2.4.0
+	github.com/lestrrat-go/helium v0.8.0
 	github.com/linode/go-metadata v0.3.1
 	github.com/marmos91/dittofs v0.32.0
 	github.com/martinlindhe/base36 v1.1.1
@@ -273,6 +274,7 @@ require (
 	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da // indirect
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c // indirect
 	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea // indirect
+	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/docker/docker-credential-helpers v0.9.8 // indirect
 	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect

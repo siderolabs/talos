@@ -204,7 +204,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 }
 
 // Compare the complete emitted definition, including absent devices and defaults.
-// The optional integration gate validates this actual output, not the fixture.
+// Validate the same controller-produced XML against libvirt's Relax NG schema.
 func (suite *VirtualMachineSpecSuite) assertDomain(name, fixture string) {
 	suite.T().Helper()
 
@@ -220,8 +220,7 @@ func (suite *VirtualMachineSpecSuite) assertDomain(name, fixture string) {
 	res, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), name)
 	suite.Require().NoError(err)
 
-	path := filepath.Join(suite.T().TempDir(), "domain.xml")
-	suite.Require().NoError(os.WriteFile(path, []byte(res.TypedSpec().DomainXML), 0o600))
+	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 }
 
 func (suite *VirtualMachineSpecSuite) TestFirmwareAndConsoles() {

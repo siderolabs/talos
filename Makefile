@@ -115,6 +115,10 @@ HELM_VERSION ?= v4.3.0
 CILIUM_CLI_VERSION ?= v0.20.0
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
+# renovate: datasource=github-tags depName=libvirt/libvirt
+LIBVIRT_VERSION ?= v12.7.0
+# SHA-256 of https://download.libvirt.org/libvirt-$(patsubst v%,%,$(LIBVIRT_VERSION)).tar.xz; update with LIBVIRT_VERSION.
+LIBVIRT_SHA256 ?= 7ec1a04e7e4f4069353d4daac117bbe869287f5b202695de61fe1b079efb6cb6
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
@@ -185,6 +189,8 @@ COMMON_ARGS += --build-arg=GOFIPS140="$(GOFIPS140)"
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
+COMMON_ARGS += --build-arg=LIBVIRT_VERSION=$(LIBVIRT_VERSION)
+COMMON_ARGS += --build-arg=LIBVIRT_SHA256=$(LIBVIRT_SHA256)
 COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
 COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
 COMMON_ARGS += --build-arg=NAME="$(NAME)"

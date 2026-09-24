@@ -1,0 +1,297 @@
+<?xml version="1.0"?>
+<!-- network-related definitions used in multiple grammars -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <define name="virtualPortProfileID">
+    <data type="string">
+      <param name="maxLength">39</param>
+    </data>
+  </define>
+
+  <define name="virtualPortProfile">
+    <choice>
+      <group>
+        <element name="virtualport">
+          <attribute name="type">
+            <value>802.1Qbg</value>
+          </attribute>
+          <optional>
+            <element name="parameters">
+              <optional>
+                <attribute name="managerid">
+                  <ref name="uint8"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="typeid">
+                  <ref name="uint24"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="typeidversion">
+                  <ref name="uint8"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="instanceid">
+                  <ref name="UUID"/>
+                </attribute>
+              </optional>
+            </element>
+          </optional>
+        </element>
+      </group>
+      <group>
+        <element name="virtualport">
+          <attribute name="type">
+            <value>802.1Qbh</value>
+          </attribute>
+          <optional>
+            <element name="parameters">
+              <optional>
+                <attribute name="profileid">
+                  <ref name="virtualPortProfileID"/>
+                </attribute>
+              </optional>
+            </element>
+          </optional>
+        </element>
+      </group>
+      <group>
+        <element name="virtualport">
+          <attribute name="type">
+            <value>openvswitch</value>
+          </attribute>
+          <optional>
+            <element name="parameters">
+              <optional>
+                <attribute name="profileid">
+                  <ref name="virtualPortProfileID"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="interfaceid">
+                  <ref name="UUID"/>
+                </attribute>
+              </optional>
+            </element>
+          </optional>
+        </element>
+      </group>
+      <group>
+        <element name="virtualport">
+          <attribute name="type">
+            <value>midonet</value>
+          </attribute>
+          <element name="parameters">
+            <attribute name="interfaceid">
+              <ref name="UUID"/>
+            </attribute>
+          </element>
+        </element>
+      </group>
+      <group>
+        <!-- use this when no type attribute is present -->
+        <element name="virtualport">
+          <optional>
+            <element name="parameters">
+              <optional>
+                <attribute name="managerid">
+                  <ref name="uint8"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="typeid">
+                  <ref name="uint24"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="typeidversion">
+                  <ref name="uint8"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="instanceid">
+                  <ref name="UUID"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="profileid">
+                  <ref name="virtualPortProfileID"/>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="interfaceid">
+                  <ref name="UUID"/>
+                </attribute>
+              </optional>
+            </element>
+          </optional>
+        </element>
+      </group>
+    </choice>
+  </define>
+
+  <define name="bandwidth">
+    <element name="bandwidth">
+      <optional>
+        <attribute name="classID">
+          <ref name="positiveInteger"/>
+        </attribute>
+      </optional>
+      <interleave>
+        <optional>
+          <element name="inbound">
+            <ref name="bandwidth-attributes"/>
+            <empty/>
+          </element>
+        </optional>
+        <optional>
+          <element name="outbound">
+            <ref name="bandwidth-attributes"/>
+            <empty/>
+          </element>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+
+  <define name="bandwidth-attributes">
+    <optional>
+      <attribute name="average">
+        <ref name="speed"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="peak">
+        <ref name="speed"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="floor">
+        <ref name="speed"/>
+      </attribute>
+    </optional>
+    <optional>
+      <attribute name="burst">
+        <ref name="BurstSize"/>
+      </attribute>
+    </optional>
+  </define>
+
+  <define name="speed">
+    <data type="unsignedLong">
+      <param name="pattern">[0-9]+</param>
+      <param name="minInclusive">1</param>
+      <param name="maxInclusive">18014398509481984</param>
+    </data>
+  </define>
+  <define name="BurstSize">
+    <data type="unsignedInt">
+      <param name="pattern">[0-9]+</param>
+      <param name="minInclusive">1</param>
+    </data>
+  </define>
+
+  <define name="unsignedShort">
+    <data type="integer">
+      <param name="minInclusive">0</param>
+      <param name="maxInclusive">65535</param>
+    </data>
+  </define>
+  <define name="protocol">
+    <data type="string">
+      <param name="pattern">(tcp)|(udp)</param>
+    </data>
+  </define>
+  <define name="addr-family">
+    <data type="string">
+      <param name="pattern">(ipv4)|(ipv6)</param>
+    </data>
+  </define>
+
+  <define name="vlan">
+    <element name="vlan">
+      <optional>
+        <attribute name="trunk">
+          <value>yes</value>
+        </attribute>
+      </optional>
+      <oneOrMore>
+        <element name="tag">
+          <attribute name="id">
+            <data type="unsignedInt">
+              <param name="maxInclusive">4095</param>
+            </data>
+          </attribute>
+          <optional>
+            <attribute name="nativeMode">
+              <choice>
+                <value>tagged</value>
+                <value>untagged</value>
+              </choice>
+            </attribute>
+          </optional>
+          <empty/>
+        </element>
+      </oneOrMore>
+    </element>
+  </define>
+
+  <define name="port">
+    <data type="integer">
+      <param name="minInclusive">1</param>
+      <param name="maxInclusive">65535</param>
+    </data>
+  </define>
+
+  <!-- The (static) route element specifies a network address and gateway
+       address to access that network. Both the network address and
+       the gateway address must be specified. -->
+  <define name="route">
+    <element name="route">
+      <optional>
+        <attribute name="family"><ref name="addr-family"/></attribute>
+      </optional>
+      <optional>
+        <attribute name="address"><ref name="ipAddr"/></attribute>
+      </optional>
+      <optional>
+        <choice>
+          <attribute name="netmask"><ref name="ipv4Addr"/></attribute>
+          <attribute name="prefix"><ref name="ipPrefix"/></attribute>
+        </choice>
+      </optional>
+      <attribute name="gateway"><ref name="ipAddr"/></attribute>
+      <optional>
+        <attribute name="metric"><ref name="unsignedInt"/></attribute>
+      </optional>
+    </element>
+  </define>
+
+  <define name="macTableManager">
+    <choice>
+      <value>kernel</value>
+      <value>libvirt</value>
+    </choice>
+  </define>
+
+  <define name="mtu">
+    <element name="mtu">
+      <attribute name="size">
+        <ref name="unsignedShort"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="portOptions">
+    <element name="port">
+      <optional>
+        <attribute name="isolated">
+          <ref name="virYesNo"/>
+        </attribute>
+      </optional>
+    </element>
+  </define>
+
+</grammar>

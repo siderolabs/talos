@@ -441,6 +441,14 @@ WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod tidy
 WORKDIR /src
 
+# Fetch the pinned libvirt domain schema closure for Go-only VM XML tests.
+FROM build-go AS libvirt-schema-generate
+ARG LIBVIRT_VERSION
+ARG LIBVIRT_SHA256
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go run ./tools/libvirt-schema \
+    -version "${LIBVIRT_VERSION}" -sha256 "${LIBVIRT_SHA256}" \
+    -output internal/app/machined/pkg/controllers/hypervisor/testdata/libvirt
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --link --from=go-mod-tidy /src/go.mod /src/go.sum /
 COPY --link --from=go-mod-tidy /src/pkg/machinery/go.mod /src/pkg/machinery/go.sum /pkg/machinery/
@@ -458,6 +466,7 @@ COPY --link --from=go-generate /src/pkg/machinery/imager/imageropts/ /pkg/machin
 COPY --link --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --link --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
 COPY --link --from=go-generate /src/pkg/machinery/version/os-release /pkg/machinery/version/os-release
+COPY --link --from=libvirt-schema-generate /src/internal/app/machined/pkg/controllers/hypervisor/testdata/libvirt/ /internal/app/machined/pkg/controllers/hypervisor/testdata/libvirt/
 COPY --link --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
 COPY --link --from=selinux-generate / /internal/pkg/selinux/
 COPY --link --from=embed-abbrev / /
