@@ -55,22 +55,25 @@ func (suite *UKISuite) TearDownTest() {
 
 // TestUKIBooted verifies that the system is booted from a UKI.
 func (suite *UKISuite) TestUKIBooted() {
-	node := suite.RandomDiscoveredNodeInternalIP()
-	ctx := client.WithNode(suite.ctx, node)
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
 
-	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.SecurityStateID},
-		func(r *runtimeres.SecurityState, asrt *assert.Assertions) {
-			asrt.True(r.TypedSpec().BootedWithUKI)
-		},
-	)
+			rtestutils.AssertResources(
+				ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.SecurityStateID},
+				func(r *runtimeres.SecurityState, asrt *assert.Assertions) {
+					asrt.True(r.TypedSpec().BootedWithUKI)
+				},
+			)
 
-	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.BootedEntryID},
-		func(r *runtimeres.BootedEntry, asrt *assert.Assertions) {
-			asrt.NotEmpty(r.TypedSpec().BootedEntry, "BootedEntry should not be empty when booted with UKI")
-		},
-	)
+			rtestutils.AssertResources(
+				ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.BootedEntryID},
+				func(r *runtimeres.BootedEntry, asrt *assert.Assertions) {
+					asrt.NotEmpty(r.TypedSpec().BootedEntry, "BootedEntry should not be empty when booted with UKI")
+				},
+			)
+		})
+	}
 }
 
 func init() {

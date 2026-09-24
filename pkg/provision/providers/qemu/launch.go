@@ -800,5 +800,17 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 		return false, fmt.Errorf("error probing disk: %w", err)
 	}
 
-	return info.Name == "gpt" && len(info.Parts) > 0, nil
+	switch info.Name {
+	case "gpt":
+		return len(info.Parts) > 0, nil
+	case "linux_raid_member":
+		// md member superblock survives a wipe of the array contents, so look inside:
+		// with metadata 1.0 (bootable mirror), the array data starts at offset 0 of the member,
+		// so the GPT of the array (if any) is readable directly from the member disk.
+		//
+		// check directly skipping blkid, as blkid would prefere MD label over GPT always.
+		return checkRAIDMemberPartitions(config)
+	default:
+		return false, nil
+	}
 }

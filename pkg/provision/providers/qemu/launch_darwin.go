@@ -63,3 +63,8 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 func startQemuCmd(_ *LaunchConfig, cmd *exec.Cmd) error {
 	return cmd.Start()
 }
+
+func checkRAIDMemberPartitions(*LaunchConfig) (bool, error) {
+	// this is backported fix with a stub for Darwin to avoid updating go-blockdevice
+	return true, nil
+}

@@ -11,6 +11,7 @@ import (
 	"log"
 	"net"
 	"net/netip"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	"github.com/coreos/go-iptables/iptables"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/provision"
@@ -276,4 +278,26 @@ func startQemuCmd(config *LaunchConfig, cmd *exec.Cmd) error {
 	}
 
 	return nil
+}
+
+func checkRAIDMemberPartitions(config *LaunchConfig) (bool, error) {
+	f, err := os.Open(config.DiskPaths[0])
+	if err != nil {
+		return false, fmt.Errorf("error opening disk: %w", err)
+	}
+
+	defer f.Close() //nolint:errcheck
+
+	dev, err := gpt.DeviceFromFile(f, gpt.WithFileSectorSize(config.DiskBlockSizes[0]))
+	if err != nil {
+		return false, fmt.Errorf("error opening disk: %w", err)
+	}
+
+	table, err := gpt.Read(dev)
+	if err != nil {
+		// no (valid) GPT inside the array
+		return false, nil //nolint:nilerr
+	}
+
+	return len(table.Partitions()) > 0, nil
 }
