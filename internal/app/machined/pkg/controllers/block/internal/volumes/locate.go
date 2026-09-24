@@ -151,6 +151,11 @@ func locateDiskByDiskMatch(vc ManagerContext) (bool, error) {
 			continue
 		}
 
+		// a partition without a device (e.g. of an ISO image on a CD-ROM) can't be used
+		if dv.DevPath == "" {
+			continue
+		}
+
 		if matchedVol == nil || (matchedVol.ParentDevPath != "" && dv.ParentDevPath == "") {
 			matchedVol = dv
 		}
@@ -172,6 +177,11 @@ func locateVolumeByMatch(vc ManagerContext) (bool, error) {
 	env := celenv.VolumeLocator()
 
 	for _, dv := range vc.DiscoveredVolumes {
+		// a partition without a device (e.g. of an ISO image on a CD-ROM) can't be used
+		if dv.DevPath == "" {
+			continue
+		}
+
 		matchContext := map[string]any{"volume": dv}
 
 		// Resolve the parent disk for CEL context

@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
+	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
@@ -310,8 +311,9 @@ func (ctrl *DiscoveryController) probeDevice(ctx context.Context, r controller.R
 	touchedIDs[id] = struct{}{}
 
 	var (
-		devicePartitions  map[uint]string
-		pendingPartitions []uint
+		devicePartitions    map[uint]string
+		pendingPartitions   []uint
+		hasPartitionDevices bool
 	)
 
 	if len(info.Parts) > 0 {
@@ -328,16 +330,39 @@ func (ctrl *DiscoveryController) probeDevice(ctx context.Context, r controller.R
 			return xerrors.NewTaggedf[errProbeFailure]("failed to sync the partition maps of blockdevice %s: %w", devPath, err)
 		}
 
+		// some devices never get partition devices: the kernel never partitions a CD-ROM, so the
+		// partitions of a hybrid ISO image (e.g. the EFI System Partition sd-boot was loaded from)
+		// exist only in its partition table, and they are published without a device
+		hasPartitionDevices, err = bd.HasPartitionDevices()
+		if err != nil {
+			return fmt.Errorf("failed to check for partition devices: %w", err)
+		}
+
 		// the devices of the partitions are resolved from the kernel rather than composed from the
 		// name of the disk: a device-mapper disk has no kernel partitions at all, and its
 		// partitions are device-mapper devices of their own, with unrelated names
-		devicePartitions, err = bd.GetPartitionDevices()
-		if err != nil {
-			return fmt.Errorf("failed to get partition devices: %w", err)
+		if hasPartitionDevices {
+			devicePartitions, err = bd.GetPartitionDevices()
+			if err != nil {
+				return fmt.Errorf("failed to get partition devices: %w", err)
+			}
 		}
 	}
 
 	for _, nested := range info.Parts {
+		if !hasPartitionDevices {
+			// the ID only has to be unique, as there is no device to resolve it to
+			partID := partitioning.DevName(id, nested.PartitionIndex) //nolint:staticcheck // we are synthesizing the name here, it doesn't exist in the kernel
+
+			if err = ctrl.writeNestedVolume(ctx, r, partID, "", "", id, devPath, info, nested); err != nil {
+				return err
+			}
+
+			touchedIDs[partID] = struct{}{}
+
+			continue
+		}
+
 		partID, ok := devicePartitions[nested.PartitionIndex]
 		if !ok {
 			// the partition is in the table on disk, but the kernel has not published a device for
@@ -358,44 +383,8 @@ func (ctrl *DiscoveryController) probeDevice(ctx context.Context, r controller.R
 			continue
 		}
 
-		if err = safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, partID), func(dv *block.DiscoveredVolume) error {
-			dv.TypedSpec().Type = "partition"
-			dv.TypedSpec().DevPath = filepath.Join("/dev", partID)
-			dv.TypedSpec().DevicePath = partDevicePath
-			dv.TypedSpec().Parent = id
-			dv.TypedSpec().ParentDevPath = devPath
-
-			dv.TypedSpec().Offset = nested.PartitionOffset
-			dv.TypedSpec().SetSize(nested.PartitionSize)
-
-			dv.TypedSpec().SectorSize = info.SectorSize
-			dv.TypedSpec().IOSize = info.IOSize
-
-			ctrl.fillDiscoveredVolumeFromInfo(dv, nested.ProbeResult)
-
-			if nested.PartitionUUID != nil {
-				dv.TypedSpec().PartitionUUID = nested.PartitionUUID.String()
-			} else {
-				dv.TypedSpec().PartitionUUID = ""
-			}
-
-			if nested.PartitionType != nil {
-				dv.TypedSpec().PartitionType = nested.PartitionType.String()
-			} else {
-				dv.TypedSpec().PartitionType = ""
-			}
-
-			if nested.PartitionLabel != nil {
-				dv.TypedSpec().PartitionLabel = *nested.PartitionLabel
-			} else {
-				dv.TypedSpec().PartitionLabel = ""
-			}
-
-			dv.TypedSpec().PartitionIndex = nested.PartitionIndex
-
-			return nil
-		}); err != nil {
-			return fmt.Errorf("failed to write discovered volume: %w", err)
+		if err = ctrl.writeNestedVolume(ctx, r, partID, filepath.Join("/dev", partID), partDevicePath, id, devPath, info, nested); err != nil {
+			return err
 		}
 
 		touchedIDs[partID] = struct{}{}
@@ -405,6 +394,57 @@ func (ctrl *DiscoveryController) probeDevice(ctx context.Context, r controller.R
 		logger.Debug("partition devices have not appeared yet", zap.Uints("partitions", pendingPartitions))
 
 		return xerrors.NewTaggedf[errPartitionPending]("partitions %v of blockdevice %s have no device yet", pendingPartitions, devPath)
+	}
+
+	return nil
+}
+
+// writeNestedVolume publishes a partition of the disk as a discovered volume.
+//
+// The partition device path is empty for a partition which never gets a device of its own (see HasPartitionDevices).
+func (ctrl *DiscoveryController) writeNestedVolume(
+	ctx context.Context, r controller.ReaderWriter,
+	partID, partDevPath, partDevicePath, parentID, parentDevPath string,
+	info *blkid.Info, nested blkid.NestedProbeResult,
+) error {
+	if err := safe.WriterModify(ctx, r, block.NewDiscoveredVolume(block.NamespaceName, partID), func(dv *block.DiscoveredVolume) error {
+		dv.TypedSpec().Type = "partition"
+		dv.TypedSpec().DevPath = partDevPath
+		dv.TypedSpec().DevicePath = partDevicePath
+		dv.TypedSpec().Parent = parentID
+		dv.TypedSpec().ParentDevPath = parentDevPath
+
+		dv.TypedSpec().Offset = nested.PartitionOffset
+		dv.TypedSpec().SetSize(nested.PartitionSize)
+
+		dv.TypedSpec().SectorSize = info.SectorSize
+		dv.TypedSpec().IOSize = info.IOSize
+
+		ctrl.fillDiscoveredVolumeFromInfo(dv, nested.ProbeResult)
+
+		if nested.PartitionUUID != nil {
+			dv.TypedSpec().PartitionUUID = nested.PartitionUUID.String()
+		} else {
+			dv.TypedSpec().PartitionUUID = ""
+		}
+
+		if nested.PartitionType != nil {
+			dv.TypedSpec().PartitionType = nested.PartitionType.String()
+		} else {
+			dv.TypedSpec().PartitionType = ""
+		}
+
+		if nested.PartitionLabel != nil {
+			dv.TypedSpec().PartitionLabel = *nested.PartitionLabel
+		} else {
+			dv.TypedSpec().PartitionLabel = ""
+		}
+
+		dv.TypedSpec().PartitionIndex = nested.PartitionIndex
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("failed to write discovered volume: %w", err)
 	}
 
 	return nil

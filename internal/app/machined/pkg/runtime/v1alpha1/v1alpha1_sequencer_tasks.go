@@ -1150,6 +1150,11 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (Syste
 				continue
 			}
 
+			// a partition without a device (e.g. of an ISO image on a CD-ROM) can't be wiped
+			if discoveredVolume.TypedSpec().DevPath == "" {
+				continue
+			}
+
 			result = append(result, partition.VolumeWipeTargetFromDiscoveredVolume(discoveredVolume))
 
 			found = true
