@@ -37,6 +37,8 @@ type VirtualMachineConfig interface {
 type VirtualMachineCPUConfig interface {
 	// Count is the total number of vCPUs.
 	Count() uint32
+	// Limit is the whole-domain host CPU ceiling in millicores; None means unlimited.
+	Limit() optional.Optional[uint64]
 }
 
 // VirtualMachineMemoryConfig defines the memory presented to the guest.

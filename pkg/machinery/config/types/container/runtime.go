@@ -10,14 +10,13 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strconv"
-	"strings"
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 )
 
 // validNetworkConditions are the network readiness conditions accepted in dependsOn.networks.
@@ -116,7 +115,7 @@ func (r *ContainerResources) CPULimit() optional.Optional[uint64] {
 		return optional.None[uint64]()
 	}
 
-	millicores, err := parseMillicores(r.Limits.CPU)
+	millicores, err := meta.ParseMillicores(r.Limits.CPU)
 	if err != nil {
 		return optional.None[uint64]()
 	}
@@ -140,33 +139,12 @@ func (r *ContainerResources) Validate() error {
 	}
 
 	if r.Limits.CPU != "" {
-		if _, err := parseMillicores(r.Limits.CPU); err != nil {
-			validationErrors = errors.Join(validationErrors, err)
+		if _, err := meta.ParseMillicores(r.Limits.CPU); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("limits.cpu %w", err))
 		}
 	}
 
 	return validationErrors
-}
-
-// parseMillicores parses a Kubernetes-style CPU quantity in millicores.
-//
-// Only the `<n>m` form is accepted. Bare core counts are rejected rather than guessed at, since
-// `1` meaning one core and `1` meaning one millicore are an easy and expensive confusion.
-func parseMillicores(value string) (uint64, error) {
-	if !strings.HasSuffix(value, "m") {
-		return 0, fmt.Errorf("limits.cpu %q must be expressed in millicores, e.g. 1500m", value)
-	}
-
-	millicores, err := strconv.ParseUint(strings.TrimSuffix(value, "m"), 10, 64)
-	if err != nil {
-		return 0, fmt.Errorf("limits.cpu %q is not a valid millicore quantity: %w", value, err)
-	}
-
-	if millicores == 0 {
-		return 0, fmt.Errorf("limits.cpu %q must be greater than zero", value)
-	}
-
-	return millicores, nil
 }
 
 // ContainerDependsOn gates container startup on external conditions.

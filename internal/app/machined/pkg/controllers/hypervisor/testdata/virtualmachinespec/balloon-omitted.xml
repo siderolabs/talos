@@ -2,6 +2,9 @@
   <name>balloon</name>
   <memory unit="bytes">1073741824</memory>
   <vcpu>7</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
   <os firmware="efi">
     <type>hvm</type>
     <firmware>

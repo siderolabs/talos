@@ -8849,12 +8849,13 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 <a name="talos.resource.definitions.hypervisor.VirtualMachineCPUSpec"></a>
 
 ### VirtualMachineCPUSpec
-VirtualMachineCPUSpec describes the desired virtual CPUs.
+VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | count | [uint32](#uint32) |  |  |
+| limit | [uint64](#uint64) |  | Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited. |
 
 
 

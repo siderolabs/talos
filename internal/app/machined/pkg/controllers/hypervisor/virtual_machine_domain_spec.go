@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -121,6 +123,12 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 			Value: uint(spec.Memory.Size),
 			Unit:  "bytes",
 		},
+		// Talos creates this partition at boot and weights it against the other roots; without an
+		// explicit partition libvirt would place the domain in its own /machine default, outside
+		// the tree Talos tracks and kills on shutdown.
+		Resource: &libvirtxml.DomainResource{
+			Partition: "/" + constants.CgroupVirtualMachines,
+		},
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
 				Type: "hvm",
@@ -136,6 +144,20 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 
 	if spec.Memory.Ballooning.Enabled {
 		domain.Devices.MemBalloon.Model = "virtio"
+	}
+
+	if spec.CPU.Limit > 0 {
+		// One core is the whole period, so the quota is the period scaled by cores. The limit was
+		// validated against hypervisorhelpers.MaxCPULimitMillicores above, which keeps the product within the
+		// schema's cpuquota range and therefore within int64.
+		quota := spec.CPU.Limit * hypervisorhelpers.CPUQuotaPeriod / 1000
+
+		// global_quota bounds the whole domain (vCPUs and emulator together), unlike quota which
+		// is enforced per vCPU thread.
+		domain.CPUTune = &libvirtxml.DomainCPUTune{
+			GlobalPeriod: &libvirtxml.DomainCPUTunePeriod{Value: hypervisorhelpers.CPUQuotaPeriod},
+			GlobalQuota:  &libvirtxml.DomainCPUTuneQuota{Value: int64(quota)},
+		}
 	}
 
 	switch spec.Firmware.Type {
@@ -224,26 +246,51 @@ func validateVirtualMachineFirmware(name string, firmware hypervisor.VirtualMach
 	return nil
 }
 
-func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachineSpecSpec) error {
-	if err := validateVirtualMachineDomainName(name); err != nil {
-		return err
-	}
-
-	// The domain schema defines countCPU as a nonzero unsigned short.
-	if spec.CPU.Count == 0 || spec.CPU.Count > 65535 {
-		return fmt.Errorf("virtual machine %q: CPU count must be between 1 and 65535", name)
-	}
-
+func validateVirtualMachineMemory(name string, memory hypervisor.VirtualMachineMemorySpec) error {
 	// On 64-bit libvirt, virDomainParseMemory requires memory below 2^63 bytes.
 	// Talos supports only 64-bit targets, so the checked value also fits uint.
-	if spec.Memory.Size == 0 || spec.Memory.Size > 1<<63-1024 {
+	if memory.Size == 0 || memory.Size > 1<<63-1024 {
 		return fmt.Errorf("virtual machine %q: memory size must be between 1024 and 9223372036854774784 bytes", name)
 	}
 
 	// libvirt stores memory in KiB, even when XML specifies bytes. Reject values
 	// that would otherwise be silently rounded up by virDomainParseMemory.
-	if spec.Memory.Size%1024 != 0 {
+	if memory.Size%1024 != 0 {
 		return fmt.Errorf("virtual machine %q: memory size must be a multiple of 1024 bytes", name)
+	}
+
+	return nil
+}
+
+func validateVirtualMachineCPU(name string, cpu hypervisor.VirtualMachineCPUSpec) error {
+	// The domain schema defines countCPU as a nonzero unsigned short.
+	if cpu.Count == 0 || cpu.Count > 65535 {
+		return fmt.Errorf("virtual machine %q: CPU count must be between 1 and 65535", name)
+	}
+
+	if cpu.Limit == 0 {
+		return nil
+	}
+
+	if cpu.Limit < hypervisorhelpers.MinCPULimitMillicores || cpu.Limit > hypervisorhelpers.MaxCPULimitMillicores {
+		return fmt.Errorf("virtual machine %q: CPU limit must be between %d and %d millicores",
+			name, hypervisorhelpers.MinCPULimitMillicores, hypervisorhelpers.MaxCPULimitMillicores)
+	}
+
+	return nil
+}
+
+func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachineSpecSpec) error {
+	if err := validateVirtualMachineDomainName(name); err != nil {
+		return err
+	}
+
+	if err := validateVirtualMachineCPU(name, spec.CPU); err != nil {
+		return err
+	}
+
+	if err := validateVirtualMachineMemory(name, spec.Memory); err != nil {
+		return err
 	}
 
 	switch spec.PowerState {

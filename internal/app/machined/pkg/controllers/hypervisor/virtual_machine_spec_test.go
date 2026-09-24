@@ -146,6 +146,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 	doc.FirmwareConfig.SecureBootConfig.SecureBootEnabled = new(true)
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)
 	doc.ConsoleConfig.VNCConfig.VNCEnabled = new(true)
+	doc.CPUConfig.CPULimit = "2500m"
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName:      "system",
@@ -168,6 +169,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 		asrt.Equal(hypervisor.VirtualMachineSpecSpec{
 			CPU: hypervisor.VirtualMachineCPUSpec{
 				Count: 3,
+				Limit: 2500,
 			},
 			Memory: hypervisor.VirtualMachineMemorySpec{
 				Size: 4 << 30,
@@ -272,6 +274,7 @@ func (suite *VirtualMachineSpecSuite) TestIntegrationXMLFixtures() {
 	created.MemoryConfig.BallooningConfig = &hypervisorcfg.VirtualMachineBallooning{
 		BallooningEnabled: new(true),
 	}
+	created.CPUConfig.CPULimit = "2500m"
 	updated := newVirtualMachine("vm-integration-updated")
 	updated.CPUConfig.CPUCount = 1
 	updated.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
@@ -492,6 +495,40 @@ func (suite *VirtualMachineSpecSuite) TestBallooningUpdates() {
 	suite.replaceConfig(doc, newVirtualMachine("empty-balloon-barrier"))
 	ctest.AssertResource(suite, "empty-balloon-barrier", func(_ *hypervisor.VirtualMachineDomainSpec, _ *assert.Assertions) {})
 	suite.assertDomain(doc.Name(), "balloon-omitted")
+}
+
+func (suite *VirtualMachineSpecSuite) TestCPULimit() {
+	doc := newVirtualMachine("guest-one")
+	doc.CPUConfig.CPULimit = "2500m"
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+	suite.assertDomain(doc.Name(), "cpu-limit")
+
+	// Dropping the limit must drop cputune, not leave the last quota behind.
+	doc.CPUConfig.CPULimit = ""
+	suite.replaceConfig(doc)
+	suite.assertDomain(doc.Name(), "default")
+}
+
+func (suite *VirtualMachineSpecSuite) TestRejectsCPULimitOutsideSchemaRange() {
+	// Below the schema's 1000 microsecond minimum quota, and above its maximum.
+	for _, limit := range []uint64{1, 9, 17592186044415*1000/100000 + 1} {
+		suite.logs.TakeAll()
+
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "capped-invalid")
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1, Limit: limit},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024},
+			PowerState: "running",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		}
+
+		suite.Create(spec)
+		suite.assertConversionError("capped-invalid", "CPU limit must be between 10 and")
+		ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "capped-invalid")
+		suite.Destroy(spec)
+	}
 }
 
 func (suite *VirtualMachineSpecSuite) replaceConfig(docs ...configcfg.Document) {

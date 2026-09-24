@@ -19,9 +19,11 @@ message ContentLibraryStatusSpec {
   string error = 4;
 }
 
-// VirtualMachineCPUSpec describes the desired virtual CPUs.
+// VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 message VirtualMachineCPUSpec {
   uint32 count = 1;
+  // Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited.
+  uint64 limit = 2;
 }
 
 // VirtualMachineConsoleSpec describes requested guest consoles.
