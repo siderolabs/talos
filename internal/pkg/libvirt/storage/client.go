@@ -2,8 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package libvirtstorage manages host-local persistent directory pools.
-package libvirtstorage
+// Package storage manages host-local persistent directory pools.
+package storage
 
 import (
 	"context"
@@ -19,14 +19,53 @@ import (
 	"libvirt.org/go/libvirtxml"
 )
 
-// Socket and URI deliberately address the modular storage daemon, not the
-// library's default libvirtd socket / QEMU driver. Verified against
-// libvirt's virtstoraged(8) and src/storage/storage_driver.c (storageConnectOpen).
-const (
-	Socket           = "/run/libvirt/virtstoraged-sock"
-	URI              = "storage:///system"
-	operationTimeout = 5 * time.Second
-)
+const operationTimeout = 5 * time.Second
+
+// Connector opens bounded sessions against one modular storage daemon.
+type Connector struct {
+	socket string
+	uri    string
+}
+
+// New configures the daemon endpoint without opening a connection.
+func New(socket, uri string) *Connector {
+	return &Connector{socket: socket, uri: uri}
+}
+
+// Open bounds dialing, the handshake, RPCs and graceful disconnect with one
+// timeout context. Cancellation closes the transport because go-libvirt RPCs
+// do not accept a context.
+func (c *Connector) Open(ctx context.Context) (Client, error) {
+	sessionCtx, cancel := context.WithTimeout(ctx, operationTimeout)
+
+	conn, err := (&net.Dialer{}).DialContext(sessionCtx, "unix", c.socket)
+	if err != nil {
+		cancel()
+
+		return nil, err
+	}
+
+	return c.OpenConn(sessionCtx, conn, cancel)
+}
+
+// OpenConn connects over an already-connected transport for this connector.
+// It takes ownership of conn and cancel; ctx must bound the full session.
+func (c *Connector) OpenConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (Client, error) {
+	rpc := libvirt.NewWithDialer(dialers.NewAlreadyConnected(conn))
+	client := &client{conn: conn, rpc: rpc, cancel: cancel}
+
+	client.stopClose = context.AfterFunc(ctx, func() { closeTransport(conn) })
+	if err := rpc.ConnectToURI(libvirt.ConnectURI(c.uri)); err != nil {
+		client.Close()
+
+		return nil, err
+	}
+
+	// Only a completed handshake may send CONNECT_CLOSE during cleanup.
+	client.disconnect = rpc.Disconnect
+
+	return client, nil
+}
 
 // The URL is a fixed namespace identifier, not a network endpoint. Changing
 // this identity changes pool UUIDs and breaks recognition of existing ownership.
@@ -80,39 +119,6 @@ type client struct {
 	cancel     context.CancelFunc
 	stopClose  func() bool
 	disconnect func() error
-}
-
-// Open bounds dialing, the handshake, RPCs and graceful disconnect with one
-// timeout context. Cancellation closes the transport because go-libvirt RPCs
-// do not accept a context.
-func Open(ctx context.Context) (Client, error) {
-	sessionCtx, cancel := context.WithTimeout(ctx, operationTimeout)
-
-	conn, err := (&net.Dialer{}).DialContext(sessionCtx, "unix", Socket)
-	if err != nil {
-		cancel()
-
-		return nil, err
-	}
-
-	return openConn(sessionCtx, conn, cancel)
-}
-
-func openConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (Client, error) {
-	rpc := libvirt.NewWithDialer(dialers.NewAlreadyConnected(conn))
-	c := &client{conn: conn, rpc: rpc, cancel: cancel}
-
-	c.stopClose = context.AfterFunc(ctx, func() { closeTransport(conn) })
-	if err := rpc.ConnectToURI(libvirt.ConnectURI(URI)); err != nil {
-		c.Close()
-
-		return nil, err
-	}
-
-	// Only a completed handshake may send CONNECT_CLOSE during cleanup.
-	c.disconnect = rpc.Disconnect
-
-	return c, nil
 }
 
 func (c *client) Close() {
