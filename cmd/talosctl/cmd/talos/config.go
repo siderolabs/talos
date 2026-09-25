@@ -406,7 +406,7 @@ var configMergeCmd = &cobra.Command{
 	Use:   "merge <from>",
 	Short: "Merge additional contexts from another client configuration file",
 	Long:  "Contexts with the same name are renamed while merging configs.",
-	Args:  cobra.MinimumNArgs(1),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		from := args[0]
 

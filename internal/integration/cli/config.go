@@ -128,6 +128,17 @@ func (suite *TalosconfigSuite) TestMerge() {
 	suite.Require().NoError(err)
 
 	suite.Require().NotNil(c.Contexts["foo-1"])
+
+	suite.RunCLI(
+		[]string{"config", "merge", "--talosconfig", path, talosconfigPath, talosconfigPath},
+		base.StdoutEmpty(),
+		base.ShouldFail(),
+		base.StderrShouldMatch(regexp.MustCompile(`accepts 1 arg\(s\), received 2`)),
+	)
+
+	c, err = clientconfig.Open(path)
+	suite.Require().NoError(err)
+	suite.Require().Len(c.Contexts, 2)
 }
 
 // TestNewTTL checks `talosctl config new --crt-ttl`.
