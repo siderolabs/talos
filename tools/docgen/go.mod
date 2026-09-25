@@ -3,7 +3,7 @@ module github.com/siderolabs/talos/tools/docgen
 go 1.26.8
 
 require (
-	github.com/gomarkdown/markdown v0.0.0-20260917010721-cc30ffac3c05
+	github.com/gomarkdown/markdown v0.0.0-20260923180740-94fc73f6b1a3
 	github.com/invopop/jsonschema v0.14.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/pb33f/ordered-map/v2 v2.3.1

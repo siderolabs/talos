@@ -384,7 +384,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.37.0"
+	DefaultKubernetesVersion = "1.37.1"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernetesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -446,7 +446,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
-	DefaultEtcdVersion = "3.7.1"
+	DefaultEtcdVersion = "v3.7.2"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
