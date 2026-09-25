@@ -4,7 +4,7 @@ go 1.27.0
 
 replace (
 	// forked to set O_CLOEXEC on device open and add SataDevice.CheckPowerMode (skip standby disks)
-	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c
+	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260723175002-53b369c3973c
 
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.14.53
@@ -13,7 +13,7 @@ replace (
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20200520190114-19ca17470d7d
 
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
@@ -28,30 +28,31 @@ replace (
 // Kubernetes dependencies sharing the same version.
 require (
 	cel.dev/cel-go v0.32.0
-	cloud.google.com/go/compute/metadata v0.9.1
-	codeberg.org/miekg/dns v0.6.114
+	cloud.google.com/go/compute/metadata v0.10.0
+	codeberg.org/miekg/dns v0.6.115
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.1
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.5.0
 	github.com/alexflint/go-filemutex v1.3.0
 	github.com/anatol/smart.go v0.0.0-20260913233941-486c28b93357
-	github.com/aws/aws-sdk-go-v2 v1.47.0
-	github.com/aws/aws-sdk-go-v2/config v1.33.5
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.0
-	github.com/aws/aws-sdk-go-v2/service/acm v1.50.0
-	github.com/aws/aws-sdk-go-v2/service/kms v1.61.0
+	github.com/aws/aws-sdk-go-v2 v1.47.1
+	github.com/aws/aws-sdk-go-v2/config v1.33.6
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.1
+	github.com/aws/aws-sdk-go-v2/service/acm v1.50.1
+	github.com/aws/aws-sdk-go-v2/service/kms v1.61.1
 	github.com/aws/smithy-go v1.28.2
-	github.com/beevik/ntp v1.5.0
-	github.com/beevik/nts v0.3.2
+	github.com/beevik/ntp v1.6.0
+	github.com/beevik/nts v0.3.3
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bougou/go-ipmi v0.9.1
 	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/containerd/cgroups/v3 v3.1.3
-	github.com/containerd/containerd/api v1.11.1
-	github.com/containerd/containerd/v2 v2.3.5
+	github.com/containerd/containerd/api v1.12.0
+	github.com/containerd/containerd/v2 v2.4.1
 	github.com/containerd/errdefs v1.0.0
-	github.com/containerd/log v0.1.0
+	github.com/containerd/log v0.2.0
 	github.com/containerd/platforms v1.0.0-rc.5
 	github.com/containerd/typeurl/v2 v2.3.0
 	github.com/containernetworking/cni v1.3.1
@@ -73,6 +74,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/g0rbe/go-chattr v1.0.1
 	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v3 v3.5.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/golang/mock v1.7.0-rc.1
@@ -89,19 +91,19 @@ require (
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hashicorp/go-getter/v2 v2.2.4
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hetznercloud/hcloud-go/v2 v2.48.0
+	github.com/hetznercloud/hcloud-go/v2 v2.49.0
 	github.com/insomniacslk/dhcp v0.0.0-20260901064844-234b97448fae
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260802200809-43bafec815b3
+	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260904060952-9498c7a8aec5
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.20.0
+	github.com/klauspost/compress v1.20.1
 	github.com/klauspost/cpuid/v2 v2.4.0
 	github.com/lestrrat-go/helium v0.8.0
 	github.com/linode/go-metadata v0.3.1
-	github.com/marmos91/dittofs v0.32.0
+	github.com/marmos91/dittofs v0.34.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.24
-	github.com/mdlayher/arp v0.0.0-20260528070854-93566ba168e9
+	github.com/mdlayher/arp v0.0.0-20260923112748-e9ee4960293e
 	github.com/mdlayher/ethernet v0.0.0-20220221185849-529eae5b6118
 	github.com/mdlayher/ethtool v0.6.1
 	github.com/mdlayher/genetlink v1.4.0
@@ -160,7 +162,7 @@ require (
 	github.com/siderolabs/siderolink v0.3.18
 	github.com/siderolabs/talos/pkg/machinery v1.15.0-alpha.0
 	github.com/sigstore/cosign/v3 v3.1.3
-	github.com/sigstore/sigstore v1.10.10
+	github.com/sigstore/sigstore v1.11.0
 	github.com/sigstore/sigstore-go v1.3.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
@@ -171,10 +173,10 @@ require (
 	github.com/u-root/u-root v0.16.0
 	github.com/ulikunitz/xz v0.5.17
 	github.com/vultr/metadata v1.1.0
-	go.etcd.io/etcd/api/v3 v3.7.1
-	go.etcd.io/etcd/client/pkg/v3 v3.7.1
-	go.etcd.io/etcd/client/v3 v3.7.1
-	go.etcd.io/etcd/etcdutl/v3 v3.7.1
+	go.etcd.io/etcd/api/v3 v3.7.2
+	go.etcd.io/etcd/client/pkg/v3 v3.7.2
+	go.etcd.io/etcd/client/v3 v3.7.2
+	go.etcd.io/etcd/etcdutl/v3 v3.7.2
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.28.0
 	go.uber.org/zap/exp v0.3.0
@@ -188,22 +190,22 @@ require (
 	golang.org/x/text v0.42.0
 	golang.org/x/time v0.16.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
-	google.golang.org/grpc v1.83.2
+	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
-	k8s.io/api v0.37.0
-	k8s.io/apiextensions-apiserver v0.37.0
-	k8s.io/apimachinery v0.37.0
-	k8s.io/apiserver v0.37.0
-	k8s.io/client-go v0.37.0
-	k8s.io/component-base v0.37.0
-	k8s.io/cri-api v0.37.0
+	k8s.io/api v0.37.1
+	k8s.io/apiextensions-apiserver v0.37.1
+	k8s.io/apimachinery v0.37.1
+	k8s.io/apiserver v0.37.1
+	k8s.io/client-go v0.37.1
+	k8s.io/component-base v0.37.1
+	k8s.io/cri-api v0.37.1
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-proxy v0.37.0
-	k8s.io/kube-scheduler v0.37.0
-	k8s.io/kubectl v0.37.0
-	k8s.io/kubelet v0.37.0
-	k8s.io/pod-security-admission v0.37.0
+	k8s.io/kube-proxy v0.37.1
+	k8s.io/kube-scheduler v0.37.1
+	k8s.io/kubectl v0.37.1
+	k8s.io/kubelet v0.37.1
+	k8s.io/pod-security-admission v0.37.1
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12007.0
@@ -236,19 +238,19 @@ require (
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.20 // indirect
-	github.com/aws/aws-sdk-go-v2/credentials v1.20.5 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.3 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.3 // indirect
+	github.com/aws/aws-sdk-go-v2/credentials v1.20.6 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.19 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.3 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.4 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.113.1 // indirect
-	github.com/aws/aws-sdk-go-v2/service/signin v1.10.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sso v1.38.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.43.0 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.51.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/signin v1.10.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sso v1.38.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.43.1 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.51.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -262,6 +264,7 @@ require (
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/fifo v1.1.0 // indirect
 	github.com/containerd/go-cni v1.1.14 // indirect
+	github.com/containerd/log/otel v0.1.0 // indirect
 	github.com/containerd/plugin v1.1.0 // indirect
 	github.com/containerd/ttrpc v1.2.9 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
@@ -476,8 +479,8 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zalando/go-keyring v0.2.8 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.7.1 // indirect
-	go.etcd.io/etcd/server/v3 v3.7.1 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.7.2 // indirect
+	go.etcd.io/etcd/server/v3 v3.7.2 // indirect
 	go.etcd.io/raft/v3 v3.7.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
@@ -506,9 +509,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.3 // indirect
 	gorm.io/gorm v1.31.2 // indirect
-	k8s.io/cli-runtime v0.37.0 // indirect
+	k8s.io/cli-runtime v0.37.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
-	k8s.io/streaming v0.37.0 // indirect
+	k8s.io/streaming v0.37.1 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.78 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 	modernc.org/libc v1.74.1 // indirect

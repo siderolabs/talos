@@ -10,6 +10,8 @@ github.com/go-quicktest/qt v1.102.0 h1:HSQxCeh5YZH3EL3W39ixjtyaEhcWSXQHtHnMBzSs4
 github.com/go-quicktest/qt v1.102.0/go.mod h1:p4lGIVX+8Wa6ZPNDvqcxq36XpUDLh42FLetFU7odllI=
 github.com/gomarkdown/markdown v0.0.0-20260917010721-cc30ffac3c05 h1:uFfRLdcXYMBxuaLPMMZAu2XPz0Yqyay4kRdr6AQWAag=
 github.com/gomarkdown/markdown v0.0.0-20260917010721-cc30ffac3c05/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
+github.com/gomarkdown/markdown v0.0.0-20260923180740-94fc73f6b1a3 h1:tTy9EC3uLxFeMrYCOf+T4cS86imMT6kGMl7htiU907o=
+github.com/gomarkdown/markdown v0.0.0-20260923180740-94fc73f6b1a3/go.mod h1:JDGcbDT52eL4fju3sZ4TeHGsQwhG9nbDV21aMyhwPoA=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/gorilla/css v1.0.1 h1:ntNaBIghp6JmvWnxbZKANoLyuXTPZ4cAMlo6RyhlbO8=
