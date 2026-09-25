@@ -66,6 +66,19 @@ Reported information includes chassis and port IDs, system and port descriptions
 The built-in listener does not transmit advertisements; use the `lldpd` system extension when advertising is required.
 """
 
+    [notes.kubelet_resource_managers]
+        title = "Kubelet Resource Manager State"
+        description = """\
+Talos now validates the kubelet CPU manager and memory manager state files (`/var/lib/kubelet/cpu_manager_state`, `/var/lib/kubelet/memory_manager_state`)
+the same way kubelet does on startup, and removes a state file kubelet would refuse to load before starting kubelet.
+
+Previously only a change of the manager policy was detected, so changing e.g. `reservedSystemCPUs` or `reservedMemory`, or
+a change of the CPU/NUMA topology of the machine, left kubelet unable to start until the state file was removed manually.
+
+Only the rendered `KubeletConfiguration` (`machine.kubelet.extraConfig`) is checked: the resource manager settings passed as kubelet
+command line flags via `machine.kubelet.extraArgs` (e.g. `--cpu-manager-policy`, `--reserved-cpus`) are not taken into account.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\
