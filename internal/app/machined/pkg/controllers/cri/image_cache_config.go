@@ -523,7 +523,7 @@ func (ctrl *ImageCacheConfigController) getImageCacheRoot(
 	ctx context.Context, r controller.ReaderWriter, volumeStatus *block.VolumeStatus,
 ) (optional.Optional[string], bool, error) {
 	switch volumeStatus.TypedSpec().Phase { //nolint:exhaustive
-	case block.VolumePhaseMissing, block.VolumePhaseFailed, block.VolumePhaseWaiting:
+	case block.VolumePhaseMissing, block.VolumePhaseFailed, block.VolumePhaseLocked, block.VolumePhaseWaiting:
 		// image cache is missing
 		return optional.None[string](), true, nil
 	case block.VolumePhaseReady:

@@ -138,6 +138,17 @@ description: Talos gRPC API reference.
     - [DiskUsageInfo](#machine.DiskUsageInfo)
     - [DiskUsageRequest](#machine.DiskUsageRequest)
     - [DmesgRequest](#machine.DmesgRequest)
+    - [EncryptionRecoveryKeyFetch](#machine.EncryptionRecoveryKeyFetch)
+    - [EncryptionRecoveryKeyFetchRequest](#machine.EncryptionRecoveryKeyFetchRequest)
+    - [EncryptionRecoveryKeyFetchResponse](#machine.EncryptionRecoveryKeyFetchResponse)
+    - [EncryptionRecoveryKeyFetchResult](#machine.EncryptionRecoveryKeyFetchResult)
+    - [EncryptionRecoveryKeySupply](#machine.EncryptionRecoveryKeySupply)
+    - [EncryptionRecoveryKeySupplyRequest](#machine.EncryptionRecoveryKeySupplyRequest)
+    - [EncryptionRecoveryKeySupplyResponse](#machine.EncryptionRecoveryKeySupplyResponse)
+    - [EncryptionRecoveryKeyVerify](#machine.EncryptionRecoveryKeyVerify)
+    - [EncryptionRecoveryKeyVerifyRequest](#machine.EncryptionRecoveryKeyVerifyRequest)
+    - [EncryptionRecoveryKeyVerifyResponse](#machine.EncryptionRecoveryKeyVerifyResponse)
+    - [EncryptionRecoveryKeyVerifyResult](#machine.EncryptionRecoveryKeyVerifyResult)
     - [EtcdAlarm](#machine.EtcdAlarm)
     - [EtcdAlarmDisarm](#machine.EtcdAlarmDisarm)
     - [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse)
@@ -713,9 +724,11 @@ description: Talos gRPC API reference.
 - [resource/definitions/secrets/secrets.proto](#resource/definitions/secrets/secrets.proto)
     - [APICertsSpec](#talos.resource.definitions.secrets.APICertsSpec)
     - [CertSANSpec](#talos.resource.definitions.secrets.CertSANSpec)
+    - [EncryptionRecoveryKeySpec](#talos.resource.definitions.secrets.EncryptionRecoveryKeySpec)
     - [EncryptionSaltSpec](#talos.resource.definitions.secrets.EncryptionSaltSpec)
     - [EtcdCertsSpec](#talos.resource.definitions.secrets.EtcdCertsSpec)
     - [EtcdRootSpec](#talos.resource.definitions.secrets.EtcdRootSpec)
+    - [GeneratedRecoveryKeySpec](#talos.resource.definitions.secrets.GeneratedRecoveryKeySpec)
     - [KubeletSpec](#talos.resource.definitions.secrets.KubeletSpec)
     - [KubernetesCertsSpec](#talos.resource.definitions.secrets.KubernetesCertsSpec)
     - [KubernetesDynamicCertsSpec](#talos.resource.definitions.secrets.KubernetesDynamicCertsSpec)
@@ -2636,6 +2649,178 @@ dmesg
 | ----- | ---- | ----- | ----------- |
 | follow | [bool](#bool) |  |  |
 | tail | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyFetch"></a>
+
+### EncryptionRecoveryKeyFetch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| results | [EncryptionRecoveryKeyFetchResult](#machine.EncryptionRecoveryKeyFetchResult) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyFetchRequest"></a>
+
+### EncryptionRecoveryKeyFetchRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volumes | [string](#string) | repeated | Volume IDs to fetch the key for, defaults to all volumes with a generated key pending. |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyFetchResponse"></a>
+
+### EncryptionRecoveryKeyFetchResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EncryptionRecoveryKeyFetch](#machine.EncryptionRecoveryKeyFetch) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyFetchResult"></a>
+
+### EncryptionRecoveryKeyFetchResult
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume | [string](#string) |  |  |
+| key | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeySupply"></a>
+
+### EncryptionRecoveryKeySupply
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| volumes | [string](#string) | repeated | Volume IDs the key was supplied for. |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeySupplyRequest"></a>
+
+### EncryptionRecoveryKeySupplyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volumes | [string](#string) | repeated | Volume IDs to supply the key for, defaults to all volumes with a recovery key configured. |
+| key | [bytes](#bytes) |  | Recovery key. |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeySupplyResponse"></a>
+
+### EncryptionRecoveryKeySupplyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EncryptionRecoveryKeySupply](#machine.EncryptionRecoveryKeySupply) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyVerify"></a>
+
+### EncryptionRecoveryKeyVerify
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| results | [EncryptionRecoveryKeyVerifyResult](#machine.EncryptionRecoveryKeyVerifyResult) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyVerifyRequest"></a>
+
+### EncryptionRecoveryKeyVerifyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volumes | [string](#string) | repeated | Volume IDs to verify the key against, defaults to all volumes with a recovery key configured. |
+| key | [bytes](#bytes) |  | Recovery key. |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyVerifyResponse"></a>
+
+### EncryptionRecoveryKeyVerifyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [EncryptionRecoveryKeyVerify](#machine.EncryptionRecoveryKeyVerify) | repeated |  |
+
+
+
+
+
+
+<a name="machine.EncryptionRecoveryKeyVerifyResult"></a>
+
+### EncryptionRecoveryKeyVerifyResult
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume | [string](#string) |  |  |
+| valid | [bool](#bool) |  |  |
 
 
 
@@ -5303,6 +5488,9 @@ The machine service definition.
 | Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
+| EncryptionRecoveryKeySupply | [EncryptionRecoveryKeySupplyRequest](#machine.EncryptionRecoveryKeySupplyRequest) | [EncryptionRecoveryKeySupplyResponse](#machine.EncryptionRecoveryKeySupplyResponse) | EncryptionRecoveryKeySupply supplies the disk encryption recovery key for encrypted volumes. |
+| EncryptionRecoveryKeyVerify | [EncryptionRecoveryKeyVerifyRequest](#machine.EncryptionRecoveryKeyVerifyRequest) | [EncryptionRecoveryKeyVerifyResponse](#machine.EncryptionRecoveryKeyVerifyResponse) | EncryptionRecoveryKeyVerify verifies the disk encryption recovery key against encrypted volumes. |
+| EncryptionRecoveryKeyFetch | [EncryptionRecoveryKeyFetchRequest](#machine.EncryptionRecoveryKeyFetchRequest) | [EncryptionRecoveryKeyFetchResponse](#machine.EncryptionRecoveryKeyFetchResponse) | EncryptionRecoveryKeyFetch fetches the disk encryption recovery keys generated by the node.<br><br>Each key is returned once: the node drops it after it was fetched. |
 | ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.<br><br>Use ImageService List RPC instead. |
 | ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.<br><br>Use ImageService Pull RPC instead. |
 
@@ -5494,6 +5682,7 @@ BlockEncryptionKeyType describes encryption key type.
 | ENCRYPTION_KEY_NODE_ID | 1 |  |
 | ENCRYPTION_KEY_KMS | 2 |  |
 | ENCRYPTION_KEY_TPM | 3 |  |
+| ENCRYPTION_KEY_RECOVERY | 4 |  |
 
 
 
@@ -5621,6 +5810,7 @@ BlockVolumePhase describes volume phase.
 | VOLUME_PHASE_PREPARED | 5 |  |
 | VOLUME_PHASE_READY | 6 |  |
 | VOLUME_PHASE_CLOSED | 7 |  |
+| VOLUME_PHASE_LOCKED | 8 |  |
 
 
 
@@ -7563,6 +7753,7 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
 | scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
 | scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
+| enrolled_encryption_keys | [string](#string) | repeated | EnrolledEncryptionKeys is the list of encryption key types which are enrolled in the volume (present in the LUKS header).<br><br>A configured key type which is not enrolled is a pending key, e.g. a recovery key which was not supplied yet. |
 
 
 
@@ -12553,6 +12744,21 @@ CertSANSpec describes fields of the cert SANs.
 
 
 
+<a name="talos.resource.definitions.secrets.EncryptionRecoveryKeySpec"></a>
+
+### EncryptionRecoveryKeySpec
+EncryptionRecoveryKeySpec describes the recovery key.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [bytes](#bytes) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.secrets.EncryptionSaltSpec"></a>
 
 ### EncryptionSaltSpec
@@ -12595,6 +12801,21 @@ EtcdRootSpec describes etcd CA secrets.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | etcd_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.secrets.GeneratedRecoveryKeySpec"></a>
+
+### GeneratedRecoveryKeySpec
+GeneratedRecoveryKeySpec describes the generated recovery key.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [bytes](#bytes) |  |  |
 
 
 

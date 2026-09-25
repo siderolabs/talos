@@ -453,6 +453,10 @@ message VolumeStatusSpec {
   bool scrub_enabled = 26;
   // ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
   google.protobuf.Duration scrub_interval = 27;
+  // EnrolledEncryptionKeys is the list of encryption key types which are enrolled in the volume (present in the LUKS header).
+  //
+  // A configured key type which is not enrolled is a pending key, e.g. a recovery key which was not supplied yet.
+  repeated string enrolled_encryption_keys = 28;
 }
 
 // VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.

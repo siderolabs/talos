@@ -284,6 +284,8 @@ func NewState() (*State, error) {
 		&runtime.WatchdogTimerStatus{},
 		&secrets.API{},
 		&secrets.CertSAN{},
+		&secrets.EncryptionRecoveryKey{},
+		&secrets.GeneratedRecoveryKey{},
 		&secrets.EncryptionSalt{},
 		&secrets.Etcd{},
 		&secrets.EtcdRoot{},

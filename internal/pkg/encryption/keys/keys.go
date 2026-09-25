@@ -54,6 +54,8 @@ func NewHandler(cfg block.EncryptionKey, options ...KeyOption) (Handler, error) 
 		if err != nil {
 			return nil, err
 		}
+	case block.EncryptionKeyRecovery:
+		handler = NewRecoveryKeyHandler(key, opts.VolumeID, opts.RecoveryKeyGetter, opts.RecoveryKeyPublisher)
 	case block.EncryptionKeyTPM:
 		if opts.TPMLocker == nil {
 			return nil, fmt.Errorf("failed to create TPM key handler at slot %d: no TPM lock function", cfg.Slot)
@@ -102,3 +104,9 @@ func (k *KeyHandler) Slot() int {
 
 // ErrTokenInvalid is returned by the keys handler if the supplied token is not valid.
 var ErrTokenInvalid = errors.New("invalid token")
+
+// ErrKeyNotAvailable is returned by the keys handler if the key can't be produced right now,
+// because it has to be supplied by the operator and it wasn't (yet).
+//
+// The slot is skipped when unlocking the volume and left untouched when syncing the keys.
+var ErrKeyNotAvailable = errors.New("key not available")

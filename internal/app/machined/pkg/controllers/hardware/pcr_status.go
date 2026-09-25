@@ -130,7 +130,7 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 					volumesReady[volumeStatus.Metadata().ID()] = struct{}{}
 				case block.VolumePhaseClosed:
 					// skip it, closed
-				case block.VolumePhaseLocated, block.VolumePhaseWaiting, block.VolumePhaseFailed,
+				case block.VolumePhaseLocated, block.VolumePhaseWaiting, block.VolumePhaseFailed, block.VolumePhaseLocked,
 					block.VolumePhaseProvisioned, block.VolumePhasePrepared:
 					volumesPending[volumeStatus.Metadata().ID()] = struct{}{}
 				}
