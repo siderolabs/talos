@@ -5850,6 +5850,29 @@ jobs:
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make images
+      - name: Sign Windows binaries (Authenticode)
+        run: |
+          if [ -z "$WINDOWS_CODESIGN_CERT" ]; then
+            echo "WINDOWS_CODESIGN_CERT not set, skipping Authenticode signing"
+            exit 0
+          fi
+          sudo apt-get install -y osslsigncode
+          umask 077
+          pfx="$(mktemp --tmpdir="${RUNNER_TEMP:-/tmp}" codesign.XXXXXX.pfx)"
+          trap 'rm -f "$pfx"' EXIT
+          echo "$WINDOWS_CODESIGN_CERT" | base64 -d > "$pfx"
+          for arch in amd64 arm64; do
+            osslsigncode sign \
+              -pkcs12 "$pfx" \
+              -pass "$WINDOWS_CODESIGN_PASSWORD" \
+              -n "talosctl" \
+              -i "https://github.com/siderolabs/talos" \
+              -ts http://timestamp.digicert.com \
+              -h sha256 \
+              -in _out/talosctl-windows-${arch}.exe \
+              -out _out/talosctl-windows-${arch}.exe.signed
+            mv _out/talosctl-windows-${arch}.exe.signed _out/talosctl-windows-${arch}.exe
+          done
       - name: Sign artifacts
         run: |
           cosign sign-blob --bundle _out/initramfs-amd64.xz.bundle --yes _out/initramfs-amd64.xz
