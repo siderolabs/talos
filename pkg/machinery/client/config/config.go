@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"go.yaml.in/yaml/v4"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
@@ -116,6 +117,35 @@ func Open(path string) (*Config, error) {
 	config, err := fromFile(confPath.Path)
 	if err != nil {
 		return nil, err
+	}
+
+	if path == "" {
+		if talosConfigPaths, ok := os.LookupEnv(constants.TalosConfigEnvVar); ok {
+			firstContext := config.Context
+
+			for _, talosConfigPath := range filepath.SplitList(talosConfigPaths) {
+				if talosConfigPath == "" || talosConfigPath == confPath.Path {
+					continue
+				}
+
+				if _, err = os.Stat(talosConfigPath); err != nil {
+					if errors.Is(err, fs.ErrNotExist) {
+						continue
+					}
+
+					return nil, err
+				}
+
+				additionalConfig, additionalErr := fromFile(talosConfigPath)
+				if additionalErr != nil {
+					return nil, additionalErr
+				}
+
+				config.Merge(additionalConfig)
+			}
+
+			config.Context = firstContext
+		}
 	}
 
 	config.path = confPath
