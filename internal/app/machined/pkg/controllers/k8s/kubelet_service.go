@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/x509"
-	stdjson "encoding/json"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -31,13 +30,13 @@ import (
 	kubeletv1config "k8s.io/kubelet/config/v1"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
-	runtimetalos "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/kubeletstate"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -52,7 +51,6 @@ type ServiceManager interface {
 // KubeletServiceController renders kubelet configuration files and controls kubelet service lifecycle.
 type KubeletServiceController struct {
 	V1Alpha1Services ServiceManager
-	V1Alpha1Mode     runtimetalos.Mode
 }
 
 // Name implements controller.Controller interface.
@@ -62,70 +60,13 @@ func (ctrl *KubeletServiceController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *KubeletServiceController) Inputs() []controller.Input {
-	return nil
-}
-
-// Outputs implements controller.Controller interface.
-func (ctrl *KubeletServiceController) Outputs() []controller.Output {
-	return nil
-}
-
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo,cyclop
-func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	// initially, wait for the machine-id to be generated and /var to be mounted
-	if err := r.UpdateInputs([]controller.Input{
+	return []controller.Input{
 		{
 			Namespace: files.NamespaceName,
 			Type:      files.EtcFileStatusType,
 			ID:        optional.Some("machine-id"),
 			Kind:      controller.InputWeak,
 		},
-		{
-			Namespace: runtimeres.NamespaceName,
-			Type:      runtimeres.MountStatusType,
-			ID:        optional.Some(constants.EphemeralPartitionLabel),
-			Kind:      controller.InputWeak,
-		},
-	}); err != nil {
-		return err
-	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
-
-		_, err := r.Get(ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, "machine-id", resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
-			return fmt.Errorf("error getting etc file status: %w", err)
-		}
-
-		_, err = r.Get(ctx, resource.NewMetadata(runtimeres.NamespaceName, runtimeres.MountStatusType, constants.EphemeralPartitionLabel, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				// in container mode EPHEMERAL is always mounted
-				if ctrl.V1Alpha1Mode != runtimetalos.ModeContainer {
-					// wait for the EPHEMERAL to be mounted
-					continue
-				}
-			} else {
-				return fmt.Errorf("error getting ephemeral mount status: %w", err)
-			}
-		}
-
-		break
-	}
-
-	// normal reconcile loop
-	if err := r.UpdateInputs([]controller.Input{
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubeletSpecType,
@@ -138,17 +79,48 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			ID:        optional.Some(secrets.KubeletID),
 			Kind:      controller.InputWeak,
 		},
-	}); err != nil {
-		return err
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
+			ID:        optional.Some(ctrl.volumeMountRequestID(constants.KubeletDataVolumeID)),
+			Kind:      controller.InputStrong,
+		},
 	}
+}
 
-	r.QueueReconcile()
+// Outputs implements controller.Controller interface.
+func (ctrl *KubeletServiceController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: block.VolumeMountRequestType,
+			Kind: controller.OutputShared,
+		},
+	}
+}
 
+// volumeMountRequestID returns the ID of the volume mount request (and the matching volume mount status) for the volume.
+func (ctrl *KubeletServiceController) volumeMountRequestID(volumeID string) resource.ID {
+	return ctrl.Name() + "-" + volumeID
+}
+
+// Run implements controller.Controller interface.
+//
+//nolint:gocyclo,cyclop
+func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
+		}
+
+		// wait for the machine-id to be generated
+		if _, err := r.Get(ctx, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, "machine-id", resource.VersionUndefined)); err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting etc file status: %w", err)
 		}
 
 		cfg, err := safe.ReaderGetByID[*k8s.KubeletSpec](ctx, r, k8s.KubeletID)
@@ -162,6 +134,55 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 
 		cfgSpec := cfg.TypedSpec()
 
+		// kubelet is enabled, so request the KUBELET volume to be mounted (with its parent volume, as the mount
+		// controller doesn't mount parents on its own): the controller inspects and cleans up the kubelet state
+		// before starting kubelet, so the volume should stay mounted while the controller is active
+		for _, volumeID := range []string{"/var/lib", constants.KubeletDataVolumeID} {
+			if err = safe.WriterModify(
+				ctx, r,
+				block.NewVolumeMountRequest(block.NamespaceName, ctrl.volumeMountRequestID(volumeID)),
+				func(v *block.VolumeMountRequest) error {
+					v.TypedSpec().Requester = ctrl.Name()
+					v.TypedSpec().VolumeID = volumeID
+
+					return nil
+				},
+			); err != nil {
+				return fmt.Errorf("error creating volume mount request for %q: %w", volumeID, err)
+			}
+		}
+
+		kubeletMountStatus, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, ctrl.volumeMountRequestID(constants.KubeletDataVolumeID))
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				// KUBELET volume is not mounted yet
+				continue
+			}
+
+			return fmt.Errorf("error getting volume mount status for the KUBELET volume: %w", err)
+		}
+
+		switch kubeletMountStatus.Metadata().Phase() {
+		case resource.PhaseTearingDown:
+			// the KUBELET volume is being unmounted, release it and stop operating until it's mounted again
+			if kubeletMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+				if err = r.RemoveFinalizer(ctx, kubeletMountStatus.Metadata(), ctrl.Name()); err != nil {
+					return fmt.Errorf("error removing finalizer from volume mount status for the KUBELET volume: %w", err)
+				}
+			}
+
+			continue
+		case resource.PhaseRunning:
+			if !kubeletMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+				if err = r.AddFinalizer(ctx, kubeletMountStatus.Metadata(), ctrl.Name()); err != nil {
+					return fmt.Errorf("error adding finalizer to volume mount status for the KUBELET volume: %w", err)
+				}
+
+				// the finalizer update triggers another reconcile, so wait for it to avoid restarting kubelet twice
+				continue
+			}
+		}
+
 		secret, err := safe.ReaderGetByID[*secrets.Kubelet](ctx, r, secrets.KubeletID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -173,11 +194,17 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 
 		secretSpec := secret.TypedSpec()
 
+		var kubeletConfiguration kubeletconfig.KubeletConfiguration
+
+		if err = runtime.DefaultUnstructuredConverter.FromUnstructured(cfgSpec.Config, &kubeletConfiguration); err != nil {
+			return fmt.Errorf("error converting kubelet configuration from unstructured: %w", err)
+		}
+
 		if err = ctrl.writePKI(secretSpec); err != nil {
 			return fmt.Errorf("error writing kubelet PKI: %w", err)
 		}
 
-		if err = ctrl.writeConfig(cfgSpec); err != nil {
+		if err = ctrl.writeConfig(&kubeletConfiguration); err != nil {
 			return fmt.Errorf("error writing kubelet configuration: %w", err)
 		}
 
@@ -200,7 +227,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		if err = ctrl.handlePolicyChange(cfgSpec, logger); err != nil {
+		if err = ctrl.cleanupResourceManagerState(kubeletMountStatus.TypedSpec().Target, &kubeletConfiguration, logger); err != nil {
 			return err
 		}
 
@@ -220,81 +247,23 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 	}
 }
 
-// handlePolicyChange handles the cpuManagerPolicy change.
-func (ctrl *KubeletServiceController) handlePolicyChange(cfgSpec *k8s.KubeletSpecSpec, logger *zap.Logger) error {
-	const managerFilename = "/var/lib/kubelet/cpu_manager_state"
-
-	oldPolicy, err := loadPolicyFromFile(managerFilename)
-
-	switch {
-	case errors.Is(err, os.ErrNotExist):
-		return nil // no cpu_manager_state file, nothing to do
-	case err != nil:
-		return fmt.Errorf("error loading cpu_manager_state file: %w", err)
-	}
-
-	policy, err := getFromMap[string](cfgSpec.Config, "cpuManagerPolicy")
+// cleanupResourceManagerState removes the kubelet resource manager (CPU manager, memory manager) state files
+// which kubelet would refuse to load with the current configuration.
+//
+// Kubelet validates the persisted state against the configuration and the machine topology on startup, and fails
+// if they don't match (e.g. the policy or the set of reserved CPUs changed), so the state is validated the same
+// way before kubelet is started.
+func (ctrl *KubeletServiceController) cleanupResourceManagerState(kubeletStateDir string, kubeletConfiguration *kubeletconfig.KubeletConfiguration, logger *zap.Logger) error {
+	machine, err := kubeletstate.DiscoverMachine()
 	if err != nil {
-		return err
+		return fmt.Errorf("error discovering machine topology: %w", err)
 	}
 
-	newPolicy := policy.ValueOrZero()
-	if equalPolicy(oldPolicy, newPolicy) {
-		return nil
-	}
-
-	logger.Info("cpuManagerPolicy changed", zap.String("old", oldPolicy), zap.String("new", newPolicy))
-
-	err = os.Remove(managerFilename)
-	if err != nil {
-		return fmt.Errorf("error removing cpu_manager_state file: %w", err)
+	if err = kubeletstate.Cleanup(kubeletStateDir, kubeletConfiguration, machine, logger); err != nil {
+		return fmt.Errorf("error cleaning up kubelet resource manager state: %w", err)
 	}
 
 	return nil
-}
-
-func loadPolicyFromFile(filename string) (string, error) {
-	raw, err := os.ReadFile(filename)
-	if err != nil {
-		return "", err
-	}
-
-	cpuManagerState := struct {
-		Policy string `json:"policyName"`
-	}{}
-
-	if err = stdjson.Unmarshal(raw, &cpuManagerState); err != nil {
-		return "", err
-	}
-
-	return cpuManagerState.Policy, nil
-}
-
-func equalPolicy(current, newOne string) bool {
-	if current == "none" {
-		current = ""
-	}
-
-	if newOne == "none" {
-		newOne = ""
-	}
-
-	return current == newOne
-}
-
-func getFromMap[T any](m map[string]any, key string) (optional.Optional[T], error) {
-	var zero optional.Optional[T]
-
-	res, ok := m[key]
-	if !ok {
-		return zero, nil
-	}
-
-	if res, ok := res.(T); ok {
-		return optional.Some(res), nil
-	}
-
-	return zero, fmt.Errorf("unexpected type for key %q: found %T, expected %T", key, res, *new(T))
 }
 
 func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) error {
@@ -340,13 +309,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 	return os.WriteFile(constants.KubernetesCACert, acceptedCAs, 0o400)
 }
 
-func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) error {
-	var kubeletConfiguration kubeletconfig.KubeletConfiguration
-
-	if err := runtime.DefaultUnstructuredConverter.FromUnstructured(cfgSpec.Config, &kubeletConfiguration); err != nil {
-		return fmt.Errorf("error converting kubelet configuration from unstructured: %w", err)
-	}
-
+func (ctrl *KubeletServiceController) writeConfig(kubeletConfiguration *kubeletconfig.KubeletConfiguration) error {
 	serializer := json.NewSerializerWithOptions(
 		json.DefaultMetaFactory,
 		nil,
@@ -358,7 +321,7 @@ func (ctrl *KubeletServiceController) writeConfig(cfgSpec *k8s.KubeletSpecSpec) 
 
 	var buf bytes.Buffer
 
-	if err := serializer.Encode(&kubeletConfiguration, &buf); err != nil {
+	if err := serializer.Encode(kubeletConfiguration, &buf); err != nil {
 		return err
 	}
 
