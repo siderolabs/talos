@@ -9,7 +9,10 @@ package api
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
+	"io"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -21,17 +24,18 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/remotecommand"
 	"k8s.io/kubectl/pkg/scheme"
+	"k8s.io/utils/cpuset"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// KubeletSuite verifies that projected volumes still receive updates
-// after the kubelet service is restarted.
-//
-// Regression test for https://github.com/siderolabs/talos/issues/13352.
+// KubeletSuite verifies kubelet service lifecycle: that projected volumes still receive updates
+// after the kubelet service is restarted, and that kubelet configuration changes are picked up.
 type KubeletSuite struct {
 	base.K8sSuite
 
@@ -60,6 +64,162 @@ func (suite *KubeletSuite) TearDownTest() {
 	if suite.ctxCancel != nil {
 		suite.ctxCancel()
 	}
+}
+
+// TestCPUManagerPolicyChange enables the static CPU manager policy, changes its settings and disables it back,
+// asserting that kubelet is restarted and picks up the new configuration each time.
+//
+// Kubelet refuses to start if the persisted CPU manager state doesn't match the configuration, so Talos
+// should remove the state file before starting kubelet with the changed configuration.
+func (suite *KubeletSuite) TestCPUManagerPolicyChange() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	cfg, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	// the test patches the KubeletConfig document, which a configuration still carrying
+	// .machine.kubelet won't accept alongside it
+	if !slices.ContainsFunc(cfg.Documents(), func(doc config.Document) bool {
+		return doc.Kind() == k8s.KubeletConfig
+	}) {
+		suite.T().Skipf("the machine configuration on node %s has no %s document", node, k8s.KubeletConfig)
+	}
+
+	if _, ok := cfg.K8sKubeletConfig().ExtraConfig()["cpuManagerPolicy"]; ok {
+		suite.T().Skip("cpuManagerPolicy is already set on the node")
+	}
+
+	onlineCPUs, err := cpuset.Parse(suite.ReadFile(nodeCtx, "/sys/devices/system/cpu/online"))
+	suite.Require().NoError(err)
+
+	suite.T().Logf("using node %s with online CPUs %s", node, onlineCPUs)
+
+	// keys set in the KubeletConfig document, to be removed on cleanup (removing a key which is not set fails the patch)
+	var extraConfigKeys []string
+
+	defer func() {
+		suite.T().Log("disabling the CPU manager static policy")
+
+		deleteExtraConfig := map[string]any{}
+
+		for _, key := range extraConfigKeys {
+			deleteExtraConfig[key] = map[string]any{"$patch": "delete"}
+		}
+
+		suite.patchKubeletExtraConfig(node, deleteExtraConfig)
+
+		suite.assertCPUManagerState(nodeCtx, "none", cpuset.New())
+	}()
+
+	suite.T().Log("enabling the CPU manager static policy")
+
+	extraConfigKeys = append(extraConfigKeys, "cpuManagerPolicy")
+
+	suite.patchKubeletExtraConfig(node, map[string]any{
+		"cpuManagerPolicy": "static",
+	})
+
+	// without strict CPU reservation, the default (shared) cpuset includes all CPUs
+	suite.assertCPUManagerState(nodeCtx, "static", onlineCPUs)
+
+	if onlineCPUs.Size() < 2 {
+		suite.T().Log("skipping the strict CPU reservation step, as the node has a single CPU")
+
+		return
+	}
+
+	suite.T().Log("enabling strict CPU reservation")
+
+	reservedCPUs := cpuset.New(onlineCPUs.List()[0])
+
+	extraConfigKeys = append(extraConfigKeys, "cpuManagerPolicyOptions", "reservedSystemCPUs")
+
+	suite.patchKubeletExtraConfig(node, map[string]any{
+		"cpuManagerPolicyOptions": map[string]any{
+			"strict-cpu-reservation": "true",
+		},
+		"reservedSystemCPUs": reservedCPUs.String(),
+	})
+
+	// with strict CPU reservation, kubelet refuses to load the previous state (which includes the reserved CPUs in the default cpuset),
+	// so Talos should have removed it before starting kubelet
+	suite.assertCPUManagerState(nodeCtx, "static", onlineCPUs.Difference(reservedCPUs))
+}
+
+// patchKubeletExtraConfig patches the extra kubelet configuration on the node and waits for kubelet
+// to be restarted and healthy.
+//
+// The settings go into the KubeletConfig document rather than into the deprecated
+// .machine.kubelet.extraConfig: a configuration carrying both is rejected outright, so patching the
+// v1alpha1 field fails on any cluster already using the document.
+func (suite *KubeletSuite) patchKubeletExtraConfig(node string, extraConfig map[string]any) {
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	lastKubeletEvent := suite.LatestServiceEventTimestamp(suite.ctx, node, "kubelet")
+
+	// the document is merged into the one already on the node, so the image and the rest of the
+	// kubelet configuration are left alone
+	suite.PatchMachineConfig(nodeCtx, map[string]any{
+		"apiVersion": "v1alpha1",
+		"kind":       k8s.KubeletConfig,
+		"config":     extraConfig,
+	})
+
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "kubelet", lastKubeletEvent, []string{
+		"Stopping",
+		"Finished",
+		"Starting",
+		"Waiting",
+		"Preparing",
+		"Running",
+	})
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI,
+		"kubelet",
+		func(svc *v1alpha1.Service, asrt *assert.Assertions) {
+			asrt.True(svc.TypedSpec().Healthy)
+			asrt.True(svc.TypedSpec().Running)
+		},
+	)
+}
+
+// assertCPUManagerState asserts that the CPU manager state written by kubelet has the expected policy and default cpuset.
+func (suite *KubeletSuite) assertCPUManagerState(nodeCtx context.Context, expectedPolicy string, expectedDefaultCPUs cpuset.CPUSet) {
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
+
+		reader, err := suite.Client.Read(nodeCtx, "/var/lib/kubelet/cpu_manager_state")
+		if !asrt.NoError(err) {
+			return
+		}
+
+		defer reader.Close() //nolint:errcheck
+
+		body, err := io.ReadAll(reader)
+		if !asrt.NoError(err) {
+			return
+		}
+
+		var state struct {
+			PolicyName    string `json:"policyName"`
+			DefaultCPUSet string `json:"defaultCpuSet"`
+		}
+
+		if !asrt.NoError(json.Unmarshal(body, &state), "failed to parse the CPU manager state %q", string(body)) {
+			return
+		}
+
+		asrt.Equal(expectedPolicy, state.PolicyName)
+
+		defaultCPUs, err := cpuset.Parse(state.DefaultCPUSet)
+		if !asrt.NoError(err) {
+			return
+		}
+
+		asrt.True(expectedDefaultCPUs.Equals(defaultCPUs), "expected default cpuset %q, got %q", expectedDefaultCPUs, defaultCPUs)
+	}, time.Minute, time.Second, "CPU manager state should match the configuration")
 }
 
 // TestProjectedVolumeUpdatesSurviveKubeletRestart creates a pod with a
