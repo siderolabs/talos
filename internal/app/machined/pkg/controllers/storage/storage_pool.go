@@ -23,7 +23,8 @@ import (
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/pkg/libvirtstorage"
+	"github.com/siderolabs/talos/internal/pkg/libvirt"
+	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -89,7 +90,9 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 	}
 
 	if ctrl.Open == nil {
-		ctrl.Open = libvirtstorage.Open
+		ctrl.Open = func(ctx context.Context) (libvirtstorage.Client, error) {
+			return libvirt.New().Storage(ctx)
+		}
 	}
 
 	for {

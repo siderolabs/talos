@@ -8941,7 +8941,8 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| domain_xml | [string](#string) |  | DomainXML is a libvirt domain definition, suitable for DomainDefineXML. |
+| domain_xml | [string](#string) |  | DomainXML is the libvirt domain description used to start the guest. |
+| power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
 
 
 

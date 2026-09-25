@@ -12,6 +12,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
@@ -35,6 +36,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineSpecType,
 			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineDomainSpecType,
+			Kind:      controller.InputDestroyReady,
 		},
 	}
 }
@@ -72,12 +78,13 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		return fmt.Errorf("failed to list virtual machine specs: %w", err)
 	}
 
-	runtime.StartTrackingOutputs()
+	desired := make(map[string]struct{}, specs.Len())
 
 	var errs []error
 
 	for vm := range specs.All() {
 		name := vm.Metadata().ID()
+		desired[name] = struct{}{}
 
 		// COSI tracks attempted modifications even when the callback fails. Keep
 		// validation inside the callback so an invalid update preserves the last
@@ -91,7 +98,8 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 				}
 
 				*res.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-					DomainXML: domainXML,
+					DomainXML:  domainXML,
+					PowerState: vm.TypedSpec().PowerState,
 				}
 
 				return nil
@@ -101,7 +109,35 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		}
 	}
 
-	return errors.Join(append(errs, safe.CleanupOutputs[*hypervisor.VirtualMachineDomainSpec](ctx, runtime))...)
+	return errors.Join(append(errs, ctrl.cleanupDomains(ctx, runtime, desired))...)
+}
+
+func (ctrl *VirtualMachineDomainSpecController) cleanupDomains(ctx context.Context, runtime controller.Runtime, desired map[string]struct{}) error {
+	domains, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, runtime)
+	if err != nil {
+		return fmt.Errorf("failed to list virtual machine domain specs: %w", err)
+	}
+
+	for domain := range domains.All() {
+		if _, wanted := desired[domain.Metadata().ID()]; wanted && domain.Metadata().Phase() == resource.PhaseRunning {
+			continue
+		}
+
+		ready, teardownErr := runtime.Teardown(ctx, domain.Metadata())
+		if teardownErr != nil {
+			return fmt.Errorf("failed to tear down virtual machine domain spec %q: %w", domain.Metadata().ID(), teardownErr)
+		}
+
+		if !ready {
+			continue
+		}
+
+		if destroyErr := runtime.Destroy(ctx, domain.Metadata()); destroyErr != nil {
+			return fmt.Errorf("failed to destroy virtual machine domain spec %q: %w", domain.Metadata().ID(), destroyErr)
+		}
+	}
+
+	return nil
 }
 
 func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpecSpec) (string, error) {
@@ -140,9 +176,14 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 
 	switch spec.Firmware.Type {
 	case "bios":
-		domain.OS.Firmware = "bios"
+		// Omit firmware autoselection: the libvirt extension runs legacy BIOS
+		// domains without a firmware descriptor.
 	case "uefi":
 		domain.OS.Firmware = "efi"
+		// QEMU rejects UEFI domains without ACPI on supported architectures.
+		domain.Features = &libvirtxml.DomainFeatureList{
+			ACPI: &libvirtxml.DomainFeature{},
+		}
 
 		enabled := "no"
 		if spec.Firmware.SecureBoot {

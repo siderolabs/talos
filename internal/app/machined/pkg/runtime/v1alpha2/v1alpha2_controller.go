@@ -281,6 +281,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&hypervisorctrls.ContentLibraryController{},
 		&hypervisorctrls.VirtualMachineSpecController{},
 		&hypervisorctrls.VirtualMachineDomainSpecController{},
+		&hypervisorctrls.VirtualMachineController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", constants.SystemContainerdNamespace, nil),
 		cri.NewImageGCController("cri", constants.SystemContainerdNamespace, cri.KubernetesRefsToRetain),

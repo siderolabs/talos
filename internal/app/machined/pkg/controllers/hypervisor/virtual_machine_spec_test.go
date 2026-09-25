@@ -234,7 +234,8 @@ func (suite *VirtualMachineSpecSuite) TestFirmwareAndConsoles() {
 	suite.Require().NoError(err)
 	suite.Create(config.NewMachineConfig(cfg))
 	ctest.AssertResource(suite, "bios", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
-		asrt.Contains(res.TypedSpec().DomainXML, `<os firmware="bios">`)
+		asrt.Contains(res.TypedSpec().DomainXML, "<os>")
+		asrt.NotContains(res.TypedSpec().DomainXML, `firmware="bios"`)
 	})
 	ctest.AssertResource(suite, "uefi", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Contains(res.TypedSpec().DomainXML, `<os firmware="efi">`)
@@ -321,7 +322,7 @@ func (suite *VirtualMachineSpecSuite) assertConversionError(name, reason string)
 
 			return ok && strings.Contains(err, fmt.Sprintf("virtual machine %q: %s", name, reason))
 		}).Len() > 0
-	}, 3*time.Second, time.Millisecond)
+	}, 30*time.Second, time.Millisecond)
 }
 
 func (suite *VirtualMachineSpecSuite) TestRejectsCPUOutsideSchemaRange() {

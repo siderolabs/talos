@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
@@ -77,6 +78,59 @@ func (suite *VirtualMachineSpecSuite) externalSpecLifecycle(owner string) {
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), spec.Metadata(), state.WithDestroyOwner(owner)))
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "balloon")
+}
+
+func (suite *VirtualMachineSpecSuite) TestBIOSDomainUsesDefaultFirmware() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "bios-default")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 128 << 20},
+		PowerState: "stopped",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "bios"},
+	}
+	suite.Create(spec)
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, "<os>")
+		asrt.NotContains(res.TypedSpec().DomainXML, `firmware="bios"`)
+		asrt.Equal("stopped", res.TypedSpec().PowerState)
+	})
+}
+
+func (suite *VirtualMachineSpecSuite) TestUEFIDomainEnablesACPI() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "uefi-acpi")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "stopped",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+	}
+	suite.Create(spec)
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, "<acpi></acpi>")
+	})
+}
+
+func (suite *VirtualMachineSpecSuite) TestDomainSpecCleanupWaitsForFinalizer() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "held-domain")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "stopped",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+	}
+	suite.Create(spec)
+
+	domain := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, spec.Metadata().ID())
+	ctest.AssertResource(suite, domain.Metadata().ID(), func(_ *hypervisor.VirtualMachineDomainSpec, _ *assert.Assertions) {})
+	suite.AddFinalizer(domain.Metadata(), "test.libvirt-cleanup")
+	suite.Destroy(spec)
+
+	ctest.AssertResource(suite, domain.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, res.Metadata().Phase())
+		asrt.True(res.Metadata().Finalizers().Has("test.libvirt-cleanup"))
+	})
+	suite.RemoveFinalizer(domain.Metadata(), "test.libvirt-cleanup")
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, domain.Metadata().ID())
 }
 
 func (suite *VirtualMachineSpecSuite) TestExternalSpecRejectsConfigCollision() {

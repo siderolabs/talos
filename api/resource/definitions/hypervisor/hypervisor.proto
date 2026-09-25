@@ -58,8 +58,10 @@ message VirtualMachineDiskSpec {
 
 // VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 message VirtualMachineDomainSpecSpec {
-  // DomainXML is a libvirt domain definition, suitable for DomainDefineXML.
+  // DomainXML is the libvirt domain description used to start the guest.
   string domain_xml = 1;
+  // PowerState selects running or stopped transient-domain behavior.
+  string power_state = 2;
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
