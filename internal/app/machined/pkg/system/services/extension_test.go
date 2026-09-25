@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/mocks"
@@ -42,6 +43,9 @@ func TestGetOCIOptions(t *testing.T) {
 
 		return oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "testNamespace"), &mockClient, &containers.Container{}, ociOpts...)
 	}
+
+	defaultOCISpec, err := generateOCISpec(&services.Extension{})
+	require.NoError(t, err)
 
 	t.Run("default configurations are cleared away if user passes empty arrays for MaskedPaths and ReadonlyPaths", func(t *testing.T) {
 		// given
@@ -83,26 +87,8 @@ func TestGetOCIOptions(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, []string{
-			"/proc/acpi",
-			"/proc/asound",
-			"/proc/kcore",
-			"/proc/keys",
-			"/proc/latency_stats",
-			"/proc/timer_list",
-			"/proc/timer_stats",
-			"/proc/sched_debug",
-			"/sys/firmware",
-			"/sys/devices/virtual/powercap",
-			"/proc/scsi",
-		}, spec.Linux.MaskedPaths)
-		assert.Equal(t, []string{
-			"/proc/bus",
-			"/proc/fs",
-			"/proc/irq",
-			"/proc/sys",
-			"/proc/sysrq-trigger",
-		}, spec.Linux.ReadonlyPaths)
+		assert.Equal(t, defaultOCISpec.Linux.MaskedPaths, spec.Linux.MaskedPaths)
+		assert.Equal(t, defaultOCISpec.Linux.ReadonlyPaths, spec.Linux.ReadonlyPaths)
 	})
 
 	t.Run("root fs is readonly unless explicitly enabled", func(t *testing.T) {

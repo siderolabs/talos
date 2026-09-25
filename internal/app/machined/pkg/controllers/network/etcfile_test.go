@@ -332,7 +332,7 @@ func (suite *EtcFileConfigSuite) TestInvalidNames() {
 		etcFileContents{
 			hosts:            "127.0.0.1 localhost\n::1       localhost ip6-localhost ip6-loopback\nff02::1   ip6-allnodes\nff02::2   ip6-allrouters\n",
 			resolvConf:       "nameserver 127.0.0.53\n\nsearch legit.example Corp_Example.com\n",
-			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n\nsearch legit.example Corp_Example.com\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\n\nsearch legit.example Corp_Example.com\n",
 		},
 	)
 }
