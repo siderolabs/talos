@@ -9,6 +9,9 @@
       <feature enabled="no" name="enrolled-keys"></feature>
     </firmware>
   </os>
+  <features>
+    <acpi></acpi>
+  </features>
   <devices>
     <memballoon model="none"></memballoon>
   </devices>

@@ -17,16 +17,16 @@ import (
 const VirtualMachineDomainSpecType = resource.Type("VirtualMachineDomainSpecs.hypervisor.talos.dev")
 
 // VirtualMachineDomainSpec holds a rendered libvirt domain definition.
-//
-// The ID is the virtual machine name. Publishing a spec does not define or start a domain.
 type VirtualMachineDomainSpec = typed.Resource[VirtualMachineDomainSpecSpec, VirtualMachineDomainSpecExtension]
 
 // VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 //
 //gotagsrewrite:gen
 type VirtualMachineDomainSpecSpec struct {
-	// DomainXML is a libvirt domain definition, suitable for DomainDefineXML.
+	// DomainXML is the libvirt domain description used to start the guest.
 	DomainXML string `yaml:"domainXML" protobuf:"1"`
+	// PowerState selects running or stopped transient-domain behavior.
+	PowerState string `yaml:"powerState" protobuf:"2"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package libvirtstorage_test
+package domain_test
 
 import (
 	"context"
@@ -17,47 +17,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/pkg/libvirtstorage"
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 )
 
-func TestSessionDeadlineClosesHandshakeReadStall(t *testing.T) {
-	t.Parallel()
-	synctest.Test(t, func(t *testing.T) {
-		raw, server := net.Pipe()
-		defer server.Close() //nolint:errcheck
-		defer raw.Close()    //nolint:errcheck
-
-		ctx, cancel := context.WithTimeout(t.Context(), time.Second)
-		defer cancel()
-
-		done := make(chan error, 1)
-
-		go func() {
-			_, err := libvirtstorage.OpenConn(ctx, raw, cancel)
-			done <- err
-		}()
-		// Accept the complete authentication request: its write has succeeded, but
-		// the daemon never sends a reply. Caller context remains live throughout.
-		call, err := readCall(server)
-		require.NoError(t, err)
-		require.EqualValues(t, 66, binary.BigEndian.Uint32(call[8:12]))
-
-		synctest.Sleep(time.Second)
-
-		select {
-		case err = <-done:
-			require.Error(t, err)
-		default:
-			t.Error("session deadline did not close transport after a successful write and stalled reply")
-			require.NoError(t, raw.Close())
-			<-done
-		}
-
-		require.NoError(t, t.Context().Err(), "session expiry must not cancel the caller")
-	})
-}
-
-// The remote protocol has a length prefix and six uint32 header fields:
+// Libvirt RPC frames have a length prefix and six uint32 header fields:
 // program, version, procedure, message type, serial, status.
 func readCall(conn net.Conn) ([]byte, error) {
 	var size uint32
@@ -100,7 +63,7 @@ func serveHandshake(conn net.Conn) error {
 		var payload []byte
 		if procedure == 66 {
 			payload = make([]byte, 4)
-		} // empty authentication list
+		}
 
 		if err = replyCall(conn, call, payload); err != nil {
 			return err
@@ -110,12 +73,98 @@ func serveHandshake(conn net.Conn) error {
 	return nil
 }
 
+func TestHandshakeCancellationClosesTransport(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		client, server := net.Pipe()
+		defer server.Close() //nolint:errcheck
+
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+
+		sessionCtx, cancelSession := context.WithTimeout(ctx, time.Hour)
+		defer cancelSession()
+
+		read := make(chan struct{})
+
+		go func() {
+			var b [1]byte
+
+			_, err := server.Read(b[:])
+			require.NoError(t, err)
+
+			close(read)
+
+			_, err = io.Copy(io.Discard, server)
+			require.NoError(t, err)
+		}()
+
+		done := make(chan error, 1)
+
+		go func() {
+			_, err := libvirtdomain.New("", "qemu:///system").OpenConn(sessionCtx, client, cancelSession)
+			done <- err
+		}()
+
+		<-read
+		cancel()
+		synctest.Wait()
+
+		select {
+		case err := <-done:
+			require.Error(t, err)
+		default:
+			t.Error("context cancellation did not interrupt libvirt handshake")
+			require.NoError(t, client.Close())
+			<-done
+		}
+
+		synctest.Wait()
+	})
+}
+
+func TestSessionDeadlineClosesHandshakeReadStall(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		raw, server := net.Pipe()
+		defer server.Close() //nolint:errcheck
+		defer raw.Close()    //nolint:errcheck
+
+		ctx, cancel := context.WithTimeout(t.Context(), time.Second)
+		defer cancel()
+
+		done := make(chan error, 1)
+
+		go func() { _, err := libvirtdomain.New("", "qemu:///system").OpenConn(ctx, raw, cancel); done <- err }()
+
+		call, err := readCall(server)
+		require.NoError(t, err)
+		require.EqualValues(t, 66, binary.BigEndian.Uint32(call[8:12]))
+
+		synctest.Sleep(time.Second)
+
+		select {
+		case err = <-done:
+			require.Error(t, err)
+		default:
+			t.Error("session deadline did not interrupt a stalled reply")
+			require.NoError(t, raw.Close())
+			<-done
+		}
+
+		require.NoError(t, t.Context().Err(), "session deadline must not cancel the caller")
+	})
+}
+
 func TestConnectedSessionReadStall(t *testing.T) {
 	t.Parallel()
 
 	for _, cancelCaller := range []bool{false, true} {
 		t.Run(fmt.Sprintf("cancel=%t", cancelCaller), func(t *testing.T) {
 			t.Parallel()
+
 			synctest.Test(t, func(t *testing.T) {
 				raw, server := net.Pipe()
 				defer server.Close() //nolint:errcheck
@@ -134,20 +183,20 @@ func TestConnectedSessionReadStall(t *testing.T) {
 					}
 
 					_, err := readCall(server)
-					accepted <- err // accept the storage RPC but never reply
+					accepted <- err // accept a domain RPC but never reply
 				}()
 
 				sessionCtx, cancelSession := context.WithTimeout(ctx, time.Second)
 				defer cancelSession()
 
-				client, err := libvirtstorage.OpenConn(sessionCtx, raw, cancelSession)
+				client, err := libvirtdomain.New("", "qemu:///system").OpenConn(sessionCtx, raw, cancelSession)
 				require.NoError(t, err)
 
 				defer client.Close()
 
 				done := make(chan error, 1)
 
-				go func() { _, rpcErr := client.Pools(); done <- rpcErr }()
+				go func() { _, rpcErr := client.Domains(); done <- rpcErr }()
 
 				require.NoError(t, <-accepted)
 
@@ -168,7 +217,7 @@ func TestConnectedSessionReadStall(t *testing.T) {
 						require.Equal(t, canceledAt, time.Now(), "caller cancellation must not wait for the session deadline")
 					}
 				default:
-					t.Error("connected RPC did not return after session expiry/cancellation")
+					t.Error("domain RPC did not return after session expiry/cancellation")
 					require.NoError(t, raw.Close())
 					<-done
 				}
@@ -179,6 +228,7 @@ func TestConnectedSessionReadStall(t *testing.T) {
 
 func TestSessionGracefulClose(t *testing.T) {
 	t.Parallel()
+
 	synctest.Test(t, func(t *testing.T) {
 		raw, server := net.Pipe()
 		defer server.Close() //nolint:errcheck
@@ -219,7 +269,7 @@ func TestSessionGracefulClose(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 		defer cancel()
 
-		client, err := libvirtstorage.OpenConn(ctx, raw, cancel)
+		client, err := libvirtdomain.New("", "qemu:///system").OpenConn(ctx, raw, cancel)
 		require.NoError(t, err)
 		client.Close()
 		require.NoError(t, <-done)
@@ -228,6 +278,7 @@ func TestSessionGracefulClose(t *testing.T) {
 
 func TestSessionGracefulCloseReadStallIsBounded(t *testing.T) {
 	t.Parallel()
+
 	synctest.Test(t, func(t *testing.T) {
 		raw, server := net.Pipe()
 		defer server.Close() //nolint:errcheck
@@ -253,7 +304,7 @@ func TestSessionGracefulCloseReadStallIsBounded(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 		defer cancel()
 
-		client, err := libvirtstorage.OpenConn(ctx, raw, cancel)
+		client, err := libvirtdomain.New("", "qemu:///system").OpenConn(ctx, raw, cancel)
 		require.NoError(t, err)
 
 		done := make(chan struct{})
@@ -261,7 +312,6 @@ func TestSessionGracefulCloseReadStallIsBounded(t *testing.T) {
 		go func() { client.Close(); close(done) }()
 
 		require.NoError(t, <-accepted)
-
 		synctest.Sleep(time.Second)
 
 		select {

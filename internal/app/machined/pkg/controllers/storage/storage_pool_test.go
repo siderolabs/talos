@@ -24,7 +24,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
-	"github.com/siderolabs/talos/internal/pkg/libvirtstorage"
+	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"

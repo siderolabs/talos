@@ -421,8 +421,10 @@ func (x *VirtualMachineDiskSpec) GetProvision() *VirtualMachineDiskProvisionSpec
 // VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 type VirtualMachineDomainSpecSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// DomainXML is a libvirt domain definition, suitable for DomainDefineXML.
-	DomainXml     string `protobuf:"bytes,1,opt,name=domain_xml,json=domainXml,proto3" json:"domain_xml,omitempty"`
+	// DomainXML is the libvirt domain description used to start the guest.
+	DomainXml string `protobuf:"bytes,1,opt,name=domain_xml,json=domainXml,proto3" json:"domain_xml,omitempty"`
+	// PowerState selects running or stopped transient-domain behavior.
+	PowerState    string `protobuf:"bytes,2,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -460,6 +462,13 @@ func (*VirtualMachineDomainSpecSpec) Descriptor() ([]byte, []int) {
 func (x *VirtualMachineDomainSpecSpec) GetDomainXml() string {
 	if x != nil {
 		return x.DomainXml
+	}
+	return ""
+}
+
+func (x *VirtualMachineDomainSpecSpec) GetPowerState() string {
+	if x != nil {
+		return x.PowerState
 	}
 	return ""
 }
@@ -736,10 +745,12 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x04type\x18\x06 \x01(\tR\x04type\x12\x1d\n" +
 	"\n" +
 	"boot_order\x18\a \x01(\rR\tbootOrder\x12d\n" +
-	"\tprovision\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpecR\tprovision\"=\n" +
+	"\tprovision\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpecR\tprovision\"^\n" +
 	"\x1cVirtualMachineDomainSpecSpec\x12\x1d\n" +
 	"\n" +
-	"domain_xml\x18\x01 \x01(\tR\tdomainXml\"Q\n" +
+	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
+	"\vpower_state\x18\x02 \x01(\tR\n" +
+	"powerState\"Q\n" +
 	"\x1aVirtualMachineFirmwareSpec\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1f\n" +
 	"\vsecure_boot\x18\x02 \x01(\bR\n" +

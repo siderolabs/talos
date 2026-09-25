@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package libvirtstorage_test
+package storage_test
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"libvirt.org/go/libvirtxml"
 
-	"github.com/siderolabs/talos/internal/pkg/libvirtstorage"
+	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
 )
 
 const machine = "6b5baa32-47dd-4bcd-9c25-92870e3d43c9"
@@ -257,7 +257,10 @@ func TestHandshakeCancellationClosesTransport(t *testing.T) {
 
 		done := make(chan error, 1)
 
-		go func() { _, err := libvirtstorage.OpenConn(sessionCtx, client, cancelSession); done <- err }()
+		go func() {
+			_, err := libvirtstorage.New("", "storage:///system").OpenConn(sessionCtx, client, cancelSession)
+			done <- err
+		}()
 
 		<-read
 		cancel()
@@ -289,7 +292,7 @@ func TestHandshakeExpiredDeadline(t *testing.T) {
 		done := make(chan error, 1)
 
 		go func() {
-			_, err := libvirtstorage.OpenConn(ctx, client, cancel)
+			_, err := libvirtstorage.New("", "storage:///system").OpenConn(ctx, client, cancel)
 			done <- err
 		}()
 
