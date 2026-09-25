@@ -525,6 +525,28 @@
           "description": "The interval at which the filesystems are trimmed.\n\nThe trim is performed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that trims are spread out over time.\n",
           "markdownDescription": "The interval at which the filesystems are trimmed.\n\nThe trim is performed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that trims are spread out over time.",
           "x-intellij-html-description": "\u003cp\u003eThe interval at which the filesystems are trimmed.\u003c/p\u003e\n\n\u003cp\u003eThe trim is performed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that trims are spread out over time.\u003c/p\u003e\n"
+        },
+        "chunkSize": {
+          "type": "string",
+          "title": "chunkSize",
+          "description": "The size of the filesystem range trimmed at once.\n\nBy default (or when set to zero), the whole filesystem is trimmed at once (same as the fstrim command).\nTrimming a large filesystem at once issues discards for all free space back-to-back,\nwhich might cause latency spikes for other workloads using the same disk.\nSetting the chunk size splits the trim into multiple operations, each covering at most\nthe chunk size of the filesystem. When set, the chunk size must be at least 1MiB.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.\n",
+          "markdownDescription": "The size of the filesystem range trimmed at once.\n\nBy default (or when set to zero), the whole filesystem is trimmed at once (same as the `fstrim` command).\nTrimming a large filesystem at once issues discards for all free space back-to-back,\nwhich might cause latency spikes for other workloads using the same disk.\nSetting the chunk size splits the trim into multiple operations, each covering at most\nthe chunk size of the filesystem. When set, the chunk size must be at least 1MiB.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.",
+          "x-intellij-html-description": "\u003cp\u003eThe size of the filesystem range trimmed at once.\u003c/p\u003e\n\n\u003cp\u003eBy default (or when set to zero), the whole filesystem is trimmed at once (same as the \u003ccode\u003efstrim\u003c/code\u003e command).\nTrimming a large filesystem at once issues discards for all free space back-to-back,\nwhich might cause latency spikes for other workloads using the same disk.\nSetting the chunk size splits the trim into multiple operations, each covering at most\nthe chunk size of the filesystem. When set, the chunk size must be at least 1MiB.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.\u003c/p\u003e\n"
+        },
+        "chunkDelay": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "chunkDelay",
+          "description": "The delay between trimming consecutive chunks.\n\nOnly used when the chunk size is set.\n",
+          "markdownDescription": "The delay between trimming consecutive chunks.\n\nOnly used when the chunk size is set.",
+          "x-intellij-html-description": "\u003cp\u003eThe delay between trimming consecutive chunks.\u003c/p\u003e\n\n\u003cp\u003eOnly used when the chunk size is set.\u003c/p\u003e\n"
+        },
+        "minLength": {
+          "type": "string",
+          "title": "minLength",
+          "description": "The minimum contiguous free range to discard.\n\nFree ranges smaller than this value are not discarded, which reduces the number of discard\noperations at the expense of leaving small free ranges untrimmed.\nThe kernel raises the value to the discard granularity of the device.\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.\n",
+          "markdownDescription": "The minimum contiguous free range to discard.\n\nFree ranges smaller than this value are not discarded, which reduces the number of discard\noperations at the expense of leaving small free ranges untrimmed.\nThe kernel raises the value to the discard granularity of the device.\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.",
+          "x-intellij-html-description": "\u003cp\u003eThe minimum contiguous free range to discard.\u003c/p\u003e\n\n\u003cp\u003eFree ranges smaller than this value are not discarded, which reduces the number of discard\noperations at the expense of leaving small free ranges untrimmed.\nThe kernel raises the value to the discard granularity of the device.\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -887,6 +909,28 @@
           "description": "The interval at which the volume is trimmed, overriding the global trim interval.\n",
           "markdownDescription": "The interval at which the volume is trimmed, overriding the global trim interval.",
           "x-intellij-html-description": "\u003cp\u003eThe interval at which the volume is trimmed, overriding the global trim interval.\u003c/p\u003e\n"
+        },
+        "chunkSize": {
+          "type": "string",
+          "title": "chunkSize",
+          "description": "The size of the filesystem range trimmed at once, overriding the global chunk size.\n\nSetting it explicitly to zero trims the whole filesystem at once.\nWhen set to a non-zero value, the chunk size must be at least 1MiB.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.\n",
+          "markdownDescription": "The size of the filesystem range trimmed at once, overriding the global chunk size.\n\nSetting it explicitly to zero trims the whole filesystem at once.\nWhen set to a non-zero value, the chunk size must be at least 1MiB.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.",
+          "x-intellij-html-description": "\u003cp\u003eThe size of the filesystem range trimmed at once, overriding the global chunk size.\u003c/p\u003e\n\n\u003cp\u003eSetting it explicitly to zero trims the whole filesystem at once.\nWhen set to a non-zero value, the chunk size must be at least 1MiB.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.\u003c/p\u003e\n"
+        },
+        "chunkDelay": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "chunkDelay",
+          "description": "The delay between trimming consecutive chunks, overriding the global chunk delay.\n\nSetting it explicitly to zero trims the chunks back-to-back.\n",
+          "markdownDescription": "The delay between trimming consecutive chunks, overriding the global chunk delay.\n\nSetting it explicitly to zero trims the chunks back-to-back.",
+          "x-intellij-html-description": "\u003cp\u003eThe delay between trimming consecutive chunks, overriding the global chunk delay.\u003c/p\u003e\n\n\u003cp\u003eSetting it explicitly to zero trims the chunks back-to-back.\u003c/p\u003e\n"
+        },
+        "minLength": {
+          "type": "string",
+          "title": "minLength",
+          "description": "The minimum contiguous free range to discard, overriding the global minimum length.\n\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.\n",
+          "markdownDescription": "The minimum contiguous free range to discard, overriding the global minimum length.\n\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.",
+          "x-intellij-html-description": "\u003cp\u003eThe minimum contiguous free range to discard, overriding the global minimum length.\u003c/p\u003e\n\n\u003cp\u003eThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

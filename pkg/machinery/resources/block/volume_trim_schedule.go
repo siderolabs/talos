@@ -34,6 +34,8 @@ type VolumeTrimScheduleSpec struct {
 	Interval time.Duration `yaml:"interval" protobuf:"2"`
 	// NextTrim is the next scheduled trim time for the volume.
 	NextTrim time.Time `yaml:"nextTrim" protobuf:"3"`
+	// Options are the options of the trim operation.
+	Options TrimOptionsSpec `yaml:"options,omitempty" protobuf:"4"`
 }
 
 // NewVolumeTrimSchedule initializes a VolumeTrimSchedule resource.

@@ -34,6 +34,9 @@ func TestFilesystemTrimConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
 				c := block.NewFilesystemTrimConfigV1Alpha1()
 				c.TrimInterval = 7 * 24 * time.Hour
+				c.TrimChunkSize = block.MustByteSize("1GiB")
+				c.TrimChunkDelay = 250 * time.Millisecond
+				c.TrimMinLength = block.MustByteSize("1MiB")
 
 				return c
 			},
@@ -116,6 +119,77 @@ func TestFilesystemTrimConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "interval cannot be negative",
+		},
+		{
+			name: "negative chunk delay",
+
+			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
+				c := block.NewFilesystemTrimConfigV1Alpha1()
+				c.TrimChunkDelay = -time.Second
+
+				return c
+			},
+
+			expectedErrors: "chunk delay cannot be negative",
+		},
+		{
+			name: "negative chunk size",
+
+			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
+				c := block.NewFilesystemTrimConfigV1Alpha1()
+				c.TrimChunkSize = block.MustByteSize("-1GiB")
+
+				return c
+			},
+
+			expectedErrors: "chunk size cannot be negative",
+		},
+		{
+			name: "chunk size too small",
+
+			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
+				c := block.NewFilesystemTrimConfigV1Alpha1()
+				c.TrimChunkSize = block.MustByteSize("512KiB")
+
+				return c
+			},
+
+			expectedErrors: "chunk size cannot be less than 1.0 MiB",
+		},
+		{
+			name: "negative minimum length",
+
+			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
+				c := block.NewFilesystemTrimConfigV1Alpha1()
+				c.TrimMinLength = block.MustByteSize("-1MiB")
+
+				return c
+			},
+
+			expectedErrors: "minimum length cannot be negative",
+		},
+		{
+			name: "minimum length too large",
+
+			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
+				c := block.NewFilesystemTrimConfigV1Alpha1()
+				c.TrimMinLength = block.MustByteSize("256MiB")
+
+				return c
+			},
+
+			expectedErrors: "minimum length cannot be greater than 128 MiB",
+		},
+		{
+			name: "boundary values",
+
+			cfg: func(t *testing.T) *block.FilesystemTrimConfigV1Alpha1 {
+				c := block.NewFilesystemTrimConfigV1Alpha1()
+				c.TrimChunkSize = block.MustByteSize("1MiB")
+				c.TrimMinLength = block.MustByteSize("128MiB")
+
+				return c
+			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

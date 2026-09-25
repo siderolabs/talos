@@ -420,6 +420,7 @@ description: Talos gRPC API reference.
     - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
     - [SystemDiskSpec](#talos.resource.definitions.block.SystemDiskSpec)
     - [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo)
+    - [TrimOptionsSpec](#talos.resource.definitions.block.TrimOptionsSpec)
     - [UserDiskConfigStatusSpec](#talos.resource.definitions.block.UserDiskConfigStatusSpec)
     - [VolumeConfigSpec](#talos.resource.definitions.block.VolumeConfigSpec)
     - [VolumeMountRequestSpec](#talos.resource.definitions.block.VolumeMountRequestSpec)
@@ -7444,6 +7445,23 @@ TPMEncryptionOptionsInfo is the options for TPM-based encryption.
 
 
 
+<a name="talos.resource.definitions.block.TrimOptionsSpec"></a>
+
+### TrimOptionsSpec
+TrimOptionsSpec is the spec for trim (fstrim) operation options.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| chunk_size | [uint64](#uint64) |  | ChunkSize is the size of the filesystem range trimmed at once (zero means the whole filesystem). |
+| chunk_delay | [google.protobuf.Duration](#google.protobuf.Duration) |  | ChunkDelay is the delay between trimming consecutive chunks. |
+| min_length | [uint64](#uint64) |  | MinLength is the minimum contiguous free range to discard. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.UserDiskConfigStatusSpec"></a>
 
 ### UserDiskConfigStatusSpec
@@ -7479,6 +7497,7 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 | trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
 | scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
 | scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
+| trim_options | [TrimOptionsSpec](#talos.resource.definitions.block.TrimOptionsSpec) |  | TrimOptions are the resolved options of the trim operation. |
 
 
 
@@ -7563,6 +7582,7 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
 | scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
 | scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
+| trim_options | [TrimOptionsSpec](#talos.resource.definitions.block.TrimOptionsSpec) |  | TrimOptions are the resolved options of the trim operation. |
 
 
 
@@ -7580,6 +7600,7 @@ VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type of the volume to be trimmed. |
 | interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval is the trim interval for the volume. |
 | next_trim | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | NextTrim is the next scheduled trim time for the volume. |
+| options | [TrimOptionsSpec](#talos.resource.definitions.block.TrimOptionsSpec) |  | Options are the options of the trim operation. |
 
 
 

@@ -6,6 +6,10 @@
 
 package block
 
+import (
+	"time"
+)
+
 // DeepCopy generates a deep copy of *DiskSMARTConfigV1Alpha1.
 func (o *DiskSMARTConfigV1Alpha1) DeepCopy() *DiskSMARTConfigV1Alpha1 {
 	var cp DiskSMARTConfigV1Alpha1 = *o
@@ -34,6 +38,12 @@ func (o *ExistingVolumeConfigV1Alpha1) DeepCopy() *ExistingVolumeConfigV1Alpha1 
 			cp.TrimSpec.TrimEnabled = new(bool)
 			*cp.TrimSpec.TrimEnabled = *o.TrimSpec.TrimEnabled
 		}
+		cp.TrimSpec.TrimChunkSize = o.TrimSpec.TrimChunkSize.DeepCopy()
+		if o.TrimSpec.TrimChunkDelay != nil {
+			cp.TrimSpec.TrimChunkDelay = new(time.Duration)
+			*cp.TrimSpec.TrimChunkDelay = *o.TrimSpec.TrimChunkDelay
+		}
+		cp.TrimSpec.TrimMinLength = o.TrimSpec.TrimMinLength.DeepCopy()
 	}
 	if o.ScrubSpec != nil {
 		cp.ScrubSpec = new(ScrubConfig)
@@ -55,6 +65,8 @@ func (o *FilesystemScrubConfigV1Alpha1) DeepCopy() *FilesystemScrubConfigV1Alpha
 // DeepCopy generates a deep copy of *FilesystemTrimConfigV1Alpha1.
 func (o *FilesystemTrimConfigV1Alpha1) DeepCopy() *FilesystemTrimConfigV1Alpha1 {
 	var cp FilesystemTrimConfigV1Alpha1 = *o
+	cp.TrimChunkSize = o.TrimChunkSize.DeepCopy()
+	cp.TrimMinLength = o.TrimMinLength.DeepCopy()
 	return &cp
 }
 
@@ -257,6 +269,12 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 			cp.TrimSpec.TrimEnabled = new(bool)
 			*cp.TrimSpec.TrimEnabled = *o.TrimSpec.TrimEnabled
 		}
+		cp.TrimSpec.TrimChunkSize = o.TrimSpec.TrimChunkSize.DeepCopy()
+		if o.TrimSpec.TrimChunkDelay != nil {
+			cp.TrimSpec.TrimChunkDelay = new(time.Duration)
+			*cp.TrimSpec.TrimChunkDelay = *o.TrimSpec.TrimChunkDelay
+		}
+		cp.TrimSpec.TrimMinLength = o.TrimSpec.TrimMinLength.DeepCopy()
 	}
 	if o.ScrubSpec != nil {
 		cp.ScrubSpec = new(ScrubConfig)
@@ -398,6 +416,12 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 			cp.TrimSpec.TrimEnabled = new(bool)
 			*cp.TrimSpec.TrimEnabled = *o.TrimSpec.TrimEnabled
 		}
+		cp.TrimSpec.TrimChunkSize = o.TrimSpec.TrimChunkSize.DeepCopy()
+		if o.TrimSpec.TrimChunkDelay != nil {
+			cp.TrimSpec.TrimChunkDelay = new(time.Duration)
+			*cp.TrimSpec.TrimChunkDelay = *o.TrimSpec.TrimChunkDelay
+		}
+		cp.TrimSpec.TrimMinLength = o.TrimSpec.TrimMinLength.DeepCopy()
 	}
 	if o.ScrubSpec != nil {
 		cp.ScrubSpec = new(ScrubConfig)
