@@ -3,6 +3,23 @@ kind: auto.CI
 spec:
   compileGHWorkflowsOnly: true
 ---
+kind: common.Gitattributes
+spec:
+  additionalContent:
+    - "# generated code and reference docs (make generate / make docs), collapsed in reviews"
+    - "*.pb.go linguist-generated=true"
+    - "*_enumer.go linguist-generated=true"
+    - "*.generated.go linguist-generated=true"
+    - "zz_generated.deepcopy.go linguist-generated=true"
+    - "*_doc.go linguist-generated=true"
+    - "api/resource/definitions/**/*.proto linguist-generated=true"
+    - "pkg/machinery/config/schemas/*.schema.json linguist-generated=true"
+    - "website/content/*/reference/api.md linguist-generated=true"
+    - "website/content/*/reference/cli.md linguist-generated=true"
+    - "website/content/*/reference/configuration/*/*.md linguist-generated=true"
+    - "website/content/*/reference/configuration/**/_index.md -linguist-generated"
+    - "website/content/*/schemas/*.schema.json linguist-generated=true"
+---
 kind: common.SOPS
 spec:
   enabled: true
