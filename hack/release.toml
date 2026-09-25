@@ -71,7 +71,7 @@ The built-in listener does not transmit advertisements; use the `lldpd` system e
         description = """\
 Linux: 6.18.53
 Kubernetes: 1.37.0
-containerd: 2.3.5
+containerd: 2.3.6
 CoreDNS: 1.14.7
 systemd-udevd: 262
 

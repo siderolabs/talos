@@ -568,7 +568,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.3.5"
+	DefaultContainerdVersion = "2.3.6"
 
 	// RuncVersion is the runc version.
 	RuncVersion = "1.5.1"
