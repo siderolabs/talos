@@ -68,6 +68,22 @@ If you require IPVS support, you can enable it by loading the following kernel m
 * `xt_ipvs` (nftables/iptables match)
 """
 
+    [notes.NetworkLinkIngressConfig]
+        title = "Allow filtering incoming packets by the destination IP and link"
+        description = """\
+A new NetworkLinkIngressConfig allows filtering incoming packets by link and the destination IP.
+If `destinationAddresses` is left defaults to node addresses.
+Currently does not work with IPv6.
+
+```yaml
+apiVersion: v1alpha1
+kind: NetworkLinkIngressConfig
+name: enp0s2.35
+destinationAddresses:
+    - 1.2.3.4/32
+```
+"""
+
     [notes.lockdown]
         title = "Secure Boot images no longer have lockdown=confidentiality enabled by default"
         description = """\

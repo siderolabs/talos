@@ -5,3 +5,9 @@ enabled: false
 apiVersion: v1alpha1
 kind: KubeFlannelCNIConfig
 $patch: delete
+---
+apiVersion: v1alpha1
+kind: NetworkLinkIngressConfig
+name: net0
+# Cilium KubeProxy replacement is incompatible with the NetworkLinkIngressConfig
+$patch: delete
