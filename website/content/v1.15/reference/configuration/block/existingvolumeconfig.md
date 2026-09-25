@@ -108,6 +108,13 @@ It overrides the global FilesystemTrimConfig for the volume.
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
 |`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
+|`chunkSize` |ByteSize |The size of the filesystem range trimmed at once, overriding the global chunk size.<br><br>Setting it explicitly to zero trims the whole filesystem at once.<br>When set to a non-zero value, the chunk size must be at least 1MiB.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 1GiB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+chunkSize: 1GiB
+{{< /highlight >}}</details> | |
+|`chunkDelay` |Duration |The delay between trimming consecutive chunks, overriding the global chunk delay.<br><br>Setting it explicitly to zero trims the chunks back-to-back.  | |
+|`minLength` |ByteSize |The minimum contiguous free range to discard, overriding the global minimum length.<br><br>The value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 1MiB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+minLength: 1MiB
+{{< /highlight >}}</details> | |
 
 
 

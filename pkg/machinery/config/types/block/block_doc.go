@@ -760,10 +760,35 @@ func (FilesystemTrimConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The interval at which the filesystems are trimmed.\n\nThe trim is performed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that trims are spread out over time.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the filesystems are trimmed." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "chunkSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The size of the filesystem range trimmed at once.\n\nBy default (or when set to zero), the whole filesystem is trimmed at once (same as the `fstrim` command).\nTrimming a large filesystem at once issues discards for all free space back-to-back,\nwhich might cause latency spikes for other workloads using the same disk.\nSetting the chunk size splits the trim into multiple operations, each covering at most\nthe chunk size of the filesystem. When set, the chunk size must be at least 1MiB.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The size of the filesystem range trimmed at once." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "chunkDelay",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The delay between trimming consecutive chunks.\n\nOnly used when the chunk size is set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The delay between trimming consecutive chunks." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minLength",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum contiguous free range to discard.\n\nFree ranges smaller than this value are not discarded, which reduces the number of discard\noperations at the expense of leaving small free ranges untrimmed.\nThe kernel raises the value to the discard granularity of the device.\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum contiguous free range to discard." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleFilesystemTrimConfigV1Alpha1())
+
+	doc.Fields[2].AddExample("", "1GiB")
+	doc.Fields[3].AddExample("", "250ms")
+	doc.Fields[4].AddExample("", "1MiB")
 
 	return doc
 }
@@ -945,8 +970,32 @@ func (TrimConfig) Doc() *encoder.Doc {
 				Description: "The interval at which the volume is trimmed, overriding the global trim interval.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the volume is trimmed, overriding the global trim interval." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "chunkSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The size of the filesystem range trimmed at once, overriding the global chunk size.\n\nSetting it explicitly to zero trims the whole filesystem at once.\nWhen set to a non-zero value, the chunk size must be at least 1MiB.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1GiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The size of the filesystem range trimmed at once, overriding the global chunk size." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "chunkDelay",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The delay between trimming consecutive chunks, overriding the global chunk delay.\n\nSetting it explicitly to zero trims the chunks back-to-back.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The delay between trimming consecutive chunks, overriding the global chunk delay." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minLength",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum contiguous free range to discard, overriding the global minimum length.\n\nThe value cannot exceed 128MiB, as ext4 rejects values larger than the block group size.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 1MiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum contiguous free range to discard, overriding the global minimum length." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
+
+	doc.Fields[2].AddExample("", "1GiB")
+	doc.Fields[4].AddExample("", "1MiB")
 
 	return doc
 }

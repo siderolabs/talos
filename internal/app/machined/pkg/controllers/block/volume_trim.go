@@ -24,12 +24,16 @@ import (
 //
 // It watches VolumeTrimSchedule resources, wakes up when the next scheduled trim is due, and,
 // if the volume is mounted, performs the trim on the mounted filesystem.
+//
+// While the trim is running, the controller holds a finalizer on the MountStatus so the volume
+// is not unmounted mid-trim; if the MountStatus is torn down (the volume is going to be unmounted),
+// the trim is canceled (at the next chunk boundary) and the finalizer is released.
 type VolumeTrimController struct {
-	// TrimFunc performs the trim on the mounted filesystem at the given target path,
-	// defaults to fstrim.Fstrim.
+	// TrimFunc performs the trim on the mounted filesystem at the given target path
+	// with the given options, defaults to fstrim.FstrimChunked.
 	//
 	// It is overridable for testing.
-	TrimFunc func(target string) (uint64, error)
+	TrimFunc func(ctx context.Context, target string, options block.TrimOptionsSpec) (uint64, error)
 
 	// lastTrimmed tracks the most recent trim slot handled per volume ID.
 	//
@@ -37,6 +41,14 @@ type VolumeTrimController struct {
 	// A volume absent from the map has not been observed yet, and its current slot is skipped to
 	// avoid trimming right after (re)start.
 	lastTrimmed map[string]time.Time
+}
+
+func trimFstrim(ctx context.Context, target string, options block.TrimOptionsSpec) (uint64, error) {
+	return fstrim.FstrimChunked(ctx, target, fstrim.Options{
+		ChunkSize: options.ChunkSize,
+		Delay:     options.ChunkDelay,
+		MinLength: options.MinLength,
+	})
 }
 
 // Name implements controller.Controller interface.
@@ -74,7 +86,7 @@ func (ctrl *VolumeTrimController) Run(ctx context.Context, r controller.Runtime,
 	}
 
 	if ctrl.TrimFunc == nil {
-		ctrl.TrimFunc = fstrim.Fstrim
+		ctrl.TrimFunc = trimFstrim
 	}
 
 	timer := time.NewTimer(time.Hour)
@@ -190,7 +202,12 @@ func (ctrl *VolumeTrimController) Run(ctx context.Context, r controller.Runtime,
 				continue
 			}
 
-			if err = ctrl.trim(ctx, r, logger, mountStatus); err != nil {
+			if err = ctrl.trim(ctx, r, logger, mountStatus, schedule.TypedSpec().Options); err != nil {
+				if ctx.Err() != nil {
+					// controller is shutting down, don't touch the remaining schedules
+					return nil
+				}
+
 				return fmt.Errorf("failed to trim volume %q: %w", volumeID, err)
 			}
 		}
@@ -214,7 +231,12 @@ func (ctrl *VolumeTrimController) Run(ctx context.Context, r controller.Runtime,
 
 // trim performs the fstrim on the mounted volume, holding a finalizer on the mount status
 // for the duration of the operation so the volume is not unmounted while being trimmed.
-func (ctrl *VolumeTrimController) trim(ctx context.Context, r controller.Runtime, logger *zap.Logger, mountStatus *block.MountStatus) error {
+//
+// If the mount status enters the tearing down phase while the trim is running, the trim is canceled
+// so the finalizer can be released and the unmount can proceed.
+func (ctrl *VolumeTrimController) trim(
+	ctx context.Context, r controller.Runtime, logger *zap.Logger, mountStatus *block.MountStatus, options block.TrimOptionsSpec,
+) error {
 	volumeID := mountStatus.TypedSpec().Spec.VolumeID
 	target := mountStatus.TypedSpec().Target
 
@@ -234,8 +256,38 @@ func (ctrl *VolumeTrimController) trim(ctx context.Context, r controller.Runtime
 		}
 	}()
 
-	trimmed, err := ctrl.TrimFunc(target)
+	// bind the trim context to the mount status teardown, so the trim is canceled if the volume
+	// is going to be unmounted; the wrapping cancel releases the teardown watch once the trim is done.
+	unmountCtx, unmountCancel := context.WithCancel(ctx)
+	defer unmountCancel()
+
+	unmountCtx, err := r.ContextWithTeardown(unmountCtx, mountStatus.Metadata())
 	if err != nil {
+		return fmt.Errorf("failed to watch mount status %q for teardown: %w", mountStatus.Metadata().ID(), err)
+	}
+
+	start := time.Now()
+
+	trimmed, err := ctrl.TrimFunc(unmountCtx, target, options)
+	if err != nil {
+		if ctx.Err() != nil {
+			// controller is shutting down, the trim will be retried on the next scheduled slot
+			logger.Info("trim interrupted", zap.String("volume", volumeID), zap.String("target", target), zap.String("trimmed", humanize.Bytes(trimmed)))
+
+			return ctx.Err()
+		}
+
+		if unmountCtx.Err() != nil {
+			// the volume is being unmounted, release the finalizer and let the unmount proceed
+			logger.Info("trim interrupted, volume is being unmounted",
+				zap.String("volume", volumeID),
+				zap.String("target", target),
+				zap.String("trimmed", humanize.Bytes(trimmed)),
+			)
+
+			return nil
+		}
+
 		if errors.Is(err, fstrim.ErrNotSupported) {
 			logger.Warn("trim not supported for volume", zap.String("volume", volumeID), zap.String("target", target))
 
@@ -249,6 +301,7 @@ func (ctrl *VolumeTrimController) trim(ctx context.Context, r controller.Runtime
 		zap.String("volume", volumeID),
 		zap.String("target", target),
 		zap.String("trimmed", humanize.Bytes(trimmed)),
+		zap.Duration("duration", time.Since(start)),
 	)
 
 	return nil

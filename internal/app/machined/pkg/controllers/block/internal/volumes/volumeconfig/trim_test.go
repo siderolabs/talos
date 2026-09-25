@@ -15,6 +15,7 @@ import (
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 func TestResolveTrim(t *testing.T) {
@@ -32,6 +33,21 @@ func TestResolveTrim(t *testing.T) {
 		return doc
 	}
 
+	globalDocWithOptions := func() *blockcfg.FilesystemTrimConfigV1Alpha1 {
+		doc := globalDoc()
+		doc.TrimChunkSize = blockcfg.MustByteSize("1GiB")
+		doc.TrimChunkDelay = 250 * time.Millisecond
+		doc.TrimMinLength = blockcfg.MustByteSize("1MiB")
+
+		return doc
+	}
+
+	globalOptions := block.TrimOptionsSpec{
+		ChunkSize:  1024 * 1024 * 1024,
+		ChunkDelay: 250 * time.Millisecond,
+		MinLength:  1024 * 1024,
+	}
+
 	userVolume := func(name string, trim *blockcfg.TrimConfig) *blockcfg.UserVolumeConfigV1Alpha1 {
 		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
 		doc.MetaName = name
@@ -47,6 +63,7 @@ func TestResolveTrim(t *testing.T) {
 
 		expectedEnabled  bool
 		expectedInterval time.Duration
+		expectedOptions  block.TrimOptionsSpec
 	}{
 		{
 			name:      "no config",
@@ -81,6 +98,61 @@ func TestResolveTrim(t *testing.T) {
 			expectedInterval: customInterval,
 		},
 		{
+			name:             "global options",
+			docs:             []configconfig.Document{globalDocWithOptions()},
+			volumeCfg:        userVolume("data", &blockcfg.TrimConfig{TrimInterval: customInterval}),
+			expectedEnabled:  true,
+			expectedInterval: customInterval,
+			expectedOptions:  globalOptions,
+		},
+		{
+			name: "per-volume options override",
+			docs: []configconfig.Document{globalDocWithOptions()},
+			volumeCfg: userVolume("data", &blockcfg.TrimConfig{
+				TrimChunkSize:  blockcfg.MustByteSize("0"),
+				TrimChunkDelay: new(time.Second),
+				TrimMinLength:  blockcfg.MustByteSize("4MiB"),
+			}),
+			expectedEnabled:  true,
+			expectedInterval: globalInterval,
+			expectedOptions: block.TrimOptionsSpec{
+				ChunkSize:  0,
+				ChunkDelay: time.Second,
+				MinLength:  4 * 1024 * 1024,
+			},
+		},
+		{
+			name: "per-volume zero chunk delay overrides global",
+			docs: []configconfig.Document{globalDocWithOptions()},
+			volumeCfg: userVolume("data", &blockcfg.TrimConfig{
+				TrimChunkDelay: new(time.Duration(0)),
+			}),
+			expectedEnabled:  true,
+			expectedInterval: globalInterval,
+			expectedOptions: block.TrimOptionsSpec{
+				ChunkSize:  globalOptions.ChunkSize,
+				ChunkDelay: 0,
+				MinLength:  globalOptions.MinLength,
+			},
+		},
+		{
+			name: "per-volume options without global",
+			volumeCfg: userVolume("data", &blockcfg.TrimConfig{
+				TrimInterval:  customInterval,
+				TrimChunkSize: blockcfg.MustByteSize("512MiB"),
+			}),
+			expectedEnabled:  true,
+			expectedInterval: customInterval,
+			expectedOptions: block.TrimOptionsSpec{
+				ChunkSize: 512 * 1024 * 1024,
+			},
+		},
+		{
+			name:      "disabled with global options",
+			docs:      []configconfig.Document{globalDocWithOptions()},
+			volumeCfg: userVolume("data", &blockcfg.TrimConfig{TrimEnabled: new(false)}),
+		},
+		{
 			name:      "disabled without global is no-op",
 			volumeCfg: userVolume("data", &blockcfg.TrimConfig{TrimEnabled: new(false)}),
 		},
@@ -91,10 +163,11 @@ func TestResolveTrim(t *testing.T) {
 			ctr, err := container.New(tc.docs...)
 			require.NoError(t, err)
 
-			enabled, interval := volumeconfig.ResolveTrim(ctr, tc.volumeCfg)
+			enabled, interval, options := volumeconfig.ResolveTrim(ctr, tc.volumeCfg)
 
 			assert.Equal(t, tc.expectedEnabled, enabled)
 			assert.Equal(t, tc.expectedInterval, interval)
+			assert.Equal(t, tc.expectedOptions, options)
 		})
 	}
 }

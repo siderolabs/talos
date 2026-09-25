@@ -134,10 +134,11 @@ func (b *Builder) WithConvertEncryptionConfiguration(encryption configconfig.Enc
 // WithTrim sets VolumeConfigSpec.Trim.
 func (b *Builder) WithTrim(cfg configconfig.Config, volumeTrimCfg configconfig.VolumeTrimConfigProvider) *Builder {
 	b.opts = append(b.opts, func(spec *block.VolumeConfigSpec) error {
-		enabled, interval := ResolveTrim(cfg, volumeTrimCfg)
+		enabled, interval, options := ResolveTrim(cfg, volumeTrimCfg)
 
 		spec.TrimEnabled = enabled
 		spec.TrimInterval = interval
+		spec.TrimOptions = options
 
 		return nil
 	})

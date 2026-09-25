@@ -364,6 +364,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			// so consumers (e.g. the trim/scrub schedule controllers) don't need to read the volume config.
 			volumeStatus.TypedSpec().TrimEnabled = vc.TypedSpec().TrimEnabled
 			volumeStatus.TypedSpec().TrimInterval = vc.TypedSpec().TrimInterval
+			volumeStatus.TypedSpec().TrimOptions = vc.TypedSpec().TrimOptions
 			volumeStatus.TypedSpec().ScrubEnabled = vc.TypedSpec().ScrubEnabled
 			volumeStatus.TypedSpec().ScrubInterval = vc.TypedSpec().ScrubInterval
 			volumeStatus.TypedSpec().EncryptionAllowDiscards = vc.TypedSpec().Encryption.AllowDiscards

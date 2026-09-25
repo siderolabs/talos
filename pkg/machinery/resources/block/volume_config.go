@@ -54,6 +54,8 @@ type VolumeConfigSpec struct {
 	TrimEnabled bool `yaml:"trimEnabled,omitempty" protobuf:"8"`
 	// TrimInterval is the resolved interval at which the volume should be trimmed.
 	TrimInterval time.Duration `yaml:"trimInterval,omitempty" protobuf:"9"`
+	// TrimOptions are the resolved options of the trim operation.
+	TrimOptions TrimOptionsSpec `yaml:"trimOptions,omitempty" protobuf:"12"`
 
 	// ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule.
 	ScrubEnabled bool `yaml:"scrubEnabled,omitempty" protobuf:"10"`
@@ -67,6 +69,18 @@ const (
 	WaveUserVolumes     = 0
 	WaveLegacyUserDisks = 1000000 // legacy user disks rely on specific order of provisioning
 )
+
+// TrimOptionsSpec is the spec for trim (fstrim) operation options.
+//
+//gotagsrewrite:gen
+type TrimOptionsSpec struct {
+	// ChunkSize is the size of the filesystem range trimmed at once (zero means the whole filesystem).
+	ChunkSize uint64 `yaml:"chunkSize,omitempty" protobuf:"1"`
+	// ChunkDelay is the delay between trimming consecutive chunks.
+	ChunkDelay time.Duration `yaml:"chunkDelay,omitempty" protobuf:"2"`
+	// MinLength is the minimum contiguous free range to discard.
+	MinLength uint64 `yaml:"minLength,omitempty" protobuf:"3"`
+}
 
 // ProvisioningSpec is the spec for volume provisioning.
 //
