@@ -332,6 +332,13 @@ These commands where historically used to generate pieces of Talos PKI, but they
 as `talosctl gen config` and `talosctl gen secrets` now generate all required PKI material automatically.
 """
 
+    [notes.ignore_ctrl_alt_delete]
+        title = "Ignore Ctrl-Alt-Delete"
+        description = """\
+Setting `ignoreCtrlAltDelete: true` in the `SecurityProfileConfig` document makes Talos log and ignore Ctrl-Alt-Delete instead of rebooting the machine.
+Ctrl-Alt-Delete still reboots the machine until a configuration with this option is applied.
+"""
+
 [make_deps]
 
     [make_deps.tools]

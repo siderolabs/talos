@@ -6,12 +6,16 @@
 package v1alpha1
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
@@ -23,6 +27,9 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 )
 
 type mockSequencer struct {
@@ -216,6 +223,119 @@ func TestRun(t *testing.T) {
 			defer sequencer.callsMu.Unlock()
 
 			assert.Equal(1, sequencer.calls[tt.to])
+		})
+	}
+}
+
+func TestListenForSignalsCtrlAltDelete(t *testing.T) {
+	securityProfile := func(ignoreCtrlAltDelete *bool) []config.Document {
+		doc := runtimecfg.NewSecurityProfileConfigV1Alpha1()
+		doc.IgnoreCtrlAltDeleteEnabled = ignoreCtrlAltDelete
+
+		return []config.Document{doc}
+	}
+
+	tests := []struct {
+		name       string
+		configured bool
+		documents  []config.Document
+		signals    []os.Signal
+
+		expectedReboots   int
+		expectedShutdowns int
+		expectedIgnored   int
+	}{
+		{
+			name:            "no config",
+			signals:         []os.Signal{syscall.SIGINT},
+			expectedReboots: 1,
+		},
+		{
+			name:            "no security profile",
+			configured:      true,
+			signals:         []os.Signal{syscall.SIGINT},
+			expectedReboots: 1,
+		},
+		{
+			name:            "not set",
+			configured:      true,
+			documents:       securityProfile(nil),
+			signals:         []os.Signal{syscall.SIGINT},
+			expectedReboots: 1,
+		},
+		{
+			name:            "disabled",
+			configured:      true,
+			documents:       securityProfile(new(false)),
+			signals:         []os.Signal{syscall.SIGINT},
+			expectedReboots: 1,
+		},
+		{
+			name:              "enabled",
+			configured:        true,
+			documents:         securityProfile(new(true)),
+			signals:           []os.Signal{syscall.SIGINT, syscall.SIGINT, syscall.SIGTERM},
+			expectedShutdowns: 1,
+			expectedIgnored:   2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("PLATFORM", "container")
+
+			prevLogOutput := log.Writer()
+
+			t.Cleanup(func() { log.SetOutput(prevLogOutput) })
+
+			logOutput := &bytes.Buffer{}
+			log.SetOutput(logOutput)
+
+			s, err := NewState()
+			require.NoError(t, err)
+
+			sequencer := &mockSequencer{
+				calls:  map[runtime.Sequence]int{},
+				phases: map[runtime.Sequence]PhaseList{},
+			}
+
+			for _, seq := range []runtime.Sequence{runtime.SequenceReboot, runtime.SequenceShutdown} {
+				sequencer.phases[seq] = sequencer.phases[seq].Append(seq.String(), sequencer.trackCall(seq.String(), nil))
+			}
+
+			l := logging.NewCircularBufferLoggingManager(log.New(os.Stdout, "machined fallback logger: ", log.Flags()))
+
+			controller := Controller{
+				r:            NewRuntime(s, NewEvents(1000, 10), l),
+				s:            sequencer,
+				priorityLock: NewPriorityLock[runtime.Sequence](),
+			}
+
+			if tt.configured {
+				cfg, err := container.New(tt.documents...)
+				require.NoError(t, err)
+
+				require.NoError(t, controller.r.SetConfig(cfg))
+			}
+
+			sigs := make(chan os.Signal, len(tt.signals))
+
+			for _, sig := range tt.signals {
+				sigs <- sig
+			}
+
+			// listenForSignals ignores the passed signals on return, so pass one the test doesn't care about
+			t.Cleanup(func() { signal.Reset(syscall.SIGUSR2) })
+
+			controller.listenForSignals(t.Context(), sigs, []os.Signal{syscall.SIGUSR2})
+
+			sequencer.callsMu.Lock()
+			defer sequencer.callsMu.Unlock()
+
+			assert.Equal(t, tt.expectedReboots, sequencer.calls[runtime.SequenceReboot])
+			assert.Equal(t, tt.expectedShutdowns, sequencer.calls[runtime.SequenceShutdown])
+			assert.Equal(t, tt.expectedIgnored, strings.Count(logOutput.String(), "Ctrl-Alt-Delete ignored as per SecurityProfileConfig"))
+			assert.Empty(t, sigs)
 		})
 	}
 }

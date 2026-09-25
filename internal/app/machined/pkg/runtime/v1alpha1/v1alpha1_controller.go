@@ -232,6 +232,12 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 func (c *Controller) listenForSignals(ctx context.Context, sigs chan os.Signal, allSignals []os.Signal) {
 	sig := <-sigs
 
+	for sig == syscall.SIGINT && c.ignoreCtrlAltDelete() {
+		log.Printf("Ctrl-Alt-Delete ignored as per SecurityProfileConfig")
+
+		sig = <-sigs
+	}
+
 	switch sig {
 	case syscall.SIGTERM:
 		// in container mode, SIGTERM is used to signal container shutdown
@@ -255,6 +261,17 @@ func (c *Controller) listenForSignals(ctx context.Context, sigs chan os.Signal, 
 
 	// ignore further signals, since we are already shutting down or rebooting
 	signal.Ignore(allSignals...)
+}
+
+func (c *Controller) ignoreCtrlAltDelete() bool {
+	cfg := c.r.Config()
+	if cfg == nil {
+		return false
+	}
+
+	securityProfile := cfg.SecurityProfileConfig()
+
+	return securityProfile != nil && securityProfile.IgnoreCtrlAltDelete()
 }
 
 func (c *Controller) listenForACPI(ctx context.Context) error {
