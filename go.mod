@@ -58,7 +58,7 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/containerd/containerd/api v1.11.1
-	github.com/containerd/containerd/v2 v2.3.5
+	github.com/containerd/containerd/v2 v2.3.6
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/log v0.1.0
 	github.com/containerd/platforms v1.0.0-rc.5
@@ -196,6 +196,7 @@ require (
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.140.0
+	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	sigs.k8s.io/hydrophone v0.7.0
 	sigs.k8s.io/yaml v1.6.0
@@ -428,7 +429,6 @@ require (
 	k8s.io/cli-runtime v0.37.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/streaming v0.37.0 // indirect
-	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.78 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/controller-runtime v0.24.1 // indirect
