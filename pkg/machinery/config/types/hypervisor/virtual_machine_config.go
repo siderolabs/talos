@@ -38,6 +38,7 @@ var (
 	_ config.VirtualMachineConfig           = &VirtualMachineConfigV1Alpha1{}
 	_ config.NamedDocument                  = &VirtualMachineConfigV1Alpha1{}
 	_ config.Validator                      = &VirtualMachineConfigV1Alpha1{}
+	_ config.SecretDocument                 = &VirtualMachineConfigV1Alpha1{}
 	_ config.VirtualMachineCPUConfig        = &VirtualMachineCPU{}
 	_ config.VirtualMachineMemoryConfig     = &VirtualMachineMemory{}
 	_ config.VirtualMachineBallooningConfig = &VirtualMachineBallooning{}
@@ -108,6 +109,11 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//
 	//     Optional; a virtual machine with no interfaces has no network connectivity at all.
 	NetworkingConfig VirtualMachineNetworking `yaml:"networking,omitempty"`
+	//   description: |
+	//     Settings which apply inside the guest.
+	//
+	//     Optional; omitting it leaves the guest to boot its image unmodified.
+	GuestConfig VirtualMachineGuest `yaml:"guest,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest.
@@ -239,6 +245,15 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 			VNCEnabled: new(true),
 		},
 	}
+	cfg.GuestConfig = VirtualMachineGuest{
+		CloudInitConfig: &VirtualMachineCloudInit{
+			MetaDataConfig: "instance-id: vm1-001\nlocal-hostname: vm1\n",
+			UserDataConfig: "#cloud-config\nusers:\n  - name: op\n    ssh_authorized_keys:\n      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...\n",
+		},
+		AgentConfig: &VirtualMachineAgent{
+			AgentEnabled: new(true),
+		},
+	}
 
 	return cfg
 }
@@ -321,9 +336,26 @@ func (c *VirtualMachineConfigV1Alpha1) Networking() config.VirtualMachineNetwork
 	return &c.NetworkingConfig
 }
 
+// Guest implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Guest() config.VirtualMachineGuestConfig {
+	return &c.GuestConfig
+}
+
+// Redact implements config.SecretDocument interface.
+//
+// Only the guest's `user-data` is redacted: it is where SSH keys, passwords and join tokens end up.
+// `meta-data` and `network-config` carry identity and addressing, which are not secrets, and are
+// more useful left readable in a support bundle.
+func (c *VirtualMachineConfigV1Alpha1) Redact(replacement string) {
+	c.GuestConfig.Redact(replacement)
+}
+
 // Validate implements config.Validator interface.
 func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	var validationErrors error
+	var (
+		validationErrors error
+		warnings         []string //nolint:prealloc
+	)
 
 	validationErrors = errors.Join(validationErrors, c.ValidateName())
 	validationErrors = errors.Join(validationErrors, c.ValidatePowerState())
@@ -333,7 +365,12 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	validationErrors = errors.Join(validationErrors, c.ValidateDisks())
 	validationErrors = errors.Join(validationErrors, c.ValidateNetworking())
 
-	return nil, validationErrors
+	guestWarnings, guestErrors := c.ValidateGuest()
+	validationErrors = errors.Join(validationErrors, guestErrors)
+
+	warnings = append(warnings, guestWarnings...)
+
+	return warnings, validationErrors
 }
 
 // ValidateName checks the virtual machine name.
@@ -447,4 +484,9 @@ func (c *VirtualMachineConfigV1Alpha1) ValidatePowerState() error {
 	}
 
 	return nil
+}
+
+// ValidateGuest checks the settings which apply inside the guest.
+func (c *VirtualMachineConfigV1Alpha1) ValidateGuest() ([]string, error) {
+	return c.GuestConfig.validate()
 }
