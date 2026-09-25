@@ -45,6 +45,7 @@ type Config struct {
 	// AppendBootPartitionUUID makes GRUB probe the partition it was loaded from (BOOT) and pass its UUID
 	// to the kernel via the `talos.boot.partuuid` argument.
 	AppendBootPartitionUUID bool
+	Timeout                 *uint
 }
 
 // MenuEntry represents a grub menu entry in the grub config file.
