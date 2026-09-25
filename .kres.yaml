@@ -103,6 +103,7 @@ spec:
     integration/qemu-default: "Run QEMU integration tests on default variant"
     integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
     integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
+    integration/qemu-hypervisor-libvirt: "Run libvirt domain integration tests on QEMU Talos"
     integration/qemu-md-boot: "Run QEMU integration tests on an MD RAID1 boot array"
     integration/qemu-race: "Run QEMU integration tests with the race detector"
     integration/qemu-13: "Run QEMU integration tests with Talos version contract v1.13"
@@ -1458,6 +1459,68 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-hypervisor
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-qemu-hypervisor-libvirt
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      triggerLabels:
+        - integration/qemu-hypervisor-libvirt
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: libvirtd extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/amd64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: installer extensions
+          command: installer-with-extensions
+          environment:
+            EXTENSIONS_FILTER_COMMAND: "grep -E '/libvirtd:'"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-qemu-hypervisor-libvirt
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-hypervisor-libvirt
+            QEMU_CONTROLPLANES: 1
+            QEMU_WORKERS: 0
+            QEMU_EXTRA_DISKS: 1
+            QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
+            WITH_SKIP_ETCD_K8S: true
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt
+            TEST_MODE: skip-etcd-k8s
+            INTEGRATION_TEST_RUN: TestIntegration/hypervisor.LibvirtSuite
+            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-hypervisor-libvirt
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
