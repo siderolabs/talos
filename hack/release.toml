@@ -99,6 +99,16 @@ which are known to be unreachable from a node (e.g., addresses of a private netw
 endpoint rotation never attempts them.
 """
 
+    [notes.trim_chunks]
+        title = "Filesystem Trim Chunking"
+        description = """\
+The `FilesystemTrimConfig` document (and the per-volume `trim` settings) now support `chunkSize`, `chunkDelay` and `minLength` options.
+
+By default, the whole filesystem is trimmed at once (same as the `fstrim` command), which issues discards for all free space back-to-back
+and might cause latency spikes for other workloads on the same disk (e.g. etcd).
+Setting `chunkSize` splits the trim into multiple operations with `chunkDelay` in between, while `minLength` skips free ranges smaller than the specified size.
+"""
+
     [notes.ipvs]
         title = "IPVS Support"
         description = """\

@@ -294,6 +294,12 @@ type FilesystemTrimConfig interface {
 	FilesystemTrimConfigSignal()
 	// Interval returns the global trim interval for filesystems which support trimming.
 	Interval() time.Duration
+	// ChunkSize returns the size of the filesystem range trimmed at once (zero means the whole filesystem).
+	ChunkSize() uint64
+	// ChunkDelay returns the delay between trimming consecutive chunks.
+	ChunkDelay() time.Duration
+	// MinLength returns the minimum contiguous free range to discard.
+	MinLength() uint64
 }
 
 // DiskSMARTConfig defines the interface to access disk SMART monitoring configuration.
@@ -323,6 +329,12 @@ type VolumeTrimConfig interface {
 	Enabled() optional.Optional[bool]
 	// Interval returns the trim interval for the volume (if explicitly set), overriding the global interval.
 	Interval() optional.Optional[time.Duration]
+	// ChunkSize returns the trim chunk size for the volume (if explicitly set), overriding the global chunk size.
+	ChunkSize() optional.Optional[uint64]
+	// ChunkDelay returns the delay between trim chunks for the volume (if explicitly set), overriding the global delay.
+	ChunkDelay() optional.Optional[time.Duration]
+	// MinLength returns the minimum discard length for the volume (if explicitly set), overriding the global minimum length.
+	MinLength() optional.Optional[uint64]
 }
 
 // FilesystemScrubConfig defines the interface to access global filesystem scrub configuration.

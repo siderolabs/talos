@@ -118,6 +118,7 @@ func (ctrl *VolumeTrimScheduleController) Run(ctx context.Context, r controller.
 				volumeID := volumeStatus.Metadata().ID()
 				interval := volumeStatus.TypedSpec().TrimInterval
 				filesystem := volumeStatus.TypedSpec().Filesystem
+				options := volumeStatus.TypedSpec().TrimOptions
 
 				// salt the schedule with the node ID so different nodes trim at different times.
 				nextTrim := block.NextScheduledTime(nodeID+"/"+volumeID, interval, now)
@@ -131,6 +132,7 @@ func (ctrl *VolumeTrimScheduleController) Run(ctx context.Context, r controller.
 						schedule.TypedSpec().Filesystem = filesystem
 						schedule.TypedSpec().Interval = interval
 						schedule.TypedSpec().NextTrim = nextTrim
+						schedule.TypedSpec().Options = options
 
 						return nil
 					},

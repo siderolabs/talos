@@ -63,8 +63,16 @@ func (suite *VolumeTrimScheduleSuite) createVolumeStatus(id string, mutate func(
 func (suite *VolumeTrimScheduleSuite) TestEligibility() {
 	suite.createIdentity()
 
+	trimOptions := block.TrimOptionsSpec{
+		ChunkSize:  1024 * 1024 * 1024,
+		ChunkDelay: 250 * time.Millisecond,
+		MinLength:  1024 * 1024,
+	}
+
 	// eligible: ready partition with xfs, trim enabled
-	suite.createVolumeStatus(constants.EphemeralPartitionLabel, nil)
+	suite.createVolumeStatus(constants.EphemeralPartitionLabel, func(spec *block.VolumeStatusSpec) {
+		spec.TrimOptions = trimOptions
+	})
 
 	// not eligible: trim disabled
 	suite.createVolumeStatus("trim-disabled", func(spec *block.VolumeStatusSpec) {
@@ -87,6 +95,7 @@ func (suite *VolumeTrimScheduleSuite) TestEligibility() {
 		asrt.Equal(testTrimInterval, schedule.TypedSpec().Interval)
 		asrt.True(schedule.TypedSpec().NextTrim.After(now), "next trim should be in the future")
 		asrt.True(schedule.TypedSpec().NextTrim.Before(now.Add(testTrimInterval).Add(time.Second)), "next trim should be within one interval")
+		asrt.Equal(trimOptions, schedule.TypedSpec().Options)
 	})
 
 	ctest.AssertNoResource[*block.VolumeTrimSchedule](suite, "trim-disabled")

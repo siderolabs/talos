@@ -1520,6 +1520,17 @@ const (
 	// The default value is 1 week.
 	DefaultFilesystemTrimInterval = 7 * 24 * time.Hour
 
+	// FilesystemTrimMinChunkSize is the minimum allowed filesystem trim chunk size (when chunking is enabled).
+	//
+	// The kernel rejects trim ranges smaller than the filesystem block size, so 1MiB is a safe lower bound
+	// for any supported filesystem block size.
+	FilesystemTrimMinChunkSize = 1024 * 1024
+
+	// FilesystemTrimMaxMinLength is the maximum allowed filesystem trim minimum length.
+	//
+	// ext4 rejects minimum length values larger than the block group size (128MiB with 4KiB blocks).
+	FilesystemTrimMaxMinLength = 128 * 1024 * 1024
+
 	// TaintEffectNoSchedule is the taint effect for NoSchedule.
 	//
 	// Vendored here to avoid pulling in k8s.io.

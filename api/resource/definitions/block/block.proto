@@ -352,6 +352,16 @@ message TPMEncryptionOptionsInfo {
   repeated int64 pub_key_pc_rs = 2;
 }
 
+// TrimOptionsSpec is the spec for trim (fstrim) operation options.
+message TrimOptionsSpec {
+  // ChunkSize is the size of the filesystem range trimmed at once (zero means the whole filesystem).
+  uint64 chunk_size = 1;
+  // ChunkDelay is the delay between trimming consecutive chunks.
+  google.protobuf.Duration chunk_delay = 2;
+  // MinLength is the minimum contiguous free range to discard.
+  uint64 min_length = 3;
+}
+
 // UserDiskConfigStatusSpec is the spec for UserDiskConfigStatus resource.
 message UserDiskConfigStatusSpec {
   bool ready = 1;
@@ -382,6 +392,8 @@ message VolumeConfigSpec {
   bool scrub_enabled = 10;
   // ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
   google.protobuf.Duration scrub_interval = 11;
+  // TrimOptions are the resolved options of the trim operation.
+  TrimOptionsSpec trim_options = 12;
 }
 
 // VolumeMountRequestSpec is the spec for VolumeMountRequest.
@@ -453,6 +465,8 @@ message VolumeStatusSpec {
   bool scrub_enabled = 26;
   // ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
   google.protobuf.Duration scrub_interval = 27;
+  // TrimOptions are the resolved options of the trim operation.
+  TrimOptionsSpec trim_options = 28;
 }
 
 // VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
@@ -463,6 +477,8 @@ message VolumeTrimScheduleSpec {
   google.protobuf.Duration interval = 2;
   // NextTrim is the next scheduled trim time for the volume.
   google.protobuf.Timestamp next_trim = 3;
+  // Options are the options of the trim operation.
+  TrimOptionsSpec options = 4;
 }
 
 // ZswapStatusSpec is the spec for ZswapStatus resource.
