@@ -1,7 +1,11 @@
 <domain type="kvm">
-  <name>guest/&amp;&lt;雪&gt;&#x9;&#xD;🙂</name>
+  <name>guest-one</name>
   <memory unit="bytes">4294967296</memory>
   <vcpu>3</vcpu>
+  <cputune>
+    <global_period>100000</global_period>
+    <global_quota>250000</global_quota>
+  </cputune>
   <resource>
     <partition>/virtualmachines.partition</partition>
   </resource>

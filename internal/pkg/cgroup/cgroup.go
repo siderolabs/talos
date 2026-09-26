@@ -238,6 +238,14 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupTalosContainersMillicores))),
 			},
 		}
+	case constants.CgroupVirtualMachines:
+		// Same reasoning as taloscontainers: guest workloads, so a weight against the other roots but no
+		// reservation. libvirt creates the per-domain consumer cgroups below this partition itself.
+		return &cgroup2.Resources{
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupVirtualMachinesMillicores))),
+			},
+		}
 	}
 
 	return &cgroup2.Resources{}

@@ -168,6 +168,21 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "cpu limit",
+			filename: "virtualmachineconfig_cpulimit.yaml",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
+				c.MetaName = "vm3"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+				c.CPUConfig.CPUCount = 4
+				c.CPUConfig.CPULimit = "3000m"
+				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
+
+				return c
+			},
+		},
+		{
 			name:     "minimal",
 			filename: "virtualmachineconfig_minimal.yaml",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
@@ -613,6 +628,81 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 
 			expectedErrors: "networking.interfaces[0]: link is required\n" +
 				"networking.interfaces[1]: duplicate interface name \"net0\"",
+		},
+		{
+			name: "cpu limit without millicores",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPULimit = "2"
+
+				return c
+			},
+
+			expectedErrors: `cpu.limit "2" must be expressed in millicores, e.g. 1500m`,
+		},
+		{
+			name: "zero cpu limit",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPULimit = "0m"
+
+				return c
+			},
+
+			expectedErrors: `cpu.limit "0m" must be greater than zero`,
+		},
+		{
+			name: "cpu limit below minimum",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPULimit = "9m"
+
+				return c
+			},
+
+			expectedErrors: "cpu.limit must be between 10 and 175921860444 millicores",
+		},
+		{
+			name: "minimum cpu limit",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPULimit = "10m"
+
+				return c
+			},
+		},
+		{
+			name: "maximum cpu limit",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPULimit = "175921860444m"
+
+				return c
+			},
+		},
+		{
+			name: "cpu limit above maximum",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPULimit = "175921860445m"
+
+				return c
+			},
+
+			expectedErrors: "cpu.limit must be between 10 and 175921860444 millicores",
+		},
+		{
+			name: "missing cpu count with invalid cpu limit",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPUCount = 0
+				c.CPUConfig.CPULimit = "2"
+
+				return c
+			},
+
+			expectedErrors: "cpu.count is required\n" +
+				`cpu.limit "2" must be expressed in millicores, e.g. 1500m`,
 		},
 		{
 			name: "valid",

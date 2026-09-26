@@ -84,6 +84,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 	doc.CPUConfig = hypervisorcfg.VirtualMachineCPU{
 		CPUCount: 3,
+		CPULimit: "2500m",
 	}
 	doc.MemoryConfig = hypervisorcfg.VirtualMachineMemory{
 		MemorySize: meta.MustByteSize("4GiB"),
@@ -91,7 +92,6 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 			BallooningEnabled: new(true),
 		},
 	}
-
 	created, err := container.New(append(slices.Clone(original.Documents()), doc)...)
 	suite.Require().NoError(err)
 	suite.validateVirtualMachineConfig(created, doc)
@@ -104,6 +104,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 	// the previously enabled ballooning section, not preserve it as a merge patch would.
 	doc = doc.DeepCopy()
 	doc.CPUConfig.CPUCount = 1
+	doc.CPUConfig.CPULimit = ""
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("512MiB")
 	doc.MemoryConfig.BallooningConfig = nil
 	suite.Require().Equal(hypervisorhelpers.PowerStateStopped, doc.PowerStateConfig)
@@ -145,6 +146,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 		},
 		CPU: hypervisor.VirtualMachineCPUSpec{
 			Count: 3,
+			Limit: 2500,
 		},
 		Memory: hypervisor.VirtualMachineMemorySpec{
 			Size: 4 * 1024 * 1024 * 1024,

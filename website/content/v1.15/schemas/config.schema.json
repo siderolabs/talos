@@ -2324,6 +2324,13 @@
           "description": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.\n",
           "markdownDescription": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.",
           "x-intellij-html-description": "\u003cp\u003eNumber of virtual CPUs presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.\u003c/p\u003e\n"
+        },
+        "limit": {
+          "type": "string",
+          "title": "limit",
+          "description": "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain’s global CFS quota.\n\n1000m is one host core. The ceiling is independent of count: a guest with four\nvCPUs and a 2000m ceiling sees four processors but is scheduled for at most two cores\nof host time.\n\nOptional; omitting it leaves the virtual machine bounded only by its vCPU count.\n",
+          "markdownDescription": "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain's global CFS quota.\n\n`1000m` is one host core. The ceiling is independent of `count`: a guest with four\nvCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores\nof host time.\n\nOptional; omitting it leaves the virtual machine bounded only by its vCPU count.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain\u0026rsquo;s global CFS quota.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003e1000m\u003c/code\u003e is one host core. The ceiling is independent of \u003ccode\u003ecount\u003c/code\u003e: a guest with four\nvCPUs and a \u003ccode\u003e2000m\u003c/code\u003e ceiling sees four processors but is scheduled for at most two cores\nof host time.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves the virtual machine bounded only by its vCPU count.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2331,7 +2338,7 @@
       "required": [
         "count"
       ],
-      "description": "VirtualMachineCPU describes the processors presented to the guest."
+      "description": "VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.\\n\\nThere is deliberately no matching memory ceiling. Guest memory is already fixed by `memory.size`,\\nand libvirt advises against a QEMU memory hard limit: the emulator's own footprint over guest RAM\\nis not predictable, and a limit guessed too low has the kernel kill the virtual machine.\\n"
     },
     "hypervisor.VirtualMachineConfigV1Alpha1": {
       "properties": {

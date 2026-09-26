@@ -151,8 +151,8 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 func (VirtualMachineCPU) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineCPU",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineCPU describes the processors presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineCPU describes the processors presented to the guest.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineCPU describes the processors presented to the guest and the host time they may consume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.\n\nThere is deliberately no matching memory ceiling. Guest memory is already fixed by `memory.size`,\nand libvirt advises against a QEMU memory hard limit: the emulator's own footprint over guest RAM\nis not predictable, and a limit guessed too low has the kernel kill the virtual machine.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VirtualMachineConfigV1Alpha1",
@@ -167,10 +167,18 @@ func (VirtualMachineCPU) Doc() *encoder.Doc {
 				Description: "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of virtual CPUs presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "limit",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain's global CFS quota.\n\n`1000m` is one host core. The ceiling is independent of `count`: a guest with four\nvCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores\nof host time.\n\nOptional; omitting it leaves the virtual machine bounded only by its vCPU count.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", 4)
+	doc.Fields[1].AddExample("", "3000m")
 
 	return doc
 }

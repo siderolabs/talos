@@ -83,11 +83,13 @@ type VirtualMachineDiskFromImageSpec struct {
 	Mode    string `yaml:"mode" protobuf:"4"`
 }
 
-// VirtualMachineCPUSpec describes the desired virtual CPUs.
+// VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 //
 //gotagsrewrite:gen
 type VirtualMachineCPUSpec struct {
 	Count uint32 `yaml:"count" protobuf:"1"`
+	// Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited.
+	Limit uint64 `yaml:"limit,omitempty" protobuf:"2"`
 }
 
 // VirtualMachineMemorySpec describes the desired guest memory.

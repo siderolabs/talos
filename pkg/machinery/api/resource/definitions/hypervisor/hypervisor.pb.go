@@ -97,10 +97,12 @@ func (x *ContentLibraryStatusSpec) GetError() string {
 	return ""
 }
 
-// VirtualMachineCPUSpec describes the desired virtual CPUs.
+// VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 type VirtualMachineCPUSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Count         uint32                 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Count uint32                 `protobuf:"varint,1,opt,name=count,proto3" json:"count,omitempty"`
+	// Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited.
+	Limit         uint64 `protobuf:"varint,2,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -138,6 +140,13 @@ func (*VirtualMachineCPUSpec) Descriptor() ([]byte, []int) {
 func (x *VirtualMachineCPUSpec) GetCount() uint32 {
 	if x != nil {
 		return x.Count
+	}
+	return 0
+}
+
+func (x *VirtualMachineCPUSpec) GetLimit() uint64 {
+	if x != nil {
+		return x.Limit
 	}
 	return 0
 }
@@ -712,9 +721,10 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x14\n" +
 	"\x05ready\x18\x03 \x01(\bR\x05ready\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"-\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"C\n" +
 	"\x15VirtualMachineCPUSpec\x12\x14\n" +
-	"\x05count\x18\x01 \x01(\rR\x05count\"E\n" +
+	"\x05count\x18\x01 \x01(\rR\x05count\x12\x14\n" +
+	"\x05limit\x18\x02 \x01(\x04R\x05limit\"E\n" +
 	"\x19VirtualMachineConsoleSpec\x12\x16\n" +
 	"\x06serial\x18\x01 \x01(\bR\x06serial\x12\x10\n" +
 	"\x03vnc\x18\x02 \x01(\bR\x03vnc\"{\n" +

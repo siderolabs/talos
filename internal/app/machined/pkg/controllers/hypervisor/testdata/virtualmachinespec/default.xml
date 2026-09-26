@@ -2,6 +2,9 @@
   <name>guest-one</name>
   <memory unit="bytes">4294967296</memory>
   <vcpu>3</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
   <os firmware="efi">
     <type>hvm</type>
     <firmware>
