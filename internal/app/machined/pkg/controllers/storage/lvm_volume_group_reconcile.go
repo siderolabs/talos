@@ -25,11 +25,19 @@ type LVMProvisioner interface {
 	PVCreate(ctx context.Context, device string) error
 	VGCreate(ctx context.Context, vg string, pvs ...string) error
 	VGExtend(ctx context.Context, vg string, pvs ...string) error
+	VGChangeActivate(ctx context.Context, vg string) error
 }
 
-// LVMVolumeGroupReconcileController applies PV/VG state.
+// LVMVolumeGroupReconcileController applies PV/VG state, and keeps managed
+// VGs activated.
 //
-// Additive only. Destructive ops go through LVMService wipe RPCs.
+// Additive only in every other sense: existing PVs/VGs are left alone,
+// nothing is resized or removed. Destructive ops go through LVMService wipe
+// RPCs. Activation is the one exception - vgcreate activates a brand new
+// VG's LVs as a side effect, but an already-existing VG (e.g. found already
+// assembled across a reboot) is not activated by anything else, so this
+// controller re-asserts activation on every reconcile regardless of whether
+// it just created/extended the VG or found it already fully assembled.
 type LVMVolumeGroupReconcileController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          LVMProvisioner
@@ -183,23 +191,43 @@ func (ctrl *LVMVolumeGroupReconcileController) reconcileVG(
 		if err := ctrl.LVM.VGCreate(ctx, spec.Name, spec.PhysicalVolumes...); err != nil && !errors.Is(err, lvm.ErrExists) {
 			return fmt.Errorf("vgcreate %q: %w", spec.Name, err)
 		}
+	} else if missing := devicesMissingFromVG(spec.PhysicalVolumes, observedPVByDevice, observedVG.TypedSpec().Name); len(missing) > 0 {
+		logger.Info(
+			"extending LVM volume group",
+			zap.String("vg", spec.Name),
+			zap.Strings("devices", missing),
+		)
 
-		return nil
+		if err := ctrl.LVM.VGExtend(ctx, spec.Name, missing...); err != nil && !errors.Is(err, lvm.ErrExists) {
+			return fmt.Errorf("vgextend %q: %w", spec.Name, err)
+		}
 	}
 
-	missing := devicesMissingFromVG(spec.PhysicalVolumes, observedPVByDevice, observedVG.TypedSpec().Name)
-	if len(missing) == 0 {
-		return nil
-	}
+	return ctrl.ensureActive(ctx, logger, spec.Name)
+}
 
-	logger.Info(
-		"extending LVM volume group",
-		zap.String("vg", spec.Name),
-		zap.Strings("devices", missing),
-	)
+// ensureActive activates the VG via the same vgchange -aay --autoactivation
+// event call LVMActivationController uses for foreign VGs. vgcreate
+// activates a brand new VG's LVs as a side effect, but nothing else brings
+// a Talos-managed VG back up across a reboot: when the VG/PVs already exist
+// exactly as declared, nothing above this point in reconcileVG is
+// "missing", so this is the only step that runs at all in that case.
+//
+// Called unconditionally on every reconcile (idempotent, and cheap once
+// steady state is reached - vgchange -aay is a no-op when everything
+// eligible is already active), rather than gated on some remembered
+// "already activated" state, so a VG that goes inactive for any reason
+// (e.g. a foreign tool deactivated it) gets reactivated on the next event
+// too.
+func (ctrl *LVMVolumeGroupReconcileController) ensureActive(ctx context.Context, logger *zap.Logger, vgName string) error {
+	if err := ctrl.LVM.VGChangeActivate(ctx, vgName); err != nil {
+		if errors.Is(err, exec.ErrNotFound) {
+			logger.Warn("lvm binary not found; skipping LVM provisioning")
 
-	if err := ctrl.LVM.VGExtend(ctx, spec.Name, missing...); err != nil && !errors.Is(err, lvm.ErrExists) {
-		return fmt.Errorf("vgextend %q: %w", spec.Name, err)
+			return nil
+		}
+
+		return fmt.Errorf("activate vg %q: %w", vgName, err)
 	}
 
 	return nil

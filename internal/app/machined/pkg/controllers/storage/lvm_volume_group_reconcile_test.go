@@ -31,6 +31,7 @@ type fakeProvisioner struct {
 	pvCreates map[string]struct{}
 	vgCreates map[string][]string
 	vgExtends map[string]map[string]struct{}
+	activated map[string]int
 
 	pvCreateErr   error
 	vgCreateErr   error
@@ -43,6 +44,7 @@ func newFakeProvisioner() *fakeProvisioner {
 		pvCreates: map[string]struct{}{},
 		vgCreates: map[string][]string{},
 		vgExtends: map[string]map[string]struct{}{},
+		activated: map[string]int{},
 	}
 }
 
@@ -82,6 +84,22 @@ func (f *fakeProvisioner) VGExtend(_ context.Context, vg string, pvs ...string) 
 	}
 
 	return f.vgExtendErr
+}
+
+func (f *fakeProvisioner) VGChangeActivate(_ context.Context, vg string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.activated[vg]++
+
+	return nil
+}
+
+func (f *fakeProvisioner) activatedCount(vg string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.activated[vg]
 }
 
 func (f *fakeProvisioner) pvCreated() []string {
@@ -150,6 +168,7 @@ func (f *fakeProvisioner) reset() {
 	f.pvCreates = map[string]struct{}{}
 	f.vgCreates = map[string][]string{}
 	f.vgExtends = map[string]map[string]struct{}{}
+	f.activated = map[string]int{}
 	f.pvCreateCalls = 0
 	f.pvCreateErr = nil
 	f.vgCreateErr = nil
@@ -252,6 +271,51 @@ func (suite *LVMVolumeGroupReconcileSuite) TestNoOpWhenObservedMatchesDesired() 
 
 	_, vgCreated := suite.provisioner.vgCreated()
 	suite.Assert().False(vgCreated)
+}
+
+// TestActivatesWhenAlreadyAssembled is the actual reported regression: a VG
+// found already fully assembled (as it would be across a reboot - PVs and
+// VG both already present exactly as declared) still gets an activation
+// call. Before this, "additive only" meant nothing was missing here, so
+// nothing ever called an activation command at all.
+func (suite *LVMVolumeGroupReconcileSuite) TestActivatesWhenAlreadyAssembled() {
+	suite.createPVStatus("nvme0n1", "/dev/nvme0n1", testVGName)
+	suite.createPVStatus("nvme1n1", "/dev/nvme1n1", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/nvme0n1", "/dev/nvme1n1")
+
+	suite.eventually(func() bool {
+		return suite.provisioner.activatedCount(testVGName) > 0
+	})
+
+	// Still additive otherwise: no pvcreate/vgcreate/vgextend for state that
+	// already matches.
+	suite.Assert().Empty(suite.provisioner.pvCreated())
+	suite.Assert().Empty(suite.provisioner.vgExtended(testVGName))
+
+	_, vgCreated := suite.provisioner.vgCreated()
+	suite.Assert().False(vgCreated)
+}
+
+// TestActivatesAfterCreatingVG and TestActivatesAfterExtendingVG confirm
+// activation isn't limited to the no-op path - it's the last step
+// regardless of which branch reconcileVG took.
+func (suite *LVMVolumeGroupReconcileSuite) TestActivatesAfterCreatingVG() {
+	suite.createVGSpec("/dev/nvme0n1", "/dev/nvme1n1")
+
+	suite.eventually(func() bool {
+		return suite.provisioner.activatedCount(testVGName) > 0
+	})
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestActivatesAfterExtendingVG() {
+	suite.createPVStatus("nvme0n1", "/dev/nvme0n1", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/nvme0n1", "/dev/nvme1n1")
+
+	suite.eventually(func() bool {
+		return suite.provisioner.activatedCount(testVGName) > 0
+	})
 }
 
 func (suite *LVMVolumeGroupReconcileSuite) TestRetriesTransientFailureWithoutNewEvent() {
