@@ -134,27 +134,14 @@ func TestGetOCIOptions(t *testing.T) {
 		spec, err := generateOCISpec(svc)
 
 		// then
-		assert.NoError(t, err)
-		assert.Equal(t, []string{
-			"/proc/acpi",
-			"/proc/asound",
-			"/proc/kcore",
-			"/proc/keys",
-			"/proc/latency_stats",
-			"/proc/timer_list",
-			"/proc/timer_stats",
-			"/proc/sched_debug",
-			"/sys/firmware",
-			"/sys/devices/virtual/powercap",
-			"/proc/scsi",
-		}, spec.Linux.MaskedPaths)
-		assert.Equal(t, []string{
-			"/proc/bus",
-			"/proc/fs",
-			"/proc/irq",
-			"/proc/sys",
-			"/proc/sysrq-trigger",
-		}, spec.Linux.ReadonlyPaths)
+		require.NoError(t, err)
+
+		// Containerd defaults include host-dependent paths, such as CPU thermal throttle directories.
+		defaultSpec, err := oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "testNamespace"), &mockClient, &containers.Container{})
+		require.NoError(t, err)
+
+		assert.Equal(t, defaultSpec.Linux.MaskedPaths, spec.Linux.MaskedPaths, "nil masked paths must preserve containerd defaults")
+		assert.Equal(t, defaultSpec.Linux.ReadonlyPaths, spec.Linux.ReadonlyPaths, "nil readonly paths must preserve containerd defaults")
 	})
 
 	t.Run("root fs is readonly unless explicitly enabled", func(t *testing.T) {
