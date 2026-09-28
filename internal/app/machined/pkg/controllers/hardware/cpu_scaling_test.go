@@ -190,10 +190,9 @@ func (suite *CPUScalingSuite) TestApplyReportedImmediately() {
 
 	ctest.AssertResource(suite, "policy0", func(r *hardware.CPUScalingStatus, asrt *assert.Assertions) {
 		asrt.Equal("powersave", r.TypedSpec().Governor)
+		asrt.EqualValues(1400000, r.TypedSpec().ScalingMinFrequencyKhz)
+		asrt.EqualValues(2800000, r.TypedSpec().ScalingMaxFrequencyKhz)
 	})
-
-	assert.Equal(suite.T(), "1400000", readPolicyAttr(suite.T(), suite.root, "policy0", "scaling_min_freq"))
-	assert.Equal(suite.T(), "2800000", readPolicyAttr(suite.T(), suite.root, "policy0", "scaling_max_freq"))
 }
 
 func (suite *CPUScalingSuite) TestRestoreOnRemoval() {
