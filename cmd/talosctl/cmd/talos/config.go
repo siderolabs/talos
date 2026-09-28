@@ -298,7 +298,12 @@ var configRemoveCmd = &cobra.Command{
 					continue
 				}
 			} else {
-				fmt.Fprintf(safeout.Stderr(), "removing context %q\n", match)
+				verb := "removing"
+				if configRemoveCmdFlags.dry {
+					verb = "would remove"
+				}
+
+				fmt.Fprintf(safeout.Stderr(), "%s context %q\n", verb, match)
 			}
 
 			noChanges = false
