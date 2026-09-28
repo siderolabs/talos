@@ -382,6 +382,12 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 									corev1.ResourceMemory: resource.MustParse("1Gi"),
 									corev1.ResourceCPU:    resource.MustParse("750m"),
 								},
+								// A memory limit caps the inner Talos and, as a side effect, exempts the pod from the
+								// Talos userspace OOM handler on the host node: the default cgroup ranking gives a
+								// cgroup with memory.max set a zero score, so it never gets picked as a victim.
+								Limits: corev1.ResourceList{
+									corev1.ResourceMemory: resource.MustParse("2Gi"),
+								},
 							},
 							Ports: []corev1.ContainerPort{
 								{
