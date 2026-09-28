@@ -10,10 +10,10 @@ const (
 	CPUQuotaPeriod = 100000
 
 	// MinCPULimitMillicores corresponds to libvirt's minimum cpuquota of 1000 microseconds.
-	MinCPULimitMillicores = 1000 * 1000 / CPUQuotaPeriod
+	MinCPULimitMillicores uint64 = 1000 * 1000 / CPUQuotaPeriod
 
 	// MaxCPULimitMillicores keeps the quota within libvirt's maximum of 17592186044415 microseconds.
-	MaxCPULimitMillicores = 17592186044415 * 1000 / CPUQuotaPeriod
+	MaxCPULimitMillicores uint64 = 17592186044415 * 1000 / CPUQuotaPeriod
 )
 
 //go:generate go tool github.com/dmarkham/enumer -type=PowerState,VirtualMachineDiskBus,VirtualMachineDiskFormat,VirtualMachineDiskImageMode,VirtualMachineDiskType,VirtualMachineFirmwareType -linecomment -text
