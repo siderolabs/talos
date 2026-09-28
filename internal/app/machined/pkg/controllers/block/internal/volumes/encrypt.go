@@ -30,6 +30,7 @@ func HandleEncryption(ctx context.Context, logger *zap.Logger, volumeContext Man
 		volumeContext.Status.EncryptionProvider = block.EncryptionProviderNone
 		volumeContext.Status.EncryptionFailedSyncs = nil
 		volumeContext.Status.ConfiguredEncryptionKeys = nil
+		volumeContext.Status.EnrolledEncryptionKeys = nil
 
 		return nil
 	case block.EncryptionProviderLUKS2:
@@ -100,7 +101,17 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 
 	mappedPath, usedSlot, failedSyncs, err := handler.Open(ctx, logger, volumeContext.Status.Location, mappedName)
 	if err != nil {
+		if hasRecoveryKey(volumeContext.Cfg.TypedSpec().Encryption) {
+			// the operator can unlock the volume with the recovery key
+			return xerrors.NewTaggedf[Locked]("error opening encrypted volume: %w", err)
+		}
+
 		return xerrors.NewTaggedf[Retryable]("error opening encrypted volume: %w", err)
+	}
+
+	pendingSlots, err := handler.PendingSlots(volumeContext.Status.Location)
+	if err != nil {
+		return fmt.Errorf("error reading pending key slots: %w", err)
 	}
 
 	resolvedPath, err := filepath.EvalSymlinks(mappedPath)
@@ -114,6 +125,7 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 	volumeContext.Status.EncryptionFailedSyncs = failedSyncs
 
 	volumeContext.Status.ConfiguredEncryptionKeys = nil
+	volumeContext.Status.EnrolledEncryptionKeys = enrolledKeyTypes(volumeContext.Cfg.TypedSpec().Encryption, pendingSlots)
 	volumeContext.Status.EncryptionSlot = &usedSlot
 
 	for _, key := range volumeContext.Cfg.TypedSpec().Encryption.Keys {
@@ -138,4 +150,26 @@ func HandleEncryptionWithHandler(ctx context.Context, logger *zap.Logger, volume
 	slices.Sort(volumeContext.Status.ConfiguredEncryptionKeys)
 
 	return nil
+}
+
+// hasRecoveryKey returns true if the encryption config has a recovery key configured.
+func hasRecoveryKey(spec block.EncryptionSpec) bool {
+	return slices.ContainsFunc(spec.Keys, func(key block.EncryptionKey) bool {
+		return key.Type == block.EncryptionKeyRecovery
+	})
+}
+
+// enrolledKeyTypes returns the configured key types which have their slot enrolled in the LUKS header.
+func enrolledKeyTypes(spec block.EncryptionSpec, pendingSlots []int) []string {
+	var enrolled []string
+
+	for _, key := range spec.Keys {
+		if !slices.Contains(pendingSlots, key.Slot) && !slices.Contains(enrolled, key.Type.String()) {
+			enrolled = append(enrolled, key.Type.String())
+		}
+	}
+
+	slices.Sort(enrolled)
+
+	return enrolled
 }

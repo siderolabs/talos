@@ -180,6 +180,7 @@ EncryptionKey represents configuration for disk encryption key.
 |`nodeID` |<a href="#RawVolumeConfig.encryption.keys..nodeID">EncryptionKeyNodeID</a> |Deterministically generated key from the node UUID and PartitionLabel.  | |
 |`kms` |<a href="#RawVolumeConfig.encryption.keys..kms">EncryptionKeyKMS</a> |KMS managed encryption key.  | |
 |`tpm` |<a href="#RawVolumeConfig.encryption.keys..tpm">EncryptionKeyTPM</a> |Enable TPM based disk encryption.  | |
+|`recovery` |<a href="#RawVolumeConfig.encryption.keys..recovery">EncryptionKeyRecovery</a> |Recovery key which is held by the operator and never stored on the node.<br>The node generates the key when it enrolls the slot (while the volume is unlocked with another key), and keeps it in memory until it is fetched once with `talosctl recovery-key fetch`. The operator supplies the key whenever the volume can't be unlocked with any of the other keys (e.g. the TPM state changed after a firmware update, or the KMS is not reachable), from the console dashboard or with `talosctl recovery-key unlock`.<br>If the recovery key is the only key configured, the volume can't be unlocked without operator intervention on every boot.  | |
 |`lockToState` |bool |Lock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes.  | |
 
 
@@ -261,6 +262,18 @@ EncryptionKeyTPMOptions represents the options for TPM-based key protection.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`pcrs` |[]int |List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.  | |
+
+
+
+
+
+
+
+
+#### recovery {#RawVolumeConfig.encryption.keys..recovery}
+
+EncryptionKeyRecovery represents a key which is held by the operator and never stored on the node.
+
 
 
 

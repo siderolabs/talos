@@ -802,6 +802,7 @@ enum BlockEncryptionKeyType {
   ENCRYPTION_KEY_NODE_ID = 1;
   ENCRYPTION_KEY_KMS = 2;
   ENCRYPTION_KEY_TPM = 3;
+  ENCRYPTION_KEY_RECOVERY = 4;
 }
 
 // BlockEncryptionProviderType describes encryption provider type.
@@ -875,6 +876,7 @@ enum BlockVolumePhase {
   VOLUME_PHASE_PREPARED = 5;
   VOLUME_PHASE_READY = 6;
   VOLUME_PHASE_CLOSED = 7;
+  VOLUME_PHASE_LOCKED = 8;
 }
 
 // BlockVolumeType describes volume type.

@@ -63,6 +63,9 @@ const (
 
 	// ScreenResourceExplorer is the resource explorer screen.
 	ScreenResourceExplorer Screen = "Resources"
+
+	// ScreenRecoveryKey is the disk encryption recovery key screen.
+	ScreenRecoveryKey Screen = "Recovery Key"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -130,6 +133,11 @@ type Dashboard struct {
 	screenConfigs        []screenConfig
 	footer               *components.Footer
 
+	// screenKeyToName is shared with the footer, so hiding a screen removes it from the footer as well
+	screenKeyToName       map[string]string
+	screenConfigByKeyCode map[tcell.Key]screenConfig
+	hiddenScreens         map[Screen]struct{}
+
 	data *apidata.Data
 
 	selectedNodeIndex int
@@ -175,15 +183,20 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 		return nil, err
 	}
 
-	screenKeyToName := xslices.ToMap(dashboard.screenConfigs, func(t screenConfig) (string, string) {
+	dashboard.screenKeyToName = xslices.ToMap(dashboard.screenConfigs, func(t screenConfig) (string, string) {
 		return t.screenKey, string(t.screen)
 	})
 
-	screenConfigByKeyCode := xslices.ToMap(dashboard.screenConfigs, func(config screenConfig) (tcell.Key, screenConfig) {
+	dashboard.screenConfigByKeyCode = xslices.ToMap(dashboard.screenConfigs, func(config screenConfig) (tcell.Key, screenConfig) {
 		return config.keyCode, config
 	})
 
-	dashboard.footer = components.NewFooter(screenKeyToName, nodes)
+	dashboard.hiddenScreens = map[Screen]struct{}{}
+
+	dashboard.footer = components.NewFooter(dashboard.screenKeyToName, nodes)
+
+	// the recovery key screen only shows up while a volume is locked
+	dashboard.hideScreen(ScreenRecoveryKey)
 
 	dashboard.footer.NodeClick = func(node string) {
 		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
@@ -201,11 +214,18 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	}
 
 	dashboard.footer.ScreenClick = func(screenName string) {
+		if dashboard.isHidden(Screen(screenName)) {
+			return
+		}
+
 		dashboard.selectScreen(Screen(screenName))
 	}
 
 	dashboard.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		config, screenOk := screenConfigByKeyCode[event.Key()]
+		config, screenOk := dashboard.screenConfigByKeyCode[event.Key()]
+		if screenOk && dashboard.isHidden(config.screen) {
+			screenOk = false
+		}
 
 		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
 
@@ -303,47 +323,47 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 }
 
 func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
-	primitiveForScreen := func(screen Screen) screenSelectListener {
-		switch screen {
-		case ScreenSummary:
-			return NewSummaryGrid(d.app)
-		case ScreenMonitor:
-			return NewMonitorGrid(d.app)
-		case ScreenNetworkConfig:
-			return NewNetworkConfigGrid(ctx, d)
-		case ScreenConfigURL:
-			return NewConfigURLGrid(ctx, d)
-		case ScreenResourceExplorer:
-			return NewResourceExplorerGrid(ctx, d)
-		default:
-			return nil
-		}
-	}
+	// screens which act on a single node, so node navigation is disabled on them
+	singleNodeScreens := []Screen{ScreenNetworkConfig, ScreenConfigURL, ScreenRecoveryKey}
 
 	d.screenConfigs = make([]screenConfig, 0, len(screens))
 
 	for i, screen := range screens {
-		primitive := primitiveForScreen(screen)
+		primitive := d.newScreen(ctx, screen)
 		if primitive == nil {
 			return fmt.Errorf("unknown screen %s", screen)
 		}
 
-		config := screenConfig{
+		d.screenConfigs = append(d.screenConfigs, screenConfig{
 			screenKey:           fmt.Sprintf("F%d", i+1),
 			screen:              screen,
 			keyCode:             tcell.KeyF1 + tcell.Key(i),
 			primitive:           primitive,
-			allowNodeNavigation: true,
-		}
-
-		if screen == ScreenNetworkConfig || screen == ScreenConfigURL {
-			config.allowNodeNavigation = false
-		}
-
-		d.screenConfigs = append(d.screenConfigs, config)
+			allowNodeNavigation: !slices.Contains(singleNodeScreens, screen),
+		})
 	}
 
 	return nil
+}
+
+// newScreen builds the primitive for the screen, nil if the screen is unknown.
+func (d *Dashboard) newScreen(ctx context.Context, screen Screen) screenSelectListener {
+	switch screen {
+	case ScreenSummary:
+		return NewSummaryGrid(d.app)
+	case ScreenMonitor:
+		return NewMonitorGrid(d.app)
+	case ScreenNetworkConfig:
+		return NewNetworkConfigGrid(ctx, d)
+	case ScreenConfigURL:
+		return NewConfigURLGrid(ctx, d)
+	case ScreenResourceExplorer:
+		return NewResourceExplorerGrid(ctx, d)
+	case ScreenRecoveryKey:
+		return NewRecoveryKeyGrid(ctx, d)
+	default:
+		return nil
+	}
 }
 
 // Run starts the dashboard.
@@ -525,6 +545,49 @@ func (d *Dashboard) processLog(node, logLine, logError string) {
 func (d *Dashboard) processTick() {
 	for _, component := range d.tickerListeners {
 		component.OnTick()
+	}
+}
+
+// isHidden returns true if the screen is currently hidden from the footer and the function keys.
+func (d *Dashboard) isHidden(screen Screen) bool {
+	_, hidden := d.hiddenScreens[screen]
+
+	return hidden
+}
+
+// hideScreen removes the screen from the footer and disables its function key.
+//
+// If the screen is currently selected, the summary screen is selected instead.
+func (d *Dashboard) hideScreen(screen Screen) {
+	if d.isHidden(screen) {
+		return
+	}
+
+	for _, config := range d.screenConfigs {
+		if config.screen != screen {
+			continue
+		}
+
+		delete(d.screenKeyToName, config.screenKey)
+		d.hiddenScreens[screen] = struct{}{}
+
+		if d.selectedScreenConfig != nil && d.selectedScreenConfig.screen == screen {
+			d.selectScreen(ScreenSummary)
+		}
+	}
+}
+
+// showScreen puts a hidden screen back into the footer and re-enables its function key.
+func (d *Dashboard) showScreen(screen Screen) {
+	if !d.isHidden(screen) {
+		return
+	}
+
+	for _, config := range d.screenConfigs {
+		if config.screen == screen {
+			d.screenKeyToName[config.screenKey] = string(config.screen)
+			delete(d.hiddenScreens, screen)
+		}
 	}
 }
 

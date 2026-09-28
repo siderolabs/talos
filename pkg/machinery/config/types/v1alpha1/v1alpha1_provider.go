@@ -1604,6 +1604,12 @@ func (e *EncryptionKey) TPM() config.EncryptionKeyTPM {
 	return e.KeyTPM
 }
 
+// Recovery implements the config.Provider interface.
+func (e *EncryptionKey) Recovery() bool {
+	// not supported in v1alpha1
+	return false
+}
+
 // LockToSTATE implements the config.Provider interface.
 func (e *EncryptionKey) LockToSTATE() bool {
 	// not supported in v1alpha1

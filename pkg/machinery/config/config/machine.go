@@ -267,6 +267,7 @@ type EncryptionKey interface {
 	KMS() EncryptionKeyKMS
 	Slot() int
 	TPM() EncryptionKeyTPM
+	Recovery() bool
 	LockToSTATE() bool
 }
 

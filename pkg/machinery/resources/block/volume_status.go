@@ -55,6 +55,10 @@ type VolumeStatusSpec struct {
 	EncryptionFailedSyncs []string `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
 	// ConfiguredEncryptionKeys is the list of configured encryption keys for the volume.
 	ConfiguredEncryptionKeys []string `yaml:"configuredEncryptionKeys,omitempty" protobuf:"17"`
+	// EnrolledEncryptionKeys is the list of encryption key types which are enrolled in the volume (present in the LUKS header).
+	//
+	// A configured key type which is not enrolled is a pending key, e.g. a recovery key which was not supplied yet.
+	EnrolledEncryptionKeys []string `yaml:"enrolledEncryptionKeys,omitempty" protobuf:"28"`
 	// EncryptionLockedToState indicates if the encryption is locked to STATE partition
 	EncryptionLockedToState bool `yaml:"encryptionLockedToState,omitempty" protobuf:"20"`
 	// EncryptionSlot indicates the currently used encryption slot used for decryption.

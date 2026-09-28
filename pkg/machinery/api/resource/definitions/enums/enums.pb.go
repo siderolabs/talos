@@ -3829,10 +3829,11 @@ func (NethelpersWOLMode) EnumDescriptor() ([]byte, []int) {
 type BlockEncryptionKeyType int32
 
 const (
-	BlockEncryptionKeyType_ENCRYPTION_KEY_STATIC  BlockEncryptionKeyType = 0
-	BlockEncryptionKeyType_ENCRYPTION_KEY_NODE_ID BlockEncryptionKeyType = 1
-	BlockEncryptionKeyType_ENCRYPTION_KEY_KMS     BlockEncryptionKeyType = 2
-	BlockEncryptionKeyType_ENCRYPTION_KEY_TPM     BlockEncryptionKeyType = 3
+	BlockEncryptionKeyType_ENCRYPTION_KEY_STATIC   BlockEncryptionKeyType = 0
+	BlockEncryptionKeyType_ENCRYPTION_KEY_NODE_ID  BlockEncryptionKeyType = 1
+	BlockEncryptionKeyType_ENCRYPTION_KEY_KMS      BlockEncryptionKeyType = 2
+	BlockEncryptionKeyType_ENCRYPTION_KEY_TPM      BlockEncryptionKeyType = 3
+	BlockEncryptionKeyType_ENCRYPTION_KEY_RECOVERY BlockEncryptionKeyType = 4
 )
 
 // Enum value maps for BlockEncryptionKeyType.
@@ -3842,12 +3843,14 @@ var (
 		1: "ENCRYPTION_KEY_NODE_ID",
 		2: "ENCRYPTION_KEY_KMS",
 		3: "ENCRYPTION_KEY_TPM",
+		4: "ENCRYPTION_KEY_RECOVERY",
 	}
 	BlockEncryptionKeyType_value = map[string]int32{
-		"ENCRYPTION_KEY_STATIC":  0,
-		"ENCRYPTION_KEY_NODE_ID": 1,
-		"ENCRYPTION_KEY_KMS":     2,
-		"ENCRYPTION_KEY_TPM":     3,
+		"ENCRYPTION_KEY_STATIC":   0,
+		"ENCRYPTION_KEY_NODE_ID":  1,
+		"ENCRYPTION_KEY_KMS":      2,
+		"ENCRYPTION_KEY_TPM":      3,
+		"ENCRYPTION_KEY_RECOVERY": 4,
 	}
 )
 
@@ -4305,6 +4308,7 @@ const (
 	BlockVolumePhase_VOLUME_PHASE_PREPARED    BlockVolumePhase = 5
 	BlockVolumePhase_VOLUME_PHASE_READY       BlockVolumePhase = 6
 	BlockVolumePhase_VOLUME_PHASE_CLOSED      BlockVolumePhase = 7
+	BlockVolumePhase_VOLUME_PHASE_LOCKED      BlockVolumePhase = 8
 )
 
 // Enum value maps for BlockVolumePhase.
@@ -4318,6 +4322,7 @@ var (
 		5: "VOLUME_PHASE_PREPARED",
 		6: "VOLUME_PHASE_READY",
 		7: "VOLUME_PHASE_CLOSED",
+		8: "VOLUME_PHASE_LOCKED",
 	}
 	BlockVolumePhase_value = map[string]int32{
 		"VOLUME_PHASE_WAITING":     0,
@@ -4328,6 +4333,7 @@ var (
 		"VOLUME_PHASE_PREPARED":    5,
 		"VOLUME_PHASE_READY":       6,
 		"VOLUME_PHASE_CLOSED":      7,
+		"VOLUME_PHASE_LOCKED":      8,
 	}
 )
 
@@ -5777,12 +5783,13 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x12WOL_MODE_BROADCAST\x10\b\x12\x12\n" +
 	"\x0eWOL_MODE_MAGIC\x10 \x12\x19\n" +
 	"\x15WOL_MODE_MAGIC_SECURE\x10@\x12\x14\n" +
-	"\x0fWOL_MODE_FILTER\x10\x80\x01*\x7f\n" +
+	"\x0fWOL_MODE_FILTER\x10\x80\x01*\x9c\x01\n" +
 	"\x16BlockEncryptionKeyType\x12\x19\n" +
 	"\x15ENCRYPTION_KEY_STATIC\x10\x00\x12\x1a\n" +
 	"\x16ENCRYPTION_KEY_NODE_ID\x10\x01\x12\x16\n" +
 	"\x12ENCRYPTION_KEY_KMS\x10\x02\x12\x16\n" +
-	"\x12ENCRYPTION_KEY_TPM\x10\x03*Z\n" +
+	"\x12ENCRYPTION_KEY_TPM\x10\x03\x12\x1b\n" +
+	"\x17ENCRYPTION_KEY_RECOVERY\x10\x04*Z\n" +
 	"\x1bBlockEncryptionProviderType\x12\x1c\n" +
 	"\x18ENCRYPTION_PROVIDER_NONE\x10\x00\x12\x1d\n" +
 	"\x19ENCRYPTION_PROVIDER_LUKS2\x10\x01*\x85\x02\n" +
@@ -5819,7 +5826,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x11NFS_TRANSPORT_TCP\x10\x00\x12\x16\n" +
 	"\x12NFS_TRANSPORT_TCP6\x10\x01\x12\x15\n" +
 	"\x11NFS_TRANSPORT_UDP\x10\x02\x12\x16\n" +
-	"\x12NFS_TRANSPORT_UDP6\x10\x03*\xe3\x01\n" +
+	"\x12NFS_TRANSPORT_UDP6\x10\x03*\xfc\x01\n" +
 	"\x10BlockVolumePhase\x12\x18\n" +
 	"\x14VOLUME_PHASE_WAITING\x10\x00\x12\x17\n" +
 	"\x13VOLUME_PHASE_FAILED\x10\x01\x12\x18\n" +
@@ -5828,7 +5835,8 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x18VOLUME_PHASE_PROVISIONED\x10\x04\x12\x19\n" +
 	"\x15VOLUME_PHASE_PREPARED\x10\x05\x12\x16\n" +
 	"\x12VOLUME_PHASE_READY\x10\x06\x12\x17\n" +
-	"\x13VOLUME_PHASE_CLOSED\x10\a*\xc0\x01\n" +
+	"\x13VOLUME_PHASE_CLOSED\x10\a\x12\x17\n" +
+	"\x13VOLUME_PHASE_LOCKED\x10\b*\xc0\x01\n" +
 	"\x0fBlockVolumeType\x12\x19\n" +
 	"\x15VOLUME_TYPE_PARTITION\x10\x00\x12\x14\n" +
 	"\x10VOLUME_TYPE_DISK\x10\x01\x12\x15\n" +

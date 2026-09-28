@@ -176,6 +176,13 @@ func (EncryptionKey) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable TPM based disk encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "recovery",
+				Type:        "EncryptionKeyRecovery",
+				Note:        "",
+				Description: "Recovery key which is held by the operator and never stored on the node.\nThe node generates the key when it enrolls the slot (while the volume is unlocked with another key), and keeps it in memory until it is fetched once with `talosctl recovery-key fetch`. The operator supplies the key whenever the volume can't be unlocked with any of the other keys (e.g. the TPM state changed after a firmware update, or the KMS is not reachable), from the console dashboard or with `talosctl recovery-key unlock`.\nIf the recovery key is the only key configured, the volume can't be unlocked without operator intervention on every boot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Recovery key which is held by the operator and never stored on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "lockToState",
 				Type:        "bool",
 				Note:        "",
@@ -306,6 +313,23 @@ func (EncryptionKeyNodeID) Doc() *encoder.Doc {
 			{
 				TypeName:  "EncryptionKey",
 				FieldName: "nodeID",
+			},
+		},
+		Fields: []encoder.Doc{},
+	}
+
+	return doc
+}
+
+func (EncryptionKeyRecovery) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EncryptionKeyRecovery",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyRecovery represents a key which is held by the operator and never stored on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EncryptionKeyRecovery represents a key which is held by the operator and never stored on the node.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EncryptionKey",
+				FieldName: "recovery",
 			},
 		},
 		Fields: []encoder.Doc{},
@@ -1401,6 +1425,7 @@ func GetFileDoc() *encoder.FileDoc {
 			EncryptionKeyTPM{}.Doc(),
 			EncryptionKeyTPMOptions{}.Doc(),
 			EncryptionKeyNodeID{}.Doc(),
+			EncryptionKeyRecovery{}.Doc(),
 			ExistingVolumeConfigV1Alpha1{}.Doc(),
 			VolumeDiscoverySpec{}.Doc(),
 			VolumeSelector{}.Doc(),

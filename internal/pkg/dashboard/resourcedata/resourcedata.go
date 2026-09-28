@@ -20,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -140,6 +141,7 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 		network.NewNodeAddress(network.NamespaceName, "").Metadata(),
 		siderolink.NewStatus().Metadata(),
 		runtime.NewDiagnostic(runtime.NamespaceName, "").Metadata(),
+		block.NewVolumeStatus(block.NamespaceName, "").Metadata(),
 	}
 
 	for _, ptr := range watchKindResources {

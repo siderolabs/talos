@@ -207,6 +207,10 @@ func (o VolumeStatusSpec) DeepCopy() VolumeStatusSpec {
 		cp.ConfiguredEncryptionKeys = make([]string, len(o.ConfiguredEncryptionKeys))
 		copy(cp.ConfiguredEncryptionKeys, o.ConfiguredEncryptionKeys)
 	}
+	if o.EnrolledEncryptionKeys != nil {
+		cp.EnrolledEncryptionKeys = make([]string, len(o.EnrolledEncryptionKeys))
+		copy(cp.EnrolledEncryptionKeys, o.EnrolledEncryptionKeys)
+	}
 	if o.EncryptionSlot != nil {
 		cp.EncryptionSlot = new(int)
 		*cp.EncryptionSlot = *o.EncryptionSlot

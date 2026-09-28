@@ -33,6 +33,8 @@ type Helpers struct {
 	GetSystemInformation helpers.SystemInformationGetter
 	TPMLocker            helpers.TPMLockFunc
 	SaltGetter           helpers.SaltGetter
+	RecoveryKeyGetter    helpers.RecoveryKeyGetter
+	RecoveryKeyPublisher helpers.RecoveryKeyPublisher
 }
 
 // NewHandler creates new Handler.
@@ -75,6 +77,8 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers 
 			keys.WithSystemInformationGetter(helpers.GetSystemInformation),
 			keys.WithTPMLocker(helpers.TPMLocker),
 			keys.WithSaltGetter(helpers.SaltGetter),
+			keys.WithRecoveryKeyGetter(helpers.RecoveryKeyGetter),
+			keys.WithRecoveryKeyPublisher(helpers.RecoveryKeyPublisher),
 		)
 		if err != nil {
 			return nil, err
@@ -156,6 +160,24 @@ func (h *Handler) Open(ctx context.Context, logger *zap.Logger, devicePath, mapp
 	return path, usedKey.Slot, failedSyncs, nil
 }
 
+// PendingSlots returns the configured key slots which are not enrolled (yet) in the encrypted partition.
+func (h *Handler) PendingSlots(devicePath string) ([]int, error) {
+	keyslots, err := h.encryptionProvider.ReadKeyslots(devicePath)
+	if err != nil {
+		return nil, err
+	}
+
+	var pending []int
+
+	for _, handler := range h.keyHandlers {
+		if _, ok := keyslots.Keyslots[strconv.Itoa(handler.Slot())]; !ok {
+			pending = append(pending, handler.Slot())
+		}
+	}
+
+	return pending, nil
+}
+
 // Close encrypted partition.
 func (h *Handler) Close(ctx context.Context, encryptedPath string) error {
 	if err := h.encryptionProvider.Close(ctx, encryptedPath); err != nil {
@@ -194,6 +216,13 @@ func (h *Handler) FormatAndEncrypt(ctx context.Context, logger *zap.Logger, path
 		}
 
 		if err := h.addKey(ctx, path, key, handler); err != nil {
+			if errors.Is(err, keys.ErrKeyNotAvailable) {
+				// the key has to be enrolled later by the operator
+				logger.Info("skipping key slot, key not available", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
+
+				continue
+			}
+
 			return err
 		}
 	}
@@ -220,24 +249,12 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 			continue
 		}
 
-		// keyslot exists
 		if _, ok := keyslots.Keyslots[slot]; ok {
-			if err = h.updateKey(ctx, path, k, handler); err != nil {
-				logger.Error("failed to update key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
-
-				failedSyncs = append(failedSyncs, fmt.Sprintf("error updating key slot %s %T: %s", slot, handler, err))
-			} else {
-				logger.Info("updated encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
-			}
+			// keyslot exists, verify (and re-enroll if needed) the key
+			failedSyncs = recordKeySync(logger, failedSyncs, h.updateKey(ctx, path, k, handler), handler, "update", "updated encryption key")
 		} else {
 			// keyslot does not exist so just add the key
-			if err = h.addKey(ctx, path, k, handler); err != nil {
-				logger.Error("failed to add key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
-
-				failedSyncs = append(failedSyncs, fmt.Sprintf("error adding key slot %s %T: %s", slot, handler, err))
-			} else {
-				logger.Info("added encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
-			}
+			failedSyncs = recordKeySync(logger, failedSyncs, h.addKey(ctx, path, k, handler), handler, "add", "added encryption key")
 		}
 	}
 
@@ -260,6 +277,28 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 	}
 
 	return failedSyncs, nil
+}
+
+// recordKeySync logs the outcome of syncing a key slot, and records the failure if any.
+//
+// A key which is not available (it has to come from the operator) is not a failure: the slot is left as is.
+func recordKeySync(logger *zap.Logger, failedSyncs []string, err error, handler keys.Handler, action, successMessage string) []string {
+	fields := []zap.Field{zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler))}
+
+	switch {
+	case errors.Is(err, keys.ErrKeyNotAvailable):
+		logger.Debug("skipping key slot "+action+", key not available", fields...)
+
+		return failedSyncs
+	case err != nil:
+		logger.Error("failed to "+action+" key", append(fields, zap.Error(err))...)
+
+		return append(failedSyncs, fmt.Sprintf("error %s key slot %d %T: %s", action, handler.Slot(), handler, err))
+	default:
+		logger.Info(successMessage, fields...)
+
+		return failedSyncs
+	}
 }
 
 func (h *Handler) updateKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) error {
@@ -301,7 +340,20 @@ func (h *Handler) checkKey(ctx context.Context, path string, handler keys.Handle
 		return false, err
 	}
 
-	return h.encryptionProvider.CheckKey(ctx, path, key)
+	valid, err := h.encryptionProvider.CheckKey(ctx, path, key)
+	if err != nil {
+		return false, err
+	}
+
+	if !valid {
+		if keys.IsRecovery(handler) {
+			// the key was typed in by the operator: a mismatch is most likely a typo,
+			// never a reason to throw away the enrolled recovery key
+			return true, nil
+		}
+	}
+
+	return valid, nil
 }
 
 func (h *Handler) addKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) error {
@@ -351,7 +403,11 @@ func (h *Handler) tryHandlers(
 		if err != nil {
 			errs = multierror.Append(errs, err)
 
-			logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)), zap.Error(err))
+			if errors.Is(err, keys.ErrKeyNotAvailable) {
+				logger.Debug("skipping key handler, key not available", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)))
+			} else {
+				logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)), zap.Error(err))
+			}
 
 			continue
 		}
@@ -385,6 +441,17 @@ func (h *Handler) readToken(ctx context.Context, path string, id int) (token.Tok
 		return &luks.Token[*keys.KMSToken]{
 			Type:     token.Type,
 			UserData: kmsData,
+		}, nil
+	case keys.TokenTypeRecovery:
+		recoveryData := &keys.RecoveryToken{}
+
+		if err = json.Unmarshal(token.UserData, &recoveryData); err != nil {
+			return nil, err
+		}
+
+		return &luks.Token[*keys.RecoveryToken]{
+			Type:     token.Type,
+			UserData: recoveryData,
 		}, nil
 	case keys.TokenTypeTPM:
 		tpmData := &keys.TPMToken{}

@@ -90,6 +90,13 @@
           "markdownDescription": "Enable TPM based disk encryption.",
           "x-intellij-html-description": "\u003cp\u003eEnable TPM based disk encryption.\u003c/p\u003e\n"
         },
+        "recovery": {
+          "$ref": "#/$defs/block.EncryptionKeyRecovery",
+          "title": "recovery",
+          "description": "Recovery key which is held by the operator and never stored on the node.\nThe node generates the key when it enrolls the slot (while the volume is unlocked with another key), and keeps it in memory until it is fetched once with talosctl recovery-key fetch. The operator supplies the key whenever the volume can’t be unlocked with any of the other keys (e.g. the TPM state changed after a firmware update, or the KMS is not reachable), from the console dashboard or with talosctl recovery-key unlock.\nIf the recovery key is the only key configured, the volume can’t be unlocked without operator intervention on every boot.\n",
+          "markdownDescription": "Recovery key which is held by the operator and never stored on the node.\nThe node generates the key when it enrolls the slot (while the volume is unlocked with another key), and keeps it in memory until it is fetched once with `talosctl recovery-key fetch`. The operator supplies the key whenever the volume can't be unlocked with any of the other keys (e.g. the TPM state changed after a firmware update, or the KMS is not reachable), from the console dashboard or with `talosctl recovery-key unlock`.\nIf the recovery key is the only key configured, the volume can't be unlocked without operator intervention on every boot.",
+          "x-intellij-html-description": "\u003cp\u003eRecovery key which is held by the operator and never stored on the node.\nThe node generates the key when it enrolls the slot (while the volume is unlocked with another key), and keeps it in memory until it is fetched once with \u003ccode\u003etalosctl recovery-key fetch\u003c/code\u003e. The operator supplies the key whenever the volume can\u0026rsquo;t be unlocked with any of the other keys (e.g. the TPM state changed after a firmware update, or the KMS is not reachable), from the console dashboard or with \u003ccode\u003etalosctl recovery-key unlock\u003c/code\u003e.\nIf the recovery key is the only key configured, the volume can\u0026rsquo;t be unlocked without operator intervention on every boot.\u003c/p\u003e\n"
+        },
         "lockToState": {
           "type": "boolean",
           "title": "lockToState",
@@ -121,6 +128,12 @@
       "additionalProperties": false,
       "type": "object",
       "description": "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel."
+    },
+    "block.EncryptionKeyRecovery": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EncryptionKeyRecovery represents a key which is held by the operator and never stored on the node."
     },
     "block.EncryptionKeyStatic": {
       "properties": {
