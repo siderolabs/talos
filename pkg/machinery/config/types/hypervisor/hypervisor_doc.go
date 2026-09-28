@@ -140,6 +140,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Networking settings for the virtual machine.\n\nOptional; a virtual machine with no interfaces has no network connectivity at all.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Networking settings for the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "guest",
+				Type:        "VirtualMachineGuest",
+				Note:        "",
+				Description: "Settings which apply inside the guest.\n\nOptional; omitting it leaves the guest to boot its image unmodified.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Settings which apply inside the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -630,6 +637,104 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineGuest) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineGuest",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineGuest describes the settings which apply inside the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineGuest describes the settings which apply inside the guest.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "guest",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "cloudInit",
+				Type:        "VirtualMachineCloudInit",
+				Note:        "",
+				Description: "Seed handed to the guest on first boot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Seed handed to the guest on first boot." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "agent",
+				Type:        "VirtualMachineAgent",
+				Note:        "",
+				Description: "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "qemu-guest-agent settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineAgent) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineAgent",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineGuest",
+				FieldName: "agent",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "description: |\n    Attach the qemu-guest-agent virtio channel.\n\n    Without the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\n   report the addresses the guest holds. The agent has to be installed and running inside\n    the guest for the channel to be of any use.\n\n    Optional; defaults to disabled.\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineCloudInit) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineCloudInit",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineCloudInit describes the NoCloud seed handed to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineCloudInit describes the NoCloud seed handed to the guest.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineGuest",
+				FieldName: "cloudInit",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "metaData",
+				Type:        "string",
+				Note:        "",
+				Description: "Contents of the seed's `meta-data` file, carrying the guest's identity.\n\n`instance-id` is what decides whether a boot is a reboot or a new instance. An unchanged\nid means edits to `userData` are inert; a changed id re-runs provisioning, which\nregenerates the SSH host keys in most images.\n\nMust be valid YAML.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Contents of the seed's `meta-data` file, carrying the guest's identity." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "userData",
+				Type:        "string",
+				Note:        "",
+				Description: "Contents of the seed's `user-data` file, carrying what the operator wants done.\n\nFor a distro image this is a cloud-init document, usually starting with `#cloud-config`,\nthough a script or a MIME archive is equally valid -- it is not parsed here. For a Talos\nguest this is the guest's own machine configuration.\n\nCarries SSH keys, passwords and tokens in practice, and is redacted from the\nconfiguration as read back over the API.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Contents of the seed's `user-data` file, carrying what the operator wants done." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "networkConfig",
+				Type:        "string",
+				Note:        "",
+				Description: "Contents of the seed's `network-config` file, carrying the guest's network settings.\n\nNeeded by guests which cannot configure themselves over DHCP. Unset leaves the guest to\nits own defaults.\n\nMust be valid YAML.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Contents of the seed's `network-config` file, carrying the guest's network settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "instance-id: vm1-001\nlocal-hostname: vm1\n")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file hypervisor_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -653,6 +758,9 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineVNC{}.Doc(),
 			VirtualMachineNetworking{}.Doc(),
 			VirtualMachineInterface{}.Doc(),
+			VirtualMachineGuest{}.Doc(),
+			VirtualMachineAgent{}.Doc(),
+			VirtualMachineCloudInit{}.Doc(),
 		},
 	}
 }

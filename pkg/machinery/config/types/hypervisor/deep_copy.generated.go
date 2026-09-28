@@ -55,5 +55,17 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 		cp.NetworkingConfig.InterfacesConfig = make([]VirtualMachineInterface, len(o.NetworkingConfig.InterfacesConfig))
 		copy(cp.NetworkingConfig.InterfacesConfig, o.NetworkingConfig.InterfacesConfig)
 	}
+	if o.GuestConfig.CloudInitConfig != nil {
+		cp.GuestConfig.CloudInitConfig = new(VirtualMachineCloudInit)
+		*cp.GuestConfig.CloudInitConfig = *o.GuestConfig.CloudInitConfig
+	}
+	if o.GuestConfig.AgentConfig != nil {
+		cp.GuestConfig.AgentConfig = new(VirtualMachineAgent)
+		*cp.GuestConfig.AgentConfig = *o.GuestConfig.AgentConfig
+		if o.GuestConfig.AgentConfig.AgentEnabled != nil {
+			cp.GuestConfig.AgentConfig.AgentEnabled = new(bool)
+			*cp.GuestConfig.AgentConfig.AgentEnabled = *o.GuestConfig.AgentConfig.AgentEnabled
+		}
+	}
 	return &cp
 }

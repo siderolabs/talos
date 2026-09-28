@@ -27,6 +27,16 @@ import (
 // exampleDigest is a well-formed sha256 digest, used wherever a valid one is needed.
 const exampleDigest = "sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c"
 
+// instanceIDWarning is the warning a seed with no instance-id earns.
+const instanceIDWarning = "guest.cloudInit: no instance-id, so cloud-init cannot tell a reboot from a new instance " +
+	"and edits to userData may not take effect"
+
+const (
+	exampleMetaData      = "instance-id: vm1-001\nlocal-hostname: vm1\n"
+	exampleUserData      = "#cloud-config\nusers:\n  - name: op\n    sudo: ALL=(ALL) NOPASSWD:ALL\n    ssh_authorized_keys:\n      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...\n"
+	exampleNetworkConfig = "version: 2\nethernets:\n    eth0:\n        addresses:\n          - 10.0.0.10/24\n        gateway4: 10.0.0.1\n"
+)
+
 //nolint:dupl
 func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 	t.Parallel()
@@ -168,6 +178,28 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "guest",
+			filename: "virtualmachineconfig_guest.yaml",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
+				c.MetaName = "vm1"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+				c.CPUConfig.CPUCount = 4
+				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					MetaDataConfig:      exampleMetaData,
+					UserDataConfig:      exampleUserData,
+					NetworkConfigConfig: exampleNetworkConfig,
+				}
+				c.GuestConfig.AgentConfig = &hypervisor.VirtualMachineAgent{
+					AgentEnabled: new(true),
+				}
+
+				return c
+			},
+		},
+		{
 			name:     "minimal",
 			filename: "virtualmachineconfig_minimal.yaml",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
@@ -221,6 +253,10 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 		cfg func() *hypervisor.VirtualMachineConfigV1Alpha1
 
 		expectedErrors string
+		// expectedErrorPrefix is for errors wrapping a message from outside this package, whose
+		// exact wording is not ours to pin.
+		expectedErrorPrefix string
+		expectedWarnings    []string
 	}{
 		{
 			name: "empty",
@@ -523,6 +559,114 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "empty cloudInit",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{}
+
+				return c
+			},
+
+			expectedErrors: "guest.cloudInit: at least one of metaData, userData or networkConfig must be set",
+		},
+		{
+			name: "metaData is not YAML",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					MetaDataConfig: "instance-id: vm1\n  local-hostname: vm1\n",
+				}
+
+				return c
+			},
+
+			expectedErrorPrefix: "guest.cloudInit.metaData: must be valid YAML:",
+		},
+		{
+			name: "networkConfig is not YAML",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					NetworkConfigConfig: "version: 2\n  ethernets: {}\n",
+				}
+
+				return c
+			},
+
+			expectedErrorPrefix: "guest.cloudInit.networkConfig: must be valid YAML:",
+			// No metaData, so the instance-id warning fires alongside the error.
+			expectedWarnings: []string{instanceIDWarning},
+		},
+		{
+			// user-data is as legitimately a script or a MIME archive as it is a cloud-config
+			// document, so it is never parsed.
+			name: "userData is not YAML",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					UserDataConfig: "#!/bin/sh\necho hello\n",
+				}
+
+				return c
+			},
+
+			expectedWarnings: []string{instanceIDWarning},
+		},
+		{
+			name: "seed without an instance-id",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					MetaDataConfig: "local-hostname: vm1\n",
+					UserDataConfig: exampleUserData,
+				}
+
+				return c
+			},
+
+			expectedWarnings: []string{instanceIDWarning},
+		},
+		{
+			// The most likely first thing anyone writes, and the case the warning exists for.
+			name: "seed with only userData",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					UserDataConfig: exampleUserData,
+				}
+
+				return c
+			},
+
+			expectedWarnings: []string{instanceIDWarning},
+		},
+		{
+			name: "metaData is not a mapping",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					MetaDataConfig: "- instance-id: vm1\n",
+				}
+
+				return c
+			},
+
+			expectedErrors: "guest.cloudInit.metaData: must be a YAML mapping",
+		},
+		{
+			name: "valid with a guest seed",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					MetaDataConfig:      exampleMetaData,
+					UserDataConfig:      exampleUserData,
+					NetworkConfigConfig: exampleNetworkConfig,
+				}
+
+				return c
+			},
+		},
+		{
 			name: "power state outside the enum",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
@@ -645,12 +789,19 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 
 			cfg := test.cfg()
 
-			_, err := cfg.Validate(validationMode{})
+			warnings, err := cfg.Validate(validationMode{})
 
-			if test.expectedErrors == "" {
-				require.NoError(t, err)
-			} else {
+			assert.Equal(t, test.expectedWarnings, warnings)
+
+			switch {
+			case test.expectedErrorPrefix != "":
+				require.Error(t, err)
+				assert.True(t, strings.HasPrefix(err.Error(), test.expectedErrorPrefix),
+					"error %q does not start with %q", err, test.expectedErrorPrefix)
+			case test.expectedErrors != "":
 				assert.EqualError(t, err, test.expectedErrors)
+			default:
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -1067,4 +1218,48 @@ func TestVirtualMachineConfigEnumDocValues(t *testing.T) {
 			assert.Equal(t, test.expected, test.doc.Fields[idx].Values)
 		})
 	}
+}
+
+func TestVirtualMachineConfigRedact(t *testing.T) {
+	t.Parallel()
+
+	t.Run("seed", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := validVirtualMachineConfig()
+		cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+			MetaDataConfig:      exampleMetaData,
+			UserDataConfig:      exampleUserData,
+			NetworkConfigConfig: exampleNetworkConfig,
+		}
+
+		cfg.Redact("REDACTED")
+
+		assert.Equal(t, "REDACTED", cfg.GuestConfig.CloudInitConfig.UserDataConfig)
+		assert.Equal(t, exampleMetaData, cfg.GuestConfig.CloudInitConfig.MetaDataConfig)
+		assert.Equal(t, exampleNetworkConfig, cfg.GuestConfig.CloudInitConfig.NetworkConfigConfig)
+	})
+
+	t.Run("empty userData is left alone", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := validVirtualMachineConfig()
+		cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+			MetaDataConfig: exampleMetaData,
+		}
+
+		cfg.Redact("REDACTED")
+
+		assert.Empty(t, cfg.GuestConfig.CloudInitConfig.UserDataConfig)
+	})
+
+	t.Run("no seed at all", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := validVirtualMachineConfig()
+
+		cfg.Redact("REDACTED")
+
+		assert.Nil(t, cfg.GuestConfig.CloudInitConfig)
+	})
 }

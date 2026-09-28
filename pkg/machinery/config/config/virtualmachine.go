@@ -31,6 +31,8 @@ type VirtualMachineConfig interface {
 	Console() VirtualMachineConsoleConfig
 	// Networking settings.
 	Networking() VirtualMachineNetworkingConfig
+	// Guest settings; never nil, and zero-valued when the guest section is omitted.
+	Guest() VirtualMachineGuestConfig
 }
 
 // VirtualMachineCPUConfig defines the processors presented to the guest.
@@ -151,4 +153,35 @@ type VirtualMachineInterfaceConfig interface {
 	Name() string
 	// Link is the kernel name of the host link the interface is attached to.
 	Link() string
+}
+
+// VirtualMachineGuestConfig defines the settings which apply inside the guest.
+//
+//nolint:iface
+type VirtualMachineGuestConfig interface {
+	// CloudInit is the seed handed to the guest on first boot.
+	CloudInit() optional.Optional[VirtualMachineCloudInitConfig]
+	// Agent settings; never nil.
+	Agent() VirtualMachineAgentConfig
+}
+
+// VirtualMachineAgentConfig defines the qemu-guest-agent settings for a virtual machine.
+//
+//nolint:iface
+type VirtualMachineAgentConfig interface {
+	// Enabled reports whether the guest agent channel is attached, with the default applied.
+	Enabled() bool
+}
+
+// VirtualMachineCloudInitConfig defines the NoCloud seed handed to the guest.
+//
+// The three values are the three files of a NoCloud seed, passed through verbatim: Talos renders
+// them into the seed and does not interpret them.
+type VirtualMachineCloudInitConfig interface {
+	// MetaData is the `meta-data` file, carrying the guest's identity.
+	MetaData() string
+	// UserData is the `user-data` file, carrying what the operator wants done.
+	UserData() string
+	// NetworkConfig is the `network-config` file, carrying the guest's network settings.
+	NetworkConfig() string
 }

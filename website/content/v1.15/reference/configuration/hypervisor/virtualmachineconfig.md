@@ -93,6 +93,22 @@ networking:
           link: eth0 # Kernel name (or alias) of the host link the interface is attached to.
         - name: net1 # Name of the interface, unique within the virtual machine.
           link: eth1 # Kernel name (or alias) of the host link the interface is attached to.
+# Settings which apply inside the guest.
+guest:
+    # Seed handed to the guest on first boot.
+    cloudInit:
+        metaData: | # Contents of the seed's `meta-data` file, carrying the guest's identity.
+            instance-id: vm1-001
+            local-hostname: vm1
+        userData: | # Contents of the seed's `user-data` file, carrying what the operator wants done.
+            #cloud-config
+            users:
+              - name: op
+                ssh_authorized_keys:
+                  - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...
+    # qemu-guest-agent settings.
+    agent:
+        enabled: true # description: |
 {{< /highlight >}}
 
 
@@ -106,6 +122,7 @@ networking:
 |`disks` |<a href="#VirtualMachineConfig.disks.">[]VirtualMachineDisk</a> |Disks attached to the virtual machine.<br><br>Removing a disk detaches it from the virtual machine; the volume backing it stays in<br>its storage pool and is deleted separately.<br><br>A configuration patch merges into this list by disk name: a patch entry naming an<br>existing disk updates that disk, and any other entry is appended. Removing a disk<br>requires supplying the document in full.  | |
 |`console` |<a href="#VirtualMachineConfig.console">VirtualMachineConsole</a> |Consoles attached to the virtual machine.<br><br>Optional; omitting it leaves both consoles detached.  | |
 |`networking` |<a href="#VirtualMachineConfig.networking">VirtualMachineNetworking</a> |Networking settings for the virtual machine.<br><br>Optional; a virtual machine with no interfaces has no network connectivity at all.  | |
+|`guest` |<a href="#VirtualMachineConfig.guest">VirtualMachineGuest</a> |Settings which apply inside the guest.<br><br>Optional; omitting it leaves the guest to boot its image unmodified.  | |
 
 
 
@@ -356,6 +373,61 @@ name: net0
 |`link` |string |Kernel name (or alias) of the host link the interface is attached to.<br><br>The link must already exist on the host: it is attached to as is, and neither Talos nor<br>the hypervisor configures networking for it. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 link: eth0
 {{< /highlight >}}</details> | |
+
+
+
+
+
+
+
+
+## guest {#VirtualMachineConfig.guest}
+
+VirtualMachineGuest describes the settings which apply inside the guest.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`cloudInit` |<a href="#VirtualMachineConfig.guest.cloudInit">VirtualMachineCloudInit</a> |Seed handed to the guest on first boot.  | |
+|`agent` |<a href="#VirtualMachineConfig.guest.agent">VirtualMachineAgent</a> |qemu-guest-agent settings.<br><br>Optional; the agent channel is not attached when this section is omitted.  | |
+
+
+
+
+### cloudInit {#VirtualMachineConfig.guest.cloudInit}
+
+VirtualMachineCloudInit describes the NoCloud seed handed to the guest.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`metaData` |string |Contents of the seed's `meta-data` file, carrying the guest's identity.<br><br>`instance-id` is what decides whether a boot is a reboot or a new instance. An unchanged<br>id means edits to `userData` are inert; a changed id re-runs provisioning, which<br>regenerates the SSH host keys in most images.<br><br>Must be valid YAML. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+metaData: |
+    instance-id: vm1-001
+    local-hostname: vm1
+{{< /highlight >}}</details> | |
+|`userData` |string |Contents of the seed's `user-data` file, carrying what the operator wants done.<br><br>For a distro image this is a cloud-init document, usually starting with `#cloud-config`,<br>though a script or a MIME archive is equally valid -- it is not parsed here. For a Talos<br>guest this is the guest's own machine configuration.<br><br>Carries SSH keys, passwords and tokens in practice, and is redacted from the<br>configuration as read back over the API.  | |
+|`networkConfig` |string |Contents of the seed's `network-config` file, carrying the guest's network settings.<br><br>Needed by guests which cannot configure themselves over DHCP. Unset leaves the guest to<br>its own defaults.<br><br>Must be valid YAML.  | |
+
+
+
+
+
+
+### agent {#VirtualMachineConfig.guest.agent}
+
+VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |description: |<br>    Attach the qemu-guest-agent virtio channel.<br><br>    Without the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot<br>   report the addresses the guest holds. The agent has to be installed and running inside<br>    the guest for the channel to be of any use.<br><br>    Optional; defaults to disabled.<br>  | |
 
 
 
