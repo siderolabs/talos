@@ -229,7 +229,7 @@ func (EncryptionKeyKMS) Doc() *encoder.Doc {
 				Name:        "endpoint",
 				Type:        "string",
 				Note:        "",
-				Description: "KMS endpoint to Seal/Unseal the key.",
+				Description: "KMS endpoint to Seal/Unseal the key.\n\nThe endpoint should be specified as a URL with an explicit scheme, e.g. `https://kms.example.com:4443`.\nWith the `https://` scheme, the connection to the KMS server is established over TLS, and the server certificate\nis verified against the trusted root CAs.\n\nWARNING: if the scheme is omitted (e.g. `kms.example.com:4443`) or set to `grpc://`, the connection\nto the KMS server is established without TLS, and the disk encryption key material is transmitted in plaintext.\nUse plaintext endpoints only on fully trusted networks.\n\nNote: when encrypting the `STATE` volume, custom trusted root CAs from the machine configuration\nmight not be available when unlocking the volume (as the machine configuration is stored on `STATE`),\nso the KMS server certificate should be signed by a CA trusted by default.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "KMS endpoint to Seal/Unseal the key." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
