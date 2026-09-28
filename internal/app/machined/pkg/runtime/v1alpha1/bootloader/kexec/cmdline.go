@@ -10,6 +10,20 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+// BootImageParam is the kernel argument GRUB's `linux` command prepends to the command line,
+// holding the path to the kernel being booted.
+const BootImageParam = "BOOT_IMAGE"
+
+// AppendBootImage sets the BOOT_IMAGE kernel argument (replacing any existing value) the way GRUB does.
+//
+// It is used on kexec, when GRUB is skipped and can't report the kernel being booted itself.
+func AppendBootImage(cmdline, kernelPath string) string {
+	parsed := procfs.NewCmdline(cmdline)
+	parsed.Set(BootImageParam, procfs.NewParameter(BootImageParam).Append(kernelPath))
+
+	return parsed.String()
+}
+
 // AppendBootPartitionUUID sets the boot partition kernel argument (replacing any existing value), unless the UUID is empty.
 //
 // It is used on kexec, when the bootloader is skipped and can't report the partition itself.

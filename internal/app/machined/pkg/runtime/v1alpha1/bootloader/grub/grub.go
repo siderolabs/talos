@@ -38,8 +38,14 @@ const bootPartitionCmdlineArg = constants.KernelParamBootPartitionUUID + "=$" + 
 
 // Config represents a grub configuration file (grub.cfg).
 type Config struct {
-	Default        BootLabel
-	Fallback       BootLabel
+	Default  BootLabel
+	Fallback BootLabel
+	// Booted is the entry the system is running from right now (if known).
+	//
+	// It is detected on probe from the kernel command line, and it is not persisted in the config.
+	// It differs from Default e.g. when an operator selected a non-default entry in the GRUB menu,
+	// or right after an upgrade before the reboot.
+	Booted         BootLabel
 	Entries        map[BootLabel]MenuEntry
 	AddResetOption bool
 	// AppendBootPartitionUUID makes GRUB probe the partition it was loaded from (BOOT) and pass its UUID
@@ -96,6 +102,10 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 		defer initrd.Close() //nolint:errcheck
 
 		cmdline := strings.TrimSpace(defaultEntry.Cmdline)
+
+		// GRUB is skipped on kexec, so the kernel path it would have passed is set explicitly,
+		// so that the booted entry can be detected after kexec
+		cmdline = kexec.AppendBootImage(cmdline, defaultEntry.Linux)
 
 		// GRUB is skipped on kexec, so the boot partition UUID it would have probed is round-tripped
 		// from the current boot (if it is known)

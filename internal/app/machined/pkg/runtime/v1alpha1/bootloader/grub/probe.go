@@ -7,6 +7,7 @@ package grub
 
 import (
 	"github.com/siderolabs/gen/xerrors"
+	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -36,12 +37,18 @@ func ProbeWithCallback(disk string, options options.ProbeOptions, callback func(
 				return err
 			}
 
-			if grubConf != nil && callback != nil {
-				return callback(grubConf)
-			}
-
 			if grubConf == nil {
 				options.Logf("GRUB: config not found")
+
+				return nil
+			}
+
+			grubConf.DetectBooted(procfs.ProcCmdline())
+
+			options.Logf("GRUB: default entry: %q, booted entry: %q", grubConf.Default, grubConf.Booted)
+
+			if callback != nil {
+				return callback(grubConf)
 			}
 
 			return nil

@@ -47,3 +47,34 @@ func TestAppendBootPartitionUUID(t *testing.T) {
 		})
 	}
 }
+
+func TestAppendBootImage(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cmdline    string
+		kernelPath string
+		expected   string
+	}{
+		{
+			name:       "appended",
+			cmdline:    "talos.platform=metal console=ttyS0",
+			kernelPath: "/A/vmlinuz",
+			expected:   "talos.platform=metal console=ttyS0 BOOT_IMAGE=/A/vmlinuz",
+		},
+		{
+			name:       "replaced",
+			cmdline:    "BOOT_IMAGE=/A/vmlinuz talos.platform=metal",
+			kernelPath: "/B/vmlinuz",
+			expected:   "BOOT_IMAGE=/B/vmlinuz talos.platform=metal",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, kexec.AppendBootImage(test.cmdline, test.kernelPath))
+		})
+	}
+}
