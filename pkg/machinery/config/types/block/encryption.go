@@ -140,8 +140,20 @@ type EncryptionKeyStatic struct {
 //	examples:
 //	  - value: exampleKMSKey()
 type EncryptionKeyKMS struct {
-	//   description: >
+	//   description: |
 	//     KMS endpoint to Seal/Unseal the key.
+	//
+	//     The endpoint should be specified as a URL with an explicit scheme, e.g. `https://kms.example.com:4443`.
+	//     With the `https://` scheme, the connection to the KMS server is established over TLS, and the server certificate
+	//     is verified against the trusted root CAs.
+	//
+	//     WARNING: if the scheme is omitted (e.g. `kms.example.com:4443`) or set to `grpc://`, the connection
+	//     to the KMS server is established without TLS, and the disk encryption key material is transmitted in plaintext.
+	//     Use plaintext endpoints only on fully trusted networks.
+	//
+	//     Note: when encrypting the `STATE` volume, custom trusted root CAs from the machine configuration
+	//     might not be available when unlocking the volume (as the machine configuration is stored on `STATE`),
+	//     so the KMS server certificate should be signed by a CA trusted by default.
 	KMSEndpoint string `yaml:"endpoint"`
 }
 

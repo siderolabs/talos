@@ -364,7 +364,7 @@ encryption:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoint` |string |KMS endpoint to Seal/Unseal the key.  | |
+|`endpoint` |string |KMS endpoint to Seal/Unseal the key.<br><br>The endpoint should be specified as a URL with an explicit scheme, e.g. `https://kms.example.com:4443`.<br>With the `https://` scheme, the connection to the KMS server is established over TLS, and the server certificate<br>is verified against the trusted root CAs.<br><br>WARNING: if the scheme is omitted (e.g. `kms.example.com:4443`) or set to `grpc://`, the connection<br>to the KMS server is established without TLS, and the disk encryption key material is transmitted in plaintext.<br>Use plaintext endpoints only on fully trusted networks.<br><br>Note: when encrypting the `STATE` volume, custom trusted root CAs from the machine configuration<br>might not be available when unlocking the volume (as the machine configuration is stored on `STATE`),<br>so the KMS server certificate should be signed by a CA trusted by default.  | |
 
 
 
