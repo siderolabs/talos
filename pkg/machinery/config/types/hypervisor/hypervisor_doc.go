@@ -640,7 +640,7 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 				Name:        "link",
 				Type:        "string",
 				Note:        "",
-				Description: "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.",
+				Description: "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kernel name (or alias) of the host link the interface is attached to." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},

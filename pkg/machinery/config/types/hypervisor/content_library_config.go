@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // ContentLibraryConfigKind is a config document kind.
@@ -136,7 +137,7 @@ func (c *ContentLibraryConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 
 // ValidateName checks the content library name.
 func (c *ContentLibraryConfigV1Alpha1) ValidateName() error {
-	return validateName(c.MetaName)
+	return hypervisorhelpers.ValidateName(c.MetaName)
 }
 
 // ValidateBackingVolume checks the volume backing the content library.
@@ -153,7 +154,7 @@ func (c *ContentLibraryConfigV1Alpha1) ValidateBackingVolume() error {
 	switch {
 	case volumeName == "":
 		return errors.New("backing.volume is required")
-	case !validNamePattern.MatchString(volumeName):
+	case !hypervisorhelpers.ValidNameCharset(volumeName):
 		return fmt.Errorf("backing.volume %q: volume name can only contain ASCII letters, digits and hyphens", volumeName)
 	}
 

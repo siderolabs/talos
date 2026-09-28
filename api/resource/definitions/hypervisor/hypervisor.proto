@@ -98,6 +98,14 @@ message VirtualMachineFirmwareSpec {
   bool secure_boot = 2;
 }
 
+// VirtualMachineInterfaceSpec describes a network interface attached to a host link.
+message VirtualMachineInterfaceSpec {
+  // Name of the virtual machine interface config (not reflected in the guest)
+  string name = 1;
+  // Link identifier, as seen from the host
+  string link = 2;
+}
+
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.
 message VirtualMachineMemoryBallooningSpec {
   bool enabled = 1;
@@ -126,6 +134,7 @@ message VirtualMachineSpecSpec {
   VirtualMachineFirmwareSpec firmware = 4;
   VirtualMachineConsoleSpec console = 5;
   repeated VirtualMachineDiskSpec disks = 6;
+  repeated VirtualMachineInterfaceSpec interfaces = 7;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.

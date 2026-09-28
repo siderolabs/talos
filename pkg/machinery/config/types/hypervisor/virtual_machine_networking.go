@@ -15,6 +15,7 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // Check interfaces.
@@ -50,8 +51,8 @@ type VirtualMachineInterface struct {
 	//   description: |
 	//     Kernel name (or alias) of the host link the interface is attached to.
 	//
-	//     The link must already exist on the host: it is attached to as is, and neither Talos nor
-	//     the hypervisor configures networking for it.
+	//     The link must already exist on the host and be an Ethernet link, e.g. a physical
+	//     interface, a bond, or a VLAN. It is attached to as is.
 	//   examples:
 	//     - value: '"eth0"'
 	//   schemaRequired: true
@@ -88,7 +89,7 @@ func (i *VirtualMachineInterface) Link() string {
 func (i *VirtualMachineInterface) Validate(index int) (string, error) {
 	var validationErrors error
 
-	if err := validateName(i.InterfaceName); err != nil {
+	if err := hypervisorhelpers.ValidateName(i.InterfaceName); err != nil {
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("networking.interfaces[%d]: %w", index, err))
 	}
 

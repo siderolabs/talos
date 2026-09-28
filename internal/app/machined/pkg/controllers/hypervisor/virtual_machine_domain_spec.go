@@ -6,6 +6,7 @@ package hypervisor
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"strings"
@@ -19,11 +20,14 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // VirtualMachineDomainSpecController renders backend-neutral specs into libvirt XML.
-// It reads no machine configuration and performs no libvirt operations.
+// It reads no machine configuration and performs no libvirt operations; host links are
+// observed only to resolve interface link names and aliases.
 type VirtualMachineDomainSpecController struct{}
 
 // Name implements controller.Controller interface.
@@ -44,6 +48,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 			Type:      hypervisor.VirtualMachineDomainSpecType,
 			Kind:      controller.InputDestroyReady,
 		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -58,7 +67,7 @@ func (ctrl *VirtualMachineDomainSpecController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *VirtualMachineDomainSpecController) Run(ctx context.Context, runtime controller.Runtime, _ *zap.Logger) error {
+func (ctrl *VirtualMachineDomainSpecController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -66,7 +75,7 @@ func (ctrl *VirtualMachineDomainSpecController) Run(ctx context.Context, runtime
 		case <-runtime.EventCh():
 		}
 
-		if err := ctrl.reconcile(ctx, runtime); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger); err != nil {
 			return err
 		}
 
@@ -74,11 +83,18 @@ func (ctrl *VirtualMachineDomainSpecController) Run(ctx context.Context, runtime
 	}
 }
 
-func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, runtime controller.Runtime) error {
+func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	specs, err := safe.ReaderListAll[*hypervisor.VirtualMachineSpec](ctx, runtime)
 	if err != nil {
 		return fmt.Errorf("failed to list virtual machine specs: %w", err)
 	}
+
+	linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, runtime)
+	if err != nil {
+		return fmt.Errorf("failed to list link statuses: %w", err)
+	}
+
+	links := newHostLinks(linkStatuses)
 
 	desired := make(map[string]struct{}, specs.Len())
 
@@ -94,9 +110,20 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		if err := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				domainXML, renderErr := renderVirtualMachineDomain(name, vm.TypedSpec())
+				domainXML, renderErr := renderVirtualMachineDomain(name, vm.TypedSpec(), links)
 				if renderErr != nil {
-					return renderErr
+					if res.TypedSpec().DomainXML == "" {
+						// Nothing was ever defined, so there is nothing to stop.
+						return renderErr
+					}
+
+					// The config validated, but it cannot be applied.
+					res.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
+
+					logger.Error("stopping virtual machine: spec cannot be rendered",
+						zap.String("virtual_machine", name), zap.Error(renderErr))
+
+					return nil
 				}
 
 				*res.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
@@ -107,6 +134,12 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 				return nil
 			},
 		); err != nil {
+			if errors.Is(err, errLinkNotFound) || errors.Is(err, errLinkNotEthernet) {
+				logger.Info("virtual machine is held back by its host links", zap.Error(err))
+
+				continue
+			}
+
 			errs = append(errs, fmt.Errorf("failed to write virtual machine domain spec %q: %w", name, err))
 		}
 	}
@@ -142,8 +175,14 @@ func (ctrl *VirtualMachineDomainSpecController) cleanupDomains(ctx context.Conte
 	return nil
 }
 
-func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpecSpec) (string, error) {
+//nolint:gocyclo
+func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpecSpec, links hostLinks) (string, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
+		return "", err
+	}
+
+	interfaces, err := renderVirtualMachineInterfaces(name, spec.Interfaces, links)
+	if err != nil {
 		return "", err
 	}
 
@@ -175,6 +214,7 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 			MemBalloon: &libvirtxml.DomainMemBalloon{
 				Model: "none",
 			},
+			Interfaces: interfaces,
 		},
 	}
 
@@ -318,6 +358,129 @@ func renderVirtualMachineCPUTune(name string, cpu hypervisor.VirtualMachineCPUSp
 	}
 
 	return &cputune, nil
+}
+
+// errLinkNotFound marks a render waiting on a host link that has not appeared yet, as opposed
+// to one that failed. See the call site in reconcile.
+var errLinkNotFound = errors.New("host link not found")
+
+// errLinkNotEthernet marks a host link that exists but cannot carry a macvtap.
+var errLinkNotEthernet = errors.New("host link is not an Ethernet link")
+
+// hostLinks carries what an interface needs to know about the host's links: how to resolve a
+// name or alias, and whether what it resolves to can carry a macvtap.
+type hostLinks struct {
+	resolver *network.LinkResolver
+	types    map[string]nethelpers.LinkType
+}
+
+// newHostLinks indexes the observed host links for interface resolution.
+func newHostLinks(links safe.List[*network.LinkStatus]) hostLinks {
+	types := make(map[string]nethelpers.LinkType, links.Len())
+
+	for link := range links.All() {
+		types[link.Metadata().ID()] = link.TypedSpec().Type
+	}
+
+	return hostLinks{
+		resolver: network.NewLinkResolver(links.All),
+		types:    types,
+	}
+}
+
+// resolveInterfaceLinks resolves the host link of each interface, in order. It fails on the
+// first link the host does not have, or has but cannot attach a macvtap to: rendering fewer
+// interfaces than requested would silently alter the VM definition, so the whole render fails
+// and VirtualMachineDomainSpecController withdraws the power intent.
+//
+// VirtualMachineStatusController renders the same spec to report the obstacle.
+func resolveInterfaceLinks(name string, interfaces []hypervisor.VirtualMachineInterfaceSpec, links hostLinks) ([]string, error) {
+	resolved := make([]string, 0, len(interfaces))
+
+	for _, iface := range interfaces {
+		link, ok := links.resolver.ResolveChecked(iface.Link)
+		if !ok {
+			return nil, fmt.Errorf("virtual machine %q: interface %q: %w: %q", name, iface.Name, errLinkNotFound, iface.Link)
+		}
+
+		// Only the type is checked, not the kind: a bond or a VLAN is as good a macvtap lower
+		// link as a physical interface, while a loopback or an L3 tunnel is not one at all.
+		if links.types[link] != nethelpers.LinkEther {
+			return nil, fmt.Errorf("virtual machine %q: interface %q: %w: %q", name, iface.Name, errLinkNotEthernet, iface.Link)
+		}
+
+		resolved = append(resolved, link)
+	}
+
+	return resolved, nil
+}
+
+func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.VirtualMachineInterfaceSpec, links hostLinks) ([]libvirtxml.DomainInterface, error) {
+	resolved, err := resolveInterfaceLinks(name, interfaces, links)
+	if err != nil {
+		return nil, err
+	}
+
+	var result []libvirtxml.DomainInterface
+
+	for i, iface := range interfaces {
+		result = append(result, libvirtxml.DomainInterface{
+			MAC: &libvirtxml.DomainInterfaceMAC{
+				Address: interfaceMAC(name, iface.Name),
+			},
+			// A macvtap in bridge mode lets guests on the same lower link reach each other, and
+			// a host macvlan in bridge mode on the same parent reach the guest. The lower link's
+			// own address cannot: macvtap traffic never loops back to its parent.
+			Source: &libvirtxml.DomainInterfaceSource{
+				Direct: &libvirtxml.DomainInterfaceSourceDirect{
+					Dev:  resolved[i],
+					Mode: "bridge",
+				},
+			},
+			Model: &libvirtxml.DomainInterfaceModel{
+				Type: "virtio",
+			},
+			// The user alias carries the configured interface name onto the device, so it can be
+			// addressed without depending on the generated macvtap name.
+			Alias: &libvirtxml.DomainAlias{
+				Name: interfaceAliasPrefix + iface.Name,
+			},
+		})
+	}
+
+	return result, nil
+}
+
+// interfaceAliasPrefix marks a device alias as user-assigned; libvirt ignores other aliases.
+const interfaceAliasPrefix = "ua-"
+
+// interfaceMAC derives a stable MAC address for an interface under the QEMU OUI.
+func interfaceMAC(vmName, ifaceName string) string {
+	sum := sha256.Sum256([]byte(vmName + "\x00" + ifaceName))
+
+	return fmt.Sprintf("52:54:00:%02x:%02x:%02x", sum[0], sum[1], sum[2])
+}
+
+func validateVirtualMachineInterfaces(name string, interfaces []hypervisor.VirtualMachineInterfaceSpec) error {
+	names := make(map[string]struct{}, len(interfaces))
+
+	for _, iface := range interfaces {
+		if err := hypervisorhelpers.ValidateName(iface.Name); err != nil {
+			return fmt.Errorf("virtual machine %q: interface %w", name, err)
+		}
+
+		if _, exists := names[iface.Name]; exists {
+			return fmt.Errorf("virtual machine %q: duplicate interface name %q", name, iface.Name)
+		}
+
+		names[iface.Name] = struct{}{}
+
+		if iface.Link == "" {
+			return fmt.Errorf("virtual machine %q: interface %q: link is required", name, iface.Name)
+		}
+	}
+
+	return nil
 }
 
 func validateVirtualMachineDomainName(name string) error {
@@ -467,6 +630,10 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 	}
 
 	if err := validateVirtualMachineFirmware(name, spec.Firmware); err != nil {
+		return err
+	}
+
+	if err := validateVirtualMachineInterfaces(name, spec.Interfaces); err != nil {
 		return err
 	}
 

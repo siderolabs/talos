@@ -12,6 +12,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sync"
 	"testing"
 	"testing/fstest"
@@ -73,12 +74,25 @@ func validateDomainXML(data []byte) error {
 		return domainGrammar.err
 	}
 
-	doc, err := helium.NewParser().Parse(context.Background(), data)
+	doc, err := helium.NewParser().Parse(context.Background(), hoistInterfaceSources(data))
 	if err != nil {
 		return fmt.Errorf("parse domain XML: %w", err)
 	}
 
 	return relaxng.NewValidator(domainGrammar.grammar).Validate(context.Background(), doc)
+}
+
+var interfaceSource = regexp.MustCompile(`(?s)(<interface[^>]*>)(.*?)(\s*<source[^>]*>(?:</source>)?)`)
+
+// hoistInterfaceSources moves each interface's source element to be its first child.
+//
+// The domain schema interleaves the source with an inner interleave holding mac, model and
+// alias. helium fails to match an outer element placed between two inner ones, which is exactly
+// the order libvirtxml emits (mac, source, model), even though the document is valid; xmllint
+// accepts it. Interleave makes child order irrelevant, so validating the reordered document
+// checks the same content.
+func hoistInterfaceSources(data []byte) []byte {
+	return interfaceSource.ReplaceAll(data, []byte("${1}${3}${2}"))
 }
 
 func TestDomainSchemaMissingInclude(t *testing.T) {

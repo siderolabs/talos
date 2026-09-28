@@ -172,6 +172,10 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 			},
 		},
 	}
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "eth0"},
+		{InterfaceName: "net1", InterfaceLink: "uplink"},
+	}
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
 	suite.Create(config.NewMachineConfig(cfg))
@@ -214,6 +218,10 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 						},
 					},
 				},
+			},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+				{Name: "net0", Link: "eth0"},
+				{Name: "net1", Link: "uplink"},
 			},
 		}, *res.TypedSpec())
 	})

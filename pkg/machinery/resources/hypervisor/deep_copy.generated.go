@@ -37,6 +37,10 @@ func (o VirtualMachineSpecSpec) DeepCopy() VirtualMachineSpecSpec {
 			}
 		}
 	}
+	if o.Interfaces != nil {
+		cp.Interfaces = make([]VirtualMachineInterfaceSpec, len(o.Interfaces))
+		copy(cp.Interfaces, o.Interfaces)
+	}
 	return cp
 }
 

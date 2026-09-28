@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package hypervisor
+package hypervisorhelpers
 
 import (
 	"errors"
@@ -17,8 +17,9 @@ const maxNameLength = 63
 // validNamePattern matches the characters a hypervisor document name may contain.
 var validNamePattern = regexp.MustCompile(`^[A-Za-z0-9-]+$`)
 
-// validateName checks a document name.
-func validateName(name string) error {
+// ValidateName checks a hypervisor document name: nonempty, ASCII letters/digits/hyphens
+// only, and at most 63 characters.
+func ValidateName(name string) error {
 	switch {
 	case name == "":
 		return errors.New("name is required")
@@ -29,4 +30,13 @@ func validateName(name string) error {
 	}
 
 	return nil
+}
+
+// ValidNameCharset reports whether name uses only the characters a hypervisor document name may
+// contain.
+//
+// It exists for callers that reference another document by name and phrase their own message
+// naming the kind referenced, rather than reporting a name of their own.
+func ValidNameCharset(name string) bool {
+	return validNamePattern.MatchString(name)
 }

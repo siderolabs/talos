@@ -514,6 +514,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
     - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
+    - [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
@@ -9056,6 +9057,22 @@ VirtualMachineFirmwareSpec describes firmware selection without host firmware pa
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec"></a>
+
+### VirtualMachineInterfaceSpec
+VirtualMachineInterfaceSpec describes a network interface attached to a host link.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine interface config (not reflected in the guest) |
+| link | [string](#string) |  | Link identifier, as seen from the host |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec"></a>
 
 ### VirtualMachineMemoryBallooningSpec
@@ -9118,6 +9135,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | firmware | [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec) |  |  |
 | console | [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec) |  |  |
 | disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated |  |
+| interfaces | [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec) | repeated |  |
 
 
 

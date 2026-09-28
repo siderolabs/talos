@@ -23,3 +23,22 @@
 (allow svirt_t virt_content_t (fs_classes (ro)))
 (allow svirt_tcg_t svirt_image_t (fs_classes (rw)))
 (allow svirt_tcg_t virt_content_t (fs_classes (ro)))
+
+; macvtap character devices, one per guest interface attached to a host link.
+;
+; devtmpfs labels these device_t on creation, which is enough to open them, but
+; libvirt insists on looking the default context up in file_contexts before it
+; relabels the fd into the guest's category set. A miss there is fatal to domain
+; start, not a fallback to the devtmpfs label, so the entry below has to exist.
+(type tap_device_t)
+(call protected_device_f (tap_device_t))
+(filecon "/dev/tap[0-9]+" char (system_u object_r tap_device_t (systemLow systemLow)))
+
+; libvirtd opens the device while it is still device_t and relabels the fd.
+(allow init_t device_t (chr_file (relabelfrom)))
+(allow init_t tap_device_t (chr_file (relabelto)))
+(allow init_t tap_device_t (fs_classes (rw)))
+
+; The guest reaches its network through the tap fd it inherits from libvirtd.
+(allow svirt_t tap_device_t (fs_classes (rw)))
+(allow svirt_tcg_t tap_device_t (fs_classes (rw)))

@@ -25,12 +25,23 @@ type VirtualMachineSpec = typed.Resource[VirtualMachineSpecSpec, VirtualMachineS
 //
 //gotagsrewrite:gen
 type VirtualMachineSpecSpec struct {
-	CPU        VirtualMachineCPUSpec      `yaml:"cpu" protobuf:"1"`
-	Memory     VirtualMachineMemorySpec   `yaml:"memory" protobuf:"2"`
-	PowerState string                     `yaml:"powerState" protobuf:"3"`
-	Firmware   VirtualMachineFirmwareSpec `yaml:"firmware" protobuf:"4"`
-	Console    VirtualMachineConsoleSpec  `yaml:"console" protobuf:"5"`
-	Disks      []VirtualMachineDiskSpec   `yaml:"disks,omitempty" protobuf:"6"`
+	CPU        VirtualMachineCPUSpec         `yaml:"cpu" protobuf:"1"`
+	Memory     VirtualMachineMemorySpec      `yaml:"memory" protobuf:"2"`
+	PowerState string                        `yaml:"powerState" protobuf:"3"`
+	Firmware   VirtualMachineFirmwareSpec    `yaml:"firmware" protobuf:"4"`
+	Console    VirtualMachineConsoleSpec     `yaml:"console" protobuf:"5"`
+	Disks      []VirtualMachineDiskSpec      `yaml:"disks,omitempty" protobuf:"6"`
+	Interfaces []VirtualMachineInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"7"`
+}
+
+// VirtualMachineInterfaceSpec describes a network interface attached to a host link.
+//
+//gotagsrewrite:gen
+type VirtualMachineInterfaceSpec struct {
+	// Name of the virtual machine interface config (not reflected in the guest)
+	Name string `yaml:"name" protobuf:"1"`
+	// Link identifier, as seen from the host
+	Link string `yaml:"link" protobuf:"2"`
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.

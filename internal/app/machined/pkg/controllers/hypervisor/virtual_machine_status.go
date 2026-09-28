@@ -18,9 +18,12 @@ import (
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// VirtualMachineStatusController combines desired VMs with independent libvirt observations.
+// VirtualMachineStatusController combines desired VMs with independent libvirt observations, and
+// with the host links their interfaces need: a spec that cannot be rendered on this host loses
+// its power intent.
 type VirtualMachineStatusController struct {
 	V1Alpha1Mode machineruntime.Mode
 }
@@ -36,6 +39,7 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 		{Namespace: hypervisor.NamespaceName, Type: hypervisor.VirtualMachineSpecType, Kind: controller.InputWeak},
 		{Namespace: hypervisor.NamespaceName, Type: hypervisor.VirtualMachineDomainStatusType, Kind: controller.InputWeak},
 		{Namespace: hardware.NamespaceName, Type: hardware.SystemInformationType, Kind: controller.InputWeak},
+		{Namespace: network.NamespaceName, Type: network.LinkStatusType, Kind: controller.InputWeak},
 	}
 }
 
@@ -89,13 +93,27 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		byName[domain.Metadata().ID()] = domain
 	}
 
+	linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, runtime)
+	if err != nil {
+		return fmt.Errorf("list link statuses: %w", err)
+	}
+
+	links := newHostLinks(linkStatuses)
+
 	machineUUID, machineErr := getMachineUUID(ctx, runtime)
 
 	var errs error
 
 	for spec := range specs.All() {
 		name := spec.Metadata().ID()
-		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, byName[name])
+
+		// VirtualMachineDomainSpecController withdraws the power intent of a spec it cannot
+		// render, so an observed domain is on its way out: that obstacle outranks its apparent
+		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
+		// the reason legible even before a domain spec exists.
+		_, renderErr := renderVirtualMachineDomain(name, spec.TypedSpec(), links)
+
+		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, name),
@@ -112,7 +130,17 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 	return errors.Join(errs, safe.CleanupOutputs[*hypervisor.VirtualMachineStatus](ctx, runtime))
 }
 
-func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, machineErr error,
+// renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
+// worth waiting for, anything else needs the config changed.
+func renderStage(err error) hypervisor.VirtualMachineStage {
+	if errors.Is(err, errLinkNotFound) {
+		return hypervisor.VirtualMachineStagePending
+	}
+
+	return hypervisor.VirtualMachineStageError
+}
+
+func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, machineErr, renderErr error,
 	domain *hypervisor.VirtualMachineDomainStatus,
 ) hypervisor.VirtualMachineStatusSpec {
 	status := hypervisor.VirtualMachineStatusSpec{PowerState: hypervisor.VirtualMachinePowerStateUnknown}
@@ -131,6 +159,14 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 
 		return status
 	case domain == nil:
+		if renderErr != nil {
+			// The domain was never defined, or it has been withdrawn, and this is why.
+			status.Stage = renderStage(renderErr)
+			status.Error = renderErr.Error()
+
+			return status
+		}
+
 		status.Error = "domain has not been observed"
 
 		return status
@@ -152,6 +188,13 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 	}
 
 	status.Stage = hypervisor.VirtualMachineStagePending
+
+	if renderErr != nil {
+		status.Stage = renderStage(renderErr)
+		status.Error = renderErr.Error()
+
+		return status
+	}
 
 	return reconcileVirtualMachinePower(desired, status)
 }

@@ -2725,9 +2725,9 @@
         "link": {
           "type": "string",
           "title": "link",
-          "description": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.\n",
-          "markdownDescription": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.",
-          "x-intellij-html-description": "\u003cp\u003eKernel name (or alias) of the host link the interface is attached to.\u003c/p\u003e\n\n\u003cp\u003eThe link must already exist on the host: it is attached to as is, and neither Talos nor\nthe hypervisor configures networking for it.\u003c/p\u003e\n"
+          "description": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.\n",
+          "markdownDescription": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.",
+          "x-intellij-html-description": "\u003cp\u003eKernel name (or alias) of the host link the interface is attached to.\u003c/p\u003e\n\n\u003cp\u003eThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

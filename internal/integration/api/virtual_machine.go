@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
@@ -22,12 +23,14 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 //go:embed testdata/virtualmachinespec/created.xml
@@ -118,25 +121,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 	suite.Require().NoError(err)
 	suite.validateVirtualMachineConfigBytes(updatedBytes, doc)
 
-	// Register before the first RPC: a failed apply may still have changed the node.
-	// Cleanup must not reuse the test deadline, which may already have expired.
-	suite.T().Cleanup(func() {
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cleanupCancel()
-
-		cleanupCtx = client.WithNode(cleanupCtx, node)
-
-		_, applyErr := suite.Client.ApplyConfiguration(cleanupCtx, &machineapi.ApplyConfigurationRequest{
-			Data: originalBytes,
-			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
-		})
-		if !suite.Assert().NoError(applyErr, "restore original configuration on node %s", node) {
-			return
-		}
-
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
-	})
+	suite.registerConfigRestore(node, name, originalBytes)
 
 	suite.applyVirtualMachineConfig(nodeCtx, createdBytes)
 	suite.assertVirtualMachineProjection(nodeCtx, name, hypervisor.VirtualMachineSpecSpec{
@@ -211,6 +196,32 @@ func (suite *VirtualMachineSuite) validateVirtualMachineConfigBytes(data []byte,
 	suite.T().Fatalf("decoded configuration is missing virtual machine %q", doc.MetaName)
 }
 
+// registerConfigRestore restores the node's original configuration when the test ends, and asserts
+// the virtual machine's projections are gone. Register it before the first RPC: a failed apply may
+// still have changed the node. The cleanup does not reuse the test deadline, which may already have
+// expired.
+func (suite *VirtualMachineSuite) registerConfigRestore(node, name string, originalBytes []byte) {
+	suite.T().Helper()
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cleanupCancel()
+
+		cleanupCtx = client.WithNode(cleanupCtx, node)
+
+		_, applyErr := suite.Client.ApplyConfiguration(cleanupCtx, &machineapi.ApplyConfigurationRequest{
+			Data: originalBytes,
+			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
+		})
+		if !suite.Assert().NoError(applyErr, "restore original configuration on node %s", node) {
+			return
+		}
+
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
+	})
+}
+
 func (suite *VirtualMachineSuite) applyVirtualMachineConfig(ctx context.Context, data []byte) {
 	suite.T().Helper()
 
@@ -239,6 +250,128 @@ func (suite *VirtualMachineSuite) assertVirtualMachineProjection(ctx context.Con
 			asrt.Equal(expectedXML, spec.TypedSpec().DomainXML)
 		},
 	)
+}
+
+// TestInterfaceProjection verifies that network interfaces reach the rendered domain definition,
+// and that an interface naming a link the host does not have holds the whole definition back.
+func (suite *VirtualMachineSuite) TestInterfaceProjection() {
+	if testing.Short() {
+		suite.T().Skip("skipping machine configuration changes in short mode")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(ctx, node)
+	name := "vm-integration-" + uuid.NewString()
+	link := suite.physicalLinkName(nodeCtx)
+
+	suite.T().Logf("testing virtual machine %q interfaces on node %s, attaching to host link %q", name, node, link)
+
+	original, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	originalBytes, err := original.Bytes()
+	suite.Require().NoError(err)
+
+	for _, vm := range original.VirtualMachineConfigs() {
+		suite.Require().NotEqual(name, vm.Name(), "test name collides with an existing document")
+	}
+
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+
+	// A link name the host cannot have. It is well formed, so it passes configuration validation
+	// and is only rejected later, when the renderer fails to resolve it.
+	const missingLink = "vmtestmissing0"
+
+	missingBytes := suite.virtualMachineWithInterface(original, name, missingLink)
+	attachedBytes := suite.virtualMachineWithInterface(original, name, link)
+
+	suite.registerConfigRestore(node, name, originalBytes)
+
+	// The unresolvable link goes first: a domain that was never rendered is indistinguishable
+	// from a stale one left behind, and holding back does not remove an already rendered domain.
+	suite.applyVirtualMachineConfig(nodeCtx, missingBytes)
+	suite.assertVirtualMachineInterfaces(nodeCtx, name, missingLink)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+
+	suite.applyVirtualMachineConfig(nodeCtx, attachedBytes)
+	suite.assertVirtualMachineInterfaces(nodeCtx, name, link)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			domainXML := spec.TypedSpec().DomainXML
+
+			asrt.Contains(domainXML, `<source dev="`+link+`" mode="bridge"></source>`)
+			asrt.Contains(domainXML, `<model type="virtio"></model>`)
+			// The user alias carries the configured interface name, not the generated macvtap name.
+			asrt.Contains(domainXML, `<alias name="ua-net0"></alias>`)
+			// The MAC is derived from the names rather than assigned by libvirt, so that a
+			// transient domain keeps it across restarts.
+			asrt.Regexp(`<mac address="52:54:00:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}"></mac>`, domainXML)
+		},
+	)
+}
+
+// virtualMachineWithInterface renders the node configuration with one added virtual machine
+// holding a single interface attached to link.
+func (suite *VirtualMachineSuite) virtualMachineWithInterface(original config.Provider, name, link string) []byte {
+	suite.T().Helper()
+
+	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
+	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
+	doc.CPUConfig = hypervisorcfg.VirtualMachineCPU{CPUCount: 1}
+	doc.MemoryConfig = hypervisorcfg.VirtualMachineMemory{MemorySize: meta.MustByteSize("512MiB")}
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: link},
+	}
+
+	cfg, err := container.New(append(slices.Clone(original.Documents()), doc)...)
+	suite.Require().NoError(err)
+	suite.validateVirtualMachineConfig(cfg, doc)
+
+	data, err := cfg.Bytes()
+	suite.Require().NoError(err)
+	suite.validateVirtualMachineConfigBytes(data, doc)
+
+	return data
+}
+
+func (suite *VirtualMachineSuite) assertVirtualMachineInterfaces(ctx context.Context, name, link string) {
+	suite.T().Helper()
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+			asrt.Equal([]hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: link}}, spec.TypedSpec().Interfaces)
+		},
+	)
+}
+
+// physicalLinkName returns the node's first physical link, by name. The interface attached to it is
+// only ever defined, never started, so the link carries no guest traffic.
+func (suite *VirtualMachineSuite) physicalLinkName(nodeCtx context.Context) string {
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var names []string
+
+	for link := range links.All() {
+		if link.TypedSpec().Physical() {
+			names = append(names, link.Metadata().ID())
+		}
+	}
+
+	if len(names) == 0 {
+		suite.T().Skip("no physical link on the node to attach an interface to")
+	}
+
+	slices.Sort(names)
+
+	return names[0]
 }
 
 func init() {

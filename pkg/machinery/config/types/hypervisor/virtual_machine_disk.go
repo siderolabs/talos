@@ -321,14 +321,14 @@ func (i *VirtualMachineDiskFromImage) Mode() hypervisorhelpers.VirtualMachineDis
 func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 	var validationErrors error
 
-	if err := validateName(d.DiskName); err != nil {
+	if err := hypervisorhelpers.ValidateName(d.DiskName); err != nil {
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: %w", index, err))
 	}
 
 	switch {
 	case d.DiskPool == "":
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: pool is required", index))
-	case !validNamePattern.MatchString(d.DiskPool):
+	case !hypervisorhelpers.ValidNameCharset(d.DiskPool):
 		validationErrors = errors.Join(validationErrors,
 			fmt.Errorf("disks[%d]: pool %q: pool name can only contain ASCII letters, digits and hyphens", index, d.DiskPool))
 	}
@@ -414,7 +414,7 @@ func (i *VirtualMachineDiskFromImage) validate(
 	case i.ImageLibrary == "":
 		validationErrors = errors.Join(validationErrors,
 			fmt.Errorf("disks[%d]: provision.fromImage.library is required", index))
-	case !validNamePattern.MatchString(i.ImageLibrary):
+	case !hypervisorhelpers.ValidNameCharset(i.ImageLibrary):
 		validationErrors = errors.Join(validationErrors,
 			fmt.Errorf("disks[%d]: provision.fromImage.library %q: library name can only contain ASCII letters, digits and hyphens",
 				index, i.ImageLibrary))

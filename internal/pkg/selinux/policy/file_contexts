@@ -5,6 +5,7 @@
 /opt/cni(/.*)?	system_u:object_r:cni_plugin_t:s0
 /usr/bin(/.*)?	system_u:object_r:bin_exec_t:s0
 /usr/lib(/.*)?	system_u:object_r:lib_t:s0
+/dev/tap[0-9]+	-c	system_u:object_r:tap_device_t:s0
 /usr/lib/udev/[^/.]+	--	system_u:object_r:udev_exec_t:s0
 /etc/kubernetes(/.*)?	system_u:object_r:k8s_conf_t:s0
 /opt/containerd(/.*)?	system_u:object_r:containerd_plugin_t:s0

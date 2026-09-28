@@ -15,11 +15,22 @@ type LinkResolver struct {
 //
 // If the link name or alias is not found in the lookup table, it is returned as is.
 func (r *LinkResolver) Resolve(name string) string {
+	resolved, _ := r.ResolveChecked(name)
+
+	return resolved
+}
+
+// ResolveChecked resolves the link name or alias to the actual link name, and reports
+// whether the name or alias was found in the lookup table.
+//
+// If the link name or alias is not found in the lookup table, it is returned as is, with
+// found reported as false.
+func (r *LinkResolver) ResolveChecked(name string) (resolved string, found bool) {
 	if resolved, ok := r.lookup[name]; ok {
-		return resolved
+		return resolved, true
 	}
 
-	return name
+	return name, false
 }
 
 // NewLinkResolver creates a new link name resolver.

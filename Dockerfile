@@ -832,6 +832,7 @@ END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/selinux/virtual_domain_context hack/selinux/virtual_image_context /rootfs/etc/selinux/targeted/contexts/
+COPY --link --chmod=0644 --from=selinux-generate /policy/file_contexts /rootfs/etc/selinux/targeted/contexts/files/file_contexts
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
@@ -841,7 +842,7 @@ COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 COPY --link --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,selinux/targeted/contexts/files/file_contexts}
+    touch /rootfs/etc/extensions.yaml
     ln -s ca-certificates.crt /rootfs/etc/ssl/certs/ca-certificates
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
@@ -923,6 +924,7 @@ END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/selinux/virtual_domain_context hack/selinux/virtual_image_context /rootfs/etc/selinux/targeted/contexts/
+COPY --link --chmod=0644 --from=selinux-generate /policy/file_contexts /rootfs/etc/selinux/targeted/contexts/files/file_contexts
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
@@ -932,7 +934,7 @@ COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 COPY --link --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,selinux/targeted/contexts/files/file_contexts}
+    touch /rootfs/etc/extensions.yaml
     ln -s ca-certificates.crt /rootfs/etc/ssl/certs/ca-certificates
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates

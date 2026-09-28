@@ -327,6 +327,30 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidSpecs() {
 			CPU:    hypervisor.VirtualMachineCPUSpec{Count: 1},
 			Memory: hypervisor.VirtualMachineMemorySpec{Size: 1<<64 - 1},
 		},
+		// Interface names become libvirt user aliases and must be unique; links are required.
+		{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{{Name: "", Link: "eth0"}},
+		},
+		{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{{Name: "net.0", Link: "eth0"}},
+		},
+		{
+			CPU:    hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory: hypervisor.VirtualMachineMemorySpec{Size: 1024},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+				{Name: "net0", Link: "eth0"},
+				{Name: "net0", Link: "eth1"},
+			},
+		},
+		{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0"}},
+		},
 	} {
 		suite.logs.TakeAll()
 

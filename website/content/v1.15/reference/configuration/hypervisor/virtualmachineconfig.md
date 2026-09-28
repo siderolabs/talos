@@ -464,7 +464,7 @@ VirtualMachineInterface describes a single network interface of a virtual machin
 |`name` |string |Name of the interface, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. This is how the interface is addressed over the API; it is not the<br>device name inside the guest, which the guest kernel chooses for itself. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 name: net0
 {{< /highlight >}}</details> | |
-|`link` |string |Kernel name (or alias) of the host link the interface is attached to.<br><br>The link must already exist on the host: it is attached to as is, and neither Talos nor<br>the hypervisor configures networking for it. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`link` |string |Kernel name (or alias) of the host link the interface is attached to.<br><br>The link must already exist on the host and be an Ethernet link, e.g. a physical<br>interface, a bond, or a VLAN. It is attached to as is. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 link: eth0
 {{< /highlight >}}</details> | |
 

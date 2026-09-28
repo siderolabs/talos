@@ -175,5 +175,12 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 		spec.Disks = append(spec.Disks, intent)
 	}
 
+	for _, iface := range vm.Networking().Interfaces() {
+		spec.Interfaces = append(spec.Interfaces, hypervisor.VirtualMachineInterfaceSpec{
+			Name: iface.Name(),
+			Link: iface.Link(),
+		})
+	}
+
 	return spec
 }

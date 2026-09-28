@@ -414,7 +414,7 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 
 // ValidateName checks the virtual machine name.
 func (c *VirtualMachineConfigV1Alpha1) ValidateName() error {
-	return validateName(c.MetaName)
+	return hypervisorhelpers.ValidateName(c.MetaName)
 }
 
 // ValidateCPU checks the processor settings.

@@ -18,8 +18,10 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type openFailure struct{ err error }
@@ -307,11 +309,22 @@ func (s *VirtualMachineStatusSuite) TestFailedInventoryKeepsObservationUntilSucc
 func (s *VirtualMachineStatusSuite) TestAbsentDomainIsNotReadyDuringFailedScan() {
 	s.openErr.Store(&openFailure{err: errors.New("daemon unavailable")})
 
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	spec.TypedSpec().PowerState = "stopped"
+	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+}
+
+// newRenderableSpec builds a spec that renders, so a test about something other than rendering
+// does not trip the renderer's own validation.
+func newRenderableSpec(name, powerState string) *hypervisor.VirtualMachineSpec {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+	spec.TypedSpec().CPU = hypervisor.VirtualMachineCPUSpec{Count: 1}
+	spec.TypedSpec().Memory = hypervisor.VirtualMachineMemorySpec{Size: 1 << 30}
+	spec.TypedSpec().Firmware = hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"}
+	spec.TypedSpec().PowerState = powerState
+
+	return spec
 }
 
 func (s *VirtualMachineStatusSuite) assertStatus(name, state string, stage hypervisor.VirtualMachineStage, errorText string) {
@@ -328,8 +341,7 @@ func (s *VirtualMachineStatusSuite) assertStatus(name, state string, stage hyper
 }
 
 func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	spec.TypedSpec().PowerState = "stopped"
+	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
@@ -355,16 +367,64 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 
 	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStageReady, "")
 
-	second := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm2")
-	second.TypedSpec().PowerState = "stopped"
+	second := newRenderableSpec("vm2", "stopped")
 	s.Create(second)
 	s.assertStatus("vm2", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
 	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStageReady, "")
 }
 
+// A link the host lacks costs the spec its power intent, so the running domain is on its way out:
+// readiness would be a lie.
+func (s *VirtualMachineStatusSuite) TestUnresolvedLinkHoldsBackReadiness() {
+	name := "vm1"
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+
+	spec := newRenderableSpec(name, "running")
+	spec.TypedSpec().Interfaces = []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: "uplink"}}
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "vm1": interface "net0": host link not found: "uplink"`)
+
+	link := network.NewLinkStatus(network.NamespaceName, "macvlan0")
+	link.TypedSpec().Type = nethelpers.LinkEther
+	link.TypedSpec().Alias = "uplink"
+	s.Create(link)
+
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+}
+
+// The same obstacle, before the domain was ever defined: the missing link is the reason, not the
+// generic absence of an observation.
+func (s *VirtualMachineStatusSuite) TestUnresolvedLinkExplainsUndefinedDomain() {
+	spec := newRenderableSpec("vm1", "running")
+	spec.TypedSpec().Interfaces = []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: "uplink"}}
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStagePending,
+		`virtual machine "vm1": interface "net0": host link not found: "uplink"`)
+}
+
+// A link of the wrong type is not something to wait for: the config has to change, so the stage
+// says error rather than pending.
+func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
+	link := network.NewLinkStatus(network.NamespaceName, "lo")
+	link.TypedSpec().Type = nethelpers.LinkLoopbck
+	s.Create(link)
+
+	spec := newRenderableSpec("vm1", "running")
+	spec.TypedSpec().Interfaces = []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: "lo"}}
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
+		`virtual machine "vm1": interface "net0": host link is not an Ethernet link: "lo"`)
+}
+
 func (s *VirtualMachineStatusSuite) TestForeignDomainIsError() {
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	spec.TypedSpec().PowerState = "running"
+	spec := newRenderableSpec("vm1", "running")
 	s.Create(spec)
 	s.client.domains["vm1"] = libvirtdomain.Domain{Name: "vm1", UUID: uuid.New()}
 	s.start()
@@ -372,8 +432,7 @@ func (s *VirtualMachineStatusSuite) TestForeignDomainIsError() {
 }
 
 func (s *VirtualMachineStatusSuite) TestUnsupportedPowerStateIsError() {
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	spec.TypedSpec().PowerState = "suspended"
+	spec := newRenderableSpec("vm1", "suspended")
 	s.Create(spec)
 	s.start()
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError, `unsupported power state "suspended"`)
@@ -382,8 +441,7 @@ func (s *VirtualMachineStatusSuite) TestUnsupportedPowerStateIsError() {
 func (s *VirtualMachineStatusSuite) TestDaemonUnavailable() {
 	s.openErr.Store(&openFailure{err: errors.New("daemon unavailable")})
 
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	spec.TypedSpec().PowerState = "running"
+	spec := newRenderableSpec("vm1", "running")
 	s.Create(spec)
 	s.start()
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
@@ -393,8 +451,7 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageKeepsLastObservationUntilSu
 	name := "vm1"
 	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
 
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
-	spec.TypedSpec().PowerState = "running"
+	spec := newRenderableSpec(name, "running")
 	s.Create(spec)
 
 	resume := make(chan struct{})
@@ -446,8 +503,7 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageKeepsLastObservationUntilSu
 }
 
 func (s *VirtualMachineStatusSuite) TestStatusRemovedWithSpec() {
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	spec.TypedSpec().PowerState = "stopped"
+	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
