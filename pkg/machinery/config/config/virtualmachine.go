@@ -39,6 +39,34 @@ type VirtualMachineCPUConfig interface {
 	Count() uint32
 	// Limit is the whole-domain host CPU ceiling in millicores; None means unlimited.
 	Limit() optional.Optional[uint64]
+	// Topology settings; never nil.
+	Topology() VirtualMachineCPUTopologyConfig
+}
+
+// VirtualMachineCPUTopologyConfig defines guest CPU geometry and host CPU pinning.
+// Geometry counts return zero when omitted; they do not identify host CPUs.
+type VirtualMachineCPUTopologyConfig interface {
+	Sockets() uint32
+	Cores() uint32
+	Threads() uint32
+	// Pinning settings; never nil.
+	Pinning() VirtualMachineCPUPinningConfig
+}
+
+// VirtualMachineCPUPinningConfig defines which host CPUs the guest's threads are pinned to.
+type VirtualMachineCPUPinningConfig interface {
+	// VCPUs are the per-vCPU pins, in declaration order.
+	VCPUs() []VirtualMachineVCPUPinConfig
+	// Emulator is the canonical host CPU list the emulator threads are pinned to; empty means unpinned.
+	Emulator() string
+}
+
+// VirtualMachineVCPUPinConfig pins one guest vCPU to a set of host CPUs.
+type VirtualMachineVCPUPinConfig interface {
+	// VCPU is the guest vCPU index, starting at 0.
+	VCPU() uint32
+	// CPUs is the canonical host CPU list the vCPU is pinned to.
+	CPUs() string
 }
 
 // VirtualMachineMemoryConfig defines the memory presented to the guest.
@@ -47,6 +75,16 @@ type VirtualMachineMemoryConfig interface {
 	Size() uint64
 	// Ballooning settings; never nil.
 	Ballooning() VirtualMachineBallooningConfig
+	// NUMA placement; None when the guest memory is not placed.
+	NUMA() optional.Optional[VirtualMachineNUMAConfig]
+}
+
+// VirtualMachineNUMAConfig defines where the guest memory is placed on the host.
+type VirtualMachineNUMAConfig interface {
+	// Mode is how guest memory is bound to the nodes, with the default applied.
+	Mode() hypervisorhelpers.VirtualMachineNUMAMode
+	// Nodes is the canonical host NUMA node list the guest memory is placed on.
+	Nodes() string
 }
 
 // VirtualMachineBallooningConfig defines the virtio-balloon settings for a virtual machine.

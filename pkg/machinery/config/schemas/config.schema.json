@@ -2321,9 +2321,9 @@
         "count": {
           "type": "integer",
           "title": "count",
-          "description": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.\n",
-          "markdownDescription": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.",
-          "x-intellij-html-description": "\u003cp\u003eNumber of virtual CPUs presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.\u003c/p\u003e\n"
+          "description": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads can be configured with topology.\n",
+          "markdownDescription": "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads can be configured with `topology`.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of virtual CPUs presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads can be configured with \u003ccode\u003etopology\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "limit": {
           "type": "string",
@@ -2331,6 +2331,13 @@
           "description": "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain’s global CFS quota.\n\n1000m is one host core. The ceiling is independent of count: a guest with four\nvCPUs and a 2000m ceiling sees four processors but is scheduled for at most two cores\nof host time.\n\nOptional; omitting it leaves the virtual machine bounded only by its vCPU count.\n",
           "markdownDescription": "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain's global CFS quota.\n\n`1000m` is one host core. The ceiling is independent of `count`: a guest with four\nvCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores\nof host time.\n\nOptional; omitting it leaves the virtual machine bounded only by its vCPU count.",
           "x-intellij-html-description": "\u003cp\u003eHost CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain\u0026rsquo;s global CFS quota.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003e1000m\u003c/code\u003e is one host core. The ceiling is independent of \u003ccode\u003ecount\u003c/code\u003e: a guest with four\nvCPUs and a \u003ccode\u003e2000m\u003c/code\u003e ceiling sees four processors but is scheduled for at most two cores\nof host time.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves the virtual machine bounded only by its vCPU count.\u003c/p\u003e\n"
+        },
+        "topology": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineCPUTopology",
+          "title": "topology",
+          "description": "Optional guest CPU geometry and host CPU pinning.\n\nGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal count.\nPinning may be configured without guest geometry.\n",
+          "markdownDescription": "Optional guest CPU geometry and host CPU pinning.\n\nGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal `count`.\nPinning may be configured without guest geometry.",
+          "x-intellij-html-description": "\u003cp\u003eOptional guest CPU geometry and host CPU pinning.\u003c/p\u003e\n\n\u003cp\u003eGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal \u003ccode\u003ecount\u003c/code\u003e.\nPinning may be configured without guest geometry.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2339,6 +2346,65 @@
         "count"
       ],
       "description": "VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.\\n\\nThere is deliberately no matching memory ceiling. Guest memory is already fixed by `memory.size`,\\nand libvirt advises against a QEMU memory hard limit: the emulator's own footprint over guest RAM\\nis not predictable, and a limit guessed too low has the kernel kill the virtual machine.\\n"
+    },
+    "hypervisor.VirtualMachineCPUPinning": {
+      "properties": {
+        "vcpus": {
+          "items": {
+            "$ref": "#/$defs/hypervisor.VirtualMachineVCPUPin"
+          },
+          "type": "array",
+          "title": "vcpus",
+          "description": "Per-vCPU pins.\n\nA vCPU left out of this list is scheduled on any host CPU.\n\nA configuration patch replaces this list as a whole rather than appending to it.\n",
+          "markdownDescription": "Per-vCPU pins.\n\nA vCPU left out of this list is scheduled on any host CPU.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+          "x-intellij-html-description": "\u003cp\u003ePer-vCPU pins.\u003c/p\u003e\n\n\u003cp\u003eA vCPU left out of this list is scheduled on any host CPU.\u003c/p\u003e\n\n\u003cp\u003eA configuration patch replaces this list as a whole rather than appending to it.\u003c/p\u003e\n"
+        },
+        "emulator": {
+          "type": "string",
+          "title": "emulator",
+          "description": "Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)\nare pinned to, as a Linux CPU list, e.g. 0-1,4.\n\nOptional; omitting it leaves the emulator threads unpinned.\n",
+          "markdownDescription": "Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)\nare pinned to, as a Linux CPU list, e.g. `0-1,4`.\n\nOptional; omitting it leaves the emulator threads unpinned.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs the emulator threads (everything of the virtual machine that is not a vCPU)\nare pinned to, as a Linux CPU list, e.g. \u003ccode\u003e0-1,4\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves the emulator threads unpinned.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineCPUPinning describes which host CPUs the guest's threads are pinned to.\\n\\nHost CPU IDs are the kernel's logical CPU numbers, SMT threads included. Whether a named CPU\\nexists and is available is only known on the host, when the virtual machine starts.\\n"
+    },
+    "hypervisor.VirtualMachineCPUTopology": {
+      "properties": {
+        "sockets": {
+          "type": "integer",
+          "title": "sockets",
+          "description": "Number of guest sockets. If any geometry dimension is set, all three must be\npositive and sockets * cores * threads must equal cpu.count.\n",
+          "markdownDescription": "Number of guest sockets. If any geometry dimension is set, all three must be\npositive and sockets * cores * threads must equal `cpu.count`.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of guest sockets. If any geometry dimension is set, all three must be\npositive and sockets * cores * threads must equal \u003ccode\u003ecpu.count\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "cores": {
+          "type": "integer",
+          "title": "cores",
+          "description": "Number of guest cores per socket, not host CPU IDs.\n",
+          "markdownDescription": "Number of guest cores per socket, not host CPU IDs.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of guest cores per socket, not host CPU IDs.\u003c/p\u003e\n"
+        },
+        "threads": {
+          "type": "integer",
+          "title": "threads",
+          "description": "Number of guest threads per core, not host CPU IDs.\n",
+          "markdownDescription": "Number of guest threads per core, not host CPU IDs.",
+          "x-intellij-html-description": "\u003cp\u003eNumber of guest threads per core, not host CPU IDs.\u003c/p\u003e\n"
+        },
+        "pinning": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineCPUPinning",
+          "title": "pinning",
+          "description": "Host CPUs the guest’s threads are pinned to; independent of guest geometry and cpu.limit.\nOptional; omitting it leaves the virtual machine schedulable on any host CPU.\n",
+          "markdownDescription": "Host CPUs the guest's threads are pinned to; independent of guest geometry and `cpu.limit`.\nOptional; omitting it leaves the virtual machine schedulable on any host CPU.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs the guest\u0026rsquo;s threads are pinned to; independent of guest geometry and \u003ccode\u003ecpu.limit\u003c/code\u003e.\nOptional; omitting it leaves the virtual machine schedulable on any host CPU.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineCPUTopology describes guest CPU geometry and independent host CPU pinning."
     },
     "hypervisor.VirtualMachineConfigV1Alpha1": {
       "properties": {
@@ -2687,6 +2753,13 @@
           "description": "Memory ballooning settings.\n\nOptional; ballooning is disabled when this section is omitted.\n",
           "markdownDescription": "Memory ballooning settings.\n\nOptional; ballooning is disabled when this section is omitted.",
           "x-intellij-html-description": "\u003cp\u003eMemory ballooning settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; ballooning is disabled when this section is omitted.\u003c/p\u003e\n"
+        },
+        "numa": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineNUMA",
+          "title": "numa",
+          "description": "Host NUMA nodes the guest memory is placed on.\n\nOptional; omitting it leaves placement to the host.\n",
+          "markdownDescription": "Host NUMA nodes the guest memory is placed on.\n\nOptional; omitting it leaves placement to the host.",
+          "x-intellij-html-description": "\u003cp\u003eHost NUMA nodes the guest memory is placed on.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves placement to the host.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2695,6 +2768,34 @@
         "size"
       ],
       "description": "VirtualMachineMemory describes the memory presented to the guest."
+    },
+    "hypervisor.VirtualMachineNUMA": {
+      "properties": {
+        "mode": {
+          "enum": [
+            "strict",
+            "preferred",
+            "interleave"
+          ],
+          "title": "mode",
+          "description": "How guest memory is bound to the nodes.\n\nstrict fails allocations that cannot be served from nodes; preferred falls back\nto other nodes; interleave spreads pages across nodes round-robin.\n\nOptional; defaults to strict.\n",
+          "markdownDescription": "How guest memory is bound to the nodes.\n\n`strict` fails allocations that cannot be served from `nodes`; `preferred` falls back\nto other nodes; `interleave` spreads pages across `nodes` round-robin.\n\nOptional; defaults to `strict`.",
+          "x-intellij-html-description": "\u003cp\u003eHow guest memory is bound to the nodes.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003estrict\u003c/code\u003e fails allocations that cannot be served from \u003ccode\u003enodes\u003c/code\u003e; \u003ccode\u003epreferred\u003c/code\u003e falls back\nto other nodes; \u003ccode\u003einterleave\u003c/code\u003e spreads pages across \u003ccode\u003enodes\u003c/code\u003e round-robin.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003estrict\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "nodes": {
+          "type": "string",
+          "title": "nodes",
+          "description": "Host NUMA nodes the guest memory is placed on, as a Linux node list, e.g. 1 or 0-1.\n\nWhether a named node exists is only known on the host, when the virtual machine starts.\n",
+          "markdownDescription": "Host NUMA nodes the guest memory is placed on, as a Linux node list, e.g. `1` or `0-1`.\n\nWhether a named node exists is only known on the host, when the virtual machine starts.",
+          "x-intellij-html-description": "\u003cp\u003eHost NUMA nodes the guest memory is placed on, as a Linux node list, e.g. \u003ccode\u003e1\u003c/code\u003e or \u003ccode\u003e0-1\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eWhether a named node exists is only known on the host, when the virtual machine starts.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "nodes"
+      ],
+      "description": "VirtualMachineNUMA describes where the guest memory is placed on the host."
     },
     "hypervisor.VirtualMachineNetworking": {
       "properties": {
@@ -2726,6 +2827,31 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VirtualMachineSerial describes the serial console of a virtual machine."
+    },
+    "hypervisor.VirtualMachineVCPUPin": {
+      "properties": {
+        "vcpu": {
+          "type": "integer",
+          "title": "vcpu",
+          "description": "Guest vCPU index, starting at 0 and below cpu.count.\n",
+          "markdownDescription": "Guest vCPU index, starting at 0 and below `cpu.count`.",
+          "x-intellij-html-description": "\u003cp\u003eGuest vCPU index, starting at 0 and below \u003ccode\u003ecpu.count\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "cpus": {
+          "type": "string",
+          "title": "cpus",
+          "description": "Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. 8 or 9-10.\n",
+          "markdownDescription": "Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs the vCPU is pinned to, as a Linux CPU list, e.g. \u003ccode\u003e8\u003c/code\u003e or \u003ccode\u003e9-10\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cpus",
+        "vcpu"
+      ],
+      "description": "VirtualMachineVCPUPin pins one guest vCPU to a set of host CPUs."
     },
     "hypervisor.VirtualMachineVNC": {
       "properties": {

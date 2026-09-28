@@ -106,8 +106,9 @@ func (ctrl *VirtualMachineSpecController) reconcile(ctx context.Context, runtime
 func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.VirtualMachineSpecSpec {
 	spec := hypervisor.VirtualMachineSpecSpec{
 		CPU: hypervisor.VirtualMachineCPUSpec{
-			Count: vm.CPU().Count(),
-			Limit: vm.CPU().Limit().ValueOrZero(),
+			Count:       vm.CPU().Count(),
+			Limit:       vm.CPU().Limit().ValueOrZero(),
+			EmulatorPin: vm.CPU().Topology().Pinning().Emulator(),
 		},
 		Memory: hypervisor.VirtualMachineMemorySpec{
 			Size: vm.Memory().Size(),
@@ -124,6 +125,29 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 			Serial: vm.Console().Serial().Enabled(),
 			VNC:    vm.Console().VNC().Enabled(),
 		},
+	}
+
+	topology := vm.CPU().Topology()
+	if topology.Sockets() != 0 || topology.Cores() != 0 || topology.Threads() != 0 {
+		spec.CPU.Topology = &hypervisor.VirtualMachineCPUTopologySpec{
+			Sockets: topology.Sockets(),
+			Cores:   topology.Cores(),
+			Threads: topology.Threads(),
+		}
+	}
+
+	for _, pin := range topology.Pinning().VCPUs() {
+		spec.CPU.Pins = append(spec.CPU.Pins, hypervisor.VirtualMachineVCPUPinSpec{
+			VCPU: pin.VCPU(),
+			CPUs: pin.CPUs(),
+		})
+	}
+
+	if numa, ok := vm.Memory().NUMA().Get(); ok {
+		spec.Memory.NUMA = &hypervisor.VirtualMachineMemoryNUMASpec{
+			Mode:  numa.Mode().String(),
+			Nodes: numa.Nodes(),
+		}
 	}
 
 	for _, disk := range vm.Disks() {

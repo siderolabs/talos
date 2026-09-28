@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
+	"libvirt.org/go/libvirtxml"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
@@ -147,6 +148,15 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)
 	doc.ConsoleConfig.VNCConfig.VNCEnabled = new(true)
 	doc.CPUConfig.CPULimit = "2500m"
+	doc.CPUConfig.TopologyConfig.TopologySockets = new(uint32(1))
+	doc.CPUConfig.TopologyConfig.TopologyCores = new(uint32(3))
+	doc.CPUConfig.TopologyConfig.TopologyThreads = new(uint32(1))
+	doc.CPUConfig.TopologyConfig.PinningConfig = hypervisorcfg.VirtualMachineCPUPinning{
+		// Written out of order and with a duplicate: the projection carries the canonical form.
+		VCPUsConfig:    []hypervisorcfg.VirtualMachineVCPUPin{{PinVCPU: 2, PinCPUs: "9,8,9"}, {PinVCPU: 0, PinCPUs: "1"}},
+		EmulatorConfig: "0-1",
+	}
+	doc.MemoryConfig.NUMAConfig = &hypervisorcfg.VirtualMachineNUMA{NUMANodes: "1"}
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName:      "system",
@@ -168,11 +178,15 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.Equal(hypervisor.VirtualMachineSpecSpec{
 			CPU: hypervisor.VirtualMachineCPUSpec{
-				Count: 3,
-				Limit: 2500,
+				Count:       3,
+				Limit:       2500,
+				Pins:        []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 2, CPUs: "8-9"}, {VCPU: 0, CPUs: "1"}},
+				EmulatorPin: "0-1",
+				Topology:    &hypervisor.VirtualMachineCPUTopologySpec{Sockets: 1, Cores: 3, Threads: 1},
 			},
 			Memory: hypervisor.VirtualMachineMemorySpec{
 				Size: 4 << 30,
+				NUMA: &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "1"},
 			},
 			PowerState: "suspended",
 			Firmware: hypervisor.VirtualMachineFirmwareSpec{
@@ -510,6 +524,215 @@ func (suite *VirtualMachineSpecSuite) TestCPULimit() {
 	doc.CPUConfig.CPULimit = ""
 	suite.replaceConfig(doc)
 	suite.assertDomain(doc.Name(), "default")
+}
+
+func (suite *VirtualMachineSpecSuite) TestCPUPinningAndNUMA() {
+	doc := newVirtualMachine("guest-one")
+	doc.CPUConfig.TopologyConfig.PinningConfig = hypervisorcfg.VirtualMachineCPUPinning{
+		VCPUsConfig:    []hypervisorcfg.VirtualMachineVCPUPin{{PinVCPU: 0, PinCPUs: "8"}, {PinVCPU: 1, PinCPUs: "9-10"}},
+		EmulatorConfig: "0-1",
+	}
+	doc.MemoryConfig.NUMAConfig = &hypervisorcfg.VirtualMachineNUMA{NUMANodes: "1"}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+	suite.assertDomain(doc.Name(), "cpu-pinning")
+
+	// The quota and the pins share one cputune; a changed pin set must not leave the old pins behind.
+	doc.CPUConfig.CPULimit = "2500m"
+	doc.CPUConfig.TopologyConfig.PinningConfig = hypervisorcfg.VirtualMachineCPUPinning{
+		VCPUsConfig: []hypervisorcfg.VirtualMachineVCPUPin{{PinVCPU: 2, PinCPUs: "4"}},
+	}
+	doc.MemoryConfig.NUMAConfig = &hypervisorcfg.VirtualMachineNUMA{
+		NUMAMode:  hypervisorhelpers.VirtualMachineNUMAModeInterleave,
+		NUMANodes: "0-1",
+	}
+	suite.replaceConfig(doc)
+	suite.assertDomain(doc.Name(), "cpu-pinning-limit")
+
+	// Dropping the pins and the placement leaves the quota alone, and dropping that too drops cputune.
+	doc.CPUConfig.TopologyConfig.PinningConfig = hypervisorcfg.VirtualMachineCPUPinning{}
+	doc.MemoryConfig.NUMAConfig = nil
+	suite.replaceConfig(doc)
+	suite.assertDomain(doc.Name(), "cpu-limit")
+
+	doc.CPUConfig.CPULimit = ""
+	suite.replaceConfig(doc)
+	suite.assertDomain(doc.Name(), "default")
+}
+
+func (suite *VirtualMachineSpecSuite) TestCPUTopologyLifecycle() {
+	doc := newVirtualMachine("guest-one")
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+	suite.assertDomain(doc.Name(), "default")
+
+	for _, topology := range []hypervisor.VirtualMachineCPUTopologySpec{
+		{Sockets: 3, Cores: 1, Threads: 1},
+		{Sockets: 1, Cores: 2, Threads: 2},
+	} {
+		doc.CPUConfig.CPUCount = topology.Sockets * topology.Cores * topology.Threads
+		doc.CPUConfig.TopologyConfig = hypervisorcfg.VirtualMachineCPUTopology{
+			TopologySockets: new(topology.Sockets),
+			TopologyCores:   new(topology.Cores),
+			TopologyThreads: new(topology.Threads),
+		}
+		suite.replaceConfig(doc)
+		ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			var domain libvirtxml.Domain
+			if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.NotNil(domain.CPU) {
+				return
+			}
+
+			asrt.Equal(&libvirtxml.DomainCPUTopology{
+				Sockets: int(topology.Sockets),
+				Cores:   int(topology.Cores),
+				Threads: int(topology.Threads),
+			}, domain.CPU.Topology)
+			asrt.Equal(uint(doc.CPUConfig.CPUCount), domain.VCPU.Value)
+			asrt.Nil(domain.CPUTune)
+			asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+		})
+	}
+
+	doc.CPUConfig.CPULimit = "2000m"
+	doc.CPUConfig.TopologyConfig.PinningConfig = hypervisorcfg.VirtualMachineCPUPinning{
+		VCPUsConfig:    []hypervisorcfg.VirtualMachineVCPUPin{{PinVCPU: 0, PinCPUs: "4"}},
+		EmulatorConfig: "5",
+	}
+	suite.replaceConfig(doc)
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		var domain libvirtxml.Domain
+		if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.NotNil(domain.CPU) || !asrt.NotNil(domain.CPUTune) {
+			return
+		}
+
+		asrt.Equal(&libvirtxml.DomainCPUTopology{Sockets: 1, Cores: 2, Threads: 2}, domain.CPU.Topology)
+		asrt.Equal([]libvirtxml.DomainCPUTuneVCPUPin{{VCPU: 0, CPUSet: "4"}}, domain.CPUTune.VCPUPin)
+		asrt.Equal(&libvirtxml.DomainCPUTuneEmulatorPin{CPUSet: "5"}, domain.CPUTune.EmulatorPin)
+		asrt.NotNil(domain.CPUTune.GlobalQuota)
+		asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+	})
+
+	doc.CPUConfig.CPUCount = 3
+	doc.CPUConfig.CPULimit = ""
+	doc.CPUConfig.TopologyConfig = hypervisorcfg.VirtualMachineCPUTopology{}
+	suite.replaceConfig(doc)
+	suite.assertDomain(doc.Name(), "default")
+}
+
+func (suite *VirtualMachineSpecSuite) TestInjectedInvalidCPUTopology() {
+	for i, topology := range []hypervisor.VirtualMachineCPUTopologySpec{
+		{},
+		{Sockets: 1, Cores: 3},
+		{Sockets: 1, Threads: 3},
+		{Cores: 3, Threads: 1},
+		{Sockets: 1, Cores: 2, Threads: 1},
+		{Sockets: 1 << 31, Cores: 1 << 31, Threads: 4},
+		// The product is 2^64 + 4, which must not wrap and match the four-vCPU count.
+		{Sockets: 111620, Cores: 429509837, Threads: 384773},
+	} {
+		name := fmt.Sprintf("invalid-topology-%d", i)
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 4, Topology: &topology},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			PowerState: "running",
+		}
+		suite.Create(spec)
+		suite.assertConversionError(name, "CPU topology")
+		ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, name)
+		suite.Destroy(spec)
+	}
+}
+
+func (suite *VirtualMachineSpecSuite) TestInjectedInvalidPlacement() {
+	for _, test := range []struct {
+		name   string
+		cpu    hypervisor.VirtualMachineCPUSpec
+		numa   *hypervisor.VirtualMachineMemoryNUMASpec
+		reason string
+	}{
+		{
+			name:   "vcpu past count",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3, Pins: []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 3, CPUs: "0"}}},
+			reason: "pinned vCPU 3 must be less than CPU count 3",
+		},
+		{
+			name:   "duplicate vcpu",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3, Pins: []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 1, CPUs: "0"}, {VCPU: 1, CPUs: "1"}}},
+			reason: "vCPU 1 is pinned more than once",
+		},
+		{
+			name:   "empty vcpu pin",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3, Pins: []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 1}}},
+			reason: "vCPU 1 pin must name at least one host ID",
+		},
+		{
+			name:   "vcpu pin past the host bound",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3, Pins: []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 1, CPUs: "0-1000000000"}}},
+			reason: `vCPU 1 pin "0-1000000000": 1000000000 is out of range`,
+		},
+		{
+			name:   "emulator pin exclusion grammar",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3, EmulatorPin: "0-3,^1"},
+			reason: `emulator pin "0-3,^1"`,
+		},
+		{
+			name:   "numa mode",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3},
+			numa:   &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "bind", Nodes: "0"},
+			reason: `unsupported NUMA mode "bind"`,
+		},
+		{
+			name:   "numa nodes past the mask",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3},
+			numa:   &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "16384"},
+			reason: `NUMA nodes "16384": 16384 is out of range`,
+		},
+		{
+			name:   "numa nodes empty",
+			cpu:    hypervisor.VirtualMachineCPUSpec{Count: 3},
+			numa:   &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict"},
+			reason: "NUMA nodes must name at least one host ID",
+		},
+	} {
+		suite.Run(test.name, func() {
+			suite.logs.TakeAll()
+
+			spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "placement-invalid")
+			*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+				CPU:        test.cpu,
+				Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024, NUMA: test.numa},
+				PowerState: "running",
+				Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			}
+
+			suite.Create(spec)
+			suite.assertConversionError("placement-invalid", test.reason)
+			ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "placement-invalid")
+			suite.Destroy(spec)
+		})
+	}
+}
+
+// A spec written by another producer need not be canonical; the rendered cpuset is.
+func (suite *VirtualMachineSpecSuite) TestInjectedNonCanonicalPlacement() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "guest-one")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU: hypervisor.VirtualMachineCPUSpec{
+			Count:       3,
+			Pins:        []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 0, CPUs: "8"}, {VCPU: 1, CPUs: "10,9,+9"}},
+			EmulatorPin: "1,0",
+		},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30, NUMA: &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "1,1"}},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+	}
+	suite.Create(spec)
+	suite.assertDomain("guest-one", "cpu-pinning")
 }
 
 func (suite *VirtualMachineSpecSuite) TestRejectsCPULimitOutsideSchemaRange() {

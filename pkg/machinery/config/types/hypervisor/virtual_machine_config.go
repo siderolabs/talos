@@ -121,7 +121,7 @@ type VirtualMachineCPU struct {
 	//     Number of virtual CPUs presented to the guest.
 	//
 	//     This is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are
-	//     laid out into sockets, cores and threads is not configurable.
+	//     laid out into sockets, cores and threads can be configured with `topology`.
 	//   examples:
 	//     - value: 4
 	//   schemaRequired: true
@@ -140,6 +140,13 @@ type VirtualMachineCPU struct {
 	//   schema:
 	//     type: string
 	CPULimit string `yaml:"limit,omitempty"`
+	//   description: |
+	//     Optional guest CPU geometry and host CPU pinning.
+	//
+	//     Geometry counts describe the guest, not host CPU IDs. When any dimension is set,
+	//     all three must be positive and their product must equal `count`.
+	//     Pinning may be configured without guest geometry.
+	TopologyConfig VirtualMachineCPUTopology `yaml:"topology,omitempty"`
 }
 
 // VirtualMachineMemory describes the memory presented to the guest.
@@ -160,6 +167,11 @@ type VirtualMachineMemory struct {
 	//
 	//     Optional; ballooning is disabled when this section is omitted.
 	BallooningConfig *VirtualMachineBallooning `yaml:"ballooning,omitempty"`
+	//   description: |
+	//     Host NUMA nodes the guest memory is placed on.
+	//
+	//     Optional; omitting it leaves placement to the host.
+	NUMAConfig *VirtualMachineNUMA `yaml:"numa,omitempty"`
 }
 
 // VirtualMachineBallooning describes the virtio-balloon settings for a virtual machine.
@@ -190,11 +202,27 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 	cfg.CPUConfig = VirtualMachineCPU{
 		CPUCount: 4,
 		CPULimit: "3000m",
+		TopologyConfig: VirtualMachineCPUTopology{
+			TopologySockets: new(uint32(1)),
+			TopologyCores:   new(uint32(2)),
+			TopologyThreads: new(uint32(2)),
+			PinningConfig: VirtualMachineCPUPinning{
+				VCPUsConfig: []VirtualMachineVCPUPin{
+					{PinVCPU: 0, PinCPUs: "8"},
+					{PinVCPU: 1, PinCPUs: "9-10"},
+				},
+				EmulatorConfig: "0-1",
+			},
+		},
 	}
 	cfg.MemoryConfig = VirtualMachineMemory{
 		MemorySize: meta.MustByteSize("4GiB"),
 		BallooningConfig: &VirtualMachineBallooning{
 			BallooningEnabled: new(true),
+		},
+		NUMAConfig: &VirtualMachineNUMA{
+			NUMAMode:  hypervisorhelpers.VirtualMachineNUMAModeStrict,
+			NUMANodes: "1",
 		},
 	}
 	cfg.PowerStateConfig = hypervisorhelpers.PowerStateRunning
@@ -305,9 +333,23 @@ func (c *VirtualMachineCPU) Limit() optional.Optional[uint64] {
 	return optional.Some(millicores)
 }
 
+// Topology implements config.VirtualMachineCPUConfig interface.
+func (c *VirtualMachineCPU) Topology() config.VirtualMachineCPUTopologyConfig {
+	return &c.TopologyConfig
+}
+
 // Size implements config.VirtualMachineMemoryConfig interface.
 func (m *VirtualMachineMemory) Size() uint64 {
 	return m.MemorySize.Value()
+}
+
+// NUMA implements config.VirtualMachineMemoryConfig interface.
+func (m *VirtualMachineMemory) NUMA() optional.Optional[config.VirtualMachineNUMAConfig] {
+	if m.NUMAConfig == nil {
+		return optional.None[config.VirtualMachineNUMAConfig]()
+	}
+
+	return optional.Some[config.VirtualMachineNUMAConfig](m.NUMAConfig)
 }
 
 // Ballooning implements config.VirtualMachineMemoryConfig interface.
@@ -392,21 +434,27 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateCPU() error {
 		}
 	}
 
-	return validationErrors
+	return errors.Join(validationErrors, c.CPUConfig.TopologyConfig.validate(c.CPUConfig.CPUCount))
 }
 
 // ValidateMemory checks the memory settings.
 func (c *VirtualMachineConfigV1Alpha1) ValidateMemory() error {
+	var validationErrors error
+
 	switch {
 	case c.MemoryConfig.MemorySize.IsNegative():
-		return errors.New("memory.size must not be negative")
+		validationErrors = errors.New("memory.size must not be negative")
 	case c.MemoryConfig.MemorySize.IsZero():
-		return errors.New("memory.size is required")
+		validationErrors = errors.New("memory.size is required")
 	case c.MemoryConfig.MemorySize.Value() == 0:
-		return errors.New("memory.size must be greater than zero")
+		validationErrors = errors.New("memory.size must be greater than zero")
 	}
 
-	return nil
+	if c.MemoryConfig.NUMAConfig != nil {
+		validationErrors = errors.Join(validationErrors, c.MemoryConfig.NUMAConfig.validate())
+	}
+
+	return validationErrors
 }
 
 // ValidateDisks checks the disks attached to the virtual machine.

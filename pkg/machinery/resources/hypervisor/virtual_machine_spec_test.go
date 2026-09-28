@@ -22,7 +22,12 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 
 	res := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "guest")
 	*res.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
-		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 3},
+		CPU: hypervisor.VirtualMachineCPUSpec{
+			Count:       3,
+			Pins:        []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 0, CPUs: "4-5"}},
+			EmulatorPin: "6",
+			Topology:    &hypervisor.VirtualMachineCPUTopologySpec{Sockets: 1, Cores: 3, Threads: 1},
+		},
 		PowerState: "suspended",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi", SecureBoot: true},
 		Console:    hypervisor.VirtualMachineConsoleSpec{Serial: true, VNC: true},
@@ -48,6 +53,7 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 		Memory: hypervisor.VirtualMachineMemorySpec{
 			Size:       4 << 30,
 			Ballooning: hypervisor.VirtualMachineMemoryBallooningSpec{Enabled: true},
+			NUMA:       &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "1"},
 		},
 	}
 	encoded, err := protobuf.FromResource(res)
@@ -77,6 +83,14 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 
 	clone := res.DeepCopy().(*hypervisor.VirtualMachineSpec)
 	clone.TypedSpec().CPU.Count++
+	clone.TypedSpec().CPU.Topology.Cores = 4
+	clone.TypedSpec().CPU.Pins[0].CPUs = "7"
+	clone.TypedSpec().CPU.EmulatorPin = "8"
+	clone.TypedSpec().Memory.NUMA.Nodes = "0"
+	assert.Equal(t, uint32(3), res.TypedSpec().CPU.Topology.Cores)
+	assert.Equal(t, "4-5", res.TypedSpec().CPU.Pins[0].CPUs)
+	assert.Equal(t, "6", res.TypedSpec().CPU.EmulatorPin)
+	assert.Equal(t, "1", res.TypedSpec().Memory.NUMA.Nodes)
 	clone.TypedSpec().Memory.Size++
 	clone.TypedSpec().Memory.Ballooning.Enabled = false
 	clone.TypedSpec().Disks[0].Provision.FromImage.Digest = "changed"
@@ -90,10 +104,21 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `cpu:
     count: 3
+    pins:
+        - vcpu: 0
+          cpus: 4-5
+    emulatorPin: "6"
+    topology:
+        sockets: 1
+        cores: 3
+        threads: 1
 memory:
     size: 4294967296
     ballooning:
         enabled: true
+    numa:
+        mode: strict
+        nodes: "1"
 powerState: suspended
 firmware:
     type: uefi

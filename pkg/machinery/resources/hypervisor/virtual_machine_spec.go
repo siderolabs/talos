@@ -88,6 +88,29 @@ type VirtualMachineCPUSpec struct {
 	Count uint32 `yaml:"count" protobuf:"1"`
 	// Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited.
 	Limit uint64 `yaml:"limit,omitempty" protobuf:"2"`
+	// Pins are the per-vCPU host CPU pins; an unlisted vCPU is unpinned.
+	Pins []VirtualMachineVCPUPinSpec `yaml:"pins,omitempty" protobuf:"3"`
+	// EmulatorPin is the host CPU list the emulator threads are pinned to; empty means unpinned.
+	EmulatorPin string `yaml:"emulatorPin,omitempty" protobuf:"4"`
+	// Topology is the guest-visible CPU geometry; nil leaves it to libvirt.
+	Topology *VirtualMachineCPUTopologySpec `yaml:"topology,omitempty" protobuf:"5"`
+}
+
+// VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.
+//
+//gotagsrewrite:gen
+type VirtualMachineCPUTopologySpec struct {
+	Sockets uint32 `yaml:"sockets" protobuf:"1"`
+	Cores   uint32 `yaml:"cores" protobuf:"2"`
+	Threads uint32 `yaml:"threads" protobuf:"3"`
+}
+
+// VirtualMachineVCPUPinSpec pins one guest vCPU to a host CPU list.
+//
+//gotagsrewrite:gen
+type VirtualMachineVCPUPinSpec struct {
+	VCPU uint32 `yaml:"vcpu" protobuf:"1"`
+	CPUs string `yaml:"cpus" protobuf:"2"`
 }
 
 // VirtualMachineMemorySpec describes the desired guest memory.
@@ -97,6 +120,16 @@ type VirtualMachineMemorySpec struct {
 	// Size is the guest memory size in bytes.
 	Size       uint64                             `yaml:"size" protobuf:"1"`
 	Ballooning VirtualMachineMemoryBallooningSpec `yaml:"ballooning" protobuf:"2"`
+	// NUMA is the host NUMA placement of the guest memory; nil leaves placement to the host.
+	NUMA *VirtualMachineMemoryNUMASpec `yaml:"numa,omitempty" protobuf:"3"`
+}
+
+// VirtualMachineMemoryNUMASpec places the guest memory on host NUMA nodes.
+//
+//gotagsrewrite:gen
+type VirtualMachineMemoryNUMASpec struct {
+	Mode  string `yaml:"mode" protobuf:"1"`
+	Nodes string `yaml:"nodes" protobuf:"2"`
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.

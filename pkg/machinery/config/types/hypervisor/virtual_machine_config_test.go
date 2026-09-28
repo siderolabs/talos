@@ -183,6 +183,35 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "placement",
+			filename: "virtualmachineconfig_placement.yaml",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := hypervisor.NewVirtualMachineConfigV1Alpha1()
+				c.MetaName = "vm4"
+				c.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+				c.CPUConfig.CPUCount = 4
+				c.CPUConfig.CPULimit = "3000m"
+				c.CPUConfig.TopologyConfig.TopologySockets = new(uint32(1))
+				c.CPUConfig.TopologyConfig.TopologyCores = new(uint32(2))
+				c.CPUConfig.TopologyConfig.TopologyThreads = new(uint32(2))
+				c.CPUConfig.TopologyConfig.PinningConfig = hypervisor.VirtualMachineCPUPinning{
+					VCPUsConfig: []hypervisor.VirtualMachineVCPUPin{
+						{PinVCPU: 0, PinCPUs: "8"},
+						{PinVCPU: 1, PinCPUs: "9-10"},
+					},
+					EmulatorConfig: "0-1",
+				}
+				c.MemoryConfig.MemorySize = meta.MustByteSize("16GiB")
+				c.MemoryConfig.NUMAConfig = &hypervisor.VirtualMachineNUMA{
+					NUMAMode:  hypervisorhelpers.VirtualMachineNUMAModeStrict,
+					NUMANodes: "1",
+				}
+				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
+
+				return c
+			},
+		},
+		{
 			name:     "minimal",
 			filename: "virtualmachineconfig_minimal.yaml",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
@@ -705,8 +734,83 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 				`cpu.limit "2" must be expressed in millicores, e.g. 1500m`,
 		},
 		{
+			name: "pins outside the guest and the host",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.TopologyConfig.PinningConfig = hypervisor.VirtualMachineCPUPinning{
+					VCPUsConfig: []hypervisor.VirtualMachineVCPUPin{
+						{PinVCPU: 4, PinCPUs: "0"},
+						{PinVCPU: 1, PinCPUs: "0-1000000000"},
+						{PinVCPU: 1, PinCPUs: ""},
+						{PinVCPU: 2, PinCPUs: "3-1"},
+					},
+					EmulatorConfig: "0-3,^1",
+				}
+
+				return c
+			},
+
+			expectedErrors: "cpu.topology.pinning.vcpus[0]: vcpu 4 must be less than cpu.count 4\n" +
+				`cpu.topology.pinning.vcpus[1].cpus "0-1000000000": 1000000000 is out of range, IDs must be between 0 and 999` + "\n" +
+				"cpu.topology.pinning.vcpus[2]: duplicate vcpu 1\n" +
+				"cpu.topology.pinning.vcpus[2].cpus is required\n" +
+				`cpu.topology.pinning.vcpus[3].cpus "3-1": invalid range "3-1" (3 > 1)` + "\n" +
+				`cpu.topology.pinning.emulator "0-3,^1": strconv.Atoi: parsing "^1": invalid syntax`,
+		},
+		{
+			name: "pin without a count is reported once",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPUCount = 0
+				c.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig = []hypervisor.VirtualMachineVCPUPin{{PinVCPU: 0, PinCPUs: "0"}}
+
+				return c
+			},
+
+			expectedErrors: "cpu.count is required",
+		},
+		{
+			name: "numa without nodes",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.MemoryConfig.NUMAConfig = &hypervisor.VirtualMachineNUMA{NUMAMode: hypervisorhelpers.VirtualMachineNUMAModePreferred}
+
+				return c
+			},
+
+			expectedErrors: "memory.numa.nodes is required",
+		},
+		{
+			name: "numa outside the mask and the enum",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.MemoryConfig.NUMAConfig = &hypervisor.VirtualMachineNUMA{NUMAMode: 7, NUMANodes: "16384"}
+
+				return c
+			},
+
+			expectedErrors: `unsupported memory.numa.mode "VirtualMachineNUMAMode(7)", expected strict, preferred or interleave` + "\n" +
+				`memory.numa.nodes "16384": 16384 is out of range, IDs must be between 0 and 16383`,
+		},
+		{
 			name: "valid",
 			cfg:  validVirtualMachineConfig,
+		},
+		{
+			name: "valid with placement",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.TopologyConfig.PinningConfig = hypervisor.VirtualMachineCPUPinning{
+					VCPUsConfig: []hypervisor.VirtualMachineVCPUPin{
+						{PinVCPU: 0, PinCPUs: "999"},
+						{PinVCPU: 3, PinCPUs: "+1,0-1"},
+					},
+					EmulatorConfig: "0",
+				}
+				c.MemoryConfig.NUMAConfig = &hypervisor.VirtualMachineNUMA{NUMANodes: "16383"}
+
+				return c
+			},
 		},
 		{
 			name: "valid with interfaces",
@@ -953,6 +1057,180 @@ func imageDisk(name string) hypervisor.VirtualMachineDisk {
 	}
 }
 
+func TestVirtualMachineConfigCPUTopology(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		cpu      string
+		expected string
+	}{
+		{name: "count only", cpu: "count: 4"},
+		{name: "SMT geometry", cpu: "count: 4, topology: {sockets: 1, cores: 2, threads: 2}"},
+		{name: "pinning only", cpu: "count: 4, topology: {pinning: {vcpus: [{vcpu: 0, cpus: '8'}], emulator: '9'}}"},
+		{name: "missing sockets", cpu: "count: 4, topology: {cores: 2, threads: 2}", expected: "must all be specified"},
+		{name: "missing cores", cpu: "count: 4, topology: {sockets: 1, threads: 4}", expected: "must all be specified"},
+		{name: "missing threads", cpu: "count: 4, topology: {sockets: 1, cores: 4}", expected: "must all be specified"},
+		{name: "zero sockets", cpu: "count: 4, topology: {sockets: 0, cores: 2, threads: 2}", expected: "must all be positive"},
+		{name: "zero cores", cpu: "count: 4, topology: {sockets: 1, cores: 0, threads: 4}", expected: "must all be positive"},
+		{name: "zero threads", cpu: "count: 4, topology: {sockets: 1, cores: 4, threads: 0}", expected: "must all be positive"},
+		{name: "all zero", cpu: "count: 4, topology: {sockets: 0, cores: 0, threads: 0}", expected: "must all be positive"},
+		{name: "product mismatch", cpu: "count: 4, topology: {sockets: 1, cores: 2, threads: 1}", expected: "must equal cpu.count"},
+		{name: "overflow", cpu: "count: 4, topology: {sockets: 4294967295, cores: 4294967295, threads: 4294967295}", expected: "must equal cpu.count"},
+		{name: "overflow wrapping to zero", cpu: "count: 4, topology: {sockets: 2147483648, cores: 2147483648, threads: 4}", expected: "must equal cpu.count"},
+		// The product is 2^64 + 4: unchecked uint64 multiplication would incorrectly match cpu.count.
+		{name: "overflow wrapping to count", cpu: "count: 4, topology: {sockets: 111620, cores: 429509837, threads: 384773}", expected: "must equal cpu.count"},
+		{name: "count required", cpu: "count: 0", expected: "cpu.count is required"},
+		{name: "maximum count", cpu: "count: 65535, topology: {sockets: 1, cores: 65535, threads: 1}"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			provider, err := configloader.NewFromBytes([]byte("apiVersion: v1alpha1\nkind: VirtualMachineConfig\nname: vm1\ncpu: {" + test.cpu + "}\n"))
+			require.NoError(t, err)
+
+			cfg, ok := provider.Documents()[0].(*hypervisor.VirtualMachineConfigV1Alpha1)
+			require.True(t, ok)
+
+			if test.expected != "" {
+				require.ErrorContains(t, cfg.ValidateCPU(), test.expected)
+
+				return
+			}
+
+			require.NoError(t, cfg.ValidateCPU())
+			marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+			require.NoError(t, err)
+			reloaded, err := configloader.NewFromBytes(marshaled)
+			require.NoError(t, err)
+			assert.Equal(t, cfg, reloaded.Documents()[0])
+
+			if test.name == "count only" {
+				assert.NotContains(t, string(marshaled), "topology:")
+			}
+		})
+	}
+}
+
+func TestVirtualMachineConfigRejectDirectCPUPinning(t *testing.T) {
+	t.Parallel()
+
+	_, err := configloader.NewFromBytes([]byte("apiVersion: v1alpha1\nkind: VirtualMachineConfig\nname: vm1\ncpu: {count: 4, pinning: {emulator: '0-1'}}\n"))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "pinning")
+}
+
+func TestVirtualMachineConfigTopologyClone(t *testing.T) {
+	t.Parallel()
+
+	cfg := validVirtualMachineConfig()
+	cfg.CPUConfig.TopologyConfig = hypervisor.VirtualMachineCPUTopology{
+		TopologySockets: new(uint32(1)),
+		TopologyCores:   new(uint32(2)),
+		TopologyThreads: new(uint32(2)),
+		PinningConfig: hypervisor.VirtualMachineCPUPinning{
+			VCPUsConfig:    []hypervisor.VirtualMachineVCPUPin{{PinVCPU: 0, PinCPUs: "8"}},
+			EmulatorConfig: "9",
+		},
+	}
+
+	clone, ok := cfg.Clone().(*hypervisor.VirtualMachineConfigV1Alpha1)
+	require.True(t, ok)
+	assert.Equal(t, cfg, clone)
+	*clone.CPUConfig.TopologyConfig.TopologySockets = 4
+	*clone.CPUConfig.TopologyConfig.TopologyCores = 1
+	*clone.CPUConfig.TopologyConfig.TopologyThreads = 1
+	clone.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig[0].PinCPUs = "10"
+	clone.CPUConfig.TopologyConfig.PinningConfig.EmulatorConfig = "11"
+
+	assert.Equal(t, uint32(1), cfg.CPU().Topology().Sockets())
+	assert.Equal(t, uint32(2), cfg.CPU().Topology().Cores())
+	assert.Equal(t, uint32(2), cfg.CPU().Topology().Threads())
+	assert.Equal(t, "8", cfg.CPU().Topology().Pinning().VCPUs()[0].CPUs())
+	assert.Equal(t, "9", cfg.CPU().Topology().Pinning().Emulator())
+}
+
+func TestVirtualMachineConfigPlacementAccessors(t *testing.T) {
+	t.Parallel()
+
+	t.Run("omitted placement is a no-op", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := hypervisor.NewVirtualMachineConfigV1Alpha1()
+
+		require.NotNil(t, cfg.CPU().Topology())
+		require.NotNil(t, cfg.CPU().Topology().Pinning())
+		assert.Zero(t, cfg.CPU().Topology().Sockets())
+		assert.Zero(t, cfg.CPU().Topology().Cores())
+		assert.Zero(t, cfg.CPU().Topology().Threads())
+		assert.Empty(t, cfg.CPU().Topology().Pinning().VCPUs())
+		assert.Empty(t, cfg.CPU().Topology().Pinning().Emulator())
+		assert.False(t, cfg.Memory().NUMA().IsPresent())
+	})
+
+	t.Run("host lists are canonical and numa mode defaults to strict", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := hypervisor.NewVirtualMachineConfigV1Alpha1()
+		cfg.CPUConfig.TopologyConfig.PinningConfig = hypervisor.VirtualMachineCPUPinning{
+			VCPUsConfig:    []hypervisor.VirtualMachineVCPUPin{{PinVCPU: 1, PinCPUs: "10,9,+8"}},
+			EmulatorConfig: "1,0,1",
+		}
+		cfg.MemoryConfig.NUMAConfig = &hypervisor.VirtualMachineNUMA{NUMANodes: "1-2,0"}
+
+		pins := cfg.CPU().Topology().Pinning().VCPUs()
+		require.Len(t, pins, 1)
+		assert.Equal(t, uint32(1), pins[0].VCPU())
+		assert.Equal(t, "8-10", pins[0].CPUs())
+		assert.Equal(t, "0-1", cfg.CPU().Topology().Pinning().Emulator())
+
+		numa, ok := cfg.Memory().NUMA().Get()
+		require.True(t, ok)
+		assert.Equal(t, hypervisorhelpers.VirtualMachineNUMAModeStrict, numa.Mode())
+		assert.Equal(t, "0-2", numa.Nodes())
+
+		cfg.MemoryConfig.NUMAConfig.NUMAMode = hypervisorhelpers.VirtualMachineNUMAModeInterleave
+		numa, ok = cfg.Memory().NUMA().Get()
+		require.True(t, ok)
+		assert.Equal(t, hypervisorhelpers.VirtualMachineNUMAModeInterleave, numa.Mode())
+	})
+}
+
+// A patch replaces the pin list as a whole: merging by position would leave stale pins behind, and
+// merging by vCPU would need a second list type for a list this small.
+func TestVirtualMachineConfigMergePins(t *testing.T) {
+	t.Parallel()
+
+	base := validVirtualMachineConfig()
+	base.CPUConfig.TopologyConfig.PinningConfig = hypervisor.VirtualMachineCPUPinning{
+		VCPUsConfig:    []hypervisor.VirtualMachineVCPUPin{{PinVCPU: 0, PinCPUs: "0"}, {PinVCPU: 1, PinCPUs: "1"}},
+		EmulatorConfig: "2",
+	}
+
+	patch := hypervisor.NewVirtualMachineConfigV1Alpha1()
+	patch.MetaName = base.MetaName
+	patch.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig = []hypervisor.VirtualMachineVCPUPin{{PinVCPU: 1, PinCPUs: "3"}}
+
+	left, err := container.New(base)
+	require.NoError(t, err)
+
+	right, err := container.New(patch)
+	require.NoError(t, err)
+
+	merged, err := configpatcher.StrategicMerge(left, configpatcher.NewStrategicMergePatch(right))
+	require.NoError(t, err)
+
+	documents := merged.Documents()
+	require.Len(t, documents, 1)
+
+	cfg, ok := documents[0].(*hypervisor.VirtualMachineConfigV1Alpha1)
+	require.True(t, ok)
+
+	assert.Equal(t, []hypervisor.VirtualMachineVCPUPin{{PinVCPU: 1, PinCPUs: "3"}}, cfg.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig)
+	assert.Equal(t, "2", cfg.CPUConfig.TopologyConfig.PinningConfig.EmulatorConfig)
+	assert.Equal(t, uint32(4), cfg.CPUConfig.CPUCount)
+}
+
 func TestVirtualMachineConfigConsoleDefaults(t *testing.T) {
 	t.Parallel()
 
@@ -1018,6 +1296,9 @@ cpu:
     count: 1
 memory:
     size: 512MiB
+    numa:
+        mode: strict
+        nodes: "0"
 firmware:
     type: uefi
 disks:
@@ -1084,6 +1365,12 @@ func TestVirtualMachineConfigEnumUnmarshal(t *testing.T) {
 			spoiled:  "mode: cow",
 			expected: "cow does not belong to VirtualMachineDiskImageMode values",
 		},
+		{
+			name:     "numa mode",
+			valid:    "mode: strict",
+			spoiled:  "mode: bind",
+			expected: "bind does not belong to VirtualMachineNUMAMode values",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -1146,6 +1433,12 @@ func TestVirtualMachineConfigEnumDocValues(t *testing.T) {
 			doc:      hypervisor.VirtualMachineDiskFromImage{}.Doc(),
 			field:    "mode",
 			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskImageModeStrings()),
+		},
+		{
+			name:     "numa mode",
+			doc:      hypervisor.VirtualMachineNUMA{}.Doc(),
+			field:    "mode",
+			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineNUMAModeStrings()),
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

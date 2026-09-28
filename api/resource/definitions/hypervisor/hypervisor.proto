@@ -26,6 +26,19 @@ message VirtualMachineCPUSpec {
   uint32 count = 1;
   // Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited.
   uint64 limit = 2;
+  // Pins are the per-vCPU host CPU pins; an unlisted vCPU is unpinned.
+  repeated VirtualMachineVCPUPinSpec pins = 3;
+  // EmulatorPin is the host CPU list the emulator threads are pinned to; empty means unpinned.
+  string emulator_pin = 4;
+  // Topology is the guest-visible CPU geometry; nil leaves it to libvirt.
+  VirtualMachineCPUTopologySpec topology = 5;
+}
+
+// VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.
+message VirtualMachineCPUTopologySpec {
+  uint32 sockets = 1;
+  uint32 cores = 2;
+  uint32 threads = 3;
 }
 
 // VirtualMachineConsoleSpec describes requested guest consoles.
@@ -90,11 +103,19 @@ message VirtualMachineMemoryBallooningSpec {
   bool enabled = 1;
 }
 
+// VirtualMachineMemoryNUMASpec places the guest memory on host NUMA nodes.
+message VirtualMachineMemoryNUMASpec {
+  string mode = 1;
+  string nodes = 2;
+}
+
 // VirtualMachineMemorySpec describes the desired guest memory.
 message VirtualMachineMemorySpec {
   // Size is the guest memory size in bytes.
   uint64 size = 1;
   VirtualMachineMemoryBallooningSpec ballooning = 2;
+  // NUMA is the host NUMA placement of the guest memory; nil leaves placement to the host.
+  VirtualMachineMemoryNUMASpec numa = 3;
 }
 
 // VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
@@ -115,5 +136,11 @@ message VirtualMachineStatusSpec {
   talos.resource.definitions.enums.HypervisorVirtualMachineStage stage = 2;
   // Error describes an observation failure or obstacle, when known.
   string error = 3;
+}
+
+// VirtualMachineVCPUPinSpec pins one guest vCPU to a host CPU list.
+message VirtualMachineVCPUPinSpec {
+  uint32 vcpu = 1;
+  string cp_us = 2;
 }
 

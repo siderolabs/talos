@@ -1,0 +1,29 @@
+<domain type="kvm">
+  <name>guest-one</name>
+  <memory unit="bytes">4294967296</memory>
+  <vcpu>3</vcpu>
+  <cputune>
+    <vcpupin vcpu="0" cpuset="8"></vcpupin>
+    <vcpupin vcpu="1" cpuset="9-10"></vcpupin>
+    <emulatorpin cpuset="0-1"></emulatorpin>
+  </cputune>
+  <numatune>
+    <memory mode="strict" nodeset="1"></memory>
+  </numatune>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
+  <os firmware="efi">
+    <type>hvm</type>
+    <firmware>
+      <feature enabled="no" name="secure-boot"></feature>
+      <feature enabled="no" name="enrolled-keys"></feature>
+    </firmware>
+  </os>
+  <features>
+    <acpi></acpi>
+  </features>
+  <devices>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>

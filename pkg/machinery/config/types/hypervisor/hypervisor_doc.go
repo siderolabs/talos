@@ -164,7 +164,7 @@ func (VirtualMachineCPU) Doc() *encoder.Doc {
 				Name:        "count",
 				Type:        "uint32",
 				Note:        "",
-				Description: "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads is not configurable.",
+				Description: "Number of virtual CPUs presented to the guest.\n\nThis is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are\nlaid out into sockets, cores and threads can be configured with `topology`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of virtual CPUs presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -173,6 +173,13 @@ func (VirtualMachineCPU) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads\ntogether, mapped onto the domain's global CFS quota.\n\n`1000m` is one host core. The ceiling is independent of `count`: a guest with four\nvCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores\nof host time.\n\nOptional; omitting it leaves the virtual machine bounded only by its vCPU count.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "topology",
+				Type:        "VirtualMachineCPUTopology",
+				Note:        "",
+				Description: "Optional guest CPU geometry and host CPU pinning.\n\nGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal `count`.\nPinning may be configured without guest geometry.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional guest CPU geometry and host CPU pinning." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -208,6 +215,13 @@ func (VirtualMachineMemory) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Memory ballooning settings.\n\nOptional; ballooning is disabled when this section is omitted.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory ballooning settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "numa",
+				Type:        "VirtualMachineNUMA",
+				Note:        "",
+				Description: "Host NUMA nodes the guest memory is placed on.\n\nOptional; omitting it leaves placement to the host.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host NUMA nodes the guest memory is placed on." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -638,6 +652,160 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineCPUTopology) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineCPUTopology",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineCPUTopology describes guest CPU geometry and independent host CPU pinning." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineCPUTopology describes guest CPU geometry and independent host CPU pinning.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineCPU",
+				FieldName: "topology",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "sockets",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of guest sockets. If any geometry dimension is set, all three must be\npositive and sockets * cores * threads must equal `cpu.count`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of guest sockets. If any geometry dimension is set, all three must be" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cores",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of guest cores per socket, not host CPU IDs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of guest cores per socket, not host CPU IDs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "threads",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of guest threads per core, not host CPU IDs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of guest threads per core, not host CPU IDs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "pinning",
+				Type:        "VirtualMachineCPUPinning",
+				Note:        "",
+				Description: "Host CPUs the guest's threads are pinned to; independent of guest geometry and `cpu.limit`.\nOptional; omitting it leaves the virtual machine schedulable on any host CPU.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs the guest's threads are pinned to; independent of guest geometry and `cpu.limit`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineCPUPinning) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineCPUPinning",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineCPUPinning describes which host CPUs the guest's threads are pinned to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineCPUPinning describes which host CPUs the guest's threads are pinned to.\n\nHost CPU IDs are the kernel's logical CPU numbers, SMT threads included. Whether a named CPU\nexists and is available is only known on the host, when the virtual machine starts.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineCPUTopology",
+				FieldName: "pinning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "vcpus",
+				Type:        "[]VirtualMachineVCPUPin",
+				Note:        "",
+				Description: "Per-vCPU pins.\n\nA vCPU left out of this list is scheduled on any host CPU.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Per-vCPU pins." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "emulator",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)\nare pinned to, as a Linux CPU list, e.g. `0-1,4`.\n\nOptional; omitting it leaves the emulator threads unpinned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[1].AddExample("", "0-1")
+
+	return doc
+}
+
+func (VirtualMachineVCPUPin) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineVCPUPin",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineVCPUPin pins one guest vCPU to a set of host CPUs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineVCPUPin pins one guest vCPU to a set of host CPUs.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineCPUPinning",
+				FieldName: "vcpus",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "vcpu",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Guest vCPU index, starting at 0 and below `cpu.count`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Guest vCPU index, starting at 0 and below `cpu.count`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", 0)
+	doc.Fields[1].AddExample("", "9-10")
+
+	return doc
+}
+
+func (VirtualMachineNUMA) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineNUMA",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineNUMA describes where the guest memory is placed on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineNUMA describes where the guest memory is placed on the host.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineMemory",
+				FieldName: "numa",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "mode",
+				Type:        "VirtualMachineNUMAMode",
+				Note:        "",
+				Description: "How guest memory is bound to the nodes.\n\n`strict` fails allocations that cannot be served from `nodes`; `preferred` falls back\nto other nodes; `interleave` spreads pages across `nodes` round-robin.\n\nOptional; defaults to `strict`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How guest memory is bound to the nodes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"strict",
+					"preferred",
+					"interleave",
+				},
+			},
+			{
+				Name:        "nodes",
+				Type:        "string",
+				Note:        "",
+				Description: "Host NUMA nodes the guest memory is placed on, as a Linux node list, e.g. `1` or `0-1`.\n\nWhether a named node exists is only known on the host, when the virtual machine starts.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host NUMA nodes the guest memory is placed on, as a Linux node list, e.g. `1` or `0-1`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[1].AddExample("", "1")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file hypervisor_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -661,6 +829,10 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineVNC{}.Doc(),
 			VirtualMachineNetworking{}.Doc(),
 			VirtualMachineInterface{}.Doc(),
+			VirtualMachineCPUTopology{}.Doc(),
+			VirtualMachineCPUPinning{}.Doc(),
+			VirtualMachineVCPUPin{}.Doc(),
+			VirtualMachineNUMA{}.Doc(),
 		},
 	}
 }

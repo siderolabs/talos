@@ -123,6 +123,14 @@ enum HypervisorhelpersVirtualMachineFirmwareType {
   VIRTUAL_MACHINE_FIRMWARE_TYPE_BIOS = 2;
 }
 
+// HypervisorhelpersVirtualMachineNUMAMode is how guest memory is bound to the host NUMA nodes it is placed on.
+enum HypervisorhelpersVirtualMachineNUMAMode {
+  VIRTUAL_MACHINE_NUMA_MODE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_NUMA_MODE_STRICT = 1;
+  VIRTUAL_MACHINE_NUMA_MODE_PREFERRED = 2;
+  VIRTUAL_MACHINE_NUMA_MODE_INTERLEAVE = 3;
+}
+
 // NethelpersAddressFlag wraps IFF_* constants.
 enum NethelpersAddressFlag {
   NETHELPERS_ADDRESSFLAG_UNSPECIFIED = 0;

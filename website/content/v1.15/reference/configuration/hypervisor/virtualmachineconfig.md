@@ -30,12 +30,30 @@ powerState: running # Power state the virtual machine is driven towards.
 cpu:
     count: 4 # Number of virtual CPUs presented to the guest.
     limit: 3000m # Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads
+    # Optional guest CPU geometry and host CPU pinning.
+    topology:
+        sockets: 1 # Number of guest sockets. If any geometry dimension is set, all three must be
+        cores: 2 # Number of guest cores per socket, not host CPU IDs.
+        threads: 2 # Number of guest threads per core, not host CPU IDs.
+        # Host CPUs the guest's threads are pinned to; independent of guest geometry and `cpu.limit`.
+        pinning:
+            # Per-vCPU pins.
+            vcpus:
+                - vcpu: 0 # Guest vCPU index, starting at 0 and below `cpu.count`.
+                  cpus: "8" # Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`.
+                - vcpu: 1 # Guest vCPU index, starting at 0 and below `cpu.count`.
+                  cpus: 9-10 # Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`.
+            emulator: 0-1 # Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)
 # Memory settings for the virtual machine.
 memory:
     size: 4GiB # Memory allocated to the guest at boot.
     # Memory ballooning settings.
     ballooning:
         enabled: true # Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.
+    # Host NUMA nodes the guest memory is placed on.
+    numa:
+        mode: strict # How guest memory is bound to the nodes.
+        nodes: "1" # Host NUMA nodes the guest memory is placed on, as a Linux node list, e.g. `1` or `0-1`.
 # Firmware the virtual machine boots.
 firmware:
     type: uefi # Firmware the guest boots.
@@ -125,12 +143,76 @@ is not predictable, and a limit guessed too low has the kernel kill the virtual 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`count` |uint32 |Number of virtual CPUs presented to the guest.<br><br>This is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are<br>laid out into sockets, cores and threads is not configurable. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`count` |uint32 |Number of virtual CPUs presented to the guest.<br><br>This is the total vCPU count, not a per-socket or per-core figure: how those vCPUs are<br>laid out into sockets, cores and threads can be configured with `topology`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 count: 4
 {{< /highlight >}}</details> | |
 |`limit` |string |Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads<br>together, mapped onto the domain's global CFS quota.<br><br>`1000m` is one host core. The ceiling is independent of `count`: a guest with four<br>vCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores<br>of host time.<br><br>Optional; omitting it leaves the virtual machine bounded only by its vCPU count. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 limit: 3000m
 {{< /highlight >}}</details> | |
+|`topology` |<a href="#VirtualMachineConfig.cpu.topology">VirtualMachineCPUTopology</a> |Optional guest CPU geometry and host CPU pinning.<br><br>Geometry counts describe the guest, not host CPU IDs. When any dimension is set,<br>all three must be positive and their product must equal `count`.<br>Pinning may be configured without guest geometry.  | |
+
+
+
+
+### topology {#VirtualMachineConfig.cpu.topology}
+
+VirtualMachineCPUTopology describes guest CPU geometry and independent host CPU pinning.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`sockets` |uint32 |Number of guest sockets. If any geometry dimension is set, all three must be<br>positive and sockets * cores * threads must equal `cpu.count`.  | |
+|`cores` |uint32 |Number of guest cores per socket, not host CPU IDs.  | |
+|`threads` |uint32 |Number of guest threads per core, not host CPU IDs.  | |
+|`pinning` |<a href="#VirtualMachineConfig.cpu.topology.pinning">VirtualMachineCPUPinning</a> |Host CPUs the guest's threads are pinned to; independent of guest geometry and `cpu.limit`.<br>Optional; omitting it leaves the virtual machine schedulable on any host CPU.  | |
+
+
+
+
+#### pinning {#VirtualMachineConfig.cpu.topology.pinning}
+
+VirtualMachineCPUPinning describes which host CPUs the guest's threads are pinned to.
+
+Host CPU IDs are the kernel's logical CPU numbers, SMT threads included. Whether a named CPU
+exists and is available is only known on the host, when the virtual machine starts.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`vcpus` |<a href="#VirtualMachineConfig.cpu.topology.pinning.vcpus.">[]VirtualMachineVCPUPin</a> |Per-vCPU pins.<br><br>A vCPU left out of this list is scheduled on any host CPU.<br><br>A configuration patch replaces this list as a whole rather than appending to it.  | |
+|`emulator` |string |Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)<br>are pinned to, as a Linux CPU list, e.g. `0-1,4`.<br><br>Optional; omitting it leaves the emulator threads unpinned. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+emulator: 0-1
+{{< /highlight >}}</details> | |
+
+
+
+
+##### vcpus[] {#VirtualMachineConfig.cpu.topology.pinning.vcpus.}
+
+VirtualMachineVCPUPin pins one guest vCPU to a set of host CPUs.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`vcpu` |uint32 |Guest vCPU index, starting at 0 and below `cpu.count`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+vcpu: 0
+{{< /highlight >}}</details> | |
+|`cpus` |string |Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+cpus: 9-10
+{{< /highlight >}}</details> | |
+
+
+
+
+
+
 
 
 
@@ -150,6 +232,7 @@ VirtualMachineMemory describes the memory presented to the guest.
 size: 4GiB
 {{< /highlight >}}</details> | |
 |`ballooning` |<a href="#VirtualMachineConfig.memory.ballooning">VirtualMachineBallooning</a> |Memory ballooning settings.<br><br>Optional; ballooning is disabled when this section is omitted.  | |
+|`numa` |<a href="#VirtualMachineConfig.memory.numa">VirtualMachineNUMA</a> |Host NUMA nodes the guest memory is placed on.<br><br>Optional; omitting it leaves placement to the host.  | |
 
 
 
@@ -164,6 +247,25 @@ VirtualMachineBallooning describes the virtio-balloon settings for a virtual mac
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.<br><br>Ballooning only shrinks the guest below `memory.size`; growing beyond it is memory<br>hot-add, which is a separate mechanism.<br><br>Optional; defaults to disabled.  | |
+
+
+
+
+
+
+### numa {#VirtualMachineConfig.memory.numa}
+
+VirtualMachineNUMA describes where the guest memory is placed on the host.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`mode` |VirtualMachineNUMAMode |How guest memory is bound to the nodes.<br><br>`strict` fails allocations that cannot be served from `nodes`; `preferred` falls back<br>to other nodes; `interleave` spreads pages across `nodes` round-robin.<br><br>Optional; defaults to `strict`.  |`strict`<br />`preferred`<br />`interleave`<br /> |
+|`nodes` |string |Host NUMA nodes the guest memory is placed on, as a Linux node list, e.g. `1` or `0-1`.<br><br>Whether a named node exists is only known on the host, when the virtual machine starts. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+nodes: "1"
+{{< /highlight >}}</details> | |
 
 
 

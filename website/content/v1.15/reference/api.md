@@ -343,6 +343,7 @@ description: Talos gRPC API reference.
     - [HypervisorhelpersVirtualMachineDiskImageMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskImageMode)
     - [HypervisorhelpersVirtualMachineDiskType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType)
     - [HypervisorhelpersVirtualMachineFirmwareType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineFirmwareType)
+    - [HypervisorhelpersVirtualMachineNUMAMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineNUMAMode)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
     - [NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive)
@@ -505,6 +506,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/hypervisor/hypervisor.proto](#resource/definitions/hypervisor/hypervisor.proto)
     - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
     - [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec)
+    - [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec)
     - [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec)
     - [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec)
     - [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec)
@@ -513,9 +515,11 @@ description: Talos gRPC API reference.
     - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
+    - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
     - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
     - [VirtualMachineStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineStatusSpec)
+    - [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec)
   
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
     - [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping)
@@ -5840,6 +5844,20 @@ HypervisorhelpersVirtualMachineFirmwareType is the firmware a virtual machine bo
 
 
 
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineNUMAMode"></a>
+
+### HypervisorhelpersVirtualMachineNUMAMode
+HypervisorhelpersVirtualMachineNUMAMode is how guest memory is bound to the host NUMA nodes it is placed on.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_NUMA_MODE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_NUMA_MODE_STRICT | 1 |  |
+| VIRTUAL_MACHINE_NUMA_MODE_PREFERRED | 2 |  |
+| VIRTUAL_MACHINE_NUMA_MODE_INTERLEAVE | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.KubespanPeerState"></a>
 
 ### KubespanPeerState
@@ -8887,6 +8905,26 @@ VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time t
 | ----- | ---- | ----- | ----------- |
 | count | [uint32](#uint32) |  |  |
 | limit | [uint64](#uint64) |  | Limit is the whole-domain host CPU ceiling in millicores; zero means unlimited. |
+| pins | [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec) | repeated | Pins are the per-vCPU host CPU pins; an unlisted vCPU is unpinned. |
+| emulator_pin | [string](#string) |  | EmulatorPin is the host CPU list the emulator threads are pinned to; empty means unpinned. |
+| topology | [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec) |  | Topology is the guest-visible CPU geometry; nil leaves it to libvirt. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec"></a>
+
+### VirtualMachineCPUTopologySpec
+VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| sockets | [uint32](#uint32) |  |  |
+| cores | [uint32](#uint32) |  |  |
+| threads | [uint32](#uint32) |  |  |
 
 
 
@@ -9033,6 +9071,22 @@ VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec"></a>
+
+### VirtualMachineMemoryNUMASpec
+VirtualMachineMemoryNUMASpec places the guest memory on host NUMA nodes.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mode | [string](#string) |  |  |
+| nodes | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineMemorySpec"></a>
 
 ### VirtualMachineMemorySpec
@@ -9043,6 +9097,7 @@ VirtualMachineMemorySpec describes the desired guest memory.
 | ----- | ---- | ----- | ----------- |
 | size | [uint64](#uint64) |  | Size is the guest memory size in bytes. |
 | ballooning | [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec) |  |  |
+| numa | [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec) |  | NUMA is the host NUMA placement of the guest memory; nil leaves placement to the host. |
 
 
 
@@ -9080,6 +9135,22 @@ VirtualMachineStatusSpec describes observed power state and reconciliation stage
 | power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  | PowerState is the matched domain's observed power, or unknown when no domain was observed. |
 | stage | [talos.resource.definitions.enums.HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage) |  | Stage distinguishes unknown observation, convergence, readiness, and observed obstacles. |
 | error | [string](#string) |  | Error describes an observation failure or obstacle, when known. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec"></a>
+
+### VirtualMachineVCPUPinSpec
+VirtualMachineVCPUPinSpec pins one guest vCPU to a host CPU list.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| vcpu | [uint32](#uint32) |  |  |
+| cp_us | [string](#string) |  |  |
 
 
 

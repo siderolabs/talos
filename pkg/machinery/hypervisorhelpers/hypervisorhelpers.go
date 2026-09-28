@@ -16,4 +16,4 @@ const (
 	MaxCPULimitMillicores uint64 = 17592186044415 * 1000 / CPUQuotaPeriod
 )
 
-//go:generate go tool github.com/dmarkham/enumer -type=PowerState,VirtualMachineDiskBus,VirtualMachineDiskFormat,VirtualMachineDiskImageMode,VirtualMachineDiskType,VirtualMachineFirmwareType -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=PowerState,VirtualMachineDiskBus,VirtualMachineDiskFormat,VirtualMachineDiskImageMode,VirtualMachineDiskType,VirtualMachineFirmwareType,VirtualMachineNUMAMode -linecomment -text

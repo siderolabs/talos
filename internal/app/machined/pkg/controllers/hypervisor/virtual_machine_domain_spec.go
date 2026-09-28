@@ -178,47 +178,44 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 		},
 	}
 
+	if topology := spec.CPU.Topology; topology != nil {
+		domain.CPU = &libvirtxml.DomainCPU{
+			Topology: &libvirtxml.DomainCPUTopology{
+				Sockets: int(topology.Sockets),
+				Cores:   int(topology.Cores),
+				Threads: int(topology.Threads),
+			},
+		}
+	}
+
 	if spec.Memory.Ballooning.Enabled {
 		domain.Devices.MemBalloon.Model = "virtio"
 	}
 
-	if spec.CPU.Limit > 0 {
-		// One core is the whole period, so the quota is the period scaled by cores. The limit was
-		// validated against hypervisorhelpers.MaxCPULimitMillicores above, which keeps the product within the
-		// schema's cpuquota range and therefore within int64.
-		quota := spec.CPU.Limit * hypervisorhelpers.CPUQuotaPeriod / 1000
-
-		// global_quota bounds the whole domain (vCPUs and emulator together), unlike quota which
-		// is enforced per vCPU thread.
-		domain.CPUTune = &libvirtxml.DomainCPUTune{
-			GlobalPeriod: &libvirtxml.DomainCPUTunePeriod{Value: hypervisorhelpers.CPUQuotaPeriod},
-			GlobalQuota:  &libvirtxml.DomainCPUTuneQuota{Value: int64(quota)},
-		}
+	cputune, err := renderVirtualMachineCPUTune(name, spec.CPU)
+	if err != nil {
+		return "", err
 	}
 
-	switch spec.Firmware.Type {
-	case "bios":
-		// Omit firmware autoselection: the libvirt extension runs legacy BIOS
-		// domains without a firmware descriptor.
-	case "uefi":
-		domain.OS.Firmware = "efi"
-		// QEMU rejects UEFI domains without ACPI on supported architectures.
-		domain.Features = &libvirtxml.DomainFeatureList{
-			ACPI: &libvirtxml.DomainFeature{},
+	domain.CPUTune = cputune
+
+	if spec.Memory.NUMA != nil {
+		nodes, err := canonicalHostIDList(name, "NUMA nodes", spec.Memory.NUMA.Nodes, hypervisorhelpers.MaxHostNUMANodeID)
+		if err != nil {
+			return "", err
 		}
 
-		enabled := "no"
-		if spec.Firmware.SecureBoot {
-			enabled = "yes"
-		}
-
-		domain.OS.FirmwareInfo = &libvirtxml.DomainOSFirmwareInfo{
-			Features: []libvirtxml.DomainOSFirmwareFeature{
-				{Name: "secure-boot", Enabled: enabled},
-				{Name: "enrolled-keys", Enabled: enabled},
+		// The mode is always written, even the default: libvirt's own default is also strict, but
+		// the rendered definition should not depend on that.
+		domain.NUMATune = &libvirtxml.DomainNUMATune{
+			Memory: &libvirtxml.DomainNUMATuneMemory{
+				Mode:    spec.Memory.NUMA.Mode,
+				Nodeset: nodes,
 			},
 		}
 	}
+
+	renderVirtualMachineFirmware(&domain, spec.Firmware)
 
 	if spec.Console.Serial {
 		// libvirt allocates the PTY; no host device path is prescribed.
@@ -250,6 +247,77 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 	}
 
 	return domainXML, nil
+}
+
+func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor.VirtualMachineFirmwareSpec) {
+	if firmware.Type != "uefi" {
+		// Omit firmware autoselection: the libvirt extension runs legacy BIOS
+		// domains without a firmware descriptor.
+		return
+	}
+
+	domain.OS.Firmware = "efi"
+	// QEMU rejects UEFI domains without ACPI on supported architectures.
+	domain.Features = &libvirtxml.DomainFeatureList{
+		ACPI: &libvirtxml.DomainFeature{},
+	}
+
+	enabled := "no"
+	if firmware.SecureBoot {
+		enabled = "yes"
+	}
+
+	domain.OS.FirmwareInfo = &libvirtxml.DomainOSFirmwareInfo{
+		Features: []libvirtxml.DomainOSFirmwareFeature{
+			{Name: "secure-boot", Enabled: enabled},
+			{Name: "enrolled-keys", Enabled: enabled},
+		},
+	}
+}
+
+// renderVirtualMachineCPUTune builds the one cputune element the quota and the pins share, or nil
+// when none of them is set.
+func renderVirtualMachineCPUTune(name string, cpu hypervisor.VirtualMachineCPUSpec) (*libvirtxml.DomainCPUTune, error) {
+	var cputune libvirtxml.DomainCPUTune
+
+	if cpu.Limit > 0 {
+		// One core is the whole period, so the quota is the period scaled by cores. The limit was
+		// validated against hypervisorhelpers.MaxCPULimitMillicores, which keeps the product within the
+		// schema's cpuquota range and therefore within int64.
+		quota := cpu.Limit * hypervisorhelpers.CPUQuotaPeriod / 1000
+
+		// global_quota bounds the whole domain (vCPUs and emulator together), unlike quota which
+		// is enforced per vCPU thread.
+		cputune.GlobalPeriod = &libvirtxml.DomainCPUTunePeriod{Value: hypervisorhelpers.CPUQuotaPeriod}
+		cputune.GlobalQuota = &libvirtxml.DomainCPUTuneQuota{Value: int64(quota)}
+	}
+
+	for _, pin := range cpu.Pins {
+		cpus, err := canonicalHostIDList(name, fmt.Sprintf("vCPU %d pin", pin.VCPU), pin.CPUs, hypervisorhelpers.MaxHostCPUID)
+		if err != nil {
+			return nil, err
+		}
+
+		cputune.VCPUPin = append(cputune.VCPUPin, libvirtxml.DomainCPUTuneVCPUPin{
+			VCPU:   uint(pin.VCPU),
+			CPUSet: cpus,
+		})
+	}
+
+	if cpu.EmulatorPin != "" {
+		cpus, err := canonicalHostIDList(name, "emulator pin", cpu.EmulatorPin, hypervisorhelpers.MaxHostCPUID)
+		if err != nil {
+			return nil, err
+		}
+
+		cputune.EmulatorPin = &libvirtxml.DomainCPUTuneEmulatorPin{CPUSet: cpus}
+	}
+
+	if cputune.GlobalQuota == nil && len(cputune.VCPUPin) == 0 && cputune.EmulatorPin == nil {
+		return nil, nil
+	}
+
+	return &cputune, nil
 }
 
 func validateVirtualMachineDomainName(name string) error {
@@ -300,6 +368,16 @@ func validateVirtualMachineMemory(name string, memory hypervisor.VirtualMachineM
 		return fmt.Errorf("virtual machine %q: memory size must be a multiple of 1024 bytes", name)
 	}
 
+	if memory.NUMA == nil {
+		return nil
+	}
+
+	switch memory.NUMA.Mode {
+	case "strict", "preferred", "interleave":
+	default:
+		return fmt.Errorf("virtual machine %q: unsupported NUMA mode %q", name, memory.NUMA.Mode)
+	}
+
 	return nil
 }
 
@@ -309,16 +387,64 @@ func validateVirtualMachineCPU(name string, cpu hypervisor.VirtualMachineCPUSpec
 		return fmt.Errorf("virtual machine %q: CPU count must be between 1 and 65535", name)
 	}
 
-	if cpu.Limit == 0 {
-		return nil
-	}
-
-	if cpu.Limit < hypervisorhelpers.MinCPULimitMillicores || cpu.Limit > hypervisorhelpers.MaxCPULimitMillicores {
+	if cpu.Limit != 0 && (cpu.Limit < hypervisorhelpers.MinCPULimitMillicores || cpu.Limit > hypervisorhelpers.MaxCPULimitMillicores) {
 		return fmt.Errorf("virtual machine %q: CPU limit must be between %d and %d millicores",
 			name, hypervisorhelpers.MinCPULimitMillicores, hypervisorhelpers.MaxCPULimitMillicores)
 	}
 
+	return errors.Join(validateVirtualMachineCPUTopology(name, cpu), validateVirtualMachineCPUPins(name, cpu))
+}
+
+func validateVirtualMachineCPUTopology(name string, cpu hypervisor.VirtualMachineCPUSpec) error {
+	topology := cpu.Topology
+	if topology == nil {
+		return nil
+	}
+
+	if topology.Sockets == 0 || topology.Cores == 0 || topology.Threads == 0 {
+		return fmt.Errorf("virtual machine %q: CPU topology sockets, cores and threads must all be positive", name)
+	}
+
+	// Check the two-factor product first so multiplying by threads cannot overflow.
+	cores := uint64(topology.Sockets) * uint64(topology.Cores)
+	if cores > uint64(cpu.Count) || cores*uint64(topology.Threads) != uint64(cpu.Count) {
+		return fmt.Errorf("virtual machine %q: CPU topology sockets * cores * threads must equal CPU count %d", name, cpu.Count)
+	}
+
 	return nil
+}
+
+func validateVirtualMachineCPUPins(name string, cpu hypervisor.VirtualMachineCPUSpec) error {
+	pinned := map[uint32]struct{}{}
+
+	for _, pin := range cpu.Pins {
+		if pin.VCPU >= cpu.Count {
+			return fmt.Errorf("virtual machine %q: pinned vCPU %d must be less than CPU count %d", name, pin.VCPU, cpu.Count)
+		}
+
+		if _, exists := pinned[pin.VCPU]; exists {
+			return fmt.Errorf("virtual machine %q: vCPU %d is pinned more than once", name, pin.VCPU)
+		}
+
+		pinned[pin.VCPU] = struct{}{}
+	}
+
+	return nil
+}
+
+// canonicalHostIDList checks that a host ID list is well-formed, bounded and nonempty, and returns
+// it in canonical form: that is what the schema's cpuset pattern accepts, whatever the spec wrote.
+func canonicalHostIDList(name, what, list string, maxID int) (string, error) {
+	set, err := hypervisorhelpers.ParseHostIDList(list, maxID)
+	if err != nil {
+		return "", fmt.Errorf("virtual machine %q: %s %q: %w", name, what, list, err)
+	}
+
+	if set.IsEmpty() {
+		return "", fmt.Errorf("virtual machine %q: %s must name at least one host ID", name, what)
+	}
+
+	return set.String(), nil
 }
 
 func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachineSpecSpec) error {

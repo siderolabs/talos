@@ -15,6 +15,22 @@ func (o *ContentLibraryConfigV1Alpha1) DeepCopy() *ContentLibraryConfigV1Alpha1 
 // DeepCopy generates a deep copy of *VirtualMachineConfigV1Alpha1.
 func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 {
 	var cp VirtualMachineConfigV1Alpha1 = *o
+	if o.CPUConfig.TopologyConfig.TopologySockets != nil {
+		cp.CPUConfig.TopologyConfig.TopologySockets = new(uint32)
+		*cp.CPUConfig.TopologyConfig.TopologySockets = *o.CPUConfig.TopologyConfig.TopologySockets
+	}
+	if o.CPUConfig.TopologyConfig.TopologyCores != nil {
+		cp.CPUConfig.TopologyConfig.TopologyCores = new(uint32)
+		*cp.CPUConfig.TopologyConfig.TopologyCores = *o.CPUConfig.TopologyConfig.TopologyCores
+	}
+	if o.CPUConfig.TopologyConfig.TopologyThreads != nil {
+		cp.CPUConfig.TopologyConfig.TopologyThreads = new(uint32)
+		*cp.CPUConfig.TopologyConfig.TopologyThreads = *o.CPUConfig.TopologyConfig.TopologyThreads
+	}
+	if o.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig != nil {
+		cp.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig = make([]VirtualMachineVCPUPin, len(o.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig))
+		copy(cp.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig, o.CPUConfig.TopologyConfig.PinningConfig.VCPUsConfig)
+	}
 	cp.MemoryConfig.MemorySize = o.MemoryConfig.MemorySize.DeepCopy()
 	if o.MemoryConfig.BallooningConfig != nil {
 		cp.MemoryConfig.BallooningConfig = new(VirtualMachineBallooning)
@@ -23,6 +39,10 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 			cp.MemoryConfig.BallooningConfig.BallooningEnabled = new(bool)
 			*cp.MemoryConfig.BallooningConfig.BallooningEnabled = *o.MemoryConfig.BallooningConfig.BallooningEnabled
 		}
+	}
+	if o.MemoryConfig.NUMAConfig != nil {
+		cp.MemoryConfig.NUMAConfig = new(VirtualMachineNUMA)
+		*cp.MemoryConfig.NUMAConfig = *o.MemoryConfig.NUMAConfig
 	}
 	if o.FirmwareConfig.SecureBootConfig.SecureBootEnabled != nil {
 		cp.FirmwareConfig.SecureBootConfig.SecureBootEnabled = new(bool)

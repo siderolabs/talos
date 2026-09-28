@@ -1,0 +1,25 @@
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm4
+powerState: running
+cpu:
+    count: 4
+    limit: 3000m
+    topology:
+        sockets: 1
+        cores: 2
+        threads: 2
+        pinning:
+            vcpus:
+                - vcpu: 0
+                  cpus: "8"
+                - vcpu: 1
+                  cpus: 9-10
+            emulator: 0-1
+memory:
+    size: 16GiB
+    numa:
+        mode: strict
+        nodes: "1"
+firmware:
+    type: uefi

@@ -15,6 +15,18 @@ func (o ContentLibraryStatusSpec) DeepCopy() ContentLibraryStatusSpec {
 // DeepCopy generates a deep copy of VirtualMachineSpecSpec.
 func (o VirtualMachineSpecSpec) DeepCopy() VirtualMachineSpecSpec {
 	var cp VirtualMachineSpecSpec = o
+	if o.CPU.Pins != nil {
+		cp.CPU.Pins = make([]VirtualMachineVCPUPinSpec, len(o.CPU.Pins))
+		copy(cp.CPU.Pins, o.CPU.Pins)
+	}
+	if o.CPU.Topology != nil {
+		cp.CPU.Topology = new(VirtualMachineCPUTopologySpec)
+		*cp.CPU.Topology = *o.CPU.Topology
+	}
+	if o.Memory.NUMA != nil {
+		cp.Memory.NUMA = new(VirtualMachineMemoryNUMASpec)
+		*cp.Memory.NUMA = *o.Memory.NUMA
+	}
 	if o.Disks != nil {
 		cp.Disks = make([]VirtualMachineDiskSpec, len(o.Disks))
 		copy(cp.Disks, o.Disks)
