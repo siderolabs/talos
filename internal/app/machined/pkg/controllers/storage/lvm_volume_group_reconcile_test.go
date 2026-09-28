@@ -16,6 +16,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
+	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -28,10 +30,11 @@ const testVGName = "vg-pool"
 type fakeProvisioner struct {
 	mu sync.Mutex
 
-	pvCreates map[string]struct{}
-	vgCreates map[string][]string
-	vgExtends map[string]map[string]struct{}
-	activated map[string]int
+	pvCreates   map[string]struct{}
+	vgCreates   map[string][]string
+	vgExtends   map[string]map[string]struct{}
+	activated   map[string]int
+	deactivated map[string]int
 
 	pvCreateErr   error
 	vgCreateErr   error
@@ -41,10 +44,11 @@ type fakeProvisioner struct {
 
 func newFakeProvisioner() *fakeProvisioner {
 	return &fakeProvisioner{
-		pvCreates: map[string]struct{}{},
-		vgCreates: map[string][]string{},
-		vgExtends: map[string]map[string]struct{}{},
-		activated: map[string]int{},
+		pvCreates:   map[string]struct{}{},
+		vgCreates:   map[string][]string{},
+		vgExtends:   map[string]map[string]struct{}{},
+		activated:   map[string]int{},
+		deactivated: map[string]int{},
 	}
 }
 
@@ -95,11 +99,27 @@ func (f *fakeProvisioner) VGChangeActivate(_ context.Context, vg string) error {
 	return nil
 }
 
+func (f *fakeProvisioner) VGChangeDeactivate(_ context.Context, vg string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.deactivated[vg]++
+
+	return nil
+}
+
 func (f *fakeProvisioner) activatedCount(vg string) int {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
 	return f.activated[vg]
+}
+
+func (f *fakeProvisioner) deactivatedCount(vg string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.deactivated[vg]
 }
 
 func (f *fakeProvisioner) pvCreated() []string {
@@ -169,6 +189,7 @@ func (f *fakeProvisioner) reset() {
 	f.vgCreates = map[string][]string{}
 	f.vgExtends = map[string]map[string]struct{}{}
 	f.activated = map[string]int{}
+	f.deactivated = map[string]int{}
 	f.pvCreateCalls = 0
 	f.pvCreateErr = nil
 	f.vgCreateErr = nil
@@ -211,6 +232,13 @@ func (suite *LVMVolumeGroupReconcileSuite) eventually(check func() bool) {
 
 		return retry.ExpectedErrorf("provisioner state not yet reached")
 	})
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) hasFinalizer(volumeStatusID, finalizer string) bool {
+	res, err := suite.State().Get(suite.Ctx(), block.NewVolumeStatus(block.NamespaceName, volumeStatusID).Metadata())
+	suite.Require().NoError(err)
+
+	return res.Metadata().Finalizers().Has(finalizer)
 }
 
 func (suite *LVMVolumeGroupReconcileSuite) TestCreatesPVsAndVGFromScratch() {
@@ -315,6 +343,88 @@ func (suite *LVMVolumeGroupReconcileSuite) TestActivatesAfterExtendingVG() {
 
 	suite.eventually(func() bool {
 		return suite.provisioner.activatedCount(testVGName) > 0
+	})
+}
+
+// TestAddsFinalizerToParentRawVolume covers a VG whose provisioning.parents
+// references a RawVolume: once its backing block.VolumeStatus is ready, the
+// controller must both activate the VG and finalize the RawVolume so it
+// cannot close out from under an active VG.
+func (suite *LVMVolumeGroupReconcileSuite) TestAddsFinalizerToParentRawVolume() {
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newRawVolumeDoc("data1"),
+		newVGParentsDoc(testVGName, storagecfg.ProvisioningVolumeParent{ParentKind: "RawVolume", ParentName: "data1"}),
+	)
+
+	createVolumeStatus(&suite.DefaultSuite, "r-data1", block.VolumePhaseReady, block.EncryptionProviderNone, "/dev/vdb1", "/dev/vdb1")
+	suite.createPVStatus("vdb1", "/dev/vdb1", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/vdb1")
+
+	finalizer := (&storagectrl.LVMVolumeGroupReconcileController{}).Name() + "-" + testVGName
+
+	suite.eventually(func() bool {
+		return suite.hasFinalizer("r-data1", finalizer)
+	})
+
+	suite.eventually(func() bool {
+		return suite.provisioner.activatedCount(testVGName) > 0
+	})
+}
+
+// TestNoFinalizerForSelectorBasedVG confirms a selector-matched VG (no
+// provisioning.parents) never gets a finalizer placed on a backing volume,
+// even when one happens to exist at the matched device path - only a
+// parents-based VG owns its backing volumes exclusively enough to justify
+// the finalizer.
+func (suite *LVMVolumeGroupReconcileSuite) TestNoFinalizerForSelectorBasedVG() {
+	applyMachineConfigDocs(&suite.DefaultSuite, newVGDoc(testVGName, `disk.transport == "nvme"`))
+
+	createVolumeStatus(&suite.DefaultSuite, "some-volume", block.VolumePhaseReady, block.EncryptionProviderNone, "/dev/nvme0n1", "/dev/nvme0n1")
+	suite.createPVStatus("nvme0n1", "/dev/nvme0n1", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/nvme0n1")
+
+	suite.eventually(func() bool {
+		return suite.provisioner.activatedCount(testVGName) > 0
+	})
+
+	finalizer := (&storagectrl.LVMVolumeGroupReconcileController{}).Name() + "-" + testVGName
+
+	// Give the finalizer a chance to appear if the controller wrongly added it.
+	time.Sleep(250 * time.Millisecond)
+	suite.Assert().False(suite.hasFinalizer("some-volume", finalizer))
+}
+
+// TestDeactivatesAndReleasesFinalizerOnParentTeardown confirms the reverse
+// direction: once the parent RawVolume starts tearing down, the VG must be
+// deactivated and the finalizer released so the teardown can proceed.
+func (suite *LVMVolumeGroupReconcileSuite) TestDeactivatesAndReleasesFinalizerOnParentTeardown() {
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newRawVolumeDoc("data1"),
+		newVGParentsDoc(testVGName, storagecfg.ProvisioningVolumeParent{ParentKind: "RawVolume", ParentName: "data1"}),
+	)
+
+	createVolumeStatus(&suite.DefaultSuite, "r-data1", block.VolumePhaseReady, block.EncryptionProviderNone, "/dev/vdb1", "/dev/vdb1")
+	suite.createPVStatus("vdb1", "/dev/vdb1", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/vdb1")
+
+	finalizer := (&storagectrl.LVMVolumeGroupReconcileController{}).Name() + "-" + testVGName
+
+	suite.eventually(func() bool {
+		return suite.hasFinalizer("r-data1", finalizer)
+	})
+
+	_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeStatus(block.NamespaceName, "r-data1").Metadata())
+	suite.Require().NoError(err)
+
+	suite.eventually(func() bool {
+		return suite.provisioner.deactivatedCount(testVGName) > 0
+	})
+
+	suite.eventually(func() bool {
+		return !suite.hasFinalizer("r-data1", finalizer)
 	})
 }
 

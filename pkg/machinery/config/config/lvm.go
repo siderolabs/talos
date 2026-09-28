@@ -13,7 +13,23 @@ import (
 type LVMVolumeGroupConfig interface {
 	NamedDocument
 	LVMVolumeGroupConfigSignal()
+	// PhysicalVolumeSelector returns the CEL selector matching disks to use as
+	// physical volumes. Zero when Parents is used instead.
 	PhysicalVolumeSelector() cel.Expression
+	// Parents returns the Talos-managed volumes to use as physical volumes,
+	// instead of matching disks with PhysicalVolumeSelector. Empty when a
+	// selector is used instead.
+	Parents() []ProvisioningVolumeParent
+}
+
+// ProvisioningVolumeParent references a Talos-managed volume, by kind and
+// name, to use as a physical volume backing an LVM volume group.
+type ProvisioningVolumeParent struct {
+	// Kind is the kind of the referenced volume config document (e.g.
+	// "RawVolume").
+	Kind string
+	// Name is the name of the referenced volume config document.
+	Name string
 }
 
 // LVMLogicalVolumeConfig exposes an LVM logical volume config document.

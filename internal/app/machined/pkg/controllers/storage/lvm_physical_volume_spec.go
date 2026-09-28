@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -122,7 +123,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 
 	r.StartTrackingOutputs()
 
-	if err := ctrl.emitSpecs(ctx, r, logger, vgDocs, volumes); err != nil {
+	if err := ctrl.emitSpecs(ctx, r, logger, machineConfig, vgDocs, volumes); err != nil {
 		return err
 	}
 
@@ -137,13 +138,14 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 	return nil
 }
 
-// emitSpecs evaluates every VG selector against the discovered volumes and
-// writes PV specs for matches, recording overlap conflicts as validation
-// errors.
+// emitSpecs evaluates every VG selector (or parent reference list) against
+// the discovered volumes and writes PV specs for matches, recording overlap
+// conflicts as validation errors.
 func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	ctx context.Context,
 	r controller.Runtime,
 	logger *zap.Logger,
+	machineConfig configconfig.Config,
 	vgDocs []configconfig.LVMVolumeGroupConfig,
 	volumes []blockhelpers.MatchContext,
 ) error {
@@ -154,13 +156,24 @@ func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	// Conflicts recorded per losing VG, surfaced as LVMValidationError.
 	conflicts := map[string]string{}
 
-	for _, doc := range vgDocs {
-		if doc.PhysicalVolumeSelector().IsZero() {
-			continue
-		}
+	volumesByID := make(map[string]blockhelpers.MatchContext, len(volumes))
 
-		if err := ctrl.matchVolumesToVG(ctx, r, logger, doc, volumes, claimedBy, conflicts); err != nil {
-			return err
+	for _, vol := range volumes {
+		if vol.VolumeID != "" {
+			volumesByID[vol.VolumeID] = vol
+		}
+	}
+
+	for _, doc := range vgDocs {
+		switch {
+		case len(doc.Parents()) > 0:
+			if err := ctrl.matchParentsToVG(ctx, r, logger, machineConfig, doc, volumesByID, claimedBy, conflicts); err != nil {
+				return err
+			}
+		case !doc.PhysicalVolumeSelector().IsZero():
+			if err := ctrl.matchVolumesToVG(ctx, r, logger, doc, volumes, claimedBy, conflicts); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -171,6 +184,97 @@ func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	}
 
 	return nil
+}
+
+// matchParentsToVG resolves the RawVolume parents declared by a VG doc into
+// PV specs, one per ready parent. A parent not yet ready (block.VolumeStatus
+// not present in volumesByID) is silently skipped for this tick - the
+// controller re-runs when block.VolumeStatus changes, same as the selector
+// path's implicit wait.
+func (ctrl *LVMPhysicalVolumeSpecController) matchParentsToVG(
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	machineConfig configconfig.Config,
+	doc configconfig.LVMVolumeGroupConfig,
+	volumesByID map[string]blockhelpers.MatchContext,
+	claimedBy map[string]string,
+	conflicts map[string]string,
+) error {
+	for _, parent := range doc.Parents() {
+		if parent.Kind != "RawVolume" {
+			conflicts[doc.Name()] = fmt.Sprintf("unsupported parent kind %q for %q", parent.Kind, parent.Name)
+
+			continue
+		}
+
+		if !rawVolumeConfigExists(machineConfig, parent.Name) {
+			conflicts[doc.Name()] = fmt.Sprintf("parent RawVolume %q not found in machine config", parent.Name)
+
+			continue
+		}
+
+		volumeID := constants.RawVolumePrefix + parent.Name
+
+		vol, ok := volumesByID[volumeID]
+		if !ok {
+			logger.Debug("waiting for parent volume to be ready",
+				zap.String("vg", doc.Name()),
+				zap.String("parent", parent.Name),
+			)
+
+			continue
+		}
+
+		if vol.Partitioned {
+			logger.Debug(
+				"skipping partitioned disk as PV candidate; its partitions are preferred",
+				zap.String("device", vol.DevPath),
+				zap.String("vg", doc.Name()),
+			)
+
+			continue
+		}
+
+		devPath := vol.DevPath
+
+		if prev, ok := claimedBy[devPath]; ok && prev != doc.Name() {
+			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", devPath, prev)
+
+			logger.Warn(
+				"disk claimed by multiple LVM volume groups; skipping",
+				zap.String("device", devPath),
+				zap.String("first_vg", prev),
+				zap.String("conflicting_vg", doc.Name()),
+			)
+
+			continue
+		}
+
+		claimedBy[devPath] = doc.Name()
+
+		if err := ctrl.writePVSpec(ctx, r, devPath, doc.Name()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// rawVolumeConfigExists reports whether a RawVolumeConfig doc with the given
+// name exists in the machine config.
+func rawVolumeConfigExists(machineConfig configconfig.Config, name string) bool {
+	if machineConfig == nil {
+		return false
+	}
+
+	for _, doc := range machineConfig.RawVolumeConfigs() {
+		if doc.Name() == name {
+			return true
+		}
+	}
+
+	return false
 }
 
 // matchVolumesToVG evaluates the selector of a single VG doc against all
