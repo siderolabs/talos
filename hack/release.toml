@@ -20,6 +20,7 @@ preface = """
         description = """\
 Linux: 6.18.56
 containerd: 2.3.7
+etcd: 3.7.2
 
 Talos is built with Go 1.26.9.
 """
