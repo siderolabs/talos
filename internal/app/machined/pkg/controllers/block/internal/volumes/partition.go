@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xerrors"
 	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
-	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 	"go.uber.org/zap"
 
@@ -23,9 +22,10 @@ import (
 
 // CreatePartitionResult is the result of creating a partition.
 type CreatePartitionResult struct {
-	PartitionIdx int
-	Partition    gpt.Partition
-	Size         uint64
+	PartitionIdx     int
+	Partition        gpt.Partition
+	PartitionDevName string
+	Size             uint64
 }
 
 // CreatePartition creates a partition on a disk.
@@ -97,7 +97,10 @@ func CreatePartition(ctx context.Context, logger *zap.Logger, diskPath string, v
 	}
 
 	// wipe the newly created partition, as it might contain old data
-	partitionDevName := partitioning.DevName(diskPath, uint(partitionIdx))
+	partitionDevName, err := dev.GetPartitionDevName(uint(partitionIdx))
+	if err != nil {
+		return CreatePartitionResult{}, xerrors.NewTaggedf[Retryable]("error getting partition device name: %w", err)
+	}
 
 	partitionDev, err := blockdev.NewFromPath(partitionDevName, blockdev.OpenForWrite())
 	if err != nil {
@@ -118,8 +121,9 @@ func CreatePartition(ctx context.Context, logger *zap.Logger, diskPath string, v
 	)
 
 	return CreatePartitionResult{
-		PartitionIdx: partitionIdx,
-		Partition:    partitionEntry,
-		Size:         size,
+		PartitionIdx:     partitionIdx,
+		Partition:        partitionEntry,
+		PartitionDevName: partitionDevName,
+		Size:             size,
 	}, nil
 }

@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"path/filepath"
 	"strings"
 
@@ -65,6 +66,10 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 	// lastObservedGenerations holds the last observed generation of each device.
 	//
 	// when the generation of a device changes, the device might have changed and might need to be re-probed.
+	//
+	// an entry is dropped as soon as the device is gone: a device which comes back under the same name
+	// (e.g. device-mapper devices reuse "dm-N" names) starts counting generations from scratch, and
+	// a stale entry would make it look unchanged and never probed.
 	lastObservedGenerations := map[string]int{}
 
 	for {
@@ -80,11 +85,14 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 		}
 
 		touchedDisks := map[string]struct{}{}
+		presentDevices := map[string]struct{}{}
 
 		for device := range blockdevices.All() {
 			if device.TypedSpec().Type != block.DeviceTypeDisk {
 				continue
 			}
+
+			presentDevices[device.Metadata().ID()] = struct{}{}
 
 			if device.TypedSpec().Major == 1 {
 				// ignore ram disks (/dev/ramX), major number is 1
@@ -128,6 +136,13 @@ func (ctrl *DisksController) Run(ctx context.Context, r controller.Runtime, logg
 
 			delete(lastObservedGenerations, disk.Metadata().ID())
 		}
+
+		// forget the devices which are gone, whether or not they ever produced a disk
+		maps.DeleteFunc(lastObservedGenerations, func(id string, _ int) bool {
+			_, present := presentDevices[id]
+
+			return !present
+		})
 	}
 }
 
@@ -249,6 +264,10 @@ func (ctrl *DisksController) analyzeBlockDevice(
 		d.TypedSpec().SubSystem = props.SubSystem
 		d.TypedSpec().Transport = props.Transport
 		d.TypedSpec().Rotational = props.Rotational
+
+		d.TypedSpec().DeviceMapperName = props.DeviceMapperName
+		d.TypedSpec().DeviceMapperUUID = props.DeviceMapperUUID
+		d.TypedSpec().DeviceMapperKind = props.DeviceMapperKind
 
 		d.TypedSpec().SecondaryDisks = secondaryDisks
 

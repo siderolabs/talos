@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 var patchCmdFlags struct {
@@ -56,11 +57,11 @@ var patchCmd = &cobra.Command{
 		parentDir := filepath.Dir(patchCmdFlags.output)
 
 		// Create dir path, ignoring "already exists" messages
-		if err := os.MkdirAll(parentDir, os.ModePerm); err != nil && !os.IsExist(err) {
+		if err := os.MkdirAll(parentDir, fileutils.SecretDirMode); err != nil && !os.IsExist(err) {
 			return fmt.Errorf("failed to create output dir: %w", err)
 		}
 
-		return os.WriteFile(patchCmdFlags.output, patchedData, 0o644)
+		return fileutils.WriteSecret(patchCmdFlags.output, patchedData)
 	},
 }
 

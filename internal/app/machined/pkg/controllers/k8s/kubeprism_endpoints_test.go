@@ -39,11 +39,11 @@ func (suite *KubePrismControllerSuite) TestGeneration() {
 			MachineType: "controlplane",
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must(url.Parse("https://example.com"))(suite.Require()),
 				},
-				LocalAPIServerPort: 6445,
+				LocalAPIServerPort: 6445, //nolint:staticcheck // testing deprecated field
 			},
 		},
 	}))
@@ -121,10 +121,8 @@ func TestEndpointsBalancerControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KubePrismControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewKubePrismEndpointsController()))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewKubePrismEndpointsController()))
 		},
 	})
 }

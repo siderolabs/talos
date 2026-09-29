@@ -619,6 +619,14 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 
 	suite.Assert().Truef(assertDummyInterface(provider), "dummy interface wasn't found")
 
+	// A dry run must not confirm the pending try-mode configuration.
+	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
+		Data:   suite.PatchV1Alpha1Config(provider, func(*v1alpha1.Config) {}),
+		Mode:   machineapi.ApplyConfigurationRequest_AUTO,
+		DryRun: true,
+	})
+	suite.Require().NoError(err)
+
 	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
 		asrt.False(assertDummyInterface(r.Provider()))
 	})

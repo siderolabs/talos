@@ -24,6 +24,7 @@ import (
 
 type legacyOps struct {
 	clusterDiskSize   int
+	clusterDiskDriver string
 	extraDisks        int
 	extraDiskSize     int
 	extraDisksDrivers []string
@@ -46,6 +47,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		preallocateDisksFlag            = "disk-preallocate"
 		clusterUserVolumesFlag          = "user-volumes"
 		clusterDiskSizeFlag             = "disk"
+		clusterDiskDriverFlag           = "disk-driver"
 		primaryDisksFlag                = "primary-disks"
 		diskBlockSizeFlag               = "disk-block-size"
 		useVIPFlag                      = "use-vip"
@@ -55,8 +57,10 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		firewallFlag                    = "with-firewall"
 		bgpFlag                         = "with-bgp"
 		bgpCLOSFlag                     = "with-bgp-clos"
+		nfsFlag                         = "with-nfs"
 		tpmEnabledFlag                  = "with-tpm1_2"
 		tpm2EnabledFlag                 = "with-tpm2"
+		ipmiEnabledFlag                 = "with-ipmi"
 		withIOMMUFlag                   = "with-iommu"
 		talosconfigFlag                 = "talosconfig"
 		applyConfigEnabledFlag          = "with-apply-config"
@@ -150,6 +154,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		packetCorruptFlag,
 		bandwidthFlag,
 		airgappedFlag,
+		ipmiEnabledFlag,
 
 		// The following might work but need testing first.
 		configInjectionMethodFlag,
@@ -227,6 +232,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.BoolVar(&qOps.UefiEnabled, uefiEnabledFlag, qOps.UefiEnabled, "enable UEFI on x86_64 architecture")
 		qemu.BoolVar(&qOps.Tpm1_2Enabled, tpmEnabledFlag, qOps.Tpm1_2Enabled, "enable TPM 1.2 emulation support using swtpm")
 		qemu.BoolVar(&qOps.Tpm2Enabled, tpm2EnabledFlag, qOps.Tpm2Enabled, "enable TPM 2.0 emulation support using swtpm")
+		qemu.BoolVar(&qOps.IPMIEnabled, ipmiEnabledFlag, qOps.IPMIEnabled, "enable BMC (IPMI) emulation using QEMU's built-in BMC simulator (amd64 only)")
 		qemu.BoolVar(&qOps.WithIOMMU, withIOMMUFlag, qOps.WithIOMMU, "enable IOMMU support, this also add a new PCI root port and an interface attached to it")
 		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
@@ -256,8 +262,10 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 			"specify percent of corrupt packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
 		qemu.IntVar(&qOps.Bandwidth, bandwidthFlag, qOps.Bandwidth, "specify bandwidth restriction (in kbps) on the bridge interface")
 		qemu.StringVar(&qOps.WithFirewall, firewallFlag, qOps.WithFirewall, "inject firewall rules into the cluster, value is default policy - accept/block")
+		qemu.BoolVar(&qOps.WithLLDP, "with-lldp", qOps.WithLLDP, "run a continuous LLDP receive-test advertiser on the QEMU host")
 		qemu.BoolVar(&qOps.WithBGP, bgpFlag, qOps.WithBGP, "run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP")
 		qemu.BoolVar(&qOps.WithBGPCLOS, bgpCLOSFlag, qOps.WithBGPCLOS, "full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback")
+		qemu.BoolVar(&qOps.WithNFS, nfsFlag, qOps.WithNFS, "run an embedded userspace NFS server and mount NFSv3 and NFSv4 test volumes")
 		qemu.Var(&qOps.WithSiderolinkAgent, withSiderolinkAgentFlag,
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
 		qemu.StringVar(&qOps.ConfigInjectionMethod,
@@ -286,7 +294,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 			}
 
 			var disks strings.Builder
-			fmt.Fprintf(&disks, "virtio:%d", legacyOps.clusterDiskSize)
+			fmt.Fprintf(&disks, "%s:%d", legacyOps.clusterDiskDriver, legacyOps.clusterDiskSize)
 
 			for i := range legacyOps.extraDisks {
 				driver := "ide"
@@ -323,13 +331,18 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 				return err
 			}
 
+			// for dev mode, provision extra DHCP records for host-exposed workloads in the cluster
+			qOps.ExtraDHCPRecordsCount = 50
+
 			return createDevCluster(cmd.Context(), cOps, qOps)
 		},
 	}
 	createCmd.Flags().IntVar(&legacyOps.clusterDiskSize, clusterDiskSizeFlag, 6*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().StringVar(&legacyOps.clusterDiskDriver, clusterDiskDriverFlag, "virtio",
+		"driver for the primary (system) disks (virtio, ide, ahci, scsi, nvme, megaraid, usb, mmc)")
 	createCmd.Flags().IntVar(&qOps.PrimaryDisks, primaryDisksFlag, qOps.PrimaryDisks, "number of primary disks to create for each VM (each sized by --disk)")
 	createCmd.Flags().IntVar(&legacyOps.extraDisks, extraDisksFlag, 0, "number of extra disks to create for each worker VM")
-	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, extraDisksDriversFlag, nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid)")
+	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksDrivers, extraDisksDriversFlag, nil, "driver for each extra disk (virtio, ide, ahci, scsi, nvme, megaraid, usb, mmc, virtiofs)")
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksTags, extraDisksTagsFlag, nil, "tags for each extra disk (only used by virtiofs)")
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksSerials, extraDisksSerialsFlag, nil, "serials for each extra disk")
 	createCmd.Flags().IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")

@@ -48,7 +48,8 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL,
 	var etcdEncryptionProvidersList []any
 
 	if in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret != "" {
-		etcdEncryptionProvidersList = append(etcdEncryptionProvidersList,
+		etcdEncryptionProvidersList = append(
+			etcdEncryptionProvidersList,
 			map[string]any{
 				"secretbox": map[string]any{
 					"keys": []any{
@@ -63,7 +64,8 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL,
 	}
 
 	if in.Options.SecretsBundle.Secrets.AESCBCEncryptionSecret != "" {
-		etcdEncryptionProvidersList = append(etcdEncryptionProvidersList,
+		etcdEncryptionProvidersList = append(
+			etcdEncryptionProvidersList,
 			map[string]any{
 				"secretbox": map[string]any{
 					"keys": []any{

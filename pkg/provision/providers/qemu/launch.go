@@ -21,6 +21,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
+	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
@@ -36,6 +37,9 @@ const (
 	// qemuStartupGracePeriod separates "QEMU never came up" from "the VM ran and then died": a
 	// process which exits with an error this soon after being started never got to run the VM.
 	qemuStartupGracePeriod = 5 * time.Second
+
+	// xhciID is the QEMU id of the single xHCI controller shared by the USB disks and the USB boot stick.
+	xhciID = "xhci"
 )
 
 // LaunchConfig is passed in to the Launch function over stdin.
@@ -69,6 +73,7 @@ type LaunchConfig struct {
 	BadRTC                    bool
 	ArchitectureData          Arch
 	IOMMUEnabled              bool
+	IPMIEnabled               bool
 	SkipInjectingExtraCmdline bool
 
 	// Talos config
@@ -169,6 +174,7 @@ func launchVM(config *LaunchConfig) error {
 		"-chardev", fmt.Sprintf("socket,path=%s/%s.sock,server=on,wait=off,id=qga0", config.StatePath, config.Network.Hostname),
 		"-device", "virtio-serial",
 		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
+		"-device", "virtio-keyboard-pci",
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action", "pause",
 	}
@@ -196,14 +202,9 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	var (
-		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached bool
-		ahciBus                                                                      int
+		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached, xhciAttached bool
+		ahciBus                                                                                    int
 	)
-
-	blockDeviceIOOptions := "aio=threads,cache=none"
-	if runtime.GOOS == "linux" {
-		blockDeviceIOOptions = "aio=native,cache=none"
-	}
 
 	for i, disk := range config.DiskPaths {
 		driver := config.DiskDrivers[i]
@@ -223,12 +224,12 @@ func launchVM(config *LaunchConfig) error {
 		case "virtio":
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=virtio%d,format=raw,if=none,file=%s,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("virtio-blk-pci,drive=virtio%d,logical_block_size=%d,physical_block_size=%d%s", i, blockSize, blockSize, serial),
 			)
 
 		case "ide":
-			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=none", disk))
+			args = append(args, "-drive", fmt.Sprintf("format=raw,if=ide,file=%s,cache=unsafe", disk))
 
 		case "ahci":
 			if !ahciAttached {
@@ -238,7 +239,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s", i, disk),
+				"-drive", fmt.Sprintf("id=ide%d,format=raw,if=none,file=%s,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("ide-hd,drive=ide%d,bus=ahci0.%d", i, ahciBus),
 			)
 
@@ -252,7 +253,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi0.0,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -268,7 +269,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
+				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -282,8 +283,32 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
+			)
+
+		case "usb":
+			if !xhciAttached {
+				args = append(args, "-device", "nec-usb-xhci,id="+xhciID)
+				xhciAttached = true
+			}
+
+			args = append(
+				args,
+				"-drive", fmt.Sprintf("id=usb%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
+				"-device", fmt.Sprintf("usb-storage,bus=%s.0,drive=usb%d,logical_block_size=%d,physical_block_size=%d%s", xhciID, i, blockSize, blockSize, serial),
+			)
+
+		case "mmc":
+			// an SDHCI controller has a single slot, so each card gets its own controller;
+			// QEMU attaches the card to the first SD bus with a free slot, i.e. the controller just added
+			//
+			// SD cards have a fixed 512-byte block size, and the image size must be a power of two (see CreateDisks)
+			args = append(
+				args,
+				"-device", fmt.Sprintf("sdhci-pci,id=sdhci%d", i),
+				"-drive", fmt.Sprintf("id=mmc%d,format=raw,if=none,file=%s,discard=unmap,cache=unsafe", i, disk),
+				"-device", fmt.Sprintf("sd-card,drive=mmc%d", i),
 			)
 
 		case "virtiofs":
@@ -391,6 +416,15 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
+	if config.IPMIEnabled {
+		ipmiArgs, err := config.ArchitectureData.IPMIDeviceArgs()
+		if err != nil {
+			return err
+		}
+
+		args = append(args, ipmiArgs...)
+	}
+
 	// ref: https://wiki.qemu.org/Features/VT-d
 	if config.IOMMUEnabled {
 		args = append(
@@ -421,11 +455,14 @@ func launchVM(config *LaunchConfig) error {
 				fmt.Sprintf("id=cdrom0,file=%s,media=cdrom", config.ISOPath),
 			)
 		case config.USBPath != "" && !skipBootloader:
+			if !xhciAttached {
+				args = append(args, "-device", "nec-usb-xhci,id="+xhciID)
+			}
+
 			args = append(
 				args,
 				"-drive", fmt.Sprintf("if=none,id=stick,format=raw,read-only=on,file=%s", config.USBPath),
-				"-device", "nec-usb-xhci,id=xhci",
-				"-device", "usb-storage,bus=xhci.0,drive=stick,removable=on",
+				"-device", fmt.Sprintf("usb-storage,bus=%s.0,drive=stick,removable=on", xhciID),
 			)
 		case config.UKIPath != "":
 			args = append(
@@ -775,5 +812,39 @@ func checkPartitions(config *LaunchConfig) (bool, error) {
 		return false, fmt.Errorf("error probing disk: %w", err)
 	}
 
-	return info.Name == "gpt" && len(info.Parts) > 0, nil
+	switch info.Name {
+	case "gpt":
+		return len(info.Parts) > 0, nil
+	case "linux_raid_member":
+		// md member superblock survives a wipe of the array contents, so look inside:
+		// with metadata 1.0 (bootable mirror), the array data starts at offset 0 of the member,
+		// so the GPT of the array (if any) is readable directly from the member disk.
+		//
+		// check directly skipping blkid, as blkid would prefere MD label over GPT always.
+		return checkRAIDMemberPartitions(config)
+	default:
+		return false, nil
+	}
+}
+
+func checkRAIDMemberPartitions(config *LaunchConfig) (bool, error) {
+	f, err := os.Open(config.DiskPaths[0])
+	if err != nil {
+		return false, fmt.Errorf("error opening disk: %w", err)
+	}
+
+	defer f.Close() //nolint:errcheck
+
+	dev, err := gpt.DeviceFromFile(f, gpt.WithFileSectorSize(config.DiskBlockSizes[0]))
+	if err != nil {
+		return false, fmt.Errorf("error opening disk: %w", err)
+	}
+
+	table, err := gpt.Read(dev)
+	if err != nil {
+		// no (valid) GPT inside the array
+		return false, nil //nolint:nilerr
+	}
+
+	return len(table.Partitions()) > 0, nil
 }

@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 
-	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -42,12 +41,7 @@ func (l *Local) String() string {
 
 // GetConnection returns a grpc connection to the backend.
 func (l *Local) GetConnection(ctx context.Context, _ string) (context.Context, *grpc.ClientConn, error) {
-	md, _ := metadata.FromIncomingContext(ctx)
-	md = md.Copy()
-
-	authz.SetMetadata(md, authz.GetRoles(ctx))
-
-	outCtx := metadata.NewOutgoingContext(ctx, md)
+	outCtx := metadata.NewOutgoingContext(ctx, OutgoingMetadata(ctx))
 
 	l.mu.Lock()
 	defer l.mu.Unlock()

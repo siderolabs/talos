@@ -31,31 +31,7 @@ func (suite *SupportSuite) SuiteName() string {
 //
 // Encryption is disabled to verify support bundled contents.
 func (suite *SupportSuite) TestSupportNoEncryption() {
-	tempDir := suite.T().TempDir()
-
-	output := filepath.Join(tempDir, "support.zip")
-
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
-
-	suite.RunCLI(
-		[]string{"support", "--nodes", node, "-w", "5", "-O", output, "--no-encryption"},
-		base.StderrNotEmpty(),
-	)
-
-	archive, err := zip.OpenReader(output)
-	suite.Require().NoError(err)
-
-	defer archive.Close() //nolint:errcheck
-
-	files := map[string]struct{}{}
-
-	for _, f := range archive.File {
-		files[f.Name] = struct{}{}
-
-		if strings.HasSuffix(f.Name, "dmesg.log") {
-			suite.Require().Greater(f.UncompressedSize64, uint64(0), "dmesg log is empty")
-		}
-	}
+	node, files := suite.collectBundle()
 
 	for _, name := range []string{
 		"dmesg.log",
@@ -63,14 +39,29 @@ func (suite *SupportSuite) TestSupportNoEncryption() {
 		"service-logs/apid.state",
 		"service-logs/machined.log",
 		"service-logs/machined.state",
-		"service-logs/kubelet.log",
-		"service-logs/kubelet.state",
 		"resources/kernelparamstatuses.runtime.talos.dev.yaml",
 		"controller-runtime.log",
 		"mounts",
 		"processes",
 		"io",
 		"summary",
+	} {
+		n := fmt.Sprintf("%s/%s", node, name)
+		suite.Require().Contains(files, n, "File %s doesn't exist in the support bundle", n)
+	}
+}
+
+// TestSupportNoEncryptionKubernetes verifies the Kubernetes contents of an unencrypted support bundle.
+func (suite *SupportSuite) TestSupportNoEncryptionKubernetes() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so the bundle has no Kubernetes data")
+	}
+
+	node, files := suite.collectBundle()
+
+	for _, name := range []string{
+		"service-logs/kubelet.log",
+		"service-logs/kubelet.state",
 	} {
 		n := fmt.Sprintf("%s/%s", node, name)
 		suite.Require().Contains(files, n, "File %s doesn't exist in the support bundle", n)
@@ -100,6 +91,36 @@ func (suite *SupportSuite) TestSupportNoEncryption() {
 	} {
 		suite.Require().Contains(files, name, "File %s doesn't exist in the support bundle", name)
 	}
+}
+
+// collectBundle collects an unencrypted support bundle from a random control plane node, and
+// returns the node and the names of the files in the bundle.
+func (suite *SupportSuite) collectBundle() (string, map[string]struct{}) {
+	output := filepath.Join(suite.T().TempDir(), "support.zip")
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	suite.RunCLI(
+		[]string{"support", "--nodes", node, "-w", "5", "-O", output, "--no-encryption"},
+		base.StderrNotEmpty(),
+	)
+
+	archive, err := zip.OpenReader(output)
+	suite.Require().NoError(err)
+
+	defer archive.Close() //nolint:errcheck
+
+	files := map[string]struct{}{}
+
+	for _, f := range archive.File {
+		files[f.Name] = struct{}{}
+
+		if strings.HasSuffix(f.Name, "dmesg.log") {
+			suite.Require().Greater(f.UncompressedSize64, uint64(0), "dmesg log is empty")
+		}
+	}
+
+	return node, files
 }
 
 // TestSupportWithEncryption does successful support run with encryption.

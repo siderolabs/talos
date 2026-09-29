@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+  <!-- Overrides for the no-op versions of storage elements for use with domain XMLs. -->
+  <include href="domaincommon.rng"/>
+
+  <define name="storageStartupPolicy" combine="choice">
+    <!-- overrides the no-op version in storagecommon.rng -->
+    <ref name="startupPolicy"/>
+  </define>
+
+  <define name="storageSourceExtra" combine="choice">
+    <!-- overrides the no-op version in storagecommon.rng -->
+    <ref name="diskspec"/>
+  </define>
+
+</grammar>

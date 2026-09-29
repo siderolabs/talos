@@ -161,9 +161,7 @@ func TestAcquireSuite(t *testing.T) {
 	t.Parallel()
 
 	s := &AcquireSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-		},
+		Timeout: 15 * time.Second,
 	}
 
 	s.DefaultSuite.AfterSetup = func(*ctest.DefaultSuite) {

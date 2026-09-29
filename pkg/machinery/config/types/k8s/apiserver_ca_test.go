@@ -233,7 +233,7 @@ func TestKubeAPIServerCAConfigV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 with cluster CA set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterCA: &x509.PEMEncodedCertificateAndKey{
+					ClusterCA: &x509.PEMEncodedCertificateAndKey{ //nolint:staticcheck // testing deprecated field
 						Crt: []byte("foo"),
 						Key: []byte("bar"),
 					},

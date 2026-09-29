@@ -11,7 +11,6 @@ import (
 
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xerrors"
-	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"go.uber.org/zap"
 
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
@@ -152,6 +151,11 @@ func locateDiskByDiskMatch(vc ManagerContext) (bool, error) {
 			continue
 		}
 
+		// a partition without a device (e.g. of an ISO image on a CD-ROM) can't be used
+		if dv.DevPath == "" {
+			continue
+		}
+
 		if matchedVol == nil || (matchedVol.ParentDevPath != "" && dv.ParentDevPath == "") {
 			matchedVol = dv
 		}
@@ -173,6 +177,11 @@ func locateVolumeByMatch(vc ManagerContext) (bool, error) {
 	env := celenv.VolumeLocator()
 
 	for _, dv := range vc.DiscoveredVolumes {
+		// a partition without a device (e.g. of an ISO image on a CD-ROM) can't be used
+		if dv.DevPath == "" {
+			continue
+		}
+
 		matchContext := map[string]any{"volume": dv}
 
 		// Resolve the parent disk for CEL context
@@ -326,7 +335,7 @@ func applyProvisioning(ctx context.Context, logger *zap.Logger, vc ManagerContex
 		}
 
 		vc.Status.Phase = block.VolumePhaseProvisioned
-		vc.Status.Location = partitioning.DevName(disk, uint(partRes.PartitionIdx))
+		vc.Status.Location = partRes.PartitionDevName
 		vc.Status.PartitionIndex = partRes.PartitionIdx
 		vc.Status.ParentLocation = disk
 		vc.Status.PartitionUUID = partRes.Partition.PartGUID.String()

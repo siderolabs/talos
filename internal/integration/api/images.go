@@ -11,7 +11,6 @@ import (
 	_ "embed"
 	"errors"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -63,6 +62,10 @@ func (suite *ImagesSuite) TestList() {
 
 	suite.T().Logf("using node %s", node)
 
+	// Nothing is guaranteed to be in the CRI namespace (a cluster without Kubernetes runs no pods),
+	// so pull an image first rather than rely on one being there.
+	pulledImage := suite.pullImage(ctx, pullTestImage)
+
 	rcv, err := suite.Client.ImageClient.List(ctx, &machine.ImageServiceListRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
@@ -86,15 +89,7 @@ func (suite *ImagesSuite) TestList() {
 		imageNames = append(imageNames, msg.GetName())
 	}
 
-	suite.Require().NotEmpty(imageNames, "expected to receive at least one image from List()")
-
-	for _, name := range imageNames {
-		if strings.Contains(name, "registry.k8s.io/pause") {
-			return
-		}
-	}
-
-	suite.Fail("expected to find pause image in the list")
+	suite.Assert().Contains(imageNames, pulledImage, "expected the pulled image in the list")
 }
 
 // TestPull tests ImageService.Pull().
@@ -104,17 +99,26 @@ func (suite *ImagesSuite) TestPull() {
 
 	suite.T().Logf("using node %s", node)
 
-	const (
-		image         = "registry.k8s.io/kube-apiserver:v1.27.1"
-		digestedImage = "registry.k8s.io/kube-apiserver@sha256:a6daed8429c54f0008910fc4ecc17aefa1dfcd7cc2ff0089570854d4f95213ed"
-	)
+	pulledImage := suite.pullImage(ctx, pullTestImage)
 
+	// depending on whether the image verification is enabled or not, the pulled image ref can be either the original one (without digest) or the digested one, so we should accept both
+	suite.Assert().Contains([]string{pullTestDigestedImage, pullTestImage}, pulledImage, "pulled image name should match requested image")
+}
+
+const (
+	pullTestImage         = "registry.k8s.io/kube-apiserver:v1.27.1"
+	pullTestDigestedImage = "registry.k8s.io/kube-apiserver@sha256:a6daed8429c54f0008910fc4ecc17aefa1dfcd7cc2ff0089570854d4f95213ed"
+)
+
+// pullImage pulls an image into the CRI namespace and returns the name Pull reports it stored the
+// image under.
+func (suite *ImagesSuite) pullImage(ctx context.Context, ref string) string {
 	rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_CRI,
 		},
-		ImageRef: image,
+		ImageRef: ref,
 	})
 	suite.Require().NoError(err)
 
@@ -135,8 +139,8 @@ func (suite *ImagesSuite) TestPull() {
 	}
 
 	suite.Require().NotEmpty(pulledImage, "expected pulled image name in the response")
-	// depending on whether the image verification is enabled or not, the pulled image ref can be either the original one (without digest) or the digested one, so we should accept both
-	suite.Assert().Contains([]string{digestedImage, image}, pulledImage, "pulled image name should match requested image")
+
+	return pulledImage
 }
 
 //go:embed testdata/pause.tar
@@ -252,6 +256,12 @@ func (suite *ImagesSuite) TestVerify() {
 			RuleImagePattern: "localhost:4444/*",
 			RuleDeny:         new(true),
 		},
+		{
+			// a pattern written against the Docker Hub host the way the configuration
+			// reference shows it
+			RuleImagePattern: "docker.io/library/busybox*",
+			RuleDeny:         new(true),
+		},
 	}
 
 	suite.PatchMachineConfig(ctx, imageVerificationConfig)
@@ -259,7 +269,7 @@ func (suite *ImagesSuite) TestVerify() {
 	// wait for the configuration to be applied
 	rtestutils.AssertResources(
 		ctx, suite.T(), suite.Client.COSI,
-		[]resource.ID{"0000", "0001", "0002"},
+		[]resource.ID{"0000", "0001", "0002", "0003"},
 		func(rule *securityres.ImageVerificationRule, asrt *assert.Assertions) {
 			switch rule.Metadata().ID() {
 			case "0000":
@@ -268,6 +278,8 @@ func (suite *ImagesSuite) TestVerify() {
 				asrt.Equal("registry.k8s.io/*", rule.TypedSpec().ImagePattern)
 			case "0002":
 				asrt.Equal("localhost:4444/*", rule.TypedSpec().ImagePattern)
+			case "0003":
+				asrt.Equal("docker.io/library/busybox*", rule.TypedSpec().ImagePattern)
 			}
 		},
 	)
@@ -299,6 +311,21 @@ func (suite *ImagesSuite) TestVerify() {
 	suite.Require().Error(err)
 	suite.Assert().Equal(codes.PermissionDenied, status.Code(err), "expected image verification to be denied according to our config")
 	suite.Assert().Equal("verification denied by matched rule (0002)", status.Convert(err).Message())
+
+	// the reference is normalized before it is matched, so neither a different spelling of the
+	// registry domain nor a different spelling of the Docker Hub repository evades a deny rule
+	for _, deniedRef := range []string{
+		"LOCALHOST:4444/myimage:latest",
+		"docker.io/library/busybox:1.36",
+		"index.docker.io/library/busybox:1.36",
+		"busybox:1.36",
+	} {
+		_, err = suite.Client.ImageClient.Verify(ctx, &machine.ImageServiceVerifyRequest{
+			ImageRef: deniedRef,
+		})
+		suite.Require().Error(err, "expected %q to be denied", deniedRef)
+		suite.Assert().Equal(codes.PermissionDenied, status.Code(err), "expected %q to be denied according to our config", deniedRef)
+	}
 
 	// now test via the image pull flow
 	rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{

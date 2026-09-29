@@ -29,10 +29,8 @@ func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(etcdctrl.NewConfigController()))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(etcdctrl.NewConfigController()))
 		},
 	})
 }
@@ -85,7 +83,7 @@ func (suite *ConfigSuite) TestReconcile() {
 				EtcdExtraArgs: meta.Args{
 					"arg": meta.NewArgValue("value", nil),
 				},
-				EtcdSubnet: "10.0.0.0/8",
+				EtcdSubnet: "10.0.0.0/8", //nolint:staticcheck // testing deprecated field
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image: "foo/bar:v1.0.0",
@@ -214,7 +212,7 @@ func (suite *ConfigSuite) TestReconcile() {
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: tt.networkConfig,
+						NetworkInterfaces: tt.networkConfig, //nolint:staticcheck // legacy config
 					},
 				},
 			}

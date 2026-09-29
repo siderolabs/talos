@@ -97,6 +97,10 @@ func (s *KubeTalosAPIAccessConfigV1Alpha1) Validate(validation.RuntimeMode, ...v
 		warnings []string
 	)
 
+	if len(s.AccessAllowedRoles) == 0 {
+		warnings = append(warnings, "no roles are allowed in .allowedRoles, so access is blocked")
+	}
+
 	for _, r := range s.AccessAllowedRoles {
 		if !role.All.Includes(role.Role(r)) {
 			errs = errors.Join(errs, fmt.Errorf("invalid role %q in .allowedRoles", r))

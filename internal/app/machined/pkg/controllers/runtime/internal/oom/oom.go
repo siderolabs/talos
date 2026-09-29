@@ -13,7 +13,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/google/cel-go/common/types"
+	"cel.dev/cel-go/common/types"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/cgroups"

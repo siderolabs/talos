@@ -21,11 +21,9 @@ func TestKernelCmdlineSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KernelCmdlineSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.KernelCmdlineController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.KernelCmdlineController{}))
 		},
 	})
 }

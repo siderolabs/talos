@@ -135,6 +135,20 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 		return status.Error(codes.Internal, fmt.Sprintf("installation failed: %v", err))
 	}
 
+	// the installer created the META partition from scratch: merge the in-memory META with what the
+	// installer wrote and persist it, as there is no install sequence around this call to do it
+	// (and the reboot comes as a separate API call)
+	resources := s.runtime.State().V1Alpha2().Resources()
+	meta := s.runtime.State().Machine().Meta()
+
+	if err = install.ReloadMeta(ctx, resources, meta); err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to reload META: %v", err))
+	}
+
+	if err = install.SyncMeta(ctx, resources, meta); err != nil {
+		return status.Error(codes.Internal, fmt.Sprintf("failed to sync META: %v", err))
+	}
+
 	return nil
 }
 

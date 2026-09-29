@@ -69,6 +69,10 @@ type Config interface { //nolint:interfacebloat
 	// - containers:
 	ContainerConfigs() []ContainerConfig
 
+	// - hypervisor:
+	ContentLibraryConfigs() []ContentLibraryConfig
+	VirtualMachineConfigs() []VirtualMachineConfig
+
 	// - block devices/storage:
 	Volumes() VolumesConfig
 	UserVolumeConfigs() []UserVolumeConfig
@@ -79,9 +83,11 @@ type Config interface { //nolint:interfacebloat
 	ZswapConfig() ZswapConfig
 	FilesystemTrimConfig() FilesystemTrimConfig
 	FilesystemScrubConfig() FilesystemScrubConfig
+	DiskSMARTConfig() DiskSMARTConfig
 	LVMVolumeGroupConfigs() []LVMVolumeGroupConfig
 	LVMLogicalVolumeConfigs() []LVMLogicalVolumeConfig
 	RAIDArrayConfigs() []RAIDArrayConfig
+	StoragePoolConfigs() []StoragePoolConfig
 
 	// - cri:
 	RegistryMirrorConfigs() map[string]RegistryMirrorConfig
@@ -99,6 +105,7 @@ type Config interface { //nolint:interfacebloat
 	UdevRulesConfig() UdevConfig
 	TrustedRoots() TrustedRootsConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
+	CPUScalingConfigs() []CPUScalingConfig
 	OOMConfig() OOMConfig
 	ImageVerificationConfig() ImageVerificationConfig
 	SysctlConfig() map[string]string

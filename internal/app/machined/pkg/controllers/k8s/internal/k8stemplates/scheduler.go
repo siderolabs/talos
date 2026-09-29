@@ -9,7 +9,6 @@ import (
 
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -35,37 +34,31 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 	kubeSchedulerVersion := compatibility.VersionFromImageRef(cfg.Image)
 
 	livenessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   kubeSchedulerVersion.KubeSchedulerHealthLivenessEndpoint(),
-				Host:   "localhost",
-				Port:   intstr.FromInt(10259),
-				Scheme: corev1.URISchemeHTTPS,
-			},
+		HTTPGet: &corev1.HTTPGetAction{
+			Path:   kubeSchedulerVersion.KubeSchedulerHealthLivenessEndpoint(),
+			Host:   "localhost",
+			Port:   intstr.FromInt(10259),
+			Scheme: corev1.URISchemeHTTPS,
 		},
 		TimeoutSeconds: 15,
 	}
 
 	readinessProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   kubeSchedulerVersion.KubeSchedulerHealthReadinessEndpoint(),
-				Host:   "localhost",
-				Port:   intstr.FromInt(10259),
-				Scheme: corev1.URISchemeHTTPS,
-			},
+		HTTPGet: &corev1.HTTPGetAction{
+			Path:   kubeSchedulerVersion.KubeSchedulerHealthReadinessEndpoint(),
+			Host:   "localhost",
+			Port:   intstr.FromInt(10259),
+			Scheme: corev1.URISchemeHTTPS,
 		},
 		TimeoutSeconds: 15,
 	}
 
 	startupProbe := &corev1.Probe{
-		ProbeHandler: corev1.ProbeHandler{
-			HTTPGet: &corev1.HTTPGetAction{
-				Path:   kubeSchedulerVersion.KubeSchedulerHealthStartupEndpoint(),
-				Host:   "localhost",
-				Port:   intstr.FromInt(10259),
-				Scheme: corev1.URISchemeHTTPS,
-			},
+		HTTPGet: &corev1.HTTPGetAction{
+			Path:   kubeSchedulerVersion.KubeSchedulerHealthStartupEndpoint(),
+			Host:   "localhost",
+			Port:   intstr.FromInt(10259),
+			Scheme: corev1.URISchemeHTTPS,
 		},
 		// Give 60 seconds for the container to start up
 		PeriodSeconds:    5,
@@ -74,26 +67,22 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 	}
 
 	return &corev1.Pod{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "Pod",
+		APIVersion: "v1",
+		Kind:       "Pod",
+		Name:       k8s.SchedulerID,
+		Namespace:  "kube-system",
+		Annotations: map[string]string{
+			constants.AnnotationStaticPodSecretsVersion: secretsVersion,
+			constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
 		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      k8s.SchedulerID,
-			Namespace: "kube-system",
-			Annotations: map[string]string{
-				constants.AnnotationStaticPodSecretsVersion: secretsVersion,
-				constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
-			},
-			Labels: map[string]string{
-				"tier":                         "control-plane",
-				"k8s-app":                      k8s.SchedulerID,
-				"component":                    k8s.SchedulerID,
-				"app.kubernetes.io/name":       k8s.SchedulerID,
-				"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
-				"app.kubernetes.io/component":  "control-plane",
-				"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
-			},
+		Labels: map[string]string{
+			"tier":                         "control-plane",
+			"k8s-app":                      k8s.SchedulerID,
+			"component":                    k8s.SchedulerID,
+			"app.kubernetes.io/name":       k8s.SchedulerID,
+			"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
+			"app.kubernetes.io/component":  "control-plane",
+			"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 		},
 		Spec: corev1.PodSpec{
 			Priority:          new(SystemCriticalPriority),
@@ -153,18 +142,14 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 			Volumes: append(append([]corev1.Volume{
 				{
 					Name: "secrets",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: constants.KubernetesSchedulerSecretsDir,
-						},
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: constants.KubernetesSchedulerSecretsDir,
 					},
 				},
 				{
 					Name: "config",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: constants.KubernetesSchedulerConfigDir,
-						},
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: constants.KubernetesSchedulerConfigDir,
 					},
 				},
 			}, EphemeralWritableVolumes()...), Volumes(cfg.ExtraVolumes)...),

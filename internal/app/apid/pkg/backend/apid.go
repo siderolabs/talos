@@ -8,12 +8,15 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	gonet "net"
 	"slices"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"github.com/siderolabs/net"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/connectivity"
@@ -22,7 +25,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protowire"
 
-	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	proxybackend "github.com/siderolabs/talos/pkg/grpc/proxy/backend"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -34,6 +37,51 @@ import (
 //
 // The connection will enter IDLE time after GracefulShutdownTimeout/2, if no RPC is running.
 const GracefulShutdownTimeout = 30 * time.Minute
+
+// Liveness settings for the connection to the other apid instance.
+//
+// The backend connection is cached for the lifetime of apid and is the only thing standing between
+// a client and the node it asked for, so it has to notice on its own that the node went away. A
+// node which is rebooted by an upgrade (kexec, in particular) drops its TCP state without sending
+// FIN or RST, and proxied calls are mostly server-streaming, so apid sends nothing that could draw
+// a RST back: without probing, the connection stays `READY` while delivering nothing, and the
+// client blocks until its own timeout.
+//
+// Keepalives cover the connection while it is idle; TCP_USER_TIMEOUT additionally bounds how long
+// data may stay unacknowledged, which keepalives on their own do not.
+const (
+	backendKeepaliveIdle     = 30 * time.Second
+	backendKeepaliveInterval = 10 * time.Second
+	backendKeepaliveCount    = 3
+	backendUserTimeout       = 60 * time.Second
+)
+
+// backendDialer dials the other apid instance with dead peer detection enabled.
+func backendDialer() *gonet.Dialer {
+	return &gonet.Dialer{
+		KeepAliveConfig: gonet.KeepAliveConfig{
+			Enable:   true,
+			Idle:     backendKeepaliveIdle,
+			Interval: backendKeepaliveInterval,
+			Count:    backendKeepaliveCount,
+		},
+		Control: func(_, _ string, c syscall.RawConn) error {
+			var sockErr error
+
+			if err := c.Control(func(fd uintptr) {
+				sockErr = unix.SetsockoptInt(int(fd), unix.IPPROTO_TCP, unix.TCP_USER_TIMEOUT, int(backendUserTimeout.Milliseconds()))
+			}); err != nil {
+				return err
+			}
+
+			if sockErr != nil {
+				return fmt.Errorf("failed to set TCP_USER_TIMEOUT: %w", sockErr)
+			}
+
+			return nil
+		},
+	}
+}
 
 var _ proxy.Backend = (*APID)(nil)
 
@@ -68,20 +116,20 @@ func (a *APID) String() string {
 
 // GetConnection returns a grpc connection to the backend.
 func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *grpc.ClientConn, error) {
-	md, _ := metadata.FromIncomingContext(ctx)
-	md = md.Copy()
+	md := proxybackend.OutgoingMetadata(ctx)
 
-	authz.SetMetadata(md, authz.GetRoles(ctx))
+	// 'proxyfrom' tells the next apid instance that the request has already been routed,
+	// so it should not be routed any further. It is derived from the (caller-controlled)
+	// authority, but it is never inherited from the caller: the allowlist in
+	// OutgoingMetadata drops both ':authority' and 'proxyfrom', as it does the routing
+	// metadata ('node', 'nodes').
+	incomingMD, _ := metadata.FromIncomingContext(ctx)
 
-	if authority := md[":authority"]; len(authority) > 0 {
+	if authority := incomingMD[":authority"]; len(authority) > 0 {
 		md.Set("proxyfrom", authority...)
 	} else {
 		md.Set("proxyfrom", "unknown")
 	}
-
-	delete(md, ":authority")
-	delete(md, "nodes")
-	delete(md, "node")
 
 	outCtx := metadata.NewOutgoingContext(ctx, md)
 
@@ -106,6 +154,9 @@ func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *g
 
 	a.conn, err = grpc.NewClient(
 		fmt.Sprintf("%s:%d", net.FormatAddress(a.target), constants.ApidPort),
+		grpc.WithContextDialer(func(ctx context.Context, addr string) (gonet.Conn, error) {
+			return backendDialer().DialContext(ctx, "tcp", addr)
+		}),
 		grpc.WithInitialWindowSize(65535*32),
 		grpc.WithInitialConnWindowSize(65535*16),
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
@@ -172,7 +223,7 @@ func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *g
 func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 	payload, err := proto.Marshal(&common.Empty{
 		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
-			Hostname: a.target,
+			Hostname: a.target, //nolint:staticcheck // legacy behavior
 		},
 	})
 
@@ -238,9 +289,9 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 func (a *APID) BuildError(streaming bool, err error) ([]byte, error) {
 	var resp proto.Message = &common.Empty{
 		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
-			Hostname: a.target,
-			Error:    err.Error(),
-			Status:   status.Convert(err).Proto(),
+			Hostname: a.target,                    //nolint:staticcheck // legacy behavior
+			Error:    err.Error(),                 //nolint:staticcheck // legacy behavior
+			Status:   status.Convert(err).Proto(), //nolint:staticcheck // legacy behavior
 		},
 	}
 

@@ -89,6 +89,36 @@ func TestBondConfigUnmarshal(t *testing.T) {
 	}, docs[0])
 }
 
+// TestBondConfigPrimaryRoundtrip covers the `primary` YAML key end to end: the 802.3ad fixture above
+// can't carry it, since a primary is only valid in the single-active-slave modes.
+func TestBondConfigPrimaryRoundtrip(t *testing.T) {
+	t.Parallel()
+
+	cfg := network.NewBondConfigV1Alpha1("bond0")
+	cfg.BondLinks = []string{"eth0", "eth1"}
+	cfg.BondMode = new(nethelpers.BondModeActiveBackup)
+	cfg.BondPrimary = new("eth0")
+	cfg.BondPrimaryReselect = new(nethelpers.PrimaryReselectBetter)
+
+	warnings, err := cfg.Validate(validationMode{})
+	require.NoError(t, err)
+	require.Empty(t, warnings)
+
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+	require.NoError(t, err)
+
+	assert.Contains(t, string(marshaled), "primary: eth0\n")
+	assert.Contains(t, string(marshaled), "primaryReselect: better\n")
+
+	provider, err := configloader.NewFromBytes(marshaled)
+	require.NoError(t, err)
+
+	docs := provider.Documents()
+	require.Len(t, docs, 1)
+
+	assert.Equal(t, cfg, docs[0])
+}
+
 func TestBondValidate(t *testing.T) {
 	t.Parallel()
 
@@ -130,6 +160,87 @@ func TestBondValidate(t *testing.T) {
 			},
 
 			expectedError: "bond mode must be specified",
+		},
+		{
+			name: "primary not in links",
+
+			cfg: func() *network.BondConfigV1Alpha1 {
+				cfg := network.NewBondConfigV1Alpha1("bond0")
+				cfg.BondLinks = []string{"eth0", "eth1"}
+				cfg.BondMode = new(nethelpers.BondModeActiveBackup)
+				cfg.BondPrimary = new("eth2")
+
+				return cfg
+			},
+
+			expectedError: `primary link "eth2" is not in the list of bonded links`,
+		},
+		{
+			name: "primary empty",
+
+			cfg: func() *network.BondConfigV1Alpha1 {
+				cfg := network.NewBondConfigV1Alpha1("bond0")
+				cfg.BondLinks = []string{"eth0", "eth1"}
+				cfg.BondMode = new(nethelpers.BondModeActiveBackup)
+				cfg.BondPrimary = new("")
+
+				return cfg
+			},
+
+			expectedError: "primary link name can't be empty",
+		},
+		{
+			name: "primary in unsupported mode",
+
+			cfg: func() *network.BondConfigV1Alpha1 {
+				cfg := network.NewBondConfigV1Alpha1("bond0")
+				cfg.BondLinks = []string{"eth0", "eth1"}
+				cfg.BondMode = new(nethelpers.BondModeRoundrobin)
+				cfg.BondPrimary = new("eth0")
+
+				return cfg
+			},
+
+			expectedError: `primary link is not supported in "balance-rr" bond mode`,
+		},
+		{
+			name: "primaryReselect without primary",
+
+			cfg: func() *network.BondConfigV1Alpha1 {
+				cfg := network.NewBondConfigV1Alpha1("bond0")
+				cfg.BondLinks = []string{"eth0", "eth1"}
+				cfg.BondMode = new(nethelpers.BondModeActiveBackup)
+				cfg.BondPrimaryReselect = new(nethelpers.PrimaryReselectAlways)
+
+				return cfg
+			},
+
+			expectedWarnings: []string{"primaryReselect has no effect unless primary is specified"},
+		},
+		{
+			name: "primary with primaryReselect",
+
+			cfg: func() *network.BondConfigV1Alpha1 {
+				cfg := network.NewBondConfigV1Alpha1("bond0")
+				cfg.BondLinks = []string{"eth0", "eth1"}
+				cfg.BondMode = new(nethelpers.BondModeActiveBackup)
+				cfg.BondPrimary = new("eth0")
+				cfg.BondPrimaryReselect = new(nethelpers.PrimaryReselectAlways)
+
+				return cfg
+			},
+		},
+		{
+			name: "primaryReselect in unsupported mode is not warned about",
+
+			cfg: func() *network.BondConfigV1Alpha1 {
+				cfg := network.NewBondConfigV1Alpha1("bond0")
+				cfg.BondLinks = []string{"eth0", "eth1"}
+				cfg.BondMode = new(nethelpers.BondModeBroadcast)
+				cfg.BondPrimaryReselect = new(nethelpers.PrimaryReselectAlways)
+
+				return cfg
+			},
 		},
 		{
 			name: "valid",

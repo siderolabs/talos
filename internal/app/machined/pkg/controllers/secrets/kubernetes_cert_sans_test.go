@@ -30,10 +30,8 @@ type KubernetesCertSANsSuite struct {
 
 func TestKubernetesCertSANsSuite(t *testing.T) {
 	suite.Run(t, &KubernetesCertSANsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesCertSANsController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesCertSANsController{}))
 		},
 	})
 }

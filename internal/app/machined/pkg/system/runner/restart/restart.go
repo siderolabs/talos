@@ -5,20 +5,17 @@
 package restart
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 )
 
 type restarter struct {
 	wrappedRunner runner.Runner
 	opts          *Options
-
-	stop    chan struct{}
-	stopped chan struct{}
 }
 
 // New wraps runner.Runner with restart policy.
@@ -26,8 +23,6 @@ func New(wrapRunner runner.Runner, opts ...Option) runner.Runner {
 	r := &restarter{
 		wrappedRunner: wrapRunner,
 		opts:          DefaultOptions(),
-		stop:          make(chan struct{}),
-		stopped:       make(chan struct{}),
 	}
 
 	for _, opt := range opts {
@@ -103,38 +98,26 @@ func (r *restarter) Open() error {
 // Run implements the Runner interface
 //
 //nolint:gocyclo
-func (r *restarter) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
-	defer close(r.stopped)
+func (r *restarter) Run(ctx context.Context, eventSink events.Recorder, onStart runner.OnStart) (runner.Status, error) {
+	var status runner.Status
 
 	for {
-		errCh := make(chan error)
-
-		go func() {
-			errCh <- r.wrappedRunner.Run(eventSink, pidRecorder)
-		}()
-
 		var err error
 
-		select {
-		case <-r.stop:
-			//nolint:errcheck
-			_ = r.wrappedRunner.Stop()
+		// The wrapped runner returns of its own accord once ctx is done, so the stop is a plain
+		// cancellation rather than a separate signal to deliver.
+		status, err = r.wrappedRunner.Run(ctx, eventSink, onStart)
 
-			return <-errCh
-		case err = <-errCh:
-		}
-
-		errStop := r.wrappedRunner.Stop()
-		if errStop != nil {
-			return errStop
+		if ctx.Err() != nil {
+			return status, err
 		}
 
 		switch r.opts.Type {
 		case Once:
-			return err
+			return status, err
 		case UntilSuccess:
 			if err == nil {
-				return nil
+				return status, nil
 			}
 
 			eventSink(events.StateWaiting, "Error running %s, going to restart until it succeeds: %v", r.wrappedRunner, err)
@@ -147,22 +130,13 @@ func (r *restarter) Run(eventSink events.Recorder, pidRecorder pid.Recorder) err
 		}
 
 		select {
-		case <-r.stop:
+		case <-ctx.Done():
 			eventSink(events.StateStopping, "Aborting restart sequence")
 
-			return nil
+			return status, nil
 		case <-time.After(r.opts.RestartInterval):
 		}
 	}
-}
-
-// Stop implements the Runner interface.
-func (r *restarter) Stop() error {
-	close(r.stop)
-
-	<-r.stopped
-
-	return nil
 }
 
 // Close implements the Runner interface.

@@ -41,7 +41,7 @@ func TestNew(t *testing.T) {
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterSecret: "topsecret",
+			ClusterSecret: "topsecret", //nolint:staticcheck // legacy config
 		},
 	}
 
@@ -141,6 +141,20 @@ func TestNewConflict(t *testing.T) {
 
 	_, err = container.New(ev2, ev1, uv1, uv2)
 	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and UserVolumeConfig/my-user-volume-1")
+
+	// External volumes share the name namespace too: all three kinds mount at /var/mnt/<name>, and a
+	// name has to identify one volume for anything referring to a volume by name to resolve.
+	xv1 := block.NewExternalVolumeConfigV1Alpha1()
+	xv1.MetaName = "my-user-volume-1"
+
+	_, err = container.New(uv1, xv1)
+	assert.EqualError(t, err, "conflicting documents: UserVolumeConfig/my-user-volume-1 and ExternalVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(ev1, xv1)
+	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and ExternalVolumeConfig/my-user-volume-1")
+
+	_, err = container.New(xv1, uv2)
+	require.NoError(t, err)
 }
 
 func TestCRICustomizationConfigs(t *testing.T) {
@@ -239,7 +253,7 @@ func TestUdevRulesConfig(t *testing.T) {
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineUdev: &v1alpha1.UdevConfig{ //nolint:staticcheck // legacy config
-				UdevRules: []string{"legacy-rule"},
+				UdevRules: []string{"legacy-rule"}, //nolint:staticcheck // legacy config
 			},
 		},
 	}
@@ -296,10 +310,10 @@ func TestDiscoveryServiceConfigs(t *testing.T) {
 	legacyEnabled := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
-				DiscoveryEnabled: new(true),
+				DiscoveryEnabled: new(true), //nolint:staticcheck // legacy config
 				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{ //nolint:staticcheck // legacy config
 					RegistryService: v1alpha1.RegistryServiceConfig{ //nolint:staticcheck // legacy config
-						RegistryEndpoint: "https://legacy.discovery.test/",
+						RegistryEndpoint: "https://legacy.discovery.test/", //nolint:staticcheck // legacy config
 					},
 				},
 			},
@@ -310,7 +324,7 @@ func TestDiscoveryServiceConfigs(t *testing.T) {
 	legacyDisabled := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
-				DiscoveryEnabled: new(false),
+				DiscoveryEnabled: new(false), //nolint:staticcheck // legacy config
 			},
 		},
 	}

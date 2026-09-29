@@ -111,6 +111,7 @@ type Qemu struct {
 	UefiEnabled               bool
 	Tpm1_2Enabled             bool
 	Tpm2Enabled               bool
+	IPMIEnabled               bool
 	ExtraUEFISearchPaths      []string
 	NetworkNoMasqueradeCIDRs  []string
 	Nameservers               []string
@@ -141,8 +142,10 @@ type Qemu struct {
 	Bandwidth                 int
 	DiskEncryptionKeyTypes    []string
 	WithFirewall              string
+	WithLLDP                  bool
 	WithBGP                   bool
 	WithBGPCLOS               bool
+	WithNFS                   bool
 	WithSiderolinkAgent       flags.Agent
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string
@@ -160,6 +163,12 @@ type Qemu struct {
 	// "example.com" or "registry.example.com:5000"), and the value is the HTTPAuth
 	// containing the username and password for that endpoint.
 	DownloadHTTPAuth map[string]HTTPAuth
+
+	// ExtraDHCPRecordsCount is a numer of extra DHCP records to be added to the DHCP server
+	// database.
+	//
+	// They can be used to ensure predictable IPs for extra MACs exposed on the QEMU virtual network.
+	ExtraDHCPRecordsCount int
 }
 
 // HTTPAuth represents basic authentication credentials for downloading boot assets.

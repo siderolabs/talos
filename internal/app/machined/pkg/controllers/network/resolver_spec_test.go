@@ -44,8 +44,6 @@ func TestResolverSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ResolverSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

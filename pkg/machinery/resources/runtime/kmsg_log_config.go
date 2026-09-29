@@ -28,7 +28,18 @@ const KmsgLogConfigID resource.ID = "kmsg-log"
 //
 //gotagsrewrite:gen
 type KmsgLogConfigSpec struct {
+	// Destinations is retained for compatibility with clients which do not support tagged destinations.
 	Destinations []*url.URL `yaml:"destinations" protobuf:"1"`
+	// TaggedDestinations associates each endpoint with its dedicated extra tags.
+	TaggedDestinations []KmsgLogDestination `yaml:"taggedDestinations" protobuf:"2"`
+}
+
+// KmsgLogDestination configures a destination for kernel message logs.
+//
+//gotagsrewrite:gen
+type KmsgLogDestination struct {
+	Endpoint  *url.URL          `yaml:"endpoint" protobuf:"1"`
+	ExtraTags map[string]string `yaml:"extraTags,omitempty" protobuf:"2"`
 }
 
 // NewKmsgLogConfig initializes a KmsgLogConfig resource.

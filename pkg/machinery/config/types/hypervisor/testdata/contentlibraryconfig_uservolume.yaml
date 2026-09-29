@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: ContentLibraryConfig
+name: my-vm-images-1
+backing:
+    volume: vm-images

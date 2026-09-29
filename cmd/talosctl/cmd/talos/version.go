@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -38,7 +39,7 @@ var versionCmd = &cobra.Command{
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !versionCmdFlags.json {
-			fmt.Println("Client:")
+			safeout.Println("Client:")
 
 			if versionCmdFlags.shortVersion {
 				version.PrintShortVersion()
@@ -51,7 +52,7 @@ var versionCmd = &cobra.Command{
 				return nil
 			}
 
-			fmt.Println("Server:")
+			safeout.Println("Server:")
 		}
 
 		ctx := cmd.Context()
@@ -89,16 +90,26 @@ var versionCmd = &cobra.Command{
 func printVersionResponse(node string, resp *machine.VersionResponse) error {
 	for _, msg := range resp.Messages {
 		if !versionCmdFlags.json {
-			fmt.Printf("\t%s:        %s\n", "NODE", node)
+			safeout.Printf("\t%s:        %s\n", "NODE", node)
 
-			version.PrintLongVersionFromExisting(msg.Version)
+			// the fields are the node's own strings rendered into talosctl's layout,
+			// so each one is escaped as a cell: a newline in any of them would
+			// otherwise fake a line of the version block.
+			version.WriteLongVersionFromExisting(safeout.Stdout(), &machine.VersionInfo{
+				Tag:       safeout.Cell(msg.Version.GetTag()),
+				Sha:       safeout.Cell(msg.Version.GetSha()),
+				Built:     safeout.Cell(msg.Version.GetBuilt()),
+				GoVersion: safeout.Cell(msg.Version.GetGoVersion()),
+				Os:        safeout.Cell(msg.Version.GetOs()),
+				Arch:      safeout.Cell(msg.Version.GetArch()),
+			})
 
 			var enabledFeatures []string
 			if msg.Features.GetRbac() {
 				enabledFeatures = append(enabledFeatures, "RBAC")
 			}
 
-			fmt.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
+			safeout.Printf("\tEnabled:     %s\n", strings.Join(enabledFeatures, ", "))
 
 			continue
 		}
@@ -108,7 +119,7 @@ func printVersionResponse(node string, resp *machine.VersionResponse) error {
 			return err
 		}
 
-		fmt.Printf("%s\n", b)
+		safeout.Printf("%s\n", b)
 	}
 
 	return nil

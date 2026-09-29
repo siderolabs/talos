@@ -96,6 +96,11 @@ type ImageVerificationRuleV1Alpha1 struct {
 	//   description: |
 	//     Image reference pattern to match for this rule.
 	//     Supports glob patterns, matches only on the image registry and repository, not on the tag or digest.
+	//
+	//     The pattern is matched against the normalized image reference, which always starts with a registry
+	//     domain: `docker.io/library/nginx*` matches `nginx:latest`, while `library/nginx*` matches nothing.
+	//     The Docker Hub domain is always normalized to `docker.io`, so a pattern written against
+	//     `index.docker.io` or `registry-1.docker.io` matches the same images a `docker.io` one does.
 	//   examples:
 	//     - value: >
 	//         "docker.io/library/nginx"
@@ -175,7 +180,7 @@ func exampleImageVerificationConfigV1Alpha1() *ImageVerificationConfigV1Alpha1 {
 			},
 		},
 		{
-			RuleImagePattern: "my-registry/*",
+			RuleImagePattern: "my-registry.example.com/*",
 			RulePublicKeyVerifier: &ImagePublicKeyVerifierV1Alpha1{
 				ConfigCertificate: `-----BEGIN CERTIFICATE-----
 MII--Sample Value--
@@ -183,7 +188,7 @@ MII--Sample Value--
 			},
 		},
 		{
-			RuleImagePattern: "locahost:3000/*",
+			RuleImagePattern: "localhost:3000/*",
 			RuleDeny:         new(true),
 		},
 	}
@@ -223,8 +228,10 @@ func (s *ImageVerificationConfigV1Alpha1) Validate(validation.RuntimeMode, ...va
 			}
 		}
 
-		if !strings.ContainsRune(rule.RuleImagePattern, '/') && rule.RuleImagePattern != "*" && rule.RuleImagePattern != "" {
-			warnings = append(warnings, fmt.Sprintf("rule %d: imagePattern does not contain a '/', image references like 'nginx' are matched as 'docker.io/nginx' (normalized)", i))
+		if pattern := rule.RuleImagePattern; pattern != "" && patternMatchesNoImage(pattern) {
+			warnings = append(warnings,
+				fmt.Sprintf("rule %d: imagePattern %q cannot match any image: references are matched in their normalized "+
+					"'<registry domain>/<repository>' form, e.g. 'nginx' is matched as 'docker.io/library/nginx'", i, pattern))
 		}
 
 		skip := pointer.SafeDeref(rule.RuleSkip)
@@ -268,6 +275,28 @@ func (s *ImageVerificationConfigV1Alpha1) Validate(validation.RuntimeMode, ...va
 	}
 
 	return warnings, errs
+}
+
+// patternMatchesNoImage reports whether the pattern cannot match any image reference at all.
+//
+// Image references are matched in their normalized `<registry domain>/<repository>` form, and the
+// glob matcher anchors the pattern's leading literal at the start of the reference. So a pattern
+// whose leading literal reaches past the domain separator without being a registry domain can
+// never match — `library/nginx*` does not match `docker.io/library/nginx` — and neither can a
+// pattern which has no glob and no `/`, as every normalized reference has one.
+func patternMatchesNoImage(pattern string) bool {
+	// the literal which the glob matcher anchors at the start of the reference
+	prefix, _, hasGlob := strings.Cut(pattern, "*")
+
+	domain, _, hasSeparator := strings.Cut(prefix, "/")
+	if !hasSeparator {
+		// the literal stops short of the domain separator, so it can still be extended into a
+		// registry domain by a glob
+		return !hasGlob
+	}
+
+	// the domain of a pattern is matched case-insensitively, just like the domain of a reference
+	return !strings.ContainsAny(domain, ".:") && !strings.EqualFold(domain, "localhost")
 }
 
 // Rules implements config.ImageVerificationConfig interface.

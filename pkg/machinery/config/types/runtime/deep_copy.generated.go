@@ -39,6 +39,12 @@ func (o *KmsgLogV1Alpha1) DeepCopy() *KmsgLogV1Alpha1 {
 			*cp.KmsgLogURL.URL.User = *o.KmsgLogURL.URL.User
 		}
 	}
+	if o.ExtraTags != nil {
+		cp.ExtraTags = make(map[string]string, len(o.ExtraTags))
+		for k2, v2 := range o.ExtraTags {
+			cp.ExtraTags[k2] = v2
+		}
+	}
 	return &cp
 }
 
@@ -118,6 +124,10 @@ func (o *SecurityProfileConfigV1Alpha1) DeepCopy() *SecurityProfileConfigV1Alpha
 	if o.WorkloadIsolationEnabled != nil {
 		cp.WorkloadIsolationEnabled = new(bool)
 		*cp.WorkloadIsolationEnabled = *o.WorkloadIsolationEnabled
+	}
+	if o.IgnoreCtrlAltDeleteEnabled != nil {
+		cp.IgnoreCtrlAltDeleteEnabled = new(bool)
+		*cp.IgnoreCtrlAltDeleteEnabled = *o.IgnoreCtrlAltDeleteEnabled
 	}
 	return &cp
 }

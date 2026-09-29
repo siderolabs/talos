@@ -296,7 +296,7 @@ func (h *Client) Drain(ctx context.Context, node string) error {
 func (h *Client) evict(ctx context.Context, p corev1.Pod, gracePeriod int64) error {
 	for {
 		pol := &policy.Eviction{
-			ObjectMeta:    metav1.ObjectMeta{Namespace: p.GetNamespace(), Name: p.GetName()},
+			Namespace: p.GetNamespace(), Name: p.GetName(),
 			DeleteOptions: &metav1.DeleteOptions{GracePeriodSeconds: &gracePeriod},
 		}
 		err := h.CoreV1().Pods(p.GetNamespace()).Evict(ctx, pol)

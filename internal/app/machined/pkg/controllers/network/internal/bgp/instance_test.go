@@ -20,8 +20,8 @@ import (
 func TestOriginatedPathWithdrawalPropagates(t *testing.T) {
 	ctx := t.Context()
 	fabricPort := freeBGPImportTestPort(t)
-	originServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.1", -1)
-	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.2", fabricPort)
+	originServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.1", -1, false)
+	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.2", fabricPort, false)
 	connectBGPImportTestFabric(t, ctx, originServer, fabricServer, fabricPort)
 
 	instance := internalbgp.NewInstance()
@@ -89,6 +89,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		zap.NewNop(),
 		config,
 		netip.MustParseAddr("10.0.0.1"),
+		0,
 		[]internalbgp.Peer{peer},
 		peerIfaces,
 		-1,
@@ -106,6 +107,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		zap.NewNop(),
 		config,
 		netip.MustParseAddr("10.0.0.1"),
+		0,
 		[]internalbgp.Peer{peer},
 		peerIfaces,
 		-1,
@@ -119,6 +121,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		zap.NewNop(),
 		config,
 		netip.MustParseAddr("10.0.0.1"),
+		0,
 		[]internalbgp.Peer{peer},
 		peerIfaces,
 		-1,
@@ -132,6 +135,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		zap.NewNop(),
 		config,
 		netip.MustParseAddr("10.0.0.1"),
+		0,
 		nil,
 		peerIfaces,
 		-1,
@@ -168,6 +172,7 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 		zap.NewNop(),
 		config,
 		netip.MustParseAddr("10.0.0.9"),
+		0,
 		nil,
 		peerIfaces,
 		-1,

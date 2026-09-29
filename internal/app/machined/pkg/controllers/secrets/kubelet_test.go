@@ -25,10 +25,8 @@ func TestKubeletSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KubeletSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewKubeletController()))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(secretsctrl.NewKubeletController()))
 		},
 	})
 }
@@ -52,12 +50,12 @@ func (suite *KubeletSuite) TestReconcile() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
 					},
-					ClusterCA:      k8sCA,
+					ClusterCA:      k8sCA, //nolint:staticcheck // testing deprecated field
 					BootstrapToken: "abc.def",
 				},
 			},
@@ -90,12 +88,12 @@ func (suite *KubeletSuite) TestReconcileKubePrism() {
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: u,
 				},
 			},
-			ClusterCA:      k8sCA,
+			ClusterCA:      k8sCA, //nolint:staticcheck // testing deprecated field
 			BootstrapToken: "abc.def",
 		},
 	}

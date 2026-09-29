@@ -61,8 +61,15 @@ func (c *ClusterConfig) Scheduler() *SchedulerConfig {
 	return c.SchedulerConfig
 }
 
-// Endpoint implements the config.ClusterConfig interface.
+// Endpoint returns the Kubernetes API endpoint as set in the v1alpha1 config.
+//
+// It returns nil if the endpoint is not set in the v1alpha1 config: e.g. when the cluster
+// endpoint was migrated to the KubeClusterConfig document.
 func (c *ClusterConfig) Endpoint() *url.URL {
+	if c.ControlPlane == nil || c.ControlPlane.Endpoint == nil {
+		return nil
+	}
+
 	return c.ControlPlane.Endpoint.URL
 }
 

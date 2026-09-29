@@ -46,11 +46,9 @@ func TestTimeServerSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &TimeServerSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.TimeServerSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.TimeServerSpecController{}))
 		},
 	})
 }

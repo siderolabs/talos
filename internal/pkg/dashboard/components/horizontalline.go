@@ -34,7 +34,7 @@ func NewHorizontalLine(label string) *HorizontalLine {
 				if j == y && i >= leftGap && i-leftGap < labelLength {
 					screen.SetContent(i, j, widget.label[i-leftGap], nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
 				} else {
-					screen.SetContent(i, j, tview.BoxDrawingsLightHorizontal, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+					screen.SetContent(i, j, tview.BoxDrawingsLightHorizontal, nil, tcell.StyleDefault)
 				}
 			}
 		}
@@ -43,4 +43,9 @@ func NewHorizontalLine(label string) *HorizontalLine {
 	})
 
 	return widget
+}
+
+// SetLabel replaces the label drawn on the line.
+func (widget *HorizontalLine) SetLabel(label string) {
+	widget.label = []rune(" " + label + " ")
 }

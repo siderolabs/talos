@@ -77,13 +77,11 @@ func TestPlatformConfigLoadSuite(t *testing.T) {
 	}
 
 	suite.Run(t, &PlatformConfigLoadSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(
-					suite.Runtime().RegisterController(&netctrl.PlatformConfigLoadController{}),
-				)
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(
+				suite.Runtime().RegisterController(&netctrl.PlatformConfigLoadController{}),
+			)
 		},
 	})
 }

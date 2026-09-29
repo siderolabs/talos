@@ -152,7 +152,7 @@ type ProvisioningSpec struct {
 	//        "2.5GiB"
 	//  schema:
 	//    type: string
-	ProvisioningMinSize ByteSize `yaml:"minSize,omitempty"`
+	ProvisioningMinSize meta.ByteSize `yaml:"minSize,omitempty"`
 	//  description: |
 	//    The maximum size of the volume, if not specified the volume can grow to the size of the
 	//    disk.
@@ -165,7 +165,7 @@ type ProvisioningSpec struct {
 	//        "80%"
 	//  schema:
 	//    type: string
-	ProvisioningMaxSize Size `yaml:"maxSize,omitempty"`
+	ProvisioningMaxSize meta.Size `yaml:"maxSize,omitempty"`
 }
 
 // MaxSizeNegative returns true if the maximum size is negative.

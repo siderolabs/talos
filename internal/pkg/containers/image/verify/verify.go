@@ -14,7 +14,7 @@ import (
 	"github.com/containerd/containerd/v2/core/remotes"
 	"github.com/containerd/errdefs"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/distribution/reference"
 	"github.com/sigstore/cosign/v3/pkg/cosign"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -23,6 +23,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/internal/pkg/containers/image/imageref"
 	ourcosign "github.com/siderolabs/talos/internal/pkg/containers/image/verify/internal/cosign"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/security"
@@ -34,6 +35,10 @@ type TagFetcher = ourcosign.TagFetcher
 
 // ImageSignature verifies image signature within Talos source code.
 //
+// The image reference is normalized with [imageref] before anything else: the verification rules
+// are matched against the canonical reference, and the digested reference returned on success is
+// in the same namespace, so that the image which was verified is the image which gets pulled.
+//
 // tagFetcher (optional) is invoked when the resolver's digest-based manifest
 // fetch returns NotFound — see [TagFetcher].
 //
@@ -43,21 +48,29 @@ func ImageSignature(
 ) (*machine.ImageServiceVerifyResponse, error) {
 	logger = logger.With(zap.String("image_ref", imageRef))
 
-	inRef, err := name.ParseReference(imageRef)
+	namedRef, err := imageref.Parse(imageRef)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "image reference is invalid: %s", err)
 	}
 
-	ruleMatcher, err := security.ImageVerificationRuleMatcher(ctx, resources)
+	normalizedRef := namedRef.String()
+
+	logger = logger.With(zap.String("normalized_image_ref", normalizedRef))
+
+	ruleMatcher, err := NewRuleMatcher(ctx, resources)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to create image verification rule matcher: %s", err)
 	}
 
-	logger.Debug("finding matching image verification rule for image reference", zap.Stringer("image_ref_context", inRef.Context()))
+	logger.Debug("finding matching image verification rule for image reference")
 
-	matchedRule := ruleMatcher(inRef.Context().String())
+	matchedRule, err := ruleMatcher(normalizedRef)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to match image verification rules: %s", err)
+	}
+
 	if matchedRule == nil {
-		logger.Info("no matched image verification rule, allowing by default", zap.Stringer("image_ref_context", inRef.Context()))
+		logger.Info("no matched image verification rule, allowing by default")
 
 		return &machine.ImageServiceVerifyResponse{
 			Verified: false,
@@ -81,13 +94,9 @@ func ImageSignature(
 	}
 
 	// resolve the image reference to a digest reference if needed
-	var (
-		digestRef name.Digest
-		ok        bool
-	)
-
-	if digestRef, ok = inRef.(name.Digest); !ok {
-		_, desc, err := resolver.Resolve(ctx, inRef.String())
+	digestRef, ok := namedRef.(reference.Canonical)
+	if !ok {
+		_, desc, err := resolver.Resolve(ctx, normalizedRef)
 		if err != nil {
 			if errdefs.IsNotFound(err) {
 				logger.Info("image reference not found during resolution", zap.Error(err))
@@ -98,7 +107,7 @@ func ImageSignature(
 			return nil, status.Errorf(codes.Internal, "failed to resolve image reference: %s", err)
 		}
 
-		digestRef, err = name.NewDigest(inRef.Context().Name() + "@" + desc.Digest.String())
+		digestRef, err = reference.WithDigest(reference.TrimNamed(namedRef), desc.Digest)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "failed to construct digest reference: %s", err)
 		}

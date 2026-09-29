@@ -15,15 +15,20 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xtesting/must"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -41,7 +46,7 @@ func TestValidateAsClient(t *testing.T) {
 
 	v1alpha1Cfg := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},
@@ -119,7 +124,7 @@ func TestCrossValidateEncryption(t *testing.T) {
 
 	v1alpha1Cfg := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},
@@ -130,7 +135,7 @@ func TestCrossValidateEncryption(t *testing.T) {
 			MachineCA: &x509.PEMEncodedCertificateAndKey{
 				Crt: []byte("cert"),
 			},
-			MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{
+			MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{ //nolint:staticcheck // testing legacy features
 				EphemeralPartition: &v1alpha1.EncryptionConfig{
 					EncryptionKeys: []*v1alpha1.EncryptionKey{
 						{
@@ -230,7 +235,7 @@ func TestValidateContainer(t *testing.T) {
 
 	v1alpha1Cfg := &v1alpha1.Config{
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must.Value(url.Parse("https://localhost:6443"))(t),
 				},
@@ -299,12 +304,45 @@ func TestValidateContainer(t *testing.T) {
 
 	apiServerCAConfig := k8s.NewKubeAPIServerCAConfigV1Alpha1()
 
+	// the cluster endpoint was migrated out of the v1alpha1 config
+	v1alpha1CfgControlplaneNoEndpoint := v1alpha1CfgControlplane.DeepCopy()
+	v1alpha1CfgControlplaneNoEndpoint.ClusterConfig.ControlPlane = nil //nolint:staticcheck // testing legacy features
+
+	kubeClusterConfig := k8s.NewKubeClusterConfigV1Alpha1()
+	kubeClusterConfig.ClusterNameConfig = "test-cluster"
+	kubeClusterConfig.ClusterEndpointConfig = meta.URL{URL: must.Value(url.Parse("https://localhost:6443"))(t)}
+
+	// .machine.nodeLabels migrated to the KubeNodeConfig document as-is, without the control plane role label
+	kubeNodeConfig := k8s.NewKubeNodeConfigV1Alpha1()
+	kubeNodeConfig.LabelsConfig = map[string]string{
+		"rack": "r13a25",
+	}
+
+	kubeNodeConfigControlplane := k8s.NewKubeNodeConfigV1Alpha1()
+	kubeNodeConfigControlplane.LabelsConfig = map[string]string{
+		constants.LabelNodeRoleControlPlane: "",
+	}
+	kubeNodeConfigControlplane.TaintsConfig = map[string]string{
+		constants.LabelNodeRoleControlPlane: constants.TaintEffectNoSchedule,
+	}
+
+	kubeNodeConfigStandalone := k8s.NewKubeNodeConfigV1Alpha1()
+	kubeNodeConfigStandalone.SkipNodeRegistrationConfig = new(true)
+
+	encryptedDNSWarning := "all configured nameservers use encrypted DNS (DoT or DoH): validating certificates requires a correct system clock, " +
+		"so boot may stall when NTP servers are configured by hostname; consider keeping at least one plain-DNS fallback or configuring NTP servers by IP address"
+
+	controlPlaneLabelWarning := "KubeNodeConfig document should set the \"node-role.kubernetes.io/control-plane\" node label on control plane machines " +
+		"(and, unless scheduling on control planes is allowed, the \"node-role.kubernetes.io/control-plane: NoSchedule\" taint): " +
+		"unlike .machine.nodeLabels/.machine.nodeTaints, the document contents are used as-is"
+
 	for _, tt := range []struct {
 		name        string
 		documents   []config.Document
 		inContainer bool
 
-		expectedError string
+		expectedWarnings []string
+		expectedError    string
 	}{
 		{
 			name: "empty !container",
@@ -350,13 +388,15 @@ func TestValidateContainer(t *testing.T) {
 			inContainer: true,
 		},
 		{
-			name:          "DoT without hostDNS",
-			documents:     []config.Document{resolverConfigDoT},
-			expectedError: "1 error occurred:\n\t* hostDNS must be enabled when using non-default DNS protocols\n\n",
+			name:             "DoT without hostDNS",
+			documents:        []config.Document{resolverConfigDoT},
+			expectedWarnings: []string{encryptedDNSWarning},
+			expectedError:    "1 error occurred:\n\t* hostDNS must be enabled when using non-default DNS protocols\n\n",
 		},
 		{
-			name:      "DoT with hostDNS",
-			documents: []config.Document{resolverConfigDoT, v1alpha1CfgHostDNS},
+			name:             "DoT with hostDNS",
+			documents:        []config.Document{resolverConfigDoT, v1alpha1CfgHostDNS},
+			expectedWarnings: []string{encryptedDNSWarning},
 		},
 		{
 			name:      "controlplane doc only",
@@ -393,6 +433,40 @@ func TestValidateContainer(t *testing.T) {
 
 			expectedError: "1 error occurred:\n\t* etcd encryption config is required for control plane machines running kube-apiserver\n\n",
 		},
+		{
+			// the cluster endpoint was removed from the v1alpha1 config, but the KubeClusterConfig
+			// document was not added: Kubernetes is configured, but there is no way to reach it
+			name:      "api-server CA without cluster endpoint",
+			documents: []config.Document{v1alpha1CfgControlplaneNoEndpoint, apiServerCAConfig, kubeEtcdEncryptionConfig},
+
+			expectedError: "1 error occurred:\n\t* cluster name and endpoint are required when Kubernetes is configured: " +
+				"either .cluster.clusterName/.cluster.controlPlane.endpoint or the KubeClusterConfig document\n\n",
+		},
+		{
+			name:      "api-server CA with migrated cluster endpoint",
+			documents: []config.Document{v1alpha1CfgControlplaneNoEndpoint, apiServerCAConfig, kubeEtcdEncryptionConfig, kubeClusterConfig},
+		},
+		{
+			// the control plane role label is not synthesized for the KubeNodeConfig document
+			name:      "node config without control plane role label",
+			documents: []config.Document{v1alpha1CfgControlplane, kubeNodeConfig},
+
+			expectedWarnings: []string{controlPlaneLabelWarning},
+		},
+		{
+			name:      "node config with control plane role label",
+			documents: []config.Document{v1alpha1CfgControlplane, kubeNodeConfigControlplane},
+		},
+		{
+			// the node is not registered in Kubernetes, so the labels and taints are not used
+			name:      "node config with skipped node registration",
+			documents: []config.Document{v1alpha1CfgControlplane, kubeNodeConfigStandalone},
+		},
+		{
+			// worker machines never get the control plane role label
+			name:      "node config without control plane role label on a worker",
+			documents: []config.Document{v1alpha1Cfg, kubeNodeConfig},
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -400,7 +474,9 @@ func TestValidateContainer(t *testing.T) {
 			ctr, err := container.New(tt.documents...)
 			require.NoError(t, err)
 
-			_, err = ctr.ValidateAsClient(validationMode{inContainer: tt.inContainer})
+			warnings, err := ctr.ValidateAsClient(validationMode{inContainer: tt.inContainer})
+
+			assert.Equal(t, tt.expectedWarnings, warnings)
 
 			if tt.expectedError == "" {
 				require.NoError(t, err)
@@ -534,4 +610,49 @@ func (validationMode) RequiresInstall() bool {
 
 func (v validationMode) InContainer() bool {
 	return v.inContainer
+}
+
+// TestCPUScalingSysfsConflict covers the case where CPU frequency scaling is configured twice over:
+// CPUScalingSpecController and KernelParamSpecController would each revert the other forever.
+func TestCPUScalingSysfsConflict(t *testing.T) {
+	t.Parallel()
+
+	scalingCfg := hardware.NewCPUScalingConfigV1Alpha1("all")
+	scalingCfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression(`true`, celenv.CPUScalingLocator()))
+	scalingCfg.ScalingGovernor = "performance"
+
+	for _, test := range []struct {
+		name      string
+		sysfsKeys map[string]string
+
+		expectedError string
+	}{
+		{
+			name:          "cpufreq key conflicts",
+			sysfsKeys:     map[string]string{"devices.system.cpu.cpu0.cpufreq.scaling_governor": "powersave"},
+			expectedError: `conflicts with CPUScalingConfig`,
+		},
+		{
+			name:      "unrelated sysfs key is fine",
+			sysfsKeys: map[string]string{"kernel.kexec_load_disabled": "1"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			sysfsCfg := runtime.NewSysfsConfigV1Alpha1()
+			sysfsCfg.Params = test.sysfsKeys
+
+			cfg, err := container.New(scalingCfg, sysfsCfg)
+			require.NoError(t, err)
+
+			_, err = cfg.ValidateAsClient(validationMode{})
+
+			if test.expectedError == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.ErrorContains(t, err, test.expectedError)
+			}
+		})
+	}
 }

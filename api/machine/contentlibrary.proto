@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package machine;
+
+import "common/common.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// The ContentLibraryService manages the contents of content libraries.
+//
+// Content libraries store virtual machine images; they are declared with the
+// ContentLibraryConfig document and backed by a volume.
+service ContentLibraryService {
+  // List files stored in a content library.
+  rpc List(ContentLibraryServiceListRequest) returns (stream ContentLibraryServiceListResponse);
+  // Upload a file to a content library.
+  rpc Upload(stream ContentLibraryServiceUploadRequest) returns (ContentLibraryServiceUploadResponse);
+  // Delete a file from a content library.
+  rpc Delete(ContentLibraryServiceDeleteRequest) returns (ContentLibraryServiceDeleteResponse);
+}
+
+message ContentLibraryServiceListRequest {
+  // ID of the content library to list.
+  string library_id = 1;
+}
+
+message ContentLibraryServiceListResponse {
+  // Name of the file within the library.
+  string name = 1;
+  // Size of the file in bytes.
+  uint64 size = 2;
+  // Time the file was last modified.
+  google.protobuf.Timestamp modified_at = 3;
+}
+
+// ContentLibraryServiceUploadInfo is the metadata of an upload.
+//
+// It is sent as the first message of the Upload stream.
+message ContentLibraryServiceUploadInfo {
+  // ID of the content library to upload to.
+  string library_id = 1;
+  // Name of the file within the library.
+  string name = 2;
+  // Overwrite an existing file with the same name.
+  bool overwrite = 3;
+  // Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".
+  //
+  // Optional: when it is set, the upload is rejected unless the contents hash to it.
+  // The algorithms supported are sha256 and sha512.
+  string digest = 4;
+}
+
+message ContentLibraryServiceUploadRequest {
+  oneof request {
+    // Metadata of the upload, sent as the first message.
+    ContentLibraryServiceUploadInfo info = 1;
+    // Chunk of the file contents.
+    common.Data chunk = 2;
+  }
+}
+
+// ContentLibraryServiceUploadDigests are the digests of what an upload carried.
+//
+// They are computed over everything the node received, under every algorithm the API can verify,
+// whether or not the contents were stored: they are carried by the response of an upload which
+// succeeded, and by the details of the error of one which completed and was then refused.
+message ContentLibraryServiceUploadDigests {
+  // Digest of the contents, as "sha256:<hex>".
+  string sha256 = 1;
+  // Digest of the contents, as "sha512:<hex>".
+  string sha512 = 2;
+}
+
+message ContentLibraryServiceUploadResponse {
+  // Name of the uploaded file.
+  string name = 1;
+  // Size of the uploaded file in bytes.
+  uint64 size = 2;
+  // Digests of the contents stored.
+  ContentLibraryServiceUploadDigests digests = 3;
+}
+
+message ContentLibraryServiceDeleteRequest {
+  // ID of the content library to delete from.
+  string library_id = 1;
+  // Name of the file within the library.
+  string name = 2;
+}
+
+message ContentLibraryServiceDeleteResponse {}

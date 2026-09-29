@@ -271,6 +271,81 @@ func controlplaneConfigResourceType(service string) resource.Type {
 	panic(fmt.Sprintf("unknown service ID %q", service))
 }
 
+var errConfigNotFound = errors.New("service configuration not found")
+
+// watchControlPlaneConfigResource starts a watch on a single control plane component configuration resource,
+// returning the watch channel along with the initial state of the resource.
+//
+// If the resource doesn't exist, errConfigNotFound is returned.
+func watchControlPlaneConfigResource(ctx context.Context, c *client.Client, md resource.Metadata) (<-chan state.Event, resource.Resource, context.CancelFunc, error) {
+	watchCtx, watchCancel := context.WithCancel(ctx)
+
+	watchCh := make(chan state.Event)
+
+	if err := c.COSI.Watch(watchCtx, md, watchCh); err != nil {
+		watchCancel()
+
+		return nil, nil, nil, fmt.Errorf("error watching service configuration %q: %w", md.ID(), err)
+	}
+
+	var ev state.Event
+
+	select {
+	case ev = <-watchCh:
+	case <-ctx.Done():
+		watchCancel()
+
+		return nil, nil, nil, ctx.Err()
+	}
+
+	var err error
+
+	switch ev.Type {
+	case state.Created:
+		return watchCh, ev.Resource, watchCancel, nil
+	case state.Destroyed:
+		err = errConfigNotFound
+	case state.Errored:
+		err = fmt.Errorf("error watching service configuration %q: %w", md.ID(), ev.Error)
+	case state.Updated, state.Bootstrapped, state.Noop:
+		err = fmt.Errorf("unexpected event type: %d", ev.Type)
+	}
+
+	watchCancel()
+
+	return nil, nil, nil, err
+}
+
+// watchControlPlaneConfig starts a watch on the control plane component configuration resource which the node
+// renders the static pod from.
+//
+// Talos 1.14+ renders the static pod from the "final-" prefixed configuration resource, and stamps the version of
+// that resource into the pod annotation, while older versions of Talos use the non-prefixed resource for both.
+// The two resources have independent version counters which are free to diverge, so the version compared against
+// the pod annotation has to come from the resource the node actually rendered the pod from.
+//
+// Watch the "final-" resource first, falling back to the non-prefixed one if it doesn't exist. The probe is done
+// per node, so a cluster running a mix of Talos versions is handled correctly.
+func watchControlPlaneConfig(ctx context.Context, c *client.Client, service string) (<-chan state.Event, resource.Resource, context.CancelFunc, error) {
+	resourceType := controlplaneConfigResourceType(service)
+
+	for _, id := range []resource.ID{k8s.FinalPrefix + service, service} {
+		watchCh, initialConfig, stopWatch, err := watchControlPlaneConfigResource(ctx, c,
+			resource.NewMetadata(k8s.ControlPlaneNamespaceName, resourceType, id, resource.VersionUndefined))
+
+		switch {
+		case err == nil:
+			return watchCh, initialConfig, stopWatch, nil
+		case errors.Is(err, errConfigNotFound):
+			// the resource doesn't exist, try the next ID
+		default:
+			return nil, nil, nil, err
+		}
+	}
+
+	return nil, nil, nil, fmt.Errorf("configuration for service %q not found", service)
+}
+
 //nolint:gocyclo
 func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node string) error {
 	ctx, cancel := context.WithCancel(ctx)
@@ -285,28 +360,14 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 
 	options.Log(" > %q: starting update", node)
 
-	watchCh := make(chan state.Event)
-
-	if err = c.COSI.Watch(ctx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, controlplaneConfigResourceType(service), service, resource.VersionUndefined), watchCh); err != nil {
-		return fmt.Errorf("error watching service configuration: %w", err)
+	watchCh, initialConfig, stopWatch, err := watchControlPlaneConfig(ctx, c, service)
+	if err != nil {
+		return err
 	}
 
-	var (
-		expectedConfigVersion string
-		initialConfig         resource.Resource
-	)
+	defer stopWatch()
 
-	select {
-	case ev := <-watchCh:
-		if ev.Type != state.Created {
-			return fmt.Errorf("unexpected event type: %d", ev.Type)
-		}
-
-		expectedConfigVersion = ev.Resource.Metadata().Version().String()
-		initialConfig = ev.Resource
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	expectedConfigVersion := initialConfig.Metadata().Version()
 
 	skipConfigWait := false
 
@@ -329,11 +390,14 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 	if !skipConfigWait {
 		select {
 		case ev := <-watchCh:
-			if ev.Type != state.Updated {
+			switch ev.Type {
+			case state.Updated:
+				expectedConfigVersion = ev.Resource.Metadata().Version()
+			case state.Errored:
+				return fmt.Errorf("error watching service configuration: %w", ev.Error)
+			case state.Created, state.Destroyed, state.Bootstrapped, state.Noop:
 				return fmt.Errorf("unexpected event type: %d", ev.Type)
 			}
-
-			expectedConfigVersion = ev.Resource.Metadata().Version().String()
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -563,7 +627,7 @@ func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured,
 }
 
 //nolint:gocyclo
-func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node, configVersion string) error {
+func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options UpgradeOptions, service, node string, configVersion resource.Version) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
@@ -616,7 +680,11 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options Upgrad
 				continue
 			}
 
-			if pod.Annotations[constants.AnnotationStaticPodConfigVersion] != configVersion {
+			podConfigVersion, err := resource.ParseVersion(pod.Annotations[constants.AnnotationStaticPodConfigVersion])
+			if err != nil || podConfigVersion.Value() < configVersion.Value() {
+				// the config version is a monotonically growing counter, so the pod is up-to-date as soon as it
+				// reaches the expected version: an unrelated config change might have bumped it even further
+				// while the pod was being updated.
 				options.Log(" > %q: %s: waiting, config version mismatch: got %q, expected %q", node, service, pod.Annotations[constants.AnnotationStaticPodConfigVersion], configVersion)
 
 				continue

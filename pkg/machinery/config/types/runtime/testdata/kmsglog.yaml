@@ -2,3 +2,6 @@ apiVersion: v1alpha1
 kind: KmsgLogConfig
 name: apiSink
 url: https://kmsglog.api/logs
+extraTags:
+    cluster: staging-west
+    node: worker-1

@@ -127,9 +127,10 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 		}
 
 		if err := reconcileErrs.ErrorOrNil(); err != nil {
-			// Log and retry on next event.
-			logger.Warn("LVM reconcile encountered errors", zap.Error(err))
+			return fmt.Errorf("LVM reconcile encountered errors: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

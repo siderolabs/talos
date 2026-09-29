@@ -57,7 +57,6 @@ func TestCmdlineParse(t *testing.T) {
 					NumPeerNotif:    1,
 					TLBDynamicLB:    1,
 					UseCarrier:      true,
-					PrimaryIndex:    new(uint32(0)),
 					MissedMax:       2,
 				},
 			},
@@ -406,7 +405,6 @@ func TestCmdlineParse(t *testing.T) {
 							NumPeerNotif:    1,
 							TLBDynamicLB:    1,
 							UseCarrier:      true,
-							PrimaryIndex:    new(uint32(0)),
 						},
 					},
 					{

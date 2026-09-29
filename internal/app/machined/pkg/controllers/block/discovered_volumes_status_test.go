@@ -5,12 +5,14 @@
 package block_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 
 	blockctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -26,11 +28,11 @@ func TestDiscoveredVolumesStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &DiscoveredVolumesStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
+				WaitForDevices: func(context.Context, *zap.Logger) error { return nil },
+			}))
 		},
 	})
 }
@@ -132,5 +134,60 @@ func (suite *DiscoveredVolumesStatusSuite) TestReadyDoesNotResetWhenDevicesBecom
 	// Confirm Ready remains true (intentional one-way latch behavior).
 	ctest.AssertResource(suite, block.DiscoveredVolumesStatusID, func(r *block.DiscoveredVolumesStatus, asrt *assert.Assertions) {
 		asrt.True(r.TypedSpec().Ready)
+	})
+}
+
+// DiscoveredVolumesStatusSettleSuite checks that the discovery refresh is not requested before the storage
+// devices settle: a USB- or SD-attached system disk shows up after udevd settles, and if the refresh
+// runs without it, the volume manager declares META/STATE missing and the node drops to maintenance.
+type DiscoveredVolumesStatusSettleSuite struct {
+	ctest.DefaultSuite
+
+	devicesSettled chan struct{}
+}
+
+func TestDiscoveredVolumesStatusSettleSuite(t *testing.T) {
+	t.Parallel()
+
+	s := &DiscoveredVolumesStatusSettleSuite{
+		devicesSettled: make(chan struct{}),
+	}
+
+	s.DefaultSuite = ctest.DefaultSuite{
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
+				WaitForDevices: func(ctx context.Context, _ *zap.Logger) error {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-s.devicesSettled:
+						return nil
+					}
+				},
+			}))
+		},
+	}
+
+	suite.Run(t, s)
+}
+
+func (suite *DiscoveredVolumesStatusSettleSuite) TestWaitsForDevices() {
+	devicesStatus := runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID)
+	devicesStatus.TypedSpec().Ready = true
+	suite.Create(devicesStatus)
+
+	// udevd settled, but the storage devices are still enumerating: no discovery refresh yet
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Assert().Never(func() bool {
+		_, err := safe.StateGetByID[*block.DiscoveryRefreshRequest](ctx, st, block.RefreshID)
+
+		return err == nil
+	}, time.Second, 100*time.Millisecond)
+
+	close(suite.devicesSettled)
+
+	ctest.AssertResource(suite, block.RefreshID, func(r *block.DiscoveryRefreshRequest, asrt *assert.Assertions) {
+		asrt.Equal(1, r.TypedSpec().Request)
 	})
 }

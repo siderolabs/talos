@@ -20,7 +20,7 @@ var SupportedArchitectures = []string{
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.44-talos"
+	DefaultKernelVersion = "6.18.53-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -79,6 +79,12 @@ const (
 	// KernelParamDeviceSettleTime is the kernel parameter name for specifying the
 	// extra device settle timeout.
 	KernelParamDeviceSettleTime = "talos.device.settle_time"
+
+	// KernelParamBootPartitionUUID is the kernel parameter name for specifying the
+	// partition UUID of the boot partition (the partition the bootloader was loaded from).
+	//
+	// Talos waits for this partition to be discovered before declaring the system volumes missing.
+	KernelParamBootPartitionUUID = "talos.boot.partuuid"
 
 	// KernelParamCGroups is the legacy kernel parameter not supported anymore.
 	KernelParamCGroups = "talos.unified_cgroup_hierarchy"
@@ -378,7 +384,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.37.0-rc.0"
+	DefaultKubernetesVersion = "1.37.0"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernetesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -406,7 +412,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
-	DefaultCoreDNSVersion = "v1.14.6"
+	DefaultCoreDNSVersion = "v1.14.7"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
@@ -562,7 +568,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.3.3"
+	DefaultContainerdVersion = "2.3.6"
 
 	// RuncVersion is the runc version.
 	RuncVersion = "1.5.1"
@@ -575,6 +581,18 @@ const (
 
 	// K8sContainerdNamespace is the Containerd namespace for CRI pods.
 	K8sContainerdNamespace = "k8s.io"
+
+	// TalosContainersContainerdNamespace is the Containerd namespace for containers declared via ContainerConfig.
+	//
+	// These run against the CRI containerd instance, but in their own namespace so that they neither
+	// collide with Kubernetes pods nor depend on Kubernetes being configured.
+	TalosContainersContainerdNamespace = "taloscontainers"
+
+	// TalosContainersLogPrefix is the service log name prefix for containers declared via ContainerConfig.
+	//
+	// Keyed by container config, not by instance: successive generations append to one buffer, so restart
+	// history reads as a single continuous log.
+	TalosContainersLogPrefix = TalosContainersContainerdNamespace + "-"
 
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
@@ -800,6 +818,13 @@ const (
 	// mount namespace.
 	DebugHostNsImage = "docker.io/nixos/nix:latest"
 
+	// DebugNixyBoxImage is a tiny image used in the integration tests.
+	// It has Nix-like layout, but it contains only statically linked shell
+	// based on busybox.
+	// This image is small to ensure safe use in the integration tests,
+	// as the image is pulled to the tmpfs.
+	DebugNixyBoxImage = "ghcr.io/siderolabs/nixybox:v2026.06.0"
+
 	// DebugHostNsWorkdirBase is the disk-backed base directory for PROFILE_HOST_NS
 	// overlay upper/work layers. It lives on the EPHEMERAL partition (/var) so that
 	// writes to the session root (nix eval cache, /tmp, /etc) and the /nix store do
@@ -814,6 +839,16 @@ const (
 
 	// SelinuxLabelUnconfinedSysContainer is the SELinux label for system containers without label set (normally extensions).
 	SelinuxLabelUnconfinedSysContainer = "system_u:system_r:unconfined_container_t:s0"
+
+	// SelinuxLabelTalosContainer is the SELinux label for containers declared via ContainerConfig.
+	//
+	// Distinct from the pod label even though both run on the CRI containerd: these are not pods, and
+	// a domain of their own is what lets them be told apart in audit and confined separately.
+	SelinuxLabelTalosContainer = "system_u:system_r:taloscontainer_t:s0"
+
+	// SelinuxLabelTalosContainerMachined is the SELinux label for containers declared via
+	// ContainerConfig with security.machinedAccess set.
+	SelinuxLabelTalosContainerMachined = "system_u:system_r:taloscontainer_machined_t:s0"
 
 	// SelinuxLabelUnconfinedService is the SELinux label for process without label set (normally should not occur).
 	SelinuxLabelUnconfinedService = "system_u:system_r:unconfined_service_t:s0"
@@ -887,6 +922,24 @@ const (
 
 	// CgroupSystemSandboxMillicores is the CPU weight for the sandbox cgroup.
 	CgroupSystemSandboxMillicores = 100
+
+	// CgroupTalosContainersRoot is the cgroup containing containers declared via ContainerConfig.
+	CgroupTalosContainersRoot = "taloscontainers"
+
+	// CgroupTalosContainersMillicores is the CPU weight for the taloscontainers root cgroup.
+	CgroupTalosContainersMillicores = 1000
+
+	// CgroupVirtualMachines is the cgroup partition holding virtual machines declared via VirtualMachineConfig.
+	//
+	// libvirt appends `.partition` to every component of a domain's `<resource><partition>` path unless the
+	// component already contains a dot or is one of the top-level names `machine`, `system` or `user`
+	// (kept bare to mirror systemd slices). It creates the directory only for its `/machine` default;
+	// Talos creates this one at boot. Carrying the suffix in the constant keeps the on-disk path identical
+	// to the value rendered into domain XML.
+	CgroupVirtualMachines = "virtualmachines.partition"
+
+	// CgroupVirtualMachinesMillicores is the CPU weight for the virtualmachines root cgroup.
+	CgroupVirtualMachinesMillicores = 1000
 
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
 	CgroupPodRuntimeRoot = "podruntime"
@@ -1213,7 +1266,7 @@ const (
 	ProcModulesPath = "/proc/modules"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.5"
+	GoVersion = "go1.27.1"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
@@ -1410,6 +1463,11 @@ const (
 	// SwapVolumePrefix is the prefix for the swap volumes.
 	SwapVolumePrefix = "s-"
 
+	// ContainerServicePIDPrefix distinguishes container PIDs from Talos service PIDs in the ServicePID
+	// namespace, parallel to the "ext-" prefix extension services use, so an AllowedServices glob can
+	// target containers without risking a collision with an unrelated service name.
+	ContainerServicePIDPrefix = "ctr-"
+
 	// PartitionLabelLength is the length of the partition label.
 	//
 	// See https://en.wikipedia.org/wiki/GUID_Partition_Table#Partition_entries_(LBA_2%E2%80%9333)
@@ -1487,6 +1545,11 @@ const (
 
 	// FilesystemScrubPriority is the priority value for running FS scrubbing processes.
 	FilesystemScrubPriority = 19
+
+	// DefaultDiskSMARTInterval is the default interval for refreshing disk SMART status.
+	//
+	// The default value is 30 minutes. Disks in standby are not spun up to be probed.
+	DefaultDiskSMARTInterval = 30 * time.Minute
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

@@ -486,10 +486,17 @@ func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 				},
 			},
 			{
+				Name:        "primary",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface) which should be used as the primary slave of the bond.\n\nThe primary link, when up, is always the active one; the other links are only used when the\nprimary is down. Only meaningful for the \"active-backup\", \"balance-tlb\" and \"balance-alb\" modes.\n\nMust be one of the links listed in `links`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface) which should be used as the primary slave of the bond." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "primaryReselect",
 				Type:        "PrimaryReselect",
 				Note:        "",
-				Description: "Policy under which the primary slave should be reselected.",
+				Description: "Policy under which the primary slave should be reselected.\n\nHas no effect unless `primary` is set.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Policy under which the primary slave should be reselected." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"always",
@@ -588,9 +595,10 @@ func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.Fields[18].AddExample("", 65535)
 	doc.Fields[19].AddExample("", 0)
 	doc.Fields[20].AddExample("", "on")
-	doc.Fields[21].AddExample("", "always")
-	doc.Fields[27].AddExample("", 1)
-	doc.Fields[28].AddExample("", 0)
+	doc.Fields[21].AddExample("", "enp1s2")
+	doc.Fields[22].AddExample("", "always")
+	doc.Fields[28].AddExample("", 1)
+	doc.Fields[29].AddExample("", 0)
 
 	return doc
 }
@@ -761,6 +769,155 @@ func (VRFConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.Fields[2].AddExample("", nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70})
 	doc.Fields[3].AddExample("", []string{"enp1s3", "enp1s2"})
 	doc.Fields[4].AddExample("", 10)
+
+	return doc
+}
+
+func (MacVLANConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "MacVLANConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "MacVLANConfig is a config document to create a MACVLAN link over a parent link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "MacVLANConfig is a config document to create a MACVLAN link over a parent link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the macvlan link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the macvlan link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "MacvlanMode",
+				Note:        "",
+				Description: "MACVLAN mode to use for the link.\nIf not set, defaults to bridge.\n\nThe `source` mode requires a list of source MAC addresses, which is\nnot supported yet, so it can't be used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "MACVLAN mode to use for the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"private",
+					"vepa",
+					"bridge",
+					"passthru",
+					"source",
+				},
+			},
+			{
+				Name:        "parent",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the parent link (interface) the macvlan link is created on.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the parent link (interface) the macvlan link is created on." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleMacVLANConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "eth0.macvlan")
+	doc.Fields[2].AddExample("", "bridge")
+	doc.Fields[3].AddExample("", "eth0")
+	doc.Fields[4].AddExample("", "2e:3c:4d:5e:6f:70")
+
+	return doc
+}
+
+func (VXLANConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VXLANConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VXLANConfig is a config document to create a VXLAN (Virtual eXtensible LAN) link over a parent link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VXLANConfig is a config document to create a VXLAN (Virtual eXtensible LAN) link over a parent link.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the vxlan link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the vxlan link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "id",
+				Type:        "uint32",
+				Note:        "",
+				Description: "VXLAN network identifier (VNI) to be used for the vxlan link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "VXLAN network identifier (VNI) to be used for the vxlan link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "local",
+				Type:        "Addr",
+				Note:        "",
+				Description: "Source IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Source IP address (IPv4 or IPv6) to use in outgoing packets for the tunnel endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "group",
+				Type:        "Addr",
+				Note:        "",
+				Description: "Multicast group IP address (IPv4 or IPv6) to join for the tunnel.\nEither the group or the local address should be set, not both.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Multicast group IP address (IPv4 or IPv6) to join for the tunnel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "parent",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the parent link (interface) used as the physical device for the tunnel endpoint.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the parent link (interface) used as the physical device for the tunnel endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "port",
+				Type:        "uint16",
+				Note:        "",
+				Description: "Destination UDP port for VXLAN traffic.\nIf not set, defaults to 4789.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination UDP port for VXLAN traffic." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "learning",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable learning of source link addresses (MAC learning).\nIf not set, defaults to true.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable learning of source link addresses (MAC learning)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVXLANConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "vxlan900")
+	doc.Fields[2].AddExample("", 100)
+	doc.Fields[3].AddExample("", "10.255.0.1")
+	doc.Fields[4].AddExample("", "239.1.1.1")
+	doc.Fields[5].AddExample("", "vtep0")
+	doc.Fields[6].AddExample("", 4789)
+	doc.Fields[7].AddExample("", false)
+	doc.Fields[8].AddExample("", "2e:3c:4d:5e:6f:70")
 
 	return doc
 }
@@ -1371,6 +1528,13 @@ func (KubeSpanFiltersConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "peerEndpoints",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Filter endpoints received from other KubeSpan peers before this node attempts to connect to them.\n\nThis filter is the opposite of the `endpoints` filter: `endpoints` filters the addresses this node\nadvertises to the whole cluster, affecting how every peer connects to this node, while `peerEndpoints`\nfilters the endpoints received from other peers, affecting only outgoing connections of this node.\n\nUse it to exclude endpoints which are known to be unreachable from this node\n(e.g., addresses of a private network this node is not connected to), so they are never attempted.\n\nDefault value: no filtering.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Filter endpoints received from other KubeSpan peers before this node attempts to connect to them." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "excludeAdvertisedNetworks",
 				Type:        "[]Prefix",
 				Note:        "",
@@ -1381,7 +1545,8 @@ func (KubeSpanFiltersConfig) Doc() *encoder.Doc {
 	}
 
 	doc.Fields[0].AddExample("Exclude addresses in 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
-	doc.Fields[1].AddExample("Exclude private networks from being advertised.", []meta.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}})
+	doc.Fields[1].AddExample("Exclude peer endpoints in the 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
+	doc.Fields[2].AddExample("Exclude private networks from being advertised.", []meta.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}})
 
 	return doc
 }
@@ -1494,6 +1659,14 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 			},
 			{
 				TypeName:  "VRFConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "MacVLANConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "VXLANConfigV1Alpha1",
 				FieldName: "",
 			},
 			{
@@ -1836,7 +2009,7 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 		Fields: []encoder.Doc{
 			{
 				Name:        "domains",
-				Type:        "[]string",
+				Type:        "SearchDomainList",
 				Note:        "",
 				Description: "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nIf set, this overrides any search domains obtained via DHCP or platform configuration.\nAn empty list (`domains: []`) clears search domains obtained from DHCP or platform,\nwhile leaving this field unset inherits them.\nThe default configuration derives the search domain from the hostname FQDN.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of search domains to be used for DNS resolution." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -2584,6 +2757,8 @@ func GetFileDoc() *encoder.FileDoc {
 			BridgeSTPConfig{}.Doc(),
 			BridgeVLANConfig{}.Doc(),
 			VRFConfigV1Alpha1{}.Doc(),
+			MacVLANConfigV1Alpha1{}.Doc(),
+			VXLANConfigV1Alpha1{}.Doc(),
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			DHCPv4ConfigV1Alpha1{}.Doc(),
 			DHCPv6ConfigV1Alpha1{}.Doc(),

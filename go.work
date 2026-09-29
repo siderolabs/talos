@@ -1,4 +1,4 @@
-go 1.26.5
+go 1.27.0
 
 use (
 	.
@@ -9,6 +9,7 @@ use (
 	./tools/gotagsrewrite
 	./tools/kubeimportlinter
 	./tools/labeled-squashfs
+	./tools/libvirt-schema
 	./tools/loglinter
 	./tools/redactgen
 	./tools/sbom-builder

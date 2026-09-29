@@ -24,6 +24,7 @@ func TestKmsgLogMarshalStability(t *testing.T) {
 	cfg := runtime.NewKmsgLogV1Alpha1()
 	cfg.MetaName = "apiSink"
 	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("https://kmsglog.api/logs"))
+	cfg.ExtraTags = map[string]string{"cluster": "staging-west", "node": "worker-1"}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -102,6 +103,7 @@ func TestKmsgLogValidate(t *testing.T) {
 				cfg := runtime.NewKmsgLogV1Alpha1()
 				cfg.MetaName = "name3"
 				cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://10.2.3.4:5000/"))
+				cfg.ExtraTags = map[string]string{"cluster": "staging-west"}
 
 				return cfg
 			},
@@ -129,6 +131,24 @@ func TestKmsgLogValidate(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestKmsgLogRejectsReservedExtraTags(t *testing.T) {
+	t.Parallel()
+
+	for _, key := range []string{"facility", "seq", "clock", "priority", "msg", "talos-time", "talos-level"} {
+		t.Run(key, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := runtime.NewKmsgLogV1Alpha1()
+			cfg.MetaName = "name"
+			cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://10.2.3.4:5000/"))
+			cfg.ExtraTags = map[string]string{key: "overridden"}
+
+			_, err := cfg.Validate(validationMode{})
+			assert.EqualError(t, err, "extra tag \""+key+"\" is reserved")
 		})
 	}
 }

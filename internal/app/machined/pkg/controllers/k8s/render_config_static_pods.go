@@ -241,8 +241,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			r.TypedSpec().Ready = true
 			r.TypedSpec().Version = admissionRes.Metadata().Version().String() +
 				auditRes.Metadata().Version().String() +
-				authorizerConfigRes.Metadata().Version().String() +
-				kubeSchedulerRes.Metadata().Version().String()
+				authorizerConfigRes.Metadata().Version().String()
 
 			if authenticationConfigRes != nil {
 				r.TypedSpec().Version += authenticationConfigRes.Metadata().Version().String()

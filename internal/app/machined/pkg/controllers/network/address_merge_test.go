@@ -151,11 +151,9 @@ func TestAddressMergeSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &AddressMergeSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewAddressMergeController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(netctrl.NewAddressMergeController()))
 		},
 	})
 }

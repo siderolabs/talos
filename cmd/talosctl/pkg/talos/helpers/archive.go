@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/siderolabs/talos/pkg/safepath"
 )
@@ -56,6 +55,9 @@ func ExtractFileFromTarGz(filename string, r io.ReadCloser) ([]byte, error) {
 
 // ExtractTarGz extracts .tar.gz archive from r into filesystem under localPath.
 //
+// The archive is a dump of node's filesystem which might contain symlinks or
+// other special files, handle them in a safe way for the client.
+//
 //nolint:gocyclo
 func ExtractTarGz(localPath string, r io.ReadCloser) error {
 	defer r.Close() //nolint:errcheck
@@ -64,6 +66,13 @@ func ExtractTarGz(localPath string, r io.ReadCloser) error {
 	if err != nil {
 		return fmt.Errorf("error initializing gzip: %w", err)
 	}
+
+	root, err := os.OpenRoot(localPath)
+	if err != nil {
+		return fmt.Errorf("error opening local path %q: %w", localPath, err)
+	}
+
+	defer root.Close() //nolint:errcheck
 
 	tr := tar.NewReader(zr)
 
@@ -77,36 +86,36 @@ func ExtractTarGz(localPath string, r io.ReadCloser) error {
 			return fmt.Errorf("error reading tar header: %s", err)
 		}
 
-		hdrPath := safepath.CleanPath(hdr.Name)
-		if hdrPath == "" {
+		path := safepath.CleanPath(hdr.Name)
+		if path == "" {
 			return errors.New("empty tar header path")
 		}
 
-		path := filepath.Join(localPath, hdrPath)
-		// TODO: do we need to clean up any '..' references?
-
 		switch hdr.Typeflag {
 		case tar.TypeDir:
-			mode := hdr.FileInfo().Mode()
+			// Perm drops setuid, setgid and sticky along with the type bits.
+			mode := hdr.FileInfo().Mode().Perm()
 			mode |= 0o700 // make rwx for the owner
 
-			if err = os.Mkdir(path, mode); err != nil {
+			if err = root.Mkdir(path, mode); err != nil {
 				return fmt.Errorf("error creating directory %q mode %s: %w", path, mode, err)
 			}
 
-			if err = os.Chmod(path, mode); err != nil {
+			if err = root.Chmod(path, mode); err != nil {
 				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
 			}
 
 		case tar.TypeSymlink:
-			if err = os.Symlink(hdr.Linkname, path); err != nil {
+			if err = root.Symlink(hdr.Linkname, path); err != nil {
 				return fmt.Errorf("error creating symlink %q -> %q: %w", path, hdr.Linkname, err)
 			}
 
 		default:
-			mode := hdr.FileInfo().Mode()
+			// drop setuid, setgid and sticky along with the type bits, the owner
+			// of the file is not restored, so setuid and setgid bits are not useful.
+			mode := hdr.FileInfo().Mode().Perm()
 
-			fp, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
+			fp, err := root.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, mode)
 			if err != nil {
 				return fmt.Errorf("error creating file %q mode %s: %w", path, mode, err)
 			}
@@ -120,7 +129,7 @@ func ExtractTarGz(localPath string, r io.ReadCloser) error {
 				return fmt.Errorf("error closing %q: %w", path, err)
 			}
 
-			if err = os.Chmod(path, mode); err != nil {
+			if err = root.Chmod(path, mode); err != nil {
 				return fmt.Errorf("error updating mode %s for %q: %w", mode, path, err)
 			}
 		}

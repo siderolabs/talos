@@ -48,7 +48,7 @@ var (
 //	description: |
 //	  Existing volumes allow to mount partitions (or whole disks) that were created
 //	  outside of Talos. Volume will be mounted under `/var/mnt/<name>`.
-//	  The existing volume config name should not conflict with user volume names.
+//	  The name must not be taken by a user or external volume.
 //	examples:
 //	  - value: exampleExistingVolumeConfigV1Alpha1()
 //	alias: ExistingVolumeConfig
@@ -157,7 +157,7 @@ func (s *ExistingVolumeConfigV1Alpha1) Clone() config.Document {
 
 // ConflictsWithKinds implements config.ConflictingDocument interface.
 func (s *ExistingVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
-	return []string{UserVolumeConfigKind}
+	return conflictingVolumeKinds(ExistingVolumeConfigKind)
 }
 
 // Validate implements config.Validator interface.

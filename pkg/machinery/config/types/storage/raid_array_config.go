@@ -106,7 +106,7 @@ func (s RAIDProvisioningSpec) Validate() error {
 		return errors.New("provisioning.volumeSelector.match is required")
 	}
 
-	if err := s.RAIDVolumeSelector.Match.ParseBool(celenv.VolumeLocator()); err != nil {
+	if err := s.RAIDVolumeSelector.Match.ParseBool(celenv.MemberVolumeLocator()); err != nil {
 		return fmt.Errorf("provisioning.volumeSelector.match: %w", err)
 	}
 
@@ -122,6 +122,15 @@ type RAIDVolumeSelector struct {
 	//     the `disk` variable is bound for whole disks (empty for partitions), so
 	//     both whole disks and partitions can be selected. The system disk and
 	//     its partitions are never eligible.
+	//
+	//     A volume declared in the machine config also matches on `volume_id`,
+	//     the volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),
+	//     as in `volume_id == "r-mirror0"`. A device Talos does not manage as a
+	//     volume has an empty `volume_id`.
+	//
+	//     An encrypted volume matches the same way. Talos builds the array on
+	//     the opened device, never on the ciphertext, and matches the volume
+	//     only after the volume manager has prepared it.
 	//   schema:
 	//     type: string
 	//   examples:

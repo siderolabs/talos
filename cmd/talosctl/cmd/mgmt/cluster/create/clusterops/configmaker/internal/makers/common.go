@@ -84,6 +84,7 @@ type Maker[ExtraOps any] struct {
 	EOps ExtraOps
 
 	extraOptionsProvider ExtraOptionsProvider
+	userConfigBundleOps  []bundle.Option
 }
 
 // SetExtraOptionsProvider sets extra options provider containing the provider specific logic.
@@ -202,7 +203,8 @@ func (m *Maker[T]) initConfigBundleOps() error {
 		return err
 	}
 
-	m.ConfigBundleOps = slices.Clone(configPatchBundleOps)
+	m.ConfigBundleOps = []bundle.Option{}
+	m.userConfigBundleOps = configPatchBundleOps
 
 	return nil
 }
@@ -228,7 +230,7 @@ func (m *Maker[T]) initVersionContract() error {
 	return nil
 }
 
-// GetClusterConfigs prepares and returns the cluster create request data. This method is ment to be called after the implemeting maker
+// GetClusterConfigs prepares and returns the cluster create request data. This method is meant to be called after the implementing maker
 // logic has been run.
 func (m *Maker[T]) GetClusterConfigs() (clusterops.ClusterConfigs, error) {
 	var configBundle *bundle.Bundle
@@ -285,9 +287,9 @@ func (m *Maker[T]) applyOmniConfigs() error {
 //nolint:gocyclo
 func (m *Maker[T]) finalizeMachineConfigs() (*bundle.Bundle, error) {
 	// These options needs to be generated after the implementing maker has made changes to the cluster request.
-	provisionGenOps, provisionBundleOps := m.Provisioner.GenOptions(m.ClusterRequest.Network, m.VersionContract)
+	provisionGenOps, provisionBundleOps := m.Provisioner.GenOptions(m.ClusterRequest, m.VersionContract)
 	m.GenOps = slices.Concat(m.GenOps, provisionGenOps)
-	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, provisionBundleOps)
+	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, provisionBundleOps, m.userConfigBundleOps)
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithEndpointList(m.Endpoints)})
 
 	m.ConfigBundleOps = append(

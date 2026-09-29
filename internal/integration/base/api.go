@@ -18,7 +18,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
@@ -45,7 +44,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
+	k8sres "github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 )
@@ -158,6 +159,12 @@ func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 		}
 	}
 
+	if len(nodes) == 0 && apiSuite.Cluster != nil {
+		// The provisioner state lists every node the cluster has, so no match means the cluster
+		// was created without nodes of this type, not that discovery missed them.
+		apiSuite.T().Skipf("cluster has no nodes of type %v", types)
+	}
+
 	apiSuite.Require().NotEmpty(nodes)
 
 	return nodes[rand.IntN(len(nodes))].InternalIP.String()
@@ -165,11 +172,13 @@ func (apiSuite *APISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 
 // Capabilities describes current cluster allowed actions.
 type Capabilities struct {
-	RunsTalosKernel bool
-	SupportsReboot  bool
-	SupportsRecover bool
-	SupportsVolumes bool
-	SecureBooted    bool
+	RunsTalosKernel    bool
+	SupportsReboot     bool
+	SupportsRecover    bool
+	SupportsVolumes    bool
+	SupportsMETA       bool
+	SecureBooted       bool
+	SupportsKubernetes bool
 }
 
 // Capabilities returns a set of capabilities to skip tests for different environments.
@@ -186,6 +195,7 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 			caps.RunsTalosKernel = true
 			caps.SupportsReboot = true
 			caps.SupportsRecover = true
+			caps.SupportsMETA = true
 			caps.SupportsVolumes = true
 		}
 	}
@@ -205,7 +215,37 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 
 	caps.SecureBooted = securityResource.TypedSpec().SecureBoot
 
+	// Kubernetes is configured only when the machine config carries a cluster section: a cluster
+	// created with --skip-etcd-k8s runs Talos on its own, and the kubelet configuration which every
+	// Kubernetes node has never appears.
+	_, err = safe.StateGetByID[*k8sres.KubeletConfig](ctx, apiSuite.Client.COSI, k8sres.KubeletID)
+
+	switch {
+	case err == nil:
+		caps.SupportsKubernetes = true
+	case state.IsNotFoundError(err):
+	default:
+		apiSuite.Require().NoError(err)
+	}
+
 	return caps
+}
+
+// SupportsEtcd reports whether the cluster runs etcd.
+func (apiSuite *APISuite) SupportsEtcd() bool {
+	ctx, ctxCancel := context.WithTimeout(context.Background(), time.Minute)
+	defer ctxCancel()
+
+	nodeCtx := client.WithNode(ctx, apiSuite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane))
+
+	_, err := safe.StateGetByID[*secrets.EtcdRoot](nodeCtx, apiSuite.Client.COSI, secrets.EtcdRootID)
+	if state.IsNotFoundError(err) {
+		return false
+	}
+
+	apiSuite.Require().NoError(err)
+
+	return true
 }
 
 // AssertClusterHealthy verifies that cluster is healthy using provisioning checks.
@@ -331,20 +371,78 @@ func (apiSuite *APISuite) AssertBootIDChanged(nodeCtx context.Context, bootIDBef
 }
 
 // WaitForBootDone waits for boot phase done event.
+//
+// Any API error is treated as retryable: the node might be still rebooting (or might reboot once
+// again if another reboot is still in flight), so its API is not guaranteed to be available for
+// the whole duration of the wait.
 func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
 	apiSuite.ClearConnectionRefused(ctx, apiSuite.DiscoverNodeInternalIPs(ctx)...)
 
 	for _, node := range apiSuite.DiscoverNodeInternalIPs(ctx) {
-		rtestutils.AssertResource(
-			client.WithNode(ctx, node),
-			apiSuite.T(),
-			apiSuite.Client.COSI,
-			runtimeres.MachineStatusID,
-			func(machineStatus *runtimeres.MachineStatus, asrt *assert.Assertions) {
-				asrt.Equal(runtimeres.MachineStageRunning, machineStatus.TypedSpec().Stage)
-			},
+		nodeCtx := client.WithNode(ctx, node)
+
+		apiSuite.Require().NoError(
+			retry.Constant(10*time.Minute, retry.WithUnits(time.Second)).RetryWithContext(nodeCtx, func(ctx context.Context) error {
+				reqCtx, reqCtxCancel := context.WithTimeout(ctx, 30*time.Second)
+				defer reqCtxCancel()
+
+				machineStatus, err := safe.StateGetByID[*runtimeres.MachineStatus](reqCtx, apiSuite.Client.COSI, runtimeres.MachineStatusID)
+				if err != nil {
+					return retry.ExpectedErrorf("error reading machine status of node %q: %w", node, err)
+				}
+
+				if stage := machineStatus.TypedSpec().Stage; stage != runtimeres.MachineStageRunning {
+					return retry.ExpectedErrorf("node %q is in stage %q, expected %q", node, stage, runtimeres.MachineStageRunning)
+				}
+
+				return nil
+			}),
 		)
 	}
+}
+
+// WaitForBootIDStable waits for the node boot ID to stay stable for a number of consecutive reads.
+//
+// This makes sure that no reboot is still in flight before running further assertions against the node.
+//
+// Context provided should have the node attached for API calls.
+func (apiSuite *APISuite) WaitForBootIDStable(nodeCtx context.Context, node string, timeout time.Duration) string {
+	// the node is considered settled if it reports the same boot ID for that many consecutive reads
+	const stableReads = 10
+
+	var (
+		lastBootID string
+		numStable  int
+	)
+
+	apiSuite.Require().NoError(
+		retry.Constant(timeout, retry.WithUnits(time.Second)).RetryWithContext(nodeCtx, func(ctx context.Context) error {
+			bootID, err := apiSuite.ReadBootID(ctx)
+			if err != nil || bootID == "" {
+				lastBootID, numStable = "", 0
+
+				if err != nil {
+					return retry.ExpectedErrorf("error reading bootID for node %q: %w", node, err)
+				}
+
+				return retry.ExpectedErrorf("bootID is empty for node %q", node)
+			}
+
+			if bootID != lastBootID {
+				lastBootID, numStable = bootID, 1
+			} else {
+				numStable++
+			}
+
+			if numStable < stableReads {
+				return retry.ExpectedErrorf("bootID %q of node %q is stable for %d read(s) out of %d", bootID, node, numStable, stableReads)
+			}
+
+			return nil
+		}),
+	)
+
+	return lastBootID
 }
 
 // ClearConnectionRefused clears cached connection refused errors which might be left after node reboot.

@@ -53,15 +53,11 @@ func FlannelClusterRoleTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.
 	}
 
 	return &rbacv1.ClusterRole{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: rbacv1.SchemeGroupVersion.String(),
-			Kind:       "ClusterRole",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "flannel",
-			Labels: map[string]string{
-				"k8s-app": "flannel",
-			},
+		APIVersion: rbacv1.SchemeGroupVersion.String(),
+		Kind:       "ClusterRole",
+		Name:       "flannel",
+		Labels: map[string]string{
+			"k8s-app": "flannel",
 		},
 		Rules: rules,
 	}
@@ -71,15 +67,11 @@ func FlannelClusterRoleTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.
 // ClusterRoleBinding for the flannel CNI plugin.
 func FlannelClusterRoleBindingTemplate() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: rbacv1.SchemeGroupVersion.String(),
-			Kind:       "ClusterRoleBinding",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "flannel",
-			Labels: map[string]string{
-				"k8s-app": "flannel",
-			},
+		APIVersion: rbacv1.SchemeGroupVersion.String(),
+		Kind:       "ClusterRoleBinding",
+		Name:       "flannel",
+		Labels: map[string]string{
+			"k8s-app": "flannel",
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: rbacv1.SchemeGroupVersion.Group,
@@ -100,16 +92,12 @@ func FlannelClusterRoleBindingTemplate() runtime.Object {
 // ServiceAccount for the flannel CNI plugin.
 func FlannelServiceAccountTemplate() runtime.Object {
 	return &corev1.ServiceAccount{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ServiceAccount",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "flannel",
-			Namespace: "kube-system",
-			Labels: map[string]string{
-				"k8s-app": "flannel",
-			},
+		APIVersion: corev1.SchemeGroupVersion.String(),
+		Kind:       "ServiceAccount",
+		Name:       "flannel",
+		Namespace:  "kube-system",
+		Labels: map[string]string{
+			"k8s-app": "flannel",
 		},
 	}
 }
@@ -188,17 +176,13 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 	data["net-conf.json"] = string(netConfJSON)
 
 	return &corev1.ConfigMap{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: corev1.SchemeGroupVersion.String(),
-			Kind:       "ConfigMap",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kube-flannel-cfg",
-			Namespace: "kube-system",
-			Labels: map[string]string{
-				"k8s-app": "flannel",
-				"tier":    "node",
-			},
+		APIVersion: corev1.SchemeGroupVersion.String(),
+		Kind:       "ConfigMap",
+		Name:       "kube-flannel-cfg",
+		Namespace:  "kube-system",
+		Labels: map[string]string{
+			"k8s-app": "flannel",
+			"tier":    "node",
 		},
 		Data: data,
 	}
@@ -249,19 +233,20 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.O
 	}
 
 	volumes := []corev1.Volume{
-		{Name: "run", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/run/flannel"}}},
-		{Name: "cni", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/etc/cni/net.d"}}},
-		{Name: "flannel-cfg", VolumeSource: corev1.VolumeSource{
+		{Name: "run", HostPath: &corev1.HostPathVolumeSource{Path: "/run/flannel"}},
+		{Name: "cni", HostPath: &corev1.HostPathVolumeSource{Path: "/etc/cni/net.d"}},
+		{
+			Name: "flannel-cfg",
 			ConfigMap: &corev1.ConfigMapVolumeSource{
-				LocalObjectReference: corev1.LocalObjectReference{Name: "kube-flannel-cfg"},
+				Name: "kube-flannel-cfg",
 			},
-		}},
+		},
 	}
 
 	if spec.FlannelKubeNetworkPoliciesEnabled {
 		volumes = append(volumes, corev1.Volume{
-			Name:         "lib-modules",
-			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/usr/lib/modules"}},
+			Name:     "lib-modules",
+			HostPath: &corev1.HostPathVolumeSource{Path: "/usr/lib/modules"},
 		})
 	}
 
@@ -352,17 +337,13 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.O
 	}
 
 	return &appsv1.DaemonSet{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: appsv1.SchemeGroupVersion.String(),
-			Kind:       "DaemonSet",
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "kube-flannel",
-			Namespace: "kube-system",
-			Labels: map[string]string{
-				"k8s-app": "flannel",
-				"tier":    "node",
-			},
+		APIVersion: appsv1.SchemeGroupVersion.String(),
+		Kind:       "DaemonSet",
+		Name:       "kube-flannel",
+		Namespace:  "kube-system",
+		Labels: map[string]string{
+			"k8s-app": "flannel",
+			"tier":    "node",
 		},
 		Spec: appsv1.DaemonSetSpec{
 			Selector: &metav1.LabelSelector{

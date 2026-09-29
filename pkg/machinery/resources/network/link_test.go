@@ -11,8 +11,101 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+func TestBondMasterSpecEqualPrimary(t *testing.T) {
+	t.Parallel()
+
+	base := func() network.BondMasterSpec {
+		return network.BondMasterSpec{
+			Mode:            nethelpers.BondModeActiveBackup,
+			PrimaryReselect: nethelpers.PrimaryReselectAlways,
+		}
+	}
+
+	withIndex := func(idx uint32) network.BondMasterSpec {
+		spec := base()
+		spec.PrimaryIndex = new(idx)
+
+		return spec
+	}
+
+	for _, test := range []struct {
+		name        string
+		spec, other network.BondMasterSpec
+
+		expected bool
+	}{
+		{
+			name:     "both unset",
+			spec:     base(),
+			other:    base(),
+			expected: true,
+		},
+		{
+			name:     "same index",
+			spec:     withIndex(4),
+			other:    withIndex(4),
+			expected: true,
+		},
+		{
+			name:     "different index",
+			spec:     withIndex(4),
+			other:    withIndex(5),
+			expected: false,
+		},
+		{
+			// the kernel stops reporting IFLA_BOND_PRIMARY once the primary slave leaves the bond
+			// (NIC unplugged, driver unloaded); treating that as drift would tear the bond down and
+			// re-enslave every remaining slave in the middle of a failover
+			name:     "kernel dropped the primary",
+			spec:     withIndex(4),
+			other:    base(),
+			expected: true,
+		},
+		{
+			// nothing in the config asks for a primary, so whatever the kernel has stays put
+			name:     "primary set out of band",
+			spec:     base(),
+			other:    withIndex(4),
+			expected: true,
+		},
+		{
+			// Primary is the unresolved form and must never be compared directly: the kernel only
+			// ever reports the index back, so comparing it would make the two never converge
+			name: "differing names with matching indexes",
+			spec: func() network.BondMasterSpec {
+				spec := withIndex(4)
+				spec.Primary = "eno1"
+
+				return spec
+			}(),
+			other:    withIndex(4),
+			expected: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, test.spec.Equal(&test.other))
+			assert.Equal(t, test.expected, test.other.Equal(&test.spec), "Equal should be symmetric")
+		})
+	}
+}
+
+func TestBondMasterSpecZero(t *testing.T) {
+	t.Parallel()
+
+	var zeroSpec network.BondMasterSpec
+
+	assert.True(t, zeroSpec.IsZero())
+
+	withPrimary := network.BondMasterSpec{Primary: "eno1"}
+
+	assert.False(t, withPrimary.IsZero())
+}
 
 func TestWireguardPeer(t *testing.T) {
 	t.Parallel()

@@ -5,11 +5,14 @@
 package filemap_test
 
 import (
+	"bytes"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/google/go-containerregistry/pkg/v1/tarball"
+	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -86,7 +89,7 @@ func TestLayer(t *testing.T) {
 	artifacts, err := filemap.Walk(tempDir, "")
 	require.NoError(t, err)
 
-	layer, err := filemap.Layer(artifacts)
+	layer, err := filemap.Layer(t.TempDir(), artifacts)
 	require.NoError(t, err)
 
 	_, err = layer.Digest()
@@ -105,4 +108,48 @@ func TestLayer(t *testing.T) {
 
 		require.NoError(t, rc.Close())
 	}
+}
+
+// TestLayerDigestParity pins the staged layer against the one go-containerregistry builds from an
+// uncompressed opener.
+//
+// Layer compresses ahead of time at a level picked to match go-containerregistry's private default,
+// and a dependency bump which changed that default would otherwise silently change the digest
+// of every artifacts layer we publish.
+func TestLayerDigestParity(t *testing.T) {
+	tempDir := t.TempDir()
+
+	require.NoError(t, os.MkdirAll(filepath.Join(tempDir, "a/b"), 0o755))
+	// compressible, so that the compression level is what decides the digest.
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "a/b/file"), bytes.Repeat([]byte("hello world"), 4096), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "a/executable"), []byte("payload"), 0o755))
+
+	artifacts, err := filemap.Walk(tempDir, "")
+	require.NoError(t, err)
+
+	// sorts artifacts in place, so the reference layer below sees the same entry order.
+	staged, err := filemap.Layer(t.TempDir(), artifacts)
+	require.NoError(t, err)
+
+	reference, err := tarball.LayerFromOpener(
+		func() (io.ReadCloser, error) { return filemap.Build(artifacts), nil },
+		tarball.WithMediaType(types.OCILayer),
+	)
+	require.NoError(t, err)
+
+	stagedDigest, err := staged.Digest()
+	require.NoError(t, err)
+
+	referenceDigest, err := reference.Digest()
+	require.NoError(t, err)
+
+	assert.Equal(t, referenceDigest, stagedDigest)
+
+	stagedSize, err := staged.Size()
+	require.NoError(t, err)
+
+	referenceSize, err := reference.Size()
+	require.NoError(t, err)
+
+	assert.Equal(t, referenceSize, stagedSize)
 }

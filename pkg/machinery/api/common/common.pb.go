@@ -126,6 +126,8 @@ const (
 	ContainerdNamespace_NS_UNKNOWN ContainerdNamespace = 0
 	ContainerdNamespace_NS_SYSTEM  ContainerdNamespace = 1
 	ContainerdNamespace_NS_CRI     ContainerdNamespace = 2
+	// NS_TALOSCONTAINERS is the namespace for containers declared via a ContainerConfig document.
+	ContainerdNamespace_NS_TALOSCONTAINERS ContainerdNamespace = 3
 )
 
 // Enum value maps for ContainerdNamespace.
@@ -134,11 +136,13 @@ var (
 		0: "NS_UNKNOWN",
 		1: "NS_SYSTEM",
 		2: "NS_CRI",
+		3: "NS_TALOSCONTAINERS",
 	}
 	ContainerdNamespace_value = map[string]int32{
-		"NS_UNKNOWN": 0,
-		"NS_SYSTEM":  1,
-		"NS_CRI":     2,
+		"NS_UNKNOWN":         0,
+		"NS_SYSTEM":          1,
+		"NS_CRI":             2,
+		"NS_TALOSCONTAINERS": 3,
 	}
 )
 
@@ -1028,13 +1032,14 @@ const file_common_common_proto_rawDesc = "" +
 	"\x0fContainerDriver\x12\x0e\n" +
 	"\n" +
 	"CONTAINERD\x10\x00\x12\a\n" +
-	"\x03CRI\x10\x01*@\n" +
+	"\x03CRI\x10\x01*X\n" +
 	"\x13ContainerdNamespace\x12\x0e\n" +
 	"\n" +
 	"NS_UNKNOWN\x10\x00\x12\r\n" +
 	"\tNS_SYSTEM\x10\x01\x12\n" +
 	"\n" +
-	"\x06NS_CRI\x10\x02:]\n" +
+	"\x06NS_CRI\x10\x02\x12\x16\n" +
+	"\x12NS_TALOSCONTAINERS\x10\x03:]\n" +
 	"\x19remove_deprecated_message\x12\x1f.google.protobuf.MessageOptions\x18\xbd\xd7\x05 \x01(\tR\x17removeDeprecatedMessage:W\n" +
 	"\x17remove_deprecated_field\x12\x1d.google.protobuf.FieldOptions\x18\xbd\xd7\x05 \x01(\tR\x15removeDeprecatedField:T\n" +
 	"\x16remove_deprecated_enum\x12\x1c.google.protobuf.EnumOptions\x18\xbd\xd7\x05 \x01(\tR\x14removeDeprecatedEnum:d\n" +

@@ -30,3 +30,15 @@ const (
 	// DiskImageBootloader stores the bootloader used for the disk image, this key is wiped on first boot.
 	DiskImageBootloader
 )
+
+// IsAPIWriteable returns true if the given key is writeable via the API.
+func IsAPIWriteable(key uint8) bool {
+	switch key {
+	case 0:
+		return false // used internally as empty slot marker, not settable
+	case Upgrade, StagedUpgradeImageRef, StagedUpgradeInstallOptions, StateEncryptionConfig, DiskImageBootloader:
+		return false
+	default:
+		return true
+	}
+}

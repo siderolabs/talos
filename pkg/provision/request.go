@@ -83,6 +83,11 @@ type NetworkRequest struct {
 	// on a BGP-advertised loopback instead.
 	NoDHCP bool
 
+	// ExtraDHCPRecords adds additional DHCP records to the DHCP server configuration.
+	//
+	// Records for the nodes will be added automatically, so this is only needed for specific tests.
+	ExtraDHCPRecords []DHCPRecord
+
 	LoadBalancerPorts []int
 
 	// CNI-specific parameters.
@@ -109,6 +114,14 @@ type NetworkRequest struct {
 	ImageCacheTLSCertFile string
 	ImageCacheTLSKeyFile  string
 	ImageCachePort        uint16
+}
+
+// DHCPRecord describes a DHCP record to be added to the DHCP server configuration.
+type DHCPRecord struct {
+	MAC     string
+	IP      netip.Prefix
+	Gateway netip.Addr
+	Name    string
 }
 
 // NodeRequests is a list of NodeRequest.
@@ -183,7 +196,7 @@ type Disk struct {
 	SkipPreallocate bool
 	// Driver for the disk.
 	//
-	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "virtiofs" (special).
+	// Supported types: "virtio", "ide", "ahci", "scsi", "nvme", "megaraid", "usb", "mmc", "virtiofs" (special).
 	Driver string
 	// Block size for the disk, defaults to 512 if not set.
 	BlockSize uint
@@ -289,4 +302,48 @@ func (sr *SiderolinkRequest) GetAddr(u *uuid.UUID) (netip.Addr, bool) {
 type SiderolinkBind struct {
 	UUID uuid.UUID
 	Addr netip.Addr
+}
+
+// defaultInstallDiskPath is the guest path of the primary disk for the drivers which don't override it.
+const defaultInstallDiskPath = "/dev/vda"
+
+// installDiskPaths maps a disk driver to the guest device path the kernel gives to the first such disk.
+//
+//nolint:goconst
+var installDiskPaths = map[string]string{
+	"virtio":   "/dev/vda",
+	"ide":      "/dev/sda",
+	"ahci":     "/dev/sda",
+	"scsi":     "/dev/sda",
+	"megaraid": "/dev/sda",
+	"usb":      "/dev/sda",
+	"nvme":     "/dev/nvme0n1",
+	"mmc":      "/dev/mmcblk0",
+}
+
+// HasDiskDriver reports whether any node has a disk with the given driver.
+func (reqs *ClusterRequest) HasDiskDriver(driver string) bool {
+	return slices.ContainsFunc(reqs.Nodes, func(node NodeRequest) bool {
+		return slices.ContainsFunc(node.Disks, func(disk *Disk) bool {
+			return disk.Driver == driver
+		})
+	})
+}
+
+// InstallDiskPath returns the guest device path Talos should be installed to, derived from the
+// driver of the primary disk of the first node.
+//
+// Note: with a mix of drivers which share the same device name prefix (e.g. a "usb" primary disk and
+// a "scsi" extra disk) the kernel assigns the names in probe order, so the path is only reliable when
+// the primary disk is the only one of its kind.
+func (reqs *ClusterRequest) InstallDiskPath() string {
+	if len(reqs.Nodes) == 0 || len(reqs.Nodes[0].Disks) == 0 {
+		return defaultInstallDiskPath
+	}
+
+	if path, ok := installDiskPaths[reqs.Nodes[0].Disks[0].Driver]; ok {
+		return path
+	}
+
+	return defaultInstallDiskPath
 }

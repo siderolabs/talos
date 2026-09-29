@@ -66,6 +66,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
+	containersres "github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -82,45 +83,6 @@ func WaitForUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		return system.WaitForService(system.StateEventUp, "udevd").Wait(ctx)
 	}, "waitForUdevd"
-}
-
-// WaitForUSB represents the WaitForUSB task.
-func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		// Wait for USB storage in the case that the install disk is supplied over
-		// USB. If we don't wait, there is the chance that we will fail to detect the
-		// install disk.
-		file := "/sys/module/usb_storage/parameters/delay_use"
-
-		_, err := os.Stat(file)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				return nil
-			}
-
-			return err
-		}
-
-		b, err := os.ReadFile(file)
-		if err != nil {
-			return err
-		}
-
-		val := strings.TrimSuffix(string(b), "\n")
-
-		var i int
-
-		i, err = strconv.Atoi(val)
-		if err != nil {
-			return err
-		}
-
-		logger.Printf("waiting %d second(s) for USB storage", i)
-
-		time.Sleep(time.Duration(i) * time.Second)
-
-		return nil
-	}, "waitForUSB"
 }
 
 // EnforceKSPPRequirements represents the EnforceKSPPRequirements task.
@@ -301,6 +263,26 @@ func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string
 	}, "startMachined"
 }
 
+// StartSandboxd represents the task to start sandboxd, which owns the sandbox
+// PID+mount namespace that the container plane runs inside.
+//
+// sandboxd takes no configuration, so it is started here, before the machine
+// config is loaded: this guarantees that the sandbox launcher is published
+// before CRI (which is started by cri.ServiceController, independently of this
+// sequence) can reach its first launch. Whether CRI actually enters the
+// namespace is decided separately from the SecurityProfileConfig document.
+func StartSandboxd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+		if !sandboxd.ServiceEnabled(r) {
+			return nil
+		}
+
+		system.Services(r).LoadAndStart(&services.Sandboxd{})
+
+		return nil
+	}, "startSandboxd"
+}
+
 // StartSyslogd represents the task to start syslogd.
 func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
@@ -369,13 +351,6 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		serviceList := []system.Service{}
 
-		// When workload isolation is enabled (SecurityProfileConfig), the sandbox
-		// PID+mount namespace must be up before CRI (which DependsOn it and runs
-		// inside it). Skipped in container mode or when isolation is disabled/absent.
-		if sandboxd.Enabled(r) {
-			serviceList = append(serviceList, &services.Sandboxd{})
-		}
-
 		shouldStartEtcd := r.Config() != nil && r.Config().Cluster() != nil && r.Config().Cluster().Etcd().CA() != nil
 
 		switch t := r.Config().Machine().Type(); t {
@@ -440,6 +415,13 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			}
 		}
 	}, "startAllServices"
+}
+
+// PreShutdownServices runs node shutdown hooks while services are still running.
+func PreShutdownServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, _ *log.Logger, r runtime.Runtime) error {
+		return system.Services(r).PreShutdown(ctx)
+	}, "preShutdownServices"
 }
 
 // StopServicesEphemeral represents the StopServicesEphemeral task.
@@ -1168,6 +1150,11 @@ func parseTargets(ctx context.Context, r runtime.Runtime, wipeStr string) (Syste
 				continue
 			}
 
+			// a partition without a device (e.g. of an ISO image on a CD-ROM) can't be wiped
+			if discoveredVolume.TypedSpec().DevPath == "" {
+				continue
+			}
+
 			result = append(result, partition.VolumeWipeTargetFromDiscoveredVolume(discoveredVolume))
 
 			found = true
@@ -1810,11 +1797,7 @@ func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 func FlushMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		// META partition should be created at this point.
-		if _, err := waitForVolumeReady(ctx, r, constants.MetaPartitionLabel); err != nil {
-			return err
-		}
-
-		return r.State().Machine().Meta().Flush()
+		return install.SyncMeta(ctx, r.State().V1Alpha2().Resources(), r.State().Machine().Meta())
 	}, "flushMeta"
 }
 
@@ -1884,15 +1867,18 @@ func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "waitForCARoots"
 }
 
-// TeardownVolumeLifecycle tears down volume lifecycle resource.
-func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+// teardownLifecycleResource tears down a lifecycle barrier resource and waits for it to be released.
+//
+// Such a resource carries no data: the finalizer set is the payload. Every controller that owns
+// something which has to be wound down before a given point in the shutdown holds a finalizer on it,
+// so tearing it down and waiting for that set to empty is how a phase waits for a subsystem to be
+// wound down.
+func teardownLifecycleResource(md *resource.Metadata) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 
-		volumeLifecycle := blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID).Metadata()
-
-		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, volumeLifecycle)
+		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, md)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return nil
@@ -1901,13 +1887,29 @@ func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 			return err
 		}
 
-		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, volumeLifecycle, state.WithFinalizerEmpty())
-		if err != nil {
+		if _, err = r.State().V1Alpha2().Resources().WatchFor(ctx, md, state.WithFinalizerEmpty()); err != nil {
 			return err
 		}
 
-		return r.State().V1Alpha2().Resources().Destroy(ctx, volumeLifecycle)
-	}, "teardownLifecycle"
+		return r.State().V1Alpha2().Resources().Destroy(ctx, md)
+	}
+}
+
+// TeardownVolumeLifecycle tears down volume lifecycle resource.
+func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return teardownLifecycleResource(
+		blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID).Metadata(),
+	), "teardownLifecycle"
+}
+
+// TeardownContainerLifecycle tears down the container shutdown barrier resource.
+//
+// Unlike TeardownVolumeLifecycle, this runs before stopServices: that phase is what stops the CRI
+// containerd instance itself, so a barrier torn down after it would find containerd already gone.
+func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return teardownLifecycleResource(
+		containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata(),
+	), "teardownContainerLifecycle"
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),
@@ -1964,8 +1966,4 @@ func logError(err error, logger *log.Logger) error {
 	logger.Printf("WARNING: task failed: %s", err)
 
 	return nil
-}
-
-func waitForVolumeReady(ctx context.Context, r runtime.Runtime, volumeID string) (*blockres.VolumeStatus, error) {
-	return blockres.WaitForVolumePhase(ctx, r.State().V1Alpha2().Resources(), volumeID, blockres.VolumePhaseReady)
 }

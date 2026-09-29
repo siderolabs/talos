@@ -229,11 +229,9 @@ func TestLinkMergeSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &LinkMergeSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(netctrl.NewLinkMergeController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(netctrl.NewLinkMergeController()))
 		},
 	})
 }

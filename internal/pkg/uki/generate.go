@@ -254,14 +254,6 @@ func (builder *Builder) generateProfiles() error {
 func (builder *Builder) generateKernel() error {
 	path := builder.KernelPath
 
-	if builder.peSigner != nil {
-		path := filepath.Join(builder.scratchDir, "kernel")
-
-		if err := builder.peSigner.Sign(builder.KernelPath, path); err != nil {
-			return err
-		}
-	}
-
 	builder.sections = append(
 		builder.sections,
 		section{

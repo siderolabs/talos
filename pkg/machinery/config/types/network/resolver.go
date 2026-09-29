@@ -140,13 +140,32 @@ type SearchDomainsConfig struct {
 	//     An empty list (`domains: []`) clears search domains obtained from DHCP or platform,
 	//     while leaving this field unset inherits them.
 	//     The default configuration derives the search domain from the hostname FQDN.
-	SearchDomains []string `yaml:"domains,omitempty"`
+	//   schema:
+	//     type: array
+	//     items:
+	//       type: string
+	SearchDomains SearchDomainList `yaml:"domains,omitempty" talos:"omitonlyifnil" merge:"replace"`
 	//   description: |
 	//     Disable default search domain configuration from hostname FQDN.
 	//
 	//     When set to true, the system will not derive search domains from the hostname FQDN.
 	//     This allows for a custom configuration of search domains without any defaults.
 	SearchDisableDefault *bool `yaml:"disableDefault,omitempty"`
+}
+
+// SearchDomainList is a list of DNS search domains.
+//
+// A nil list means that search domains are not configured (and are inherited from
+// other configuration layers), while an explicitly empty list clears search domains
+// obtained from DHCP or platform.
+type SearchDomainList []string
+
+// IsZero implements yaml.IsZeroer.
+//
+// Only a nil list is considered zero, so that an explicitly empty list survives
+// encoding with the `omitempty` tag instead of being dropped.
+func (l SearchDomainList) IsZero() bool {
+	return l == nil
 }
 
 // HostDNSConfig represents host DNS configuration.
@@ -192,7 +211,7 @@ func exampleResolverConfigV1Alpha1() *ResolverConfigV1Alpha1 {
 		},
 	}
 	cfg.ResolverSearchDomains = SearchDomainsConfig{
-		SearchDomains: []string{"example.com"},
+		SearchDomains: SearchDomainList{"example.com"},
 	}
 
 	return cfg
@@ -334,6 +353,13 @@ func (s *ResolverConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 		}
 	}
 
+	// this is a warning (and not an error) to keep accepting machine configuration which was valid before
+	for _, domain := range s.ResolverSearchDomains.SearchDomains {
+		if err := nethelpers.ValidateDNSNameChars(domain); err != nil {
+			warnings = append(warnings, fmt.Sprintf("searchDomains: %s, it will be ignored", err))
+		}
+	}
+
 	if nonRegularDNS > 0 && nonRegularDNS == len(s.ResolverNameservers) {
 		warnings = append(
 			warnings,
@@ -363,7 +389,7 @@ func (s *ResolverConfigV1Alpha1) SearchDomains() optional.Optional[[]string] {
 		return optional.None[[]string]()
 	}
 
-	return optional.Some(slices.Clone(s.ResolverSearchDomains.SearchDomains))
+	return optional.Some([]string(slices.Clone(s.ResolverSearchDomains.SearchDomains)))
 }
 
 // DisableSearchDomain implements NetworkResolverConfig interface.

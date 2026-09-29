@@ -19,8 +19,14 @@ import (
 // RuntimeConfig defines the interface to access Talos runtime configuration.
 type RuntimeConfig interface {
 	EventsEndpoint() *string
-	KmsgLogURLs() []*url.URL
+	KmsgLogDestinations() []KmsgLogDestination
 	WatchdogTimer() WatchdogTimerConfig
+}
+
+// KmsgLogDestination configures a destination for kernel message logs.
+type KmsgLogDestination struct {
+	Endpoint  *url.URL
+	ExtraTags map[string]string
 }
 
 // EnvironmentConfig defines the interface to access Talos environment configuration.
@@ -100,6 +106,8 @@ type SecurityProfileConfig interface {
 	SecurityProfileConfigSignal()
 	// WorkloadIsolation reports whether the container plane should run inside the sandbox namespace.
 	WorkloadIsolation() bool
+	// IgnoreCtrlAltDelete reports whether Ctrl-Alt-Delete should be ignored.
+	IgnoreCtrlAltDelete() bool
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.
@@ -115,9 +123,9 @@ func (w runtimeConfigWrapper) EventsEndpoint() *string {
 	})
 }
 
-func (w runtimeConfigWrapper) KmsgLogURLs() []*url.URL {
-	return aggregateValues(w, func(c RuntimeConfig) []*url.URL {
-		return c.KmsgLogURLs()
+func (w runtimeConfigWrapper) KmsgLogDestinations() []KmsgLogDestination {
+	return aggregateValues(w, func(c RuntimeConfig) []KmsgLogDestination {
+		return c.KmsgLogDestinations()
 	})
 }
 

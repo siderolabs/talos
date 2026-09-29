@@ -42,6 +42,25 @@ func (suite *RestartSuite) TestSystem() {
 	suite.RunAndWaitForMatch([]string{"service", "-n", node, "trustd"}, regexp.MustCompile(`EVENTS\s+\[Running\]: Health check successful`), 30*time.Second)
 }
 
+// TestKubernetesFlagDeprecated covers the deprecated -k/--kubernetes alias reaching the CRI driver, and
+// warning while it does.
+//
+// A nonexistent container id avoids restarting a real Kubernetes workload container, while still
+// proving the request reached the CRI driver via its "not found" response.
+func (suite *RestartSuite) TestKubernetesFlagDeprecated() {
+	suite.RunCLI(
+		[]string{
+			"restart", "-k", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane),
+			"talosctl-it-nonexistent",
+		},
+		base.StdoutEmpty(),
+		base.ShouldFail(),
+		base.StderrShouldMatch(regexp.MustCompile(`(?i)deprecated`)),
+		base.StderrShouldMatch(regexp.MustCompile(`--namespace cri`)),
+		base.StderrShouldMatch(regexp.MustCompile(`not found`)),
+	)
+}
+
 func init() {
 	allSuites = append(allSuites, new(RestartSuite))
 }

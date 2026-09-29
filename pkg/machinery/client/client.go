@@ -39,16 +39,18 @@ type Client struct {
 	options *Options
 	conn    *grpcConnectionWrapper
 
-	MachineClient   machineapi.MachineServiceClient
-	TimeClient      timeapi.TimeServiceClient
-	ClusterClient   clusterapi.ClusterServiceClient
-	StorageClient   storageapi.StorageServiceClient
-	LVMClient       machineapi.LVMServiceClient
-	MDClient        machineapi.MDServiceClient
-	InspectClient   inspectapi.InspectServiceClient
-	ImageClient     machineapi.ImageServiceClient
-	DebugClient     machineapi.DebugServiceClient
-	LifecycleClient machineapi.LifecycleServiceClient
+	MachineClient        machineapi.MachineServiceClient
+	TimeClient           timeapi.TimeServiceClient
+	ClusterClient        clusterapi.ClusterServiceClient
+	StorageClient        storageapi.StorageServiceClient
+	MachineStorageClient machineapi.StorageServiceClient
+	LVMClient            machineapi.LVMServiceClient
+	MDClient             machineapi.MDServiceClient
+	InspectClient        inspectapi.InspectServiceClient
+	ImageClient          machineapi.ImageServiceClient
+	DebugClient          machineapi.DebugServiceClient
+	LifecycleClient      machineapi.LifecycleServiceClient
+	ContentLibraryClient machineapi.ContentLibraryServiceClient
 
 	COSI state.State
 
@@ -173,12 +175,14 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
+	c.MachineStorageClient = machineapi.NewStorageServiceClient(c.conn)
 	c.LVMClient = machineapi.NewLVMServiceClient(c.conn)
 	c.MDClient = machineapi.NewMDServiceClient(c.conn)
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
 	c.LifecycleClient = machineapi.NewLifecycleServiceClient(c.conn)
+	c.ContentLibraryClient = machineapi.NewContentLibraryServiceClient(c.conn)
 
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))

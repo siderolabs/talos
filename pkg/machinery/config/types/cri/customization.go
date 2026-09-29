@@ -76,7 +76,7 @@ func NewCRICustomizationConfigV1Alpha1(name string) *CRICustomizationConfigV1Alp
 
 func exampleCRICustomizationConfigV1Alpha1() *CRICustomizationConfigV1Alpha1 {
 	cfg := NewCRICustomizationConfigV1Alpha1("enable-metrics")
-	cfg.CustomizationContent = `[metrics]
+	cfg.CustomizationContent = `[plugins."io.containerd.server.v1.metrics"]
   address = "0.0.0.0:11234"
 `
 

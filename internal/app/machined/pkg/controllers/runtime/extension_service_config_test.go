@@ -26,10 +26,8 @@ type ExtensionServiceConfigSuite struct {
 
 func TestExtensionServiceConfigSuite(t *testing.T) {
 	suite.Run(t, &ExtensionServiceConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServiceConfigController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServiceConfigController{}))
 		},
 	})
 }

@@ -58,6 +58,18 @@ func (suite *SecuritySuite) TestSecurityState() {
 		ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.SecurityStateID},
 		func(r *runtimeres.SecurityState, asrt *assert.Assertions) {
 			asrt.True(r.TypedSpec().ModuleSignatureEnforced, "module signature enforcement should be enabled")
+
+			if r.TypedSpec().SecureBoot {
+				// the kernel locks itself down to `integrity` when it is booted with Secure Boot
+				// enabled, which is why Talos does not pass `lockdown=` explicitly anymore
+				asrt.GreaterOrEqual(r.TypedSpec().LockdownState, runtimeres.LockdownStateIntegrity,
+					"kernel lockdown should be at least `integrity` with Secure Boot enabled, got %s", r.TypedSpec().LockdownState)
+
+				// every Secure Boot provisioning path also enables a TPM, so the firmware
+				// recorded the `db` entry it used in PCR 7 and it should have been picked up
+				asrt.NotEmpty(r.TypedSpec().SecureBootAuthorityFingerprints,
+					"the Secure Boot authority should have been read from the TPM event log")
+			}
 		},
 	)
 }

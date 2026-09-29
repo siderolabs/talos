@@ -262,10 +262,8 @@ func (helper bgpWorkloadHelper) assertFabricSessions(nodeCtx context.Context, ex
 
 func (helper bgpWorkloadHelper) createBackend(ctx context.Context, nodeName, podName, description string) {
 	_, err := helper.suite.Clientset.CoreV1().Pods(corev1.NamespaceDefault).Create(ctx, &corev1.Pod{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   podName,
-			Labels: map[string]string{"app": podName},
-		},
+		Name:   podName,
+		Labels: map[string]string{"app": podName},
 		Spec: corev1.PodSpec{
 			NodeName: nodeName,
 			Containers: []corev1.Container{{

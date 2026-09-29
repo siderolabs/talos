@@ -24,14 +24,12 @@ func TestSBOMItemSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &SBOMItemSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.SBOMItemController{
-					SPDXPath:          "./testdata/spdx",
-					ExtensionSPDXPath: "./testdata/ext-spdx",
-				}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrls.SBOMItemController{
+				SPDXPath:          "./testdata/spdx",
+				ExtensionSPDXPath: "./testdata/ext-spdx",
+			}))
 		},
 	})
 }

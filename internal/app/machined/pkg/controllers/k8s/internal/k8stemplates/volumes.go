@@ -45,18 +45,14 @@ func EphemeralWritableVolumes() []corev1.Volume {
 	return []corev1.Volume{
 		{
 			Name: "tmp",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{
-					Medium: corev1.StorageMediumMemory,
-				},
+			EmptyDir: &corev1.EmptyDirVolumeSource{
+				Medium: corev1.StorageMediumMemory,
 			},
 		},
 		{
 			Name: "run",
-			VolumeSource: corev1.VolumeSource{
-				EmptyDir: &corev1.EmptyDirVolumeSource{
-					Medium: corev1.StorageMediumMemory,
-				},
+			EmptyDir: &corev1.EmptyDirVolumeSource{
+				Medium: corev1.StorageMediumMemory,
 			},
 		},
 	}
@@ -67,10 +63,8 @@ func Volumes(volumes []k8s.ExtraVolume) []corev1.Volume {
 	return xslices.Map(volumes, func(vol k8s.ExtraVolume) corev1.Volume {
 		return corev1.Volume{
 			Name: vol.Name,
-			VolumeSource: corev1.VolumeSource{
-				HostPath: &corev1.HostPathVolumeSource{
-					Path: vol.HostPath,
-				},
+			HostPath: &corev1.HostPathVolumeSource{
+				Path: vol.HostPath,
 			},
 		}
 	})

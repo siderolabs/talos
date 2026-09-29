@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package machine;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// The storage service provides utilities for working with disks and block devices.
+service StorageService {
+  // Statfs returns filesystem statistics for the filesystem containing the given path.
+  rpc Statfs(StorageServiceStatfsRequest) returns (StorageServiceStatfsResponse);
+}
+
+// StorageServiceStatfsRequest is the request message for Statfs.
+message StorageServiceStatfsRequest {
+  // Path is the mount point or a file/directory within the mounted file system.
+  string path = 1;
+}
+
+// StorageServiceStatfsResponse is the response message for Statfs.
+message StorageServiceStatfsResponse {
+  // Size is the total size of the volume in bytes.
+  uint64 size = 1;
+  // Used is the amount of used space in bytes.
+  uint64 used = 2;
+  // Available is the amount of space available to unprivileged users in bytes.
+  uint64 available = 3;
+  // Inodes is the total number of inodes in the filesystem.
+  uint64 inodes = 4;
+  // InodesUsed is the number of used inodes.
+  uint64 inodes_used = 5;
+  // InodesFree is the number of free inodes.
+  uint64 inodes_free = 6;
+}

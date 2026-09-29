@@ -16,7 +16,7 @@ import (
 
 	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/containerd/errdefs"
-	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/distribution/reference"
 	digest "github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 
@@ -47,14 +47,16 @@ var tagFetchAccept = strings.Join([]string{
 func NewTagFetcher(reg cri.Registries) verify.TagFetcher {
 	hosts := RegistryHosts(reg)
 
-	return func(ctx context.Context, repo name.Repository, tag string, expectedDigest digest.Digest) ([]byte, error) {
-		registryHosts, err := hosts(repo.RegistryStr())
+	return func(ctx context.Context, repo reference.Named, tag string, expectedDigest digest.Digest) ([]byte, error) {
+		registryDomain := reference.Domain(repo)
+
+		registryHosts, err := hosts(registryDomain)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get registry hosts for %q: %w", repo.RegistryStr(), err)
+			return nil, fmt.Errorf("failed to get registry hosts for %q: %w", registryDomain, err)
 		}
 
 		if len(registryHosts) == 0 {
-			return nil, fmt.Errorf("no registry hosts for %q: %w", repo.RegistryStr(), errdefs.ErrNotFound)
+			return nil, fmt.Errorf("no registry hosts for %q: %w", registryDomain, errdefs.ErrNotFound)
 		}
 
 		var firstErr error
@@ -80,7 +82,7 @@ func NewTagFetcher(reg cri.Registries) verify.TagFetcher {
 // manifest, performs the same 401/Authorize handshake the docker resolver does,
 // and validates the returned content against expectedDigest.
 func fetchManifestByTagFromHost(
-	ctx context.Context, host docker.RegistryHost, repo name.Repository, tag string, expectedDigest digest.Digest,
+	ctx context.Context, host docker.RegistryHost, repo reference.Named, tag string, expectedDigest digest.Digest,
 ) ([]byte, error) {
 	reqURL := buildTagManifestURL(host, repo, tag)
 
@@ -210,8 +212,8 @@ func checkTagManifestStatus(status int, reqURL string) error {
 // buildTagManifestURL mirrors how containerd's dockerBase builds a manifests URL:
 // <scheme>://<host>/<host.Path>/<repo>/manifests/<tag>, with the proxy-namespace
 // query argument added when the configured host is not the image's registry.
-func buildTagManifestURL(host docker.RegistryHost, repo name.Repository, tag string) string {
-	p := path.Join("/", host.Path, repo.RepositoryStr(), "manifests", tag)
+func buildTagManifestURL(host docker.RegistryHost, repo reference.Named, tag string) string {
+	p := path.Join("/", host.Path, reference.Path(repo), "manifests", tag)
 
 	u := url.URL{
 		Scheme: host.Scheme,
@@ -223,7 +225,7 @@ func buildTagManifestURL(host docker.RegistryHost, repo name.Repository, tag str
 	// the upstream namespace as ?ns=<registry> so they know what to proxy.
 	// docker.DefaultHost handles aliases such as docker.io → registry-1.docker.io,
 	// so we don't have to duplicate that mapping here.
-	refHost := repo.RegistryStr()
+	refHost := reference.Domain(repo)
 
 	canonicalRefHost, err := docker.DefaultHost(refHost)
 	if err != nil {

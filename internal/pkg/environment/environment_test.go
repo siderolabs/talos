@@ -71,7 +71,7 @@ func TestGet(t *testing.T) {
 
 				cfg, err = container.New(&v1alpha1.Config{
 					MachineConfig: &v1alpha1.MachineConfig{
-						MachineEnv: test.cfg,
+						MachineEnv: test.cfg, //nolint:staticcheck // testing deprecated field
 					},
 				})
 				require.NoError(t, err)

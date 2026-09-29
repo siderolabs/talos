@@ -95,6 +95,13 @@
 (typeattributeset system_p init_t)
 (typeattributeset system_p service_p)
 
+; Domains which create/mount system overlayfs.
+; https://github.com/torvalds/linux/blob/ad8d485e665829ecbf3c97b22ce251f8ff5f8037/fs/overlayfs/inode.c#L305-L308
+; see also: "Permission model" in kernel Documentation/filesystems/overlayfs.rst
+(typeattribute overlay_mounter_p)
+(typeattributeset overlay_mounter_p initramfs_t)
+(typeattributeset overlay_mounter_p init_t)
+
 (typeattribute any_p)
 (typeattributeset any_p system_p)
 (typeattributeset any_p system_container_p)

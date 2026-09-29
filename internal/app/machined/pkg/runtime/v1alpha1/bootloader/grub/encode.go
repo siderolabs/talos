@@ -53,14 +53,24 @@ terminal_output console
 
 `)
 
+	var bootPartitionArg string
+
+	if c.AppendBootPartitionUUID {
+		// $root is the partition GRUB was loaded from (BOOT): Talos waits for it to be discovered
+		// before declaring the system volumes missing
+		fmt.Fprintf(wr, "probe --set=%s --part-uuid $root\n\n", BootPartitionVariable)
+
+		bootPartitionArg = " " + bootPartitionCmdlineArg
+	}
+
 	for _, entry := range c.Entries {
 		fmt.Fprintf(wr, `menuentry "%s" {
   set gfxmode=auto
   set gfxpayload=text
-  linux %s %s
+  linux %s %s%s
   initrd %s
 }
-`, entry.Name, entry.Linux, Quote(entry.Cmdline), entry.Initrd)
+`, entry.Name, entry.Linux, Quote(entry.Cmdline), bootPartitionArg, entry.Initrd)
 	}
 
 	if c.AddResetOption {
@@ -69,10 +79,10 @@ terminal_output console
 		fmt.Fprintf(wr, `menuentry "Reset Talos installation and return to maintenance mode" {
   set gfxmode=auto
   set gfxpayload=text
-  linux %s %s talos.experimental.wipe=system:EPHEMERAL,STATE
+  linux %s %s talos.experimental.wipe=system:EPHEMERAL,STATE%s
   initrd %s
 }
-`, defaultEntry.Linux, Quote(defaultEntry.Cmdline), defaultEntry.Initrd)
+`, defaultEntry.Linux, Quote(defaultEntry.Cmdline), bootPartitionArg, defaultEntry.Initrd)
 	}
 
 	return nil

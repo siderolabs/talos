@@ -19,19 +19,20 @@ const KubeletKubeconfigType = resource.Type("KubeletKubeconfigs.kubernetes.talos
 // KubeletKubeconfigID is a singleton resource ID for KubeletKubeconfig.
 const KubeletKubeconfigID = resource.ID("kubelet")
 
-// KubeletKubeconfig resource exposes the on-disk kubelet kubeconfig state so
-// that consumers can detect when the file has changed and rebuild their
-// Kubernetes clients (the informer's reflector doesn't bubble up
-// connection-refused errors against a stale endpoint).
+// KubeletKubeconfig resource exposes the on-disk kubelet client credentials state
+// so that consumers can detect when they have changed and rebuild their Kubernetes
+// clients (the informer's reflector doesn't bubble up connection-refused errors
+// against a stale endpoint, nor does it recover from expired credentials).
 type KubeletKubeconfig = typed.Resource[KubeletKubeconfigSpec, KubeletKubeconfigExtension]
 
-// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+// KubeletKubeconfigSpec describes the current kubelet client credentials.
 //
 //gotagsrewrite:gen
 type KubeletKubeconfigSpec struct {
-	// Hash is a content digest of the kubeconfig file. It changes whenever the
-	// file contents change, which is the signal consumers use to rebuild their
-	// Kubernetes clients.
+	// Hash is a content digest of the kubeconfig file and of the certificates it
+	// references on disk (kubelet rotates its client certificate without ever
+	// touching the kubeconfig). It changes whenever the credentials change, which
+	// is the signal consumers use to rebuild their Kubernetes clients.
 	Hash string `yaml:"hash" protobuf:"1"`
 }
 

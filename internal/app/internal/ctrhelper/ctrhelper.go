@@ -24,29 +24,14 @@ import (
 //   - detached (context.Background()) context with the appropriate containerd namespace
 //   - containerd client
 func ContainerdInstanceHelper(ctx context.Context, req *common.ContainerdInstance) (context.Context, context.Context, *containerdapi.Client, error) {
-	var (
-		containerdAddress   string
-		containerdNamespace string
-	)
-
-	switch req.GetDriver() {
-	case common.ContainerDriver_CONTAINERD:
-		containerdAddress = constants.SystemContainerdAddress
-	case common.ContainerDriver_CRI:
-		containerdAddress = constants.CRIContainerdAddress
-	default:
-		return nil, nil, nil, status.Errorf(codes.InvalidArgument, "invalid containerd driver %s", req.GetDriver())
+	containerdAddress, err := ContainerdInstanceAddress(req.GetDriver(), req.GetNamespace())
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
-	switch req.GetNamespace() {
-	case common.ContainerdNamespace_NS_CRI:
-		containerdNamespace = constants.K8sContainerdNamespace
-	case common.ContainerdNamespace_NS_SYSTEM:
-		containerdNamespace = constants.SystemContainerdNamespace
-	case common.ContainerdNamespace_NS_UNKNOWN:
-		fallthrough
-	default:
-		return nil, nil, nil, status.Errorf(codes.InvalidArgument, "invalid containerd namespace %s", req.GetNamespace())
+	containerdNamespace, err := ContainerdInstanceNamespace(req.GetNamespace())
+	if err != nil {
+		return nil, nil, nil, err
 	}
 
 	if req.GetDriver() == common.ContainerDriver_CONTAINERD && req.GetNamespace() == common.ContainerdNamespace_NS_CRI {
@@ -59,4 +44,38 @@ func ContainerdInstanceHelper(ctx context.Context, req *common.ContainerdInstanc
 	}
 
 	return namespaces.WithNamespace(ctx, containerdNamespace), namespaces.WithNamespace(context.Background(), containerdNamespace), client, nil
+}
+
+// ContainerdInstanceAddress resolves which containerd instance's socket a driver addresses.
+func ContainerdInstanceAddress(driver common.ContainerDriver, namespace common.ContainerdNamespace) (string, error) {
+	switch driver {
+	case common.ContainerDriver_CONTAINERD:
+		// The containerd instance backing every non-system namespace (taloscontainers included) is
+		// the same one CRI uses; only the system namespace lives in Talos's own containerd instance.
+		if namespace == common.ContainerdNamespace_NS_SYSTEM {
+			return constants.SystemContainerdAddress, nil
+		}
+
+		return constants.CRIContainerdAddress, nil
+	case common.ContainerDriver_CRI:
+		return constants.CRIContainerdAddress, nil
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "invalid containerd driver %s", driver)
+	}
+}
+
+// ContainerdInstanceNamespace resolves the enum namespace selector to the raw containerd namespace name.
+func ContainerdInstanceNamespace(namespace common.ContainerdNamespace) (string, error) {
+	switch namespace {
+	case common.ContainerdNamespace_NS_CRI:
+		return constants.K8sContainerdNamespace, nil
+	case common.ContainerdNamespace_NS_SYSTEM:
+		return constants.SystemContainerdNamespace, nil
+	case common.ContainerdNamespace_NS_TALOSCONTAINERS:
+		return constants.TalosContainersContainerdNamespace, nil
+	case common.ContainerdNamespace_NS_UNKNOWN:
+		fallthrough
+	default:
+		return "", status.Errorf(codes.InvalidArgument, "invalid containerd namespace %s", namespace)
+	}
 }

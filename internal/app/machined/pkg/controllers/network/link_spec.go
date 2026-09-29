@@ -235,6 +235,32 @@ func findLink(links []rtnetlink.LinkMessage, name string, allowAliases bool) *rt
 	return nil
 }
 
+// resolveBondPrimary returns a copy of the bond master spec with PrimaryIndex resolved from Primary,
+// along with the link the primary resolved to (nil if it isn't present).
+//
+// The configuration layers name the primary slave, while the kernel's IFLA_BOND_PRIMARY is an interface
+// index. Indexes are not stable across reboots, renames or NIC re-plugs, so the resolution has to happen
+// against the live link list every time the settings are applied rather than once at config parsing time.
+//
+// If the primary link is not present right now, PrimaryIndex is left unset, which means "don't touch the
+// primary": the attribute is not encoded, so the kernel keeps whatever it has. Applying it anyway would be
+// actively harmful — the kernel resolves an unknown index to an empty name and *clears* the primary. The
+// controller watches RTMGRP_LINK, so a primary which shows up later converges on the next reconcile.
+func resolveBondPrimary(bondMaster network.BondMasterSpec, links []rtnetlink.LinkMessage) (network.BondMasterSpec, *rtnetlink.LinkMessage) {
+	bondMaster.PrimaryIndex = nil
+
+	if bondMaster.Primary == "" {
+		return bondMaster, nil
+	}
+
+	primaryLink := findLink(links, bondMaster.Primary, true)
+	if primaryLink != nil {
+		bondMaster.PrimaryIndex = new(primaryLink.Index)
+	}
+
+	return bondMaster, primaryLink
+}
+
 func rawLinkData(link *rtnetlink.LinkMessage) []byte {
 	if link == nil || link.Attributes == nil || link.Attributes.Info == nil || link.Attributes.Info.Data == nil {
 		return nil
@@ -314,25 +340,36 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 	switch link.Metadata().Phase() {
 	case resource.PhaseTearingDown:
 		// TODO: should we bring link down if it's physical and the spec was torn down?
-		if link.TypedSpec().Logical {
-			existing := findLink(*links, link.TypedSpec().Name, false) // logical links don't have aliases
+		existing := findLink(*links, link.TypedSpec().Name, false) // logical links don't have aliases
 
-			deleteLink := existing != nil
+		deleteLink := existing != nil
+		if deleteLink {
+			var existingKind string
 
-			if deleteLink {
-				if err := conn.Link.Delete(existing.Index); err != nil {
-					return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
-				}
+			if existing.Attributes != nil && existing.Attributes.Info != nil {
+				existingKind = existing.Attributes.Info.Kind
+			}
 
-				logger.Info("deleted link", zap.String("name", existing.Attributes.Name))
+			// this check mirrors exactly LinkStatus.Physical() method, but expressed in Linux netlink data
+			if existingKind == "" && existing.Type == uint16(nethelpers.LinkEther) {
+				// don't ever try to deleted physical links
+				deleteLink = false
+			}
+		}
 
-				// refresh links as the link list got changed
-				var err error
+		if deleteLink {
+			if err := conn.Link.Delete(existing.Index); err != nil {
+				return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
+			}
 
-				*links, err = conn.Link.List()
-				if err != nil {
-					return fmt.Errorf("error listing links: %w", err)
-				}
+			logger.Info("deleted link", zap.String("name", existing.Attributes.Name))
+
+			// refresh links as the link list got changed
+			var err error
+
+			*links, err = conn.Link.List()
+			if err != nil {
+				return fmt.Errorf("error listing links: %w", err)
 			}
 		}
 
@@ -372,6 +409,26 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				replace = true
 			}
 
+			// the parent link (VLAN, macvlan) is set on link creation and can't be changed on the fly
+			//
+			// existing.Attributes.Type is IFLA_LINK; VXLAN is skipped here, as the kernel doesn't report
+			// its parent via IFLA_LINK, it is carried inside the link info and checked in the VXLAN sync below
+			if !replace && link.TypedSpec().ParentName != "" && link.TypedSpec().Kind != network.LinkKindVXLAN {
+				parent := findLink(*links, link.TypedSpec().ParentName, true) // allow aliases for physical links/parents
+
+				// if the new parent doesn't exist yet, there's nothing to re-create the link on top of, so leave it alone
+				if parent != nil && existing.Attributes.Type != parent.Index {
+					logger.Info(
+						"replacing logical link with a different parent",
+						zap.String("parent_name", link.TypedSpec().ParentName),
+						zap.Uint32("old_parent_index", existing.Attributes.Type),
+						zap.Uint32("new_parent_index", parent.Index),
+					)
+
+					replace = true
+				}
+			}
+
 			if !replace && link.TypedSpec().Kind == network.LinkKindVeth {
 				if err := verifyVethPeers(*links, link.TypedSpec().Name, link.TypedSpec().Veth.PeerName); err != nil {
 					logger.Info(
@@ -409,6 +466,29 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 			}
 
+			// sync MACVLAN spec, as it's not reconciled in-place
+			if !replace && link.TypedSpec().Kind == network.LinkKindMacVLAN {
+				var existingMacVLAN network.MacVLANSpec
+
+				if existingRawLinkData == nil {
+					return fmt.Errorf("existing link %q has no data, can't decode macvlan settings", link.TypedSpec().Name)
+				}
+
+				if err := networkadapter.MacVLANSpec(&existingMacVLAN).Decode(existingRawLinkData); err != nil {
+					return fmt.Errorf("error decoding macvlan properties on %q: %w", link.TypedSpec().Name, err)
+				}
+
+				if existingMacVLAN != link.TypedSpec().MacVLAN {
+					logger.Info(
+						"replacing macvlan link",
+						zap.Stringer("old_mode", existingMacVLAN.Mode),
+						zap.Stringer("new_mode", link.TypedSpec().MacVLAN.Mode),
+					)
+
+					replace = true
+				}
+			}
+
 			// sync VRF spec, as it can't be modified on the fly
 			if !replace && link.TypedSpec().Kind == network.LinkKindVRF {
 				var existingVRF network.VRFMasterSpec
@@ -429,6 +509,48 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					)
 
 					replace = true
+				}
+			}
+
+			// sync VXLAN spec, as it can't be modified on the fly
+			if !replace && link.TypedSpec().Kind == network.LinkKindVXLAN {
+				var (
+					existingVXLAN       network.VXLANSpec
+					existingParentIndex uint32
+				)
+
+				if existingRawLinkData == nil {
+					return fmt.Errorf("existing link %q has no data, can't decode vxlan settings", link.TypedSpec().Name)
+				}
+
+				if err := networkadapter.VXLANSpec(&existingVXLAN, &existingParentIndex).Decode(existingRawLinkData); err != nil {
+					return fmt.Errorf("error decoding vxlan properties on %q: %w", link.TypedSpec().Name, err)
+				}
+
+				if existingVXLAN != networkadapter.NormalizeVXLANSpec(link.TypedSpec().VXLAN) {
+					logger.Info(
+						"replacing vxlan link",
+						zap.Uint32("old_id", existingVXLAN.ID),
+						zap.Uint32("new_id", link.TypedSpec().VXLAN.ID),
+					)
+
+					replace = true
+				}
+
+				// the parent is part of the link info for VXLAN, so it is checked here rather than via IFLA_LINK
+				if !replace && link.TypedSpec().ParentName != "" {
+					parent := findLink(*links, link.TypedSpec().ParentName, true) // allow aliases for physical links/parents
+
+					if parent != nil && existingParentIndex != parent.Index {
+						logger.Info(
+							"replacing vxlan link with a different parent",
+							zap.String("parent_name", link.TypedSpec().ParentName),
+							zap.Uint32("old_parent_index", existingParentIndex),
+							zap.Uint32("new_parent_index", parent.Index),
+						)
+
+						replace = true
+					}
 				}
 			}
 
@@ -475,8 +597,17 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 			}
 
+			if link.TypedSpec().Kind == network.LinkKindMacVLAN {
+				data, err = networkadapter.MacVLANSpec(&link.TypedSpec().MacVLAN).Encode()
+				if err != nil {
+					return fmt.Errorf("error encoding macvlan attributes for link %q: %w", link.TypedSpec().Name, err)
+				}
+			}
+
 			if link.TypedSpec().Kind == network.LinkKindBond {
-				data, err = networkadapter.BondMasterSpec(&link.TypedSpec().BondMaster).Encode()
+				bondMaster, _ := resolveBondPrimary(link.TypedSpec().BondMaster, *links)
+
+				data, err = networkadapter.BondMasterSpec(&bondMaster).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding bond attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
@@ -486,6 +617,13 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				data, err = networkadapter.VethSpec(&link.TypedSpec().Veth).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding veth attributes for link %q: %w", link.TypedSpec().Name, err)
+				}
+			}
+
+			if link.TypedSpec().Kind == network.LinkKindVXLAN {
+				data, err = networkadapter.VXLANSpec(&link.TypedSpec().VXLAN, &parentIndex).Encode()
+				if err != nil {
+					return fmt.Errorf("error encoding vxlan attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
 			}
 
@@ -558,19 +696,38 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error parsing bond attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
-			// primaryIndex might be reported from the kernel, but if it's nil in the spec, we should treat it as equal
-			if existingBond.PrimaryIndex != nil && link.TypedSpec().BondMaster.PrimaryIndex == nil {
-				existingBond.PrimaryIndex = nil
-			}
+			// the spec carries the primary as a link name, but the kernel talks in interface indexes, and those
+			// are not stable, so resolve the name against the current link list on every reconcile
+			expectedBond, primaryLink := resolveBondPrimary(link.TypedSpec().BondMaster, *links)
 
-			if !existingBond.Equal(&link.TypedSpec().BondMaster) {
+			// decide on the primary here rather than leaving it to Equal, which is deliberately lenient about it.
+			//
+			// The kernel only reports IFLA_BOND_PRIMARY while the primary slave is actually enslaved, so its answer
+			// is only worth comparing against once the primary link has joined the bond. Outside of that, an unset
+			// primary on the kernel side doesn't mean drift:
+			//
+			//   - the primary link hasn't been enslaved yet: the name we asked for is already pending in the bond's
+			//     params, and bond_enslave picks it up when the link joins;
+			//   - the primary link is gone (unplugged, driver unloaded): the kernel dropped it, and re-applying would
+			//     tear the bond down and re-enslave every remaining slave exactly when a failover is in flight;
+			//   - nothing asks for a primary at all: whatever the kernel has stays put.
+			primaryEnslaved := expectedBond.PrimaryIndex != nil &&
+				primaryLink != nil && pointer.SafeDeref(primaryLink.Attributes.Master) == existing.Index
+
+			primaryDiffers := primaryEnslaved &&
+				(existingBond.PrimaryIndex == nil || *existingBond.PrimaryIndex != *expectedBond.PrimaryIndex)
+
+			// take the primary out of the picture for Equal, which is only asked about the remaining settings
+			existingBond.PrimaryIndex = expectedBond.PrimaryIndex
+
+			if primaryDiffers || !existingBond.Equal(&expectedBond) {
 				logger.Debug(
 					"updating bond settings",
 					zap.String("old", fmt.Sprintf("%+v", existingBond)),
-					zap.String("new", fmt.Sprintf("%+v", link.TypedSpec().BondMaster)),
+					zap.String("new", fmt.Sprintf("%+v", expectedBond)),
 				)
 
-				data, err := networkadapter.BondMasterSpec(&link.TypedSpec().BondMaster).Encode()
+				data, err := networkadapter.BondMasterSpec(&expectedBond).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding bond attributes for %q: %w", link.TypedSpec().Name, err)
 				}
@@ -733,7 +890,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				logger.Info("reconfigured wireguard link", zap.Int("peers", len(link.TypedSpec().Wireguard.Peers)))
 
 				// notify link status controller, as wireguard updates can't be watched via netlink API
-				if err = safe.WriterModify[*network.LinkRefresh](ctx, r, network.NewLinkRefresh(network.NamespaceName, network.LinkKindWireguard), func(r *network.LinkRefresh) error {
+				if err = safe.WriterModify[*network.LinkRefresh](ctx, r, network.NewLinkRefresh(network.NamespaceName, network.LinkRefreshWireguard), func(r *network.LinkRefresh) error {
 					r.TypedSpec().Bump()
 
 					return nil

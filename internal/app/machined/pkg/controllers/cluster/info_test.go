@@ -30,9 +30,9 @@ func (suite *InfoSuite) TestReconcile() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ClusterConfig: &v1alpha1.ClusterConfig{
-			ClusterID:   "cluster1",
-			ClusterName: "foo",
-			ControlPlane: &v1alpha1.ControlPlaneConfig{
+			ClusterID:   "cluster1", //nolint:staticcheck // testing deprecated field
+			ClusterName: "foo",      //nolint:staticcheck // testing deprecated field
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 				Endpoint: &v1alpha1.Endpoint{
 					URL: must(url.Parse("https://example.com/")),
 				},
@@ -59,11 +59,9 @@ func TestInfoSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &InfoSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewInfoController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(clusterctrl.NewInfoController()))
 		},
 	})
 }

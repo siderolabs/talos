@@ -260,11 +260,9 @@ func TestControlPlaneSchedulerFinalSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ControlPlaneSchedulerFinalSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneSchedulerFinalController()))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneSchedulerFinalController()))
 		},
 	})
 }
@@ -621,11 +619,9 @@ func TestControlPlaneControllerManagerFinalSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ControlPlaneControllerManagerFinalSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneControllerManagerFinalController()))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneControllerManagerFinalController()))
 		},
 	})
 }
@@ -1172,11 +1168,9 @@ func TestControlPlaneAPIServerFinalSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ControlPlaneAPIServerFinalSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAPIServerFinalController()))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAPIServerFinalController()))
 		},
 	})
 }

@@ -197,7 +197,7 @@ func TestDiscoveryServiceConfigV1Alpha1ConflictValidate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // testing legacy config conflict
-						DiscoveryEnabled: new(true),
+						DiscoveryEnabled: new(true), //nolint:staticcheck // testing legacy config conflict
 					},
 				},
 			},
@@ -209,7 +209,7 @@ func TestDiscoveryServiceConfigV1Alpha1ConflictValidate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // testing legacy config conflict
-						DiscoveryEnabled: new(false),
+						DiscoveryEnabled: new(false), //nolint:staticcheck // testing legacy config conflict
 					},
 				},
 			},

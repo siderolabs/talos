@@ -74,15 +74,15 @@ func (widget *Header) OnResourceDataChange(data resourcedata.Data) {
 		if data.Deleted {
 			nodeData.hostname = noHostname
 		} else {
-			nodeData.hostname = res.TypedSpec().Hostname
+			nodeData.hostname = tview.Escape(res.TypedSpec().Hostname)
 		}
 	case *runtime.Version:
 		if data.Deleted {
 			nodeData.name = version.Name
 			nodeData.version = notAvailable
 		} else {
-			nodeData.name = res.TypedSpec().Name
-			nodeData.version = res.TypedSpec().Version
+			nodeData.name = tview.Escape(res.TypedSpec().Name)
+			nodeData.version = tview.Escape(res.TypedSpec().Version)
 
 			if nodeData.name == "" {
 				nodeData.name = version.Name

@@ -45,12 +45,11 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 		userVolumeResource := VolumeResource{
 			VolumeID:           volumeID,
 			Label:              block.UserVolumeLabel,
-			MountTransformFunc: HandleUserVolumeMountRequest(userVolumeConfig), // This is overridden for Directory type below.
+			MountTransformFunc: HandleUserVolumeMountRequest(userVolumeConfig),
 		}
 
 		switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
 		case block.VolumeTypeDirectory:
-			userVolumeResource.MountTransformFunc = DefaultMountTransform
 			userVolumeResource.TransformFunc = NewBuilder().
 				WithType(block.VolumeTypeDirectory).
 				WithMount(block.MountSpec{
@@ -277,6 +276,11 @@ func externalVolumeSource(ext configconfig.ExternalVolumeConfig) string {
 			return ext.Mount().Virtiofs().ValueOrZero().Source()
 		}
 
+	case block.FilesystemTypeNFS:
+		if ext.Mount().NFS().IsPresent() {
+			return ext.Mount().NFS().ValueOrZero().Source()
+		}
+
 	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeBtrfs:
 		fallthrough
 
@@ -295,6 +299,13 @@ func externalVolumeParameters(ext configconfig.ExternalVolumeConfig) ([]block.Pa
 		}
 
 		return nil, errors.New("virtiofs mount specification is required for Virtiofs external volume")
+
+	case block.FilesystemTypeNFS:
+		if ext.Mount().NFS().IsPresent() {
+			return ext.Mount().NFS().ValueOrZero().Parameters()
+		}
+
+		return nil, errors.New("NFS mount specification is required for NFS external volume")
 
 	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeBtrfs:
 		fallthrough

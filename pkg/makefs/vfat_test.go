@@ -2,6 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+//nolint:dupl
 package makefs_test
 
 import (
@@ -40,6 +41,30 @@ func TestVFATCustomSectorSize(t *testing.T) {
 	require.NoError(t, c.Run())
 
 	assert.Contains(t, stdout.String(), "sector size: 4096 bytes")
+}
+
+func TestVFATCustomClusterSize(t *testing.T) {
+	if _, err := exec.LookPath("minfo"); err != nil {
+		t.Skip("minfo not found in PATH, skipping test")
+	}
+
+	tempDir := t.TempDir()
+	vfatImg := filepath.Join(tempDir, "test.img")
+
+	f, err := os.Create(vfatImg)
+	require.NoError(t, err)
+	require.NoError(t, f.Truncate(100*1024*1024))
+	require.NoError(t, f.Close())
+
+	require.NoError(t, makefs.VFAT(t.Context(), vfatImg, makefs.WithLabel("TEST"), makefs.WithSectorsPerCluster(4)))
+
+	var stdout bytes.Buffer
+
+	c := exec.CommandContext(t.Context(), "minfo", "-i", vfatImg)
+	c.Stdout = &stdout
+	require.NoError(t, c.Run())
+
+	assert.Contains(t, stdout.String(), "cluster size: 4 sectors")
 }
 
 func TestVFATWithSourceDirectory(t *testing.T) {

@@ -76,15 +76,17 @@ func TestKubeTalosAPIAccessConfigValidate(t *testing.T) {
 		name string
 		cfg  func() *k8s.KubeTalosAPIAccessConfigV1Alpha1
 
-		expectedError string
+		expectedError    string
+		expectedWarnings []string
 	}{
 		{
 			name: "valid",
 			cfg:  kubeTalosAPIAccessConfig,
 		},
 		{
-			name: "no roles",
-			cfg:  k8s.NewKubeTalosAPIAccessConfigV1Alpha1,
+			name:             "no roles",
+			cfg:              k8s.NewKubeTalosAPIAccessConfigV1Alpha1,
+			expectedWarnings: []string{"no roles are allowed in .allowedRoles, so access is blocked"},
 		},
 		{
 			name: "all roles",
@@ -128,7 +130,7 @@ func TestKubeTalosAPIAccessConfigValidate(t *testing.T) {
 			t.Parallel()
 
 			warnings, err := test.cfg().Validate(validationMode{})
-			assert.Nil(t, warnings)
+			assert.Equal(t, test.expectedWarnings, warnings)
 
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)

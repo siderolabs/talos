@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/gertd/go-pluralize"
 	"github.com/hashicorp/go-multierror"
 )
@@ -26,7 +25,11 @@ func AppendErrors(err error, errs ...error) error {
 
 		count := pluralize.NewClient().Pluralize("error", len(lines), true)
 
-		return color.RedString(fmt.Sprintf("%s occurred:\n%s", count, strings.Join(lines, "\n")))
+		// plain text: the aggregated message is mostly chosen by the node, so it is
+		// escaped before it reaches the terminal, and an escape sequence in it would
+		// be escaped along with everything else. Whoever prints the error colorizes
+		// it - see cmd.Execute.
+		return fmt.Sprintf("%s occurred:\n%s", count, strings.Join(lines, "\n"))
 	}
 
 	return res

@@ -30,9 +30,7 @@ func TestStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &StatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-		},
+		Timeout: 3 * time.Second,
 	})
 }
 

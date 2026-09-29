@@ -42,6 +42,8 @@ type ConfigSpec struct {
 	MTU uint32 `yaml:"mtu,omitempty" protobuf:"6"`
 	// If not empty, filter advertised endpoints using the list of CIDRs.
 	EndpointFilters []string `yaml:"endpointFilters,omitempty" protobuf:"7"`
+	// If not empty, filter peer endpoints to connect to using the list of CIDRs.
+	PeerEndpointFilters []string `yaml:"peerEndpointFilters,omitempty" protobuf:"11"`
 	// Harvest endpoints from the peer statuses.
 	HarvestExtraEndpoints bool `yaml:"harvestExtraEndpoints" protobuf:"8"`
 	// Extra endpoints to announce.

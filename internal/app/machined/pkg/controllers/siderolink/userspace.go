@@ -61,10 +61,11 @@ func (ctrl *UserspaceWireguardController) Outputs() []controller.Output {
 func (ctrl *UserspaceWireguardController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	eg, ctx := errgroup.WithContext(ctx)
 
+	relayRetryTimer := NewResettableTimer()
+
 	var (
-		relayRetryTimer resettableTimer
-		tunnelDevice    tunnelDeviceProps
-		tunnelRelay     tunnelProps
+		tunnelDevice tunnelDeviceProps
+		tunnelRelay  tunnelProps
 	)
 
 	defer func() {
@@ -209,59 +210,38 @@ type tunnelDeviceProps struct {
 	mtu      int
 }
 
-// resettableTimer wraps time.Timer to allow resetting the timer to any duration.
-type resettableTimer struct {
+// ResettableTimer wraps time.Timer to allow arming, re-arming or stopping it.
+type ResettableTimer struct {
 	mx    sync.Mutex
 	timer *time.Timer
 }
 
-// Reset resets the timer to the given duration.
-//
-// If the duration is zero, the timer is removed (and stopped as needed).
-// If the duration is non-zero, the timer is created if it doesn't exist, or reset if it does.
-func (rt *resettableTimer) Reset(delay time.Duration) {
+// NewResettableTimer creates a stopped ResettableTimer.
+func NewResettableTimer() *ResettableTimer {
+	timer := time.NewTimer(0)
+	timer.Stop()
+
+	return &ResettableTimer{timer: timer}
+}
+
+// Reset arms the timer for the given duration, or stops it when the duration is zero.
+func (rt *ResettableTimer) Reset(delay time.Duration) {
 	rt.mx.Lock()
 	defer rt.mx.Unlock()
 
-	if delay == 0 {
-		if rt.timer != nil {
-			if !rt.timer.Stop() {
-				<-rt.timer.C
-			}
+	rt.timer.Stop()
 
-			rt.timer = nil
-		}
-	} else {
-		if rt.timer == nil {
-			rt.timer = time.NewTimer(delay)
-		} else {
-			if !rt.timer.Stop() {
-				<-rt.timer.C
-			}
-
-			rt.timer.Reset(delay)
-		}
+	if delay > 0 {
+		rt.timer.Reset(delay)
 	}
 }
 
 // Clear should be called after receiving from the timer channel.
-func (rt *resettableTimer) Clear() {
-	rt.mx.Lock()
-	defer rt.mx.Unlock()
-
-	rt.timer = nil
+func (rt *ResettableTimer) Clear() {
+	rt.Reset(0)
 }
 
 // C returns the timer channel.
-//
-// If the timer was not reset to a non-zero duration, nil is returned.
-func (rt *resettableTimer) C() <-chan time.Time {
-	rt.mx.Lock()
-	defer rt.mx.Unlock()
-
-	if rt.timer == nil {
-		return nil
-	}
-
+func (rt *ResettableTimer) C() <-chan time.Time {
 	return rt.timer.C
 }

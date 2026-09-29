@@ -67,7 +67,7 @@ func (suite *HostnameConfigSuite) TestDefaultStableHostname() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						StableHostname: new(true),
+						StableHostname: new(true), //nolint:staticcheck // testing deprecated field
 					},
 				},
 			},
@@ -113,11 +113,11 @@ func (suite *HostnameConfigSuite) TestLegacyMachineConfiguration() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkHostname: "foo",
+						NetworkHostname: "foo", //nolint:staticcheck // legacy config
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -218,8 +218,6 @@ func TestHostnameConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &HostnameConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

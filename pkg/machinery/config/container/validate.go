@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -18,6 +19,7 @@ import (
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -106,8 +108,12 @@ func (container *Container) validate(mode validation.RuntimeMode, opt ...validat
 		}
 	}
 
-	if err := container.validateContainer(mode); err != nil {
-		multiErr = multierror.Append(multiErr, err)
+	containerWarnings, containerErr := container.validateContainer(mode)
+
+	warnings = append(warnings, containerWarnings...)
+
+	if containerErr != nil {
+		multiErr = multierror.Append(multiErr, containerErr)
 	}
 
 	return warnings, multiErr.ErrorOrNil()
@@ -204,9 +210,27 @@ func (container *Container) runtimeValidateContainer(ctx context.Context, st sta
 //
 // This validation is used to do validation which only makes sense for the full configuration (vs. individual documents).
 //
+// The method returns warnings and fatal errors (as multierror).
+//
 //nolint:gocyclo,cyclop
-func (container *Container) validateContainer(mode validation.RuntimeMode) error {
-	var errs error
+func (container *Container) validateContainer(mode validation.RuntimeMode) ([]string, error) {
+	var (
+		warnings []string
+		errs     error
+	)
+
+	// A cpufreq attribute set both by CPUScalingConfig and through sysfs has two controllers writing
+	// it, each reverting the other on every reconcile. Reject that rather than let the machine flap.
+	if len(container.CPUScalingConfigs()) > 0 {
+		for key := range container.SysfsConfig() {
+			if strings.HasPrefix(key, "devices.system.cpu.") && strings.Contains(key, ".cpufreq.") {
+				errs = multierror.Append(errs, fmt.Errorf(
+					"sysfs key %q conflicts with CPUScalingConfig: configure CPU frequency scaling through one of them, not both",
+					key,
+				))
+			}
+		}
+	}
 
 	if mode.InContainer() {
 		// in container mode, HostDNS must be enabled and forward KubeDNS to host must be enabled as well
@@ -262,6 +286,22 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		errs = multierror.Append(errs, err)
 	}
 
+	// A volume backs a single content library, and must not be read-only. A per-document Validate()
+	// cannot see the other documents, so this is a container-level check.
+	if err := validateContentLibraryBackingVolumes(container); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
+	if err := container.validateStoragePools(); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
+	// A virtual machine disk provisioned from an image names the content library holding it, which
+	// only the rest of the configuration can resolve.
+	if err := validateVirtualMachineImageReferences(container); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
 	// or by a DiscoveryIdentityConfig document. The identity may live in a separate document, so this
 	// cross-document check is done at the container level.
@@ -293,6 +333,38 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 				errs = multierror.Append(errs, fmt.Errorf("etcd encryption config is required for control plane machines running kube-apiserver"))
 			}
 		}
+
+		// the legacy .machine.nodeLabels/.machine.nodeTaints are amended with the control plane role
+		// label and taint for control plane machines, while the KubeNodeConfig document is used as-is,
+		// so warn if the control plane role label is missing after the migration
+		//
+		// the taint is not checked, as skipping it is a valid way to allow scheduling on control planes
+		if nodeConfigs := findMatchingDocs[configconfig.K8sNodeConfig](container.documents); len(nodeConfigs) > 0 {
+			nodeConfig := nodeConfigs[0]
+
+			_, hasControlPlaneLabel := nodeConfig.Labels()[constants.LabelNodeRoleControlPlane]
+
+			// if the node is not registered in Kubernetes, the labels and taints are not used at all
+			if !hasControlPlaneLabel && !nodeConfig.SkipNodeRegistration() {
+				warnings = append(warnings, fmt.Sprintf(
+					"KubeNodeConfig document should set the %q node label on control plane machines "+
+						"(and, unless scheduling on control planes is allowed, the %q taint): "+
+						"unlike .machine.nodeLabels/.machine.nodeTaints, the document contents are used as-is",
+					constants.LabelNodeRoleControlPlane,
+					constants.LabelNodeRoleControlPlane+": "+constants.TaintEffectNoSchedule,
+				))
+			}
+		}
+	}
+
+	// if Kubernetes is configured for this machine (there is a Kubernetes CA), the cluster name and
+	// endpoint are required: they might be provided either by the legacy .cluster.controlPlane.endpoint
+	// or by the KubeClusterConfig document, so this is a cross-document check
+	//
+	// configs generated with Kubernetes disabled have neither, so they are not affected
+	if container.K8sAPIServerCAConfig() != nil && container.K8sClusterConfig() == nil {
+		errs = multierror.Append(errs, fmt.Errorf("cluster name and endpoint are required when Kubernetes is configured: "+
+			"either .cluster.clusterName/.cluster.controlPlane.endpoint or the KubeClusterConfig document"))
 	}
 
 	controlplaneDocs := findMatchingDocs[ControlplaneOnlyConfig](container.documents)
@@ -304,7 +376,8 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		slices.Sort(kinds)
 		kinds = slices.Compact(kinds)
 
-		errs = multierror.Append(errs,
+		errs = multierror.Append(
+			errs,
 			fmt.Errorf(
 				"the following document kinds are only allowed on control plane machines: %v",
 				kinds,
@@ -312,7 +385,7 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		)
 	}
 
-	return errs
+	return warnings, errs
 }
 
 // Validate is the legacy validation method.

@@ -56,12 +56,10 @@ func TestUpgradeFallbackControllerSuite(t *testing.T) {
 
 	suite.Run(t, &DropUpgradeFallbackControllerSuite{
 		meta: m,
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&runtime.DropUpgradeFallbackController{
-					MetaProvider: metaProvider{meta: m},
-				}))
-			},
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&runtime.DropUpgradeFallbackController{
+				MetaProvider: metaProvider{meta: m},
+			}))
 		},
 	})
 }

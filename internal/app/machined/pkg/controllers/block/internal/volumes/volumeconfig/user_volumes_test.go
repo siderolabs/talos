@@ -19,7 +19,6 @@ import (
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -44,12 +43,10 @@ func TestUserVolumeTransformer(t *testing.T) {
 			name: "partition volume",
 			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.UserVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
-					MetaName:   "foo",
-					VolumeType: new(block.VolumeTypePartition),
+					MetaKind:       blockcfg.UserVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
+					MetaName:       "foo",
+					VolumeType:     new(block.VolumeTypePartition),
 					FilesystemSpec: blockcfg.FilesystemSpec{
 						FilesystemType: block.FilesystemTypeXFS,
 					},
@@ -84,12 +81,10 @@ func TestUserVolumeTransformer(t *testing.T) {
 		{
 			name: "directory volume",
 			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
-				Meta: meta.Meta{
-					MetaKind:       blockcfg.UserVolumeConfigKind,
-					MetaAPIVersion: "v1alpha1",
-				},
-				MetaName:   "bar",
-				VolumeType: new(block.VolumeTypeDirectory),
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				MetaName:       "bar",
+				VolumeType:     new(block.VolumeTypeDirectory),
 				FilesystemSpec: blockcfg.FilesystemSpec{
 					FilesystemType: block.FilesystemTypeXFS,
 				},
@@ -115,19 +110,18 @@ func TestUserVolumeTransformer(t *testing.T) {
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
-					// default mount transform is noop
 					require.NoError(t, err)
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},
 		{
 			name: "unsupported volume type",
 			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
-				Meta: meta.Meta{
-					MetaKind:       blockcfg.UserVolumeConfigKind,
-					MetaAPIVersion: "v1alpha1",
-				},
-				VolumeType: new(block.VolumeTypeTmpfs),
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				VolumeType:     new(block.VolumeTypeTmpfs),
 			}},
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
 				require.Error(t, err)
@@ -139,22 +133,18 @@ func TestUserVolumeTransformer(t *testing.T) {
 		{
 			name: "multiple configs",
 			cfg: []*blockcfg.UserVolumeConfigV1Alpha1{{
-				Meta: meta.Meta{
-					MetaKind:       blockcfg.UserVolumeConfigKind,
-					MetaAPIVersion: "v1alpha1",
-				},
-				MetaName:   "foo",
-				VolumeType: new(block.VolumeTypePartition),
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				MetaName:       "foo",
+				VolumeType:     new(block.VolumeTypePartition),
 				FilesystemSpec: blockcfg.FilesystemSpec{
 					FilesystemType: block.FilesystemTypeXFS,
 				},
 			}, {
-				Meta: meta.Meta{
-					MetaKind:       blockcfg.UserVolumeConfigKind,
-					MetaAPIVersion: "v1alpha1",
-				},
-				MetaName:   "bar",
-				VolumeType: new(block.VolumeTypeDirectory),
+				MetaKind:       blockcfg.UserVolumeConfigKind,
+				MetaAPIVersion: "v1alpha1",
+				MetaName:       "bar",
+				VolumeType:     new(block.VolumeTypeDirectory),
 				FilesystemSpec: blockcfg.FilesystemSpec{
 					FilesystemType: block.FilesystemTypeXFS,
 				},
@@ -205,11 +195,9 @@ func TestRawVolumeTransformer(t *testing.T) {
 	t.Parallel()
 
 	volumeCfg := &blockcfg.RawVolumeConfigV1Alpha1{
-		Meta: meta.Meta{
-			MetaKind:       blockcfg.RawVolumeConfigKind,
-			MetaAPIVersion: "v1alpha1",
-		},
-		MetaName: "raw-data",
+		MetaKind:       blockcfg.RawVolumeConfigKind,
+		MetaAPIVersion: "v1alpha1",
+		MetaName:       "raw-data",
 	}
 
 	cfg, err := container.New(volumeCfg)
@@ -262,11 +250,9 @@ func TestExistingVolumeTransformer(t *testing.T) {
 			name: "existing volume RW",
 			cfg: []*blockcfg.ExistingVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.ExistingVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
-					MetaName: "existing-data",
+					MetaKind:       blockcfg.ExistingVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
+					MetaName:       "existing-data",
 					VolumeDiscoverySpec: blockcfg.VolumeDiscoverySpec{
 						VolumeSelectorConfig: blockcfg.VolumeSelector{
 							Match: cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label == "MY-DATA"`, celenv.VolumeLocator())),
@@ -306,11 +292,9 @@ func TestExistingVolumeTransformer(t *testing.T) {
 			name: "existing volume RO",
 			cfg: []*blockcfg.ExistingVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.ExistingVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
-					MetaName: "readonly-data",
+					MetaKind:       blockcfg.ExistingVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
+					MetaName:       "readonly-data",
 					VolumeDiscoverySpec: blockcfg.VolumeDiscoverySpec{
 						VolumeSelectorConfig: blockcfg.VolumeSelector{
 							Match: cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label == "READONLY-DATA"`, celenv.VolumeLocator())),
@@ -370,10 +354,8 @@ func TestExternalVolumeTransformer(t *testing.T) {
 			name: "external volume RW",
 			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.ExternalVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
+					MetaKind:       blockcfg.ExternalVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
 					MetaName:       "external-data",
 					FilesystemType: block.FilesystemTypeVirtiofs,
 					MountSpec: blockcfg.ExternalMountSpec{
@@ -411,13 +393,11 @@ func TestExternalVolumeTransformer(t *testing.T) {
 			},
 		},
 		{
-			name: "external volume RW",
+			name: "external volume RO",
 			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.ExternalVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
+					MetaKind:       blockcfg.ExternalVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
 					MetaName:       "external-data",
 					FilesystemType: block.FilesystemTypeVirtiofs,
 					MountSpec: blockcfg.ExternalMountSpec{
@@ -448,9 +428,42 @@ func TestExternalVolumeTransformer(t *testing.T) {
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
 					require.NoError(t, err)
 
-					assert.True(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+					assert.True(t, m.TypedSpec().ReadOnly, "expected read-only mount")
 					assert.True(t, m.TypedSpec().Secure)
 					assert.True(t, m.TypedSpec().NoExec)
+				})
+			},
+		},
+		{
+			name: "NFSv3 external volume",
+			cfg: []*blockcfg.ExternalVolumeConfigV1Alpha1{
+				{
+					MetaKind: blockcfg.ExternalVolumeConfigKind, MetaAPIVersion: "v1alpha1",
+					MetaName:       "nfs-data",
+					FilesystemType: block.FilesystemTypeNFS,
+					MountSpec: blockcfg.ExternalMountSpec{
+						MountNFS: &blockcfg.NFSMountSpec{
+							NFSServer:  "10.5.0.1",
+							NFSPath:    "/export",
+							NFSVersion: block.NFSVersion3,
+							NFSPort:    12049,
+						},
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
+				require.Len(t, resources, 1)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.FilesystemTypeNFS, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+					assert.Equal(t, "10.5.0.1:/export", vc.TypedSpec().Provisioning.DiskSelector.External)
+					assert.Equal(t, []block.ParameterSpec{
+						block.NewStringParameter("vers", "3"),
+						block.NewStringParameter("port", "12049"),
+						block.NewBooleanParameter("nolock"),
+					}, vc.TypedSpec().Mount.Parameters)
 				})
 			},
 		},
@@ -491,11 +504,9 @@ func TestSwapVolumeTransformer(t *testing.T) {
 			name: "swap volume",
 			cfg: []*blockcfg.SwapVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.SwapVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
-					MetaName: "swap1",
+					MetaKind:       blockcfg.SwapVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
+					MetaName:       "swap1",
 				},
 			},
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
@@ -527,11 +538,9 @@ func TestSwapVolumeTransformer(t *testing.T) {
 			name: "swap volume with sizes",
 			cfg: []*blockcfg.SwapVolumeConfigV1Alpha1{
 				{
-					Meta: meta.Meta{
-						MetaKind:       blockcfg.SwapVolumeConfigKind,
-						MetaAPIVersion: "v1alpha1",
-					},
-					MetaName: "swap1",
+					MetaKind:       blockcfg.SwapVolumeConfigKind,
+					MetaAPIVersion: "v1alpha1",
+					MetaName:       "swap1",
 					ProvisioningSpec: blockcfg.ProvisioningSpec{
 						ProvisioningMinSize: blockcfg.MustByteSize("1GB"),
 						ProvisioningMaxSize: blockcfg.MustSize("2GB"),

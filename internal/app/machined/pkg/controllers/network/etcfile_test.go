@@ -80,7 +80,7 @@ func (suite *EtcFileConfigSuite) ExtraSetup() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						ExtraHostEntries: []*v1alpha1.ExtraHost{
+						ExtraHostEntries: []*v1alpha1.ExtraHost{ //nolint:staticcheck // legacy config
 							{
 								HostIP:      "10.0.0.1",
 								HostAliases: []string{"a", "b"},
@@ -93,7 +93,7 @@ func (suite *EtcFileConfigSuite) ExtraSetup() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -273,7 +273,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomainLegacy() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkDisableSearchDomain: new(true),
+						NetworkDisableSearchDomain: new(true), //nolint:staticcheck // legacy config
 					},
 				},
 			},
@@ -356,6 +356,21 @@ func (suite *EtcFileConfigSuite) TestOnlyHostname() {
 	)
 }
 
+func (suite *EtcFileConfigSuite) TestInvalidNames() {
+	suite.hostnameStatus.TypedSpec().Hostname = "node1"
+	suite.hostnameStatus.TypedSpec().Domainname = "poc.example\n6.6.6.6 registry.k8s.io"
+	suite.resolverStatus.TypedSpec().SearchDomains = []string{"legit.example", "poc.example\nnameserver 6.6.6.6", "Corp_Example.com"}
+
+	suite.testFiles(
+		[]resource.Resource{suite.defaultAddress, suite.hostnameStatus, suite.resolverStatus, suite.hostDNSConfig},
+		etcFileContents{
+			hosts:            "127.0.0.1 localhost\n::1       localhost ip6-localhost ip6-loopback\nff02::1   ip6-allnodes\nff02::2   ip6-allrouters\n",
+			resolvConf:       "nameserver 127.0.0.53\n\nsearch legit.example Corp_Example.com\n",
+			resolvGlobalConf: "nameserver 169.254.116.108\nnameserver fd54:616c:6f73:0:204f:5320:444e:531\n\nsearch legit.example Corp_Example.com\n",
+		},
+	)
+}
+
 func (suite *EtcFileConfigSuite) ExtraTearDown() {
 	if _, err := os.Lstat(suite.podResolvConfPath); err == nil {
 		if suite.etcRoot.FSType() == "os" {
@@ -380,9 +395,7 @@ func TestEtcFileConfigSuite(t *testing.T) {
 	}
 
 	s := &EtcFileConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	}
 
 	s.AfterSetup = func(*ctest.DefaultSuite) {

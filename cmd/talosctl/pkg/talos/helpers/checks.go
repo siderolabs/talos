@@ -8,12 +8,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/xerrors"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
@@ -105,7 +105,7 @@ func ClientVersionCheck(ctx context.Context, clientFactory ClientFactory) error 
 	}
 
 	if warnings != nil {
-		fmt.Fprintf(os.Stderr, "WARNING: %s\n", strings.Join(warnings, ", "))
+		fmt.Fprintf(safeout.Stderr(), "WARNING: %s\n", strings.Join(warnings, ", "))
 	}
 
 	return errs

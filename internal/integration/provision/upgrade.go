@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/images"
 	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -35,6 +35,8 @@ type upgradeSpec struct {
 	SourceVersion        string
 	SourceK8sVersion     string
 
+	VersionContract *config.VersionContract
+
 	TargetInstallerImage  string
 	TargetVersion         string
 	TargetK8sVersion      string
@@ -46,16 +48,17 @@ type upgradeSpec struct {
 	WorkerNodes       int
 
 	UpgradeUseInmemoryContainerd bool
+	UpgradeRebootPowercyle       bool
 
-	// Deprecated: staged upgrades are not supported by the new LifecycleService API.
-	// Use the legacy MachineService.Upgrade path instead.
-	UpgradeStage            bool
 	WithEncryption          bool
 	WithTrustedBoot         bool
 	WithBios                bool
 	WithApplyConfig         bool
 	WithSkipInjectingConfig bool
 	WithEnforcing           bool
+
+	// TestRollback specifies whether to test rollback after the upgrade.
+	TestRollback bool
 }
 
 const (
@@ -125,118 +128,63 @@ func upgradeStableToCurrent() upgradeSpec {
 }
 
 // upgradeCurrentToCurrent upgrades the current version to itself.
-func upgradeCurrentToCurrent() upgradeSpec {
-	installerImage := fmt.Sprintf(
-		"%s/%s:%s",
-		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
-		DefaultSettings.CurrentVersion,
-	)
-
-	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-same-ver", DefaultSettings.CurrentVersion),
-
-		SourceKernelPath:     helpers.ArtifactPath(constants.KernelAssetWithArch),
-		SourceInitramfsPath:  helpers.ArtifactPath(constants.InitramfsAssetWithArch),
-		SourceInstallerImage: installerImage,
-		SourceVersion:        DefaultSettings.CurrentVersion,
-		SourceK8sVersion:     currentK8sVersion,
-
-		TargetInstallerImage: installerImage,
-		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
-
-		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
-		WorkerNodes:       DefaultSettings.WorkerNodes,
-
-		WithEncryption: true,
-	}
-}
-
-// upgradeCurrentToCurrentBios upgrades the current version to itself without UEFI.
-func upgradeCurrentToCurrentBios() upgradeSpec {
-	installerImage := fmt.Sprintf(
-		"%s/%s:%s",
-		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
-		DefaultSettings.CurrentVersion,
-	)
-
-	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-same-ver-bios", DefaultSettings.CurrentVersion),
-
-		SourceDiskImagePath:  helpers.ArtifactPath("metal-amd64.raw.zst"),
-		SourceInstallerImage: installerImage,
-		SourceVersion:        DefaultSettings.CurrentVersion,
-		SourceK8sVersion:     currentK8sVersion,
-
-		TargetInstallerImage: installerImage,
-		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
-
-		ControlplaneNodes: DefaultSettings.ControlplaneNodes,
-		WorkerNodes:       DefaultSettings.WorkerNodes,
-
-		WithEncryption:  true,
-		WithBios:        true,
-		WithApplyConfig: true,
-	}
-}
-
-// upgradeStableToCurrentPreserveStage upgrades from the stable Talos release to the current version for single-node cluster with preserve and stage.
-func upgradeStableToCurrentPreserveStage() upgradeSpec {
-	return upgradeSpec{
-		ShortName: fmt.Sprintf("prsrv-stg-%s-%s", stableRelease, DefaultSettings.CurrentVersion),
-
-		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
-		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", stableRelease),
-		SourceVersion:        stableRelease,
-		SourceK8sVersion:     stableK8sVersion,
-
-		TargetInstallerImage: fmt.Sprintf(
+func upgradeCurrentToCurrent(useGRUB, useKexec, useEncryption bool) func() upgradeSpec {
+	return func() upgradeSpec {
+		installerImage := fmt.Sprintf(
 			"%s/%s:%s",
 			DefaultSettings.TargetInstallImageRegistry,
 			images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 			DefaultSettings.CurrentVersion,
-		),
-		TargetVersion:    DefaultSettings.CurrentVersion,
-		TargetK8sVersion: currentK8sVersion,
+		)
 
-		ControlplaneNodes: 1,
-		WorkerNodes:       0,
-		UpgradeStage:      true,
-	}
-}
+		targetInstallerImage := installerImage + "-extra-cmdline"
 
-func upgradeCurrentToCurrentNewCmdline() upgradeSpec {
-	installerImage := fmt.Sprintf(
-		"%s/%s:%s",
-		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
-		DefaultSettings.CurrentVersion,
-	)
+		// we need to keep name short due to socket path length limi
+		bootloader := "sd"
 
-	targetInstallerImage := installerImage + "-extra-cmdline"
+		if useGRUB {
+			bootloader = "gr"
+		}
 
-	return upgradeSpec{
-		ShortName: fmt.Sprintf("%s-same-ver-extra-cmdline", DefaultSettings.CurrentVersion),
+		kexec := "kex"
 
-		SourceISOPath:        helpers.ArtifactPath("metal-amd64.iso"),
-		SourceInstallerImage: installerImage,
-		SourceVersion:        DefaultSettings.CurrentVersion,
-		SourceK8sVersion:     currentK8sVersion,
+		if !useKexec {
+			kexec = "pwr"
+		}
 
-		TargetInstallerImage: targetInstallerImage,
-		TargetVersion:        DefaultSettings.CurrentVersion,
-		TargetK8sVersion:     currentK8sVersion,
+		encryption := "ne"
 
-		ControlplaneNodes: 1,
-		WorkerNodes:       0,
+		if useEncryption {
+			encryption = "en"
+		}
 
-		TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+		return upgradeSpec{
+			ShortName: fmt.Sprintf("%s-sver-%s-%s-%s", DefaultSettings.CurrentVersion, bootloader, kexec, encryption),
 
-		WithApplyConfig: true,
+			SourceISOPath:        helpers.ArtifactPath("metal-amd64.iso"),
+			SourceInstallerImage: installerImage,
+			SourceVersion:        DefaultSettings.CurrentVersion,
+			SourceK8sVersion:     currentK8sVersion,
+
+			VersionContract: config.TalosVersionCurrent.DisableEtcd().DisableKubernetes(),
+
+			TargetInstallerImage: targetInstallerImage,
+			TargetVersion:        DefaultSettings.CurrentVersion,
+			TargetK8sVersion:     currentK8sVersion,
+
+			ControlplaneNodes: 1,
+			WorkerNodes:       0,
+
+			TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+
+			UpgradeRebootPowercyle: !useKexec,
+
+			WithApplyConfig: true,
+			WithBios:        useGRUB,
+			WithEncryption:  useEncryption,
+
+			TestRollback: true,
+		}
 	}
 }
 
@@ -257,6 +205,8 @@ func upgradeCurrentToCurrentEnforcing() upgradeSpec {
 		SourceInstallerImage: installerImage,
 		SourceVersion:        DefaultSettings.CurrentVersion,
 		SourceK8sVersion:     currentK8sVersion,
+
+		VersionContract: config.TalosVersionCurrent.DisableEtcd().DisableKubernetes(),
 
 		TargetInstallerImage: installerImage,
 		TargetVersion:        DefaultSettings.CurrentVersion,
@@ -360,6 +310,8 @@ func (suite *UpgradeSuite) runE2E(k8sVersion string) {
 }
 
 // TestRolling performs rolling upgrade starting with master nodes.
+//
+//nolint:gocyclo
 func (suite *UpgradeSuite) TestRolling() {
 	suite.setupCluster(clusterOptions{
 		ClusterName: suite.spec.ShortName,
@@ -376,6 +328,8 @@ func (suite *UpgradeSuite) TestRolling() {
 		SourceInstallerImage: suite.spec.SourceInstallerImage,
 		SourceVersion:        suite.spec.SourceVersion,
 		SourceK8sVersion:     suite.spec.SourceK8sVersion,
+
+		VersionContract: suite.spec.VersionContract,
 
 		WithEncryption:          suite.spec.WithEncryption,
 		WithTrustedBoot:         suite.spec.WithTrustedBoot,
@@ -403,22 +357,23 @@ func (suite *UpgradeSuite) TestRolling() {
 	}
 
 	options := upgradeOptions{
+		SourceVersion:                suite.spec.SourceVersion,
 		TargetInstallerImage:         suite.spec.TargetInstallerImage,
-		UpgradeStage:                 suite.spec.UpgradeStage,
 		TargetVersion:                suite.spec.TargetVersion,
 		UpgradeUseInmemoryContainerd: suite.spec.UpgradeUseInmemoryContainerd,
+		RebootPowercycle:             suite.spec.UpgradeRebootPowercyle,
 	}
 
-	// upgrade master nodes
+	// upgrade controlplane nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeInit || node.Type == machine.TypeControlPlane {
+		if node.Type.IsControlPlane() {
 			suite.upgradeNode(client, node, options)
 		}
 	}
 
 	// upgrade worker nodes
 	for _, node := range suite.Cluster.Info().Nodes {
-		if node.Type == machine.TypeWorker {
+		if !node.Type.IsControlPlane() {
 			suite.upgradeNode(client, node, options)
 		}
 	}
@@ -439,7 +394,9 @@ func (suite *UpgradeSuite) TestRolling() {
 	}
 
 	// upgrade Kubernetes if required
-	suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion, suite.spec.SkipKubeletUpgrade)
+	if !suite.spec.VersionContract.KubernetesDisabled() {
+		suite.upgradeKubernetes(suite.spec.SourceK8sVersion, suite.spec.TargetK8sVersion, suite.spec.SkipKubeletUpgrade)
+	}
 
 	if suite.spec.TargetCmdlineContains != "" {
 		for _, node := range suite.Cluster.Info().Nodes {
@@ -447,8 +404,38 @@ func (suite *UpgradeSuite) TestRolling() {
 		}
 	}
 
-	// run e2e test
-	suite.runE2E(suite.spec.TargetK8sVersion)
+	// run e2e tests on the upgraded cluster
+	if !suite.spec.VersionContract.KubernetesDisabled() {
+		suite.runE2E(suite.spec.TargetK8sVersion)
+	}
+
+	// test rollback if required
+	if !suite.spec.TestRollback {
+		return
+	}
+
+	// roll back worker nodes
+	for _, node := range suite.Cluster.Info().Nodes {
+		if !node.Type.IsControlPlane() {
+			suite.rollbackNode(client, node, options)
+		}
+	}
+
+	// roll back controlplane nodes
+	for _, node := range suite.Cluster.Info().Nodes {
+		if node.Type.IsControlPlane() {
+			suite.rollbackNode(client, node, options)
+		}
+	}
+
+	// verify final cluster version
+	suite.assertSameVersionCluster(client, suite.spec.TargetVersion)
+
+	if suite.spec.TargetCmdlineContains != "" {
+		for _, node := range suite.Cluster.Info().Nodes {
+			suite.assertCmdlineNotContains(client, node.IPs[0].String(), suite.spec.TargetCmdlineContains)
+		}
+	}
 }
 
 // SuiteName ...
@@ -463,13 +450,17 @@ func (suite *UpgradeSuite) SuiteName() string {
 func init() {
 	allSuites = append(
 		allSuites,
-		&UpgradeSuite{specGen: upgradePreviousToStable, track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(false, false, false), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(false, true, false), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(false, false, true), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(false, true, true), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, false, false), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, true, false), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, false, true), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrent(true, true, true), track: 0},
+		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcing, track: 0},
+		&UpgradeSuite{specGen: upgradeStableToCurrentTrustedBoot, track: 1},
 		&UpgradeSuite{specGen: upgradeStableToCurrent, track: 1},
-		&UpgradeSuite{specGen: upgradeCurrentToCurrent, track: 2},
-		&UpgradeSuite{specGen: upgradeCurrentToCurrentBios, track: 0},
-		&UpgradeSuite{specGen: upgradeStableToCurrentPreserveStage, track: 1},
-		&UpgradeSuite{specGen: upgradeCurrentToCurrentNewCmdline, track: 2},
-		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcing, track: 1},
-		&UpgradeSuite{specGen: upgradeStableToCurrentTrustedBoot, track: 0},
+		&UpgradeSuite{specGen: upgradePreviousToStable, track: 1},
 	)
 }

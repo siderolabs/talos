@@ -31,6 +31,9 @@ import (
 type CLISuite struct {
 	suite.Suite
 	TalosSuite
+
+	// resourcePresence caches controlPlaneHasResource answers by resource type.
+	resourcePresence map[string]bool
 }
 
 // DiscoverNodes provides list of Talos nodes in the cluster.
@@ -73,9 +76,58 @@ func (cliSuite *CLISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) 
 		}
 	}
 
+	if len(nodes) == 0 && cliSuite.Cluster != nil {
+		// The provisioner state lists every node the cluster has, so no match means the cluster
+		// was created without nodes of this type, not that discovery missed them.
+		cliSuite.T().Skipf("cluster has no nodes of type %v", types)
+	}
+
 	cliSuite.Require().NotEmpty(nodes)
 
 	return nodes[rand.IntN(len(nodes))].InternalIP.String()
+}
+
+// SupportsKubernetes reports whether the cluster runs Kubernetes.
+//
+// Kubernetes is configured only when the machine config carries a cluster section: a cluster
+// created with --skip-etcd-k8s runs Talos on its own, and the kubelet configuration which every
+// Kubernetes node has never appears. This is the same signal APISuite.Capabilities uses.
+func (cliSuite *CLISuite) SupportsKubernetes() bool {
+	return cliSuite.controlPlaneHasResource("kubeletconfigs", "KubeletConfig")
+}
+
+// SupportsEtcd reports whether the cluster runs etcd.
+//
+// etcd runs only on control plane nodes whose machine config carries the etcd CA, which is exactly
+// when the etcd root secrets exist: on a cluster created with --skip-etcd-k8s, they never appear.
+// This is the same signal APISuite.SupportsEtcd uses.
+func (cliSuite *CLISuite) SupportsEtcd() bool {
+	return cliSuite.controlPlaneHasResource("etcdrootsecrets", "EtcdRootSecret")
+}
+
+// controlPlaneHasResource reports whether a control plane node has a resource of the given type,
+// caching the answer for the rest of the suite.
+//
+// Table output always carries a header, so an empty list still satisfies RunCLI's default checks;
+// the resource is present if its type name shows up in a row.
+func (cliSuite *CLISuite) controlPlaneHasResource(resourceType, typeName string) bool {
+	if present, ok := cliSuite.resourcePresence[resourceType]; ok {
+		return present
+	}
+
+	node := cliSuite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	stdout, _ := cliSuite.RunCLI([]string{"--nodes", node, "get", resourceType})
+
+	present := strings.Contains(stdout, typeName)
+
+	if cliSuite.resourcePresence == nil {
+		cliSuite.resourcePresence = map[string]bool{}
+	}
+
+	cliSuite.resourcePresence[resourceType] = present
+
+	return present
 }
 
 func (cliSuite *CLISuite) discoverKubectl() cluster.Info {

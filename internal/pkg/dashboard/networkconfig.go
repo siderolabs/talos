@@ -66,6 +66,18 @@ type NetworkConfigGrid struct {
 	nodeMap      map[string]*networkConfigData
 }
 
+// dropdownListStyles returns the styles for the drop-down popup list.
+//
+// The popup keeps a background of its own so that it stands out from whatever it
+// covers, but the text color is left at the terminal default, and the selected entry
+// is marked with reverse video rather than a hardcoded color pair, so that both work
+// on dark and light terminals alike.
+func dropdownListStyles() (unselected, selected tcell.Style) {
+	unselected = tcell.StyleDefault.Background(tview.Styles.MoreContrastBackgroundColor)
+
+	return unselected, unselected.Attributes(tcell.AttrReverse)
+}
+
 // NewNetworkConfigGrid initializes NetworkConfigGrid.
 func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkConfigGrid {
 	widget := &NetworkConfigGrid{
@@ -117,10 +129,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	widget.interfaceDropdown.SetOptions([]string{interfaceNone}, func(_ string, _ int) {
 		widget.formEdited()
 	})
-	widget.interfaceDropdown.SetListStyles(
-		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
-		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
-	)
+	widget.interfaceDropdown.SetListStyles(dropdownListStyles())
 
 	widget.vlanIDField = tview.NewInputField().SetLabel(formItemVLANID).SetAcceptanceFunc(tview.InputFieldInteger)
 	widget.vlanIDField.SetBlurFunc(widget.formEdited)
@@ -130,10 +139,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	widget.modeDropdown.SetOptions([]string{ModeDHCP, ModeStatic}, func(_ string, _ int) {
 		widget.formEdited()
 	})
-	widget.modeDropdown.SetListStyles(
-		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
-		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
-	)
+	widget.modeDropdown.SetListStyles(dropdownListStyles())
 
 	widget.addressesField = tview.NewInputField().SetLabel(formItemAddresses)
 	widget.addressesField.SetBlurFunc(widget.formEdited)
@@ -308,7 +314,7 @@ func (widget *NetworkConfigGrid) redraw() {
 
 		err := encoder.Encode(data.existingConfig)
 		if err != nil {
-			widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+			widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(err.Error())))
 		}
 
 		widget.existingConfigView.SetText(fmt.Sprintf("[lightblue]%s[-]", tview.Escape(buf.String())))
@@ -317,7 +323,7 @@ func (widget *NetworkConfigGrid) redraw() {
 	}
 
 	if data.newConfigError != nil {
-		widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", data.newConfigError))
+		widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(data.newConfigError.Error())))
 	} else if data.newConfig != nil {
 		var buf strings.Builder
 
@@ -326,7 +332,7 @@ func (widget *NetworkConfigGrid) redraw() {
 
 		err := encoder.Encode(data.newConfig)
 		if err != nil {
-			widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+			widget.newConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(err.Error())))
 		}
 
 		widget.newConfigView.SetText(fmt.Sprintf("[green]%s[-]", tview.Escape(buf.String())))
@@ -381,7 +387,7 @@ func (widget *NetworkConfigGrid) updateNodeData(data resourcedata.Data) {
 				cfg := runtime.PlatformNetworkConfig{}
 
 				if err := yaml.Unmarshal([]byte(res.TypedSpec().Value), &cfg); err != nil {
-					widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", err))
+					widget.existingConfigView.SetText(fmt.Sprintf("[red]error: %v[-]", tview.Escape(err.Error())))
 
 					return
 				}
@@ -431,7 +437,7 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 
 	configBytes, err := yaml.Marshal(nodeData.newConfig)
 	if err != nil {
-		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
 		return
 	}
@@ -439,7 +445,7 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 	ctx = utils.NodeContext(ctx, widget.selectedNode)
 
 	if err = widget.dashboard.cli.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, configBytes); err != nil {
-		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))
+		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
 		return
 	}

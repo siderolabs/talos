@@ -1,0 +1,278 @@
+<?xml version="1.0"?>
+<!-- A Relax NG schema for common libvirt XML storage elements -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+    datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <!-- This schema is not designed for standalone use; another file
+       must include both this file and basictypes.rng -->
+
+  <define name="encryption">
+    <element name="encryption">
+      <attribute name="format">
+        <choice>
+          <value>default</value>
+          <value>qcow</value>
+          <value>luks</value>
+          <value>luks2</value>
+          <value>luks-any</value>
+        </choice>
+      </attribute>
+      <optional>
+        <attribute name="engine">
+          <choice>
+            <value>qemu</value>
+            <value>librbd</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <interleave>
+          <oneOrMore>
+            <ref name="secret"/>
+          </oneOrMore>
+          <optional>
+            <interleave>
+              <element name="cipher">
+                <ref name="keycipher"/>
+              </element>
+              <element name="ivgen">
+                <ref name="keyivgen"/>
+              </element>
+            </interleave>
+          </optional>
+        </interleave>
+      </optional>
+    </element>
+  </define>
+
+  <define name="initiatorinfo">
+    <element name="initiator">
+      <element name="iqn">
+        <attribute name="name">
+          <text/>
+        </attribute>
+        <empty/>
+      </element>
+    </element>
+  </define>
+
+  <define name="reconnect">
+    <element name="reconnect">
+      <choice>
+        <group>
+          <attribute name="enabled">
+            <ref name="virYesNo"/>
+          </attribute>
+          <optional>
+            <attribute name="timeout">
+              <ref name="unsignedInt"/>
+            </attribute>
+          </optional>
+        </group>
+        <attribute name="delay">
+          <ref name="unsignedInt"/>
+        </attribute>
+      </choice>
+    </element>
+  </define>
+
+  <define name="unixSocketSource">
+    <element name="source">
+      <attribute name="type">
+        <value>unix</value>
+      </attribute>
+      <attribute name="path">
+        <ref name="absFilePath"/>
+      </attribute>
+      <attribute name="mode">
+        <choice>
+          <value>server</value>
+          <value>client</value>
+        </choice>
+      </attribute>
+      <optional>
+         <ref name="reconnect"/>
+      </optional>
+      <empty/>
+    </element>
+  </define>
+
+  <define name="reservations">
+    <element name="reservations">
+      <optional>
+        <attribute name="managed">
+          <ref name="virYesNo"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="migration">
+          <ref name="virYesNo"/>
+        </attribute>
+      </optional>
+      <optional>
+        <ref name="unixSocketSource"/>
+      </optional>
+    </element>
+  </define>
+
+  <define name="secret">
+    <element name="secret">
+      <attribute name="type">
+        <value>passphrase</value>
+      </attribute>
+      <choice>
+        <attribute name="uuid">
+          <ref name="UUID"/>
+        </attribute>
+        <attribute name="usage">
+          <text/>
+        </attribute>
+      </choice>
+    </element>
+  </define>
+
+  <define name="compat">
+    <element name="compat">
+      <data type="string">
+        <param name="pattern">[0-9]+\.[0-9]+</param>
+      </data>
+    </element>
+  </define>
+
+  <define name="clusterSize">
+    <element name="clusterSize">
+      <ref name="scaledInteger"/>
+    </element>
+  </define>
+
+  <define name="fileFormatFeatures">
+    <element name="features">
+      <interleave>
+        <optional>
+          <element name="lazy_refcounts">
+            <empty/>
+          </element>
+        </optional>
+        <optional>
+          <element name="extended_l2">
+            <empty/>
+          </element>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+
+  <!-- split the list of known storage formats into two, those where
+       we know how to follow backing chains, and all others -->
+  <define name="storageFormatBacking">
+    <choice>
+      <value>cow</value>
+      <value>qcow</value>
+      <value>qcow2</value>
+      <value>qed</value>
+      <value>vmdk</value>
+    </choice>
+  </define>
+  <define name="storageFormat">
+    <choice>
+      <value>raw</value>
+      <value>dir</value>
+      <value>bochs</value>
+      <value>cloop</value>
+      <value>dmg</value>
+      <value>iso</value>
+      <value>vpc</value>
+      <value>vdi</value>
+      <value>fat</value>
+      <value>vhd</value>
+      <value>ploop</value>
+      <value>luks</value>
+      <ref name="storageFormatBacking"/>
+    </choice>
+  </define>
+
+  <define name="storageStartupPolicy">
+    <!-- Use a combine="choice" override in client files that want to
+         add additional attributes to a <source> sub-element
+         associated with a storage source -->
+    <notAllowed/>
+  </define>
+
+  <define name="storageSourceExtra">
+    <!-- Use a combine="choice" override in client files that want to
+         add additional elements as siblings of a <source> sub-element
+         associated with a storage source -->
+    <notAllowed/>
+  </define>
+
+  <define name="permissions">
+    <optional>
+      <element name="permissions">
+        <interleave>
+          <optional>
+            <element name="mode">
+              <ref name="octalMode"/>
+            </element>
+          </optional>
+          <optional>
+            <element name="owner">
+              <choice>
+                <ref name="unsignedInt"/>
+                <value>-1</value>
+              </choice>
+            </element>
+          </optional>
+          <optional>
+            <element name="group">
+              <choice>
+                <ref name="unsignedInt"/>
+                <value>-1</value>
+              </choice>
+            </element>
+          </optional>
+          <optional>
+            <element name="label">
+              <text/>
+            </element>
+          </optional>
+        </interleave>
+      </element>
+    </optional>
+  </define>
+
+  <define name="keycipher">
+    <attribute name="name">
+      <text/>
+    </attribute>
+    <attribute name="size">
+      <ref name="unsignedInt"/>
+    </attribute>
+    <optional>
+      <attribute name="mode">
+        <text/>
+      </attribute>
+      <attribute name="hash">
+        <text/>
+      </attribute>
+    </optional>
+  </define>
+
+  <define name="keyivgen">
+    <attribute name="name">
+      <text/>
+    </attribute>
+    <optional>
+      <attribute name="hash">
+        <text/>
+      </attribute>
+    </optional>
+  </define>
+
+  <define name="refreshVolumeAllocation">
+    <choice>
+      <value>default</value>
+      <value>capacity</value>
+    </choice>
+  </define>
+
+</grammar>

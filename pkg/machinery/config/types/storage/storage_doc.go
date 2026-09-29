@@ -83,13 +83,14 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 				Name:        "match",
 				Type:        "Expression",
 				Note:        "",
-				Description: "CEL expression matching a disk or partition to use as a physical volume.\n\nThe expression is evaluated against each discovered volume with the\n`volume` variable (the discovered volume) and, for whole disks, the\n`disk` variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via `volume.partition_label`.",
+				Description: "CEL expression matching a disk or partition to use as a physical volume.\n\nThe expression is evaluated against each discovered volume with the\n`volume` variable (the discovered volume) and, for whole disks, the\n`disk` variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via `volume.partition_label`.\n\nA volume declared in the machine config also matches on `volume_id`,\nthe volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),\nas in `volume_id == \"r-lvmdata\"`. A device Talos does not manage as a\nvolume has an empty `volume_id`.\n\nUse `volume_id` for a whole-disk volume, which carries no partition\nlabel to match on. Use it for an encrypted volume too: Talos creates\nthe physical volume on the opened device, never on the ciphertext.\n\nTalos matches a declared volume only after the volume manager has\nprepared it. Provisioning therefore waits for an encrypted volume to\nbe unlocked rather than write to the still-locked device.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching a disk or partition to use as a physical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
 
 	doc.Fields[0].AddExample("match raw volume partitions labeled r-lvm*", exampleLVMVolumeSelector())
+	doc.Fields[0].AddExample("match the raw volume named lvmdata, encrypted or not", exampleLVMVolumeIDSelector())
 
 	return doc
 }
@@ -286,13 +287,70 @@ func (RAIDVolumeSelector) Doc() *encoder.Doc {
 				Name:        "match",
 				Type:        "Expression",
 				Note:        "",
-				Description: "CEL expression matching the member volumes of the array.\n\nEvaluated against each discovered volume with the `volume` variable;\nthe `disk` variable is bound for whole disks (empty for partitions), so\nboth whole disks and partitions can be selected. The system disk and\nits partitions are never eligible.",
+				Description: "CEL expression matching the member volumes of the array.\n\nEvaluated against each discovered volume with the `volume` variable;\nthe `disk` variable is bound for whole disks (empty for partitions), so\nboth whole disks and partitions can be selected. The system disk and\nits partitions are never eligible.\n\nA volume declared in the machine config also matches on `volume_id`,\nthe volume name prefixed by its kind (`u-` user, `r-` raw, `s-` swap),\nas in `volume_id == \"r-mirror0\"`. A device Talos does not manage as a\nvolume has an empty `volume_id`.\n\nAn encrypted volume matches the same way. Talos builds the array on\nthe opened device, never on the ciphertext, and matches the volume\nonly after the volume manager has prepared it.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching the member volumes of the array." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
 
 	doc.Fields[0].AddExample("match NVMe disks larger than 100 GiB", exampleRAIDDiskSelector())
+
+	return doc
+}
+
+func (StoragePoolV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "StoragePool",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "StoragePool defines a directory storage pool on a configured filesystem volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "StoragePool defines a directory storage pool on a configured filesystem volume.\nDefines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,\nor ExternalVolumeConfig. The backing volume must be writable and filesystem-backed.\nOnly one pool may reference a backing volume. The pool directory is named after\nthe pool beneath the volume mount target. Removing the configuration stops and\nundefines the pool, but never deletes its files or backing volume.\nRequires the libvirtd system extension. Changing the backing volume changes\nthe pool target; it does not migrate existing disk images.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Pool name: 1-63 ASCII letters, digits, hyphens or underscores, starting with a letter or digit.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Pool name: 1-63 ASCII letters, digits, hyphens or underscores, starting with a letter or digit." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "volume",
+				Type:        "StoragePoolVolume",
+				Note:        "",
+				Description: "Reference to the writable filesystem volume backing this pool.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Reference to the writable filesystem volume backing this pool." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleStoragePoolV1Alpha1())
+
+	return doc
+}
+
+func (StoragePoolVolume) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "StoragePoolVolume",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "StoragePoolVolume references a backing volume by its document name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "StoragePoolVolume references a backing volume by its document name.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "StoragePoolV1Alpha1",
+				FieldName: "volume",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the UserVolumeConfig, ExistingVolumeConfig, or ExternalVolumeConfig document.\nThis is the literal document name, not the runtime volume ID.\nFor example, a UserVolumeConfig named `u-images` is referenced as `u-images`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the UserVolumeConfig, ExistingVolumeConfig, or ExternalVolumeConfig document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -311,6 +369,8 @@ func GetFileDoc() *encoder.FileDoc {
 			RAIDArrayConfigV1Alpha1{}.Doc(),
 			RAIDProvisioningSpec{}.Doc(),
 			RAIDVolumeSelector{}.Doc(),
+			StoragePoolV1Alpha1{}.Doc(),
+			StoragePoolVolume{}.Doc(),
 		},
 	}
 }

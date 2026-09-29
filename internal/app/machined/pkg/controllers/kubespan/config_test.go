@@ -41,8 +41,8 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				},
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=",
-				ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=",
+				ClusterID:     "8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", //nolint:staticcheck // testing deprecated field
+				ClusterSecret: "I+1In7fLnpcRIjUmEoeugZnSyFoTF6MztLxICL5Yu0s=", //nolint:staticcheck // testing deprecated field
 			},
 		},
 		&network.KubespanEndpointsConfigV1Alpha1{
@@ -76,8 +76,8 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterID:     "test-cluster-id",
-					ClusterSecret: "test-cluster-secret",
+					ClusterID:     "test-cluster-id",     //nolint:staticcheck // testing deprecated field
+					ClusterSecret: "test-cluster-secret", //nolint:staticcheck // testing deprecated field
 				},
 			},
 		),
@@ -99,6 +99,7 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 	kubeSpanCfg.ConfigMTU = new(uint32(1380))
 	kubeSpanCfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
+		ConfigPeerEndpoints:             []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"},
 		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/8")}},
 	}
 
@@ -107,8 +108,8 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 			ConfigVersion: "v1alpha1",
 			MachineConfig: &v1alpha1.MachineConfig{},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				ClusterID:     "test-cluster-id-multi-doc",
-				ClusterSecret: "test-cluster-secret-multi-doc",
+				ClusterID:     "test-cluster-id-multi-doc",     //nolint:staticcheck // testing deprecated field
+				ClusterSecret: "test-cluster-secret-multi-doc", //nolint:staticcheck // testing deprecated field
 			},
 		},
 		kubeSpanCfg,
@@ -127,6 +128,7 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 			asrt.Equal("test-cluster-secret-multi-doc", spec.SharedSecret)
 			asrt.Equal(uint32(1380), spec.MTU)
 			asrt.Equal([]string{"0.0.0.0/0", "::/0"}, spec.EndpointFilters)
+			asrt.Equal([]string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"}, spec.PeerEndpointFilters)
 			asrt.Equal([]netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}, spec.ExcludeAdvertisedNetworks)
 		},
 	)
@@ -145,8 +147,8 @@ func (suite *ConfigSuite) TestReconcileNoDiscoveryIdentityConfig() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterID:     "",
-					ClusterSecret: "",
+					ClusterID:     "", //nolint:staticcheck // testing deprecated field
+					ClusterSecret: "", //nolint:staticcheck // testing deprecated field
 				},
 			},
 		),
@@ -160,11 +162,9 @@ func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(kubespanctrl.NewConfigController()))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(kubespanctrl.NewConfigController()))
 		},
 	})
 }

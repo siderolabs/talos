@@ -47,10 +47,18 @@ var rules = map[string]role.Set{
 	"/machine.ImageService/Remove": role.MakeSet(role.Admin),
 	"/machine.ImageService/Verify": role.MakeSet(role.Admin, role.Operator, role.Reader, role.ImageVerifier),
 
+	"/machine.ContentLibraryService/List": role.MakeSet(
+		role.Admin, role.Operator, role.Reader, role.ContentLibraryReader, role.ContentLibraryWriter,
+	),
+	"/machine.ContentLibraryService/Upload": role.MakeSet(role.Admin, role.Operator, role.ContentLibraryWriter),
+	"/machine.ContentLibraryService/Delete": role.MakeSet(role.Admin, role.Operator, role.ContentLibraryWriter),
+
 	"/machine.DebugService/ContainerRun": role.MakeSet(role.Admin),
 
 	"/machine.LifecycleService/Install": role.MakeSet(role.Admin),
 	"/machine.LifecycleService/Upgrade": role.MakeSet(role.Admin),
+
+	"/machine.StorageService/Statfs": role.MakeSet(role.Admin, role.Operator, role.Reader),
 
 	"/machine.MachineService/ApplyConfiguration": role.MakeSet(
 		role.Admin,
@@ -218,6 +226,13 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 				Pattern:      "ext-*",
 				AllowedRoles: role.All,
 				// allow processes forked inside the container to access apid as well
+				AllowNamespaceMatch: true,
+			},
+			{
+				// containers with security.machinedAccess enabled.
+				Pattern:      constants.ContainerServicePIDPrefix + "*",
+				AllowedRoles: role.All,
+				// allow processes forked inside the container to access machined as well
 				AllowNamespaceMatch: true,
 			},
 		},

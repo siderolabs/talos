@@ -28,13 +28,13 @@ func (in *Input) init() ([]config.Document, error) {
 	v1alpha1Config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   new(in.Options.Debug),
-		ConfigPersist: new(true),
+		ConfigPersist: new(true), //nolint:staticcheck // legacy configuration
 	}
 
 	machine := &v1alpha1.MachineConfig{
 		MachineType: machine.TypeInit.String(),
 		MachineKubelet: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy configuration
-			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
+			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), //nolint:staticcheck // legacy configuration
 		}),
 		MachineCA:       in.Options.SecretsBundle.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
@@ -43,10 +43,10 @@ func (in *Input) init() ([]config.Document, error) {
 			InstallDisk:              in.Options.InstallDisk,
 			InstallImage:             in.Options.InstallImage,
 			InstallWipe:              new(false),
-			InstallExtraKernelArgs:   in.Options.InstallExtraKernelArgs,
+			InstallExtraKernelArgs:   in.Options.InstallExtraKernelArgs,                                        //nolint:staticcheck // legacy configuration
 			InstallGrubUseUKICmdline: nilIf(!in.Options.VersionContract.GrubUseUKICmdlineDefault(), new(true)), //nolint:staticcheck
 		}),
-		MachineDisks:    in.Options.MachineDisks,
+		MachineDisks:    in.Options.MachineDisks, //nolint:staticcheck // legacy configuration
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
@@ -134,15 +134,15 @@ func (in *Input) init() ([]config.Document, error) {
 		ClusterID:     nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
 		ClusterName:   nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.ClusterName),                          //nolint:staticcheck // legacy configuration
 		ClusterSecret: nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
-		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{
+		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // legacy configuration
 			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
-			LocalAPIServerPort: in.Options.LocalAPIServerPort,
+			LocalAPIServerPort: in.Options.LocalAPIServerPort, //nolint:staticcheck // legacy configuration
 		}),
-		APIServerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.APIServerConfig{
+		APIServerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.APIServerConfig{ //nolint:staticcheck // legacy configuration
 			ExtraCertSANs:          certSANs,
 			ContainerImage:         fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion),
-			AdmissionControlConfig: admissionControlConfig,
-			AuditPolicyConfig:      auditPolicyConfig,
+			AdmissionControlConfig: admissionControlConfig, //nolint:staticcheck // legacy configuration
+			AuditPolicyConfig:      auditPolicyConfig,      //nolint:staticcheck // legacy configuration
 		}),
 		ControllerManagerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControllerManagerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion),
@@ -156,7 +156,7 @@ func (in *Input) init() ([]config.Document, error) {
 		EtcdConfig: nilIf(in.Options.VersionContract.EtcdDisabled(), &v1alpha1.EtcdConfig{
 			RootCA: in.Options.SecretsBundle.Certs.Etcd,
 		}),
-		ClusterNetwork: nilIf(
+		ClusterNetwork: nilIf( //nolint:staticcheck // legacy configuration
 			in.Options.VersionContract.MultidocKubernetesConfigSupported(),
 			&v1alpha1.ClusterNetworkConfig{
 				DNSDomain:     in.Options.DNSDomain,
@@ -164,9 +164,9 @@ func (in *Input) init() ([]config.Document, error) {
 				ServiceSubnet: in.ServiceNet,
 			},
 		),
-		ClusterCA:             nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),
-		ClusterAggregatorCA:   nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),
-		ClusterServiceAccount: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sServiceAccount),
+		ClusterCA:             nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),               //nolint:staticcheck // legacy configuration
+		ClusterAggregatorCA:   nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),     //nolint:staticcheck // legacy configuration
+		ClusterServiceAccount: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sServiceAccount), //nolint:staticcheck // legacy configuration
 		BootstrapToken:        nilIf(in.Options.VersionContract.KubernetesDisabled(), in.Options.SecretsBundle.Secrets.BootstrapToken),
 	}
 
@@ -197,7 +197,7 @@ func (in *Input) init() ([]config.Document, error) {
 
 	if in.Options.DiscoveryEnabled != nil && !in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
 		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
-			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled),
+			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled), //nolint:staticcheck // legacy configuration
 		}
 
 		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {

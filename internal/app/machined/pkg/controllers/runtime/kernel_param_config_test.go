@@ -37,10 +37,10 @@ func (suite *KernelParamConfigSuite) TestReconcileConfig() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineSysctls: map[string]string{
+					MachineSysctls: map[string]string{ //nolint:staticcheck // testing deprecated field
 						fsFileMax: value,
 					},
-					MachineSysfs: map[string]string{
+					MachineSysfs: map[string]string{ //nolint:staticcheck // testing deprecated field
 						fsFileMax: valueSysfs,
 					},
 				},
@@ -128,8 +128,6 @@ func TestKernelParamConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KernelParamConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	})
 }

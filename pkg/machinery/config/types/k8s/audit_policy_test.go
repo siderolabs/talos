@@ -89,7 +89,7 @@ func TestKubeAuditPolicyConfigV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
 					APIServerConfig: &v1alpha1.APIServerConfig{ //nolint:staticcheck // testing deprecated field
-						AuditPolicyConfig: meta.Unstructured{
+						AuditPolicyConfig: meta.Unstructured{ //nolint:staticcheck // testing deprecated field
 							Object: map[string]any{
 								"apiVersion": "audit.k8s.io/v1",
 								"kind":       "Policy",

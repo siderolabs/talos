@@ -25,10 +25,8 @@ import (
 
 func TestAPICertSANsSuite(t *testing.T) {
 	suite.Run(t, &APICertSANsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APICertSANsController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APICertSANsController{}))
 		},
 	})
 }

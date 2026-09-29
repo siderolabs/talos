@@ -254,8 +254,16 @@ func TestKeys(t *testing.T) {
 
 	assert.Equal(
 		t,
-		"asn=65001;router=10.0.0.1;multipath=true;maxpaths=8;vrf=vrf-blue;table=88;listen=179;",
-		internalbgp.ServerKey(65001, netip.MustParseAddr("10.0.0.1"), true, 8, "vrf-blue", 88, 179),
+		"asn=65001;router=10.0.0.1;multipath=true;maxpaths=8;vrf=vrf-blue@7;table=88;listen=179;",
+		internalbgp.ServerKey(65001, netip.MustParseAddr("10.0.0.1"), true, 8, "vrf-blue", 7, 88, 179),
+	)
+
+	// The listening socket is bound to the VRF device, so a VRF recreated under the same name has
+	// to rebuild the server rather than keep a socket bound to the old, dead index.
+	assert.NotEqual(
+		t,
+		internalbgp.ServerKey(65001, netip.MustParseAddr("10.0.0.1"), true, 8, "vrf-blue", 7, 88, 179),
+		internalbgp.ServerKey(65001, netip.MustParseAddr("10.0.0.1"), true, 8, "vrf-blue", 9, 88, 179),
 	)
 
 	peer := internalbgp.Peer{

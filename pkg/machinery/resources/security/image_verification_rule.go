@@ -6,16 +6,10 @@
 package security
 
 import (
-	"context"
-	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/ryanuber/go-glob"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -94,27 +88,6 @@ func (ImageVerificationRuleExtension) ResourceDefinition() meta.ResourceDefiniti
 			},
 		},
 	}
-}
-
-// ImageVerificationRuleMatchFunc is a function type for matching image references to verification rules.
-type ImageVerificationRuleMatchFunc func(imageRef string) *ImageVerificationRule
-
-// ImageVerificationRuleMatcher creates the matcher for the given image reference against the provided rules and returns the first matching rule.
-func ImageVerificationRuleMatcher(ctx context.Context, st state.State) (ImageVerificationRuleMatchFunc, error) {
-	rules, err := safe.StateListAll[*ImageVerificationRule](ctx, st)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list image verification rules: %w", err)
-	}
-
-	return func(imageRef string) *ImageVerificationRule {
-		for rule := range rules.All() {
-			if rule.TypedSpec().ImagePattern != "" && glob.Glob(rule.TypedSpec().ImagePattern, imageRef) {
-				return rule
-			}
-		}
-
-		return nil
-	}, nil
 }
 
 func init() {

@@ -141,6 +141,29 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 				AnonCounter: true,
 				Verdict:     new(nethelpers.VerdictAccept),
 			},
+			// conntrack: accept established and related traffic, drop invalid traffic.
+			//
+			// This applies to both default-accept and default-block modes; otherwise
+			// replies to connections initiated by the machine itself might be dropped.
+			{
+				MatchConntrackState: &network.NfTablesConntrackStateMatch{
+					States: []nethelpers.ConntrackState{
+						nethelpers.ConntrackStateEstablished,
+						nethelpers.ConntrackStateRelated,
+					},
+				},
+				AnonCounter: true,
+				Verdict:     new(nethelpers.VerdictAccept),
+			},
+			{
+				MatchConntrackState: &network.NfTablesConntrackStateMatch{
+					States: []nethelpers.ConntrackState{
+						nethelpers.ConntrackStateInvalid,
+					},
+				},
+				AnonCounter: true,
+				Verdict:     new(nethelpers.VerdictDrop),
+			},
 		}
 
 		defaultAction := cfg.Config().NetworkRules().DefaultAction()
@@ -150,26 +173,6 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 
 			spec.Rules = append(
 				spec.Rules,
-				// conntrack
-				network.NfTablesRule{
-					MatchConntrackState: &network.NfTablesConntrackStateMatch{
-						States: []nethelpers.ConntrackState{
-							nethelpers.ConntrackStateEstablished,
-							nethelpers.ConntrackStateRelated,
-						},
-					},
-					AnonCounter: true,
-					Verdict:     new(nethelpers.VerdictAccept),
-				},
-				network.NfTablesRule{
-					MatchConntrackState: &network.NfTablesConntrackStateMatch{
-						States: []nethelpers.ConntrackState{
-							nethelpers.ConntrackStateInvalid,
-						},
-					},
-					AnonCounter: true,
-					Verdict:     new(nethelpers.VerdictDrop),
-				},
 				// CVE-1999-0524 mitigation: drop timestamp and address mask ICMP requests
 				network.NfTablesRule{
 					MatchLayer4: &network.NfTablesLayer4Match{

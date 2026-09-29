@@ -35,12 +35,12 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 
 			cfg := &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterName: "talos1",
-					ClusterCA: &x509.PEMEncodedCertificateAndKey{
+					ClusterName: "talos1", //nolint:staticcheck // testing deprecated field
+					ClusterCA: &x509.PEMEncodedCertificateAndKey{ //nolint:staticcheck // testing deprecated field
 						Crt: ca.CrtPEM,
 						Key: ca.KeyPEM,
 					},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -71,6 +71,9 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 			suite.Require().NoError(err)
 
 			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, fmt.Sprintf("admin@%s", cfg.K8sClusterConfig().ClusterName())))
+
+			// whatever Talos generates should always pass the validation talosctl applies to it
+			suite.Assert().NoError(kubeconfig.Validate(config))
 		})
 	}
 }
@@ -107,6 +110,7 @@ func (suite *GenerateSuite) TestGenerate() {
 	suite.Require().NoError(err)
 
 	suite.Assert().NoError(clientcmd.ConfirmUsable(*config, "kube-controller-manager@foo"))
+	suite.Assert().NoError(kubeconfig.Validate(config))
 }
 
 func TestGenerateSuite(t *testing.T) {

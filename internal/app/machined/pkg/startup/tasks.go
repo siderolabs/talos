@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
 // LogMode prints the current mode.
@@ -65,6 +66,15 @@ func SetupSystemDirectories(ctx context.Context, log *zap.Logger, rt runtime.Run
 func InitVolumeLifecycle(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
 	if err := rt.State().V1Alpha2().Resources().Create(ctx, block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)); err != nil {
 		return fmt.Errorf("initVolumeLifecycle: %w", err)
+	}
+
+	return next()(ctx, log, rt, next)
+}
+
+// InitContainerLifecycle initializes the container shutdown barrier resource.
+func InitContainerLifecycle(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next NextTaskFunc) error {
+	if err := rt.State().V1Alpha2().Resources().Create(ctx, containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID)); err != nil {
+		return fmt.Errorf("initContainerLifecycle: %w", err)
 	}
 
 	return next()(ctx, log, rt, next)

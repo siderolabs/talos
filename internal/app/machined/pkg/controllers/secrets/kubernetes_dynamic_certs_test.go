@@ -30,11 +30,9 @@ import (
 
 func TestKubernetesDynamicCertsSuite(t *testing.T) {
 	suite.Run(t, &KubernetesDynamicCertsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesDynamicCertsController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.KubernetesDynamicCertsController{}))
 		},
 	})
 }

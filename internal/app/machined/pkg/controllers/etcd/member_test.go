@@ -26,10 +26,8 @@ func TestMemberSuite(t *testing.T) {
 
 	suite.Run(t, &MemberSuite{
 		ctrl: ctrl,
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(ctrl))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(ctrl))
 		},
 	})
 }

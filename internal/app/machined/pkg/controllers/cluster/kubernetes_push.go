@@ -21,12 +21,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // KubernetesPushController pushes Affiliate resource to the Kubernetes registry.
 type KubernetesPushController struct {
-	localAffiliateID resource.ID
-	kubernetesClient *kubernetes.Client
+	localAffiliateID    resource.ID
+	kubernetesClient    *kubernetes.Client
+	clientKubeconfigVer string
 }
 
 // Name implements controller.Controller interface.
@@ -49,6 +51,12 @@ func (ctrl *KubernetesPushController) Inputs() []controller.Input {
 			ID:        optional.Some(cluster.LocalIdentity),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletKubeconfigType,
+			ID:        optional.Some(k8s.KubeletKubeconfigID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -60,7 +68,7 @@ func (ctrl *KubernetesPushController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	defer func() {
 		if ctrl.kubernetesClient != nil {
 			ctrl.kubernetesClient.Close() //nolint:errcheck
@@ -127,14 +135,16 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 				continue
 			}
 
-			if ctrl.kubernetesClient == nil {
-				ctrl.kubernetesClient, err = kubernetes.NewClientFromKubeletKubeconfig()
-				if err != nil {
-					return fmt.Errorf("error building kubernetes client: %w", err)
-				}
+			client, err := ctrl.getKubernetesClient(ctx, r, logger)
+			if err != nil {
+				return err
 			}
 
-			if err = registry.NewKubernetes(ctrl.kubernetesClient).Push(ctx, affiliate); err != nil {
+			if client == nil {
+				continue
+			}
+
+			if err = registry.NewKubernetes(client).Push(ctx, affiliate); err != nil {
 				// reset client connection
 				ctrl.kubernetesClient.Close() //nolint:errcheck
 				ctrl.kubernetesClient = nil
@@ -145,4 +155,46 @@ func (ctrl *KubernetesPushController) Run(ctx context.Context, r controller.Runt
 
 		r.ResetRestartBackoff()
 	}
+}
+
+// getKubernetesClient returns the cached Kubernetes client, rebuilding it whenever the
+// kubelet credentials on disk have changed since the client was built.
+//
+// The credentials are read once when the client is created, so a client which outlives a
+// kubelet client certificate rotation would keep presenting an expired certificate.
+//
+// It returns a nil client if the kubelet credentials are not available yet.
+func (ctrl *KubernetesPushController) getKubernetesClient(ctx context.Context, r controller.Runtime, logger *zap.Logger) (*kubernetes.Client, error) {
+	kubeconfigRes, err := safe.ReaderGetByID[*k8s.KubeletKubeconfig](ctx, r, k8s.KubeletKubeconfigID)
+	if err != nil {
+		if !state.IsNotFoundError(err) {
+			return nil, fmt.Errorf("error getting kubelet kubeconfig: %w", err)
+		}
+
+		return nil, nil
+	}
+
+	currentKubeconfigVer := kubeconfigRes.TypedSpec().Hash
+
+	if ctrl.kubernetesClient != nil && ctrl.clientKubeconfigVer != currentKubeconfigVer {
+		logger.Info(
+			"kubelet credentials changed, rebuilding Kubernetes client",
+			zap.String("old_hash", ctrl.clientKubeconfigVer),
+			zap.String("new_hash", currentKubeconfigVer),
+		)
+
+		ctrl.kubernetesClient.Close() //nolint:errcheck
+		ctrl.kubernetesClient = nil
+	}
+
+	if ctrl.kubernetesClient == nil {
+		ctrl.kubernetesClient, err = kubernetes.NewClientFromKubeletKubeconfig()
+		if err != nil {
+			return nil, fmt.Errorf("error building kubernetes client: %w", err)
+		}
+
+		ctrl.clientKubeconfigVer = currentKubeconfigVer
+	}
+
+	return ctrl.kubernetesClient, nil
 }

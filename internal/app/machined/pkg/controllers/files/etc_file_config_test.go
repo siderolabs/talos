@@ -132,11 +132,9 @@ func TestEtcFileConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &EtcFileConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.EtcFileConfigController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&filesctrl.EtcFileConfigController{}))
 		},
 	})
 }

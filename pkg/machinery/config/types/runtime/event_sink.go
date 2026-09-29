@@ -9,7 +9,6 @@ package runtime
 import (
 	"fmt"
 	"net"
-	"net/url"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -87,8 +86,8 @@ func (s *EventSinkV1Alpha1) EventsEndpoint() *string {
 	return new(s.Endpoint)
 }
 
-// KmsgLogURLs implements config.RuntimeConfig interface.
-func (s *EventSinkV1Alpha1) KmsgLogURLs() []*url.URL {
+// KmsgLogDestinations implements config.RuntimeConfig interface.
+func (s *EventSinkV1Alpha1) KmsgLogDestinations() []config.KmsgLogDestination {
 	return nil
 }
 

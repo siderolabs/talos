@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 )
 
@@ -41,7 +42,18 @@ var sensitiveFields = map[string]struct{}{
 
 // ExtractMetadata formats metadata from incoming grpc context as string for the log.
 func ExtractMetadata(ctx context.Context) string {
-	md, _ := metadata.FromIncomingContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		md = metadata.MD{}
+	}
+
+	// the peer address always comes from the connection itself, never from the client-supplied metadata
+	delete(md, "peer")
+
+	if p, ok := peer.FromContext(ctx); ok && p.Addr != nil {
+		md["peer"] = []string{p.Addr.String()}
+	}
+
 	keys := maps.Keys(md)
 	slices.Sort(keys)
 

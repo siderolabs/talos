@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 	"text/tabwriter"
@@ -16,15 +15,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var statsCmdFlags struct {
-	kubernetesNamespaceFlag
+	containerNamespaceFlag
 }
 
 // statsCmd represents the stats command.
@@ -43,17 +41,9 @@ var statsCmd = &cobra.Command{
 
 		defer clientFactory.Close() //nolint:errcheck
 
-		var (
-			namespace string
-			driver    common.ContainerDriver
-		)
-
-		if statsCmdFlags.kubernetes {
-			namespace = constants.K8sContainerdNamespace
-			driver = common.ContainerDriver_CRI
-		} else {
-			namespace = constants.SystemContainerdNamespace
-			driver = common.ContainerDriver_CONTAINERD
+		namespace, driver, err := statsCmdFlags.resolveContainerNamespace()
+		if err != nil {
+			return err
 		}
 
 		responseChan := multiplex.UnaryViaFactory(
@@ -63,7 +53,7 @@ var statsCmd = &cobra.Command{
 			},
 		)
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
 
 		flushTimer := time.NewTimer(outputFlushInterval)
@@ -93,7 +83,7 @@ var statsCmd = &cobra.Command{
 								display = "└─ " + display
 							}
 
-							fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+							safeout.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
 						}
 					}
 				}
@@ -109,7 +99,7 @@ var statsCmd = &cobra.Command{
 }
 
 func init() {
-	statsCmd.Flags().BoolVarP(&statsCmdFlags.kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	addContainerNamespaceFlags(statsCmd, &statsCmdFlags.containerNamespaceFlag)
 
 	statsCmd.Flags().Bool("use-cri", false, "use the CRI driver")
 	statsCmd.Flags().MarkHidden("use-cri") //nolint:errcheck

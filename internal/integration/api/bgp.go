@@ -270,6 +270,142 @@ func (suite *BGPSuite) TestVRFBGP() {
 	suite.Require().Equal(managementPrefix, finalManagementPrefix)
 }
 
+// TestVRFBGPRecreate verifies that a VRF deleted and recreated under the same name gets its
+// VRF-bound BGP session back.
+//
+// gobgp binds its listening socket to the VRF device by name, and the kernel resolves that name to
+// an ifindex once, at bind time. A VRF recreated under the same name gets a fresh ifindex, so a
+// server carried across the rebuild keeps listening on a device that no longer exists and the
+// session never recovers. The controller deliberately preserves a running instance while its VRF is
+// missing, so this is exactly the sequence that strands a stale listener.
+func (suite *BGPSuite) TestVRFBGPRecreate() {
+	if !suite.BGPEnabled {
+		suite.T().Skip("skipping BGP test; enable with -talos.bgp (requires a cluster created with --with-bgp)")
+	}
+
+	if suite.BGPCLOSEnabled {
+		suite.T().Skip("skipping numbered VRF BGP test on a full-CLOS cluster")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() == base.ProvisionerDocker {
+		suite.T().Skip("skipping BGP test since provisioner is not qemu")
+	}
+
+	const (
+		nodeASN     = 65001
+		fabricASN   = 65000
+		fabricRoute = "10.200.0.0/24"
+		vrfName     = "vrf-bgp"
+		vrfBGPName  = "vrf-fabric"
+	)
+
+	const vrfTable = nethelpers.RoutingTable(100)
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	managementLink, managementPrefix := suite.managementNetwork(nodeCtx)
+	fabric := managementPrefix.Masked().Addr().Next()
+	vrfAddress := vm.VRFPeerAddress()
+	vrfLink := suite.vrfBGPLink(nodeCtx)
+
+	suite.T().Logf(
+		"testing VRF recreation on node %q: management %s, VRF link %s, fabric %s -> %s",
+		node,
+		managementLink,
+		vrfLink,
+		fabric,
+		vrfAddress,
+	)
+
+	vrfLinkConfig := network.NewLinkConfigV1Alpha1(vrfLink)
+	vrfLinkConfig.LinkUp = new(true)
+	vrfLinkConfig.LinkAddresses = []network.AddressConfig{{AddressAddress: vm.VRFPeerPrefix()}}
+	vrfLinkConfig.LinkRoutes = []network.RouteConfig{{
+		RouteDestination: meta.Prefix{Prefix: netip.PrefixFrom(fabric, fabric.BitLen())},
+		RouteTable:       vrfTable,
+	}}
+
+	vrf := network.NewVRFConfigV1Alpha1(vrfName)
+	vrf.VRFLinks = []string{vrfLink}
+	vrf.VRFTable = vrfTable
+	vrf.LinkUp = new(true)
+
+	vrfBGP := network.NewBGPInstanceConfigV1Alpha1(vrfBGPName)
+	vrfBGP.BGPVRF = vrfName
+	vrfBGP.BGPLocalASN = nodeASN
+	vrfBGP.BGPRouterID = meta.Addr{Addr: vrfAddress}
+	vrfBGP.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+		NeighborAddressConfig: meta.Addr{Addr: fabric},
+		NeighborPeerASN:       fabricASN,
+		NeighborPassive:       true,
+	}}
+
+	suite.PatchMachineConfig(nodeCtx, vrfLinkConfig, vrf, vrfBGP)
+
+	vrfPeerID := vrfBGPName + "/" + fabric.String()
+	learnedRouteID := networkres.RouteID(
+		vrfTable,
+		nethelpers.FamilyInet4,
+		netip.MustParsePrefix(fabricRoute),
+		fabric,
+		0,
+		"",
+	)
+
+	suite.waitForBGPPeer(nodeCtx, vrfPeerID, vrfBGPName, fabricASN)
+	suite.waitForBGPRoute(nodeCtx, learnedRouteID, vrfTable, fabric)
+
+	originalIndex := suite.bgpLinkIndex(nodeCtx, vrfName)
+
+	originalPeer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.COSI, vrfPeerID)
+	suite.Require().NoError(err)
+
+	originalSince := originalPeer.TypedSpec().Since
+
+	suite.T().Logf("VRF %q established: ifindex %d, session up since %s", vrfName, originalIndex, originalSince)
+
+	// Drop the VRF: the instance keeps running (its VRF is merely "not ready"), so the gobgp server,
+	// and its listening socket bound to this now-dead ifindex, survive the gap.
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+
+	// Bring it back under the same name; the kernel hands out a fresh ifindex.
+	suite.PatchMachineConfig(nodeCtx, vrf)
+
+	var recreatedIndex uint32
+
+	suite.Eventually(func() bool {
+		link, linkErr := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, vrfName)
+		if linkErr != nil {
+			return false
+		}
+
+		recreatedIndex = link.TypedSpec().Index
+
+		return recreatedIndex != 0 && recreatedIndex != originalIndex
+	}, time.Minute, time.Second, "VRF %q was not recreated with a fresh ifindex", vrfName)
+
+	suite.T().Logf("VRF %q recreated: ifindex %d (was %d)", vrfName, recreatedIndex, originalIndex)
+
+	// The session has to be rebuilt through the new device: a server kept from before the rebuild
+	// still listens on the old ifindex and never sees the fabric peer's inbound connection.
+	reestablishedSince := suite.waitForReestablishedBGPPeer(nodeCtx, vrfPeerID, vrfBGPName, fabricASN, originalSince)
+	suite.waitForBGPRoute(nodeCtx, learnedRouteID, vrfTable, fabric)
+
+	suite.T().Logf("VRF BGP session re-established at %s after the VRF was recreated", reestablishedSince)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BGPInstanceKind, vrfBGPName)
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfPeerID)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, vrfLink)
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+
+	suite.waitForManagementNetwork(nodeCtx, managementLink, managementPrefix)
+}
+
 // assertBFDUp waits until BFD is up on every BGP peer.
 func (suite *BGPSuite) assertBFDUp(nodeCtx context.Context) {
 	rtestutils.AssertAll(
@@ -620,6 +756,48 @@ func (suite *BGPSuite) waitForBGPRoute(
 
 		return spec.Table == table && spec.Gateway == gateway && spec.Protocol == nethelpers.ProtocolBGP
 	}, 2*time.Minute, time.Second, "BGP route %q was not installed", id)
+}
+
+// waitForReestablishedBGPPeer waits until the peer is Established in a session which started after
+// the given instant, so a status left over from the previous session cannot satisfy it.
+func (suite *BGPSuite) waitForReestablishedBGPPeer(
+	nodeCtx context.Context,
+	id, instance string,
+	peerASN uint32,
+	after time.Time,
+) time.Time {
+	var since time.Time
+
+	suite.Eventually(func() bool {
+		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.COSI, id)
+		if err != nil {
+			return false
+		}
+
+		spec := peer.TypedSpec()
+
+		if spec.Instance != instance || spec.State != nethelpers.BGPSessionStateEstablished || spec.PeerASN != peerASN {
+			return false
+		}
+
+		if !spec.Since.After(after) {
+			return false
+		}
+
+		since = spec.Since
+
+		return true
+	}, 2*time.Minute, time.Second, "BGP peer %q did not re-establish a session newer than %s", id, after)
+
+	return since
+}
+
+// bgpLinkIndex returns the current kernel ifindex of a link.
+func (suite *BGPSuite) bgpLinkIndex(nodeCtx context.Context, name string) uint32 {
+	link, err := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, name)
+	suite.Require().NoError(err)
+
+	return link.TypedSpec().Index
 }
 
 // bridgeGateway returns the bridge gateway address (where the --with-bgp fabric peer listens): the first

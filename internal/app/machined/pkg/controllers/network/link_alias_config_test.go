@@ -215,11 +215,9 @@ func TestLinkAliasConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &LinkAliasConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.LinkAliasConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.LinkAliasConfigController{}))
 		},
 	})
 }

@@ -7,7 +7,9 @@ package filemap
 
 import (
 	"archive/tar"
+	"bufio"
 	"cmp"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"os"
@@ -146,15 +148,62 @@ func handleDir(w *tar.Writer, path string, mode int64) error {
 // These layers are reproducible and consistent.
 //
 // A filemap is a path -> file content map representing a file system.
-func Layer(filemap []File) (v1.Layer, error) {
+//
+// The compressed layer is staged as a file under tempDir, which must outlive the returned
+// layer: go-containerregistry re-opens the layer contents for every digest and write access.
+// Removing tempDir reclaims the temporary file.
+func Layer(tempDir string, filemap []File) (v1.Layer, error) {
 	slices.SortFunc(filemap, func(a, b File) int { return cmp.Compare(a.ImagePath, b.ImagePath) })
 
-	// Return a new copy of the buffer each time it's opened.
-	//
-	// WithCompressedCaching memoizes the compressed bytes after the first read, so the gzip
-	// pipeline is spun up exactly once instead of being re-created for each digest/diffID/write
-	// access.
+	path, err := buildCompressed(tempDir, filemap)
+	if err != nil {
+		return nil, err
+	}
+
 	return tarball.LayerFromOpener(func() (io.ReadCloser, error) {
-		return Build(filemap), nil
-	}, tarball.WithMediaType(types.OCILayer), tarball.WithCompressedCaching)
+		return os.Open(path)
+	}, tarball.WithMediaType(types.OCILayer))
+}
+
+// buildCompressed writes the gzipped filemap tarball to a new file under tempDir, returning
+// its path.
+//
+// The compression level matches the one go-containerregistry applies to an uncompressed
+// opener, so staging the layer here leaves its digest unchanged (see TestLayerDigestParity).
+func buildCompressed(tempDir string, filemap []File) (string, error) {
+	out, err := os.CreateTemp(tempDir, "layer-*.tar.gz")
+	if err != nil {
+		return "", fmt.Errorf("error creating layer file: %w", err)
+	}
+
+	defer out.Close() //nolint:errcheck
+
+	tarReader := Build(filemap)
+	defer tarReader.Close() //nolint:errcheck
+
+	// use bufio to avoid many small writes to the underlying file
+	bw := bufio.NewWriterSize(out, 2<<16)
+
+	zw, err := gzip.NewWriterLevel(bw, gzip.BestSpeed)
+	if err != nil {
+		return "", fmt.Errorf("error creating gzip writer: %w", err)
+	}
+
+	if _, err = io.Copy(zw, tarReader); err != nil {
+		return "", fmt.Errorf("error compressing layer: %w", err)
+	}
+
+	if err = zw.Close(); err != nil {
+		return "", fmt.Errorf("error finishing layer compression: %w", err)
+	}
+
+	if err = bw.Flush(); err != nil {
+		return "", fmt.Errorf("error flushing layer file: %w", err)
+	}
+
+	if err = out.Close(); err != nil {
+		return "", fmt.Errorf("error closing layer file: %w", err)
+	}
+
+	return out.Name(), nil
 }

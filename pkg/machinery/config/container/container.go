@@ -453,6 +453,16 @@ func (container *Container) ContainerConfigs() []config.ContainerConfig {
 	return findMatchingDocs[config.ContainerConfig](container.documents)
 }
 
+// ContentLibraryConfigs implements config.Config interface.
+func (container *Container) ContentLibraryConfigs() []config.ContentLibraryConfig {
+	return findMatchingDocs[config.ContentLibraryConfig](container.documents)
+}
+
+// VirtualMachineConfigs implements config.Config interface.
+func (container *Container) VirtualMachineConfigs() []config.VirtualMachineConfig {
+	return findMatchingDocs[config.VirtualMachineConfig](container.documents)
+}
+
 // UserVolumeConfigs implements config.Config interface.
 func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)
@@ -476,6 +486,11 @@ func (container *Container) ExistingVolumeConfigs() []config.ExistingVolumeConfi
 // SwapVolumeConfigs implements config.Config interface.
 func (container *Container) SwapVolumeConfigs() []config.SwapVolumeConfig {
 	return findMatchingDocs[config.SwapVolumeConfig](container.documents)
+}
+
+// StoragePoolConfigs implements config.Config interface.
+func (container *Container) StoragePoolConfigs() []config.StoragePoolConfig {
+	return findMatchingDocs[config.StoragePoolConfig](container.documents)
 }
 
 // LVMVolumeGroupConfigs implements config.Config interface.
@@ -526,6 +541,16 @@ func (container *Container) SecurityProfileConfig() config.SecurityProfileConfig
 // FilesystemScrubConfig implements config.Config interface.
 func (container *Container) FilesystemScrubConfig() config.FilesystemScrubConfig {
 	matching := findMatchingDocs[config.FilesystemScrubConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
+// DiskSMARTConfig implements config.Config interface.
+func (container *Container) DiskSMARTConfig() config.DiskSMARTConfig {
+	matching := findMatchingDocs[config.DiskSMARTConfig](container.documents)
 	if len(matching) == 0 {
 		return nil
 	}
@@ -631,6 +656,11 @@ func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLin
 	}
 
 	return result
+}
+
+// CPUScalingConfigs implements config.Config interface.
+func (container *Container) CPUScalingConfigs() []config.CPUScalingConfig {
+	return findMatchingDocs[config.CPUScalingConfig](container.documents)
 }
 
 // NetworkLinkAliasConfigs implements config.Config interface.

@@ -26,9 +26,9 @@ ARTIFACTS := _out
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.14.0
+TOOLS ?= v1.15.0-alpha.0-10-gd40b203
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.14.0
+PKGS ?= v1.15.0-alpha.0-41-g6868054
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -96,7 +96,7 @@ PKG_ZLIB ?= $(PKGS_PREFIX)/zlib:$(PKGS)
 PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 
 # renovate: datasource=github-tags depName=golang/go
-GO_VERSION ?= 1.26
+GO_VERSION ?= 1.27
 # renovate: datasource=npm depName=markdownlint-cli
 MARKDOWNLINTCLI_VERSION ?= 0.49.1
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
@@ -106,21 +106,26 @@ TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.37.0-rc.0
+KUBECTL_VERSION ?= v1.37.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v4.2.3
+HELM_VERSION ?= v4.3.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.19.7
+CILIUM_CLI_VERSION ?= v0.20.0
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
+# renovate: datasource=github-tags depName=libvirt/libvirt
+LIBVIRT_VERSION ?= v12.7.0
+# SHA-256 of https://download.libvirt.org/libvirt-$(patsubst v%,%,$(LIBVIRT_VERSION)).tar.xz; update with LIBVIRT_VERSION.
+LIBVIRT_SHA256 ?= 7ec1a04e7e4f4069353d4daac117bbe869287f5b202695de61fe1b079efb6cb6
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 TESTPKGS ?= github.com/siderolabs/talos/...
+UNITTEST_PARALLELISM ?= 8
 RELEASES ?= v1.12.9 v1.13.7
 SHORT_INTEGRATION_TEST ?=
 CUSTOM_CNI_URL ?=
@@ -184,6 +189,8 @@ COMMON_ARGS += --build-arg=GOFIPS140="$(GOFIPS140)"
 COMMON_ARGS += --build-arg=http_proxy=$(http_proxy)
 COMMON_ARGS += --build-arg=https_proxy=$(https_proxy)
 COMMON_ARGS += --build-arg=INSTALLER_ARCH=$(INSTALLER_ARCH)
+COMMON_ARGS += --build-arg=LIBVIRT_VERSION=$(LIBVIRT_VERSION)
+COMMON_ARGS += --build-arg=LIBVIRT_SHA256=$(LIBVIRT_SHA256)
 COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
 COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
 COMMON_ARGS += --build-arg=NAME="$(NAME)"
@@ -255,6 +262,7 @@ COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=TAG=$(TAG)
 COMMON_ARGS += --build-arg=TESTPKGS=$(TESTPKGS)
+COMMON_ARGS += --build-arg=UNITTEST_PARALLELISM=$(UNITTEST_PARALLELISM)
 COMMON_ARGS += --build-arg=TOOLS_PREFIX=$(TOOLS_PREFIX)
 COMMON_ARGS += --build-arg=TOOLS=$(TOOLS)
 COMMON_ARGS += --build-arg=GENERATE_VEX_PREFIX=$(GENERATE_VEX_PREFIX)
@@ -264,7 +272,7 @@ COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
 
 CI_ARGS ?=
 
-EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier|nebula|newt|netbird|multipath-tools|trident-iscsi-tools|-snapshotter|hyperv-guest-agent|/qemu:'
+EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier|nebula|newt|netbird|multipath-tools|trident-iscsi-tools|-snapshotter|hyperv-guest-agent|/qemu:|/libvirtd:'
 
 all: initramfs kernel installer imager talosctl talosctl-image talos
 
@@ -665,9 +673,16 @@ provision-tests-track-%:
 
 installer-with-extensions: $(ARTIFACTS)/extensions/_out/extensions-metadata
 	$(MAKE) image-installer \
-		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer-base$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_IN) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | $(EXTENSIONS_FILTER_COMMAND) | xargs -n 1 echo --system-extension-image)"
-	crane push $(ARTIFACTS)/installer-amd64.tar $(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-amd64-extensions
-	INSTALLER_IMAGE_EXTENSIONS="$(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-amd64-extensions" yq eval -n '.apiVersion = "v1alpha1" | .kind = "UnattendedInstallConfig" | .installer.image = strenv(INSTALLER_IMAGE_EXTENSIONS) | .provisioning.diskSelector.match = "disk.dev_path == \"/dev/vda\""' > $(ARTIFACTS)/installer-extensions-patch.yaml
+		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer-base$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_IN) \
+			$(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | $(EXTENSIONS_FILTER_COMMAND) | xargs -n 1 echo --system-extension-image)"
+	crane push \
+		--image-refs $(ARTIFACTS)/installer-extensions.ref \
+		$(ARTIFACTS)/installer-amd64.tar \
+		$(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-amd64-extensions
+	INSTALLER_IMAGE_EXTENSIONS="$$(cat $(ARTIFACTS)/installer-extensions.ref)" \
+		yq eval -n \
+		'.apiVersion = "v1alpha1" | .kind = "UnattendedInstallConfig" | .installer.image = strenv(INSTALLER_IMAGE_EXTENSIONS) | .provisioning.diskSelector.match = "disk.dev_path == \"/dev/vda\""' \
+		> $(ARTIFACTS)/installer-extensions-patch.yaml
 
 kubelet-fat-patch:
 	K8S_VERSION=$(KUBECTL_VERSION) yq eval -n '.apiVersion = "v1alpha1" | .kind = "KubeletConfig" | .image = "ghcr.io/siderolabs/kubelet:" + strenv(K8S_VERSION) + "-fat"' > $(ARTIFACTS)/kubelet-fat-patch.yaml

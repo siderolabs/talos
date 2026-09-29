@@ -26,11 +26,9 @@ func TestMountStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &MountStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.MountStatusController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.MountStatusController{}))
 		},
 	})
 }

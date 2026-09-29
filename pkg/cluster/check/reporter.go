@@ -23,9 +23,9 @@ func (r *ConditionReporter) Update(condition conditions.Condition) {
 }
 
 // StderrReporter returns console reporter with stderr output.
-func StderrReporter() *ConditionReporter {
+func StderrReporter(opts ...reporter.Option) *ConditionReporter {
 	return &ConditionReporter{
-		w: reporter.New(),
+		w: reporter.New(opts...),
 	}
 }
 

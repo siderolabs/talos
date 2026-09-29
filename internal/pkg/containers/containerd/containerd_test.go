@@ -40,10 +40,6 @@ const (
 func MockEventSink(state events.ServiceState, message string, args ...any) {
 }
 
-func MockPidRecorder(serviceName string, pid int32, clearEntry bool) error {
-	return nil
-}
-
 type ContainerdSuite struct {
 	suite.Suite
 
@@ -53,6 +49,8 @@ type ContainerdSuite struct {
 
 	containerdNamespace string
 	containerdRunner    runner.Runner
+	runnerCtx           context.Context //nolint:containedctx
+	runnerCancel        context.CancelFunc
 	containerdWg        sync.WaitGroup
 	containerdAddress   string
 
@@ -63,6 +61,8 @@ type ContainerdSuite struct {
 
 	containerRunners []runner.Runner
 	containersWg     sync.WaitGroup
+	containersCtx    context.Context //nolint:containedctx
+	containersCancel context.CancelFunc
 }
 
 func (suite *ContainerdSuite) SetupSuite() {
@@ -122,12 +122,14 @@ func (suite *ContainerdSuite) SetupSuite() {
 		runner.WithEnv([]string{constants.EnvPathWithBin}),
 		runner.WithCgroupPath(suite.tmpDir),
 	)
+	suite.runnerCtx, suite.runnerCancel = context.WithCancel(context.Background())
+
 	suite.Require().NoError(suite.containerdRunner.Open())
 
 	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
-		suite.containerdRunner.Run(MockEventSink, MockPidRecorder) //nolint:errcheck
+		suite.containerdRunner.Run(suite.runnerCtx, MockEventSink, nil) //nolint:errcheck
 	})
 
 	suite.client, err = containerd.New(suite.containerdAddress)
@@ -145,13 +147,17 @@ func (suite *ContainerdSuite) SetupSuite() {
 func (suite *ContainerdSuite) TearDownSuite() {
 	suite.Require().NoError(suite.client.Close())
 
-	suite.Require().NoError(suite.containerdRunner.Stop())
+	suite.runnerCancel()
 	suite.containerdWg.Wait()
 }
 
 func (suite *ContainerdSuite) SetupTest() {
 	suite.containerRunners = nil
 	suite.containerID = uuid.New().String()
+
+	// One context per test for every container it starts; canceling it in TearDownTest is what stops
+	// them.
+	suite.containersCtx, suite.containersCancel = context.WithCancel(context.Background())
 }
 
 func (suite *ContainerdSuite) run(runners ...runner.Runner) {
@@ -174,7 +180,9 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 			defer func() { runningCh <- false }()
 			defer suite.containersWg.Done()
 
-			suite.Require().NoError(r.Run(runningSink, MockPidRecorder))
+			_, runErr := r.Run(suite.containersCtx, runningSink, nil)
+
+			suite.Require().NoError(runErr)
 		}(r)
 	}
 
@@ -186,9 +194,8 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 }
 
 func (suite *ContainerdSuite) TearDownTest() {
-	for _, r := range suite.containerRunners {
-		suite.Assert().NoError(r.Stop())
-	}
+	// Canceling the shared context is the stop signal for every container runner.
+	suite.containersCancel()
 
 	suite.containersWg.Wait()
 

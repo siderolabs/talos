@@ -88,6 +88,19 @@ func NewUnattendedInstallController(rt v1alpha1runtime.Runtime) *UnattendedInsta
 				return err
 			}
 
+			// the install sequence (which reloads/flushes META after the installer) is skipped when the
+			// UnattendedInstallConfig document drives the install, so merge the in-memory META with what
+			// the installer wrote into the partition it just created here
+			meta := rt.State().Machine().Meta()
+
+			if err := install.ReloadMeta(ctx, resources, meta); err != nil {
+				return err
+			}
+
+			if err := install.SyncMeta(ctx, resources, meta); err != nil {
+				return err
+			}
+
 			return crires.WaitForImageCacheCopy(ctx, resources)
 		},
 	}

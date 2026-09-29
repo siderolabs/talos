@@ -178,7 +178,8 @@ func (suite *NodeTaintsSuite) setNodeTaints(nodeIP string, nodeTaints map[string
 			nodeConfig.TaintsConfig = nodeTaints
 
 			return nil
-		}))(suite.T())
+		},
+	))(suite.T())
 
 	bytes, err := nodeConfig.Bytes()
 	suite.Require().NoError(err)

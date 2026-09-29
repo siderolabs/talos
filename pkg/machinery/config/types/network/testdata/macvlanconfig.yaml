@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: MacVLANConfig
+name: eth0.macvlan
+mode: bridge
+parent: eth0

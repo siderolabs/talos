@@ -38,6 +38,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision"
 	remoteprovisionpb "github.com/siderolabs/talos/pkg/provision/api"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // ProviderName is the name of the remote provisioner.
@@ -317,7 +318,9 @@ func resolveLogWriter(opts []provision.Option) io.Writer {
 // in-process QEMU provisioner expects.
 //
 //nolint:gocyclo
-func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+func (p *Provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+	networkReq := clusterReq.Network
+
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -330,7 +333,7 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 	}
 
 	genOpts := []generate.Option{
-		generate.WithInstallDisk("/dev/vda"),
+		generate.WithInstallDisk(clusterReq.InstallDiskPath()),
 	}
 
 	var bundleOpts []bundle.Option
@@ -379,6 +382,9 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 			),
 		)
 	}
+
+	// the remote server runs QEMU, so the QEMU-emulated SD card workaround applies as well
+	bundleOpts = append(bundleOpts, vm.MMCDiscardWorkaroundOptions(clusterReq, contract)...)
 
 	if !contract.GrubUseUKICmdlineDefault() {
 		genOpts = append(

@@ -9,7 +9,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -19,6 +18,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/yamlstrip"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -97,13 +97,13 @@ func patchFn(patches []configpatcher.Patch) func(context.Context, *client.Client
 			bytes.TrimSpace(yamlstrip.Comments(patched)),
 			bytes.TrimSpace(yamlstrip.Comments(body)),
 		) {
-			fmt.Fprintln(os.Stderr, "Apply was skipped: no changes detected.")
+			fmt.Fprintln(safeout.Stderr(), "Apply was skipped: no changes detected.")
 
 			return nil
 		}
 
 		fmt.Fprintf(
-			os.Stderr, "patched %s/%s at the node %s\n",
+			safeout.Stderr(), "patched %s/%s at the node %s\n",
 			mc.Metadata().Type(),
 			mc.Metadata().ID(),
 			node,

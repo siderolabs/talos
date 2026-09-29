@@ -1619,12 +1619,13 @@ func (x *KubeletConfigSpec) GetRegisterWithTaints() map[string]string {
 	return nil
 }
 
-// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+// KubeletKubeconfigSpec describes the current kubelet client credentials.
 type KubeletKubeconfigSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Hash is a content digest of the kubeconfig file. It changes whenever the
-	// file contents change, which is the signal consumers use to rebuild their
-	// Kubernetes clients.
+	// Hash is a content digest of the kubeconfig file and of the certificates it
+	// references on disk (kubelet rotates its client certificate without ever
+	// touching the kubeconfig). It changes whenever the credentials change, which
+	// is the signal consumers use to rebuild their Kubernetes clients.
 	Hash          string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache

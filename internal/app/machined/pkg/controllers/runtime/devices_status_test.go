@@ -74,8 +74,6 @@ func TestDevicesStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &DevicesStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-		},
+		Timeout: 15 * time.Second,
 	})
 }

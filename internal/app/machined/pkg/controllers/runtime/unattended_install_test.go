@@ -33,9 +33,7 @@ type UnattendedInstallSuite struct {
 
 func TestUnattendedInstallSuite(t *testing.T) {
 	suite.Run(t, &UnattendedInstallSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-		},
+		Timeout: 30 * time.Second,
 	})
 }
 

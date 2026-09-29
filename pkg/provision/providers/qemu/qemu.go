@@ -31,9 +31,7 @@ type provisioner struct {
 // NewProvisioner initializes qemu provisioner.
 func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 	p := &provisioner{
-		Provisioner: vm.Provisioner{
-			Name: "qemu",
-		},
+		Name: "qemu",
 	}
 
 	return p, nil
@@ -47,7 +45,9 @@ func (p *provisioner) Close() error {
 // GenOptions provides a list of additional config generate options.
 //
 //nolint:gocyclo
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+func (p *provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+	networkReq := clusterReq.Network
+
 	hasIPv4 := false
 	hasIPv6 := false
 
@@ -60,7 +60,7 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 	}
 
 	genOpts := []generate.Option{
-		generate.WithInstallDisk("/dev/vda"),
+		generate.WithInstallDisk(clusterReq.InstallDiskPath()),
 	}
 
 	var bundleOpts []bundle.Option
@@ -111,6 +111,8 @@ func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 			),
 		)
 	}
+
+	bundleOpts = append(bundleOpts, vm.MMCDiscardWorkaroundOptions(clusterReq, contract)...)
 
 	if !contract.GrubUseUKICmdlineDefault() {
 		genOpts = append(

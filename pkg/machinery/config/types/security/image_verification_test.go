@@ -345,6 +345,35 @@ func TestImageVerificationConfigValidate(t *testing.T) {
 						RuleImagePattern: "nginx",
 						RuleSkip:         new(true),
 					},
+					{
+						RuleImagePattern: "library/nginx*",
+						RuleSkip:         new(true),
+					},
+					{ // a pattern which does start with a registry domain draws no warning
+						RuleImagePattern: "docker.io/library/nginx*",
+						RuleSkip:         new(true),
+					},
+					{
+						RuleImagePattern: "localhost:5000/*",
+						RuleSkip:         new(true),
+					},
+					{ // the domain of a pattern is normalized before it is matched, so its
+						// case is not significant here either
+						RuleImagePattern: "LOCALHOST/*",
+						RuleSkip:         new(true),
+					},
+					{
+						RuleImagePattern: "*/library/nginx*",
+						RuleSkip:         new(true),
+					},
+					{ // a glob can still be extended into a registry domain, e.g. 'nginx.io/foo'
+						RuleImagePattern: "nginx*",
+						RuleSkip:         new(true),
+					},
+					{
+						RuleImagePattern: "*",
+						RuleSkip:         new(true),
+					},
 				}
 
 				return c
@@ -353,7 +382,10 @@ func TestImageVerificationConfigValidate(t *testing.T) {
 			expectedWarnings: []string{
 				"rule 0: imagePattern contains ':' but matching only applies to the image registry and repository, not the tag or digest",
 				"rule 1: imagePattern contains '@' but matching only applies to the image registry and repository, not the tag or digest",
-				"rule 2: imagePattern does not contain a '/', image references like 'nginx' are matched as 'docker.io/nginx' (normalized)",
+				"rule 2: imagePattern \"nginx\" cannot match any image: references are matched in their normalized " +
+					"'<registry domain>/<repository>' form, e.g. 'nginx' is matched as 'docker.io/library/nginx'",
+				"rule 3: imagePattern \"library/nginx*\" cannot match any image: references are matched in their normalized " +
+					"'<registry domain>/<repository>' form, e.g. 'nginx' is matched as 'docker.io/library/nginx'",
 			},
 		},
 	} {

@@ -123,10 +123,8 @@ func (suite *CRISeccompProfileSuite) TestReconcileSeccompProfile() {
 
 func TestSeccompProfileSuite(t *testing.T) {
 	suite.Run(t, &CRISeccompProfileSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&cri.SeccompProfileController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&cri.SeccompProfileController{}))
 		},
 	})
 }

@@ -28,6 +28,8 @@ message ConfigSpec {
   repeated common.NetIPPort extra_endpoints = 9;
   // If not empty, filter advertised networks using the list of CIDRs.
   repeated common.NetIPPrefix exclude_advertised_networks = 10;
+  // If not empty, filter peer endpoints to connect to using the list of CIDRs.
+  repeated string peer_endpoint_filters = 11;
 }
 
 // EndpointSpec describes Endpoint state.

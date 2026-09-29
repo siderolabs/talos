@@ -82,6 +82,10 @@ func (suite *KubeNetworkConfigSuite) TestNodeCIDRMaskSize() {
 		suite.T().Skip("skipping if cluster is not qemu")
 	}
 
+	if !suite.Capabilities().SupportsKubernetes {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no controller manager to configure")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	nodeCtx := client.WithNode(suite.ctx, node)
 

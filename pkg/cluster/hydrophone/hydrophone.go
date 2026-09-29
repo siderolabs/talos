@@ -164,7 +164,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	}
 
 	testRunner := conformance.NewTestRunner(config, clientset)
-	testClient := client.NewClient(cfg, clientset, config.Namespace)
+	testClient := client.NewClient(cfg, clientset, config.Namespace, &types.Configuration{})
 
 	// cleanup waits for the conformance namespace to be deleted, which might block forever if the namespace
 	// is stuck terminating, so it is always bounded by the delete timeout.

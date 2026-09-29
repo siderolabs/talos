@@ -538,6 +538,12 @@ func getProtoBasicName(typ string) string {
 
 // ToSnakeCase converts a string to snake case.
 func ToSnakeCase(str string) string {
+	// Treat VLANs as a plural acronym. Keep this exception exact to avoid
+	// renaming existing protobuf fields with other acronym spellings.
+	if str == "VLANs" {
+		return "vlans"
+	}
+
 	snake := matchFirstCap.ReplaceAllString(str, "${1}_${2}")
 	snake = matchAllCap.ReplaceAllString(snake, "${1}_${2}")
 	snake = strings.ToLower(snake)

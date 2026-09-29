@@ -15,7 +15,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -38,7 +38,7 @@ func TestLVMLogicalVolumeConfigMarshalUnmarshal(t *testing.T) {
 				c.MetaName = "lv-data"
 				c.LVType = storageres.LVMLogicalVolumeTypeLinear
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -90,7 +90,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c := storagecfg.NewLVMLogicalVolumeConfigV1Alpha1()
 				c.LVType = storageres.LVMLogicalVolumeTypeLinear
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -101,7 +101,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 			cfg: func(t *testing.T) *storagecfg.LVMLogicalVolumeConfigV1Alpha1 {
 				c := storagecfg.NewLVMLogicalVolumeConfigV1Alpha1()
 				c.MetaName = "lv-data"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -124,8 +124,8 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c := storagecfg.NewLVMLogicalVolumeConfigV1Alpha1()
 				c.MetaName = "lv-data"
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMinSize = block.MustByteSize("100GiB")
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMinSize = meta.MustByteSize("100GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -138,7 +138,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c.MetaName = "lv-data"
 				c.LVType = storageres.LVMLogicalVolumeTypeRAID1
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("80%")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("80%")
 
 				return c
 			},
@@ -150,7 +150,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c.MetaName = "lv-data"
 				c.LVMirrors = new(uint32(1))
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -164,7 +164,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c.LVType = storageres.LVMLogicalVolumeTypeRAID1
 				c.LVStripes = new(uint32(2))
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -178,7 +178,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c.LVType = storageres.LVMLogicalVolumeTypeRAID0
 				c.LVStripes = new(uint32(1))
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -192,7 +192,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c.LVType = storageres.LVMLogicalVolumeTypeRAID0
 				c.LVStripes = new(uint32(3))
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -206,7 +206,7 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 				c.LVMirrors = new(uint32(1))
 				c.LVStripes = new(uint32(2))
 				c.Provisioning.VolumeGroup = "vg-pool"
-				c.Provisioning.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
 
 				return c
 			},
@@ -227,4 +227,25 @@ func TestLVMLogicalVolumeConfigValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLVMLogicalVolumeConfigClone(t *testing.T) {
+	t.Parallel()
+
+	c := storagecfg.NewLVMLogicalVolumeConfigV1Alpha1()
+	c.MetaName = "lv-data"
+	c.LVMirrors = new(uint32(1))
+	c.Provisioning.VolumeGroup = "vg-pool"
+	c.Provisioning.ProvisioningMinSize = meta.MustByteSize("10GiB")
+	c.Provisioning.ProvisioningMaxSize = meta.MustSize("50GiB")
+
+	clone := c.Clone().(*storagecfg.LVMLogicalVolumeConfigV1Alpha1) //nolint:forcetypeassert,errcheck
+
+	assert.Equal(t, c, clone)
+	assert.NotSame(t, c, clone)
+	assert.NotSame(t, c.LVMirrors, clone.LVMirrors)
+	assert.NotSame(t, c.Provisioning.ProvisioningMaxSize.ByteSize, clone.Provisioning.ProvisioningMaxSize.ByteSize)
+
+	// ProvisioningMinSize keeps its buffers unexported, so the independence of the
+	// copy is asserted by TestRegistryDeepCopyAudit in config/types.
 }

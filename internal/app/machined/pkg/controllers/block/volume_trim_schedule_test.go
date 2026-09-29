@@ -32,11 +32,9 @@ func TestVolumeTrimScheduleSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &VolumeTrimScheduleSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeTrimScheduleController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.VolumeTrimScheduleController{}))
 		},
 	})
 }

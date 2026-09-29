@@ -102,13 +102,11 @@ func TestFSScrubSuite(t *testing.T) {
 
 	suite.Run(t, &FSScrubSuite{
 		tracker: tracker,
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 15 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.FSScrubController{
-					ScrubFunc: tracker.scrub,
-				}))
-			},
+		Timeout: 15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.FSScrubController{
+				ScrubFunc: tracker.scrub,
+			}))
 		},
 	})
 }

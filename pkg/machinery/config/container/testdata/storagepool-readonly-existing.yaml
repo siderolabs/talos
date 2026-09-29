@@ -1,0 +1,14 @@
+apiVersion: v1alpha1
+kind: StoragePool
+name: vm-images
+volume:
+  name: vm-data
+---
+apiVersion: v1alpha1
+kind: ExistingVolumeConfig
+name: vm-data
+discovery:
+  volumeSelector:
+    match: volume.partition_label == "MY-DATA"
+mount:
+  readOnly: true

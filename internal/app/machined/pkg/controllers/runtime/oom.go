@@ -157,12 +157,10 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			}
 
 			ctrl.actionLog = append(ctrl.actionLog, actionLogItem{
-				ID: ctrl.idSeq,
-				OOMActionSpec: runtimeres.OOMActionSpec{
-					TriggerContext: string(ctxString),
-					Processes:      processes,
-					Score:          score,
-				},
+				ID:             ctrl.idSeq,
+				TriggerContext: string(ctxString),
+				Processes:      processes,
+				Score:          score,
 			})
 
 			ctrl.idSeq++

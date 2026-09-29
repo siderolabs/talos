@@ -6,11 +6,18 @@
 package v1alpha1
 
 import (
+	"log"
 	"reflect"
 	"slices"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/metal"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 func TestNewSequencer(t *testing.T) {
@@ -29,6 +36,114 @@ func TestNewSequencer(t *testing.T) {
 			if got := NewSequencer(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewSequencer() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+type resetOptions struct{}
+
+func (resetOptions) GetGraceful() bool {
+	return false
+}
+
+func (resetOptions) GetReboot() bool {
+	return true
+}
+
+func (resetOptions) GetMode() machineapi.ResetRequest_WipeMode {
+	return machineapi.ResetRequest_ALL
+}
+
+func (resetOptions) GetUserDisksToWipe() []string {
+	return nil
+}
+
+func (resetOptions) GetSystemDiskTargets() []runtime.PartitionTarget {
+	return nil
+}
+
+func (resetOptions) GetSystemDiskPaths() []string {
+	return nil
+}
+
+func TestPreShutdownPhaseOrdering(t *testing.T) {
+	t.Setenv("PLATFORM", "container")
+
+	state, err := NewState()
+	require.NoError(t, err)
+
+	metalPlatform := &metal.Metal{}
+	state.platform = metalPlatform
+	state.machine.platform = metalPlatform
+
+	rt := NewRuntime(
+		state,
+		NewEvents(1000, 10),
+		logging.NewCircularBufferLoggingManager(log.New(t.Output(), "fallback logger: ", log.Flags())),
+	)
+	sequencer := NewSequencer()
+
+	for _, tt := range []struct {
+		name     string
+		phases   []runtime.Phase
+		expected bool
+	}{
+		{
+			name:     "reboot",
+			phases:   sequencer.Reboot(rt, &machineapi.RebootRequest{}),
+			expected: true,
+		},
+		{
+			name:     "reset",
+			phases:   sequencer.Reset(rt, resetOptions{}),
+			expected: true,
+		},
+		{
+			name:     "shutdown",
+			phases:   sequencer.Shutdown(rt, &machineapi.ShutdownRequest{}),
+			expected: true,
+		},
+		{
+			name:     "stage upgrade",
+			phases:   sequencer.StageUpgrade(rt, &machineapi.UpgradeRequest{}),
+			expected: true,
+		},
+		{
+			name:     "upgrade",
+			phases:   sequencer.Upgrade(rt, &machineapi.UpgradeRequest{}),
+			expected: true,
+		},
+		{
+			name: "forced reboot",
+			phases: sequencer.Reboot(rt, &machineapi.RebootRequest{
+				Mode: machineapi.RebootRequest_FORCE,
+			}),
+		},
+		{
+			name:   "maintenance upgrade",
+			phases: sequencer.MaintenanceUpgrade(rt, &machineapi.UpgradeRequest{}),
+		},
+		{
+			name:   "emergency cleanup",
+			phases: sequencer.EmergencyVolumeCleanup(rt),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			names := make([]string, 0, len(tt.phases))
+			for _, phase := range tt.phases {
+				names = append(names, phase.Name)
+			}
+
+			preShutdown := slices.Index(names, "preShutdown")
+			if !tt.expected {
+				assert.Equal(t, -1, preShutdown)
+
+				return
+			}
+
+			require.NotEqual(t, -1, preShutdown)
+			require.Less(t, preShutdown+1, len(names))
+			assert.Equal(t, "dbus", names[preShutdown+1])
 		})
 	}
 }

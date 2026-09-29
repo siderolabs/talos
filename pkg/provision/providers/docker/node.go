@@ -143,12 +143,10 @@ func (p *provisioner) createNode(ctx context.Context, clusterReq provision.Clust
 	mounts = slices.Concat(mounts, nodeReq.Mounts)
 
 	hostConfig := &container.HostConfig{
-		Privileged:  true,
-		SecurityOpt: []string{"seccomp:unconfined"},
-		Resources: container.Resources{
-			NanoCPUs: nodeReq.NanoCPUs,
-			Memory:   nodeReq.Memory,
-		},
+		Privileged:     true,
+		SecurityOpt:    []string{"seccomp:unconfined"},
+		NanoCPUs:       nodeReq.NanoCPUs,
+		Memory:         nodeReq.Memory,
 		ReadonlyRootfs: true,
 		Mounts:         mounts,
 	}

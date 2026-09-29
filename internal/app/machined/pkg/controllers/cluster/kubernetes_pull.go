@@ -24,6 +24,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
+// watchErrorsThreshold is the number of consecutive watch errors before the Kubernetes
+// client is rebuilt from scratch.
+const watchErrorsThreshold = 5
+
 // KubernetesPullController pulls list of Affiliate resource from the Kubernetes registry.
 type KubernetesPullController struct{}
 
@@ -47,6 +51,12 @@ func (ctrl *KubernetesPullController) Inputs() []controller.Input {
 			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletKubeconfigType,
+			ID:        optional.Some(k8s.KubeletKubeconfigID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -65,26 +75,43 @@ func (ctrl *KubernetesPullController) Outputs() []controller.Output {
 //nolint:gocyclo,cyclop
 func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	var (
-		kubernetesClient   *kubernetes.Client
-		kubernetesRegistry *registry.Kubernetes
-		watchCtxCancel     context.CancelFunc
-		notifyCh           <-chan struct{}
-		notifyCloser       func()
+		kubernetesClient     *kubernetes.Client
+		kubernetesRegistry   *registry.Kubernetes
+		watchCtxCancel       context.CancelFunc
+		notifyCh             <-chan struct{}
+		watchErrCh           <-chan error
+		notifyCloser         func()
+		watchErrors          int
+		watchReady           bool
+		watcherKubeconfigVer string
 	)
 
-	defer func() {
+	closeWatcher := func() {
 		if watchCtxCancel != nil {
 			watchCtxCancel()
+			watchCtxCancel = nil
 		}
 
 		if notifyCloser != nil {
 			notifyCloser()
+			notifyCloser = nil
+			notifyCh = nil
+			watchErrCh = nil
 		}
 
 		if kubernetesClient != nil {
 			kubernetesClient.Close() //nolint:errcheck
+
+			kubernetesClient = nil
 		}
-	}()
+
+		kubernetesRegistry = nil
+		watchErrors = 0
+		watchReady = false
+		watcherKubeconfigVer = ""
+	}
+
+	defer closeWatcher()
 
 	for {
 		select {
@@ -92,6 +119,22 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			return nil
 		case <-r.EventCh():
 		case <-notifyCh:
+			watchErrors = 0
+			watchReady = true
+		case watchErr := <-watchErrCh:
+			watchErrors++
+
+			logger.Error("kubernetes registry node watch error", zap.Error(watchErr), zap.Int("error_count", watchErrors))
+
+			if watchErrors < watchErrorsThreshold {
+				continue
+			}
+
+			// the client might be holding on to credentials which are no longer valid
+			// (e.g. kubelet rotated its client certificate), so rebuild it from scratch
+			logger.Info("restarting Kubernetes registry watch with a new client")
+
+			closeWatcher()
 		}
 
 		discoveryConfig, err := safe.ReaderGetByID[*cluster.Config](ctx, r, cluster.ConfigID)
@@ -125,6 +168,30 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 			continue
 		}
 
+		// Look up the current kubelet credentials hash: it changes both when the kubeconfig
+		// is rewritten and when kubelet rotates its client certificate, and either way the
+		// cached client is pinned to the credentials it read when it was built.
+		kubeconfigRes, err := safe.ReaderGetByID[*k8s.KubeletKubeconfig](ctx, r, k8s.KubeletKubeconfigID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting kubelet kubeconfig: %w", err)
+			}
+
+			continue
+		}
+
+		currentKubeconfigVer := kubeconfigRes.TypedSpec().Hash
+
+		if kubernetesClient != nil && watcherKubeconfigVer != currentKubeconfigVer {
+			logger.Info(
+				"kubelet credentials changed, restarting Kubernetes registry watch",
+				zap.String("old_hash", watcherKubeconfigVer),
+				zap.String("new_hash", currentKubeconfigVer),
+			)
+
+			closeWatcher()
+		}
+
 		if kubernetesClient == nil {
 			kubernetesClient, err = kubernetes.NewClientFromKubeletKubeconfig()
 			if err != nil {
@@ -141,10 +208,19 @@ func (ctrl *KubernetesPullController) Run(ctx context.Context, r controller.Runt
 
 			watchCtx, watchCtxCancel = context.WithCancel(ctx) //nolint:govet
 
-			notifyCh, notifyCloser, err = kubernetesRegistry.Watch(watchCtx, logger)
+			notifyCh, watchErrCh, notifyCloser, err = kubernetesRegistry.Watch(watchCtx)
 			if err != nil {
 				return fmt.Errorf("error setting up registry watcher: %w", err) //nolint:govet
 			}
+
+			watcherKubeconfigVer = currentKubeconfigVer
+		}
+
+		if !watchReady {
+			// The informer cache backing List() is empty until the watch delivers its first
+			// notification, so listing now would yield no affiliates and make cleanupAffiliates()
+			// destroy every affiliate this controller owns until the cache syncs.
+			continue
 		}
 
 		affiliateSpecs, err := kubernetesRegistry.List(nodename.TypedSpec().Nodename)

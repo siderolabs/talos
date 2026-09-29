@@ -7,7 +7,7 @@ package volumes_test
 import (
 	"testing"
 
-	"github.com/google/cel-go/cel"
+	"cel.dev/cel-go/cel"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
@@ -118,6 +118,25 @@ func TestLocateAndProvision(t *testing.T) {
 			assertStatus: func(t *testing.T, s block.VolumeStatusSpec) {
 				assert.Equal(t, "/dev/sda1", s.Location)
 				assert.Equal(t, "uuid-123", s.UUID)
+			},
+		},
+		{
+			name: "partition without a device is skipped",
+			volumeConfig: block.VolumeConfigSpec{
+				Type: block.VolumeTypeDisk,
+				Locator: block.LocatorSpec{
+					Match: mkCEL(`volume.name == "iso9660" && volume.label.startsWith("TALOS_")`, celenv.VolumeLocator()),
+				},
+			},
+			discoveredVolumes: []*blockpb.DiscoveredVolumeSpec{
+				// the ISO9660 partition of a hybrid ISO image on a CD-ROM, which has no device of its own
+				mkVol("", "/dev/sr0", 1*gb, withName("iso9660"), func(v *blockpb.DiscoveredVolumeSpec) { v.Label = "TALOS_V1" }),
+				mkVol("/dev/sr0", "", 1*gb, withName("iso9660"), func(v *blockpb.DiscoveredVolumeSpec) { v.Label = "TALOS_V1" }),
+			},
+
+			expectedPhase: block.VolumePhaseLocated,
+			assertStatus: func(t *testing.T, s block.VolumeStatusSpec) {
+				assert.Equal(t, "/dev/sr0", s.Location)
 			},
 		},
 		{

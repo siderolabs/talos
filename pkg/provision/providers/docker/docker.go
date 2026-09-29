@@ -87,7 +87,7 @@ func (p *provisioner) Close() error {
 }
 
 // GenOptions provides a list of additional config generate options.
-func (p *provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
+func (p *provisioner) GenOptions(_ provision.ClusterRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
 	var genOptions []generate.Option
 
 	if contract.HostDNSEnabled() {

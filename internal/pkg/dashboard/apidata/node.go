@@ -22,6 +22,9 @@ type Node struct {
 	DiskStats     *machine.DiskStats
 	Processes     *machine.Process
 	ServiceList   *machine.ServiceList
+	// ContainerStats holds the stats of the containers declared via ContainerConfig,
+	// i.e. of the taloscontainers containerd namespace. Nil when the node does not have it.
+	ContainerStats *machine.Stats
 
 	// These fields are calculated as diff with Node data from previous pol.
 	SystemStatDiff  *machine.SystemStat
@@ -30,6 +33,9 @@ type Node struct {
 	// ProcsDiff maps pid to the CPU-time delta (float64) for that interval.
 	// Using float64 avoids allocating a ProcessInfo struct per process per tick.
 	ProcsDiff map[int32]float64
+	// ContainerCPUDiff maps container ID to its CPU-time delta in nanoseconds for that
+	// interval. Stat.CpuUsage is a cumulative counter, so only the delta is meaningful.
+	ContainerCPUDiff map[string]uint64
 
 	// Time-series data.
 	Series map[string][]float64
@@ -176,6 +182,16 @@ func (node *Node) UpdateDiff(old *Node) {
 
 		node.ProcsDiff = xslices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, float64) {
 			return proc.Pid, procDiff(index[proc.Pid], proc)
+		})
+	}
+
+	if old.ContainerStats != nil {
+		index := xslices.ToMap(old.ContainerStats.GetStats(), func(stat *machine.Stat) (string, *machine.Stat) {
+			return stat.Id, stat
+		})
+
+		node.ContainerCPUDiff = xslices.ToMap(node.ContainerStats.GetStats(), func(stat *machine.Stat) (string, uint64) {
+			return stat.Id, statCPUDiff(index[stat.Id], stat)
 		})
 	}
 }

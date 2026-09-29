@@ -22,6 +22,12 @@ message BootIDSpec {
   string boot_id = 1;
 }
 
+// BootPartitionStatusSpec describes the partition the machine was booted from.
+message BootPartitionStatusSpec {
+  // PartitionUUID is the GPT partition UUID of the boot partition.
+  string partition_uuid = 1;
+}
+
 // BootedEntrySpec describes the booted entry resource properties.
 message BootedEntrySpec {
   string booted_entry = 1;
@@ -117,7 +123,16 @@ message KernelParamStatusSpec {
 
 // KmsgLogConfigSpec describes configuration for kmsg log streaming.
 message KmsgLogConfigSpec {
+  // Destinations is retained for compatibility with clients which do not support tagged destinations.
   repeated common.URL destinations = 1;
+  // TaggedDestinations associates each endpoint with its dedicated extra tags.
+  repeated KmsgLogDestination tagged_destinations = 2;
+}
+
+// KmsgLogDestination configures a destination for kernel message logs.
+message KmsgLogDestination {
+  common.URL endpoint = 1;
+  map<string, string> extra_tags = 2;
 }
 
 // LoadedKernelModuleSpec describes loaded Linux kernel modules.
@@ -211,6 +226,10 @@ message SecurityStateSpec {
   bool booted_with_uki = 5;
   talos.resource.definitions.enums.RuntimeFIPSState fips_state = 6;
   bool module_signature_enforced = 7;
+  talos.resource.definitions.enums.RuntimeLockdownState lockdown_state = 8;
+  // SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the
+  // firmware used to authorize the images loaded in this boot, as recorded in PCR 7.
+  repeated string secure_boot_authority_fingerprints = 9;
 }
 
 // ServicePIDSpec is the spec for the service PID.

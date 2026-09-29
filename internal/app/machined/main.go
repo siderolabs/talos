@@ -39,11 +39,13 @@ import (
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
 	"github.com/siderolabs/talos/internal/pkg/containermode"
+	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/startup"
 )
 
@@ -166,6 +168,11 @@ func runDebugServer(ctx context.Context) {
 func run() error {
 	// Limit GOMAXPROCS.
 	startup.LimitMaxProcs(constants.MachinedMaxProcs)
+
+	// Start the controller runtime tracer (no-op unless enabled via `talos.trace=1`).
+	//
+	// This has to happen before the resource state is created, as the tracer wraps it.
+	defer ctrltrace.Setup(version.Tag).Close() //nolint:errcheck
 
 	// Initialize the controller without a config.
 	c, err := v1alpha1runtime.NewController()

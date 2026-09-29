@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: VXLANConfig
+name: vxlan900
+id: 100
+local: 10.255.0.1
+parent: vtep0
+port: 4789
+learning: false

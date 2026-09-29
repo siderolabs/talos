@@ -26,6 +26,13 @@ func (suite *EtcdSuite) SuiteName() string {
 	return "cli.EtcdSuite"
 }
 
+// SetupSuite skips the suite on a cluster without etcd.
+func (suite *EtcdSuite) SetupSuite() {
+	if !suite.SupportsEtcd() {
+		suite.T().Skip("cluster doesn't run etcd")
+	}
+}
+
 // TestMembers etcd members should have some output.
 func (suite *EtcdSuite) TestMembers() {
 	suite.RunCLI([]string{"etcd", "members", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)}) // default checks for stdout not empty

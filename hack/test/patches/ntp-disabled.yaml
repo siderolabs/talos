@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: TimeSyncConfig
+enabled: false
+bootTimeout: 5s

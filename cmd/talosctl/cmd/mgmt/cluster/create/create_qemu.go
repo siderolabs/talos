@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -145,7 +146,7 @@ func writeMachineconfig(clusterConfigs clusterops.ClusterConfigs, cOps clusterop
 	}
 
 	fullFilePath := filepath.Join(".", "machineconfig.yaml")
-	if err = os.WriteFile(fullFilePath, cfgBytes, 0o644); err != nil {
+	if err = fileutils.WriteSecret(fullFilePath, cfgBytes); err != nil {
 		return err
 	}
 

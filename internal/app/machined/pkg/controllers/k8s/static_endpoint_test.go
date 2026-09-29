@@ -36,7 +36,7 @@ func (suite *StaticEndpointControllerSuite) TestReconcile() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -69,7 +69,7 @@ func (suite *StaticEndpointControllerSuite) TestReconcileHostname() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -93,10 +93,8 @@ func TestStaticEndpointControllerSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &StaticEndpointControllerSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.StaticEndpointController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.StaticEndpointController{}))
 		},
 	})
 }

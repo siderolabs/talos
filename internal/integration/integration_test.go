@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/api"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/internal/integration/cli"
+	"github.com/siderolabs/talos/internal/integration/hypervisor"
 	"github.com/siderolabs/talos/internal/integration/k8s"
 	provision_test "github.com/siderolabs/talos/internal/integration/provision"
 	"github.com/siderolabs/talos/pkg/images"
@@ -38,13 +39,17 @@ var (
 	trustedBoot         bool
 	selinuxEnforcing    bool
 	extensionsQEMU      bool
+	extensionsLibvirt   bool
 	extensionsNvidia    bool
+	lldpEnabled         bool
 	bgpEnabled          bool
 	bgpCLOSEnabled      bool
 	ciliumBGPEnabled    bool
 	verifyUKIBooted     bool
 	airgapped           bool
 	virtiofsd           bool
+	nfs                 bool
+	ipmi                bool
 	race                bool
 	skipEphemeralPolicy bool
 
@@ -134,7 +139,9 @@ func TestIntegration(t *testing.T) {
 				HelmPath:               helmPath,
 				KubeStrPath:            kubeStrPath,
 				ExtensionsQEMU:         extensionsQEMU,
+				ExtensionsLibvirt:      extensionsLibvirt,
 				ExtensionsNvidia:       extensionsNvidia,
+				LLDPEnabled:            lldpEnabled,
 				BGPEnabled:             bgpEnabled,
 				BGPCLOSEnabled:         bgpCLOSEnabled,
 				CiliumBGPEnabled:       ciliumBGPEnabled,
@@ -146,6 +153,8 @@ func TestIntegration(t *testing.T) {
 				CSITestTimeout:         csiTestTimeout,
 				Airgapped:              airgapped,
 				Virtiofsd:              virtiofsd,
+				NFS:                    nfs,
+				IPMI:                   ipmi,
 				Race:                   race,
 				SkipEphemeralPolicy:    skipEphemeralPolicy,
 				DedicatedSystemVolumes: dedicatedSystemVolumes,
@@ -181,7 +190,9 @@ func init() {
 	flag.BoolVar(&trustedBoot, "talos.trustedboot", false, "enable tests for trusted boot mode")
 	flag.BoolVar(&selinuxEnforcing, "talos.enforcing", false, "enable tests for SELinux enforcing mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
+	flag.BoolVar(&extensionsLibvirt, "talos.extensions.libvirt", false, "enable tests for libvirt extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.BoolVar(&lldpEnabled, "talos.lldp", false, "enable LLDP receive tests (requires a cluster created with --with-lldp)")
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")
 	flag.BoolVar(&ciliumBGPEnabled, "talos.bgp.cilium", false, "enable the Cilium BGP-to-fabric test (requires Cilium CNI with BGP Control Plane and --with-bgp-clos)")
@@ -216,6 +227,8 @@ func init() {
 	flag.StringVar(&csiTestTimeout, "talos.csi.timeout", "15m", "CSI test timeout")
 	flag.BoolVar(&airgapped, "talos.airgapped", false, "Marker to skip tests that should not be run on airgapped talos cluster")
 	flag.BoolVar(&virtiofsd, "talos.virtiofsd", false, "Marker to skip tests that should not be run without virtiofsd")
+	flag.BoolVar(&nfs, "talos.nfs", false, "enable tests for the embedded NFS server and external volumes")
+	flag.BoolVar(&ipmi, "talos.ipmi", false, "Marker to skip tests that should not be run without an emulated BMC (IPMI)")
 	flag.BoolVar(&skipEphemeralPolicy, "talos.skip-ephemeral-policy", false,
 		"Skip MountsSuite assertions for EPHEMERAL-backed fixture mounts")
 	flag.BoolVar(&dedicatedSystemVolumes, "talos.dedicated-system-volumes", false,
@@ -234,5 +247,5 @@ func init() {
 		provision_test.DefaultSettings.TargetInstallImageRegistry, "image registry for target installer image (provision tests only)")
 	flag.StringVar(&provision_test.DefaultSettings.CNIBundleURL, "talos.provision.cni-bundle-url", provision_test.DefaultSettings.CNIBundleURL, "URL to download CNI bundle from")
 
-	allSuites = slices.Concat(api.GetAllSuites(), cli.GetAllSuites(), k8s.GetAllSuites(), provision_test.GetAllSuites())
+	allSuites = slices.Concat(api.GetAllSuites(), cli.GetAllSuites(), hypervisor.GetAllSuites(), k8s.GetAllSuites(), provision_test.GetAllSuites())
 }

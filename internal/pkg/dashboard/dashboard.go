@@ -28,8 +28,19 @@ import (
 )
 
 func init() {
-	// set background to be left as the default color of the terminal
+	// Inherit the color scheme from the terminal: leave the foreground and background
+	// at the terminal defaults, so that the dashboard is readable on both dark and
+	// light themes without any detection or configuration.
+	//
+	// Accent colors elsewhere in the dashboard are ANSI-16 names (red, green, yellow,
+	// gray, ...) on purpose: tcell renders those as palette indices, so the terminal
+	// remaps them to the theme the user picked. Absolute (RGB) colors bypass the
+	// palette and must not be used.
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
+	tview.Styles.PrimaryTextColor = tcell.ColorDefault
+	tview.Styles.BorderColor = tcell.ColorDefault
+	tview.Styles.TitleColor = tcell.ColorDefault
+	tview.Styles.GraphicsColor = tcell.ColorDefault
 }
 
 // Screen is a dashboard screen.
@@ -52,6 +63,9 @@ const (
 
 	// ScreenResourceExplorer is the resource explorer screen.
 	ScreenResourceExplorer Screen = "Resources"
+
+	// ScreenContainers is the containers screen.
+	ScreenContainers Screen = "Containers"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -291,28 +305,32 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	return dashboard, nil
 }
 
-func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
-	primitiveForScreen := func(screen Screen) screenSelectListener {
-		switch screen {
-		case ScreenSummary:
-			return NewSummaryGrid(d.app)
-		case ScreenMonitor:
-			return NewMonitorGrid(d.app)
-		case ScreenNetworkConfig:
-			return NewNetworkConfigGrid(ctx, d)
-		case ScreenConfigURL:
-			return NewConfigURLGrid(ctx, d)
-		case ScreenResourceExplorer:
-			return NewResourceExplorerGrid(ctx, d)
-		default:
-			return nil
-		}
+// newScreenPrimitive builds the primitive implementing the given screen, or nil when the screen is
+// unknown.
+func (d *Dashboard) newScreenPrimitive(ctx context.Context, screen Screen) screenSelectListener { //nolint:ireturn
+	switch screen {
+	case ScreenSummary:
+		return NewSummaryGrid(d.app)
+	case ScreenMonitor:
+		return NewMonitorGrid(d.app)
+	case ScreenNetworkConfig:
+		return NewNetworkConfigGrid(ctx, d)
+	case ScreenConfigURL:
+		return NewConfigURLGrid(ctx, d)
+	case ScreenResourceExplorer:
+		return NewResourceExplorerGrid(ctx, d)
+	case ScreenContainers:
+		return NewContainersGrid(ctx, d)
+	default:
+		return nil
 	}
+}
 
+func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) error {
 	d.screenConfigs = make([]screenConfig, 0, len(screens))
 
 	for i, screen := range screens {
-		primitive := primitiveForScreen(screen)
+		primitive := d.newScreenPrimitive(ctx, screen)
 		if primitive == nil {
 			return fmt.Errorf("unknown screen %s", screen)
 		}

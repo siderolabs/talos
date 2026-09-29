@@ -40,16 +40,14 @@ const (
 func MockEventSink(state events.ServiceState, message string, args ...any) {
 }
 
-func MockPidRecorder(serviceName string, pid int32, clearEntry bool) error {
-	return nil
-}
-
 type CRISuite struct {
 	suite.Suite
 
 	tmpDir string
 
 	containerdRunner  runner.Runner
+	runnerCtx         context.Context //nolint:containedctx
+	runnerCancel      context.CancelFunc
 	containerdWg      sync.WaitGroup
 	containerdAddress string
 
@@ -117,12 +115,14 @@ func (suite *CRISuite) SetupSuite() {
 		runner.WithEnv([]string{constants.EnvPathWithBin}),
 		runner.WithCgroupPath(suite.tmpDir),
 	)
+	suite.runnerCtx, suite.runnerCancel = context.WithCancel(context.Background())
+
 	suite.Require().NoError(suite.containerdRunner.Open())
 
 	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
-		suite.containerdRunner.Run(MockEventSink, MockPidRecorder) //nolint:errcheck
+		suite.containerdRunner.Run(suite.runnerCtx, MockEventSink, nil) //nolint:errcheck
 	})
 
 	suite.client, err = criclient.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
@@ -140,7 +140,7 @@ func (suite *CRISuite) TearDownSuite() {
 
 	suite.Require().NoError(suite.client.Close())
 
-	suite.Require().NoError(suite.containerdRunner.Stop())
+	suite.runnerCancel()
 	suite.containerdWg.Wait()
 }
 

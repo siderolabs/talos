@@ -13,7 +13,7 @@ import (
 	"testing"
 
 	"github.com/containerd/errdefs"
-	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/distribution/reference"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -142,7 +142,7 @@ func TestTagFetcher(t *testing.T) {
 
 			fetcher := image.NewTagFetcher(cfg)
 
-			repo, err := name.NewRepository("example.com/" + repoStr)
+			repo, err := reference.WithName("example.com/" + repoStr)
 			require.NoError(t, err)
 
 			body, err := fetcher(t.Context(), repo, tag, expectedDigest)
@@ -199,7 +199,7 @@ func TestTagFetcherMaxBodySize(t *testing.T) {
 
 	fetcher := image.NewTagFetcher(cfg)
 
-	repo, err := name.NewRepository("example.com/" + repoStr)
+	repo, err := reference.WithName("example.com/" + repoStr)
 	require.NoError(t, err)
 
 	_, err = fetcher(t.Context(), repo, tag, advertisedDigest)

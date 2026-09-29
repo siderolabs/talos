@@ -23,11 +23,9 @@ func TestSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &SpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&etcdctrl.SpecController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&etcdctrl.SpecController{}))
 		},
 	})
 }

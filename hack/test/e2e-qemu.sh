@@ -10,6 +10,7 @@ CLUSTER_NAME="e2e-${PROVISIONER}"
 LOG_ARCHIVE_SUFFIX="${GITHUB_STEP_NAME:-e2e-${PROVISIONER}}"
 
 QEMU_FLAGS=()
+TEST_NFS=("-talos.nfs")
 
 case "${CI:-false}" in
   false)
@@ -67,9 +68,17 @@ case "${WITH_KUBESPAN:-false}" in
     ;;
 esac
 
+case "${WITH_LLDP:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-lldp")
+    ;;
+esac
+
 case "${WITH_BGP:-false}" in
   true)
-    QEMU_FLAGS+=("--with-bgp")
+    # The fabric NIC shares a segment with the management NIC, so ARP has to be restricted to the
+    # interface owning each address; see the patch for what breaks otherwise.
+    QEMU_FLAGS+=("--with-bgp" "--config-patch=@hack/test/patches/bgp-arp.yaml")
     ;;
 esac
 
@@ -214,6 +223,14 @@ case "${WITH_TPM1_2:-false}" in
     ;;
 esac
 
+case "${WITH_IPMI:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--with-ipmi")
+    ;;
+esac
+
 case "${WITH_SIDEROLINK_AGENT:-false}" in
   false)
     ;;
@@ -293,6 +310,25 @@ case "${WITH_TALOS_VERSION:-none}" in
     ;;
 esac
 
+# A cluster without etcd and Kubernetes: the machine configuration carries neither, so nothing but
+# Talos itself comes up. Used by the tests which only exercise Talos APIs.
+case "${WITH_SKIP_ETCD_K8S:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--skip-etcd-k8s" "--skip-kubeconfig" "--skip-k8s-node-readiness-check")
+    ;;
+esac
+
+# Extra disks are attached to workers only by default; this attaches them to control planes as well.
+case "${QEMU_EXTRA_DISKS_ON_CONTROLPLANES:-false}" in
+  false)
+    ;;
+  *)
+    QEMU_FLAGS+=("--extra-disks-on-controlplanes")
+    ;;
+esac
+
 case "${WITH_ENFORCING:-false}" in
   false)
     ;;
@@ -350,6 +386,7 @@ function create_cluster {
     --controlplanes="${QEMU_CONTROLPLANES:-3}" \
     --workers="${QEMU_WORKERS:-2}" \
     --disk="${QEMU_SYSTEM_DISK_SIZE:-15360}" \
+    --disk-driver="${QEMU_SYSTEM_DISK_DRIVER:-virtio}" \
     --primary-disks="${QEMU_SYSTEM_DISKS:-1}" \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
     --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-6144}" \
@@ -364,6 +401,7 @@ function create_cluster {
     --cidr=172.20.1.0/24 \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \
+    --with-nfs \
     --cni-bundle-url="${ARTIFACTS}/talosctl-cni-bundle-\${ARCH}.tar.gz" \
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
@@ -396,6 +434,10 @@ esac
 case "${TEST_MODE:-default}" in
   fast-conformance)
     run_kubernetes_conformance_test fast
+    ;;
+  skip-etcd-k8s)
+    # There is no Kubernetes to fetch a kubeconfig from, or to run the Kubernetes tests against.
+    run_talos_integration_test
     ;;
   *)
     get_kubeconfig

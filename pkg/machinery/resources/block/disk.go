@@ -45,6 +45,15 @@ type DiskSpec struct {
 	Transport       string `yaml:"transport,omitempty" protobuf:"11"`
 	Rotational      bool   `yaml:"rotational,omitempty" protobuf:"12"`
 
+	// DeviceMapperName, DeviceMapperUUID and DeviceMapperKind identify a device-mapper disk, and
+	// are empty for any other disk.
+	//
+	// DeviceMapperKind is one of mpath, lvm, crypt or dm, so that a selector can pick out, say,
+	// multipath disks without matching every device-mapper device.
+	DeviceMapperName string `yaml:"device_mapper_name,omitempty" protobuf:"20"`
+	DeviceMapperUUID string `yaml:"device_mapper_uuid,omitempty" protobuf:"21"`
+	DeviceMapperKind string `yaml:"device_mapper_kind,omitempty" protobuf:"22"`
+
 	// SecondaryDisks (if set) specifies the secondary disk IDs.
 	//
 	// E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda.

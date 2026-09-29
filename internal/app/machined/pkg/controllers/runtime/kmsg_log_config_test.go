@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -52,6 +51,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 		KmsgLogURL: meta.URL{
 			URL: must(url.Parse("https://10.0.0.2:4444/logs")),
 		},
+		ExtraTags: map[string]string{"cluster": "staging-west"},
 	}
 
 	kmsgLogConfig2 := &runtimecfg.KmsgLogV1Alpha1{
@@ -59,6 +59,7 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 		KmsgLogURL: meta.URL{
 			URL: must(url.Parse("https://10.0.0.1:3333/logs")),
 		},
+		ExtraTags: map[string]string{"node": "worker-1"},
 	}
 
 	cfg, err := container.New(kmsgLogConfig1, kmsgLogConfig2)
@@ -68,13 +69,16 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigMachineConfig() {
 
 	rtestutils.AssertResources[*runtime.KmsgLogConfig](suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.KmsgLogConfigID},
 		func(cfg *runtime.KmsgLogConfig, asrt *assert.Assertions) {
-			asrt.Equal(
-				[]string{
-					"https://10.0.0.1:3333/logs",
-					"https://10.0.0.2:4444/logs",
-				},
-				xslices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
-			)
+			// the destination from the kernel args is also specified in the machine config, so it is
+			// deduplicated, and the extra tags from the machine config are merged into it
+			asrt.Equal([]*url.URL{
+				must(url.Parse("https://10.0.0.1:3333/logs")),
+				must(url.Parse("https://10.0.0.2:4444/logs")),
+			}, cfg.TypedSpec().Destinations)
+			asrt.Equal([]runtime.KmsgLogDestination{
+				{Endpoint: must(url.Parse("https://10.0.0.1:3333/logs")), ExtraTags: map[string]string{"node": "worker-1"}},
+				{Endpoint: must(url.Parse("https://10.0.0.2:4444/logs")), ExtraTags: map[string]string{"cluster": "staging-west"}},
+			}, cfg.TypedSpec().TaggedDestinations)
 		})
 }
 
@@ -88,10 +92,8 @@ func (suite *KmsgLogConfigSuite) TestKmsgLogConfigCmdline() {
 
 	rtestutils.AssertResources[*runtime.KmsgLogConfig](suite.Ctx(), suite.T(), suite.State(), []resource.ID{runtime.KmsgLogConfigID},
 		func(cfg *runtime.KmsgLogConfig, asrt *assert.Assertions) {
-			asrt.Equal(
-				[]string{"https://10.0.0.1:3333/logs"},
-				xslices.Map(cfg.TypedSpec().Destinations, func(u *url.URL) string { return u.String() }),
-			)
+			asrt.Equal([]*url.URL{must(url.Parse("https://10.0.0.1:3333/logs"))}, cfg.TypedSpec().Destinations)
+			asrt.Equal([]runtime.KmsgLogDestination{{Endpoint: must(url.Parse("https://10.0.0.1:3333/logs"))}}, cfg.TypedSpec().TaggedDestinations)
 		})
 }
 

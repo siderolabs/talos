@@ -139,10 +139,8 @@ func TestIdentitySuite(t *testing.T) {
 	}
 
 	suite.Run(t, &IdentitySuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.IdentityController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&kubespanctrl.IdentityController{}))
 		},
 	})
 }

@@ -71,7 +71,7 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 					MachineNetwork: &v1alpha1.NetworkConfig{}, //nolint:staticcheck // legacy config
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -170,12 +170,12 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationLegacy() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NameServers: []string{"2.2.2.2", "3.3.3.3"},
-						Searches:    []string{"example.com", "example.org"},
+						NameServers: []string{"2.2.2.2", "3.3.3.3"},         //nolint:staticcheck // legacy config
+						Searches:    []string{"example.com", "example.org"}, //nolint:staticcheck // legacy config
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -230,7 +230,7 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationNewStyle() {
 		},
 	}
 	rc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
-		SearchDomains: []string{"example.com", "example.org"},
+		SearchDomains: networkcfg.SearchDomainList{"example.com", "example.org"},
 	}
 
 	ctr, err := container.New(rc)
@@ -270,7 +270,7 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationEmptySearchDomains() {
 	rc := networkcfg.NewResolverConfigV1Alpha1()
 	// explicit empty search domains (domains: []): no nameservers, override to clear
 	rc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
-		SearchDomains: []string{},
+		SearchDomains: networkcfg.SearchDomainList{},
 	}
 
 	ctr, err := container.New(rc)
@@ -337,8 +337,6 @@ func TestResolverConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ResolverConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-		},
+		Timeout: 10 * time.Second,
 	})
 }

@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/internal/pkg/containers/image/imageref"
 	"github.com/siderolabs/talos/internal/pkg/containers/image/progress"
 	"github.com/siderolabs/talos/internal/pkg/containers/image/verify"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -54,7 +55,7 @@ func Pull(
 		o(&opts)
 	}
 
-	namedRef, err := reference.ParseDockerRef(ref)
+	namedRef, err := imageref.Parse(ref)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse image reference %q: %w", ref, err)
 	}
@@ -82,7 +83,7 @@ func PullWithRetriesAndTimeout(
 		o(&opts)
 	}
 
-	namedRef, err := reference.ParseDockerRef(ref)
+	namedRef, err := imageref.Parse(ref)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse image reference %q: %w", ref, err)
 	}
@@ -131,7 +132,9 @@ func pullInternal(
 	namedRef reference.Named,
 	opts PullOptions,
 ) (img containerd.Image, err error) {
-	// normalize reference
+	// the canonical form of the reference, as produced by imageref.Parse: this is the single
+	// spelling used for the verification policy match, for the registry configuration lookup and
+	// for the pull itself
 	ref := namedRef.String()
 
 	if opts.SkipIfAlreadyPulled {

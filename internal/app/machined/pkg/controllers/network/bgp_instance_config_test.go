@@ -227,11 +227,9 @@ func TestBGPInstanceConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &BGPInstanceConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.BGPInstanceConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.BGPInstanceConfigController{}))
 		},
 	})
 }

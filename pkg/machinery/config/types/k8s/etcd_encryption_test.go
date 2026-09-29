@@ -221,7 +221,7 @@ func TestKubeEtcdEncryptionConfigV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 with etcd secretbox encryption secret set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterSecretboxEncryptionSecret: "foo",
+					ClusterSecretboxEncryptionSecret: "foo", //nolint:staticcheck // testing deprecated field
 				},
 			},
 
@@ -231,7 +231,7 @@ func TestKubeEtcdEncryptionConfigV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 with etcd aescbc encryption secret set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterAESCBCEncryptionSecret: "foo",
+					ClusterAESCBCEncryptionSecret: "foo", //nolint:staticcheck // testing deprecated field
 				},
 			},
 

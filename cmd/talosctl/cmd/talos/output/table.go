@@ -17,6 +17,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.yaml.in/yaml/v4"
 	"k8s.io/client-go/util/jsonpath"
+
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 )
 
 // Table outputs resources in Table view.
@@ -46,12 +48,14 @@ func (table *Table) WriteHeader(definition *meta.ResourceDefinition, withEvents 
 		fields = slices.Insert(fields, 0, "*")
 	}
 
-	table.displayType = definition.TypedSpec().DisplayType
+	// the resource definition is served by the node, so the display type and the
+	// column names are node-supplied too, not just the rows.
+	table.displayType = safeout.Cell(definition.TypedSpec().DisplayType)
 
 	for _, column := range definition.TypedSpec().PrintColumns {
 		name := column.Name
 
-		fields = append(fields, strings.ToUpper(name))
+		fields = append(fields, safeout.Cell(strings.ToUpper(name)))
 
 		expr := jsonpath.New(name)
 		if err := expr.Parse(column.JSONPath); err != nil {
@@ -80,7 +84,7 @@ func (table *Table) WriteHeader(definition *meta.ResourceDefinition, withEvents 
 
 // WriteResource implements output.Writer interface.
 func (table *Table) WriteResource(node string, r resource.Resource, event state.EventType) error {
-	values := []string{r.Metadata().Namespace(), table.displayType, r.Metadata().ID(), r.Metadata().Version().String()}
+	values := []string{safeout.Cell(r.Metadata().Namespace()), table.displayType, safeout.Cell(r.Metadata().ID()), r.Metadata().Version().String()}
 
 	if table.withEvents {
 		var label string
@@ -118,7 +122,11 @@ func (table *Table) WriteResource(node string, r resource.Resource, event state.
 			return err
 		}
 
-		values = append(values, value)
+		// every cell is escaped rather than only filtered on the way out, because a
+		// tab in a value is read by the tabwriter as a column separator and a newline
+		// ends the row: a node choosing either one rewrites the shape of the table
+		// around it, and the tabwriter has consumed both before any writer sees them.
+		values = append(values, safeout.Cell(value))
 	}
 
 	values = slices.Insert(values, 0, node)

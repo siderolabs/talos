@@ -95,30 +95,40 @@ func WriteVariable(name, value string) error {
 	return efi.Write(efivarfs.ScopeSystemd, name, efivarfs.AttrBootserviceAccess|efivarfs.AttrRuntimeAccess|efivarfs.AttrNonVolatile, out)
 }
 
-// CreateBootEntry creates a UEFI boot entry named "Talos Linux UKI" and sets it as the first in the `BootOrder`
-// The entry will point to the SystemdBoot PE binary located at the specified install disk path.
-//
-//nolint:gocyclo,cyclop
-func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(format string, args ...any), sdBootFilePath string) error {
+// findEFIPartition returns the EFI partition on the disk, which is required to have a partition UUID.
+func findEFIPartition(blkidInfo *blkid.Info) (blkid.NestedProbeResult, error) {
 	efiPartInfo := xslices.Filter(blkidInfo.Parts, func(part blkid.NestedProbeResult) bool {
 		return part.PartitionLabel != nil && *part.PartitionLabel == constants.EFIPartitionLabel
 	})
 
 	if len(efiPartInfo) == 0 {
-		return fmt.Errorf("EFI partition not found on install disk %q", blkidInfo.Name)
+		return blkid.NestedProbeResult{}, fmt.Errorf("EFI partition not found on install disk %q", blkidInfo.Name)
 	}
 
 	if len(efiPartInfo) > 1 {
-		return fmt.Errorf("multiple EFI partitions found on install disk %q, expected only one", blkidInfo.Name)
+		return blkid.NestedProbeResult{}, fmt.Errorf("multiple EFI partitions found on install disk %q, expected only one", blkidInfo.Name)
 	}
 
-	partitionUUID := efiPartInfo[0].PartitionUUID
-
-	if partitionUUID == nil {
-		return fmt.Errorf("EFI partition UUID not found on install disk %q", blkidInfo.Name)
+	if efiPartInfo[0].PartitionUUID == nil {
+		return blkid.NestedProbeResult{}, fmt.Errorf("EFI partition UUID not found on install disk %q", blkidInfo.Name)
 	}
 
-	printf("using disk %s with partition %d and UUID %s", blkidInfo.Name, efiPartInfo[0].PartitionIndex, partitionUUID.String())
+	return efiPartInfo[0], nil
+}
+
+// CreateBootEntry creates a UEFI boot entry named "Talos Linux UKI" and sets it as the first in the `BootOrder`
+// The entry will point to the SystemdBoot PE binary located at the specified install disk path.
+//
+//nolint:gocyclo,cyclop
+func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(format string, args ...any), sdBootFilePath string) error {
+	efiPart, err := findEFIPartition(blkidInfo)
+	if err != nil {
+		return err
+	}
+
+	partitionUUID := efiPart.PartitionUUID
+
+	printf("using disk %s with partition %d and UUID %s", blkidInfo.Name, efiPart.PartitionIndex, partitionUUID.String())
 
 	bootOrder, err := efivarfs.GetBootOrder(rw)
 	if err != nil {
@@ -194,9 +204,9 @@ func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(
 		Description: TalosBootEntryDescription,
 		FilePath: efivarfs.DevicePath{
 			&efivarfs.HardDrivePath{
-				PartitionNumber:     uint32(efiPartInfo[0].PartitionIndex),
-				PartitionStartBlock: efiPartInfo[0].PartitionOffset / uint64(blkidInfo.SectorSize),
-				PartitionSizeBlocks: efiPartInfo[0].PartitionSize / uint64(blkidInfo.SectorSize),
+				PartitionNumber:     uint32(efiPart.PartitionIndex),
+				PartitionStartBlock: efiPart.PartitionOffset / uint64(blkidInfo.SectorSize),
+				PartitionSizeBlocks: efiPart.PartitionSize / uint64(blkidInfo.SectorSize),
 				PartitionMatch: &efivarfs.PartitionGPT{
 					PartitionUUID: *partitionUUID,
 				},

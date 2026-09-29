@@ -199,5 +199,10 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 		return nil, err
 	}
 
+	// a null entry in a list (or a map) of pointers decodes to a nil element which the code doesn't expect
+	if err = xyaml.CheckNullElements(target, manifest); err != nil {
+		return nil, err
+	}
+
 	return target, nil
 }

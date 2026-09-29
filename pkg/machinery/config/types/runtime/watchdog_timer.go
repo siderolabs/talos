@@ -8,7 +8,6 @@ package runtime
 
 import (
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -104,8 +103,8 @@ func (s *WatchdogTimerV1Alpha1) EventsEndpoint() *string {
 	return nil
 }
 
-// KmsgLogURLs implements config.RuntimeConfig interface.
-func (s *WatchdogTimerV1Alpha1) KmsgLogURLs() []*url.URL {
+// KmsgLogDestinations implements config.RuntimeConfig interface.
+func (s *WatchdogTimerV1Alpha1) KmsgLogDestinations() []config.KmsgLogDestination {
 	return nil
 }
 

@@ -647,9 +647,9 @@ type ImageServiceVerifyRequest struct {
 	// Image reference to verify.
 	//
 	// The image reference could be either in:
-	//   - the digest form (e.g. "docker.io/library/nginx@sha256:abc123...") to ensure that the exact image is verified.
-	//   - the tag form (e.g. "docker.io/library/nginx:latest") to verify the image currently pointed by the tag, and the resolved
-	//     digested will be returned in the response.
+	//  * the digest form (e.g. "docker.io/library/nginx@sha256:abc123...") to ensure that the exact image is verified.
+	//  * the tag form (e.g. "docker.io/library/nginx:latest") to verify the image currently pointed by the tag, and the resolved
+	//    digested will be returned in the response.
 	//
 	// Any other format will cause the error.
 	ImageRef string `protobuf:"bytes,1,opt,name=image_ref,json=imageRef,proto3" json:"image_ref,omitempty"`

@@ -73,6 +73,19 @@ func diskStatDiff(old, next *machine.DiskStat) *machine.DiskStat {
 	}
 }
 
+// statCPUDiff returns the CPU-time consumed by a container since the previous poll.
+//
+// A container that only appeared in this poll has no previous sample to subtract, and a container
+// restarted in between has its counter reset by containerd, so both report zero rather than a
+// spike.
+func statCPUDiff(old, next *machine.Stat) uint64 {
+	if old == nil || next == nil || next.CpuUsage < old.CpuUsage {
+		return 0
+	}
+
+	return next.CpuUsage - old.CpuUsage
+}
+
 func procDiff(old, next *machine.ProcessInfo) float64 {
 	if old == nil || next == nil {
 		return 0

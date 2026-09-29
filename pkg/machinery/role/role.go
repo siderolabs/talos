@@ -38,6 +38,13 @@ const (
 	// MetaWriter defines Talos role that allows mutating META values (write and delete).
 	MetaWriter = Role(Prefix + "meta:writer")
 
+	// ContentLibraryReader defines Talos role that allows listing the contents of content libraries.
+	ContentLibraryReader = Role(Prefix + "content-library:reader")
+
+	// ContentLibraryWriter defines Talos role that allows mutating the contents of content libraries
+	// (upload and delete), in addition to listing them.
+	ContentLibraryWriter = Role(Prefix + "content-library:writer")
+
 	// Impersonator defines Talos role for impersonating another user (and their role).
 	// Used internally, but may also be granted to the user.
 	Impersonator = Role(Prefix + "impersonator")
@@ -50,7 +57,7 @@ type Set struct {
 
 var (
 	// All roles that can be granted to users.
-	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, Impersonator)
+	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, ContentLibraryReader, ContentLibraryWriter, Impersonator)
 
 	// Zero is an empty set of roles.
 	Zero = MakeSet()
@@ -102,6 +109,14 @@ func (s Set) Strings() []string {
 	slices.Sort(res)
 
 	return res
+}
+
+// Empty returns true if the set contains no roles.
+//
+// A credential resolving to an empty set names no roles at all, and never authorizes
+// anything: it should be rejected rather than treated as a caller holding no roles.
+func (s Set) Empty() bool {
+	return len(s.roles) == 0
 }
 
 // IncludesAny returns true if there is a non-empty intersection between sets.

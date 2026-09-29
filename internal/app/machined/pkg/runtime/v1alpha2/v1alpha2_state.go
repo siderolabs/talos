@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 
+	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -23,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubeaccess"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -51,15 +53,15 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(namespaced.NewState(
+	s.resources = state.WrapCore(ctrltrace.WrapState(namespaced.NewState(
 		func(ns string) state.CoreState {
 			return inmem.NewStateWithOptions(
 				inmem.WithHistoryInitialCapacity(8),
-				inmem.WithHistoryMaxCapacity(1024),
+				inmem.WithHistoryMaxCapacity(1536),
 				inmem.WithHistoryGap(4),
 			)(ns)
 		},
-	))
+	)))
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 
@@ -90,6 +92,7 @@ func NewState() (*State, error) {
 		{network.ConfigNamespaceName, "Networking configuration resources."},
 		{cri.NamespaceName, "CRI Seccomp resources."},
 		{containers.NamespaceName, "Talos-managed container resources."},
+		{hypervisor.NamespaceName, "Talos hypervisor resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
 		{security.NamespaceName, "Security resources."},
 		{perf.NamespaceName, "Stats resources."},
@@ -109,6 +112,7 @@ func NewState() (*State, error) {
 		&block.Disk{},
 		&block.MountRequest{},
 		&block.MountStatus{},
+		&block.SMARTStatus{},
 		&block.SwapStatus{},
 		&block.Symlink{},
 		&block.SystemDisk{},
@@ -121,6 +125,16 @@ func NewState() (*State, error) {
 		&block.VolumeTrimSchedule{},
 		&block.ZswapStatus{},
 		&containers.ContainerSpec{},
+		&containers.ContainerImageStatus{},
+		&containers.ContainerMountStatus{},
+		&containers.ContainerDependencyStatus{},
+		&containers.ContainerInstanceSpec{},
+		&containers.ContainerInstanceStatus{},
+		&containers.ContainerLifecycle{},
+		&containers.ContainerStatus{},
+		&hypervisor.ContentLibraryStatus{},
+		&hypervisor.VirtualMachineSpec{},
+		&hypervisor.VirtualMachineDomainSpec{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},
 		&cluster.Affiliate{},
@@ -138,7 +152,10 @@ func NewState() (*State, error) {
 		&etcd.Member{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&hardware.BMCDevice{},
 		&hardware.CPUCore{},
+		&hardware.CPUScalingSpec{},
+		&hardware.CPUScalingStatus{},
 		&hardware.MemoryModule{},
 		&hardware.PCIDevice{},
 		&hardware.PCIDriverRebindConfig{},
@@ -202,6 +219,7 @@ func NewState() (*State, error) {
 		&network.LinkAliasSpec{},
 		&network.LinkRefresh{},
 		&network.LinkStatus{},
+		&network.LLDPNeighborStatus{},
 		&network.LinkSpec{},
 		&network.NfTablesChain{},
 		&network.NodeAddress{},
@@ -229,6 +247,7 @@ func NewState() (*State, error) {
 		&runtime.APIServiceConfig{},
 		&runtime.BootedEntry{},
 		&runtime.BootID{},
+		&runtime.BootPartitionStatus{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.Environment{},
@@ -280,6 +299,8 @@ func NewState() (*State, error) {
 		&siderolink.Config{},
 		&siderolink.Status{},
 		&siderolink.Tunnel{},
+		&storage.StoragePoolSpec{},
+		&storage.StoragePoolStatus{},
 		&storage.LVMRefreshRequest{},
 		&storage.LVMPhysicalVolumeSpec{},
 		&storage.LVMLogicalVolumeSpec{},
@@ -292,6 +313,7 @@ func NewState() (*State, error) {
 		&storage.MDArrayStatus{},
 		&storage.MDRefreshRequest{},
 		&time.AdjtimeStatus{},
+		&time.NTPStatus{},
 		&time.Status{},
 		&v1alpha1.AcquireConfigSpec{},
 		&v1alpha1.AcquireConfigStatus{},
@@ -337,6 +359,15 @@ func (s *State) GetConfig(ctx context.Context) (talosconfig.Provider, error) {
 // SetConfig implements runtime.V1alpha2State interface.
 func (s *State) SetConfig(ctx context.Context, id string, cfg talosconfig.Provider) error {
 	cfgResource := config.NewMachineConfigWithID(cfg, id)
+
+	if cfg == nil {
+		err := s.resources.Destroy(ctx, cfgResource.Metadata())
+		if err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		return nil
+	}
 
 	oldCfg, err := s.resources.Get(ctx, cfgResource.Metadata())
 	if err != nil {

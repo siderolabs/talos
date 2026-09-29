@@ -297,7 +297,7 @@ func (ctrl *EndpointController) watchKubernetesEndpointSlices(ctx context.Contex
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	notifyCh, watchCloser, err := kubernetesEndpointSliceWatcher(ctx, logger, client)
+	notifyCh, watchErrCh, watchCloser, err := kubernetesEndpointSliceWatcher(ctx, client)
 	if err != nil {
 		return fmt.Errorf("error watching Kubernetes endpoint slice: %w", err)
 	}
@@ -308,11 +308,30 @@ func (ctrl *EndpointController) watchKubernetesEndpointSlices(ctx context.Contex
 		watchCloser()
 	}()
 
+	var watchErrors int
+
 	for {
 		select {
 		case endpoints := <-notifyCh:
+			watchErrors = 0
+
 			if err = ctrl.updateEndpointsResource(ctx, r, logger, endpoints); err != nil {
 				return err
+			}
+		case watchErr := <-watchErrCh:
+			watchErrors++
+
+			logger.Error("kubernetes endpoint watch error", zap.Error(watchErr), zap.Int("error_count", watchErrors))
+
+			if watchErrors >= watchErrorsThreshold {
+				// The watch is failing persistently: give up on this client and let the caller
+				// build a new one. On a worker that also re-reads the kubelet credentials off
+				// disk, which is what recovers a client pinned to a rotated client certificate.
+				logger.Info("restarting Kubernetes endpoint watch with a new client")
+
+				r.QueueReconcile()
+
+				return nil
 			}
 		case <-ctx.Done():
 			return nil
@@ -325,7 +344,7 @@ func (ctrl *EndpointController) watchKubernetesEndpointSlices(ctx context.Contex
 	}
 }
 
-func kubernetesEndpointSliceWatcher(ctx context.Context, logger *zap.Logger, client *kubernetes.Client) (chan *discoveryv1.EndpointSlice, func(), error) {
+func kubernetesEndpointSliceWatcher(ctx context.Context, client *kubernetes.Client) (chan *discoveryv1.EndpointSlice, <-chan error, func(), error) {
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		client.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithNamespace(corev1.NamespaceDefault),
@@ -335,24 +354,39 @@ func kubernetesEndpointSliceWatcher(ctx context.Context, logger *zap.Logger, cli
 	)
 
 	notifyCh := make(chan *discoveryv1.EndpointSlice, 1)
+	watchErrCh := make(chan error, 1)
 
 	informer := informerFactory.Discovery().V1().EndpointSlices().Informer()
 
-	if err := informer.SetWatchErrorHandler(func(r *cache.Reflector, err error) {
-		logger.Error("kubernetes endpoint watch error", zap.Error(err))
+	if err := informer.SetWatchErrorHandler(func(_ *cache.Reflector, err error) {
+		select {
+		case watchErrCh <- err:
+		default:
+		}
 	}); err != nil {
-		return nil, nil, fmt.Errorf("error setting watch error handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("error setting watch error handler: %w", err)
+	}
+
+	// Every notification carries the endpoint slice itself, so a send can't be dropped the way
+	// a bare "something changed" notification could be; it is given up only once the watch
+	// context is canceled, as otherwise a handler blocked on a full channel with no reader left
+	// would deadlock the `informerFactory.Shutdown()` which follows the cancel.
+	notify := func(endpointSlice *discoveryv1.EndpointSlice) {
+		select {
+		case notifyCh <- endpointSlice:
+		case <-ctx.Done():
+		}
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj any) { notifyCh <- obj.(*discoveryv1.EndpointSlice) },
-		DeleteFunc: func(_ any) { notifyCh <- &discoveryv1.EndpointSlice{} },
-		UpdateFunc: func(_, obj any) { notifyCh <- obj.(*discoveryv1.EndpointSlice) },
+		AddFunc:    func(obj any) { notify(obj.(*discoveryv1.EndpointSlice)) },
+		DeleteFunc: func(_ any) { notify(&discoveryv1.EndpointSlice{}) },
+		UpdateFunc: func(_, obj any) { notify(obj.(*discoveryv1.EndpointSlice)) },
 	}); err != nil {
-		return nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
+		return nil, nil, nil, fmt.Errorf("error adding watch event handler: %w", err)
 	}
 
 	informerFactory.Start(ctx.Done())
 
-	return notifyCh, informerFactory.Shutdown, nil
+	return notifyCh, watchErrCh, informerFactory.Shutdown, nil
 }

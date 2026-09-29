@@ -16,6 +16,8 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 	"go.yaml.in/yaml/v4"
+
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 // Config represents the client configuration file (talosconfig).
@@ -181,11 +183,11 @@ func (c *Config) Save(path string) error {
 		return err
 	}
 
-	if err = os.MkdirAll(filepath.Dir(c.path.Path), 0o700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(c.path.Path), fileutils.SecretDirMode); err != nil {
 		return err
 	}
 
-	return os.WriteFile(c.path.Path, configBytes, 0o600)
+	return fileutils.WriteSecret(c.path.Path, configBytes)
 }
 
 // Bytes gets yaml encoded config data.

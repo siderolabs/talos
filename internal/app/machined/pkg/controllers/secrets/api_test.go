@@ -27,11 +27,9 @@ import (
 
 func TestAPISuite(t *testing.T) {
 	suite.Run(t, &APISuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APIController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APIController{}))
 		},
 	})
 }

@@ -20,6 +20,13 @@
 (typetransition pod_containerd_t run_t chr_file pod_containerd_run_t)
 (typetransition pod_containerd_t run_t blk_file pod_containerd_run_t)
 (typetransition pod_containerd_t run_t fifo_file pod_containerd_run_t)
+; /run/cilium and similar, managed by high-privilege pods
+(typetransition pod_p run_t file pod_containerd_run_t)
+(typetransition pod_p run_t dir pod_containerd_run_t)
+(typetransition pod_p run_t lnk_file pod_containerd_run_t)
+(typetransition pod_p run_t chr_file pod_containerd_run_t)
+(typetransition pod_p run_t blk_file pod_containerd_run_t)
+(typetransition pod_p run_t fifo_file pod_containerd_run_t)
 
 (allow pod_containerd_t pod_containerd_run_t (fs_classes (rw)))
 
@@ -173,8 +180,8 @@
 (allow pod_containerd_t devpts_t (fs_classes (rw)))
 (allow pod_p devpts_t (fs_classes (rw)))
 
-; ; cilium
-; (allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
+; cilium-cni (called by CRI) connecting to /run/cilium/cilium.sock (exposed by agent pod)
+(allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
 
 ; pkg/flannel
 (allow pod_p cni_conf_t (fs_classes (rw)))
@@ -203,6 +210,11 @@
 ; TODO: label
 (allow pod_p kubelet_state_t (fs_classes (rw)))
 
+; Network filesystems are labeled network_fs_t by genfscon. Let regular pods use
+; NFS/CIFS volumes while the filesystem and mount options continue to enforce
+; read-only and Unix-level access controls.
+(allow pod_t network_fs_t (fs_classes (rw)))
+
 ; getattr, unmount called by containers and should be guarded by their mount namespaces
 (allow pod_p fs_t (filesystem (
     ; associate
@@ -210,7 +222,10 @@
     mount
     quotaget
     quotamod
-    ; relabelfrom
+    ; CSI drivers mount volumes with an explicit context=, requested through StorageClass
+    ; mountOptions, and the mount syscall relabels the filesystem away from fs_t. The target
+    ; type is covered by the ephemeral_t fs_classes grant below.
+    relabelfrom
     ; relabelto
     remount
     unmount

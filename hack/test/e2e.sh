@@ -33,7 +33,7 @@ export TALOS_VERSION
 # Kubernetes
 
 export KUBECONFIG="${TMP}/kubeconfig"
-export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.37.0-rc.0}
+export KUBERNETES_VERSION=${KUBERNETES_VERSION:-1.37.0}
 
 export NAME_PREFIX="talos-e2e-${SHA}-${PLATFORM}"
 export TIMEOUT=1200
@@ -44,6 +44,7 @@ CLUSTER_NAME=
 
 TEST_SHORT=()
 TEST_RUN=("-test.run" ".")
+TEST_NFS=()
 
 function run_talos_integration_test {
   case "${SHORT_INTEGRATION_TEST:-no}" in
@@ -74,6 +75,14 @@ function run_talos_integration_test {
       TEST_VIRTIOFSD=("-talos.virtiofsd")
   fi
 
+  case "${WITH_IPMI:-false}" in
+    false)
+      ;;
+    *)
+      TEST_IPMI=("-talos.ipmi")
+      ;;
+  esac
+
   "${INTEGRATION_TEST}" \
     -test.v \
     -talos.failfast \
@@ -88,7 +97,9 @@ function run_talos_integration_test {
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}" \
     "${TEST_AIRGAPPED[@]}" \
-    "${TEST_VIRTIOFSD[@]}"
+    "${TEST_VIRTIOFSD[@]}" \
+    "${TEST_NFS[@]}" \
+    "${TEST_IPMI[@]}"
 }
 
 function run_talos_integration_test_docker {

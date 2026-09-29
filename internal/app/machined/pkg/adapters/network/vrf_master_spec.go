@@ -2,6 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+// Encode/Decode below mirror macvlan_spec.go: both carry a single uint32 attribute.
+//
+//nolint:dupl
 package network
 
 import (

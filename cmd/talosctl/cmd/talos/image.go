@@ -36,6 +36,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/registry"
 	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/imager/cache"
@@ -52,6 +53,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
@@ -68,6 +70,8 @@ func (flags imageCmdFlagsType) apiNamespace() (common.ContainerdNamespace, error
 		return common.ContainerdNamespace_NS_CRI, nil
 	case "system":
 		return common.ContainerdNamespace_NS_SYSTEM, nil
+	case constants.TalosContainersContainerdNamespace:
+		return common.ContainerdNamespace_NS_TALOSCONTAINERS, nil
 	default:
 		return 0, fmt.Errorf("unsupported namespace %q", flags.namespace)
 	}
@@ -90,8 +94,29 @@ func (flags imageCmdFlagsType) containerdInstance() (*common.ContainerdInstance,
 			Driver:    common.ContainerDriver_CONTAINERD,
 			Namespace: common.ContainerdNamespace_NS_SYSTEM,
 		}, nil
+	case constants.TalosContainersContainerdNamespace:
+		return &common.ContainerdInstance{
+			Driver:    common.ContainerDriver_CONTAINERD,
+			Namespace: common.ContainerdNamespace_NS_TALOSCONTAINERS,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported namespace %q", flags.namespace)
+	}
+}
+
+// containerNamespace resolves the raw containerd namespace and driver used by the container-listing
+// RPCs (containers, logs, stats, restart), which take the namespace as a string directly rather than
+// through the ContainerdNamespace enum used by the image and debug commands.
+func (flags imageCmdFlagsType) containerNamespace() (string, common.ContainerDriver, error) {
+	switch flags.namespace {
+	case "cri":
+		return constants.K8sContainerdNamespace, common.ContainerDriver_CRI, nil
+	case "system":
+		return constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, nil
+	case constants.TalosContainersContainerdNamespace:
+		return constants.TalosContainersContainerdNamespace, common.ContainerDriver_CONTAINERD, nil
+	default:
+		return "", 0, fmt.Errorf("namespace %q is not supported by this command", flags.namespace)
 	}
 }
 
@@ -141,7 +166,7 @@ func imageList(ctx context.Context) error {
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	headerWritten := false
 
 	var errs error
@@ -164,7 +189,7 @@ func imageList(ctx context.Context) error {
 			fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tLABELS\tCREATED")
 		}
 
-		fmt.Fprintf(
+		safeout.Fprintf(
 			w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			resp.Node,
 			resp.Payload.GetName(),
@@ -194,7 +219,7 @@ func imageListLegacy(ctx context.Context, clientFactory *global.ClientFactory) e
 		},
 	)
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
 
 	var errs error
@@ -206,7 +231,7 @@ func imageListLegacy(ctx context.Context, clientFactory *global.ClientFactory) e
 			continue
 		}
 
-		fmt.Fprintf(
+		safeout.Fprintf(
 			w, "%s\t%s\t%s\t%s\t%s\n",
 			resp.Node,
 			resp.Payload.Name,
@@ -240,7 +265,7 @@ func imagePull(ctx context.Context, imageRef string) error {
 
 	defer clientFactory.Close() //nolint:errcheck
 
-	rep := reporter.New()
+	rep := reporter.New(reporter.WithLineFilter(safeout.String))
 
 	containerdInstance, err := imageCmdFlags.containerdInstance()
 	if err != nil {
@@ -312,7 +337,7 @@ func imagePullInternal(
 		var sb strings.Builder
 
 		for node, imageName := range finishedPulls {
-			fmt.Fprintf(&sb, "%s: pulled image %s\n", node, imageName)
+			fmt.Fprintf(&sb, "%s: pulled image %s\n", node, safeout.String(imageName))
 		}
 
 		rep.Report(reporter.Update{
@@ -524,11 +549,11 @@ var imageK8sBundleCmd = &cobra.Command{
 					},
 					ClusterConfig: &v1alpha1.ClusterConfig{
 						EtcdConfig:              &v1alpha1.EtcdConfig{},
-						APIServerConfig:         &v1alpha1.APIServerConfig{},
+						APIServerConfig:         &v1alpha1.APIServerConfig{},         //nolint:staticcheck // legacy configuration
 						ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck // legacy config
 						SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck // legacy config
-						CoreDNSConfig:           &v1alpha1.CoreDNS{},
-						ProxyConfig:             &v1alpha1.ProxyConfig{}, //nolint:staticcheck // legacy configuration
+						CoreDNSConfig:           &v1alpha1.CoreDNS{},                 //nolint:staticcheck // legacy config
+						ProxyConfig:             &v1alpha1.ProxyConfig{},             //nolint:staticcheck // legacy configuration
 					},
 				},
 			),
@@ -541,16 +566,16 @@ var imageK8sBundleCmd = &cobra.Command{
 			},
 		)
 
-		fmt.Printf("%s\n", images.Flannel)
-		fmt.Printf("%s\n", images.CoreDNS)
-		fmt.Printf("%s\n", images.Etcd)
-		fmt.Printf("%s\n", images.Pause)
-		fmt.Printf("%s\n", images.KubeAPIServer)
-		fmt.Printf("%s\n", images.KubeControllerManager)
-		fmt.Printf("%s\n", images.KubeScheduler)
-		fmt.Printf("%s\n", images.KubeProxy)
-		fmt.Printf("%s\n", images.Kubelet)
-		fmt.Printf("%s\n", images.KubeNetworkPolicies)
+		safeout.Printf("%s\n", images.Flannel)
+		safeout.Printf("%s\n", images.CoreDNS)
+		safeout.Printf("%s\n", images.Etcd)
+		safeout.Printf("%s\n", images.Pause)
+		safeout.Printf("%s\n", images.KubeAPIServer)
+		safeout.Printf("%s\n", images.KubeControllerManager)
+		safeout.Printf("%s\n", images.KubeScheduler)
+		safeout.Printf("%s\n", images.KubeProxy)
+		safeout.Printf("%s\n", images.Kubelet)
+		safeout.Printf("%s\n", images.KubeNetworkPolicies)
 
 		return nil
 	},
@@ -629,15 +654,15 @@ var imageTalosBundleCmd = &cobra.Command{
 		sources := images.ListSourcesFor(tag)
 
 		if semTag.LT(talosLegacyInstallerMaximumVersion) {
-			fmt.Printf("%s\n", sources.Installer)
+			safeout.Printf("%s\n", sources.Installer)
 		}
 
-		fmt.Printf("%s\n", sources.InstallerBase)
-		fmt.Printf("%s\n", sources.Imager)
-		fmt.Printf("%s\n", sources.Talos)
-		fmt.Printf("%s\n", sources.TalosctlAll)
-		fmt.Printf("%s\n", sources.Overlays)
-		fmt.Printf("%s\n", sources.Extensions)
+		safeout.Printf("%s\n", sources.InstallerBase)
+		safeout.Printf("%s\n", sources.Imager)
+		safeout.Printf("%s\n", sources.Talos)
+		safeout.Printf("%s\n", sources.TalosctlAll)
+		safeout.Printf("%s\n", sources.Overlays)
+		safeout.Printf("%s\n", sources.Extensions)
 
 		digestedReferences := []string{}
 
@@ -666,7 +691,7 @@ var imageTalosBundleCmd = &cobra.Command{
 		slices.Sort(digestedReferences)
 
 		for _, ref := range slices.Compact(digestedReferences) {
-			fmt.Printf("%s\n", ref)
+			safeout.Printf("%s\n", ref)
 		}
 
 		return nil
@@ -706,11 +731,11 @@ var imageIntegrationCmd = &cobra.Command{
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
 				EtcdConfig:              &v1alpha1.EtcdConfig{},
-				APIServerConfig:         &v1alpha1.APIServerConfig{},
+				APIServerConfig:         &v1alpha1.APIServerConfig{},         //nolint:staticcheck // legacy configuration
 				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck
 				SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck
-				CoreDNSConfig:           &v1alpha1.CoreDNS{},
-				ProxyConfig:             &v1alpha1.ProxyConfig{}, //nolint:staticcheck
+				CoreDNSConfig:           &v1alpha1.CoreDNS{},                 //nolint:staticcheck // legacy configuration
+				ProxyConfig:             &v1alpha1.ProxyConfig{},             //nolint:staticcheck
 			},
 		}))
 
@@ -726,12 +751,13 @@ var imageIntegrationCmd = &cobra.Command{
 			imgs.Pause.String(),
 			imgs.KubeNetworkPolicies.String(),
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
+			"docker.io/alpine/socat:1.8.1.3",
 			"docker.io/library/alpine:latest",
 			"ghcr.io/siderolabs/talosctl:v1.13.5",
 			"registry.k8s.io/kube-apiserver:v1.27.0",
 			"registry.k8s.io/kube-apiserver:v1.27.1",
 			"docker.io/library/alpine:3.23",
-			constants.DebugHostNsImage,
+			constants.DebugNixyBoxImage,
 			"docker.io/library/nginx:latest",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
@@ -761,7 +787,7 @@ var imageIntegrationCmd = &cobra.Command{
 		imageNames = slices.Compact(imageNames)
 
 		for _, img := range imageNames {
-			fmt.Println(img)
+			safeout.Println(img)
 		}
 
 		return nil
@@ -1007,7 +1033,7 @@ var imageCacheCertGenCmd = &cobra.Command{
 			return err
 		}
 
-		if err := os.WriteFile(imageCacheCertGenCmdFlags.tlsKeyFile, keyPEM, 0o600); err != nil {
+		if err := fileutils.WriteSecret(imageCacheCertGenCmdFlags.tlsKeyFile, keyPEM); err != nil {
 			return err
 		}
 
@@ -1048,7 +1074,8 @@ var imageCacheCertGenCmdFlags struct {
 func init() {
 	imageCmd.PersistentFlags().StringVar(
 		&imageCmdFlags.namespace, "namespace", "cri",
-		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",
+		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance, \""+
+			constants.TalosContainersContainerdNamespace+"\" for containers declared via ContainerConfig",
 	)
 	addCommand(imageCmd)
 

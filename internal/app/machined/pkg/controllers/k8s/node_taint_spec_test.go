@@ -34,11 +34,9 @@ func TestNodeTaintsSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &NodeTaintsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeTaintSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeTaintSpecController{}))
 		},
 	})
 }
@@ -55,10 +53,10 @@ func (suite *NodeTaintsSuite) updateMachineConfig(machineType machine.Type, allo
 		cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineType:       machineType.String(),
-				MachineNodeTaints: nodeTaints,
+				MachineNodeTaints: nodeTaints, //nolint:staticcheck // testing deprecated field
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				AllowSchedulingOnControlPlanes: new(allowScheduling),
+				AllowSchedulingOnControlPlanes: new(allowScheduling), //nolint:staticcheck // testing deprecated field
 			},
 		}))
 

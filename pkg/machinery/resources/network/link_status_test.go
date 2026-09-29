@@ -96,7 +96,7 @@ func TestLinkStatusMarshalYAML(t *testing.T) {
 			Peers: []network.WireguardPeer{
 				{
 					PublicKey:                   "peer=",
-					PresharedKey:                "key=",
+					PresharedKeyConfigured:      true,
 					Endpoint:                    "127.0.0.1:3333",
 					PersistentKeepaliveInterval: 30 * time.Second,
 					AllowedIPs: []netip.Prefix{
@@ -146,7 +146,7 @@ bondMaster:
     lacpRate: fast
     arpValidate: all
     arpAllTargets: any
-    primary: 3
+    primaryIndex: 3
     primaryReselect: better
     failOverMac: follow
     adSelect: count
@@ -173,7 +173,7 @@ wireguard:
     firewallMark: 11233
     peers:
         - publicKey: peer=
-          presharedKey: key=
+          presharedKeyConfigured: true
           endpoint: 127.0.0.1:3333
           persistentKeepaliveInterval: 30s
           allowedIPs:

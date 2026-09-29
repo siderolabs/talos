@@ -1,0 +1,25 @@
+; libvirt/qemu sVirt dynamic labeling.
+(type svirt_t)
+(call system_container_p (svirt_t))
+(typepermissive svirt_t)
+
+(type svirt_tcg_t)
+(call system_container_p (svirt_tcg_t))
+(typepermissive svirt_tcg_t)
+
+(type svirt_image_t)
+(call common_f (svirt_image_t))
+
+(type virt_content_t)
+(call common_f (virt_content_t))
+
+; libvirtd runs as init_t and transitions QEMU via setexeccon.
+(allow init_t self (process (setexec)))
+(allow init_t svirt_t (process (transition dyntransition)))
+(allow init_t svirt_tcg_t (process (transition dyntransition)))
+
+; sVirt domains access their disk images and read-only content.
+(allow svirt_t svirt_image_t (fs_classes (rw)))
+(allow svirt_t virt_content_t (fs_classes (ro)))
+(allow svirt_tcg_t svirt_image_t (fs_classes (rw)))
+(allow svirt_tcg_t virt_content_t (fs_classes (ro)))

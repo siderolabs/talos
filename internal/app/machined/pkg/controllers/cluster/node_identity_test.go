@@ -92,10 +92,8 @@ func TestNodeIdentitySuite(t *testing.T) {
 	}
 
 	suite.Run(t, &NodeIdentitySuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.NodeIdentityController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.NodeIdentityController{}))
 		},
 	})
 }

@@ -29,6 +29,10 @@ func (suite *KubeconfigSuite) SuiteName() string {
 
 // TestDirectory generates kubeconfig in specified directory.
 func (suite *KubeconfigSuite) TestDirectory() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubeconfig to fetch")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), tempDir},
@@ -43,6 +47,10 @@ func (suite *KubeconfigSuite) TestDirectory() {
 
 // TestCwd generates kubeconfig in cwd.
 func (suite *KubeconfigSuite) TestCwd() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubeconfig to fetch")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	savedCwd, err := os.Getwd()
@@ -60,6 +68,10 @@ func (suite *KubeconfigSuite) TestCwd() {
 
 // TestCustomName generates kubeconfig with custom name.
 func (suite *KubeconfigSuite) TestCustomName() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubeconfig to fetch")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), filepath.Join(tempDir, "k8sconfig")},
@@ -78,6 +90,10 @@ func (suite *KubeconfigSuite) TestMultiNodeFail() {
 
 // TestMergeRename tests merge config into existing kubeconfig with default rename conflict resolution.
 func (suite *KubeconfigSuite) TestMergeRename() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubeconfig to fetch")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	path := filepath.Join(tempDir, "config")
@@ -94,6 +110,10 @@ func (suite *KubeconfigSuite) TestMergeRename() {
 
 // TestMergeOverwrite test merge config into existing kubeconfig with overwrite conflict resolution.
 func (suite *KubeconfigSuite) TestMergeOverwrite() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there is no kubeconfig to fetch")
+	}
+
 	tempDir := suite.T().TempDir()
 
 	path := filepath.Join(tempDir, "config")

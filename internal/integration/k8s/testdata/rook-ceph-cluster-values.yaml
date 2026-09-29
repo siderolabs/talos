@@ -20,3 +20,20 @@ cephClusterSpec:
     useAllDevices: true
     config:
       encryptedDevice: "true"
+  security:
+    cephx:
+      # Ceph v20.2.4 (CVE-2025-30156) introduced the aes256k CephX key type; upstream Linux only
+      # supports it since 7.0, but Talos backports the support to its 6.18 kernel (siderolabs/pkgs#1660).
+      # Override the chart default of `aes` so that the tests actually exercise krbd mounts with
+      # aes256k keys, and restrict the allowed ciphers so that the cluster can reach HEALTH_OK.
+      csi:
+        keyType: aes256k
+      allowedCiphers:
+        - aes256k
+  healthCheck:
+    muteHealthWarning:
+      # Rotating service keys generated before `allowedCiphers` is applied only expire after
+      # `auth_service_ticket_ttl` (2-3 hours), which is way past the test timeout. This warning is
+      # unrelated to the CSI/kernel key type, so muting it doesn't weaken the test.
+      AUTH_INSECURE_ROTATING_SERVICE_KEY_TYPE:
+        policy: mute

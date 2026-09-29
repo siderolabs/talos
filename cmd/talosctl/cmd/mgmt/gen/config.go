@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 const (
@@ -304,7 +305,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 			return err
 		}
 
-		if err = writeToDestination(data, outputPaths.controlPlane, 0o644); err != nil {
+		if err = writeToDestination(data, outputPaths.controlPlane); err != nil {
 			return err
 		}
 	}
@@ -315,7 +316,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 			return err
 		}
 
-		if err = writeToDestination(data, outputPaths.worker, 0o644); err != nil {
+		if err = writeToDestination(data, outputPaths.worker); err != nil {
 			return err
 		}
 	}
@@ -326,7 +327,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 			return fmt.Errorf("failed to marshal config: %+v", err)
 		}
 
-		if err = writeToDestination(data, outputPaths.talosconfig, 0o644); err != nil {
+		if err = writeToDestination(data, outputPaths.talosconfig); err != nil {
 			return err
 		}
 	}
@@ -334,7 +335,7 @@ func writeConfigBundle(configBundle *bundle.Bundle, outputPaths configOutputPath
 	return nil
 }
 
-func writeToDestination(data []byte, destination string, permissions os.FileMode) error {
+func writeToDestination(data []byte, destination string) error {
 	if destination == stdoutOutput {
 		_, err := os.Stdout.Write(data)
 
@@ -348,11 +349,11 @@ func writeToDestination(data []byte, destination string, permissions os.FileMode
 	parentDir := filepath.Dir(destination)
 
 	// Create dir path, ignoring "already exists" messages
-	if err := os.MkdirAll(parentDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(parentDir, fileutils.SecretDirMode); err != nil {
 		return fmt.Errorf("failed to create output dir: %w", err)
 	}
 
-	err := os.WriteFile(destination, data, permissions)
+	err := fileutils.WriteSecret(destination, data)
 
 	fmt.Fprintf(os.Stderr, "Created %s\n", destination)
 

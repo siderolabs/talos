@@ -3,6 +3,20 @@ kind: auto.CI
 spec:
   compileGHWorkflowsOnly: true
 ---
+kind: common.Gitattributes
+spec:
+  additionalContent:
+    - "# generated code and reference docs (make generate / make docs), collapsed in reviews"
+    - "*.pb.go linguist-generated=true"
+    - "*_enumer.go linguist-generated=true"
+    - "*.generated.go linguist-generated=true"
+    - "zz_generated.deepcopy.go linguist-generated=true"
+    - "*_doc.go linguist-generated=true"
+    - "api/resource/definitions/**/*.proto linguist-generated=true"
+    - "pkg/machinery/config/schemas/*.schema.json linguist-generated=true"
+    - "website/content/*/reference/configuration/**/_index.md -linguist-generated"
+    - "website/content/*/schemas/*.schema.json linguist-generated=true"
+---
 kind: common.SOPS
 spec:
   enabled: true
@@ -30,7 +44,7 @@ spec:
     - kernel
     - security
     - ci
-    - ^v1.14
+    - ^v1.15
   licenseChecks:
     - skipPaths:
         - .git/
@@ -108,6 +122,7 @@ spec:
     integration/qemu-13: "Run QEMU integration tests with Talos version contract v1.13"
     integration/release-gate: "Run all release-gate integration tests"
     integration/reproducibility-test: "Run build reproducibility tests"
+    integration/talosctl: "Build talosctl for all supported platforms"
     integration/trusted-boot: "Run trusted-boot integration tests (all variants)"
     integration/trusted-boot-default: "Run trusted-boot integration tests on default variant"
     integration/trusted-boot-disk-image: "Run trusted-boot integration tests on disk-image variant"
@@ -462,6 +477,7 @@ spec:
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml:@hack/test/patches/dedicated-system-volumes-worker.yaml"
             withConfigPatchControlPlane: "@hack/test/patches/dedicated-system-volumes-controlplane.yaml"
+            withIpmi: "true"
             qemuExtraDisks: "5"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
             qemuExtraDisksTags: "disk0"
@@ -499,6 +515,7 @@ spec:
             buildRace: "true"
             tagSuffix: -race
             extraTestArgs: "-talos.race"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             qemuExtraDisks: "4"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
@@ -548,6 +565,7 @@ spec:
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
             WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlPlane }}
+            WITH_IPMI: ${{ matrix.withIpmi }}
             WITH_TALOS_VERSION: ${{ matrix.withTalosVersion }}
             QEMU_EXTRA_DISKS: ${{ matrix.qemuExtraDisks }}
             QEMU_EXTRA_DISKS_SIZE: "10240"
@@ -745,11 +763,11 @@ spec:
         labelKeys: [track]
         include:
           - track: "0"
-            buildTrustedBootStableArtifacts: "true"
-          - track: "1"
             buildEnforcing: "true"
-          - track: "2"
             buildExtraCmdline: "true"
+          - track: "1"
+            buildTrustedBootStableArtifacts: "true"
+          - track: "2"
           - track: "3"
       steps:
         - name: download-artifacts
@@ -882,6 +900,7 @@ spec:
         - integration/qemu-md-boot
         - integration/qemu-race
         - integration/qemu-13
+        - integration/cilium
         - integration/conformance
         - integration/conformance-default
         - integration/conformance-enforcing
@@ -928,9 +947,16 @@ spec:
         flatJobMatrix: true
         labelKeys: [test]
         include:
-          - test: e2e-firewall
+          - test: e2e-firewall-block
             shortIntegrationTest: "yes"
             withFirewall: block
+          - test: e2e-firewall-accept
+            shortIntegrationTest: "yes"
+            withFirewall: accept
+          - test: e2e-lldp
+            integrationTestRun: TestIntegration/api.LLDPSuite
+            withLLDP: "true"
+            extraTestArgs: -talos.lldp
           - test: e2e-bgp
             shortIntegrationTest: "yes"
             withBGP: "true"
@@ -976,6 +1002,7 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             SHORT_INTEGRATION_TEST: ${{ matrix.shortIntegrationTest }}
             WITH_FIREWALL: ${{ matrix.withFirewall }}
+            WITH_LLDP: ${{ matrix.withLLDP }}
             WITH_BGP: ${{ matrix.withBGP }}
             WITH_BGP_CLOS: ${{ matrix.withBGPCLOS }}
             QEMU_CONTROLPLANES: ${{ matrix.qemuControlplanes }}
@@ -1139,6 +1166,10 @@ spec:
             withDiskEncryption: "true"
             withUefi: "false"
             extraTestArgs: -talos.verifyukibooted=false
+          - test: e2e-usb-disk
+            qemuSystemDiskDriver: "usb"
+          - test: e2e-mmc-disk
+            qemuSystemDiskDriver: "mmc"
           - test: e2e-node-address-v2
             withConfigPatch: "@hack/test/patches/node-address-v2.yaml"
           - test: e2e-tpm1_2
@@ -1147,6 +1178,8 @@ spec:
             withConfigPatch: "@hack/test/patches/dns-over-tls.yaml"
           - test: e2e-dns-over-http
             withConfigPatch: "@hack/test/patches/dns-over-http.yaml"
+          - test: e2e-sync-disabled
+            withConfigPatch: "@hack/test/patches/ntp-disabled.yaml"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -1169,6 +1202,7 @@ spec:
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             WITH_TPM1_2: ${{ matrix.withTpm12 }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            QEMU_SYSTEM_DISK_DRIVER: "${{ matrix.qemuSystemDiskDriver }}"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
@@ -1370,6 +1404,78 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-hypervisor
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/hypervisor
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: libvirtd extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/amd64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: installer extensions
+          command: installer-with-extensions
+          environment:
+            EXTENSIONS_FILTER_COMMAND: "grep -E '/libvirtd:'"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-hypervisor
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-hypervisor
+            # The hypervisor APIs need neither etcd nor Kubernetes, so the cluster runs without
+            # them: two control planes and no workers, a worker being a Kubernetes concept which
+            # means nothing here. We use two nodes, as some tests need more than one node.
+            # Extra disks go to workers by default, so with no workers they are attached to the
+            # control planes instead.
+            # Every integration suite runs; those needing etcd, Kubernetes or worker nodes skip
+            # themselves on this cluster.
+            QEMU_CONTROLPLANES: 2
+            QEMU_WORKERS: 0
+            QEMU_EXTRA_DISKS: 1
+            QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
+            WITH_SKIP_ETCD_K8S: true
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt
+            TEST_MODE: skip-etcd-k8s
+            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-hypervisor
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
     - name: integration-extensions
       buildxOptions:
         enabled: true
@@ -1440,9 +1546,10 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/cilium
@@ -1473,11 +1580,18 @@ spec:
             qemuWorkers: "1"
             extraTestArgs: -talos.bgp.clos -talos.bgp.cilium
             integrationTestRun: TestIntegration/api.BGPCiliumSuite
+          - test: e2e-cilium-strict-enforcing
+            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumInstallType: strict
+            withKubespan: ""
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
       steps:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
         - name: e2e-cilium
@@ -1498,6 +1612,7 @@ spec:
             INTEGRATION_TEST_RUN: ${{ matrix.integrationTestRun }}
             WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.ciliumConfigPatch }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
         - name: save-talos-logs
           conditions:
             - always
@@ -1765,6 +1880,18 @@ spec:
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+    - name: integration-talosctl
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      triggerLabels:
+        - integration/talosctl
+        - integration/release-gate
+      steps:
+        - name: ci-temp-release-tag
+        - name: talosctl-all
     - name: integration-reproducibility-test
       buildxOptions:
         enabled: true
@@ -1811,6 +1938,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: cloud-images
+          environment:
+            # this job only verifies that the image creation pipeline works, so a single
+            # region is enough - no need to publish to every enabled AWS region
+            CLOUD_IMAGES_EXTRA_ARGS: |-
+              --aws-regions=us-east-1
     - name: integration-build-image-cache
       buildxOptions:
         enabled: true
@@ -1915,62 +2047,62 @@ spec:
         labelKeys: [test]
         flatJobMatrix: true
         include:
-          - test: factory-1.12-iso
+          - test: factory-1.13-iso
             factoryBootMethod: iso
-            factoryVersion: v1.12.5
+            factoryVersion: v1.13.8
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.36.4
             factoryUpgrade: "true"
             factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            factoryUpgradeVersion: v1.12.6
-          - test: factory-1.12-image
+            factoryUpgradeVersion: v1.13.9
+          - test: factory-1.13-image
             factoryBootMethod: disk-image
-            factoryVersion: v1.12.5
+            factoryVersion: v1.13.8
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.36.4
             factoryUpgrade: "true"
             factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            factoryUpgradeVersion: v1.12.6
-          - test: factory-1.12-pxe
+            factoryUpgradeVersion: v1.13.9
+          - test: factory-1.13-pxe
             factoryBootMethod: ipxe
-            factoryVersion: v1.12.6
+            factoryVersion: v1.13.9
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.36.4
             factoryUpgrade: ""
             factoryUpgradeSchematic: ""
             factoryUpgradeVersion: ""
+          - test: factory-1.13-secureboot
+            factoryBootMethod: secureboot-iso
+            factoryVersion: v1.13.8
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            kubernetesVersion: 1.36.4
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.13.9
           - test: factory-1.12-secureboot
             factoryBootMethod: secureboot-iso
-            factoryVersion: v1.12.5
+            factoryVersion: v1.12.10
             factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            kubernetesVersion: 1.35.3
+            kubernetesVersion: 1.35.8
             factoryUpgrade: "true"
             factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            factoryUpgradeVersion: v1.12.6
-          - test: factory-1.11-secureboot
-            factoryBootMethod: secureboot-iso
-            factoryVersion: v1.11.5
-            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            kubernetesVersion: 1.34.3
+            factoryUpgradeVersion: v1.12.11
+          - test: factory-1.12-iso
+            factoryBootMethod: iso
+            factoryVersion: v1.12.10
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.35.8
             factoryUpgrade: "true"
-            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            factoryUpgradeVersion: v1.11.6
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.11
           - test: factory-1.11-iso
             factoryBootMethod: iso
             factoryVersion: v1.11.5
             factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.34.3
+            kubernetesVersion: 1.34.11
             factoryUpgrade: "true"
             factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
             factoryUpgradeVersion: v1.11.6
-          - test: factory-1.10-iso
-            factoryBootMethod: iso
-            factoryVersion: v1.10.8
-            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            kubernetesVersion: 1.33.7
-            factoryUpgrade: "true"
-            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            factoryUpgradeVersion: v1.10.9
       steps:
         - name: download-artifacts
           artifactStep:

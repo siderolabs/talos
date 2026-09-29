@@ -40,6 +40,13 @@ enum RuntimeSELinuxState {
   SE_LINUX_STATE_ENFORCING = 2;
 }
 
+// RuntimeLockdownState describes the current kernel lockdown level.
+enum RuntimeLockdownState {
+  LOCKDOWN_STATE_NONE = 0;
+  LOCKDOWN_STATE_INTEGRITY = 1;
+  LOCKDOWN_STATE_CONFIDENTIALITY = 2;
+}
+
 // RuntimeFIPSState describes the current FIPS status.
 enum RuntimeFIPSState {
   FIPS_STATE_DISABLED = 0;
@@ -69,6 +76,51 @@ enum MachineType {
   // TypeWorker designates the node as a worker node.
   // This means it will be an available compute node for scheduling workloads.
   TYPE_WORKER = 3;
+}
+
+// HypervisorhelpersPowerState is the power state a virtual machine is driven towards.
+enum HypervisorhelpersPowerState {
+  POWER_STATE_UNKNOWN = 0;
+  POWER_STATE_RUNNING = 1;
+  POWER_STATE_STOPPED = 2;
+  POWER_STATE_SUSPENDED = 3;
+}
+
+// HypervisorhelpersVirtualMachineDiskBus is the controller a disk is attached to.
+enum HypervisorhelpersVirtualMachineDiskBus {
+  VIRTUAL_MACHINE_DISK_BUS_UNKNOWN = 0;
+  VIRTUAL_MACHINE_DISK_BUS_VIRTIO = 1;
+  VIRTUAL_MACHINE_DISK_BUS_SCSI = 2;
+  VIRTUAL_MACHINE_DISK_BUS_SATA = 3;
+  VIRTUAL_MACHINE_DISK_BUS_NV_ME = 4;
+}
+
+// HypervisorhelpersVirtualMachineDiskFormat is the on-disk format of a virtual machine disk.
+enum HypervisorhelpersVirtualMachineDiskFormat {
+  VIRTUAL_MACHINE_DISK_FORMAT_UNKNOWN = 0;
+  VIRTUAL_MACHINE_DISK_FORMAT_RAW = 1;
+  VIRTUAL_MACHINE_DISK_FORMAT_QCOW2 = 2;
+}
+
+// HypervisorhelpersVirtualMachineDiskImageMode is how a disk's contents are derived from a content library image.
+enum HypervisorhelpersVirtualMachineDiskImageMode {
+  VIRTUAL_MACHINE_DISK_IMAGE_MODE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_DISK_IMAGE_MODE_COPY = 1;
+  VIRTUAL_MACHINE_DISK_IMAGE_MODE_LINKED = 2;
+}
+
+// HypervisorhelpersVirtualMachineDiskType is the kind of device a disk is presented as.
+enum HypervisorhelpersVirtualMachineDiskType {
+  VIRTUAL_MACHINE_DISK_TYPE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_DISK_TYPE_DISK = 1;
+  VIRTUAL_MACHINE_DISK_TYPE_CDROM = 2;
+}
+
+// HypervisorhelpersVirtualMachineFirmwareType is the firmware a virtual machine boots.
+enum HypervisorhelpersVirtualMachineFirmwareType {
+  VIRTUAL_MACHINE_FIRMWARE_TYPE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_FIRMWARE_TYPE_UEFI = 1;
+  VIRTUAL_MACHINE_FIRMWARE_TYPE_BIOS = 2;
 }
 
 // NethelpersAddressFlag wraps IFF_* constants.
@@ -301,6 +353,16 @@ enum NethelpersLinkType {
   LINK6_LOWPAN = 825;
   LINK_VOID = 65535;
   LINK_NONE = 65534;
+}
+
+// NethelpersMacvlanMode is a MACVLAN operating mode.
+enum NethelpersMacvlanMode {
+  NETHELPERS_MACVLANMODE_UNSPECIFIED = 0;
+  MACVLAN_MODE_PRIVATE = 1;
+  MACVLAN_MODE_VEPA = 2;
+  MACVLAN_MODE_BRIDGE = 4;
+  MACVLAN_MODE_PASSTHRU = 8;
+  MACVLAN_MODE_SOURCE = 16;
 }
 
 // NethelpersMatchOperator is a netfilter match operator.
@@ -758,6 +820,7 @@ enum BlockFilesystemType {
   FILESYSTEM_TYPE_SWAP = 5;
   FILESYSTEM_TYPE_VIRTIOFS = 6;
   FILESYSTEM_TYPE_BTRFS = 7;
+  FILESYSTEM_TYPE_NFS = 8;
 }
 
 // BlockFSParameterType describes Filesystem Parameter type.
@@ -765,6 +828,41 @@ enum BlockFSParameterType {
   FS_PARAMETER_TYPE_STRING_VALUE = 0;
   FS_PARAMETER_TYPE_BOOLEAN_VALUE = 1;
   FS_PARAMETER_TYPE_BINARY_VALUE = 2;
+}
+
+// BlockNFSVersion describes an NFS protocol version.
+enum BlockNFSVersion {
+  NFS_VERSION3 = 0;
+  NFS_VERSION4 = 1;
+  NFS_VERSION4_POINT1 = 2;
+  NFS_VERSION4_POINT2 = 3;
+}
+
+// BlockNFSLocking controls NFSv3 lock coordination.
+enum BlockNFSLocking {
+  NFS_LOCKING_LOCAL = 0;
+  NFS_LOCKING_REMOTE = 1;
+}
+
+// BlockNFSRecovery controls client behavior after an NFS request times out.
+enum BlockNFSRecovery {
+  NFS_RECOVERY_HARD = 0;
+  NFS_RECOVERY_SOFT = 1;
+  NFS_RECOVERY_SOFT_ERROR = 2;
+}
+
+// BlockNFSSecurity identifies an NFS RPC security flavor.
+enum BlockNFSSecurity {
+  NFS_SECURITY_NONE = 0;
+  NFS_SECURITY_SYS = 1;
+}
+
+// BlockNFSTransport identifies an NFS transport protocol.
+enum BlockNFSTransport {
+  NFS_TRANSPORT_TCP = 0;
+  NFS_TRANSPORT_TCP6 = 1;
+  NFS_TRANSPORT_UDP = 2;
+  NFS_TRANSPORT_UDP6 = 3;
 }
 
 // BlockVolumePhase describes volume phase.
@@ -818,6 +916,58 @@ enum StorageMDMetadata {
   MD_METADATA12 = 1;
 }
 
+// NetworkConfigLayer describes network configuration layers, with lowest priority first.
+enum NetworkConfigLayer {
+  CONFIG_DEFAULT = 0;
+  CONFIG_CMDLINE = 1;
+  CONFIG_PLATFORM = 2;
+  CONFIG_OPERATOR = 3;
+  CONFIG_MACHINE_CONFIGURATION = 4;
+}
+
+// NetworkOperator enumerates Talos network operators.
+enum NetworkOperator {
+  OPERATOR_DHCP4 = 0;
+  OPERATOR_DHCP6 = 1;
+  OPERATOR_VIP = 2;
+  OPERATOR_LLDP = 3;
+}
+
+// ContainersContainerState describes where a container is in its lifecycle (internal representation).
+enum ContainersContainerState {
+  CONTAINER_STATE_PENDING = 0;
+  CONTAINER_STATE_PULLING = 1;
+  CONTAINER_STATE_STARTING = 2;
+  CONTAINER_STATE_RUNNING = 3;
+  CONTAINER_STATE_EXITED = 4;
+  CONTAINER_STATE_BACKOFF = 5;
+  CONTAINER_STATE_STOPPING = 6;
+}
+
+// ContainersContainerHealth is the coarse user-facing status.
+enum ContainersContainerHealth {
+  CONTAINER_HEALTH_PENDING = 0;
+  CONTAINER_HEALTH_PULLING = 1;
+  CONTAINER_HEALTH_HEALTHY = 2;
+  CONTAINER_HEALTH_DEGRADED = 3;
+}
+
+// ContainersContainerImagePhase describes the state of a container's image pull.
+enum ContainersContainerImagePhase {
+  CONTAINER_IMAGE_PHASE_PENDING = 0;
+  CONTAINER_IMAGE_PHASE_PULLING = 1;
+  CONTAINER_IMAGE_PHASE_READY = 2;
+  CONTAINER_IMAGE_PHASE_FAILED = 3;
+}
+
+// ContainersContainerInstancePhase describes the state of a container instance's execution.
+enum ContainersContainerInstancePhase {
+  CONTAINER_INSTANCE_PHASE_CREATED = 0;
+  CONTAINER_INSTANCE_PHASE_RUNNING = 1;
+  CONTAINER_INSTANCE_PHASE_TERMINATED = 2;
+  CONTAINER_INSTANCE_PHASE_FAILED = 3;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;
@@ -839,21 +989,5 @@ enum KubespanPeerState {
   PEER_STATE_UNKNOWN = 0;
   PEER_STATE_UP = 1;
   PEER_STATE_DOWN = 2;
-}
-
-// NetworkConfigLayer describes network configuration layers, with lowest priority first.
-enum NetworkConfigLayer {
-  CONFIG_DEFAULT = 0;
-  CONFIG_CMDLINE = 1;
-  CONFIG_PLATFORM = 2;
-  CONFIG_OPERATOR = 3;
-  CONFIG_MACHINE_CONFIGURATION = 4;
-}
-
-// NetworkOperator enumerates Talos network operators.
-enum NetworkOperator {
-  OPERATOR_DHCP4 = 0;
-  OPERATOR_DHCP6 = 1;
-  OPERATOR_VIP = 2;
 }
 

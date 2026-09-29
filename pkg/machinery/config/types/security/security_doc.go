@@ -83,7 +83,7 @@ func (ImageVerificationRuleV1Alpha1) Doc() *encoder.Doc {
 				Name:        "image",
 				Type:        "string",
 				Note:        "",
-				Description: "Image reference pattern to match for this rule.\nSupports glob patterns, matches only on the image registry and repository, not on the tag or digest.",
+				Description: "Image reference pattern to match for this rule.\nSupports glob patterns, matches only on the image registry and repository, not on the tag or digest.\n\nThe pattern is matched against the normalized image reference, which always starts with a registry\ndomain: `docker.io/library/nginx*` matches `nginx:latest`, while `library/nginx*` matches nothing.\nThe Docker Hub domain is always normalized to `docker.io`, so a pattern written against\n`index.docker.io` or `registry-1.docker.io` matches the same images a `docker.io` one does.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Image reference pattern to match for this rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

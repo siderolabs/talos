@@ -8,6 +8,8 @@ import (
 	"io"
 	"strings"
 	"text/template"
+
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 )
 
 // Schema defines columns for cgroups printer.
@@ -46,16 +48,21 @@ func (s *Schema) HeaderLine() string {
 
 // Render returns the row line.
 func (s *Schema) Render(data any) (string, error) {
-	var rowLine strings.Builder
+	var rowLine, cell strings.Builder
 
 	for i, c := range s.Columns {
 		if i > 0 {
 			rowLine.WriteString("\t")
 		}
 
-		if err := c.Render(&rowLine, data); err != nil {
+		// the column is rendered into a buffer of its own and escaped
+		cell.Reset()
+
+		if err := c.Render(&cell, data); err != nil {
 			return "", err
 		}
+
+		rowLine.WriteString(safeout.Cell(cell.String()))
 	}
 
 	return rowLine.String(), nil

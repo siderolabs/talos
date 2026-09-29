@@ -26,16 +26,16 @@ import (
 
 // HostBinds are the live host mounts bind-mounted into the debug root so tools can
 // reach the running node: devices, kernel filesystems, runtime sockets (/run,
-// /system) and data (/var). They are recursively bind-mounted and made shared, so a
-// mount a session creates under them (e.g. `zpool create -m /var/tank`) propagates to
-// the host, and unmounts propagate back — the session manages host mounts as if it
-// were in the host namespace (which it is). Flags (nodev, nosuid, noexec) are inherited
+// /system), live configuration (/etc), and data (/var). They are recursively bind-mounted
+// and made shared, so a mount a session creates under them (e.g. `zpool create -m /var/tank`)
+// propagates to the host, and unmounts propagate back. The session manages host mounts as
+// if it were in the host namespace (which it is). Flags (nodev, nosuid, noexec) are inherited
 // from the already-compliant host mounts.
 //
 // /var is bound even though the session's own scratch (merged, image, overlay uppers)
 // lives under it: Setup marks those scratch mounts MS_UNBINDABLE, so the recursive /var
 // bind skips them and cannot nest merged into itself.
-var HostBinds = []string{"dev", "proc", "sys", "run", "system", "var"}
+var HostBinds = []string{"dev", "proc", "sys", "run", "system", "var", "etc"}
 
 // Setup builds the debug chroot root in the CURRENT (host) mount namespace:
 //   - the image snapshot mounted read-only at baseDir/image (via fsopen, so the many-
@@ -89,8 +89,9 @@ func Setup(snapshotMounts []mount.Mount, baseDir, varBase string) (merged string
 	}
 
 	// Overlay root: host / as lower, disk-backed upper/work under varBase (mountv3
-	// creates the target and the upper/work dirs). The upper lets the session create
-	// /nix, /etc/nix, etc. without touching Talos's immutable squashfs, on disk.
+	// creates the target and the upper/work dirs). The upper gives the session writable
+	// root paths not replaced by the live host binds below, without touching Talos's
+	// immutable squashfs.
 	if _, err = mountv3.NewOverlayWithBasePath([]string{"/"}, merged, varBase, nil).Mount(); err != nil {
 		return "", nil, fmt.Errorf("mount overlay root: %w", err)
 	}

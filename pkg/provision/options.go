@@ -88,6 +88,15 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
+// WithIPMI enables or disables BMC (IPMI) emulation.
+func WithIPMI(enabled bool) Option {
+	return func(o *Options) error {
+		o.IPMIEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithIOMMU enables or disables IOMMU.
 func WithIOMMU(enabled bool) Option {
 	return func(o *Options) error {
@@ -178,6 +187,15 @@ func WithJSONLogs(endpoint string) Option {
 	}
 }
 
+// WithLLDP enables the QEMU host's continuous LLDP receive-test advertiser.
+func WithLLDP(enabled bool) Option {
+	return func(o *Options) error {
+		o.LLDPEnabled = enabled
+
+		return nil
+	}
+}
+
 // WithBGP enables an embedded gobgp speaker acting as a fabric peer for testing native BGP.
 func WithBGP(listenAddress, neighborRange, advertise string, localASN, peerASN uint32) Option {
 	return func(o *Options) error {
@@ -205,6 +223,15 @@ func WithBGPCLOS(advertise string, localASN, peerASN uint32, loopbackCIDR string
 		o.BGPLocalASN = localASN
 		o.BGPPeerASN = peerASN
 		o.BGPLoopbackCIDR = loopbackCIDR
+
+		return nil
+	}
+}
+
+// WithNFS enables an embedded userspace NFS server for development clusters.
+func WithNFS(enabled bool) Option {
+	return func(o *Options) error {
+		o.NFSEnabled = enabled
 
 		return nil
 	}
@@ -250,6 +277,8 @@ type Options struct {
 	TPM2Enabled bool
 	// Enable IOMMU for VMs and add a new PCI root controller and network interface.
 	IOMMUEnabled bool
+	// Enable BMC (IPMI) emulation using QEMU's built-in BMC simulator.
+	IPMIEnabled bool
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 
@@ -262,8 +291,12 @@ type Options struct {
 
 	KMSEndpoint      string
 	JSONLogsEndpoint string
+	NFSEnabled       bool
 
 	SiderolinkEnabled bool
+
+	// LLDP receive-test advertiser, enabled by --with-lldp.
+	LLDPEnabled bool
 
 	// BGP test fabric peer (embedded gobgp), enabled by --with-bgp.
 	BGPEnabled       bool

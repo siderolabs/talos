@@ -201,20 +201,18 @@ func TestControlPlaneStaticPodSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &ControlPlaneStaticPodSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.ControlPlaneStaticPodController{}))
 
-				etcdService := v1alpha1.NewService("etcd")
-				etcdService.TypedSpec().Running = true
-				etcdService.TypedSpec().Healthy = true
+			etcdService := v1alpha1.NewService("etcd")
+			etcdService.TypedSpec().Running = true
+			etcdService.TypedSpec().Healthy = true
 
-				suite.Require().NoError(suite.State().Create(suite.Ctx(), etcdService))
-			},
-			AfterTearDown: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.State().Destroy(suite.Ctx(), v1alpha1.NewService("etcd").Metadata()))
-			},
+			suite.Require().NoError(suite.State().Create(suite.Ctx(), etcdService))
+		},
+		AfterTearDown: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.State().Destroy(suite.Ctx(), v1alpha1.NewService("etcd").Metadata()))
 		},
 	})
 }

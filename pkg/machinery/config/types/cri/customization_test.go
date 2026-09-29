@@ -20,7 +20,7 @@ import (
 //go:embed testdata/cricustomizationconfig.yaml
 var expectedCRICustomizationConfigDocument []byte
 
-const customizationContent = `[metrics]
+const customizationContent = `[plugins."io.containerd.server.v1.metrics"]
   address = "0.0.0.0:11234"
 `
 

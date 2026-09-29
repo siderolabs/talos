@@ -5,6 +5,7 @@
 package process_test
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -30,17 +31,16 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 )
 
+// assertRunSucceeds runs the runner to completion and asserts it ended cleanly.
+func (suite *ProcessSuite) assertRunSucceeds(r runner.Runner, onStart runner.OnStart) {
+	_, err := r.Run(context.Background(), MockEventSink(suite.T()), onStart)
+
+	suite.Assert().NoError(err)
+}
+
 func MockEventSink(t *testing.T) func(state events.ServiceState, message string, args ...any) {
 	return func(state events.ServiceState, message string, args ...any) {
 		t.Logf("state %s: %s", state, fmt.Sprintf(message, args...))
-	}
-}
-
-func MockPidRecorder(t *testing.T) func(id string, pid int32, clearEntry bool) error {
-	return func(id string, pid int32, clearEntry bool) error {
-		t.Logf("recording pid for %s: %d (clear: %v)", id, pid, clearEntry)
-
-		return nil
 	}
 }
 
@@ -79,9 +79,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
-	// calling stop when Run has finished is no-op
-	suite.Assert().NoError(r.Stop())
+	suite.assertRunSucceeds(r, nil)
 }
 
 func (suite *ProcessSuite) TestRunLogs() {
@@ -94,7 +92,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
+	suite.assertRunSucceeds(r, nil)
 
 	// the log file is written asynchronously, so we need to wait a bit
 	suite.EventuallyWithT(func(collect *assert.CollectT) {
@@ -124,7 +122,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	var wg sync.WaitGroup
 
 	wg.Go(func() {
-		suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
+		suite.assertRunSucceeds(r, nil)
 	})
 
 	fetchLog := func() []byte {
@@ -171,10 +169,15 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+
+		done <- runErr
 	}()
 
 	time.Sleep(40 * time.Millisecond)
@@ -201,7 +204,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	default:
 	}
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	<-done
 }
 
@@ -219,15 +222,20 @@ func (suite *ProcessSuite) TestStopSigKill() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+
+		done <- runErr
 	}()
 
 	time.Sleep(100 * time.Millisecond)
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	<-done
 }
 
@@ -260,10 +268,15 @@ func (suite *ProcessSuite) TestPriority() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+
+		done <- runErr
 	}()
 
 	var pid uint64
@@ -287,7 +300,7 @@ func (suite *ProcessSuite) TestPriority() {
 
 	time.Sleep(1000 * time.Millisecond)
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	<-done
 }
 
@@ -321,10 +334,15 @@ func (suite *ProcessSuite) TestIOPriority() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+
+		done <- runErr
 	}()
 
 	var pid uint64
@@ -348,7 +366,7 @@ func (suite *ProcessSuite) TestIOPriority() {
 
 	time.Sleep(10 * time.Millisecond)
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	<-done
 }
 
@@ -381,10 +399,15 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+
+		done <- runErr
 	}()
 
 	var pid uint64
@@ -407,7 +430,7 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 
 	time.Sleep(10 * time.Millisecond)
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	<-done
 }
 
@@ -504,7 +527,7 @@ func (suite *ProcessSuite) TestSandboxUnavailable() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	err := r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+	_, err := r.Run(context.Background(), MockEventSink(suite.T()), nil)
 	suite.Assert().Error(err)
 	suite.Assert().Contains(err.Error(), "sandbox namespace not available")
 }
@@ -539,7 +562,7 @@ func (suite *ProcessSuite) TestSandboxRetryWhenUnavailable() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
+	suite.assertRunSucceeds(r, nil)
 
 	select {
 	case <-launcher.launched:
@@ -561,12 +584,8 @@ func (suite *ProcessSuite) TestSandboxSuccess() {
 	launcher := &mockSandboxLauncher{handle: handle, launched: make(chan runtime.LaunchConfig, 1)}
 
 	recorded := make(chan int32, 4)
-	pidRecorder := func(id string, pid int32, clearEntry bool) error {
-		if !clearEntry {
-			recorded <- pid
-		}
-
-		return nil
+	onStart := func(pid int32) {
+		recorded <- pid
 	}
 
 	r := process.NewRunner(false, &runner.Args{
@@ -582,7 +601,7 @@ func (suite *ProcessSuite) TestSandboxSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), pidRecorder))
+	suite.assertRunSucceeds(r, onStart)
 
 	select {
 	case p := <-recorded:
@@ -617,10 +636,15 @@ func (suite *ProcessSuite) TestSandboxStopSignal() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+
+		done <- runErr
 	}()
 
 	select {
@@ -629,7 +653,7 @@ func (suite *ProcessSuite) TestSandboxStopSignal() {
 		suite.Fail("launch did not happen")
 	}
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 
 	select {
 	case err := <-done:

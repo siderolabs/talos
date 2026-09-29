@@ -13,7 +13,6 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // JSONPathSuite verifies dmesg command.
@@ -39,14 +38,16 @@ func (suite *JSONPathSuite) TestGetScalarPropertyWithJSONPath() {
 
 // TestGetWithJSONPathWildcard verifies that the jsonpath filter to the get command accepts a wildcard operator.
 // It is handy when 'get' requests a list of resources.
+//
+// Resource definitions are listed, as every node has them: each one carries an array of print
+// columns, and MachineStatus declares its columns as Stage and Ready. The wildcard prints each
+// element on its own line.
 func (suite *JSONPathSuite) TestGetWithJSONPathWildcard() {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	suite.RunCLI(
-		[]string{"get", "--nodes", node, "manifests", "--output", `jsonpath='{.spec[*].metadata.name}'`},
-		base.StdoutShouldMatch(regexp.MustCompile("coredns")),
-		base.StdoutShouldMatch(regexp.MustCompile("kube-dns")),
-		base.StdoutShouldMatch(regexp.MustCompile("kubeconfig-in-cluster")),
+		[]string{"get", "--nodes", node, "resourcedefinitions", "--output", `jsonpath='{.spec.printColumns[*].name}'`},
+		base.StdoutShouldMatch(regexp.MustCompile(`Stage\nReady`)),
 		base.WithRetry(retry.Constant(15*time.Second, retry.WithUnits(time.Second))),
 	)
 }

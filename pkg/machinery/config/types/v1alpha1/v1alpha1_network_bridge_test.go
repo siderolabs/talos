@@ -301,7 +301,7 @@ func TestResolverBridging(t *testing.T) {
 					},
 				}
 				rc.ResolverSearchDomains = network.SearchDomainsConfig{
-					SearchDomains:        []string{"universe.com", "galaxy.org"},
+					SearchDomains:        network.SearchDomainList{"universe.com", "galaxy.org"},
 					SearchDisableDefault: new(true),
 				}
 

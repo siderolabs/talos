@@ -81,6 +81,13 @@ func runInstallCmd(ctx context.Context) (err error) {
 		// then we should set the option to true
 		grubUseUKICmdline := config.Machine() == nil || config.Machine().Install().GrubUseUKICmdline()
 
+		// A config with no .machine.install section has nowhere to hold extraKernelArgs, so there is no
+		// legacy command line to preserve and the UKI is the only source for the kernel arguments. The
+		// check above reads a missing setting the same as an explicit false, so look at the raw config.
+		if raw := config.RawV1Alpha1(); raw != nil && raw.MachineConfig != nil && raw.MachineConfig.MachineInstall == nil { //nolint:staticcheck // legacy configuration
+			grubUseUKICmdline = true
+		}
+
 		// the UnattendedInstallConfig document takes precedence over the deprecated .machine.install section.
 		if config.UnattendedInstallConfig() != nil {
 			// legacyBIOSSupport is not supported in the new config.

@@ -8,6 +8,7 @@ package runtime
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/siderolabs/gen/ensure"
@@ -64,6 +65,10 @@ type KmsgLogV1Alpha1 struct {
 	//     type: string
 	//     pattern: "^(tcp|udp)://"
 	KmsgLogURL meta.URL `yaml:"url"`
+	//   description: |
+	//     Extra tags (key-value) pairs to attach to every kernel log message sent.
+	//     The keys `facility`, `seq`, `clock`, `priority`, `msg`, `talos-time`, and `talos-level` are reserved and rejected.
+	ExtraTags map[string]string `yaml:"extraTags,omitempty"`
 }
 
 // NewKmsgLogV1Alpha1 creates a new eventsink config document.
@@ -80,6 +85,10 @@ func exampleKmsgLogV1Alpha1() *KmsgLogV1Alpha1 {
 	cfg := NewKmsgLogV1Alpha1()
 	cfg.MetaName = "remote-log"
 	cfg.KmsgLogURL.URL = ensure.Value(url.Parse("tcp://192.168.3.7:3478/"))
+	cfg.ExtraTags = map[string]string{
+		"cluster": "staging-west",
+		"node":    "worker-1",
+	}
 
 	return cfg
 }
@@ -104,9 +113,12 @@ func (s *KmsgLogV1Alpha1) EventsEndpoint() *string {
 	return nil
 }
 
-// KmsgLogURLs implements config.RuntimeConfig interface.
-func (s *KmsgLogV1Alpha1) KmsgLogURLs() []*url.URL {
-	return []*url.URL{s.KmsgLogURL.URL}
+// KmsgLogDestinations implements config.RuntimeConfig interface.
+func (s *KmsgLogV1Alpha1) KmsgLogDestinations() []config.KmsgLogDestination {
+	return []config.KmsgLogDestination{{
+		Endpoint:  s.KmsgLogURL.URL,
+		ExtraTags: s.ExtraTags,
+	}}
 }
 
 // WatchdogTimer implements config.RuntimeConfig interface.
@@ -142,5 +154,20 @@ func (s *KmsgLogV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option)
 		return nil, errors.New("url port is required")
 	}
 
+	for key := range s.ExtraTags {
+		if isReservedKmsgLogField(key) {
+			return nil, fmt.Errorf("extra tag %q is reserved", key)
+		}
+	}
+
 	return nil, nil
+}
+
+func isReservedKmsgLogField(key string) bool {
+	switch key {
+	case "facility", "seq", "clock", "priority", "msg", "talos-time", "talos-level":
+		return true
+	default:
+		return false
+	}
 }

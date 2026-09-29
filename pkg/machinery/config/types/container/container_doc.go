@@ -185,8 +185,8 @@ func (UserVolumeMount) Doc() *encoder.Doc {
 				Name:        "options",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Mount options. User volume mounts are read-only by default (`ro`).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. User volume mounts are read-only by default (`ro`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mount options. User volume mounts are writable by default (`rw`).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. User volume mounts are writable by default (`rw`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"ro",
 					"rw",
@@ -275,8 +275,8 @@ func (HostPathMount) Doc() *encoder.Doc {
 				Name:        "options",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Mount options. Host path mounts are read-only by default (`ro`).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. Host path mounts are read-only by default (`ro`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mount options. Host path mounts are writable by default (`rw`).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. Host path mounts are writable by default (`rw`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -491,6 +491,13 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Linux capabilities to add or drop on top of the profile.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Linux capabilities to add or drop on top of the profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "machinedAccess",
+				Type:        "bool",
+				Note:        "",
+				Description: "Publishes the container's PID so machined's API can recognize it, and bind-mounts the\nmachined API socket into the container.\n\nThis alone does not grant DAC access to the socket, which is owned by the `apid` user:\nreaching it in practice still requires `profile: privileged` or an equivalent capability/\n`runAs` grant. Once connected, the container may request any role, same as extension\nservices; the RPC's own role requirements are what actually gate access.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Publishes the container's PID so machined's API can recognize it, and bind-mounts the" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}

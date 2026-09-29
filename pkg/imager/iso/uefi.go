@@ -29,6 +29,40 @@ const (
 //go:embed loader.conf.tmpl
 var loaderConfigTemplate string
 
+// fatSectorsPerCluster picks the cluster size for the ESP holding the UKI.
+//
+// mkfs.vfat defaults to a single 512 byte sector per cluster at the sizes we
+// build here, which leaves the ESP with a ~900 KiB FAT per copy and a cluster
+// chain of ~200k entries for a single ~100 MiB UKI. Firmware walks that chain
+// on every boot, which is painful on slow media (e.g. an optical drive).
+//
+// The cluster size is capped so that the cluster count stays above the FAT32
+// minimum of 65525: most implementations (EDK2 included) derive the FAT type
+// from the cluster count, so a FAT32 filesystem below that floor reads back as
+// FAT16 and fails to mount.
+func fatSectorsPerCluster(sizeBytes int64) uint {
+	const (
+		sectorSize = 512
+		// FAT32 minimum cluster count, plus room for the reserved sectors and the FATs themselves.
+		minClusters = 65525 + 2048
+		maxSPC      = 8
+	)
+
+	sectors := sizeBytes / sectorSize
+
+	spc := uint(1)
+
+	for next := spc * 2; next <= maxSPC; next *= 2 {
+		if sectors/int64(next) < minClusters {
+			break
+		}
+
+		spc = next
+	}
+
+	return spc
+}
+
 // CreateUEFI creates an iso using a UKI, systemd-boot.
 //
 // The ISO created supports only booting in UEFI mode, and supports SecureBoot.
@@ -79,6 +113,7 @@ func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...an
 	fopts := []makefs.Option{
 		makefs.WithLabel(constants.EFIPartitionLabel),
 		makefs.WithReproducible(true),
+		makefs.WithSectorsPerCluster(fatSectorsPerCluster(isoSize)),
 	}
 
 	if err := makefs.VFAT(ctx, efiBootImg, fopts...); err != nil {

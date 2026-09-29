@@ -49,18 +49,16 @@ func goalState(ctx context.Context) (gs *GoalState, err error) {
 func reportHealth(ctx context.Context, gsIncarnation, gsContainerID, gsInstanceID string) (err error) {
 	// Construct health response
 	h := &Health{
-		Xsi: "http://www.w3.org/2001/XMLSchema-instance",
-		Xsd: "http://www.w3.org/2001/XMLSchema",
-		WAAgent: WAAgent{
-			GoalStateIncarnation: gsIncarnation,
-			Container: &Container{
-				ContainerID: gsContainerID,
-				RoleInstanceList: &RoleInstanceList{
-					Role: &RoleInstance{
-						InstanceID: gsInstanceID,
-						Health: &HealthStatus{
-							State: "Ready",
-						},
+		Xsi:                  "http://www.w3.org/2001/XMLSchema-instance",
+		Xsd:                  "http://www.w3.org/2001/XMLSchema",
+		GoalStateIncarnation: gsIncarnation,
+		Container: &Container{
+			ContainerID: gsContainerID,
+			RoleInstanceList: &RoleInstanceList{
+				Role: &RoleInstance{
+					InstanceID: gsInstanceID,
+					Health: &HealthStatus{
+						State: "Ready",
 					},
 				},
 			},

@@ -43,7 +43,7 @@ func (suite *NodenameSuite) TestDefault() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -74,11 +74,11 @@ func (suite *NodenameSuite) TestFQDN() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
-						KubeletRegisterWithFQDN: new(true),
+						KubeletRegisterWithFQDN: new(true), //nolint:staticcheck // legacy config
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -103,11 +103,9 @@ func TestNodenameSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &NodenameSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodenameController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodenameController{}))
 		},
 	})
 }

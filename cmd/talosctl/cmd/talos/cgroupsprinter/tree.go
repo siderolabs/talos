@@ -11,6 +11,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/internal/pkg/cgroups"
 )
 
@@ -62,7 +63,7 @@ func PrintNode(name string, w io.Writer, schema *Schema, node, parent *cgroups.N
 		return err
 	}
 
-	_, err = fmt.Fprintf(w, "%s%s%s\t%s\n", prefix.String(), edge, name, rowData)
+	_, err = fmt.Fprintf(w, "%s%s%s\t%s\n", prefix.String(), edge, safeout.Cell(name), rowData)
 	if err != nil {
 		return err
 	}

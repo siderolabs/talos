@@ -180,10 +180,8 @@ func TestPersistenceSuite(t *testing.T) {
 	require.NoError(t, err)
 
 	suite.Run(t, &PersistenceSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&configctrl.PersistenceController{}))
-			},
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&configctrl.PersistenceController{}))
 		},
 
 		cfg1: cfg1,

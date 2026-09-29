@@ -94,7 +94,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "eth0",
 								DeviceVlans: []*v1alpha1.Vlan{
@@ -207,7 +207,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -354,7 +354,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationWithAliases() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "enx0123",
 								DeviceVlans: []*v1alpha1.Vlan{
@@ -383,7 +383,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationWithAliases() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -488,6 +488,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 	bc1.BondMode = new(nethelpers.BondModeActiveBackup)
 	bc1.BondLinks = []string{"dummy2", "dummy3"}
 	bc1.BondUpDelay = new(uint32(200))
+	bc1.BondPrimary = new("dummy2")
 
 	br1 := networkcfg.NewBridgeConfigV1Alpha1("br0")
 	br1.BridgeLinks = []string{"enp0s2", "eth1"}
@@ -562,6 +563,9 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.Equal(nethelpers.BondModeActiveBackup, r.TypedSpec().BondMaster.Mode)
 				asrt.EqualValues(200, r.TypedSpec().BondMaster.UpDelay)
 				asrt.Nil(r.TypedSpec().BondMaster.ADLACPActive)
+				asrt.Equal("dummy2", r.TypedSpec().BondMaster.Primary)
+				// the name is resolved to an index only when the settings are applied
+				asrt.Nil(r.TypedSpec().BondMaster.PrimaryIndex)
 			case "br0":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)
@@ -569,6 +573,45 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
 				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
 				asrt.True(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
+			}
+		},
+	)
+}
+
+// TestMachineConfigurationNewStyleBondPrimaryAlias checks that the bond primary is resolved through
+// link aliases, the same way the list of bonded links is.
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleBondPrimaryAlias() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	bc := networkcfg.NewBondConfigV1Alpha1("bond0")
+	bc.BondMode = new(nethelpers.BondModeActiveBackup)
+	bc.BondLinks = []string{"uplink", "eth1"}
+	bc.BondPrimary = new("uplink")
+	bc.BondPrimaryReselect = new(nethelpers.PrimaryReselectAlways)
+
+	ctr, err := container.New(bc)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	status := network.NewLinkStatus(network.NamespaceName, "eth0")
+	status.TypedSpec().AltNames = []string{"uplink"}
+	suite.Create(status)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/bond0",
+			"configuration/eth0",
+			"configuration/eth1",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			switch r.TypedSpec().Name {
+			case "bond0":
+				asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+				// "uplink" is an alias of eth0, so the primary is stored under the real link name
+				asrt.Equal("eth0", r.TypedSpec().BondMaster.Primary)
+				asrt.Equal(nethelpers.PrimaryReselectAlways, r.TypedSpec().BondMaster.PrimaryReselect)
+			case "eth0", "eth1":
+				asrt.Equal("bond0", r.TypedSpec().BondSlave.MasterName)
 			}
 		},
 	)
@@ -636,6 +679,70 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
 				asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
 				asrt.Equal(nethelpers.RoutingTable(123), r.TypedSpec().VRFMaster.Table)
 			}
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVXLAN() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	vxlan := networkcfg.NewVXLANConfigV1Alpha1("vxlan900")
+	vxlan.VXLANID = 100
+	vxlan.VXLANLocal = meta.Addr{Addr: netip.MustParseAddr("10.255.0.1")}
+	vxlan.VXLANParent = "vtep0"
+	vxlan.VXLANPort = new(uint16(4789))
+	vxlan.VXLANLearning = new(false)
+
+	ctr, err := container.New(vxlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/vxlan900",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal("vxlan900", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.True(r.TypedSpec().Logical)
+			asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+			asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+			asrt.Equal("vtep0", r.TypedSpec().ParentName)
+			asrt.Equal(network.VXLANSpec{
+				ID:       100,
+				Local:    netip.MustParseAddr("10.255.0.1"),
+				Port:     4789,
+				Learning: false,
+			}, r.TypedSpec().VXLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVXLANDefaults() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	vxlan := networkcfg.NewVXLANConfigV1Alpha1("vxlan900")
+	vxlan.VXLANID = 100
+	vxlan.VXLANParent = "vtep0"
+
+	ctr, err := container.New(vxlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/vxlan900",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
+			asrt.Equal(network.VXLANSpec{
+				ID:       100,
+				Port:     4789,
+				Learning: true,
+			}, r.TypedSpec().VXLAN)
 		},
 	)
 }
@@ -823,7 +930,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkInterfaces: []*v1alpha1.Device{
+						NetworkInterfaces: []*v1alpha1.Device{ //nolint:staticcheck // legacy config
 							{
 								DeviceInterface: "eth0",
 								DeviceVlans: []*v1alpha1.Vlan{
@@ -854,7 +961,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
 						},
@@ -972,11 +1079,127 @@ func TestLinkConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &LinkConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&netctrl.DeviceConfigController{}))
 		},
 	})
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleMacVLAN() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+
+	ctr, err := container.New(macvlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal("eth0.macvlan", r.TypedSpec().Name)
+			asrt.True(r.TypedSpec().Up)
+			asrt.True(r.TypedSpec().Logical)
+			asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+			asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+			asrt.Equal("eth0", r.TypedSpec().ParentName)
+			asrt.Equal(network.MacVLANSpec{
+				Mode: nethelpers.MacvlanModeBridge,
+			}, r.TypedSpec().MacVLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleMacVLANDefaults() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+
+	ctr, err := container.New(macvlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+			asrt.True(r.TypedSpec().Up)
+			asrt.Equal(network.MacVLANSpec{
+				Mode: nethelpers.MacvlanModeBridge,
+			}, r.TypedSpec().MacVLAN)
+		},
+	)
+}
+
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleMacVLANDown() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+	macvlan.LinkUp = new(false)
+
+	ctr, err := container.New(macvlan)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+			asrt.False(r.TypedSpec().Up)
+		},
+	)
+}
+
+// TestMachineConfigurationMacVLANInVRF mirrors the reporter's use case from
+// https://github.com/siderolabs/talos/issues/13167: a macvlan interface created
+// on a physical link and enslaved to a VRF.
+func (suite *LinkConfigSuite) TestMachineConfigurationMacVLANInVRF() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	macvlan := networkcfg.NewMacVLANConfigV1Alpha1("eth0.macvlan")
+	macvlan.MacVLANParent = "eth0"
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+
+	vrf := networkcfg.NewVRFConfigV1Alpha1("underlay")
+	vrf.VRFLinks = []string{"eth0.macvlan"}
+	vrf.VRFTable = nethelpers.RoutingTable(99)
+
+	ctr, err := container.New(macvlan, vrf)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0.macvlan",
+			"configuration/underlay",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "eth0.macvlan":
+				asrt.Equal(network.LinkKindMacVLAN, r.TypedSpec().Kind)
+				asrt.Equal("eth0", r.TypedSpec().ParentName)
+				asrt.Equal(network.MacVLANSpec{Mode: nethelpers.MacvlanModeBridge}, r.TypedSpec().MacVLAN)
+				asrt.Equal("underlay", r.TypedSpec().VRFSlave.MasterName)
+			case "underlay":
+				asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.RoutingTable(99), r.TypedSpec().VRFMaster.Table)
+			}
+		},
+	)
 }

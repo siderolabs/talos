@@ -103,13 +103,13 @@ func (ctrl *ImageFactorySchematicController) Run(ctx context.Context, r controll
 // "Image Factory (https://factory.talos.dev)".
 // If no " (" is found, the whole string is returned as flavor and apiURL is empty.
 func parseAuthor(author string) (flavor, apiURL string) {
-	idx := strings.LastIndex(author, " (")
-	if idx == -1 {
+	before, after, ok := strings.CutLast(author, " (")
+	if !ok {
 		return author, ""
 	}
 
-	flavor = author[:idx]
-	url := author[idx+2:]
+	flavor = before
+	url := after
 
 	apiURL = strings.TrimSuffix(url, ")")
 

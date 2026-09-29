@@ -69,6 +69,11 @@ type K8sSuite struct {
 func (k8sSuite *K8sSuite) SetupSuite() {
 	k8sSuite.APISuite.SetupSuite()
 
+	// A cluster can be created without Kubernetes at all, and then there is no kubeconfig to build a client from.
+	if !k8sSuite.Capabilities().SupportsKubernetes {
+		k8sSuite.T().Skip("cluster doesn't run Kubernetes")
+	}
+
 	kubeconfig, err := k8sSuite.Client.Kubeconfig(context.Background())
 	k8sSuite.Require().NoError(err)
 
@@ -280,11 +285,9 @@ func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
 
 	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, corev1.Volume{
 		Name: name,
-		VolumeSource: corev1.VolumeSource{
-			HostPath: &corev1.HostPathVolumeSource{
-				Path: hostPath,
-				Type: new(corev1.HostPathDirectoryOrCreate),
-			},
+		HostPath: &corev1.HostPathVolumeSource{
+			Path: hostPath,
+			Type: new(corev1.HostPathDirectoryOrCreate),
 		},
 	})
 
@@ -380,9 +383,7 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 		name:      podName,
 		namespace: "kube-system",
 		pod: &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: podName,
-			},
+			Name: podName,
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
@@ -416,18 +417,14 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 				Volumes: []corev1.Volume{
 					{
 						Name: "dev",
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{
-								Path: "/dev",
-							},
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev",
 						},
 					},
 					{
 						Name: "host",
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{
-								Path: "/",
-							},
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/",
 						},
 					},
 				},
@@ -456,9 +453,7 @@ func (k8sSuite *K8sSuite) NewPod(name string) (podInfo, error) {
 		name:      podName,
 		namespace: "default",
 		pod: &corev1.Pod{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: podName,
-			},
+			Name: podName,
 			Spec: corev1.PodSpec{
 				Containers: []corev1.Container{
 					{
@@ -779,12 +774,12 @@ func (k8sSuite *K8sSuite) WaitForResource(ctx context.Context, namespace, group,
 	fieldSelector := fields.OneTermEqualSelector("metadata.name", resourceName).String()
 
 	lw := &cache.ListWatch{
-		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+		ListFunc: func(options metav1.ListOptions) (runtime.Object, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to ListWithContext
 			options.FieldSelector = fieldSelector
 
 			return dr.List(ctx, options)
 		},
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to WatchWithContext
 			options.FieldSelector = fieldSelector
 
 			return dr.Watch(ctx, options)
@@ -1054,12 +1049,12 @@ func (k8sSuite *K8sSuite) DeleteManifests(ctx context.Context, manifests []unstr
 		// wait for the object to be deleted
 		fieldSelector := fields.OneTermEqualSelector("metadata.name", obj.GetName()).String()
 		lw := &cache.ListWatch{
-			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
+			ListFunc: func(options metav1.ListOptions) (runtime.Object, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to ListWithContext
 				options.FieldSelector = fieldSelector
 
 				return dr.List(ctx, options)
 			},
-			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
+			WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) { //nolint:staticcheck // deprecated client-go ListWatch, migrate to WatchWithContext
 				options.FieldSelector = fieldSelector
 
 				return dr.Watch(ctx, options)

@@ -168,7 +168,11 @@ func (suite *BGPMetalLBSuite) TestMetalLBVRFBGP() { //nolint:gocyclo
 	workloadBGP.BGPNeighborConfigs = []network.BGPNeighborConfig{{
 		NeighborAddressConfig: meta.Addr{Addr: metalLBSpeakerPrefix.Addr()},
 		NeighborPeerASN:       metalLBSpeakerASN,
-		NeighborHoldTime:      9 * time.Second,
+		// frr-k8s runs bgpd with -p 0, so the speaker never listens: only it may initiate. Dialing
+		// it lands on the node's own default-VRF wildcard listener instead, which rejects the
+		// unknown peer and resets the session every retry.
+		NeighborPassive:  true,
+		NeighborHoldTime: 9 * time.Second,
 	}}
 
 	fabricPatch := network.NewBGPInstanceConfigV1Alpha1(metalLBFabricName)
@@ -275,11 +279,9 @@ func (suite *BGPMetalLBSuite) TestMetalLBVRFBGP() { //nolint:gocyclo
 
 func (suite *BGPMetalLBSuite) metalLBInstall() {
 	_, err := suite.Clientset.CoreV1().Namespaces().Create(suite.ctx, &corev1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: metalLBNamespace,
-			Labels: map[string]string{
-				"pod-security.kubernetes.io/enforce": "privileged",
-			},
+		Name: metalLBNamespace,
+		Labels: map[string]string{
+			"pod-security.kubernetes.io/enforce": "privileged",
 		},
 	}, metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
@@ -428,11 +430,9 @@ func (suite *BGPMetalLBSuite) metalLBObjects(nodeName string) []unstructured.Uns
 
 func (suite *BGPMetalLBSuite) metalLBCreateService() {
 	_, err := suite.Clientset.CoreV1().Services(corev1.NamespaceDefault).Create(suite.ctx, &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: metalLBServiceName,
-			Annotations: map[string]string{
-				"metallb.io/address-pool": metalLBPoolName,
-			},
+		Name: metalLBServiceName,
+		Annotations: map[string]string{
+			"metallb.io/address-pool": metalLBPoolName,
 		},
 		Spec: corev1.ServiceSpec{
 			Selector:              map[string]string{"app": metalLBBackendName},

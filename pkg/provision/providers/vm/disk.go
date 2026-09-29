@@ -7,6 +7,7 @@ package vm
 import (
 	"errors"
 	"fmt"
+	"math/bits"
 	"os"
 
 	"github.com/detailyang/go-fallocate"
@@ -70,6 +71,11 @@ func (p *Provisioner) CreateDisks(state *provision.State, nodeReq provision.Node
 		diskPath := state.GetRelativePath(fmt.Sprintf("%s-%d.disk", nodeReq.Name, i))
 		diskSize := (disk.Size + QEMUAlignment - 1) / QEMUAlignment * QEMUAlignment
 
+		if disk.Driver == "mmc" {
+			// QEMU requires the SD card image size to be a power of two
+			diskSize = nextPowerOfTwo(diskSize)
+		}
+
 		var diskF *os.File
 
 		diskF, err = os.Create(diskPath)
@@ -97,4 +103,13 @@ func (p *Provisioner) CreateDisks(state *provision.State, nodeReq provision.Node
 	}
 
 	return diskPaths, nil
+}
+
+// nextPowerOfTwo rounds the size up to the nearest power of two.
+func nextPowerOfTwo(size uint64) uint64 {
+	if size <= 1 {
+		return 1
+	}
+
+	return 1 << bits.Len64(size-1)
 }

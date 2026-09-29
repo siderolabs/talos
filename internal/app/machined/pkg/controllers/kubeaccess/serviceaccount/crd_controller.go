@@ -323,7 +323,11 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 	}
 
 	desiredRoles, found, err := unstructured.NestedStringSlice(talosSA.UnstructuredContent(), "spec", "roles")
-	if err != nil || !found {
+
+	// parse desiredRoles to see if they are empty.
+	desiredRoleSet, _ := role.Parse(desiredRoles)
+
+	if err != nil || !found || desiredRoleSet.Empty() {
 		msg := messageRolesNotFound
 
 		updateErr := t.updateTalosSAStatus(ctx, talosSA, msg)
@@ -337,10 +341,8 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 			return fmt.Errorf("%s: %w", msg, err)
 		}
 
-		return errors.New(msg)
+		return errors.New(msg) //nolint:staticcheck // msg doubles as the user-facing Kubernetes Event message
 	}
-
-	desiredRoleSet, _ := role.Parse(desiredRoles)
 
 	if !slices.ContainsFunc(t.allowedNamespaces, func(allowedNS string) bool {
 		return allowedNS == namespace
@@ -357,6 +359,7 @@ func (t *CRDController) syncHandler(ctx context.Context, key string) error {
 		return nil
 	}
 
+	// every requested role must appear in the allowlist; the empty desiredRoles list is handled above.
 	var unallowedRoles []string
 
 	for _, desiredRole := range desiredRoles {
@@ -608,11 +611,9 @@ func (t *CRDController) newSecret(talosSA *unstructured.Unstructured, roles role
 	}
 
 	return &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: talosSA.GetName(),
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(talosSA, talosSAGVK),
-			},
+		Name: talosSA.GetName(),
+		OwnerReferences: []metav1.OwnerReference{
+			*metav1.NewControllerRef(talosSA, talosSAGVK),
 		},
 		Data: map[string][]byte{
 			constants.TalosconfigFilename: config,

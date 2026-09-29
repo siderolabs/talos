@@ -408,6 +408,32 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "filesystem spec is invalid for volumeType directory",
 		},
 		{
+			name: "secure mount for directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = new(blockres.VolumeTypeDirectory)
+				c.MountSpec.MountSecure = new(false)
+
+				return c
+			},
+		},
+		{
+			name: "disable access time for directory",
+
+			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {
+				c := block.NewUserVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+				c.VolumeType = new(blockres.VolumeTypeDirectory)
+				c.MountSpec.MountDisableAccessTime = new(true)
+
+				return c
+			},
+
+			expectedErrors: "mount.disableAccessTime is invalid for volumeType directory",
+		},
+		{
 			name: "invalid volumeType",
 
 			cfg: func(t *testing.T) *block.UserVolumeConfigV1Alpha1 {

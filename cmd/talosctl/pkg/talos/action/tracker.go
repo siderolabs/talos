@@ -23,11 +23,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
@@ -83,10 +83,6 @@ func GRPCDialOptions() []grpc.DialOption {
 			// disable grpc backoff
 			Backoff:           backoff.Config{},
 			MinConnectTimeout: 20 * time.Second,
-		}),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:    10 * time.Second,
-			Timeout: 5 * time.Second,
 		}),
 	}
 }
@@ -161,9 +157,9 @@ func NewTracker(
 		expectedEventFn:          expectedEventFn,
 		actionFn:                 actionFn,
 		nodeToLatestStatusUpdate: make(map[string]reporter.Update, len(clientFactory.Nodes())),
-		reporter:                 reporter.New(),
+		reporter:                 reporter.New(reporter.WithLineFilter(safeout.String)),
 		reportCh:                 make(chan nodeUpdate),
-		isTerminal:               isatty.IsTerminal(os.Stderr.Fd()),
+		isTerminal:               isatty.IsTerminal(os.Stderr.Fd()), //nolint:forbidigo // asking about the stream, not writing to it
 		clientExecutor:           clientFactory,
 	}
 
@@ -244,7 +240,7 @@ func (a *Tracker) Run(ctx context.Context) error {
 				}
 
 				tracker.update(reporter.Update{
-					Message: trackErr.Error(),
+					Message: safeout.String(trackErr.Error()),
 					Status:  reporter.StatusError,
 				})
 			}
@@ -276,14 +272,14 @@ func (a *Tracker) Run(ctx context.Context) error {
 	if len(failedNodes) > 0 {
 		slices.Sort(failedNodes)
 
-		fmt.Fprintf(os.Stderr, "console logs for nodes %q:\n", failedNodes)
+		fmt.Fprintf(safeout.Stderr(), "console logs for nodes %q:\n", failedNodes)
 
 		for _, node := range failedNodes {
 			dmesgReader, _ := failedNodesToDmesgs.Get(node)
 
-			_, copyErr := io.Copy(os.Stderr, dmesgReader)
+			_, copyErr := io.Copy(safeout.Stderr(), dmesgReader)
 			if copyErr != nil {
-				fmt.Fprintf(os.Stderr, "%q: failed to print debug logs: %v\n", node, copyErr)
+				fmt.Fprintf(safeout.Stderr(), "%q: failed to print debug logs: %v\n", node, copyErr)
 			}
 		}
 	}
@@ -317,7 +313,7 @@ func (a *Tracker) runReporter(ctx context.Context) error {
 
 		case update = <-a.reportCh:
 			if !a.isTerminal {
-				fmt.Fprintf(os.Stderr, "%q: %v\n", update.node, update.update.Message)
+				fmt.Fprintf(safeout.Stderr(), "%q: %v\n", update.node, update.update.Message)
 
 				continue
 			}

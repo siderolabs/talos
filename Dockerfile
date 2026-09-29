@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.26.0-labs
+# syntax = docker/dockerfile-upstream:1.27.0-labs
 
 # Meta args applied to stage base names.
 
@@ -441,6 +441,14 @@ WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod tidy
 WORKDIR /src
 
+# Fetch the pinned libvirt domain schema closure for Go-only VM XML tests.
+FROM build-go AS libvirt-schema-generate
+ARG LIBVIRT_VERSION
+ARG LIBVIRT_SHA256
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go run ./tools/libvirt-schema \
+    -version "${LIBVIRT_VERSION}" -sha256 "${LIBVIRT_SHA256}" \
+    -output internal/app/machined/pkg/controllers/hypervisor/testdata/libvirt
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --link --from=go-mod-tidy /src/go.mod /src/go.sum /
 COPY --link --from=go-mod-tidy /src/pkg/machinery/go.mod /src/pkg/machinery/go.sum /pkg/machinery/
@@ -448,7 +456,7 @@ COPY --link --from=proto-format-build /src/api /api/
 COPY --link --from=proto-format-build /src/pkg/provision/api /pkg/provision/api/
 COPY --link --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
 COPY --link --from=generate-build-clean /api/machinery /pkg/machinery/
-COPY --link --from=generate-build-clean /api/docs/api.md /website/content/v1.14/reference/api.md
+COPY --link --from=generate-build-clean /api/docs/api.md /website/content/v1.15/reference/api.md
 COPY --link --from=generate-build-clean /pkg/provision/api /pkg/provision/api/
 COPY --link --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
 COPY --link --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
@@ -458,6 +466,7 @@ COPY --link --from=go-generate /src/pkg/machinery/imager/imageropts/ /pkg/machin
 COPY --link --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
 COPY --link --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
 COPY --link --from=go-generate /src/pkg/machinery/version/os-release /pkg/machinery/version/os-release
+COPY --link --from=libvirt-schema-generate /src/internal/app/machined/pkg/controllers/hypervisor/testdata/libvirt/ /internal/app/machined/pkg/controllers/hypervisor/testdata/libvirt/
 COPY --link --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
 COPY --link --from=selinux-generate / /internal/pkg/selinux/
 COPY --link --from=embed-abbrev / /
@@ -783,7 +792,7 @@ COPY --link --from=pkg-zlib-amd64 /usr/lib /rootfs/usr/lib
 # NOTE: amd64 ships igzip, but arm64 ships pigz (see https://github.com/siderolabs/extensions/discussions/931)
 COPY --link --exclude=usr/lib/pkgconfig --exclude=usr/include --from=pkg-igzip-amd64 / /rootfs
 COPY --link --from=pkg-pcre2-amd64 / /rootfs
-COPY --link --from=pkg-openssl-amd64 / /rootfs
+COPY --link --from=pkg-openssl-amd64 --exclude=usr/lib/libssl* / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
 COPY --link --from=pkg-libaio-amd64 / /rootfs
 COPY --link --from=pkg-mdadm-amd64 / /rootfs
@@ -791,11 +800,9 @@ COPY --link --from=pkg-musl-amd64 / /rootfs
 COPY --link --from=pkg-nftables-amd64 / /rootfs
 COPY --link --from=pkg-runc-amd64 / /rootfs
 COPY --link --from=pkg-xfsprogs-amd64 / /rootfs
-COPY --link --from=pkg-util-linux-amd64 /usr/lib/libblkid.* /rootfs/usr/lib/
-COPY --link --from=pkg-util-linux-amd64 /usr/lib/libuuid.* /rootfs/usr/lib/
-COPY --link --from=pkg-util-linux-amd64 /usr/lib/libmount.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-amd64 /usr/lib/ /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-amd64 /usr/share/spdx/util-linux.spdx.json /rootfs/usr/share/spdx/util-linux.spdx.json
-COPY --link --from=pkg-kmod-amd64 /usr/lib/libkmod.* /rootfs/usr/lib/
+COPY --link --from=pkg-kmod-amd64 /usr/lib/ /rootfs/usr/lib/
 COPY --link --from=pkg-kmod-amd64 /usr/bin/kmod /rootfs/usr/bin/modprobe
 COPY --link --from=pkg-kmod-amd64 usr/share/spdx/kmod.spdx.json /rootfs/usr/share/spdx/kmod.spdx.json
 COPY --link --from=modules-amd64 /usr/lib/modules /rootfs/usr/lib/modules
@@ -824,6 +831,7 @@ RUN --mount=type=bind,source=hack/cleanup.sh,target=/usr/bin/cleanup.sh <<END
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
+COPY --chmod=0644 hack/selinux/virtual_domain_context hack/selinux/virtual_image_context /rootfs/etc/selinux/targeted/contexts/
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
@@ -869,7 +877,7 @@ COPY --link --from=pkg-liburcu-arm64 / /rootfs
 COPY --link --from=pkg-libsepol-arm64 / /rootfs
 COPY --link --from=pkg-libselinux-arm64 / /rootfs
 COPY --link --from=pkg-pcre2-arm64 / /rootfs
-COPY --link --from=pkg-openssl-arm64 / /rootfs
+COPY --link --from=pkg-openssl-arm64 --exclude=usr/lib/libssl* / /rootfs
 COPY --link --from=pkg-lvm2-arm64 / /rootfs
 COPY --link --from=pkg-libaio-arm64 / /rootfs
 COPY --link --from=pkg-mdadm-arm64 / /rootfs
@@ -883,11 +891,9 @@ COPY --link --from=pkg-zlib-arm64 /usr/share/spdx /rootfs/usr/share/spdx
 COPY --link --from=pkg-zlib-arm64 /usr/lib /rootfs/usr/lib
 # NOTE: amd64 ships igzip, but arm64 ships pigz (see https://github.com/siderolabs/extensions/discussions/931)
 COPY --link --from=pkg-pigz-arm64 / /rootfs
-COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/
-COPY --link --from=pkg-util-linux-arm64 /usr/lib/libuuid.* /rootfs/usr/lib/
-COPY --link --from=pkg-util-linux-arm64 /usr/lib/libmount.* /rootfs/usr/lib/
+COPY --link --from=pkg-util-linux-arm64 /usr/lib/ /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-arm64 /usr/share/spdx/util-linux.spdx.json /rootfs/usr/share/spdx/util-linux.spdx.json
-COPY --link --from=pkg-kmod-arm64 /usr/lib/libkmod.* /rootfs/usr/lib/
+COPY --link --from=pkg-kmod-arm64 /usr/lib/ /rootfs/usr/lib/
 COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/usr/bin/modprobe
 COPY --link --from=pkg-kmod-arm64 /usr/share/spdx/kmod.spdx.json /rootfs/usr/share/spdx/kmod.spdx.json
 COPY --link --from=modules-arm64 /usr/lib/modules /rootfs/usr/lib/modules
@@ -916,6 +922,7 @@ RUN --mount=type=bind,source=hack/cleanup.sh,target=/usr/bin/cleanup.sh <<END
 END
 COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
+COPY --chmod=0644 hack/selinux/virtual_domain_context hack/selinux/virtual_image_context /rootfs/etc/selinux/targeted/contexts/
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
@@ -1031,10 +1038,16 @@ FROM ${GENERATE_VEX_PREFIX}:${GENERATE_VEX} AS talos-vex
 
 FROM build-go AS vex-generate
 ARG TAG
-RUN --mount=type=bind,from=talos-vex,source=/generate-vex,target=/generate-vex /generate-vex gen --target-version $TAG > /talos.vex.json
+RUN --mount=type=bind,from=talos-vex,source=/generate-vex,target=/generate-vex --mount=type=bind,from=pkg-kernel-amd64,source=/usr/lib/modules,target=/usr/lib/modules <<EOF
+set -euo pipefail
+
+KERNEL_VERSION=$(ls /usr/lib/modules | sed s/-talos//)
+
+/generate-vex gen --target-version $TAG --kernel-version ${KERNEL_VERSION} > /talos.vex.json
 # This config contains IDs of the tracked, but affected vulnerabilities.
 # Once an advisory is made, the CI should go back to passing status.
-RUN --mount=type=bind,from=talos-vex,source=/generate-vex,target=/generate-vex /generate-vex grype-config --target-version $TAG > /talos.grype.yaml
+/generate-vex grype-config --target-version $TAG  --kernel-version=${KERNEL_VERSION} > /talos.grype.yaml
+EOF
 
 FROM scratch AS vex
 COPY --link --from=vex-generate /talos.vex.json /talos.vex.json
@@ -1045,7 +1058,7 @@ COPY --link --from=sbom-arm64 /talos-arm64.spdx.json /talos-arm64.spdx.json
 COPY --link --from=vex /talos.vex.json /talos.vex.json
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
-    --vex /talos.vex.json -vv 2>&1 | tee /grype-scan.log
+    --vex /talos.vex.json 2>&1 | tee /grype-scan.log
 
 FROM scratch AS grype-scan-result
 COPY --link --from=grype-scan /grype-scan.log /grype-scan.log
@@ -1056,7 +1069,7 @@ COPY --link --from=vex /talos.vex.json /talos.vex.json
 COPY --link --from=vex /talos.grype.yaml /talos.grype.yaml
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     github.com/anchore/grype/cmd/grype sbom:/talos-arm64.spdx.json \
-    --vex /talos.vex.json -vv --fail-on negligible --config /talos.grype.yaml
+    --vex /talos.vex.json --fail-on negligible --config /talos.grype.yaml
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
 RUN rm -rf /rootfs/usr/share/spdx/*
@@ -1228,7 +1241,7 @@ COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libburn / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisoburn / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /
-COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --from=pkg-openssl / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --exclude=usr/lib/libssl* --from=pkg-openssl / /
 COPY --link --from=pkg-open-vmdk / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-pcre2 / /
 COPY --link --from=pkg-pigz / /
@@ -1283,11 +1296,12 @@ COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
+ARG UNITTEST_PARALLELISM
 ENV PLATFORM=container
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p 4 ${TESTPKGS}
+    -covermode=atomic -coverprofile=coverage.txt -coverpkg=${TESTPKGS} -p ${UNITTEST_PARALLELISM} ${TESTPKGS}
 FROM scratch AS unit-tests
 COPY --link --from=unit-tests-runner /src/coverage.txt /coverage.txt
 
@@ -1298,12 +1312,15 @@ COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
+ARG UNITTEST_PARALLELISM
 ENV PLATFORM=container
 ENV CGO_ENABLED=1
+ # reduce the wait time of TSan to exit after the test is done
+ENV GORACE=atexit_sleep_ms=100
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -race -p 4 ${TESTPKGS}
+    -race -p ${UNITTEST_PARALLELISM} ${TESTPKGS}
 
 # The unit-tests-fips target performs tests with FIPS strict mode.
 FROM base AS unit-tests-fips
@@ -1311,13 +1328,14 @@ COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
 COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
+ARG UNITTEST_PARALLELISM
 ENV PLATFORM=container
 ENV GOFIPS140=latest
 ENV GODEBUG=fips140=only,tlsmlkem=0
 ARG GO_LDFLAGS
 RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type=cache,target=/.cache,id=talos/.cache go test \
     -ldflags "${GO_LDFLAGS}" \
-    -p 4 ${TESTPKGS}
+    -p ${UNITTEST_PARALLELISM} ${TESTPKGS}
 
 # The integration-test targets builds integration test binary.
 
@@ -1521,9 +1539,9 @@ RUN --mount=type=bind,from=talosctl-targetarch,source=/talosctl-${TARGETOS}-${TA
 COPY ./pkg/machinery/config/schemas/*.schema.json /tmp/schemas/
 
 FROM scratch AS docs
-COPY --link --from=docs-build /tmp/configuration/ /website/content/v1.14/reference/configuration/
-COPY --link --from=docs-build /tmp/cli.md /website/content/v1.14/reference/
-COPY --link --from=docs-build /tmp/schemas /website/content/v1.14/schemas/
+COPY --link --from=docs-build /tmp/configuration/ /website/content/v1.15/reference/configuration/
+COPY --link --from=docs-build /tmp/cli.md /website/content/v1.15/reference/
+COPY --link --from=docs-build /tmp/schemas /website/content/v1.15/schemas/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 

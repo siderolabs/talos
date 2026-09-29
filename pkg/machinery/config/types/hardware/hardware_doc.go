@@ -10,6 +10,103 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
+func (CPUScalingConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUScalingConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUScalingConfig configures Linux CPU frequency scaling." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUScalingConfig configures Linux CPU frequency scaling.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the config document.\n\nIt is used to tell apart several scaling policies, and is reported on the\n`CPUScalingSpec` resources the document produces.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "selector",
+				Type:        "CPUScalingSelector",
+				Note:        "",
+				Description: "Selector to match the cpufreq policies to configure.\n\nIf several documents match the same policy, the first one (in document order) wins.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector to match the cpufreq policies to configure." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "governor",
+				Type:        "string",
+				Note:        "",
+				Description: "Scaling governor to set, e.g. `performance`, `powersave` or `schedutil`.\n\nThe governors a machine offers depend on its cpufreq driver, and are reported per policy\nin `availableGovernors` of the `CPUScalingStatus` resource.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Scaling governor to set, e.g. `performance`, `powersave` or `schedutil`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "energyPerformancePreference",
+				Type:        "string",
+				Note:        "",
+				Description: "Energy performance preference to set, e.g. `performance`, `balance_performance`,\n`balance_power` or `power`.\n\nOnly some drivers implement this (HWP-enabled `intel_pstate`, `amd-pstate` in active\nmode); the values a machine offers are reported per policy in `availableEPPs` of the\n`CPUScalingStatus` resource.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Energy performance preference to set, e.g. `performance`, `balance_performance`," /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minFrequencyKhz",
+				Type:        "uint64",
+				Note:        "",
+				Description: "Lower bound of the frequency window the governor may use, in kHz.\n\nLeft alone when not set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Lower bound of the frequency window the governor may use, in kHz." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "maxFrequencyKhz",
+				Type:        "uint64",
+				Note:        "",
+				Description: "Upper bound of the frequency window the governor may use, in kHz.\n\nLeft alone when not set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Upper bound of the frequency window the governor may use, in kHz." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleCPUScalingConfigV1Alpha1())
+
+	doc.AddExample("", exampleCPUScalingConfigEfficiencyV1Alpha1())
+
+	doc.Fields[3].AddExample("", "performance")
+	doc.Fields[4].AddExample("", "balance_performance")
+	doc.Fields[5].AddExample("", 1200000)
+	doc.Fields[6].AddExample("", 3300000)
+
+	return doc
+}
+
+func (CPUScalingSelector) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUScalingSelector",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUScalingSelector selects the cpufreq policies to configure." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUScalingSelector selects the cpufreq policies to configure.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUScalingConfigV1Alpha1",
+				FieldName: "selector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "The Common Expression Language (CEL) expression to match the cpufreq policy.\n\nThe `cpu` variable is a cpufreq policy as reported by the `CPUScalingStatus` resource.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The Common Expression Language (CEL) expression to match the cpufreq policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match every policy", exampleCPUScalingSelectorAll())
+	doc.Fields[0].AddExample("match the performance cores of a hybrid CPU", exampleCPUScalingSelectorPerformance())
+	doc.Fields[0].AddExample("match policies whose hardware tops out above 3 GHz", exampleCPUScalingSelectorFast())
+	doc.Fields[0].AddExample("match policies by scaling driver", exampleCPUScalingSelectorDriver())
+
+	return doc
+}
+
 func (PCIDriverRebindConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "PCIDriverRebindConfig",
@@ -48,6 +145,8 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "hardware",
 		Description: "Package hardware provides hardware related config documents.\n",
 		Structs: []*encoder.Doc{
+			CPUScalingConfigV1Alpha1{}.Doc(),
+			CPUScalingSelector{}.Doc(),
 			PCIDriverRebindConfigV1Alpha1{}.Doc(),
 		},
 	}

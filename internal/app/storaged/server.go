@@ -250,19 +250,17 @@ func (s *Server) validateDeviceForWipe(ctx context.Context, deviceName string, s
 				filepath.Base(volumeStatus.TypedSpec().Location),
 				filepath.Base(volumeStatus.TypedSpec().MountLocation),
 			} {
-				for _, dev := range []string{deviceName, parent} {
-					if dev == "" || location == "" {
-						continue
-					}
+				if location == "" {
+					continue
+				}
 
-					if location == dev {
-						return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", dev, volumeStatus.Metadata().ID())
-					}
+				if location == deviceName {
+					return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", deviceName, volumeStatus.Metadata().ID())
 				}
 			}
 
 			if filepath.Base(volumeStatus.TypedSpec().ParentLocation) == deviceName {
-				return status.Errorf(codes.FailedPrecondition, "blockdevice %q is in use by volume %q", deviceName, volumeStatus.Metadata().ID())
+				return status.Errorf(codes.FailedPrecondition, "blockdevice %q is a parent of volume %q", deviceName, volumeStatus.Metadata().ID())
 			}
 		}
 	}

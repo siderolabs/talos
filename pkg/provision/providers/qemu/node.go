@@ -29,6 +29,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
@@ -234,6 +235,8 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		APIPort: apiBind.Port,
 	}
 
+	launchConfig.IPMIEnabled = opts.IPMIEnabled
+
 	if opts.TPM1_2Enabled || opts.TPM2Enabled {
 		tpmConfig, tpm2Err := p.createVirtualTPMState(state, nodeReq.Name, opts.TPM2Enabled)
 		if tpm2Err != nil {
@@ -265,7 +268,12 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		return provision.NodeInfo{}, err
 	}
 
-	launchConfigFile, err := os.Create(state.GetRelativePath(fmt.Sprintf("%s.config", nodeReq.Name)))
+	// the launch config embeds the machine config, so keep it owner-only
+	launchConfigFile, err := os.OpenFile(
+		state.GetRelativePath(fmt.Sprintf("%s.config", nodeReq.Name)),
+		os.O_RDWR|os.O_CREATE|os.O_TRUNC,
+		fileutils.SecretFileMode,
+	)
 	if err != nil {
 		return provision.NodeInfo{}, err
 	}
@@ -408,7 +416,7 @@ func (p *provisioner) createMetalConfigISO(ctx context.Context, state *provision
 
 	defer os.RemoveAll(tmpDir) //nolint:errcheck
 
-	if err = os.WriteFile(filepath.Join(tmpDir, "config.yaml"), []byte(config), 0o644); err != nil {
+	if err = fileutils.WriteSecret(filepath.Join(tmpDir, "config.yaml"), []byte(config)); err != nil {
 		return "", err
 	}
 

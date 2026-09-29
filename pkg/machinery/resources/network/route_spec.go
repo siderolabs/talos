@@ -5,7 +5,9 @@
 package network
 
 import (
+	"cmp"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -58,6 +60,34 @@ type RouteNextHop struct {
 	Weight      uint32     `yaml:"weight,omitempty" protobuf:"3"`
 }
 
+// CompareRouteNextHops orders next-hops canonically: by gateway, then out-link name, then weight.
+//
+// Producers of multipath routes (e.g. BGP) don't promise a stable next-hop order, while the kernel
+// keeps a multipath route's next-hops in the order they were installed; a canonical order keeps both the
+// RouteSpec resource and the installed route stable across reconciles.
+func CompareRouteNextHops(a, b RouteNextHop) int {
+	if c := a.Gateway.Compare(b.Gateway); c != 0 {
+		return c
+	}
+
+	if c := cmp.Compare(a.OutLinkName, b.OutLinkName); c != 0 {
+		return c
+	}
+
+	return cmp.Compare(a.Weight, b.Weight)
+}
+
+// NormalizeNextHops sorts the next-hops canonically (see CompareRouteNextHops) and drops exact duplicates.
+//
+// The slice is modified in place, and the (possibly shortened) result is returned. A duplicate next-hop
+// (e.g. the same route reflected by two route reflectors with the next-hop unchanged) is rejected by
+// the kernel for IPv6 and doubles the weight of the gateway for IPv4, so it is never what was intended.
+func NormalizeNextHops(nexthops []RouteNextHop) []RouteNextHop {
+	slices.SortFunc(nexthops, CompareRouteNextHops)
+
+	return slices.Compact(nexthops)
+}
+
 var (
 	zero16 = netip.MustParseAddr("::")
 	zero4  = netip.MustParseAddr("0.0.0.0")
@@ -101,6 +131,8 @@ func (route *RouteSpecSpec) Normalize() nethelpers.Family {
 		family = nethelpers.FamilyInet6
 		route.Source = netip.Addr{}
 	}
+
+	route.NextHops = NormalizeNextHops(route.NextHops)
 
 	switch {
 	case len(route.NextHops) > 0:

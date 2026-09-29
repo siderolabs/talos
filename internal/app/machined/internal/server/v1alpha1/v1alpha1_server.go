@@ -32,6 +32,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	"github.com/google/uuid"
+	"github.com/gopacket/gopacket"
 	"github.com/gopacket/gopacket/afpacket"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/nberlee/go-netstat/netstat"
@@ -53,6 +54,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/internal/app/contentlibrary"
 	"github.com/siderolabs/talos/internal/app/debug"
 	"github.com/siderolabs/talos/internal/app/images"
 	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
@@ -64,6 +66,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/mdd"
 	"github.com/siderolabs/talos/internal/app/resources"
+	machinestorage "github.com/siderolabs/talos/internal/app/storage"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/containers"
 	taloscontainerd "github.com/siderolabs/talos/internal/pkg/containers/containerd"
@@ -153,8 +156,10 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
+	machine.RegisterStorageServiceServer(obj, machinestorage.NewService())
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
+	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(resourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
@@ -198,10 +203,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	mode := in.Mode.String()
 
 	var modeDetails string
-
-	if in.Mode != machine.ApplyConfigurationRequest_TRY {
-		s.Controller.Runtime().CancelConfigRollbackTimeout()
-	}
 
 	cfgProvider, err := configloader.NewFromBytes(in.GetData())
 	if err != nil {
@@ -270,6 +271,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 				},
 			},
 		}, nil
+	}
+
+	if in.Mode != machine.ApplyConfigurationRequest_TRY {
+		s.Controller.Runtime().CancelConfigRollbackTimeout()
 	}
 
 	log.Printf("apply config request: mode %s", strings.ToLower(mode))
@@ -1266,6 +1271,11 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 		return status.Error(codes.FailedPrecondition, "k8s API server CA config is not set")
 	}
 
+	k8sClusterConfig := s.Controller.Runtime().Config().K8sClusterConfig()
+	if k8sClusterConfig == nil {
+		return status.Error(codes.FailedPrecondition, "cluster name and endpoint are not configured (.cluster.controlPlane.endpoint or KubeClusterConfig document)")
+	}
+
 	if err := kubeconfig.GenerateAdmin(
 		struct {
 			configconfig.ClusterConfig
@@ -1274,7 +1284,7 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 		}{
 			ClusterConfig:        s.Controller.Runtime().Config().Cluster(),
 			K8sAPIServerCAConfig: k8sCAConfig,
-			K8sClusterConfig:     s.Controller.Runtime().Config().K8sClusterConfig(),
+			K8sClusterConfig:     k8sClusterConfig,
 		},
 		&b,
 	); err != nil {
@@ -1316,40 +1326,29 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 // Logs provides a service or container logs can be requested and the contents of the
 // log file are streamed in chunks.
 func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsServer) (err error) {
-	var chunk chunker.Chunker
+	var (
+		chunk chunker.Chunker
+		file  io.Closer
+	)
 
 	switch {
 	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
-		var options []runtime.LogOption
-
-		if req.Follow {
-			options = append(options, runtime.WithFollow())
-		}
-
-		if req.TailLines >= 0 {
-			options = append(options, runtime.WithTailLines(int(req.TailLines)))
-		}
-
-		var logR io.ReadCloser
-
-		logR, err = s.Controller.Runtime().Logging().ServiceLog(req.Id).Reader(options...)
-		if err != nil {
-			return err
-		}
-
-		//nolint:errcheck
-		defer logR.Close()
-
-		chunk = stream.NewChunker(l.Context(), logR)
+		chunk, file, err = s.serviceLogChunker(l.Context(), req, req.Id)
+	case req.Namespace == constants.TalosContainersContainerdNamespace:
+		// Containers declared via ContainerConfig log to a buffer keyed by container, not by
+		// instance, so that successive restarts append to one buffer and logs outlive the
+		// container: see containers.RuntimeController.
+		chunk, file, err = s.serviceLogChunker(l.Context(), req, constants.TalosContainersLogPrefix+req.Id)
 	default:
-		var file io.Closer
-
-		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer file.Close()
+		chunk, file, err = k8slogs(l.Context(), req)
 	}
+
+	if err != nil {
+		return err
+	}
+
+	//nolint:errcheck
+	defer file.Close()
 
 	for data := range chunk.Read() {
 		if err = l.Send(&common.Data{Bytes: data}); err != nil {
@@ -1358,6 +1357,26 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 	}
 
 	return nil
+}
+
+// serviceLogChunker opens the named entry in the in-memory service log buffer for streaming.
+func (s *Server) serviceLogChunker(ctx context.Context, req *machine.LogsRequest, id string) (chunker.Chunker, io.Closer, error) {
+	var options []runtime.LogOption
+
+	if req.Follow {
+		options = append(options, runtime.WithFollow())
+	}
+
+	if req.TailLines >= 0 {
+		options = append(options, runtime.WithTailLines(int(req.TailLines)))
+	}
+
+	logR, err := s.Controller.Runtime().Logging().ServiceLog(id).Reader(options...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return stream.NewChunker(ctx, logR), logR, nil
 }
 
 // LogsContainers provide a list of registered log containers.
@@ -2014,7 +2033,10 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 		return err
 	}
 
-	snapshot, err := os.OpenFile(constants.EtcdRecoverySnapshotPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o700)
+	// The snapshot is written to a temporary file and moved into place only once it is complete,
+	// so that the recovery running in the etcd service keeps reading the snapshot it started with:
+	// a repeated upload never truncates or removes the file under an in-progress recovery.
+	snapshot, err := os.CreateTemp(filepath.Dir(constants.EtcdRecoverySnapshotPath), filepath.Base(constants.EtcdRecoverySnapshotPath)+".*")
 	if err != nil {
 		return fmt.Errorf("error creating etcd recovery snapshot: %w", err)
 	}
@@ -2053,6 +2075,10 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 
 	if err = snapshot.Close(); err != nil {
 		return fmt.Errorf("error closing snapshot: %w", err)
+	}
+
+	if err = os.Rename(snapshot.Name(), constants.EtcdRecoverySnapshotPath); err != nil {
+		return fmt.Errorf("error moving snapshot into place: %w", err)
 	}
 
 	successfulUpload = true
@@ -2393,7 +2419,12 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	}
 
 	// make a nice context name
-	contextName := s.Controller.Runtime().Config().K8sClusterConfig().ClusterName()
+	k8sClusterConfig := s.Controller.Runtime().Config().K8sClusterConfig()
+	if k8sClusterConfig == nil {
+		return nil, status.Error(codes.FailedPrecondition, "cluster name and endpoint are not configured (.cluster.controlPlane.endpoint or KubeClusterConfig document)")
+	}
+
+	contextName := k8sClusterConfig.ClusterName()
 	if r := roles.Strings(); len(r) == 1 {
 		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
 	}
@@ -2478,6 +2509,9 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		afpacket.OptInterface(in.Interface),
 		afpacket.OptPollTimeout(100*time.Millisecond),
 		afpacket.OptSocketType(unix.SOCK_RAW|unix.SOCK_CLOEXEC),
+		// the kernel strips the VLAN header off the ingress frames and reports the tag out-of-band,
+		// so ask afpacket to re-insert it into the packet data, the same way libpcap/tcpdump do
+		afpacket.OptAddVLANHeader(true),
 	)
 	if err != nil {
 		return fmt.Errorf("error creating afpacket handle: %w", err)
@@ -2497,11 +2531,21 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 		return fmt.Errorf("error setting promiscuous mode %v: %w", in.Promiscuous, err)
 	}
 
-	return capturePackets(srv.Context(), &packetStreamWriter{srv}, handle, in.SnapLen, linkType)
+	return CapturePackets(srv.Context(), &packetStreamWriter{srv}, handle, in.SnapLen, linkType)
 }
 
+// PacketCaptureHandle is a subset of [afpacket.TPacket] used for packet capture.
+type PacketCaptureHandle interface {
+	ZeroCopyReadPacketData() ([]byte, gopacket.CaptureInfo, error)
+	Stats() (afpacket.Stats, error)
+	SocketStats() (afpacket.SocketStats, afpacket.SocketStatsV3, error)
+	Close()
+}
+
+// CapturePackets handles the packet capture loop and writes packets to the provided writer in pcap format.
+//
 //nolint:gocyclo,cyclop
-func capturePackets(ctx context.Context, w io.Writer, handle *afpacket.TPacket, snapLen uint32, linkType pcap.LinkType) error {
+func CapturePackets(ctx context.Context, w io.Writer, handle PacketCaptureHandle, snapLen uint32, linkType pcap.LinkType) error {
 	defer handle.Close()
 
 	pcapw := pcap.NewWriter(w)
@@ -2535,6 +2579,11 @@ func capturePackets(ctx context.Context, w io.Writer, handle *afpacket.TPacket, 
 
 		data, captureData, err := handle.ZeroCopyReadPacketData()
 		if err == nil {
+			// afpacket re-inserts the VLAN header stripped by the kernel into the packet data (which bumps the
+			// capture length), but, unlike libpcap, it doesn't adjust the original wire length reported by the
+			// kernel, so compensate here: otherwise the pcap writer rejects the packet as capture length > length.
+			captureData.Length = max(captureData.Length, captureData.CaptureLength)
+
 			if err = pcapw.WritePacket(captureData, data); err != nil {
 				return err
 			}

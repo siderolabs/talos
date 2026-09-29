@@ -6,14 +6,13 @@ package helpers
 
 import (
 	"fmt"
-	"os"
 	"slices"
 	"strings"
 
 	"github.com/siderolabs/gen/maps"
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
@@ -84,11 +83,11 @@ func AddModeFlags(mode *Mode, command *cobra.Command) {
 func PrintApplyResults(resp *machine.ApplyConfigurationResponse) {
 	for _, m := range resp.GetMessages() {
 		for _, w := range m.GetWarnings() {
-			cli.Warning("%s", w)
+			safeout.Warningf("%s", w)
 		}
 
 		if m.ModeDetails != "" {
-			fmt.Fprintln(os.Stderr, m.ModeDetails)
+			fmt.Fprintln(safeout.Stderr(), m.ModeDetails)
 		}
 	}
 }

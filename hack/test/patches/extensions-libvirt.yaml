@@ -1,0 +1,18 @@
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: passwd
+mode: 0o644
+contents: |
+  root:x:0:0:root:/root:/bin/sh
+  qemu:x:107:107:qemu:/var/lib/libvirt:/bin/false
+  nobody:x:65534:65534:nobody:/:/bin/false
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: group
+mode: 0o644
+contents: |
+  root:x:0:
+  kvm:x:36:qemu
+  qemu:x:107:
+  nobody:x:65534:

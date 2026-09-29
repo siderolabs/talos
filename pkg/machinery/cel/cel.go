@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/google/cel-go/cel"
-	"github.com/google/cel-go/common/types"
+	"cel.dev/cel-go/cel"
+	"cel.dev/cel-go/common/types"
 	"github.com/siderolabs/protoenc"
 	"go.yaml.in/yaml/v4"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"

@@ -270,11 +270,9 @@ func TestKubeletSpecSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &KubeletSpecSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 3 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.KubeletSpecController{}))
-			},
+		Timeout: 3 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.KubeletSpecController{}))
 		},
 	})
 }
@@ -342,11 +340,9 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 	t.Parallel()
 
 	defaultKubeletConfig := kubeletconfig.KubeletConfiguration{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: kubeletconfig.SchemeGroupVersion.String(),
-			Kind:       "KubeletConfiguration",
-		},
-		Port: constants.KubeletPort,
+		APIVersion: kubeletconfig.SchemeGroupVersion.String(),
+		Kind:       "KubeletConfiguration",
+		Port:       constants.KubeletPort,
 		Authentication: kubeletconfig.KubeletAuthentication{
 			X509: kubeletconfig.KubeletX509Authentication{
 				ClientCAFile: constants.KubernetesCACert,

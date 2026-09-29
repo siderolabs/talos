@@ -9,6 +9,11 @@ import (
 
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/gen/xslices"
+
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // CreateOverlayMountRequests exposes createOverlayMountRequests for tests.
@@ -24,4 +29,28 @@ func (svc *Extension) GetOCIOptions() ([]oci.SpecOpts, error) {
 	}
 
 	return svc.getOCIOptions(envVars, svc.Spec.Container.Mounts), nil
+}
+
+// PromotionEndpoints exposes promotionEndpoints for tests.
+func PromotionEndpoints(selfEndpoints, votingMemberEndpoints, discoveredEndpoints []string) []string {
+	return promotionEndpoints(xslices.ToSetFunc(selfEndpoints, normalizeEtcdEndpoint), votingMemberEndpoints, discoveredEndpoints)
+}
+
+// HostProcessArgs exposes hostProcessArgs for tests.
+func (svc *Extension) HostProcessArgs() (runner.Args, error) {
+	return svc.hostProcessArgs(nil)
+}
+
+// SetPreShutdownRunnerFactory replaces the pre-shutdown process runner factory for tests.
+func (svc *Extension) SetPreShutdownRunnerFactory(factory func(bool, *runner.Args, ...runner.Option) runner.Runner) {
+	svc.preShutdownRunnerFn = factory
+}
+
+// ApplyExtensionServiceConfig exposes applyExtensionServiceConfig for tests.
+func (svc *Extension) ApplyExtensionServiceConfig(
+	spec *runtimeres.ExtensionServiceConfigSpec,
+	mounts []specs.Mount,
+	envVars []string,
+) ([]specs.Mount, []string, error) {
+	return svc.applyExtensionServiceConfig(spec, mounts, envVars)
 }

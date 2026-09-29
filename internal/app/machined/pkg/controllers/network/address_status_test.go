@@ -29,11 +29,9 @@ func TestAddressStatusSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &AddressStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressStatusController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressStatusController{}))
 		},
 	})
 }

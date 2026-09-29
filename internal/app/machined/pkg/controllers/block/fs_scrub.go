@@ -435,25 +435,13 @@ func (ctrl *FSScrubController) runXFSScrub(ctx context.Context, logger *zap.Logg
 
 	defer taskRunner.Close() //nolint:errcheck
 
-	errCh := make(chan error, 1)
-
-	go func() {
-		errCh <- taskRunner.Run(
-			func(events.ServiceState, string, ...any) {},
-			func(string, int32, bool) error { return nil },
-		)
-	}()
-
-	select {
-	case err := <-errCh:
+	// Run returns once the process has stopped, so cancellation needs no separate signal.
+	_, err := taskRunner.Run(ctx, func(events.ServiceState, string, ...any) {}, nil)
+	if err != nil {
 		return err
-	case <-ctx.Done():
-		if err := taskRunner.Stop(); err != nil {
-			logger.Error("failed to stop the scrub process", zap.Error(err))
-		}
-
-		<-errCh
-
-		return ctx.Err()
 	}
+
+	// the runner reports a clean stop when it terminated the process on cancellation,
+	// so surface the cancellation only when the run itself did not fail.
+	return ctx.Err()
 }

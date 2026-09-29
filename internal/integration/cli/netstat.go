@@ -32,6 +32,10 @@ func (suite *NetstatSuite) TestListening() {
 
 // TestContainers verifies that containers are listed.
 func (suite *NetstatSuite) TestContainers() {
+	if !suite.SupportsKubernetes() {
+		suite.T().Skip("cluster doesn't run Kubernetes, so there are no pods")
+	}
+
 	nodes := suite.DiscoverNodeInternalIPs(context.TODO())
 
 	suite.RunCLI([]string{"netstat", "--listening", "--programs", "--udp", "--ipv6", "--pods", "--nodes", strings.Join(nodes, ",")},

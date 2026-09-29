@@ -21,6 +21,7 @@ func TestLocalGetConnection(t *testing.T) {
 	l := backend.NewLocal("test", "/tmp/test.sock")
 
 	md1 := metadata.New(nil)
+	md1.Set("runtime", "Talos")
 	md1.Set("key", "value1", "value2")
 	ctx1 := metadata.NewIncomingContext(authz.ContextWithRoles(t.Context(), role.MakeSet(role.Admin)), md1)
 
@@ -31,8 +32,9 @@ func TestLocalGetConnection(t *testing.T) {
 
 	mdOut1, ok1 := metadata.FromOutgoingContext(outCtx1)
 	assert.True(t, ok1)
-	assert.Equal(t, []string{"value1", "value2"}, mdOut1.Get("key"))
+	assert.Equal(t, []string{"Talos"}, mdOut1.Get("runtime"))
 	assert.Equal(t, []string{"os:admin"}, mdOut1.Get("talos-role"))
+	assert.Empty(t, mdOut1.Get("key")) // not allowlisted for proxying
 
 	t.Run("Same context", func(t *testing.T) {
 		t.Parallel()
@@ -45,14 +47,16 @@ func TestLocalGetConnection(t *testing.T) {
 
 		mdOut2, ok2 := metadata.FromOutgoingContext(outCtx2)
 		assert.True(t, ok2)
-		assert.Equal(t, []string{"value1", "value2"}, mdOut2.Get("key"))
+		assert.Equal(t, []string{"Talos"}, mdOut2.Get("runtime"))
 		assert.Equal(t, []string{"os:admin"}, mdOut2.Get("talos-role"))
+		assert.Empty(t, mdOut2.Get("key"))
 	})
 
 	t.Run("Other context", func(t *testing.T) {
 		t.Parallel()
 
 		md3 := metadata.New(nil)
+		md3.Set("runtime", "Talos")
 		md3.Set("key", "value3", "value4")
 		ctx3 := metadata.NewIncomingContext(authz.ContextWithRoles(t.Context(), role.MakeSet(role.Reader)), md3)
 
@@ -63,7 +67,8 @@ func TestLocalGetConnection(t *testing.T) {
 
 		mdOut3, ok3 := metadata.FromOutgoingContext(outCtx3)
 		assert.True(t, ok3)
-		assert.Equal(t, []string{"value3", "value4"}, mdOut3.Get("key"))
+		assert.Equal(t, []string{"Talos"}, mdOut3.Get("runtime"))
 		assert.Equal(t, []string{"os:reader"}, mdOut3.Get("talos-role"))
+		assert.Empty(t, mdOut3.Get("key"))
 	})
 }

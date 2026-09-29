@@ -12,6 +12,9 @@ import "github.com/siderolabs/gen/optional"
 type ContainerConfig interface {
 	NamedDocument
 
+	// Marker for findMatchingDocs[T]
+	ContainerConfigSignal()
+
 	// Image is the OCI reference in canonical form.
 	Image() string
 	// Entrypoint overrides the image ENTRYPOINT; nil means use the image.
@@ -51,7 +54,7 @@ type ContainerUserVolumeMountConfig interface {
 	Name() string
 	// Destination inside the container.
 	Destination() string
-	// MountOptions with the read-only default already applied.
+	// MountOptions with the writable default already applied.
 	MountOptions() []string
 }
 
@@ -61,7 +64,7 @@ type ContainerTmpfsMountConfig interface {
 	Destination() string
 	// Size of the tmpfs; empty means the kernel default.
 	Size() string
-	// MountOptions with the read-only default already applied.
+	// MountOptions with the writable default already applied.
 	MountOptions() []string
 }
 
@@ -71,7 +74,7 @@ type ContainerHostPathMountConfig interface {
 	Source() string
 	// Destination inside the container.
 	Destination() string
-	// MountOptions with the read-only default already applied.
+	// MountOptions with the writable default already applied.
 	MountOptions() []string
 }
 
@@ -96,6 +99,9 @@ type ContainerSecurityConfig interface {
 	CapabilitiesAdd() []string
 	// CapabilitiesDrop lists capabilities to remove; "ALL" is accepted.
 	CapabilitiesDrop() []string
+	// MachinedAccess publishes the container's PID for machined's API to recognize, and mounts
+	// the machined API socket into the container.
+	MachinedAccess() bool
 }
 
 // ContainerNetworkMode selects the container's network namespace.

@@ -6,8 +6,6 @@
 package network
 
 import (
-	"net"
-
 	"github.com/siderolabs/gen/pair/ordered"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -25,7 +23,9 @@ func SetBondSlave(link *network.LinkSpecSpec, bond ordered.Pair[string, int]) {
 }
 
 // SendBondMaster sets the bond master spec.
-func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConfig) {
+//
+// resolveLinkName resolves a link alias to the actual link name.
+func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConfig, resolveLinkName func(string) string) {
 	link.Logical = true
 	link.Kind = network.LinkKindBond
 	link.Type = nethelpers.LinkEther
@@ -51,6 +51,12 @@ func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConf
 		link.BondMaster.ADLACPActive = nil
 	}
 
+	if primary, ok := bond.Primary().Get(); ok {
+		link.BondMaster.Primary = resolveLinkName(primary)
+	} else {
+		link.BondMaster.Primary = ""
+	}
+
 	link.BondMaster.PrimaryReselect = bond.PrimaryReselect().ValueOrZero()
 	link.BondMaster.ResendIGMP = bond.ResendIGMP().ValueOrZero()
 	link.BondMaster.MinLinks = bond.MinLinks().ValueOrZero()
@@ -67,8 +73,10 @@ func SendBondMaster(link *network.LinkSpecSpec, bond talosconfig.NetworkBondConf
 
 // SetBondMasterLegacy sets the bond master spec.
 //
+// resolveLinkName resolves a link alias to the actual link name.
+//
 //nolint:gocyclo
-func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
+func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond, resolveLinkName func(string) string) error {
 	link.Logical = true
 	link.Kind = network.LinkKindBond
 	link.Type = nethelpers.LinkEther
@@ -98,17 +106,10 @@ func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond) erro
 		return err
 	}
 
-	var primary uint32
+	var primary string
 
 	if bond.Primary() != "" {
-		var iface *net.Interface
-
-		iface, err = net.InterfaceByName(bond.Primary())
-		if err != nil {
-			return err
-		}
-
-		primary = uint32(iface.Index)
+		primary = resolveLinkName(bond.Primary())
 	}
 
 	primaryReselect, err := nethelpers.PrimaryReselectByName(bond.PrimaryReselect())
@@ -132,7 +133,7 @@ func SetBondMasterLegacy(link *network.LinkSpecSpec, bond talosconfig.Bond) erro
 		LACPRate:        lacpRate,
 		ARPValidate:     arpValidate,
 		ARPAllTargets:   arpAllTargets,
-		PrimaryIndex:    new(primary),
+		Primary:         primary,
 		PrimaryReselect: primaryReselect,
 		FailOverMac:     failOverMAC,
 		ADSelect:        adSelect,

@@ -1,0 +1,377 @@
+---
+description: |
+    VolumeConfig is a system volume configuration document.
+    Note: at the moment, only `STATE`, `EPHEMERAL`, `IMAGECACHE`, `ETCD`, `CRI`, `KUBELET` and `LOG`
+    system volumes are supported. The `ETCD`, `CRI`, `KUBELET` and `LOG` volumes default to a
+    directory under `EPHEMERAL`, and can be placed on a dedicated partition by specifying
+    `provisioning`. The backing of these volumes (directory vs. dedicated partition) can only be
+    chosen at cluster creation time: changing it on an already-provisioned node is not supported.
+title: VolumeConfig
+---
+
+<!-- markdownlint-disable -->
+
+
+
+
+
+
+
+
+
+{{< highlight yaml >}}
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL # Name of the volume.
+# The provisioning describes how the volume is provisioned.
+provisioning:
+    # The disk selector expression.
+    diskSelector:
+        match: disk.transport == "nvme" # The Common Expression Language (CEL) expression to match the disk.
+    maxSize: 50GiB # The maximum size of the volume, if not specified the volume can grow to the size of the
+
+    # # The minimum size of the volume.
+    # minSize: 2.5GiB
+
+# # The encryption describes how the volume is encrypted.
+# encryption:
+#     provider: luks2 # Encryption provider to use for the encryption.
+#     # Defines the encryption keys generation and storage method.
+#     keys:
+#         - slot: 0 # Key slot number for LUKS2 encryption.
+#           # Key which value is stored in the configuration file.
+#           static:
+#             passphrase: exampleKey # Defines the static passphrase value.
+#
+#           # # KMS managed encryption key.
+#           # kms:
+#           #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+#         - slot: 1 # Key slot number for LUKS2 encryption.
+#           # KMS managed encryption key.
+#           kms:
+#             endpoint: https://example-kms-endpoint.com # KMS endpoint to Seal/Unseal the key.
+#     cipher: aes-xts-plain64 # Cipher to use for the encryption. Depends on the encryption provider.
+#     blockSize: 4096 # Defines the encryption sector size.
+#     # Additional --perf parameters for the LUKS2 encryption.
+#     options:
+#         - no_read_workqueue
+#         - no_write_workqueue
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Name of the volume.  | |
+|`provisioning` |<a href="#VolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
+|`filesystem` |<a href="#VolumeConfig.filesystem">SystemVolumeFilesystemSpec</a> |The filesystem describes how the volume is formatted.<br><br>Note: this only takes effect at the time the volume is formatted.  | |
+|`encryption` |<a href="#VolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
+|`mount` |<a href="#VolumeConfig.mount">MountSpec</a> |The mount describes additional mount options.  | |
+|`trim` |<a href="#VolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
+|`scrub` |<a href="#VolumeConfig.scrub">ScrubConfig</a> |The scrub describes the per-volume filesystem scrub configuration.  | |
+
+
+
+
+## provisioning {#VolumeConfig.provisioning}
+
+ProvisioningSpec describes how the volume is provisioned.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`diskSelector` |<a href="#VolumeConfig.provisioning.diskSelector">DiskSelector</a> |The disk selector expression.  | |
+|`grow` |bool |Should the volume grow to the size of the disk (if possible).  | |
+|`minSize` |ByteSize |The minimum size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+minSize: 2.5GiB
+{{< /highlight >}}</details> | |
+|`maxSize` |Size |The maximum size of the volume, if not specified the volume can grow to the size of the<br>disk.<br><br>Size is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+maxSize: 50GiB
+{{< /highlight >}}{{< highlight yaml >}}
+maxSize: 80%
+{{< /highlight >}}</details> | |
+
+
+
+
+### diskSelector {#VolumeConfig.provisioning.diskSelector}
+
+DiskSelector selects a disk for the volume.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`match` |Expression |The Common Expression Language (CEL) expression to match the disk. <details><summary>Show example(s)</summary>match disks with size between 120GB and 1TB:{{< highlight yaml >}}
+match: disk.size > 120u * GB && disk.size < 1u * TB
+{{< /highlight >}}match SATA disks that are not rotational and not system disks:{{< highlight yaml >}}
+match: disk.transport == "sata" && !disk.rotational && !system_disk
+{{< /highlight >}}</details> | |
+
+
+
+
+
+
+
+
+## filesystem {#VolumeConfig.filesystem}
+
+SystemVolumeFilesystemSpec describes how the system volume is formatted.
+
+The filesystem type is fixed for system volumes, and project quota support is configured via
+machine features, so only the filesystem-specific tunables are exposed here.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`xfs` |<a href="#VolumeConfig.filesystem.xfs">XFSSpec</a> |XFS-specific filesystem options.  | |
+
+
+
+
+### xfs {#VolumeConfig.filesystem.xfs}
+
+XFSSpec configures XFS-specific filesystem options.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`minAllocationGroupSize` |ByteSize |The minimum size of an XFS allocation group.<br><br>On non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of<br>CPUs, which on machines with many cores and a modest disk yields hundreds of tiny<br>allocation groups. Talos bounds the allocation group size from below to keep the geometry<br>sane; this option overrides that bound.<br><br>Set to zero to use the `mkfs.xfs` defaults unchanged.<br><br>Note: this only affects volumes at the time they are formatted.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+minAllocationGroupSize: 128GiB
+{{< /highlight >}}</details> | |
+
+
+
+
+
+
+
+
+## encryption {#VolumeConfig.encryption}
+
+EncryptionSpec represents volume encryption settings.
+
+
+
+{{< highlight yaml >}}
+encryption:
+    provider: luks2 # Encryption provider to use for the encryption.
+    # Defines the encryption keys generation and storage method.
+    keys:
+        - slot: 0 # Key slot number for LUKS2 encryption.
+          # Key which value is stored in the configuration file.
+          static:
+            passphrase: exampleKey # Defines the static passphrase value.
+
+          # # KMS managed encryption key.
+          # kms:
+          #     endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+        - slot: 1 # Key slot number for LUKS2 encryption.
+          # KMS managed encryption key.
+          kms:
+            endpoint: https://example-kms-endpoint.com # KMS endpoint to Seal/Unseal the key.
+    cipher: aes-xts-plain64 # Cipher to use for the encryption. Depends on the encryption provider.
+    blockSize: 4096 # Defines the encryption sector size.
+
+    # # Additional --perf parameters for the LUKS2 encryption.
+    # options:
+    #     - no_read_workqueue
+    #     - no_write_workqueue
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`provider` |EncryptionProviderType |Encryption provider to use for the encryption.  |`luks2`<br /> |
+|`keys` |<a href="#VolumeConfig.encryption.keys.">[]EncryptionKey</a> |Defines the encryption keys generation and storage method.  | |
+|`cipher` |string |Cipher to use for the encryption. Depends on the encryption provider. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+cipher: aes-xts-plain64
+{{< /highlight >}}</details> |`aes-xts-plain64`<br />`xchacha12,aes-adiantum-plain64`<br />`xchacha20,aes-adiantum-plain64`<br /> |
+|`keySize` |uint |Defines the encryption key length.  | |
+|`blockSize` |uint64 |Defines the encryption sector size. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+blockSize: 4096
+{{< /highlight >}}</details> | |
+|`options` |[]string |Additional --perf parameters for the LUKS2 encryption. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+options:
+    - no_read_workqueue
+    - no_write_workqueue
+{{< /highlight >}}</details> | |
+|`allowDiscards` |bool |Allow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened.<br>Defaults to false.  | |
+
+
+
+
+### keys[] {#VolumeConfig.encryption.keys.}
+
+EncryptionKey represents configuration for disk encryption key.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`slot` |int |Key slot number for LUKS2 encryption.  | |
+|`static` |<a href="#VolumeConfig.encryption.keys..static">EncryptionKeyStatic</a> |Key which value is stored in the configuration file.  | |
+|`nodeID` |<a href="#VolumeConfig.encryption.keys..nodeID">EncryptionKeyNodeID</a> |Deterministically generated key from the node UUID and PartitionLabel.  | |
+|`kms` |<a href="#VolumeConfig.encryption.keys..kms">EncryptionKeyKMS</a> |KMS managed encryption key.  | |
+|`tpm` |<a href="#VolumeConfig.encryption.keys..tpm">EncryptionKeyTPM</a> |Enable TPM based disk encryption.  | |
+|`lockToState` |bool |Lock the disk encryption key to the random salt stored in the STATE partition. This is useful to prevent the volume from being unlocked if STATE partition is compromised or replaced. It is recommended to use this option with TPM disk encryption for non-STATE volumes.  | |
+
+
+
+
+#### static {#VolumeConfig.encryption.keys..static}
+
+EncryptionKeyStatic represents throw away key type.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`passphrase` |string |Defines the static passphrase value.  | |
+
+
+
+
+
+
+#### nodeID {#VolumeConfig.encryption.keys..nodeID}
+
+EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
+
+
+
+
+
+
+
+
+
+#### kms {#VolumeConfig.encryption.keys..kms}
+
+EncryptionKeyKMS represents a key that is generated and then sealed/unsealed by the KMS server.
+
+
+
+{{< highlight yaml >}}
+encryption:
+    keys:
+        - kms:
+            endpoint: https://192.168.88.21:4443 # KMS endpoint to Seal/Unseal the key.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`endpoint` |string |KMS endpoint to Seal/Unseal the key.<br><br>The endpoint should be specified as a URL with an explicit scheme, e.g. `https://kms.example.com:4443`.<br>With the `https://` scheme, the connection to the KMS server is established over TLS, and the server certificate<br>is verified against the trusted root CAs.<br><br>WARNING: if the scheme is omitted (e.g. `kms.example.com:4443`) or set to `grpc://`, the connection<br>to the KMS server is established without TLS, and the disk encryption key material is transmitted in plaintext.<br>Use plaintext endpoints only on fully trusted networks.<br><br>Note: when encrypting the `STATE` volume, custom trusted root CAs from the machine configuration<br>might not be available when unlocking the volume (as the machine configuration is stored on `STATE`),<br>so the KMS server certificate should be signed by a CA trusted by default.  | |
+
+
+
+
+
+
+#### tpm {#VolumeConfig.encryption.keys..tpm}
+
+EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`options` |<a href="#VolumeConfig.encryption.keys..tpm.options">EncryptionKeyTPMOptions</a> |TPM options for key protection.  | |
+|`checkSecurebootStatusOnEnroll` |bool |Check that Secureboot is enabled in the EFI firmware.<br>If Secureboot is not enabled, the enrollment of the key will fail.  | |
+
+
+
+
+##### options {#VolumeConfig.encryption.keys..tpm.options}
+
+EncryptionKeyTPMOptions represents the options for TPM-based key protection.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`pcrs` |[]int |List of PCRs to bind the key to. If not set, defaults to PCR 7, can be disabled by passing an empty list.  | |
+
+
+
+
+
+
+
+
+
+
+
+
+## mount {#VolumeConfig.mount}
+
+MountSpec describes how the volume is mounted.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>For dedicated ETCD and LOG volumes, this also enables noexec.<br><br>Defaults to true for better security.<br>Supported for EPHEMERAL and dedicated ETCD, CRI, KUBELET and LOG volumes.  | |
+|`disableAccessTime` |bool |If true, disable file access time updates.<br><br>Supported only for EPHEMERAL volume.  | |
+
+
+
+
+
+
+## trim {#VolumeConfig.trim}
+
+TrimConfig describes per-volume filesystem trim (fstrim) configuration.
+
+It overrides the global FilesystemTrimConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
+|`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
+
+
+
+
+
+
+## scrub {#VolumeConfig.scrub}
+
+ScrubConfig describes per-volume filesystem scrub configuration.
+
+It overrides the global FilesystemScrubConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable scrubbing for this volume.<br><br>If not set, scrubbing is enabled by default when scrub section is present.  | |
+|`interval` |Duration |The interval at which the volume is scrubbed, overriding the global scrub interval.  | |
+
+
+
+
+
+
+
+

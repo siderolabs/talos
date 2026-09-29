@@ -245,7 +245,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{ //nolint:staticcheck // testing deprecated field
 					CacheLocalEnabled: new(true),
 				},
 			},
@@ -339,7 +339,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{ //nolint:staticcheck // testing deprecated field
 					CacheLocalEnabled: new(true),
 				},
 			},
@@ -403,7 +403,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithEncryptionConfig() {
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{ //nolint:staticcheck // testing deprecated field
 					CacheLocalEnabled: new(true),
 				},
 			},
@@ -443,9 +443,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithEncryptionConfig() {
 
 func TestImageCacheConfigSuite(t *testing.T) {
 	s := &ImageCacheConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-		},
+		Timeout: 5 * time.Second,
 	}
 
 	s.AfterSetup = func(suite *ctest.DefaultSuite) {

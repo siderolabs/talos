@@ -182,7 +182,8 @@ func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string
 			nodeConfig.LabelsConfig = nodeLabels
 
 			return nil
-		})
+		},
+	)
 	suite.Require().NoError(err)
 
 	bytes, err := nodeConfig.Bytes()

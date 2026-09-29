@@ -73,11 +73,9 @@ func TestEthernetConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &EthernetConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.EthernetConfigController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.EthernetConfigController{}))
 		},
 	})
 }

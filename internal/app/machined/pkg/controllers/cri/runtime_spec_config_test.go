@@ -29,11 +29,9 @@ func TestRuntimeSpecConfigSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &RuntimeSpecConfigSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&crictrl.RuntimeSpecConfigController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&crictrl.RuntimeSpecConfigController{}))
 		},
 	})
 }

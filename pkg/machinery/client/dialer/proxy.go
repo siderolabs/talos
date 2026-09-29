@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 
 	"golang.org/x/net/http/httpproxy"
 	"golang.org/x/net/proxy"
@@ -262,15 +263,37 @@ func sendHTTPRequest(ctx context.Context, req *http.Request, conn net.Conn) erro
 	return nil
 }
 
+// TCP keepalive settings for the Talos API client connections.
+//
+// Most long-running Talos API calls are server-streaming (e.g. `Events`), so the client sends
+// nothing at all once the request is on the wire. A peer which goes away without closing the
+// connection - a node kexec'ed into a new kernel by an upgrade is the common case - is therefore
+// invisible at the HTTP/2 level: it produces silence, not an error, and the connection stays
+// `READY` forever.
+//
+// TCP keepalives probe the connection from below HTTP/2, so unlike gRPC keepalive pings they are
+// never seen by the server and can't trip its keepalive enforcement policy on a connection which
+// is idle but perfectly valid (e.g. while the node is pulling an image).
+//
+// Only `Idle` and `Interval` are set: those are the knobs supported across the platforms
+// `talosctl` runs on, while the probe count is not (it is unavailable on OpenBSD and on Windows
+// releases before 10 1709). Leaving the count at the OS default (8-10 probes) puts the detection
+// time at around two minutes.
+const (
+	tcpKeepaliveIdle     = 30 * time.Second
+	tcpKeepaliveInterval = 10 * time.Second
+)
+
 // NetDialerWithTCPKeepalive returns a net.Dialer that enables TCP keepalives on
-// the underlying connection with OS default values for keepalive parameters.
+// the underlying connection to detect peers which went away without closing the connection.
 func NetDialerWithTCPKeepalive() *net.Dialer {
 	return &net.Dialer{
 		KeepAliveConfig: net.KeepAliveConfig{
 			Enable:   true,
-			Idle:     -1,
-			Count:    -1,
-			Interval: -1,
+			Idle:     tcpKeepaliveIdle,
+			Interval: tcpKeepaliveInterval,
+			// not set: unsupported on some platforms, so the OS default applies
+			Count: -1,
 		},
 	}
 }

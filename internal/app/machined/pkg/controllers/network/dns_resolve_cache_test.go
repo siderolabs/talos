@@ -105,10 +105,8 @@ func (suite *DNSServer) testResolving(nameservers []network.NameServerSpec) {
 	rtestutils.AssertLength[*network.DNSUpstream](suite.Ctx(), suite.T(), suite.State(), len(nameservers))
 
 	msg := &dns.Msg{
-		MsgHdr: dns.MsgHdr{
-			Id:               dns.Id(),
-			RecursionDesired: true,
-		},
+		Id:               dns.Id(),
+		RecursionDesired: true,
 		Question: []dns.Question{
 			{
 				Name:   dns.Fqdn("google.com"),
@@ -246,7 +244,7 @@ func (suite *DNSServer) assertResolverResponse(port, name string, qType uint16, 
 
 			exchange, err := dns.Exchange(
 				&dns.Msg{
-					MsgHdr: dns.MsgHdr{Id: dns.Id(), RecursionDesired: true},
+					Id: dns.Id(), RecursionDesired: true,
 					Question: []dns.Question{
 						{Name: dns.Fqdn(name), Qtype: qType, Qclass: dns.ClassINET},
 					},
@@ -315,15 +313,13 @@ func TestDNSServer(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &DNSServer{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
-					Logger: zaptest.NewLogger(t),
-					State:  suite.State(),
-				}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
+				Logger: zaptest.NewLogger(t),
+				State:  suite.State(),
+			}))
 		},
 	})
 }
@@ -411,11 +407,9 @@ func TestDNSUpstreams(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &DNSUpstreams{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 10 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
-			},
+		Timeout: 10 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSUpstreamController{}))
 		},
 	})
 }

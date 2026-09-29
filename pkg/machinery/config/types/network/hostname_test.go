@@ -119,6 +119,19 @@ func TestHostnameConfigValidate(t *testing.T) {
 			expectedError: "fqdn is too long: 320",
 		},
 		{
+			name: "hostname with space",
+			cfg: func() *network.HostnameConfigV1Alpha1 {
+				cfg := network.NewHostnameConfigV1Alpha1()
+				cfg.ConfigHostname = "my host"
+
+				return cfg
+			},
+
+			expectedWarnings: []string{
+				"hostname: name \"my host\" contains invalid character ' ' at position 2, it will not be written to /etc/hosts",
+			},
+		},
+		{
 			name: "valid 1",
 			cfg: func() *network.HostnameConfigV1Alpha1 {
 				cfg := network.NewHostnameConfigV1Alpha1()
@@ -182,7 +195,7 @@ func TestHostnameV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkHostname: "foo",
+						NetworkHostname: "foo", //nolint:staticcheck // legacy config
 					},
 				},
 			},
@@ -195,7 +208,7 @@ func TestHostnameV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						StableHostname: new(true),
+						StableHostname: new(true), //nolint:staticcheck // legacy config
 					},
 				},
 			},

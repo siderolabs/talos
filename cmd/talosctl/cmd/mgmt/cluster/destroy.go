@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers"
@@ -86,7 +87,7 @@ func init() {
 	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveSupportArchivePath, "save-support-archive-path", "", "", "save support archive to the specified file on destroy")
 	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveClusterLogsArchivePath, "save-cluster-logs-archive-path", "", "", "save cluster logs archive to the specified file on destroy")
 	AddProvisionerFlag(destroyCmd)
-	cli.Should(destroyCmd.Flags().MarkDeprecated(ProvisionerFlagName, "the provisioner is inferred automatically"))
+	cli.Should(helpers.MarkFlagDeprecated(destroyCmd.Flags(), ProvisionerFlagName, "the provisioner is inferred automatically"))
 
 	Cmd.AddCommand(destroyCmd)
 }

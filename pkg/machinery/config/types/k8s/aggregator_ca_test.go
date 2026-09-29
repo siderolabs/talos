@@ -240,7 +240,7 @@ func TestKubeAggregatorCAConfigV1Alpha1Validate(t *testing.T) {
 			name: "v1alpha1 with aggregator CA set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterAggregatorCA: &x509.PEMEncodedCertificateAndKey{
+					ClusterAggregatorCA: &x509.PEMEncodedCertificateAndKey{ //nolint:staticcheck // testing deprecated field
 						Crt: []byte("foo"),
 						Key: []byte("bar"),
 					},

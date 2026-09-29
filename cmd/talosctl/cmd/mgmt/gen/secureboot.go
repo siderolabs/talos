@@ -9,7 +9,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -22,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 )
 
 var genSecurebootCmdFlags struct {
@@ -85,20 +85,20 @@ var genSecurebootDatabaseCmd = &cobra.Command{
 	},
 }
 
-func checkedWrite(path string, data []byte, perm fs.FileMode) error { //nolint:unparam
+func checkedWrite(path string, data []byte) error {
 	if err := validateFileExists(path); err != nil {
 		return err
 	}
 
 	if dirname := filepath.Dir(path); dirname != "." {
-		if err := os.MkdirAll(dirname, 0o700); err != nil {
+		if err := os.MkdirAll(dirname, fileutils.SecretDirMode); err != nil {
 			return err
 		}
 	}
 
 	fmt.Fprintf(os.Stderr, "writing %s\n", path)
 
-	return os.WriteFile(path, data, perm)
+	return fileutils.WriteSecret(path, data)
 }
 
 func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCert bool) error {
@@ -119,7 +119,7 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCe
 	}
 
 	if outputCert {
-		if err = checkedWrite(filepath.Join(path, prefix+"-signing-cert.pem"), signingKey.CrtPEM, 0o600); err != nil {
+		if err = checkedWrite(filepath.Join(path, prefix+"-signing-cert.pem"), signingKey.CrtPEM); err != nil {
 			return err
 		}
 
@@ -128,7 +128,7 @@ func generateSigningCerts(path, prefix, commonName string, rsaBits int, outputCe
 		}
 	}
 
-	return checkedWrite(filepath.Join(path, prefix+"-signing-key.pem"), signingKey.KeyPEM, 0o600)
+	return checkedWrite(filepath.Join(path, prefix+"-signing-key.pem"), signingKey.KeyPEM)
 }
 
 func saveAsDER(file string, pem []byte) error {
@@ -137,7 +137,7 @@ func saveAsDER(file string, pem []byte) error {
 		return err
 	}
 
-	return checkedWrite(file, publicKeyDER, 0o600)
+	return checkedWrite(file, publicKeyDER)
 }
 
 // generateSecureBootDatabase generates a UEFI database to enroll the signing certificate.
@@ -168,7 +168,7 @@ func generateSecureBootDatabase(ctx context.Context, path, enrolledCertificatePa
 
 	// output all files with sd-boot conventional names for auto-enrolment
 	for _, entry := range db {
-		if err = checkedWrite(filepath.Join(path, entry.Name), entry.Contents, 0o600); err != nil {
+		if err = checkedWrite(filepath.Join(path, entry.Name), entry.Contents); err != nil {
 			return err
 		}
 	}

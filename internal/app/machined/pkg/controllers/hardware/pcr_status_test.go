@@ -65,9 +65,7 @@ type PCRStatusSuite struct {
 
 func TestPCRStatusSuite(t *testing.T) {
 	suite.Run(t, &PCRStatusSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-		},
+		Timeout: 30 * time.Second,
 	})
 }
 

@@ -143,16 +143,12 @@ func AssembleNative(srcPath, dstPath string, sections []Section) error {
 		newFileHeader.NumberOfSections++
 
 		newSections = append(newSections, &peSectionWithPath{
-			Section: pe.Section{
-				SectionHeader: pe.SectionHeader{
-					Name:            sections[i].Name,
-					VirtualSize:     uint32(sections[i].virtualSize),
-					VirtualAddress:  uint32(sections[i].virtualAddress),
-					Size:            uint32((sections[i].virtualSize + fileAlignment) &^ fileAlignment),
-					Characteristics: pe.IMAGE_SCN_CNT_INITIALIZED_DATA | pe.IMAGE_SCN_MEM_READ,
-				},
-			},
-			SourcePath: sections[i].Path,
+			Name:            sections[i].Name,
+			VirtualSize:     uint32(sections[i].virtualSize),
+			VirtualAddress:  uint32(sections[i].virtualAddress),
+			Size:            uint32((sections[i].virtualSize + fileAlignment) &^ fileAlignment),
+			Characteristics: pe.IMAGE_SCN_CNT_INITIALIZED_DATA | pe.IMAGE_SCN_MEM_READ,
+			SourcePath:      sections[i].Path,
 		})
 	}
 

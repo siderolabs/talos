@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	snapshot "go.etcd.io/etcd/etcdutl/v3/snapshot"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/logging"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
@@ -49,14 +50,14 @@ Talos etcd cluster can be recovered from a known snapshot with '--recover-from='
 		}
 
 		if bootstrapCmdFlags.recoverFrom != "" {
-			manager := snapshot.NewV3(logging.Wrap(os.Stderr))
+			manager := snapshot.NewV3(logging.Wrap(os.Stderr)) //nolint:forbidigo // a zap sink, not a render path
 
 			status, err := manager.Status(bootstrapCmdFlags.recoverFrom)
 			if err != nil {
 				return err
 			}
 
-			fmt.Printf("recovering from snapshot %q: hash %08x, revision %d, total keys %d, total size %d\n",
+			safeout.Printf("recovering from snapshot %q: hash %08x, revision %d, total keys %d, total size %d\n",
 				bootstrapCmdFlags.recoverFrom, status.Hash, status.Revision, status.TotalKey, status.TotalSize)
 
 			snapshot, err := os.Open(bootstrapCmdFlags.recoverFrom)

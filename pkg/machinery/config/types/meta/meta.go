@@ -2,7 +2,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-// Package meta provides common meta types for config documents.
+// Package meta provides the shared document metadata and the field types
+// common to several config documents (sizes, network addresses, args, URLs).
 package meta
 
 // Meta is a shared meta information for config documents.

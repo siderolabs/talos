@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand/v2"
+	"net"
 	"net/netip"
 	"strconv"
 	"strings"
@@ -323,6 +324,10 @@ func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
 		suite.T().Skip("skipping if cluster is not qemu")
 	}
 
+	if !suite.SupportsEtcd() {
+		suite.T().Skip("cluster doesn't run etcd, which the VIP waits for")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
@@ -452,6 +457,275 @@ func (suite *NetworkConfigSuite) TestVLANConfig() {
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
 }
 
+// TestMacVLANConfig tests creation of macvlan interfaces.
+func (suite *NetworkConfigSuite) TestMacVLANConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	suffix := rand.IntN(10000)
+
+	dummyNames := xslices.Map([]string{"a", "b"}, func(s string) string {
+		return fmt.Sprintf("dummy%d%s", suffix, s)
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	macvlanName := fmt.Sprintf("mvlan%d", suffix)
+
+	macvlan := network.NewMacVLANConfigV1Alpha1(macvlanName)
+	macvlan.MacVLANParent = dummyNames[0]
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModePrivate)
+	macvlan.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	macvlan.LinkMTU = 1400
+	macvlan.LinkUp = new(false)
+	macvlan.LinkAddresses = []network.AddressConfig{
+		{AddressAddress: netip.MustParsePrefix("192.0.2.3/32")},
+	}
+
+	addressID := macvlanName + "/192.0.2.3/32"
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, macvlan)...)
+
+	dummyIndexes := xslices.Map(dummyNames, func(dummyName string) uint32 {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, dummyName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal("dummy", link.TypedSpec().Kind)
+			},
+		)
+
+		dummy, err := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, dummyName)
+		suite.Require().NoError(err)
+
+		return dummy.TypedSpec().Index
+	})
+
+	assertMacVLANLink := func(parentIndex uint32, up bool, mode nethelpers.MacvlanMode) {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, macvlanName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal(networkres.LinkKindMacVLAN, link.TypedSpec().Kind)
+				asrt.EqualValues(1400, link.TypedSpec().MTU)
+				asrt.Equal(macvlan.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+				asrt.Equal(parentIndex, link.TypedSpec().LinkIndex)
+				asrt.Equal(up, link.TypedSpec().Flags&nethelpers.LinkFlags(nethelpers.LinkUp) != 0)
+				asrt.Equal(mode, link.TypedSpec().MacVLAN.Mode)
+			},
+		)
+	}
+
+	// the link is created on top of the first dummy, and `up: false` is honored
+	assertMacVLANLink(dummyIndexes[0], false, nethelpers.MacvlanModePrivate)
+
+	macvlan.LinkUp = new(true)
+	suite.PatchMachineConfig(nodeCtx, macvlan)
+
+	assertMacVLANLink(dummyIndexes[0], true, nethelpers.MacvlanModePrivate)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(macvlanName, address.TypedSpec().LinkName)
+		},
+	)
+
+	// changing the parent re-creates the link on top of the new parent
+	macvlan.MacVLANParent = dummyNames[1]
+	suite.PatchMachineConfig(nodeCtx, macvlan)
+
+	assertMacVLANLink(dummyIndexes[1], true, nethelpers.MacvlanModePrivate)
+
+	// the mode can't be changed on the fly either, so the link is re-created
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+	suite.PatchMachineConfig(nodeCtx, macvlan)
+
+	assertMacVLANLink(dummyIndexes[1], true, nethelpers.MacvlanModeBridge)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.MacVLANKind, macvlanName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, macvlanName)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+}
+
+// TestMacVLANWithDHCP tests creation of macvlan interfaces with DHCP.
+func (suite *NetworkConfigSuite) TestMacVLANWithDHCP() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping if cluster is not qemu")
+	}
+
+	if len(suite.Cluster.Info().Network.ExtraDHCPRecords) == 0 {
+		suite.T().Skip("skipping if no extra DHCP records are configured")
+	}
+
+	if suite.BGPCLOSEnabled {
+		// A full-CLOS node has no net0 to parent the macvlan on: it reaches the cluster over its
+		// fabric uplinks and a BGP-advertised loopback, and the DHCP server is not on that path.
+		suite.T().Skip("skipping macvlan DHCP test on a full-CLOS cluster")
+	}
+
+	dhcpRecord := suite.Cluster.Info().Network.ExtraDHCPRecords[0]
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	suffix := rand.IntN(10000)
+
+	macvlanName := fmt.Sprintf("mvlan%d", suffix)
+
+	macAddress, err := net.ParseMAC(dhcpRecord.MAC)
+	suite.Require().NoError(err)
+
+	macvlan := network.NewMacVLANConfigV1Alpha1(macvlanName)
+	macvlan.MacVLANParent = "net0"
+	macvlan.MacVLANMode = new(nethelpers.MacvlanModeBridge)
+	macvlan.HardwareAddressConfig = nethelpers.HardwareAddr(macAddress)
+	macvlan.LinkUp = new(true)
+
+	dhcp4 := network.NewDHCPv4ConfigV1Alpha1(macvlanName)
+	dhcp4.ConfigIgnoreHostname = new(true)
+	dhcp4.ConfigIgnoreRoutes = new(true)
+
+	addressID := macvlanName + "/" + dhcpRecord.IP.String()
+
+	suite.PatchMachineConfig(nodeCtx, macvlan, dhcp4)
+
+	// DHCP runs, assigning the expected IP address to the macvlan interface
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(macvlanName, address.TypedSpec().LinkName)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.MacVLANKind, macvlanName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DHCPv4Kind, macvlanName)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, macvlanName)
+}
+
+// TestVXLANConfig tests creation of vxlan interfaces.
+func (suite *NetworkConfigSuite) TestVXLANConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	suffix := rand.IntN(10000)
+
+	dummyNames := xslices.Map([]string{"a", "b"}, func(s string) string {
+		return fmt.Sprintf("dummy%d%s", suffix, s)
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	vxlanName := fmt.Sprintf("vxlan%d", suffix)
+
+	vxlan := network.NewVXLANConfigV1Alpha1(vxlanName)
+	vxlan.VXLANID = 100
+	vxlan.VXLANParent = dummyNames[0]
+	vxlan.VXLANPort = new(uint16(4789))
+	vxlan.VXLANLearning = new(false)
+	vxlan.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	vxlan.LinkMTU = 1400
+	vxlan.LinkUp = new(false)
+	vxlan.LinkAddresses = []network.AddressConfig{
+		{AddressAddress: netip.MustParsePrefix("192.0.2.4/32")},
+	}
+
+	addressID := vxlanName + "/192.0.2.4/32"
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, vxlan)...)
+
+	dummyIndexes := xslices.Map(dummyNames, func(dummyName string) uint32 {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, dummyName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal("dummy", link.TypedSpec().Kind)
+			},
+		)
+
+		dummy, err := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, dummyName)
+		suite.Require().NoError(err)
+
+		return dummy.TypedSpec().Index
+	})
+
+	assertVXLANLink := func(parentIndex uint32, up bool, vni uint32) {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, vxlanName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal(networkres.LinkKindVXLAN, link.TypedSpec().Kind)
+				asrt.EqualValues(1400, link.TypedSpec().MTU)
+				asrt.Equal(vxlan.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+				asrt.Equal(parentIndex, link.TypedSpec().LinkIndex)
+				asrt.Equal(up, link.TypedSpec().Flags&nethelpers.LinkFlags(nethelpers.LinkUp) != 0)
+				asrt.Equal(vni, link.TypedSpec().VXLAN.ID)
+				asrt.EqualValues(4789, link.TypedSpec().VXLAN.Port)
+				asrt.False(link.TypedSpec().VXLAN.Learning)
+			},
+		)
+	}
+
+	// the link is created on top of the first dummy, and `up: false` is honored
+	assertVXLANLink(dummyIndexes[0], false, 100)
+
+	vxlan.LinkUp = new(true)
+	suite.PatchMachineConfig(nodeCtx, vxlan)
+
+	assertVXLANLink(dummyIndexes[0], true, 100)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, addressID,
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Equal(vxlanName, address.TypedSpec().LinkName)
+		},
+	)
+
+	// changing the parent re-creates the link on top of the new parent
+	vxlan.VXLANParent = dummyNames[1]
+	suite.PatchMachineConfig(nodeCtx, vxlan)
+
+	assertVXLANLink(dummyIndexes[1], true, 100)
+
+	// the VNI can't be changed on the fly either, so the link is re-created
+	vxlan.VXLANID = 200
+	suite.PatchMachineConfig(nodeCtx, vxlan)
+
+	assertVXLANLink(dummyIndexes[1], true, 200)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VXLANKind, vxlanName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vxlanName)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+}
+
 // TestBondConfig tests creation of bond interfaces.
 func (suite *NetworkConfigSuite) TestBondConfig() {
 	if suite.Cluster == nil {
@@ -550,6 +824,79 @@ func (suite *NetworkConfigSuite) TestBondConfig() {
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
+}
+
+// TestBondPrimaryConfig tests that the bond primary named in the config is applied to the kernel.
+//
+// The kernel reports IFLA_BOND_PRIMARY as an interface index, while the config names the link, so this
+// covers the name-to-index resolution end to end.
+func (suite *NetworkConfigSuite) TestBondPrimaryConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyNames := xslices.Map([]int{0, 1}, func(int) string {
+		return fmt.Sprintf("dummy%d", rand.IntN(10000))
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	// deliberately the second link, so a pass can't be explained by the bond defaulting to the first slave
+	primaryName := dummyNames[1]
+
+	bondName := "agg." + strconv.Itoa(rand.IntN(10000))
+
+	bond := network.NewBondConfigV1Alpha1(bondName)
+	bond.BondLinks = dummyNames
+	bond.BondMode = new(nethelpers.BondModeActiveBackup)
+	bond.BondMIIMon = new(uint32(100))
+	bond.BondPrimary = new(primaryName)
+	bond.BondPrimaryReselect = new(nethelpers.PrimaryReselectAlways)
+	bond.LinkUp = new(true)
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, bond)...)
+
+	var primaryIndex uint32
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, primaryName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.NotZero(link.TypedSpec().MasterIndex)
+			asrt.NotZero(link.TypedSpec().Index)
+
+			primaryIndex = link.TypedSpec().Index
+		},
+	)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, bondName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("bond", link.TypedSpec().Kind)
+			asrt.Equal(nethelpers.BondModeActiveBackup, link.TypedSpec().BondMaster.Mode)
+			asrt.Equal(nethelpers.PrimaryReselectAlways, link.TypedSpec().BondMaster.PrimaryReselect)
+
+			if asrt.NotNil(link.TypedSpec().BondMaster.PrimaryIndex) {
+				asrt.Equal(primaryIndex, *link.TypedSpec().BondMaster.PrimaryIndex)
+			}
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BondKind, bondName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, bondName)
 }
 
 // TestBridgeConfig tests creation of bridge interfaces.

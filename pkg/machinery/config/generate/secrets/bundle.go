@@ -23,13 +23,37 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
+// Option is a functional option for NewBundle.
+type Option func(*options)
+
+type options struct {
+	ecdsaServiceAccountKey bool
+}
+
+// WithECDSAServiceAccountKey generates an ECDSA key for the Kubernetes service accounts instead of the RSA key the version contract selects.
+//
+// RSA is the default since Talos 1.7, because some external systems (e.g., AWS IAM roles for service accounts) do not accept ECDSA signed tokens.
+// Talos and Kubernetes work with both. An ECDSA key is generated in about a millisecond, an RSA key in hundreds of milliseconds.
+// This matters when many clusters are created, e.g., in tests.
+func WithECDSAServiceAccountKey() Option {
+	return func(o *options) {
+		o.ecdsaServiceAccountKey = true
+	}
+}
+
 // NewBundle creates secrets bundle generating all secrets.
-func NewBundle(clock Clock, versionContract *config.VersionContract) (*Bundle, error) {
+func NewBundle(clock Clock, versionContract *config.VersionContract, opts ...Option) (*Bundle, error) {
 	bundle := &Bundle{
 		Clock: clock,
 	}
 
-	err := bundle.populate(versionContract)
+	var o options
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	err := bundle.populate(versionContract, o)
 	if err != nil {
 		return nil, err
 	}
@@ -143,7 +167,7 @@ func NewBundleFromKubernetesPKI(pkiDir, bootstrapToken string, versionContract *
 		},
 	}
 
-	err = bundle.populate(versionContract)
+	err = bundle.populate(versionContract, options{})
 	if err != nil {
 		return nil, err
 	}
@@ -174,13 +198,34 @@ type etcdEncryptionConfigProvider struct {
 }
 
 // NewBundleFromConfig creates secrets bundle using existing config.
+//
+//nolint:gocyclo
 func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
-	certs := &Certs{
-		K8s:               c.K8sAPIServerCAConfig().IssuingCA(),
-		K8sAggregator:     c.K8sAggregatorCAConfig().IssuingCA(),
-		K8sServiceAccount: c.K8sServiceAccountConfig().IssuingKey(),
-		Etcd:              c.Cluster().Etcd().CA(),
-		OS:                c.Machine().Security().IssuingCA(),
+	// the secrets might be missing from the config (e.g. a worker config, or a config
+	// which keeps them in the multi-doc documents which are not present), so each accessor is
+	// checked for nil before use
+	certs := &Certs{}
+
+	if clusterConfig := c.Cluster(); clusterConfig != nil {
+		if etcdCA := clusterConfig.Etcd(); etcdCA != nil {
+			certs.Etcd = etcdCA.CA()
+		}
+	}
+
+	if machineConfig := c.Machine(); machineConfig != nil {
+		certs.OS = machineConfig.Security().IssuingCA()
+	}
+
+	if apiServerCA := c.K8sAPIServerCAConfig(); apiServerCA != nil {
+		certs.K8s = apiServerCA.IssuingCA()
+	}
+
+	if aggregatorCA := c.K8sAggregatorCAConfig(); aggregatorCA != nil {
+		certs.K8sAggregator = aggregatorCA.IssuingCA()
+	}
+
+	if serviceAccount := c.K8sServiceAccountConfig(); serviceAccount != nil {
+		certs.K8sServiceAccount = serviceAccount.IssuingKey()
 	}
 
 	cluster := &Cluster{}
@@ -257,7 +302,7 @@ func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
 // populate fills all the missing fields in the secrets bundle.
 //
 //nolint:gocyclo,cyclop
-func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
+func (bundle *Bundle) populate(versionContract *config.VersionContract, o options) error {
 	if bundle.Clock == nil {
 		bundle.Clock = NewClock()
 	}
@@ -304,7 +349,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 		}
 
 		if bundle.Certs.K8sServiceAccount == nil {
-			if versionContract.UseRSAServiceAccountKey() {
+			if versionContract.UseRSAServiceAccountKey() && !o.ecdsaServiceAccountKey {
 				serviceAccount, err := x509.NewRSAKey()
 				if err != nil {
 					return err

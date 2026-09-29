@@ -13,6 +13,8 @@ import (
 
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+
+	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 )
 
 const (
@@ -21,6 +23,129 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// BMCDeviceSpec describes a BMC as reported over the local IPMI interface.
+//
+// The identity fields come from Get Device ID, the network configuration from
+// Get LAN Configuration Parameters. Network configuration is best-effort: a BMC
+// with no LAN channel configured (or one which doesn't implement the commands)
+// yields the identity fields only.
+type BMCDeviceSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ManufacturerID is the IANA enterprise number of the BMC vendor (e.g. 674 for Dell).
+	ManufacturerId uint32 `protobuf:"varint,1,opt,name=manufacturer_id,json=manufacturerId,proto3" json:"manufacturer_id,omitempty"`
+	// Manufacturer is the vendor name resolved from ManufacturerID, empty if the vendor is not known.
+	Manufacturer string `protobuf:"bytes,2,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
+	// ProductID is the vendor-specific product identifier of the BMC.
+	ProductId uint32 `protobuf:"varint,3,opt,name=product_id,json=productId,proto3" json:"product_id,omitempty"`
+	// FirmwareVersion is the BMC firmware revision, e.g. `7.10`.
+	FirmwareVersion string `protobuf:"bytes,4,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
+	// IPMIVersion is the IPMI specification version supported by the BMC, e.g. `2.0`.
+	IpmiVersion string `protobuf:"bytes,5,opt,name=ipmi_version,json=ipmiVersion,proto3" json:"ipmi_version,omitempty"`
+	// Channel is the IPMI LAN channel the network configuration was read from.
+	Channel uint32 `protobuf:"varint,6,opt,name=channel,proto3" json:"channel,omitempty"`
+	// Address is the BMC IP address with its subnet mask.
+	Address *common.NetIPPrefix `protobuf:"bytes,7,opt,name=address,proto3" json:"address,omitempty"`
+	// Gateway is the BMC default gateway.
+	Gateway *common.NetIP `protobuf:"bytes,8,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	// HardwareAddr is the MAC address of the BMC LAN interface.
+	HardwareAddr  []byte `protobuf:"bytes,9,opt,name=hardware_addr,json=hardwareAddr,proto3" json:"hardware_addr,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BMCDeviceSpec) Reset() {
+	*x = BMCDeviceSpec{}
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BMCDeviceSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BMCDeviceSpec) ProtoMessage() {}
+
+func (x *BMCDeviceSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BMCDeviceSpec.ProtoReflect.Descriptor instead.
+func (*BMCDeviceSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *BMCDeviceSpec) GetManufacturerId() uint32 {
+	if x != nil {
+		return x.ManufacturerId
+	}
+	return 0
+}
+
+func (x *BMCDeviceSpec) GetManufacturer() string {
+	if x != nil {
+		return x.Manufacturer
+	}
+	return ""
+}
+
+func (x *BMCDeviceSpec) GetProductId() uint32 {
+	if x != nil {
+		return x.ProductId
+	}
+	return 0
+}
+
+func (x *BMCDeviceSpec) GetFirmwareVersion() string {
+	if x != nil {
+		return x.FirmwareVersion
+	}
+	return ""
+}
+
+func (x *BMCDeviceSpec) GetIpmiVersion() string {
+	if x != nil {
+		return x.IpmiVersion
+	}
+	return ""
+}
+
+func (x *BMCDeviceSpec) GetChannel() uint32 {
+	if x != nil {
+		return x.Channel
+	}
+	return 0
+}
+
+func (x *BMCDeviceSpec) GetAddress() *common.NetIPPrefix {
+	if x != nil {
+		return x.Address
+	}
+	return nil
+}
+
+func (x *BMCDeviceSpec) GetGateway() *common.NetIP {
+	if x != nil {
+		return x.Gateway
+	}
+	return nil
+}
+
+func (x *BMCDeviceSpec) GetHardwareAddr() []byte {
+	if x != nil {
+		return x.HardwareAddr
+	}
+	return nil
+}
 
 // CPUCoreSpec represents a single CPU core as seen by the Linux kernel.
 type CPUCoreSpec struct {
@@ -63,7 +188,7 @@ type CPUCoreSpec struct {
 
 func (x *CPUCoreSpec) Reset() {
 	*x = CPUCoreSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[0]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -75,7 +200,7 @@ func (x *CPUCoreSpec) String() string {
 func (*CPUCoreSpec) ProtoMessage() {}
 
 func (x *CPUCoreSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[0]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -88,7 +213,7 @@ func (x *CPUCoreSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CPUCoreSpec.ProtoReflect.Descriptor instead.
 func (*CPUCoreSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{0}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *CPUCoreSpec) GetSocket() string {
@@ -203,6 +328,260 @@ func (x *CPUCoreSpec) GetAddressSizes() string {
 	return ""
 }
 
+// CPUScalingSpecSpec describes the cpufreq settings requested for a policy.
+//
+// An empty field leaves that attribute alone.
+type CPUScalingSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Governor is the scaling governor to set.
+	Governor string `protobuf:"bytes,1,opt,name=governor,proto3" json:"governor,omitempty"`
+	// EnergyPerformancePreference is the energy performance preference to set.
+	EnergyPerformancePreference string `protobuf:"bytes,2,opt,name=energy_performance_preference,json=energyPerformancePreference,proto3" json:"energy_performance_preference,omitempty"`
+	// MinFrequencyKhz is the lower bound of the frequency window to set, in kHz.
+	MinFrequencyKhz uint64 `protobuf:"varint,3,opt,name=min_frequency_khz,json=minFrequencyKhz,proto3" json:"min_frequency_khz,omitempty"`
+	// MaxFrequencyKhz is the upper bound of the frequency window to set, in kHz.
+	MaxFrequencyKhz uint64 `protobuf:"varint,4,opt,name=max_frequency_khz,json=maxFrequencyKhz,proto3" json:"max_frequency_khz,omitempty"`
+	// ConfigName is the CPUScalingConfig document these settings came from.
+	ConfigName    string `protobuf:"bytes,5,opt,name=config_name,json=configName,proto3" json:"config_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CPUScalingSpecSpec) Reset() {
+	*x = CPUScalingSpecSpec{}
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CPUScalingSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CPUScalingSpecSpec) ProtoMessage() {}
+
+func (x *CPUScalingSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CPUScalingSpecSpec.ProtoReflect.Descriptor instead.
+func (*CPUScalingSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *CPUScalingSpecSpec) GetGovernor() string {
+	if x != nil {
+		return x.Governor
+	}
+	return ""
+}
+
+func (x *CPUScalingSpecSpec) GetEnergyPerformancePreference() string {
+	if x != nil {
+		return x.EnergyPerformancePreference
+	}
+	return ""
+}
+
+func (x *CPUScalingSpecSpec) GetMinFrequencyKhz() uint64 {
+	if x != nil {
+		return x.MinFrequencyKhz
+	}
+	return 0
+}
+
+func (x *CPUScalingSpecSpec) GetMaxFrequencyKhz() uint64 {
+	if x != nil {
+		return x.MaxFrequencyKhz
+	}
+	return 0
+}
+
+func (x *CPUScalingSpecSpec) GetConfigName() string {
+	if x != nil {
+		return x.ConfigName
+	}
+	return ""
+}
+
+// CPUScalingStatusSpec describes a cpufreq policy: which CPUs it drives, what its driver supports,
+// and the governor, energy performance preference and frequency limits currently in effect.
+//
+// Only values which are stable unless something sets them are reported. The current and requested
+// frequencies are left out: the kernel moves them continuously, and reporting them would rewrite
+// this resource on every read.
+type CPUScalingStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Driver is the cpufreq scaling driver backing the policy (e.g. `intel_pstate`, `intel_cpufreq`, `acpi-cpufreq`).
+	Driver string `protobuf:"bytes,1,opt,name=driver,proto3" json:"driver,omitempty"`
+	// AffectedCPUs is the sorted list of online logical CPUs whose frequency this policy controls.
+	AffectedCpUs []uint32 `protobuf:"varint,2,rep,packed,name=affected_cp_us,json=affectedCpUs,proto3" json:"affected_cp_us,omitempty"`
+	// RelatedCPUs is the sorted list of all logical CPUs belonging to this policy, online or not.
+	RelatedCpUs []uint32 `protobuf:"varint,3,rep,packed,name=related_cp_us,json=relatedCpUs,proto3" json:"related_cp_us,omitempty"`
+	// AvailableGovernors is the list of scaling governors the driver offers for this policy.
+	AvailableGovernors []string `protobuf:"bytes,4,rep,name=available_governors,json=availableGovernors,proto3" json:"available_governors,omitempty"`
+	// AvailableEPPs is the list of energy performance preferences the driver offers, empty unless
+	// the driver implements them (HWP-enabled intel_pstate, amd-pstate in active mode).
+	AvailableEpPs []string `protobuf:"bytes,5,rep,name=available_ep_ps,json=availableEpPs,proto3" json:"available_ep_ps,omitempty"`
+	// Governor is the scaling governor currently in effect.
+	Governor string `protobuf:"bytes,6,opt,name=governor,proto3" json:"governor,omitempty"`
+	// EnergyPerformancePreference is the energy performance preference currently in effect.
+	EnergyPerformancePreference string `protobuf:"bytes,7,opt,name=energy_performance_preference,json=energyPerformancePreference,proto3" json:"energy_performance_preference,omitempty"`
+	// CPUInfoMinFrequencyKhz is the lowest frequency the hardware supports, in kHz.
+	CpuInfoMinFrequencyKhz uint64 `protobuf:"varint,8,opt,name=cpu_info_min_frequency_khz,json=cpuInfoMinFrequencyKhz,proto3" json:"cpu_info_min_frequency_khz,omitempty"`
+	// CPUInfoMaxFrequencyKhz is the highest frequency the hardware supports, in kHz.
+	CpuInfoMaxFrequencyKhz uint64 `protobuf:"varint,9,opt,name=cpu_info_max_frequency_khz,json=cpuInfoMaxFrequencyKhz,proto3" json:"cpu_info_max_frequency_khz,omitempty"`
+	// BaseFrequencyKhz is the sustained (non-turbo) frequency, in kHz, reported only by some drivers.
+	BaseFrequencyKhz uint64 `protobuf:"varint,10,opt,name=base_frequency_khz,json=baseFrequencyKhz,proto3" json:"base_frequency_khz,omitempty"`
+	// CPUCapacity is the scheduler's capacity rating of the policy's first CPU, relative to 1024
+	// for the most capable CPU in the system. On asymmetric systems it distinguishes big from little cores.
+	CpuCapacity uint32 `protobuf:"varint,11,opt,name=cpu_capacity,json=cpuCapacity,proto3" json:"cpu_capacity,omitempty"`
+	// CoreType is `performance` or `efficiency` on CPUs with a hybrid topology, empty otherwise.
+	CoreType string `protobuf:"bytes,12,opt,name=core_type,json=coreType,proto3" json:"core_type,omitempty"`
+	// ScalingMinFrequencyKhz is the lowest frequency the policy currently allows the governor to pick, in kHz.
+	ScalingMinFrequencyKhz uint64 `protobuf:"varint,13,opt,name=scaling_min_frequency_khz,json=scalingMinFrequencyKhz,proto3" json:"scaling_min_frequency_khz,omitempty"`
+	// ScalingMaxFrequencyKhz is the highest frequency the policy currently allows the governor to pick, in kHz.
+	ScalingMaxFrequencyKhz uint64 `protobuf:"varint,14,opt,name=scaling_max_frequency_khz,json=scalingMaxFrequencyKhz,proto3" json:"scaling_max_frequency_khz,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
+}
+
+func (x *CPUScalingStatusSpec) Reset() {
+	*x = CPUScalingStatusSpec{}
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CPUScalingStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CPUScalingStatusSpec) ProtoMessage() {}
+
+func (x *CPUScalingStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CPUScalingStatusSpec.ProtoReflect.Descriptor instead.
+func (*CPUScalingStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *CPUScalingStatusSpec) GetDriver() string {
+	if x != nil {
+		return x.Driver
+	}
+	return ""
+}
+
+func (x *CPUScalingStatusSpec) GetAffectedCpUs() []uint32 {
+	if x != nil {
+		return x.AffectedCpUs
+	}
+	return nil
+}
+
+func (x *CPUScalingStatusSpec) GetRelatedCpUs() []uint32 {
+	if x != nil {
+		return x.RelatedCpUs
+	}
+	return nil
+}
+
+func (x *CPUScalingStatusSpec) GetAvailableGovernors() []string {
+	if x != nil {
+		return x.AvailableGovernors
+	}
+	return nil
+}
+
+func (x *CPUScalingStatusSpec) GetAvailableEpPs() []string {
+	if x != nil {
+		return x.AvailableEpPs
+	}
+	return nil
+}
+
+func (x *CPUScalingStatusSpec) GetGovernor() string {
+	if x != nil {
+		return x.Governor
+	}
+	return ""
+}
+
+func (x *CPUScalingStatusSpec) GetEnergyPerformancePreference() string {
+	if x != nil {
+		return x.EnergyPerformancePreference
+	}
+	return ""
+}
+
+func (x *CPUScalingStatusSpec) GetCpuInfoMinFrequencyKhz() uint64 {
+	if x != nil {
+		return x.CpuInfoMinFrequencyKhz
+	}
+	return 0
+}
+
+func (x *CPUScalingStatusSpec) GetCpuInfoMaxFrequencyKhz() uint64 {
+	if x != nil {
+		return x.CpuInfoMaxFrequencyKhz
+	}
+	return 0
+}
+
+func (x *CPUScalingStatusSpec) GetBaseFrequencyKhz() uint64 {
+	if x != nil {
+		return x.BaseFrequencyKhz
+	}
+	return 0
+}
+
+func (x *CPUScalingStatusSpec) GetCpuCapacity() uint32 {
+	if x != nil {
+		return x.CpuCapacity
+	}
+	return 0
+}
+
+func (x *CPUScalingStatusSpec) GetCoreType() string {
+	if x != nil {
+		return x.CoreType
+	}
+	return ""
+}
+
+func (x *CPUScalingStatusSpec) GetScalingMinFrequencyKhz() uint64 {
+	if x != nil {
+		return x.ScalingMinFrequencyKhz
+	}
+	return 0
+}
+
+func (x *CPUScalingStatusSpec) GetScalingMaxFrequencyKhz() uint64 {
+	if x != nil {
+		return x.ScalingMaxFrequencyKhz
+	}
+	return 0
+}
+
 // MemoryModuleSpec represents a single Memory.
 type MemoryModuleSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -220,7 +599,7 @@ type MemoryModuleSpec struct {
 
 func (x *MemoryModuleSpec) Reset() {
 	*x = MemoryModuleSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[1]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +611,7 @@ func (x *MemoryModuleSpec) String() string {
 func (*MemoryModuleSpec) ProtoMessage() {}
 
 func (x *MemoryModuleSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[1]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +624,7 @@ func (x *MemoryModuleSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MemoryModuleSpec.ProtoReflect.Descriptor instead.
 func (*MemoryModuleSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *MemoryModuleSpec) GetSize() uint32 {
@@ -322,7 +701,7 @@ type PCIDeviceSpec struct {
 
 func (x *PCIDeviceSpec) Reset() {
 	*x = PCIDeviceSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[2]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -334,7 +713,7 @@ func (x *PCIDeviceSpec) String() string {
 func (*PCIDeviceSpec) ProtoMessage() {}
 
 func (x *PCIDeviceSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[2]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -347,7 +726,7 @@ func (x *PCIDeviceSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PCIDeviceSpec.ProtoReflect.Descriptor instead.
 func (*PCIDeviceSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *PCIDeviceSpec) GetClass() string {
@@ -424,7 +803,7 @@ type PCIDriverRebindConfigSpec struct {
 
 func (x *PCIDriverRebindConfigSpec) Reset() {
 	*x = PCIDriverRebindConfigSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[3]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -436,7 +815,7 @@ func (x *PCIDriverRebindConfigSpec) String() string {
 func (*PCIDriverRebindConfigSpec) ProtoMessage() {}
 
 func (x *PCIDriverRebindConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[3]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -449,7 +828,7 @@ func (x *PCIDriverRebindConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PCIDriverRebindConfigSpec.ProtoReflect.Descriptor instead.
 func (*PCIDriverRebindConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *PCIDriverRebindConfigSpec) GetPciid() string {
@@ -477,7 +856,7 @@ type PCIDriverRebindStatusSpec struct {
 
 func (x *PCIDriverRebindStatusSpec) Reset() {
 	*x = PCIDriverRebindStatusSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[4]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -489,7 +868,7 @@ func (x *PCIDriverRebindStatusSpec) String() string {
 func (*PCIDriverRebindStatusSpec) ProtoMessage() {}
 
 func (x *PCIDriverRebindStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[4]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -502,7 +881,7 @@ func (x *PCIDriverRebindStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PCIDriverRebindStatusSpec.ProtoReflect.Descriptor instead.
 func (*PCIDriverRebindStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PCIDriverRebindStatusSpec) GetPciid() string {
@@ -542,7 +921,7 @@ type ProcessorSpec struct {
 
 func (x *ProcessorSpec) Reset() {
 	*x = ProcessorSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -554,7 +933,7 @@ func (x *ProcessorSpec) String() string {
 func (*ProcessorSpec) ProtoMessage() {}
 
 func (x *ProcessorSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -567,7 +946,7 @@ func (x *ProcessorSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProcessorSpec.ProtoReflect.Descriptor instead.
 func (*ProcessorSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ProcessorSpec) GetSocket() string {
@@ -671,7 +1050,7 @@ type SystemInformationSpec struct {
 
 func (x *SystemInformationSpec) Reset() {
 	*x = SystemInformationSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +1062,7 @@ func (x *SystemInformationSpec) String() string {
 func (*SystemInformationSpec) ProtoMessage() {}
 
 func (x *SystemInformationSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +1075,7 @@ func (x *SystemInformationSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemInformationSpec.ProtoReflect.Descriptor instead.
 func (*SystemInformationSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *SystemInformationSpec) GetManufacturer() string {
@@ -759,7 +1138,18 @@ var File_resource_definitions_hardware_hardware_proto protoreflect.FileDescripto
 
 const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\n" +
-	",resource/definitions/hardware/hardware.proto\x12#talos.resource.definitions.hardware\"\xf0\x03\n" +
+	",resource/definitions/hardware/hardware.proto\x12#talos.resource.definitions.hardware\x1a\x13common/common.proto\"\xe0\x02\n" +
+	"\rBMCDeviceSpec\x12'\n" +
+	"\x0fmanufacturer_id\x18\x01 \x01(\rR\x0emanufacturerId\x12\"\n" +
+	"\fmanufacturer\x18\x02 \x01(\tR\fmanufacturer\x12\x1d\n" +
+	"\n" +
+	"product_id\x18\x03 \x01(\rR\tproductId\x12)\n" +
+	"\x10firmware_version\x18\x04 \x01(\tR\x0ffirmwareVersion\x12!\n" +
+	"\fipmi_version\x18\x05 \x01(\tR\vipmiVersion\x12\x18\n" +
+	"\achannel\x18\x06 \x01(\rR\achannel\x12-\n" +
+	"\aaddress\x18\a \x01(\v2\x13.common.NetIPPrefixR\aaddress\x12'\n" +
+	"\agateway\x18\b \x01(\v2\r.common.NetIPR\agateway\x12#\n" +
+	"\rhardware_addr\x18\t \x01(\fR\fhardwareAddr\"\xf0\x03\n" +
 	"\vCPUCoreSpec\x12\x16\n" +
 	"\x06socket\x18\x01 \x01(\tR\x06socket\x12\x17\n" +
 	"\acore_id\x18\x02 \x01(\tR\x06coreId\x12\"\n" +
@@ -780,7 +1170,30 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\x05flags\x18\r \x03(\tR\x05flags\x12\x12\n" +
 	"\x04bugs\x18\x0e \x03(\tR\x04bugs\x12\x1b\n" +
 	"\tbogo_mips\x18\x0f \x01(\x01R\bbogoMips\x12#\n" +
-	"\raddress_sizes\x18\x10 \x01(\tR\faddressSizes\"\x8f\x02\n" +
+	"\raddress_sizes\x18\x10 \x01(\tR\faddressSizes\"\xed\x01\n" +
+	"\x12CPUScalingSpecSpec\x12\x1a\n" +
+	"\bgovernor\x18\x01 \x01(\tR\bgovernor\x12B\n" +
+	"\x1denergy_performance_preference\x18\x02 \x01(\tR\x1benergyPerformancePreference\x12*\n" +
+	"\x11min_frequency_khz\x18\x03 \x01(\x04R\x0fminFrequencyKhz\x12*\n" +
+	"\x11max_frequency_khz\x18\x04 \x01(\x04R\x0fmaxFrequencyKhz\x12\x1f\n" +
+	"\vconfig_name\x18\x05 \x01(\tR\n" +
+	"configName\"\x8d\x05\n" +
+	"\x14CPUScalingStatusSpec\x12\x16\n" +
+	"\x06driver\x18\x01 \x01(\tR\x06driver\x12$\n" +
+	"\x0eaffected_cp_us\x18\x02 \x03(\rR\faffectedCpUs\x12\"\n" +
+	"\rrelated_cp_us\x18\x03 \x03(\rR\vrelatedCpUs\x12/\n" +
+	"\x13available_governors\x18\x04 \x03(\tR\x12availableGovernors\x12&\n" +
+	"\x0favailable_ep_ps\x18\x05 \x03(\tR\ravailableEpPs\x12\x1a\n" +
+	"\bgovernor\x18\x06 \x01(\tR\bgovernor\x12B\n" +
+	"\x1denergy_performance_preference\x18\a \x01(\tR\x1benergyPerformancePreference\x12:\n" +
+	"\x1acpu_info_min_frequency_khz\x18\b \x01(\x04R\x16cpuInfoMinFrequencyKhz\x12:\n" +
+	"\x1acpu_info_max_frequency_khz\x18\t \x01(\x04R\x16cpuInfoMaxFrequencyKhz\x12,\n" +
+	"\x12base_frequency_khz\x18\n" +
+	" \x01(\x04R\x10baseFrequencyKhz\x12!\n" +
+	"\fcpu_capacity\x18\v \x01(\rR\vcpuCapacity\x12\x1b\n" +
+	"\tcore_type\x18\f \x01(\tR\bcoreType\x129\n" +
+	"\x19scaling_min_frequency_khz\x18\r \x01(\x04R\x16scalingMinFrequencyKhz\x129\n" +
+	"\x19scaling_max_frequency_khz\x18\x0e \x01(\x04R\x16scalingMaxFrequencyKhz\"\x8f\x02\n" +
 	"\x10MemoryModuleSpec\x12\x12\n" +
 	"\x04size\x18\x01 \x01(\rR\x04size\x12%\n" +
 	"\x0edevice_locator\x18\x02 \x01(\tR\rdeviceLocator\x12!\n" +
@@ -850,22 +1263,29 @@ func file_resource_definitions_hardware_hardware_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_hardware_hardware_proto_rawDescData
 }
 
-var file_resource_definitions_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_resource_definitions_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_resource_definitions_hardware_hardware_proto_goTypes = []any{
-	(*CPUCoreSpec)(nil),               // 0: talos.resource.definitions.hardware.CPUCoreSpec
-	(*MemoryModuleSpec)(nil),          // 1: talos.resource.definitions.hardware.MemoryModuleSpec
-	(*PCIDeviceSpec)(nil),             // 2: talos.resource.definitions.hardware.PCIDeviceSpec
-	(*PCIDriverRebindConfigSpec)(nil), // 3: talos.resource.definitions.hardware.PCIDriverRebindConfigSpec
-	(*PCIDriverRebindStatusSpec)(nil), // 4: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec
-	(*ProcessorSpec)(nil),             // 5: talos.resource.definitions.hardware.ProcessorSpec
-	(*SystemInformationSpec)(nil),     // 6: talos.resource.definitions.hardware.SystemInformationSpec
+	(*BMCDeviceSpec)(nil),             // 0: talos.resource.definitions.hardware.BMCDeviceSpec
+	(*CPUCoreSpec)(nil),               // 1: talos.resource.definitions.hardware.CPUCoreSpec
+	(*CPUScalingSpecSpec)(nil),        // 2: talos.resource.definitions.hardware.CPUScalingSpecSpec
+	(*CPUScalingStatusSpec)(nil),      // 3: talos.resource.definitions.hardware.CPUScalingStatusSpec
+	(*MemoryModuleSpec)(nil),          // 4: talos.resource.definitions.hardware.MemoryModuleSpec
+	(*PCIDeviceSpec)(nil),             // 5: talos.resource.definitions.hardware.PCIDeviceSpec
+	(*PCIDriverRebindConfigSpec)(nil), // 6: talos.resource.definitions.hardware.PCIDriverRebindConfigSpec
+	(*PCIDriverRebindStatusSpec)(nil), // 7: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec
+	(*ProcessorSpec)(nil),             // 8: talos.resource.definitions.hardware.ProcessorSpec
+	(*SystemInformationSpec)(nil),     // 9: talos.resource.definitions.hardware.SystemInformationSpec
+	(*common.NetIPPrefix)(nil),        // 10: common.NetIPPrefix
+	(*common.NetIP)(nil),              // 11: common.NetIP
 }
 var file_resource_definitions_hardware_hardware_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	10, // 0: talos.resource.definitions.hardware.BMCDeviceSpec.address:type_name -> common.NetIPPrefix
+	11, // 1: talos.resource.definitions.hardware.BMCDeviceSpec.gateway:type_name -> common.NetIP
+	2,  // [2:2] is the sub-list for method output_type
+	2,  // [2:2] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_hardware_hardware_proto_init() }
@@ -879,7 +1299,7 @@ func file_resource_definitions_hardware_hardware_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_hardware_hardware_proto_rawDesc), len(file_resource_definitions_hardware_hardware_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

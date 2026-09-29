@@ -1,0 +1,204 @@
+<?xml version="1.0"?>
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <!-- This schema is not designed for standalone use -->
+
+  <define name="sysinfo-smbios-group-bios">
+    <optional>
+      <element name="bios">
+        <oneOrMore>
+          <element name="entry">
+            <attribute name="name">
+              <ref name="sysinfo-bios-name"/>
+            </attribute>
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </optional>
+  </define>
+
+  <define name="sysinfo-smbios-group-system">
+    <optional>
+      <element name="system">
+        <oneOrMore>
+          <element name="entry">
+            <attribute name="name">
+              <ref name="sysinfo-system-name"/>
+            </attribute>
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </optional>
+  </define>
+
+  <define name="sysinfo-smbios-group-baseboard">
+    <zeroOrMore>
+      <element name="baseBoard">
+        <oneOrMore>
+          <element name="entry">
+            <attribute name="name">
+              <ref name="sysinfo-baseBoard-name"/>
+            </attribute>
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </zeroOrMore>
+  </define>
+
+  <define name="sysinfo-smbios-group-chassis">
+    <optional>
+      <element name="chassis">
+        <oneOrMore>
+          <element name="entry">
+            <attribute name="name">
+              <ref name="sysinfo-chassis-name"/>
+            </attribute>
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </optional>
+  </define>
+
+  <define name="sysinfo-smbios-group-processor">
+    <zeroOrMore>
+      <element name="processor">
+        <oneOrMore>
+          <element name="entry">
+            <attribute name="name">
+              <ref name="sysinfo-processor-name"/>
+            </attribute>
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </zeroOrMore>
+  </define>
+
+  <define name="sysinfo-smbios-group-memory">
+    <zeroOrMore>
+      <element name="memory_device">
+        <oneOrMore>
+          <element name="entry">
+            <attribute name="name">
+              <ref name="sysinfo-memory-name"/>
+            </attribute>
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </zeroOrMore>
+  </define>
+
+  <define name="sysinfo-smbios-group-oemstrings">
+    <optional>
+      <element name="oemStrings">
+        <oneOrMore>
+          <element name="entry">
+            <ref name="sysinfo-value"/>
+          </element>
+        </oneOrMore>
+      </element>
+    </optional>
+  </define>
+
+  <define name="sysinfo-fwcfg-entry">
+    <element name="entry">
+      <attribute name="name">
+        <data type="string"/>
+      </attribute>
+      <choice>
+        <group>
+          <attribute name="file">
+            <data type="string"/>
+          </attribute>
+          <empty/>
+        </group>
+        <group>
+          <ref name="sysinfo-value"/>
+        </group>
+      </choice>
+    </element>
+  </define>
+
+  <define name="sysinfo-bios-name">
+    <choice>
+      <value>vendor</value>
+      <value>version</value>
+      <value>date</value>
+      <value>release</value>
+    </choice>
+  </define>
+
+  <define name="sysinfo-system-name">
+    <choice>
+      <value>manufacturer</value>
+      <value>product</value>
+      <value>version</value>
+      <value>serial</value>
+      <value>uuid</value>
+      <value>sku</value>
+      <value>family</value>
+    </choice>
+  </define>
+
+  <define name="sysinfo-baseBoard-name">
+    <choice>
+      <value>manufacturer</value>
+      <value>product</value>
+      <value>version</value>
+      <value>serial</value>
+      <value>asset</value>
+      <value>location</value>
+    </choice>
+  </define>
+
+  <define name="sysinfo-chassis-name">
+    <choice>
+      <value>manufacturer</value>
+      <value>version</value>
+      <value>serial</value>
+      <value>asset</value>
+      <value>sku</value>
+    </choice>
+  </define>
+
+  <define name="sysinfo-processor-name">
+    <choice>
+      <value>socket_destination</value>
+      <value>type</value>
+      <value>family</value>
+      <value>manufacturer</value>
+      <value>signature</value>
+      <value>version</value>
+      <value>external_clock</value>
+      <value>max_speed</value>
+      <value>status</value>
+      <value>serial_number</value>
+      <value>part_number</value>
+    </choice>
+  </define>
+
+  <define name="sysinfo-memory-name">
+    <choice>
+      <value>size</value>
+      <value>form_factor</value>
+      <value>locator</value>
+      <value>bank_locator</value>
+      <value>type</value>
+      <value>type_detail</value>
+      <value>speed</value>
+      <value>manufacturer</value>
+      <value>serial_number</value>
+      <value>part_number</value>
+    </choice>
+  </define>
+
+  <define name="sysinfo-value">
+    <data type="string"/>
+  </define>
+
+</grammar>

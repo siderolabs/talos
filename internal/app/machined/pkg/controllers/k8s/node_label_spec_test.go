@@ -34,11 +34,9 @@ func TestNodeLabelsSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &NodeLabelsSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 5 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeLabelSpecController{}))
-			},
+		Timeout: 5 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&k8sctrl.NodeLabelSpecController{}))
 		},
 	})
 }
@@ -53,7 +51,7 @@ func (suite *NodeLabelsSuite) updateMachineConfig(machineType machine.Type, labe
 		cfg = config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineType:       machineType.String(),
-				MachineNodeLabels: labels,
+				MachineNodeLabels: labels, //nolint:staticcheck // testing deprecated field
 			},
 		}))
 

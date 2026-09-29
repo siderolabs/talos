@@ -105,7 +105,7 @@ func (widget *NetworkInfo) updateNodeData(data resourcedata.Data) {
 		if data.Deleted {
 			nodeData.hostname = notAvailable
 		} else {
-			nodeData.hostname = res.TypedSpec().Hostname
+			nodeData.hostname = tview.Escape(res.TypedSpec().Hostname)
 		}
 	case *network.RouteStatus:
 		if data.Deleted {
@@ -257,7 +257,7 @@ func (widget *NetworkInfo) timeservers(status *network.TimeServerStatus) string 
 		return none
 	}
 
-	return strings.Join(status.TypedSpec().NTPServers, ", ")
+	return strings.Join(xslices.Map(status.TypedSpec().NTPServers, tview.Escape), ", ")
 }
 
 func (widget *NetworkInfo) connectivity(status *network.Status) string {

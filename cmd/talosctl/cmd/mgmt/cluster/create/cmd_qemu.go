@@ -58,6 +58,7 @@ func init() {
 
 	cmdDescription.WriteString("\n")
 	cmdDescription.WriteString("Note: exactly one of 'iso', 'iso-secureboot', 'pxe' or 'disk-image' presets must be specified.\n")
+	cmdDescription.WriteString("See the 'talosctl cluster create dev' command for more advanced QEMU options.\n")
 
 	createQemuCmd := &cobra.Command{
 		Use:   providers.QemuProviderName,

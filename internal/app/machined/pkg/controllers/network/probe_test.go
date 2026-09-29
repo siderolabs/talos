@@ -81,11 +81,9 @@ func (suite *ProbeSuite) TestReconcile() {
 // TestProbeSuite runs the ProbeSuite.
 func TestProbeSuite(t *testing.T) {
 	suite.Run(t, &ProbeSuite{
-		DefaultSuite: ctest.DefaultSuite{
-			Timeout: 20 * time.Second,
-			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&networkctrl.ProbeController{}))
-			},
+		Timeout: 20 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&networkctrl.ProbeController{}))
 		},
 	})
 }

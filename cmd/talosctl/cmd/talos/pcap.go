@@ -20,6 +20,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
@@ -107,7 +109,7 @@ e.g. by excluding packets with the port 50000.
 		var out io.Writer
 
 		if pcapCmdFlags.output == "-" {
-			out = os.Stdout
+			out = os.Stdout //nolint:forbidigo // a pcap file, not text
 		} else {
 			out, err = os.Create(pcapCmdFlags.output)
 			if err != nil {
@@ -150,9 +152,9 @@ func dumpPackets(ctx context.Context, r io.Reader) error {
 		func(packet gopacket.Packet, err error) {
 			switch err {
 			case nil:
-				fmt.Println(packet)
+				safeout.Println(packet)
 			default:
-				fmt.Println("packet capture error:", err)
+				safeout.Println("packet capture error:", err)
 			}
 		},
 	)
@@ -207,7 +209,7 @@ func init() {
 	pcapCmd.Flags().StringVarP(&pcapCmdFlags.output, "output", "o", "", "if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout")
 	pcapCmd.Flags().StringVar(&pcapCmdFlags.bpfFilter, "bpf-filter", "", "bpf filter to apply, tcpdump -dd format")
 	pcapCmd.Flags().DurationVar(&pcapCmdFlags.duration, "duration", 0, "duration of the capture")
-	pcapCmd.Flags().MarkDeprecated("snaplen", "support of snap length is removed") //nolint:errcheck
+	helpers.MarkFlagDeprecated(pcapCmd.Flags(), "snaplen", "support of snap length is removed") //nolint:errcheck
 
 	addCommand(pcapCmd)
 }

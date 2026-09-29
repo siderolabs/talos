@@ -1,0 +1,478 @@
+<?xml version="1.0"?>
+<!-- CPU-related definitions used in multiple grammars -->
+<grammar xmlns="http://relaxng.org/ns/structure/1.0"
+         datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes">
+
+  <define name="cpuMode">
+    <attribute name="mode">
+      <choice>
+        <value>custom</value>
+        <value>host-model</value>
+        <value>host-passthrough</value>
+        <value>maximum</value>
+      </choice>
+    </attribute>
+  </define>
+
+  <define name="cpuMatch">
+    <attribute name="match">
+      <choice>
+        <value>minimum</value>
+        <value>exact</value>
+        <value>strict</value>
+      </choice>
+    </attribute>
+  </define>
+
+  <define name="cpuCheck">
+    <attribute name="check">
+      <choice>
+        <value>none</value>
+        <value>partial</value>
+        <value>full</value>
+      </choice>
+    </attribute>
+  </define>
+
+  <define name="cpuModel">
+    <element name="model">
+      <optional>
+        <attribute name="fallback">
+          <choice>
+            <value>allow</value>
+            <value>forbid</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="vendor_id">
+          <data type="string">
+            <param name="pattern">[^,]{12}</param>
+          </data>
+        </attribute>
+      </optional>
+      <choice>
+        <text/>
+        <empty/>
+      </choice>
+    </element>
+  </define>
+
+  <define name="cpuVendor">
+    <element name="vendor">
+      <text/>
+    </element>
+  </define>
+
+  <define name="cpuFeature">
+    <element name="feature">
+      <attribute name="policy">
+        <choice>
+          <value>force</value>
+          <value>require</value>
+          <value>optional</value>
+          <value>disable</value>
+          <value>forbid</value>
+        </choice>
+      </attribute>
+      <attribute name="name">
+        <ref name="featureName"/>
+      </attribute>
+      <empty/>
+    </element>
+  </define>
+
+  <define name="cpuTopology">
+    <element name="topology">
+      <attribute name="sockets">
+        <ref name="positiveInteger"/>
+      </attribute>
+      <optional>
+        <attribute name="dies">
+          <ref name="positiveInteger"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="clusters">
+          <ref name="positiveInteger"/>
+        </attribute>
+      </optional>
+      <attribute name="cores">
+        <ref name="positiveInteger"/>
+      </attribute>
+      <attribute name="threads">
+        <ref name="positiveInteger"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="cpuNuma">
+    <element name="numa">
+      <interleave>
+        <oneOrMore>
+          <ref name="numaCell"/>
+        </oneOrMore>
+        <optional>
+          <ref name="numaInterconnects"/>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+
+  <define name="numaCell">
+    <element name="cell">
+      <optional>
+        <attribute name="id">
+          <ref name="unsignedInt"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="cpus">
+          <ref name="cpuset"/>
+        </attribute>
+      </optional>
+      <attribute name="memory">
+        <ref name="memoryKB"/>
+      </attribute>
+      <optional>
+        <attribute name="unit">
+          <ref name="unit"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="memAccess">
+          <choice>
+            <value>shared</value>
+            <value>private</value>
+          </choice>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="discard">
+          <ref name="virYesNo"/>
+        </attribute>
+      </optional>
+      <interleave>
+        <optional>
+          <element name="distances">
+            <oneOrMore>
+              <ref name="numaDistance"/>
+            </oneOrMore>
+          </element>
+        </optional>
+        <zeroOrMore>
+          <ref name="numaCache"/>
+        </zeroOrMore>
+      </interleave>
+    </element>
+  </define>
+
+  <define name="numaDistance">
+    <element name="sibling">
+      <attribute name="id">
+        <ref name="unsignedInt"/>
+      </attribute>
+      <attribute name="value">
+        <ref name="numaDistanceValue"/>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="numaCache">
+    <element name="cache">
+      <attribute name="level">
+        <ref name="unsignedInt"/>
+      </attribute>
+      <attribute name="associativity">
+        <choice>
+          <value>none</value>
+          <value>direct</value>
+          <value>full</value>
+        </choice>
+      </attribute>
+      <attribute name="policy">
+        <choice>
+          <value>none</value>
+          <value>writeback</value>
+          <value>writethrough</value>
+        </choice>
+      </attribute>
+      <interleave>
+        <element name="size">
+          <attribute name="value">
+            <ref name="unsignedInt"/>
+          </attribute>
+          <attribute name="unit">
+            <ref name="unit"/>
+          </attribute>
+        </element>
+        <element name="line">
+          <attribute name="value">
+            <ref name="unsignedInt"/>
+          </attribute>
+          <attribute name="unit">
+            <ref name="unit"/>
+          </attribute>
+        </element>
+      </interleave>
+    </element>
+  </define>
+
+  <define name="numaInterconnects">
+    <element name="interconnects">
+      <interleave>
+        <zeroOrMore>
+          <element name="latency">
+            <attribute name="initiator">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <attribute name="target">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <optional>
+              <attribute name="cache">
+                <ref name="unsignedInt"/>
+              </attribute>
+            </optional>
+            <attribute name="type">
+              <choice>
+                <value>access</value>
+                <value>read</value>
+                <value>write</value>
+              </choice>
+            </attribute>
+            <attribute name="value">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <empty/>
+          </element>
+        </zeroOrMore>
+        <zeroOrMore>
+          <element name="bandwidth">
+            <attribute name="initiator">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <attribute name="target">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <optional>
+              <attribute name="cache">
+                <ref name="unsignedInt"/>
+              </attribute>
+            </optional>
+            <attribute name="type">
+              <choice>
+                <value>access</value>
+                <value>read</value>
+                <value>write</value>
+              </choice>
+            </attribute>
+            <attribute name="value">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <attribute name="unit">
+              <ref name="unit"/>
+            </attribute>
+          </element>
+        </zeroOrMore>
+      </interleave>
+    </element>
+  </define>
+
+  <!-- Memory as an attribute is in KiB, no way to express a unit -->
+  <define name="memoryKB">
+    <data type="unsignedLong"/>
+  </define>
+  <define name="featureName">
+    <data type="string">
+      <param name="pattern">[a-zA-Z0-9\-_\.]+</param>
+    </data>
+  </define>
+
+  <define name="cpuCache">
+    <element name="cache">
+      <optional>
+        <attribute name="level">
+          <choice>
+            <value>1</value>
+            <value>2</value>
+            <value>3</value>
+          </choice>
+        </attribute>
+      </optional>
+      <attribute name="mode">
+        <choice>
+          <value>emulate</value>
+          <value>passthrough</value>
+          <value>disable</value>
+        </choice>
+      </attribute>
+    </element>
+  </define>
+
+  <define name="cpuMaxPhysAddr">
+    <element name="maxphysaddr">
+      <attribute name="mode">
+        <choice>
+          <value>emulate</value>
+          <value>passthrough</value>
+        </choice>
+      </attribute>
+      <optional>
+        <attribute name="bits">
+          <ref name="unsignedInt"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="limit">
+          <ref name="unsignedInt"/>
+        </attribute>
+      </optional>
+    </element>
+  </define>
+
+  <define name="hostcpu">
+    <element name="cpu">
+      <interleave>
+        <element name="arch">
+          <ref name="archnames"/>
+        </element>
+        <optional>
+          <element name="features">
+            <optional>
+              <element name="pae"><empty/></element>
+            </optional>
+            <optional>
+              <element name="nonpae"><empty/></element>
+            </optional>
+            <optional>
+              <element name="vmx"><empty/></element>
+            </optional>
+            <optional>
+              <element name="svm"><empty/></element>
+            </optional>
+          </element>
+        </optional>
+        <optional>
+          <element name="model">
+            <text/>
+          </element>
+        </optional>
+        <optional>
+          <element name="vendor">
+            <text/>
+          </element>
+        </optional>
+        <optional>
+          <element name="microcode">
+            <attribute name="version">
+              <ref name="positiveInteger"/>
+            </attribute>
+          </element>
+        </optional>
+        <optional>
+          <element name="signature">
+            <attribute name="family">
+              <ref name="positiveInteger"/>
+            </attribute>
+            <attribute name="model">
+              <ref name="unsignedInt"/>
+            </attribute>
+            <attribute name="stepping">
+              <ref name="unsignedInt"/>
+            </attribute>
+          </element>
+        </optional>
+        <optional>
+          <element name="counter">
+            <attribute name="name">
+              <text/>
+            </attribute>
+            <attribute name="frequency">
+              <ref name="positiveInteger"/>
+            </attribute>
+            <attribute name="scaling">
+              <ref name="virYesNo"/>
+            </attribute>
+          </element>
+        </optional>
+        <optional>
+          <ref name="cpuTopology"/>
+        </optional>
+        <optional>
+          <ref name="cpuMaxPhysAddr"/>
+        </optional>
+        <zeroOrMore>
+          <element name="feature">
+            <attribute name="name">
+              <data type="string">
+                <param name="pattern">[a-zA-Z0-9\-_.]+</param>
+              </data>
+            </attribute>
+            <empty/>
+          </element>
+        </zeroOrMore>
+        <zeroOrMore>
+          <element name="pages">
+            <optional>
+              <attribute name="unit">
+                <ref name="unit"/>
+              </attribute>
+            </optional>
+            <attribute name="size">
+              <ref name="unsignedInt"/>
+            </attribute>
+          </element>
+        </zeroOrMore>
+      </interleave>
+    </element>
+  </define>
+
+  <define name="guestcpu">
+    <element name="cpu">
+      <optional>
+        <ref name="cpuMode"/>
+      </optional>
+      <optional>
+        <ref name="cpuMatch"/>
+      </optional>
+      <optional>
+        <ref name="cpuCheck"/>
+      </optional>
+      <optional>
+        <attribute name="deprecated_features">
+          <ref name="virOnOff"/>
+        </attribute>
+      </optional>
+      <optional>
+        <attribute name="migratable">
+          <ref name="virOnOff"/>
+        </attribute>
+      </optional>
+      <interleave>
+        <optional>
+          <ref name="cpuModel"/>
+        </optional>
+        <optional>
+          <ref name="cpuVendor"/>
+        </optional>
+        <optional>
+          <ref name="cpuTopology"/>
+        </optional>
+        <zeroOrMore>
+          <ref name="cpuFeature"/>
+        </zeroOrMore>
+        <optional>
+          <ref name="cpuNuma"/>
+        </optional>
+        <optional>
+          <ref name="cpuCache"/>
+        </optional>
+        <optional>
+          <ref name="cpuMaxPhysAddr"/>
+        </optional>
+      </interleave>
+    </element>
+  </define>
+
+</grammar>

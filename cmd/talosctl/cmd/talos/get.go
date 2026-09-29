@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -70,7 +71,7 @@ func getResources(ctx context.Context, args []string, clientFactory *global.Clie
 		return err
 	}
 
-	out, err := output.NewWriter(getCmdFlags.output)
+	out, err := output.NewWriter(getCmdFlags.output, os.Stdout) //nolint:forbidigo // wrapped per format below
 	if err != nil {
 		return err
 	}
