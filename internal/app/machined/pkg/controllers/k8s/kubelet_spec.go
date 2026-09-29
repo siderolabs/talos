@@ -377,6 +377,12 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 		config.FailSwapOn = new(false)
 	}
 
+	// kubelet requires low < high, so only default both if neither is overridden
+	if config.ImageGCHighThresholdPercent == nil && config.ImageGCLowThresholdPercent == nil {
+		config.ImageGCHighThresholdPercent = new(int32(constants.KubeletImageGCHighThresholdPercent))
+		config.ImageGCLowThresholdPercent = new(int32(constants.KubeletImageGCLowThresholdPercent))
+	}
+
 	if len(config.SystemReserved) == 0 {
 		config.SystemReserved = map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,

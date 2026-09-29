@@ -357,17 +357,19 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		Authorization: kubeletconfig.KubeletAuthorization{
 			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
 		},
-		CgroupRoot:            "/",
-		SystemCgroups:         "/" + constants.CgroupSystem,
-		KubeletCgroups:        "/" + constants.CgroupKubelet,
-		RotateCertificates:    true,
-		ProtectKernelDefaults: true,
-		Address:               "0.0.0.0",
-		OOMScoreAdj:           new(int32(constants.KubeletOOMScoreAdj)),
-		ClusterDomain:         "cluster.local",
-		ClusterDNS:            []string{"10.0.0.5"},
-		SerializeImagePulls:   new(false),
-		FailSwapOn:            new(false),
+		CgroupRoot:                  "/",
+		SystemCgroups:               "/" + constants.CgroupSystem,
+		KubeletCgroups:              "/" + constants.CgroupKubelet,
+		RotateCertificates:          true,
+		ProtectKernelDefaults:       true,
+		Address:                     "0.0.0.0",
+		OOMScoreAdj:                 new(int32(constants.KubeletOOMScoreAdj)),
+		ClusterDomain:               "cluster.local",
+		ClusterDNS:                  []string{"10.0.0.5"},
+		SerializeImagePulls:         new(false),
+		FailSwapOn:                  new(false),
+		ImageGCHighThresholdPercent: new(int32(constants.KubeletImageGCHighThresholdPercent)),
+		ImageGCLowThresholdPercent:  new(int32(constants.KubeletImageGCLowThresholdPercent)),
 		SystemReserved: map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,
 			"memory":            constants.KubeletSystemReservedMemoryWorker,
@@ -485,6 +487,22 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.StaticPodPath = ""
+			},
+			machineType: machine.TypeWorker,
+		},
+		{
+			name: "override image GC thresholds",
+			cfgSpec: &k8s.KubeletConfigSpec{
+				ClusterDNS:    []string{"10.0.0.5"},
+				ClusterDomain: "cluster.local",
+				ExtraConfig: map[string]any{
+					"imageGCHighThresholdPercent": 90,
+				},
+			},
+			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
+			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
+				kc.ImageGCHighThresholdPercent = new(int32(90))
+				kc.ImageGCLowThresholdPercent = nil
 			},
 			machineType: machine.TypeWorker,
 		},

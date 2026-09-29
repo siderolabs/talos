@@ -444,6 +444,15 @@ const (
 	// KubeletSystemReservedEphemeralStorage ephemeral-storage system reservation value for kubelet kubeconfig.
 	KubeletSystemReservedEphemeralStorage = "256Mi"
 
+	// KubeletImageGCHighThresholdPercent is the default disk usage percentage which triggers kubelet image GC.
+	//
+	// It is kept well below the upstream default of 85%, as 85% is exactly the default hard eviction threshold (imagefs.available<15%),
+	// so the eviction manager (which runs every 10s) always fires before image GC (which runs every 5m).
+	KubeletImageGCHighThresholdPercent = 75
+
+	// KubeletImageGCLowThresholdPercent is the default disk usage percentage kubelet image GC frees disk space down to.
+	KubeletImageGCLowThresholdPercent = 65
+
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
 	DefaultEtcdVersion = "v3.7.2"

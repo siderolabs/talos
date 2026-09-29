@@ -79,6 +79,18 @@ Only the rendered `KubeletConfiguration` (`machine.kubelet.extraConfig`) is chec
 command line flags via `machine.kubelet.extraArgs` (e.g. `--cpu-manager-policy`, `--reserved-cpus`) are not taken into account.
 """
 
+    [notes.kubelet_image_gc]
+        title = "Kubelet Image GC Thresholds"
+        description = """\
+Talos now defaults kubelet `imageGCHighThresholdPercent` to 75 and `imageGCLowThresholdPercent` to 65 (upstream defaults are 85 and 80).
+
+The upstream image GC high threshold matches the default `imagefs.available<15%` hard eviction threshold, so the node was put
+into `DiskPressure` (and tainted for `evictionPressureTransitionPeriod`) before image GC had a chance to run.
+
+The defaults are applied only if neither of the thresholds is set in `machine.kubelet.extraConfig`.
+On upgrade, nodes with disk usage above 75% will garbage collect unused images.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\
