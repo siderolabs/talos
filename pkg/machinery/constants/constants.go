@@ -20,7 +20,7 @@ var SupportedArchitectures = []string{
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.51-talos"
+	DefaultKernelVersion = "6.18.54-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -562,10 +562,10 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.3.5"
+	DefaultContainerdVersion = "2.3.6"
 
 	// RuncVersion is the runc version.
-	RuncVersion = "1.5.1"
+	RuncVersion = "1.5.2"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
