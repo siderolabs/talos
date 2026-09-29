@@ -286,7 +286,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&hypervisorctrls.VirtualMachineDomainSpecController{},
 		&hypervisorctrls.VirtualMachineDomainStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			Open:         virtClient.Domain,
+			Open:         virtClient.DomainConnector().OpenPersistent,
 			Watch:        virtClient.DomainConnector().Watch,
 		},
 		&hypervisorctrls.VirtualMachineStatusController{
