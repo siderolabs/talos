@@ -64,3 +64,9 @@ func (c *Client) Storage(ctx context.Context) (storage.Client, error) {
 func (c *Client) Domain(ctx context.Context) (domain.Client, error) {
 	return c.domain.Open(ctx)
 }
+
+// DomainConnector exposes the configured QEMU endpoint for long-lived lifecycle
+// watches without changing the timeout of short-lived Domain sessions.
+func (c *Client) DomainConnector() *domain.Connector {
+	return c.domain
+}

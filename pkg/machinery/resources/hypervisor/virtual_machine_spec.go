@@ -30,9 +30,7 @@ type VirtualMachineSpecSpec struct {
 	PowerState string                     `yaml:"powerState" protobuf:"3"`
 	Firmware   VirtualMachineFirmwareSpec `yaml:"firmware" protobuf:"4"`
 	Console    VirtualMachineConsoleSpec  `yaml:"console" protobuf:"5"`
-	// Disks are logical volume intent, not libvirt source paths. Resolution and
-	// provisioning belong to a storage controller, not the XML renderer.
-	Disks []VirtualMachineDiskSpec `yaml:"disks,omitempty" protobuf:"6"`
+	Disks      []VirtualMachineDiskSpec   `yaml:"disks,omitempty" protobuf:"6"`
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.

@@ -13,6 +13,8 @@ import (
 
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (
@@ -482,6 +484,99 @@ func (x *VirtualMachineDomainSpecSpec) GetPowerState() string {
 	return ""
 }
 
+// VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
+type VirtualMachineDomainStatusSpec struct {
+	state         protoimpl.MessageState                   `protogen:"open.v1"`
+	Uuid          string                                   `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	PowerState    enums.HypervisorVirtualMachinePowerState `protobuf:"varint,2,opt,name=power_state,json=powerState,proto3,enum=talos.resource.definitions.enums.HypervisorVirtualMachinePowerState" json:"power_state,omitempty"`
+	Error         string                                   `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	State         uint32                                   `protobuf:"varint,4,opt,name=state,proto3" json:"state,omitempty"`
+	MaxMemoryKiB  uint64                                   `protobuf:"varint,5,opt,name=max_memory_ki_b,json=maxMemoryKiB,proto3" json:"max_memory_ki_b,omitempty"`
+	MemoryKiB     uint64                                   `protobuf:"varint,6,opt,name=memory_ki_b,json=memoryKiB,proto3" json:"memory_ki_b,omitempty"`
+	VcpUs         uint32                                   `protobuf:"varint,7,opt,name=vcp_us,json=vcpUs,proto3" json:"vcp_us,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VirtualMachineDomainStatusSpec) Reset() {
+	*x = VirtualMachineDomainStatusSpec{}
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VirtualMachineDomainStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VirtualMachineDomainStatusSpec) ProtoMessage() {}
+
+func (x *VirtualMachineDomainStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VirtualMachineDomainStatusSpec.ProtoReflect.Descriptor instead.
+func (*VirtualMachineDomainStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetPowerState() enums.HypervisorVirtualMachinePowerState {
+	if x != nil {
+		return x.PowerState
+	}
+	return enums.HypervisorVirtualMachinePowerState(0)
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetState() uint32 {
+	if x != nil {
+		return x.State
+	}
+	return 0
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetMaxMemoryKiB() uint64 {
+	if x != nil {
+		return x.MaxMemoryKiB
+	}
+	return 0
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetMemoryKiB() uint64 {
+	if x != nil {
+		return x.MemoryKiB
+	}
+	return 0
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetVcpUs() uint32 {
+	if x != nil {
+		return x.VcpUs
+	}
+	return 0
+}
+
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
 type VirtualMachineFirmwareSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -493,7 +588,7 @@ type VirtualMachineFirmwareSpec struct {
 
 func (x *VirtualMachineFirmwareSpec) Reset() {
 	*x = VirtualMachineFirmwareSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -505,7 +600,7 @@ func (x *VirtualMachineFirmwareSpec) String() string {
 func (*VirtualMachineFirmwareSpec) ProtoMessage() {}
 
 func (x *VirtualMachineFirmwareSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -518,7 +613,7 @@ func (x *VirtualMachineFirmwareSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineFirmwareSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineFirmwareSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *VirtualMachineFirmwareSpec) GetType() string {
@@ -545,7 +640,7 @@ type VirtualMachineMemoryBallooningSpec struct {
 
 func (x *VirtualMachineMemoryBallooningSpec) Reset() {
 	*x = VirtualMachineMemoryBallooningSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -557,7 +652,7 @@ func (x *VirtualMachineMemoryBallooningSpec) String() string {
 func (*VirtualMachineMemoryBallooningSpec) ProtoMessage() {}
 
 func (x *VirtualMachineMemoryBallooningSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -570,7 +665,7 @@ func (x *VirtualMachineMemoryBallooningSpec) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use VirtualMachineMemoryBallooningSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineMemoryBallooningSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *VirtualMachineMemoryBallooningSpec) GetEnabled() bool {
@@ -592,7 +687,7 @@ type VirtualMachineMemorySpec struct {
 
 func (x *VirtualMachineMemorySpec) Reset() {
 	*x = VirtualMachineMemorySpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -604,7 +699,7 @@ func (x *VirtualMachineMemorySpec) String() string {
 func (*VirtualMachineMemorySpec) ProtoMessage() {}
 
 func (x *VirtualMachineMemorySpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -617,7 +712,7 @@ func (x *VirtualMachineMemorySpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineMemorySpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineMemorySpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *VirtualMachineMemorySpec) GetSize() uint64 {
@@ -636,22 +731,20 @@ func (x *VirtualMachineMemorySpec) GetBallooning() *VirtualMachineMemoryBallooni
 
 // VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 type VirtualMachineSpecSpec struct {
-	state      protoimpl.MessageState      `protogen:"open.v1"`
-	Cpu        *VirtualMachineCPUSpec      `protobuf:"bytes,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
-	Memory     *VirtualMachineMemorySpec   `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"`
-	PowerState string                      `protobuf:"bytes,3,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
-	Firmware   *VirtualMachineFirmwareSpec `protobuf:"bytes,4,opt,name=firmware,proto3" json:"firmware,omitempty"`
-	Console    *VirtualMachineConsoleSpec  `protobuf:"bytes,5,opt,name=console,proto3" json:"console,omitempty"`
-	// Disks are logical volume intent, not libvirt source paths. Resolution and
-	// provisioning belong to a storage controller, not the XML renderer.
-	Disks         []*VirtualMachineDiskSpec `protobuf:"bytes,6,rep,name=disks,proto3" json:"disks,omitempty"`
+	state         protoimpl.MessageState      `protogen:"open.v1"`
+	Cpu           *VirtualMachineCPUSpec      `protobuf:"bytes,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
+	Memory        *VirtualMachineMemorySpec   `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"`
+	PowerState    string                      `protobuf:"bytes,3,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
+	Firmware      *VirtualMachineFirmwareSpec `protobuf:"bytes,4,opt,name=firmware,proto3" json:"firmware,omitempty"`
+	Console       *VirtualMachineConsoleSpec  `protobuf:"bytes,5,opt,name=console,proto3" json:"console,omitempty"`
+	Disks         []*VirtualMachineDiskSpec   `protobuf:"bytes,6,rep,name=disks,proto3" json:"disks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *VirtualMachineSpecSpec) Reset() {
 	*x = VirtualMachineSpecSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -663,7 +756,7 @@ func (x *VirtualMachineSpecSpec) String() string {
 func (*VirtualMachineSpecSpec) ProtoMessage() {}
 
 func (x *VirtualMachineSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +769,7 @@ func (x *VirtualMachineSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineSpecSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{10}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *VirtualMachineSpecSpec) GetCpu() *VirtualMachineCPUSpec {
@@ -721,11 +814,75 @@ func (x *VirtualMachineSpecSpec) GetDisks() []*VirtualMachineDiskSpec {
 	return nil
 }
 
+// VirtualMachineStatusSpec describes observed power state and reconciliation stage.
+type VirtualMachineStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// PowerState is the matched domain's observed power, or unknown when no domain was observed.
+	PowerState enums.HypervisorVirtualMachinePowerState `protobuf:"varint,1,opt,name=power_state,json=powerState,proto3,enum=talos.resource.definitions.enums.HypervisorVirtualMachinePowerState" json:"power_state,omitempty"`
+	// Stage distinguishes unknown observation, convergence, readiness, and observed obstacles.
+	Stage enums.HypervisorVirtualMachineStage `protobuf:"varint,2,opt,name=stage,proto3,enum=talos.resource.definitions.enums.HypervisorVirtualMachineStage" json:"stage,omitempty"`
+	// Error describes an observation failure or obstacle, when known.
+	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VirtualMachineStatusSpec) Reset() {
+	*x = VirtualMachineStatusSpec{}
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VirtualMachineStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VirtualMachineStatusSpec) ProtoMessage() {}
+
+func (x *VirtualMachineStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VirtualMachineStatusSpec.ProtoReflect.Descriptor instead.
+func (*VirtualMachineStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *VirtualMachineStatusSpec) GetPowerState() enums.HypervisorVirtualMachinePowerState {
+	if x != nil {
+		return x.PowerState
+	}
+	return enums.HypervisorVirtualMachinePowerState(0)
+}
+
+func (x *VirtualMachineStatusSpec) GetStage() enums.HypervisorVirtualMachineStage {
+	if x != nil {
+		return x.Stage
+	}
+	return enums.HypervisorVirtualMachineStage(0)
+}
+
+func (x *VirtualMachineStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
 var File_resource_definitions_hypervisor_hypervisor_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\n" +
-	"0resource/definitions/hypervisor/hypervisor.proto\x12%talos.resource.definitions.hypervisor\"w\n" +
+	"0resource/definitions/hypervisor/hypervisor.proto\x12%talos.resource.definitions.hypervisor\x1a&resource/definitions/enums/enums.proto\"w\n" +
 	"\x18ContentLibraryStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x14\n" +
@@ -760,7 +917,16 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\n" +
 	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
 	"\vpower_state\x18\x02 \x01(\tR\n" +
-	"powerState\"Q\n" +
+	"powerState\"\xa5\x02\n" +
+	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
+	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12e\n" +
+	"\vpower_state\x18\x02 \x01(\x0e2D.talos.resource.definitions.enums.HypervisorVirtualMachinePowerStateR\n" +
+	"powerState\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\x12\x14\n" +
+	"\x05state\x18\x04 \x01(\rR\x05state\x12%\n" +
+	"\x0fmax_memory_ki_b\x18\x05 \x01(\x04R\fmaxMemoryKiB\x12\x1e\n" +
+	"\vmemory_ki_b\x18\x06 \x01(\x04R\tmemoryKiB\x12\x15\n" +
+	"\x06vcp_us\x18\a \x01(\rR\x05vcpUs\"Q\n" +
 	"\x1aVirtualMachineFirmwareSpec\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1f\n" +
 	"\vsecure_boot\x18\x02 \x01(\bR\n" +
@@ -779,7 +945,12 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"powerState\x12]\n" +
 	"\bfirmware\x18\x04 \x01(\v2A.talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpecR\bfirmware\x12Z\n" +
 	"\aconsole\x18\x05 \x01(\v2@.talos.resource.definitions.hypervisor.VirtualMachineConsoleSpecR\aconsole\x12S\n" +
-	"\x05disks\x18\x06 \x03(\v2=.talos.resource.definitions.hypervisor.VirtualMachineDiskSpecR\x05disksB~\n" +
+	"\x05disks\x18\x06 \x03(\v2=.talos.resource.definitions.hypervisor.VirtualMachineDiskSpecR\x05disks\"\xee\x01\n" +
+	"\x18VirtualMachineStatusSpec\x12e\n" +
+	"\vpower_state\x18\x01 \x01(\x0e2D.talos.resource.definitions.enums.HypervisorVirtualMachinePowerStateR\n" +
+	"powerState\x12U\n" +
+	"\x05stage\x18\x02 \x01(\x0e2?.talos.resource.definitions.enums.HypervisorVirtualMachineStageR\x05stage\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05errorB~\n" +
 	"-dev.talos.api.resource.definitions.hypervisorZMgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisorb\x06proto3"
 
 var (
@@ -794,34 +965,41 @@ func file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP() []byte 
 	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescData
 }
 
-var file_resource_definitions_hypervisor_hypervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_resource_definitions_hypervisor_hypervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_resource_definitions_hypervisor_hypervisor_proto_goTypes = []any{
-	(*ContentLibraryStatusSpec)(nil),           // 0: talos.resource.definitions.hypervisor.ContentLibraryStatusSpec
-	(*VirtualMachineCPUSpec)(nil),              // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
-	(*VirtualMachineConsoleSpec)(nil),          // 2: talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
-	(*VirtualMachineDiskFromImageSpec)(nil),    // 3: talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
-	(*VirtualMachineDiskProvisionSpec)(nil),    // 4: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
-	(*VirtualMachineDiskSpec)(nil),             // 5: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
-	(*VirtualMachineDomainSpecSpec)(nil),       // 6: talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec
-	(*VirtualMachineFirmwareSpec)(nil),         // 7: talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
-	(*VirtualMachineMemoryBallooningSpec)(nil), // 8: talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
-	(*VirtualMachineMemorySpec)(nil),           // 9: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
-	(*VirtualMachineSpecSpec)(nil),             // 10: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec
+	(*ContentLibraryStatusSpec)(nil),              // 0: talos.resource.definitions.hypervisor.ContentLibraryStatusSpec
+	(*VirtualMachineCPUSpec)(nil),                 // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
+	(*VirtualMachineConsoleSpec)(nil),             // 2: talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
+	(*VirtualMachineDiskFromImageSpec)(nil),       // 3: talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
+	(*VirtualMachineDiskProvisionSpec)(nil),       // 4: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
+	(*VirtualMachineDiskSpec)(nil),                // 5: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
+	(*VirtualMachineDomainSpecSpec)(nil),          // 6: talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec
+	(*VirtualMachineDomainStatusSpec)(nil),        // 7: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec
+	(*VirtualMachineFirmwareSpec)(nil),            // 8: talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
+	(*VirtualMachineMemoryBallooningSpec)(nil),    // 9: talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
+	(*VirtualMachineMemorySpec)(nil),              // 10: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
+	(*VirtualMachineSpecSpec)(nil),                // 11: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec
+	(*VirtualMachineStatusSpec)(nil),              // 12: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec
+	(enums.HypervisorVirtualMachinePowerState)(0), // 13: talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	(enums.HypervisorVirtualMachineStage)(0),      // 14: talos.resource.definitions.enums.HypervisorVirtualMachineStage
 }
 var file_resource_definitions_hypervisor_hypervisor_proto_depIdxs = []int32{
-	3, // 0: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec.from_image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
-	4, // 1: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec.provision:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
-	8, // 2: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.ballooning:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
-	1, // 3: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cpu:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
-	9, // 4: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.memory:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
-	7, // 5: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.firmware:type_name -> talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
-	2, // 6: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.console:type_name -> talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
-	5, // 7: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.disks:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	3,  // 0: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec.from_image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
+	4,  // 1: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec.provision:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
+	13, // 2: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	9,  // 3: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.ballooning:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
+	1,  // 4: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cpu:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
+	10, // 5: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.memory:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
+	8,  // 6: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.firmware:type_name -> talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
+	2,  // 7: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.console:type_name -> talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
+	5,  // 8: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.disks:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
+	13, // 9: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	14, // 10: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachineStage
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_hypervisor_hypervisor_proto_init() }
@@ -835,7 +1013,7 @@ func file_resource_definitions_hypervisor_hypervisor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_hypervisor_hypervisor_proto_rawDesc), len(file_resource_definitions_hypervisor_hypervisor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

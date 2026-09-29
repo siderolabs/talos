@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -18,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -27,11 +25,7 @@ import (
 // VirtualMachineController reconciles running transient domains with virtqemud.
 type VirtualMachineController struct {
 	V1Alpha1Mode machineruntime.Mode
-
-	// Open is injectable for reconciliation tests.
-	Open func(context.Context) (libvirtdomain.Client, error)
-	// ReconcileInterval bounds recovery time when a guest disappears without a resource event.
-	ReconcileInterval time.Duration
+	Open         func(context.Context) (libvirtdomain.Client, error)
 }
 
 // Name implements controller.Controller interface.
@@ -53,6 +47,11 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			ID:        optional.Some(hardware.SystemInformationID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineDomainStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -67,27 +66,11 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 		return nil
 	}
 
-	if ctrl.Open == nil {
-		ctrl.Open = func(ctx context.Context) (libvirtdomain.Client, error) {
-			return libvirt.New().Domain(ctx)
-		}
-	}
-
-	// The daemon can start or a transient guest can exit without a COSI event.
-	interval := ctrl.ReconcileInterval
-	if interval <= 0 {
-		interval = 30 * time.Second
-	}
-
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-runtime.EventCh():
-		case <-ticker.C:
 		}
 
 		if err := ctrl.reconcile(ctx, runtime); err != nil {

@@ -5056,6 +5056,109 @@ func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{72}
 }
 
+// HypervisorVirtualMachinePowerState is the observed power state of a virtual machine.
+type HypervisorVirtualMachinePowerState int32
+
+const (
+	HypervisorVirtualMachinePowerState_VIRTUAL_MACHINE_POWER_STATE_UNKNOWN HypervisorVirtualMachinePowerState = 0
+	HypervisorVirtualMachinePowerState_VIRTUAL_MACHINE_POWER_STATE_RUNNING HypervisorVirtualMachinePowerState = 1
+	HypervisorVirtualMachinePowerState_VIRTUAL_MACHINE_POWER_STATE_STOPPED HypervisorVirtualMachinePowerState = 2
+)
+
+// Enum value maps for HypervisorVirtualMachinePowerState.
+var (
+	HypervisorVirtualMachinePowerState_name = map[int32]string{
+		0: "VIRTUAL_MACHINE_POWER_STATE_UNKNOWN",
+		1: "VIRTUAL_MACHINE_POWER_STATE_RUNNING",
+		2: "VIRTUAL_MACHINE_POWER_STATE_STOPPED",
+	}
+	HypervisorVirtualMachinePowerState_value = map[string]int32{
+		"VIRTUAL_MACHINE_POWER_STATE_UNKNOWN": 0,
+		"VIRTUAL_MACHINE_POWER_STATE_RUNNING": 1,
+		"VIRTUAL_MACHINE_POWER_STATE_STOPPED": 2,
+	}
+)
+
+func (x HypervisorVirtualMachinePowerState) Enum() *HypervisorVirtualMachinePowerState {
+	p := new(HypervisorVirtualMachinePowerState)
+	*p = x
+	return p
+}
+
+func (x HypervisorVirtualMachinePowerState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (HypervisorVirtualMachinePowerState) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[73].Descriptor()
+}
+
+func (HypervisorVirtualMachinePowerState) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[73]
+}
+
+func (x HypervisorVirtualMachinePowerState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use HypervisorVirtualMachinePowerState.Descriptor instead.
+func (HypervisorVirtualMachinePowerState) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{73}
+}
+
+// HypervisorVirtualMachineStage describes how far the observed VM has converged to its desired state.
+type HypervisorVirtualMachineStage int32
+
+const (
+	HypervisorVirtualMachineStage_VIRTUAL_MACHINE_STAGE_UNKNOWN HypervisorVirtualMachineStage = 0
+	HypervisorVirtualMachineStage_VIRTUAL_MACHINE_STAGE_PENDING HypervisorVirtualMachineStage = 1
+	HypervisorVirtualMachineStage_VIRTUAL_MACHINE_STAGE_READY   HypervisorVirtualMachineStage = 2
+	HypervisorVirtualMachineStage_VIRTUAL_MACHINE_STAGE_ERROR   HypervisorVirtualMachineStage = 3
+)
+
+// Enum value maps for HypervisorVirtualMachineStage.
+var (
+	HypervisorVirtualMachineStage_name = map[int32]string{
+		0: "VIRTUAL_MACHINE_STAGE_UNKNOWN",
+		1: "VIRTUAL_MACHINE_STAGE_PENDING",
+		2: "VIRTUAL_MACHINE_STAGE_READY",
+		3: "VIRTUAL_MACHINE_STAGE_ERROR",
+	}
+	HypervisorVirtualMachineStage_value = map[string]int32{
+		"VIRTUAL_MACHINE_STAGE_UNKNOWN": 0,
+		"VIRTUAL_MACHINE_STAGE_PENDING": 1,
+		"VIRTUAL_MACHINE_STAGE_READY":   2,
+		"VIRTUAL_MACHINE_STAGE_ERROR":   3,
+	}
+)
+
+func (x HypervisorVirtualMachineStage) Enum() *HypervisorVirtualMachineStage {
+	p := new(HypervisorVirtualMachineStage)
+	*p = x
+	return p
+}
+
+func (x HypervisorVirtualMachineStage) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (HypervisorVirtualMachineStage) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[74].Descriptor()
+}
+
+func (HypervisorVirtualMachineStage) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[74]
+}
+
+func (x HypervisorVirtualMachineStage) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use HypervisorVirtualMachineStage.Descriptor instead.
+func (HypervisorVirtualMachineStage) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{74}
+}
+
 // KubespanPeerState is KubeSpan peer current state.
 type KubespanPeerState int32
 
@@ -5090,11 +5193,11 @@ func (x KubespanPeerState) String() string {
 }
 
 func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[73].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[75].Descriptor()
 }
 
 func (KubespanPeerState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[73]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[75]
 }
 
 func (x KubespanPeerState) Number() protoreflect.EnumNumber {
@@ -5103,7 +5206,7 @@ func (x KubespanPeerState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KubespanPeerState.Descriptor instead.
 func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{73}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{75}
 }
 
 var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
@@ -5896,7 +5999,16 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_UNKNOWN\x10\x00\x12#\n" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_SKIPPED\x10\x01\x12#\n" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_PENDING\x10\x02\x12!\n" +
-	"\x1dIMAGE_CACHE_COPY_STATUS_READY\x10\x03*S\n" +
+	"\x1dIMAGE_CACHE_COPY_STATUS_READY\x10\x03*\x9f\x01\n" +
+	"\"HypervisorVirtualMachinePowerState\x12'\n" +
+	"#VIRTUAL_MACHINE_POWER_STATE_UNKNOWN\x10\x00\x12'\n" +
+	"#VIRTUAL_MACHINE_POWER_STATE_RUNNING\x10\x01\x12'\n" +
+	"#VIRTUAL_MACHINE_POWER_STATE_STOPPED\x10\x02*\xa7\x01\n" +
+	"\x1dHypervisorVirtualMachineStage\x12!\n" +
+	"\x1dVIRTUAL_MACHINE_STAGE_UNKNOWN\x10\x00\x12!\n" +
+	"\x1dVIRTUAL_MACHINE_STAGE_PENDING\x10\x01\x12\x1f\n" +
+	"\x1bVIRTUAL_MACHINE_STAGE_READY\x10\x02\x12\x1f\n" +
+	"\x1bVIRTUAL_MACHINE_STAGE_ERROR\x10\x03*S\n" +
 	"\x11KubespanPeerState\x12\x16\n" +
 	"\x12PEER_STATE_UNKNOWN\x10\x00\x12\x11\n" +
 	"\rPEER_STATE_UP\x10\x01\x12\x13\n" +
@@ -5915,7 +6027,7 @@ func file_resource_definitions_enums_enums_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_enums_enums_proto_rawDescData
 }
 
-var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 74)
+var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 76)
 var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(RuntimeKernelModuleState)(0),                     // 0: talos.resource.definitions.enums.RuntimeKernelModuleState
 	(RuntimeKernelModuleType)(0),                      // 1: talos.resource.definitions.enums.RuntimeKernelModuleType
@@ -5990,7 +6102,9 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(ContainersContainerInstancePhase)(0),             // 70: talos.resource.definitions.enums.ContainersContainerInstancePhase
 	(CriImageCacheStatus)(0),                          // 71: talos.resource.definitions.enums.CriImageCacheStatus
 	(CriImageCacheCopyStatus)(0),                      // 72: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(KubespanPeerState)(0),                            // 73: talos.resource.definitions.enums.KubespanPeerState
+	(HypervisorVirtualMachinePowerState)(0),           // 73: talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	(HypervisorVirtualMachineStage)(0),                // 74: talos.resource.definitions.enums.HypervisorVirtualMachineStage
+	(KubespanPeerState)(0),                            // 75: talos.resource.definitions.enums.KubespanPeerState
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -6010,7 +6124,7 @@ func file_resource_definitions_enums_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_enums_enums_proto_rawDesc), len(file_resource_definitions_enums_enums_proto_rawDesc)),
-			NumEnums:      74,
+			NumEnums:      76,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

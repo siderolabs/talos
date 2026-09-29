@@ -335,6 +335,8 @@ description: Talos gRPC API reference.
     - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
+    - [HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState)
+    - [HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage)
     - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
     - [HypervisorhelpersVirtualMachineDiskBus](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus)
     - [HypervisorhelpersVirtualMachineDiskFormat](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat)
@@ -508,10 +510,12 @@ description: Talos gRPC API reference.
     - [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec)
     - [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec)
     - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
+    - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
     - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
+    - [VirtualMachineStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineStatusSpec)
   
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
     - [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping)
@@ -5728,6 +5732,33 @@ CriImageCacheStatus describes image cache status type.
 
 
 
+<a name="talos.resource.definitions.enums.HypervisorVirtualMachinePowerState"></a>
+
+### HypervisorVirtualMachinePowerState
+HypervisorVirtualMachinePowerState is the observed power state of a virtual machine.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_POWER_STATE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_POWER_STATE_RUNNING | 1 |  |
+| VIRTUAL_MACHINE_POWER_STATE_STOPPED | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorVirtualMachineStage"></a>
+
+### HypervisorVirtualMachineStage
+HypervisorVirtualMachineStage describes how far the observed VM has converged to its desired state.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_STAGE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_STAGE_PENDING | 1 |  |
+| VIRTUAL_MACHINE_STAGE_READY | 2 |  |
+| VIRTUAL_MACHINE_STAGE_ERROR | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorhelpersPowerState"></a>
 
 ### HypervisorhelpersPowerState
@@ -8950,6 +8981,27 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec"></a>
+
+### VirtualMachineDomainStatusSpec
+VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| uuid | [string](#string) |  |  |
+| power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  |  |
+| error | [string](#string) |  |  |
+| state | [uint32](#uint32) |  |  |
+| max_memory_ki_b | [uint64](#uint64) |  |  |
+| memory_ki_b | [uint64](#uint64) |  |  |
+| vcp_us | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec"></a>
 
 ### VirtualMachineFirmwareSpec
@@ -9010,7 +9062,24 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | power_state | [string](#string) |  |  |
 | firmware | [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec) |  |  |
 | console | [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec) |  |  |
-| disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated | Disks are logical volume intent, not libvirt source paths. Resolution and provisioning belong to a storage controller, not the XML renderer. |
+| disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineStatusSpec"></a>
+
+### VirtualMachineStatusSpec
+VirtualMachineStatusSpec describes observed power state and reconciliation stage.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  | PowerState is the matched domain's observed power, or unknown when no domain was observed. |
+| stage | [talos.resource.definitions.enums.HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage) |  | Stage distinguishes unknown observation, convergence, readiness, and observed obstacles. |
+| error | [string](#string) |  | Error describes an observation failure or obstacle, when known. |
 
 
 

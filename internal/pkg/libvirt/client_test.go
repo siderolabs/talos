@@ -36,6 +36,9 @@ func TestClientUsesConfiguredDaemonSockets(t *testing.T) {
 
 	_, err = client.Domain(t.Context())
 	require.ErrorContains(t, err, domainSocket)
+
+	_, err = client.DomainConnector().Watch(t.Context())
+	require.ErrorContains(t, err, domainSocket)
 }
 
 func TestClientUsesConfiguredDaemonURIs(t *testing.T) {

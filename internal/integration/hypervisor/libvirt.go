@@ -93,7 +93,7 @@ func (suite *LibvirtSuite) TestDomainDefinition() {
 	})
 
 	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.assertNoDomain(node, name)
+	suite.assertStoppedDomain(nodeCtx, node, name)
 
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	suite.PatchMachineConfig(nodeCtx, doc)
@@ -111,12 +111,40 @@ func (suite *LibvirtSuite) TestDomainDefinition() {
 
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
 	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.assertNoDomain(node, name)
+	suite.assertStoppedDomain(nodeCtx, node, name)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
 
+	// No status exists after document removal; inspect libvirt to catch an orphaned domain.
 	suite.assertNoDomain(node, name)
+}
+
+func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name string) {
+	suite.T().Helper()
+
+	// A missing domain status alone cannot distinguish a stopped VM from an unavailable daemon.
+	suite.assertNoDomain(node, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](ctx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
+			asrt.Equal(hypervisor.VirtualMachinePowerStateUnknown, status.TypedSpec().PowerState)
+			asrt.Equal(hypervisor.VirtualMachineStageUnknown, status.TypedSpec().Stage)
+		},
+	)
+}
+
+func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name string, powerState hypervisor.VirtualMachinePowerState) {
+	suite.T().Helper()
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
+			asrt.Equal(powerState, status.TypedSpec().PowerState)
+			asrt.Equal(hypervisor.VirtualMachineStageReady, status.TypedSpec().Stage)
+			asrt.Empty(status.TypedSpec().Error)
+		},
+	)
 }
 
 func (suite *LibvirtSuite) assertNoDomain(node, name string) {
@@ -137,6 +165,9 @@ func (suite *LibvirtSuite) assertNoDomain(node, name string) {
 func (suite *LibvirtSuite) assertRunningTransientDomain(node, name string, cpus uint) {
 	suite.T().Helper()
 
+	suite.assertVirtualMachineStatus(client.WithNode(suite.ctx, node), name, hypervisor.VirtualMachinePowerStateRunning)
+
+	// The status contract does not include XML or persistence; verify those via libvirt.
 	suite.Require().Eventually(func() bool {
 		text, code := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dumpxml", name)
 		if code != 0 {
@@ -149,8 +180,7 @@ func (suite *LibvirtSuite) assertRunningTransientDomain(node, name string, cpus 
 
 		info, infoCode := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dominfo", name)
 
-		return infoCode == 0 && regexp.MustCompile(`(?m)^Persistent:\s+no\s*$`).MatchString(info) &&
-			regexp.MustCompile(`(?m)^State:\s+running\s*$`).MatchString(info)
+		return infoCode == 0 && regexp.MustCompile(`(?m)^Persistent:\s+no\s*$`).MatchString(info)
 	}, 2*time.Minute, time.Second, "domain %q was not running transiently with %d CPUs", name, cpus)
 }
 

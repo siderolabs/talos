@@ -5,6 +5,8 @@ package talos.resource.definitions.hypervisor;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisor";
 option java_package = "dev.talos.api.resource.definitions.hypervisor";
 
+import "resource/definitions/enums/enums.proto";
+
 // ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 message ContentLibraryStatusSpec {
   // VolumeID is the ID of the volume backing the library.
@@ -66,6 +68,17 @@ message VirtualMachineDomainSpecSpec {
   string power_state = 2;
 }
 
+// VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
+message VirtualMachineDomainStatusSpec {
+  string uuid = 1;
+  talos.resource.definitions.enums.HypervisorVirtualMachinePowerState power_state = 2;
+  string error = 3;
+  uint32 state = 4;
+  uint64 max_memory_ki_b = 5;
+  uint64 memory_ki_b = 6;
+  uint32 vcp_us = 7;
+}
+
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
 message VirtualMachineFirmwareSpec {
   string type = 1;
@@ -91,8 +104,16 @@ message VirtualMachineSpecSpec {
   string power_state = 3;
   VirtualMachineFirmwareSpec firmware = 4;
   VirtualMachineConsoleSpec console = 5;
-  // Disks are logical volume intent, not libvirt source paths. Resolution and
-  // provisioning belong to a storage controller, not the XML renderer.
   repeated VirtualMachineDiskSpec disks = 6;
+}
+
+// VirtualMachineStatusSpec describes observed power state and reconciliation stage.
+message VirtualMachineStatusSpec {
+  // PowerState is the matched domain's observed power, or unknown when no domain was observed.
+  talos.resource.definitions.enums.HypervisorVirtualMachinePowerState power_state = 1;
+  // Stage distinguishes unknown observation, convergence, readiness, and observed obstacles.
+  talos.resource.definitions.enums.HypervisorVirtualMachineStage stage = 2;
+  // Error describes an observation failure or obstacle, when known.
+  string error = 3;
 }
 

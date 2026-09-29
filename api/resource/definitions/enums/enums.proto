@@ -984,6 +984,21 @@ enum CriImageCacheCopyStatus {
   IMAGE_CACHE_COPY_STATUS_READY = 3;
 }
 
+// HypervisorVirtualMachinePowerState is the observed power state of a virtual machine.
+enum HypervisorVirtualMachinePowerState {
+  VIRTUAL_MACHINE_POWER_STATE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_POWER_STATE_RUNNING = 1;
+  VIRTUAL_MACHINE_POWER_STATE_STOPPED = 2;
+}
+
+// HypervisorVirtualMachineStage describes how far the observed VM has converged to its desired state.
+enum HypervisorVirtualMachineStage {
+  VIRTUAL_MACHINE_STAGE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_STAGE_PENDING = 1;
+  VIRTUAL_MACHINE_STAGE_READY = 2;
+  VIRTUAL_MACHINE_STAGE_ERROR = 3;
+}
+
 // KubespanPeerState is KubeSpan peer current state.
 enum KubespanPeerState {
   PEER_STATE_UNKNOWN = 0;

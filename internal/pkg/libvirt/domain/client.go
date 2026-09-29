@@ -49,6 +49,25 @@ func (c *Connector) Open(ctx context.Context) (Client, error) {
 	return c.OpenConn(sessionCtx, conn, cancel)
 }
 
+// OpenPersistent opens one inventory session for an event-driven controller.
+// Only connection establishment is time-bounded; the caller closes the session.
+func (c *Connector) OpenPersistent(ctx context.Context) (Client, error) {
+	startupCtx, startupCancel := context.WithTimeout(ctx, operationTimeout)
+	defer startupCancel()
+
+	conn, err := (&net.Dialer{}).DialContext(startupCtx, "unix", c.socket)
+	if err != nil {
+		return nil, err
+	}
+
+	stopStartupClose := context.AfterFunc(startupCtx, func() { closeTransport(conn) })
+	defer stopStartupClose()
+
+	sessionCtx, cancel := context.WithCancel(ctx)
+
+	return c.OpenConn(sessionCtx, conn, cancel)
+}
+
 // OpenConn connects over an already-connected transport for this connector.
 // It takes ownership of conn and cancel; ctx must bound the full session.
 func (c *Connector) OpenConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (Client, error) {
@@ -81,9 +100,19 @@ type Domain struct {
 	UUID uuid.UUID
 }
 
+// Info holds selected fields from libvirt DomainGetInfo. Memory is in KiB.
+type Info struct {
+	State        uint32
+	MaxMemoryKiB uint64
+	MemoryKiB    uint64
+	VCPUs        uint32
+}
+
 // Client represents one bounded reconciliation session; callers must Close it.
 type Client interface {
 	Domains() ([]Domain, error)
+	Active(Domain) (bool, error)
+	Info(Domain) (Info, error)
 	Start(Domain, string) error
 	Remove(Domain) error
 	Close()
@@ -108,6 +137,7 @@ type definitionRPC interface {
 
 type lifecycleRPC interface {
 	DomainIsActive(libvirt.Domain) (int32, error)
+	DomainGetInfo(libvirt.Domain) (uint8, uint64, uint64, uint16, uint64, error)
 	DomainDestroy(libvirt.Domain) error
 	DomainHasManagedSaveImage(libvirt.Domain, uint32) (int32, error)
 	DomainManagedSaveRemove(libvirt.Domain, uint32) error
@@ -154,6 +184,44 @@ func (c *client) Domains() ([]Domain, error) {
 	}
 
 	return result, nil
+}
+
+func (c *client) Active(domain Domain) (bool, error) {
+	found, exists, err := c.lookup(domain)
+	if err != nil || !exists {
+		return false, err
+	}
+
+	active, err := c.rpc.DomainIsActive(found)
+	if err != nil {
+		return false, err
+	}
+
+	return active == 1, nil
+}
+
+// Info reads raw libvirt domain state and counters for any domain in the inventory.
+func (c *client) Info(domain Domain) (Info, error) {
+	found, exists, err := c.lookup(domain)
+	if err != nil {
+		return Info{}, err
+	}
+
+	if !exists {
+		return Info{}, fmt.Errorf("domain %q disappeared before reading info", domain.Name)
+	}
+
+	state, maxMemory, memory, vcpus, _, err := c.rpc.DomainGetInfo(found)
+	if err != nil {
+		return Info{}, err
+	}
+
+	return Info{
+		State:        uint32(state),
+		MaxMemoryKiB: maxMemory,
+		MemoryKiB:    memory,
+		VCPUs:        uint32(vcpus),
+	}, nil
 }
 
 func (c *client) lookup(d Domain) (libvirt.Domain, bool, error) {

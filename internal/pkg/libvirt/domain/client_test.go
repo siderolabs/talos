@@ -119,6 +119,7 @@ type domainRecord struct {
 	identity    libvirtdomain.Domain
 	xml         string
 	lookupError libvirt.ErrorNumber
+	inactive    bool
 }
 
 type domainWireFixture struct {
@@ -180,25 +181,27 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	switch procedure {
 	case 23: // DOMAIN_LOOKUP_BY_NAME
 		return f.handleLookup(conn, call)
-	case 10: // DOMAIN_CREATE_XML: the client submits a complete transient definition
-		var description libvirtxml.Domain
-		if err := description.Unmarshal(decodeString(call[24:])); err != nil {
-			return err
-		}
+	case 10: // DOMAIN_CREATE_XML
+		var err error
 
-		id, err := uuid.Parse(description.UUID)
+		payload, err = f.createDomain(call)
 		if err != nil {
 			return err
 		}
-
-		identity := libvirtdomain.Domain{Name: description.Name, UUID: id}
-		f.records[identity.Name] = domainRecord{identity: identity, xml: decodeString(call[24:])}
-		payload = encodeDomain(identity)
 	case 14: // DOMAIN_GET_XML_DESC
 		name := decodeString(call[24:])
 		payload = encodeString(f.records[name].xml)
+	case 16: // DOMAIN_GET_INFO
+		return replyDomainInfo(conn, call)
 	case 150: // DOMAIN_IS_ACTIVE
-		payload = binary.BigEndian.AppendUint32(nil, 1)
+		name := decodeString(call[24:])
+
+		var active uint32 = 1
+		if f.records[name].inactive {
+			active = 0
+		}
+
+		payload = binary.BigEndian.AppendUint32(nil, active)
 	case 151: // DOMAIN_IS_PERSISTENT
 		payload = binary.BigEndian.AppendUint32(nil, 0)
 	case 12: // DOMAIN_DESTROY
@@ -207,6 +210,33 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	default:
 		return fmt.Errorf("unexpected domain RPC %d", procedure)
 	}
+
+	return replyCall(conn, call, payload)
+}
+
+func (f *domainWireFixture) createDomain(call []byte) ([]byte, error) {
+	var description libvirtxml.Domain
+	if err := description.Unmarshal(decodeString(call[24:])); err != nil {
+		return nil, err
+	}
+
+	id, err := uuid.Parse(description.UUID)
+	if err != nil {
+		return nil, err
+	}
+
+	identity := libvirtdomain.Domain{Name: description.Name, UUID: id}
+	f.records[identity.Name] = domainRecord{identity: identity, xml: decodeString(call[24:])}
+
+	return encodeDomain(identity), nil
+}
+
+func replyDomainInfo(conn net.Conn, call []byte) error {
+	payload := binary.BigEndian.AppendUint32(nil, uint32(libvirt.DomainRunning))
+	payload = binary.BigEndian.AppendUint64(payload, 1048576)
+	payload = binary.BigEndian.AppendUint64(payload, 524288)
+	payload = binary.BigEndian.AppendUint32(payload, 2)
+	payload = binary.BigEndian.AppendUint64(payload, 4000) // libvirt always returns CPU time, even though we do not expose it.
 
 	return replyCall(conn, call, payload)
 }
@@ -273,6 +303,55 @@ func countProcedure(calls []uint32, procedure uint32) int {
 	}
 
 	return count
+}
+
+func TestInfoReadsLibvirtMetrics(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "external", UUID: uuid.New()}
+	client, finished, served := openDomainFixture(t, domainRecord{identity: domain})
+
+	info, err := client.Info(domain)
+	require.NoError(t, err)
+	require.Equal(t, uint32(libvirt.DomainRunning), info.State)
+	require.Equal(t, uint64(1048576), info.MaxMemoryKiB)
+	require.Equal(t, uint64(524288), info.MemoryKiB)
+	require.Equal(t, uint32(2), info.VCPUs)
+
+	client.Close()
+	require.NoError(t, <-served)
+	require.Equal(t, 1, countProcedure((<-finished).calls, 16))
+}
+
+func TestActiveReadsDomainState(t *testing.T) {
+	t.Parallel()
+
+	owned := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	inactive := libvirtdomain.Domain{Name: "second", UUID: uuid.New()}
+	client, finished, served := openDomainFixture(t,
+		domainRecord{identity: owned},
+		domainRecord{identity: inactive, inactive: true},
+	)
+
+	active, err := client.Active(owned)
+	require.NoError(t, err)
+	require.True(t, active)
+
+	active, err = client.Active(inactive)
+	require.NoError(t, err)
+	require.False(t, active)
+
+	active, err = client.Active(libvirtdomain.Domain{Name: "missing", UUID: uuid.New()})
+	require.NoError(t, err)
+	require.False(t, active)
+
+	active, err = client.Active(libvirtdomain.Domain{Name: owned.Name, UUID: uuid.New()})
+	require.ErrorContains(t, err, "not owned")
+	require.False(t, active)
+
+	client.Close()
+	require.NoError(t, <-served)
+	require.Equal(t, 2, countProcedure((<-finished).calls, 150))
 }
 
 func TestTransientDomainLifecycle(t *testing.T) {

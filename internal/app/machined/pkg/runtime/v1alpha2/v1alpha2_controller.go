@@ -45,6 +45,7 @@ import (
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
+	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/internal/pkg/md"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -160,6 +161,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	if err != nil {
 		return fmt.Errorf("failed to initialize MD: %w", err)
 	}
+
+	virtClient := libvirt.New()
 
 	for _, c := range []controller.Controller{
 		&block.DevicesController{
@@ -281,8 +284,17 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&hypervisorctrls.ContentLibraryController{},
 		&hypervisorctrls.VirtualMachineSpecController{},
 		&hypervisorctrls.VirtualMachineDomainSpecController{},
+		&hypervisorctrls.VirtualMachineDomainStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			Open:         virtClient.Domain,
+			Watch:        virtClient.DomainConnector().Watch,
+		},
+		&hypervisorctrls.VirtualMachineStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&hypervisorctrls.VirtualMachineController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			Open:         virtClient.Domain,
 		},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", constants.SystemContainerdNamespace, nil),

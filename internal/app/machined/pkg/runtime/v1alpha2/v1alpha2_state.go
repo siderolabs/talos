@@ -135,6 +135,8 @@ func NewState() (*State, error) {
 		&hypervisor.ContentLibraryStatus{},
 		&hypervisor.VirtualMachineSpec{},
 		&hypervisor.VirtualMachineDomainSpec{},
+		&hypervisor.VirtualMachineDomainStatus{},
+		&hypervisor.VirtualMachineStatus{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},
 		&cluster.Affiliate{},

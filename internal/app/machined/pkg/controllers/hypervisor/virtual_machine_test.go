@@ -33,6 +33,7 @@ type domainClient struct {
 	texts           map[string]string
 	starts          map[string]int
 	removeErr       error
+	listErr         error
 	changed         chan struct{}
 	attempted       chan struct{}
 	attemptedRemove chan struct{}
@@ -51,7 +52,31 @@ func (c *domainClient) Domains() ([]libvirtdomain.Domain, error) {
 	default:
 	}
 
+	if c.listErr != nil {
+		return nil, c.listErr
+	}
+
 	return slices.Collect(maps.Values(c.domains)), nil
+}
+
+func (c *domainClient) Active(domain libvirtdomain.Domain) (bool, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	existing, present := c.domains[domain.Name]
+
+	return present && existing.UUID == domain.UUID, nil
+}
+
+func (c *domainClient) Info(domain libvirtdomain.Domain) (libvirtdomain.Info, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if existing, ok := c.domains[domain.Name]; !ok || existing.UUID != domain.UUID {
+		return libvirtdomain.Info{}, fmt.Errorf("domain %q disappeared", domain.Name)
+	}
+
+	return libvirtdomain.Info{State: 1, MaxMemoryKiB: 1048576, MemoryKiB: 524288, VCPUs: 2}, nil
 }
 
 func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
@@ -336,8 +361,7 @@ func (s *VirtualMachineDomainSuite) TestStoppedRemovesClaimedDomain() {
 
 func (s *VirtualMachineDomainSuite) TestUnexpectedShutdownRestartsRunningDomain() {
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
-		Open:              s.client.open,
-		ReconcileInterval: 20 * time.Millisecond,
+		Open: s.client.open,
 	}))
 
 	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "restart")
@@ -347,10 +371,14 @@ func (s *VirtualMachineDomainSuite) TestUnexpectedShutdownRestartsRunningDomain(
 	s.assertDomain("restart", spec.TypedSpec().DomainXML, true)
 	s.assertFinalizer("restart", true)
 
+	status := hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, "restart")
+	s.Create(status)
+
 	s.client.mu.Lock()
 	delete(s.client.domains, "restart")
 	delete(s.client.texts, "restart")
 	s.client.mu.Unlock()
+	s.Destroy(status)
 
 	s.Require().Eventually(func() bool {
 		s.client.mu.Lock()
