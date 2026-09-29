@@ -446,7 +446,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
-	DefaultEtcdVersion = "3.7.1"
+	DefaultEtcdVersion = "v3.7.2"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
@@ -1358,7 +1358,7 @@ const (
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
 	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
-	KubeNetworkPoliciesVersion = "v1.1.1"
+	KubeNetworkPoliciesVersion = "v1.1.2"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
