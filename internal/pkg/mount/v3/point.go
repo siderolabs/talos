@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -249,7 +250,9 @@ func (p *Point) retry(f func() error, isUnmount bool) error {
 func (p *Point) moveMount(target string) error {
 	fd, err := p.root.Fd()
 	if err != nil {
-		if p.Source() != "" {
+		// fall back to moving the mount by path, but only if the source is a path
+		// (pseudo filesystems have sources like "tmpfs" or "cgroup")
+		if filepath.IsAbs(p.Source()) {
 			if err := unix.MoveMount(unix.AT_FDCWD, p.Source(), unix.AT_FDCWD, target, 0); err != nil {
 				return fmt.Errorf("error moving mount from %q to %q: %w", p.Source(), target, err)
 			}

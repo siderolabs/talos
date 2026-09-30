@@ -9,6 +9,7 @@
 package fsopen
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -111,10 +112,12 @@ func (fs *FS) new() (err error) {
 		}
 	}()
 
-	if fs.source != "" {
-		if err := unix.FsconfigSetString(fsfd, "source", fs.source); err != nil {
-			return fmt.Errorf("FSCONFIG_SET_STRING failed: %w: key=%q value=%q", err, "source", fs.source)
-		}
+	// default the source to the filesystem type (as `mount -t tmpfs tmpfs` does),
+	// otherwise the kernel reports the source as "none"
+	source := cmp.Or(fs.source, fs.fstype)
+
+	if err := unix.FsconfigSetString(fsfd, "source", source); err != nil {
+		return fmt.Errorf("FSCONFIG_SET_STRING failed: %w: key=%q value=%q", err, "source", source)
 	}
 
 	for key := range fs.boolParams {

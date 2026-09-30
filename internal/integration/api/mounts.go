@@ -241,6 +241,42 @@ func (suite *MountsSuite) TestEphemeralExecPolicy() {
 	}
 }
 
+// TestPseudoMountSources asserts Talos-created pseudo filesystems report a meaningful source
+// (and not "none") in mountinfo.
+func (suite *MountsSuite) TestPseudoMountSources() {
+	expected := map[string]string{
+		"/dev":                    "devtmpfs",
+		"/proc":                   "proc",
+		"/sys":                    "sysfs",
+		"/run":                    "tmpfs",
+		"/system":                 "tmpfs",
+		"/tmp":                    "tmpfs",
+		"/dev/shm":                "devshm",
+		"/dev/pts":                "devpts",
+		"/dev/hugepages":          "hugetlb",
+		"/sys/fs/bpf":             "bpf",
+		constants.CgroupMountPath: "cgroup",
+	}
+
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			found := map[string]string{}
+
+			for _, m := range suite.readMountInfo(node) {
+				if _, ok := expected[m.mountPoint]; ok {
+					if _, seen := found[m.mountPoint]; !seen {
+						found[m.mountPoint] = m.source
+					}
+				}
+			}
+
+			for mountPoint, source := range expected {
+				suite.Assert().Equal(source, found[mountPoint], "unexpected source for %q", mountPoint)
+			}
+		})
+	}
+}
+
 func (suite *MountsSuite) runPolicy(opt string, exempt func(mountInfo) bool, rationale string) {
 	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
 		suite.Run(node, func() {

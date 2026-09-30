@@ -35,6 +35,7 @@ func NewCgroup2() *Manager {
 		WithMountAttributes(unix.MOUNT_ATTR_RELATIME),
 		WithFsopen(
 			"cgroup2",
+			fsopen.WithSource("cgroup"),
 			fsopen.WithBoolParameter("nsdelegate"),
 			fsopen.WithBoolParameter("memory_recursiveprot"),
 		),
@@ -356,7 +357,7 @@ func PseudoSub(printer func(string, ...any)) Managers {
 			WithSecure(),
 			WithNoExec(),
 			WithMountAttributes(unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("tmpfs"),
+			WithFsopen("tmpfs", fsopen.WithSource("devshm")),
 		),
 		newManager(
 			always,
@@ -375,7 +376,7 @@ func PseudoSub(printer func(string, ...any)) Managers {
 			WithPrinter(printer),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 			WithTarget("/dev/hugepages"),
-			WithFsopen("hugetlbfs"),
+			WithFsopen("hugetlbfs", fsopen.WithSource("hugetlb")),
 		),
 		newManager(
 			always,
@@ -438,7 +439,7 @@ func PseudoSub(printer func(string, ...any)) Managers {
 			WithNoExec(),
 			WithReadOnly(),
 			WithMountAttributes(unix.MOUNT_ATTR_RELATIME),
-			WithFsopen("efivarfs"),
+			WithFsopen("efivarfs", fsopen.WithSource("efivars")),
 		),
 	)
 }
