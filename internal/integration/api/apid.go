@@ -18,6 +18,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/dustin/go-humanize"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -270,6 +272,170 @@ func (suite *ApidSuite) TestPKIMismatch() {
 	)
 
 	suite.Require().NoError(wrongClient.Close())
+}
+
+// TestImpersonationWithoutRole verifies that the impersonation header is rejected when the client
+// doesn't have os:impersonator role, whatever roles the client has otherwise.
+func (suite *ApidSuite) TestImpersonationWithoutRole() {
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
+	cpNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	for _, tt := range []struct {
+		name  string
+		roles []role.Role
+	}{
+		{
+			name:  "reader",
+			roles: []role.Role{role.Reader},
+		},
+		{
+			name:  "admin",
+			roles: []role.Role{role.Admin},
+		},
+		{
+			name:  "operator and reader",
+			roles: []role.Role{role.Operator, role.Reader},
+		},
+	} {
+		suite.Run(tt.name, func() {
+			cli := suite.generateClient(tt.roles...)
+
+			for _, node := range nodes {
+				nodeCtx := client.WithNode(suite.ctx, node)
+
+				// sanity check: the client works without the impersonation header
+				_, err := cli.Version(nodeCtx)
+				suite.Require().NoError(err)
+
+				// any impersonation header is rejected, whether it escalates, downgrades or keeps the roles
+				for _, impersonated := range []role.Role{role.Admin, role.Reader, role.Impersonator, tt.roles[0]} {
+					_, err = cli.Version(withImpersonation(nodeCtx, impersonated))
+					suite.Require().Error(err)
+					suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+					suite.Assert().ErrorContains(err, "impersonator role")
+				}
+			}
+
+			// the header doesn't escalate access to admin-only APIs either
+			_, err := cli.GenerateClientConfiguration(withImpersonation(client.WithNode(suite.ctx, cpNode), role.Admin), &machineapi.GenerateClientConfigurationRequest{
+				Roles:  []string{string(role.Reader)},
+				CrtTtl: durationpb.New(time.Hour),
+			})
+			suite.Require().Error(err)
+			suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+			suite.Assert().ErrorContains(err, "impersonator role")
+		})
+	}
+}
+
+// TestImpersonation verifies that a client with os:impersonator role can impersonate any role via the impersonation header,
+// and that the impersonated roles are what gets authorized, including when the request is proxied between apid instances.
+func (suite *ApidSuite) TestImpersonation() {
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
+	cpCtx := client.WithNode(suite.ctx, suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane))
+
+	adminOnlyRequest := &machineapi.GenerateClientConfigurationRequest{
+		Roles:  []string{string(role.Reader)},
+		CrtTtl: durationpb.New(time.Hour),
+	}
+
+	suite.Run("impersonator only", func() {
+		cli := suite.generateClient(role.Impersonator)
+
+		for _, node := range nodes {
+			nodeCtx := client.WithNode(suite.ctx, node)
+
+			// os:impersonator alone doesn't grant access to anything
+			_, err := cli.Version(nodeCtx)
+			suite.Require().Error(err)
+			suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+
+			// impersonating a reader grants read-only access
+			_, err = cli.Version(withImpersonation(nodeCtx, role.Reader))
+			suite.Require().NoError(err)
+
+			// impersonating an admin grants access as well
+			_, err = cli.Version(withImpersonation(nodeCtx, role.Admin))
+			suite.Require().NoError(err)
+
+			// impersonating an unknown role grants nothing
+			_, err = cli.Version(withImpersonation(nodeCtx, role.Role("os:nonexistent")))
+			suite.Require().Error(err)
+			suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+		}
+
+		// impersonated reader is denied admin-only APIs
+		_, err := cli.GenerateClientConfiguration(withImpersonation(cpCtx, role.Reader), adminOnlyRequest)
+		suite.Require().Error(err)
+		suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+
+		// impersonated admin is allowed admin-only APIs
+		_, err = cli.GenerateClientConfiguration(withImpersonation(cpCtx, role.Admin), adminOnlyRequest)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("impersonator and reader", func() {
+		cli := suite.generateClient(role.Impersonator, role.Reader)
+
+		for _, node := range nodes {
+			nodeCtx := client.WithNode(suite.ctx, node)
+
+			// without the header, the client's own roles apply
+			_, err := cli.Version(nodeCtx)
+			suite.Require().NoError(err)
+		}
+
+		// the client's own roles don't include admin
+		_, err := cli.GenerateClientConfiguration(cpCtx, adminOnlyRequest)
+		suite.Require().Error(err)
+		suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+
+		// the header replaces the client's own roles rather than being merged with them
+		_, err = cli.GenerateClientConfiguration(withImpersonation(cpCtx, role.Admin), adminOnlyRequest)
+		suite.Require().NoError(err)
+
+		_, err = cli.GenerateClientConfiguration(withImpersonation(cpCtx, role.Operator), adminOnlyRequest)
+		suite.Require().Error(err)
+		suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err), "unexpected error: %v", err)
+	})
+}
+
+// generateClient returns a Talos API client with a certificate carrying the given roles.
+//
+// The certificate is issued by the cluster via the GenerateClientConfiguration API, so it is trusted by apid.
+func (suite *ApidSuite) generateClient(roles ...role.Role) *client.Client {
+	cpNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	resp, err := suite.Client.GenerateClientConfiguration(client.WithNode(suite.ctx, cpNode), &machineapi.GenerateClientConfigurationRequest{
+		Roles:  role.MakeSet(roles...).Strings(),
+		CrtTtl: durationpb.New(time.Hour),
+	})
+	suite.Require().NoError(err)
+	suite.Require().Len(resp.Messages, 1)
+
+	config, err := clientconfig.FromBytes(resp.Messages[0].Talosconfig)
+	suite.Require().NoError(err)
+
+	config.Contexts[config.Context].Endpoints = suite.Client.GetEndpoints()
+
+	cli, err := client.New(suite.ctx, client.WithConfig(config))
+	suite.Require().NoError(err)
+
+	suite.T().Cleanup(func() {
+		suite.Assert().NoError(cli.Close())
+	})
+
+	return cli
+}
+
+// withImpersonation sets the impersonation header in the outgoing gRPC metadata.
+func withImpersonation(ctx context.Context, roles ...role.Role) context.Context {
+	md, _ := metadata.FromOutgoingContext(ctx)
+	md = md.Copy()
+
+	md.Set(constants.APIAuthzRoleMetadataKey, role.MakeSet(roles...).Strings()...)
+
+	return metadata.NewOutgoingContext(ctx, md)
 }
 
 func init() {

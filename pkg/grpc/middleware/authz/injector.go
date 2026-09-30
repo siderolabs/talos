@@ -6,14 +6,17 @@ package authz
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
+	"google.golang.org/grpc/status"
 
 	grpclog "github.com/siderolabs/talos/pkg/grpc/middleware/log"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -74,20 +77,20 @@ func (i *Injector) annotatef(ctx context.Context, format string, v ...any) {
 // or from gRPC metadata (in case of subsequent apid instances, machined, or user with impersonator role).
 //
 //nolint:gocyclo
-func (i *Injector) extractRoles(ctx context.Context) role.Set {
+func (i *Injector) extractRoles(ctx context.Context) (role.Set, error) {
 	// sanity check
 	if _, ok := getFromContext(ctx); ok {
-		panic("roles should not be present in the context at this point")
+		return role.Zero, errors.New("roles should not be present in the context at this point")
 	}
 
 	switch i.Mode {
 	case Disabled:
 		i.annotatef(ctx, "RBAC is disabled, injecting all roles")
 
-		return role.All
+		return role.All, nil
 
 	case ReadOnly:
-		return readerRoleSet
+		return readerRoleSet, nil
 
 	case ReadOnlyWithAdminOnSiderolink:
 		check := i.SideroLinkPeerCheckFunc
@@ -98,29 +101,32 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 		if siderolinkPeerAddr, siderolinkPeer := check(ctx); siderolinkPeer {
 			i.annotatef(ctx, "inject admin role for SideroLink peer %q", siderolinkPeerAddr)
 
-			return adminRoleSet
+			return adminRoleSet, nil
 		}
 
-		return readerRoleSet
+		return readerRoleSet, nil
 
 	case MetadataOnly:
-		roles, _ := getFromMetadata(ctx, i.annotatef)
+		roles, _, err := getFromMetadata(ctx, i.annotatef)
+		if err != nil {
+			return role.Zero, err
+		}
 
-		return roles
+		return roles, nil
 
 	case Enabled:
 		p, ok := peer.FromContext(ctx)
 		if !ok {
-			panic("can't get peer information")
+			return role.Zero, errors.New("can't get peer information")
 		}
 
 		tlsInfo, ok := p.AuthInfo.(credentials.TLSInfo)
 		if !ok {
-			panic(fmt.Sprintf("expected credentials.TLSInfo, got %T", p.AuthInfo))
+			return role.Zero, fmt.Errorf("expected credentials.TLSInfo, got %T", p.AuthInfo)
 		}
 
 		if len(tlsInfo.State.PeerCertificates) == 0 {
-			panic("expected at least one certificate")
+			return role.Zero, errors.New("expected at least one certificate")
 		}
 
 		// PeerCertificates[0] is the leaf certificate the connection was verified against, so this
@@ -135,25 +141,38 @@ func (i *Injector) extractRoles(ctx context.Context) role.Set {
 		// trust gRPC metadata from clients with impersonator role if present
 		// (including requests proxied from other apid instances)
 		if roles.Includes(role.Impersonator) {
-			metadataRoles, ok := getFromMetadata(ctx, i.annotatef)
+			metadataRoles, ok, err := getFromMetadata(ctx, i.annotatef)
+			if err != nil {
+				return role.Zero, err
+			}
+
 			if ok {
-				return metadataRoles
+				return metadataRoles, nil
 			}
 
 			// that's a real user with impersonator role then
 			i.annotatef(ctx, "no roles in metadata, returning parsed roles")
+		} else if hasInMetadata(ctx) {
+			// impersonation header is present, but the client doesn't have impersonator role, so we reject the request
+			// with a clean error instead of silently ignoring the impersonation header
+			return role.Zero, status.Error(codes.PermissionDenied, "client doesn't have impersonator role, but impersonation header is present")
 		}
 
-		return roles
+		return roles, nil
 	}
 
-	panic("unreachable")
+	return role.Zero, fmt.Errorf("unknown injector mode %v", i.Mode)
 }
 
 // UnaryInterceptor returns grpc UnaryServerInterceptor.
 func (i *Injector) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
-		ctx = ContextWithRoles(ctx, i.extractRoles(ctx))
+		extractedRoles, err := i.extractRoles(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx = ContextWithRoles(ctx, extractedRoles)
 
 		return handler(ctx, req)
 	}
@@ -163,7 +182,13 @@ func (i *Injector) UnaryInterceptor() grpc.UnaryServerInterceptor {
 func (i *Injector) StreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		ctx := stream.Context()
-		ctx = ContextWithRoles(ctx, i.extractRoles(ctx))
+
+		extractedRoles, err := i.extractRoles(ctx)
+		if err != nil {
+			return err
+		}
+
+		ctx = ContextWithRoles(ctx, extractedRoles)
 
 		wrapped := grpc_middleware.WrapServerStream(stream)
 		wrapped.WrappedContext = ctx

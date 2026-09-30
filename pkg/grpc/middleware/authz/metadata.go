@@ -6,6 +6,7 @@ package authz
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/grpc/metadata"
 
@@ -32,22 +33,32 @@ func SetMetadata(md metadata.MD, roles role.Set) {
 	md.Set(mdKey, roleStrings...)
 }
 
-// getFromMetadata returns roles extracted from gRPC metadata.
-func getFromMetadata(ctx context.Context, annotate func(ctx context.Context, format string, v ...any)) (role.Set, bool) {
+// hasInMetadata returns true if the role header is present in gRPC metadata.
+func hasInMetadata(ctx context.Context) bool {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		panic("no request metadata")
+		return false
+	}
+
+	return len(md.Get(mdKey)) > 0
+}
+
+// getFromMetadata returns roles extracted from gRPC metadata.
+func getFromMetadata(ctx context.Context, annotate func(ctx context.Context, format string, v ...any)) (role.Set, bool, error) {
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return role.Zero, false, errors.New("no request metadata")
 	}
 
 	strings := md.Get(mdKey)
 	if len(strings) == 0 {
 		annotate(ctx, "no roles in metadata")
 
-		return role.Zero, false
+		return role.Zero, false, nil
 	}
 
 	roles, unknownRoles := role.Parse(strings)
 	annotate(ctx, "parsed metadata %v as %v (unknownRoles = %v)", strings, roles.Strings(), unknownRoles)
 
-	return roles, true
+	return roles, true, nil
 }
