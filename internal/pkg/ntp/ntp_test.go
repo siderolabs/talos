@@ -932,3 +932,22 @@ func (suite *NTPSuite) TestNTSBootstrapDoesNotBypassUntrustedCert() {
 
 	suite.Assert().Zero(relaxedAttempts.Load(), "untrusted certificate must not trigger relaxed validation")
 }
+
+func TestQueryPTPDeviceInvalid(t *testing.T) {
+	t.Parallel()
+
+	for _, device := range []string{
+		"/dev/../dev/null",
+		"/dev/../etc/shadow",
+		"/dev/watchdog",
+		"/dev/null",
+		"/dev/ptp_nonexistent",
+	} {
+		t.Run(device, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := ntp.QueryPTPDevice(device)
+			assert.Error(t, err)
+		})
+	}
+}

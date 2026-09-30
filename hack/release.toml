@@ -91,6 +91,16 @@ The defaults are applied only if neither of the thresholds is set in `machine.ku
 On upgrade, nodes with disk usage above 75% will garbage collect unused images.
 """
 
+    [notes.time_check]
+        title = "Time Check API"
+        description = """\
+The `TimeService/TimeCheck` API (`talosctl time --check`) is no longer available to the `os:reader` role, as it allows querying
+arbitrary time servers from the node. The `TimeService/Time` API (querying the configured time server) is still available to `os:reader`.
+
+PTP device paths are now strictly validated both in the machine configuration and in the API: the path should be directly under `/dev`,
+the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the device should be a PTP character device.
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\

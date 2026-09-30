@@ -157,7 +157,7 @@ var rules = map[string]role.Set{
 	),
 
 	"/time.TimeService/Time":      role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/time.TimeService/TimeCheck": role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/time.TimeService/TimeCheck": role.MakeSet(role.Admin, role.Operator),
 }
 
 type machinedService struct {
