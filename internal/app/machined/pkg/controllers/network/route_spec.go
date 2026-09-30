@@ -106,10 +106,30 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 
 		var multiErr *multierror.Error
 
-		// loop over routes and make reconcile decision
-		for route := range list.All() {
-			if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, route); err != nil {
-				multiErr = multierror.Append(multiErr, err)
+		// Tear down stale routes first, then reconcile the desired ones.
+		//
+		// When the next hops of a route change shape (e.g. a single gateway becomes an ECMP set once a second
+		// BGP path is learned, or the other way around), the old spec is torn down and a new spec with a
+		// different ID is created at the same time. The kernel keeps a single IPv4 route per table, destination
+		// and priority, so the new route can only be added once the old one is gone: handling the specs in ID
+		// order could try the add first, fail with EEXIST, and leave the destination without any route until
+		// the controller is restarted after a backoff.
+		for _, phase := range []resource.Phase{resource.PhaseTearingDown, resource.PhaseRunning} {
+			for route := range list.All() {
+				if route.Metadata().Phase() != phase {
+					continue
+				}
+
+				if err = ctrl.syncRoute(ctx, r, logger, conn, links, routes, route); err != nil {
+					multiErr = multierror.Append(multiErr, err)
+				}
+			}
+
+			if phase == resource.PhaseTearingDown {
+				// routes might have been removed by the teardown pass
+				if routes, err = conn.Route.List(); err != nil {
+					return fmt.Errorf("error listing routes: %w", err)
+				}
 			}
 		}
 
