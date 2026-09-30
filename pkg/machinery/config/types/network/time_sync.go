@@ -146,15 +146,49 @@ func (s *TimeSyncConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 		errs = errors.Join(errs, errors.New("only one of ntp or ptp configuration can be specified"))
 	}
 
-	if s.TimeNTP != nil && s.TimeNTP.UseNTS != nil && *s.TimeNTP.UseNTS {
-		for _, server := range s.TimeNTP.Servers {
-			if net.ParseIP(server) != nil {
-				errs = errors.Join(errs, fmt.Errorf("NTS requires hostnames, not IP addresses: %q", server))
-			}
-		}
+	if s.TimeNTP != nil {
+		errs = errors.Join(errs, s.TimeNTP.validate())
+	}
+
+	if s.TimePTP != nil {
+		errs = errors.Join(errs, s.TimePTP.validate())
 	}
 
 	return nil, errs
+}
+
+func (n *NTPConfig) validate() error {
+	var errs error
+
+	useNTS := pointer.SafeDeref(n.UseNTS)
+
+	for _, server := range n.Servers {
+		if config.IsPTPDevicePath(server) {
+			errs = errors.Join(errs, fmt.Errorf("PTP devices should be specified in the ptp section, not as NTP servers: %q", server))
+		}
+
+		if useNTS && net.ParseIP(server) != nil {
+			errs = errors.Join(errs, fmt.Errorf("NTS requires hostnames, not IP addresses: %q", server))
+		}
+	}
+
+	return errs
+}
+
+func (p *PTPConfig) validate() error {
+	var errs error
+
+	for _, device := range p.Devices {
+		if !config.IsPTPDevicePath(device) {
+			errs = errors.Join(errs, fmt.Errorf("PTP device should be a path under %s: %q", config.PTPDevicePathPrefix, device))
+
+			continue
+		}
+
+		errs = errors.Join(errs, config.ValidatePTPDevicePath(device))
+	}
+
+	return errs
 }
 
 // V1Alpha1ConflictValidate implements container.V1Alpha1ConflictValidator interface.

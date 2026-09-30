@@ -26,6 +26,7 @@ import (
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/machinery/compatibility"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
@@ -124,6 +125,16 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	if c.NetworkHostDNSConfig() != nil {
 		if c.NetworkHostDNSConfig().ForwardKubeDNSToHost() && !c.NetworkHostDNSConfig().HostDNSEnabled() {
 			result = multierror.Append(result, errors.New("feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)"))
+		}
+	}
+
+	if c.MachineConfig.MachineTime != nil {
+		for _, server := range c.MachineConfig.MachineTime.TimeServers {
+			if config.IsPTPDevicePath(server) {
+				if err := config.ValidatePTPDevicePath(server); err != nil {
+					result = multierror.Append(result, fmt.Errorf("invalid time server (.machine.time.servers): %w", err))
+				}
+			}
 		}
 	}
 
