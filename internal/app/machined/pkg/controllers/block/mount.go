@@ -990,7 +990,25 @@ func (ctrl *MountController) handleDiskUnmountOperation(
 		zap.String("filesystem", mountCtx.point.FSType()),
 	)
 
+	removeUserVolumeMountPoint(logger, constants.UserVolumeMountPoint, mountCtx.point.Target())
+
 	return nil
+}
+
+// removeUserVolumeMountPoint removes the (now empty) mount point directory of a user volume after unmount.
+//
+// If the directory stays behind, workloads (e.g. local PVs) using the path would silently write to the parent filesystem
+// instead of failing.
+//
+// Only direct children of the user volume root are touched, and os.Remove never removes a non-empty directory.
+func removeUserVolumeMountPoint(logger *zap.Logger, userVolumeRoot, target string) {
+	if filepath.Dir(target) != userVolumeRoot {
+		return
+	}
+
+	if err := os.Remove(target); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		logger.Warn("failed to remove volume mount point directory", zap.String("target", target), zap.Error(err))
+	}
 }
 
 func (ctrl *MountController) handleDirectoryUnmountOperation(
