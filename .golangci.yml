@@ -250,6 +250,7 @@ linters:
         - github.com/mdlayher/ethtool
         - github.com/secure-io/siv-go
         - github.com/anatol/smart.go
+        - google.golang.org/grpc # temporary, downgrading for the vulncheck
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false

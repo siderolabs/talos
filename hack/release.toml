@@ -105,7 +105,7 @@ the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the dev
         title = "Component Updates"
         description = """\
 Linux: 6.18.54
-Kubernetes: 1.37.0
+Kubernetes: 1.38.0-alpha.1
 containerd: 2.3.6
 runc: 1.5.2
 CoreDNS: 1.14.7

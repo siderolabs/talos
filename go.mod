@@ -25,6 +25,8 @@ replace (
 	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72
 )
 
+replace google.golang.org/grpc v1.84.0 => google.golang.org/grpc v1.83.2
+
 // Kubernetes dependencies sharing the same version.
 require (
 	cel.dev/cel-go v0.32.0
@@ -144,7 +146,7 @@ require (
 	github.com/siderolabs/go-debug v0.6.3
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
-	github.com/siderolabs/go-kubernetes v0.2.41
+	github.com/siderolabs/go-kubernetes v0.2.43
 	github.com/siderolabs/go-lldp v0.1.0
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.4
@@ -189,22 +191,22 @@ require (
 	golang.org/x/text v0.42.0
 	golang.org/x/time v0.16.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
-	google.golang.org/grpc v1.83.2
+	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
-	k8s.io/api v0.37.0
-	k8s.io/apiextensions-apiserver v0.37.0
-	k8s.io/apimachinery v0.37.0
-	k8s.io/apiserver v0.37.0
-	k8s.io/client-go v0.37.0
-	k8s.io/component-base v0.37.0
-	k8s.io/cri-api v0.37.0
+	k8s.io/api v0.38.0-alpha.1
+	k8s.io/apiextensions-apiserver v0.38.0-alpha.1
+	k8s.io/apimachinery v0.38.0-alpha.1
+	k8s.io/apiserver v0.38.0-alpha.1
+	k8s.io/client-go v0.38.0-alpha.1
+	k8s.io/component-base v0.38.0-alpha.1
+	k8s.io/cri-api v0.38.0-alpha.1
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-proxy v0.37.0
-	k8s.io/kube-scheduler v0.37.0
-	k8s.io/kubectl v0.37.0
-	k8s.io/kubelet v0.37.0
-	k8s.io/pod-security-admission v0.37.0
+	k8s.io/kube-proxy v0.38.0-alpha.1
+	k8s.io/kube-scheduler v0.38.0-alpha.1
+	k8s.io/kubectl v0.38.0-alpha.1
+	k8s.io/kubelet v0.38.0-alpha.1
+	k8s.io/pod-security-admission v0.38.0-alpha.1
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12007.0
@@ -266,7 +268,7 @@ require (
 	github.com/containerd/plugin v1.1.0 // indirect
 	github.com/containerd/ttrpc v1.2.9 // indirect
 	github.com/coredns/caddy v1.1.4 // indirect
-	github.com/coreos/go-oidc/v3 v3.20.0 // indirect
+	github.com/coreos/go-oidc/v3 v3.21.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
@@ -288,8 +290,8 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
-	github.com/fluxcd/cli-utils v1.2.2 // indirect
-	github.com/fluxcd/pkg/ssa v0.77.0 // indirect
+	github.com/fluxcd/cli-utils v1.3.0 // indirect
+	github.com/fluxcd/pkg/ssa v0.78.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/gaissmai/bart v0.26.1 // indirect
@@ -506,9 +508,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.3 // indirect
 	gorm.io/gorm v1.31.2 // indirect
-	k8s.io/cli-runtime v0.37.0 // indirect
-	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098 // indirect
-	k8s.io/streaming v0.37.0 // indirect
+	k8s.io/cli-runtime v0.38.0-alpha.1 // indirect
+	k8s.io/kube-openapi v0.0.0-20260908163437-c4db2bdfbfe6 // indirect
+	k8s.io/streaming v0.38.0-alpha.1 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.78 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 	modernc.org/libc v1.74.1 // indirect
@@ -516,13 +518,14 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.55.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
-	sigs.k8s.io/controller-runtime v0.24.1 // indirect
+	sigs.k8s.io/controller-runtime v0.25.0 // indirect
 	sigs.k8s.io/json v0.0.0-20260909141634-11ed52e25bc5 // indirect
 	sigs.k8s.io/knftables v0.0.21 // indirect
 	sigs.k8s.io/kustomize/api v0.21.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
+	sigs.k8s.io/structured-merge-diff/v7 v7.0.0 // indirect
 )
 
 exclude github.com/containerd/containerd v1.7.0

@@ -63,17 +63,21 @@ type upgradeSpec struct {
 
 const (
 	// These versions should be kept in sync with Makefile variable RELEASES.
-	previousRelease = "v1.12.9"
-	stableRelease   = "v1.13.7" // or soon-to-be-stable
+	previousRelease = "v1.13.10"
+	stableRelease   = "v1.14.2" // or soon-to-be-stable
 	// The current version (the one being built on CI) is DefaultSettings.CurrentVersion.
 
 	// Command to find Kubernetes version for past releases:
 	//
 	//  git show ${TAG}:pkg/machinery/constants/constants.go | grep KubernetesVersion
-	previousK8sVersion = "1.35.4" // constants.DefaultKubernetesVersion in the previousRelease
-	stableK8sVersion   = "1.36.2" // constants.DefaultKubernetesVersion in the stableRelease
+	previousK8sVersion = "1.36.3" // constants.DefaultKubernetesVersion in the previousRelease
+	stableK8sVersion   = "1.37.1" // constants.DefaultKubernetesVersion in the stableRelease
 	currentK8sVersion  = constants.DefaultKubernetesVersion
 )
+
+func installerImageFor(version string) string {
+	return images.NewInstallerImage("", "metal", images.DefaultInstallerImageSchematic, version)
+}
 
 // upgradePreviousToStable upgrades from the previous Talos release to the stable release.
 func upgradePreviousToStable() upgradeSpec {
@@ -87,11 +91,11 @@ func upgradePreviousToStable() upgradeSpec {
 				constants.InitramfsAsset,
 			),
 		),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", previousRelease),
+		SourceInstallerImage: installerImageFor(previousRelease),
 		SourceVersion:        previousRelease,
 		SourceK8sVersion:     previousK8sVersion,
 
-		TargetInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", stableRelease),
+		TargetInstallerImage: installerImageFor(stableRelease),
 		TargetVersion:        stableRelease,
 		TargetK8sVersion:     stableK8sVersion,
 
@@ -107,7 +111,7 @@ func upgradeStableToCurrent() upgradeSpec {
 
 		SourceKernelPath:     helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.KernelAsset)),
 		SourceInitramfsPath:  helpers.ArtifactPath(filepath.Join(trimVersion(stableRelease), constants.InitramfsAsset)),
-		SourceInstallerImage: fmt.Sprintf("%s:%s", "ghcr.io/siderolabs/installer", stableRelease),
+		SourceInstallerImage: installerImageFor(stableRelease),
 		SourceVersion:        stableRelease,
 		SourceK8sVersion:     stableK8sVersion,
 
