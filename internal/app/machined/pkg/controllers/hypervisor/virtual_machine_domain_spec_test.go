@@ -7,7 +7,10 @@ package hypervisor_test
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -15,12 +18,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
@@ -467,4 +473,176 @@ func (*externalSpecProducer) Run(ctx context.Context, _ controller.Runtime, _ *z
 	<-ctx.Done()
 
 	return nil
+}
+
+// contentLibraryPlaceholder stands in for the library's mount point, which is a temporary
+// directory and therefore differs between runs, so that the fixture can stay exact.
+const contentLibraryPlaceholder = "/content-library"
+
+func (suite *VirtualMachineSpecSuite) TestRendersCDROMFromContentLibrary() {
+	path := suite.T().TempDir()
+	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeID: "u-images", Path: path, Ready: true}
+	suite.Create(library)
+
+	doc := newVirtualMachine("booted")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		{
+			DiskName:      "install",
+			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			DiskBootOrder: 1,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+					ImageLibrary: "images",
+					ImageFile:    "talos.iso",
+				},
+			},
+		},
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	want, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", "cdrom.xml"))
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal(string(want), strings.ReplaceAll(res.TypedSpec().DomainXML, path, contentLibraryPlaceholder)+"\n")
+	})
+
+	res, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), doc.Name())
+	suite.Require().NoError(err)
+	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+}
+
+// Two cdroms on the same driver must not both claim sda.
+func (suite *VirtualMachineSpecSuite) TestAllocatesDistinctTargetDevices() {
+	path := suite.T().TempDir()
+	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "two-images")
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeID: "u-two-images", Path: path, Ready: true}
+	suite.Create(library)
+
+	cdrom := func(name string, bus hypervisorhelpers.VirtualMachineDiskBus) hypervisorcfg.VirtualMachineDisk {
+		return hypervisorcfg.VirtualMachineDisk{
+			DiskName: name,
+			DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			DiskBus:  bus,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+					ImageLibrary: "two-images",
+					ImageFile:    "talos.iso",
+				},
+			},
+		}
+	}
+
+	doc := newVirtualMachine("two-cdroms")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		cdrom("install", hypervisorhelpers.VirtualMachineDiskBusSATA),
+		cdrom("rescue", hypervisorhelpers.VirtualMachineDiskBusSCSI),
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, `<target dev="sda" bus="sata"></target>`)
+		asrt.Contains(res.TypedSpec().DomainXML, `<target dev="sdb" bus="scsi"></target>`)
+	})
+}
+
+// libvirt has no nvme disk bus, so the domain is refused rather than rendered unusably.
+func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBus() {
+	path := suite.T().TempDir()
+	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "nvme-images")
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeID: "u-nvme-images", Path: path, Ready: true}
+	suite.Create(library)
+
+	doc := newVirtualMachine("nvme-cdrom")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		{
+			DiskName: "install",
+			DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+			DiskBus:  hypervisorhelpers.VirtualMachineDiskBusNVMe,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+					ImageLibrary: "nvme-images",
+					ImageFile:    "talos.iso",
+				},
+			},
+		},
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertConversionError(doc.Name(), `disk "install": unsupported bus "nvme"`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
+}
+
+// VirtualMachineStaleDiskSuite runs the domain renderer without VirtualMachineDiskController, so
+// that the disk statuses it reads are the ones the test writes.
+type VirtualMachineStaleDiskSuite struct {
+	ctest.DefaultSuite
+}
+
+func TestVirtualMachineStaleDiskSuite(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, &VirtualMachineStaleDiskSuite{
+		Timeout: 15 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+		},
+	})
+}
+
+// A disk status is keyed by the disk's name alone, so changing the image leaves the previous
+// status in place until VirtualMachineDiskController catches up. Rendering from it would attach
+// the previous image, and a rendered domain is started.
+func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImage() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{cdromDiskSpec("install", libraryName, "new.iso", "")},
+	}
+	suite.Create(spec)
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, "install"))
+	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           "install",
+		SourcePath:     filepath.Join(contentLibraryPlaceholder, "old.iso"),
+		Format:         "raw",
+		ReadOnly:       true,
+		Ready:          true,
+		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "old.iso"},
+	}
+	suite.Create(status)
+
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, vmName)
+
+	status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](suite.Ctx(), suite.State(), status.Metadata().ID())
+	suite.Require().NoError(err)
+
+	status.TypedSpec().SourcePath = filepath.Join(contentLibraryPlaceholder, "new.iso")
+	status.TypedSpec().Image.File = "new.iso"
+	suite.Update(status)
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, filepath.Join(contentLibraryPlaceholder, "new.iso"))
+		asrt.NotContains(res.TypedSpec().DomainXML, "old.iso")
+	})
 }

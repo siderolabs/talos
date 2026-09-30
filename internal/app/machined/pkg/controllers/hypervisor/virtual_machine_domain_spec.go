@@ -9,12 +9,14 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"net"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
@@ -41,6 +43,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineDiskStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -96,7 +103,12 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 
 	links := newHostLinks(linkStatuses)
 
-	desired := make(map[string]struct{}, specs.Len())
+	resolvedDisks, err := listResolvedDisks(ctx, runtime)
+	if err != nil {
+		return err
+	}
+
+	desired := make(map[resource.ID]struct{}, specs.Len())
 
 	var errs []error
 
@@ -110,7 +122,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		if err := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				domainXML, renderErr := renderVirtualMachineDomain(name, vm.TypedSpec(), links)
+				domainXML, renderErr := renderVirtualMachineDomain(name, vm.TypedSpec(), links, resolvedDisks)
 				if renderErr != nil {
 					if res.TypedSpec().DomainXML == "" {
 						// Nothing was ever defined, so there is nothing to stop.
@@ -134,8 +146,8 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 				return nil
 			},
 		); err != nil {
-			if errors.Is(err, errLinkNotFound) || errors.Is(err, errLinkNotEthernet) {
-				logger.Info("virtual machine is held back by its host links", zap.Error(err))
+			if isHeldBack(err) {
+				logger.Info("virtual machine is held back by its host resources", zap.Error(err))
 
 				continue
 			}
@@ -144,39 +156,75 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		}
 	}
 
-	return errors.Join(append(errs, ctrl.cleanupDomains(ctx, runtime, desired))...)
+	return errors.Join(append(errs, cleanupDomainSpecs(ctx, runtime, desired))...)
 }
 
-func (ctrl *VirtualMachineDomainSpecController) cleanupDomains(ctx context.Context, runtime controller.Runtime, desired map[string]struct{}) error {
-	domains, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, runtime)
+// cleanupDomainSpecs removes the domain specs of virtual machines which are no longer desired, and
+// those which are already leaving.
+//
+// safe.CleanupOutputs is not usable here: it destroys without tearing down first, and
+// VirtualMachineController holds a finalizer on every domain spec it has claimed. The spec has to
+// be torn down so that controller stops the domain and gives back its hold, and only then
+// destroyed. The destroy-ready input wakes this controller once the spec is free.
+func cleanupDomainSpecs(ctx context.Context, runtime controller.Runtime, desired map[resource.ID]struct{}) error {
+	domainSpecs, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, runtime)
 	if err != nil {
 		return fmt.Errorf("failed to list virtual machine domain specs: %w", err)
 	}
 
-	for domain := range domains.All() {
-		if _, wanted := desired[domain.Metadata().ID()]; wanted && domain.Metadata().Phase() == resource.PhaseRunning {
+	for domainSpec := range domainSpecs.All() {
+		md := domainSpec.Metadata()
+
+		if _, wanted := desired[md.ID()]; wanted && md.Phase() == resource.PhaseRunning {
 			continue
 		}
 
-		ready, teardownErr := runtime.Teardown(ctx, domain.Metadata())
-		if teardownErr != nil {
-			return fmt.Errorf("failed to tear down virtual machine domain spec %q: %w", domain.Metadata().ID(), teardownErr)
+		okToDestroy, err := runtime.Teardown(ctx, md)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("failed to tear down virtual machine domain spec %q: %w", md.ID(), err)
 		}
 
-		if !ready {
+		if !okToDestroy {
 			continue
 		}
 
-		if destroyErr := runtime.Destroy(ctx, domain.Metadata()); destroyErr != nil {
-			return fmt.Errorf("failed to destroy virtual machine domain spec %q: %w", domain.Metadata().ID(), destroyErr)
+		if err := runtime.Destroy(ctx, md); err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to destroy virtual machine domain spec %q: %w", md.ID(), err)
 		}
 	}
 
 	return nil
 }
 
+// listResolvedDisks indexes the published disk statuses by their resource ID, which is the key
+// renderVirtualMachineDisks looks a disk up under. The ID covers the disk's name only, so the
+// render checks the image too before it uses what it finds.
+func listResolvedDisks(ctx context.Context, runtime controller.Runtime) (map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, error) {
+	diskStatuses, err := safe.ReaderListAll[*hypervisor.VirtualMachineDiskStatus](ctx, runtime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list virtual machine disk statuses: %w", err)
+	}
+
+	resolvedDisks := make(map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, diskStatuses.Len())
+
+	for status := range diskStatuses.All() {
+		resolvedDisks[status.Metadata().ID()] = *status.TypedSpec()
+	}
+
+	return resolvedDisks, nil
+}
+
 //nolint:gocyclo
-func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpecSpec, links hostLinks) (string, error) {
+func renderVirtualMachineDomain(
+	name string,
+	spec *hypervisor.VirtualMachineSpecSpec,
+	links hostLinks,
+	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+) (string, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
 		return "", err
 	}
@@ -218,10 +266,6 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 		},
 	}
 
-	// Resolve the CPU against the host rather than leaving the model to QEMU, whose default is
-	// x86-64-v1. Talos itself is built for x86-64-v2, so a guest left on the default boots its
-	// kernel and then faults in machined. host-model keeps the domain expressed in named models
-	// libvirt can reason about, unlike a passthrough of whatever this host happens to be.
 	domain.CPU = &libvirtxml.DomainCPU{
 		Mode: "host-model",
 	}
@@ -263,7 +307,22 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 
 	renderVirtualMachineFirmware(&domain, spec.Firmware)
 
-	if spec.Console.Serial {
+	renderVirtualMachineConsole(&domain, spec.Console)
+
+	if err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks); err != nil {
+		return "", err
+	}
+
+	domainXML, err := domain.Marshal()
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
+	}
+
+	return domainXML, nil
+}
+
+func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec) {
+	if console.Serial {
 		// libvirt allocates the PTY; no host device path is prescribed.
 		domain.Devices.Serials = []libvirtxml.DomainSerial{
 			{
@@ -274,7 +333,7 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 		}
 	}
 
-	if spec.Console.VNC {
+	if console.VNC {
 		// Bind locally; a remote graphics endpoint requires a separate access policy.
 		domain.Devices.Graphics = []libvirtxml.DomainGraphic{
 			{
@@ -286,13 +345,6 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 			},
 		}
 	}
-
-	domainXML, err := domain.Marshal()
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
-	}
-
-	return domainXML, nil
 }
 
 func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor.VirtualMachineFirmwareSpec) {
@@ -373,6 +425,21 @@ var errLinkNotFound = errors.New("host link not found")
 // errLinkNotEthernet marks a host link that exists but cannot carry a macvtap.
 var errLinkNotEthernet = errors.New("host link is not an Ethernet link")
 
+// errDiskNotReady marks a render waiting on a disk that has not been resolved or provisioned yet.
+var errDiskNotReady = errors.New("not ready")
+
+// errDiskUnsupported marks a disk nothing on the host will ever make attachable. Unlike
+// errDiskNotReady, waiting does not help: the configuration has to change.
+var errDiskUnsupported = errors.New("unsupported disk")
+
+// isHeldBack reports whether a render failed on something this controller should wait out rather
+// than fail on. It is wider than what renderStage grades as pending: a configuration the host
+// cannot satisfy is a permanent obstacle to report, but still no reason to restart the controller.
+func isHeldBack(err error) bool {
+	return errors.Is(err, errLinkNotFound) || errors.Is(err, errLinkNotEthernet) ||
+		errors.Is(err, errDiskNotReady) || errors.Is(err, errDiskUnsupported)
+}
+
 // hostLinks carries what an interface needs to know about the host's links: how to resolve a
 // name or alias, and whether what it resolves to can carry a macvtap.
 type hostLinks struct {
@@ -432,7 +499,7 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 	for i, iface := range interfaces {
 		result = append(result, libvirtxml.DomainInterface{
 			MAC: &libvirtxml.DomainInterfaceMAC{
-				Address: interfaceMAC(name, iface.Name),
+				Address: interfaceHardwareAddr(name, iface),
 			},
 			// A macvtap in bridge mode lets guests on the same lower link reach each other, and
 			// a host macvlan in bridge mode on the same parent reach the guest. The lower link's
@@ -460,6 +527,16 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 // interfaceAliasPrefix marks a device alias as user-assigned; libvirt ignores other aliases.
 const interfaceAliasPrefix = "ua-"
 
+// interfaceHardwareAddr is the address the guest is given: the configured one, or a derived one
+// when the configuration names none.
+func interfaceHardwareAddr(vmName string, iface hypervisor.VirtualMachineInterfaceSpec) string {
+	if iface.HardwareAddr != "" {
+		return iface.HardwareAddr
+	}
+
+	return interfaceMAC(vmName, iface.Name)
+}
+
 // interfaceMAC derives a stable MAC address for an interface under the QEMU OUI.
 func interfaceMAC(vmName, ifaceName string) string {
 	sum := sha256.Sum256([]byte(vmName + "\x00" + ifaceName))
@@ -483,6 +560,18 @@ func validateVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtu
 
 		if iface.Link == "" {
 			return fmt.Errorf("virtual machine %q: interface %q: link is required", name, iface.Name)
+		}
+
+		if iface.HardwareAddr != "" {
+			addr, err := net.ParseMAC(iface.HardwareAddr)
+			if err != nil {
+				return fmt.Errorf("virtual machine %q: interface %q: %w", name, iface.Name, err)
+			}
+
+			if len(addr) != 6 || addr[0]&1 != 0 {
+				return fmt.Errorf("virtual machine %q: interface %q: hardware address %q must be a 6 byte unicast address",
+					name, iface.Name, iface.HardwareAddr)
+			}
 		}
 	}
 
@@ -643,11 +732,110 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 		return err
 	}
 
-	// Pool and library references are logical names, not resolved volume paths.
-	// Rendering fewer disks than requested would silently alter the VM definition.
-	if len(spec.Disks) != 0 {
-		return fmt.Errorf("virtual machine %q: unresolved disks require provisioned volume sources", name)
+	return nil
+}
+
+// renderVirtualMachineDisks attaches every disk of the virtual machine, in configuration order.
+func renderVirtualMachineDisks(
+	domain *libvirtxml.Domain,
+	name string,
+	disks []hypervisor.VirtualMachineDiskSpec,
+	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+) error {
+	devs := targetDevAllocator{}
+
+	for _, disk := range disks {
+		// Graded before the disk status is consulted, because every status failure reads as waiting:
+		// a disk this slice does not provision would otherwise leave the machine pending forever.
+		if err := checkVirtualMachineDiskSupported(disk); err != nil {
+			return fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
+		}
+
+		resolved, found := resolvedDisks[hypervisor.VirtualMachineDiskStatusID(name, disk.Name)]
+
+		switch {
+		case !found:
+			return fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, errDiskNotReady)
+		case resolved.Image != *disk.Provision.FromImage:
+			// The status is keyed by name alone, so an image change leaves the previous one in
+			// place until VirtualMachineDiskController catches up. Rendering it would attach the
+			// previous image, and the domain is started as soon as it is rendered.
+			return fmt.Errorf("virtual machine %q: disk %q is %w: its disk status is for another image", name, disk.Name, errDiskNotReady)
+		case !resolved.Ready:
+			return fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, errDiskNotReady, resolved.Error)
+		}
+
+		dev, err := devs.allocate(disk.Bus)
+		if err != nil {
+			return fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
+		}
+
+		device := "disk"
+		if disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() {
+			device = "cdrom"
+		}
+
+		rendered := libvirtxml.DomainDisk{
+			Device: device,
+			Driver: &libvirtxml.DomainDiskDriver{
+				Name: "qemu",
+				Type: resolved.Format,
+			},
+			Source: &libvirtxml.DomainDiskSource{
+				File: &libvirtxml.DomainDiskSourceFile{
+					File: resolved.SourcePath,
+				},
+			},
+			Target: &libvirtxml.DomainDiskTarget{
+				Dev: dev,
+				Bus: disk.Bus,
+			},
+		}
+
+		if resolved.ReadOnly {
+			rendered.ReadOnly = &libvirtxml.DomainDiskReadOnly{}
+		}
+
+		// Talos renders no <os><boot dev>, so per-device boot elements are free to use; libvirt
+		// rejects a domain that mixes the two.
+		if disk.BootOrder > 0 {
+			rendered.Boot = &libvirtxml.DomainDeviceBoot{Order: uint(disk.BootOrder)}
+		}
+
+		domain.Devices.Disks = append(domain.Devices.Disks, rendered)
 	}
 
 	return nil
+}
+
+// targetDevAllocator hands out the guest device names libvirt requires to be unique.
+//
+// Buses sharing a driver share a sequence: scsi and sata both present sd*, so a domain with one of
+// each must not name both sda.
+type targetDevAllocator map[string]int
+
+func (a targetDevAllocator) allocate(bus string) (string, error) {
+	var prefix string
+
+	switch bus {
+	case hypervisorhelpers.VirtualMachineDiskBusVirtio.String():
+		prefix = "vd"
+	case hypervisorhelpers.VirtualMachineDiskBusSCSI.String(), hypervisorhelpers.VirtualMachineDiskBusSATA.String():
+		prefix = "sd"
+	default:
+		// libvirt has no nvme disk bus: an NVMe namespace is a source type or a controller, not a
+		// <target bus>. Refuse rather than render a domain libvirt will not accept.
+		return "", fmt.Errorf("unsupported bus %q", bus)
+	}
+
+	index := a[prefix]
+	if index >= 26 {
+		// Past sdz libvirt continues sdaa, sdab and so on. A guest with 27 disks on one driver is
+		// not a case this supports yet.
+		return "", fmt.Errorf("too many disks on the %q bus", bus)
+	}
+
+	a[prefix] = index + 1
+
+	return prefix + string(rune('a'+index)), nil
 }

@@ -42,6 +42,10 @@ type VirtualMachineInterfaceSpec struct {
 	Name string `yaml:"name" protobuf:"1"`
 	// Link identifier, as seen from the host
 	Link string `yaml:"link" protobuf:"2"`
+	// HardwareAddr is the address presented to the guest.
+	//
+	// Empty when it is to be derived from the virtual machine and interface names.
+	HardwareAddr string `yaml:"hardwareAddr,omitempty" protobuf:"3"`
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.

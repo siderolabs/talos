@@ -19,6 +19,8 @@ message ContentLibraryStatusSpec {
   bool ready = 3;
   // Error describes why the library is not ready.
   string error = 4;
+  // Fingerprint changes whenever the files in the library do (name, size, modification time).
+  string fingerprint = 5;
 }
 
 // VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
@@ -73,6 +75,33 @@ message VirtualMachineDiskSpec {
   VirtualMachineDiskProvisionSpec provision = 8;
 }
 
+// VirtualMachineDiskStatusSpec is the spec for VirtualMachineDiskStatus.
+message VirtualMachineDiskStatusSpec {
+  // VirtualMachine is the name of the virtual machine the disk belongs to.
+  string virtual_machine = 1;
+  // Name is the disk's name within that virtual machine.
+  string name = 2;
+  // SourcePath is the absolute host path libvirt opens.
+  //
+  // Only meaningful when Ready.
+  string source_path = 3;
+  // Format is the on-host format of SourcePath, as libvirt's disk driver type.
+  //
+  // Only meaningful when Ready.
+  string format = 4;
+  // ReadOnly is true when the guest must not write to the source.
+  bool read_only = 5;
+  // Ready is true once the source exists and may be attached.
+  bool ready = 6;
+  // Error describes why the disk is not ready.
+  string error = 7;
+  // Image is the content library image this status resolved.
+  //
+  // It is recorded whether or not the resolution succeeded, so that a status left behind by an
+  // earlier image is recognizable as stale rather than usable.
+  VirtualMachineDiskFromImageSpec image = 8;
+}
+
 // VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 message VirtualMachineDomainSpecSpec {
   // DomainXML is the libvirt domain description used to start the guest.
@@ -104,6 +133,10 @@ message VirtualMachineInterfaceSpec {
   string name = 1;
   // Link identifier, as seen from the host
   string link = 2;
+  // HardwareAddr is the address presented to the guest.
+  //
+  // Empty when it is to be derived from the virtual machine and interface names.
+  string hardware_addr = 3;
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.

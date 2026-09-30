@@ -81,6 +81,19 @@ func (suite *ContentLibrarySuite) provisionLibrary() (context.Context, string, s
 
 	ctx := client.WithNode(suite.ctx, node)
 
+	name, path := provisionContentLibrary(&suite.APISuite, ctx, node)
+
+	return ctx, name, path
+}
+
+// provisionContentLibrary declares a content library on a directory user volume of node and waits
+// for it to come up.
+//
+// It returns the library's ID and the path its contents sit at. The library and the volume backing
+// it are removed when the test ends.
+func provisionContentLibrary(suite *base.APISuite, ctx context.Context, node string) (string, string) { //nolint:revive
+	suite.T().Helper()
+
 	// Randomized so repeated runs against the same cluster don't collide on a leftover volume.
 	name := fmt.Sprintf("cl-%04x", rand.Int31())
 	volumeID := constants.UserVolumePrefix + name
@@ -101,8 +114,8 @@ func (suite *ContentLibrarySuite) provisionLibrary() (context.Context, string, s
 	suite.PatchMachineConfig(ctx, volumeDoc, libraryDoc)
 
 	suite.T().Cleanup(func() {
-		// A context of its own: cleanups run after TearDownTest, which has already canceled
-		// suite.ctx by then.
+		// A context of its own: cleanups run after TearDownTest, which has already canceled the
+		// suite's context by then.
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
@@ -126,7 +139,7 @@ func (suite *ContentLibrarySuite) provisionLibrary() (context.Context, string, s
 		},
 	)
 
-	return ctx, name, filepath.Join(constants.UserVolumeMountPoint, name)
+	return name, filepath.Join(constants.UserVolumeMountPoint, name)
 }
 
 // TestLibraryBecomesReady covers a library declared on a user volume being reported as ready, and

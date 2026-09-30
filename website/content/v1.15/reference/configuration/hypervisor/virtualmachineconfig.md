@@ -63,7 +63,7 @@ firmware:
 # Disks attached to the virtual machine.
 disks:
     - name: system # Name of the disk, unique within the virtual machine.
-      pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
+      pool: pool1 # Name of the `StoragePool` document this disk's volume lives in.
       size: 20GiB # Size of the volume.
       bootOrder: 1 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
@@ -77,14 +77,13 @@ disks:
             # # Integrity check of the library file, verified before the volume is provisioned.
             # digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
     - name: data # Name of the disk, unique within the virtual machine.
-      pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
+      pool: pool1 # Name of the `StoragePool` document this disk's volume lives in.
       size: 100GiB # Size of the volume.
       # Where the volume's contents come from.
       provision:
         # Create an empty volume, formatted per `format`.
         blank: {}
     - name: install # Name of the disk, unique within the virtual machine.
-      pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
       type: cdrom # Kind of device the disk is presented as.
       bootOrder: 2 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
@@ -96,6 +95,9 @@ disks:
 
             # # Integrity check of the library file, verified before the volume is provisioned.
             # digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
+
+      # # Name of the `StoragePool` document this disk's volume lives in.
+      # pool: pool1
 # Consoles attached to the virtual machine.
 console:
     # Serial console settings.
@@ -110,8 +112,14 @@ networking:
     interfaces:
         - name: net0 # Name of the interface, unique within the virtual machine.
           link: eth0 # Kernel name (or alias) of the host link the interface is attached to.
+
+          # # Hardware (MAC) address presented to the guest.
+          # hardwareAddr: 52:54:00:12:34:56
         - name: net1 # Name of the interface, unique within the virtual machine.
           link: eth1 # Kernel name (or alias) of the host link the interface is attached to.
+
+          # # Hardware (MAC) address presented to the guest.
+          # hardwareAddr: 52:54:00:12:34:56
 {{< /highlight >}}
 
 
@@ -317,7 +325,7 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the disk, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It names the volume created in the storage pool.  | |
-|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document. The reference<br>is checked for shape only: nothing resolves it against the rest of the machine<br>configuration yet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pool` |string |Name of the `StoragePool` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document. The reference<br>is checked for shape only: nothing resolves it against the rest of the machine<br>configuration yet.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose image is attached in place<br>from its content library and never lands in a pool. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pool: pool1
 {{< /highlight >}}</details> | |
 |`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |
@@ -378,7 +386,7 @@ file: talos-1.14.qcow2
 |`digest` |string |Integrity check of the library file, verified before the volume is provisioned.<br><br>Written as `<algorithm>:<hex>`, under either `sha256` or `sha512`.<br><br>Optional; the file is used as-is when this is unset. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
 {{< /highlight >}}</details> | |
-|`mode` |VirtualMachineDiskImageMode |How the volume is derived from the image.<br><br>`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library<br>image: fast and space-cheap, but it pins that image for the lifetime of the disk, and it<br>requires `format: qcow2`.<br><br>Optional; defaults to `copy`.  |`copy`<br />`linked`<br /> |
+|`mode` |VirtualMachineDiskImageMode |How the volume is derived from the image.<br><br>`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library<br>image: fast and space-cheap, but it pins that image for the lifetime of the disk, and it<br>requires `format: qcow2`.<br><br>Optional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never<br>diverges from the image, and which is therefore attached in place.  |`copy`<br />`linked`<br /> |
 
 
 
@@ -466,6 +474,9 @@ name: net0
 {{< /highlight >}}</details> | |
 |`link` |string |Kernel name (or alias) of the host link the interface is attached to.<br><br>The link must already exist on the host and be an Ethernet link, e.g. a physical<br>interface, a bond, or a VLAN. It is attached to as is. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 link: eth0
+{{< /highlight >}}</details> | |
+|`hardwareAddr` |HardwareAddr |Hardware (MAC) address presented to the guest.<br><br>Defaults to an address derived from the virtual machine and interface names, which is<br>stable for as long as both keep their names. Set it to pin the address a DHCP server<br>reserves against, or to keep one across a rename.<br><br>It must be a unicast address, and is not allowed to be all zeroes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+hardwareAddr: 52:54:00:12:34:56
 {{< /highlight >}}</details> | |
 
 

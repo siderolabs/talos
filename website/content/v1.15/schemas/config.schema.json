@@ -2580,9 +2580,9 @@
         "pool": {
           "type": "string",
           "title": "pool",
-          "description": "Name of the StoragePoolConfig document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n",
-          "markdownDescription": "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.",
-          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\u003c/p\u003e\n"
+          "description": "Name of the StoragePool document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n\nRequired for a disk, and not allowed on a cdrom, whose image is attached in place\nfrom its content library and never lands in a pool.\n",
+          "markdownDescription": "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePool\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose image is attached in place\nfrom its content library and never lands in a pool.\u003c/p\u003e\n"
         },
         "size": {
           "type": "string",
@@ -2642,7 +2642,6 @@
       "type": "object",
       "required": [
         "name",
-        "pool",
         "provision"
       ],
       "description": "VirtualMachineDisk describes a single disk attached to a virtual machine."
@@ -2682,9 +2681,9 @@
             "linked"
           ],
           "title": "mode",
-          "description": "How the volume is derived from the image.\n\ncopy makes a full, independent copy. linked makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires format: qcow2.\n\nOptional; defaults to copy.\n",
-          "markdownDescription": "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`.",
-          "x-intellij-html-description": "\u003cp\u003eHow the volume is derived from the image.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003ecopy\u003c/code\u003e makes a full, independent copy. \u003ccode\u003elinked\u003c/code\u003e makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires \u003ccode\u003eformat: qcow2\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003ecopy\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "How the volume is derived from the image.\n\ncopy makes a full, independent copy. linked makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires format: qcow2.\n\nOptional; defaults to copy. Not allowed on a cdrom, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.\n",
+          "markdownDescription": "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.",
+          "x-intellij-html-description": "\u003cp\u003eHow the volume is derived from the image.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003ecopy\u003c/code\u003e makes a full, independent copy. \u003ccode\u003elinked\u003c/code\u003e makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires \u003ccode\u003eformat: qcow2\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003ecopy\u003c/code\u003e. Not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2772,6 +2771,14 @@
           "description": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.\n",
           "markdownDescription": "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.",
           "x-intellij-html-description": "\u003cp\u003eKernel name (or alias) of the host link the interface is attached to.\u003c/p\u003e\n\n\u003cp\u003eThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.\u003c/p\u003e\n"
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "pattern": "^[0-9a-f:]+$",
+          "title": "hardwareAddr",
+          "description": "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.\n",
+          "markdownDescription": "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.",
+          "x-intellij-html-description": "\u003cp\u003eHardware (MAC) address presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\u003c/p\u003e\n\n\u003cp\u003eIt must be a unicast address, and is not allowed to be all zeroes.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

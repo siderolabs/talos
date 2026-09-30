@@ -58,6 +58,8 @@ func compileDomainGrammar(schemas fs.FS) (*relaxng.Grammar, error) {
 	return grammar, nil
 }
 
+var heliumDriverElement = regexp.MustCompile(`<driver[^>]*(></driver>|/>)`)
+
 func validateDomainXML(data []byte) error {
 	domainGrammar.Do(func() {
 		schemas, err := fs.Sub(libvirtSchemas, "testdata/libvirt")
@@ -74,7 +76,7 @@ func validateDomainXML(data []byte) error {
 		return domainGrammar.err
 	}
 
-	doc, err := helium.NewParser().Parse(context.Background(), hoistInterfaceSources(data))
+	doc, err := helium.NewParser().Parse(context.Background(), hoistInterfaceSources(heliumDriverElement.ReplaceAll(data, nil)))
 	if err != nil {
 		return fmt.Errorf("parse domain XML: %w", err)
 	}

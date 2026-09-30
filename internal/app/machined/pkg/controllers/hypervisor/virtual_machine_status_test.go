@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -543,6 +544,39 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedLinkExplainsUndefinedDomain() 
 		`virtual machine "vm1": interface "net0": host link not found: "uplink"`)
 }
 
+// A disk whose status has not been published yet is the same kind of obstacle as a link the host
+// has not brought up: worth waiting for, not a config error.
+func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
+	name := "vm1"
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+
+	spec := newRenderableSpec(name, "running")
+	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
+		Name: "install",
+		Bus:  hypervisorhelpers.VirtualMachineDiskBusSATA.String(),
+		Type: hypervisorhelpers.VirtualMachineDiskTypeCDROM.String(),
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"},
+		},
+	}}
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "vm1": disk "install" is not ready: no disk status yet`)
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(name, "install"))
+	status.TypedSpec().VirtualMachine = name
+	status.TypedSpec().Name = "install"
+	status.TypedSpec().SourcePath = "/var/lib/libvirt/images/vm1-install.qcow2"
+	status.TypedSpec().Format = "qcow2"
+	status.TypedSpec().Ready = true
+	status.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"}
+	s.Create(status)
+
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+}
+
 // A link of the wrong type is not something to wait for: the config has to change, so the stage
 // says error rather than pending.
 func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
@@ -557,6 +591,24 @@ func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
 
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
 		`virtual machine "vm1": interface "net0": host link is not an Ethernet link: "lo"`)
+}
+
+// A disk this slice does not provision is not something to wait for: no host resource will ever
+// resolve it, so the stage says error rather than pending.
+func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
+	spec := newRenderableSpec("vm1", "running")
+	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
+		Name:      "data",
+		Pool:      "pool1",
+		Size:      20 << 30,
+		Type:      hypervisorhelpers.VirtualMachineDiskTypeDisk.String(),
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true},
+	}}
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
+		`virtual machine "vm1": disk "data": unsupported disk: only cdrom disks are provisioned today, this one is "disk"`)
 }
 
 func (s *VirtualMachineStatusSuite) TestForeignDomainIsError() {

@@ -134,6 +134,7 @@ func NewState() (*State, error) {
 		&containers.ContainerStatus{},
 		&hypervisor.ContentLibraryStatus{},
 		&hypervisor.VirtualMachineSpec{},
+		&hypervisor.VirtualMachineDiskStatus{},
 		&hypervisor.VirtualMachineDomainSpec{},
 		&hypervisor.VirtualMachineDomainStatus{},
 		&hypervisor.VirtualMachineStatus{},

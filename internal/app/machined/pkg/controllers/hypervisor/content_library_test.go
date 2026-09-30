@@ -395,3 +395,101 @@ func (suite *ContentLibrarySuite) TestRemovedFromConfig() {
 	ctest.AssertNoResource[*block.VolumeMountRequest](suite, testRequestID)
 	suite.assertHeld(testRequestID, false)
 }
+
+// landImage puts a file into a library the way an upload does: staged elsewhere, then renamed into
+// place, so the library only ever sees the finished file.
+func (suite *ContentLibrarySuite) landImage(target, name, contents string) {
+	suite.T().Helper()
+
+	staged := filepath.Join(suite.T().TempDir(), name)
+	suite.Require().NoError(os.WriteFile(staged, []byte(contents), 0o600))
+	suite.Require().NoError(os.Rename(staged, filepath.Join(target, name)))
+}
+
+// A library's contents are files, not resources: writing one produces no event of its own, so the
+// status carries a fingerprint of the listing that consumers can watch instead.
+func (suite *ContentLibrarySuite) TestPublishesFingerprint() {
+	target := suite.T().TempDir()
+
+	suite.applyLibrary(newDoc())
+	ctest.AssertResource(suite, testRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+	suite.satisfyMount(testRequestID, testVolumeID, target, false)
+
+	var empty string
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.NotEmpty(status.TypedSpec().Fingerprint)
+
+		empty = status.TypedSpec().Fingerprint
+	})
+
+	suite.landImage(target, "talos.iso", "an image")
+
+	var withImage string
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.NotEqual(empty, status.TypedSpec().Fingerprint, "an uploaded image must change the fingerprint")
+
+		withImage = status.TypedSpec().Fingerprint
+	})
+
+	// An upload in flight is staged under a reserved prefix, and is not contents yet.
+	suite.Require().NoError(os.WriteFile(filepath.Join(target, staging.Prefix+"partial"), []byte("half"), 0o600))
+
+	suite.Assert().Never(func() bool {
+		status, err := ctest.Get[*hypervisor.ContentLibraryStatus](suite,
+			hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary).Metadata())
+
+		return err == nil && status.TypedSpec().Fingerprint != withImage
+	}, time.Second, 100*time.Millisecond)
+
+	suite.Require().NoError(os.Remove(filepath.Join(target, "talos.iso")))
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.NotEqual(withImage, status.TypedSpec().Fingerprint, "a deleted image must change the fingerprint")
+	})
+}
+
+// TestWatchesAnotherVolumesContents covers the contents watch following a library repointed at
+// another volume: the directory the new mount brought has to be watched too, or an image landing in
+// it would never move the fingerprint.
+func (suite *ContentLibrarySuite) TestWatchesAnotherVolumesContents() {
+	const otherVolumeName = "other-images"
+
+	suite.applyLibrary(newDoc())
+	ctest.AssertResource(suite, testRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
+
+	var empty string
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+
+		empty = status.TypedSpec().Fingerprint
+	})
+
+	suite.updateConfig(
+		newUserVolume(testVolumeName),
+		newUserVolume(otherVolumeName),
+		newDocBackedBy(otherVolumeName),
+	)
+
+	otherVolumeID := constants.UserVolumePrefix + otherVolumeName
+	otherRequestID := contentLibraryControllerName + "/" + testLibrary + "/" + otherVolumeID
+	otherTarget := suite.T().TempDir()
+
+	ctest.AssertResource(suite, otherRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+	suite.satisfyMount(otherRequestID, otherVolumeID, otherTarget, false)
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.Equal(otherTarget, status.TypedSpec().Path)
+	})
+
+	suite.landImage(otherTarget, "talos.iso", "an image")
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.NotEqual(empty, status.TypedSpec().Fingerprint, "an image uploaded to the new backing volume must change the fingerprint")
+	})
+}

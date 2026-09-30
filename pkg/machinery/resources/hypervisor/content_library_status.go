@@ -35,6 +35,8 @@ type ContentLibraryStatusSpec struct {
 	Ready bool `yaml:"ready" protobuf:"3"`
 	// Error describes why the library is not ready.
 	Error string `yaml:"error,omitempty" protobuf:"4"`
+	// Fingerprint changes whenever the files in the library do (name, size, modification time).
+	Fingerprint string `yaml:"fingerprint,omitempty" protobuf:"5"`
 }
 
 // NewContentLibraryStatus initializes a ContentLibraryStatus resource.

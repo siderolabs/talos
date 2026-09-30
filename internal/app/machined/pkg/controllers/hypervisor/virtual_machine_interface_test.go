@@ -170,3 +170,68 @@ func (suite *VirtualMachineSpecSuite) TestNonEthernetLinkIsRejected() {
 	suite.assertWaitingForLink(`virtual machine "non-ethernet-link": interface "net0": host link is not an Ethernet link: "lo"`)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
 }
+
+// A configured address is what the guest gets, so it can be reserved against on the segment the
+// virtual machine lands on.
+func (suite *VirtualMachineSpecSuite) TestInterfaceHardwareAddressIsHonoured() {
+	suite.createLink("eth0", "")
+
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "mac-pinned")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+			{Name: "net0", Link: "eth0", HardwareAddr: "52:54:00:00:31:31"},
+			// Left to be derived, so both paths are covered in one domain.
+			{Name: "net1", Link: "eth0"},
+		},
+	}
+	suite.Create(spec)
+
+	ctest.AssertResource(suite, "mac-pinned", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		found := regexp.MustCompile(`<mac address="([^"]+)">`).FindAllStringSubmatch(res.TypedSpec().DomainXML, -1)
+		asrt.Len(found, 2)
+
+		if len(found) != 2 {
+			return
+		}
+
+		asrt.Equal("52:54:00:00:31:31", found[0][1])
+		asrt.Regexp(`^52:54:00:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$`, found[1][1])
+		asrt.NotEqual("52:54:00:00:31:31", found[1][1], "the derived address must not collide with the configured one")
+	})
+}
+
+// An address the guest could never answer to fails that virtual machine rather than being passed
+// to libvirt, which would reject the whole domain.
+func (suite *VirtualMachineSpecSuite) TestInterfaceRejectsBadHardwareAddresses() {
+	suite.createLink("eth0", "")
+
+	for _, test := range []struct {
+		name string
+		addr string
+		want string
+	}{
+		{name: "malformed", addr: "not-a-mac", want: "address"},
+		{name: "multicast", addr: "01:54:00:00:31:31", want: "unicast"},
+		{name: "too-short", addr: "52:54:00:00:31", want: "unicast"},
+	} {
+		vmName := "mac-bad-" + test.name
+
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+			PowerState: "running",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+				{Name: "net0", Link: "eth0", HardwareAddr: test.addr},
+			},
+		}
+		suite.Create(spec)
+
+		ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, vmName)
+	}
+}

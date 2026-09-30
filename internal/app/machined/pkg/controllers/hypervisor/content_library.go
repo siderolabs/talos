@@ -7,15 +7,23 @@ package hypervisor
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"strings"
+	"sync"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/fsnotify/fsnotify"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/panicsafe"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
@@ -77,14 +85,23 @@ func (ctrl *ContentLibraryController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 func (ctrl *ContentLibraryController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
+	contentsWatch, err := startContentsWatch(runtime, logger)
+	if err != nil {
+		return err
+	}
+
+	defer contentsWatch.stop()
+
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-runtime.EventCh():
+		case <-contentsWatch.failed:
+			return errors.New("the content library contents watch stopped")
 		}
 
-		if err := ctrl.reconcile(ctx, runtime, logger); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger, contentsWatch); err != nil {
 			logger.Error("failed to reconcile content libraries", zap.Error(err))
 
 			return err
@@ -94,7 +111,132 @@ func (ctrl *ContentLibraryController) Run(ctx context.Context, runtime controlle
 	}
 }
 
-func (ctrl *ContentLibraryController) reconcile(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
+// contentsWatch reconciles the controller whenever a watched library directory changes.
+//
+// A library's contents are files, and writing one produces no resource event. This turns an image
+// arriving, changing or being deleted into a reconciliation, which republishes the library's
+// fingerprint and so wakes whoever is waiting on that file.
+type contentsWatch struct {
+	watcher *fsnotify.Watcher
+	// watched is the set of directories the watch currently covers.
+	watched map[string]struct{}
+	// failed is closed once the watch is gone, so that the controller restarts.
+	failed chan struct{}
+	done   sync.WaitGroup
+}
+
+func startContentsWatch(runtime controller.Runtime, logger *zap.Logger) (*contentsWatch, error) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create fsnotify watcher: %w", err)
+	}
+
+	watch := &contentsWatch{
+		watcher: watcher,
+		watched: map[string]struct{}{},
+		failed:  make(chan struct{}),
+	}
+
+	watch.done.Go(func() {
+		defer close(watch.failed)
+
+		err := panicsafe.RunErr(func() error {
+			for {
+				select {
+				case _, ok := <-watcher.Events:
+					if !ok {
+						return nil
+					}
+
+					runtime.QueueReconcile()
+				case err, ok := <-watcher.Errors:
+					if !ok {
+						return nil
+					}
+
+					logger.Warn("content library watch error", zap.Error(err))
+
+					runtime.QueueReconcile()
+				}
+			}
+		})
+		if err != nil {
+			logger.Error("content library watch failed", zap.Error(err))
+		}
+	})
+
+	return watch, nil
+}
+
+func (w *contentsWatch) stop() {
+	w.watcher.Close() //nolint:errcheck
+
+	w.done.Wait()
+}
+
+// watch covers a directory, re-establishing the watch every time it is called: a watch follows the
+// inode it was established on, not the name, so this also picks up whatever a new mount put at the
+// path.
+func (w *contentsWatch) watch(path string) error {
+	if err := w.watcher.Add(path); err != nil {
+		return fmt.Errorf("failed to watch %q: %w", path, err)
+	}
+
+	w.watched[path] = struct{}{}
+
+	return nil
+}
+
+// prune stops watching the directories outside wanted.
+func (w *contentsWatch) prune(wanted map[string]struct{}) {
+	maps.DeleteFunc(w.watched, func(path string, _ struct{}) bool {
+		if _, keep := wanted[path]; keep {
+			return false
+		}
+
+		w.watcher.Remove(path) //nolint:errcheck // the watch is gone either way
+
+		return true
+	})
+}
+
+// FingerprintLibrary fingerprints a library's listing, so the value changes exactly when the set
+// of files, their sizes or their modification times do.
+//
+// Uploads in flight are staged under a reserved prefix and excluded: a partial upload must not
+// advertise itself as a change to the library's contents.
+func FingerprintLibrary(path string) (string, error) {
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return "", err
+	}
+
+	sum := sha256.New()
+
+	for _, entry := range entries {
+		if entry.IsDir() || strings.HasPrefix(entry.Name(), staging.Prefix) {
+			continue
+		}
+
+		info, err := entry.Info()
+		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				// Raced with a delete; the event that delete raised brings us back here.
+				continue
+			}
+
+			return "", err
+		}
+
+		fmt.Fprintf(sum, "%s\x00%d\x00%d\x00", entry.Name(), info.Size(), info.ModTime().UnixNano())
+	}
+
+	return hex.EncodeToString(sum.Sum(nil)), nil
+}
+
+func (ctrl *ContentLibraryController) reconcile(
+	ctx context.Context, runtime controller.Runtime, logger *zap.Logger, watch *contentsWatch,
+) error {
 	machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, runtime, config.ActiveID)
 	if err != nil && !state.IsNotFoundError(err) {
 		return fmt.Errorf("failed to get machine config: %w", err)
@@ -102,20 +244,12 @@ func (ctrl *ContentLibraryController) reconcile(ctx context.Context, runtime con
 
 	runtime.StartTrackingOutputs()
 
-	wantedMountRequests := map[string]struct{}{}
-
-	if machineConfig != nil && machineConfig.Config() != nil {
-		for _, contentLibraryConfig := range machineConfig.Config().ContentLibraryConfigs() {
-			requestID, err := ctrl.reconcileLibrary(ctx, runtime, logger, machineConfig.Config(), contentLibraryConfig)
-			if err != nil {
-				return err
-			}
-
-			if requestID != "" {
-				wantedMountRequests[requestID] = struct{}{}
-			}
-		}
+	wantedMountRequests, wantedWatches, err := ctrl.reconcileLibraries(ctx, runtime, logger, watch, machineConfig)
+	if err != nil {
+		return err
 	}
+
+	watch.prune(wantedWatches)
 
 	// The mounts of libraries which are no longer configured are given back here, before the statuses
 	// are cleaned up.
@@ -133,6 +267,83 @@ func (ctrl *ContentLibraryController) reconcile(ctx context.Context, runtime con
 	return nil
 }
 
+// reconcileLibraries brings up every configured library, and reports what they collectively want:
+// the mount requests to keep, and the directories to watch for contents changes.
+func (ctrl *ContentLibraryController) reconcileLibraries(
+	ctx context.Context, runtime controller.Runtime, logger *zap.Logger, watch *contentsWatch,
+	machineConfig *config.MachineConfig,
+) (mountRequests, watches map[string]struct{}, err error) {
+	mountRequests = map[string]struct{}{}
+	watches = map[string]struct{}{}
+
+	if machineConfig == nil || machineConfig.Config() == nil {
+		return mountRequests, watches, nil
+	}
+
+	for _, contentLibraryConfig := range machineConfig.Config().ContentLibraryConfigs() {
+		requestID, watchPath, err := ctrl.reconcileLibrary(ctx, runtime, logger, watch, machineConfig.Config(), contentLibraryConfig)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if requestID != "" {
+			mountRequests[requestID] = struct{}{}
+		}
+
+		if watchPath != "" {
+			watches[watchPath] = struct{}{}
+		}
+	}
+
+	return mountRequests, watches, nil
+}
+
+// publishStatus writes one library's status and reports whether this write is the one that made it
+// ready, which is the only moment nothing can be staged in it.
+//
+// A library that is not ready has no directory to list, so it keeps whatever fingerprint it last
+// advertised rather than claiming its contents vanished.
+func (ctrl *ContentLibraryController) publishStatus(
+	ctx context.Context, runtime controller.Runtime, libraryID, volumeID, path, reason string,
+) (bool, error) {
+	ready := reason == ""
+
+	var fingerprint string
+
+	if ready {
+		var err error
+
+		if fingerprint, err = FingerprintLibrary(path); err != nil {
+			return false, fmt.Errorf("failed to read content library %q: %w", libraryID, err)
+		}
+	}
+
+	var becameReady bool
+
+	if err := safe.WriterModify(
+		ctx, runtime,
+		hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryID),
+		func(res *hypervisor.ContentLibraryStatus) error {
+			becameReady = ready && !res.TypedSpec().Ready
+
+			res.TypedSpec().VolumeID = volumeID
+			res.TypedSpec().Path = path
+			res.TypedSpec().Ready = ready
+			res.TypedSpec().Error = reason
+
+			if ready {
+				res.TypedSpec().Fingerprint = fingerprint
+			}
+
+			return nil
+		},
+	); err != nil {
+		return false, fmt.Errorf("failed to write content library status %q: %w", libraryID, err)
+	}
+
+	return becameReady, nil
+}
+
 // reconcileLibrary brings one content library up and reports what came of it on its status.
 //
 // Returns the ID of the mount request the library wants, empty when it wants none.
@@ -140,9 +351,10 @@ func (ctrl *ContentLibraryController) reconcileLibrary(
 	ctx context.Context,
 	runtime controller.Runtime,
 	logger *zap.Logger,
+	watch *contentsWatch,
 	cfg configcfg.Config,
 	contentLibraryConfig configcfg.ContentLibraryConfig,
-) (string, error) {
+) (string, string, error) {
 	libraryID := contentLibraryConfig.Name()
 	volumeName := contentLibraryConfig.BackingVolumeName()
 
@@ -171,36 +383,30 @@ func (ctrl *ContentLibraryController) reconcileLibrary(
 		var err error
 
 		if path, reason, err = ctrl.mount(ctx, runtime, logger, libraryID, backing.ID, requestID); err != nil {
-			return "", err
+			return "", "", err
 		}
 	}
 
-	// Sweeping is only safe on the transition to ready, so the transition is noticed here, where the
-	// previous status is still readable.
-	var becameReady bool
+	watchPath := ""
 
-	if err := safe.WriterModify(
-		ctx, runtime,
-		hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryID),
-		func(res *hypervisor.ContentLibraryStatus) error {
-			becameReady = reason == "" && !res.TypedSpec().Ready
+	if reason == "" {
+		watchPath = path
 
-			res.TypedSpec().VolumeID = backing.ID
-			res.TypedSpec().Path = path
-			res.TypedSpec().Ready = reason == ""
-			res.TypedSpec().Error = reason
+		if err := watch.watch(path); err != nil {
+			return "", "", fmt.Errorf("content library %q: %w", libraryID, err)
+		}
+	}
 
-			return nil
-		},
-	); err != nil {
-		return "", fmt.Errorf("failed to write content library status %q: %w", libraryID, err)
+	becameReady, err := ctrl.publishStatus(ctx, runtime, libraryID, backing.ID, path, reason)
+	if err != nil {
+		return "", "", err
 	}
 
 	if becameReady {
 		ctrl.sweepStagedUploads(logger, libraryID, path)
 	}
 
-	return requestID, nil
+	return requestID, watchPath, nil
 }
 
 // mountRequestID builds the ID of the mount request for one library and its backing volume.

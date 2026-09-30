@@ -92,15 +92,17 @@ type VirtualMachineDisk struct {
 	//   schemaRequired: true
 	DiskName string `yaml:"name"`
 	//   description: |
-	//     Name of the `StoragePoolConfig` document this disk's volume lives in.
+	//     Name of the `StoragePool` document this disk's volume lives in.
 	//
 	//     The pool is declared separately and is not provisioned by this document. The reference
 	//     is checked for shape only: nothing resolves it against the rest of the machine
 	//     configuration yet.
+	//
+	//     Required for a `disk`, and not allowed on a `cdrom`, whose image is attached in place
+	//     from its content library and never lands in a pool.
 	//   examples:
 	//     - value: '"pool1"'
-	//   schemaRequired: true
-	DiskPool string `yaml:"pool"`
+	DiskPool string `yaml:"pool,omitempty"`
 	//   description: |
 	//     Size of the volume.
 	//
@@ -211,7 +213,8 @@ type VirtualMachineDiskFromImage struct {
 	//     image: fast and space-cheap, but it pins that image for the lifetime of the disk, and it
 	//     requires `format: qcow2`.
 	//
-	//     Optional; defaults to `copy`.
+	//     Optional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never
+	//     diverges from the image, and which is therefore attached in place.
 	//   values:
 	//     - copy
 	//     - linked
@@ -325,10 +328,7 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: %w", index, err))
 	}
 
-	switch {
-	case d.DiskPool == "":
-		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: pool is required", index))
-	case !hypervisorhelpers.ValidNameCharset(d.DiskPool):
+	if d.DiskPool != "" && !hypervisorhelpers.ValidNameCharset(d.DiskPool) {
 		validationErrors = errors.Join(validationErrors,
 			fmt.Errorf("disks[%d]: pool %q: pool name can only contain ASCII letters, digits and hyphens", index, d.DiskPool))
 	}
@@ -336,6 +336,10 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 	//nolint:exhaustive // Type() resolves the zero member to disk, so it never reaches this switch.
 	switch d.Type() {
 	case hypervisorhelpers.VirtualMachineDiskTypeDisk:
+		if d.DiskPool == "" {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: pool is required", index))
+		}
+
 		switch {
 		case d.DiskSize.IsNegative():
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: size must not be negative", index))
@@ -345,6 +349,11 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: size must be greater than zero", index))
 		}
 	case hypervisorhelpers.VirtualMachineDiskTypeCDROM:
+		if d.DiskPool != "" {
+			validationErrors = errors.Join(validationErrors,
+				fmt.Errorf("disks[%d]: pool is not allowed on a cdrom, whose image is attached in place from its content library", index))
+		}
+
 		if !d.DiskSize.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: size is not allowed on a cdrom", index))
 		}
@@ -402,7 +411,7 @@ func (d *VirtualMachineDisk) validateProvision(index int) error {
 //
 // diskFormat is the disk's format as written, not as defaulted: `linked` needs a qcow2 volume, and
 // the default is already qcow2, so only an explicit `raw` conflicts. diskType is the disk's
-// defaulted type, used to reject `linked` on a cdrom, which has no backing chain of its own.
+// defaulted type, used to reject a mode outright on a cdrom, which is attached in place.
 func (i *VirtualMachineDiskFromImage) validate(
 	index int,
 	diskFormat hypervisorhelpers.VirtualMachineDiskFormat,
@@ -426,14 +435,21 @@ func (i *VirtualMachineDiskFromImage) validate(
 		validationErrors = errors.Join(validationErrors, validateImageDigest(index, i.ImageDigest))
 	}
 
+	// A cdrom takes no mode at all: its medium is read-only, so it never diverges from the image,
+	// and neither mode describes what happens -- the library file is attached in place.
+	if diskType == hypervisorhelpers.VirtualMachineDiskTypeCDROM {
+		if i.ImageMode != hypervisorhelpers.VirtualMachineDiskImageModeUnknown {
+			validationErrors = errors.Join(validationErrors,
+				fmt.Errorf("disks[%d]: provision.fromImage.mode is not allowed on a cdrom, whose read-only medium never diverges from the image", index))
+		}
+
+		return validationErrors
+	}
+
 	switch i.ImageMode {
 	case hypervisorhelpers.VirtualMachineDiskImageModeUnknown, hypervisorhelpers.VirtualMachineDiskImageModeCopy:
 	case hypervisorhelpers.VirtualMachineDiskImageModeLinked:
-		switch {
-		case diskType == hypervisorhelpers.VirtualMachineDiskTypeCDROM:
-			validationErrors = errors.Join(validationErrors,
-				fmt.Errorf("disks[%d]: provision.fromImage.mode: linked is not allowed on a cdrom, which has no backing chain of its own", index))
-		case diskFormat == hypervisorhelpers.VirtualMachineDiskFormatRaw:
+		if diskFormat == hypervisorhelpers.VirtualMachineDiskFormatRaw {
 			validationErrors = errors.Join(validationErrors,
 				fmt.Errorf("disks[%d]: provision.fromImage.mode: linked requires format qcow2, as backing chains are a qcow2 feature", index))
 		}

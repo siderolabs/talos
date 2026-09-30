@@ -71,6 +71,7 @@ var (
 	talosImage        string
 	csiTestName       string
 	csiTestTimeout    string
+	hypervisorISOPath string
 )
 
 // TestIntegration ...
@@ -141,6 +142,7 @@ func TestIntegration(t *testing.T) {
 				ExtensionsQEMU:         extensionsQEMU,
 				ExtensionsLibvirt:      extensionsLibvirt,
 				ExtensionsNvidia:       extensionsNvidia,
+				HypervisorISOPath:      hypervisorISOPath,
 				LLDPEnabled:            lldpEnabled,
 				BGPEnabled:             bgpEnabled,
 				BGPCLOSEnabled:         bgpCLOSEnabled,
@@ -192,6 +194,8 @@ func init() {
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsLibvirt, "talos.extensions.libvirt", false, "enable tests for libvirt extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.StringVar(&hypervisorISOPath, "talos.hypervisor.iso", "",
+		"path to a Talos ISO the hypervisor tests upload into a content library; unset skips the tests needing a real image")
 	flag.BoolVar(&lldpEnabled, "talos.lldp", false, "enable LLDP receive tests (requires a cluster created with --with-lldp)")
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")

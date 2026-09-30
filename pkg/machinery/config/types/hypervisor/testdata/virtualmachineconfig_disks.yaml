@@ -27,7 +27,6 @@ disks:
       provision:
         blank: {}
     - name: install
-      pool: pool1
       type: cdrom
       bootOrder: 2
       provision:

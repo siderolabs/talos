@@ -52,6 +52,9 @@ type TalosSuite struct {
 	ExtensionsLibvirt bool
 	// ExtensionsNvidia runs tests with nvidia extensions enabled
 	ExtensionsNvidia bool
+	// HypervisorISOPath is a path on the machine running the tests to a Talos ISO the hypervisor
+	// tests upload into a content library. Empty skips the tests needing a real image.
+	HypervisorISOPath string
 	// LLDPEnabled runs tests against a cluster created with --with-lldp.
 	LLDPEnabled bool
 	// BGPEnabled runs tests against a cluster created with an embedded BGP fabric peer (--with-bgp)

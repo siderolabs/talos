@@ -340,8 +340,8 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "pool",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePoolConfig` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePool` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "size",
@@ -493,7 +493,7 @@ func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 				Name:        "mode",
 				Type:        "VirtualMachineDiskImageMode",
 				Note:        "",
-				Description: "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`.",
+				Description: "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "How the volume is derived from the image." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"copy",
@@ -643,11 +643,19 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 				Description: "Kernel name (or alias) of the host link the interface is attached to.\n\nThe link must already exist on the host and be an Ethernet link, e.g. a physical\ninterface, a bond, or a VLAN. It is attached to as is.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kernel name (or alias) of the host link the interface is attached to." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Hardware (MAC) address presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", "net0")
 	doc.Fields[1].AddExample("", "eth0")
+	doc.Fields[2].AddExample("", "52:54:00:12:34:56")
 
 	return doc
 }

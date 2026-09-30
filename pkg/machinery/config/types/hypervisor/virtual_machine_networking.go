@@ -9,6 +9,8 @@ package hypervisor
 import (
 	"errors"
 	"fmt"
+	"net"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -16,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 // Check interfaces.
@@ -57,6 +60,21 @@ type VirtualMachineInterface struct {
 	//     - value: '"eth0"'
 	//   schemaRequired: true
 	InterfaceLink string `yaml:"link"`
+	//   description: |
+	//     Hardware (MAC) address presented to the guest.
+	//
+	//     Defaults to an address derived from the virtual machine and interface names, which is
+	//     stable for as long as both keep their names. Set it to pin the address a DHCP server
+	//     reserves against, or to keep one across a rename.
+	//
+	//     It must be a unicast address, and is not allowed to be all zeroes.
+	//   examples:
+	//    - value: >
+	//       "52:54:00:12:34:56"
+	//   schema:
+	//     type: string
+	//     pattern: ^[0-9a-f:]+$
+	HardwareAddressConfig nethelpers.HardwareAddr `yaml:"hardwareAddr,omitempty"`
 }
 
 // IsZero implements yaml.IsZeroer.
@@ -85,6 +103,11 @@ func (i *VirtualMachineInterface) Link() string {
 	return i.InterfaceLink
 }
 
+// HardwareAddress implements config.VirtualMachineInterfaceConfig interface.
+func (i *VirtualMachineInterface) HardwareAddress() net.HardwareAddr {
+	return net.HardwareAddr(i.HardwareAddressConfig)
+}
+
 // Validate checks the interface and returns its name.
 func (i *VirtualMachineInterface) Validate(index int) (string, error) {
 	var validationErrors error
@@ -94,8 +117,35 @@ func (i *VirtualMachineInterface) Validate(index int) (string, error) {
 	}
 
 	validationErrors = errors.Join(validationErrors, validateLink(index, i.InterfaceLink))
+	validationErrors = errors.Join(validationErrors, validateHardwareAddress(index, net.HardwareAddr(i.HardwareAddressConfig)))
 
 	return i.InterfaceName, validationErrors
+}
+
+// validateHardwareAddress checks an address the guest is to be given.
+//
+// An empty address is what most virtual machines carry: the address is then derived from the
+// virtual machine and interface names.
+func validateHardwareAddress(index int, addr net.HardwareAddr) error {
+	if len(addr) == 0 {
+		return nil
+	}
+
+	if len(addr) != 6 {
+		return fmt.Errorf("networking.interfaces[%d]: hardwareAddr %q must be a 6 byte MAC address", index, addr)
+	}
+
+	// The low bit of the first octet marks a group address; a guest answering to one would be
+	// answering for every machine on the segment.
+	if addr[0]&1 != 0 {
+		return fmt.Errorf("networking.interfaces[%d]: hardwareAddr %q must be a unicast address", index, addr)
+	}
+
+	if slices.Max(addr) == 0 {
+		return fmt.Errorf("networking.interfaces[%d]: hardwareAddr must not be all zeroes", index)
+	}
+
+	return nil
 }
 
 // validateLink checks the shape of the host link name an interface is attached to.

@@ -74,6 +74,12 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 	if o.NetworkingConfig.InterfacesConfig != nil {
 		cp.NetworkingConfig.InterfacesConfig = make([]VirtualMachineInterface, len(o.NetworkingConfig.InterfacesConfig))
 		copy(cp.NetworkingConfig.InterfacesConfig, o.NetworkingConfig.InterfacesConfig)
+		for i3 := range o.NetworkingConfig.InterfacesConfig {
+			if o.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig != nil {
+				cp.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig = make([]byte, len(o.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig))
+				copy(cp.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig, o.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig)
+			}
+		}
 	}
 	return &cp
 }

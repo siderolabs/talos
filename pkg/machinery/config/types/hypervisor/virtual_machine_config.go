@@ -256,7 +256,6 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 		},
 		{
 			DiskName:      "install",
-			DiskPool:      "pool1",
 			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			DiskBootOrder: 2,
 			ProvisionConfig: VirtualMachineDiskProvision{

@@ -176,9 +176,16 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 	}
 
 	for _, iface := range vm.Networking().Interfaces() {
+		var hardwareAddr string
+
+		if addr := iface.HardwareAddress(); len(addr) > 0 {
+			hardwareAddr = addr.String()
+		}
+
 		spec.Interfaces = append(spec.Interfaces, hypervisor.VirtualMachineInterfaceSpec{
-			Name: iface.Name(),
-			Link: iface.Link(),
+			Name:         iface.Name(),
+			Link:         iface.Link(),
+			HardwareAddr: hardwareAddr,
 		})
 	}
 

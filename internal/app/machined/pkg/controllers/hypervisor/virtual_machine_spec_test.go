@@ -124,6 +124,7 @@ func TestVirtualMachineSpecSuite(t *testing.T) {
 		Logger:  zap.New(core),
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineSpecController{}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDiskController{}))
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
 		},
 		logs: logs,
@@ -269,8 +270,8 @@ func (suite *VirtualMachineSpecSuite) TestFirmwareAndConsoles() {
 	})
 }
 
-func (suite *VirtualMachineSpecSuite) TestRejectsUnresolvedDisks() {
-	doc := newVirtualMachine("unresolved")
+func (suite *VirtualMachineSpecSuite) TestRejectsUnsupportedDisks() {
+	doc := newVirtualMachine("unsupported")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{{
 		DiskName: "data", DiskPool: "pool1", DiskSize: meta.MustByteSize("20GiB"),
 		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{}},
@@ -281,7 +282,7 @@ func (suite *VirtualMachineSpecSuite) TestRejectsUnresolvedDisks() {
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.Equal("pool1", res.TypedSpec().Disks[0].Pool)
 	})
-	suite.assertConversionError(doc.Name(), "unresolved disks")
+	suite.assertConversionError(doc.Name(), `disk "data": unsupported disk: only cdrom disks are provisioned today`)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
 }
 
@@ -443,7 +444,7 @@ func (suite *VirtualMachineSpecSuite) TestDeterministicProjection() {
 	suite.Equal(before.Metadata().Version(), after.Metadata().Version())
 }
 
-func (suite *VirtualMachineSpecSuite) TestIgnoresPersistentConfigButRejectsUnresolvedDisks() {
+func (suite *VirtualMachineSpecSuite) TestIgnoresPersistentConfigButRejectsUnsupportedDisks() {
 	persistent, err := container.New(newVirtualMachine("staged-only"))
 	suite.Require().NoError(err)
 	suite.Create(config.NewMachineConfigWithID(persistent, config.PersistentID))
@@ -463,7 +464,7 @@ func (suite *VirtualMachineSpecSuite) TestIgnoresPersistentConfigButRejectsUnres
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
 	suite.Create(config.NewMachineConfig(cfg))
-	suite.assertConversionError(doc.Name(), "unresolved disks")
+	suite.assertConversionError(doc.Name(), `disk "deferred": unsupported disk: only cdrom disks are provisioned today`)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "staged-only")
 }

@@ -5,6 +5,8 @@
 package config
 
 import (
+	"net"
+
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
@@ -99,7 +101,8 @@ type VirtualMachineBallooningConfig interface {
 type VirtualMachineDiskConfig interface {
 	// Name of the disk, unique within the virtual machine.
 	Name() string
-	// Pool is the name of the StoragePoolConfig document this disk's volume lives in.
+	// Pool is the name of the StoragePool document this disk's volume lives in; empty for a cdrom,
+	// which is attached in place from its content library.
 	Pool() string
 	// Size of the volume in bytes; zero for a cdrom.
 	Size() uint64
@@ -133,7 +136,8 @@ type VirtualMachineDiskFromImageConfig interface {
 	File() string
 	// Digest is an optional integrity check of the library file, as `sha256:<hex>`.
 	Digest() string
-	// Mode is how the volume is derived from the image, with the default applied.
+	// Mode is how the volume is derived from the image, with the default applied. It carries no
+	// meaning for a cdrom, which takes no mode and is attached in place.
 	Mode() hypervisorhelpers.VirtualMachineDiskImageMode
 }
 
@@ -191,4 +195,6 @@ type VirtualMachineInterfaceConfig interface {
 	Name() string
 	// Link is the kernel name of the host link the interface is attached to.
 	Link() string
+	// HardwareAddress is the address presented to the guest, empty when it is to be derived.
+	HardwareAddress() net.HardwareAddr
 }

@@ -519,6 +519,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec)
     - [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec)
     - [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec)
+    - [VirtualMachineDiskStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskStatusSpec)
     - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
     - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
@@ -8990,6 +8991,7 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 | path | [string](#string) |  | Path is the absolute path of the library's contents, the target the backing volume is mounted at.<br><br>Only meaningful when Ready. |
 | ready | [bool](#bool) |  | Ready is true once the backing volume is mounted. |
 | error | [string](#string) |  | Error describes why the library is not ready. |
+| fingerprint | [string](#string) |  | Fingerprint changes whenever the files in the library do (name, size, modification time). |
 
 
 
@@ -9104,6 +9106,28 @@ VirtualMachineDiskSpec describes a disk before its volume has a host source.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineDiskStatusSpec"></a>
+
+### VirtualMachineDiskStatusSpec
+VirtualMachineDiskStatusSpec is the spec for VirtualMachineDiskStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| virtual_machine | [string](#string) |  | VirtualMachine is the name of the virtual machine the disk belongs to. |
+| name | [string](#string) |  | Name is the disk's name within that virtual machine. |
+| source_path | [string](#string) |  | SourcePath is the absolute host path libvirt opens.<br><br>Only meaningful when Ready. |
+| format | [string](#string) |  | Format is the on-host format of SourcePath, as libvirt's disk driver type.<br><br>Only meaningful when Ready. |
+| read_only | [bool](#bool) |  | ReadOnly is true when the guest must not write to the source. |
+| ready | [bool](#bool) |  | Ready is true once the source exists and may be attached. |
+| error | [string](#string) |  | Error describes why the disk is not ready. |
+| image | [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec) |  | Image is the content library image this status resolved.<br><br>It is recorded whether or not the resolution succeeded, so that a status left behind by an earlier image is recognizable as stale rather than usable. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec"></a>
 
 ### VirtualMachineDomainSpecSpec
@@ -9167,6 +9191,7 @@ VirtualMachineInterfaceSpec describes a network interface attached to a host lin
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  | Name of the virtual machine interface config (not reflected in the guest) |
 | link | [string](#string) |  | Link identifier, as seen from the host |
+| hardware_addr | [string](#string) |  | HardwareAddr is the address presented to the guest.<br><br>Empty when it is to be derived from the virtual machine and interface names. |
 
 
 

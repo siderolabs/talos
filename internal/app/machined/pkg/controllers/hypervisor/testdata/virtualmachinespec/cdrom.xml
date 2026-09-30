@@ -1,0 +1,29 @@
+<domain type="kvm">
+  <name>booted</name>
+  <memory unit="bytes">4294967296</memory>
+  <vcpu>3</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
+  <os firmware="efi">
+    <type>hvm</type>
+    <firmware>
+      <feature enabled="no" name="secure-boot"></feature>
+      <feature enabled="no" name="enrolled-keys"></feature>
+    </firmware>
+  </os>
+  <features>
+    <acpi></acpi>
+  </features>
+  <cpu mode="host-model"></cpu>
+  <devices>
+    <disk type="file" device="cdrom">
+      <driver name="qemu" type="raw"></driver>
+      <source file="/content-library/talos.iso"></source>
+      <target dev="sda" bus="sata"></target>
+      <readonly></readonly>
+      <boot order="1"></boot>
+    </disk>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>
