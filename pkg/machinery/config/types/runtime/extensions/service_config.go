@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/extensions/services"
 )
 
 // ServiceConfigKind is a Extension config document kind.
@@ -131,6 +132,10 @@ func (e *ServiceConfigV1Alpha1) Clone() config.Document {
 func (e *ServiceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if e.ServiceName == "" {
 		return nil, fmt.Errorf("name is required")
+	}
+
+	if !services.IsValidName(e.ServiceName) {
+		return nil, fmt.Errorf("name %q is invalid", e.ServiceName)
 	}
 
 	if len(e.ServiceConfigFiles) == 0 && len(e.ServiceEnvironment) == 0 {

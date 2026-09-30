@@ -107,11 +107,16 @@ type Dependency struct {
 
 var nameRe = regexp.MustCompile(`^[-_a-z0-9]{1,}$`)
 
+// IsValidName checks whether the extension service name is valid.
+func IsValidName(name string) bool {
+	return nameRe.MatchString(name)
+}
+
 // Validate the service spec.
 func (spec *Spec) Validate() error {
 	var multiErr *multierror.Error
 
-	if !nameRe.MatchString(spec.Name) {
+	if !IsValidName(spec.Name) {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("name %q is invalid", spec.Name))
 	}
 
