@@ -49,6 +49,7 @@ type Client struct {
 	InspectClient        inspectapi.InspectServiceClient
 	ImageClient          machineapi.ImageServiceClient
 	DebugClient          machineapi.DebugServiceClient
+	HypervisorClient     machineapi.HypervisorServiceClient
 	LifecycleClient      machineapi.LifecycleServiceClient
 	ContentLibraryClient machineapi.ContentLibraryServiceClient
 
@@ -181,6 +182,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
+	c.HypervisorClient = machineapi.NewHypervisorServiceClient(c.conn)
 	c.LifecycleClient = machineapi.NewLifecycleServiceClient(c.conn)
 	c.ContentLibraryClient = machineapi.NewContentLibraryServiceClient(c.conn)
 

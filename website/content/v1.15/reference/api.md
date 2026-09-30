@@ -65,6 +65,13 @@ description: Talos gRPC API reference.
   
     - [DebugService](#machine.DebugService)
   
+- [machine/hypervisor.proto](#machine/hypervisor.proto)
+    - [ConsoleAttach](#machine.ConsoleAttach)
+    - [ConsoleRequest](#machine.ConsoleRequest)
+    - [ConsoleResponse](#machine.ConsoleResponse)
+  
+    - [HypervisorService](#machine.HypervisorService)
+  
 - [machine/image.proto](#machine/image.proto)
     - [ImageServiceCredentials](#machine.ImageServiceCredentials)
     - [ImageServiceImportRequest](#machine.ImageServiceImportRequest)
@@ -1534,6 +1541,78 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ContainerRun | [DebugContainerRunRequest](#machine.DebugContainerRunRequest) stream | [DebugContainerRunResponse](#machine.DebugContainerRunResponse) stream | ContainerRun runs a debug container, attaches to it, and streams I/O. |
+
+ <!-- end services -->
+
+
+
+<a name="machine/hypervisor.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/hypervisor.proto
+
+
+
+<a name="machine.ConsoleAttach"></a>
+
+### ConsoleAttach
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.ConsoleRequest"></a>
+
+### ConsoleRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| attach | [ConsoleAttach](#machine.ConsoleAttach) |  |  |
+| stdin_data | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="machine.ConsoleResponse"></a>
+
+### ConsoleResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| stdout_data | [bytes](#bytes) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.HypervisorService"></a>
+
+### HypervisorService
+HypervisorService exposes virtual machine APIs.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| ConsoleStream | [ConsoleRequest](#machine.ConsoleRequest) stream | [ConsoleResponse](#machine.ConsoleResponse) stream | ConsoleStream attaches exclusively to one managed VM's live serial console. The first request must be an attach with a nonempty name; subsequent requests must contain stdin_data, at most 64 KiB per frame. Bytes pass through unchanged. Client input EOF (half-close), cancellation, or guest EOF detaches the session. Only live output is sent: there is no replay, persistent log, or resize support. |
 
  <!-- end services -->
 

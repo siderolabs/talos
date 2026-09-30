@@ -53,7 +53,8 @@ var rules = map[string]role.Set{
 	"/machine.ContentLibraryService/Upload": role.MakeSet(role.Admin, role.Operator, role.ContentLibraryWriter),
 	"/machine.ContentLibraryService/Delete": role.MakeSet(role.Admin, role.Operator, role.ContentLibraryWriter),
 
-	"/machine.DebugService/ContainerRun": role.MakeSet(role.Admin),
+	"/machine.DebugService/ContainerRun":       role.MakeSet(role.Admin),
+	"/machine.HypervisorService/ConsoleStream": role.MakeSet(role.Admin),
 
 	"/machine.LifecycleService/Install": role.MakeSet(role.Admin),
 	"/machine.LifecycleService/Upgrade": role.MakeSet(role.Admin),

@@ -56,6 +56,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/contentlibrary"
 	"github.com/siderolabs/talos/internal/app/debug"
+	"github.com/siderolabs/talos/internal/app/hypervisord"
 	"github.com/siderolabs/talos/internal/app/images"
 	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
 	"github.com/siderolabs/talos/internal/app/lifecycle"
@@ -73,6 +74,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/containers/cri"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
+	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	"github.com/siderolabs/talos/internal/pkg/miniprocfs"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/pcap"
@@ -158,6 +160,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
 	machine.RegisterStorageServiceServer(obj, machinestorage.NewService())
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
+	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(resourceState, libvirt.New().DomainConnector().OpenConsole))
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
 	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(resourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)

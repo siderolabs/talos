@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package machine;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// HypervisorService exposes virtual machine APIs.
+service HypervisorService {
+  // ConsoleStream attaches exclusively to one managed VM's live serial console.
+  // The first request must be an attach with a nonempty name; subsequent requests
+  // must contain stdin_data, at most 64 KiB per frame. Bytes pass through unchanged.
+  // Client input EOF (half-close), cancellation, or guest EOF detaches the session.
+  // Only live output is sent: there is no replay, persistent log, or resize support.
+  rpc ConsoleStream(stream ConsoleRequest) returns (stream ConsoleResponse);
+}
+
+message ConsoleRequest {
+  oneof request {
+    ConsoleAttach attach = 1;
+    bytes stdin_data = 2;
+  }
+}
+
+message ConsoleAttach {
+  string name = 1;
+}
+
+message ConsoleResponse {
+  bytes stdout_data = 1;
+}
