@@ -14,6 +14,7 @@ import (
 
 	beevikntp "github.com/beevik/ntp"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest"
@@ -524,5 +525,24 @@ func (suite *NTPSuite) TestSyncSwitchTimeservers() {
 
 	for i := 1; i < 3; i++ {
 		suite.Assert().Equal(2*time.Millisecond, suite.clockAdjustments[i])
+	}
+}
+
+func TestQueryPTPDeviceInvalid(t *testing.T) {
+	t.Parallel()
+
+	for _, device := range []string{
+		"/dev/../dev/null",
+		"/dev/../etc/shadow",
+		"/dev/watchdog",
+		"/dev/null",
+		"/dev/ptp_nonexistent",
+	} {
+		t.Run(device, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := ntp.QueryPTPDevice(device)
+			assert.Error(t, err)
+		})
 	}
 }

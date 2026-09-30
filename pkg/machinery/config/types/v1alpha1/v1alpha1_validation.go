@@ -132,6 +132,16 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		result = multierror.Append(result, errors.New("feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)"))
 	}
 
+	if c.MachineConfig.MachineTime != nil {
+		for _, server := range c.MachineConfig.MachineTime.TimeServers {
+			if config.IsPTPDevicePath(server) {
+				if err := config.ValidatePTPDevicePath(server); err != nil {
+					result = multierror.Append(result, fmt.Errorf("invalid time server (.machine.time.servers): %w", err))
+				}
+			}
+		}
+	}
+
 	if t := c.Machine().Type(); t != machine.TypeUnknown && t.String() != c.MachineConfig.MachineType {
 		warnings = append(warnings, fmt.Sprintf("use %q instead of %q for machine type", t.String(), c.MachineConfig.MachineType))
 	}

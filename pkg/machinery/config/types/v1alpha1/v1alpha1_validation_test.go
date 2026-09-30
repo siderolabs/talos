@@ -2035,6 +2035,30 @@ func TestValidate(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)\n\n",
 		},
+		{
+			name: "InvalidPTPTimeServer",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+					MachineTime: &v1alpha1.TimeConfig{
+						TimeServers: []string{"time.cloudflare.com", "/dev/ptp_kvm", "/dev/../dev/watchdog"},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedError: "1 error occurred:\n\t* invalid time server (.machine.time.servers): PTP device path \"/dev/../dev/watchdog\" is not clean\n\n",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

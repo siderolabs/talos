@@ -13,8 +13,8 @@ import (
 	"math/bits"
 	"net"
 	"os"
+	"path/filepath"
 	"slices"
-	"strings"
 	"sync"
 	"time"
 
@@ -26,6 +26,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/ntp/internal/spike"
 	"github.com/siderolabs/talos/internal/pkg/timex"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 // Syncer performs time sync via NTP on schedule.
@@ -320,8 +321,10 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 }
 
 // IsPTPDevice checks if a given server string represents a PTP device.
+//
+// The device path is validated when the device is queried, see QueryPTPDevice.
 func IsPTPDevice(server string) bool {
-	return strings.HasPrefix(server, "/dev/")
+	return config.IsPTPDevicePath(server)
 }
 
 func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
@@ -389,9 +392,14 @@ func (syncer *Syncer) queryPTP(device string) (*Measurement, bool, error) {
 	return meas, false, err
 }
 
+// errNotPTPDevice is returned for any path which doesn't resolve to a PTP device.
+//
+// A single error is used for all failure modes to avoid leaking information about the filesystem.
+var errNotPTPDevice = errors.New("not a PTP device")
+
 // QueryPTPDevice queries PTP device for current time.
 func QueryPTPDevice(device string) (unix.Timespec, error) {
-	phc, err := os.Open(device)
+	phc, err := openPTPDevice(device)
 	if err != nil {
 		return unix.Timespec{}, err
 	}
@@ -416,6 +424,46 @@ func QueryPTPDevice(device string) (unix.Timespec, error) {
 	}
 
 	return ts, err
+}
+
+// openPTPDevice opens the PTP device verifying that the path points to a PTP character device.
+//
+// The path is first opened with O_PATH, which doesn't invoke the device driver's open handler,
+// so opening a path which is not a PTP device (e.g. a watchdog) has no side effects.
+func openPTPDevice(device string) (*os.File, error) {
+	if err := config.ValidatePTPDevicePath(device); err != nil {
+		return nil, err
+	}
+
+	pathFd, err := unix.Open(device, unix.O_PATH|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, errNotPTPDevice
+	}
+
+	defer unix.Close(pathFd) //nolint:errcheck
+
+	var st unix.Stat_t
+
+	if err = unix.Fstat(pathFd, &st); err != nil {
+		return nil, errNotPTPDevice
+	}
+
+	if st.Mode&unix.S_IFMT != unix.S_IFCHR {
+		return nil, errNotPTPDevice
+	}
+
+	subsystem, err := os.Readlink(fmt.Sprintf("/sys/dev/char/%d:%d/subsystem", unix.Major(st.Rdev), unix.Minor(st.Rdev)))
+	if err != nil || filepath.Base(subsystem) != "ptp" {
+		return nil, errNotPTPDevice
+	}
+
+	// re-open the verified file via /proc to avoid races with the path being replaced
+	phc, err := os.OpenFile(fmt.Sprintf("/proc/self/fd/%d", pathFd), os.O_RDONLY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, errNotPTPDevice
+	}
+
+	return phc, nil
 }
 
 func (syncer *Syncer) queryNTP(server string) (*Measurement, bool, error) {
