@@ -23,15 +23,21 @@ import (
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-const machineUUID = "c737f778-82a1-48dd-990b-67901031bcc5"
+const (
+	machineUUID        = "c737f778-82a1-48dd-990b-67901031bcc5"
+	virtqemudServiceID = "ext-virtqemud"
+)
 
 type domainClient struct {
 	mu              sync.Mutex
 	domains         map[string]libvirtdomain.Domain
 	texts           map[string]string
 	starts          map[string]int
+	opens           int
+	closes          int
 	removeErr       error
 	listErr         error
 	changed         chan struct{}
@@ -40,8 +46,21 @@ type domainClient struct {
 	listed          chan struct{}
 }
 
-func (c *domainClient) open(context.Context) (libvirtdomain.Client, error) { return c, nil }
-func (*domainClient) Close()                                               {}
+func (c *domainClient) open(context.Context) (libvirtdomain.Client, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.opens++
+
+	return c, nil
+}
+
+func (c *domainClient) Close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.closes++
+}
 
 func (c *domainClient) Domains() ([]libvirtdomain.Domain, error) {
 	c.mu.Lock()
@@ -169,6 +188,15 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 	system := hardware.NewSystemInformation(hardware.SystemInformationID)
 	system.TypedSpec().UUID = machineUUID
 	s.Create(system)
+	s.Create(newReadyVirtqemudService())
+}
+
+func newReadyVirtqemudService() *v1alpha1.Service {
+	service := v1alpha1.NewService(virtqemudServiceID)
+	service.TypedSpec().Running = true
+	service.TypedSpec().Unknown = true
+
+	return service
 }
 
 func (s *VirtualMachineDomainSuite) start() {
@@ -231,6 +259,76 @@ func (s *VirtualMachineDomainSuite) TestCreateUpdateRemove() {
 	s.assertFinalizer("first", false)
 	s.Destroy(first)
 	s.assertDomain("second", second.TypedSpec().DomainXML, true)
+}
+
+func (s *VirtualMachineDomainSuite) TestServiceReadinessGatesReconciliationAndCleanup() {
+	service, err := safe.StateGetByID[*v1alpha1.Service](s.Ctx(), s.State(), virtqemudServiceID)
+	s.Require().NoError(err)
+	s.Destroy(service)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "gated")
+	spec.TypedSpec().DomainXML = `<domain><name>gated</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+	s.start()
+
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.opens != 0
+	}, 100*time.Millisecond, 10*time.Millisecond)
+
+	starting := v1alpha1.NewService(virtqemudServiceID)
+	starting.TypedSpec().Unknown = true
+	s.Create(starting)
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.opens != 0
+	}, 100*time.Millisecond, 10*time.Millisecond)
+
+	ctest.UpdateWithConflicts(s, starting, func(resource *v1alpha1.Service) error {
+		resource.TypedSpec().Running = true
+
+		return nil
+	})
+	s.assertDomain("gated", spec.TypedSpec().DomainXML, true)
+	s.assertFinalizer("gated", true)
+
+	ready, err := s.State().Teardown(s.Ctx(), starting.Metadata())
+	s.Require().NoError(err)
+	s.Require().True(ready)
+	s.Destroy(starting)
+
+	updated := ctest.UpdateWithConflicts(s, spec, func(resource *hypervisor.VirtualMachineDomainSpec) error {
+		resource.TypedSpec().DomainXML = `<domain><name>gated</name><vcpu>2</vcpu></domain>`
+
+		return nil
+	})
+
+	s.client.mu.Lock()
+	opensWhileReady := s.client.opens
+	s.client.mu.Unlock()
+
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.opens != opensWhileReady || s.client.texts["gated"] == updated.TypedSpec().DomainXML
+	}, 100*time.Millisecond, 10*time.Millisecond)
+	s.assertFinalizer("gated", true)
+
+	teardownReady, err := s.State().Teardown(s.Ctx(), updated.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(teardownReady)
+	s.assertFinalizer("gated", true)
+	s.assertDomain("gated", spec.TypedSpec().DomainXML, true)
+
+	s.Create(newReadyVirtqemudService())
+	s.assertDomain("gated", "", false)
+	s.assertFinalizer("gated", false)
 }
 
 func (s *VirtualMachineDomainSuite) TestUnclaimedDomainsAreNeverRemoved() {

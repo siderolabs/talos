@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
@@ -20,7 +21,10 @@ import (
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
+
+const virtqemudServiceID = "ext-virtqemud"
 
 // VirtualMachineController reconciles running transient domains with virtqemud.
 type VirtualMachineController struct {
@@ -52,6 +56,12 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			Type:      hypervisor.VirtualMachineDomainStatusType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        optional.Some(virtqemudServiceID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -73,12 +83,36 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 		case <-runtime.EventCh():
 		}
 
-		if err := ctrl.reconcile(ctx, runtime); err != nil {
+		ready, err := virtqemudReady(ctx, runtime)
+		if err != nil {
+			return err
+		}
+
+		if !ready {
+			runtime.ResetRestartBackoff()
+
+			continue
+		}
+
+		if err = ctrl.reconcile(ctx, runtime); err != nil {
 			return err
 		}
 
 		runtime.ResetRestartBackoff()
 	}
+}
+
+func virtqemudReady(ctx context.Context, runtime controller.Runtime) (bool, error) {
+	service, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, runtime, virtqemudServiceID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("get %q service: %w", virtqemudServiceID, err)
+	}
+
+	return service.TypedSpec().Running && (service.TypedSpec().Healthy || service.TypedSpec().Unknown), nil
 }
 
 func (ctrl *VirtualMachineController) reconcile(ctx context.Context, runtime controller.Runtime) error {

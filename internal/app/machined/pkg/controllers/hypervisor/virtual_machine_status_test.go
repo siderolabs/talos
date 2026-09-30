@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 type openFailure struct{ err error }
@@ -52,6 +53,7 @@ func (s *VirtualMachineStatusSuite) SetupTest() {
 	machine := hardware.NewSystemInformation(hardware.SystemInformationID)
 	machine.TypedSpec().UUID = machineUUID
 	s.Create(machine)
+	s.Create(newReadyVirtqemudService())
 }
 
 func TestVirtualMachineStatusSuite(t *testing.T) {
@@ -107,6 +109,140 @@ func (s *VirtualMachineStatusSuite) TestLifecycleEventRefreshesUnmanagedDomainWi
 		return err == nil && status.TypedSpec().UUID == domain.UUID.String()
 	}, 5*time.Second, 10*time.Millisecond)
 	s.Require().EqualValues(1, s.opens.Load(), "lifecycle events must reuse the startup inventory session")
+}
+
+func (s *VirtualMachineStatusSuite) registerReadinessObserver(
+	watchCanceled chan<- struct{},
+	subscriptions *atomic.Int32,
+) {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainStatusController{
+		Open: func(ctx context.Context) (libvirtdomain.Client, error) {
+			if subscriptions.Load() == 0 {
+				return nil, errors.New("watch was not registered before open")
+			}
+
+			return s.open(ctx)
+		},
+		Watch: func(ctx context.Context) (<-chan struct{}, error) {
+			subscriptions.Add(1)
+
+			events := make(chan struct{}, 1)
+
+			go func() {
+				<-ctx.Done()
+
+				watchCanceled <- struct{}{}
+			}()
+
+			return events, nil
+		},
+	}))
+}
+
+func (s *VirtualMachineStatusSuite) assertObserverIdle(subscriptions *atomic.Int32) {
+	s.Require().Never(func() bool {
+		return subscriptions.Load() != 0 || s.opens.Load() != 0
+	}, 100*time.Millisecond, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineStatusSuite) assertWatchCanceled(watchCanceled <-chan struct{}) {
+	s.Require().Eventually(func() bool {
+		select {
+		case <-watchCanceled:
+			return true
+		default:
+			return false
+		}
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineStatusSuite) assertClientCloseCount(expected int) {
+	s.Require().Eventually(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.closes == expected
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineStatusSuite) assertDomainObservation(
+	name string,
+	powerState hypervisor.VirtualMachinePowerState,
+	errorText string,
+) {
+	s.Require().Eventually(func() bool {
+		status, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainStatus](s.Ctx(), s.State(), name)
+		if err != nil {
+			return false
+		}
+
+		return status.TypedSpec().PowerState == powerState && status.TypedSpec().Error == errorText
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineStatusSuite) assertManagedStatusUnavailable(name string) {
+	s.Require().Eventually(func() bool {
+		domainStatus, domainErr := safe.StateGetByID[*hypervisor.VirtualMachineDomainStatus](s.Ctx(), s.State(), name)
+		if domainErr != nil {
+			return false
+		}
+
+		status, statusErr := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
+		if statusErr != nil {
+			return false
+		}
+
+		return domainStatus.TypedSpec().UUID == libvirtdomain.UUID(uuid.MustParse(machineUUID), name).String() &&
+			domainStatus.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateUnknown &&
+			domainStatus.TypedSpec().Error != "" &&
+			status.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateUnknown &&
+			status.TypedSpec().Stage == hypervisor.VirtualMachineStageError && status.TypedSpec().Error != ""
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineStatusSuite) TestServiceReadinessControlsObserverLifecycle() {
+	service, err := safe.StateGetByID[*v1alpha1.Service](s.Ctx(), s.State(), virtqemudServiceID)
+	s.Require().NoError(err)
+	s.Destroy(service)
+
+	domain := libvirtdomain.Domain{Name: "gated", UUID: uuid.New()}
+	s.client.domains[domain.Name] = domain
+
+	watchCanceled := make(chan struct{}, 3)
+
+	var subscriptions atomic.Int32
+
+	s.registerReadinessObserver(watchCanceled, &subscriptions)
+	s.assertObserverIdle(&subscriptions)
+
+	starting := v1alpha1.NewService(virtqemudServiceID)
+	starting.TypedSpec().Unknown = true
+	s.Create(starting)
+	s.assertObserverIdle(&subscriptions)
+
+	ctest.UpdateWithConflicts(s, starting, func(resource *v1alpha1.Service) error {
+		resource.TypedSpec().Running = true
+
+		return nil
+	})
+	s.assertDomainObservation(domain.Name, hypervisor.VirtualMachinePowerStateRunning, "")
+	s.Require().EqualValues(1, subscriptions.Load())
+	s.Require().EqualValues(1, s.opens.Load())
+
+	s.Destroy(starting)
+	s.assertWatchCanceled(watchCanceled)
+	s.assertClientCloseCount(1)
+	s.assertDomainObservation(domain.Name, hypervisor.VirtualMachinePowerStateUnknown, "virtqemud service is not ready")
+
+	s.Create(newReadyVirtqemudService())
+	s.assertDomainObservation(domain.Name, hypervisor.VirtualMachinePowerStateRunning, "")
+	s.Require().Eventually(func() bool {
+		return subscriptions.Load() == 2 && s.opens.Load() == 2
+	}, 5*time.Second, 10*time.Millisecond)
+
+	s.TearDownTest()
+	s.assertWatchCanceled(watchCanceled)
+	s.assertClientCloseCount(2)
 }
 
 func (s *VirtualMachineStatusSuite) TestLifecycleEventRemovesDisappearedDomainWithoutPolling() {
@@ -447,7 +583,7 @@ func (s *VirtualMachineStatusSuite) TestDaemonUnavailable() {
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
 }
 
-func (s *VirtualMachineStatusSuite) TestLibvirtOutageKeepsLastObservationUntilSuccessfulScan() {
+func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUntilSuccessfulScan() {
 	name := "vm1"
 	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
 
@@ -483,10 +619,7 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageKeepsLastObservationUntilSu
 	close(s.events)
 	s.Require().Eventually(func() bool { return subscriptions.Load() >= 3 }, 5*time.Second, 10*time.Millisecond)
 
-	status, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainStatus](s.Ctx(), s.State(), name)
-	s.Require().NoError(err)
-	s.Require().Equal(libvirtdomain.UUID(uuid.MustParse(machineUUID), name).String(), status.TypedSpec().UUID)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertManagedStatusUnavailable(name)
 
 	s.client.mu.Lock()
 	delete(s.client.domains, name)

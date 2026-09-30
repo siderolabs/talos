@@ -36,17 +36,36 @@ func (*VirtualMachineStatusController) Name() string {
 // Inputs implements controller.Controller.
 func (*VirtualMachineStatusController) Inputs() []controller.Input {
 	return []controller.Input{
-		{Namespace: hypervisor.NamespaceName, Type: hypervisor.VirtualMachineSpecType, Kind: controller.InputWeak},
-		{Namespace: hypervisor.NamespaceName, Type: hypervisor.VirtualMachineDomainStatusType, Kind: controller.InputWeak},
-		{Namespace: hardware.NamespaceName, Type: hardware.SystemInformationType, Kind: controller.InputWeak},
-		{Namespace: network.NamespaceName, Type: network.LinkStatusType, Kind: controller.InputWeak},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineDomainStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.SystemInformationType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
 // Outputs implements controller.Controller.
 func (*VirtualMachineStatusController) Outputs() []controller.Output {
 	return []controller.Output{
-		{Type: hypervisor.VirtualMachineStatusType, Kind: controller.OutputExclusive},
+		{
+			Type: hypervisor.VirtualMachineStatusType,
+			Kind: controller.OutputExclusive,
+		},
 	}
 }
 
