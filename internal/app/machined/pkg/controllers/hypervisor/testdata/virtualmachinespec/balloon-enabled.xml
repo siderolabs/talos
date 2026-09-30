@@ -15,6 +15,7 @@
   <features>
     <acpi></acpi>
   </features>
+  <cpu mode="host-model"></cpu>
   <devices>
     <memballoon model="virtio"></memballoon>
   </devices>

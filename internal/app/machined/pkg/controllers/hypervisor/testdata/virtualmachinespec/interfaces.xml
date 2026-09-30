@@ -15,6 +15,7 @@
   <features>
     <acpi></acpi>
   </features>
+  <cpu mode="host-model"></cpu>
   <devices>
     <interface type="direct">
       <mac address="52:54:00:8b:86:cc"></mac>

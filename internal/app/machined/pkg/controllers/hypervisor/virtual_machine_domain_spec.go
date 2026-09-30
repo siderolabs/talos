@@ -218,13 +218,19 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 		},
 	}
 
+	// Resolve the CPU against the host rather than leaving the model to QEMU, whose default is
+	// x86-64-v1. Talos itself is built for x86-64-v2, so a guest left on the default boots its
+	// kernel and then faults in machined. host-model keeps the domain expressed in named models
+	// libvirt can reason about, unlike a passthrough of whatever this host happens to be.
+	domain.CPU = &libvirtxml.DomainCPU{
+		Mode: "host-model",
+	}
+
 	if topology := spec.CPU.Topology; topology != nil {
-		domain.CPU = &libvirtxml.DomainCPU{
-			Topology: &libvirtxml.DomainCPUTopology{
-				Sockets: int(topology.Sockets),
-				Cores:   int(topology.Cores),
-				Threads: int(topology.Threads),
-			},
+		domain.CPU.Topology = &libvirtxml.DomainCPUTopology{
+			Sockets: int(topology.Sockets),
+			Cores:   int(topology.Cores),
+			Threads: int(topology.Threads),
 		}
 	}
 
