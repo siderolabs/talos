@@ -189,7 +189,9 @@ func (ctrl *LinkConfigController) Run(ctx context.Context, r controller.Runtime,
 					}
 				}
 
-				if linkStatus.TypedSpec().Physical() {
+				// skip links which are already enslaved (e.g. by the kernel, like Azure accelerated networking VF enslaved to netvsc),
+				// as default link spec would try to unslave them
+				if linkStatus.TypedSpec().Physical() && linkStatus.TypedSpec().MasterIndex == 0 {
 					if err = ctrl.apply(ctx, r, []network.LinkSpecSpec{
 						{
 							Name:        linkStatus.Metadata().ID(),

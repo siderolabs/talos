@@ -50,10 +50,15 @@ func (suite *OperatorConfigSuite) TestDefaultDHCP() {
 		),
 	)
 
-	for _, link := range []string{"eth0", "eth1", "eth2"} {
+	for _, link := range []string{"eth0", "eth1", "eth2", "eth3"} {
 		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
 		linkStatus.TypedSpec().Type = nethelpers.LinkEther
 		linkStatus.TypedSpec().LinkState = true
+
+		if link == "eth3" {
+			// enslaved by the kernel (e.g. Azure accelerated networking VF)
+			linkStatus.TypedSpec().MasterIndex = 1
+		}
 
 		suite.Create(linkStatus)
 	}
@@ -73,6 +78,13 @@ func (suite *OperatorConfigSuite) TestDefaultDHCP() {
 			case "default/dhcp4/eth1":
 				asrt.Equal("eth1", r.TypedSpec().LinkName)
 			}
+		},
+	)
+
+	suite.assertNoOperators(
+		[]string{
+			"default/dhcp4/eth2",
+			"default/dhcp4/eth3",
 		},
 	)
 }

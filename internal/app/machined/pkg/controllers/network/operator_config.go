@@ -316,7 +316,8 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 
 			// operators from defaults
 			for linkStatus := range linkStatuses.All() {
-				if linkStatus.TypedSpec().Physical() {
+				// skip links which are already enslaved (e.g. by the kernel, like Azure accelerated networking VF enslaved to netvsc)
+				if linkStatus.TypedSpec().Physical() && linkStatus.TypedSpec().MasterIndex == 0 {
 					if _, configured := configuredInterfaces[linkStatus.Metadata().ID()]; !configured {
 						if _, ignored := ignoredInterfaces[linkStatus.Metadata().ID()]; !ignored {
 							// enable DHCPv4 operator on physical interfaces which don't have any explicit configuration and are not ignored

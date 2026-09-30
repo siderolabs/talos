@@ -909,13 +909,18 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 		),
 	)
 
-	for _, link := range []string{"eth5", "eth1", "eth2", "eth3", "eth4"} {
+	for _, link := range []string{"eth5", "eth1", "eth2", "eth3", "eth4", "eth6"} {
 		linkStatus := network.NewLinkStatus(network.NamespaceName, link)
 		linkStatus.TypedSpec().Type = nethelpers.LinkEther
 		linkStatus.TypedSpec().LinkState = true
 
 		if link == "eth5" {
 			linkStatus.TypedSpec().AltNames = []string{"enp0s2"}
+		}
+
+		if link == "eth6" {
+			// enslaved by the kernel (e.g. Azure accelerated networking VF)
+			linkStatus.TypedSpec().MasterIndex = 1
 		}
 
 		suite.Create(linkStatus)
@@ -988,6 +993,7 @@ func (suite *LinkConfigSuite) TestDefaultUp() {
 			"default/eth2",
 			"default/eth3",
 			"default/eth4",
+			"default/eth6",
 		},
 	)
 }
