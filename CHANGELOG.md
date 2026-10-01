@@ -1,3 +1,89 @@
+## [Talos 1.13.11](https://github.com/siderolabs/talos/releases/tag/v1.13.11) (2026-10-01)
+
+Welcome to the v1.13.11 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Time Check API
+
+The `TimeService/TimeCheck` API (`talosctl time --check`) is no longer available to the `os:reader` role, as it allows querying
+arbitrary time servers from the node. The `TimeService/Time` API (querying the configured time server) is still available to `os:reader`.
+
+PTP device paths are now strictly validated both in the machine configuration and in the API: the path should be directly under `/dev`,
+the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the device should be a PTP character device.
+
+
+### Component Updates
+
+Linux: 6.18.54
+containerd: 2.2.9
+
+Talos is built with Go 1.26.7
+
+
+### Contributors
+
+* Andrey Smirnov
+* Maja Bojarska
+* Noel Georgi
+* Raphaël DUCOM
+* Utku Ozdemir
+
+### Changes
+<details><summary>12 commits</summary>
+<p>
+
+* [`5f3e4fce3`](https://github.com/siderolabs/talos/commit/5f3e4fce3a85905dfb23e4c52cdba4174b02f94b) test: fix up tests for default OCI spec
+* [`4fe094e73`](https://github.com/siderolabs/talos/commit/4fe094e73a8d29f890ad820ace38ddca2f441e43) fix: add validation for the PTP device name
+* [`56c81cffd`](https://github.com/siderolabs/talos/commit/56c81cffd0cb6be510e091d9eb975d0f35ca0c9f) fix: drop devices from the last observed generation if they are gone
+* [`bd7a2d4dc`](https://github.com/siderolabs/talos/commit/bd7a2d4dc44bd46c9db7d0eb18183a1b68f190c1) fix: perform stricter validation of hostnames/search domains
+* [`dbe8e022c`](https://github.com/siderolabs/talos/commit/dbe8e022c02d1636fcf446de38ea37fedcae4793) fix: do not disclose pre-shared Wireguard key in LinkStatus
+* [`00db0af77`](https://github.com/siderolabs/talos/commit/00db0af77abb76db92fcf9e3030e6d860bcb8bdc) chore: pass kernel version down to VEX generator
+* [`500899185`](https://github.com/siderolabs/talos/commit/500899185c7563612f4927ae20b1a18943282f0b) fix: reconnect the WireGuard over gRPC tunnel after a failure
+* [`0077a50ed`](https://github.com/siderolabs/talos/commit/0077a50ed12182d635e1f28ab5bff5bddd1b24f3) fix: drop logical links if they no longer declare as logical
+* [`29b1e6536`](https://github.com/siderolabs/talos/commit/29b1e6536f3b89e3c35b6d99dbecbce11e018f96) fix: notify about link alias changes
+* [`118a77363`](https://github.com/siderolabs/talos/commit/118a7736301972f98ae2b356e46ef33a24b1a64f) fix(security): define the permissions the 6.18 kernel expects in the classes
+* [`365e3c4f6`](https://github.com/siderolabs/talos/commit/365e3c4f64e0394ea51c8a6a55a973d9f8cad641) fix: set TCP keealive and user timeout on apid proxied connections
+* [`080979b4c`](https://github.com/siderolabs/talos/commit/080979b4c3d50aaaa455058eea058817a1894c69) feat: update pkgs/tools
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>10 commits</summary>
+<p>
+
+* [`642a01b`](https://github.com/siderolabs/pkgs/commit/642a01b7744a6cd35ee0ea16f38a87a6e9fdadec) feat: update containerd to 2.2.9
+* [`3016b61`](https://github.com/siderolabs/pkgs/commit/3016b6144996eb872c0284bd7100bc5f570a1828) fix: add a patch to fix booting on Apple hardware
+* [`889ec2b`](https://github.com/siderolabs/pkgs/commit/889ec2b6772f180a9029f8bc7a945a39f710d6c9) feat: update Linux to 6.18.54
+* [`b554743`](https://github.com/siderolabs/pkgs/commit/b554743a52b54a6139e0468c76dde0ce7e00e417) feat: update Linux to 6.18.53
+* [`574809b`](https://github.com/siderolabs/pkgs/commit/574809b890bc160a3f1377a51440c8d837adcd2c) feat: update DRBD & Linux firmware
+* [`6f29f5d`](https://github.com/siderolabs/pkgs/commit/6f29f5d3c0d09082532d530b29c522ad2a16653e) feat: update Linux to 6.18.52
+* [`1737c02`](https://github.com/siderolabs/pkgs/commit/1737c02edf248c32236aad8b4ea6c04e1994337f) feat: update Linux to 6.18.51
+* [`6b76586`](https://github.com/siderolabs/pkgs/commit/6b76586c6329e8dcf60f5911d6d031042d8238c6) feat: update Linux to 6.18.50
+* [`bb9fe70`](https://github.com/siderolabs/pkgs/commit/bb9fe7099554c188b3d3bc7c6cc48e95716217a4) feat: bump kernel to 6.18.49
+* [`6187366`](https://github.com/siderolabs/pkgs/commit/61873666a8105ea41fc683d55669e32d208db722) chore: sync tools
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`b912600`](https://github.com/siderolabs/tools/commit/b912600505fcaf5ea8d0858078a2a5a9b61db0ae) feat: update pcre to 10.48
+* [`7b95365`](https://github.com/siderolabs/tools/commit/7b953659c39c4068122d944881e302a2b4f27be3) chore: bump util-linux 2.42.3
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**   v1.13.0-65-g9b044c5 -> v1.13.0-75-g642a01b
+* **github.com/siderolabs/tools**  v1.13.0-12-gc70be08 -> v1.13.0-14-gb912600
+
+Previous release can be found at [v1.13.10](https://github.com/siderolabs/talos/releases/tag/v1.13.10)
+
 ## [Talos 1.13.10](https://github.com/siderolabs/talos/releases/tag/v1.13.10) (2026-09-03)
 
 Welcome to the v1.13.10 release of Talos!
