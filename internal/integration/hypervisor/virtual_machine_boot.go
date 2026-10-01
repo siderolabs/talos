@@ -127,7 +127,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{hypervisor.VirtualMachineDiskStatusID(name, "install")},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
 		},

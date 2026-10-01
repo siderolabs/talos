@@ -11,7 +11,7 @@
 (type taloscontainer_t)
 (call pod_p (taloscontainer_t))
 
-; Containers that asked for security.machinedAccess, labelled by ContainerRuntimeController in place
+; Containers that asked for security.machinedAccess, labeled by ContainerRuntimeController in place
 ; of taloscontainer_t.
 ;
 ; A domain of its own rather than granting taloscontainer_t the socket: the bind-mount already
