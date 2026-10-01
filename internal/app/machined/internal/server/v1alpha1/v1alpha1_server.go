@@ -2418,13 +2418,13 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 		return nil, err
 	}
 
-	// make a nice context name
-	k8sClusterConfig := s.Controller.Runtime().Config().K8sClusterConfig()
-	if k8sClusterConfig == nil {
-		return nil, status.Error(codes.FailedPrecondition, "cluster name and endpoint are not configured (.cluster.controlPlane.endpoint or KubeClusterConfig document)")
+	// make a nice context name if we have cluster config
+	contextName := "talos"
+
+	if k8sClusterConfig := s.Controller.Runtime().Config().K8sClusterConfig(); k8sClusterConfig != nil {
+		contextName = k8sClusterConfig.ClusterName()
 	}
 
-	contextName := k8sClusterConfig.ClusterName()
 	if r := roles.Strings(); len(r) == 1 {
 		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
 	}

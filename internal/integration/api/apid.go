@@ -277,10 +277,6 @@ func (suite *ApidSuite) TestPKIMismatch() {
 // TestImpersonationWithoutRole verifies that the impersonation header is rejected when the client
 // doesn't have os:impersonator role, whatever roles the client has otherwise.
 func (suite *ApidSuite) TestImpersonationWithoutRole() {
-	if !suite.Capabilities().SupportsKubernetes {
-		suite.T().Skip("cluster doesn't run Kubernetes")
-	}
-
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	cpNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
@@ -335,10 +331,6 @@ func (suite *ApidSuite) TestImpersonationWithoutRole() {
 // TestImpersonation verifies that a client with os:impersonator role can impersonate any role via the impersonation header,
 // and that the impersonated roles are what gets authorized, including when the request is proxied between apid instances.
 func (suite *ApidSuite) TestImpersonation() {
-	if !suite.Capabilities().SupportsKubernetes {
-		suite.T().Skip("cluster doesn't run Kubernetes")
-	}
-
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	cpCtx := client.WithNode(suite.ctx, suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane))
 
