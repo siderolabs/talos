@@ -26,10 +26,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
+// DHCP4ClientFactory creates a DHCPv4 client for the link.
+type DHCP4ClientFactory func(linkName string, opts ...nclient4.ClientOpt) (*nclient4.Client, error)
+
 // DHCP4 implements the DHCPv4 network operator.
 type DHCP4 struct {
-	logger *zap.Logger
-	state  state.State
+	logger        *zap.Logger
+	state         state.State
+	clientFactory DHCP4ClientFactory
 
 	linkName            string
 	routeMetric         uint32
@@ -50,10 +54,19 @@ type DHCP4 struct {
 }
 
 // NewDHCP4 creates DHCPv4 operator.
-func NewDHCP4(logger *zap.Logger, linkName string, config network.DHCP4OperatorSpec, platform runtime.Platform, state state.State) *DHCP4 {
+//
+// A nil client factory uses the raw sockets on the link.
+func NewDHCP4(
+	logger *zap.Logger, linkName string, config network.DHCP4OperatorSpec, platform runtime.Platform, state state.State, clientFactory DHCP4ClientFactory,
+) *DHCP4 {
+	if clientFactory == nil {
+		clientFactory = nclient4.New
+	}
+
 	return &DHCP4{
 		logger:              logger,
 		state:               state,
+		clientFactory:       clientFactory,
 		linkName:            linkName,
 		routeMetric:         config.RouteMetric,
 		skipHostnameRequest: config.SkipHostnameRequest,
@@ -141,7 +154,10 @@ func (d *DHCP4) waitForNetworkReady(ctx context.Context) error {
 //
 //nolint:gocyclo,cyclop
 func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
-	const minRenewDuration = 5 * time.Second // Protect from renewing too often
+	const (
+		minRenewDuration = 5 * time.Second  // Protect from renewing too often
+		nakRestartDelay  = 10 * time.Second // RFC 2131, section 3.1: wait a minimum of ten seconds before restarting after a DHCPNAK to avoid excessive network traffic
+	)
 
 	dhcpStartTime := time.Now() // Time when client began address acquisition or renewal process
 	renewInterval := minRenewDuration
@@ -166,13 +182,15 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			d.logger.Warn("DHCP request/renew failed", zap.Error(err), zap.String("link", d.linkName))
 		}
 
-		if err == nil {
-			// Notify the underlying controller about the new lease
+		nak := isNak(err)
+
+		if err == nil || nak {
+			// Notify the underlying controller about the new lease (or about the rejected one being dropped)
 			if !channel.SendWithContext(ctx, notifyCh, struct{}{}) {
 				return
 			}
 
-			if newLease {
+			if err == nil && newLease {
 				// Wait for networking to be established before transitioning to unicast operations
 				if err = d.waitForNetworkReady(ctx); err != nil && !errors.Is(err, context.Canceled) {
 					d.logger.Warn("failed to wait for networking to become ready", zap.Error(err))
@@ -180,9 +198,14 @@ func (d *DHCP4) Run(ctx context.Context, notifyCh chan<- struct{}) {
 			}
 		}
 
-		if leaseTime > 0 {
+		switch {
+		case leaseTime > 0:
 			renewInterval = leaseTime / 2
-		} else {
+		case nak:
+			// RFC 2131, section 3.1: if the client receives a DHCPNAK message, the client restarts the configuration process.
+			renewInterval = nakRestartDelay
+			dhcpStartTime = time.Now()
+		default:
 			renewInterval /= 2
 		}
 
@@ -325,6 +348,20 @@ func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) 
 	d.timeservers = specs.TimeServers
 }
 
+// isNak returns true if the error is a DHCPNAK response from the server.
+func isNak(err error) bool {
+	return errors.As(err, new(*nclient4.ErrNak))
+}
+
+// clearAddressConfig drops the leased address and the routes depending on it.
+func (d *DHCP4) clearAddressConfig() {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	d.addresses = nil
+	d.routes = nil
+}
+
 func (d *DHCP4) newClient() (*nclient4.Client, error) {
 	var clientOpts []nclient4.ClientOpt
 
@@ -349,7 +386,7 @@ func (d *DHCP4) newClient() (*nclient4.Client, error) {
 	}
 
 	// Create a new client, the caller is responsible for closing it
-	return nclient4.New(d.linkName, clientOpts...)
+	return d.clientFactory(d.linkName, clientOpts...)
 }
 
 //nolint:gocyclo
@@ -432,10 +469,22 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 
 		d.logger.Debug("DHCP REQUEST with previous IP", zap.String("link", d.linkName), zap.Stringer("previous_ip", previousIPAddress))
 
-		d.lease, err = client.Request(ctx, dhcpv4.PrependModifiers(
+		// The previous IP is only a hint for the DISCOVER (RFC 2131, section 4.4.1),
+		// the REQUEST must carry the address from the OFFER (RFC 2131, section 4.3.2),
+		// so we can't use client.Request, as it applies the modifiers to both messages.
+		var offer *dhcpv4.DHCPv4
+
+		offer, err = client.DiscoverOffer(ctx, dhcpv4.PrependModifiers(
 			mods,
 			dhcpv4.WithOption(dhcpv4.OptRequestedIPAddress(previousIPAddress)),
 		)...)
+		if err != nil {
+			err = fmt.Errorf("unable to receive an offer: %w", err)
+
+			break
+		}
+
+		d.lease, err = client.RequestFromOffer(ctx, offer, mods...)
 	default:
 		d.logger.Debug("DHCP REQUEST", zap.String("link", d.linkName))
 		d.lease, err = client.Request(ctx, mods...)
@@ -444,6 +493,14 @@ func (d *DHCP4) requestRenew(ctx context.Context, hostname network.HostnameStatu
 	if err != nil {
 		// explicitly clear the lease on failure to start with the discovery sequence next time
 		d.lease = nil
+
+		// The server explicitly rejected the lease, so the address (and the routes sourced from it)
+		// must no longer be used, and the previous address should not be requested again.
+		//
+		// On other errors (e.g. timeout) keep the network configuration, as the DHCP server might be temporarily down.
+		if isNak(err) {
+			d.clearAddressConfig()
+		}
 
 		return 0, err
 	}
