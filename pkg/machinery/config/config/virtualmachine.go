@@ -39,6 +39,8 @@ type VirtualMachineCPUConfig interface {
 	Count() uint32
 	// Limit is the whole-domain host CPU ceiling in millicores; None means unlimited.
 	Limit() optional.Optional[uint64]
+	// Slice is the CPUPartitionConfig slice name the virtual machine selects; empty means none.
+	Slice() string
 	// Topology settings; never nil.
 	Topology() VirtualMachineCPUTopologyConfig
 }

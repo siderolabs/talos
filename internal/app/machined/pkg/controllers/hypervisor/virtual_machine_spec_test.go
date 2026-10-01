@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -108,6 +109,54 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsUpdatesAndRemovesTypedSp
 	suite.Destroy(replacement)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineSpec](suite, doc.Name())
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
+}
+
+// The slice is carried verbatim: the projection does not resolve it against CPUPartitionConfig,
+// and a count-only or pin-only machine keeps an empty slice.
+func (suite *VirtualMachineProjectionSuite) TestProjectsCPUSlice() {
+	partition := runtimecfg.NewCPUPartitionConfigV1Alpha1()
+	partition.InitConfig = &runtimecfg.CPUPartitionRoot{RootCPUs: "0-1"}
+	partition.SystemConfig = &runtimecfg.CPUPartitionRoot{RootCPUs: "0-1"}
+	partition.PodRuntimeConfig = &runtimecfg.CPUPartitionRoot{RootCPUs: "0-1"}
+	partition.KubepodsConfig = &runtimecfg.CPUPartitionRoot{RootCPUs: "2-3"}
+	partition.TalosContainersConfig = &runtimecfg.CPUPartitionRoot{RootCPUs: "0-1"}
+	partition.VirtualMachinesConfig = &runtimecfg.CPUPartitionVirtualMachines{
+		RootCPUs:     "4-7",
+		SlicesConfig: []runtimecfg.CPUPartitionSlice{{SliceName: "database", SliceCPUs: "4-5", SliceExclusive: new(true)}},
+	}
+
+	sliced := newVirtualMachine("sliced")
+	sliced.CPUConfig.CPUCount = 2
+	sliced.CPUConfig.CPUSlice = "database"
+	sliced.CPUConfig.TopologyConfig = hypervisorcfg.VirtualMachineCPUTopology{
+		TopologySockets: new(uint32(1)),
+		TopologyCores:   new(uint32(2)),
+		TopologyThreads: new(uint32(1)),
+	}
+
+	pinned := newVirtualMachine("pinned")
+	pinned.CPUConfig.TopologyConfig.PinningConfig = hypervisorcfg.VirtualMachineCPUPinning{
+		VCPUsConfig: []hypervisorcfg.VirtualMachineVCPUPin{{PinVCPU: 0, PinCPUs: "6"}},
+	}
+
+	cfg, err := container.New(partition, sliced, pinned, newVirtualMachine("plain"))
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, "sliced", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineCPUSpec{
+			Count:    2,
+			Slice:    "database",
+			Topology: &hypervisor.VirtualMachineCPUTopologySpec{Sockets: 1, Cores: 2, Threads: 1},
+		}, res.TypedSpec().CPU)
+	})
+	ctest.AssertResource(suite, "pinned", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Empty(res.TypedSpec().CPU.Slice)
+		asrt.Equal([]hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 0, CPUs: "6"}}, res.TypedSpec().CPU.Pins)
+	})
+	ctest.AssertResource(suite, "plain", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineCPUSpec{Count: 3}, res.TypedSpec().CPU)
+	})
 }
 
 type VirtualMachineSpecSuite struct {
@@ -518,6 +567,37 @@ func (suite *VirtualMachineSpecSuite) TestBallooningUpdates() {
 	suite.replaceConfig(doc, newVirtualMachine("empty-balloon-barrier"))
 	ctest.AssertResource(suite, "empty-balloon-barrier", func(_ *hypervisor.VirtualMachineDomainSpec, _ *assert.Assertions) {})
 	suite.assertDomain(doc.Name(), "balloon-omitted")
+}
+
+// The partition comes from the granted placement, and stays rendered while the placement is
+// being withdrawn: the definition of a running domain never changes because of a policy edit.
+func (suite *VirtualMachineSpecSuite) TestPlacementPartition() {
+	doc := newVirtualMachine("guest-one")
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+	suite.assertDomain(doc.Name(), "default")
+
+	placement := hypervisor.NewVirtualMachineCPUPlacement(hypervisor.NamespaceName, doc.Name())
+	placement.TypedSpec().Partition = "/virtualmachines.partition/database.partition"
+	placement.TypedSpec().Slice = "database"
+	placement.TypedSpec().Exclusive = true
+	suite.Create(placement)
+	suite.assertDomain(doc.Name(), "placement-database")
+
+	suite.AddFinalizer(placement.Metadata(), "hypervisor.VirtualMachineController")
+	ready, err := suite.State().Teardown(suite.Ctx(), placement.Metadata())
+	suite.Require().NoError(err)
+	suite.Require().False(ready)
+
+	// A second output is a reconciliation barrier: the withdrawn placement still renders.
+	suite.replaceConfig(doc, newVirtualMachine("barrier"))
+	ctest.AssertResource(suite, "barrier", func(_ *hypervisor.VirtualMachineDomainSpec, _ *assert.Assertions) {})
+	suite.assertDomain(doc.Name(), "placement-database")
+
+	suite.RemoveFinalizer(placement.Metadata(), "hypervisor.VirtualMachineController")
+	suite.Destroy(placement)
+	suite.assertDomain(doc.Name(), "default")
 }
 
 func (suite *VirtualMachineSpecSuite) TestCPULimit() {

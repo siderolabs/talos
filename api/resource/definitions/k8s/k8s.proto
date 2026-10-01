@@ -177,6 +177,14 @@ message KubePrismStatusesSpec {
   bool healthy = 2;
 }
 
+// KubeletCPUReservationSpec describes the staged reservation.
+message KubeletCPUReservationSpec {
+  // Managed is true while the CPU partition bounds kubepods; ReservedCPUs is then authoritative.
+  bool managed = 1;
+  // ReservedCPUs is the reservedSystemCPUs list to render, empty when unmanaged.
+  string reserved_cp_us = 2;
+}
+
 // KubeletConfigSpec holds the source of kubelet configuration.
 message KubeletConfigSpec {
   string image = 1;

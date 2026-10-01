@@ -105,6 +105,8 @@ type VirtualMachineCPUSpec struct {
 	EmulatorPin string `yaml:"emulatorPin,omitempty" protobuf:"4"`
 	// Topology is the guest-visible CPU geometry; nil leaves it to libvirt.
 	Topology *VirtualMachineCPUTopologySpec `yaml:"topology,omitempty" protobuf:"5"`
+	// Slice is the CPUPartitionSpec slice the virtual machine selects; empty means none.
+	Slice string `yaml:"slice,omitempty" protobuf:"6"`
 }
 
 // VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.

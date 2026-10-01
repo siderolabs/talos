@@ -99,6 +99,70 @@ func (x *ContentLibraryStatusSpec) GetError() string {
 	return ""
 }
 
+// VirtualMachineCPUPlacementSpec is the spec for VirtualMachineCPUPlacement.
+type VirtualMachineCPUPlacementSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Partition is the libvirt resource partition path, e.g. /virtualmachines.partition/shared.partition.
+	Partition string `protobuf:"bytes,1,opt,name=partition,proto3" json:"partition,omitempty"`
+	// Slice is the CPU partition slice name; empty for the shared remainder.
+	Slice string `protobuf:"bytes,2,opt,name=slice,proto3" json:"slice,omitempty"`
+	// Exclusive is true when the slice is exclusive to this virtual machine.
+	Exclusive     bool `protobuf:"varint,3,opt,name=exclusive,proto3" json:"exclusive,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VirtualMachineCPUPlacementSpec) Reset() {
+	*x = VirtualMachineCPUPlacementSpec{}
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VirtualMachineCPUPlacementSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VirtualMachineCPUPlacementSpec) ProtoMessage() {}
+
+func (x *VirtualMachineCPUPlacementSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VirtualMachineCPUPlacementSpec.ProtoReflect.Descriptor instead.
+func (*VirtualMachineCPUPlacementSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *VirtualMachineCPUPlacementSpec) GetPartition() string {
+	if x != nil {
+		return x.Partition
+	}
+	return ""
+}
+
+func (x *VirtualMachineCPUPlacementSpec) GetSlice() string {
+	if x != nil {
+		return x.Slice
+	}
+	return ""
+}
+
+func (x *VirtualMachineCPUPlacementSpec) GetExclusive() bool {
+	if x != nil {
+		return x.Exclusive
+	}
+	return false
+}
+
 // VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 type VirtualMachineCPUSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -110,14 +174,16 @@ type VirtualMachineCPUSpec struct {
 	// EmulatorPin is the host CPU list the emulator threads are pinned to; empty means unpinned.
 	EmulatorPin string `protobuf:"bytes,4,opt,name=emulator_pin,json=emulatorPin,proto3" json:"emulator_pin,omitempty"`
 	// Topology is the guest-visible CPU geometry; nil leaves it to libvirt.
-	Topology      *VirtualMachineCPUTopologySpec `protobuf:"bytes,5,opt,name=topology,proto3" json:"topology,omitempty"`
+	Topology *VirtualMachineCPUTopologySpec `protobuf:"bytes,5,opt,name=topology,proto3" json:"topology,omitempty"`
+	// Slice is the CPUPartitionSpec slice the virtual machine selects; empty means none.
+	Slice         string `protobuf:"bytes,6,opt,name=slice,proto3" json:"slice,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *VirtualMachineCPUSpec) Reset() {
 	*x = VirtualMachineCPUSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[1]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -129,7 +195,7 @@ func (x *VirtualMachineCPUSpec) String() string {
 func (*VirtualMachineCPUSpec) ProtoMessage() {}
 
 func (x *VirtualMachineCPUSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[1]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -142,7 +208,7 @@ func (x *VirtualMachineCPUSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineCPUSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineCPUSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *VirtualMachineCPUSpec) GetCount() uint32 {
@@ -180,6 +246,13 @@ func (x *VirtualMachineCPUSpec) GetTopology() *VirtualMachineCPUTopologySpec {
 	return nil
 }
 
+func (x *VirtualMachineCPUSpec) GetSlice() string {
+	if x != nil {
+		return x.Slice
+	}
+	return ""
+}
+
 // VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.
 type VirtualMachineCPUTopologySpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -192,7 +265,7 @@ type VirtualMachineCPUTopologySpec struct {
 
 func (x *VirtualMachineCPUTopologySpec) Reset() {
 	*x = VirtualMachineCPUTopologySpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[2]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -204,7 +277,7 @@ func (x *VirtualMachineCPUTopologySpec) String() string {
 func (*VirtualMachineCPUTopologySpec) ProtoMessage() {}
 
 func (x *VirtualMachineCPUTopologySpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[2]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -217,7 +290,7 @@ func (x *VirtualMachineCPUTopologySpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineCPUTopologySpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineCPUTopologySpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *VirtualMachineCPUTopologySpec) GetSockets() uint32 {
@@ -252,7 +325,7 @@ type VirtualMachineConsoleSpec struct {
 
 func (x *VirtualMachineConsoleSpec) Reset() {
 	*x = VirtualMachineConsoleSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[3]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -264,7 +337,7 @@ func (x *VirtualMachineConsoleSpec) String() string {
 func (*VirtualMachineConsoleSpec) ProtoMessage() {}
 
 func (x *VirtualMachineConsoleSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[3]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -277,7 +350,7 @@ func (x *VirtualMachineConsoleSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineConsoleSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineConsoleSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *VirtualMachineConsoleSpec) GetSerial() bool {
@@ -307,7 +380,7 @@ type VirtualMachineDiskFromImageSpec struct {
 
 func (x *VirtualMachineDiskFromImageSpec) Reset() {
 	*x = VirtualMachineDiskFromImageSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[4]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -319,7 +392,7 @@ func (x *VirtualMachineDiskFromImageSpec) String() string {
 func (*VirtualMachineDiskFromImageSpec) ProtoMessage() {}
 
 func (x *VirtualMachineDiskFromImageSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[4]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -332,7 +405,7 @@ func (x *VirtualMachineDiskFromImageSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineDiskFromImageSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineDiskFromImageSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *VirtualMachineDiskFromImageSpec) GetLibrary() string {
@@ -374,7 +447,7 @@ type VirtualMachineDiskProvisionSpec struct {
 
 func (x *VirtualMachineDiskProvisionSpec) Reset() {
 	*x = VirtualMachineDiskProvisionSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[5]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -386,7 +459,7 @@ func (x *VirtualMachineDiskProvisionSpec) String() string {
 func (*VirtualMachineDiskProvisionSpec) ProtoMessage() {}
 
 func (x *VirtualMachineDiskProvisionSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[5]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -399,7 +472,7 @@ func (x *VirtualMachineDiskProvisionSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineDiskProvisionSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineDiskProvisionSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *VirtualMachineDiskProvisionSpec) GetBlank() bool {
@@ -433,7 +506,7 @@ type VirtualMachineDiskSpec struct {
 
 func (x *VirtualMachineDiskSpec) Reset() {
 	*x = VirtualMachineDiskSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[6]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -445,7 +518,7 @@ func (x *VirtualMachineDiskSpec) String() string {
 func (*VirtualMachineDiskSpec) ProtoMessage() {}
 
 func (x *VirtualMachineDiskSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[6]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -458,7 +531,7 @@ func (x *VirtualMachineDiskSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineDiskSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineDiskSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *VirtualMachineDiskSpec) GetName() string {
@@ -530,7 +603,7 @@ type VirtualMachineDomainSpecSpec struct {
 
 func (x *VirtualMachineDomainSpecSpec) Reset() {
 	*x = VirtualMachineDomainSpecSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -542,7 +615,7 @@ func (x *VirtualMachineDomainSpecSpec) String() string {
 func (*VirtualMachineDomainSpecSpec) ProtoMessage() {}
 
 func (x *VirtualMachineDomainSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[7]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -555,7 +628,7 @@ func (x *VirtualMachineDomainSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineDomainSpecSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineDomainSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *VirtualMachineDomainSpecSpec) GetDomainXml() string {
@@ -588,7 +661,7 @@ type VirtualMachineDomainStatusSpec struct {
 
 func (x *VirtualMachineDomainStatusSpec) Reset() {
 	*x = VirtualMachineDomainStatusSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -600,7 +673,7 @@ func (x *VirtualMachineDomainStatusSpec) String() string {
 func (*VirtualMachineDomainStatusSpec) ProtoMessage() {}
 
 func (x *VirtualMachineDomainStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[8]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -613,7 +686,7 @@ func (x *VirtualMachineDomainStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineDomainStatusSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineDomainStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *VirtualMachineDomainStatusSpec) GetUuid() string {
@@ -676,7 +749,7 @@ type VirtualMachineFirmwareSpec struct {
 
 func (x *VirtualMachineFirmwareSpec) Reset() {
 	*x = VirtualMachineFirmwareSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -688,7 +761,7 @@ func (x *VirtualMachineFirmwareSpec) String() string {
 func (*VirtualMachineFirmwareSpec) ProtoMessage() {}
 
 func (x *VirtualMachineFirmwareSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[9]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -701,7 +774,7 @@ func (x *VirtualMachineFirmwareSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineFirmwareSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineFirmwareSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *VirtualMachineFirmwareSpec) GetType() string {
@@ -731,7 +804,7 @@ type VirtualMachineInterfaceSpec struct {
 
 func (x *VirtualMachineInterfaceSpec) Reset() {
 	*x = VirtualMachineInterfaceSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -743,7 +816,7 @@ func (x *VirtualMachineInterfaceSpec) String() string {
 func (*VirtualMachineInterfaceSpec) ProtoMessage() {}
 
 func (x *VirtualMachineInterfaceSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[10]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -756,7 +829,7 @@ func (x *VirtualMachineInterfaceSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineInterfaceSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineInterfaceSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{10}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *VirtualMachineInterfaceSpec) GetName() string {
@@ -783,7 +856,7 @@ type VirtualMachineMemoryBallooningSpec struct {
 
 func (x *VirtualMachineMemoryBallooningSpec) Reset() {
 	*x = VirtualMachineMemoryBallooningSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[11]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -795,7 +868,7 @@ func (x *VirtualMachineMemoryBallooningSpec) String() string {
 func (*VirtualMachineMemoryBallooningSpec) ProtoMessage() {}
 
 func (x *VirtualMachineMemoryBallooningSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[11]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -808,7 +881,7 @@ func (x *VirtualMachineMemoryBallooningSpec) ProtoReflect() protoreflect.Message
 
 // Deprecated: Use VirtualMachineMemoryBallooningSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineMemoryBallooningSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{11}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *VirtualMachineMemoryBallooningSpec) GetEnabled() bool {
@@ -829,7 +902,7 @@ type VirtualMachineMemoryNUMASpec struct {
 
 func (x *VirtualMachineMemoryNUMASpec) Reset() {
 	*x = VirtualMachineMemoryNUMASpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[12]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -841,7 +914,7 @@ func (x *VirtualMachineMemoryNUMASpec) String() string {
 func (*VirtualMachineMemoryNUMASpec) ProtoMessage() {}
 
 func (x *VirtualMachineMemoryNUMASpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[12]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -854,7 +927,7 @@ func (x *VirtualMachineMemoryNUMASpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineMemoryNUMASpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineMemoryNUMASpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *VirtualMachineMemoryNUMASpec) GetMode() string {
@@ -885,7 +958,7 @@ type VirtualMachineMemorySpec struct {
 
 func (x *VirtualMachineMemorySpec) Reset() {
 	*x = VirtualMachineMemorySpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[13]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -897,7 +970,7 @@ func (x *VirtualMachineMemorySpec) String() string {
 func (*VirtualMachineMemorySpec) ProtoMessage() {}
 
 func (x *VirtualMachineMemorySpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[13]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -910,7 +983,7 @@ func (x *VirtualMachineMemorySpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineMemorySpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineMemorySpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{13}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *VirtualMachineMemorySpec) GetSize() uint64 {
@@ -950,7 +1023,7 @@ type VirtualMachineSpecSpec struct {
 
 func (x *VirtualMachineSpecSpec) Reset() {
 	*x = VirtualMachineSpecSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[14]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -962,7 +1035,7 @@ func (x *VirtualMachineSpecSpec) String() string {
 func (*VirtualMachineSpecSpec) ProtoMessage() {}
 
 func (x *VirtualMachineSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[14]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -975,7 +1048,7 @@ func (x *VirtualMachineSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineSpecSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{14}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *VirtualMachineSpecSpec) GetCpu() *VirtualMachineCPUSpec {
@@ -1042,7 +1115,7 @@ type VirtualMachineStatusSpec struct {
 
 func (x *VirtualMachineStatusSpec) Reset() {
 	*x = VirtualMachineStatusSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[15]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1054,7 +1127,7 @@ func (x *VirtualMachineStatusSpec) String() string {
 func (*VirtualMachineStatusSpec) ProtoMessage() {}
 
 func (x *VirtualMachineStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[15]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1067,7 +1140,7 @@ func (x *VirtualMachineStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineStatusSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{15}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *VirtualMachineStatusSpec) GetPowerState() enums.HypervisorVirtualMachinePowerState {
@@ -1102,7 +1175,7 @@ type VirtualMachineVCPUPinSpec struct {
 
 func (x *VirtualMachineVCPUPinSpec) Reset() {
 	*x = VirtualMachineVCPUPinSpec{}
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[16]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1114,7 +1187,7 @@ func (x *VirtualMachineVCPUPinSpec) String() string {
 func (*VirtualMachineVCPUPinSpec) ProtoMessage() {}
 
 func (x *VirtualMachineVCPUPinSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[16]
+	mi := &file_resource_definitions_hypervisor_hypervisor_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1127,7 +1200,7 @@ func (x *VirtualMachineVCPUPinSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VirtualMachineVCPUPinSpec.ProtoReflect.Descriptor instead.
 func (*VirtualMachineVCPUPinSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{16}
+	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *VirtualMachineVCPUPinSpec) GetVcpu() uint32 {
@@ -1153,13 +1226,18 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x14\n" +
 	"\x05ready\x18\x03 \x01(\bR\x05ready\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"\x9e\x02\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"r\n" +
+	"\x1eVirtualMachineCPUPlacementSpec\x12\x1c\n" +
+	"\tpartition\x18\x01 \x01(\tR\tpartition\x12\x14\n" +
+	"\x05slice\x18\x02 \x01(\tR\x05slice\x12\x1c\n" +
+	"\texclusive\x18\x03 \x01(\bR\texclusive\"\xb4\x02\n" +
 	"\x15VirtualMachineCPUSpec\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\rR\x05count\x12\x14\n" +
 	"\x05limit\x18\x02 \x01(\x04R\x05limit\x12T\n" +
 	"\x04pins\x18\x03 \x03(\v2@.talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpecR\x04pins\x12!\n" +
 	"\femulator_pin\x18\x04 \x01(\tR\vemulatorPin\x12`\n" +
-	"\btopology\x18\x05 \x01(\v2D.talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpecR\btopology\"i\n" +
+	"\btopology\x18\x05 \x01(\v2D.talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpecR\btopology\x12\x14\n" +
+	"\x05slice\x18\x06 \x01(\tR\x05slice\"i\n" +
 	"\x1dVirtualMachineCPUTopologySpec\x12\x18\n" +
 	"\asockets\x18\x01 \x01(\rR\asockets\x12\x14\n" +
 	"\x05cores\x18\x02 \x01(\rR\x05cores\x12\x18\n" +
@@ -1251,44 +1329,45 @@ func file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP() []byte 
 	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescData
 }
 
-var file_resource_definitions_hypervisor_hypervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_resource_definitions_hypervisor_hypervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_resource_definitions_hypervisor_hypervisor_proto_goTypes = []any{
 	(*ContentLibraryStatusSpec)(nil),              // 0: talos.resource.definitions.hypervisor.ContentLibraryStatusSpec
-	(*VirtualMachineCPUSpec)(nil),                 // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
-	(*VirtualMachineCPUTopologySpec)(nil),         // 2: talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec
-	(*VirtualMachineConsoleSpec)(nil),             // 3: talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
-	(*VirtualMachineDiskFromImageSpec)(nil),       // 4: talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
-	(*VirtualMachineDiskProvisionSpec)(nil),       // 5: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
-	(*VirtualMachineDiskSpec)(nil),                // 6: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
-	(*VirtualMachineDomainSpecSpec)(nil),          // 7: talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec
-	(*VirtualMachineDomainStatusSpec)(nil),        // 8: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec
-	(*VirtualMachineFirmwareSpec)(nil),            // 9: talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
-	(*VirtualMachineInterfaceSpec)(nil),           // 10: talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec
-	(*VirtualMachineMemoryBallooningSpec)(nil),    // 11: talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
-	(*VirtualMachineMemoryNUMASpec)(nil),          // 12: talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec
-	(*VirtualMachineMemorySpec)(nil),              // 13: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
-	(*VirtualMachineSpecSpec)(nil),                // 14: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec
-	(*VirtualMachineStatusSpec)(nil),              // 15: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec
-	(*VirtualMachineVCPUPinSpec)(nil),             // 16: talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
-	(enums.HypervisorVirtualMachinePowerState)(0), // 17: talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
-	(enums.HypervisorVirtualMachineStage)(0),      // 18: talos.resource.definitions.enums.HypervisorVirtualMachineStage
+	(*VirtualMachineCPUPlacementSpec)(nil),        // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec
+	(*VirtualMachineCPUSpec)(nil),                 // 2: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
+	(*VirtualMachineCPUTopologySpec)(nil),         // 3: talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec
+	(*VirtualMachineConsoleSpec)(nil),             // 4: talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
+	(*VirtualMachineDiskFromImageSpec)(nil),       // 5: talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
+	(*VirtualMachineDiskProvisionSpec)(nil),       // 6: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
+	(*VirtualMachineDiskSpec)(nil),                // 7: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
+	(*VirtualMachineDomainSpecSpec)(nil),          // 8: talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec
+	(*VirtualMachineDomainStatusSpec)(nil),        // 9: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec
+	(*VirtualMachineFirmwareSpec)(nil),            // 10: talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
+	(*VirtualMachineInterfaceSpec)(nil),           // 11: talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec
+	(*VirtualMachineMemoryBallooningSpec)(nil),    // 12: talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
+	(*VirtualMachineMemoryNUMASpec)(nil),          // 13: talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec
+	(*VirtualMachineMemorySpec)(nil),              // 14: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
+	(*VirtualMachineSpecSpec)(nil),                // 15: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec
+	(*VirtualMachineStatusSpec)(nil),              // 16: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec
+	(*VirtualMachineVCPUPinSpec)(nil),             // 17: talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
+	(enums.HypervisorVirtualMachinePowerState)(0), // 18: talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	(enums.HypervisorVirtualMachineStage)(0),      // 19: talos.resource.definitions.enums.HypervisorVirtualMachineStage
 }
 var file_resource_definitions_hypervisor_hypervisor_proto_depIdxs = []int32{
-	16, // 0: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.pins:type_name -> talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
-	2,  // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.topology:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec
-	4,  // 2: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec.from_image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
-	5,  // 3: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec.provision:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
-	17, // 4: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
-	11, // 5: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.ballooning:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
-	12, // 6: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.numa:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec
-	1,  // 7: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cpu:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
-	13, // 8: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.memory:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
-	9,  // 9: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.firmware:type_name -> talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
-	3,  // 10: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.console:type_name -> talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
-	6,  // 11: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.disks:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
-	10, // 12: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.interfaces:type_name -> talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec
-	17, // 13: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
-	18, // 14: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachineStage
+	17, // 0: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.pins:type_name -> talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
+	3,  // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.topology:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec
+	5,  // 2: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec.from_image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
+	6,  // 3: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec.provision:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
+	18, // 4: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	12, // 5: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.ballooning:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
+	13, // 6: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.numa:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec
+	2,  // 7: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cpu:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
+	14, // 8: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.memory:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
+	10, // 9: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.firmware:type_name -> talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
+	4,  // 10: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.console:type_name -> talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
+	7,  // 11: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.disks:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
+	11, // 12: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.interfaces:type_name -> talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec
+	18, // 13: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	19, // 14: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachineStage
 	15, // [15:15] is the sub-list for method output_type
 	15, // [15:15] is the sub-list for method input_type
 	15, // [15:15] is the sub-list for extension type_name
@@ -1307,7 +1386,7 @@ func file_resource_definitions_hypervisor_hypervisor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_hypervisor_hypervisor_proto_rawDesc), len(file_resource_definitions_hypervisor_hypervisor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   17,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

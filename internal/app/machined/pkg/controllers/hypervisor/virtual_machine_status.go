@@ -16,6 +16,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -130,7 +131,9 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		_, renderErr := renderVirtualMachineDomain(name, spec.TypedSpec(), links)
+		// The partition does not affect validation; the root stands in for whatever the
+		// coordinator has granted.
+		_, renderErr := renderVirtualMachineDomain(name, "/"+constants.CgroupVirtualMachines, spec.TypedSpec(), links)
 
 		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])
 

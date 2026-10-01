@@ -21,6 +21,16 @@ message ContentLibraryStatusSpec {
   string error = 4;
 }
 
+// VirtualMachineCPUPlacementSpec is the spec for VirtualMachineCPUPlacement.
+message VirtualMachineCPUPlacementSpec {
+  // Partition is the libvirt resource partition path, e.g. /virtualmachines.partition/shared.partition.
+  string partition = 1;
+  // Slice is the CPU partition slice name; empty for the shared remainder.
+  string slice = 2;
+  // Exclusive is true when the slice is exclusive to this virtual machine.
+  bool exclusive = 3;
+}
+
 // VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 message VirtualMachineCPUSpec {
   uint32 count = 1;
@@ -32,6 +42,8 @@ message VirtualMachineCPUSpec {
   string emulator_pin = 4;
   // Topology is the guest-visible CPU geometry; nil leaves it to libvirt.
   VirtualMachineCPUTopologySpec topology = 5;
+  // Slice is the CPUPartitionSpec slice the virtual machine selects; empty means none.
+  string slice = 6;
 }
 
 // VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.

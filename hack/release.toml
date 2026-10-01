@@ -58,6 +58,44 @@ Setting a cpufreq attribute through both `CPUScalingConfig` and `SysfsConfig` is
 other continuously.
 """
 
+    [notes.cpu_partition]
+        title = "CPU Partitioning"
+        description = """\
+The `CPUPartitionConfig` document bounds the host CPUs the fixed Talos workload roots run on (`init`, `system`, `podruntime`,
+`taloscontainers`, `kubepods` and `virtualMachines`), and divides the virtual machine root into named slices which a
+`VirtualMachineConfig` selects with `cpu.slice`; a virtual machine selecting no slice runs on the shared remainder of the root.
+A slice may be `exclusive`, in which case it must not overlap any other root and is owned by at most one virtual machine.
+When `kubepods` is bounded, Talos renders the kubelet's `reservedSystemCPUs` from the policy.
+
+```yaml
+apiVersion: v1alpha1
+kind: CPUPartitionConfig
+init: {cpus: '0-1'}
+system: {cpus: '0-1'}
+podruntime: {cpus: '0-1'}
+taloscontainers: {cpus: '0-1'}
+kubepods: {cpus: '2-3'}
+virtualMachines:
+  cpus: '4-7'
+  slices:
+    - name: database
+      cpus: '4-5'
+      exclusive: true
+```
+
+Changes to a root or slice are applied live to running virtual machines (same QEMU process, same domain) when they can be made
+without an exclusive slice ever sharing a CPU with another workload and without moving a machine between slices. Changes which
+cannot (introducing or removing slices under running machines, changing a machine's `cpu.slice`, swapping the CPUs of two occupied
+slices) are rejected and reported in `CPUPartitionStatus` with the machines involved; Talos never pauses, stops or restarts a
+virtual machine to apply a policy. Set the affected machines to `powerState: stopped`, wait until they are released, apply the
+change, then start them again.
+
+The partition bounds logical CPU affinity through cgroup cpusets: an exclusive slice keeps other Talos-managed workloads off its
+CPUs, but does not isolate interrupts, kernel threads or physical cores. If a bounded CPU goes offline or a managed cgroup mask is
+changed outside Talos, the loss is reported in `CPUPartitionStatus` and new virtual machine starts are refused; machines already
+running are left alone, so their isolation may no longer hold until the boundary is restored.
+"""
+
     [notes.lldp]
         title = "LLDP Neighbor Discovery"
         description = """\

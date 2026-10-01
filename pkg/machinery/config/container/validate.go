@@ -302,6 +302,12 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	// A CPUPartitionConfig is referenced by virtual machines (cpu.slice) and takes over a kubelet
+	// field; both are checked against the rest of the configuration here.
+	if err := validateCPUPartition(container); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
 	// or by a DiscoveryIdentityConfig document. The identity may live in a separate document, so this
 	// cross-document check is done at the container level.

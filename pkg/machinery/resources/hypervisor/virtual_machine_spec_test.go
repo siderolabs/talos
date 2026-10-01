@@ -27,6 +27,7 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 			Pins:        []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 0, CPUs: "4-5"}},
 			EmulatorPin: "6",
 			Topology:    &hypervisor.VirtualMachineCPUTopologySpec{Sockets: 1, Cores: 3, Threads: 1},
+			Slice:       "database",
 		},
 		PowerState: "suspended",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi", SecureBoot: true},
@@ -65,6 +66,7 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
 	assert.Equal(t, res.TypedSpec().CPU.Count, spec.GetCpu().GetCount())
+	assert.Equal(t, "database", spec.GetCpu().GetSlice())
 	assert.Equal(t, res.TypedSpec().Memory.Size, spec.GetMemory().GetSize())
 	assert.Equal(t, res.TypedSpec().Memory.Ballooning.Enabled, spec.GetMemory().GetBallooning().GetEnabled())
 	assert.Equal(t, res.TypedSpec().PowerState, spec.GetPowerState())
@@ -86,10 +88,12 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	clone.TypedSpec().CPU.Topology.Cores = 4
 	clone.TypedSpec().CPU.Pins[0].CPUs = "7"
 	clone.TypedSpec().CPU.EmulatorPin = "8"
+	clone.TypedSpec().CPU.Slice = "changed"
 	clone.TypedSpec().Memory.NUMA.Nodes = "0"
 	assert.Equal(t, uint32(3), res.TypedSpec().CPU.Topology.Cores)
 	assert.Equal(t, "4-5", res.TypedSpec().CPU.Pins[0].CPUs)
 	assert.Equal(t, "6", res.TypedSpec().CPU.EmulatorPin)
+	assert.Equal(t, "database", res.TypedSpec().CPU.Slice)
 	assert.Equal(t, "1", res.TypedSpec().Memory.NUMA.Nodes)
 	clone.TypedSpec().Memory.Size++
 	clone.TypedSpec().Memory.Ballooning.Enabled = false
@@ -112,6 +116,7 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
         sockets: 1
         cores: 3
         threads: 1
+    slice: database
 memory:
     size: 4294967296
     ballooning:
