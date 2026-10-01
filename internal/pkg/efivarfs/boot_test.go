@@ -61,3 +61,58 @@ func FuzzDecode(f *testing.F) {
 		_, _ = efivarfs.UnmarshalLoadOption(a) //nolint:errcheck
 	})
 }
+
+// BootFFFF as written by the firmware of a Mac mini 2018 (Macmini8,1): an
+// empty description and a device path to the macOS boot loader.
+//
+// nolint:errcheck
+var appleBootFFFF, _ = hex.DecodeString(
+	"01000000a600000002010c00d041030a0000000001010600001b010106000000" +
+		"0316100001000000000000000000000004012a0006000000102e2f0700000000" +
+		"0000180000000000217485b5adb28e4fa16120dfa4e3b50e0202040450005c00" +
+		"530079007300740065006d005c004c006900620072006100720079005c004300" +
+		"6f0072006500530065007200760069006300650073005c0062006f006f007400" +
+		"2e0065006600690000007fff0400",
+)
+
+func TestDecodeEmptyDescription(t *testing.T) {
+	got, err := efivarfs.UnmarshalLoadOption(appleBootFFFF)
+	require.NoError(t, err)
+
+	require.Equal(t, "", got.Description)
+	require.False(t, got.Inactive)
+	require.Equal(t, efivarfs.FilePath("/System/Library/CoreServices/boot.efi"), got.FilePath[len(got.FilePath)-1])
+	require.Empty(t, got.OptionalData)
+
+	reencoded, err := got.Marshal()
+	require.NoError(t, err)
+	require.Equal(t, appleBootFFFF, reencoded)
+}
+
+func TestDescriptionRoundTrip(t *testing.T) {
+	for _, description := range []string{
+		"",
+		"A",
+		"Example",
+		// "A" is 41 00 and U+0100 is 00 01: the bytes 00 00 in the middle
+		// are not a null terminator.
+		"A\u0100",
+	} {
+		t.Run(description, func(t *testing.T) {
+			opt := efivarfs.LoadOption{
+				Description: description,
+				FilePath: efivarfs.DevicePath{
+					efivarfs.FilePath("/test/a.efi"),
+				},
+				OptionalData: []byte{0x01, 0x02},
+			}
+
+			raw, err := opt.Marshal()
+			require.NoError(t, err)
+
+			got, err := efivarfs.UnmarshalLoadOption(raw)
+			require.NoError(t, err)
+			require.Equal(t, &opt, got)
+		})
+	}
+}

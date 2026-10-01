@@ -8,7 +8,6 @@
 package efivarfs
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -126,13 +125,23 @@ func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
 	opt.Hidden = attrs&0x08 != 0
 	opt.Inactive = attrs&0x01 == 0
 	lenPath := binary.LittleEndian.Uint16(data[4:6])
-	// Search for UTF-16 null code
-	nullIdx := bytes.Index(data[6:], []byte{0x00, 0x00})
-	if nullIdx == -1 {
+	// Find the null terminator on a 2-byte boundary: bytes.Index on 00 00
+	// also matches across characters, and is off by one for an empty
+	// description.
+	descriptionEnd := -1
+
+	for i := 6; i+1 < len(data); i += 2 {
+		if data[i] == 0x00 && data[i+1] == 0x00 {
+			descriptionEnd = i
+
+			break
+		}
+	}
+
+	if descriptionEnd == -1 {
 		return nil, errors.New("no null code point marking end of Description found")
 	}
 
-	descriptionEnd := 6 + nullIdx + 1
 	descriptionRaw := data[6:descriptionEnd]
 
 	description, err := Encoding.NewDecoder().Bytes(descriptionRaw)
