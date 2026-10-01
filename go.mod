@@ -22,7 +22,7 @@ replace (
 // deadcode elimination fix replacement: https://github.com/siderolabs/talos/issues/11296
 // upstream PR: https://github.com/containerd/containerd/pull/12175
 // this a fork with containerd 2.2 branch + the commit from the PR above
-replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.3-0.20260521103442-e05d8ca25f89
+replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.10-0.20261001083358-b3412746f63d
 
 // Kubernetes dependencies sharing the same version.
 require (
