@@ -44,6 +44,9 @@ cpu:
                 - vcpu: 1 # Guest vCPU index, starting at 0 and below `cpu.count`.
                   cpus: 9-10 # Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`.
             emulator: 0-1 # Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)
+
+    # # Named `CPUPartitionConfig` slice of the virtual machine root the virtual machine
+    # slice: database
 # Memory settings for the virtual machine.
 memory:
     size: 4GiB # Memory allocated to the guest at boot.
@@ -148,6 +151,9 @@ count: 4
 {{< /highlight >}}</details> | |
 |`limit` |string |Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads<br>together, mapped onto the domain's global CFS quota.<br><br>`1000m` is one host core. The ceiling is independent of `count`: a guest with four<br>vCPUs and a `2000m` ceiling sees four processors but is scheduled for at most two cores<br>of host time.<br><br>Optional; omitting it leaves the virtual machine bounded only by its vCPU count. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 limit: 3000m
+{{< /highlight >}}</details> | |
+|`slice` |string |Named `CPUPartitionConfig` slice of the virtual machine root the virtual machine<br>runs on.<br><br>Requires a `CPUPartitionConfig` declaring the slice. Host CPU pins, when set, must<br>fit the slice. Omitting it runs the virtual machine on the remainder of the<br>virtual machine root when one is bounded, or on any host CPU otherwise.<br><br>Changing the slice of a running virtual machine is rejected rather than applied by<br>restarting it: set `powerState: stopped`, wait until `CPUPartitionStatus` no longer<br>lists the machine as blocking, change the slice, then set `powerState: running` again. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+slice: database
 {{< /highlight >}}</details> | |
 |`topology` |<a href="#VirtualMachineConfig.cpu.topology">VirtualMachineCPUTopology</a> |Optional guest CPU geometry and host CPU pinning.<br><br>Geometry counts describe the guest, not host CPU IDs. When any dimension is set,<br>all three must be positive and their product must equal `count`.<br>Pinning may be configured without guest geometry.  | |
 

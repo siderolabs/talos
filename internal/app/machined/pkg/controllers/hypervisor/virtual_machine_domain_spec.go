@@ -5,6 +5,7 @@
 package hypervisor
 
 import (
+	"cmp"
 	"context"
 	"crypto/sha256"
 	"errors"
@@ -28,6 +29,12 @@ import (
 // VirtualMachineDomainSpecController renders backend-neutral specs into libvirt XML.
 // It reads no machine configuration and performs no libvirt operations; host links are
 // observed only to resolve interface link names and aliases.
+//
+// The domain's cgroup partition comes from its VirtualMachineCPUPlacement when the CPU
+// partition coordinator has granted one, and is the virtual machine root otherwise. A
+// placement being torn down keeps rendering its partition: the placement outlives the
+// domain (the runtime releases it after the domain is removed), so the definition of a
+// running domain never changes underneath it because of a CPU policy edit.
 type VirtualMachineDomainSpecController struct{}
 
 // Name implements controller.Controller interface.
@@ -41,6 +48,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineCPUPlacementType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -96,6 +108,11 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 
 	links := newHostLinks(linkStatuses)
 
+	partitions, err := grantedPartitions(ctx, runtime)
+	if err != nil {
+		return err
+	}
+
 	desired := make(map[string]struct{}, specs.Len())
 
 	var errs []error
@@ -104,13 +121,15 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		name := vm.Metadata().ID()
 		desired[name] = struct{}{}
 
+		partition := cmp.Or(partitions[name], "/"+constants.CgroupVirtualMachines)
+
 		// COSI tracks attempted modifications even when the callback fails. Keep
 		// validation inside the callback so an invalid update preserves the last
 		// good domain without preventing unrelated renders and output cleanup.
 		if err := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				domainXML, renderErr := renderVirtualMachineDomain(name, vm.TypedSpec(), links)
+				domainXML, renderErr := renderVirtualMachineDomain(name, partition, vm.TypedSpec(), links)
 				if renderErr != nil {
 					if res.TypedSpec().DomainXML == "" {
 						// Nothing was ever defined, so there is nothing to stop.
@@ -175,8 +194,27 @@ func (ctrl *VirtualMachineDomainSpecController) cleanupDomains(ctx context.Conte
 	return nil
 }
 
+// grantedPartitions maps every virtual machine to the cgroup partition it renders with: the one
+// its placement grants, or the virtual machine root when none is granted.
+func grantedPartitions(ctx context.Context, runtime controller.Runtime) (map[string]string, error) {
+	placements, err := safe.ReaderListAll[*hypervisor.VirtualMachineCPUPlacement](ctx, runtime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list virtual machine placements: %w", err)
+	}
+
+	partitions := make(map[string]string, placements.Len())
+
+	for placement := range placements.All() {
+		if granted := placement.TypedSpec().Partition; granted != "" {
+			partitions[placement.Metadata().ID()] = granted
+		}
+	}
+
+	return partitions, nil
+}
+
 //nolint:gocyclo
-func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpecSpec, links hostLinks) (string, error) {
+func renderVirtualMachineDomain(name, partition string, spec *hypervisor.VirtualMachineSpecSpec, links hostLinks) (string, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
 		return "", err
 	}
@@ -202,7 +240,7 @@ func renderVirtualMachineDomain(name string, spec *hypervisor.VirtualMachineSpec
 		// explicit partition libvirt would place the domain in its own /machine default, outside
 		// the tree Talos tracks and kills on shutdown.
 		Resource: &libvirtxml.DomainResource{
-			Partition: "/" + constants.CgroupVirtualMachines,
+			Partition: partition,
 		},
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{

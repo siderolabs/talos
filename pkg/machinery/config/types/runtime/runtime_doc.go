@@ -511,6 +511,185 @@ func (SecurityProfileConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (CPUPartitionConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionConfig is a CPU partition config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionConfig is a CPU partition config document.\nCPUPartitionConfig bounds the host CPUs each fixed Talos workload root may run on.\n\nThe roots are the cgroups Talos already creates (`init`, `system`, `podruntime`,\n`taloscontainers`, `virtualMachines`) plus `kubepods`, the cgroup the kubelet\ncreates for pods. A root left out of the document keeps running on every host CPU;\na root listed in the document must name at least one CPU. Roots may overlap each other.\n\nThe virtual machine root may additionally be divided into named slices which\n`VirtualMachineConfig` selects with `cpu.slice`. Virtual machines which select no\nslice run on the remainder of the virtual machine root, never on a named slice.\n\nAn exclusive slice must not overlap any other root, and every other root must then be\nexplicitly bounded. At most one virtual machine may select an exclusive slice.\n\nWhen `kubepods` is bounded, Talos owns the kubelet's `reservedSystemCPUs`.\n\nChanging the CPUs of a root or slice is applied live to running virtual machines\nwhen it can be done without ever letting an exclusive slice share a CPU with another\nworkload and without moving a virtual machine between slices. Transitions which\ncannot be applied that way (introducing or removing slices while virtual machines\nrun in the virtual machine root, changing a virtual machine's `cpu.slice`,\nswapping the CPUs of two occupied slices, shrinking a slice under a pinned virtual\nmachine) are rejected and reported with the affected virtual machines; Talos never\npauses, stops or restarts a virtual machine to apply a CPU policy change. To perform\nsuch a transition, set the affected virtual machines to `powerState: stopped`, wait\nuntil `CPUPartitionStatus` no longer lists them as blocking (Talos verifies the domain\nis removed and the slice cgroup is empty; a stopped `VirtualMachineStatus` alone is not\nrelease), apply the change, then set them back to `running`.\n\nIf a bounded CPU goes offline or a managed cgroup mask is changed outside Talos, the\nloss is reported in `CPUPartitionStatus` and new virtual machine starts are refused;\nvirtual machines already running are left alone, so their isolation may no longer hold\nuntil the boundary is restored. Talos never stops or restarts a virtual machine to\nreact to such a loss.\n\nRemoving the document restores every root it bounded. A root which had tasks before\nthe policy and inherited its CPUs cannot be set back to inheriting while it has tasks\n(the kernel refuses an empty cpuset), so it is given its parent's full CPU set, which\nis the same set it ran on before; empty slices are removed.\n\nIn container mode the document is validated but has no effect.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "init",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for machined and the early boot services.\n\nOptional; omitting it leaves the root unrestricted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for machined and the early boot services." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "system",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for Talos system services (apid, trustd, udevd, ...).\n\nOptional; omitting it leaves the root unrestricted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for Talos system services (apid, trustd, udevd, ...)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "podruntime",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd).\n\nOptional; omitting it leaves the root unrestricted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "kubepods",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for Kubernetes pods.\n\nBounding this root makes Talos set the kubelet's `reservedSystemCPUs` to the\ncomplement of it; the kubelet configuration must not set that field itself.\n\nOptional; omitting it leaves the root unrestricted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "taloscontainers",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for containers declared via `ContainerConfig`.\n\nOptional; omitting it leaves the root unrestricted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for containers declared via `ContainerConfig`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "virtualMachines",
+				Type:        "CPUPartitionVirtualMachines",
+				Note:        "",
+				Description: "Host CPUs for virtual machines declared via `VirtualMachineConfig`, optionally\ndivided into named slices.\n\nOptional; omitting it leaves the root unrestricted and declares no slice.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for virtual machines declared via `VirtualMachineConfig`, optionally" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleCPUPartitionConfigV1Alpha1())
+
+	return doc
+}
+
+func (CPUPartitionRoot) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionRoot",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionRoot bounds one fixed root to a set of host CPUs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionRoot bounds one fixed root to a set of host CPUs.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "init",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "system",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "podruntime",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "kubepods",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "taloscontainers",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs the root may run on, as a Linux CPU list, e.g. `0-1` or `0,2-3`.\n\nHost CPU IDs are the kernel's logical CPU numbers, SMT threads included.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs the root may run on, as a Linux CPU list, e.g. `0-1` or `0,2-3`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "0-1")
+
+	return doc
+}
+
+func (CPUPartitionVirtualMachines) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionVirtualMachines",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionVirtualMachines bounds the virtual machine root and divides it into slices." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionVirtualMachines bounds the virtual machine root and divides it into slices.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "virtualMachines",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs the virtual machine root may run on, as a Linux CPU list.\n\nEvery named slice is a subset of it; virtual machines selecting no slice run on\nwhat the slices leave of it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs the virtual machine root may run on, as a Linux CPU list." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "slices",
+				Type:        "[]CPUPartitionSlice",
+				Note:        "",
+				Description: "Named, pairwise disjoint subsets of `cpus` a `VirtualMachineConfig` selects with\n`cpu.slice`. The name `shared` is reserved for the remainder.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Named, pairwise disjoint subsets of `cpus` a `VirtualMachineConfig` selects with" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "4-7")
+
+	return doc
+}
+
+func (CPUPartitionSlice) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionSlice",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionSlice is one named subset of the virtual machine root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionSlice is one named subset of the virtual machine root.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUPartitionVirtualMachines",
+				FieldName: "slices",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the slice, unique within the document.\n\nFollows the virtual machine name rule: between 1 and 63 ASCII letters, digits\nand hyphens. `shared` is reserved.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the slice, unique within the document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs of the slice, as a Linux CPU list. Must be a subset of the virtual\nmachine root and disjoint from every other slice.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs of the slice, as a Linux CPU list. Must be a subset of the virtual" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "exclusive",
+				Type:        "bool",
+				Note:        "",
+				Description: "Reserve the slice for a single virtual machine.\n\nAn exclusive slice must not overlap any other root, all of which must then be\nexplicitly bounded, and at most one virtual machine may select it, whether it is\nrunning or not. Its CPUs stay reserved while no virtual machine selects it.\n\nOptional; defaults to false.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Reserve the slice for a single virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "database")
+	doc.Fields[1].AddExample("", "6-7")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -532,6 +711,10 @@ func GetFileDoc() *encoder.FileDoc {
 			WatchdogTimerV1Alpha1{}.Doc(),
 			KernelModuleConfigV1Alpha1{}.Doc(),
 			SecurityProfileConfigV1Alpha1{}.Doc(),
+			CPUPartitionConfigV1Alpha1{}.Doc(),
+			CPUPartitionRoot{}.Doc(),
+			CPUPartitionVirtualMachines{}.Doc(),
+			CPUPartitionSlice{}.Doc(),
 		},
 	}
 }

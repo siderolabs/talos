@@ -175,6 +175,13 @@ func (VirtualMachineCPU) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPU ceiling in millicores for the whole virtual machine, vCPUs and emulator threads" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "slice",
+				Type:        "string",
+				Note:        "",
+				Description: "Named `CPUPartitionConfig` slice of the virtual machine root the virtual machine\nruns on.\n\nRequires a `CPUPartitionConfig` declaring the slice. Host CPU pins, when set, must\nfit the slice. Omitting it runs the virtual machine on the remainder of the\nvirtual machine root when one is bounded, or on any host CPU otherwise.\n\nChanging the slice of a running virtual machine is rejected rather than applied by\nrestarting it: set `powerState: stopped`, wait until `CPUPartitionStatus` no longer\nlists the machine as blocking, change the slice, then set `powerState: running` again.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Named `CPUPartitionConfig` slice of the virtual machine root the virtual machine" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "topology",
 				Type:        "VirtualMachineCPUTopology",
 				Note:        "",
@@ -186,6 +193,7 @@ func (VirtualMachineCPU) Doc() *encoder.Doc {
 
 	doc.Fields[0].AddExample("", 4)
 	doc.Fields[1].AddExample("", "3000m")
+	doc.Fields[2].AddExample("", "database")
 
 	return doc
 }

@@ -5,6 +5,21 @@ package talos.resource.definitions.enums;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums";
 option java_package = "dev.talos.api.resource.definitions.enums";
 
+// RuntimeCPUPartitionPhase is the coordinator's phase.
+enum RuntimeCPUPartitionPhase {
+  // CPUPartitionPhaseReady: the applied policy equals the desired one.
+  CPU_PARTITION_PHASE_READY = 0;
+  // CPUPartitionPhaseConverging: a live plan is being executed.
+  CPU_PARTITION_PHASE_CONVERGING = 1;
+  // CPUPartitionPhaseBlocked: the desired policy cannot be applied live; the applied policy stays.
+  CPU_PARTITION_PHASE_BLOCKED = 2;
+  // CPUPartitionPhaseRestoring: the policy is being removed; boundaries are being restored.
+  CPU_PARTITION_PHASE_RESTORING = 3;
+  // CPUPartitionPhaseApplying: admission is closed while the coordinator snapshots occupancy
+  // and writes; a virtual machine start seeing this phase must wait.
+  CPU_PARTITION_PHASE_APPLYING = 4;
+}
+
 // RuntimeKernelModuleState represents the operational state of a kernel module.
 enum RuntimeKernelModuleState {
   KERNEL_MODULE_STATE_LIVE = 0;

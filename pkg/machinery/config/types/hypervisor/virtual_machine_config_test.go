@@ -758,6 +758,37 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 				`cpu.topology.pinning.emulator "0-3,^1": strconv.Atoi: parsing "^1": invalid syntax`,
 		},
 		{
+			name: "slice with an invalid name",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPUSlice = "data base"
+
+				return c
+			},
+
+			expectedErrors: `cpu.slice: name "data base": name can only contain ASCII letters, digits and hyphens`,
+		},
+		{
+			name: "slice too long",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPUSlice = strings.Repeat("s", 64)
+
+				return c
+			},
+
+			expectedErrors: fmt.Sprintf("cpu.slice: name %q must be 63 characters or fewer", strings.Repeat("s", 64)),
+		},
+		{
+			name: "valid with a slice",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.CPUConfig.CPUSlice = "database"
+
+				return c
+			},
+		},
+		{
 			name: "pin without a count is reported once",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
@@ -1068,6 +1099,8 @@ func TestVirtualMachineConfigCPUTopology(t *testing.T) {
 		{name: "count only", cpu: "count: 4"},
 		{name: "SMT geometry", cpu: "count: 4, topology: {sockets: 1, cores: 2, threads: 2}"},
 		{name: "pinning only", cpu: "count: 4, topology: {pinning: {vcpus: [{vcpu: 0, cpus: '8'}], emulator: '9'}}"},
+		{name: "slice only", cpu: "count: 4, slice: database"},
+		{name: "slice with pinning", cpu: "count: 2, slice: database, topology: {sockets: 1, cores: 2, threads: 1, pinning: {vcpus: [{vcpu: 0, cpus: '4'}]}}"},
 		{name: "missing sockets", cpu: "count: 4, topology: {cores: 2, threads: 2}", expected: "must all be specified"},
 		{name: "missing cores", cpu: "count: 4, topology: {sockets: 1, threads: 4}", expected: "must all be specified"},
 		{name: "missing threads", cpu: "count: 4, topology: {sockets: 1, cores: 4}", expected: "must all be specified"},
@@ -1105,8 +1138,17 @@ func TestVirtualMachineConfigCPUTopology(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, cfg, reloaded.Documents()[0])
 
-			if test.name == "count only" {
+			switch test.name {
+			case "count only":
 				assert.NotContains(t, string(marshaled), "topology:")
+				assert.NotContains(t, string(marshaled), "slice:")
+				assert.Empty(t, cfg.CPU().Slice())
+			case "pinning only":
+				assert.NotContains(t, string(marshaled), "slice:")
+				assert.Empty(t, cfg.CPU().Slice())
+			case "slice only", "slice with pinning":
+				assert.Contains(t, string(marshaled), "slice: database")
+				assert.Equal(t, "database", cfg.CPU().Slice())
 			}
 		})
 	}

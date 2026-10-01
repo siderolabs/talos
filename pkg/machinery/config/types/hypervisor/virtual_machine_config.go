@@ -141,6 +141,20 @@ type VirtualMachineCPU struct {
 	//     type: string
 	CPULimit string `yaml:"limit,omitempty"`
 	//   description: |
+	//     Named `CPUPartitionConfig` slice of the virtual machine root the virtual machine
+	//     runs on.
+	//
+	//     Requires a `CPUPartitionConfig` declaring the slice. Host CPU pins, when set, must
+	//     fit the slice. Omitting it runs the virtual machine on the remainder of the
+	//     virtual machine root when one is bounded, or on any host CPU otherwise.
+	//
+	//     Changing the slice of a running virtual machine is rejected rather than applied by
+	//     restarting it: set `powerState: stopped`, wait until `CPUPartitionStatus` no longer
+	//     lists the machine as blocking, change the slice, then set `powerState: running` again.
+	//   examples:
+	//     - value: '"database"'
+	CPUSlice string `yaml:"slice,omitempty"`
+	//   description: |
 	//     Optional guest CPU geometry and host CPU pinning.
 	//
 	//     Geometry counts describe the guest, not host CPU IDs. When any dimension is set,
@@ -333,6 +347,11 @@ func (c *VirtualMachineCPU) Limit() optional.Optional[uint64] {
 	return optional.Some(millicores)
 }
 
+// Slice implements config.VirtualMachineCPUConfig interface.
+func (c *VirtualMachineCPU) Slice() string {
+	return c.CPUSlice
+}
+
 // Topology implements config.VirtualMachineCPUConfig interface.
 func (c *VirtualMachineCPU) Topology() config.VirtualMachineCPUTopologyConfig {
 	return &c.TopologyConfig
@@ -431,6 +450,12 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateCPU() error {
 		} else if limit < hypervisorhelpers.MinCPULimitMillicores || limit > hypervisorhelpers.MaxCPULimitMillicores {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("cpu.limit must be between %d and %d millicores",
 				hypervisorhelpers.MinCPULimitMillicores, hypervisorhelpers.MaxCPULimitMillicores))
+		}
+	}
+
+	if c.CPUConfig.CPUSlice != "" {
+		if err := hypervisorhelpers.ValidateName(c.CPUConfig.CPUSlice); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("cpu.slice: %w", err))
 		}
 	}
 

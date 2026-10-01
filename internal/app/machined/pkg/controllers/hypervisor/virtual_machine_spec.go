@@ -108,6 +108,7 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 		CPU: hypervisor.VirtualMachineCPUSpec{
 			Count:       vm.CPU().Count(),
 			Limit:       vm.CPU().Limit().ValueOrZero(),
+			Slice:       vm.CPU().Slice(),
 			EmulatorPin: vm.CPU().Topology().Pinning().Emulator(),
 		},
 		Memory: hypervisor.VirtualMachineMemorySpec{

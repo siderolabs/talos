@@ -23,6 +23,7 @@ import (
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -32,7 +33,10 @@ const (
 )
 
 type domainClient struct {
-	mu              sync.Mutex
+	mu sync.Mutex
+	// beforeStart, when set, is called (unlocked) before a Start is processed; a returned error
+	// fails the Start without defining anything.
+	beforeStart     func(name string) error
 	domains         map[string]libvirtdomain.Domain
 	texts           map[string]string
 	starts          map[string]int
@@ -125,6 +129,16 @@ func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
 
 func (c *domainClient) Start(domain libvirtdomain.Domain, text string) error {
 	c.mu.Lock()
+	hook := c.beforeStart
+	c.mu.Unlock()
+
+	if hook != nil {
+		if err := hook(domain.Name); err != nil {
+			return err
+		}
+	}
+
+	c.mu.Lock()
 	_, exists := c.domains[domain.Name]
 
 	unchanged := exists && c.texts[domain.Name] == text
@@ -189,6 +203,9 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 	system.TypedSpec().UUID = machineUUID
 	s.Create(system)
 	s.Create(newReadyVirtqemudService())
+
+	// The projection publishes a disabled policy on ordinary machines; without it, starts wait.
+	s.Create(runtimeres.NewCPUPartitionSpec())
 }
 
 func newReadyVirtqemudService() *v1alpha1.Service {

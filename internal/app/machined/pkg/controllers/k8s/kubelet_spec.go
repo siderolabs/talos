@@ -74,6 +74,12 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletCPUReservationType,
+			ID:        optional.Some(k8s.KubeletID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -196,9 +202,29 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			args["image-credential-provider-config"] = argsbuilder.Value{constants.KubeletCredentialProviderConfig}
 		}
 
+		// The CPU partition coordinator always publishes the reservation once the machine config
+		// is active; until then the kubelet is not rendered, so a managed reservation is never
+		// preceded by an unmanaged kubelet start.
+		reservation, err := safe.ReaderGetByID[*k8s.KubeletCPUReservation](ctx, r, k8s.KubeletID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting kubelet CPU reservation: %w", err)
+		}
+
 		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType())
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
+		}
+
+		if reservation.TypedSpec().Managed {
+			if _, overridden := cfgSpec.ExtraConfig["reservedSystemCPUs"]; overridden {
+				return fmt.Errorf("kubelet configuration field %q is owned by CPUPartitionConfig", "reservedSystemCPUs")
+			}
+
+			kubeletConfig.ReservedSystemCPUs = reservation.TypedSpec().ReservedCPUs
 		}
 
 		// If our platform is container, we cannot rely on the ability to change kernel parameters.

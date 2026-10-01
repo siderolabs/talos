@@ -8,10 +8,12 @@ package k8s_test
 import (
 	"net/netip"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"github.com/stretchr/testify/assert"
@@ -273,7 +275,103 @@ func TestKubeletSpecSuite(t *testing.T) {
 		Timeout: 3 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.KubeletSpecController{}))
+
+			// The CPU partition coordinator publishes an unmanaged reservation on ordinary machines.
+			suite.Require().NoError(suite.State().Create(suite.Ctx(), k8s.NewKubeletCPUReservation()))
 		},
+	})
+}
+
+// createKubeletInputs creates the config, node name, node IP and machine type inputs.
+func (suite *KubeletSpecSuite) createKubeletInputs(extraConfig map[string]any) {
+	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v2.0.0"
+	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
+	cfg.TypedSpec().ClusterDomain = "some.local"
+	cfg.TypedSpec().ExtraConfig = extraConfig
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
+	nodename.TypedSpec().Nodename = "foo.com"
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
+
+	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
+	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.3")}
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeIP))
+
+	machineType := config.NewMachineType()
+	machineType.SetMachineType(machine.TypeWorker)
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
+}
+
+func (suite *KubeletSpecSuite) kubeletConfiguration() kubeletconfig.KubeletConfiguration {
+	var configuration kubeletconfig.KubeletConfiguration
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
+		asrt.NoError(k8sruntime.DefaultUnstructuredConverter.FromUnstructured(kubeletSpec.TypedSpec().Config, &configuration))
+	})
+
+	return configuration
+}
+
+// A managed reservation sets reservedSystemCPUs and leaves the user's other reservations alone;
+// an unmanaged one renders the configuration exactly as before.
+func (suite *KubeletSpecSuite) TestReconcileWithCPUReservation() {
+	suite.createKubeletInputs(map[string]any{
+		"systemReserved": map[string]any{"cpu": "500m"},
+		"kubeReserved":   map[string]any{"cpu": "250m"},
+	})
+
+	unmanaged := suite.kubeletConfiguration()
+	suite.Assert().Empty(unmanaged.ReservedSystemCPUs)
+	suite.Assert().Equal("500m", unmanaged.SystemReserved["cpu"])
+
+	reservation, err := safe.StateGetByID[*k8s.KubeletCPUReservation](suite.Ctx(), suite.State(), k8s.KubeletID)
+	suite.Require().NoError(err)
+
+	ctest.UpdateWithConflicts(suite, reservation, func(res *k8s.KubeletCPUReservation) error {
+		res.TypedSpec().Managed = true
+		res.TypedSpec().ReservedCPUs = "0-1,4-7"
+
+		return nil
+	})
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
+		var configuration kubeletconfig.KubeletConfiguration
+
+		asrt.NoError(k8sruntime.DefaultUnstructuredConverter.FromUnstructured(kubeletSpec.TypedSpec().Config, &configuration))
+		asrt.Equal("0-1,4-7", configuration.ReservedSystemCPUs)
+		asrt.Equal("500m", configuration.SystemReserved["cpu"])
+		asrt.Equal("250m", configuration.KubeReserved["cpu"])
+	})
+}
+
+// Until the coordinator has published the reservation, no kubelet spec is rendered: a managed
+// command must never be preceded by an unmanaged kubelet start. Inside the synctest bubble,
+// synctest.Wait returns once the controller has consumed every input event.
+func TestKubeletSpecWaitsForCPUReservation(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		suite := &KubeletSpecSuite{Timeout: 3 * time.Second}
+		suite.SetT(t)
+		suite.SetupTest()
+
+		defer suite.TearDownTest()
+
+		suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.KubeletSpecController{}))
+		suite.createKubeletInputs(nil)
+
+		synctest.Wait()
+
+		_, err := safe.StateGetByID[*k8s.KubeletSpec](suite.Ctx(), suite.State(), k8s.KubeletID)
+		suite.Require().Error(err, "no kubelet spec may be rendered before the reservation is published")
+
+		suite.Create(k8s.NewKubeletCPUReservation())
+
+		synctest.Wait()
+
+		suite.Assert().Empty(suite.kubeletConfiguration().ReservedSystemCPUs)
 	})
 }
 

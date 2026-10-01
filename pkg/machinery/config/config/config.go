@@ -106,6 +106,7 @@ type Config interface { //nolint:interfacebloat
 	TrustedRoots() TrustedRootsConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
 	CPUScalingConfigs() []CPUScalingConfig
+	CPUPartitionConfig() CPUPartitionConfig
 	OOMConfig() OOMConfig
 	ImageVerificationConfig() ImageVerificationConfig
 	SysctlConfig() map[string]string

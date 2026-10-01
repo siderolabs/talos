@@ -1466,6 +1466,24 @@ spec:
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-hypervisor-cpu-partition
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-hypervisor-cpu-partition
+            # The CPU partition policy bounds the kubelet's pod cgroup and owns its
+            # reservedSystemCPUs, so its suite needs a node which runs Kubernetes (it skips on
+            # the cluster above) with virtqemud running and 8 online CPUs for its fixture: one
+            # control plane on the libvirt installer, no workers. Only this suite runs, the
+            # Kubernetes suites already run elsewhere; the low worker memory just turns off the
+            # Kubernetes smoke test the default mode would run after it.
+            QEMU_CONTROLPLANES: 1
+            QEMU_WORKERS: 0
+            QEMU_CPUS: 8
+            QEMU_MEMORY_WORKERS: 1024
+            INTEGRATION_TEST_RUN: TestIntegration/api.CPUPartitionSuite
+            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always

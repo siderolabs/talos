@@ -33,6 +33,75 @@ message BootedEntrySpec {
   string booted_entry = 1;
 }
 
+// CPUPartitionBlock names one reason the desired policy is not applied.
+message CPUPartitionBlock {
+  string reason = 1;
+  // VirtualMachines the operator has to stop and release to let the transition through.
+  repeated string virtual_machines = 2;
+  string cp_us = 3;
+}
+
+// CPUPartitionSliceSpec is one named subset of the virtual machine root.
+message CPUPartitionSliceSpec {
+  string name = 1;
+  string cp_us = 2;
+  bool exclusive = 3;
+}
+
+// CPUPartitionSpecSpec describes the desired CPU partition policy.
+message CPUPartitionSpecSpec {
+  // Enabled is false when there is no policy to enforce; Roots and Slices are then empty.
+  bool enabled = 1;
+  // Roots maps each bounded root (init, system, podruntime, kubepods, taloscontainers,
+  // virtualMachines) to its canonical CPU list; an absent root is unrestricted.
+  map<string, string> roots = 2;
+  // Slices are the named virtual machine slices, in declaration order.
+  repeated CPUPartitionSliceSpec slices = 3;
+}
+
+// CPUPartitionStatusSpec describes the applied CPU partition policy.
+message CPUPartitionStatusSpec {
+  talos.resource.definitions.enums.RuntimeCPUPartitionPhase phase = 1;
+  // Targets lists every managed cgroup, keyed as `init`, `kubepods`, ..., `virtualMachines`,
+  // `virtualMachines/shared`, `virtualMachines/<slice>`, with what was applied to it; sorted by key.
+  repeated CPUPartitionTargetStatus targets = 2;
+  // Exclusive names the applied exclusive slices.
+  repeated string exclusive = 3;
+  // Blocked explains why the desired policy is not applied; empty unless Phase is blocked.
+  repeated CPUPartitionBlock blocked = 4;
+  // EnforcementLoss lists managed targets whose applied mask names offline CPUs or whose
+  // kernel mask no longer matches what was applied (foreign change).
+  //
+  // A loss is reported and closes admission for new virtual machine starts; virtual machines
+  // already running are left alone, so their CPU isolation may no longer hold until the
+  // boundaries are restored (CPUs back online, or the foreign mask reverted) and the loss
+  // clears. Talos never stops, restarts or changes the power state of a running machine to
+  // react to a loss.
+  repeated string enforcement_loss = 5;
+  // Error is the last execution error, when a plan step failed.
+  string error = 6;
+  // AdmissionErrors names virtual machines refused a placement and why (undeclared slice, more
+  // than one owner of an exclusive slice, pins outside the slice); unrelated machines are unaffected.
+  repeated CPUPartitionBlock admission_errors = 7;
+  // Waiting names the barrier a plan is waiting on (a kubepods leaf still on removed CPUs, a
+  // cgroup the kubelet has not created yet); empty unless Phase is converging.
+  string waiting = 8;
+}
+
+// CPUPartitionTargetStatus is what the coordinator did to one cgroup.
+message CPUPartitionTargetStatus {
+  // Key names the target: a root name, `virtualMachines/shared` or `virtualMachines/<slice>`.
+  string key = 1;
+  // Initial is the cpuset.cpus read before the coordinator's first write; restored on removal
+  // when the current value is still LastApplied.
+  string initial = 2;
+  // LastApplied is the coordinator's last successful write.
+  string last_applied = 3;
+  // Intended is the value of a write in progress; equals LastApplied when none is.
+  // A restart finding Intended != LastApplied re-verifies the kernel before trusting either.
+  string intended = 4;
+}
+
 // DevicesStatusSpec is the spec for devices status.
 message DevicesStatusSpec {
   // Devices are settled down and ready to be used.

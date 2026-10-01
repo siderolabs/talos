@@ -1037,6 +1037,16 @@ func (container *Container) K8sTalosAPIAccessConfig() config.K8sTalosAPIAccessCo
 	return nil
 }
 
+// CPUPartitionConfig implements config.Config interface.
+func (container *Container) CPUPartitionConfig() config.CPUPartitionConfig {
+	matching := findMatchingDocs[config.CPUPartitionConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)
