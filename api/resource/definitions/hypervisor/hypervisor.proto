@@ -23,6 +23,13 @@ message ContentLibraryStatusSpec {
   string fingerprint = 5;
 }
 
+// VirtualMachineCPUPlacementSpec is the spec for VirtualMachineCPUPlacement.
+message VirtualMachineCPUPlacementSpec {
+  string partition = 1;
+  string slice = 2;
+  bool exclusive = 3;
+}
+
 // VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
 message VirtualMachineCPUSpec {
   uint32 count = 1;
@@ -34,6 +41,7 @@ message VirtualMachineCPUSpec {
   string emulator_pin = 4;
   // Topology is the guest-visible CPU geometry; nil leaves it to libvirt.
   VirtualMachineCPUTopologySpec topology = 5;
+  string slice = 6;
 }
 
 // VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented to the guest.

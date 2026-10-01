@@ -33,6 +33,52 @@ message BootedEntrySpec {
   string booted_entry = 1;
 }
 
+// CPUPartitionBlock names one reason the desired policy is not applied.
+message CPUPartitionBlock {
+  string reason = 1;
+  repeated string virtual_machines = 2;
+  string cp_us = 3;
+}
+
+// CPUPartitionSliceSpec is one named subset of the virtual machine root.
+message CPUPartitionSliceSpec {
+  string name = 1;
+  string cp_us = 2;
+  bool exclusive = 3;
+}
+
+// CPUPartitionSpecSpec describes the desired CPU partition policy.
+message CPUPartitionSpecSpec {
+  bool enabled = 1;
+  // Omitted roots are unrestricted.
+  map<string, string> roots = 2;
+  repeated CPUPartitionSliceSpec slices = 3;
+}
+
+// CPUPartitionStatusSpec describes the applied CPU partition policy.
+message CPUPartitionStatusSpec {
+  talos.resource.definitions.enums.RuntimeCPUPartitionPhase phase = 1;
+  // Sorted by key.
+  repeated CPUPartitionTargetStatus targets = 2;
+  repeated string exclusive = 3;
+  repeated CPUPartitionBlock blocked = 4;
+  // Closes admission without stopping running VMs.
+  repeated string enforcement_loss = 5;
+  string error = 6;
+  repeated CPUPartitionBlock admission_errors = 7;
+  string waiting = 8;
+}
+
+// CPUPartitionTargetStatus is what the coordinator did to one cgroup.
+message CPUPartitionTargetStatus {
+  string key = 1;
+  // Restore only if the current mask still matches LastApplied.
+  string initial = 2;
+  string last_applied = 3;
+  // Persisted before the kernel write; a mismatch with LastApplied requires recovery.
+  string intended = 4;
+}
+
 // DevicesStatusSpec is the spec for devices status.
 message DevicesStatusSpec {
   // Devices are settled down and ready to be used.

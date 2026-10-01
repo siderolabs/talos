@@ -391,6 +391,7 @@ description: Talos gRPC API reference.
     - [NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode)
     - [NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer)
     - [NetworkOperator](#talos.resource.definitions.enums.NetworkOperator)
+    - [RuntimeCPUPartitionPhase](#talos.resource.definitions.enums.RuntimeCPUPartitionPhase)
     - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
     - [RuntimeKernelModuleState](#talos.resource.definitions.enums.RuntimeKernelModuleState)
     - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
@@ -513,6 +514,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/hypervisor/hypervisor.proto](#resource/definitions/hypervisor/hypervisor.proto)
     - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
+    - [VirtualMachineCPUPlacementSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec)
     - [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec)
     - [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec)
     - [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec)
@@ -561,6 +563,7 @@ description: Talos gRPC API reference.
     - [KubePrismEndpoint](#talos.resource.definitions.k8s.KubePrismEndpoint)
     - [KubePrismEndpointsSpec](#talos.resource.definitions.k8s.KubePrismEndpointsSpec)
     - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
+    - [KubeletCPUReservationSpec](#talos.resource.definitions.k8s.KubeletCPUReservationSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
     - [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry)
@@ -605,6 +608,12 @@ description: Talos gRPC API reference.
     - [BootIDSpec](#talos.resource.definitions.runtime.BootIDSpec)
     - [BootPartitionStatusSpec](#talos.resource.definitions.runtime.BootPartitionStatusSpec)
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
+    - [CPUPartitionBlock](#talos.resource.definitions.runtime.CPUPartitionBlock)
+    - [CPUPartitionSliceSpec](#talos.resource.definitions.runtime.CPUPartitionSliceSpec)
+    - [CPUPartitionSpecSpec](#talos.resource.definitions.runtime.CPUPartitionSpecSpec)
+    - [CPUPartitionSpecSpec.RootsEntry](#talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry)
+    - [CPUPartitionStatusSpec](#talos.resource.definitions.runtime.CPUPartitionStatusSpec)
+    - [CPUPartitionTargetStatus](#talos.resource.definitions.runtime.CPUPartitionTargetStatus)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
     - [EnvironmentSpec](#talos.resource.definitions.runtime.EnvironmentSpec)
@@ -6883,6 +6892,21 @@ NetworkOperator enumerates Talos network operators.
 
 
 
+<a name="talos.resource.definitions.enums.RuntimeCPUPartitionPhase"></a>
+
+### RuntimeCPUPartitionPhase
+RuntimeCPUPartitionPhase is the coordinator's phase.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CPU_PARTITION_PHASE_READY | 0 |  |
+| CPU_PARTITION_PHASE_CONVERGING | 1 |  |
+| CPU_PARTITION_PHASE_BLOCKED | 2 | CPUPartitionPhaseBlocked leaves admission open under the applied policy. |
+| CPU_PARTITION_PHASE_RESTORING | 3 |  |
+| CPU_PARTITION_PHASE_APPLYING | 4 | CPUPartitionPhaseApplying closes admission before the occupancy snapshot. |
+
+
+
 <a name="talos.resource.definitions.enums.RuntimeFIPSState"></a>
 
 ### RuntimeFIPSState
@@ -8998,6 +9022,23 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec"></a>
+
+### VirtualMachineCPUPlacementSpec
+VirtualMachineCPUPlacementSpec is the spec for VirtualMachineCPUPlacement.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| partition | [string](#string) |  |  |
+| slice | [string](#string) |  |  |
+| exclusive | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineCPUSpec"></a>
 
 ### VirtualMachineCPUSpec
@@ -9011,6 +9052,7 @@ VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time t
 | pins | [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec) | repeated | Pins are the per-vCPU host CPU pins; an unlisted vCPU is unpinned. |
 | emulator_pin | [string](#string) |  | EmulatorPin is the host CPU list the emulator threads are pinned to; empty means unpinned. |
 | topology | [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec) |  | Topology is the guest-visible CPU geometry; nil leaves it to libvirt. |
+| slice | [string](#string) |  |  |
 
 
 
@@ -9817,6 +9859,22 @@ KubePrismStatusesSpec describes KubePrismStatuses data.
 
 
 
+<a name="talos.resource.definitions.k8s.KubeletCPUReservationSpec"></a>
+
+### KubeletCPUReservationSpec
+KubeletCPUReservationSpec describes the staged reservation.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| managed | [bool](#bool) |  |  |
+| reserved_cp_us | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.k8s.KubeletConfigSpec"></a>
 
 ### KubeletConfigSpec
@@ -10508,6 +10566,113 @@ BootedEntrySpec describes the booted entry resource properties.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | booted_entry | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionBlock"></a>
+
+### CPUPartitionBlock
+CPUPartitionBlock names one reason the desired policy is not applied.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| reason | [string](#string) |  |  |
+| virtual_machines | [string](#string) | repeated |  |
+| cp_us | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionSliceSpec"></a>
+
+### CPUPartitionSliceSpec
+CPUPartitionSliceSpec is one named subset of the virtual machine root.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| cp_us | [string](#string) |  |  |
+| exclusive | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionSpecSpec"></a>
+
+### CPUPartitionSpecSpec
+CPUPartitionSpecSpec describes the desired CPU partition policy.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  |  |
+| roots | [CPUPartitionSpecSpec.RootsEntry](#talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry) | repeated | Omitted roots are unrestricted. |
+| slices | [CPUPartitionSliceSpec](#talos.resource.definitions.runtime.CPUPartitionSliceSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry"></a>
+
+### CPUPartitionSpecSpec.RootsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionStatusSpec"></a>
+
+### CPUPartitionStatusSpec
+CPUPartitionStatusSpec describes the applied CPU partition policy.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| phase | [talos.resource.definitions.enums.RuntimeCPUPartitionPhase](#talos.resource.definitions.enums.RuntimeCPUPartitionPhase) |  |  |
+| targets | [CPUPartitionTargetStatus](#talos.resource.definitions.runtime.CPUPartitionTargetStatus) | repeated | Sorted by key. |
+| exclusive | [string](#string) | repeated |  |
+| blocked | [CPUPartitionBlock](#talos.resource.definitions.runtime.CPUPartitionBlock) | repeated |  |
+| enforcement_loss | [string](#string) | repeated | Closes admission without stopping running VMs. |
+| error | [string](#string) |  |  |
+| admission_errors | [CPUPartitionBlock](#talos.resource.definitions.runtime.CPUPartitionBlock) | repeated |  |
+| waiting | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionTargetStatus"></a>
+
+### CPUPartitionTargetStatus
+CPUPartitionTargetStatus is what the coordinator did to one cgroup.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| initial | [string](#string) |  | Restore only if the current mask still matches LastApplied. |
+| last_applied | [string](#string) |  |  |
+| intended | [string](#string) |  | Persisted before the kernel write; a mismatch with LastApplied requires recovery. |
 
 
 

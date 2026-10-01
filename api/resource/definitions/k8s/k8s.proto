@@ -177,6 +177,12 @@ message KubePrismStatusesSpec {
   bool healthy = 2;
 }
 
+// KubeletCPUReservationSpec describes the staged reservation.
+message KubeletCPUReservationSpec {
+  bool managed = 1;
+  string reserved_cp_us = 2;
+}
+
 // KubeletConfigSpec holds the source of kubelet configuration.
 message KubeletConfigSpec {
   string image = 1;
