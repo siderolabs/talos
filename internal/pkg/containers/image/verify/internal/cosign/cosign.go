@@ -363,6 +363,8 @@ func verifyLegacyLayers(ctx context.Context, logger *zap.Logger, fetcher remotes
 		}
 
 		co.NewBundleFormat = false
+		// verify that the signed payload references the image digest being verified
+		co.ClaimVerifier = cosign.SimpleClaimVerifier
 
 		bundleVerified, err := cosign.VerifyImageSignature(ctx, sig, imageDigest, &co)
 		if err != nil {
