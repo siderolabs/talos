@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -416,6 +417,10 @@ func (suite *LibvirtSuite) TestDomain() {
 	pidBeforeReboot, err := suite.libvirtDomainPID(nodeCtx)
 	suite.Require().NoError(err)
 	suite.Require().NotZero(pidBeforeReboot, "expected QEMU to run domain %q", libvirtDomainName)
+
+	if testing.Short() {
+		suite.T().Skip("skipping service restart and reboot checks in short mode")
+	}
 
 	virtqemudPID, err := safe.ReaderGetByID[*runtime.ServicePID](nodeCtx, suite.Client.COSI, "ext-virtqemud")
 	suite.Require().NoError(err)

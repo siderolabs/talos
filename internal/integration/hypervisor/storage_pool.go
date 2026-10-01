@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
@@ -81,14 +82,16 @@ func (suite *LibvirtSuite) TestStoragePool() {
 	suite.Require().Zero(exitCode, "new target must exist without migrated data: %s", output)
 	fixture.writeSentinel(ctx, 1, "new-data")
 
-	// Node-level reboot check: this suite runs without Kubernetes.
-	suite.AssertRebootedNoChecks(ctx, fixture.node, func(rebootCtx context.Context) error {
-		return base.IgnoreGRPCUnavailable(suite.Client.Reboot(rebootCtx))
-	}, 5*time.Minute)
-	suite.WaitForBootDone(ctx)
-	suite.AssertServicesRunning(ctx, fixture.node, map[string]string{"ext-virtstoraged": "Running"})
-	fixture.assertVolumes(ctx)
-	fixture.waitPool(ctx, 1, poolUUID)
+	if !testing.Short() {
+		// Node-level reboot check: this suite runs without Kubernetes.
+		suite.AssertRebootedNoChecks(ctx, fixture.node, func(rebootCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(rebootCtx))
+		}, 5*time.Minute)
+		suite.WaitForBootDone(ctx)
+		suite.AssertServicesRunning(ctx, fixture.node, map[string]string{"ext-virtstoraged": "Running"})
+		fixture.assertVolumes(ctx)
+		fixture.waitPool(ctx, 1, poolUUID)
+	}
 
 	// Nonempty pools follow the same stop/undefine policy; neither target's data is removed.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolKind, fixture.poolName)
@@ -96,7 +99,7 @@ func (suite *LibvirtSuite) TestStoragePool() {
 	fixture.assertSentinel(ctx, 0, "original-data")
 	fixture.assertSentinel(ctx, 1, "new-data")
 	fixture.assertVolumes(ctx)
-	suite.T().Logf("pool %s kept UUID %s through reapply, retarget and reboot", fixture.poolName, poolUUID)
+	suite.T().Logf("pool %s kept UUID %s through its lifecycle", fixture.poolName, poolUUID)
 }
 
 type storagePoolFixture struct {
