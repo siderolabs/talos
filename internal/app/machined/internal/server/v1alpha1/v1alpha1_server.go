@@ -153,8 +153,8 @@ func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
 	// wrap resources with access filter
-	resourceState := s.Controller.Runtime().State().V1Alpha2().Resources()
-	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
+	rawResourceState := s.Controller.Runtime().State().V1Alpha2().Resources()
+	resourceState := state.WrapCore(state.Filter(rawResourceState, resources.AccessPolicy(rawResourceState)))
 
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
@@ -162,7 +162,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(resourceState, libvirt.New().DomainConnector().OpenConsole))
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
-	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(resourceState, s.Logger))
+	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(rawResourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})

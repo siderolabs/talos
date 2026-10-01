@@ -160,6 +160,7 @@ func TestVirtualMachineDomainSpecRoundTrip(t *testing.T) {
 	res := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "guest")
 	res.TypedSpec().DomainXML = `<domain type="kvm"><name>guest</name></domain>`
 	res.TypedSpec().PowerState = "running"
+	res.TypedSpec().Disks = []string{"guest/system@0123456789ab", "guest/data@ba9876543210"}
 	encoded, err := protobuf.FromResource(res)
 	require.NoError(t, err)
 	wire, err := encoded.Marshal()
@@ -170,6 +171,7 @@ func TestVirtualMachineDomainSpecRoundTrip(t *testing.T) {
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
 	assert.Equal(t, res.TypedSpec().DomainXML, spec.GetDomainXml())
 	assert.Equal(t, res.TypedSpec().PowerState, spec.GetPowerState())
+	assert.Equal(t, res.TypedSpec().Disks, spec.GetDisks())
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)
@@ -180,6 +182,8 @@ func TestVirtualMachineDomainSpecRoundTrip(t *testing.T) {
 
 	clone := res.DeepCopy().(*hypervisor.VirtualMachineDomainSpec)
 	clone.TypedSpec().DomainXML = "changed"
+	clone.TypedSpec().Disks[0] = "changed"
 	assert.NotEqual(t, clone.TypedSpec().DomainXML, res.TypedSpec().DomainXML)
+	assert.NotEqual(t, clone.TypedSpec().Disks, res.TypedSpec().Disks)
 	assert.Equal(t, hypervisor.NamespaceName, res.ResourceDefinition().DefaultNamespace)
 }

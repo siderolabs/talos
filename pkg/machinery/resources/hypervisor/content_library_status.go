@@ -39,6 +39,17 @@ type ContentLibraryStatusSpec struct {
 	Fingerprint string `yaml:"fingerprint,omitempty" protobuf:"5"`
 }
 
+// contentLibraryMutationFinalizerPrefix marks a library file something is in the middle of replacing.
+const contentLibraryMutationFinalizerPrefix = "contentlibrary.Service/mutating/"
+
+// ContentLibraryMutationFinalizer names the marker one file of a content library is replaced under.
+//
+// The content library service holds it across the moment it replaces or removes a file, and the
+// controller which starts domains refuses to start one on a file which carries it.
+func ContentLibraryMutationFinalizer(name string) resource.Finalizer {
+	return contentLibraryMutationFinalizerPrefix + name
+}
+
 // NewContentLibraryStatus initializes a ContentLibraryStatus resource.
 func NewContentLibraryStatus(namespace resource.Namespace, id resource.ID) *ContentLibraryStatus {
 	return typed.NewResource[ContentLibraryStatusSpec, ContentLibraryStatusExtension](

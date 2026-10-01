@@ -550,22 +550,24 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
 	name := "vm1"
 	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
 
-	spec := newRenderableSpec(name, "running")
-	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
+	disk := hypervisor.VirtualMachineDiskSpec{
 		Name: "install",
 		Bus:  hypervisorhelpers.VirtualMachineDiskBusSATA.String(),
 		Type: hypervisorhelpers.VirtualMachineDiskTypeCDROM.String(),
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"},
 		},
-	}}
+	}
+
+	spec := newRenderableSpec(name, "running")
+	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{disk}
 	s.Create(spec)
 	s.start()
 
 	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
 		`virtual machine "vm1": disk "install" is not ready: no disk status yet`)
 
-	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(name, "install"))
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(name, disk))
 	status.TypedSpec().VirtualMachine = name
 	status.TypedSpec().Name = "install"
 	status.TypedSpec().SourcePath = "/var/lib/libvirt/images/vm1-install.qcow2"

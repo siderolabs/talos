@@ -127,7 +127,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{hypervisor.VirtualMachineDiskStatusID(name, "install")},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
 		},
@@ -172,7 +172,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
-		hypervisor.VirtualMachineDiskStatusID(name, "install"))
+		diskStatusID(name, doc.DisksConfig[0]))
 
 	// No status is left to read once the document is gone; ask libvirt whether the domain outlived it.
 	suite.assertNoDomain(node, name)

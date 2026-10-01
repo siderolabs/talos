@@ -9163,7 +9163,7 @@ VirtualMachineDiskStatusSpec is the spec for VirtualMachineDiskStatus.
 | read_only | [bool](#bool) |  | ReadOnly is true when the guest must not write to the source. |
 | ready | [bool](#bool) |  | Ready is true once the source exists and may be attached. |
 | error | [string](#string) |  | Error describes why the disk is not ready. |
-| image | [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec) |  | Image is the content library image this status resolved.<br><br>It is recorded whether or not the resolution succeeded, so that a status left behind by an earlier image is recognizable as stale rather than usable. |
+| image | [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec) |  | Image is the content library image this status resolved. |
 
 
 
@@ -9180,6 +9180,7 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | ----- | ---- | ----- | ----------- |
 | domain_xml | [string](#string) |  | DomainXML is the libvirt domain description used to start the guest. |
 | power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
+| disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
 
 
 

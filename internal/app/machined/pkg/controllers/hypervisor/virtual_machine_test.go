@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 	"sync"
 	"testing"
@@ -16,6 +18,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/uuid"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -29,6 +32,10 @@ import (
 const (
 	machineUUID        = "c737f778-82a1-48dd-990b-67901031bcc5"
 	virtqemudServiceID = "ext-virtqemud"
+	// diskStatusVM is the virtual machine the disk-holding cases work on.
+	diskStatusVM = "vm"
+	// diskStatusLibrary is the content library those cases resolve their images against.
+	diskStatusLibrary = "vm-images"
 )
 
 type domainClient struct {
@@ -39,6 +46,7 @@ type domainClient struct {
 	opens           int
 	closes          int
 	removeErr       error
+	startErr        error
 	listErr         error
 	changed         chan struct{}
 	attempted       chan struct{}
@@ -125,6 +133,14 @@ func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
 
 func (c *domainClient) Start(domain libvirtdomain.Domain, text string) error {
 	c.mu.Lock()
+
+	if c.startErr != nil {
+		err := c.startErr
+		c.mu.Unlock()
+
+		return err
+	}
+
 	_, exists := c.domains[domain.Name]
 
 	unchanged := exists && c.texts[domain.Name] == text
@@ -597,4 +613,445 @@ func (s *VirtualMachineDomainSuite) TestFailedRemovalKeepsSpecFinalizer() {
 
 func TestVirtualMachineDomainSuite(t *testing.T) {
 	suite.Run(t, new(VirtualMachineDomainSuite))
+}
+
+// newDiskStatus publishes a disk status a domain definition can name. Every case here works on one
+// virtual machine, so the status always belongs to diskStatusVM.
+func (s *VirtualMachineDomainSuite) newDiskStatus(id string) *hypervisor.VirtualMachineDiskStatus {
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id)
+	status.TypedSpec().VirtualMachine = diskStatusVM
+	status.TypedSpec().Name = "install"
+	status.TypedSpec().Ready = true
+	s.Create(status)
+
+	return status
+}
+
+// newImageDiskStatus publishes a disk status resolved against a content library file.
+func (s *VirtualMachineDomainSuite) newImageDiskStatus(id, sourcePath string, image hypervisor.VirtualMachineDiskFromImageSpec) *hypervisor.VirtualMachineDiskStatus {
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id)
+	status.TypedSpec().VirtualMachine = diskStatusVM
+	status.TypedSpec().Name = "install"
+	status.TypedSpec().Ready = true
+	status.TypedSpec().SourcePath = sourcePath
+	status.TypedSpec().Image = image
+	s.Create(status)
+
+	return status
+}
+
+// newContentLibraryStatus publishes a ready library a disk status can name.
+func (s *VirtualMachineDomainSuite) newContentLibraryStatus(path string) *hypervisor.ContentLibraryStatus {
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, diskStatusLibrary)
+	library.TypedSpec().VolumeID = "u-" + diskStatusLibrary
+	library.TypedSpec().Ready = true
+	library.TypedSpec().Path = path
+	s.Create(library)
+
+	return library
+}
+
+func (s *VirtualMachineDomainSuite) assertNeverStarted() {
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		_, started := s.client.domains[diskStatusVM]
+
+		return started
+	}, 200*time.Millisecond, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineDomainSuite) assertDiskHeld(id string, held bool) {
+	s.Require().Eventually(func() bool {
+		status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](s.Ctx(), s.State(), id)
+
+		return err == nil && status.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == held
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+// A domain reads its disks from the moment it starts, and goes on reading them until libvirt is
+// told otherwise. The hold is taken before the definition is handed over, and the one a replaced
+// definition no longer names is given back only once the replacement has actually been made.
+func (s *VirtualMachineDomainSuite) TestHoldsTheDisksOfARunningDomain() {
+	s.start()
+
+	first := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{first.Metadata().ID()}
+	s.Create(spec)
+
+	s.assertDomain("vm", spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(first.Metadata().ID(), true)
+
+	second := s.newDiskStatus("vm/install@bbbbbbbbbbbb")
+
+	updated := ctest.UpdateWithConflicts(s, spec, func(res *hypervisor.VirtualMachineDomainSpec) error {
+		res.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>2</vcpu></domain>`
+		res.TypedSpec().Disks = []string{second.Metadata().ID()}
+
+		return nil
+	})
+
+	s.assertDomain("vm", updated.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(second.Metadata().ID(), true)
+	s.assertDiskHeld(first.Metadata().ID(), false)
+
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "the finalizer must prevent immediate deletion")
+
+	s.assertDomain("vm", "", false)
+	s.assertDiskHeld(second.Metadata().ID(), false)
+	s.assertFinalizer("vm", false)
+}
+
+// Holding a disk status which is on its way out would block its teardown forever. The domain is
+// left unstarted instead; the definition it is waiting for is on its way.
+func (s *VirtualMachineDomainSuite) TestRefusesToStartOnADiskOnItsWayOut() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+	s.AddFinalizer(status.Metadata(), "somebody-else")
+
+	ready, err := s.State().Teardown(s.Ctx(), status.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		_, started := s.client.domains["vm"]
+
+		return started
+	}, 200*time.Millisecond, 10*time.Millisecond)
+
+	s.assertDiskHeld(status.Metadata().ID(), false)
+}
+
+func (s *VirtualMachineDomainSuite) TestReleasesDisksOfADomainThatNeverStarted() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+
+	s.client.startErr = errors.New("daemon disconnected")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertDiskHeld(status.Metadata().ID(), true)
+	s.assertFinalizer("vm", true)
+
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "the claim must prevent immediate deletion")
+
+	s.assertDiskHeld(status.Metadata().ID(), false)
+	s.assertFinalizer("vm", false)
+
+	s.Destroy(spec)
+	s.assertDiskHeld(status.Metadata().ID(), false)
+}
+
+// A hold reachable from no domain spec at all is one nothing can give back on the spec's behalf:
+// a hold taken just before this controller was restarted, or one left by an older generation. It
+// has to be swept on the virtual machine's name alone.
+func (s *VirtualMachineDomainSuite) TestReleasesDisksOfADestroyedSpec() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+	s.AddFinalizer(status.Metadata(), "hypervisor.VirtualMachineController")
+
+	s.start()
+
+	s.assertDiskHeld(status.Metadata().ID(), false)
+}
+
+// A domain this controller never claimed is one it will not remove, and it goes on reading its
+// disks for as long as it is there. Stopping the spec must not give those holds back under it.
+func (s *VirtualMachineDomainSuite) TestKeepsTheDisksOfAnUnclaimedDomainStillPresent() {
+	unclaimed := libvirtdomain.Domain{
+		Name: diskStatusVM,
+		UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), diskStatusVM),
+	}
+	s.client.domains[unclaimed.Name] = unclaimed
+
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+	s.AddFinalizer(status.Metadata(), "hypervisor.VirtualMachineController")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "stopped"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	select {
+	case <-s.client.listed:
+	case <-s.Ctx().Done():
+		s.FailNow("controller did not inspect the unclaimed domain")
+	}
+
+	select {
+	case <-s.client.attemptedRemove:
+		s.FailNow("controller attempted to remove an unclaimed domain")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	s.Require().Never(func() bool {
+		held, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](s.Ctx(), s.State(), status.Metadata().ID())
+
+		return err != nil || !held.Metadata().Finalizers().Has("hypervisor.VirtualMachineController")
+	}, 200*time.Millisecond, 10*time.Millisecond)
+}
+
+// A definition can name a disk status which is not published yet. That is something to wait for,
+// not a failure of the controller: the other domains keep being reconciled meanwhile.
+func (s *VirtualMachineDomainSuite) TestWaitsForADiskStatusThatIsNotThereYet() {
+	const id = "vm/install@aaaaaaaaaaaa"
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{id}
+	s.Create(spec)
+
+	other := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "other")
+	other.TypedSpec().DomainXML = `<domain><name>other</name><vcpu>1</vcpu></domain>`
+	other.TypedSpec().PowerState = "running"
+	s.Create(other)
+	s.start()
+
+	s.assertDomain("other", other.TypedSpec().DomainXML, true)
+	s.assertDomain("vm", "", false)
+
+	s.newDiskStatus(id)
+
+	s.assertDomain("vm", spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(id, true)
+}
+
+// A file being replaced is one whose contents are about to stop being what the disk status resolved
+// against. The domain waits rather than starting on them, and it keeps its holds while it waits: the
+// content library service finds those holds and refuses, so only one of the two gives way.
+func (s *VirtualMachineDomainSuite) TestRefusesToStartOnAnImageBeingReplaced() {
+	library := s.newContentLibraryStatus(s.T().TempDir())
+	s.AddFinalizer(library.Metadata(), hypervisor.ContentLibraryMutationFinalizer("image.raw"))
+
+	status := s.newImageDiskStatus("vm/install@aaaaaaaaaaaa", "",
+		hypervisor.VirtualMachineDiskFromImageSpec{Library: diskStatusLibrary, File: "image.raw"})
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertNeverStarted()
+	s.assertDiskHeld(status.Metadata().ID(), true)
+
+	s.RemoveFinalizer(library.Metadata(), hypervisor.ContentLibraryMutationFinalizer("image.raw"))
+
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+}
+
+// Another file of the same library is nothing this domain reads.
+func (s *VirtualMachineDomainSuite) TestStartsOnAnImageAnotherFileIsBeingReplacedAlongside() {
+	library := s.newContentLibraryStatus(s.T().TempDir())
+	s.AddFinalizer(library.Metadata(), hypervisor.ContentLibraryMutationFinalizer("other.raw"))
+
+	status := s.newImageDiskStatus("vm/install@aaaaaaaaaaaa", "",
+		hypervisor.VirtualMachineDiskFromImageSpec{Library: diskStatusLibrary, File: "image.raw"})
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+}
+
+// The disk status was published against the contents the file had when it resolved, and a library
+// file is not immutable. The digest is checked again under the hold, which is the only moment at
+// which what was read is what libvirt goes on to open.
+func (s *VirtualMachineDomainSuite) TestRefusesToStartOnAnImageWhichNoLongerMatchesItsDigest() {
+	path := s.T().TempDir()
+	sourcePath := filepath.Join(path, "image.raw")
+	s.Require().NoError(os.WriteFile(sourcePath, []byte("talos"), 0o600))
+
+	library := s.newContentLibraryStatus(path)
+
+	status := s.newImageDiskStatus("vm/install@aaaaaaaaaaaa", sourcePath, hypervisor.VirtualMachineDiskFromImageSpec{
+		Library: diskStatusLibrary,
+		File:    "image.raw",
+		Digest:  digest.FromString("talos").String(),
+	})
+
+	// Replaced after the status was published, exactly as an upload would have.
+	s.Require().NoError(os.WriteFile(sourcePath, []byte("not talos"), 0o600))
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertNeverStarted()
+
+	s.Require().NoError(os.WriteFile(sourcePath, []byte("talos"), 0o600))
+
+	// A library file changing is not an event of its own: what republishes the fingerprint is what
+	// tells this controller to look again.
+	ctest.UpdateWithConflicts(s, library, func(res *hypervisor.ContentLibraryStatus) error {
+		res.TypedSpec().Fingerprint = "changed"
+
+		return nil
+	})
+
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+}
+
+func (s *VirtualMachineDomainSuite) TestVerifiesAnImageSwappedUnderARunningDomain() {
+	path := s.T().TempDir()
+
+	firstPath := filepath.Join(path, "first.raw")
+	s.Require().NoError(os.WriteFile(firstPath, []byte("talos"), 0o600))
+
+	secondPath := filepath.Join(path, "second.raw")
+	s.Require().NoError(os.WriteFile(secondPath, []byte("not talos"), 0o600))
+
+	library := s.newContentLibraryStatus(path)
+
+	first := s.newImageDiskStatus("vm/install@aaaaaaaaaaaa", firstPath, hypervisor.VirtualMachineDiskFromImageSpec{
+		Library: diskStatusLibrary,
+		File:    "first.raw",
+		Digest:  digest.FromString("talos").String(),
+	})
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{first.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+
+	// The second image does not hash to what its status pinned, exactly as a file replaced after
+	// that status was published would not.
+	second := s.newImageDiskStatus("vm/install@bbbbbbbbbbbb", secondPath, hypervisor.VirtualMachineDiskFromImageSpec{
+		Library: diskStatusLibrary,
+		File:    "second.raw",
+		Digest:  digest.FromString("talos").String(),
+	})
+
+	swapped := `<domain><name>vm</name><vcpu>2</vcpu></domain>`
+
+	ctest.UpdateWithConflicts(s, spec, func(res *hypervisor.VirtualMachineDomainSpec) error {
+		res.TypedSpec().DomainXML = swapped
+		res.TypedSpec().Disks = []string{second.Metadata().ID()}
+
+		return nil
+	})
+
+	// The running domain is left alone, still on the definition which was verified.
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.texts[diskStatusVM] == swapped
+	}, 200*time.Millisecond, 10*time.Millisecond)
+
+	// The first image is still read by the domain which is still running, so its hold stays.
+	s.assertDiskHeld(first.Metadata().ID(), true)
+
+	s.Require().NoError(os.WriteFile(secondPath, []byte("talos"), 0o600))
+
+	ctest.UpdateWithConflicts(s, library, func(res *hypervisor.ContentLibraryStatus) error {
+		res.TypedSpec().Fingerprint = "changed"
+
+		return nil
+	})
+
+	s.assertDomain(diskStatusVM, swapped, true)
+	s.assertDiskHeld(second.Metadata().ID(), true)
+	s.assertDiskHeld(first.Metadata().ID(), false)
+}
+
+// Releasing a hold releases what was verified under it: from the moment the hold is gone the file
+// may be replaced again, so the next domain to read it has to hash it again rather than trust what
+// the last one found.
+func (s *VirtualMachineDomainSuite) TestReverifiesAnImageHeldAgainAfterAStop() {
+	path := s.T().TempDir()
+	sourcePath := filepath.Join(path, "image.raw")
+	s.Require().NoError(os.WriteFile(sourcePath, []byte("talos"), 0o600))
+
+	s.newContentLibraryStatus(path)
+
+	status := s.newImageDiskStatus("vm/install@aaaaaaaaaaaa", sourcePath, hypervisor.VirtualMachineDiskFromImageSpec{
+		Library: diskStatusLibrary,
+		File:    "image.raw",
+		Digest:  digest.FromString("talos").String(),
+	})
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(status.Metadata().ID(), true)
+
+	// Stopping gives the hold back, which is the moment the file stops being pinned.
+	ctest.UpdateWithConflicts(s, spec, func(res *hypervisor.VirtualMachineDomainSpec) error {
+		res.TypedSpec().PowerState = "stopped"
+
+		return nil
+	})
+
+	s.assertDomain(diskStatusVM, "", false)
+	s.assertDiskHeld(status.Metadata().ID(), false)
+
+	// Replaced while nothing held it, exactly as an overwrite of a stopped guest's image would.
+	s.Require().NoError(os.WriteFile(sourcePath, []byte("not talos"), 0o600))
+
+	ctest.UpdateWithConflicts(s, spec, func(res *hypervisor.VirtualMachineDomainSpec) error {
+		res.TypedSpec().PowerState = "running"
+
+		return nil
+	})
+
+	s.assertNeverStarted()
+}
+
+// A hold taken for a domain which then turns out not to be startable is one nothing gives back
+// while it waits, and one which refuses to let the file behind it be replaced for just as long. So
+// every disk is looked at before any of them is held.
+func (s *VirtualMachineDomainSuite) TestTakesNoHoldWhenALaterDiskIsNotThere() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID(), "vm/data@bbbbbbbbbbbb"}
+	s.Create(spec)
+	s.start()
+
+	s.assertNeverStarted()
+	s.assertDiskHeld(status.Metadata().ID(), false)
 }

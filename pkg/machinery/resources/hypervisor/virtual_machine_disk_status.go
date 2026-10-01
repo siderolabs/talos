@@ -5,6 +5,10 @@
 package hypervisor
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strings"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -44,20 +48,31 @@ type VirtualMachineDiskStatusSpec struct {
 	// Error describes why the disk is not ready.
 	Error string `yaml:"error,omitempty" protobuf:"7"`
 	// Image is the content library image this status resolved.
-	//
-	// It is recorded whether or not the resolution succeeded, so that a status left behind by an
-	// earlier image is recognizable as stale rather than usable.
 	Image VirtualMachineDiskFromImageSpec `yaml:"image,omitempty" protobuf:"8"`
 }
 
-// VirtualMachineDiskStatusID builds the resource ID for a disk of a virtual machine.
+// diskStatusIDDigestLength is how much of the provisioning digest the ID carries. It only has to
+// tell one configuration of a single disk apart from the next.
+const diskStatusIDDigestLength = 12
+
+// VirtualMachineDiskStatusID builds the resource ID for a disk of a virtual machine. Both names are
+// validated against ^[A-Za-z0-9-]+$, so neither separator can occur within either.
 //
-// Both names are validated against ^[A-Za-z0-9-]+$, so the separator cannot occur within either.
-//
-// The ID names the disk, not what it was resolved from: a consumer which cares that the status
-// answers its own configuration has to check Image as well.
-func VirtualMachineDiskStatusID(virtualMachine, disk string) resource.ID {
-	return virtualMachine + "/" + disk
+// It digests what the disk is provisioned from as well as naming the disk: a finalizer stops a
+// resource being destroyed, not updated, so re-provisioning from another image must create a second
+// status rather than rewrite the one a running domain holds.
+func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSpec) resource.ID {
+	var image VirtualMachineDiskFromImageSpec
+
+	if disk.Provision.FromImage != nil {
+		image = *disk.Provision.FromImage
+	}
+
+	// A disk provisioned from no image hashes the zero value, so it still has one stable ID to
+	// report its own unsupportedness under.
+	sum := sha256.Sum256([]byte(strings.Join([]string{image.Library, image.File, image.Digest, image.Mode}, "\x00")))
+
+	return virtualMachine + "/" + disk.Name + "@" + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
 }
 
 // NewVirtualMachineDiskStatus initializes a VirtualMachineDiskStatus resource.

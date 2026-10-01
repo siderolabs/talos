@@ -15,6 +15,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/opencontainers/go-digest"
@@ -297,10 +298,13 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 
 	defer root.Close() //nolint:errcheck
 
-	if !info.GetOverwrite() {
-		// A cheap early rejection only, so that a large image is not streamed in just to be refused
-		// at the end: the check which actually keeps two uploads from clobbering each other is the
-		// link in receiveFile.
+	if info.GetOverwrite() {
+		// Reject early if in use
+		// receiveFile checks again right before the rename.
+		if err = svc.checkNotInUse(srv.Context(), info.GetLibraryId(), info.GetName()); err != nil {
+			return err
+		}
+	} else {
 		if _, err = root.Stat(info.GetName()); err == nil {
 			return status.Errorf(codes.AlreadyExists, "file %q already exists", info.GetName())
 		} else if !errors.Is(err, fs.ErrNotExist) {
@@ -308,7 +312,7 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 		}
 	}
 
-	written, digests, err := svc.receiveFile(srv, root, info.GetName(), info.GetOverwrite(), dgst)
+	written, digests, err := svc.receiveFile(srv, root, info.GetLibraryId(), info.GetName(), info.GetOverwrite(), dgst)
 	if err != nil {
 		return withDigests(err, digests)
 	}
@@ -339,6 +343,7 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 func (svc *Service) receiveFile(
 	srv grpc.ClientStreamingServer[machine.ContentLibraryServiceUploadRequest, machine.ContentLibraryServiceUploadResponse],
 	root *os.Root,
+	libraryID string,
 	name string,
 	overwrite bool,
 	dgst digest.Digest,
@@ -417,23 +422,13 @@ func (svc *Service) receiveFile(
 		return 0, digests, status.Errorf(codes.Internal, "failed to close %q: %v", name, err)
 	}
 
+	if err = svc.claimName(srv.Context(), root, libraryID, name, tmpName, overwrite); err != nil {
+		return 0, digests, err
+	}
+
 	if overwrite {
-		if err = root.Rename(tmpName, name); err != nil {
-			return 0, digests, status.Errorf(codes.Internal, "failed to rename %q: %v", name, err)
-		}
-
-		// Cleared: the rename consumed the staged name, there is nothing left to clean up.
+		// The rename consumed the staged name, so there is nothing staged left to clean up.
 		tmpName = ""
-	} else {
-		// A link fails if the name is taken, which makes claiming it atomic: unlike the stat in
-		// Upload, two concurrent uploads of the same name cannot both get past this one.
-		if err = root.Link(tmpName, name); err != nil {
-			if errors.Is(err, fs.ErrExist) {
-				return 0, digests, status.Errorf(codes.AlreadyExists, "file %q already exists", name)
-			}
-
-			return 0, digests, status.Errorf(codes.Internal, "failed to link %q: %v", name, err)
-		}
 	}
 
 	// Both failures below leave the upload in place under the name asked for, so neither is
@@ -464,6 +459,42 @@ func (svc *Service) receiveFile(
 	return written, digests, nil
 }
 
+// claimName gives the staged upload the name it was uploaded under. Linking it leaves the staged
+// name behind, renaming it consumes it.
+func (svc *Service) claimName(ctx context.Context, root *os.Root, libraryID, name, tmpName string, overwrite bool) error {
+	if !overwrite {
+		// A link fails if the name is taken, which makes claiming it atomic: unlike the stat in
+		// Upload, two concurrent uploads of the same name cannot both get past this one.
+		if err := root.Link(tmpName, name); err != nil {
+			if errors.Is(err, fs.ErrExist) {
+				return status.Errorf(codes.AlreadyExists, "file %q already exists", name)
+			}
+
+			return status.Errorf(codes.Internal, "failed to link %q: %v", name, err)
+		}
+
+		return nil
+	}
+
+	release, err := svc.claimLibraryFile(ctx, libraryID, name)
+	if err != nil {
+		return err
+	}
+
+	defer release()
+
+	// A VM may have started reading the file in the meantime.
+	if err := svc.checkNotInUse(ctx, libraryID, name); err != nil {
+		return err
+	}
+
+	if err := root.Rename(tmpName, name); err != nil {
+		return status.Errorf(codes.Internal, "failed to rename %q: %v", name, err)
+	}
+
+	return nil
+}
+
 // syncDir flushes the library directory itself, so that a name created in it survives a power loss.
 func syncDir(root *os.Root) error {
 	dir, err := root.Open(".")
@@ -475,6 +506,80 @@ func syncDir(root *os.Root) error {
 
 	if err := dir.Sync(); err != nil {
 		return fmt.Errorf("failed to flush content library: %w", err)
+	}
+
+	return nil
+}
+
+// claimLibraryFile claims the right to mutate one file of a library.
+//
+// Returns a callable to be used for releasing the claim, once the mutation is done.
+func (svc *Service) claimLibraryFile(ctx context.Context, libraryID, name string) (func(), error) {
+	md := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryID).Metadata()
+
+	current, err := svc.state.Get(ctx, md)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, status.Errorf(codes.NotFound, "content library %q is not configured", libraryID)
+		}
+
+		return nil, status.Errorf(codes.Internal, "failed to get content library %q: %v", libraryID, err)
+	}
+
+	finalizer := hypervisor.ContentLibraryMutationFinalizer(name)
+	alreadyLocked := status.Errorf(codes.FailedPrecondition, "file %q is already being changed by another request", name)
+
+	// state.AddFinalizer open-coded, for the already-claimed check to be atomic with the add, and
+	// for the phase expectation: a library on its way out is refused rather than marked, as a
+	// marker on it would block that teardown for as long as it is held.
+	_, err = svc.state.UpdateWithConflicts(ctx, md, func(r resource.Resource) error {
+		if r.Metadata().Finalizers().Has(finalizer) {
+			return alreadyLocked
+		}
+
+		r.Metadata().Finalizers().Add(finalizer)
+
+		return nil
+	}, state.WithUpdateOwner(current.Metadata().Owner()), state.WithExpectedPhase(resource.PhaseRunning))
+
+	switch {
+	case errors.Is(err, alreadyLocked):
+		return nil, alreadyLocked
+	case state.IsPhaseConflictError(err):
+		return nil, status.Errorf(codes.FailedPrecondition, "content library %q is going away", libraryID)
+	case err != nil:
+		return nil, status.Errorf(codes.Internal, "failed to claim %q in content library %q: %v", name, libraryID, err)
+	}
+
+	return func() {
+		if err := svc.state.RemoveFinalizer(context.WithoutCancel(ctx), md, finalizer); err != nil && !state.IsNotFoundError(err) {
+			svc.logger.Error("failed to release a content library file",
+				zap.String("library", libraryID),
+				zap.String("name", name),
+				zap.Error(err),
+			)
+		}
+	}, nil
+}
+
+// checkNotInUse refuses a file a running domain is reading from.
+func (svc *Service) checkNotInUse(ctx context.Context, libraryID, name string) error {
+	diskStatuses, err := safe.StateListAll[*hypervisor.VirtualMachineDiskStatus](ctx, svc.state)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to list virtual machine disk statuses: %v", err)
+	}
+
+	for diskStatus := range diskStatuses.All() {
+		if diskStatus.Metadata().Finalizers().Empty() {
+			continue
+		}
+
+		image := diskStatus.TypedSpec().Image
+
+		if image.Library == libraryID && image.File == name {
+			return status.Errorf(codes.FailedPrecondition, "file %q is in use by disk %q of virtual machine %q",
+				name, diskStatus.TypedSpec().Name, diskStatus.TypedSpec().VirtualMachine)
+		}
 	}
 
 	return nil
@@ -492,6 +597,17 @@ func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServi
 	}
 
 	defer root.Close() //nolint:errcheck
+
+	release, err := svc.claimLibraryFile(ctx, req.GetLibraryId(), req.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	defer release()
+
+	if err := svc.checkNotInUse(ctx, req.GetLibraryId(), req.GetName()); err != nil {
+		return nil, err
+	}
 
 	if err := root.Remove(req.GetName()); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {

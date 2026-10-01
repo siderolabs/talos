@@ -53,6 +53,10 @@ func (o VirtualMachineDiskStatusSpec) DeepCopy() VirtualMachineDiskStatusSpec {
 // DeepCopy generates a deep copy of VirtualMachineDomainSpecSpec.
 func (o VirtualMachineDomainSpecSpec) DeepCopy() VirtualMachineDomainSpecSpec {
 	var cp VirtualMachineDomainSpecSpec = o
+	if o.Disks != nil {
+		cp.Disks = make([]string, len(o.Disks))
+		copy(cp.Disks, o.Disks)
+	}
 	return cp
 }
 

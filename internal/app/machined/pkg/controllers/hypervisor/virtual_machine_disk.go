@@ -9,11 +9,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/opencontainers/go-digest"
 	"go.uber.org/zap"
 
@@ -24,12 +27,17 @@ import (
 // rawDiskFormat is libvirt's driver type for a file attached as-is.
 const rawDiskFormat = "raw"
 
+const diskControllerName = "hypervisor.VirtualMachineDiskController"
+
+// errHoldFailed marks the controller's own failure to hold a library.
+var errHoldFailed = errors.New("failed to hold content library")
+
 // VirtualMachineDiskController resolves each disk of a virtual machine to a host source.
 type VirtualMachineDiskController struct{}
 
 // Name implements controller.Controller interface.
 func (ctrl *VirtualMachineDiskController) Name() string {
-	return "hypervisor.VirtualMachineDiskController"
+	return diskControllerName
 }
 
 // Inputs implements controller.Controller interface.
@@ -43,12 +51,13 @@ func (ctrl *VirtualMachineDiskController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.ContentLibraryStatusType,
-			Kind:      controller.InputWeak,
+			// Strong: an image is attached where it lies, so a library's mount has to outlive every guest reading one.
+			Kind: controller.InputStrong,
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDiskStatusType,
-			Kind:      controller.InputDestroyReady,
+			Kind:      controller.InputWeak,
 		},
 	}
 }
@@ -64,7 +73,7 @@ func (ctrl *VirtualMachineDiskController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *VirtualMachineDiskController) Run(ctx context.Context, runtime controller.Runtime, _ *zap.Logger) error {
+func (ctrl *VirtualMachineDiskController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -72,7 +81,7 @@ func (ctrl *VirtualMachineDiskController) Run(ctx context.Context, runtime contr
 		case <-runtime.EventCh():
 		}
 
-		if err := ctrl.reconcile(ctx, runtime); err != nil {
+		if err := ctrl.reconcile(ctx, runtime, logger); err != nil {
 			return err
 		}
 
@@ -80,24 +89,25 @@ func (ctrl *VirtualMachineDiskController) Run(ctx context.Context, runtime contr
 	}
 }
 
-func (ctrl *VirtualMachineDiskController) reconcile(ctx context.Context, runtime controller.Runtime) error {
-	specs, err := safe.ReaderListAll[*hypervisor.VirtualMachineSpec](ctx, runtime)
+func (ctrl *VirtualMachineDiskController) reconcile(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) error {
+	specs, err := safe.ReaderListAll[*hypervisor.VirtualMachineSpec](ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to list virtual machine specs: %w", err)
 	}
 
-	libraryStatuses, err := safe.ReaderListAll[*hypervisor.ContentLibraryStatus](ctx, runtime)
+	libraryStatuses, err := safe.ReaderListAll[*hypervisor.ContentLibraryStatus](ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to list content library statuses: %w", err)
 	}
 
-	libraries := make(map[string]hypervisor.ContentLibraryStatusSpec, libraryStatuses.Len())
+	libraries := make(map[string]*hypervisor.ContentLibraryStatus, libraryStatuses.Len())
 
 	for library := range libraryStatuses.All() {
-		libraries[library.Metadata().ID()] = *library.TypedSpec()
+		libraries[library.Metadata().ID()] = library
 	}
 
-	runtime.StartTrackingOutputs()
+	wanted := make(map[resource.ID]struct{}, specs.Len())
+	held := map[string]struct{}{}
 
 	var errs []error
 
@@ -105,46 +115,177 @@ func (ctrl *VirtualMachineDiskController) reconcile(ctx context.Context, runtime
 		name := vm.Metadata().ID()
 
 		for _, disk := range vm.TypedSpec().Disks {
-			id := hypervisor.VirtualMachineDiskStatusID(name, disk.Name)
+			id := hypervisor.VirtualMachineDiskStatusID(name, disk)
+			wanted[id] = struct{}{}
 
-			resolved, resolveErr := resolveVirtualMachineDisk(disk, libraries)
-
-			if err := safe.WriterModify(ctx, runtime,
-				hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id),
-				func(res *hypervisor.VirtualMachineDiskStatus) error {
-					*res.TypedSpec() = resolved
-					res.TypedSpec().VirtualMachine = name
-					res.TypedSpec().Name = disk.Name
-
-					// Stamped outside the resolution, so a failed one is still attributed to the
-					// image it was for: a status which does not name the image the configuration
-					// asks for today is stale, whether it is ready or not.
-					if image := disk.Provision.FromImage; image != nil {
-						res.TypedSpec().Image = *image
-					}
-
-					if resolveErr != nil {
-						res.TypedSpec().Error = resolveErr.Error()
-					}
-
-					return nil
-				},
-			); err != nil {
-				errs = append(errs, fmt.Errorf("failed to write virtual machine disk status %q: %w", id, err))
+			if err := ctrl.reconcileDisk(ctx, r, logger, name, id, disk, libraries, held); err != nil {
+				errs = append(errs, err)
 			}
 		}
 	}
 
-	return errors.Join(append(errs,
-		safe.CleanupOutputs[*hypervisor.VirtualMachineDiskStatus](ctx, runtime))...)
+	// A status the configuration has dropped is torn down to ask VirtualMachineController for its hold back.
+	if err := cleanupOutputs[*hypervisor.VirtualMachineDiskStatus](ctx, r, "virtual machine disk status", wanted); err != nil {
+		return errors.Join(append(errs, err)...)
+	}
+
+	return errors.Join(append(errs, ctrl.releaseLibraries(ctx, r, logger, libraries, held))...)
+}
+
+// reconcileDisk publishes the status of one disk of one virtual machine.
+func (ctrl *VirtualMachineDiskController) reconcileDisk(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	logger *zap.Logger,
+	name string,
+	id resource.ID,
+	disk hypervisor.VirtualMachineDiskSpec,
+	libraries map[string]*hypervisor.ContentLibraryStatus,
+	held map[string]struct{},
+) error {
+	// A status of this exact disk may still be tearing down, held by a domain reading from it:
+	// nothing can be written to it, and downstream reads it as absent.
+	switch existing, err := safe.ReaderGetByID[*hypervisor.VirtualMachineDiskStatus](ctx, r, id); {
+	case err != nil && !state.IsNotFoundError(err):
+		return fmt.Errorf("failed to get virtual machine disk status %q: %w", id, err)
+	case err == nil && existing.Metadata().Phase() != resource.PhaseRunning:
+		return nil
+	}
+
+	// The library is held before the status resolved against it is published: a ready disk is one
+	// something may start using at any moment.
+	resolved, resolveErr := ctrl.resolve(ctx, r, logger, disk, libraries, held)
+	if errors.Is(resolveErr, errHoldFailed) {
+		return fmt.Errorf("failed to resolve virtual machine disk %q: %w", id, resolveErr)
+	}
+
+	if err := safe.WriterModify(ctx, r,
+		hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id),
+		func(res *hypervisor.VirtualMachineDiskStatus) error {
+			*res.TypedSpec() = resolved
+			res.TypedSpec().VirtualMachine = name
+			res.TypedSpec().Name = disk.Name
+
+			// Stamped outside the resolution, so a failed one is still attributed to the image it was for.
+			if image := disk.Provision.FromImage; image != nil {
+				res.TypedSpec().Image = *image
+			}
+
+			if resolveErr != nil {
+				res.TypedSpec().Error = resolveErr.Error()
+			}
+
+			return nil
+		},
+	); err != nil {
+		return fmt.Errorf("failed to write virtual machine disk status %q: %w", id, err)
+	}
+
+	return nil
+}
+
+// holdLibrary keeps a library's mount in place for as long as a disk resolves against it. One which
+// is tearing down is refused rather than held, as holding it now would block that teardown forever.
+func holdLibrary(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, library *hypervisor.ContentLibraryStatus,
+) error {
+	if library.Metadata().Phase() != resource.PhaseRunning {
+		return fmt.Errorf("content library %q is going away", library.Metadata().ID())
+	}
+
+	if library.Metadata().Finalizers().Has(diskControllerName) {
+		return nil
+	}
+
+	if err := r.AddFinalizer(ctx, library.Metadata(), diskControllerName); err != nil {
+		return fmt.Errorf("%w %q: %w", errHoldFailed, library.Metadata().ID(), err)
+	}
+
+	logger.Info("holding content library for a virtual machine disk", zap.String("content_library", library.Metadata().ID()))
+
+	return nil
+}
+
+// releaseLibraries gives back the hold on every library nothing resolves against any more.
+func (ctrl *VirtualMachineDiskController) releaseLibraries(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
+	libraries map[string]*hypervisor.ContentLibraryStatus, held map[string]struct{},
+) error {
+	inUse, err := librariesInUse(ctx, r, held)
+	if err != nil {
+		return err
+	}
+
+	for id, library := range libraries {
+		if _, used := inUse[id]; used || !library.Metadata().Finalizers().Has(diskControllerName) {
+			continue
+		}
+
+		if err := r.RemoveFinalizer(ctx, library.Metadata(), diskControllerName); err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to release content library %q: %w", id, err)
+		}
+
+		logger.Info("released content library held for a virtual machine disk", zap.String("content_library", id))
+	}
+
+	return nil
+}
+
+// librariesInUse names the libraries which must stay held, by ID: the ones held names, plus every
+// library named by a disk status something else holds.
+func librariesInUse(ctx context.Context, reader controller.Reader, held map[string]struct{}) (map[string]struct{}, error) {
+	diskStatuses, err := safe.ReaderListAll[*hypervisor.VirtualMachineDiskStatus](ctx, reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list virtual machine disk statuses: %w", err)
+	}
+
+	inUse := maps.Clone(held)
+
+	for diskStatus := range diskStatuses.All() {
+		if diskStatus.Metadata().Finalizers().Empty() {
+			continue
+		}
+
+		if library := diskStatus.TypedSpec().Image.Library; library != "" {
+			inUse[library] = struct{}{}
+		}
+	}
+
+	return inUse, nil
+}
+
+// resolve finds the host source for a disk, holding the library it resolved against first and
+// recording it in held so the same pass does not give it straight back.
+func (ctrl *VirtualMachineDiskController) resolve(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	logger *zap.Logger,
+	disk hypervisor.VirtualMachineDiskSpec,
+	libraries map[string]*hypervisor.ContentLibraryStatus,
+	held map[string]struct{},
+) (hypervisor.VirtualMachineDiskStatusSpec, error) {
+	if err := checkVirtualMachineDiskSupported(disk); err != nil {
+		return hypervisor.VirtualMachineDiskStatusSpec{}, err
+	}
+
+	image := disk.Provision.FromImage
+
+	library, found := libraries[image.Library]
+	if !found {
+		return hypervisor.VirtualMachineDiskStatusSpec{}, fmt.Errorf("content library %q is not configured", image.Library)
+	}
+
+	if err := holdLibrary(ctx, r, logger, library); err != nil {
+		return hypervisor.VirtualMachineDiskStatusSpec{}, err
+	}
+
+	held[image.Library] = struct{}{}
+
+	return resolveVirtualMachineDisk(disk, *library.TypedSpec())
 }
 
 // checkVirtualMachineDiskSupported reports whether a disk is one this slice provisions at all, as
-// opposed to one that is merely not resolved yet.
-//
-// Kept apart from the rest of the resolution so both the disk's own status and the domain render
-// grade it the same way: nothing that happens on the host turns an unsupported disk into a usable
-// one, so it must not be reported as something to wait for.
+// opposed to one that is merely not resolved yet. Kept apart so the status and the render grade it alike.
 func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
 	switch {
 	case disk.Type != hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
@@ -159,21 +300,12 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 	return nil
 }
 
-// resolveVirtualMachineDisk finds the host source for a disk.
+// resolveVirtualMachineDisk finds the host source for a disk within a library already held for it.
 func resolveVirtualMachineDisk(
 	disk hypervisor.VirtualMachineDiskSpec,
-	libraries map[string]hypervisor.ContentLibraryStatusSpec,
+	library hypervisor.ContentLibraryStatusSpec,
 ) (hypervisor.VirtualMachineDiskStatusSpec, error) {
-	if err := checkVirtualMachineDiskSupported(disk); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, err
-	}
-
 	image := disk.Provision.FromImage
-
-	library, found := libraries[image.Library]
-	if !found {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, fmt.Errorf("content library %q is not configured", image.Library)
-	}
 
 	if !library.Ready {
 		return hypervisor.VirtualMachineDiskStatusSpec{}, fmt.Errorf("content library %q is not ready: %s", image.Library, library.Error)
@@ -184,8 +316,7 @@ func resolveVirtualMachineDisk(
 	}
 
 	return hypervisor.VirtualMachineDiskStatusSpec{
-		// The image is attached where it lies: nothing copies it, so the library file is pinned
-		// for as long as the virtual machine refers to it.
+		// Attached where it lies: nothing copies the image, so the library's mount has to stay under it.
 		SourcePath: filepath.Join(library.Path, image.File),
 		Format:     rawDiskFormat,
 		ReadOnly:   true,

@@ -19,12 +19,17 @@ import (
 	"github.com/google/uuid"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -32,14 +37,24 @@ import (
 // boots it, and the domain only has to name it.
 const isoName = "install.iso"
 
-// requireContentLibrarySupport skips unless the cluster can hold the library these tests source
-// their image from. LibvirtSuite itself only requires the hypervisor.
+// contentLibraryControllerName mirrors the controller whose mount requests are keyed by its name.
+const contentLibraryControllerName = "hypervisor.ContentLibraryController"
+
+// requireContentLibrarySupport is requireContentLibrary for the cases kept out of the short pipeline.
 func (suite *LibvirtSuite) requireContentLibrarySupport() {
 	suite.T().Helper()
 
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
+
+	suite.requireContentLibrary()
+}
+
+// requireContentLibrary skips unless the cluster can hold the library these tests source their
+// image from. LibvirtSuite itself only requires the hypervisor.
+func (suite *LibvirtSuite) requireContentLibrary() {
+	suite.T().Helper()
 
 	if !suite.Capabilities().SupportsVolumes {
 		suite.T().Skip("cluster doesn't support volumes")
@@ -74,21 +89,20 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
-	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
-		{
-			DiskName:      "install",
-			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
-			DiskBootOrder: 1,
-			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
-				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
-					ImageLibrary: library,
-					ImageFile:    isoName,
-					// Pinned, so the node is made to hash the file rather than take it on trust.
-					ImageDigest: digest.FromBytes(contents).String(),
-				},
+	installDisk := hypervisorcfg.VirtualMachineDisk{
+		DiskName:      "install",
+		DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+		DiskBootOrder: 1,
+		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+			FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+				ImageLibrary: library,
+				ImageFile:    isoName,
+				// Pinned, so the node is made to hash the file rather than take it on trust.
+				ImageDigest: digest.FromBytes(contents).String(),
 			},
 		},
 	}
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{installDisk}
 
 	// Register cleanup before applying configuration: a failed apply can still leave a guest
 	// behind. Do not reuse the test's expiring context.
@@ -103,7 +117,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 
 	source := filepath.Join(libraryPath, isoName)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{hypervisor.VirtualMachineDiskStatusID(name, "install")},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().SourcePath)
@@ -138,7 +152,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 	})
 
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
-		hypervisor.VirtualMachineDiskStatusID(name, "install"))
+		diskStatusID(name, installDisk))
 	suite.assertRunningTransientDomain(node, name, 1)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
@@ -187,7 +201,7 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{hypervisor.VirtualMachineDiskStatusID(name, "install")},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.False(status.TypedSpec().Ready)
 			asrt.Contains(status.TypedSpec().Error, isoName)
@@ -277,7 +291,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{hypervisor.VirtualMachineDiskStatusID(name, "install")},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
@@ -313,4 +327,273 @@ func (suite *LibvirtSuite) digestOfISO() digest.Digest {
 	suite.Require().NoError(err)
 
 	return digester.Digest()
+}
+
+// TestCDROMImageIsHeldWhileAttached covers the holds which keep the medium under a running guest:
+// the library file a domain is reading from cannot be deleted, and swapping the image frees the
+// previous one only once the domain has actually been redefined.
+func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
+	suite.requireContentLibrarySupport()
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+
+	const replacementISO = "replacement.iso"
+
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader([]byte("talos first cdrom")))
+	suite.Require().NoError(err)
+
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, false, "", bytes.NewReader([]byte("talos second cdrom")))
+	suite.Require().NoError(err)
+
+	name := "vm-swap-" + uuid.NewString()
+
+	installDisk := hypervisorcfg.VirtualMachineDisk{
+		DiskName:      "install",
+		DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+		DiskBootOrder: 1,
+		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+			FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+				ImageLibrary: library,
+				ImageFile:    isoName,
+			},
+		},
+	}
+
+	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
+	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.CPUConfig.CPUCount = 1
+	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{installDisk}
+
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, name)
+	})
+
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
+		},
+	)
+
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+
+	// The guest is reading from this file, so the content library refuses to take it away, by
+	// deleting it or by overwriting it in place.
+	_, err = suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+		LibraryId: library,
+		Name:      isoName,
+	})
+	suite.Require().Error(err)
+	suite.Require().Equal(codes.FailedPrecondition, grpcstatus.Code(err))
+
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, true, "", bytes.NewReader([]byte("talos overwritten")))
+	suite.Require().Error(err)
+	suite.Require().Equal(codes.FailedPrecondition, grpcstatus.Code(err))
+
+	swappedDisk := installDisk
+	swappedDisk.ProvisionConfig.FromImageConfig = &hypervisorcfg.VirtualMachineDiskFromImage{
+		ImageLibrary: library,
+		ImageFile:    replacementISO,
+	}
+
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{swappedDisk}
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, swappedDisk)},
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.Equal(filepath.Join(libraryPath, replacementISO), status.TypedSpec().SourcePath)
+		},
+	)
+
+	// The status of the previous image is a resource of its own, and it goes once the domain has
+	// been redefined without it.
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+		diskStatusID(name, installDisk))
+
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+
+	suite.Require().Contains(
+		suite.runVirsh(node, "domblklist", name, "--details"),
+		filepath.Join(libraryPath, replacementISO),
+	)
+
+	// Nothing reads the first image any more, so it may go.
+	_, err = suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+		LibraryId: library,
+		Name:      isoName,
+	})
+	suite.Require().NoError(err)
+
+	// A stopped virtual machine reads nothing, so its image is the operator's to replace again. The
+	// disk is still configured, and still has a status; what is gone is the hold on it.
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+	suite.PatchMachineConfig(nodeCtx, doc)
+	suite.assertNoDomain(node, name)
+
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, true, "", bytes.NewReader([]byte("talos replaced")))
+	suite.Require().NoError(err)
+
+	// Which is the other half of the bargain: an image the operator may replace is one a guest must
+	// not be handed on the strength of what it hashed to before. Pinning what the file used to be
+	// now names contents the library no longer holds.
+	pinnedDisk := swappedDisk
+	pinnedDisk.ProvisionConfig.FromImageConfig = &hypervisorcfg.VirtualMachineDiskFromImage{
+		ImageLibrary: library,
+		ImageFile:    replacementISO,
+		ImageDigest:  digest.FromBytes([]byte("talos second cdrom")).String(),
+	}
+
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{pinnedDisk}
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, pinnedDisk)},
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.False(status.TypedSpec().Ready)
+			asrt.Contains(status.TypedSpec().Error, "digest mismatch")
+		},
+	)
+
+	// No guest comes up on bytes nothing vouches for.
+	suite.assertNoDomain(node, name)
+
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{swappedDisk}
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	_, err = suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+		LibraryId: library,
+		Name:      replacementISO,
+	})
+	suite.Require().NoError(err)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
+	suite.assertNoDomain(node, name)
+}
+
+// TestContentLibraryIsReleasedWithItsGuest covers the far end of the same chain: a guest reading an
+// image out of a library's mount holds the disk status, the library status and the mount underneath
+// both, and every one of those has to come back when the guest goes. A hold left behind pins the
+// mount until the node reboots.
+//
+// The library cannot be dropped from the configuration while a virtual machine names it — validation
+// refuses that apply — so the guest goes first, and the library after it. Nothing here needs a
+// bootable image, so it runs in the short pipeline too.
+func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
+	suite.requireContentLibrary()
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader([]byte("talos held cdrom")))
+	suite.Require().NoError(err)
+
+	name := "vm-release-" + uuid.NewString()
+
+	installDisk := hypervisorcfg.VirtualMachineDisk{
+		DiskName:      "install",
+		DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
+		DiskBootOrder: 1,
+		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+			FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
+				ImageLibrary: library,
+				ImageFile:    isoName,
+			},
+		},
+	}
+
+	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
+	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.CPUConfig.CPUCount = 1
+	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{installDisk}
+
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, name)
+	})
+
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	source := filepath.Join(libraryPath, isoName)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
+		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.Equal(source, status.TypedSpec().SourcePath)
+		},
+	)
+
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
+	suite.Require().Contains(suite.runVirsh(node, "domblklist", name, "--details"), source)
+
+	// Every link of the chain is in place: the domain holds the disk status, the disk holds the
+	// library status, and the library holds the mount its image is being read out of.
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{library},
+		func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+			asrt.False(status.Metadata().Finalizers().Empty(), "the disk must hold the library")
+		},
+	)
+
+	mountRequestID := contentLibraryControllerName + "/" + library + "/" + constants.UserVolumePrefix + library
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{mountRequestID},
+		func(*block.VolumeMountStatus, *assert.Assertions) {},
+	)
+
+	// The guest goes, and every hold comes back with it. The library is only removable once no
+	// virtual machine names it any more.
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
+	suite.assertNoDomain(node, name)
+
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+		diskStatusID(name, installDisk))
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.ContentLibraryConfigKind, library)
+
+	rtestutils.AssertNoResource[*hypervisor.ContentLibraryStatus](nodeCtx, suite.T(), suite.Client.COSI, library)
+	rtestutils.AssertNoResource[*block.VolumeMountRequest](nodeCtx, suite.T(), suite.Client.COSI, mountRequestID)
+	rtestutils.AssertNoResource[*block.VolumeMountStatus](nodeCtx, suite.T(), suite.Client.COSI, mountRequestID)
+}
+
+// diskStatusID is the ID the disk status of one configured disk is published under.
+//
+// The ID covers what the disk is provisioned from as well as its name, so it is built from the same
+// document the test applied rather than written out by hand.
+func diskStatusID(vm string, disk hypervisorcfg.VirtualMachineDisk) string {
+	image := disk.ProvisionConfig.FromImageConfig
+
+	return hypervisor.VirtualMachineDiskStatusID(vm, hypervisor.VirtualMachineDiskSpec{
+		Name: disk.Name(),
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{
+				Library: image.ImageLibrary,
+				File:    image.ImageFile,
+				Digest:  image.ImageDigest,
+				Mode:    image.Mode().String(),
+			},
+		},
+	})
 }
