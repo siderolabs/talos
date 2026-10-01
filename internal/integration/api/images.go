@@ -287,12 +287,12 @@ func (suite *ImagesSuite) TestVerify() {
 	const etcdImage = constants.EtcdImage + ":" + constants.DefaultEtcdVersion
 
 	// run the tests, first with an etcd image, which should be in the image cache anyways
+	// Check verification, not the message: the registry may serve legacy signatures or OCI referrer bundles.
 	resp, err := suite.Client.ImageClient.Verify(ctx, &machine.ImageServiceVerifyRequest{
 		ImageRef: etcdImage, // this image is under registry.k8s.io
 	})
 	suite.Require().NoError(err)
 	suite.Assert().True(resp.GetVerified(), "expected image to be verified according to our config")
-	suite.Assert().Equal("verified via legacy signature (bundle verified true)", resp.GetMessage())
 	suite.Assert().Contains(resp.GetDigestedImageRef(), constants.EtcdImage)
 	suite.Assert().Contains(resp.GetDigestedImageRef(), "@sha256:")
 
