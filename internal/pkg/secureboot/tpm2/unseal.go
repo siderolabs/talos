@@ -21,6 +21,18 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+var (
+	// ErrSRKMismatch is returned when the storage root key of the TPM doesn't match the one the blob was sealed with.
+	//
+	// This happens when the TPM was cleared/reset, replaced, or the disk was moved to a different machine.
+	ErrSRKMismatch = errors.New("srk name does not match")
+
+	// ErrPCRPolicyMismatch is returned when the current PCR values don't match the policy the blob was sealed with.
+	//
+	// This happens when the measured boot state changed, e.g. after a firmware, SecureBoot db/dbx or boot chain update.
+	ErrPCRPolicyMismatch = errors.New("sealing policy digest does not match")
+)
+
 // Unseal unseals a sealed blob using the TPM
 //
 //nolint:gocyclo,cyclop
@@ -81,7 +93,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 	if !bytes.Equal(createPrimaryResponse.Name.Buffer, srk.Buffer) {
 		// this means the srk name does not match, possibly due to a different TPM or tpm was reset
 		// could also mean the disk was used on a different machine
-		return nil, fmt.Errorf("srk name does not match, expected %x, got %x", srk.Buffer, createPrimaryResponse.Name.Buffer)
+		return nil, fmt.Errorf("%w, expected %x, got %x", ErrSRKMismatch, srk.Buffer, createPrimaryResponse.Name.Buffer)
 	}
 
 	load := tpm2.Load{
@@ -290,7 +302,7 @@ func validatePCRPolicyDigest(t transport.TPM, handle tpm2.TPMHandle, pcrs []int,
 	}
 
 	if !bytes.Equal(pcrPolicyDigest.Buffer, digest) {
-		return fmt.Errorf("sealing policy digest does not match, expected %x, got %x", digest, pcrPolicyDigest.Buffer)
+		return fmt.Errorf("%w, expected %x, got %x", ErrPCRPolicyMismatch, digest, pcrPolicyDigest.Buffer)
 	}
 
 	return nil
