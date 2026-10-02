@@ -606,6 +606,19 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
 	}
 
+	// verify that the mount points were removed after unmount
+	stream, err = suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  constants.UserVolumeMountPoint,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		suite.Assert().NotContains(volumeIDs, info.RelativeName, "expected mount point %s to be removed", info.Name)
+
+		return nil
+	}))
+
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
 		asrt := assert.New(collect)

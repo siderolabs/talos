@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/mountconfig"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/mountops"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/nfs"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -43,6 +44,7 @@ type mountContext struct {
 	secure              bool
 	noExec              bool
 	securityInitialized bool
+	mountPointCreated   bool
 	unmounter           func() error
 }
 
@@ -145,6 +147,8 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 
 			mountStatus := mountStatusMap[mountRequest.Metadata().ID()]
 			mountStatusTearingDown := mountStatus != nil && mountStatus.Metadata().Phase() == resource.PhaseTearingDown
+			// either there was no mount status, or it was just torn down (if we get to the mount operation)
+			mountStatusMissing := mountStatus == nil || mountStatusTearingDown
 
 			mountHasParent := mountRequest.TypedSpec().ParentMountID != ""
 			mountParentStatus := mountStatusMap[mountRequest.TypedSpec().ParentMountID] // this might be nil
@@ -238,6 +242,15 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 
 				if err = ctrl.handleMountOperation(ctx, logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
 					return err
+				}
+
+				if mountStatusMissing && volumeStatus.Metadata().ID() == constants.UserVolumeMountPoint {
+					// user volumes are mounted under this directory, and they can't be mounted until the mount status is created,
+					// so this is the right time to clean up leftover mount points (e.g. from an unclean shutdown)
+					//
+					// it's important to perform cleanup, as kubelet's code will use the fact that `/var/mnt/<something>` is missing
+					// as a gate to skip starting the pod
+					mountops.CleanupEmptyDirectories(logger, filepath.Join(rootPath, mountTarget))
 				}
 
 				if err = safe.WriterModify(
@@ -696,14 +709,31 @@ func (ctrl *MountController) handleDiskMountOperation(
 			opts,
 		)...)
 
+		var mountPointCreated bool
+
+		if !mountRequest.TypedSpec().Detached {
+			var err error
+
+			mountPointCreated, err = mountops.CreateMountPoint(mountTarget, volumeStatus.TypedSpec().MountSpec)
+			if err != nil {
+				return fmt.Errorf("failed to create mount point for %q: %w", mountRequest.Metadata().ID(), err)
+			}
+		}
+
 		mountpoint, err := manager.Mount()
 		if err != nil {
+			if mountPointCreated {
+				mountops.RemoveMountPoint(logger, mountTarget)
+			}
+
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
 		if shouldUpdateTargetSettings {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
-				manager.Unmount() //nolint:errcheck
+				if manager.Unmount() == nil && mountPointCreated {
+					mountops.RemoveMountPoint(logger, mountTarget)
+				}
 
 				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
 			}
@@ -730,6 +760,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			secure:              mountRequest.TypedSpec().Secure,
 			noExec:              mountRequest.TypedSpec().NoExec,
 			securityInitialized: true,
+			mountPointCreated:   mountPointCreated,
 			unmounter:           manager.Unmount,
 		}
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
@@ -989,6 +1020,10 @@ func (ctrl *MountController) handleDiskUnmountOperation(
 		zap.String("target", mountCtx.point.Target()),
 		zap.String("filesystem", mountCtx.point.FSType()),
 	)
+
+	if mountCtx.mountPointCreated {
+		mountops.RemoveMountPoint(logger, mountCtx.point.Target())
+	}
 
 	return nil
 }

@@ -15,6 +15,7 @@ import (
 
 	blockctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -33,7 +34,7 @@ func TestMountSuite(t *testing.T) {
 	})
 }
 
-func (suite *MountSuite) mountVolume(volumeID string) { //nolint:unparam
+func (suite *MountSuite) mountVolume(volumeID string) {
 	mountRequest := block.NewMountRequest(block.NamespaceName, volumeID)
 	mountRequest.TypedSpec().RequesterIDs = []string{"requester1/" + volumeID}
 	mountRequest.TypedSpec().Requesters = []string{"requester1"}
@@ -147,4 +148,33 @@ func (suite *MountSuite) TestSymlinkDirectory() {
 	path, err := os.Readlink(targetPath)
 	suite.Require().NoError(err)
 	suite.Assert().Equal("/run", path)
+}
+
+func (suite *MountSuite) TestUserVolumeMountPointCleanup() {
+	dir := suite.T().TempDir()
+
+	// leftover empty mount point
+	suite.Require().NoError(os.Mkdir(filepath.Join(dir, "empty"), 0o755))
+	// non-empty directory
+	suite.Require().NoError(os.Mkdir(filepath.Join(dir, "data"), 0o755))
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "data", "file"), []byte("data"), 0o644))
+	// regular file
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "file"), []byte("data"), 0o644))
+
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, constants.UserVolumeMountPoint)
+	volumeStatus.TypedSpec().Type = block.VolumeTypeDirectory
+	volumeStatus.TypedSpec().MountSpec = block.MountSpec{
+		TargetPath: dir,
+		FileMode:   0o755,
+		UID:        os.Getuid(),
+		GID:        os.Getgid(),
+	}
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseReady
+	suite.Create(volumeStatus)
+
+	suite.mountVolume(constants.UserVolumeMountPoint)
+
+	suite.Assert().NoDirExists(filepath.Join(dir, "empty"))
+	suite.Assert().FileExists(filepath.Join(dir, "data", "file"))
+	suite.Assert().FileExists(filepath.Join(dir, "file"))
 }
