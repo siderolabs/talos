@@ -7580,6 +7580,153 @@
       ],
       "description": "WireguardPeer describes a Wireguard peer configuration."
     },
+    "runtime.CPUPartitionConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "CPUPartitionConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "init": {
+          "$ref": "#/$defs/runtime.CPUPartitionRoot",
+          "title": "init",
+          "description": "Host CPUs for machined and the early boot services.\n",
+          "markdownDescription": "Host CPUs for machined and the early boot services.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs for machined and the early boot services.\u003c/p\u003e\n"
+        },
+        "system": {
+          "$ref": "#/$defs/runtime.CPUPartitionRoot",
+          "title": "system",
+          "description": "Host CPUs for Talos system services (apid, trustd, udevd, …).\n",
+          "markdownDescription": "Host CPUs for Talos system services (apid, trustd, udevd, ...).",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs for Talos system services (apid, trustd, udevd, \u0026hellip;).\u003c/p\u003e\n"
+        },
+        "podruntime": {
+          "$ref": "#/$defs/runtime.CPUPartitionRoot",
+          "title": "podruntime",
+          "description": "Host CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd).\n",
+          "markdownDescription": "Host CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd).",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd).\u003c/p\u003e\n"
+        },
+        "kubepods": {
+          "$ref": "#/$defs/runtime.CPUPartitionRoot",
+          "title": "kubepods",
+          "description": "Host CPUs for Kubernetes pods.\n",
+          "markdownDescription": "Host CPUs for Kubernetes pods.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs for Kubernetes pods.\u003c/p\u003e\n"
+        },
+        "taloscontainers": {
+          "$ref": "#/$defs/runtime.CPUPartitionRoot",
+          "title": "taloscontainers",
+          "description": "Host CPUs for containers declared via ContainerConfig.\n",
+          "markdownDescription": "Host CPUs for containers declared via `ContainerConfig`.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs for containers declared via \u003ccode\u003eContainerConfig\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "virtualMachines": {
+          "$ref": "#/$defs/runtime.CPUPartitionVirtualMachines",
+          "title": "virtualMachines",
+          "description": "Host CPUs for virtual machines, optionally divided into named slices.\n",
+          "markdownDescription": "Host CPUs for virtual machines, optionally divided into named slices.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs for virtual machines, optionally divided into named slices.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "CPUPartitionConfig is a CPU partition config document.\\nCPUPartitionConfig declares the host CPUs each fixed Talos workload root may run on.\\n\\nThe roots are `init`, `system`, `podruntime`, `kubepods`, `taloscontainers` and\\n`virtualMachines`. A root left out of the document is unrestricted; a root listed in\\nthe document must name at least one CPU. Roots may overlap each other.\\n\\nThe document does not require virtual machines: omit `virtualMachines` to partition\\nthe host services and Kubernetes pods of an ordinary node.\\n\\nThe virtual machine root may be divided into named, pairwise disjoint slices. An\\nexclusive slice must not overlap any other root, and every other root must then be\\nbounded explicitly.\\n\\nIn container mode the document is validated but declares no policy.\\n"
+    },
+    "runtime.CPUPartitionRoot": {
+      "properties": {
+        "cpus": {
+          "type": "string",
+          "title": "cpus",
+          "description": "Host CPUs as a Linux CPU list, e.g. 0-1 or 0,2-3.\n\nCPU IDs are the kernel’s logical CPU numbers, SMT threads included.\n",
+          "markdownDescription": "Host CPUs as a Linux CPU list, e.g. `0-1` or `0,2-3`.\n\nCPU IDs are the kernel's logical CPU numbers, SMT threads included.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs as a Linux CPU list, e.g. \u003ccode\u003e0-1\u003c/code\u003e or \u003ccode\u003e0,2-3\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eCPU IDs are the kernel\u0026rsquo;s logical CPU numbers, SMT threads included.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cpus"
+      ],
+      "description": "CPUPartitionRoot bounds one fixed root to a set of host CPUs."
+    },
+    "runtime.CPUPartitionSlice": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Unique slice name: 1 to 63 ASCII letters, digits and hyphens. shared is reserved.\n",
+          "markdownDescription": "Unique slice name: 1 to 63 ASCII letters, digits and hyphens. `shared` is reserved.",
+          "x-intellij-html-description": "\u003cp\u003eUnique slice name: 1 to 63 ASCII letters, digits and hyphens. \u003ccode\u003eshared\u003c/code\u003e is reserved.\u003c/p\u003e\n"
+        },
+        "cpus": {
+          "type": "string",
+          "title": "cpus",
+          "description": "Host CPUs of the slice, as a Linux CPU list within the virtual machine root.\n",
+          "markdownDescription": "Host CPUs of the slice, as a Linux CPU list within the virtual machine root.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs of the slice, as a Linux CPU list within the virtual machine root.\u003c/p\u003e\n"
+        },
+        "exclusive": {
+          "type": "boolean",
+          "title": "exclusive",
+          "description": "Keep the slice’s CPUs out of every other root.\n",
+          "markdownDescription": "Keep the slice's CPUs out of every other root.",
+          "x-intellij-html-description": "\u003cp\u003eKeep the slice\u0026rsquo;s CPUs out of every other root.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cpus",
+        "name"
+      ],
+      "description": "CPUPartitionSlice is one named subset of the virtual machine root."
+    },
+    "runtime.CPUPartitionVirtualMachines": {
+      "properties": {
+        "cpus": {
+          "type": "string",
+          "title": "cpus",
+          "description": "Host CPUs of the virtual machine root, as a Linux CPU list.\n",
+          "markdownDescription": "Host CPUs of the virtual machine root, as a Linux CPU list.",
+          "x-intellij-html-description": "\u003cp\u003eHost CPUs of the virtual machine root, as a Linux CPU list.\u003c/p\u003e\n"
+        },
+        "slices": {
+          "items": {
+            "$ref": "#/$defs/runtime.CPUPartitionSlice"
+          },
+          "type": "array",
+          "title": "slices",
+          "description": "Named, pairwise disjoint subsets of cpus.\n\nA configuration patch replaces this list as a whole.\n",
+          "markdownDescription": "Named, pairwise disjoint subsets of `cpus`.\n\nA configuration patch replaces this list as a whole.",
+          "x-intellij-html-description": "\u003cp\u003eNamed, pairwise disjoint subsets of \u003ccode\u003ecpus\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eA configuration patch replaces this list as a whole.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "cpus"
+      ],
+      "description": "CPUPartitionVirtualMachines bounds the virtual machine root and divides it into slices."
+    },
     "runtime.DiskSelectorSpec": {
       "properties": {
         "match": {
@@ -9174,6 +9321,9 @@
     },
     {
       "$ref": "#/$defs/network.WireguardConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.CPUPartitionConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.EnvironmentV1Alpha1"

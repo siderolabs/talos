@@ -511,6 +511,187 @@ func (SecurityProfileConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (CPUPartitionConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionConfig is a CPU partition config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionConfig is a CPU partition config document.\nCPUPartitionConfig declares the host CPUs each fixed Talos workload root may run on.\n\nThe roots are `init`, `system`, `podruntime`, `kubepods`, `taloscontainers` and\n`virtualMachines`. A root left out of the document is unrestricted; a root listed in\nthe document must name at least one CPU. Roots may overlap each other.\n\nThe document does not require virtual machines: omit `virtualMachines` to partition\nthe host services and Kubernetes pods of an ordinary node.\n\nThe virtual machine root may be divided into named, pairwise disjoint slices. An\nexclusive slice must not overlap any other root, and every other root must then be\nbounded explicitly.\n\nIn container mode the document is validated but declares no policy.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "init",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for machined and the early boot services.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for machined and the early boot services." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "system",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for Talos system services (apid, trustd, udevd, ...).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for Talos system services (apid, trustd, udevd, ...)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "podruntime",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for the Kubernetes runtime components (containerd, the kubelet, etcd)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "kubepods",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for Kubernetes pods.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "taloscontainers",
+				Type:        "CPUPartitionRoot",
+				Note:        "",
+				Description: "Host CPUs for containers declared via `ContainerConfig`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for containers declared via `ContainerConfig`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "virtualMachines",
+				Type:        "CPUPartitionVirtualMachines",
+				Note:        "",
+				Description: "Host CPUs for virtual machines, optionally divided into named slices.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs for virtual machines, optionally divided into named slices." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("Kubernetes node with host services and pods on separate CPUs.", exampleCPUPartitionConfigV1Alpha1())
+
+	doc.AddExample("Virtual machine root with an exclusive slice.", exampleCPUPartitionConfigV1Alpha1Slices())
+
+	return doc
+}
+
+func (CPUPartitionRoot) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionRoot",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionRoot bounds one fixed root to a set of host CPUs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionRoot bounds one fixed root to a set of host CPUs.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "init",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "system",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "podruntime",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "kubepods",
+			},
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "taloscontainers",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs as a Linux CPU list, e.g. `0-1` or `0,2-3`.\n\nCPU IDs are the kernel's logical CPU numbers, SMT threads included.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs as a Linux CPU list, e.g. `0-1` or `0,2-3`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "0-1")
+
+	return doc
+}
+
+func (CPUPartitionVirtualMachines) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionVirtualMachines",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionVirtualMachines bounds the virtual machine root and divides it into slices." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionVirtualMachines bounds the virtual machine root and divides it into slices.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUPartitionConfigV1Alpha1",
+				FieldName: "virtualMachines",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs of the virtual machine root, as a Linux CPU list.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs of the virtual machine root, as a Linux CPU list." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "slices",
+				Type:        "[]CPUPartitionSlice",
+				Note:        "",
+				Description: "Named, pairwise disjoint subsets of `cpus`.\n\nA configuration patch replaces this list as a whole.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Named, pairwise disjoint subsets of `cpus`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "4-7")
+
+	return doc
+}
+
+func (CPUPartitionSlice) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CPUPartitionSlice",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CPUPartitionSlice is one named subset of the virtual machine root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CPUPartitionSlice is one named subset of the virtual machine root.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "CPUPartitionVirtualMachines",
+				FieldName: "slices",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Unique slice name: 1 to 63 ASCII letters, digits and hyphens. `shared` is reserved.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Unique slice name: 1 to 63 ASCII letters, digits and hyphens. `shared` is reserved." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cpus",
+				Type:        "string",
+				Note:        "",
+				Description: "Host CPUs of the slice, as a Linux CPU list within the virtual machine root.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host CPUs of the slice, as a Linux CPU list within the virtual machine root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "exclusive",
+				Type:        "bool",
+				Note:        "",
+				Description: "Keep the slice's CPUs out of every other root.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Keep the slice's CPUs out of every other root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "database")
+	doc.Fields[1].AddExample("", "6-7")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -532,6 +713,10 @@ func GetFileDoc() *encoder.FileDoc {
 			WatchdogTimerV1Alpha1{}.Doc(),
 			KernelModuleConfigV1Alpha1{}.Doc(),
 			SecurityProfileConfigV1Alpha1{}.Doc(),
+			CPUPartitionConfigV1Alpha1{}.Doc(),
+			CPUPartitionRoot{}.Doc(),
+			CPUPartitionVirtualMachines{}.Doc(),
+			CPUPartitionSlice{}.Doc(),
 		},
 	}
 }

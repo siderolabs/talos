@@ -938,6 +938,9 @@ const (
 	// CgroupTalosContainersMillicores is the CPU weight for the taloscontainers root cgroup.
 	CgroupTalosContainersMillicores = 1000
 
+	// CgroupVirtualMachinesRoot is the root name for virtual machine cgroups.
+	CgroupVirtualMachinesRoot = "virtualmachines"
+
 	// CgroupVirtualMachines is the cgroup partition holding virtual machines declared via VirtualMachineConfig.
 	//
 	// libvirt appends `.partition` to every component of a domain's `<resource><partition>` path unless the
@@ -945,7 +948,7 @@ const (
 	// (kept bare to mirror systemd slices). It creates the directory only for its `/machine` default;
 	// Talos creates this one at boot. Carrying the suffix in the constant keeps the on-disk path identical
 	// to the value rendered into domain XML.
-	CgroupVirtualMachines = "virtualmachines.partition"
+	CgroupVirtualMachines = CgroupVirtualMachinesRoot + ".partition"
 
 	// CgroupVirtualMachinesMillicores is the CPU weight for the virtualmachines root cgroup.
 	CgroupVirtualMachinesMillicores = 1000
