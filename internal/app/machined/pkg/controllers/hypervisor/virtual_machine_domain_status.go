@@ -202,20 +202,20 @@ func (ctrl *VirtualMachineDomainStatusController) handleWatchEvent(
 
 func (ctrl *VirtualMachineDomainStatusController) observationError(
 	ctx context.Context,
-	runtime controller.Runtime,
+	r controller.ReaderWriter,
 	err error,
 ) error {
-	markErr := ctrl.markUnavailable(ctx, runtime, "libvirt observation unavailable: "+err.Error())
+	markErr := ctrl.markUnavailable(ctx, r, "libvirt observation unavailable: "+err.Error())
 
 	return errors.Join(err, markErr)
 }
 
 func (ctrl *VirtualMachineDomainStatusController) markUnavailable(
 	ctx context.Context,
-	runtime controller.Runtime,
+	r controller.ReaderWriter,
 	reason string,
 ) error {
-	statuses, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainStatus](ctx, runtime)
+	statuses, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainStatus](ctx, r)
 	if err != nil {
 		return fmt.Errorf("list virtual machine domain statuses: %w", err)
 	}
@@ -223,7 +223,7 @@ func (ctrl *VirtualMachineDomainStatusController) markUnavailable(
 	var errs error
 
 	for status := range statuses.All() {
-		if writeErr := safe.WriterModify(ctx, runtime, status, func(resource *hypervisor.VirtualMachineDomainStatus) error {
+		if writeErr := safe.WriterModify(ctx, r, status, func(resource *hypervisor.VirtualMachineDomainStatus) error {
 			resource.TypedSpec().PowerState = hypervisor.VirtualMachinePowerStateUnknown
 			resource.TypedSpec().Error = reason
 

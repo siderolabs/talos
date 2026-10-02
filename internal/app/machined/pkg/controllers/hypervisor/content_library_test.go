@@ -11,7 +11,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -35,6 +37,8 @@ const (
 	testVolumeName = "vm-images"
 	// contentLibraryControllerName mirrors the controller's name, which its mount requests are keyed by.
 	contentLibraryControllerName = "hypervisor.ContentLibraryController"
+	// contentLibraryLabel mirrors the label the controller puts the library on its mount requests under.
+	contentLibraryLabel = "content-library"
 )
 
 // testVolumeID is the internal ID the backing volume gets, which the user never writes.
@@ -249,6 +253,11 @@ func (suite *ContentLibrarySuite) TestRequestsMount() {
 	ctest.AssertResource(suite, testRequestID, func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
 		asrt.Equal(testVolumeID, request.TypedSpec().VolumeID)
 		asrt.Equal(contentLibraryControllerName, request.TypedSpec().Requester)
+
+		library, labeled := request.Metadata().Labels().Get(contentLibraryLabel)
+		asrt.True(labeled, "the request must name the library it was made for")
+		asrt.Equal(testLibrary, library)
+
 		// Uploads write into the library, and a library holds image data only.
 		asrt.False(request.TypedSpec().ReadOnly)
 		asrt.True(request.TypedSpec().Secure)
@@ -492,4 +501,100 @@ func (suite *ContentLibrarySuite) TestWatchesAnotherVolumesContents() {
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
 		asrt.NotEqual(empty, status.TypedSpec().Fingerprint, "an image uploaded to the new backing volume must change the fingerprint")
 	})
+}
+
+// A virtual machine reads its image straight out of the mount, so removing the library from the
+// configuration must not take the medium away: the status tears down and waits, and the mount waits
+// with it.
+func (suite *ContentLibrarySuite) TestKeepsTheMountOfAHeldLibrary() {
+	suite.applyLibrary(newDoc())
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID)
+	})
+
+	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
+	suite.assertHeld(testRequestID, true)
+
+	libraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
+	suite.AddFinalizer(libraryStatus.Metadata(), "consumer")
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), config.NewMachineConfig(nil).Metadata()))
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, status.Metadata().Phase())
+	})
+
+	ctest.AssertResource(suite, testRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+	suite.assertHeld(testRequestID, true)
+
+	suite.RemoveFinalizer(libraryStatus.Metadata(), "consumer")
+
+	ctest.AssertNoResource[*hypervisor.ContentLibraryStatus](suite, testLibrary)
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, testRequestID)
+	suite.assertHeld(testRequestID, false)
+}
+
+// A mount this controller must not give back is one a guest is reading from, so which library a
+// request was made for is read off the request's own label rather than parsed back out of its ID.
+func (suite *ContentLibrarySuite) TestKeepsTheMountOfAHeldLibraryItNoLongerWants() {
+	suite.applyLibrary(newDoc())
+
+	ctest.AssertResource(suite, testLibrary, func(*hypervisor.ContentLibraryStatus, *assert.Assertions) {})
+
+	libraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
+	suite.AddFinalizer(libraryStatus.Metadata(), "consumer")
+
+	// Requests of a previous generation, as a library pointed at another volume leaves behind.
+	heldID := suite.strayRequest(testLibrary, testVolumeID+"-old")
+	unheldID := suite.strayRequest("other-images", "u-other-images")
+
+	// A strong input, so the controller is woken once everything above is in place.
+	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
+	suite.assertHeld(testRequestID, true)
+
+	// Nothing wants either request any more. The one whose library is held stays anyway.
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, unheldID)
+	ctest.AssertResource(suite, heldID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+}
+
+// The mount of a previous generation is freed by the hold coming back, and that happens on a status
+// which is still running: the controller has to be woken by a finalizer going away too, not only by
+// a teardown.
+func (suite *ContentLibrarySuite) TestReleasesTheMountOfAPreviousGenerationOnceTheHoldComesBack() {
+	suite.applyLibrary(newDoc())
+
+	// The status is published after the mount request it is for, so it is the status which has to be
+	// waited for: the hold below is put on a resource, not on a name.
+	ctest.AssertResource(suite, testLibrary, func(*hypervisor.ContentLibraryStatus, *assert.Assertions) {})
+
+	libraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
+	suite.AddFinalizer(libraryStatus.Metadata(), "consumer")
+
+	// A request of a previous generation, as a library pointed at another volume leaves behind.
+	heldID := suite.strayRequest(testLibrary, testVolumeID+"-old")
+
+	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
+	suite.assertHeld(testRequestID, true)
+	ctest.AssertResource(suite, heldID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+
+	// The only thing that changes from here: the hold comes back. The configuration does not move,
+	// and the status it is on stays running.
+	suite.RemoveFinalizer(libraryStatus.Metadata(), "consumer")
+
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, heldID)
+	ctest.AssertResource(suite, testRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+}
+
+// strayRequest creates a mount request this controller owns but no configuration asks for.
+func (suite *ContentLibrarySuite) strayRequest(libraryID, volumeID string) string {
+	id := contentLibraryControllerName + "/" + libraryID + "/" + volumeID
+
+	request := block.NewVolumeMountRequest(block.NamespaceName, id)
+	request.Metadata().Labels().Set(contentLibraryLabel, libraryID)
+	request.TypedSpec().VolumeID = volumeID
+	request.TypedSpec().Requester = contentLibraryControllerName
+	suite.Create(request, state.WithCreateOwner(contentLibraryControllerName))
+
+	return id
 }

@@ -29,6 +29,8 @@ import (
 const (
 	machineUUID        = "c737f778-82a1-48dd-990b-67901031bcc5"
 	virtqemudServiceID = "ext-virtqemud"
+	// diskStatusVM is the virtual machine the disk-holding cases work on.
+	diskStatusVM = "vm"
 )
 
 type domainClient struct {
@@ -39,6 +41,7 @@ type domainClient struct {
 	opens           int
 	closes          int
 	removeErr       error
+	startErr        error
 	listErr         error
 	changed         chan struct{}
 	attempted       chan struct{}
@@ -125,6 +128,14 @@ func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
 
 func (c *domainClient) Start(domain libvirtdomain.Domain, text string) error {
 	c.mu.Lock()
+
+	if c.startErr != nil {
+		err := c.startErr
+		c.mu.Unlock()
+
+		return err
+	}
+
 	_, exists := c.domains[domain.Name]
 
 	unchanged := exists && c.texts[domain.Name] == text
@@ -597,4 +608,194 @@ func (s *VirtualMachineDomainSuite) TestFailedRemovalKeepsSpecFinalizer() {
 
 func TestVirtualMachineDomainSuite(t *testing.T) {
 	suite.Run(t, new(VirtualMachineDomainSuite))
+}
+
+// newDiskStatus publishes a disk status a domain definition can name. Every case here works on one
+// virtual machine, so the status always belongs to diskStatusVM.
+func (s *VirtualMachineDomainSuite) newDiskStatus(id string) *hypervisor.VirtualMachineDiskStatus {
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id)
+	status.TypedSpec().VirtualMachine = diskStatusVM
+	status.TypedSpec().Name = "install"
+	status.TypedSpec().Ready = true
+	s.Create(status)
+
+	return status
+}
+
+func (s *VirtualMachineDomainSuite) assertDiskHeld(id string, held bool) {
+	s.Require().Eventually(func() bool {
+		status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](s.Ctx(), s.State(), id)
+
+		return err == nil && status.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == held
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+// A domain reads its disks from the moment it starts, and goes on reading them until libvirt is
+// told otherwise. The hold is taken before the definition is handed over, and the one a replaced
+// definition no longer names is given back only once the replacement has actually been made.
+func (s *VirtualMachineDomainSuite) TestHoldsTheDisksOfARunningDomain() {
+	s.start()
+
+	first := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{first.Metadata().ID()}
+	s.Create(spec)
+
+	s.assertDomain("vm", spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(first.Metadata().ID(), true)
+
+	second := s.newDiskStatus("vm/install@bbbbbbbbbbbb")
+
+	updated := ctest.UpdateWithConflicts(s, spec, func(res *hypervisor.VirtualMachineDomainSpec) error {
+		res.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>2</vcpu></domain>`
+		res.TypedSpec().Disks = []string{second.Metadata().ID()}
+
+		return nil
+	})
+
+	s.assertDomain("vm", updated.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(second.Metadata().ID(), true)
+	s.assertDiskHeld(first.Metadata().ID(), false)
+
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "the finalizer must prevent immediate deletion")
+
+	s.assertDomain("vm", "", false)
+	s.assertDiskHeld(second.Metadata().ID(), false)
+	s.assertFinalizer("vm", false)
+}
+
+// Holding a disk status which is on its way out would block its teardown forever. The domain is
+// left unstarted instead; the definition it is waiting for is on its way.
+func (s *VirtualMachineDomainSuite) TestRefusesToStartOnADiskOnItsWayOut() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+	s.AddFinalizer(status.Metadata(), "somebody-else")
+
+	ready, err := s.State().Teardown(s.Ctx(), status.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		_, started := s.client.domains["vm"]
+
+		return started
+	}, 200*time.Millisecond, 10*time.Millisecond)
+
+	s.assertDiskHeld(status.Metadata().ID(), false)
+}
+
+func (s *VirtualMachineDomainSuite) TestReleasesDisksOfADomainThatNeverStarted() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+
+	s.client.startErr = errors.New("daemon disconnected")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	s.assertDiskHeld(status.Metadata().ID(), true)
+	s.assertFinalizer("vm", true)
+
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "the claim must prevent immediate deletion")
+
+	s.assertDiskHeld(status.Metadata().ID(), false)
+	s.assertFinalizer("vm", false)
+
+	s.Destroy(spec)
+	s.assertDiskHeld(status.Metadata().ID(), false)
+}
+
+// A hold reachable from no domain spec at all is one nothing can give back on the spec's behalf:
+// a hold taken just before this controller was restarted, or one left by an older generation. It
+// has to be swept on the virtual machine's name alone.
+func (s *VirtualMachineDomainSuite) TestReleasesDisksOfADestroyedSpec() {
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+	s.AddFinalizer(status.Metadata(), "hypervisor.VirtualMachineController")
+
+	s.start()
+
+	s.assertDiskHeld(status.Metadata().ID(), false)
+}
+
+// A domain this controller never claimed is one it will not remove, and it goes on reading its
+// disks for as long as it is there. Stopping the spec must not give those holds back under it.
+func (s *VirtualMachineDomainSuite) TestKeepsTheDisksOfAnUnclaimedDomainStillPresent() {
+	unclaimed := libvirtdomain.Domain{
+		Name: diskStatusVM,
+		UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), diskStatusVM),
+	}
+	s.client.domains[unclaimed.Name] = unclaimed
+
+	status := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
+	s.AddFinalizer(status.Metadata(), "hypervisor.VirtualMachineController")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "stopped"
+	spec.TypedSpec().Disks = []string{status.Metadata().ID()}
+	s.Create(spec)
+	s.start()
+
+	select {
+	case <-s.client.listed:
+	case <-s.Ctx().Done():
+		s.FailNow("controller did not inspect the unclaimed domain")
+	}
+
+	select {
+	case <-s.client.attemptedRemove:
+		s.FailNow("controller attempted to remove an unclaimed domain")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	s.Require().Never(func() bool {
+		held, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](s.Ctx(), s.State(), status.Metadata().ID())
+
+		return err != nil || !held.Metadata().Finalizers().Has("hypervisor.VirtualMachineController")
+	}, 200*time.Millisecond, 10*time.Millisecond)
+}
+
+// A definition can name a disk status which is not published yet. That is something to wait for,
+// not a failure of the controller: the other domains keep being reconciled meanwhile.
+func (s *VirtualMachineDomainSuite) TestWaitsForADiskStatusThatIsNotThereYet() {
+	const id = "vm/install@aaaaaaaaaaaa"
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().Disks = []string{id}
+	s.Create(spec)
+
+	other := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "other")
+	other.TypedSpec().DomainXML = `<domain><name>other</name><vcpu>1</vcpu></domain>`
+	other.TypedSpec().PowerState = "running"
+	s.Create(other)
+	s.start()
+
+	s.assertDomain("other", other.TypedSpec().DomainXML, true)
+	s.assertDomain("vm", "", false)
+
+	s.newDiskStatus(id)
+
+	s.assertDomain("vm", spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(id, true)
 }

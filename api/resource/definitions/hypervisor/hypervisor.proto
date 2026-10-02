@@ -105,8 +105,9 @@ message VirtualMachineDiskStatusSpec {
   string error = 7;
   // Image is the content library image this status resolved.
   //
-  // It is recorded whether or not the resolution succeeded, so that a status left behind by an
-  // earlier image is recognizable as stale rather than usable.
+  // It is recorded whether or not the resolution succeeded: the ID digests it rather than
+  // spelling it out, so this is where a reader finds which image a status is about, and it is
+  // what holds the library the status resolved against.
   VirtualMachineDiskFromImageSpec image = 8;
 }
 
@@ -116,6 +117,12 @@ message VirtualMachineDomainSpecSpec {
   string domain_xml = 1;
   // PowerState selects running or stopped transient-domain behavior.
   string power_state = 2;
+  // Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.
+  //
+  // It is what the controller which starts the domain holds against: that controller must not
+  // re-derive the disks from the virtual machine's configuration, because the configuration moves
+  // ahead of the definition libvirt is running.
+  repeated string disks = 3;
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.

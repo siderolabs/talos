@@ -606,21 +606,25 @@ func TestVirtualMachineStaleDiskSuite(t *testing.T) {
 	})
 }
 
-// A disk status is keyed by the disk's name alone, so changing the image leaves the previous
-// status in place until VirtualMachineDiskController catches up. Rendering from it would attach
-// the previous image, and a rendered domain is started.
+// A disk status is keyed by what the disk is provisioned from, so a status left over from another
+// image is a different resource and is simply not found. Rendering from it would attach the
+// previous image, and a rendered domain is started.
 func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImage() {
+	wanted := cdromDiskSpec("install", libraryName, "new.iso", "")
+
 	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
 	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
 		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
-		Disks:      []hypervisor.VirtualMachineDiskSpec{cdromDiskSpec("install", libraryName, "new.iso", "")},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{wanted},
 	}
 	suite.Create(spec)
 
-	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, "install"))
+	stale := cdromDiskSpec("install", libraryName, "old.iso", "")
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, stale))
 	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
 		VirtualMachine: vmName,
 		Name:           "install",
@@ -634,15 +638,67 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, vmName)
 
-	status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](suite.Ctx(), suite.State(), status.Metadata().ID())
-	suite.Require().NoError(err)
-
-	status.TypedSpec().SourcePath = filepath.Join(contentLibraryPlaceholder, "new.iso")
-	status.TypedSpec().Image.File = "new.iso"
-	suite.Update(status)
+	current := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, wanted))
+	*current.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           "install",
+		SourcePath:     filepath.Join(contentLibraryPlaceholder, "new.iso"),
+		Format:         "raw",
+		ReadOnly:       true,
+		Ready:          true,
+		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "new.iso"},
+	}
+	suite.Create(current)
 
 	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Contains(res.TypedSpec().DomainXML, filepath.Join(contentLibraryPlaceholder, "new.iso"))
 		asrt.NotContains(res.TypedSpec().DomainXML, "old.iso")
+		// The definition carries what it was rendered from, so the controller which starts it can
+		// hold exactly those disks.
+		asrt.Equal([]string{current.Metadata().ID()}, res.TypedSpec().Disks)
+	})
+}
+
+// A status held by a domain goes on existing while it tears down, but names an image the
+// configuration has moved off. Rendering from it would keep a guest on a medium whose digest is
+// never verified again, so the domain is stopped instead and the hold comes back with it.
+func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingDown() {
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{disk},
+	}
+	suite.Create(spec)
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, disk))
+	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           "install",
+		SourcePath:     filepath.Join(contentLibraryPlaceholder, "talos.iso"),
+		Format:         "raw",
+		ReadOnly:       true,
+		Ready:          true,
+		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.iso"},
+	}
+	suite.Create(status)
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+		asrt.Equal([]string{status.Metadata().ID()}, res.TypedSpec().Disks)
+	})
+
+	suite.AddFinalizer(status.Metadata(), "hypervisor.VirtualMachineController")
+
+	ready, err := suite.State().Teardown(suite.Ctx(), status.Metadata())
+	suite.Require().NoError(err)
+	suite.Require().False(ready, "the hold must prevent immediate deletion")
+
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", res.TypedSpec().PowerState)
 	})
 }

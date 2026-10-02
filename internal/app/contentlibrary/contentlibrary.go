@@ -297,10 +297,13 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 
 	defer root.Close() //nolint:errcheck
 
-	if !info.GetOverwrite() {
-		// A cheap early rejection only, so that a large image is not streamed in just to be refused
-		// at the end: the check which actually keeps two uploads from clobbering each other is the
-		// link in receiveFile.
+	if info.GetOverwrite() {
+		// Reject early if in use
+		// receiveFile checks again right before the rename.
+		if err = svc.checkNotInUse(srv.Context(), info.GetLibraryId(), info.GetName()); err != nil {
+			return err
+		}
+	} else {
 		if _, err = root.Stat(info.GetName()); err == nil {
 			return status.Errorf(codes.AlreadyExists, "file %q already exists", info.GetName())
 		} else if !errors.Is(err, fs.ErrNotExist) {
@@ -308,7 +311,7 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 		}
 	}
 
-	written, digests, err := svc.receiveFile(srv, root, info.GetName(), info.GetOverwrite(), dgst)
+	written, digests, err := svc.receiveFile(srv, root, info.GetLibraryId(), info.GetName(), info.GetOverwrite(), dgst)
 	if err != nil {
 		return withDigests(err, digests)
 	}
@@ -339,6 +342,7 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 func (svc *Service) receiveFile(
 	srv grpc.ClientStreamingServer[machine.ContentLibraryServiceUploadRequest, machine.ContentLibraryServiceUploadResponse],
 	root *os.Root,
+	libraryID string,
 	name string,
 	overwrite bool,
 	dgst digest.Digest,
@@ -418,6 +422,11 @@ func (svc *Service) receiveFile(
 	}
 
 	if overwrite {
+		// A VM may have started reading the file in the meantime.
+		if err = svc.checkNotInUse(srv.Context(), libraryID, name); err != nil {
+			return 0, digests, err
+		}
+
 		if err = root.Rename(tmpName, name); err != nil {
 			return 0, digests, status.Errorf(codes.Internal, "failed to rename %q: %v", name, err)
 		}
@@ -480,6 +489,29 @@ func syncDir(root *os.Root) error {
 	return nil
 }
 
+// checkNotInUse refuses a file a running domain is reading from.
+func (svc *Service) checkNotInUse(ctx context.Context, libraryID, name string) error {
+	diskStatuses, err := safe.StateListAll[*hypervisor.VirtualMachineDiskStatus](ctx, svc.state)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to list virtual machine disk statuses: %v", err)
+	}
+
+	for diskStatus := range diskStatuses.All() {
+		if diskStatus.Metadata().Finalizers().Empty() {
+			continue
+		}
+
+		image := diskStatus.TypedSpec().Image
+
+		if image.Library == libraryID && image.File == name {
+			return status.Errorf(codes.FailedPrecondition, "file %q is in use by disk %q of virtual machine %q",
+				name, diskStatus.TypedSpec().Name, diskStatus.TypedSpec().VirtualMachine)
+		}
+	}
+
+	return nil
+}
+
 // Delete a file from a content library.
 func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServiceDeleteRequest) (*machine.ContentLibraryServiceDeleteResponse, error) {
 	if err := validateName(req.GetName()); err != nil {
@@ -492,6 +524,10 @@ func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServi
 	}
 
 	defer root.Close() //nolint:errcheck
+
+	if err := svc.checkNotInUse(ctx, req.GetLibraryId(), req.GetName()); err != nil {
+		return nil, err
+	}
 
 	if err := root.Remove(req.GetName()); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {

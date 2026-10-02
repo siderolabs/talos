@@ -618,8 +618,9 @@ type VirtualMachineDiskStatusSpec struct {
 	Error string `protobuf:"bytes,7,opt,name=error,proto3" json:"error,omitempty"`
 	// Image is the content library image this status resolved.
 	//
-	// It is recorded whether or not the resolution succeeded, so that a status left behind by an
-	// earlier image is recognizable as stale rather than usable.
+	// It is recorded whether or not the resolution succeeded: the ID digests it rather than
+	// spelling it out, so this is where a reader finds which image a status is about, and it is
+	// what holds the library the status resolved against.
 	Image         *VirtualMachineDiskFromImageSpec `protobuf:"bytes,8,opt,name=image,proto3" json:"image,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -717,7 +718,13 @@ type VirtualMachineDomainSpecSpec struct {
 	// DomainXML is the libvirt domain description used to start the guest.
 	DomainXml string `protobuf:"bytes,1,opt,name=domain_xml,json=domainXml,proto3" json:"domain_xml,omitempty"`
 	// PowerState selects running or stopped transient-domain behavior.
-	PowerState    string `protobuf:"bytes,2,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
+	PowerState string `protobuf:"bytes,2,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
+	// Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.
+	//
+	// It is what the controller which starts the domain holds against: that controller must not
+	// re-derive the disks from the virtual machine's configuration, because the configuration moves
+	// ahead of the definition libvirt is running.
+	Disks         []string `protobuf:"bytes,3,rep,name=disks,proto3" json:"disks,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -764,6 +771,13 @@ func (x *VirtualMachineDomainSpecSpec) GetPowerState() string {
 		return x.PowerState
 	}
 	return ""
+}
+
+func (x *VirtualMachineDomainSpecSpec) GetDisks() []string {
+	if x != nil {
+		return x.Disks
+	}
+	return nil
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
@@ -1406,12 +1420,13 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x14\n" +
 	"\x05ready\x18\x06 \x01(\bR\x05ready\x12\x14\n" +
 	"\x05error\x18\a \x01(\tR\x05error\x12\\\n" +
-	"\x05image\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpecR\x05image\"^\n" +
+	"\x05image\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpecR\x05image\"t\n" +
 	"\x1cVirtualMachineDomainSpecSpec\x12\x1d\n" +
 	"\n" +
 	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
 	"\vpower_state\x18\x02 \x01(\tR\n" +
-	"powerState\"\xa5\x02\n" +
+	"powerState\x12\x14\n" +
+	"\x05disks\x18\x03 \x03(\tR\x05disks\"\xa5\x02\n" +
 	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12e\n" +
 	"\vpower_state\x18\x02 \x01(\x0e2D.talos.resource.definitions.enums.HypervisorVirtualMachinePowerStateR\n" +

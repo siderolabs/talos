@@ -39,6 +39,16 @@ const testLibrary = "vm-images"
 func setup(t *testing.T, ready bool) (*contentlibrary.Service, string) {
 	t.Helper()
 
+	svc, path, _ := setupWithState(t, ready)
+
+	return svc, path
+}
+
+// setupWithState is setup, handing back the state as well for tests which have to publish more into
+// it than the library's own status.
+func setupWithState(t *testing.T, ready bool) (*contentlibrary.Service, string, state.State) {
+	t.Helper()
+
 	path := t.TempDir()
 
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
@@ -55,7 +65,7 @@ func setup(t *testing.T, ready bool) (*contentlibrary.Service, string) {
 
 	require.NoError(t, st.Create(t.Context(), contentLibraryStatus))
 
-	return contentlibrary.NewService(st, zaptest.NewLogger(t)), path
+	return contentlibrary.NewService(st, zaptest.NewLogger(t)), path, st
 }
 
 // listStream collects what List sends.
@@ -81,12 +91,20 @@ type uploadStream struct {
 	ctx      context.Context //nolint:containedctx
 	requests []*machine.ContentLibraryServiceUploadRequest
 	response *machine.ContentLibraryServiceUploadResponse
+	// beforeEOF runs once the last chunk has been handed over, which is where the service has
+	// everything it was sent and has not yet done anything with it.
+	beforeEOF func()
 }
 
 func (s *uploadStream) Context() context.Context { return s.ctx }
 
 func (s *uploadStream) Recv() (*machine.ContentLibraryServiceUploadRequest, error) {
 	if len(s.requests) == 0 {
+		if s.beforeEOF != nil {
+			s.beforeEOF()
+			s.beforeEOF = nil
+		}
+
 		return nil, io.EOF
 	}
 
@@ -540,4 +558,138 @@ func TestUnknownLibrary(t *testing.T) {
 
 	_, err = list(t, svc, "")
 	assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+}
+
+// An image is attached where it lies, so taking one away while a domain holds its disk status is
+// taking away a medium a guest is reading from.
+func TestRefusesToTakeAwayAnImageInUse(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+
+	require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+
+	diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
+	diskStatus.TypedSpec().VirtualMachine = "vm"
+	diskStatus.TypedSpec().Name = "install"
+	diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
+	require.NoError(t, st.Create(t.Context(), diskStatus))
+	require.NoError(t, st.AddFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
+
+	_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
+	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	assert.Contains(t, grpcstatus.Convert(err).Message(), `in use by disk "install" of virtual machine "vm"`)
+
+	// Overwriting it in place takes the medium away just as surely.
+	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, "image.raw", true, "", "replacement")}
+	err = svc.Upload(srv)
+	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+
+	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+
+	// Another file in the same library is nobody's business but the operator's.
+	require.NoError(t, os.WriteFile(filepath.Join(path, "other.raw"), []byte("talos"), 0o600))
+
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "other.raw"})
+	require.NoError(t, err)
+}
+
+// A disk waiting for an image which is not in its library yet is how that image is meant to arrive:
+// a name nothing holds, because nothing can be reading a file which does not exist.
+func TestUploadsAnImageADiskIsWaitingFor(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+
+	diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
+	diskStatus.TypedSpec().VirtualMachine = "vm"
+	diskStatus.TypedSpec().Name = "install"
+	diskStatus.TypedSpec().Error = `content library "vm-images": file "image.raw": no such file`
+	diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
+	require.NoError(t, st.Create(t.Context(), diskStatus))
+
+	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, "image.raw", false, "", "talos")}
+	require.NoError(t, svc.Upload(srv))
+
+	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+}
+
+// An upload takes as long as it takes, so a file which was nobody's when it started can be a running
+// guest's medium by the time it would be renamed over. The check before the rename is what catches
+// that, and it is the only one which can.
+func TestRefusesToOverwriteAnImageThatCameIntoUseMidUpload(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+
+	require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+
+	srv := &uploadStream{
+		ctx:      t.Context(),
+		requests: uploadRequestsWithDigest(testLibrary, "image.raw", true, "", "replacement"),
+		beforeEOF: func() {
+			diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
+			diskStatus.TypedSpec().VirtualMachine = "vm"
+			diskStatus.TypedSpec().Name = "install"
+			diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
+			require.NoError(t, st.Create(t.Context(), diskStatus))
+			require.NoError(t, st.AddFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
+		},
+	}
+
+	err := svc.Upload(srv)
+	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+
+	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+
+	// The refused upload leaves nothing staged behind either.
+	entries, err := os.ReadDir(path)
+	require.NoError(t, err)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "image.raw", entries[0].Name())
+}
+
+// A disk nothing holds is a disk no guest is reading from: a stopped virtual machine, or one whose
+// disk reports an error. An operator who uploaded the wrong image has to be able to replace it.
+func TestReplacesAnImageNoDomainHolds(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name      string
+		diskError string
+	}{
+		{name: "stopped virtual machine"},
+		{name: "disk which failed to resolve", diskError: `content library "vm-images": file "image.raw": digest mismatch`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc, path, st := setupWithState(t, true)
+
+			require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+
+			diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
+			diskStatus.TypedSpec().VirtualMachine = "vm"
+			diskStatus.TypedSpec().Name = "install"
+			diskStatus.TypedSpec().Error = test.diskError
+			diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
+			require.NoError(t, st.Create(t.Context(), diskStatus))
+
+			srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, "image.raw", true, "", "replacement")}
+			require.NoError(t, svc.Upload(srv))
+
+			contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
+			require.NoError(t, err)
+			assert.Equal(t, "replacement", string(contents))
+
+			_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
+			require.NoError(t, err)
+		})
+	}
 }
