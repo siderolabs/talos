@@ -35,6 +35,7 @@ type Runtime struct {
 
 	rollbackTimerMu sync.Mutex
 	rollbackTimer   *time.Timer
+	rollbackConfig  config.Provider
 }
 
 // NewRuntime initializes and returns the v1alpha1 runtime.
@@ -90,17 +91,40 @@ func (r *Runtime) ConfigContainer() config.Container {
 
 // RollbackToConfigAfter implements the Runtime interface.
 func (r *Runtime) RollbackToConfigAfter(timeout time.Duration) error {
-	cfgProvider := r.configProvider()
+	r.rollbackTimerMu.Lock()
+	defer r.rollbackTimerMu.Unlock()
 
-	r.CancelConfigRollbackTimeout()
+	// a try applied while another one is pending rolls back to the config active before the first try
+	if r.rollbackTimer == nil {
+		r.rollbackConfig = r.configProvider()
+	} else {
+		r.rollbackTimer.Stop()
+	}
 
-	r.rollbackTimer = time.AfterFunc(timeout, func() {
+	var timer *time.Timer
+
+	timer = time.AfterFunc(timeout, func() {
+		r.rollbackTimerMu.Lock()
+		defer r.rollbackTimerMu.Unlock()
+
+		// canceled or replaced while firing
+		if r.rollbackTimer != timer {
+			return
+		}
+
+		cfgProvider := r.rollbackConfig
+
+		r.rollbackTimer = nil
+		r.rollbackConfig = nil
+
 		log.Println("rolling back the configuration")
 
 		if err := r.SetConfig(cfgProvider); err != nil {
 			log.Printf("config rollback failed %s", err)
 		}
 	})
+
+	r.rollbackTimer = timer
 
 	return nil
 }
@@ -113,6 +137,7 @@ func (r *Runtime) CancelConfigRollbackTimeout() {
 	if r.rollbackTimer != nil {
 		r.rollbackTimer.Stop()
 		r.rollbackTimer = nil
+		r.rollbackConfig = nil
 	}
 }
 
