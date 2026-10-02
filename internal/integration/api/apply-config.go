@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
@@ -630,6 +631,77 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
 		asrt.False(assertDummyInterface(r.Provider()))
 	})
+}
+
+// TestApplyTryStacked applies two configs in try mode, the second one before the first one times out.
+func (suite *ApplyConfigSuite) TestApplyTryStacked() {
+	suite.WaitForBootDone(suite.ctx)
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	suite.T().Logf("applying configuration to node %q", node)
+	suite.ClearConnectionRefused(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	// the persistent config does not exist if the node booted with the config from STATE
+	suite.UpdateMachineConfig(nodeCtx, func(acr *machineapi.ApplyConfigurationRequest) {
+		acr.Mode = machineapi.ApplyConfigurationRequest_NO_REBOOT
+	}, func(cfg config.Provider) (config.Provider, error) {
+		return cfg, nil
+	})
+
+	suite.PatchMachineConfigWithModeSetter(nodeCtx, func(acr *machineapi.ApplyConfigurationRequest) {
+		acr.Mode = machineapi.ApplyConfigurationRequest_TRY
+		acr.TryModeTimeout = durationpb.New(time.Minute)
+	}, network.NewDummyLinkConfigV1Alpha1("dummy-try-a"))
+
+	suite.PatchMachineConfigWithModeSetter(nodeCtx, func(acr *machineapi.ApplyConfigurationRequest) {
+		acr.Mode = machineapi.ApplyConfigurationRequest_TRY
+		acr.TryModeTimeout = durationpb.New(10 * time.Second)
+	}, network.NewDummyLinkConfigV1Alpha1("dummy-try-b"))
+
+	dummyLinkNames := func(provider config.Provider) []string {
+		var names []string
+
+		for _, doc := range provider.Documents() {
+			if namedDocument, ok := doc.(configconfig.NamedDocument); ok && doc.Kind() == network.DummyLinkKind {
+				names = append(names, namedDocument.Name())
+			}
+		}
+
+		return names
+	}
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+		asrt.Subset(dummyLinkNames(r.Provider()), []string{"dummy-try-a", "dummy-try-b"})
+	})
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.PersistentID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-a")
+		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-b")
+	})
+
+	ctx, cancel := context.WithTimeout(nodeCtx, 30*time.Second)
+	defer cancel()
+
+	// both tries are rolled back when the second one times out
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-a")
+		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-b")
+	})
+
+	active, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.ActiveID)
+	suite.Require().NoError(err)
+
+	persistent, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.PersistentID)
+	suite.Require().NoError(err)
+
+	activeBytes, err := active.Provider().EncodeBytes()
+	suite.Require().NoError(err)
+
+	persistentBytes, err := persistent.Provider().EncodeBytes()
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal(string(persistentBytes), string(activeBytes), "active config should be the same as the persistent config after the rollback")
 }
 
 // TestApplyRemovingV1Alpha1 verifies the apply config doesn't accept removal of v1alpha1 config.
