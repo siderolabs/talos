@@ -61,8 +61,9 @@ func (suite *LibvirtSuite) SetupTest() {
 		suite.T().Skip("cluster doesn't support reboot")
 	}
 
-	// Allow time for domain operations as well as a node reboot.
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Minute)
+	// Allow time for domain operations as well as a node reboot, and for a test to boot a guest
+	// from an ISO more than once.
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 20*time.Minute)
 }
 
 // TearDownTest ...

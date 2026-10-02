@@ -149,6 +149,33 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 	defer guest.Close() //nolint:errcheck
 
 	suite.assertGuestHardware(guest)
+
+	// Stop the guest first.
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+	suite.PatchMachineConfig(nodeCtx, doc)
+	suite.assertStoppedDomain(nodeCtx, node, name)
+
+	// Start it once more. The disk outlived the stop, so the guest boots the same image again and
+	// takes the same lease, which is what makes the removal below a removal of a live guest.
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	suite.PatchMachineConfig(nodeCtx, doc)
+	suite.assertRunningTransientDomainWithDevices(node, name, guestCPUCount, 1, 1)
+
+	suite.T().Logf("waiting for the restarted guest to serve its API on %s", guestIP)
+
+	restarted := suite.awaitGuestAPI(guestIP)
+	defer restarted.Close() //nolint:errcheck
+
+	// Removing the document alone has to stop the running domain and take every resource derived
+	// from it with it: no explicit stop precedes this one.
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+		hypervisor.VirtualMachineDiskStatusID(name, "install"))
+
+	// No status is left to read once the document is gone; ask libvirt whether the domain outlived it.
+	suite.assertNoDomain(node, name)
 }
 
 // awaitGuestAPI waits for the guest to answer its maintenance API, which it does only once it has
