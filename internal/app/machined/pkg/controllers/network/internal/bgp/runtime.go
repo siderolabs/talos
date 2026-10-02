@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"slices"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -192,6 +193,43 @@ func (state *RuntimeState) resolveLinks(resolved *network.BGPInstanceConfigSpec)
 	}
 
 	return nil
+}
+
+// numberedPeerSource selects a connected address in the instance's routing domain.
+// Leave routed peers to kernel source selection. Prefer the most specific prefix,
+// then the lowest address, so resource iteration order cannot restart sessions.
+func (state *RuntimeState) numberedPeerSource(peer netip.Addr, vrf string) string {
+	var selected netip.Addr
+
+	bits := -1
+
+	for _, status := range state.addresses {
+		prefix := status.Address
+		address := prefix.Addr()
+
+		if status.Flags&nethelpers.AddressFlags(nethelpers.AddressTentative|nethelpers.AddressDADFailed|nethelpers.AddressDeprecated) != 0 {
+			continue
+		}
+
+		if !address.IsGlobalUnicast() || address == peer || !prefix.Contains(peer) {
+			continue
+		}
+
+		if err := state.validateLinkDomain(state.resolveLinkName(status.LinkName), vrf); err != nil {
+			continue
+		}
+
+		if prefix.Bits() > bits || prefix.Bits() == bits && address.Less(selected) {
+			selected = address
+			bits = prefix.Bits()
+		}
+	}
+
+	if !selected.IsValid() {
+		return ""
+	}
+
+	return selected.String()
 }
 
 func (state *RuntimeState) validateRouteSource(source netip.Addr, vrf string) error {

@@ -1367,8 +1367,8 @@ github.com/opentracing/opentracing-go v1.2.0 h1:uEJPy/1a5RIPAJ0Ov+OIO8OxWu77jEv+
 github.com/opentracing/opentracing-go v1.2.0/go.mod h1:GxEUsuufX4nBwe+T+Wl9TAgYrxe9dPLANfrWvHYVTgc=
 github.com/orcaman/concurrent-map/v2 v2.0.1 h1:jOJ5Pg2w1oeB6PeDurIYf6k9PQ+aTITr/6lP/L/zp6c=
 github.com/orcaman/concurrent-map/v2 v2.0.1/go.mod h1:9Eq3TG2oBe5FirmYWQfYO5iH1q0Jv47PLaNK++uCdOM=
-github.com/osrg/gobgp/v4 v4.9.0 h1:pKOw914kwQ4I/lWNVTfEDosEN3FuqPGytMEInXxpTyQ=
-github.com/osrg/gobgp/v4 v4.9.0/go.mod h1:bJbFm7T2nRANggShfl3I9h0UpPCzu4uAY5J/6dTdRvs=
+github.com/osrg/gobgp/v4 v4.9.1-0.20260923063545-9b49e3f9dc20 h1:dCaP7iTkSNPyf/IiGQO/Ep0XxxR9UH8YaDvGev41chk=
+github.com/osrg/gobgp/v4 v4.9.1-0.20260923063545-9b49e3f9dc20/go.mod h1:cVD5Q5BXFPLQ1EKROFeXexGJi3XYca4pbs/drBwzUig=
 github.com/packethost/packngo v0.31.0 h1:LLH90ardhULWbagBIc3I3nl2uU75io0a7AwY6hyi0S4=
 github.com/packethost/packngo v0.31.0/go.mod h1:Io6VJqzkiqmIEQbpOjeIw9v8q9PfcTEq8TEY/tMQsfw=
 github.com/pborman/getopt v0.0.0-20170112200414-7148bc3a4c30/go.mod h1:85jBQOZwpVEaDAr341tbn15RS4fCAsIst0qp7i8ex1o=
