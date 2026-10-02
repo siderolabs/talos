@@ -428,6 +428,19 @@ Setting `ignoreCtrlAltDelete: true` in the `SecurityProfileConfig` document make
 Ctrl-Alt-Delete still reboots the machine until a configuration with this option is applied.
 """
 
+    [notes.route_spec_id]
+        title = "Route Updates"
+        description = """\
+`RouteSpec` resource IDs now match the key the Linux kernel uses for routes: routing table, address family, destination and priority (metric),
+e.g. `inet4/10.0.0.0/8/1024` instead of `inet4/10.0.0.1/10.0.0.0/8/1024`.
+The gateway, the output link and the multipath next-hops are no longer part of the ID, so changing them updates the route in place
+(`RTM_NEWROUTE` with `NLM_F_REPLACE`) without the route ever being missing, e.g. when a BGP route switches between a single next-hop and ECMP.
+
+Routes which differ only in the next-hops (which can't be installed into the kernel at the same time) are now merged into a single route,
+with the higher configuration layer taking precedence.
+`RouteStatus` resource IDs are not changed.
+"""
+
 [make_deps]
 
     [make_deps.tools]

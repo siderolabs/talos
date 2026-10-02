@@ -100,7 +100,7 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 				gatewayAddr, _ = netip.AddrFromSlice(route.Attributes.Via.Addr)
 			}
 
-			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority, outLinkName)
+			id := network.RouteStatusID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority, outLinkName)
 
 			if err = safe.WriterModify(ctx, r, network.NewRouteStatus(network.NamespaceName, id), func(r *network.RouteStatus) error {
 				status := r.TypedSpec()

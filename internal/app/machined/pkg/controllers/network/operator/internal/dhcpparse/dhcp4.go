@@ -126,8 +126,10 @@ func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useH
 					}
 				}
 			}
-		} else {
-			for _, router := range ack.Router() {
+		} else if routers := ack.Router(); len(routers) > 0 {
+			// rfc2132: routers are listed in order of preference, and the kernel keeps a single default route
+			// per metric, so only the first (most preferred) router is used
+			for _, router := range routers[:1] {
 				gw, _ := netipx.FromStdIP(router)
 
 				specs.Routes = append(specs.Routes, network.RouteSpecSpec{

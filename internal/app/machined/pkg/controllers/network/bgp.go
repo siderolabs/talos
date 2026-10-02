@@ -312,7 +312,7 @@ func (ctrl *BGPController) writeOutputs(ctx context.Context, r controller.Runtim
 		for prefix, nexthops := range instance.learned {
 			spec := internalbgp.RouteSpec(prefix, nexthops, instance.source, instance.table)
 
-			id := "bgp/" + instance.name + "/" + network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Gateway, spec.Priority, spec.OutLinkName)
+			id := "bgp/" + instance.name + "/" + network.RouteID(spec.Table, spec.Family, spec.Destination, spec.Priority)
 
 			if err := safe.WriterModify(ctx, r, network.NewRouteSpec(network.ConfigNamespaceName, id), func(route *network.RouteSpec) error {
 				*route.TypedSpec() = spec

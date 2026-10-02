@@ -763,12 +763,7 @@ func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
 	suite.Require().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				err := suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(rtnetlink.RouteMessage) error { return nil })
-				if err == nil {
-					return retry.ExpectedErrorf("route to %s in table %s is still present", destination, table)
-				}
-
-				return nil
+				return suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table)
 			},
 		),
 	)
@@ -848,6 +843,452 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 			func() error { return suite.assertNoRoute(destination, netip.Addr{}) },
 		),
 	)
+}
+
+// watchRouteDeletes counts RTM_DELROUTE notifications for the destination in the table until stopped.
+func (suite *RouteSpecSuite) watchRouteDeletes(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable) (stop func() int) {
+	group := uint32(unix.RTMGRP_IPV4_ROUTE)
+
+	if family == nethelpers.FamilyInet6 {
+		group = unix.RTMGRP_IPV6_ROUTE
+	}
+
+	conn, err := rtnetlink.Dial(&netlink.Config{Groups: group})
+	suite.Require().NoError(err)
+
+	deletes := make(chan int, 1)
+
+	go func() {
+		count := 0
+
+		for {
+			rtmsgs, msgs, err := conn.Receive()
+			if err != nil {
+				deletes <- count
+
+				return
+			}
+
+			for i, msg := range msgs {
+				route, ok := rtmsgs[i].(*rtnetlink.RouteMessage)
+				if !ok || msg.Header.Type != unix.RTM_DELROUTE {
+					continue
+				}
+
+				if nethelpers.RoutingTable(route.Table) == table && netctrl.RouteDestinationMatches(route, destination) {
+					count++
+				}
+			}
+		}
+	}()
+
+	return func() int {
+		suite.Require().NoError(conn.SetReadDeadline(time.Now()))
+
+		count := <-deletes
+
+		conn.Close() //nolint:errcheck
+
+		return count
+	}
+}
+
+// TestNextHopChangeInPlace changes the next-hops of a route the way BGP does it when a path is lost or comes back:
+// the spec keeps its ID, and the route has to be updated in place, without ever being missing in the kernel.
+func (suite *RouteSpecSuite) TestNextHopChangeInPlace() {
+	for _, test := range []struct {
+		name        string
+		family      nethelpers.Family
+		destination netip.Prefix
+	}{
+		{
+			// IPv4 route via IPv6 link-local next-hops (RFC 8950), as learned from unnumbered BGP peers
+			name:        "inet4",
+			family:      nethelpers.FamilyInet4,
+			destination: netip.MustParsePrefix("0.0.0.0/0"),
+		},
+		{
+			name:        "inet6",
+			family:      nethelpers.FamilyInet6,
+			destination: netip.MustParsePrefix("2001:db8:99::/64"),
+		},
+	} {
+		suite.Run(test.name, func() {
+			conn, err := rtnetlink.Dial(nil)
+			suite.Require().NoError(err)
+
+			defer conn.Close() //nolint:errcheck
+
+			first, second := suite.uniqueDummyInterface(), suite.uniqueDummyInterface()
+
+			firstIndex := suite.createDummyInterface(conn, first, netip.MustParsePrefix("192.0.2.1/31"))
+			defer conn.Link.Delete(firstIndex) //nolint:errcheck
+
+			secondIndex := suite.createDummyInterface(conn, second, netip.MustParsePrefix("192.0.2.3/31"))
+			defer conn.Link.Delete(secondIndex) //nolint:errcheck
+
+			hopA := network.RouteNextHop{Gateway: netip.MustParseAddr("fe80::a"), OutLinkName: first}
+			hopB := network.RouteNextHop{Gateway: netip.MustParseAddr("fe80::b"), OutLinkName: second}
+			linkIndices := map[string]uint32{first: firstIndex, second: secondIndex}
+
+			table := nethelpers.RoutingTable(202)
+
+			route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, test.family, test.destination, 0))
+			*route.TypedSpec() = network.RouteSpecSpec{
+				Family:      test.family,
+				Destination: test.destination,
+				Table:       table,
+				Protocol:    nethelpers.ProtocolBGP,
+				Type:        nethelpers.TypeUnicast,
+				Scope:       nethelpers.ScopeGlobal,
+				ConfigLayer: network.ConfigOperator,
+			}
+
+			setHops := func(spec *network.RouteSpecSpec, hops []network.RouteNextHop) {
+				spec.Gateway, spec.OutLinkName, spec.NextHops = netip.Addr{}, "", nil
+
+				if len(hops) == 1 {
+					spec.Gateway, spec.OutLinkName = hops[0].Gateway, hops[0].OutLinkName
+				} else {
+					spec.NextHops = hops
+				}
+			}
+
+			// assertHops checks the kernel route next-hops: a single next-hop route is reported without RTA_MULTIPATH
+			assertHops := func(hops []network.RouteNextHop) {
+				suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+					return suite.assertMultipathRoute(test.family, test.destination, table, func(message rtnetlink.RouteMessage) error {
+						type hop struct {
+							gateway string
+							index   uint32
+						}
+
+						var actual []hop
+
+						if len(message.Attributes.Multipath) == 0 {
+							actual = append(actual, hop{routeHopGateway(message.Attributes.Gateway, message.Attributes.Via), message.Attributes.OutIface})
+						}
+
+						for _, nh := range message.Attributes.Multipath {
+							actual = append(actual, hop{routeHopGateway(nh.Gateway, nh.Via), nh.Hop.IfIndex})
+						}
+
+						expected := make([]hop, 0, len(hops))
+
+						for _, nh := range hops {
+							expected = append(expected, hop{nh.Gateway.String(), linkIndices[nh.OutLinkName]})
+						}
+
+						if !assert.ObjectsAreEqual(expected, actual) {
+							return retry.ExpectedErrorf("expected next-hops %v, got %v", expected, actual)
+						}
+
+						return nil
+					})
+				}))
+			}
+
+			setHops(route.TypedSpec(), []network.RouteNextHop{hopA})
+			suite.Create(route)
+			assertHops([]network.RouteNextHop{hopA})
+
+			stop := suite.watchRouteDeletes(test.family, test.destination, table)
+
+			for _, hops := range [][]network.RouteNextHop{
+				{hopA, hopB}, // the second path comes back
+				{hopB},       // the first path is lost
+				{hopA, hopB},
+				{hopA},
+			} {
+				ctest.UpdateWithConflicts(suite, route, func(r *network.RouteSpec) error {
+					setHops(r.TypedSpec(), hops)
+
+					return nil
+				})
+
+				assertHops(hops)
+			}
+
+			suite.Assert().Zero(stop(), "route was deleted while changing next-hops")
+
+			suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+			suite.Assert().NoError(suite.assertNoRouteInTable(test.family, test.destination, table))
+		})
+	}
+}
+
+// TestReplaceOwnedRoute verifies that a route with the same key and protocol but a different gateway is replaced in place.
+func (suite *RouteSpecSuite) TestReplaceOwnedRoute() {
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
+
+	destination := netip.MustParsePrefix("10.99.0.0/16")
+	table := nethelpers.RoutingTable(203)
+
+	// a route with the same key and protocol, as if it was installed by a previous version of the spec
+	suite.Require().NoError(conn.Route.Add(&rtnetlink.RouteMessage{
+		Family:    unix.AF_INET,
+		DstLength: uint8(destination.Bits()),
+		Protocol:  uint8(nethelpers.ProtocolStatic),
+		Scope:     uint8(nethelpers.ScopeGlobal),
+		Type:      uint8(nethelpers.TypeUnicast),
+		Attributes: rtnetlink.RouteAttributes{
+			Dst:      destination.Addr().AsSlice(),
+			Gateway:  netip.MustParseAddr("192.0.2.2").AsSlice(),
+			OutIface: ifaceIndex,
+			Priority: 100,
+			Table:    uint32(table),
+		},
+	}))
+
+	stop := suite.watchRouteDeletes(nethelpers.FamilyInet4, destination, table)
+
+	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, 100))
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: destination,
+		Gateway:     netip.MustParseAddr("192.0.2.3"),
+		Table:       table,
+		Priority:    100,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	suite.Create(route)
+
+	suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+			if !message.Attributes.Gateway.Equal(route.TypedSpec().Gateway.AsSlice()) {
+				return retry.ExpectedErrorf("expected gateway %s, got %s", route.TypedSpec().Gateway, message.Attributes.Gateway)
+			}
+
+			return nil
+		})
+	}))
+
+	suite.Assert().Zero(stop(), "route was deleted instead of being replaced")
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table))
+}
+
+// TestForeignRouteUntouched verifies that a route with the same key created by someone else (another protocol, e.g.
+// a kernel route for a connected subnet or a route learned from router advertisements) is never replaced or deleted,
+// neither while the spec is running, nor on teardown.
+func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
+
+	destination := netip.MustParsePrefix("10.96.0.0/16")
+	table := nethelpers.RoutingTable(206)
+	foreignGateway := netip.MustParseAddr("192.0.2.2")
+
+	suite.Require().NoError(conn.Route.Add(&rtnetlink.RouteMessage{
+		Family:    unix.AF_INET,
+		DstLength: uint8(destination.Bits()),
+		Protocol:  uint8(nethelpers.ProtocolRA),
+		Scope:     uint8(nethelpers.ScopeGlobal),
+		Type:      uint8(nethelpers.TypeUnicast),
+		Attributes: rtnetlink.RouteAttributes{
+			Dst:      destination.Addr().AsSlice(),
+			Gateway:  foreignGateway.AsSlice(),
+			OutIface: ifaceIndex,
+			Priority: 100,
+			Table:    uint32(table),
+		},
+	}))
+
+	stop := suite.watchRouteDeletes(nethelpers.FamilyInet4, destination, table)
+
+	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, 100))
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: destination,
+		Gateway:     netip.MustParseAddr("192.0.2.3"),
+		Table:       table,
+		Priority:    100,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	suite.Create(route)
+
+	// the controller can't install the route next to the foreign one (the kernel rejects it), but it must not touch the foreign route
+	suite.assertNoRouteChurn(nethelpers.FamilyInet4, destination, time.Second)
+
+	suite.Require().NoError(suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+		if !message.Attributes.Gateway.Equal(foreignGateway.AsSlice()) {
+			return fmt.Errorf("expected foreign gateway %s, got %s", foreignGateway, message.Attributes.Gateway)
+		}
+
+		return nil
+	}))
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+
+	suite.Assert().Zero(stop(), "foreign route was deleted")
+
+	suite.Require().NoError(suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+		if !message.Attributes.Gateway.Equal(foreignGateway.AsSlice()) {
+			return fmt.Errorf("expected foreign gateway %s, got %s", foreignGateway, message.Attributes.Gateway)
+		}
+
+		return nil
+	}))
+
+	suite.Require().NoError(conn.Route.Delete(&rtnetlink.RouteMessage{
+		Family:    unix.AF_INET,
+		DstLength: uint8(destination.Bits()),
+		Attributes: rtnetlink.RouteAttributes{
+			Dst:      destination.Addr().AsSlice(),
+			Priority: 100,
+			Table:    uint32(table),
+		},
+	}))
+}
+
+// TestTeardownByKey verifies that the route is removed on teardown even if its next-hops are not the ones in the spec.
+func (suite *RouteSpecSuite) TestTeardownByKey() {
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
+
+	destination := netip.MustParsePrefix("10.98.0.0/16")
+	table := nethelpers.RoutingTable(204)
+
+	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, 100))
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: destination,
+		Gateway:     netip.MustParseAddr("192.0.2.3"),
+		Table:       table,
+		Priority:    100,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	suite.Create(route)
+
+	suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		return suite.assertRoute(destination, route.TypedSpec().Gateway, func(rtnetlink.RouteMessage) error { return nil })
+	}))
+
+	// the spec is updated to a next-hop which can't be applied (the link doesn't exist), so the old route stays
+	ctest.UpdateWithConflicts(suite, route, func(r *network.RouteSpec) error {
+		r.TypedSpec().Gateway = netip.MustParseAddr("192.0.2.4")
+		r.TypedSpec().OutLinkName = suite.uniqueDummyInterface()
+
+		return nil
+	})
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table))
+}
+
+// TestTeardownAfterProtocolChange verifies that the route is removed on teardown if the spec changed the protocol
+// in place (e.g. the merge picked a route from another config layer for the same key), but the new version was
+// never applied.
+func (suite *RouteSpecSuite) TestTeardownAfterProtocolChange() {
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
+
+	destination := netip.MustParsePrefix("10.97.0.0/16")
+	table := nethelpers.RoutingTable(205)
+
+	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, 100))
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Destination: destination,
+		Gateway:     netip.MustParseAddr("192.0.2.3"),
+		Table:       table,
+		Priority:    100,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	suite.Create(route)
+
+	suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		return suite.assertRoute(destination, route.TypedSpec().Gateway, func(rtnetlink.RouteMessage) error { return nil })
+	}))
+
+	// the spec is replaced by a lower layer route with another protocol, which can't be applied (the link doesn't exist)
+	ctest.UpdateWithConflicts(suite, route, func(r *network.RouteSpec) error {
+		r.TypedSpec().Gateway = netip.MustParseAddr("fe80::1")
+		r.TypedSpec().OutLinkName = suite.uniqueDummyInterface()
+		r.TypedSpec().Protocol = nethelpers.ProtocolBGP
+		r.TypedSpec().ConfigLayer = network.ConfigOperator
+
+		return nil
+	})
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table))
+}
+
+// assertNoRouteInTable checks that there's no route of the family to the destination in the table.
+func (suite *RouteSpecSuite) assertNoRouteInTable(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable) error {
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	routes, err := conn.Route.List()
+	suite.Require().NoError(err)
+
+	matching := 0
+
+	for i := range routes {
+		if routes[i].Family == uint8(family) &&
+			nethelpers.RoutingTable(routes[i].Table) == table &&
+			netctrl.RouteDestinationMatches(&routes[i], destination) {
+			matching++
+		}
+	}
+
+	if matching > 0 {
+		return retry.ExpectedErrorf("%d %s route(s) to %s in table %s are still present", matching, family, destination, table)
+	}
+
+	return nil
+}
+
+// routeHopGateway returns the gateway of a next-hop as a string, whether it's encoded as RTA_GATEWAY or RTA_VIA.
+func routeHopGateway(gateway net.IP, via *rtnetlink.RouteVia) string {
+	if via != nil {
+		gateway = via.Addr
+	}
+
+	addr, _ := netip.AddrFromSlice(gateway)
+
+	return addr.Unmap().String()
 }
 
 func TestRouteScopeMatches(t *testing.T) {

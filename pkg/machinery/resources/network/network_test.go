@@ -221,3 +221,81 @@ func TestLinkStatusVXLANProtobuf(t *testing.T) {
 	assert.EqualValues(t, 100, spec.GetVxlan().GetId())
 	assert.EqualValues(t, 4789, spec.GetVxlan().GetPort())
 }
+
+func TestRouteID(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		table       nethelpers.RoutingTable
+		family      nethelpers.Family
+		destination netip.Prefix
+		priority    uint32
+
+		expected string
+	}{
+		{
+			name:        "default route",
+			table:       nethelpers.TableMain,
+			family:      nethelpers.FamilyInet4,
+			destination: netip.Prefix{},
+			priority:    1024,
+			expected:    "inet4//1024",
+		},
+		{
+			name:        "explicit default route",
+			table:       nethelpers.TableMain,
+			family:      nethelpers.FamilyInet4,
+			destination: netip.MustParsePrefix("0.0.0.0/0"),
+			priority:    1024,
+			expected:    "inet4//1024",
+		},
+		{
+			name:        "custom table",
+			table:       nethelpers.RoutingTable(101),
+			family:      nethelpers.FamilyInet4,
+			destination: netip.MustParsePrefix("10.0.0.0/8"),
+			priority:    10,
+			expected:    "101/inet4/10.0.0.0/8/10",
+		},
+		{
+			name:        "ipv6 default priority",
+			table:       nethelpers.TableMain,
+			family:      nethelpers.FamilyInet6,
+			destination: netip.MustParsePrefix("::/0"),
+			priority:    0,
+			expected:    "inet6//1024",
+		},
+		{
+			name:        "ipv4 zero priority",
+			table:       nethelpers.TableMain,
+			family:      nethelpers.FamilyInet4,
+			destination: netip.MustParsePrefix("192.168.0.0/16"),
+			priority:    0,
+			expected:    "inet4/192.168.0.0/16/0",
+		},
+		{
+			name:        "host bits in destination",
+			table:       nethelpers.TableMain,
+			family:      nethelpers.FamilyInet4,
+			destination: netip.MustParsePrefix("10.0.0.1/8"),
+			priority:    1024,
+			expected:    "inet4/10.0.0.0/8/1024",
+		},
+		{
+			name:        "ipv6 host bits in destination",
+			table:       nethelpers.TableMain,
+			family:      nethelpers.FamilyInet6,
+			destination: netip.MustParsePrefix("2001:db8::1/32"),
+			priority:    1024,
+			expected:    "inet6/2001:db8::/32/1024",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, network.RouteID(test.table, test.family, test.destination, test.priority))
+		})
+	}
+}

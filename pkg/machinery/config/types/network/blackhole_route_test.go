@@ -83,10 +83,19 @@ func TestBlackholeRouteConfigValidate(t *testing.T) {
 			expectedError: "name must be a valid address prefix: netip.ParsePrefix(\"no-prefix\"): no '/'",
 		},
 		{
-			name: "valid",
+			name: "host bits",
 
 			cfg: func() *network.BlackholeRouteConfigV1Alpha1 {
 				return network.NewBlackholeRouteConfigV1Alpha1("10.0.1.2/24")
+			},
+
+			expectedWarnings: []string{"destination 10.0.1.2/24 has host bits set, the route is installed to 10.0.1.0/24"},
+		},
+		{
+			name: "valid",
+
+			cfg: func() *network.BlackholeRouteConfigV1Alpha1 {
+				return network.NewBlackholeRouteConfigV1Alpha1("10.0.1.0/24")
 			},
 		},
 	} {

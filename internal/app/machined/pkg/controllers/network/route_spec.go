@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
@@ -26,7 +27,14 @@ import (
 )
 
 // RouteSpecController applies network.RouteSpec to the actual interfaces.
-type RouteSpecController struct{}
+type RouteSpecController struct {
+	// installedProtocols keeps the protocol of the route last installed for each spec.
+	//
+	// The spec might change the protocol in place (e.g. when the merge picks a route from another config layer for
+	// the same key), and if the new version is not applied (yet), the route in the kernel still has the old protocol,
+	// so it has to be removed on teardown as well.
+	installedProtocols map[resource.ID]nethelpers.RouteProtocol
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *RouteSpecController) Name() string {
@@ -67,6 +75,10 @@ func (ctrl *RouteSpecController) Run(ctx context.Context, r controller.Runtime, 
 	}
 
 	defer conn.Close() //nolint:errcheck
+
+	if ctrl.installedProtocols == nil {
+		ctrl.installedProtocols = map[resource.ID]nethelpers.RouteProtocol{}
+	}
 
 	for {
 		select {
@@ -167,7 +179,8 @@ func RouteDestinationMatches(route *rtnetlink.RouteMessage, destination netip.Pr
 		return false
 	}
 
-	return route.DstLength == 0 || route.Attributes.Dst.Equal(destination.Addr().AsSlice())
+	// the kernel reports the destination masked to the prefix length, so compare against the masked expected destination
+	return route.DstLength == 0 || route.Attributes.Dst.Equal(destination.Masked().Addr().AsSlice())
 }
 
 // linkIndexMatches reports whether the egress link the kernel reports matches the one the spec asked for.
@@ -180,7 +193,11 @@ func linkIndexMatches(actual, expected uint32) bool {
 	return expected == 0 || actual == expected
 }
 
-func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
+// findRoutesByKey returns the existing kernel routes which have the same key as the spec.
+//
+// The kernel keeps a single route per table, family, destination and priority (see network.RouteID): a route
+// with the same key but different next-hops can't be added next to it, it has to replace the existing one.
+func findRoutesByKey(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec) []*rtnetlink.RouteMessage {
 	var result []*rtnetlink.RouteMessage //nolint:prealloc
 
 	for i, route := range existingRoutes {
@@ -188,11 +205,12 @@ func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *netwo
 			continue
 		}
 
-		if !RouteDestinationMatches(&existingRoutes[i], expected.Destination) {
+		// TOS (IPv4) and source-specific (IPv6) routes are part of a different key, and they are never created by Talos
+		if route.Tos != 0 || route.SrcLength != 0 {
 			continue
 		}
 
-		if !routeGatewayMatches(&existingRoutes[i], expected) {
+		if !RouteDestinationMatches(&existingRoutes[i], expected.Destination) {
 			continue
 		}
 
@@ -208,6 +226,99 @@ func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *netwo
 	}
 
 	return result
+}
+
+// findOwnedRoutesByKey returns the existing kernel routes with the same key as the spec which are managed by the spec.
+//
+// A route with the same key is owned by the spec if its protocol matches the spec's protocol, or the protocol the spec
+// was last installed with (the spec protocol might have changed, e.g. a layer change). Routes with the same key
+// created by someone else (e.g. by the kernel for a connected subnet, or learned from router advertisements) are never touched.
+func findOwnedRoutesByKey(existingRoutes []rtnetlink.RouteMessage, expected *network.RouteSpecSpec, installedProtocol nethelpers.RouteProtocol, installed bool) []*rtnetlink.RouteMessage {
+	return xslices.Filter(findRoutesByKey(existingRoutes, expected), func(existing *rtnetlink.RouteMessage) bool {
+		return existing.Protocol == uint8(expected.Protocol) || (installed && existing.Protocol == uint8(installedProtocol))
+	})
+}
+
+// routeMatchesSpec reports whether an existing kernel route (with the same key) fully matches the spec.
+func routeMatchesSpec(existing *rtnetlink.RouteMessage, expected *network.RouteSpecSpec, linkIndex uint32, multipath []rtnetlink.NextHop) bool {
+	return routeGatewayMatches(existing, expected) &&
+		RouteScopeMatches(existing.Scope, expected) &&
+		nethelpers.RouteFlags(existing.Flags).Equal(expected.Flags) &&
+		existing.Protocol == uint8(expected.Protocol) &&
+		linkIndexMatches(existing.Attributes.OutIface, linkIndex) &&
+		(value.IsZero(expected.Source) || existing.Attributes.Src.Equal(expected.Source.AsSlice())) &&
+		routeMTU(existing) == expected.MTU &&
+		existing.Type == uint8(expected.Type) &&
+		multipathEqual(existing.Attributes.Multipath, multipath)
+}
+
+func routeMTU(route *rtnetlink.RouteMessage) uint32 {
+	if route.Attributes.Metrics == nil {
+		return 0
+	}
+
+	return route.Attributes.Metrics.MTU
+}
+
+// routeSpecGatewayString returns the gateway of a route spec for logging, empty for gateway-less and multipath routes.
+func routeSpecGatewayString(spec *network.RouteSpecSpec) string {
+	if value.IsZero(spec.Gateway) {
+		return ""
+	}
+
+	return spec.Gateway.String()
+}
+
+// routeGatewayString returns the gateway of an existing kernel route for logging, empty for multipath routes.
+func routeGatewayString(route *rtnetlink.RouteMessage) string {
+	if route.Attributes.Via != nil {
+		return route.Attributes.Via.Addr.String()
+	}
+
+	if route.Attributes.Gateway != nil {
+		return route.Attributes.Gateway.String()
+	}
+
+	return ""
+}
+
+// logRouteMismatch logs (at debug level) every attribute of the existing kernel route next to the one the spec asks for,
+// to tell which of them made the route not match the spec.
+//
+// The fields are only built if debug logging is enabled.
+func logRouteMismatch(logger *zap.Logger, existing *rtnetlink.RouteMessage, expected *network.RouteSpecSpec, destinationStr, gatewayStr, sourceStr string, linkIndex uint32) {
+	if ce := logger.Check(zap.DebugLevel, "route mismatch"); ce != nil {
+		ce.Write(routeMismatchFields(existing, expected, destinationStr, gatewayStr, sourceStr, linkIndex)...)
+	}
+}
+
+// routeMismatchFields returns log fields describing the differences between an existing kernel route and the spec.
+func routeMismatchFields(existing *rtnetlink.RouteMessage, expected *network.RouteSpecSpec, destinationStr, gatewayStr, sourceStr string, linkIndex uint32) []zap.Field {
+	return []zap.Field{
+		zap.String("destination", destinationStr),
+		zap.Stringer("table", expected.Table),
+		zap.String("link", expected.OutLinkName),
+		zap.Uint32("priority", expected.Priority),
+		zap.Stringer("family", expected.Family),
+		zap.String("old_gateway", routeGatewayString(existing)),
+		zap.String("new_gateway", gatewayStr),
+		zap.Int("old_next_hops", len(existing.Attributes.Multipath)),
+		zap.Int("new_next_hops", len(expected.NextHops)),
+		zap.Stringer("old_scope", nethelpers.Scope(existing.Scope)),
+		zap.Stringer("new_scope", expected.Scope),
+		zap.Stringer("old_flags", nethelpers.RouteFlags(existing.Flags)),
+		zap.Stringer("new_flags", expected.Flags),
+		zap.Stringer("old_protocol", nethelpers.RouteProtocol(existing.Protocol)),
+		zap.Stringer("new_protocol", expected.Protocol),
+		zap.Uint32("old_link_index", existing.Attributes.OutIface),
+		zap.Uint32("new_link_index", linkIndex),
+		zap.Stringer("old_source", existing.Attributes.Src),
+		zap.String("new_source", sourceStr),
+		zap.Uint32("old_mtu", routeMTU(existing)),
+		zap.Uint32("new_mtu", expected.MTU),
+		zap.Stringer("old_type", nethelpers.RouteType(existing.Type)),
+		zap.Stringer("new_type", expected.Type),
+	}
 }
 
 // crossFamilyVia returns an RTA_VIA next-hop when the gateway's address family differs from the
@@ -365,9 +476,13 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		gatewayStr = ""
 	}
 
+	installedProtocol, installed := ctrl.installedProtocols[route.Metadata().ID()]
+
 	switch route.Metadata().Phase() {
 	case resource.PhaseTearingDown:
-		for _, existing := range findMatchingRoutes(routes, route.TypedSpec()) {
+		// the route with the same key is owned by this spec, even if it is not up to date with the latest version
+		// of the spec, but don't touch routes created by someone else (e.g. by the kernel)
+		for _, existing := range findOwnedRoutesByKey(routes, route.TypedSpec(), installedProtocol, installed) {
 			// delete route
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
@@ -376,7 +491,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			logger.Info(
 				"deleted route",
 				zap.String("destination", destinationStr),
-				zap.String("gateway", gatewayStr),
+				zap.String("gateway", routeGatewayString(existing)),
 				zap.Stringer("table", route.TypedSpec().Table),
 				zap.String("link", route.TypedSpec().OutLinkName),
 				zap.Uint32("priority", route.TypedSpec().Priority),
@@ -389,6 +504,8 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		if err := r.RemoveFinalizer(ctx, route.Metadata(), ctrl.Name()); err != nil {
 			return fmt.Errorf("error removing finalizer: %w", err)
 		}
+
+		delete(ctrl.installedProtocols, route.Metadata().ID())
 	case resource.PhaseRunning:
 		if linkIndex == 0 && route.TypedSpec().OutLinkName != "" {
 			// route can't be created as link doesn't exist (yet), skip it
@@ -406,65 +523,56 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			}
 		}
 
-		matchFound := false
+		// only the routes owned by this spec are considered: a route with the same key created by someone else
+		// (e.g. by the kernel) is left alone, and adding the route next to it is up to the kernel (it might fail)
+		existingRoutes := findOwnedRoutesByKey(routes, route.TypedSpec(), installedProtocol, installed)
 
-		for _, existing := range findMatchingRoutes(routes, route.TypedSpec()) {
-			var existingMTU uint32
+		// check if an existing route matches the spec: if it does, skip update
+		matchIdx := slices.IndexFunc(existingRoutes, func(existing *rtnetlink.RouteMessage) bool {
+			return routeMatchesSpec(existing, route.TypedSpec(), linkIndex, multipath)
+		})
 
-			if existing.Attributes.Metrics != nil {
-				existingMTU = existing.Attributes.Metrics.MTU
-			}
+		// if there's no match, the first route with the same key is replaced in place, so that the route is never
+		// missing in the kernel while it's being updated (e.g. a gateway change, or a change to/from multipath)
+		var replaced *rtnetlink.RouteMessage
 
-			// check if existing route matches the spec: if it does, skip update
-			if RouteScopeMatches(existing.Scope, route.TypedSpec()) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
-				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
-				linkIndexMatches(existing.Attributes.OutIface, linkIndex) &&
-				(value.IsZero(route.TypedSpec().Source) ||
-					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) &&
-				existingMTU == route.TypedSpec().MTU &&
-				existing.Type == uint8(route.TypedSpec().Type) &&
-				multipathEqual(existing.Attributes.Multipath, multipath) {
-				matchFound = true
+		if matchIdx == -1 && len(existingRoutes) > 0 {
+			replaced = existingRoutes[0]
+		}
 
+		for i, existing := range existingRoutes {
+			if i == matchIdx || existing == replaced {
 				continue
 			}
 
-			// delete the route, it doesn't match the spec
+			// delete the route, it doesn't match the spec, and it can't be replaced as there's another route with the same key
 			if err := conn.Route.Delete(existing); err != nil {
 				return fmt.Errorf("error removing route: %w", err)
 			}
 
-			logger.Debug(
-				"removed route due to mismatch",
+			logger.Info(
+				"deleted route due to mismatch",
 				zap.String("destination", destinationStr),
-				zap.String("gateway", gatewayStr),
+				zap.String("gateway", routeGatewayString(existing)),
+				zap.Int("next_hops", len(existing.Attributes.Multipath)),
 				zap.Stringer("table", route.TypedSpec().Table),
 				zap.String("link", route.TypedSpec().OutLinkName),
 				zap.Uint32("priority", route.TypedSpec().Priority),
 				zap.Stringer("family", route.TypedSpec().Family),
-				zap.Stringer("old_scope", nethelpers.Scope(existing.Scope)),
-				zap.Stringer("new_scope", route.TypedSpec().Scope),
-				zap.Stringer("old_flags", nethelpers.RouteFlags(existing.Flags)),
-				zap.Stringer("new_flags", route.TypedSpec().Flags),
-				zap.Stringer("old_protocol", nethelpers.RouteProtocol(existing.Protocol)),
-				zap.Stringer("new_protocol", route.TypedSpec().Protocol),
-				zap.Uint32("old_link_index", existing.Attributes.OutIface),
-				zap.Uint32("new_link_index", linkIndex),
-				zap.Stringer("old_source", existing.Attributes.Src),
-				zap.String("new_source", sourceStr),
-				zap.Uint32("old_mtu", existingMTU),
-				zap.Uint32("new_mtu", route.TypedSpec().MTU),
-				zap.Stringer("old_type", nethelpers.RouteType(existing.Type)),
-				zap.Stringer("new_type", route.TypedSpec().Type),
+				zap.Stringer("type", route.TypedSpec().Type),
 			)
+
+			logRouteMismatch(logger, existing, route.TypedSpec(), destinationStr, gatewayStr, sourceStr, linkIndex)
 		}
 
-		if matchFound {
+		if matchIdx != -1 {
+			ctrl.installedProtocols[route.Metadata().ID()] = route.TypedSpec().Protocol
+
 			return nil
 		}
 
 		routeAttributes := rtnetlink.RouteAttributes{
-			Dst:      route.TypedSpec().Destination.Addr().AsSlice(),
+			Dst:      route.TypedSpec().Destination.Masked().Addr().AsSlice(),
 			Src:      route.TypedSpec().Source.AsSlice(),
 			Priority: route.TypedSpec().Priority,
 			Table:    uint32(route.TypedSpec().Table),
@@ -502,9 +610,37 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			Attributes: routeAttributes,
 		}
 
+		if replaced != nil {
+			if err := conn.Route.Replace(msg); err != nil {
+				return fmt.Errorf("error replacing route: %w, message %+v", err, *msg)
+			}
+
+			ctrl.installedProtocols[route.Metadata().ID()] = route.TypedSpec().Protocol
+
+			logger.Info(
+				"replaced route",
+				zap.String("destination", destinationStr),
+				zap.String("gateway", gatewayStr),
+				zap.String("old_gateway", routeGatewayString(replaced)),
+				zap.Int("next_hops", len(route.TypedSpec().NextHops)),
+				zap.Int("old_next_hops", len(replaced.Attributes.Multipath)),
+				zap.Stringer("table", route.TypedSpec().Table),
+				zap.String("link", route.TypedSpec().OutLinkName),
+				zap.Uint32("priority", route.TypedSpec().Priority),
+				zap.Stringer("family", route.TypedSpec().Family),
+				zap.Stringer("type", route.TypedSpec().Type),
+			)
+
+			logRouteMismatch(logger, replaced, route.TypedSpec(), destinationStr, gatewayStr, sourceStr, linkIndex)
+
+			return nil
+		}
+
 		if err := conn.Route.Add(msg); err != nil {
 			return fmt.Errorf("error adding route: %w, message %+v", err, *msg)
 		}
+
+		ctrl.installedProtocols[route.Metadata().ID()] = route.TypedSpec().Protocol
 
 		logger.Info(
 			"created route",

@@ -182,7 +182,7 @@ func (ctrl *OperatorSpecController) Run(ctx context.Context, r controller.Runtim
 				return err
 			}
 		case <-notifyCh:
-			if err := ctrl.reconcileOperatorOutputs(ctx, r); err != nil {
+			if err := ctrl.reconcileOperatorOutputs(ctx, r, logger); err != nil {
 				return err
 			}
 		}
@@ -261,14 +261,16 @@ func (ctrl *OperatorSpecController) reconcileOperators(ctx context.Context, r co
 	}
 
 	// now reconcile outputs as the operators might have changed
-	return ctrl.reconcileOperatorOutputs(ctx, r)
+	return ctrl.reconcileOperatorOutputs(ctx, r, logger)
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context, r controller.Runtime) error {
+func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	r.StartTrackingOutputs()
 
 	for _, op := range ctrl.operators {
+		seenRoutes := map[resource.ID]struct{}{}
+
 		for _, addressSpec := range op.Operator.AddressSpecs() {
 			if err := safe.WriterModify(
 				ctx, r,
@@ -287,16 +289,29 @@ func (ctrl *OperatorSpecController) reconcileOperatorOutputs(ctx context.Context
 		}
 
 		for _, routeSpec := range op.Operator.RouteSpecs() {
+			id := fmt.Sprintf(
+				"%s/%s",
+				op.Operator.Prefix(),
+				network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Priority),
+			)
+
+			// the kernel keeps a single route per key, so only the first route with the same key is used
+			if _, duplicate := seenRoutes[id]; duplicate {
+				logger.Warn(
+					"ignoring route with the same key as a previous route",
+					zap.String("route", id),
+					zap.String("gateway", routeSpecGatewayString(&routeSpec)),
+					zap.String("link", routeSpec.OutLinkName),
+				)
+
+				continue
+			}
+
+			seenRoutes[id] = struct{}{}
+
 			if err := safe.WriterModify(
 				ctx, r,
-				network.NewRouteSpec(
-					network.ConfigNamespaceName,
-					fmt.Sprintf(
-						"%s/%s",
-						op.Operator.Prefix(),
-						network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority, routeSpec.OutLinkName),
-					),
-				),
+				network.NewRouteSpec(network.ConfigNamespaceName, id),
 				func(r *network.RouteSpec) error {
 					*r.TypedSpec() = routeSpec
 

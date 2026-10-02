@@ -34,7 +34,7 @@ func (suite *RouteMergeSuite) assertNoRoute(id string) {
 }
 
 func (suite *RouteMergeSuite) TestMerge() {
-	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline/inet4//10.5.0.3/50")
+	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline/inet4//50")
 	*cmdline.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netip.MustParseAddr("10.5.0.3"),
 		OutLinkName: "eth0",
@@ -46,7 +46,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		ConfigLayer: network.ConfigCmdline,
 	}
 
-	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet4//10.5.0.3/50")
+	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet4//50")
 	*dhcp.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netip.MustParseAddr("10.5.0.3"),
 		OutLinkName: "eth0",
@@ -58,7 +58,7 @@ func (suite *RouteMergeSuite) TestMerge() {
 		ConfigLayer: network.ConfigOperator,
 	}
 
-	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet4/10.0.0.35/32/10.0.0.34/1024")
+	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet4/10.0.0.35/32/1024")
 	*static.TypedSpec() = network.RouteSpecSpec{
 		Destination: netip.MustParsePrefix("10.0.0.35/32"),
 		Gateway:     netip.MustParseAddr("10.0.0.34"),
@@ -77,15 +77,15 @@ func (suite *RouteMergeSuite) TestMerge() {
 
 	suite.assertRoutes(
 		[]string{
-			"inet4/10.5.0.3//50",
-			"inet4/10.0.0.34/10.0.0.35/32/1024",
+			"inet4//50",
+			"inet4/10.0.0.35/32/1024",
 		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
 			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
 
 			switch r.Metadata().ID() {
-			case "inet4/10.5.0.3//50":
+			case "inet4//50":
 				asrt.Equal(*dhcp.TypedSpec(), *r.TypedSpec())
-			case "inet4/10.0.0.34/10.0.0.35/32/1024":
+			case "inet4/10.0.0.35/32/1024":
 				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
 			}
 		},
@@ -95,15 +95,15 @@ func (suite *RouteMergeSuite) TestMerge() {
 
 	suite.assertRoutes(
 		[]string{
-			"inet4/10.5.0.3//50",
-			"inet4/10.0.0.34/10.0.0.35/32/1024",
+			"inet4//50",
+			"inet4/10.0.0.35/32/1024",
 		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
 			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
 
 			switch r.Metadata().ID() {
-			case "inet4/10.5.0.3//50":
+			case "inet4//50":
 				asrt.Equal(*cmdline.TypedSpec(), *r.TypedSpec())
-			case "inet4/10.0.0.34/10.0.0.35/32/1024":
+			case "inet4/10.0.0.35/32/1024":
 				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
 			}
 		},
@@ -111,7 +111,105 @@ func (suite *RouteMergeSuite) TestMerge() {
 
 	suite.Destroy(static)
 
-	suite.assertNoRoute("inet4/10.0.0.34/10.0.0.35/32/1024")
+	suite.assertNoRoute("inet4/10.0.0.35/32/1024")
+}
+
+func (suite *RouteMergeSuite) TestMergeSameKey() {
+	// the kernel keeps a single route per table, destination and priority, so the routes which differ only in
+	// next-hops are merged into a single route, higher layer wins
+	bgp := network.NewRouteSpec(network.ConfigNamespaceName, "bgp/fabric/inet4//0")
+	*bgp.TypedSpec() = network.RouteSpecSpec{
+		Destination: netip.MustParsePrefix("0.0.0.0/0"),
+		NextHops: []network.RouteNextHop{
+			{Gateway: netip.MustParseAddr("fe80::1"), OutLinkName: "eth0"},
+			{Gateway: netip.MustParseAddr("fe80::2"), OutLinkName: "eth1"},
+		},
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolBGP,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	static := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet4//0")
+	*static.TypedSpec() = network.RouteSpecSpec{
+		Gateway:     netip.MustParseAddr("10.0.0.1"),
+		OutLinkName: "eth2",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolStatic,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	// IPv6 routes without a priority get the default metric in the kernel
+	ipv6Default := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet6//1024")
+	*ipv6Default.TypedSpec() = network.RouteSpecSpec{
+		Gateway:     netip.MustParseAddr("fe80::3"),
+		OutLinkName: "eth0",
+		Family:      nethelpers.FamilyInet6,
+		Scope:       nethelpers.ScopeGlobal,
+		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
+		Priority:    network.DefaultRouteMetric,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	ipv6NoPriority := network.NewRouteSpec(network.ConfigNamespaceName, "configuration/inet6//0")
+	*ipv6NoPriority.TypedSpec() = network.RouteSpecSpec{
+		Gateway:     netip.MustParseAddr("fe80::4"),
+		OutLinkName: "eth1",
+		Family:      nethelpers.FamilyInet6,
+		Scope:       nethelpers.ScopeGlobal,
+		Type:        nethelpers.TypeUnicast,
+		Table:       nethelpers.TableMain,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{bgp, static, ipv6Default, ipv6NoPriority} {
+		suite.Create(res)
+	}
+
+	suite.assertRoutes(
+		[]string{
+			"inet4//0",
+			"inet6//1024",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "inet4//0":
+				asrt.Equal(*static.TypedSpec(), *r.TypedSpec())
+			case "inet6//1024":
+				asrt.Equal(*ipv6NoPriority.TypedSpec(), *r.TypedSpec())
+			}
+		},
+	)
+
+	suite.Destroy(static)
+
+	suite.assertRoutes(
+		[]string{
+			"inet4//0",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			asrt.Equal(*bgp.TypedSpec(), *r.TypedSpec())
+		},
+	)
+
+	// next-hops change in place, the route keeps its ID
+	bgp.TypedSpec().NextHops = nil
+	bgp.TypedSpec().Gateway = netip.MustParseAddr("fe80::1")
+	bgp.TypedSpec().OutLinkName = "eth0"
+	suite.Update(bgp)
+
+	suite.assertRoutes(
+		[]string{
+			"inet4//0",
+		}, func(r *network.RouteSpec, asrt *assert.Assertions) {
+			asrt.Equal(resource.PhaseRunning, r.Metadata().Phase())
+			asrt.Equal(*bgp.TypedSpec(), *r.TypedSpec())
+		},
+	)
 }
 
 func testMergeFlapping[R rtestutils.ResourceWithRD](suite *ctest.DefaultSuite, resources []R, outputID string, mergedResource R) {
@@ -188,7 +286,7 @@ func testMergeFlapping[R rtestutils.ResourceWithRD](suite *ctest.DefaultSuite, r
 //nolint:gocyclo
 func (suite *RouteMergeSuite) TestMergeFlapping() {
 	// simulate two conflicting default route definitions which are getting removed/added constantly
-	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline/inet4//10.5.0.3/50")
+	cmdline := network.NewRouteSpec(network.ConfigNamespaceName, "cmdline/inet4//50")
 	*cmdline.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netip.MustParseAddr("10.5.0.3"),
 		OutLinkName: "eth0",
@@ -200,7 +298,7 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 		ConfigLayer: network.ConfigCmdline,
 	}
 
-	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet4//10.5.0.3/50")
+	dhcp := network.NewRouteSpec(network.ConfigNamespaceName, "dhcp/inet4//50")
 	*dhcp.TypedSpec() = network.RouteSpecSpec{
 		Gateway:     netip.MustParseAddr("10.5.0.3"),
 		OutLinkName: "eth1",
@@ -212,7 +310,7 @@ func (suite *RouteMergeSuite) TestMergeFlapping() {
 		ConfigLayer: network.ConfigOperator,
 	}
 
-	testMergeFlapping(&suite.DefaultSuite, []*network.RouteSpec{cmdline, dhcp}, "inet4/10.5.0.3//50", dhcp)
+	testMergeFlapping(&suite.DefaultSuite, []*network.RouteSpec{cmdline, dhcp}, "inet4//50", dhcp)
 }
 
 func TestRouteMergeSuite(t *testing.T) {

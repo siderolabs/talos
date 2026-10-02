@@ -233,7 +233,7 @@ func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controll
 
 				return network.LayeredID(
 					network.ConfigPlatform,
-					network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Gateway, routeSpec.Priority, routeSpec.OutLinkName),
+					network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Priority),
 				), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {

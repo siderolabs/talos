@@ -274,6 +274,33 @@ func TestValidateContainer(t *testing.T) {
 		HostDNSForwardKubeDNSToHost: new(true),
 	}
 
+	linkConfigEth0 := network.NewLinkConfigV1Alpha1("eth0")
+	linkConfigEth0.LinkRoutes = []network.RouteConfig{
+		{
+			RouteGateway: meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
+		},
+		{
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("192.168.0.0/16")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
+		},
+	}
+
+	linkConfigEth1 := network.NewLinkConfigV1Alpha1("eth1")
+	linkConfigEth1.LinkRoutes = []network.RouteConfig{
+		{
+			RouteGateway: meta.Addr{Addr: netip.MustParseAddr("10.1.0.1")},
+		},
+		{
+			RouteGateway: meta.Addr{Addr: netip.MustParseAddr("10.1.0.2")},
+			RouteMetric:  100,
+		},
+		{
+			RouteGateway: meta.Addr{Addr: netip.MustParseAddr("fe80::1")},
+		},
+	}
+
+	blackholeRouteConfig := network.NewBlackholeRouteConfigV1Alpha1("192.168.0.0/16")
+
 	resolverConfigDoT := network.NewResolverConfigV1Alpha1()
 	resolverConfigDoT.ResolverNameservers = []network.NameserverConfig{
 		{
@@ -397,6 +424,14 @@ func TestValidateContainer(t *testing.T) {
 			name:             "DoT with hostDNS",
 			documents:        []config.Document{resolverConfigDoT, v1alpha1CfgHostDNS},
 			expectedWarnings: []string{encryptedDNSWarning},
+		},
+		{
+			name:      "routes with the same key",
+			documents: []config.Document{linkConfigEth0, linkConfigEth1, blackholeRouteConfig},
+			expectedWarnings: []string{
+				`link "eth0" route 0 and link "eth1" route 0 both configure the inet4 route to default with metric 1024 in table main, only one of them is going to be installed`,
+				`link "eth0" route 1 and blackhole route "192.168.0.0/16" both configure the inet4 route to 192.168.0.0/16 with metric 1024 in table main, only one of them is going to be installed`,
+			},
 		},
 		{
 			name:      "controlplane doc only",

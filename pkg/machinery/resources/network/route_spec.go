@@ -95,9 +95,16 @@ var (
 
 // Normalize converts 0.0.0.0 to zero value.
 //
+// The destination is masked to the network prefix, as the kernel keys the route by it (and rejects an IPv4
+// destination with host bits set).
+//
 //nolint:gocyclo
 func (route *RouteSpecSpec) Normalize() nethelpers.Family {
 	var family nethelpers.Family
+
+	if route.Destination.IsValid() {
+		route.Destination = route.Destination.Masked()
+	}
 
 	if route.Destination.Bits() == 0 {
 		// clear destination to be zero value to support "0.0.0.0/0" routes

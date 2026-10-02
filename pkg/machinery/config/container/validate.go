@@ -7,6 +7,7 @@ package container
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"slices"
 	"strings"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 // ValidateAsClient validates the config in the client context (outside of Talos).
@@ -280,6 +282,11 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		}
 	}
 
+	// The kernel keeps a single route per table, family, destination and metric, so routes sharing that key
+	// (e.g. default routes on two links without distinct metrics) can't be installed together.
+	// A per-document Validate() cannot see the other documents, so this is a container-level check.
+	warnings = append(warnings, container.validateRouteKeys()...)
+
 	// Container dependencies must form a DAG, and must only reference containers that exist.
 	// A per-document Validate() cannot see the other documents, so this is a container-level check.
 	if err := validateContainerDependencies(container.ContainerConfigs()); err != nil {
@@ -400,4 +407,82 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 // Deprecated: use ValidateAtRuntime instead for runtime validation (inside Talos).
 func (container *Container) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
 	return container.runtimeValidate(ctx, st, mode, opt...)
+}
+
+// validateRouteKeys warns about the routes which resolve to the same kernel route.
+//
+// The kernel keeps a single route per table, family, destination and metric: when several routes in the
+// configuration share that key, only one of them is going to be installed, so the configuration is ambiguous.
+//
+//nolint:gocyclo
+func (container *Container) validateRouteKeys() []string {
+	var warnings []string
+
+	owners := map[string]string{}
+
+	check := func(table nethelpers.RoutingTable, family nethelpers.Family, destination netip.Prefix, metric uint32, owner string) {
+		key := network.RouteID(table, family, destination, metric)
+
+		destinationStr := "default"
+
+		if destination.Bits() > 0 {
+			destinationStr = destination.Masked().String()
+		}
+
+		if previous, ok := owners[key]; ok {
+			warnings = append(warnings, fmt.Sprintf(
+				"%s and %s both configure the %s route to %s with metric %d in table %s, only one of them is going to be installed",
+				previous, owner, family, destinationStr, metric, table,
+			))
+
+			return
+		}
+
+		owners[key] = owner
+	}
+
+	for _, linkConfig := range container.NetworkCommonLinkConfigs() {
+		for i, route := range linkConfig.Routes() {
+			destination := route.Destination().ValueOrZero()
+			gateway := route.Gateway().ValueOrZero()
+
+			family := nethelpers.FamilyInet4
+
+			if (gateway.IsValid() && gateway.Is6()) || (destination.IsValid() && destination.Addr().Is6()) {
+				family = nethelpers.FamilyInet6
+			}
+
+			check(
+				route.Table().ValueOr(nethelpers.TableMain),
+				family,
+				destination,
+				route.Metric().ValueOr(network.DefaultRouteMetric),
+				fmt.Sprintf("link %q route %d", linkConfig.Name(), i),
+			)
+		}
+	}
+
+	for _, blackholeRouteConfig := range container.NetworkBlackholeRouteConfigs() {
+		destination, err := netip.ParsePrefix(blackholeRouteConfig.Name())
+		if err != nil {
+			// validated by the document itself
+			continue
+		}
+
+		family := nethelpers.FamilyInet4
+
+		if destination.Addr().Is6() {
+			family = nethelpers.FamilyInet6
+		}
+
+		check(
+			nethelpers.TableMain,
+			family,
+			destination,
+			blackholeRouteConfig.Metric().ValueOr(network.DefaultRouteMetric),
+			fmt.Sprintf("blackhole route %q", blackholeRouteConfig.Name()),
+		)
+	}
+
+	return warnings
 }

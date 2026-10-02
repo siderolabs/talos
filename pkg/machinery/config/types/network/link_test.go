@@ -134,6 +134,22 @@ func TestLinkValidate(t *testing.T) {
 			expectedError: "address 0 must be specified\naddress 1 must be a valid IP address",
 		},
 		{
+			name: "route destination with host bits",
+			cfg: func() *network.LinkConfigV1Alpha1 {
+				cfg := network.NewLinkConfigV1Alpha1("enp0s2")
+				cfg.LinkRoutes = []network.RouteConfig{
+					{
+						RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("10.3.5.1/24")},
+						RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("10.3.5.1")},
+					},
+				}
+
+				return cfg
+			},
+
+			expectedWarnings: []string{"route 0 destination 10.3.5.1/24 has host bits set, the route is installed to 10.3.5.0/24"},
+		},
+		{
 			name: "valid",
 			cfg: func() *network.LinkConfigV1Alpha1 {
 				cfg := network.NewLinkConfigV1Alpha1("enp0s2")

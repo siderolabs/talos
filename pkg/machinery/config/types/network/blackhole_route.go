@@ -96,17 +96,23 @@ func (s *BlackholeRouteConfigV1Alpha1) BlackholeRouteConfig() {}
 
 // Validate implements config.Validator interface.
 func (s *BlackholeRouteConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	var errs error
+	var (
+		errs     error
+		warnings []string
+	)
 
 	if s.MetaName == "" {
 		errs = errors.Join(errs, errors.New("name must be specified"))
 	}
 
-	if _, err := netip.ParsePrefix(s.MetaName); err != nil {
+	destination, err := netip.ParsePrefix(s.MetaName)
+	if err != nil {
 		errs = errors.Join(errs, fmt.Errorf("name must be a valid address prefix: %w", err))
+	} else if destination != destination.Masked() {
+		warnings = append(warnings, fmt.Sprintf("destination %s has host bits set, the route is installed to %s", destination, destination.Masked()))
 	}
 
-	return nil, errs
+	return warnings, errs
 }
 
 // Metric implements NetworkRouteConfig interface.

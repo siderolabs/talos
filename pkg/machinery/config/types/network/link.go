@@ -269,6 +269,10 @@ func (s *CommonLinkConfig) Validate() ([]string, error) {
 			errs = errors.Join(errs, fmt.Errorf("route %d destination must be a valid IP prefix", i))
 		}
 
+		if route.RouteDestination.IsValid() && route.RouteDestination.Prefix != route.RouteDestination.Masked() {
+			warnings = append(warnings, fmt.Sprintf("route %d destination %s has host bits set, the route is installed to %s", i, route.RouteDestination, route.RouteDestination.Masked()))
+		}
+
 		if route.RouteGateway != (meta.Addr{}) && (!route.RouteGateway.IsValid() || route.RouteGateway.IsUnspecified()) {
 			errs = errors.Join(errs, fmt.Errorf("route %d gateway must be a valid IP address", i))
 		}

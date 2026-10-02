@@ -147,7 +147,7 @@ func (suite *PlatformConfigApplySuite) TestRoutes() {
 	suite.Create(platformConfig)
 
 	ctest.AssertResources(suite, []string{
-		"platform/inet4/10.0.0.1//1024",
+		"platform/inet4//1024",
 	}, func(r *network.RouteSpec, asrt *assert.Assertions) {
 		spec := r.TypedSpec()
 

@@ -113,7 +113,7 @@ func (suite *BGPSuite) TestNumberedBGP() {
 	)
 
 	// the route advertised by the fabric peer should be installed via the peering address.
-	learnedRouteID := networkres.RouteID(
+	learnedRouteID := networkres.RouteStatusID(
 		nethelpers.TableMain,
 		nethelpers.FamilyInet4,
 		netip.MustParsePrefix(fabricRoute),
@@ -197,7 +197,7 @@ func (suite *BGPSuite) TestVRFBGP() {
 
 	loopbackAddressID := "lo/" + nodeLoopback
 	vrfAddressID := vrfLink + "/" + vm.VRFPeerPrefix().String()
-	vrfFabricRouteID := networkres.RouteID(
+	vrfFabricRouteID := networkres.RouteStatusID(
 		vrfTable,
 		nethelpers.FamilyInet4,
 		netip.PrefixFrom(fabric, fabric.BitLen()),
@@ -235,7 +235,7 @@ func (suite *BGPSuite) TestVRFBGP() {
 	vrfPeerID := vrfBGPName + "/" + fabric.String()
 	suite.waitForBGPPeer(nodeCtx, vrfPeerID, vrfBGPName, fabricASN)
 
-	learnedRouteID := networkres.RouteID(
+	learnedRouteID := networkres.RouteStatusID(
 		vrfTable,
 		nethelpers.FamilyInet4,
 		netip.MustParsePrefix(fabricRoute),
@@ -344,7 +344,7 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 	suite.PatchMachineConfig(nodeCtx, vrfLinkConfig, vrf, vrfBGP)
 
 	vrfPeerID := vrfBGPName + "/" + fabric.String()
-	learnedRouteID := networkres.RouteID(
+	learnedRouteID := networkres.RouteStatusID(
 		vrfTable,
 		nethelpers.FamilyInet4,
 		netip.MustParsePrefix(fabricRoute),

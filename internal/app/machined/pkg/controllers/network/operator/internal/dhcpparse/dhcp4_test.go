@@ -54,6 +54,21 @@ func TestParseDHCP4Ack(t *testing.T) {
 		assert.Empty(t, specs.TimeServers)
 	})
 
+	t.Run("several routers use the most preferred one", func(t *testing.T) {
+		// rfc2132: routers are listed in order of preference, and only one default route per metric can be installed
+		ack := must.Value(dhcpv4.New(
+			dhcpv4.WithMessageType(dhcpv4.MessageTypeAck),
+			dhcpv4.WithYourIP(net.IPv4(10, 0, 0, 5)),
+			dhcpv4.WithNetmask(net.CIDRMask(24, 32)),
+			dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(10, 0, 0, 1), net.IPv4(10, 0, 0, 2))),
+		))(t)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
+
+		require.Len(t, specs.Routes, 1)
+		assert.Equal(t, must.Value(netip.ParseAddr("10.0.0.1"))(t), specs.Routes[0].Gateway)
+	})
+
 	t.Run("router outside lease subnet adds on-link route", func(t *testing.T) {
 		// Lease 10.0.0.5/32 with gateway 10.0.0.1: gateway not on-link.
 		ack := must.Value(dhcpv4.New(

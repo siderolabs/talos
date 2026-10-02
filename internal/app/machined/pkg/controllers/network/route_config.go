@@ -91,7 +91,7 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		cmdlineRoutes := ctrl.parseCmdline(logger)
 		for _, cmdlineRoute := range cmdlineRoutes {
 			if _, ignored := ignoredInterfaces[cmdlineRoute.OutLinkName]; !ignored {
-				if err = ctrl.apply(ctx, r, []network.RouteSpecSpec{cmdlineRoute}); err != nil {
+				if err = ctrl.apply(ctx, r, logger, []network.RouteSpecSpec{cmdlineRoute}); err != nil {
 					return fmt.Errorf("error applying cmdline route: %w", err)
 				}
 			}
@@ -101,7 +101,7 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		if devices.Len() > 0 {
 			routes := ctrl.processDevicesConfiguration(logger, devices)
 
-			if err = ctrl.apply(ctx, r, routes); err != nil {
+			if err = ctrl.apply(ctx, r, logger, routes); err != nil {
 				return fmt.Errorf("error applying machine configuration routes: %w", err)
 			}
 		}
@@ -115,7 +115,7 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		if cfg != nil {
-			if err = ctrl.apply(ctx, r, ctrl.processMachineConfig(cfg.Config().NetworkCommonLinkConfigs(), cfg.Config().NetworkBlackholeRouteConfigs())); err != nil {
+			if err = ctrl.apply(ctx, r, logger, ctrl.processMachineConfig(cfg.Config().NetworkCommonLinkConfigs(), cfg.Config().NetworkBlackholeRouteConfigs())); err != nil {
 				return fmt.Errorf("error applying machine configuration routes: %w", err)
 			}
 		}
@@ -126,9 +126,25 @@ func (ctrl *RouteConfigController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runtime, routes []network.RouteSpecSpec) error {
+func (ctrl *RouteConfigController) apply(ctx context.Context, r controller.Runtime, logger *zap.Logger, routes []network.RouteSpecSpec) error {
+	seen := map[resource.ID]struct{}{}
+
 	for _, route := range routes {
-		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Table, route.Family, route.Destination, route.Gateway, route.Priority, route.OutLinkName))
+		id := network.LayeredID(route.ConfigLayer, network.RouteID(route.Table, route.Family, route.Destination, route.Priority))
+
+		// the kernel keeps a single route per key, so only the first route with the same key is used
+		if _, duplicate := seen[id]; duplicate {
+			logger.Warn(
+				"ignoring route with the same key as a previous route",
+				zap.String("route", id),
+				zap.String("gateway", routeSpecGatewayString(&route)),
+				zap.String("link", route.OutLinkName),
+			)
+
+			continue
+		}
+
+		seen[id] = struct{}{}
 
 		if err := safe.WriterModify(
 			ctx,

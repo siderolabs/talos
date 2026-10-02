@@ -445,7 +445,9 @@ func TestRedactSecretsNoSecrets(t *testing.T) {
 		ConfigLayer: network.ConfigMachineConfiguration,
 	}
 
-	runRedactTests(t, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, "inet4/10.0.0.1//10.0.0.0/8/1024", resource.VersionUndefined),
+	routeID := network.RouteID(routeSpec.Table, routeSpec.Family, routeSpec.Destination, routeSpec.Priority)
+
+	runRedactTests(t, resource.NewMetadata(network.NamespaceName, network.RouteSpecType, routeID, resource.VersionUndefined),
 		[]redactTestCase[network.RouteSpecSpec]{
 			{
 				name:     "route",

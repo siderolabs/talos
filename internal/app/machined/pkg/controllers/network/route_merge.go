@@ -25,12 +25,29 @@ func NewRouteMergeController() controller.Controller {
 			routes := map[string]*network.RouteSpecSpec{}
 
 			for route := range list.All() {
-				id := network.RouteID(route.TypedSpec().Table, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Gateway, route.TypedSpec().Priority, route.TypedSpec().OutLinkName)
+				id := network.RouteID(route.TypedSpec().Table, route.TypedSpec().Family, route.TypedSpec().Destination, route.TypedSpec().Priority)
 
 				existing, ok := routes[id]
-				if ok && existing.ConfigLayer > route.TypedSpec().ConfigLayer {
-					// skip this route, as existing one is higher layer
-					continue
+				if ok {
+					if existing.ConfigLayer > route.TypedSpec().ConfigLayer {
+						// skip this route, as existing one is higher layer
+						continue
+					}
+
+					if existing.ConfigLayer == route.TypedSpec().ConfigLayer {
+						// same layer conflict: the kernel keeps a single route per key, so only one of them can be installed,
+						// and the choice (the last one in the resource ID order) is arbitrary
+						logger.Warn(
+							"conflicting routes with the same key, keeping the last one",
+							zap.String("route", id),
+							zap.Stringer("layer", route.TypedSpec().ConfigLayer),
+							zap.String("kept", route.Metadata().ID()),
+							zap.String("dropped_gateway", routeSpecGatewayString(existing)),
+							zap.String("dropped_link", existing.OutLinkName),
+							zap.String("gateway", routeSpecGatewayString(route.TypedSpec())),
+							zap.String("link", route.TypedSpec().OutLinkName),
+						)
+					}
 				}
 
 				routes[id] = route.TypedSpec()
