@@ -135,9 +135,57 @@ func TestBuildMatchContextsEncryptedVolume(t *testing.T) {
 	assert.Equal(t, "r-lvmdata", opened.CELContext["volume_id"])
 	assert.Equal(t, "/dev/vdb1", opened.CELContext["volume"].(*blockpb.DiscoveredVolumeSpec).DevPath)
 
-	// A partition's `disk` stays unbound, as for any partition.
-	assert.Empty(t, opened.CELContext["disk"].(*blockpb.DiskSpec).DevPath)
-	assert.False(t, opened.Disk)
+	// The ciphertext is a partition and so has no disk record of its own, but
+	// the opened device is always a whole disk in its own right - `disk` binds
+	// to ITS record, not staying unbound the way an unencrypted partition's
+	// would.
+	assert.Equal(t, "/dev/dm-0", opened.CELContext["disk"].(*blockpb.DiskSpec).DevPath)
+	assert.True(t, opened.Disk)
+}
+
+func TestBuildMatchContextsEncryptedVolumeDiskSymlinks(t *testing.T) {
+	// A partition-provisioned encrypted raw volume, opened as /dev/dm-0: a
+	// selector matching disk.symlinks (e.g. the opened device's by-id
+	// dm-name-<luks name> alias) must land on the opened device's own disk
+	// record, not stay unbound as it did before this fix.
+	dm0 := disk("/dev/dm-0")
+	dm0.TypedSpec().Symlinks = []string{"/dev/disk/by-id/dm-name-luks2-r-lvm"}
+
+	disks := []*block.Disk{disk("/dev/vdb"), dm0}
+
+	volumes := []*block.DiscoveredVolume{
+		volume("vdb", "/dev/vdb", ""),
+		luksVolume("vdb1", "/dev/vdb1", "/dev/vdb"),
+		volume("dm-0", "/dev/dm-0", ""),
+	}
+
+	statuses := []*block.VolumeStatus{volumeStatus("r-lvm", "/dev/vdb1", "/dev/dm-0")}
+
+	got, err := blockhelpers.BuildMatchContexts(disks, volumes, statuses, nil, "")
+	require.NoError(t, err)
+
+	opened := contextsByPath(t, got)["/dev/dm-0"]
+	assert.Equal(t, []string{"/dev/disk/by-id/dm-name-luks2-r-lvm"}, opened.CELContext["disk"].(*blockpb.DiskSpec).Symlinks)
+}
+
+func TestBuildMatchContextsUnencryptedPartitionDiskStaysUnbound(t *testing.T) {
+	// An unencrypted partition (no redirect) must keep disk unbound, same as
+	// before this fix - only an encrypted, redirected partition gets the
+	// opened-device substitution.
+	disks := []*block.Disk{disk("/dev/vdb")}
+
+	volumes := []*block.DiscoveredVolume{
+		volume("vdb", "/dev/vdb", ""),
+		volume("vdb1", "/dev/vdb1", "/dev/vdb"),
+	}
+
+	got, err := blockhelpers.BuildMatchContexts(disks, volumes, nil, nil, "")
+	require.NoError(t, err)
+
+	byPath := contextsByPath(t, got)
+	require.Contains(t, byPath, "/dev/vdb1")
+	assert.Empty(t, byPath["/dev/vdb1"].CELContext["disk"].(*blockpb.DiskSpec).DevPath)
+	assert.False(t, byPath["/dev/vdb1"].Disk)
 }
 
 func TestBuildMatchContextsVolumeNotPrepared(t *testing.T) {

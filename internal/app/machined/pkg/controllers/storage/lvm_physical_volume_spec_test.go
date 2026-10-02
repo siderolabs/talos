@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
+	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -445,6 +446,67 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestVolumeIDEmptyForUnmanagedDevice() {
 
 	ctest.AssertResource(suite, "vdb", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
 		asrt.Equal("/dev/vdb", pv.TypedSpec().Device)
+	})
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestResolvesParentRawVolumeByReference() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createRawVolumePartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-data1")
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newRawVolumeDoc("data1"),
+		newVGParentsDoc("vg-pool", storagecfg.ProvisioningVolumeParent{ParentKind: "RawVolume", ParentName: "data1"}),
+	)
+
+	ctest.AssertResource(suite, "vdb1", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/vdb1", pv.TypedSpec().Device)
+		asrt.Equal("vg-pool", pv.TypedSpec().VGName)
+	})
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestResolvesEncryptedParentRawVolumeToOpenedDevice() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-data1")
+	createVolumeStatus(
+		&suite.DefaultSuite, "r-data1",
+		block.VolumePhaseReady, block.EncryptionProviderLUKS2,
+		"/dev/vdb1", "/dev/dm-0",
+	)
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newEncryptedRawVolumeDoc("data1"),
+		newVGParentsDoc("vg-pool", storagecfg.ProvisioningVolumeParent{ParentKind: "RawVolume", ParentName: "data1"}),
+	)
+
+	// The parent names the volume, so the PV lands on its opened device, same
+	// as the CEL volume_id selector path.
+	ctest.AssertResource(suite, "dm-0", func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("/dev/dm-0", pv.TypedSpec().Device)
+	})
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestWaitsForParentRawVolumeNotReady() {
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-data1")
+	// No VolumeStatus yet: the volume manager has not prepared it.
+
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newRawVolumeDoc("data1"),
+		newVGParentsDoc("vg-pool", storagecfg.ProvisioningVolumeParent{ParentKind: "RawVolume", ParentName: "data1"}),
+	)
+
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+}
+
+func (suite *LVMPhysicalVolumeSpecSuite) TestParentRawVolumeNotFoundInConfigSurfacesValidationError() {
+	applyMachineConfigDocs(&suite.DefaultSuite,
+		newVGParentsDoc("vg-pool", storagecfg.ProvisioningVolumeParent{ParentKind: "RawVolume", ParentName: "nonexistent"}),
+	)
+
+	ctest.AssertResource(suite, "vg-pool", func(e *storageres.LVMValidationError, asrt *assert.Assertions) {
+		asrt.Contains(e.TypedSpec().Message, "nonexistent")
 	})
 }
 
