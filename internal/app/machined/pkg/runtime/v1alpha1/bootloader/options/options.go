@@ -34,6 +34,10 @@ type InstallOptions struct {
 
 	// Boot assets to install.
 	BootAssets BootAssets
+	// BootMenuTimeout overrides the boot menu timeout.
+	BootMenuTimeout *uint
+	// DisableResetOption omits the reset option from generated menus.
+	DisableResetOption bool
 
 	// ExtraInstallStep is a function to run after the bootloader is installed.
 	ExtraInstallStep func() error
