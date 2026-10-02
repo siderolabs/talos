@@ -44,10 +44,16 @@ func GetDefaultPaths() ([]Path, error) {
 	result := make([]Path, 0, 3)
 
 	if path, ok := os.LookupEnv(constants.TalosConfigEnvVar); ok {
-		result = append(result, Path{
-			Path:         path,
-			WriteAllowed: true,
-		})
+		for _, path := range filepath.SplitList(path) {
+			if path == "" {
+				continue
+			}
+
+			result = append(result, Path{
+				Path:         path,
+				WriteAllowed: true,
+			})
+		}
 	}
 
 	result = append(
