@@ -55,23 +55,24 @@ var (
 
 	dedicatedSystemVolumes bool
 
-	talosConfig       string
-	endpoint          string
-	k8sEndpoint       string
-	expectedVersion   string
-	expectedGoVersion string
-	talosctlPath      string
-	kubectlPath       string
-	helmPath          string
-	kubeStrPath       string
-	provisionerName   string
-	remoteEndpoint    string
-	clusterName       string
-	stateDir          string
-	talosImage        string
-	csiTestName       string
-	csiTestTimeout    string
-	hypervisorISOPath string
+	talosConfig             string
+	endpoint                string
+	k8sEndpoint             string
+	expectedVersion         string
+	expectedGoVersion       string
+	talosctlPath            string
+	kubectlPath             string
+	helmPath                string
+	kubeStrPath             string
+	provisionerName         string
+	remoteEndpoint          string
+	clusterName             string
+	stateDir                string
+	talosImage              string
+	csiTestName             string
+	csiTestTimeout          string
+	hypervisorTalosISOPath  string
+	hypervisorAlpineISOPath string
 )
 
 // TestIntegration ...
@@ -128,38 +129,39 @@ func TestIntegration(t *testing.T) {
 	for _, s := range allSuites {
 		if configuredSuite, ok := s.(base.ConfiguredSuite); ok {
 			configuredSuite.SetConfig(base.TalosSuite{
-				Endpoint:               endpoint,
-				K8sEndpoint:            k8sEndpoint,
-				Cluster:                cluster,
-				HTTPProbeProvisioner:   httpProbeProvisioner,
-				TalosConfig:            talosConfig,
-				Version:                expectedVersion,
-				GoVersion:              expectedGoVersion,
-				TalosctlPath:           talosctlPath,
-				KubectlPath:            kubectlPath,
-				HelmPath:               helmPath,
-				KubeStrPath:            kubeStrPath,
-				ExtensionsQEMU:         extensionsQEMU,
-				ExtensionsLibvirt:      extensionsLibvirt,
-				ExtensionsNvidia:       extensionsNvidia,
-				HypervisorISOPath:      hypervisorISOPath,
-				LLDPEnabled:            lldpEnabled,
-				BGPEnabled:             bgpEnabled,
-				BGPCLOSEnabled:         bgpCLOSEnabled,
-				CiliumBGPEnabled:       ciliumBGPEnabled,
-				TrustedBoot:            trustedBoot,
-				SelinuxEnforcing:       selinuxEnforcing,
-				VerifyUKIBooted:        verifyUKIBooted,
-				TalosImage:             talosImage,
-				CSITestName:            csiTestName,
-				CSITestTimeout:         csiTestTimeout,
-				Airgapped:              airgapped,
-				Virtiofsd:              virtiofsd,
-				NFS:                    nfs,
-				IPMI:                   ipmi,
-				Race:                   race,
-				SkipEphemeralPolicy:    skipEphemeralPolicy,
-				DedicatedSystemVolumes: dedicatedSystemVolumes,
+				Endpoint:                endpoint,
+				K8sEndpoint:             k8sEndpoint,
+				Cluster:                 cluster,
+				HTTPProbeProvisioner:    httpProbeProvisioner,
+				TalosConfig:             talosConfig,
+				Version:                 expectedVersion,
+				GoVersion:               expectedGoVersion,
+				TalosctlPath:            talosctlPath,
+				KubectlPath:             kubectlPath,
+				HelmPath:                helmPath,
+				KubeStrPath:             kubeStrPath,
+				ExtensionsQEMU:          extensionsQEMU,
+				ExtensionsLibvirt:       extensionsLibvirt,
+				ExtensionsNvidia:        extensionsNvidia,
+				HypervisorTalosISOPath:  hypervisorTalosISOPath,
+				HypervisorAlpineISOPath: hypervisorAlpineISOPath,
+				LLDPEnabled:             lldpEnabled,
+				BGPEnabled:              bgpEnabled,
+				BGPCLOSEnabled:          bgpCLOSEnabled,
+				CiliumBGPEnabled:        ciliumBGPEnabled,
+				TrustedBoot:             trustedBoot,
+				SelinuxEnforcing:        selinuxEnforcing,
+				VerifyUKIBooted:         verifyUKIBooted,
+				TalosImage:              talosImage,
+				CSITestName:             csiTestName,
+				CSITestTimeout:          csiTestTimeout,
+				Airgapped:               airgapped,
+				Virtiofsd:               virtiofsd,
+				NFS:                     nfs,
+				IPMI:                    ipmi,
+				Race:                    race,
+				SkipEphemeralPolicy:     skipEphemeralPolicy,
+				DedicatedSystemVolumes:  dedicatedSystemVolumes,
 			})
 		}
 
@@ -194,8 +196,10 @@ func init() {
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsLibvirt, "talos.extensions.libvirt", false, "enable tests for libvirt extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
-	flag.StringVar(&hypervisorISOPath, "talos.hypervisor.iso", "",
+	flag.StringVar(&hypervisorTalosISOPath, "talos.hypervisor.talos-iso", "",
 		"path to a Talos ISO the hypervisor tests upload into a content library; unset skips the tests needing a real image")
+	flag.StringVar(&hypervisorAlpineISOPath, "talos.hypervisor.alpine-iso", "",
+		"path to a stock Alpine virt ISO for the hypervisor serial-console test; unset skips the test needing the image")
 	flag.BoolVar(&lldpEnabled, "talos.lldp", false, "enable LLDP receive tests (requires a cluster created with --with-lldp)")
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")

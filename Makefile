@@ -119,11 +119,18 @@ MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 LIBVIRT_VERSION ?= v12.7.0
 # SHA-256 of https://download.libvirt.org/libvirt-$(patsubst v%,%,$(LIBVIRT_VERSION)).tar.xz; update with LIBVIRT_VERSION.
 LIBVIRT_SHA256 ?= 7ec1a04e7e4f4069353d4daac117bbe869287f5b202695de61fe1b079efb6cb6
+# renovate: datasource=docker depName=alpine
+ALPINE_VERSION ?= 3.24.2
+# Update the checksum with the image; mirrors of identical bytes can reuse it.
+ALPINE_ISO_SHA256 ?= 3ab424762af704b2c2a9e57df1dc37f982af260071504d977f2fb96822e7130b
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
 HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
+ALPINE_ISO ?= _out/alpine-virt-x86_64.iso
+ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-virt-$(ALPINE_VERSION)-x86_64.iso
+
 TESTPKGS ?= github.com/siderolabs/talos/...
 UNITTEST_PARALLELISM ?= 8
 RELEASES ?= v1.13.10 v1.14.2
@@ -610,6 +617,23 @@ $(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH): ## This target doe
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
+.PHONY: download-alpine-iso
+download-alpine-iso: ## Downloads and verifies the configured Alpine ISO.
+	@set -eu; \
+		iso="$(ALPINE_ISO)"; url="$(ALPINE_ISO_URL)"; sha256="$(ALPINE_ISO_SHA256)"; \
+		: "$${iso:?ALPINE_ISO must be configured}"; \
+		: "$${url:?ALPINE_ISO_URL must be configured}"; \
+		: "$${sha256:?ALPINE_ISO_SHA256 must be configured}"; \
+		mkdir -p "$$(dirname "$$iso")"; \
+		trap 'rm -f "$${iso}.tmp"' 0; \
+		curl --fail --location --silent --show-error \
+			--proto '=https' --proto-redir '=https' --max-redirs 5 \
+			--connect-timeout 10 --max-time 120 --max-filesize 268435456 \
+			--output "$${iso}.tmp" "$$url"; \
+		printf '%s  %s\n' "$$sha256" "$${iso}.tmp" | sha256sum --check --strict; \
+		chmod 0444 "$${iso}.tmp"; \
+		mv "$${iso}.tmp" "$$iso"
+
 $(ARTIFACTS)/kubectl: | $(ARTIFACTS)
 	@curl --fail -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
 	@chmod +x $(ARTIFACTS)/kubectl
@@ -646,6 +670,7 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH) external-art
 		TALOSCTL=$(TALOSCTL_EXECUTABLE) \
 		INTEGRATION_TEST=$(PWD)/$(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH) \
 		SHORT_INTEGRATION_TEST=$(SHORT_INTEGRATION_TEST) \
+		EXTRA_TEST_ARGS="$(EXTRA_TEST_ARGS)" \
 		CUSTOM_CNI_URL=$(CUSTOM_CNI_URL) \
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \

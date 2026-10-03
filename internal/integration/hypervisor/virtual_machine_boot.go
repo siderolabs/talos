@@ -48,8 +48,8 @@ const (
 func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 	suite.requireContentLibrarySupport()
 
-	if suite.HypervisorISOPath == "" {
-		suite.T().Skip("skipping as -talos.hypervisor.iso is not set")
+	if suite.HypervisorTalosISOPath == "" {
+		suite.T().Skip("skipping as -talos.hypervisor.talos-iso is not set")
 	}
 
 	// The lease has to come from the cluster's own DHCP server, which serves reservations only.
@@ -77,12 +77,12 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	dgst := suite.digestOfISO()
 
-	iso, err := os.Open(suite.HypervisorISOPath)
+	iso, err := os.Open(suite.HypervisorTalosISOPath)
 	suite.Require().NoError(err)
 
 	defer iso.Close() //nolint:errcheck
 
-	suite.T().Logf("uploading %s (%s) into content library %q", suite.HypervisorISOPath, dgst, library)
+	suite.T().Logf("uploading %s (%s) into content library %q", suite.HypervisorTalosISOPath, dgst, library)
 
 	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, dgst.String(), iso)
 	suite.Require().NoError(err)

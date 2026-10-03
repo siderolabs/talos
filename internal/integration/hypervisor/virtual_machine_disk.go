@@ -212,8 +212,8 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 	suite.requireContentLibrarySupport()
 
-	if suite.HypervisorISOPath == "" {
-		suite.T().Skip("skipping as -talos.hypervisor.iso is not set")
+	if suite.HypervisorTalosISOPath == "" {
+		suite.T().Skip("skipping as -talos.hypervisor.talos-iso is not set")
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -223,14 +223,14 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
 
-	info, err := os.Stat(suite.HypervisorISOPath)
+	info, err := os.Stat(suite.HypervisorTalosISOPath)
 	suite.Require().NoError(err)
 
 	dgst := suite.digestOfISO()
 
-	suite.T().Logf("uploading %s (%d bytes, %s) into content library %q", suite.HypervisorISOPath, info.Size(), dgst, library)
+	suite.T().Logf("uploading %s (%d bytes, %s) into content library %q", suite.HypervisorTalosISOPath, info.Size(), dgst, library)
 
-	iso, err := os.Open(suite.HypervisorISOPath)
+	iso, err := os.Open(suite.HypervisorTalosISOPath)
 	suite.Require().NoError(err)
 
 	defer iso.Close() //nolint:errcheck
@@ -302,7 +302,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 func (suite *LibvirtSuite) digestOfISO() digest.Digest {
 	suite.T().Helper()
 
-	f, err := os.Open(suite.HypervisorISOPath)
+	f, err := os.Open(suite.HypervisorTalosISOPath)
 	suite.Require().NoError(err)
 
 	defer f.Close() //nolint:errcheck
