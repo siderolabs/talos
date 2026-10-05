@@ -31,6 +31,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
+	"github.com/siderolabs/talos/internal/pkg/lockdown"
 	"github.com/siderolabs/talos/internal/pkg/secureboot/eventlog"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -38,9 +39,6 @@ import (
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
-
-// kernelLockdownPath is the securityfs file exposing the kernel lockdown level.
-const kernelLockdownPath = "/sys/kernel/security/lockdown"
 
 // lockdownPollInterval is the maximum interval between kernel lockdown level reads when
 // fsnotify events are not seen. It acts as a safety net against missed inotify events.
@@ -52,7 +50,7 @@ type SecurityStateController struct {
 
 	// LockdownPath is the on-disk location of the securityfs kernel lockdown file.
 	//
-	// Defaults to [kernelLockdownPath] when empty; overridable for tests.
+	// Defaults to [lockdown.Path] when empty; overridable for tests.
 	LockdownPath string
 }
 
@@ -61,7 +59,7 @@ func (ctrl *SecurityStateController) lockdownPath() string {
 		return ctrl.LockdownPath
 	}
 
-	return kernelLockdownPath
+	return lockdown.Path
 }
 
 // Name implements controller.Controller interface.
@@ -246,7 +244,7 @@ func (ctrl *SecurityStateController) watchLockdownState(
 	for {
 		// the level is read after the watch has been established, so that a change landing while
 		// it is being read queues another reconcile instead of being missed
-		if spec.LockdownState, err = readLockdownState(ctrl.lockdownPath()); err != nil {
+		if spec.LockdownState, err = lockdown.ReadState(ctrl.lockdownPath()); err != nil {
 			return fmt.Errorf("failed to get kernel lockdown state: %w", err)
 		}
 
@@ -292,29 +290,6 @@ func queueOnLockdownChange(ctx context.Context, watcher *fsnotify.Watcher, r con
 			return err
 		}
 	}
-}
-
-// readLockdownState reads the current kernel lockdown level from securityfs.
-//
-// The file lists every level with the active one in brackets, e.g.:
-//
-//	[none] integrity confidentiality
-func readLockdownState(path string) (runtimeres.LockdownState, error) {
-	contents, err := os.ReadFile(path)
-	if err != nil {
-		return runtimeres.LockdownStateNone, err
-	}
-
-	for field := range strings.FieldsSeq(string(contents)) {
-		level, ok := strings.CutPrefix(field, "[")
-		if !ok {
-			continue
-		}
-
-		return runtimeres.LockdownStateString(strings.TrimSuffix(level, "]"))
-	}
-
-	return runtimeres.LockdownStateNone, fmt.Errorf("failed to parse kernel lockdown level %q", string(contents))
 }
 
 // secureBootAuthorityFingerprints reports the `db` certificates which the firmware used to
