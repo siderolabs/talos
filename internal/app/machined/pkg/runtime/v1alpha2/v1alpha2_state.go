@@ -291,6 +291,7 @@ func NewState() (*State, error) {
 		&runtime.Version{},
 		&runtime.WatchdogTimerConfig{},
 		&runtime.WatchdogTimerStatus{},
+		&runtime.WorkloadMemorySpec{},
 		&secrets.API{},
 		&secrets.CertSAN{},
 		&secrets.EncryptionSalt{},

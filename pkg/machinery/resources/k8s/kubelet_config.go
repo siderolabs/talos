@@ -41,6 +41,8 @@ type KubeletConfigSpec struct {
 	EnableFSQuotaMonitoring      bool                 `yaml:"enableFSQuotaMonitoring" protobuf:"12"`
 	CredentialProviderConfig     map[string]any       `yaml:"credentialProviderConfig,omitempty" protobuf:"13"`
 	RegisterWithTaints           map[string]string    `yaml:"registerWithTaints,omitempty" protobuf:"16"`
+	// KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
+	KubepodsMemoryLimit uint64 `yaml:"kubepodsMemoryLimit,omitempty" protobuf:"17"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.

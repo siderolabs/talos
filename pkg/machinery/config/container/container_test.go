@@ -72,6 +72,7 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "test-extension", cfg.ExtensionServiceConfigs()[0].Name())
 	assert.Equal(t, "0000:04:00.00", cfg.PCIDriverRebindConfig().PCIDriverRebindConfigs()[0].PCIID())
 	assert.Nil(t, cfg.CPUPartitionConfig())
+	assert.Nil(t, cfg.WorkloadResourceConfig())
 	assert.Same(t, v1alpha1Cfg, cfg.RawV1Alpha1())
 	assert.Equal(t, []config.Document{v1alpha1Cfg, sideroLinkCfg, extensionsCfg, pciDriverRebindCfg}, cfg.Documents())
 

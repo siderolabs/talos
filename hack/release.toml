@@ -15,6 +15,39 @@ preface = """
 """
 
 [notes]
+    [notes.workload_memory_limits]
+        title = "Workload Memory Limits"
+        description = """\
+The new `WorkloadResourceConfig` document sets independent aggregate memory limits for Kubernetes pods, Talos containers and virtual machines:
+
+```yaml
+apiVersion: v1alpha1
+kind: WorkloadResourceConfig
+kubepods:
+  memory:
+    limit: 16GiB
+taloscontainers:
+  memory:
+    limit: 4GiB
+virtualMachines:
+  memory:
+    limit: 32GiB
+```
+
+Each root is optional. Limits are ceilings, not reservations, and do not cover swap or HugeTLB memory.
+For `kubepods`, Talos derives `systemReserved.memory` so kubelet enforces the cap and adjusts Node Allocatable;
+an explicit `systemReserved.memory`, conflicting kubelet flags or the Static memory manager cannot be combined with this limit.
+Changing the Kubernetes cap restarts kubelet. Without Kubernetes, only the container and virtual machine limits apply.
+
+Lowering a limit can OOM-kill workloads in that group, including QEMU guests or Kubernetes control-plane pods.
+Talos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`, even without this document.
+Omitting their limits means unlimited aggregate memory; individual child limits still apply.
+Kubelet system-reserved or kube-reserved memory enforcement on these roots is rejected regardless of this document;
+CPU-only or compressible enforcement and reservations on unrelated roots remain supported.
+Kubelet drop-in directories are rejected while any cap is active; without caps, their contents remain the operator's responsibility.
+Removing the Kubernetes cap restores the original kubelet configuration. The document has no effect in container mode.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\

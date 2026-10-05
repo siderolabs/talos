@@ -323,3 +323,11 @@ message WatchdogTimerStatusSpec {
   google.protobuf.Duration feed_interval = 3;
 }
 
+// WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+//
+// Zero means no limit is configured for that root; roots are independent.
+message WorkloadMemorySpecSpec {
+  uint64 talos_containers_limit = 1;
+  uint64 virtual_machines_limit = 2;
+}
+

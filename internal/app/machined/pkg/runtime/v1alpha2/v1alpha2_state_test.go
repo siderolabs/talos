@@ -20,7 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-func TestNewStateRegistersCPUPartitionResources(t *testing.T) {
+func TestNewStateRegistersWorkloadPartitionResources(t *testing.T) {
 	t.Parallel()
 
 	s, err := v1alpha2.NewState()
@@ -32,6 +32,7 @@ func TestNewStateRegistersCPUPartitionResources(t *testing.T) {
 	}{
 		{runtime.CPUPartitionSpecType, runtime.NamespaceName},
 		{runtime.CPUPartitionStatusType, runtime.NamespaceName},
+		{runtime.WorkloadMemorySpecType, runtime.NamespaceName},
 		{k8s.KubeletCPUReservationType, k8s.NamespaceName},
 		{hypervisor.VirtualMachineCPUPlacementType, hypervisor.NamespaceName},
 	} {

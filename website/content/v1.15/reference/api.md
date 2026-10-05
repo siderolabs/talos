@@ -652,6 +652,7 @@ description: Talos gRPC API reference.
     - [VersionSpec](#talos.resource.definitions.runtime.VersionSpec)
     - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
     - [WatchdogTimerStatusSpec](#talos.resource.definitions.runtime.WatchdogTimerStatusSpec)
+    - [WorkloadMemorySpecSpec](#talos.resource.definitions.runtime.WorkloadMemorySpecSpec)
   
 - [resource/definitions/network/network.proto](#resource/definitions/network/network.proto)
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
@@ -9980,6 +9981,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
 | register_with_taints | [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry) | repeated |  |
+| kubepods_memory_limit | [uint64](#uint64) |  | KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset. |
 
 
 
@@ -11326,6 +11328,24 @@ WatchdogTimerStatusSpec describes configuration of watchdog timer.
 | device | [string](#string) |  |  |
 | timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | feed_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.WorkloadMemorySpecSpec"></a>
+
+### WorkloadMemorySpecSpec
+WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+
+Zero means no limit is configured for that root; roots are independent.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| talos_containers_limit | [uint64](#uint64) |  |  |
+| virtual_machines_limit | [uint64](#uint64) |  |  |
 
 
 

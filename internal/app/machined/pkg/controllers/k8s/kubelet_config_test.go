@@ -17,6 +17,7 @@ import (
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -159,6 +160,65 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 		asrt.Empty(spec.ExtraArgs)
 		asrt.Empty(spec.ExtraMounts)
 		asrt.False(spec.CloudProviderExternal)
+		asrt.Zero(spec.KubepodsMemoryLimit)
+	})
+}
+
+func (suite *KubeletConfigSuite) TestReconcileKubepodsMemoryLimit() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	suite.createStaticPodServerStatus()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
+				KubeletImage: "kubelet", //nolint:staticcheck // legacy config
+			},
+		},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
+				ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
+			},
+		},
+	}
+
+	workloadResources := runtime.NewWorkloadResourceConfigV1Alpha1()
+	workloadResources.KubepodsConfig = &runtime.WorkloadResourceRoot{
+		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize("16GiB")},
+	}
+	workloadResources.TalosContainersConfig = &runtime.WorkloadResourceRoot{
+		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize("4GiB")},
+	}
+
+	ctr, err := container.New(v1alpha1Cfg, workloadResources)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertResource(suite, k8s.KubeletID, func(r *k8s.KubeletConfig, asrt *assert.Assertions) {
+		asrt.Equal(uint64(16<<30), r.TypedSpec().KubepodsMemoryLimit)
+	})
+
+	containersOnly := runtime.NewWorkloadResourceConfigV1Alpha1()
+	containersOnly.TalosContainersConfig = workloadResources.TalosContainersConfig
+
+	ctr, err = container.New(v1alpha1Cfg, containersOnly)
+	suite.Require().NoError(err)
+
+	replacement := config.NewMachineConfig(ctr)
+	replacement.Metadata().SetVersion(cfg.Metadata().Version())
+	suite.Update(replacement)
+
+	ctest.AssertResource(suite, k8s.KubeletID, func(r *k8s.KubeletConfig, asrt *assert.Assertions) {
+		asrt.Zero(r.TypedSpec().KubepodsMemoryLimit)
 	})
 }
 

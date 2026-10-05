@@ -1540,8 +1540,10 @@ type KubeletConfigSpec struct {
 	CredentialProviderConfig     *structpb.Struct       `protobuf:"bytes,13,opt,name=credential_provider_config,json=credentialProviderConfig,proto3" json:"credential_provider_config,omitempty"`
 	ExtraArgs                    map[string]*ArgValues  `protobuf:"bytes,15,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	RegisterWithTaints           map[string]string      `protobuf:"bytes,16,rep,name=register_with_taints,json=registerWithTaints,proto3" json:"register_with_taints,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields                protoimpl.UnknownFields
-	sizeCache                    protoimpl.SizeCache
+	// KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
+	KubepodsMemoryLimit uint64 `protobuf:"varint,17,opt,name=kubepods_memory_limit,json=kubepodsMemoryLimit,proto3" json:"kubepods_memory_limit,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *KubeletConfigSpec) Reset() {
@@ -1670,6 +1672,13 @@ func (x *KubeletConfigSpec) GetRegisterWithTaints() map[string]string {
 		return x.RegisterWithTaints
 	}
 	return nil
+}
+
+func (x *KubeletConfigSpec) GetKubepodsMemoryLimit() uint64 {
+	if x != nil {
+		return x.KubepodsMemoryLimit
+	}
+	return 0
 }
 
 // KubeletKubeconfigSpec describes the current kubelet client credentials.
@@ -2880,7 +2889,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\ahealthy\x18\x02 \x01(\bR\ahealthy\"[\n" +
 	"\x19KubeletCPUReservationSpec\x12\x18\n" +
 	"\amanaged\x18\x01 \x01(\bR\amanaged\x12$\n" +
-	"\x0ereserved_cp_us\x18\x02 \x01(\tR\freservedCpUs\"\xbf\b\n" +
+	"\x0ereserved_cp_us\x18\x02 \x01(\tR\freservedCpUs\"\xf3\b\n" +
 	"\x11KubeletConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x1f\n" +
 	"\vcluster_dns\x18\x02 \x03(\tR\n" +
@@ -2898,7 +2907,8 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x1acredential_provider_config\x18\r \x01(\v2\x17.google.protobuf.StructR\x18credentialProviderConfig\x12_\n" +
 	"\n" +
 	"extra_args\x18\x0f \x03(\v2@.talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntryR\textraArgs\x12{\n" +
-	"\x14register_with_taints\x18\x10 \x03(\v2I.talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntryR\x12registerWithTaints\x1ag\n" +
+	"\x14register_with_taints\x18\x10 \x03(\v2I.talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntryR\x12registerWithTaints\x122\n" +
+	"\x15kubepods_memory_limit\x18\x11 \x01(\x04R\x13kubepodsMemoryLimit\x1ag\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
 	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\x1aE\n" +

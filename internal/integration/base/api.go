@@ -14,7 +14,9 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -969,6 +971,243 @@ func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {
 		apiSuite.Assert().NoError(apiSuite.Client.Close())
 	}
+}
+
+// ReadMemTotal returns the node's MemTotal in bytes, the same source the kubelet and the
+// workload memory controllers derive their limits from.
+func (apiSuite *APISuite) ReadMemTotal(nodeCtx context.Context) uint64 {
+	memory, err := apiSuite.Client.Memory(nodeCtx)
+	apiSuite.Require().NoError(err)
+	apiSuite.Require().Len(memory.GetMessages(), 1)
+
+	memTotal := memory.GetMessages()[0].GetMeminfo().GetMemtotal() * 1024
+	apiSuite.Require().NotZero(memTotal)
+
+	return memTotal
+}
+
+// ReadCgroupFile reads a file of a cgroup named relative to the cgroup root, returning the error
+// instead of failing so that it can be polled.
+func (apiSuite *APISuite) ReadCgroupFile(nodeCtx context.Context, root, file string) (string, error) {
+	reader, err := apiSuite.Client.Read(nodeCtx, filepath.Join(constants.CgroupMountPath, root, file))
+	if err != nil {
+		return "", err
+	}
+
+	body, err := io.ReadAll(reader)
+	closeErr := reader.Close()
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(body)), closeErr
+}
+
+// ReadCgroupCounters parses a "key value" cgroup file such as memory.events or cgroup.events.
+func (apiSuite *APISuite) ReadCgroupCounters(nodeCtx context.Context, root, file string) (map[string]uint64, error) {
+	contents, err := apiSuite.ReadCgroupFile(nodeCtx, root, file)
+	if err != nil {
+		return nil, err
+	}
+
+	counters := map[string]uint64{}
+
+	for line := range strings.Lines(contents) {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			continue
+		}
+
+		value, err := strconv.ParseUint(fields[1], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("parse %s/%s line %q: %w", root, file, line, err)
+		}
+
+		counters[fields[0]] = value
+	}
+
+	return counters, nil
+}
+
+// ReadCgroupUint reads a single-integer cgroup file such as memory.current.
+func (apiSuite *APISuite) ReadCgroupUint(nodeCtx context.Context, root, file string) (uint64, error) {
+	contents, err := apiSuite.ReadCgroupFile(nodeCtx, root, file)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseUint(contents, 10, 64)
+}
+
+// AssertCgroupFile waits until the cgroup file reads exactly expected.
+func (apiSuite *APISuite) AssertCgroupFile(nodeCtx context.Context, root, file, expected string) {
+	apiSuite.T().Helper()
+
+	apiSuite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		contents, err := apiSuite.ReadCgroupFile(nodeCtx, root, file)
+		if assert.NoError(collect, err) {
+			assert.Equal(collect, expected, contents, "%s/%s", root, file)
+		}
+	}, time.Minute, time.Second, "%s/%s should read %q", root, file, expected)
+}
+
+// RequireWorkloadRootIdle skips the test unless the workload root cgroup has no processes and
+// returns its current charge, so that a test never squeezes a workload it does not own.
+func (apiSuite *APISuite) RequireWorkloadRootIdle(nodeCtx context.Context, root string) uint64 {
+	apiSuite.T().Helper()
+
+	events, err := apiSuite.ReadCgroupCounters(nodeCtx, root, "cgroup.events")
+	apiSuite.Require().NoError(err)
+
+	if events["populated"] != 0 {
+		apiSuite.T().Skipf("workload root %s is populated by a workload this test does not own", root)
+	}
+
+	current, err := apiSuite.ReadCgroupUint(nodeCtx, root, "memory.current")
+	apiSuite.Require().NoError(err)
+
+	return current
+}
+
+// MemoryEvents holds one cgroup's memory.events (hierarchical: includes descendants) and
+// memory.events.local (this cgroup's own limit only).
+type MemoryEvents struct {
+	Hierarchical map[string]uint64
+	Local        map[string]uint64
+}
+
+// ReadMemoryEvents reads both memory.events files of a cgroup.
+func (apiSuite *APISuite) ReadMemoryEvents(nodeCtx context.Context, root string) (MemoryEvents, error) {
+	hierarchical, err := apiSuite.ReadCgroupCounters(nodeCtx, root, "memory.events")
+	if err != nil {
+		return MemoryEvents{}, err
+	}
+
+	local, err := apiSuite.ReadCgroupCounters(nodeCtx, root, "memory.events.local")
+	if err != nil {
+		return MemoryEvents{}, err
+	}
+
+	return MemoryEvents{Hierarchical: hierarchical, Local: local}, nil
+}
+
+// MemoryEventsSnapshot reads the cumulative memory.events of the given roots, to diff against later.
+func (apiSuite *APISuite) MemoryEventsSnapshot(nodeCtx context.Context, roots ...string) map[string]MemoryEvents {
+	snapshot := make(map[string]MemoryEvents, len(roots))
+
+	for _, root := range roots {
+		events, err := apiSuite.ReadMemoryEvents(nodeCtx, root)
+		apiSuite.Require().NoError(err, "read memory events of %s", root)
+
+		snapshot[root] = events
+	}
+
+	return snapshot
+}
+
+// AssertMemcgOOMKill waits until the root's own memory.max caused an OOM kill in its subtree.
+//
+// memory.events.local counts only events caused by this cgroup's own limit, so `max` and `oom`
+// moving there proves the root limit (not a child's limit, not the host) triggered the killer.
+// `oom_kill` is taken hierarchically, as the kernel attributes the kill to the victim's own memcg.
+func (apiSuite *APISuite) AssertMemcgOOMKill(nodeCtx context.Context, root string, before MemoryEvents, timeout time.Duration) MemoryEvents {
+	apiSuite.T().Helper()
+
+	var after MemoryEvents
+
+	apiSuite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		events, err := apiSuite.ReadMemoryEvents(nodeCtx, root)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		if assert.Greater(collect, events.Local["oom"], before.Local["oom"], "%s memory.events.local: %v", root, events.Local) &&
+			assert.Greater(collect, events.Hierarchical["oom_kill"], before.Hierarchical["oom_kill"], "%s memory.events: %v", root, events.Hierarchical) {
+			after = events
+		}
+	}, timeout, time.Second, "the %s limit should OOM-kill a task in its subtree", root)
+
+	apiSuite.T().Logf("%s memory.events.local before %v, after %v; memory.events before %v, after %v",
+		root, before.Local, after.Local, before.Hierarchical, after.Hierarchical)
+
+	apiSuite.Assert().Greater(after.Local["max"], before.Local["max"], "%s memory.max was never hit", root)
+
+	return after
+}
+
+// AssertNoNewOOMKills verifies that the roots unrelated to the test saw no OOM kills since the snapshot.
+func (apiSuite *APISuite) AssertNoNewOOMKills(nodeCtx context.Context, before map[string]MemoryEvents, roots ...string) {
+	apiSuite.T().Helper()
+
+	for _, root := range roots {
+		events, err := apiSuite.ReadMemoryEvents(nodeCtx, root)
+		if !apiSuite.Assert().NoError(err, "read memory events of %s", root) {
+			continue
+		}
+
+		apiSuite.Assert().Equal(before[root].Hierarchical["oom_kill"], events.Hierarchical["oom_kill"], "unrelated root %s saw OOM kills: %v", root, events.Hierarchical)
+	}
+}
+
+// AssertNoUserspaceOOMSince verifies the Talos userspace OOM handler did not act on the node since
+// the given time, i.e. the pressure stayed inside the limited root.
+func (apiSuite *APISuite) AssertNoUserspaceOOMSince(nodeCtx context.Context, since time.Time) {
+	apiSuite.T().Helper()
+
+	actions, err := safe.StateListAll[*runtimeres.OOMAction](nodeCtx, apiSuite.Client.COSI)
+	if !apiSuite.Assert().NoError(err) {
+		return
+	}
+
+	for action := range actions.All() {
+		apiSuite.Assert().True(action.Metadata().Created().Before(since),
+			"userspace OOM handler killed %v at %s", action.TypedSpec().Processes, action.Metadata().Created())
+	}
+}
+
+// RequireNoWorkloadResourceConfig skips the test if the node already carries a
+// WorkloadResourceConfig document and returns the exact bytes of its current configuration.
+func (apiSuite *APISuite) RequireNoWorkloadResourceConfig(nodeCtx context.Context, node string) []byte {
+	apiSuite.T().Helper()
+
+	original, err := apiSuite.ReadConfigFromNode(nodeCtx)
+	apiSuite.Require().NoError(err)
+
+	if original.WorkloadResourceConfig() != nil {
+		apiSuite.T().Skipf("node %s already carries a WorkloadResourceConfig document", node)
+	}
+
+	originalBytes, err := original.Bytes()
+	apiSuite.Require().NoError(err)
+
+	return originalBytes
+}
+
+// RestoreMachineConfigOnCleanup registers restoring the exact original configuration of the node.
+//
+// It must be registered before the first apply: a failed assertion must not leave a limit on
+// the shared cluster, and the test deadline may have expired by then, hence the fresh context.
+// afterRestore, if set, waits for the node to converge back.
+func (apiSuite *APISuite) RestoreMachineConfigOnCleanup(node string, originalBytes []byte, afterRestore func(cleanupCtx context.Context)) {
+	apiSuite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cleanupCancel()
+
+		cleanupCtx = client.WithNode(cleanupCtx, node)
+
+		_, applyErr := apiSuite.Client.ApplyConfiguration(cleanupCtx, &machineapi.ApplyConfigurationRequest{
+			Data: originalBytes,
+			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
+		})
+		if !apiSuite.Assert().NoError(applyErr, "restore original configuration on node %s", node) {
+			return
+		}
+
+		if afterRestore != nil {
+			afterRestore(cleanupCtx)
+		}
+	})
 }
 
 func mapNodeInfosToInternalIPs(nodes []cluster.NodeInfo) []string {

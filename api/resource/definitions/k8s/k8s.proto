@@ -199,6 +199,8 @@ message KubeletConfigSpec {
   google.protobuf.Struct credential_provider_config = 13;
   map<string, ArgValues> extra_args = 15;
   map<string, string> register_with_taints = 16;
+  // KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
+  uint64 kubepods_memory_limit = 17;
 }
 
 // KubeletKubeconfigSpec describes the current kubelet client credentials.

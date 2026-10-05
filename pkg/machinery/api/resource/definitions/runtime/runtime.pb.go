@@ -2581,6 +2581,61 @@ func (x *WatchdogTimerStatusSpec) GetFeedInterval() *durationpb.Duration {
 	return nil
 }
 
+// WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+//
+// Zero means no limit is configured for that root; roots are independent.
+type WorkloadMemorySpecSpec struct {
+	state                protoimpl.MessageState `protogen:"open.v1"`
+	TalosContainersLimit uint64                 `protobuf:"varint,1,opt,name=talos_containers_limit,json=talosContainersLimit,proto3" json:"talos_containers_limit,omitempty"`
+	VirtualMachinesLimit uint64                 `protobuf:"varint,2,opt,name=virtual_machines_limit,json=virtualMachinesLimit,proto3" json:"virtual_machines_limit,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *WorkloadMemorySpecSpec) Reset() {
+	*x = WorkloadMemorySpecSpec{}
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[42]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *WorkloadMemorySpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*WorkloadMemorySpecSpec) ProtoMessage() {}
+
+func (x *WorkloadMemorySpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[42]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use WorkloadMemorySpecSpec.ProtoReflect.Descriptor instead.
+func (*WorkloadMemorySpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{42}
+}
+
+func (x *WorkloadMemorySpecSpec) GetTalosContainersLimit() uint64 {
+	if x != nil {
+		return x.TalosContainersLimit
+	}
+	return 0
+}
+
+func (x *WorkloadMemorySpecSpec) GetVirtualMachinesLimit() uint64 {
+	if x != nil {
+		return x.VirtualMachinesLimit
+	}
+	return 0
+}
+
 var File_resource_definitions_runtime_runtime_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
@@ -2769,7 +2824,10 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x17WatchdogTimerStatusSpec\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x123\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12>\n" +
-	"\rfeed_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\ffeedIntervalBx\n" +
+	"\rfeed_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\ffeedInterval\"\x84\x01\n" +
+	"\x16WorkloadMemorySpecSpec\x124\n" +
+	"\x16talos_containers_limit\x18\x01 \x01(\x04R\x14talosContainersLimit\x124\n" +
+	"\x16virtual_machines_limit\x18\x02 \x01(\x04R\x14virtualMachinesLimitBx\n" +
 	"*dev.talos.api.resource.definitions.runtimeZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/runtimeb\x06proto3"
 
 var (
@@ -2784,7 +2842,7 @@ func file_resource_definitions_runtime_runtime_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_runtime_runtime_proto_rawDescData
 }
 
-var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
+var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
 var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*APIServiceConfigSpec)(nil),             // 0: talos.resource.definitions.runtime.APIServiceConfigSpec
 	(*BootIDSpec)(nil),                       // 1: talos.resource.definitions.runtime.BootIDSpec
@@ -2828,47 +2886,48 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*VersionSpec)(nil),                      // 39: talos.resource.definitions.runtime.VersionSpec
 	(*WatchdogTimerConfigSpec)(nil),          // 40: talos.resource.definitions.runtime.WatchdogTimerConfigSpec
 	(*WatchdogTimerStatusSpec)(nil),          // 41: talos.resource.definitions.runtime.WatchdogTimerStatusSpec
-	nil,                                      // 42: talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry
-	nil,                                      // 43: talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry
-	nil,                                      // 44: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
-	(enums.RuntimeCPUPartitionPhase)(0),      // 45: talos.resource.definitions.enums.RuntimeCPUPartitionPhase
-	(enums.RuntimeKernelModuleType)(0),       // 46: talos.resource.definitions.enums.RuntimeKernelModuleType
-	(enums.RuntimeKernelModuleState)(0),      // 47: talos.resource.definitions.enums.RuntimeKernelModuleState
-	(*common.URL)(nil),                       // 48: common.URL
-	(enums.RuntimeMachineStage)(0),           // 49: talos.resource.definitions.enums.RuntimeMachineStage
-	(*common.NetIP)(nil),                     // 50: common.NetIP
-	(enums.RuntimeSELinuxState)(0),           // 51: talos.resource.definitions.enums.RuntimeSELinuxState
-	(enums.RuntimeFIPSState)(0),              // 52: talos.resource.definitions.enums.RuntimeFIPSState
-	(enums.RuntimeLockdownState)(0),          // 53: talos.resource.definitions.enums.RuntimeLockdownState
-	(enums.RuntimeUnattendedInstallPhase)(0), // 54: talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
-	(*durationpb.Duration)(nil),              // 55: google.protobuf.Duration
+	(*WorkloadMemorySpecSpec)(nil),           // 42: talos.resource.definitions.runtime.WorkloadMemorySpecSpec
+	nil,                                      // 43: talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry
+	nil,                                      // 44: talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry
+	nil,                                      // 45: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	(enums.RuntimeCPUPartitionPhase)(0),      // 46: talos.resource.definitions.enums.RuntimeCPUPartitionPhase
+	(enums.RuntimeKernelModuleType)(0),       // 47: talos.resource.definitions.enums.RuntimeKernelModuleType
+	(enums.RuntimeKernelModuleState)(0),      // 48: talos.resource.definitions.enums.RuntimeKernelModuleState
+	(*common.URL)(nil),                       // 49: common.URL
+	(enums.RuntimeMachineStage)(0),           // 50: talos.resource.definitions.enums.RuntimeMachineStage
+	(*common.NetIP)(nil),                     // 51: common.NetIP
+	(enums.RuntimeSELinuxState)(0),           // 52: talos.resource.definitions.enums.RuntimeSELinuxState
+	(enums.RuntimeFIPSState)(0),              // 53: talos.resource.definitions.enums.RuntimeFIPSState
+	(enums.RuntimeLockdownState)(0),          // 54: talos.resource.definitions.enums.RuntimeLockdownState
+	(enums.RuntimeUnattendedInstallPhase)(0), // 55: talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
+	(*durationpb.Duration)(nil),              // 56: google.protobuf.Duration
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
-	42, // 0: talos.resource.definitions.runtime.CPUPartitionSpecSpec.roots:type_name -> talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry
+	43, // 0: talos.resource.definitions.runtime.CPUPartitionSpecSpec.roots:type_name -> talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry
 	5,  // 1: talos.resource.definitions.runtime.CPUPartitionSpecSpec.slices:type_name -> talos.resource.definitions.runtime.CPUPartitionSliceSpec
-	45, // 2: talos.resource.definitions.runtime.CPUPartitionStatusSpec.phase:type_name -> talos.resource.definitions.enums.RuntimeCPUPartitionPhase
+	46, // 2: talos.resource.definitions.runtime.CPUPartitionStatusSpec.phase:type_name -> talos.resource.definitions.enums.RuntimeCPUPartitionPhase
 	8,  // 3: talos.resource.definitions.runtime.CPUPartitionStatusSpec.targets:type_name -> talos.resource.definitions.runtime.CPUPartitionTargetStatus
 	4,  // 4: talos.resource.definitions.runtime.CPUPartitionStatusSpec.blocked:type_name -> talos.resource.definitions.runtime.CPUPartitionBlock
 	4,  // 5: talos.resource.definitions.runtime.CPUPartitionStatusSpec.admission_errors:type_name -> talos.resource.definitions.runtime.CPUPartitionBlock
 	13, // 6: talos.resource.definitions.runtime.ExtensionServiceConfigSpec.files:type_name -> talos.resource.definitions.runtime.ExtensionServiceConfigFile
-	46, // 7: talos.resource.definitions.runtime.KernelModuleStatusSpec.type:type_name -> talos.resource.definitions.enums.RuntimeKernelModuleType
-	47, // 8: talos.resource.definitions.runtime.KernelModuleStatusSpec.state:type_name -> talos.resource.definitions.enums.RuntimeKernelModuleState
-	48, // 9: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
+	47, // 7: talos.resource.definitions.runtime.KernelModuleStatusSpec.type:type_name -> talos.resource.definitions.enums.RuntimeKernelModuleType
+	48, // 8: talos.resource.definitions.runtime.KernelModuleStatusSpec.state:type_name -> talos.resource.definitions.enums.RuntimeKernelModuleState
+	49, // 9: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
 	23, // 10: talos.resource.definitions.runtime.KmsgLogConfigSpec.tagged_destinations:type_name -> talos.resource.definitions.runtime.KmsgLogDestination
-	48, // 11: talos.resource.definitions.runtime.KmsgLogDestination.endpoint:type_name -> common.URL
-	43, // 12: talos.resource.definitions.runtime.KmsgLogDestination.extra_tags:type_name -> talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry
-	49, // 13: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
+	49, // 11: talos.resource.definitions.runtime.KmsgLogDestination.endpoint:type_name -> common.URL
+	44, // 12: talos.resource.definitions.runtime.KmsgLogDestination.extra_tags:type_name -> talos.resource.definitions.runtime.KmsgLogDestination.ExtraTagsEntry
+	50, // 13: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
 	26, // 14: talos.resource.definitions.runtime.MachineStatusSpec.status:type_name -> talos.resource.definitions.runtime.MachineStatusStatus
 	38, // 15: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
-	50, // 16: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
-	44, // 17: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
-	51, // 18: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
-	52, // 19: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
-	53, // 20: talos.resource.definitions.runtime.SecurityStateSpec.lockdown_state:type_name -> talos.resource.definitions.enums.RuntimeLockdownState
-	54, // 21: talos.resource.definitions.runtime.UnattendedInstallStatusSpec.phase:type_name -> talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
-	55, // 22: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
-	55, // 23: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
-	55, // 24: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
+	51, // 16: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
+	45, // 17: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	52, // 18: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
+	53, // 19: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
+	54, // 20: talos.resource.definitions.runtime.SecurityStateSpec.lockdown_state:type_name -> talos.resource.definitions.enums.RuntimeLockdownState
+	55, // 21: talos.resource.definitions.runtime.UnattendedInstallStatusSpec.phase:type_name -> talos.resource.definitions.enums.RuntimeUnattendedInstallPhase
+	56, // 22: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
+	56, // 23: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
+	56, // 24: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
 	25, // [25:25] is the sub-list for method output_type
 	25, // [25:25] is the sub-list for method input_type
 	25, // [25:25] is the sub-list for extension type_name
@@ -2887,7 +2946,7 @@ func file_resource_definitions_runtime_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_runtime_runtime_proto_rawDesc), len(file_resource_definitions_runtime_runtime_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   45,
+			NumMessages:   46,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
