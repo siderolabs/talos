@@ -157,29 +157,19 @@ func (s *EncryptionServer) RecoveryKeyVerify(ctx context.Context, req *machine.R
 
 // supplyRecoveryKey stores the operator-supplied key for the volume manager to pick up.
 //
-// The resource is owned by the volume manager, so it can destroy it once the key was used.
+// The resource is owned by the volume manager, which destroys it once the key was tried. A key which
+// was supplied before and not tried yet is never replaced, so the volume manager can't destroy a key
+// it has not seen.
 func supplyRecoveryKey(ctx context.Context, st state.State, volumeID resource.ID, key []byte) error {
 	res := secrets.NewEncryptionRecoveryKey(volumeID)
 	res.TypedSpec().Key = slices.Clone(key)
 
 	err := st.Create(ctx, res, state.WithCreateOwner(recoveryKeyOwner))
-	if err == nil {
-		return nil
+	if state.IsConflictError(err) {
+		return status.Errorf(codes.AlreadyExists, "a recovery key for volume %q is still being tried, retry in a moment", volumeID)
 	}
 
-	if !state.IsConflictError(err) {
-		return err
-	}
-
-	// a key was supplied before and not consumed yet, replace it
-	existing, err := safe.StateGetByID[*secrets.EncryptionRecoveryKey](ctx, st, volumeID)
-	if err != nil {
-		return err
-	}
-
-	existing.TypedSpec().Key = slices.Clone(key)
-
-	return st.Update(ctx, existing, state.WithUpdateOwner(recoveryKeyOwner))
+	return err
 }
 
 // fetchRecoveryKey hands the generated recovery key of the volume over to the operator.
