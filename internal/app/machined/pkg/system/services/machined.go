@@ -80,9 +80,6 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/EtcdLeaveCluster":            role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdMemberList":              role.MakeSet(role.Admin, role.Operator, role.Reader, role.EtcdBackup),
 	"/machine.MachineService/EtcdRecover":                 role.MakeSet(role.Admin),
-	"/machine.MachineService/EncryptionRecoveryKeySupply": role.MakeSet(role.Admin, role.RecoveryKeySupplier),
-	"/machine.MachineService/EncryptionRecoveryKeyVerify": role.MakeSet(role.Admin),
-	"/machine.MachineService/EncryptionRecoveryKeyFetch":  role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdRemoveMemberByID":        role.MakeSet(role.Admin),
 	"/machine.MachineService/EtcdSnapshot":                role.MakeSet(role.Admin, role.Operator, role.EtcdBackup),
 	"/machine.MachineService/EtcdStatus":                  role.MakeSet(role.Admin, role.Operator, role.Reader, role.EtcdBackup),
@@ -153,7 +150,7 @@ var rules = map[string]role.Set{
 		// for maintenance only, verified in the handler
 		role.Reader,
 	),
-	"/machine.EncryptionService/RecoveryKeySupply": role.MakeSet(role.Admin),
+	"/machine.EncryptionService/RecoveryKeySupply": role.MakeSet(role.Admin, role.RecoveryKeySupplier),
 	"/machine.EncryptionService/RecoveryKeyVerify": role.MakeSet(role.Admin),
 	"/machine.EncryptionService/RecoveryKeyFetch":  role.MakeSet(role.Admin),
 	"/machine.MDService/Destroy": role.MakeSet(
