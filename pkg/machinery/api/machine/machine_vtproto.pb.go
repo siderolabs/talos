@@ -3493,6 +3493,11 @@ func (m *LogsRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Kind != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Kind))
+		i--
+		dAtA[i] = 0x30
+	}
 	if m.TailLines != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.TailLines))
 		i--
@@ -12004,6 +12009,9 @@ func (m *LogsRequest) SizeVT() (n int) {
 	}
 	if m.TailLines != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.TailLines))
+	}
+	if m.Kind != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Kind))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -22563,6 +22571,25 @@ func (m *LogsRequest) UnmarshalVT(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.TailLines |= int32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Kind", wireType)
+			}
+			m.Kind = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Kind |= LogKind(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

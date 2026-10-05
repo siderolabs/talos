@@ -28,6 +28,60 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// LogKind selects the log source independently of the container namespace.
+type LogKind int32
+
+const (
+	// Preserve legacy service/container routing when the selector is omitted.
+	LogKind_LOG_KIND_UNSPECIFIED LogKind = 0
+	LogKind_LOG_KIND_CONTAINER   LogKind = 1
+	LogKind_LOG_KIND_VM          LogKind = 2
+	LogKind_LOG_KIND_SERVICE     LogKind = 3
+)
+
+// Enum value maps for LogKind.
+var (
+	LogKind_name = map[int32]string{
+		0: "LOG_KIND_UNSPECIFIED",
+		1: "LOG_KIND_CONTAINER",
+		2: "LOG_KIND_VM",
+		3: "LOG_KIND_SERVICE",
+	}
+	LogKind_value = map[string]int32{
+		"LOG_KIND_UNSPECIFIED": 0,
+		"LOG_KIND_CONTAINER":   1,
+		"LOG_KIND_VM":          2,
+		"LOG_KIND_SERVICE":     3,
+	}
+)
+
+func (x LogKind) Enum() *LogKind {
+	p := new(LogKind)
+	*p = x
+	return p
+}
+
+func (x LogKind) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (LogKind) Descriptor() protoreflect.EnumDescriptor {
+	return file_machine_machine_proto_enumTypes[0].Descriptor()
+}
+
+func (LogKind) Type() protoreflect.EnumType {
+	return &file_machine_machine_proto_enumTypes[0]
+}
+
+func (x LogKind) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use LogKind.Descriptor instead.
+func (LogKind) EnumDescriptor() ([]byte, []int) {
+	return file_machine_machine_proto_rawDescGZIP(), []int{0}
+}
+
 type ApplyConfigurationRequest_Mode int32
 
 const (
@@ -68,11 +122,11 @@ func (x ApplyConfigurationRequest_Mode) String() string {
 }
 
 func (ApplyConfigurationRequest_Mode) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[0].Descriptor()
+	return file_machine_machine_proto_enumTypes[1].Descriptor()
 }
 
 func (ApplyConfigurationRequest_Mode) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[0]
+	return &file_machine_machine_proto_enumTypes[1]
 }
 
 func (x ApplyConfigurationRequest_Mode) Number() protoreflect.EnumNumber {
@@ -117,11 +171,11 @@ func (x RebootRequest_Mode) String() string {
 }
 
 func (RebootRequest_Mode) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[1].Descriptor()
+	return file_machine_machine_proto_enumTypes[2].Descriptor()
 }
 
 func (RebootRequest_Mode) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[1]
+	return &file_machine_machine_proto_enumTypes[2]
 }
 
 func (x RebootRequest_Mode) Number() protoreflect.EnumNumber {
@@ -166,11 +220,11 @@ func (x SequenceEvent_Action) String() string {
 }
 
 func (SequenceEvent_Action) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[2].Descriptor()
+	return file_machine_machine_proto_enumTypes[3].Descriptor()
 }
 
 func (SequenceEvent_Action) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[2]
+	return &file_machine_machine_proto_enumTypes[3]
 }
 
 func (x SequenceEvent_Action) Number() protoreflect.EnumNumber {
@@ -212,11 +266,11 @@ func (x PhaseEvent_Action) String() string {
 }
 
 func (PhaseEvent_Action) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[3].Descriptor()
+	return file_machine_machine_proto_enumTypes[4].Descriptor()
 }
 
 func (PhaseEvent_Action) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[3]
+	return &file_machine_machine_proto_enumTypes[4]
 }
 
 func (x PhaseEvent_Action) Number() protoreflect.EnumNumber {
@@ -258,11 +312,11 @@ func (x TaskEvent_Action) String() string {
 }
 
 func (TaskEvent_Action) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[4].Descriptor()
+	return file_machine_machine_proto_enumTypes[5].Descriptor()
 }
 
 func (TaskEvent_Action) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[4]
+	return &file_machine_machine_proto_enumTypes[5]
 }
 
 func (x TaskEvent_Action) Number() protoreflect.EnumNumber {
@@ -325,11 +379,11 @@ func (x ServiceStateEvent_Action) String() string {
 }
 
 func (ServiceStateEvent_Action) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[5].Descriptor()
+	return file_machine_machine_proto_enumTypes[6].Descriptor()
 }
 
 func (ServiceStateEvent_Action) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[5]
+	return &file_machine_machine_proto_enumTypes[6]
 }
 
 func (x ServiceStateEvent_Action) Number() protoreflect.EnumNumber {
@@ -392,11 +446,11 @@ func (x MachineStatusEvent_MachineStage) String() string {
 }
 
 func (MachineStatusEvent_MachineStage) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[6].Descriptor()
+	return file_machine_machine_proto_enumTypes[7].Descriptor()
 }
 
 func (MachineStatusEvent_MachineStage) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[6]
+	return &file_machine_machine_proto_enumTypes[7]
 }
 
 func (x MachineStatusEvent_MachineStage) Number() protoreflect.EnumNumber {
@@ -441,11 +495,11 @@ func (x ResetRequest_WipeMode) String() string {
 }
 
 func (ResetRequest_WipeMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[7].Descriptor()
+	return file_machine_machine_proto_enumTypes[8].Descriptor()
 }
 
 func (ResetRequest_WipeMode) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[7]
+	return &file_machine_machine_proto_enumTypes[8]
 }
 
 func (x ResetRequest_WipeMode) Number() protoreflect.EnumNumber {
@@ -487,11 +541,11 @@ func (x UpgradeRequest_RebootMode) String() string {
 }
 
 func (UpgradeRequest_RebootMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[8].Descriptor()
+	return file_machine_machine_proto_enumTypes[9].Descriptor()
 }
 
 func (UpgradeRequest_RebootMode) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[8]
+	return &file_machine_machine_proto_enumTypes[9]
 }
 
 func (x UpgradeRequest_RebootMode) Number() protoreflect.EnumNumber {
@@ -540,11 +594,11 @@ func (x ListRequest_Type) String() string {
 }
 
 func (ListRequest_Type) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[9].Descriptor()
+	return file_machine_machine_proto_enumTypes[10].Descriptor()
 }
 
 func (ListRequest_Type) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[9]
+	return &file_machine_machine_proto_enumTypes[10]
 }
 
 func (x ListRequest_Type) Number() protoreflect.EnumNumber {
@@ -589,11 +643,11 @@ func (x EtcdMemberAlarm_AlarmType) String() string {
 }
 
 func (EtcdMemberAlarm_AlarmType) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[10].Descriptor()
+	return file_machine_machine_proto_enumTypes[11].Descriptor()
 }
 
 func (EtcdMemberAlarm_AlarmType) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[10]
+	return &file_machine_machine_proto_enumTypes[11]
 }
 
 func (x EtcdMemberAlarm_AlarmType) Number() protoreflect.EnumNumber {
@@ -641,11 +695,11 @@ func (x MachineConfig_MachineType) String() string {
 }
 
 func (MachineConfig_MachineType) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[11].Descriptor()
+	return file_machine_machine_proto_enumTypes[12].Descriptor()
 }
 
 func (MachineConfig_MachineType) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[11]
+	return &file_machine_machine_proto_enumTypes[12]
 }
 
 func (x MachineConfig_MachineType) Number() protoreflect.EnumNumber {
@@ -690,11 +744,11 @@ func (x NetstatRequest_Filter) String() string {
 }
 
 func (NetstatRequest_Filter) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[12].Descriptor()
+	return file_machine_machine_proto_enumTypes[13].Descriptor()
 }
 
 func (NetstatRequest_Filter) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[12]
+	return &file_machine_machine_proto_enumTypes[13]
 }
 
 func (x NetstatRequest_Filter) Number() protoreflect.EnumNumber {
@@ -766,11 +820,11 @@ func (x ConnectRecord_State) String() string {
 }
 
 func (ConnectRecord_State) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[13].Descriptor()
+	return file_machine_machine_proto_enumTypes[14].Descriptor()
 }
 
 func (ConnectRecord_State) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[13]
+	return &file_machine_machine_proto_enumTypes[14]
 }
 
 func (x ConnectRecord_State) Number() protoreflect.EnumNumber {
@@ -821,11 +875,11 @@ func (x ConnectRecord_TimerActive) String() string {
 }
 
 func (ConnectRecord_TimerActive) Descriptor() protoreflect.EnumDescriptor {
-	return file_machine_machine_proto_enumTypes[14].Descriptor()
+	return file_machine_machine_proto_enumTypes[15].Descriptor()
 }
 
 func (ConnectRecord_TimerActive) Type() protoreflect.EnumType {
-	return &file_machine_machine_proto_enumTypes[14]
+	return &file_machine_machine_proto_enumTypes[15]
 }
 
 func (x ConnectRecord_TimerActive) Number() protoreflect.EnumNumber {
@@ -4185,15 +4239,17 @@ func (x *FeaturesInfo) GetRbac() bool {
 }
 
 // rpc logs
-// The request message containing the process name.
+// The request message containing the log source name.
 type LogsRequest struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Namespace string                 `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	Id        string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	// driver might be default "containerd" or "cri"
-	Driver        common.ContainerDriver `protobuf:"varint,3,opt,name=driver,proto3,enum=common.ContainerDriver" json:"driver,omitempty"`
-	Follow        bool                   `protobuf:"varint,4,opt,name=follow,proto3" json:"follow,omitempty"`
-	TailLines     int32                  `protobuf:"varint,5,opt,name=tail_lines,json=tailLines,proto3" json:"tail_lines,omitempty"`
+	Driver    common.ContainerDriver `protobuf:"varint,3,opt,name=driver,proto3,enum=common.ContainerDriver" json:"driver,omitempty"`
+	Follow    bool                   `protobuf:"varint,4,opt,name=follow,proto3" json:"follow,omitempty"`
+	TailLines int32                  `protobuf:"varint,5,opt,name=tail_lines,json=tailLines,proto3" json:"tail_lines,omitempty"`
+	// VM serial history requires Admin. VM and service kinds require the system namespace.
+	Kind          LogKind `protobuf:"varint,6,opt,name=kind,proto3,enum=machine.LogKind" json:"kind,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4261,6 +4317,13 @@ func (x *LogsRequest) GetTailLines() int32 {
 		return x.TailLines
 	}
 	return 0
+}
+
+func (x *LogsRequest) GetKind() LogKind {
+	if x != nil {
+		return x.Kind
+	}
+	return LogKind_LOG_KIND_UNSPECIFIED
 }
 
 type ReadRequest struct {
@@ -11908,14 +11971,15 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04mode\x18\x02 \x01(\tR\x04mode\"\"\n" +
 	"\fFeaturesInfo\x12\x12\n" +
-	"\x04rbac\x18\x01 \x01(\bR\x04rbac\"\xa3\x01\n" +
+	"\x04rbac\x18\x01 \x01(\bR\x04rbac\"\xc9\x01\n" +
 	"\vLogsRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12/\n" +
 	"\x06driver\x18\x03 \x01(\x0e2\x17.common.ContainerDriverR\x06driver\x12\x16\n" +
 	"\x06follow\x18\x04 \x01(\bR\x06follow\x12\x1d\n" +
 	"\n" +
-	"tail_lines\x18\x05 \x01(\x05R\ttailLines\"!\n" +
+	"tail_lines\x18\x05 \x01(\x05R\ttailLines\x12$\n" +
+	"\x04kind\x18\x06 \x01(\x0e2\x10.machine.LogKindR\x04kind\"!\n" +
 	"\vReadRequest\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\"O\n" +
 	"\rLogsContainer\x12,\n" +
@@ -12503,7 +12567,12 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\tImagePull\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\"C\n" +
 	"\x11ImagePullResponse\x12.\n" +
-	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xef\x1d\n" +
+	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages*b\n" +
+	"\aLogKind\x12\x18\n" +
+	"\x14LOG_KIND_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12LOG_KIND_CONTAINER\x10\x01\x12\x0f\n" +
+	"\vLOG_KIND_VM\x10\x02\x12\x14\n" +
+	"\x10LOG_KIND_SERVICE\x10\x032\xef\x1d\n" +
 	"\x0eMachineService\x12]\n" +
 	"\x12ApplyConfiguration\x12\".machine.ApplyConfigurationRequest\x1a#.machine.ApplyConfigurationResponse\x12B\n" +
 	"\tBootstrap\x12\x19.machine.BootstrapRequest\x1a\x1a.machine.BootstrapResponse\x12E\n" +
@@ -12578,494 +12647,496 @@ func file_machine_machine_proto_rawDescGZIP() []byte {
 	return file_machine_machine_proto_rawDescData
 }
 
-var file_machine_machine_proto_enumTypes = make([]protoimpl.EnumInfo, 15)
+var file_machine_machine_proto_enumTypes = make([]protoimpl.EnumInfo, 16)
 var file_machine_machine_proto_msgTypes = make([]protoimpl.MessageInfo, 178)
 var file_machine_machine_proto_goTypes = []any{
-	(ApplyConfigurationRequest_Mode)(0),                     // 0: machine.ApplyConfigurationRequest.Mode
-	(RebootRequest_Mode)(0),                                 // 1: machine.RebootRequest.Mode
-	(SequenceEvent_Action)(0),                               // 2: machine.SequenceEvent.Action
-	(PhaseEvent_Action)(0),                                  // 3: machine.PhaseEvent.Action
-	(TaskEvent_Action)(0),                                   // 4: machine.TaskEvent.Action
-	(ServiceStateEvent_Action)(0),                           // 5: machine.ServiceStateEvent.Action
-	(MachineStatusEvent_MachineStage)(0),                    // 6: machine.MachineStatusEvent.MachineStage
-	(ResetRequest_WipeMode)(0),                              // 7: machine.ResetRequest.WipeMode
-	(UpgradeRequest_RebootMode)(0),                          // 8: machine.UpgradeRequest.RebootMode
-	(ListRequest_Type)(0),                                   // 9: machine.ListRequest.Type
-	(EtcdMemberAlarm_AlarmType)(0),                          // 10: machine.EtcdMemberAlarm.AlarmType
-	(MachineConfig_MachineType)(0),                          // 11: machine.MachineConfig.MachineType
-	(NetstatRequest_Filter)(0),                              // 12: machine.NetstatRequest.Filter
-	(ConnectRecord_State)(0),                                // 13: machine.ConnectRecord.State
-	(ConnectRecord_TimerActive)(0),                          // 14: machine.ConnectRecord.TimerActive
-	(*ApplyConfigurationRequest)(nil),                       // 15: machine.ApplyConfigurationRequest
-	(*ApplyConfiguration)(nil),                              // 16: machine.ApplyConfiguration
-	(*ApplyConfigurationResponse)(nil),                      // 17: machine.ApplyConfigurationResponse
-	(*RebootRequest)(nil),                                   // 18: machine.RebootRequest
-	(*Reboot)(nil),                                          // 19: machine.Reboot
-	(*RebootResponse)(nil),                                  // 20: machine.RebootResponse
-	(*BootstrapRequest)(nil),                                // 21: machine.BootstrapRequest
-	(*Bootstrap)(nil),                                       // 22: machine.Bootstrap
-	(*BootstrapResponse)(nil),                               // 23: machine.BootstrapResponse
-	(*SequenceEvent)(nil),                                   // 24: machine.SequenceEvent
-	(*PhaseEvent)(nil),                                      // 25: machine.PhaseEvent
-	(*TaskEvent)(nil),                                       // 26: machine.TaskEvent
-	(*ServiceStateEvent)(nil),                               // 27: machine.ServiceStateEvent
-	(*RestartEvent)(nil),                                    // 28: machine.RestartEvent
-	(*ConfigLoadErrorEvent)(nil),                            // 29: machine.ConfigLoadErrorEvent
-	(*ConfigValidationErrorEvent)(nil),                      // 30: machine.ConfigValidationErrorEvent
-	(*AddressEvent)(nil),                                    // 31: machine.AddressEvent
-	(*MachineStatusEvent)(nil),                              // 32: machine.MachineStatusEvent
-	(*EventsRequest)(nil),                                   // 33: machine.EventsRequest
-	(*Event)(nil),                                           // 34: machine.Event
-	(*ResetPartitionSpec)(nil),                              // 35: machine.ResetPartitionSpec
-	(*ResetRequest)(nil),                                    // 36: machine.ResetRequest
-	(*Reset)(nil),                                           // 37: machine.Reset
-	(*ResetResponse)(nil),                                   // 38: machine.ResetResponse
-	(*Shutdown)(nil),                                        // 39: machine.Shutdown
-	(*ShutdownRequest)(nil),                                 // 40: machine.ShutdownRequest
-	(*ShutdownResponse)(nil),                                // 41: machine.ShutdownResponse
-	(*UpgradeRequest)(nil),                                  // 42: machine.UpgradeRequest
-	(*Upgrade)(nil),                                         // 43: machine.Upgrade
-	(*UpgradeResponse)(nil),                                 // 44: machine.UpgradeResponse
-	(*ServiceList)(nil),                                     // 45: machine.ServiceList
-	(*ServiceListResponse)(nil),                             // 46: machine.ServiceListResponse
-	(*ServiceInfo)(nil),                                     // 47: machine.ServiceInfo
-	(*ServiceEvents)(nil),                                   // 48: machine.ServiceEvents
-	(*ServiceEvent)(nil),                                    // 49: machine.ServiceEvent
-	(*ServiceHealth)(nil),                                   // 50: machine.ServiceHealth
-	(*ServiceStartRequest)(nil),                             // 51: machine.ServiceStartRequest
-	(*ServiceStart)(nil),                                    // 52: machine.ServiceStart
-	(*ServiceStartResponse)(nil),                            // 53: machine.ServiceStartResponse
-	(*ServiceStopRequest)(nil),                              // 54: machine.ServiceStopRequest
-	(*ServiceStop)(nil),                                     // 55: machine.ServiceStop
-	(*ServiceStopResponse)(nil),                             // 56: machine.ServiceStopResponse
-	(*ServiceRestartRequest)(nil),                           // 57: machine.ServiceRestartRequest
-	(*ServiceRestart)(nil),                                  // 58: machine.ServiceRestart
-	(*ServiceRestartResponse)(nil),                          // 59: machine.ServiceRestartResponse
-	(*CopyRequest)(nil),                                     // 60: machine.CopyRequest
-	(*ListRequest)(nil),                                     // 61: machine.ListRequest
-	(*DiskUsageRequest)(nil),                                // 62: machine.DiskUsageRequest
-	(*FileInfo)(nil),                                        // 63: machine.FileInfo
-	(*Xattr)(nil),                                           // 64: machine.Xattr
-	(*DiskUsageInfo)(nil),                                   // 65: machine.DiskUsageInfo
-	(*Mounts)(nil),                                          // 66: machine.Mounts
-	(*MountsResponse)(nil),                                  // 67: machine.MountsResponse
-	(*MountStat)(nil),                                       // 68: machine.MountStat
-	(*Version)(nil),                                         // 69: machine.Version
-	(*VersionResponse)(nil),                                 // 70: machine.VersionResponse
-	(*VersionInfo)(nil),                                     // 71: machine.VersionInfo
-	(*PlatformInfo)(nil),                                    // 72: machine.PlatformInfo
-	(*FeaturesInfo)(nil),                                    // 73: machine.FeaturesInfo
-	(*LogsRequest)(nil),                                     // 74: machine.LogsRequest
-	(*ReadRequest)(nil),                                     // 75: machine.ReadRequest
-	(*LogsContainer)(nil),                                   // 76: machine.LogsContainer
-	(*LogsContainersResponse)(nil),                          // 77: machine.LogsContainersResponse
-	(*RollbackRequest)(nil),                                 // 78: machine.RollbackRequest
-	(*Rollback)(nil),                                        // 79: machine.Rollback
-	(*RollbackResponse)(nil),                                // 80: machine.RollbackResponse
-	(*ContainersRequest)(nil),                               // 81: machine.ContainersRequest
-	(*ContainerInfo)(nil),                                   // 82: machine.ContainerInfo
-	(*Container)(nil),                                       // 83: machine.Container
-	(*ContainersResponse)(nil),                              // 84: machine.ContainersResponse
-	(*DmesgRequest)(nil),                                    // 85: machine.DmesgRequest
-	(*ProcessesResponse)(nil),                               // 86: machine.ProcessesResponse
-	(*Process)(nil),                                         // 87: machine.Process
-	(*ProcessInfo)(nil),                                     // 88: machine.ProcessInfo
-	(*RestartRequest)(nil),                                  // 89: machine.RestartRequest
-	(*Restart)(nil),                                         // 90: machine.Restart
-	(*RestartResponse)(nil),                                 // 91: machine.RestartResponse
-	(*StatsRequest)(nil),                                    // 92: machine.StatsRequest
-	(*Stats)(nil),                                           // 93: machine.Stats
-	(*StatsResponse)(nil),                                   // 94: machine.StatsResponse
-	(*Stat)(nil),                                            // 95: machine.Stat
-	(*Memory)(nil),                                          // 96: machine.Memory
-	(*MemoryResponse)(nil),                                  // 97: machine.MemoryResponse
-	(*MemInfo)(nil),                                         // 98: machine.MemInfo
-	(*HostnameResponse)(nil),                                // 99: machine.HostnameResponse
-	(*Hostname)(nil),                                        // 100: machine.Hostname
-	(*LoadAvgResponse)(nil),                                 // 101: machine.LoadAvgResponse
-	(*LoadAvg)(nil),                                         // 102: machine.LoadAvg
-	(*SystemStatResponse)(nil),                              // 103: machine.SystemStatResponse
-	(*SystemStat)(nil),                                      // 104: machine.SystemStat
-	(*CPUStat)(nil),                                         // 105: machine.CPUStat
-	(*SoftIRQStat)(nil),                                     // 106: machine.SoftIRQStat
-	(*CPUFreqStatsResponse)(nil),                            // 107: machine.CPUFreqStatsResponse
-	(*CPUsFreqStats)(nil),                                   // 108: machine.CPUsFreqStats
-	(*CPUFreqStats)(nil),                                    // 109: machine.CPUFreqStats
-	(*CPUInfoResponse)(nil),                                 // 110: machine.CPUInfoResponse
-	(*CPUsInfo)(nil),                                        // 111: machine.CPUsInfo
-	(*CPUInfo)(nil),                                         // 112: machine.CPUInfo
-	(*NetworkDeviceStatsResponse)(nil),                      // 113: machine.NetworkDeviceStatsResponse
-	(*NetworkDeviceStats)(nil),                              // 114: machine.NetworkDeviceStats
-	(*NetDev)(nil),                                          // 115: machine.NetDev
-	(*DiskStatsResponse)(nil),                               // 116: machine.DiskStatsResponse
-	(*DiskStats)(nil),                                       // 117: machine.DiskStats
-	(*DiskStat)(nil),                                        // 118: machine.DiskStat
-	(*EtcdLeaveClusterRequest)(nil),                         // 119: machine.EtcdLeaveClusterRequest
-	(*EtcdLeaveCluster)(nil),                                // 120: machine.EtcdLeaveCluster
-	(*EtcdLeaveClusterResponse)(nil),                        // 121: machine.EtcdLeaveClusterResponse
-	(*EtcdRemoveMemberRequest)(nil),                         // 122: machine.EtcdRemoveMemberRequest
-	(*EtcdRemoveMember)(nil),                                // 123: machine.EtcdRemoveMember
-	(*EtcdRemoveMemberResponse)(nil),                        // 124: machine.EtcdRemoveMemberResponse
-	(*EtcdRemoveMemberByIDRequest)(nil),                     // 125: machine.EtcdRemoveMemberByIDRequest
-	(*EtcdRemoveMemberByID)(nil),                            // 126: machine.EtcdRemoveMemberByID
-	(*EtcdRemoveMemberByIDResponse)(nil),                    // 127: machine.EtcdRemoveMemberByIDResponse
-	(*EtcdForfeitLeadershipRequest)(nil),                    // 128: machine.EtcdForfeitLeadershipRequest
-	(*EtcdForfeitLeadership)(nil),                           // 129: machine.EtcdForfeitLeadership
-	(*EtcdForfeitLeadershipResponse)(nil),                   // 130: machine.EtcdForfeitLeadershipResponse
-	(*EtcdMemberListRequest)(nil),                           // 131: machine.EtcdMemberListRequest
-	(*EtcdMember)(nil),                                      // 132: machine.EtcdMember
-	(*EtcdMembers)(nil),                                     // 133: machine.EtcdMembers
-	(*EtcdMemberListResponse)(nil),                          // 134: machine.EtcdMemberListResponse
-	(*EtcdSnapshotRequest)(nil),                             // 135: machine.EtcdSnapshotRequest
-	(*EtcdRecover)(nil),                                     // 136: machine.EtcdRecover
-	(*EtcdRecoverResponse)(nil),                             // 137: machine.EtcdRecoverResponse
-	(*EtcdAlarmListResponse)(nil),                           // 138: machine.EtcdAlarmListResponse
-	(*EtcdAlarm)(nil),                                       // 139: machine.EtcdAlarm
-	(*EtcdMemberAlarm)(nil),                                 // 140: machine.EtcdMemberAlarm
-	(*EtcdAlarmDisarmResponse)(nil),                         // 141: machine.EtcdAlarmDisarmResponse
-	(*EtcdAlarmDisarm)(nil),                                 // 142: machine.EtcdAlarmDisarm
-	(*EtcdDefragmentResponse)(nil),                          // 143: machine.EtcdDefragmentResponse
-	(*EtcdDefragment)(nil),                                  // 144: machine.EtcdDefragment
-	(*EtcdStatusResponse)(nil),                              // 145: machine.EtcdStatusResponse
-	(*EtcdStatus)(nil),                                      // 146: machine.EtcdStatus
-	(*EtcdMemberStatus)(nil),                                // 147: machine.EtcdMemberStatus
-	(*EtcdDowngradeValidateRequest)(nil),                    // 148: machine.EtcdDowngradeValidateRequest
-	(*EtcdDowngradeValidateResponse)(nil),                   // 149: machine.EtcdDowngradeValidateResponse
-	(*EtcdDowngradeValidate)(nil),                           // 150: machine.EtcdDowngradeValidate
-	(*EtcdDowngradeEnableRequest)(nil),                      // 151: machine.EtcdDowngradeEnableRequest
-	(*EtcdDowngradeEnableResponse)(nil),                     // 152: machine.EtcdDowngradeEnableResponse
-	(*EtcdDowngradeEnable)(nil),                             // 153: machine.EtcdDowngradeEnable
-	(*EtcdDowngradeCancelResponse)(nil),                     // 154: machine.EtcdDowngradeCancelResponse
-	(*EtcdDowngradeCancel)(nil),                             // 155: machine.EtcdDowngradeCancel
-	(*EtcdClusterDowngrade)(nil),                            // 156: machine.EtcdClusterDowngrade
-	(*RouteConfig)(nil),                                     // 157: machine.RouteConfig
-	(*DHCPOptionsConfig)(nil),                               // 158: machine.DHCPOptionsConfig
-	(*NetworkDeviceConfig)(nil),                             // 159: machine.NetworkDeviceConfig
-	(*NetworkConfig)(nil),                                   // 160: machine.NetworkConfig
-	(*InstallConfig)(nil),                                   // 161: machine.InstallConfig
-	(*MachineConfig)(nil),                                   // 162: machine.MachineConfig
-	(*ControlPlaneConfig)(nil),                              // 163: machine.ControlPlaneConfig
-	(*CNIConfig)(nil),                                       // 164: machine.CNIConfig
-	(*ClusterNetworkConfig)(nil),                            // 165: machine.ClusterNetworkConfig
-	(*ClusterConfig)(nil),                                   // 166: machine.ClusterConfig
-	(*GenerateClientConfigurationRequest)(nil),              // 167: machine.GenerateClientConfigurationRequest
-	(*GenerateClientConfiguration)(nil),                     // 168: machine.GenerateClientConfiguration
-	(*GenerateClientConfigurationResponse)(nil),             // 169: machine.GenerateClientConfigurationResponse
-	(*PacketCaptureRequest)(nil),                            // 170: machine.PacketCaptureRequest
-	(*BPFInstruction)(nil),                                  // 171: machine.BPFInstruction
-	(*NetstatRequest)(nil),                                  // 172: machine.NetstatRequest
-	(*ConnectRecord)(nil),                                   // 173: machine.ConnectRecord
-	(*Netstat)(nil),                                         // 174: machine.Netstat
-	(*NetstatResponse)(nil),                                 // 175: machine.NetstatResponse
-	(*MetaWriteRequest)(nil),                                // 176: machine.MetaWriteRequest
-	(*MetaWrite)(nil),                                       // 177: machine.MetaWrite
-	(*MetaWriteResponse)(nil),                               // 178: machine.MetaWriteResponse
-	(*MetaDeleteRequest)(nil),                               // 179: machine.MetaDeleteRequest
-	(*MetaDelete)(nil),                                      // 180: machine.MetaDelete
-	(*MetaDeleteResponse)(nil),                              // 181: machine.MetaDeleteResponse
-	(*ImageListRequest)(nil),                                // 182: machine.ImageListRequest
-	(*ImageListResponse)(nil),                               // 183: machine.ImageListResponse
-	(*ImagePullRequest)(nil),                                // 184: machine.ImagePullRequest
-	(*ImagePull)(nil),                                       // 185: machine.ImagePull
-	(*ImagePullResponse)(nil),                               // 186: machine.ImagePullResponse
-	(*MachineStatusEvent_MachineStatus)(nil),                // 187: machine.MachineStatusEvent.MachineStatus
-	(*MachineStatusEvent_MachineStatus_UnmetCondition)(nil), // 188: machine.MachineStatusEvent.MachineStatus.UnmetCondition
-	(*NetstatRequest_Feature)(nil),                          // 189: machine.NetstatRequest.Feature
-	(*NetstatRequest_L4Proto)(nil),                          // 190: machine.NetstatRequest.L4proto
-	(*NetstatRequest_NetNS)(nil),                            // 191: machine.NetstatRequest.NetNS
-	(*ConnectRecord_Process)(nil),                           // 192: machine.ConnectRecord.Process
-	(*durationpb.Duration)(nil),                             // 193: google.protobuf.Duration
-	(*common.Metadata)(nil),                                 // 194: common.Metadata
-	(*common.Error)(nil),                                    // 195: common.Error
-	(*anypb.Any)(nil),                                       // 196: google.protobuf.Any
-	(*timestamppb.Timestamp)(nil),                           // 197: google.protobuf.Timestamp
-	(common.ContainerDriver)(0),                             // 198: common.ContainerDriver
-	(common.ContainerdNamespace)(0),                         // 199: common.ContainerdNamespace
-	(*emptypb.Empty)(nil),                                   // 200: google.protobuf.Empty
-	(*common.Data)(nil),                                     // 201: common.Data
+	(LogKind)(0),                                            // 0: machine.LogKind
+	(ApplyConfigurationRequest_Mode)(0),                     // 1: machine.ApplyConfigurationRequest.Mode
+	(RebootRequest_Mode)(0),                                 // 2: machine.RebootRequest.Mode
+	(SequenceEvent_Action)(0),                               // 3: machine.SequenceEvent.Action
+	(PhaseEvent_Action)(0),                                  // 4: machine.PhaseEvent.Action
+	(TaskEvent_Action)(0),                                   // 5: machine.TaskEvent.Action
+	(ServiceStateEvent_Action)(0),                           // 6: machine.ServiceStateEvent.Action
+	(MachineStatusEvent_MachineStage)(0),                    // 7: machine.MachineStatusEvent.MachineStage
+	(ResetRequest_WipeMode)(0),                              // 8: machine.ResetRequest.WipeMode
+	(UpgradeRequest_RebootMode)(0),                          // 9: machine.UpgradeRequest.RebootMode
+	(ListRequest_Type)(0),                                   // 10: machine.ListRequest.Type
+	(EtcdMemberAlarm_AlarmType)(0),                          // 11: machine.EtcdMemberAlarm.AlarmType
+	(MachineConfig_MachineType)(0),                          // 12: machine.MachineConfig.MachineType
+	(NetstatRequest_Filter)(0),                              // 13: machine.NetstatRequest.Filter
+	(ConnectRecord_State)(0),                                // 14: machine.ConnectRecord.State
+	(ConnectRecord_TimerActive)(0),                          // 15: machine.ConnectRecord.TimerActive
+	(*ApplyConfigurationRequest)(nil),                       // 16: machine.ApplyConfigurationRequest
+	(*ApplyConfiguration)(nil),                              // 17: machine.ApplyConfiguration
+	(*ApplyConfigurationResponse)(nil),                      // 18: machine.ApplyConfigurationResponse
+	(*RebootRequest)(nil),                                   // 19: machine.RebootRequest
+	(*Reboot)(nil),                                          // 20: machine.Reboot
+	(*RebootResponse)(nil),                                  // 21: machine.RebootResponse
+	(*BootstrapRequest)(nil),                                // 22: machine.BootstrapRequest
+	(*Bootstrap)(nil),                                       // 23: machine.Bootstrap
+	(*BootstrapResponse)(nil),                               // 24: machine.BootstrapResponse
+	(*SequenceEvent)(nil),                                   // 25: machine.SequenceEvent
+	(*PhaseEvent)(nil),                                      // 26: machine.PhaseEvent
+	(*TaskEvent)(nil),                                       // 27: machine.TaskEvent
+	(*ServiceStateEvent)(nil),                               // 28: machine.ServiceStateEvent
+	(*RestartEvent)(nil),                                    // 29: machine.RestartEvent
+	(*ConfigLoadErrorEvent)(nil),                            // 30: machine.ConfigLoadErrorEvent
+	(*ConfigValidationErrorEvent)(nil),                      // 31: machine.ConfigValidationErrorEvent
+	(*AddressEvent)(nil),                                    // 32: machine.AddressEvent
+	(*MachineStatusEvent)(nil),                              // 33: machine.MachineStatusEvent
+	(*EventsRequest)(nil),                                   // 34: machine.EventsRequest
+	(*Event)(nil),                                           // 35: machine.Event
+	(*ResetPartitionSpec)(nil),                              // 36: machine.ResetPartitionSpec
+	(*ResetRequest)(nil),                                    // 37: machine.ResetRequest
+	(*Reset)(nil),                                           // 38: machine.Reset
+	(*ResetResponse)(nil),                                   // 39: machine.ResetResponse
+	(*Shutdown)(nil),                                        // 40: machine.Shutdown
+	(*ShutdownRequest)(nil),                                 // 41: machine.ShutdownRequest
+	(*ShutdownResponse)(nil),                                // 42: machine.ShutdownResponse
+	(*UpgradeRequest)(nil),                                  // 43: machine.UpgradeRequest
+	(*Upgrade)(nil),                                         // 44: machine.Upgrade
+	(*UpgradeResponse)(nil),                                 // 45: machine.UpgradeResponse
+	(*ServiceList)(nil),                                     // 46: machine.ServiceList
+	(*ServiceListResponse)(nil),                             // 47: machine.ServiceListResponse
+	(*ServiceInfo)(nil),                                     // 48: machine.ServiceInfo
+	(*ServiceEvents)(nil),                                   // 49: machine.ServiceEvents
+	(*ServiceEvent)(nil),                                    // 50: machine.ServiceEvent
+	(*ServiceHealth)(nil),                                   // 51: machine.ServiceHealth
+	(*ServiceStartRequest)(nil),                             // 52: machine.ServiceStartRequest
+	(*ServiceStart)(nil),                                    // 53: machine.ServiceStart
+	(*ServiceStartResponse)(nil),                            // 54: machine.ServiceStartResponse
+	(*ServiceStopRequest)(nil),                              // 55: machine.ServiceStopRequest
+	(*ServiceStop)(nil),                                     // 56: machine.ServiceStop
+	(*ServiceStopResponse)(nil),                             // 57: machine.ServiceStopResponse
+	(*ServiceRestartRequest)(nil),                           // 58: machine.ServiceRestartRequest
+	(*ServiceRestart)(nil),                                  // 59: machine.ServiceRestart
+	(*ServiceRestartResponse)(nil),                          // 60: machine.ServiceRestartResponse
+	(*CopyRequest)(nil),                                     // 61: machine.CopyRequest
+	(*ListRequest)(nil),                                     // 62: machine.ListRequest
+	(*DiskUsageRequest)(nil),                                // 63: machine.DiskUsageRequest
+	(*FileInfo)(nil),                                        // 64: machine.FileInfo
+	(*Xattr)(nil),                                           // 65: machine.Xattr
+	(*DiskUsageInfo)(nil),                                   // 66: machine.DiskUsageInfo
+	(*Mounts)(nil),                                          // 67: machine.Mounts
+	(*MountsResponse)(nil),                                  // 68: machine.MountsResponse
+	(*MountStat)(nil),                                       // 69: machine.MountStat
+	(*Version)(nil),                                         // 70: machine.Version
+	(*VersionResponse)(nil),                                 // 71: machine.VersionResponse
+	(*VersionInfo)(nil),                                     // 72: machine.VersionInfo
+	(*PlatformInfo)(nil),                                    // 73: machine.PlatformInfo
+	(*FeaturesInfo)(nil),                                    // 74: machine.FeaturesInfo
+	(*LogsRequest)(nil),                                     // 75: machine.LogsRequest
+	(*ReadRequest)(nil),                                     // 76: machine.ReadRequest
+	(*LogsContainer)(nil),                                   // 77: machine.LogsContainer
+	(*LogsContainersResponse)(nil),                          // 78: machine.LogsContainersResponse
+	(*RollbackRequest)(nil),                                 // 79: machine.RollbackRequest
+	(*Rollback)(nil),                                        // 80: machine.Rollback
+	(*RollbackResponse)(nil),                                // 81: machine.RollbackResponse
+	(*ContainersRequest)(nil),                               // 82: machine.ContainersRequest
+	(*ContainerInfo)(nil),                                   // 83: machine.ContainerInfo
+	(*Container)(nil),                                       // 84: machine.Container
+	(*ContainersResponse)(nil),                              // 85: machine.ContainersResponse
+	(*DmesgRequest)(nil),                                    // 86: machine.DmesgRequest
+	(*ProcessesResponse)(nil),                               // 87: machine.ProcessesResponse
+	(*Process)(nil),                                         // 88: machine.Process
+	(*ProcessInfo)(nil),                                     // 89: machine.ProcessInfo
+	(*RestartRequest)(nil),                                  // 90: machine.RestartRequest
+	(*Restart)(nil),                                         // 91: machine.Restart
+	(*RestartResponse)(nil),                                 // 92: machine.RestartResponse
+	(*StatsRequest)(nil),                                    // 93: machine.StatsRequest
+	(*Stats)(nil),                                           // 94: machine.Stats
+	(*StatsResponse)(nil),                                   // 95: machine.StatsResponse
+	(*Stat)(nil),                                            // 96: machine.Stat
+	(*Memory)(nil),                                          // 97: machine.Memory
+	(*MemoryResponse)(nil),                                  // 98: machine.MemoryResponse
+	(*MemInfo)(nil),                                         // 99: machine.MemInfo
+	(*HostnameResponse)(nil),                                // 100: machine.HostnameResponse
+	(*Hostname)(nil),                                        // 101: machine.Hostname
+	(*LoadAvgResponse)(nil),                                 // 102: machine.LoadAvgResponse
+	(*LoadAvg)(nil),                                         // 103: machine.LoadAvg
+	(*SystemStatResponse)(nil),                              // 104: machine.SystemStatResponse
+	(*SystemStat)(nil),                                      // 105: machine.SystemStat
+	(*CPUStat)(nil),                                         // 106: machine.CPUStat
+	(*SoftIRQStat)(nil),                                     // 107: machine.SoftIRQStat
+	(*CPUFreqStatsResponse)(nil),                            // 108: machine.CPUFreqStatsResponse
+	(*CPUsFreqStats)(nil),                                   // 109: machine.CPUsFreqStats
+	(*CPUFreqStats)(nil),                                    // 110: machine.CPUFreqStats
+	(*CPUInfoResponse)(nil),                                 // 111: machine.CPUInfoResponse
+	(*CPUsInfo)(nil),                                        // 112: machine.CPUsInfo
+	(*CPUInfo)(nil),                                         // 113: machine.CPUInfo
+	(*NetworkDeviceStatsResponse)(nil),                      // 114: machine.NetworkDeviceStatsResponse
+	(*NetworkDeviceStats)(nil),                              // 115: machine.NetworkDeviceStats
+	(*NetDev)(nil),                                          // 116: machine.NetDev
+	(*DiskStatsResponse)(nil),                               // 117: machine.DiskStatsResponse
+	(*DiskStats)(nil),                                       // 118: machine.DiskStats
+	(*DiskStat)(nil),                                        // 119: machine.DiskStat
+	(*EtcdLeaveClusterRequest)(nil),                         // 120: machine.EtcdLeaveClusterRequest
+	(*EtcdLeaveCluster)(nil),                                // 121: machine.EtcdLeaveCluster
+	(*EtcdLeaveClusterResponse)(nil),                        // 122: machine.EtcdLeaveClusterResponse
+	(*EtcdRemoveMemberRequest)(nil),                         // 123: machine.EtcdRemoveMemberRequest
+	(*EtcdRemoveMember)(nil),                                // 124: machine.EtcdRemoveMember
+	(*EtcdRemoveMemberResponse)(nil),                        // 125: machine.EtcdRemoveMemberResponse
+	(*EtcdRemoveMemberByIDRequest)(nil),                     // 126: machine.EtcdRemoveMemberByIDRequest
+	(*EtcdRemoveMemberByID)(nil),                            // 127: machine.EtcdRemoveMemberByID
+	(*EtcdRemoveMemberByIDResponse)(nil),                    // 128: machine.EtcdRemoveMemberByIDResponse
+	(*EtcdForfeitLeadershipRequest)(nil),                    // 129: machine.EtcdForfeitLeadershipRequest
+	(*EtcdForfeitLeadership)(nil),                           // 130: machine.EtcdForfeitLeadership
+	(*EtcdForfeitLeadershipResponse)(nil),                   // 131: machine.EtcdForfeitLeadershipResponse
+	(*EtcdMemberListRequest)(nil),                           // 132: machine.EtcdMemberListRequest
+	(*EtcdMember)(nil),                                      // 133: machine.EtcdMember
+	(*EtcdMembers)(nil),                                     // 134: machine.EtcdMembers
+	(*EtcdMemberListResponse)(nil),                          // 135: machine.EtcdMemberListResponse
+	(*EtcdSnapshotRequest)(nil),                             // 136: machine.EtcdSnapshotRequest
+	(*EtcdRecover)(nil),                                     // 137: machine.EtcdRecover
+	(*EtcdRecoverResponse)(nil),                             // 138: machine.EtcdRecoverResponse
+	(*EtcdAlarmListResponse)(nil),                           // 139: machine.EtcdAlarmListResponse
+	(*EtcdAlarm)(nil),                                       // 140: machine.EtcdAlarm
+	(*EtcdMemberAlarm)(nil),                                 // 141: machine.EtcdMemberAlarm
+	(*EtcdAlarmDisarmResponse)(nil),                         // 142: machine.EtcdAlarmDisarmResponse
+	(*EtcdAlarmDisarm)(nil),                                 // 143: machine.EtcdAlarmDisarm
+	(*EtcdDefragmentResponse)(nil),                          // 144: machine.EtcdDefragmentResponse
+	(*EtcdDefragment)(nil),                                  // 145: machine.EtcdDefragment
+	(*EtcdStatusResponse)(nil),                              // 146: machine.EtcdStatusResponse
+	(*EtcdStatus)(nil),                                      // 147: machine.EtcdStatus
+	(*EtcdMemberStatus)(nil),                                // 148: machine.EtcdMemberStatus
+	(*EtcdDowngradeValidateRequest)(nil),                    // 149: machine.EtcdDowngradeValidateRequest
+	(*EtcdDowngradeValidateResponse)(nil),                   // 150: machine.EtcdDowngradeValidateResponse
+	(*EtcdDowngradeValidate)(nil),                           // 151: machine.EtcdDowngradeValidate
+	(*EtcdDowngradeEnableRequest)(nil),                      // 152: machine.EtcdDowngradeEnableRequest
+	(*EtcdDowngradeEnableResponse)(nil),                     // 153: machine.EtcdDowngradeEnableResponse
+	(*EtcdDowngradeEnable)(nil),                             // 154: machine.EtcdDowngradeEnable
+	(*EtcdDowngradeCancelResponse)(nil),                     // 155: machine.EtcdDowngradeCancelResponse
+	(*EtcdDowngradeCancel)(nil),                             // 156: machine.EtcdDowngradeCancel
+	(*EtcdClusterDowngrade)(nil),                            // 157: machine.EtcdClusterDowngrade
+	(*RouteConfig)(nil),                                     // 158: machine.RouteConfig
+	(*DHCPOptionsConfig)(nil),                               // 159: machine.DHCPOptionsConfig
+	(*NetworkDeviceConfig)(nil),                             // 160: machine.NetworkDeviceConfig
+	(*NetworkConfig)(nil),                                   // 161: machine.NetworkConfig
+	(*InstallConfig)(nil),                                   // 162: machine.InstallConfig
+	(*MachineConfig)(nil),                                   // 163: machine.MachineConfig
+	(*ControlPlaneConfig)(nil),                              // 164: machine.ControlPlaneConfig
+	(*CNIConfig)(nil),                                       // 165: machine.CNIConfig
+	(*ClusterNetworkConfig)(nil),                            // 166: machine.ClusterNetworkConfig
+	(*ClusterConfig)(nil),                                   // 167: machine.ClusterConfig
+	(*GenerateClientConfigurationRequest)(nil),              // 168: machine.GenerateClientConfigurationRequest
+	(*GenerateClientConfiguration)(nil),                     // 169: machine.GenerateClientConfiguration
+	(*GenerateClientConfigurationResponse)(nil),             // 170: machine.GenerateClientConfigurationResponse
+	(*PacketCaptureRequest)(nil),                            // 171: machine.PacketCaptureRequest
+	(*BPFInstruction)(nil),                                  // 172: machine.BPFInstruction
+	(*NetstatRequest)(nil),                                  // 173: machine.NetstatRequest
+	(*ConnectRecord)(nil),                                   // 174: machine.ConnectRecord
+	(*Netstat)(nil),                                         // 175: machine.Netstat
+	(*NetstatResponse)(nil),                                 // 176: machine.NetstatResponse
+	(*MetaWriteRequest)(nil),                                // 177: machine.MetaWriteRequest
+	(*MetaWrite)(nil),                                       // 178: machine.MetaWrite
+	(*MetaWriteResponse)(nil),                               // 179: machine.MetaWriteResponse
+	(*MetaDeleteRequest)(nil),                               // 180: machine.MetaDeleteRequest
+	(*MetaDelete)(nil),                                      // 181: machine.MetaDelete
+	(*MetaDeleteResponse)(nil),                              // 182: machine.MetaDeleteResponse
+	(*ImageListRequest)(nil),                                // 183: machine.ImageListRequest
+	(*ImageListResponse)(nil),                               // 184: machine.ImageListResponse
+	(*ImagePullRequest)(nil),                                // 185: machine.ImagePullRequest
+	(*ImagePull)(nil),                                       // 186: machine.ImagePull
+	(*ImagePullResponse)(nil),                               // 187: machine.ImagePullResponse
+	(*MachineStatusEvent_MachineStatus)(nil),                // 188: machine.MachineStatusEvent.MachineStatus
+	(*MachineStatusEvent_MachineStatus_UnmetCondition)(nil), // 189: machine.MachineStatusEvent.MachineStatus.UnmetCondition
+	(*NetstatRequest_Feature)(nil),                          // 190: machine.NetstatRequest.Feature
+	(*NetstatRequest_L4Proto)(nil),                          // 191: machine.NetstatRequest.L4proto
+	(*NetstatRequest_NetNS)(nil),                            // 192: machine.NetstatRequest.NetNS
+	(*ConnectRecord_Process)(nil),                           // 193: machine.ConnectRecord.Process
+	(*durationpb.Duration)(nil),                             // 194: google.protobuf.Duration
+	(*common.Metadata)(nil),                                 // 195: common.Metadata
+	(*common.Error)(nil),                                    // 196: common.Error
+	(*anypb.Any)(nil),                                       // 197: google.protobuf.Any
+	(*timestamppb.Timestamp)(nil),                           // 198: google.protobuf.Timestamp
+	(common.ContainerDriver)(0),                             // 199: common.ContainerDriver
+	(common.ContainerdNamespace)(0),                         // 200: common.ContainerdNamespace
+	(*emptypb.Empty)(nil),                                   // 201: google.protobuf.Empty
+	(*common.Data)(nil),                                     // 202: common.Data
 }
 var file_machine_machine_proto_depIdxs = []int32{
-	0,   // 0: machine.ApplyConfigurationRequest.mode:type_name -> machine.ApplyConfigurationRequest.Mode
-	193, // 1: machine.ApplyConfigurationRequest.try_mode_timeout:type_name -> google.protobuf.Duration
-	194, // 2: machine.ApplyConfiguration.metadata:type_name -> common.Metadata
-	0,   // 3: machine.ApplyConfiguration.mode:type_name -> machine.ApplyConfigurationRequest.Mode
-	16,  // 4: machine.ApplyConfigurationResponse.messages:type_name -> machine.ApplyConfiguration
-	1,   // 5: machine.RebootRequest.mode:type_name -> machine.RebootRequest.Mode
-	194, // 6: machine.Reboot.metadata:type_name -> common.Metadata
-	19,  // 7: machine.RebootResponse.messages:type_name -> machine.Reboot
-	194, // 8: machine.Bootstrap.metadata:type_name -> common.Metadata
-	22,  // 9: machine.BootstrapResponse.messages:type_name -> machine.Bootstrap
-	2,   // 10: machine.SequenceEvent.action:type_name -> machine.SequenceEvent.Action
-	195, // 11: machine.SequenceEvent.error:type_name -> common.Error
-	3,   // 12: machine.PhaseEvent.action:type_name -> machine.PhaseEvent.Action
-	4,   // 13: machine.TaskEvent.action:type_name -> machine.TaskEvent.Action
-	5,   // 14: machine.ServiceStateEvent.action:type_name -> machine.ServiceStateEvent.Action
-	50,  // 15: machine.ServiceStateEvent.health:type_name -> machine.ServiceHealth
-	6,   // 16: machine.MachineStatusEvent.stage:type_name -> machine.MachineStatusEvent.MachineStage
-	187, // 17: machine.MachineStatusEvent.status:type_name -> machine.MachineStatusEvent.MachineStatus
-	194, // 18: machine.Event.metadata:type_name -> common.Metadata
-	196, // 19: machine.Event.data:type_name -> google.protobuf.Any
-	35,  // 20: machine.ResetRequest.system_partitions_to_wipe:type_name -> machine.ResetPartitionSpec
-	7,   // 21: machine.ResetRequest.mode:type_name -> machine.ResetRequest.WipeMode
-	194, // 22: machine.Reset.metadata:type_name -> common.Metadata
-	37,  // 23: machine.ResetResponse.messages:type_name -> machine.Reset
-	194, // 24: machine.Shutdown.metadata:type_name -> common.Metadata
-	39,  // 25: machine.ShutdownResponse.messages:type_name -> machine.Shutdown
-	8,   // 26: machine.UpgradeRequest.reboot_mode:type_name -> machine.UpgradeRequest.RebootMode
-	194, // 27: machine.Upgrade.metadata:type_name -> common.Metadata
-	43,  // 28: machine.UpgradeResponse.messages:type_name -> machine.Upgrade
-	194, // 29: machine.ServiceList.metadata:type_name -> common.Metadata
-	47,  // 30: machine.ServiceList.services:type_name -> machine.ServiceInfo
-	45,  // 31: machine.ServiceListResponse.messages:type_name -> machine.ServiceList
-	48,  // 32: machine.ServiceInfo.events:type_name -> machine.ServiceEvents
-	50,  // 33: machine.ServiceInfo.health:type_name -> machine.ServiceHealth
-	49,  // 34: machine.ServiceEvents.events:type_name -> machine.ServiceEvent
-	197, // 35: machine.ServiceEvent.ts:type_name -> google.protobuf.Timestamp
-	197, // 36: machine.ServiceHealth.last_change:type_name -> google.protobuf.Timestamp
-	194, // 37: machine.ServiceStart.metadata:type_name -> common.Metadata
-	52,  // 38: machine.ServiceStartResponse.messages:type_name -> machine.ServiceStart
-	194, // 39: machine.ServiceStop.metadata:type_name -> common.Metadata
-	55,  // 40: machine.ServiceStopResponse.messages:type_name -> machine.ServiceStop
-	194, // 41: machine.ServiceRestart.metadata:type_name -> common.Metadata
-	58,  // 42: machine.ServiceRestartResponse.messages:type_name -> machine.ServiceRestart
-	9,   // 43: machine.ListRequest.types:type_name -> machine.ListRequest.Type
-	194, // 44: machine.FileInfo.metadata:type_name -> common.Metadata
-	64,  // 45: machine.FileInfo.xattrs:type_name -> machine.Xattr
-	194, // 46: machine.DiskUsageInfo.metadata:type_name -> common.Metadata
-	194, // 47: machine.Mounts.metadata:type_name -> common.Metadata
-	68,  // 48: machine.Mounts.stats:type_name -> machine.MountStat
-	66,  // 49: machine.MountsResponse.messages:type_name -> machine.Mounts
-	194, // 50: machine.Version.metadata:type_name -> common.Metadata
-	71,  // 51: machine.Version.version:type_name -> machine.VersionInfo
-	72,  // 52: machine.Version.platform:type_name -> machine.PlatformInfo
-	73,  // 53: machine.Version.features:type_name -> machine.FeaturesInfo
-	69,  // 54: machine.VersionResponse.messages:type_name -> machine.Version
-	198, // 55: machine.LogsRequest.driver:type_name -> common.ContainerDriver
-	194, // 56: machine.LogsContainer.metadata:type_name -> common.Metadata
-	76,  // 57: machine.LogsContainersResponse.messages:type_name -> machine.LogsContainer
-	194, // 58: machine.Rollback.metadata:type_name -> common.Metadata
-	79,  // 59: machine.RollbackResponse.messages:type_name -> machine.Rollback
-	198, // 60: machine.ContainersRequest.driver:type_name -> common.ContainerDriver
-	194, // 61: machine.Container.metadata:type_name -> common.Metadata
-	82,  // 62: machine.Container.containers:type_name -> machine.ContainerInfo
-	83,  // 63: machine.ContainersResponse.messages:type_name -> machine.Container
-	87,  // 64: machine.ProcessesResponse.messages:type_name -> machine.Process
-	194, // 65: machine.Process.metadata:type_name -> common.Metadata
-	88,  // 66: machine.Process.processes:type_name -> machine.ProcessInfo
-	198, // 67: machine.RestartRequest.driver:type_name -> common.ContainerDriver
-	194, // 68: machine.Restart.metadata:type_name -> common.Metadata
-	90,  // 69: machine.RestartResponse.messages:type_name -> machine.Restart
-	198, // 70: machine.StatsRequest.driver:type_name -> common.ContainerDriver
-	194, // 71: machine.Stats.metadata:type_name -> common.Metadata
-	95,  // 72: machine.Stats.stats:type_name -> machine.Stat
-	93,  // 73: machine.StatsResponse.messages:type_name -> machine.Stats
-	194, // 74: machine.Memory.metadata:type_name -> common.Metadata
-	98,  // 75: machine.Memory.meminfo:type_name -> machine.MemInfo
-	96,  // 76: machine.MemoryResponse.messages:type_name -> machine.Memory
-	100, // 77: machine.HostnameResponse.messages:type_name -> machine.Hostname
-	194, // 78: machine.Hostname.metadata:type_name -> common.Metadata
-	102, // 79: machine.LoadAvgResponse.messages:type_name -> machine.LoadAvg
-	194, // 80: machine.LoadAvg.metadata:type_name -> common.Metadata
-	104, // 81: machine.SystemStatResponse.messages:type_name -> machine.SystemStat
-	194, // 82: machine.SystemStat.metadata:type_name -> common.Metadata
-	105, // 83: machine.SystemStat.cpu_total:type_name -> machine.CPUStat
-	105, // 84: machine.SystemStat.cpu:type_name -> machine.CPUStat
-	106, // 85: machine.SystemStat.soft_irq:type_name -> machine.SoftIRQStat
-	108, // 86: machine.CPUFreqStatsResponse.messages:type_name -> machine.CPUsFreqStats
-	194, // 87: machine.CPUsFreqStats.metadata:type_name -> common.Metadata
-	109, // 88: machine.CPUsFreqStats.cpu_freq_stats:type_name -> machine.CPUFreqStats
-	111, // 89: machine.CPUInfoResponse.messages:type_name -> machine.CPUsInfo
-	194, // 90: machine.CPUsInfo.metadata:type_name -> common.Metadata
-	112, // 91: machine.CPUsInfo.cpu_info:type_name -> machine.CPUInfo
-	114, // 92: machine.NetworkDeviceStatsResponse.messages:type_name -> machine.NetworkDeviceStats
-	194, // 93: machine.NetworkDeviceStats.metadata:type_name -> common.Metadata
-	115, // 94: machine.NetworkDeviceStats.total:type_name -> machine.NetDev
-	115, // 95: machine.NetworkDeviceStats.devices:type_name -> machine.NetDev
-	117, // 96: machine.DiskStatsResponse.messages:type_name -> machine.DiskStats
-	194, // 97: machine.DiskStats.metadata:type_name -> common.Metadata
-	118, // 98: machine.DiskStats.total:type_name -> machine.DiskStat
-	118, // 99: machine.DiskStats.devices:type_name -> machine.DiskStat
-	194, // 100: machine.EtcdLeaveCluster.metadata:type_name -> common.Metadata
-	120, // 101: machine.EtcdLeaveClusterResponse.messages:type_name -> machine.EtcdLeaveCluster
-	194, // 102: machine.EtcdRemoveMember.metadata:type_name -> common.Metadata
-	123, // 103: machine.EtcdRemoveMemberResponse.messages:type_name -> machine.EtcdRemoveMember
-	194, // 104: machine.EtcdRemoveMemberByID.metadata:type_name -> common.Metadata
-	126, // 105: machine.EtcdRemoveMemberByIDResponse.messages:type_name -> machine.EtcdRemoveMemberByID
-	194, // 106: machine.EtcdForfeitLeadership.metadata:type_name -> common.Metadata
-	129, // 107: machine.EtcdForfeitLeadershipResponse.messages:type_name -> machine.EtcdForfeitLeadership
-	194, // 108: machine.EtcdMembers.metadata:type_name -> common.Metadata
-	132, // 109: machine.EtcdMembers.members:type_name -> machine.EtcdMember
-	133, // 110: machine.EtcdMemberListResponse.messages:type_name -> machine.EtcdMembers
-	194, // 111: machine.EtcdRecover.metadata:type_name -> common.Metadata
-	136, // 112: machine.EtcdRecoverResponse.messages:type_name -> machine.EtcdRecover
-	139, // 113: machine.EtcdAlarmListResponse.messages:type_name -> machine.EtcdAlarm
-	194, // 114: machine.EtcdAlarm.metadata:type_name -> common.Metadata
-	140, // 115: machine.EtcdAlarm.member_alarms:type_name -> machine.EtcdMemberAlarm
-	10,  // 116: machine.EtcdMemberAlarm.alarm:type_name -> machine.EtcdMemberAlarm.AlarmType
-	142, // 117: machine.EtcdAlarmDisarmResponse.messages:type_name -> machine.EtcdAlarmDisarm
-	194, // 118: machine.EtcdAlarmDisarm.metadata:type_name -> common.Metadata
-	140, // 119: machine.EtcdAlarmDisarm.member_alarms:type_name -> machine.EtcdMemberAlarm
-	144, // 120: machine.EtcdDefragmentResponse.messages:type_name -> machine.EtcdDefragment
-	194, // 121: machine.EtcdDefragment.metadata:type_name -> common.Metadata
-	146, // 122: machine.EtcdStatusResponse.messages:type_name -> machine.EtcdStatus
-	194, // 123: machine.EtcdStatus.metadata:type_name -> common.Metadata
-	147, // 124: machine.EtcdStatus.member_status:type_name -> machine.EtcdMemberStatus
-	150, // 125: machine.EtcdDowngradeValidateResponse.messages:type_name -> machine.EtcdDowngradeValidate
-	194, // 126: machine.EtcdDowngradeValidate.metadata:type_name -> common.Metadata
-	156, // 127: machine.EtcdDowngradeValidate.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
-	153, // 128: machine.EtcdDowngradeEnableResponse.messages:type_name -> machine.EtcdDowngradeEnable
-	194, // 129: machine.EtcdDowngradeEnable.metadata:type_name -> common.Metadata
-	156, // 130: machine.EtcdDowngradeEnable.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
-	155, // 131: machine.EtcdDowngradeCancelResponse.messages:type_name -> machine.EtcdDowngradeCancel
-	194, // 132: machine.EtcdDowngradeCancel.metadata:type_name -> common.Metadata
-	156, // 133: machine.EtcdDowngradeCancel.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
-	158, // 134: machine.NetworkDeviceConfig.dhcp_options:type_name -> machine.DHCPOptionsConfig
-	157, // 135: machine.NetworkDeviceConfig.routes:type_name -> machine.RouteConfig
-	159, // 136: machine.NetworkConfig.interfaces:type_name -> machine.NetworkDeviceConfig
-	11,  // 137: machine.MachineConfig.type:type_name -> machine.MachineConfig.MachineType
-	161, // 138: machine.MachineConfig.install_config:type_name -> machine.InstallConfig
-	160, // 139: machine.MachineConfig.network_config:type_name -> machine.NetworkConfig
-	164, // 140: machine.ClusterNetworkConfig.cni_config:type_name -> machine.CNIConfig
-	163, // 141: machine.ClusterConfig.control_plane:type_name -> machine.ControlPlaneConfig
-	165, // 142: machine.ClusterConfig.cluster_network:type_name -> machine.ClusterNetworkConfig
-	193, // 143: machine.GenerateClientConfigurationRequest.crt_ttl:type_name -> google.protobuf.Duration
-	194, // 144: machine.GenerateClientConfiguration.metadata:type_name -> common.Metadata
-	168, // 145: machine.GenerateClientConfigurationResponse.messages:type_name -> machine.GenerateClientConfiguration
-	171, // 146: machine.PacketCaptureRequest.bpf_filter:type_name -> machine.BPFInstruction
-	12,  // 147: machine.NetstatRequest.filter:type_name -> machine.NetstatRequest.Filter
-	189, // 148: machine.NetstatRequest.feature:type_name -> machine.NetstatRequest.Feature
-	190, // 149: machine.NetstatRequest.l4proto:type_name -> machine.NetstatRequest.L4proto
-	191, // 150: machine.NetstatRequest.netns:type_name -> machine.NetstatRequest.NetNS
-	13,  // 151: machine.ConnectRecord.state:type_name -> machine.ConnectRecord.State
-	14,  // 152: machine.ConnectRecord.tr:type_name -> machine.ConnectRecord.TimerActive
-	192, // 153: machine.ConnectRecord.process:type_name -> machine.ConnectRecord.Process
-	194, // 154: machine.Netstat.metadata:type_name -> common.Metadata
-	173, // 155: machine.Netstat.connectrecord:type_name -> machine.ConnectRecord
-	174, // 156: machine.NetstatResponse.messages:type_name -> machine.Netstat
-	194, // 157: machine.MetaWrite.metadata:type_name -> common.Metadata
-	177, // 158: machine.MetaWriteResponse.messages:type_name -> machine.MetaWrite
-	194, // 159: machine.MetaDelete.metadata:type_name -> common.Metadata
-	180, // 160: machine.MetaDeleteResponse.messages:type_name -> machine.MetaDelete
-	199, // 161: machine.ImageListRequest.namespace:type_name -> common.ContainerdNamespace
-	194, // 162: machine.ImageListResponse.metadata:type_name -> common.Metadata
-	197, // 163: machine.ImageListResponse.created_at:type_name -> google.protobuf.Timestamp
-	199, // 164: machine.ImagePullRequest.namespace:type_name -> common.ContainerdNamespace
-	194, // 165: machine.ImagePull.metadata:type_name -> common.Metadata
-	185, // 166: machine.ImagePullResponse.messages:type_name -> machine.ImagePull
-	188, // 167: machine.MachineStatusEvent.MachineStatus.unmet_conditions:type_name -> machine.MachineStatusEvent.MachineStatus.UnmetCondition
-	15,  // 168: machine.MachineService.ApplyConfiguration:input_type -> machine.ApplyConfigurationRequest
-	21,  // 169: machine.MachineService.Bootstrap:input_type -> machine.BootstrapRequest
-	81,  // 170: machine.MachineService.Containers:input_type -> machine.ContainersRequest
-	60,  // 171: machine.MachineService.Copy:input_type -> machine.CopyRequest
-	200, // 172: machine.MachineService.CPUFreqStats:input_type -> google.protobuf.Empty
-	200, // 173: machine.MachineService.CPUInfo:input_type -> google.protobuf.Empty
-	200, // 174: machine.MachineService.DiskStats:input_type -> google.protobuf.Empty
-	85,  // 175: machine.MachineService.Dmesg:input_type -> machine.DmesgRequest
-	33,  // 176: machine.MachineService.Events:input_type -> machine.EventsRequest
-	131, // 177: machine.MachineService.EtcdMemberList:input_type -> machine.EtcdMemberListRequest
-	125, // 178: machine.MachineService.EtcdRemoveMemberByID:input_type -> machine.EtcdRemoveMemberByIDRequest
-	119, // 179: machine.MachineService.EtcdLeaveCluster:input_type -> machine.EtcdLeaveClusterRequest
-	128, // 180: machine.MachineService.EtcdForfeitLeadership:input_type -> machine.EtcdForfeitLeadershipRequest
-	201, // 181: machine.MachineService.EtcdRecover:input_type -> common.Data
-	135, // 182: machine.MachineService.EtcdSnapshot:input_type -> machine.EtcdSnapshotRequest
-	200, // 183: machine.MachineService.EtcdAlarmList:input_type -> google.protobuf.Empty
-	200, // 184: machine.MachineService.EtcdAlarmDisarm:input_type -> google.protobuf.Empty
-	200, // 185: machine.MachineService.EtcdDefragment:input_type -> google.protobuf.Empty
-	200, // 186: machine.MachineService.EtcdStatus:input_type -> google.protobuf.Empty
-	148, // 187: machine.MachineService.EtcdDowngradeValidate:input_type -> machine.EtcdDowngradeValidateRequest
-	151, // 188: machine.MachineService.EtcdDowngradeEnable:input_type -> machine.EtcdDowngradeEnableRequest
-	200, // 189: machine.MachineService.EtcdDowngradeCancel:input_type -> google.protobuf.Empty
-	200, // 190: machine.MachineService.Hostname:input_type -> google.protobuf.Empty
-	200, // 191: machine.MachineService.Kubeconfig:input_type -> google.protobuf.Empty
-	61,  // 192: machine.MachineService.List:input_type -> machine.ListRequest
-	62,  // 193: machine.MachineService.DiskUsage:input_type -> machine.DiskUsageRequest
-	200, // 194: machine.MachineService.LoadAvg:input_type -> google.protobuf.Empty
-	74,  // 195: machine.MachineService.Logs:input_type -> machine.LogsRequest
-	200, // 196: machine.MachineService.LogsContainers:input_type -> google.protobuf.Empty
-	200, // 197: machine.MachineService.Memory:input_type -> google.protobuf.Empty
-	200, // 198: machine.MachineService.Mounts:input_type -> google.protobuf.Empty
-	200, // 199: machine.MachineService.NetworkDeviceStats:input_type -> google.protobuf.Empty
-	200, // 200: machine.MachineService.Processes:input_type -> google.protobuf.Empty
-	75,  // 201: machine.MachineService.Read:input_type -> machine.ReadRequest
-	18,  // 202: machine.MachineService.Reboot:input_type -> machine.RebootRequest
-	89,  // 203: machine.MachineService.Restart:input_type -> machine.RestartRequest
-	78,  // 204: machine.MachineService.Rollback:input_type -> machine.RollbackRequest
-	36,  // 205: machine.MachineService.Reset:input_type -> machine.ResetRequest
-	200, // 206: machine.MachineService.ServiceList:input_type -> google.protobuf.Empty
-	57,  // 207: machine.MachineService.ServiceRestart:input_type -> machine.ServiceRestartRequest
-	51,  // 208: machine.MachineService.ServiceStart:input_type -> machine.ServiceStartRequest
-	54,  // 209: machine.MachineService.ServiceStop:input_type -> machine.ServiceStopRequest
-	40,  // 210: machine.MachineService.Shutdown:input_type -> machine.ShutdownRequest
-	92,  // 211: machine.MachineService.Stats:input_type -> machine.StatsRequest
-	200, // 212: machine.MachineService.SystemStat:input_type -> google.protobuf.Empty
-	42,  // 213: machine.MachineService.Upgrade:input_type -> machine.UpgradeRequest
-	200, // 214: machine.MachineService.Version:input_type -> google.protobuf.Empty
-	167, // 215: machine.MachineService.GenerateClientConfiguration:input_type -> machine.GenerateClientConfigurationRequest
-	170, // 216: machine.MachineService.PacketCapture:input_type -> machine.PacketCaptureRequest
-	172, // 217: machine.MachineService.Netstat:input_type -> machine.NetstatRequest
-	176, // 218: machine.MachineService.MetaWrite:input_type -> machine.MetaWriteRequest
-	179, // 219: machine.MachineService.MetaDelete:input_type -> machine.MetaDeleteRequest
-	182, // 220: machine.MachineService.ImageList:input_type -> machine.ImageListRequest
-	184, // 221: machine.MachineService.ImagePull:input_type -> machine.ImagePullRequest
-	17,  // 222: machine.MachineService.ApplyConfiguration:output_type -> machine.ApplyConfigurationResponse
-	23,  // 223: machine.MachineService.Bootstrap:output_type -> machine.BootstrapResponse
-	84,  // 224: machine.MachineService.Containers:output_type -> machine.ContainersResponse
-	201, // 225: machine.MachineService.Copy:output_type -> common.Data
-	107, // 226: machine.MachineService.CPUFreqStats:output_type -> machine.CPUFreqStatsResponse
-	110, // 227: machine.MachineService.CPUInfo:output_type -> machine.CPUInfoResponse
-	116, // 228: machine.MachineService.DiskStats:output_type -> machine.DiskStatsResponse
-	201, // 229: machine.MachineService.Dmesg:output_type -> common.Data
-	34,  // 230: machine.MachineService.Events:output_type -> machine.Event
-	134, // 231: machine.MachineService.EtcdMemberList:output_type -> machine.EtcdMemberListResponse
-	127, // 232: machine.MachineService.EtcdRemoveMemberByID:output_type -> machine.EtcdRemoveMemberByIDResponse
-	121, // 233: machine.MachineService.EtcdLeaveCluster:output_type -> machine.EtcdLeaveClusterResponse
-	130, // 234: machine.MachineService.EtcdForfeitLeadership:output_type -> machine.EtcdForfeitLeadershipResponse
-	137, // 235: machine.MachineService.EtcdRecover:output_type -> machine.EtcdRecoverResponse
-	201, // 236: machine.MachineService.EtcdSnapshot:output_type -> common.Data
-	138, // 237: machine.MachineService.EtcdAlarmList:output_type -> machine.EtcdAlarmListResponse
-	141, // 238: machine.MachineService.EtcdAlarmDisarm:output_type -> machine.EtcdAlarmDisarmResponse
-	143, // 239: machine.MachineService.EtcdDefragment:output_type -> machine.EtcdDefragmentResponse
-	145, // 240: machine.MachineService.EtcdStatus:output_type -> machine.EtcdStatusResponse
-	149, // 241: machine.MachineService.EtcdDowngradeValidate:output_type -> machine.EtcdDowngradeValidateResponse
-	152, // 242: machine.MachineService.EtcdDowngradeEnable:output_type -> machine.EtcdDowngradeEnableResponse
-	154, // 243: machine.MachineService.EtcdDowngradeCancel:output_type -> machine.EtcdDowngradeCancelResponse
-	99,  // 244: machine.MachineService.Hostname:output_type -> machine.HostnameResponse
-	201, // 245: machine.MachineService.Kubeconfig:output_type -> common.Data
-	63,  // 246: machine.MachineService.List:output_type -> machine.FileInfo
-	65,  // 247: machine.MachineService.DiskUsage:output_type -> machine.DiskUsageInfo
-	101, // 248: machine.MachineService.LoadAvg:output_type -> machine.LoadAvgResponse
-	201, // 249: machine.MachineService.Logs:output_type -> common.Data
-	77,  // 250: machine.MachineService.LogsContainers:output_type -> machine.LogsContainersResponse
-	97,  // 251: machine.MachineService.Memory:output_type -> machine.MemoryResponse
-	67,  // 252: machine.MachineService.Mounts:output_type -> machine.MountsResponse
-	113, // 253: machine.MachineService.NetworkDeviceStats:output_type -> machine.NetworkDeviceStatsResponse
-	86,  // 254: machine.MachineService.Processes:output_type -> machine.ProcessesResponse
-	201, // 255: machine.MachineService.Read:output_type -> common.Data
-	20,  // 256: machine.MachineService.Reboot:output_type -> machine.RebootResponse
-	91,  // 257: machine.MachineService.Restart:output_type -> machine.RestartResponse
-	80,  // 258: machine.MachineService.Rollback:output_type -> machine.RollbackResponse
-	38,  // 259: machine.MachineService.Reset:output_type -> machine.ResetResponse
-	46,  // 260: machine.MachineService.ServiceList:output_type -> machine.ServiceListResponse
-	59,  // 261: machine.MachineService.ServiceRestart:output_type -> machine.ServiceRestartResponse
-	53,  // 262: machine.MachineService.ServiceStart:output_type -> machine.ServiceStartResponse
-	56,  // 263: machine.MachineService.ServiceStop:output_type -> machine.ServiceStopResponse
-	41,  // 264: machine.MachineService.Shutdown:output_type -> machine.ShutdownResponse
-	94,  // 265: machine.MachineService.Stats:output_type -> machine.StatsResponse
-	103, // 266: machine.MachineService.SystemStat:output_type -> machine.SystemStatResponse
-	44,  // 267: machine.MachineService.Upgrade:output_type -> machine.UpgradeResponse
-	70,  // 268: machine.MachineService.Version:output_type -> machine.VersionResponse
-	169, // 269: machine.MachineService.GenerateClientConfiguration:output_type -> machine.GenerateClientConfigurationResponse
-	201, // 270: machine.MachineService.PacketCapture:output_type -> common.Data
-	175, // 271: machine.MachineService.Netstat:output_type -> machine.NetstatResponse
-	178, // 272: machine.MachineService.MetaWrite:output_type -> machine.MetaWriteResponse
-	181, // 273: machine.MachineService.MetaDelete:output_type -> machine.MetaDeleteResponse
-	183, // 274: machine.MachineService.ImageList:output_type -> machine.ImageListResponse
-	186, // 275: machine.MachineService.ImagePull:output_type -> machine.ImagePullResponse
-	222, // [222:276] is the sub-list for method output_type
-	168, // [168:222] is the sub-list for method input_type
-	168, // [168:168] is the sub-list for extension type_name
-	168, // [168:168] is the sub-list for extension extendee
-	0,   // [0:168] is the sub-list for field type_name
+	1,   // 0: machine.ApplyConfigurationRequest.mode:type_name -> machine.ApplyConfigurationRequest.Mode
+	194, // 1: machine.ApplyConfigurationRequest.try_mode_timeout:type_name -> google.protobuf.Duration
+	195, // 2: machine.ApplyConfiguration.metadata:type_name -> common.Metadata
+	1,   // 3: machine.ApplyConfiguration.mode:type_name -> machine.ApplyConfigurationRequest.Mode
+	17,  // 4: machine.ApplyConfigurationResponse.messages:type_name -> machine.ApplyConfiguration
+	2,   // 5: machine.RebootRequest.mode:type_name -> machine.RebootRequest.Mode
+	195, // 6: machine.Reboot.metadata:type_name -> common.Metadata
+	20,  // 7: machine.RebootResponse.messages:type_name -> machine.Reboot
+	195, // 8: machine.Bootstrap.metadata:type_name -> common.Metadata
+	23,  // 9: machine.BootstrapResponse.messages:type_name -> machine.Bootstrap
+	3,   // 10: machine.SequenceEvent.action:type_name -> machine.SequenceEvent.Action
+	196, // 11: machine.SequenceEvent.error:type_name -> common.Error
+	4,   // 12: machine.PhaseEvent.action:type_name -> machine.PhaseEvent.Action
+	5,   // 13: machine.TaskEvent.action:type_name -> machine.TaskEvent.Action
+	6,   // 14: machine.ServiceStateEvent.action:type_name -> machine.ServiceStateEvent.Action
+	51,  // 15: machine.ServiceStateEvent.health:type_name -> machine.ServiceHealth
+	7,   // 16: machine.MachineStatusEvent.stage:type_name -> machine.MachineStatusEvent.MachineStage
+	188, // 17: machine.MachineStatusEvent.status:type_name -> machine.MachineStatusEvent.MachineStatus
+	195, // 18: machine.Event.metadata:type_name -> common.Metadata
+	197, // 19: machine.Event.data:type_name -> google.protobuf.Any
+	36,  // 20: machine.ResetRequest.system_partitions_to_wipe:type_name -> machine.ResetPartitionSpec
+	8,   // 21: machine.ResetRequest.mode:type_name -> machine.ResetRequest.WipeMode
+	195, // 22: machine.Reset.metadata:type_name -> common.Metadata
+	38,  // 23: machine.ResetResponse.messages:type_name -> machine.Reset
+	195, // 24: machine.Shutdown.metadata:type_name -> common.Metadata
+	40,  // 25: machine.ShutdownResponse.messages:type_name -> machine.Shutdown
+	9,   // 26: machine.UpgradeRequest.reboot_mode:type_name -> machine.UpgradeRequest.RebootMode
+	195, // 27: machine.Upgrade.metadata:type_name -> common.Metadata
+	44,  // 28: machine.UpgradeResponse.messages:type_name -> machine.Upgrade
+	195, // 29: machine.ServiceList.metadata:type_name -> common.Metadata
+	48,  // 30: machine.ServiceList.services:type_name -> machine.ServiceInfo
+	46,  // 31: machine.ServiceListResponse.messages:type_name -> machine.ServiceList
+	49,  // 32: machine.ServiceInfo.events:type_name -> machine.ServiceEvents
+	51,  // 33: machine.ServiceInfo.health:type_name -> machine.ServiceHealth
+	50,  // 34: machine.ServiceEvents.events:type_name -> machine.ServiceEvent
+	198, // 35: machine.ServiceEvent.ts:type_name -> google.protobuf.Timestamp
+	198, // 36: machine.ServiceHealth.last_change:type_name -> google.protobuf.Timestamp
+	195, // 37: machine.ServiceStart.metadata:type_name -> common.Metadata
+	53,  // 38: machine.ServiceStartResponse.messages:type_name -> machine.ServiceStart
+	195, // 39: machine.ServiceStop.metadata:type_name -> common.Metadata
+	56,  // 40: machine.ServiceStopResponse.messages:type_name -> machine.ServiceStop
+	195, // 41: machine.ServiceRestart.metadata:type_name -> common.Metadata
+	59,  // 42: machine.ServiceRestartResponse.messages:type_name -> machine.ServiceRestart
+	10,  // 43: machine.ListRequest.types:type_name -> machine.ListRequest.Type
+	195, // 44: machine.FileInfo.metadata:type_name -> common.Metadata
+	65,  // 45: machine.FileInfo.xattrs:type_name -> machine.Xattr
+	195, // 46: machine.DiskUsageInfo.metadata:type_name -> common.Metadata
+	195, // 47: machine.Mounts.metadata:type_name -> common.Metadata
+	69,  // 48: machine.Mounts.stats:type_name -> machine.MountStat
+	67,  // 49: machine.MountsResponse.messages:type_name -> machine.Mounts
+	195, // 50: machine.Version.metadata:type_name -> common.Metadata
+	72,  // 51: machine.Version.version:type_name -> machine.VersionInfo
+	73,  // 52: machine.Version.platform:type_name -> machine.PlatformInfo
+	74,  // 53: machine.Version.features:type_name -> machine.FeaturesInfo
+	70,  // 54: machine.VersionResponse.messages:type_name -> machine.Version
+	199, // 55: machine.LogsRequest.driver:type_name -> common.ContainerDriver
+	0,   // 56: machine.LogsRequest.kind:type_name -> machine.LogKind
+	195, // 57: machine.LogsContainer.metadata:type_name -> common.Metadata
+	77,  // 58: machine.LogsContainersResponse.messages:type_name -> machine.LogsContainer
+	195, // 59: machine.Rollback.metadata:type_name -> common.Metadata
+	80,  // 60: machine.RollbackResponse.messages:type_name -> machine.Rollback
+	199, // 61: machine.ContainersRequest.driver:type_name -> common.ContainerDriver
+	195, // 62: machine.Container.metadata:type_name -> common.Metadata
+	83,  // 63: machine.Container.containers:type_name -> machine.ContainerInfo
+	84,  // 64: machine.ContainersResponse.messages:type_name -> machine.Container
+	88,  // 65: machine.ProcessesResponse.messages:type_name -> machine.Process
+	195, // 66: machine.Process.metadata:type_name -> common.Metadata
+	89,  // 67: machine.Process.processes:type_name -> machine.ProcessInfo
+	199, // 68: machine.RestartRequest.driver:type_name -> common.ContainerDriver
+	195, // 69: machine.Restart.metadata:type_name -> common.Metadata
+	91,  // 70: machine.RestartResponse.messages:type_name -> machine.Restart
+	199, // 71: machine.StatsRequest.driver:type_name -> common.ContainerDriver
+	195, // 72: machine.Stats.metadata:type_name -> common.Metadata
+	96,  // 73: machine.Stats.stats:type_name -> machine.Stat
+	94,  // 74: machine.StatsResponse.messages:type_name -> machine.Stats
+	195, // 75: machine.Memory.metadata:type_name -> common.Metadata
+	99,  // 76: machine.Memory.meminfo:type_name -> machine.MemInfo
+	97,  // 77: machine.MemoryResponse.messages:type_name -> machine.Memory
+	101, // 78: machine.HostnameResponse.messages:type_name -> machine.Hostname
+	195, // 79: machine.Hostname.metadata:type_name -> common.Metadata
+	103, // 80: machine.LoadAvgResponse.messages:type_name -> machine.LoadAvg
+	195, // 81: machine.LoadAvg.metadata:type_name -> common.Metadata
+	105, // 82: machine.SystemStatResponse.messages:type_name -> machine.SystemStat
+	195, // 83: machine.SystemStat.metadata:type_name -> common.Metadata
+	106, // 84: machine.SystemStat.cpu_total:type_name -> machine.CPUStat
+	106, // 85: machine.SystemStat.cpu:type_name -> machine.CPUStat
+	107, // 86: machine.SystemStat.soft_irq:type_name -> machine.SoftIRQStat
+	109, // 87: machine.CPUFreqStatsResponse.messages:type_name -> machine.CPUsFreqStats
+	195, // 88: machine.CPUsFreqStats.metadata:type_name -> common.Metadata
+	110, // 89: machine.CPUsFreqStats.cpu_freq_stats:type_name -> machine.CPUFreqStats
+	112, // 90: machine.CPUInfoResponse.messages:type_name -> machine.CPUsInfo
+	195, // 91: machine.CPUsInfo.metadata:type_name -> common.Metadata
+	113, // 92: machine.CPUsInfo.cpu_info:type_name -> machine.CPUInfo
+	115, // 93: machine.NetworkDeviceStatsResponse.messages:type_name -> machine.NetworkDeviceStats
+	195, // 94: machine.NetworkDeviceStats.metadata:type_name -> common.Metadata
+	116, // 95: machine.NetworkDeviceStats.total:type_name -> machine.NetDev
+	116, // 96: machine.NetworkDeviceStats.devices:type_name -> machine.NetDev
+	118, // 97: machine.DiskStatsResponse.messages:type_name -> machine.DiskStats
+	195, // 98: machine.DiskStats.metadata:type_name -> common.Metadata
+	119, // 99: machine.DiskStats.total:type_name -> machine.DiskStat
+	119, // 100: machine.DiskStats.devices:type_name -> machine.DiskStat
+	195, // 101: machine.EtcdLeaveCluster.metadata:type_name -> common.Metadata
+	121, // 102: machine.EtcdLeaveClusterResponse.messages:type_name -> machine.EtcdLeaveCluster
+	195, // 103: machine.EtcdRemoveMember.metadata:type_name -> common.Metadata
+	124, // 104: machine.EtcdRemoveMemberResponse.messages:type_name -> machine.EtcdRemoveMember
+	195, // 105: machine.EtcdRemoveMemberByID.metadata:type_name -> common.Metadata
+	127, // 106: machine.EtcdRemoveMemberByIDResponse.messages:type_name -> machine.EtcdRemoveMemberByID
+	195, // 107: machine.EtcdForfeitLeadership.metadata:type_name -> common.Metadata
+	130, // 108: machine.EtcdForfeitLeadershipResponse.messages:type_name -> machine.EtcdForfeitLeadership
+	195, // 109: machine.EtcdMembers.metadata:type_name -> common.Metadata
+	133, // 110: machine.EtcdMembers.members:type_name -> machine.EtcdMember
+	134, // 111: machine.EtcdMemberListResponse.messages:type_name -> machine.EtcdMembers
+	195, // 112: machine.EtcdRecover.metadata:type_name -> common.Metadata
+	137, // 113: machine.EtcdRecoverResponse.messages:type_name -> machine.EtcdRecover
+	140, // 114: machine.EtcdAlarmListResponse.messages:type_name -> machine.EtcdAlarm
+	195, // 115: machine.EtcdAlarm.metadata:type_name -> common.Metadata
+	141, // 116: machine.EtcdAlarm.member_alarms:type_name -> machine.EtcdMemberAlarm
+	11,  // 117: machine.EtcdMemberAlarm.alarm:type_name -> machine.EtcdMemberAlarm.AlarmType
+	143, // 118: machine.EtcdAlarmDisarmResponse.messages:type_name -> machine.EtcdAlarmDisarm
+	195, // 119: machine.EtcdAlarmDisarm.metadata:type_name -> common.Metadata
+	141, // 120: machine.EtcdAlarmDisarm.member_alarms:type_name -> machine.EtcdMemberAlarm
+	145, // 121: machine.EtcdDefragmentResponse.messages:type_name -> machine.EtcdDefragment
+	195, // 122: machine.EtcdDefragment.metadata:type_name -> common.Metadata
+	147, // 123: machine.EtcdStatusResponse.messages:type_name -> machine.EtcdStatus
+	195, // 124: machine.EtcdStatus.metadata:type_name -> common.Metadata
+	148, // 125: machine.EtcdStatus.member_status:type_name -> machine.EtcdMemberStatus
+	151, // 126: machine.EtcdDowngradeValidateResponse.messages:type_name -> machine.EtcdDowngradeValidate
+	195, // 127: machine.EtcdDowngradeValidate.metadata:type_name -> common.Metadata
+	157, // 128: machine.EtcdDowngradeValidate.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
+	154, // 129: machine.EtcdDowngradeEnableResponse.messages:type_name -> machine.EtcdDowngradeEnable
+	195, // 130: machine.EtcdDowngradeEnable.metadata:type_name -> common.Metadata
+	157, // 131: machine.EtcdDowngradeEnable.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
+	156, // 132: machine.EtcdDowngradeCancelResponse.messages:type_name -> machine.EtcdDowngradeCancel
+	195, // 133: machine.EtcdDowngradeCancel.metadata:type_name -> common.Metadata
+	157, // 134: machine.EtcdDowngradeCancel.cluster_downgrade:type_name -> machine.EtcdClusterDowngrade
+	159, // 135: machine.NetworkDeviceConfig.dhcp_options:type_name -> machine.DHCPOptionsConfig
+	158, // 136: machine.NetworkDeviceConfig.routes:type_name -> machine.RouteConfig
+	160, // 137: machine.NetworkConfig.interfaces:type_name -> machine.NetworkDeviceConfig
+	12,  // 138: machine.MachineConfig.type:type_name -> machine.MachineConfig.MachineType
+	162, // 139: machine.MachineConfig.install_config:type_name -> machine.InstallConfig
+	161, // 140: machine.MachineConfig.network_config:type_name -> machine.NetworkConfig
+	165, // 141: machine.ClusterNetworkConfig.cni_config:type_name -> machine.CNIConfig
+	164, // 142: machine.ClusterConfig.control_plane:type_name -> machine.ControlPlaneConfig
+	166, // 143: machine.ClusterConfig.cluster_network:type_name -> machine.ClusterNetworkConfig
+	194, // 144: machine.GenerateClientConfigurationRequest.crt_ttl:type_name -> google.protobuf.Duration
+	195, // 145: machine.GenerateClientConfiguration.metadata:type_name -> common.Metadata
+	169, // 146: machine.GenerateClientConfigurationResponse.messages:type_name -> machine.GenerateClientConfiguration
+	172, // 147: machine.PacketCaptureRequest.bpf_filter:type_name -> machine.BPFInstruction
+	13,  // 148: machine.NetstatRequest.filter:type_name -> machine.NetstatRequest.Filter
+	190, // 149: machine.NetstatRequest.feature:type_name -> machine.NetstatRequest.Feature
+	191, // 150: machine.NetstatRequest.l4proto:type_name -> machine.NetstatRequest.L4proto
+	192, // 151: machine.NetstatRequest.netns:type_name -> machine.NetstatRequest.NetNS
+	14,  // 152: machine.ConnectRecord.state:type_name -> machine.ConnectRecord.State
+	15,  // 153: machine.ConnectRecord.tr:type_name -> machine.ConnectRecord.TimerActive
+	193, // 154: machine.ConnectRecord.process:type_name -> machine.ConnectRecord.Process
+	195, // 155: machine.Netstat.metadata:type_name -> common.Metadata
+	174, // 156: machine.Netstat.connectrecord:type_name -> machine.ConnectRecord
+	175, // 157: machine.NetstatResponse.messages:type_name -> machine.Netstat
+	195, // 158: machine.MetaWrite.metadata:type_name -> common.Metadata
+	178, // 159: machine.MetaWriteResponse.messages:type_name -> machine.MetaWrite
+	195, // 160: machine.MetaDelete.metadata:type_name -> common.Metadata
+	181, // 161: machine.MetaDeleteResponse.messages:type_name -> machine.MetaDelete
+	200, // 162: machine.ImageListRequest.namespace:type_name -> common.ContainerdNamespace
+	195, // 163: machine.ImageListResponse.metadata:type_name -> common.Metadata
+	198, // 164: machine.ImageListResponse.created_at:type_name -> google.protobuf.Timestamp
+	200, // 165: machine.ImagePullRequest.namespace:type_name -> common.ContainerdNamespace
+	195, // 166: machine.ImagePull.metadata:type_name -> common.Metadata
+	186, // 167: machine.ImagePullResponse.messages:type_name -> machine.ImagePull
+	189, // 168: machine.MachineStatusEvent.MachineStatus.unmet_conditions:type_name -> machine.MachineStatusEvent.MachineStatus.UnmetCondition
+	16,  // 169: machine.MachineService.ApplyConfiguration:input_type -> machine.ApplyConfigurationRequest
+	22,  // 170: machine.MachineService.Bootstrap:input_type -> machine.BootstrapRequest
+	82,  // 171: machine.MachineService.Containers:input_type -> machine.ContainersRequest
+	61,  // 172: machine.MachineService.Copy:input_type -> machine.CopyRequest
+	201, // 173: machine.MachineService.CPUFreqStats:input_type -> google.protobuf.Empty
+	201, // 174: machine.MachineService.CPUInfo:input_type -> google.protobuf.Empty
+	201, // 175: machine.MachineService.DiskStats:input_type -> google.protobuf.Empty
+	86,  // 176: machine.MachineService.Dmesg:input_type -> machine.DmesgRequest
+	34,  // 177: machine.MachineService.Events:input_type -> machine.EventsRequest
+	132, // 178: machine.MachineService.EtcdMemberList:input_type -> machine.EtcdMemberListRequest
+	126, // 179: machine.MachineService.EtcdRemoveMemberByID:input_type -> machine.EtcdRemoveMemberByIDRequest
+	120, // 180: machine.MachineService.EtcdLeaveCluster:input_type -> machine.EtcdLeaveClusterRequest
+	129, // 181: machine.MachineService.EtcdForfeitLeadership:input_type -> machine.EtcdForfeitLeadershipRequest
+	202, // 182: machine.MachineService.EtcdRecover:input_type -> common.Data
+	136, // 183: machine.MachineService.EtcdSnapshot:input_type -> machine.EtcdSnapshotRequest
+	201, // 184: machine.MachineService.EtcdAlarmList:input_type -> google.protobuf.Empty
+	201, // 185: machine.MachineService.EtcdAlarmDisarm:input_type -> google.protobuf.Empty
+	201, // 186: machine.MachineService.EtcdDefragment:input_type -> google.protobuf.Empty
+	201, // 187: machine.MachineService.EtcdStatus:input_type -> google.protobuf.Empty
+	149, // 188: machine.MachineService.EtcdDowngradeValidate:input_type -> machine.EtcdDowngradeValidateRequest
+	152, // 189: machine.MachineService.EtcdDowngradeEnable:input_type -> machine.EtcdDowngradeEnableRequest
+	201, // 190: machine.MachineService.EtcdDowngradeCancel:input_type -> google.protobuf.Empty
+	201, // 191: machine.MachineService.Hostname:input_type -> google.protobuf.Empty
+	201, // 192: machine.MachineService.Kubeconfig:input_type -> google.protobuf.Empty
+	62,  // 193: machine.MachineService.List:input_type -> machine.ListRequest
+	63,  // 194: machine.MachineService.DiskUsage:input_type -> machine.DiskUsageRequest
+	201, // 195: machine.MachineService.LoadAvg:input_type -> google.protobuf.Empty
+	75,  // 196: machine.MachineService.Logs:input_type -> machine.LogsRequest
+	201, // 197: machine.MachineService.LogsContainers:input_type -> google.protobuf.Empty
+	201, // 198: machine.MachineService.Memory:input_type -> google.protobuf.Empty
+	201, // 199: machine.MachineService.Mounts:input_type -> google.protobuf.Empty
+	201, // 200: machine.MachineService.NetworkDeviceStats:input_type -> google.protobuf.Empty
+	201, // 201: machine.MachineService.Processes:input_type -> google.protobuf.Empty
+	76,  // 202: machine.MachineService.Read:input_type -> machine.ReadRequest
+	19,  // 203: machine.MachineService.Reboot:input_type -> machine.RebootRequest
+	90,  // 204: machine.MachineService.Restart:input_type -> machine.RestartRequest
+	79,  // 205: machine.MachineService.Rollback:input_type -> machine.RollbackRequest
+	37,  // 206: machine.MachineService.Reset:input_type -> machine.ResetRequest
+	201, // 207: machine.MachineService.ServiceList:input_type -> google.protobuf.Empty
+	58,  // 208: machine.MachineService.ServiceRestart:input_type -> machine.ServiceRestartRequest
+	52,  // 209: machine.MachineService.ServiceStart:input_type -> machine.ServiceStartRequest
+	55,  // 210: machine.MachineService.ServiceStop:input_type -> machine.ServiceStopRequest
+	41,  // 211: machine.MachineService.Shutdown:input_type -> machine.ShutdownRequest
+	93,  // 212: machine.MachineService.Stats:input_type -> machine.StatsRequest
+	201, // 213: machine.MachineService.SystemStat:input_type -> google.protobuf.Empty
+	43,  // 214: machine.MachineService.Upgrade:input_type -> machine.UpgradeRequest
+	201, // 215: machine.MachineService.Version:input_type -> google.protobuf.Empty
+	168, // 216: machine.MachineService.GenerateClientConfiguration:input_type -> machine.GenerateClientConfigurationRequest
+	171, // 217: machine.MachineService.PacketCapture:input_type -> machine.PacketCaptureRequest
+	173, // 218: machine.MachineService.Netstat:input_type -> machine.NetstatRequest
+	177, // 219: machine.MachineService.MetaWrite:input_type -> machine.MetaWriteRequest
+	180, // 220: machine.MachineService.MetaDelete:input_type -> machine.MetaDeleteRequest
+	183, // 221: machine.MachineService.ImageList:input_type -> machine.ImageListRequest
+	185, // 222: machine.MachineService.ImagePull:input_type -> machine.ImagePullRequest
+	18,  // 223: machine.MachineService.ApplyConfiguration:output_type -> machine.ApplyConfigurationResponse
+	24,  // 224: machine.MachineService.Bootstrap:output_type -> machine.BootstrapResponse
+	85,  // 225: machine.MachineService.Containers:output_type -> machine.ContainersResponse
+	202, // 226: machine.MachineService.Copy:output_type -> common.Data
+	108, // 227: machine.MachineService.CPUFreqStats:output_type -> machine.CPUFreqStatsResponse
+	111, // 228: machine.MachineService.CPUInfo:output_type -> machine.CPUInfoResponse
+	117, // 229: machine.MachineService.DiskStats:output_type -> machine.DiskStatsResponse
+	202, // 230: machine.MachineService.Dmesg:output_type -> common.Data
+	35,  // 231: machine.MachineService.Events:output_type -> machine.Event
+	135, // 232: machine.MachineService.EtcdMemberList:output_type -> machine.EtcdMemberListResponse
+	128, // 233: machine.MachineService.EtcdRemoveMemberByID:output_type -> machine.EtcdRemoveMemberByIDResponse
+	122, // 234: machine.MachineService.EtcdLeaveCluster:output_type -> machine.EtcdLeaveClusterResponse
+	131, // 235: machine.MachineService.EtcdForfeitLeadership:output_type -> machine.EtcdForfeitLeadershipResponse
+	138, // 236: machine.MachineService.EtcdRecover:output_type -> machine.EtcdRecoverResponse
+	202, // 237: machine.MachineService.EtcdSnapshot:output_type -> common.Data
+	139, // 238: machine.MachineService.EtcdAlarmList:output_type -> machine.EtcdAlarmListResponse
+	142, // 239: machine.MachineService.EtcdAlarmDisarm:output_type -> machine.EtcdAlarmDisarmResponse
+	144, // 240: machine.MachineService.EtcdDefragment:output_type -> machine.EtcdDefragmentResponse
+	146, // 241: machine.MachineService.EtcdStatus:output_type -> machine.EtcdStatusResponse
+	150, // 242: machine.MachineService.EtcdDowngradeValidate:output_type -> machine.EtcdDowngradeValidateResponse
+	153, // 243: machine.MachineService.EtcdDowngradeEnable:output_type -> machine.EtcdDowngradeEnableResponse
+	155, // 244: machine.MachineService.EtcdDowngradeCancel:output_type -> machine.EtcdDowngradeCancelResponse
+	100, // 245: machine.MachineService.Hostname:output_type -> machine.HostnameResponse
+	202, // 246: machine.MachineService.Kubeconfig:output_type -> common.Data
+	64,  // 247: machine.MachineService.List:output_type -> machine.FileInfo
+	66,  // 248: machine.MachineService.DiskUsage:output_type -> machine.DiskUsageInfo
+	102, // 249: machine.MachineService.LoadAvg:output_type -> machine.LoadAvgResponse
+	202, // 250: machine.MachineService.Logs:output_type -> common.Data
+	78,  // 251: machine.MachineService.LogsContainers:output_type -> machine.LogsContainersResponse
+	98,  // 252: machine.MachineService.Memory:output_type -> machine.MemoryResponse
+	68,  // 253: machine.MachineService.Mounts:output_type -> machine.MountsResponse
+	114, // 254: machine.MachineService.NetworkDeviceStats:output_type -> machine.NetworkDeviceStatsResponse
+	87,  // 255: machine.MachineService.Processes:output_type -> machine.ProcessesResponse
+	202, // 256: machine.MachineService.Read:output_type -> common.Data
+	21,  // 257: machine.MachineService.Reboot:output_type -> machine.RebootResponse
+	92,  // 258: machine.MachineService.Restart:output_type -> machine.RestartResponse
+	81,  // 259: machine.MachineService.Rollback:output_type -> machine.RollbackResponse
+	39,  // 260: machine.MachineService.Reset:output_type -> machine.ResetResponse
+	47,  // 261: machine.MachineService.ServiceList:output_type -> machine.ServiceListResponse
+	60,  // 262: machine.MachineService.ServiceRestart:output_type -> machine.ServiceRestartResponse
+	54,  // 263: machine.MachineService.ServiceStart:output_type -> machine.ServiceStartResponse
+	57,  // 264: machine.MachineService.ServiceStop:output_type -> machine.ServiceStopResponse
+	42,  // 265: machine.MachineService.Shutdown:output_type -> machine.ShutdownResponse
+	95,  // 266: machine.MachineService.Stats:output_type -> machine.StatsResponse
+	104, // 267: machine.MachineService.SystemStat:output_type -> machine.SystemStatResponse
+	45,  // 268: machine.MachineService.Upgrade:output_type -> machine.UpgradeResponse
+	71,  // 269: machine.MachineService.Version:output_type -> machine.VersionResponse
+	170, // 270: machine.MachineService.GenerateClientConfiguration:output_type -> machine.GenerateClientConfigurationResponse
+	202, // 271: machine.MachineService.PacketCapture:output_type -> common.Data
+	176, // 272: machine.MachineService.Netstat:output_type -> machine.NetstatResponse
+	179, // 273: machine.MachineService.MetaWrite:output_type -> machine.MetaWriteResponse
+	182, // 274: machine.MachineService.MetaDelete:output_type -> machine.MetaDeleteResponse
+	184, // 275: machine.MachineService.ImageList:output_type -> machine.ImageListResponse
+	187, // 276: machine.MachineService.ImagePull:output_type -> machine.ImagePullResponse
+	223, // [223:277] is the sub-list for method output_type
+	169, // [169:223] is the sub-list for method input_type
+	169, // [169:169] is the sub-list for extension type_name
+	169, // [169:169] is the sub-list for extension extendee
+	0,   // [0:169] is the sub-list for field type_name
 }
 
 func init() { file_machine_machine_proto_init() }
@@ -13078,7 +13149,7 @@ func file_machine_machine_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_machine_proto_rawDesc), len(file_machine_machine_proto_rawDesc)),
-			NumEnums:      15,
+			NumEnums:      16,
 			NumMessages:   178,
 			NumExtensions: 0,
 			NumServices:   1,

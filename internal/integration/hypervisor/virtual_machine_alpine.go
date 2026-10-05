@@ -39,9 +39,9 @@ const (
 	alpineOutputLimit = 512 << 10
 )
 
-// TestAlpineSerialConsole boots the supplied stock Alpine virt ISO and
-// exercises login, shell and networking exclusively through ConsoleStream.
-func (suite *LibvirtSuite) TestAlpineSerialConsole() {
+// prepareAlpineGuest shares the stock-ISO provisioning used by console and history tests.
+func (suite *LibvirtSuite) prepareAlpineGuest() (string, *hypervisorcfg.VirtualMachineConfigV1Alpha1, string, string) {
+	suite.T().Helper()
 	suite.requireContentLibrarySupport()
 
 	if suite.HypervisorAlpineISOPath == "" {
@@ -69,6 +69,23 @@ func (suite *LibvirtSuite) TestAlpineSerialConsole() {
 	}
 
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	original, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+	originalBytes, err := original.Bytes()
+	suite.Require().NoError(err)
+	// Registered before library and guest provisioning so restoration runs
+	// last, with its own deadline, after their ordinary cleanup callbacks.
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		_, applyErr := suite.Client.ApplyConfiguration(client.WithNode(ctx, node), &machine.ApplyConfigurationRequest{
+			Data: originalBytes,
+			Mode: machine.ApplyConfigurationRequest_NO_REBOOT,
+		})
+		suite.Assert().NoError(applyErr)
+	})
 
 	iso, err := os.Open(suite.HypervisorAlpineISOPath)
 	suite.Require().NoError(err)
@@ -106,6 +123,13 @@ func (suite *LibvirtSuite) TestAlpineSerialConsole() {
 	suite.T().Logf("uploaded stock Alpine ISO (%s) in %s", isoDigest, time.Since(started).Round(time.Millisecond))
 
 	name := "vm-alpine-" + uuid.NewString()
+	for _, existing := range original.VirtualMachineConfigs() {
+		suite.Require().NotEqual(name, existing.Name())
+	}
+
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
@@ -156,44 +180,28 @@ func (suite *LibvirtSuite) TestAlpineSerialConsole() {
 	)
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 1)
 
-	endpoint, networkResponse, requestSeen := suite.startAlpineHTTPServer(ourRecord.Gateway.String(), ourRecord.IP.Addr().String())
+	return node, doc, ourRecord.Gateway.String(), ourRecord.IP.Addr().String()
+}
 
-	streamCtx, cancelStream := context.WithTimeout(nodeCtx, 3*time.Minute)
-	defer cancelStream()
+// TestAlpineSerialConsole boots the supplied stock Alpine virt ISO and
+// exercises login, shell and networking exclusively through ConsoleStream.
+func (suite *LibvirtSuite) TestAlpineSerialConsole() {
+	node, doc, gateway, guestIP := suite.prepareAlpineGuest()
+	name := doc.Name()
+	nodeCtx := client.WithNode(suite.ctx, node)
+	endpoint, networkResponse, requestSeen := suite.startAlpineHTTPServer(gateway, guestIP, nil)
 
-	stream, err := suite.Client.HypervisorClient.ConsoleStream(streamCtx)
-	suite.Require().NoError(err)
-	suite.Require().NoError(stream.Send(&machine.ConsoleRequest{
-		Request: &machine.ConsoleRequest_Attach{
-			Attach: &machine.ConsoleAttach{
-				Name: name,
-			},
-		},
-	}))
-
-	console := &alpineConsole{
-		stream: stream,
-	}
-
-	suite.T().Cleanup(func() {
+	console := suite.loginAlpineConsole(nodeCtx, name)
+	defer func() {
 		if suite.T().Failed() {
 			suite.T().Logf("bounded Alpine console transcript: %q", console.transcript)
 		}
-	})
-
-	bootStarted := time.Now()
-	start := console.mark()
-	suite.Require().NoError(console.send("\n"))
-	suite.Require().NoError(console.expectAfter(start, []byte("login:")))
-	start = console.mark()
-	suite.Require().NoError(console.send("root\n"))
-	suite.Require().NoError(console.expectAfter(start, []byte("localhost:~#")))
-	suite.T().Logf("Alpine serial login became interactive after %s", time.Since(bootStarted).Round(time.Millisecond))
+	}()
 
 	// Split markers on the wire: terminal echo cannot contain the expected
 	// contiguous value, whether or not terminal echo is enabled.
 	nonce := strings.ReplaceAll(uuid.NewString(), "-", "")
-	start = console.mark()
+	start := console.mark()
 	suite.Require().NoError(console.send("printf '\\nALPINE_NONCE_%s\\n' '" + nonce + "'\n"))
 	suite.Require().NoError(console.expectAfter(start, []byte("\r\nALPINE_NONCE_"+nonce+"\r\n")))
 
@@ -202,14 +210,13 @@ func (suite *LibvirtSuite) TestAlpineSerialConsole() {
 	suite.Require().NoError(console.send("printf '%s\\n' console-file >/tmp/console-test && test \"$(cat /tmp/console-test)\" = console-file && printf '\\nALPINE_FILE_OK_%s\\n' '" + fileNonce + "'\n"))
 	suite.Require().NoError(console.expectAfter(start, []byte("\r\nALPINE_FILE_OK_"+fileNonce+"\r\n")))
 
-	guestIP := ourRecord.IP.Addr().String()
 	start = console.mark()
 	suite.Require().NoError(console.send("ip link set eth0 up && udhcpc -i eth0 -q -n -t 5 && ip -4 addr show dev eth0\n"))
 	suite.Require().NoError(console.expectAfter(start, []byte("inet "+guestIP+"/")))
 
 	pingNonce := strings.ReplaceAll(uuid.NewString(), "-", "")
 	start = console.mark()
-	suite.Require().NoError(console.send("ping -c 1 -W 2 " + ourRecord.Gateway.String() + " >/dev/null && printf '\\nALPINE_PING_OK_%s\\n' '" + pingNonce + "'\n"))
+	suite.Require().NoError(console.send("ping -c 1 -W 2 " + gateway + " >/dev/null && printf '\\nALPINE_PING_OK_%s\\n' '" + pingNonce + "'\n"))
 	suite.Require().NoError(console.expectAfter(start, []byte("\r\nALPINE_PING_OK_"+pingNonce+"\r\n")))
 
 	start = console.mark()
@@ -227,6 +234,9 @@ func (suite *LibvirtSuite) TestAlpineSerialConsole() {
 
 func (suite *LibvirtSuite) detachAlpineConsole(console *alpineConsole) {
 	suite.T().Helper()
+
+	defer console.cancel()
+
 	suite.Require().NoError(console.stream.CloseSend())
 
 	// Detach can leave queued stdout before EOF. Drain it under the existing
@@ -247,6 +257,7 @@ func (suite *LibvirtSuite) detachAlpineConsole(console *alpineConsole) {
 
 type alpineConsole struct {
 	stream     machine.HypervisorService_ConsoleStreamClient
+	cancel     context.CancelFunc
 	transcript []byte
 }
 
@@ -279,7 +290,7 @@ func (console *alpineConsole) expectAfter(start int, expected []byte) error {
 	return nil
 }
 
-func (suite *LibvirtSuite) startAlpineHTTPServer(gateway, guestIP string) (string, string, <-chan struct{}) {
+func (suite *LibvirtSuite) startAlpineHTTPServer(gateway, guestIP string, release <-chan struct{}) (string, string, <-chan struct{}) {
 	suite.T().Helper()
 
 	listener, err := (&net.ListenConfig{}).Listen(suite.ctx, "tcp4", net.JoinHostPort(gateway, "0"))
@@ -293,25 +304,11 @@ func (suite *LibvirtSuite) startAlpineHTTPServer(gateway, guestIP string) (strin
 		WriteTimeout:      5 * time.Second,
 		IdleTimeout:       5 * time.Second,
 		MaxHeaderBytes:    4096,
-		Handler: http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-			remoteIP, _, remoteErr := net.SplitHostPort(request.RemoteAddr)
-			if remoteErr != nil || remoteIP != guestIP || request.Method != http.MethodGet || request.URL.Path != "/alpine-console" {
-				http.NotFound(writer, request)
+		Handler:           suite.alpineHTTPHandler(guestIP, response, requestSeen, release),
+	}
 
-				return
-			}
-
-			select {
-			case requestSeen <- struct{}{}:
-			default:
-			}
-
-			writer.Header().Set("Content-Type", "text/plain")
-
-			if _, writeErr := io.WriteString(writer, response); writeErr != nil {
-				suite.T().Logf("write Alpine HTTP response: %s", writeErr)
-			}
-		}),
+	if release != nil {
+		server.WriteTimeout = 45 * time.Second
 	}
 
 	serveResult := make(chan error, 1)
@@ -341,4 +338,46 @@ func (suite *LibvirtSuite) startAlpineHTTPServer(gateway, guestIP string) (strin
 	port := strconv.Itoa(listener.Addr().(*net.TCPAddr).Port)
 
 	return "http://" + net.JoinHostPort(gateway, port) + "/alpine-console", response, requestSeen
+}
+
+func (suite *LibvirtSuite) alpineHTTPHandler(guestIP, response string, requestSeen chan<- struct{}, release <-chan struct{}) http.HandlerFunc {
+	return func(writer http.ResponseWriter, request *http.Request) {
+		remoteIP, _, err := net.SplitHostPort(request.RemoteAddr)
+		if err != nil || remoteIP != guestIP || request.Method != http.MethodGet || request.URL.Path != "/alpine-console" {
+			http.NotFound(writer, request)
+
+			return
+		}
+
+		select {
+		case requestSeen <- struct{}{}:
+		default:
+		}
+
+		if !waitAlpineRelease(request.Context(), suite.ctx, release) {
+			return
+		}
+
+		writer.Header().Set("Content-Type", "text/plain")
+
+		if _, writeErr := io.WriteString(writer, response); writeErr != nil {
+			suite.T().Logf("write Alpine HTTP response: %s", writeErr)
+		}
+	}
+}
+
+func waitAlpineRelease(requestCtx, suiteCtx context.Context, release <-chan struct{}) bool {
+	// Ordinary networking tests have no gate and retain their previous behavior.
+	if release == nil {
+		return true
+	}
+
+	select {
+	case <-release:
+		return true
+	case <-requestCtx.Done():
+		return false
+	case <-suiteCtx.Done():
+		return false
+	}
 }

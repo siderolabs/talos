@@ -292,6 +292,7 @@ func renderVirtualMachineDomain(
 func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec) {
 	if console.Serial {
 		// libvirt allocates the PTY; no host device path is prescribed.
+		// The definition adapter adds capture after assigning the host-specific UUID.
 		domain.Devices.Serials = []libvirtxml.DomainSerial{
 			{
 				Source: &libvirtxml.DomainChardevSource{

@@ -294,6 +294,7 @@ description: Talos gRPC API reference.
     - [ConnectRecord.TimerActive](#machine.ConnectRecord.TimerActive)
     - [EtcdMemberAlarm.AlarmType](#machine.EtcdMemberAlarm.AlarmType)
     - [ListRequest.Type](#machine.ListRequest.Type)
+    - [LogKind](#machine.LogKind)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
     - [MachineStatusEvent.MachineStage](#machine.MachineStatusEvent.MachineStage)
     - [NetstatRequest.Filter](#machine.NetstatRequest.Filter)
@@ -3661,7 +3662,7 @@ LogsContainer describes all available registered log containers.
 
 ### LogsRequest
 rpc logs
-The request message containing the process name.
+The request message containing the log source name.
 
 
 | Field | Type | Label | Description |
@@ -3671,6 +3672,7 @@ The request message containing the process name.
 | driver | [common.ContainerDriver](#common.ContainerDriver) |  | driver might be default "containerd" or "cri" |
 | follow | [bool](#bool) |  |  |
 | tail_lines | [int32](#int32) |  |  |
+| kind | [LogKind](#machine.LogKind) |  | VM serial history requires Admin. VM and service kinds require the system namespace. |
 
 
 
@@ -5196,6 +5198,20 @@ File type.
 | REGULAR | 0 | Regular file (not directory, symlink, etc). |
 | DIRECTORY | 1 | Directory. |
 | SYMLINK | 2 | Symbolic link. |
+
+
+
+<a name="machine.LogKind"></a>
+
+### LogKind
+LogKind selects the log source independently of the container namespace.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LOG_KIND_UNSPECIFIED | 0 | Preserve legacy service/container routing when the selector is omitted. |
+| LOG_KIND_CONTAINER | 1 |  |
+| LOG_KIND_VM | 2 |  |
+| LOG_KIND_SERVICE | 3 |  |
 
 
 

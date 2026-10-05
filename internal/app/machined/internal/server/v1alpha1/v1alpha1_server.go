@@ -75,9 +75,11 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
+	"github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/internal/pkg/miniprocfs"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/pcap"
+	"github.com/siderolabs/talos/internal/pkg/seriallogs"
 	"github.com/siderolabs/talos/pkg/archiver"
 	"github.com/siderolabs/talos/pkg/chunker"
 	"github.com/siderolabs/talos/pkg/chunker/stream"
@@ -97,11 +99,13 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/role"
@@ -1326,26 +1330,17 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 	})
 }
 
-// Logs provides a service or container logs can be requested and the contents of the
-// log file are streamed in chunks.
+// Logs streams service, container, or virtual machine logs in chunks.
 func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsServer) (err error) {
-	var (
-		chunk chunker.Chunker
-		file  io.Closer
-	)
-
-	switch {
-	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
-		chunk, file, err = s.serviceLogChunker(l.Context(), req, req.Id)
-	case req.Namespace == constants.TalosContainersContainerdNamespace:
-		// Containers declared via ContainerConfig log to a buffer keyed by container, not by
-		// instance, so that successive restarts append to one buffer and logs outlive the
-		// container: see containers.RuntimeController.
-		chunk, file, err = s.serviceLogChunker(l.Context(), req, constants.TalosContainersLogPrefix+req.Id)
-	default:
-		chunk, file, err = k8slogs(l.Context(), req)
+	if err = validateLogKind(req); err != nil {
+		return err
 	}
 
+	if req.Kind == machine.LogKind_LOG_KIND_VM {
+		return s.vmLogs(req, l)
+	}
+
+	chunk, file, err := s.logsChunker(l.Context(), req)
 	if err != nil {
 		return err
 	}
@@ -1357,6 +1352,80 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 		if err = l.Send(&common.Data{Bytes: data}); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (s *Server) vmLogs(req *machine.LogsRequest, stream machine.MachineService_LogsServer) error {
+	ctx := stream.Context()
+
+	path, err := s.vmSerialLogPath(ctx, req.Id)
+	if err != nil {
+		return err
+	}
+
+	return seriallogs.Stream(ctx, path, req.TailLines, req.Follow, func(data []byte) error {
+		return stream.Send(&common.Data{
+			Bytes: data,
+		})
+	})
+}
+
+func (s *Server) vmSerialLogPath(ctx context.Context, name string) (string, error) {
+	if err := ctx.Err(); err != nil {
+		return "", status.FromContextError(err).Err()
+	}
+
+	if err := hypervisorhelpers.ValidateName(name); err != nil {
+		return "", status.Errorf(codes.InvalidArgument, "invalid virtual machine name: %v", err)
+	}
+
+	resources := s.Controller.Runtime().State().V1Alpha2().Resources()
+
+	system, err := safe.StateGetByID[*hardware.SystemInformation](ctx, resources, hardware.SystemInformationID)
+	if err != nil {
+		return "", status.Errorf(codes.FailedPrecondition, "read machine identity: %v", err)
+	}
+
+	machineUUID, err := uuid.Parse(system.TypedSpec().UUID)
+	if err != nil || machineUUID == uuid.Nil {
+		return "", status.Error(codes.FailedPrecondition, "invalid machine UUID")
+	}
+
+	// Resolve the log path independently of VM configuration or live libvirt state.
+	// Retained logs remain readable after a VM is no longer managed.
+	return filepath.Join(constants.LogMountPoint, fmt.Sprintf("vm-%s-serial0.log", domain.UUID(machineUUID, name))), nil
+}
+
+func (s *Server) logsChunker(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io.Closer, error) {
+	switch {
+	case req.Kind == machine.LogKind_LOG_KIND_SERVICE ||
+		(req.Kind == machine.LogKind_LOG_KIND_UNSPECIFIED && (req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet")):
+		return s.serviceLogChunker(ctx, req, req.Id)
+	case req.Namespace == constants.TalosContainersContainerdNamespace:
+		// Declared containers log by config name so restart history outlives instances.
+		return s.serviceLogChunker(ctx, req, constants.TalosContainersLogPrefix+req.Id)
+	default:
+		return k8slogs(ctx, req)
+	}
+}
+
+// validateLogKind rejects unknown selectors and incompatible namespaces before routing.
+func validateLogKind(req *machine.LogsRequest) error {
+	switch req.Kind {
+	case machine.LogKind_LOG_KIND_UNSPECIFIED:
+		return nil
+	case machine.LogKind_LOG_KIND_VM, machine.LogKind_LOG_KIND_SERVICE:
+		if req.Namespace != constants.SystemContainerdNamespace {
+			return status.Errorf(codes.InvalidArgument, "log kind %s requires the system namespace", req.Kind)
+		}
+	case machine.LogKind_LOG_KIND_CONTAINER:
+		if req.Namespace == "" {
+			return status.Error(codes.InvalidArgument, "container log namespace can't be empty")
+		}
+	default:
+		return status.Errorf(codes.InvalidArgument, "unsupported log kind %d", req.Kind)
 	}
 
 	return nil

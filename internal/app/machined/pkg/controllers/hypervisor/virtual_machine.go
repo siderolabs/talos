@@ -21,12 +21,17 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-const virtqemudServiceID = "ext-virtqemud"
+const (
+	virtqemudServiceID       = "ext-virtqemud"
+	virtualMachineLogMountID = "runtime.LogPersistenceController-" + constants.LogMountPoint
+)
 
 // VirtualMachineController reconciles running transient domains with virtqemud.
 type VirtualMachineController struct {
@@ -47,6 +52,12 @@ func (ctrl *VirtualMachineController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 	return []controller.Input{
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
+			ID:        optional.Some(virtualMachineLogMountID),
+			Kind:      controller.InputWeak,
+		},
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDomainSpecType,
@@ -161,6 +172,11 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		return nil
 	}
 
+	logReady, err := virtualMachineLogsReady(ctx, r)
+	if err != nil {
+		return err
+	}
+
 	machineUUID, err := getMachineUUID(ctx, r)
 	if err != nil {
 		return err
@@ -185,7 +201,7 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 	var reconcileErrors error
 
 	for spec := range specs.All() {
-		switch err = ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, byName, spec); {
+		switch err = ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, byName, spec, logReady); {
 		case errors.Is(err, errDiskNotReady):
 			logger.Info("virtual machine is waiting for its disks",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
@@ -195,6 +211,24 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 	}
 
 	return reconcileErrors
+}
+
+// The existing log persistence controller owns the LOG mount's lifetime. Observe
+// it without taking a new mount hold: daemon shutdown must precede LOG teardown.
+func virtualMachineLogsReady(ctx context.Context, reader controller.Reader) (bool, error) {
+	mount, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, reader, virtualMachineLogMountID)
+	if state.IsNotFoundError(err) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, fmt.Errorf("get virtual machine log mount: %w", err)
+	}
+
+	return mount.Metadata().Phase() == resource.PhaseRunning &&
+		mount.TypedSpec().VolumeID == constants.LogVolumeID &&
+		mount.TypedSpec().Target == constants.LogMountPoint &&
+		!mount.TypedSpec().ReadOnly && !mount.TypedSpec().Detached, nil
 }
 
 func getMachineUUID(ctx context.Context, reader controller.Reader) (uuid.UUID, error) {
@@ -213,7 +247,7 @@ func getMachineUUID(ctx context.Context, reader controller.Reader) (uuid.UUID, e
 
 func (ctrl *VirtualMachineController) reconcileSpec(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
 	client libvirtdomain.Client, machineUUID uuid.UUID, domains map[string]libvirtdomain.Domain,
-	spec *hypervisor.VirtualMachineDomainSpec,
+	spec *hypervisor.VirtualMachineDomainSpec, logReady bool,
 ) error {
 	name := spec.Metadata().ID()
 	_, exists := domains[name]
@@ -229,6 +263,10 @@ func (ctrl *VirtualMachineController) reconcileSpec(ctx context.Context, r contr
 
 	if exists && !claimed {
 		return fmt.Errorf("refusing to adopt unclaimed domain %q", name)
+	}
+
+	if !logReady {
+		return nil
 	}
 
 	return ctrl.startSpec(ctx, r, client, machineUUID, spec, claimed)

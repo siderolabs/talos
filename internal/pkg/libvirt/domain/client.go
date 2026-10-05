@@ -19,6 +19,8 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
+
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 const operationTimeout = 5 * time.Second
@@ -320,6 +322,21 @@ func domainDefinition(d Domain, renderedXML string) (string, string, error) {
 	}
 
 	desc.UUID = d.UUID.String()
+
+	// Serial capture belongs to the owned backend definition, where the host-specific
+	// identity is known. Keep the PTY for exclusive live attachment and let virtlogd
+	// bound retention. Never accept a log path from the rendered input.
+	if desc.Devices != nil {
+		for i := range desc.Devices.Serials {
+			serial := &desc.Devices.Serials[i]
+			if serial.Source != nil && serial.Source.Pty != nil {
+				serial.Log = &libvirtxml.DomainChardevLog{
+					File:   fmt.Sprintf("%s/vm-%s-serial%d.log", constants.LogMountPoint, d.UUID, i),
+					Append: "on",
+				}
+			}
+		}
+	}
 
 	canonical, err := desc.Marshal()
 	if err != nil {

@@ -443,7 +443,15 @@ func (c *Client) Dmesg(ctx context.Context, follow, tail bool) (machineapi.Machi
 
 // Logs implements the proto.MachineServiceClient interface.
 func (c *Client) Logs(ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool, tailLines int32) (stream machineapi.MachineService_LogsClient, err error) {
+	return c.LogsWithKind(ctx, namespace, driver, id, follow, tailLines, machineapi.LogKind_LOG_KIND_UNSPECIFIED)
+}
+
+// LogsWithKind selects a log source explicitly without changing legacy Logs routing.
+func (c *Client) LogsWithKind(
+	ctx context.Context, namespace string, driver common.ContainerDriver, id string, follow bool, tailLines int32, kind machineapi.LogKind,
+) (stream machineapi.MachineService_LogsClient, err error) {
 	stream, err = c.MachineClient.Logs(ctx, &machineapi.LogsRequest{
+		Kind:      kind,
 		Namespace: namespace,
 		Driver:    driver,
 		Id:        id,

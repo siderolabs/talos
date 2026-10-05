@@ -593,8 +593,17 @@ message FeaturesInfo {
   bool rbac = 1;
 }
 
+// LogKind selects the log source independently of the container namespace.
+enum LogKind {
+  // Preserve legacy service/container routing when the selector is omitted.
+  LOG_KIND_UNSPECIFIED = 0;
+  LOG_KIND_CONTAINER = 1;
+  LOG_KIND_VM = 2;
+  LOG_KIND_SERVICE = 3;
+}
+
 // rpc logs
-// The request message containing the process name.
+// The request message containing the log source name.
 message LogsRequest {
   string namespace = 1;
   string id = 2;
@@ -602,6 +611,8 @@ message LogsRequest {
   common.ContainerDriver driver = 3;
   bool follow = 4;
   int32 tail_lines = 5;
+  // VM serial history requires Admin. VM and service kinds require the system namespace.
+  LogKind kind = 6;
 }
 
 message ReadRequest {

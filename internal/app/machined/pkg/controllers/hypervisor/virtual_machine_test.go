@@ -24,6 +24,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -205,6 +207,15 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 	system.TypedSpec().UUID = machineUUID
 	s.Create(system)
 	s.Create(newReadyVirtqemudService())
+	s.Create(newVirtualMachineLogMount())
+}
+
+func newVirtualMachineLogMount() *block.VolumeMountStatus {
+	mount := block.NewVolumeMountStatus(block.NamespaceName, "runtime.LogPersistenceController-"+constants.LogMountPoint)
+	mount.TypedSpec().VolumeID = constants.LogVolumeID
+	mount.TypedSpec().Target = constants.LogMountPoint
+
+	return mount
 }
 
 func newReadyVirtqemudService() *v1alpha1.Service {
@@ -239,6 +250,138 @@ func (s *VirtualMachineDomainSuite) assertFinalizer(name string, present bool) {
 
 		return err == nil && spec.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == present
 	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineDomainSuite) TestWaitsForLogVolume() {
+	s.Destroy(newVirtualMachineLogMount())
+	s.start()
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "log-gated")
+	spec.TypedSpec().DomainXML = `<domain><name>log-gated</name><devices><serial type="pty"/></devices></domain>`
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.starts["log-gated"] != 0
+	}, 100*time.Millisecond, 10*time.Millisecond)
+
+	mount := newVirtualMachineLogMount()
+	s.Create(mount)
+	s.assertDomain("log-gated", spec.TypedSpec().DomainXML, true)
+
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready)
+	s.assertDomain("log-gated", "", false)
+	s.assertFinalizer("log-gated", false)
+	s.Destroy(spec)
+
+	current, err := safe.StateGetByID[*block.VolumeMountStatus](s.Ctx(), s.State(), mount.Metadata().ID())
+	s.Require().NoError(err)
+	s.Require().False(current.Metadata().Finalizers().Has("hypervisor.VirtualMachineController"), "LOG lifetime remains owned by log persistence")
+}
+
+func (s *VirtualMachineDomainSuite) TestLogMountTeardownPreservesServiceShutdownOrdering() {
+	s.start()
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "log-teardown")
+	spec.TypedSpec().DomainXML = `<domain><name>log-teardown</name><devices><serial type="pty"/></devices></domain>`
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+	s.assertDomain("log-teardown", spec.TypedSpec().DomainXML, true)
+	s.assertFinalizer("log-teardown", true)
+
+	mount := newVirtualMachineLogMount()
+	s.Require().NoError(s.State().AddFinalizer(s.Ctx(), mount.Metadata(), "runtime.LogPersistenceController"))
+	ready, err := s.State().Teardown(s.Ctx(), mount.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready)
+
+	second := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "waiting")
+	second.TypedSpec().DomainXML = `<domain><name>waiting</name><devices><serial type="pty"/></devices></domain>`
+	second.TypedSpec().PowerState = "running"
+	s.Create(second)
+
+	s.Require().Never(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		_, running := s.client.domains["log-teardown"]
+
+		return s.client.starts["waiting"] != 0 || !running
+	}, 100*time.Millisecond, 10*time.Millisecond)
+
+	current, err := safe.StateGetByID[*block.VolumeMountStatus](s.Ctx(), s.State(), mount.Metadata().ID())
+	s.Require().NoError(err)
+	s.Require().True(current.Metadata().Finalizers().Has("runtime.LogPersistenceController"))
+
+	// Cleanup of configured stopped domains must still work during mount teardown.
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().PowerState = "stopped"
+
+		return nil
+	})
+	s.assertDomain("log-teardown", "", false)
+	s.assertFinalizer("log-teardown", false)
+}
+
+func (s *VirtualMachineDomainSuite) TestRejectsUnusableLogMount() {
+	s.start()
+
+	for _, test := range []struct {
+		name   string
+		mutate func(*block.VolumeMountStatus)
+	}{
+		{
+			name: "wrong-volume",
+			mutate: func(mount *block.VolumeMountStatus) {
+				mount.TypedSpec().VolumeID = "other"
+			},
+		},
+		{
+			name: "wrong-target",
+			mutate: func(mount *block.VolumeMountStatus) {
+				mount.TypedSpec().Target = "/other"
+			},
+		},
+		{
+			name: "read-only",
+			mutate: func(mount *block.VolumeMountStatus) {
+				mount.TypedSpec().ReadOnly = true
+			},
+		},
+		{
+			name: "detached",
+			mutate: func(mount *block.VolumeMountStatus) {
+				mount.TypedSpec().Detached = true
+			},
+		},
+	} {
+		s.Run(test.name, func() {
+			mount := newVirtualMachineLogMount()
+			ctest.UpdateWithConflicts(s, mount, func(current *block.VolumeMountStatus) error {
+				*current.TypedSpec() = *mount.TypedSpec()
+				test.mutate(current)
+
+				return nil
+			})
+
+			name := "unusable-log-" + test.name
+			spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+			spec.TypedSpec().DomainXML = `<domain><name>` + name + `</name><devices><serial type="pty"/></devices></domain>`
+			spec.TypedSpec().PowerState = "running"
+			s.Create(spec)
+			s.Require().Never(func() bool {
+				s.client.mu.Lock()
+				defer s.client.mu.Unlock()
+
+				return s.client.starts[name] != 0
+			}, 100*time.Millisecond, 10*time.Millisecond)
+		})
+	}
 }
 
 func (s *VirtualMachineDomainSuite) TestCreateUpdateRemove() {

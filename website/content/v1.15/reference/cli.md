@@ -2790,10 +2790,14 @@ talosctl list [path] [flags]
 
 ## talosctl logs
 
-Retrieve logs for a service
+Retrieve service, container, or VM serial logs
+
+### Synopsis
+
+Select container, VM, or service logs with --kind. Omitting --kind preserves legacy service/container routing. VM serial history uses --kind=vm with a raw VM name and requires Admin access and one target node. Tail reads only the active file; follow drains it and follows replacements after rotation. VM output is safely rendered as a byte stream, including unterminated prompts; it does not attach to the live console.
 
 ```
-talosctl logs <service name> [flags]
+talosctl logs <name> [flags]
 ```
 
 ### Options
@@ -2806,6 +2810,7 @@ talosctl logs <service name> [flags]
   -f, --follow                     specify if the logs should be streamed
   -h, --help                       help for logs
   -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
+      --kind string                log source kind: container, vm, or service (default: legacy routing)
       --namespace string           namespace to use: "system" (default, Talos service containers), "cri" for Kubernetes workloads, "taloscontainers" for containers declared via ContainerConfig (default "system")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
@@ -3976,7 +3981,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing
-* [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service
+* [talosctl logs](#talosctl-logs)	 - Retrieve service, container, or VM serial logs
 * [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
