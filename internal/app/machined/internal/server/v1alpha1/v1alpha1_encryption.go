@@ -42,20 +42,9 @@ func (s *EncryptionServer) RecoveryKeySupply(ctx context.Context, req *machine.R
 
 	st := s.server.Controller.Runtime().State().V1Alpha2().Resources()
 
-	volumeIDs, err := recoveryKeyVolumes(ctx, st, req.Volumes)
+	volumeIDs, err := lockedRecoveryKeyVolumes(ctx, st, req.Volumes)
 	if err != nil {
 		return nil, err
-	}
-
-	for _, volumeID := range volumeIDs {
-		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, st, volumeID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return nil, fmt.Errorf("error getting volume status %q: %w", volumeID, err)
-		}
-
-		if volumeStatus == nil || volumeStatus.TypedSpec().Phase != block.VolumePhaseLocked {
-			return nil, status.Errorf(codes.FailedPrecondition, "volume %q is not locked: the recovery key can only be supplied to unlock a locked volume", volumeID)
-		}
 	}
 
 	for _, volumeID := range volumeIDs {
@@ -304,6 +293,40 @@ func recoveryVolume(ctx context.Context, st state.State, volumeID resource.ID) (
 		location:    volumeStatus.TypedSpec().Location,
 		provider:    luks.New(cipher),
 	}, nil
+}
+
+// lockedRecoveryKeyVolumes resolves the requested volume IDs to the locked volumes which have a recovery key configured.
+//
+// An empty request means all locked volumes with a recovery key configured, an explicitly requested volume must be locked.
+func lockedRecoveryKeyVolumes(ctx context.Context, st state.State, requested []string) ([]resource.ID, error) {
+	candidates, err := recoveryKeyVolumes(ctx, st, requested)
+	if err != nil {
+		return nil, err
+	}
+
+	volumeIDs := make([]resource.ID, 0, len(candidates))
+
+	for _, volumeID := range candidates {
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, st, volumeID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return nil, fmt.Errorf("error getting volume status %q: %w", volumeID, err)
+		}
+
+		locked := volumeStatus != nil && volumeStatus.TypedSpec().Phase == block.VolumePhaseLocked
+
+		switch {
+		case locked:
+			volumeIDs = append(volumeIDs, volumeID)
+		case len(requested) > 0:
+			return nil, status.Errorf(codes.FailedPrecondition, "volume %q is not locked: the recovery key can only be supplied to unlock a locked volume", volumeID)
+		}
+	}
+
+	if len(volumeIDs) == 0 {
+		return nil, status.Error(codes.NotFound, "no locked volumes with a recovery key configured")
+	}
+
+	return volumeIDs, nil
 }
 
 // recoveryKeyVolumes resolves the requested volume IDs to the volumes which have a recovery key configured.
