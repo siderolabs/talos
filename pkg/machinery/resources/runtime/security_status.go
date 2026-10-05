@@ -34,6 +34,16 @@ const (
 	SELinuxStateEnforcing                      // enabled, enforcing
 )
 
+// LockdownState describes the current kernel lockdown level.
+type LockdownState int
+
+// Kernel lockdown level.
+const (
+	LockdownStateNone            LockdownState = iota // none
+	LockdownStateIntegrity                            // integrity
+	LockdownStateConfidentiality                      // confidentiality
+)
+
 // FIPSState describes the current FIPS status.
 type FIPSState int
 
