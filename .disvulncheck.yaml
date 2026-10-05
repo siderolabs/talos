@@ -1,6 +1,9 @@
 ignore_ttl: 168h # 7 days, each entry must be revalidated after this time, and either removed or renewed (with a new date)
 
 ignore:
+  - id: GO-2026-5932
+    reason: 'golang.org/x/crypto/openpgp is unmaintained and the advisory records no fixed version, so there is nothing to upgrade to. The advisory is module-scoped, so it fires on the mere presence of golang.org/x/crypto, which Talos pulls in only for bcrypt. No package in the build graph imports golang.org/x/crypto/openpgp (verified with go list -deps -test); the only openpgp code present is github.com/ProtonMail/go-crypto/openpgp, which this advisory does not cover.'
+    date: 2026-10-05
   - id: GO-2026-4736
-    reason: 'gobgp NEXT_HOP DoS (GHSA-4p9m-8gc4-rw2h). The reachable recvMessageloop symbol is real, but the advisory records no fixed version, so govulncheck flags every version. Fix commit osrg/gobgp 583080a7 is an ancestor of pinned commit 2132288c5159, whose source skips ValidateUpdateMsg when parsing has already selected error handling, so it is not affected.'
-    date: 2026-09-28
+    reason: 'gobgp NEXT_HOP DoS (GHSA-4p9m-8gc4-rw2h). The reachable recvMessageloop symbol is real, but the advisory records no fixed version, so govulncheck flags every version. The pinned github.com/osrg/gobgp/v4 v4.9.0 already carries the fix: pkg/server/fsm.go guards the bgp.ValidateUpdateMsg call with handling == bgp.ERROR_HANDLING_NONE, so a malformed NEXT_HOP already routed to RFC 7606 error handling never reaches the panicking validator, and pkg/server/fsm_test.go carries the matching regression test.'
+    date: 2026-10-05
