@@ -6,6 +6,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"maps"
 	"slices"
@@ -13,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-blockdevice/v2/encryption/luks"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -161,45 +163,26 @@ func supplyRecoveryKey(ctx context.Context, st state.State, volumeID resource.ID
 	return err
 }
 
-// fetchRecoveryKey hands the generated recovery key of the volume over to the operator.
+// fetchRecoveryKey returns the generated recovery key of the volume.
 //
-// The LUKS token of the recovery slot is marked as fetched (so the key is not regenerated on the next boot),
-// and the generated key is dropped from the node.
+// Nothing changes on the node: the key stays pending until the operator acknowledges it by verifying it.
 func fetchRecoveryKey(ctx context.Context, st state.State, volumeID resource.ID) ([]byte, error) {
 	generated, err := safe.StateGetByID[*secrets.GeneratedRecoveryKey](ctx, st, volumeID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return nil, status.Errorf(codes.FailedPrecondition, "no recovery key is pending for volume %q: it was already fetched, or the recovery slot is not enrolled yet", volumeID)
+			return nil, status.Errorf(codes.FailedPrecondition, "no recovery key is pending for volume %q: it was already acknowledged, or the recovery slot is not enrolled yet", volumeID)
 		}
 
 		return nil, fmt.Errorf("error getting generated recovery key %q: %w", volumeID, err)
-	}
-
-	volume, err := recoveryVolume(ctx, st, volumeID)
-	if err != nil {
-		return nil, err
-	}
-
-	fetchedToken := &luks.Token[*keys.RecoveryToken]{
-		Type: keys.TokenTypeRecovery,
-		UserData: &keys.RecoveryToken{
-			KeySlots: []int{volume.recoveryKey.Slot},
-			Fetched:  true,
-		},
-	}
-
-	if err = volume.provider.SetToken(ctx, volume.location, volume.recoveryKey.Slot, fetchedToken); err != nil {
-		return nil, fmt.Errorf("error marking recovery key of volume %q as fetched: %w", volumeID, err)
-	}
-
-	if err = st.Destroy(ctx, generated.Metadata(), state.WithDestroyOwner(recoveryKeyOwner)); err != nil && !state.IsNotFoundError(err) {
-		return nil, fmt.Errorf("error dropping generated recovery key %q: %w", volumeID, err)
 	}
 
 	return generated.TypedSpec().Key, nil
 }
 
 // verifyRecoveryKey checks the recovery key against the recovery key slot of the volume.
+//
+// A valid key is acknowledged: the operator proved to hold the key which is in the slot, so the slot is marked
+// as fetched and the generated key is dropped from the node.
 func verifyRecoveryKey(ctx context.Context, st state.State, volumeID resource.ID, key []byte) (bool, error) {
 	volume, err := recoveryVolume(ctx, st, volumeID)
 	if err != nil {
@@ -240,7 +223,46 @@ func verifyRecoveryKey(ctx context.Context, st state.State, volumeID resource.ID
 		return false, fmt.Errorf("error checking recovery key for volume %q: %w", volumeID, err)
 	}
 
+	if valid {
+		if err = acknowledgeRecoveryKey(ctx, st, volumeID, volume); err != nil {
+			return false, err
+		}
+	}
+
 	return valid, nil
+}
+
+// acknowledgeRecoveryKey marks the recovery key slot as fetched, and drops the generated key from the node.
+func acknowledgeRecoveryKey(ctx context.Context, st state.State, volumeID resource.ID, volume *recoveryVolumeInfo) error {
+	token := &luks.Token[*keys.RecoveryToken]{}
+
+	err := volume.provider.ReadToken(ctx, volume.location, volume.recoveryKey.Slot, token)
+	if err != nil && !errors.Is(err, encryption.ErrTokenNotFound) {
+		return fmt.Errorf("error reading recovery key token of volume %q: %w", volumeID, err)
+	}
+
+	if err == nil && token.UserData.Fetched {
+		return nil
+	}
+
+	fetchedToken := &luks.Token[*keys.RecoveryToken]{
+		Type: keys.TokenTypeRecovery,
+		UserData: &keys.RecoveryToken{
+			KeySlots: []int{volume.recoveryKey.Slot},
+			Fetched:  true,
+		},
+	}
+
+	if err = volume.provider.SetToken(ctx, volume.location, volume.recoveryKey.Slot, fetchedToken); err != nil {
+		return fmt.Errorf("error marking recovery key of volume %q as fetched: %w", volumeID, err)
+	}
+
+	err = st.Destroy(ctx, secrets.NewGeneratedRecoveryKey(volumeID).Metadata(), state.WithDestroyOwner(recoveryKeyOwner))
+	if err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("error dropping generated recovery key %q: %w", volumeID, err)
+	}
+
+	return nil
 }
 
 // recoveryVolumeInfo is what the recovery key operations need to know about a volume.
