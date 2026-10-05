@@ -16,20 +16,28 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/digitalocean/go-libvirt"
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
 const maxInputChunk = 64 * 1024
 
-// Service attaches to managed, running virtual machine consoles.
+// ConfigPatcher applies a change to the machine configuration which is live, and persists it.
+//
+// The implementation serializes the change against every other writer of the machine
+// configuration, and rejects a change which does not validate.
+type ConfigPatcher interface {
+	PatchConfiguration(ctx context.Context, patch func(config.Container) (config.Provider, error)) error
+}
+
+// Service attaches to managed, running virtual machine consoles, and drives the power state of
+// managed virtual machines.
 type Service struct {
 	machine.UnimplementedHypervisorServiceServer
 	resources   state.State
@@ -38,6 +46,10 @@ type Service struct {
 	attached    map[string]struct{}
 	openVNC     func(context.Context, domain.Domain) (io.ReadWriteCloser, error)
 	vncAttached map[string]struct{}
+	domains     func(context.Context) (domain.Client, error)
+	config      ConfigPatcher
+	power       state.State
+	powerMu     sync.Mutex
 }
 
 // ServiceOption configures optional hypervisor service capabilities.
@@ -48,6 +60,30 @@ type ServiceOption func(*Service)
 // connection whose Close interrupts concurrent reads and writes.
 func WithVNCConnector(open func(context.Context, domain.Domain) (io.ReadWriteCloser, error)) ServiceOption {
 	return func(s *Service) { s.openVNC = open }
+}
+
+// WithDomainConnector enables the power operations which act on a live domain rather than on the
+// machine configuration. The connector must honor ctx and return a client whose Close releases the
+// connection.
+func WithDomainConnector(open func(context.Context) (domain.Client, error)) ServiceOption {
+	return func(s *Service) { s.domains = open }
+}
+
+// WithConfigPatcher enables the power operations which are carried out by writing the machine
+// configuration.
+func WithConfigPatcher(patcher ConfigPatcher) ServiceOption {
+	return func(s *Service) { s.config = patcher }
+}
+
+// WithPowerState enables the power operations which read and write resource state: recording how
+// a stop is carried out, and checking a virtual machine is ready to be rebooted.
+//
+// The state is unfiltered, unlike the one the console and VNC sessions read through: a stop mode is
+// not something a client may write for itself, and a reboot by an operator reads the sensitive
+// VirtualMachineSpec. Each RPC which reaches it is authorized by its own role set, and it is used
+// for nothing else.
+func WithPowerState(power state.State) ServiceOption {
+	return func(s *Service) { s.power = power }
 }
 
 // NewService binds resource state and a dedicated libvirt console connector.
@@ -163,14 +199,9 @@ func (s *Service) attachmentIdentity(ctx context.Context, name string, vnc bool)
 		return domain.Domain{}, status.Error(codes.FailedPrecondition, "virtual machine attachment is not enabled and running")
 	}
 
-	system, err := safe.StateGetByID[*hardware.SystemInformation](ctx, s.resources, hardware.SystemInformationID)
+	machineUUID, err := readMachineUUID(ctx, s.resources)
 	if err != nil {
-		return domain.Domain{}, fmt.Errorf("read system information: %w", err)
-	}
-
-	machineUUID, err := uuid.Parse(system.TypedSpec().UUID)
-	if err != nil || machineUUID == uuid.Nil {
-		return domain.Domain{}, status.Error(codes.FailedPrecondition, "invalid machine UUID")
+		return domain.Domain{}, err
 	}
 
 	// Observed status may be stale or absent. The connector checks the live domain.

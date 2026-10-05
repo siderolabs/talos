@@ -187,19 +187,48 @@ func (suite *VirtualMachineSpecSuite) TestBIOSDomainUsesDefaultFirmware() {
 	})
 }
 
-func (suite *VirtualMachineSpecSuite) TestUEFIDomainEnablesACPI() {
-	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "uefi-acpi")
-	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
-		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
-		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
-		PowerState: "stopped",
-		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
-		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
+// Every domain gets ACPI, not only the UEFI ones which cannot boot without it: without it a
+// guest has no power button, so it could only ever be stopped by being destroyed.
+func (suite *VirtualMachineSpecSuite) TestEveryDomainEnablesACPI() {
+	for _, firmware := range []string{"bios", "uefi"} {
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, firmware+"-acpi")
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+			PowerState: "stopped",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: firmware},
+		}
+		suite.Create(spec)
+		ctest.AssertResource(suite, spec.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			asrt.Contains(res.TypedSpec().DomainXML, "<acpi></acpi>")
+		})
 	}
-	suite.Create(spec)
-	ctest.AssertResource(suite, spec.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
-		asrt.Contains(res.TypedSpec().DomainXML, "<acpi></acpi>")
-	})
+}
+
+// The stop mode asked for through the API reaches the controller which takes the domain down, and
+// a virtual machine nothing asked anything of is stopped the way every stop used to be.
+func (suite *VirtualMachineSpecSuite) TestStopModeReachesTheDomainSpec() {
+	for _, stopMode := range []string{"", hypervisorhelpers.StopModeGraceful.String(), hypervisorhelpers.StopModeForced.String()} {
+		name := "stop-mode-" + stopMode
+
+		if stopMode != "" {
+			marker := hypervisor.NewVirtualMachineStopMode(hypervisor.NamespaceName, name)
+			marker.TypedSpec().Mode = stopMode
+			suite.Create(marker)
+		}
+
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+			PowerState: "running",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		}
+		suite.Create(spec)
+		ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			asrt.Equal(stopMode, res.TypedSpec().StopMode)
+		})
+	}
 }
 
 func (suite *VirtualMachineSpecSuite) TestDomainSpecCleanupWaitsForFinalizer() {
@@ -762,6 +791,11 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingDown() {
 	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
 
+	// A graceful stop was asked for, which the withdrawal below is entitled to ignore.
+	marker := hypervisor.NewVirtualMachineStopMode(hypervisor.NamespaceName, vmName)
+	marker.TypedSpec().Mode = hypervisorhelpers.StopModeGraceful.String()
+	suite.Create(marker)
+
 	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
 	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
 		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
@@ -798,6 +832,9 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 
 	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Equal("stopped", res.TypedSpec().PowerState)
+		// A stop the controller demands to clear an unrenderable definition off the host is not
+		// one the guest may refuse, whatever was asked for.
+		asrt.Equal(hypervisorhelpers.StopModeForced.String(), res.TypedSpec().StopMode)
 	})
 }
 

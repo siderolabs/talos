@@ -56,6 +56,9 @@ type Runtime interface { //nolint:interfacebloat
 	ConfigCompleteForBoot() bool
 	RollbackToConfigAfter(time.Duration) error
 	CancelConfigRollbackTimeout()
+	// ConfigRollbackPending reports whether a configuration applied in try mode is still waiting to
+	// be rolled back.
+	ConfigRollbackPending() bool
 	SetConfig(config.Provider) error
 	SetPersistedConfig(config.Provider) error
 	State() State

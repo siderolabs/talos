@@ -50,10 +50,19 @@ type domainClient struct {
 	removeErr       error
 	startErr        error
 	listErr         error
+	shutdownErr     error
+	rebootErr       error
 	changed         chan struct{}
 	attempted       chan struct{}
 	attemptedRemove chan struct{}
 	listed          chan struct{}
+
+	// shutdowns and reboots count what was asked of each guest. Neither call changes the domain:
+	// the request is delivered rather than obeyed, and a guest which obeys is modeled by the test
+	// deleting the domain itself, the way a libvirt lifecycle event would report it.
+	shutdowns         map[string]int
+	reboots           map[string]int
+	attemptedShutdown chan struct{}
 }
 
 func (c *domainClient) open(context.Context) (libvirtdomain.Client, error) {
@@ -162,6 +171,72 @@ func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...l
 	return c.Define(domain, text)
 }
 
+func (c *domainClient) Shutdown(domain libvirtdomain.Domain) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	select {
+	case c.attemptedShutdown <- struct{}{}:
+	default:
+	}
+
+	if c.shutdownErr != nil {
+		return c.shutdownErr
+	}
+
+	existing, ok := c.domains[domain.Name]
+	if !ok {
+		return nil
+	}
+
+	if existing.UUID != domain.UUID {
+		return fmt.Errorf("domain %q is not owned", domain.Name)
+	}
+
+	c.shutdowns[domain.Name]++
+
+	return nil
+}
+
+func (c *domainClient) Reboot(domain libvirtdomain.Domain) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.rebootErr != nil {
+		return c.rebootErr
+	}
+
+	existing, ok := c.domains[domain.Name]
+	if !ok {
+		return libvirtdomain.ErrDomainNotRunning
+	}
+
+	if existing.UUID != domain.UUID {
+		return fmt.Errorf("domain %q is not owned", domain.Name)
+	}
+
+	c.reboots[domain.Name]++
+
+	return nil
+}
+
+// shutdownCount reports how many times a guest has been asked to power itself off.
+func (c *domainClient) shutdownCount(name string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.shutdowns[name]
+}
+
+// powerOff models a guest which obeys: the transient domain goes away with it.
+func (c *domainClient) powerOff(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.domains, name)
+	delete(c.texts, name)
+}
+
 func (c *domainClient) Remove(domain libvirtdomain.Domain) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -201,10 +276,14 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 		domains:         make(map[string]libvirtdomain.Domain),
 		texts:           make(map[string]string),
 		starts:          make(map[string]int),
+		shutdowns:       make(map[string]int),
+		reboots:         make(map[string]int),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
-		listed:          make(chan struct{}, 1),
+
+		attemptedShutdown: make(chan struct{}, 1),
+		listed:            make(chan struct{}, 1),
 	}
 
 	system := hardware.NewSystemInformation(hardware.SystemInformationID)
