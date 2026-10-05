@@ -276,7 +276,7 @@ func (widget *RecoveryKeyGrid) supply(ctx context.Context) {
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	ctx = utils.NodeContext(ctx, widget.selectedNode)
 
-	_, err := widget.dashboard.cli.EncryptionRecoveryKeySupply(ctx, volumes, []byte(key))
+	_, err := widget.dashboard.cli.RecoveryKeySupply(ctx, volumes, []byte(key))
 	if err != nil {
 		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", tview.Escape(err.Error())))
 
