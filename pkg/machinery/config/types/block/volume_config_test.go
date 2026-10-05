@@ -774,6 +774,23 @@ func TestVolumeConfigRecoveryKeyValidation(t *testing.T) {
 
 			expectedError: "at most one recovery key can be configured",
 		},
+		{
+			name: "multiple key types in one slot",
+
+			keys: []block.EncryptionKey{
+				{
+					KeySlot: 0,
+					KeyTPM:  &block.EncryptionKeyTPM{},
+				},
+				{
+					KeySlot:     1,
+					KeyStatic:   &block.EncryptionKeyStatic{KeyData: "secret"},
+					KeyRecovery: &block.EncryptionKeyRecovery{},
+				},
+			},
+
+			expectedError: "only one encryption key type can be specified for slot 1",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

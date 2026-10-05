@@ -7,7 +7,6 @@ package block
 import (
 	"errors"
 	"fmt"
-	"slices"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
@@ -251,10 +250,19 @@ func (s EncryptionSpec) Validate() ([]string, error) {
 func (k EncryptionKey) validate() error {
 	var errs error
 
-	keyTypes := []bool{k.KeyStatic != nil, k.KeyNodeID != nil, k.KeyKMS != nil, k.KeyTPM != nil, k.KeyRecovery != nil}
+	numKeyTypes := 0
 
-	if !slices.Contains(keyTypes, true) {
+	for _, set := range []bool{k.KeyStatic != nil, k.KeyNodeID != nil, k.KeyKMS != nil, k.KeyTPM != nil, k.KeyRecovery != nil} {
+		if set {
+			numKeyTypes++
+		}
+	}
+
+	switch {
+	case numKeyTypes == 0:
 		errs = errors.Join(errs, fmt.Errorf("at least one encryption key type must be specified for slot %d", k.KeySlot))
+	case numKeyTypes > 1:
+		errs = errors.Join(errs, fmt.Errorf("only one encryption key type can be specified for slot %d", k.KeySlot))
 	}
 
 	if k.KeyTPM != nil && k.KeyTPM.TPMOptions != nil {
