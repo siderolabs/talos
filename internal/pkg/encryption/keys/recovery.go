@@ -21,7 +21,7 @@ import (
 // RecoveryToken is the userdata stored in the partition token metadata for the recovery key slot.
 type RecoveryToken struct {
 	KeySlots []int `json:"keyslots"`
-	// Fetched is set once the operator fetched the generated key.
+	// Fetched is set once the operator acknowledged the generated key (by verifying it after fetching it).
 	//
 	// Until then the key is regenerated whenever the volume is unlocked with another key,
 	// so a key nobody knows never stays enrolled.
