@@ -158,7 +158,7 @@ func (widget *RecoveryKeyGrid) reportOutcome(id string, spec *block.VolumeStatus
 		widget.infoView.SetText(fmt.Sprintf("[red]Recovery key rejected for %s, check the key and try again[-]", tview.Escape(id)))
 
 		// put the cursor back into the key field for the retry
-		widget.form.SetFocus(0)
+		widget.form.SetFocus(1)
 		widget.dashboard.app.SetFocus(widget.form)
 	}
 }
