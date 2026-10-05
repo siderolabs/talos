@@ -22,6 +22,9 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	HypervisorService_ConsoleStream_FullMethodName = "/machine.HypervisorService/ConsoleStream"
 	HypervisorService_VNCStream_FullMethodName     = "/machine.HypervisorService/VNCStream"
+	HypervisorService_Start_FullMethodName         = "/machine.HypervisorService/Start"
+	HypervisorService_Stop_FullMethodName          = "/machine.HypervisorService/Stop"
+	HypervisorService_Reboot_FullMethodName        = "/machine.HypervisorService/Reboot"
 )
 
 // HypervisorServiceClient is the client API for HypervisorService service.
@@ -41,6 +44,12 @@ type HypervisorServiceClient interface {
 	// opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
 	// Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
 	VNCStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[VNCRequest, VNCResponse], error)
+	// Start drives a virtual machine towards running by setting powerState in the machine configuration.
+	Start(ctx context.Context, in *VirtualMachineStartRequest, opts ...grpc.CallOption) (*VirtualMachineStartResponse, error)
+	// Stop drives a virtual machine towards stopped by setting powerState in the machine configuration.
+	Stop(ctx context.Context, in *VirtualMachineStopRequest, opts ...grpc.CallOption) (*VirtualMachineStopResponse, error)
+	// Reboot restarts a running virtual machine, leaving the machine configuration alone.
+	Reboot(ctx context.Context, in *VirtualMachineRebootRequest, opts ...grpc.CallOption) (*VirtualMachineRebootResponse, error)
 }
 
 type hypervisorServiceClient struct {
@@ -77,6 +86,36 @@ func (c *hypervisorServiceClient) VNCStream(ctx context.Context, opts ...grpc.Ca
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HypervisorService_VNCStreamClient = grpc.BidiStreamingClient[VNCRequest, VNCResponse]
 
+func (c *hypervisorServiceClient) Start(ctx context.Context, in *VirtualMachineStartRequest, opts ...grpc.CallOption) (*VirtualMachineStartResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VirtualMachineStartResponse)
+	err := c.cc.Invoke(ctx, HypervisorService_Start_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hypervisorServiceClient) Stop(ctx context.Context, in *VirtualMachineStopRequest, opts ...grpc.CallOption) (*VirtualMachineStopResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VirtualMachineStopResponse)
+	err := c.cc.Invoke(ctx, HypervisorService_Stop_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *hypervisorServiceClient) Reboot(ctx context.Context, in *VirtualMachineRebootRequest, opts ...grpc.CallOption) (*VirtualMachineRebootResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VirtualMachineRebootResponse)
+	err := c.cc.Invoke(ctx, HypervisorService_Reboot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HypervisorServiceServer is the server API for HypervisorService service.
 // All implementations must embed UnimplementedHypervisorServiceServer
 // for forward compatibility.
@@ -94,6 +133,12 @@ type HypervisorServiceServer interface {
 	// opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
 	// Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
 	VNCStream(grpc.BidiStreamingServer[VNCRequest, VNCResponse]) error
+	// Start drives a virtual machine towards running by setting powerState in the machine configuration.
+	Start(context.Context, *VirtualMachineStartRequest) (*VirtualMachineStartResponse, error)
+	// Stop drives a virtual machine towards stopped by setting powerState in the machine configuration.
+	Stop(context.Context, *VirtualMachineStopRequest) (*VirtualMachineStopResponse, error)
+	// Reboot restarts a running virtual machine, leaving the machine configuration alone.
+	Reboot(context.Context, *VirtualMachineRebootRequest) (*VirtualMachineRebootResponse, error)
 	mustEmbedUnimplementedHypervisorServiceServer()
 }
 
@@ -109,6 +154,15 @@ func (UnimplementedHypervisorServiceServer) ConsoleStream(grpc.BidiStreamingServ
 }
 func (UnimplementedHypervisorServiceServer) VNCStream(grpc.BidiStreamingServer[VNCRequest, VNCResponse]) error {
 	return status.Error(codes.Unimplemented, "method VNCStream not implemented")
+}
+func (UnimplementedHypervisorServiceServer) Start(context.Context, *VirtualMachineStartRequest) (*VirtualMachineStartResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Start not implemented")
+}
+func (UnimplementedHypervisorServiceServer) Stop(context.Context, *VirtualMachineStopRequest) (*VirtualMachineStopResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Stop not implemented")
+}
+func (UnimplementedHypervisorServiceServer) Reboot(context.Context, *VirtualMachineRebootRequest) (*VirtualMachineRebootResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Reboot not implemented")
 }
 func (UnimplementedHypervisorServiceServer) mustEmbedUnimplementedHypervisorServiceServer() {}
 func (UnimplementedHypervisorServiceServer) testEmbeddedByValue()                           {}
@@ -145,13 +199,80 @@ func _HypervisorService_VNCStream_Handler(srv interface{}, stream grpc.ServerStr
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HypervisorService_VNCStreamServer = grpc.BidiStreamingServer[VNCRequest, VNCResponse]
 
+func _HypervisorService_Start_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VirtualMachineStartRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HypervisorServiceServer).Start(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HypervisorService_Start_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HypervisorServiceServer).Start(ctx, req.(*VirtualMachineStartRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HypervisorService_Stop_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VirtualMachineStopRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HypervisorServiceServer).Stop(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HypervisorService_Stop_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HypervisorServiceServer).Stop(ctx, req.(*VirtualMachineStopRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _HypervisorService_Reboot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VirtualMachineRebootRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HypervisorServiceServer).Reboot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HypervisorService_Reboot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HypervisorServiceServer).Reboot(ctx, req.(*VirtualMachineRebootRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HypervisorService_ServiceDesc is the grpc.ServiceDesc for HypervisorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var HypervisorService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "machine.HypervisorService",
 	HandlerType: (*HypervisorServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Start",
+			Handler:    _HypervisorService_Start_Handler,
+		},
+		{
+			MethodName: "Stop",
+			Handler:    _HypervisorService_Stop_Handler,
+		},
+		{
+			MethodName: "Reboot",
+			Handler:    _HypervisorService_Reboot_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "ConsoleStream",

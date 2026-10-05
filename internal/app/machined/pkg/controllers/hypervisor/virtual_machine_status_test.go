@@ -48,10 +48,14 @@ func (s *VirtualMachineStatusSuite) SetupTest() {
 		domains:         make(map[string]libvirtdomain.Domain),
 		texts:           make(map[string]string),
 		starts:          make(map[string]int),
+		shutdowns:       make(map[string]int),
+		reboots:         make(map[string]int),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
-		listed:          make(chan struct{}, 1),
+
+		attemptedShutdown: make(chan struct{}, 1),
+		listed:            make(chan struct{}, 1),
 	}
 
 	machine := hardware.NewSystemInformation(hardware.SystemInformationID)
@@ -117,6 +121,14 @@ func (c *boundedDomainClient) Start(libvirtdomain.Domain, string, ...libvirtdoma
 
 func (c *boundedDomainClient) Remove(libvirtdomain.Domain) error {
 	panic("bounded client used for remove")
+}
+
+func (c *boundedDomainClient) Shutdown(libvirtdomain.Domain) error {
+	panic("bounded client used for shutdown")
+}
+
+func (c *boundedDomainClient) Reboot(libvirtdomain.Domain) error {
+	panic("bounded client used for reboot")
 }
 
 func (s *VirtualMachineStatusSuite) startObserver() {
@@ -666,6 +678,40 @@ func (s *VirtualMachineStatusSuite) assertGuestAddresses(name string, want []str
 
 		return true
 	}, 5*time.Second, 10*time.Millisecond)
+}
+
+// A pending graceful stop is reported from the stop mode the domain spec carries, not from the
+// record: a stop forced by the domain spec is not one the operator can escape by forcing it.
+func (s *VirtualMachineStatusSuite) TestPendingStopFollowsTheDomainSpec() {
+	s.Create(newRenderableSpec("vm1", "stopped"))
+
+	record := hypervisor.NewVirtualMachineStopMode(hypervisor.NamespaceName, "vm1")
+	record.TypedSpec().Mode = hypervisorhelpers.StopModeGraceful.String()
+	s.Create(record)
+
+	domainSpec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm1")
+	domainSpec.TypedSpec().PowerState = "stopped"
+	domainSpec.TypedSpec().StopMode = hypervisorhelpers.StopModeForced.String()
+	domainSpec.TypedSpec().DomainXML = `<domain><name>vm1</name></domain>`
+	s.Create(domainSpec)
+
+	s.client.mu.Lock()
+	s.client.domains["vm1"] = libvirtdomain.Domain{Name: "vm1", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "vm1")}
+	s.client.mu.Unlock()
+
+	s.start()
+
+	s.events <- struct{}{}
+
+	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStagePending, "domain is still defined")
+
+	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), "vm1")
+	s.Require().NoError(err)
+
+	updated.TypedSpec().StopMode = hypervisorhelpers.StopModeGraceful.String()
+	s.Update(updated)
+
+	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStagePending, hypervisor.GracefulStopPendingError)
 }
 
 // A link the host lacks costs the spec its power intent, so the running domain is on its way out:
