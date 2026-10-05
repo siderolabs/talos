@@ -153,6 +153,9 @@ var rules = map[string]role.Set{
 		// for maintenance only, verified in the handler
 		role.Reader,
 	),
+	"/machine.EncryptionService/RecoveryKeySupply": role.MakeSet(role.Admin),
+	"/machine.EncryptionService/RecoveryKeyVerify": role.MakeSet(role.Admin),
+	"/machine.EncryptionService/RecoveryKeyFetch":  role.MakeSet(role.Admin),
 	"/machine.MDService/Destroy": role.MakeSet(
 		role.Admin,
 		// for maintenance only, verified in the handler

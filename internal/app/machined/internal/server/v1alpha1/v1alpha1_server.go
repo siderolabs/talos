@@ -163,6 +163,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
+	machine.RegisterEncryptionServiceServer(obj, &EncryptionServer{server: s})
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.Controller})
 	machine.RegisterLVMServiceServer(obj, lvmd.NewService(s.Controller, s.Logger))
 	machine.RegisterMDServiceServer(obj, mdd.NewService(s.Controller, s.Logger))

@@ -65,6 +65,21 @@ description: Talos gRPC API reference.
   
     - [DebugService](#machine.DebugService)
   
+- [machine/encryption.proto](#machine/encryption.proto)
+    - [RecoveryKeyFetch](#machine.RecoveryKeyFetch)
+    - [RecoveryKeyFetchRequest](#machine.RecoveryKeyFetchRequest)
+    - [RecoveryKeyFetchResponse](#machine.RecoveryKeyFetchResponse)
+    - [RecoveryKeyFetchResult](#machine.RecoveryKeyFetchResult)
+    - [RecoveryKeySupply](#machine.RecoveryKeySupply)
+    - [RecoveryKeySupplyRequest](#machine.RecoveryKeySupplyRequest)
+    - [RecoveryKeySupplyResponse](#machine.RecoveryKeySupplyResponse)
+    - [RecoveryKeyVerify](#machine.RecoveryKeyVerify)
+    - [RecoveryKeyVerifyRequest](#machine.RecoveryKeyVerifyRequest)
+    - [RecoveryKeyVerifyResponse](#machine.RecoveryKeyVerifyResponse)
+    - [RecoveryKeyVerifyResult](#machine.RecoveryKeyVerifyResult)
+  
+    - [EncryptionService](#machine.EncryptionService)
+  
 - [machine/image.proto](#machine/image.proto)
     - [ImageServiceCredentials](#machine.ImageServiceCredentials)
     - [ImageServiceImportRequest](#machine.ImageServiceImportRequest)
@@ -138,17 +153,6 @@ description: Talos gRPC API reference.
     - [DiskUsageInfo](#machine.DiskUsageInfo)
     - [DiskUsageRequest](#machine.DiskUsageRequest)
     - [DmesgRequest](#machine.DmesgRequest)
-    - [EncryptionRecoveryKeyFetch](#machine.EncryptionRecoveryKeyFetch)
-    - [EncryptionRecoveryKeyFetchRequest](#machine.EncryptionRecoveryKeyFetchRequest)
-    - [EncryptionRecoveryKeyFetchResponse](#machine.EncryptionRecoveryKeyFetchResponse)
-    - [EncryptionRecoveryKeyFetchResult](#machine.EncryptionRecoveryKeyFetchResult)
-    - [EncryptionRecoveryKeySupply](#machine.EncryptionRecoveryKeySupply)
-    - [EncryptionRecoveryKeySupplyRequest](#machine.EncryptionRecoveryKeySupplyRequest)
-    - [EncryptionRecoveryKeySupplyResponse](#machine.EncryptionRecoveryKeySupplyResponse)
-    - [EncryptionRecoveryKeyVerify](#machine.EncryptionRecoveryKeyVerify)
-    - [EncryptionRecoveryKeyVerifyRequest](#machine.EncryptionRecoveryKeyVerifyRequest)
-    - [EncryptionRecoveryKeyVerifyResponse](#machine.EncryptionRecoveryKeyVerifyResponse)
-    - [EncryptionRecoveryKeyVerifyResult](#machine.EncryptionRecoveryKeyVerifyResult)
     - [EtcdAlarm](#machine.EtcdAlarm)
     - [EtcdAlarmDisarm](#machine.EtcdAlarmDisarm)
     - [EtcdAlarmDisarmResponse](#machine.EtcdAlarmDisarmResponse)
@@ -1542,6 +1546,206 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+<a name="machine/encryption.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/encryption.proto
+
+
+
+<a name="machine.RecoveryKeyFetch"></a>
+
+### RecoveryKeyFetch
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| results | [RecoveryKeyFetchResult](#machine.RecoveryKeyFetchResult) | repeated |  |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyFetchRequest"></a>
+
+### RecoveryKeyFetchRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volumes | [string](#string) | repeated | Volume IDs to fetch the key for, defaults to all volumes with a generated key pending. |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyFetchResponse"></a>
+
+### RecoveryKeyFetchResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [RecoveryKeyFetch](#machine.RecoveryKeyFetch) | repeated |  |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyFetchResult"></a>
+
+### RecoveryKeyFetchResult
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume | [string](#string) |  |  |
+| key | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="machine.RecoveryKeySupply"></a>
+
+### RecoveryKeySupply
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| volumes | [string](#string) | repeated | Volume IDs the key was supplied for. |
+
+
+
+
+
+
+<a name="machine.RecoveryKeySupplyRequest"></a>
+
+### RecoveryKeySupplyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volumes | [string](#string) | repeated | Volume IDs to supply the key for, defaults to all volumes with a recovery key configured. |
+| key | [bytes](#bytes) |  | Recovery key. |
+
+
+
+
+
+
+<a name="machine.RecoveryKeySupplyResponse"></a>
+
+### RecoveryKeySupplyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [RecoveryKeySupply](#machine.RecoveryKeySupply) | repeated |  |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyVerify"></a>
+
+### RecoveryKeyVerify
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| metadata | [common.Metadata](#common.Metadata) |  |  |
+| results | [RecoveryKeyVerifyResult](#machine.RecoveryKeyVerifyResult) | repeated |  |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyVerifyRequest"></a>
+
+### RecoveryKeyVerifyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volumes | [string](#string) | repeated | Volume IDs to verify the key against, defaults to all volumes with a recovery key configured. |
+| key | [bytes](#bytes) |  | Recovery key. |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyVerifyResponse"></a>
+
+### RecoveryKeyVerifyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| messages | [RecoveryKeyVerify](#machine.RecoveryKeyVerify) | repeated |  |
+
+
+
+
+
+
+<a name="machine.RecoveryKeyVerifyResult"></a>
+
+### RecoveryKeyVerifyResult
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume | [string](#string) |  |  |
+| valid | [bool](#bool) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.EncryptionService"></a>
+
+### EncryptionService
+EncryptionService manages disk encryption keys of the volumes on a Talos node.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| RecoveryKeySupply | [RecoveryKeySupplyRequest](#machine.RecoveryKeySupplyRequest) | [RecoveryKeySupplyResponse](#machine.RecoveryKeySupplyResponse) | RecoveryKeySupply supplies the disk encryption recovery key to unlock locked volumes. |
+| RecoveryKeyVerify | [RecoveryKeyVerifyRequest](#machine.RecoveryKeyVerifyRequest) | [RecoveryKeyVerifyResponse](#machine.RecoveryKeyVerifyResponse) | RecoveryKeyVerify verifies the disk encryption recovery key against the recovery key slot of the volumes. |
+| RecoveryKeyFetch | [RecoveryKeyFetchRequest](#machine.RecoveryKeyFetchRequest) | [RecoveryKeyFetchResponse](#machine.RecoveryKeyFetchResponse) | RecoveryKeyFetch fetches the disk encryption recovery keys generated by the node. |
+
+ <!-- end services -->
+
+
+
 <a name="machine/image.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -2649,178 +2853,6 @@ dmesg
 | ----- | ---- | ----- | ----------- |
 | follow | [bool](#bool) |  |  |
 | tail | [bool](#bool) |  |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyFetch"></a>
-
-### EncryptionRecoveryKeyFetch
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-| results | [EncryptionRecoveryKeyFetchResult](#machine.EncryptionRecoveryKeyFetchResult) | repeated |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyFetchRequest"></a>
-
-### EncryptionRecoveryKeyFetchRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| volumes | [string](#string) | repeated | Volume IDs to fetch the key for, defaults to all volumes with a generated key pending. |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyFetchResponse"></a>
-
-### EncryptionRecoveryKeyFetchResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [EncryptionRecoveryKeyFetch](#machine.EncryptionRecoveryKeyFetch) | repeated |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyFetchResult"></a>
-
-### EncryptionRecoveryKeyFetchResult
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| volume | [string](#string) |  |  |
-| key | [bytes](#bytes) |  |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeySupply"></a>
-
-### EncryptionRecoveryKeySupply
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-| volumes | [string](#string) | repeated | Volume IDs the key was supplied for. |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeySupplyRequest"></a>
-
-### EncryptionRecoveryKeySupplyRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| volumes | [string](#string) | repeated | Volume IDs to supply the key for, defaults to all volumes with a recovery key configured. |
-| key | [bytes](#bytes) |  | Recovery key. |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeySupplyResponse"></a>
-
-### EncryptionRecoveryKeySupplyResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [EncryptionRecoveryKeySupply](#machine.EncryptionRecoveryKeySupply) | repeated |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyVerify"></a>
-
-### EncryptionRecoveryKeyVerify
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-| results | [EncryptionRecoveryKeyVerifyResult](#machine.EncryptionRecoveryKeyVerifyResult) | repeated |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyVerifyRequest"></a>
-
-### EncryptionRecoveryKeyVerifyRequest
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| volumes | [string](#string) | repeated | Volume IDs to verify the key against, defaults to all volumes with a recovery key configured. |
-| key | [bytes](#bytes) |  | Recovery key. |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyVerifyResponse"></a>
-
-### EncryptionRecoveryKeyVerifyResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [EncryptionRecoveryKeyVerify](#machine.EncryptionRecoveryKeyVerify) | repeated |  |
-
-
-
-
-
-
-<a name="machine.EncryptionRecoveryKeyVerifyResult"></a>
-
-### EncryptionRecoveryKeyVerifyResult
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| volume | [string](#string) |  |  |
-| valid | [bool](#bool) |  |  |
 
 
 
@@ -5488,9 +5520,6 @@ The machine service definition.
 | Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
-| EncryptionRecoveryKeySupply | [EncryptionRecoveryKeySupplyRequest](#machine.EncryptionRecoveryKeySupplyRequest) | [EncryptionRecoveryKeySupplyResponse](#machine.EncryptionRecoveryKeySupplyResponse) | EncryptionRecoveryKeySupply supplies the disk encryption recovery key for encrypted volumes. |
-| EncryptionRecoveryKeyVerify | [EncryptionRecoveryKeyVerifyRequest](#machine.EncryptionRecoveryKeyVerifyRequest) | [EncryptionRecoveryKeyVerifyResponse](#machine.EncryptionRecoveryKeyVerifyResponse) | EncryptionRecoveryKeyVerify verifies the disk encryption recovery key against encrypted volumes. |
-| EncryptionRecoveryKeyFetch | [EncryptionRecoveryKeyFetchRequest](#machine.EncryptionRecoveryKeyFetchRequest) | [EncryptionRecoveryKeyFetchResponse](#machine.EncryptionRecoveryKeyFetchResponse) | EncryptionRecoveryKeyFetch fetches the disk encryption recovery keys generated by the node.<br><br>Each key is returned once: the node drops it after it was fetched. |
 | ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.<br><br>Use ImageService List RPC instead. |
 | ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.<br><br>Use ImageService Pull RPC instead. |
 

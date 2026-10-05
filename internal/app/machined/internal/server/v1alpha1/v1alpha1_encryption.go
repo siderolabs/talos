@@ -27,13 +27,20 @@ import (
 // recoveryKeyOwner is the controller owning the recovery key resources: the API creates and destroys them on its behalf.
 var recoveryKeyOwner = (&blockctrl.VolumeManagerController{}).Name()
 
-// EncryptionRecoveryKeySupply implements the machine.MachineServer interface.
-func (s *Server) EncryptionRecoveryKeySupply(ctx context.Context, req *machine.EncryptionRecoveryKeySupplyRequest) (*machine.EncryptionRecoveryKeySupplyResponse, error) {
+// EncryptionServer implements machine.EncryptionServiceServer.
+type EncryptionServer struct {
+	machine.UnimplementedEncryptionServiceServer
+
+	server *Server
+}
+
+// RecoveryKeySupply implements the machine.EncryptionServiceServer interface.
+func (s *EncryptionServer) RecoveryKeySupply(ctx context.Context, req *machine.RecoveryKeySupplyRequest) (*machine.RecoveryKeySupplyResponse, error) {
 	if len(req.Key) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "recovery key must not be empty")
 	}
 
-	st := s.Controller.Runtime().State().V1Alpha2().Resources()
+	st := s.server.Controller.Runtime().State().V1Alpha2().Resources()
 
 	volumeIDs, err := recoveryKeyVolumes(ctx, st, req.Volumes)
 	if err != nil {
@@ -57,8 +64,8 @@ func (s *Server) EncryptionRecoveryKeySupply(ctx context.Context, req *machine.E
 		}
 	}
 
-	return &machine.EncryptionRecoveryKeySupplyResponse{
-		Messages: []*machine.EncryptionRecoveryKeySupply{
+	return &machine.RecoveryKeySupplyResponse{
+		Messages: []*machine.RecoveryKeySupply{
 			{
 				Volumes: volumeIDs,
 			},
@@ -66,9 +73,9 @@ func (s *Server) EncryptionRecoveryKeySupply(ctx context.Context, req *machine.E
 	}, nil
 }
 
-// EncryptionRecoveryKeyFetch implements the machine.MachineServer interface.
-func (s *Server) EncryptionRecoveryKeyFetch(ctx context.Context, req *machine.EncryptionRecoveryKeyFetchRequest) (*machine.EncryptionRecoveryKeyFetchResponse, error) {
-	st := s.Controller.Runtime().State().V1Alpha2().Resources()
+// RecoveryKeyFetch implements the machine.EncryptionServiceServer interface.
+func (s *EncryptionServer) RecoveryKeyFetch(ctx context.Context, req *machine.RecoveryKeyFetchRequest) (*machine.RecoveryKeyFetchResponse, error) {
+	st := s.server.Controller.Runtime().State().V1Alpha2().Resources()
 
 	volumeIDs := req.Volumes
 
@@ -89,7 +96,7 @@ func (s *Server) EncryptionRecoveryKeyFetch(ctx context.Context, req *machine.En
 		}
 	}
 
-	results := make([]*machine.EncryptionRecoveryKeyFetchResult, 0, len(volumeIDs))
+	results := make([]*machine.RecoveryKeyFetchResult, 0, len(volumeIDs))
 
 	for _, volumeID := range volumeIDs {
 		key, err := fetchRecoveryKey(ctx, st, volumeID)
@@ -97,14 +104,14 @@ func (s *Server) EncryptionRecoveryKeyFetch(ctx context.Context, req *machine.En
 			return nil, err
 		}
 
-		results = append(results, &machine.EncryptionRecoveryKeyFetchResult{
+		results = append(results, &machine.RecoveryKeyFetchResult{
 			Volume: volumeID,
 			Key:    key,
 		})
 	}
 
-	return &machine.EncryptionRecoveryKeyFetchResponse{
-		Messages: []*machine.EncryptionRecoveryKeyFetch{
+	return &machine.RecoveryKeyFetchResponse{
+		Messages: []*machine.RecoveryKeyFetch{
 			{
 				Results: results,
 			},
@@ -112,20 +119,20 @@ func (s *Server) EncryptionRecoveryKeyFetch(ctx context.Context, req *machine.En
 	}, nil
 }
 
-// EncryptionRecoveryKeyVerify implements the machine.MachineServer interface.
-func (s *Server) EncryptionRecoveryKeyVerify(ctx context.Context, req *machine.EncryptionRecoveryKeyVerifyRequest) (*machine.EncryptionRecoveryKeyVerifyResponse, error) {
+// RecoveryKeyVerify implements the machine.EncryptionServiceServer interface.
+func (s *EncryptionServer) RecoveryKeyVerify(ctx context.Context, req *machine.RecoveryKeyVerifyRequest) (*machine.RecoveryKeyVerifyResponse, error) {
 	if len(req.Key) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "recovery key must not be empty")
 	}
 
-	st := s.Controller.Runtime().State().V1Alpha2().Resources()
+	st := s.server.Controller.Runtime().State().V1Alpha2().Resources()
 
 	volumeIDs, err := recoveryKeyVolumes(ctx, st, req.Volumes)
 	if err != nil {
 		return nil, err
 	}
 
-	results := make([]*machine.EncryptionRecoveryKeyVerifyResult, 0, len(volumeIDs))
+	results := make([]*machine.RecoveryKeyVerifyResult, 0, len(volumeIDs))
 
 	for _, volumeID := range volumeIDs {
 		valid, err := verifyRecoveryKey(ctx, st, volumeID, req.Key)
@@ -133,14 +140,14 @@ func (s *Server) EncryptionRecoveryKeyVerify(ctx context.Context, req *machine.E
 			return nil, err
 		}
 
-		results = append(results, &machine.EncryptionRecoveryKeyVerifyResult{
+		results = append(results, &machine.RecoveryKeyVerifyResult{
 			Volume: volumeID,
 			Valid:  valid,
 		})
 	}
 
-	return &machine.EncryptionRecoveryKeyVerifyResponse{
-		Messages: []*machine.EncryptionRecoveryKeyVerify{
+	return &machine.RecoveryKeyVerifyResponse{
+		Messages: []*machine.RecoveryKeyVerify{
 			{
 				Results: results,
 			},
