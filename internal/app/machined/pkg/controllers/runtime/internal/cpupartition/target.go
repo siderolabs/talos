@@ -6,6 +6,7 @@
 package cpupartition
 
 import (
+	"cmp"
 	"fmt"
 	"strings"
 
@@ -137,6 +138,10 @@ func rootCgroupPath(root string) string {
 	default:
 		return ""
 	}
+}
+
+func (t Target) less(other Target) int {
+	return cmp.Or(cmp.Compare(t.Kind, other.Kind), cmp.Compare(t.Name, other.Name))
 }
 
 // Partition returns the libvirt resource partition of a target virtual machines run in: the
