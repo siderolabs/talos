@@ -124,8 +124,8 @@ type EncryptionKey struct {
 	//     Recovery key which is held by the operator and never stored on the node.
 	//
 	//     The node generates the key when it enrolls the slot (while the volume is unlocked
-	//     with another key), and keeps it in memory until it is fetched once with
-	//     `talosctl recovery-key fetch`. The operator supplies the key whenever the volume
+	//     with another key), and keeps it in memory until it is fetched and acknowledged
+	//     with `talosctl recovery-key fetch`. The operator supplies the key whenever the volume
 	//     can't be unlocked with any of the other keys (e.g. the TPM state changed after a
 	//     firmware update, or the KMS is not reachable), from the console dashboard or with
 	//     `talosctl recovery-key unlock`.
