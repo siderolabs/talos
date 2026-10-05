@@ -72,7 +72,7 @@ from the node afterwards. Use 'talosctl recovery-key verify' to check the stored
 		respCh := multiplex.UnaryViaFactory(
 			ctx, clientFactory,
 			func(ctx context.Context, c *client.Client) ([]string, error) {
-				resp, err := c.EncryptionRecoveryKeyFetch(ctx, recoveryKeyCmdFlags.volumes)
+				resp, err := c.RecoveryKeyFetch(ctx, recoveryKeyCmdFlags.volumes)
 				if err != nil {
 					return nil, err
 				}
@@ -172,7 +172,7 @@ Nothing is changed on the node. The command fails if the key doesn't match any o
 		respCh := multiplex.UnaryViaFactory(
 			ctx, clientFactory,
 			func(ctx context.Context, c *client.Client) ([]string, error) {
-				resp, err := c.EncryptionRecoveryKeyVerify(ctx, recoveryKeyCmdFlags.volumes, key)
+				resp, err := c.RecoveryKeyVerify(ctx, recoveryKeyCmdFlags.volumes, key)
 				if err != nil {
 					return nil, err
 				}
@@ -223,7 +223,7 @@ func supplyRecoveryKey(ctx context.Context, key []byte, volumes []string, check 
 	respCh := multiplex.UnaryViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) ([]string, error) {
-			resp, err := c.EncryptionRecoveryKeySupply(ctx, volumes, key)
+			resp, err := c.RecoveryKeySupply(ctx, volumes, key)
 			if err != nil {
 				return nil, err
 			}
