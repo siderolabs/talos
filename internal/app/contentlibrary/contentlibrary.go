@@ -564,6 +564,10 @@ func (svc *Service) claimLibraryFile(ctx context.Context, libraryID, name string
 
 // checkNotInUse refuses a file a running domain is reading from.
 func (svc *Service) checkNotInUse(ctx context.Context, libraryID, name string) error {
+	if err := svc.checkNotInUseBySeed(ctx, libraryID, name); err != nil {
+		return err
+	}
+
 	diskStatuses, err := safe.StateListAll[*hypervisor.VirtualMachineDiskStatus](ctx, svc.state)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to list virtual machine disk statuses: %v", err)
@@ -579,6 +583,26 @@ func (svc *Service) checkNotInUse(ctx context.Context, libraryID, name string) e
 		if image.Library == libraryID && image.File == name {
 			return status.Errorf(codes.FailedPrecondition, "file %q is in use by disk %q of virtual machine %q",
 				name, diskStatus.TypedSpec().Name, diskStatus.TypedSpec().VirtualMachine)
+		}
+	}
+
+	return nil
+}
+
+// checkNotInUseBySeed protects seed assets while an attached domain holds their status.
+func (svc *Service) checkNotInUseBySeed(ctx context.Context, libraryID, name string) error {
+	seeds, err := safe.StateListAll[*hypervisor.CloudInitStatus](ctx, svc.state)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to list cloud-init statuses: %v", err)
+	}
+
+	for seed := range seeds.All() {
+		if seed.Metadata().Finalizers().Empty() {
+			continue
+		}
+
+		if seed.TypedSpec().Library == libraryID && seed.TypedSpec().Name == name {
+			return status.Errorf(codes.FailedPrecondition, "file %q is in use by cloud-init seed of virtual machine %q", name, seed.TypedSpec().VirtualMachine)
 		}
 	}
 

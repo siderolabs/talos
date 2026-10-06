@@ -32,6 +32,8 @@ type VirtualMachineDomainSpecSpec struct {
 	// It is what the controller which starts the domain holds against, rather than the virtual
 	// machine's configuration, which moves ahead of the definition libvirt is running.
 	Disks []string `yaml:"disks,omitempty" protobuf:"3"`
+	// CloudInit identifies the seed status this domain has attached and must hold.
+	CloudInit string `yaml:"cloudInit,omitempty" protobuf:"4"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

@@ -124,6 +124,7 @@ networking:
 guest:
     # Seed handed to the guest on first boot.
     cloudInit:
+        library: targetlibrary # Name of the content library where Talos stores the generated NoCloud ISO.
         metaData: | # Contents of the seed's `meta-data` file, carrying the guest's identity.
             instance-id: vm1-001
             local-hostname: vm1
@@ -527,6 +528,9 @@ VirtualMachineCloudInit describes the NoCloud seed handed to the guest.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
+|`library` |string |Name of the content library where Talos stores the generated NoCloud ISO.<br><br>Must name a content library with a nonempty identifier of at most 63 ASCII letters,<br>digits or hyphens. The library is declared separately by a `ContentLibraryConfig`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+library: targetlibrary
+{{< /highlight >}}</details> | |
 |`metaData` |string |Contents of the seed's `meta-data` file, carrying the guest's identity.<br><br>`instance-id` is what decides whether a boot is a reboot or a new instance. An unchanged<br>id means edits to `userData` are inert; a changed id re-runs provisioning, which<br>regenerates the SSH host keys in most images.<br><br>Must be valid YAML. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 metaData: |
     instance-id: vm1-001

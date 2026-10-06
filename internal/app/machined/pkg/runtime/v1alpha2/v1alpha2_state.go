@@ -133,6 +133,8 @@ func NewState() (*State, error) {
 		&containers.ContainerLifecycle{},
 		&containers.ContainerStatus{},
 		&hypervisor.ContentLibraryStatus{},
+		&hypervisor.CloudInitSpec{},
+		&hypervisor.CloudInitStatus{},
 		&hypervisor.VirtualMachineSpec{},
 		&hypervisor.VirtualMachineDiskStatus{},
 		&hypervisor.VirtualMachineDomainSpec{},

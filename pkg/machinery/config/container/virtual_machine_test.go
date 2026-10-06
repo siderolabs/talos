@@ -62,6 +62,16 @@ func newBlankDiskVirtualMachineDoc(name string) *hypervisorcfg.VirtualMachineCon
 	return doc
 }
 
+func newCloudInitVirtualMachineDoc(name, library string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
+	doc := newBlankDiskVirtualMachineDoc(name)
+	doc.GuestConfig.CloudInitConfig = &hypervisorcfg.VirtualMachineCloudInit{
+		LibraryConfig:  library,
+		UserDataConfig: "#cloud-config\n",
+	}
+
+	return doc
+}
+
 func TestVirtualMachineImageReferences(t *testing.T) {
 	t.Parallel()
 
@@ -109,6 +119,51 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 			},
 			expectedErrs: []string{
 				`virtual machine "vm1": disks[1]: no ContentLibraryConfig declares content library "nowhere"`,
+			},
+		},
+		{
+			name: "cloud-init library declared",
+			docs: []config.Document{
+				newUserVolumeDoc("vm-images"),
+				newContentLibraryDoc("images", "vm-images"),
+				newCloudInitVirtualMachineDoc("vm1", "images"),
+			},
+		},
+		{
+			name: "cloud-init library not declared",
+			docs: []config.Document{
+				newCloudInitVirtualMachineDoc("vm1", "images"),
+			},
+			expectedErrs: []string{
+				`virtual machine "vm1": guest.cloudInit: no ContentLibraryConfig declares content library "images"`,
+			},
+		},
+		{
+			name: "cloud-init library differs from declared library",
+			docs: []config.Document{
+				newUserVolumeDoc("vm-images"),
+				newContentLibraryDoc("images", "vm-images"),
+				newCloudInitVirtualMachineDoc("vm1", "seeds"),
+			},
+			expectedErrs: []string{
+				`virtual machine "vm1": guest.cloudInit: no ContentLibraryConfig declares content library "seeds"`,
+			},
+		},
+		{
+			name: "multiple cloud-init libraries not declared",
+			docs: []config.Document{
+				newCloudInitVirtualMachineDoc("vm2", "seeds"),
+				newCloudInitVirtualMachineDoc("vm1", "images"),
+			},
+			expectedErrs: []string{
+				`virtual machine "vm1": guest.cloudInit: no ContentLibraryConfig declares content library "images"`,
+				`virtual machine "vm2": guest.cloudInit: no ContentLibraryConfig declares content library "seeds"`,
+			},
+		},
+		{
+			name: "cloud-init missing library name",
+			docs: []config.Document{
+				newCloudInitVirtualMachineDoc("vm1", ""),
 			},
 		},
 		{

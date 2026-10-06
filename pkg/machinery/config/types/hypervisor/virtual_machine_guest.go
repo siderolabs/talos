@@ -15,6 +15,7 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
 // Check interfaces.
@@ -52,6 +53,15 @@ type VirtualMachineAgent struct {
 
 // VirtualMachineCloudInit describes the NoCloud seed handed to the guest.
 type VirtualMachineCloudInit struct {
+	//   description: |
+	//     Name of the content library where Talos stores the generated NoCloud ISO.
+	//
+	//     Must name a content library with a nonempty identifier of at most 63 ASCII letters,
+	//     digits or hyphens. The library is declared separately by a `ContentLibraryConfig`.
+	//   examples:
+	//     - value: '"targetlibrary"'
+	//   schemaRequired: true
+	LibraryConfig string `yaml:"library"`
 	//   description: |
 	//     Contents of the seed's `meta-data` file, carrying the guest's identity.
 	//
@@ -111,6 +121,11 @@ func (a *VirtualMachineAgent) Enabled() bool {
 	return pointer.SafeDeref(a.AgentEnabled)
 }
 
+// Library implements config.VirtualMachineCloudInitConfig interface.
+func (c *VirtualMachineCloudInit) Library() string {
+	return c.LibraryConfig
+}
+
 // MetaData implements config.VirtualMachineCloudInitConfig interface.
 func (c *VirtualMachineCloudInit) MetaData() string {
 	return c.MetaDataConfig
@@ -153,6 +168,12 @@ func (g *VirtualMachineGuest) validate() ([]string, error) {
 		validationErrors error
 		warnings         []string
 	)
+
+	if cloudInit.LibraryConfig == "" {
+		validationErrors = errors.Join(validationErrors, errors.New("guest.cloudInit.library is required"))
+	} else if err := hypervisorhelpers.ValidateName(cloudInit.LibraryConfig); err != nil {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("guest.cloudInit.library: %w", err))
+	}
 
 	hasInstanceID, err := validateMetaData(cloudInit.MetaDataConfig)
 	validationErrors = errors.Join(validationErrors, err)

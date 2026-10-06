@@ -514,10 +514,13 @@ description: Talos gRPC API reference.
     - [SystemInformationSpec](#talos.resource.definitions.hardware.SystemInformationSpec)
   
 - [resource/definitions/hypervisor/hypervisor.proto](#resource/definitions/hypervisor/hypervisor.proto)
+    - [CloudInitSpecSpec](#talos.resource.definitions.hypervisor.CloudInitSpecSpec)
+    - [CloudInitStatusSpec](#talos.resource.definitions.hypervisor.CloudInitStatusSpec)
     - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
     - [VirtualMachineCPUPlacementSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec)
     - [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec)
     - [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec)
+    - [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec)
     - [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec)
     - [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec)
     - [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec)
@@ -9019,6 +9022,49 @@ SystemInformationSpec represents the system information obtained from smbios.
 
 
 
+<a name="talos.resource.definitions.hypervisor.CloudInitSpecSpec"></a>
+
+### CloudInitSpecSpec
+CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library | [string](#string) |  |  |
+| meta_data | [string](#string) |  |  |
+| user_data | [string](#string) |  |  |
+| network_config | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.CloudInitStatusSpec"></a>
+
+### CloudInitStatusSpec
+CloudInitStatusSpec never contains the raw guest seed.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| virtual_machine | [string](#string) |  |  |
+| library | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| path | [string](#string) |  | Path and VolumeID pin the backing identity and prevent stale readiness across remounts. |
+| volume_id | [string](#string) |  |  |
+| digest | [string](#string) |  |  |
+| size_bytes | [uint64](#uint64) |  |  |
+| input_digest | [string](#string) |  |  |
+| observed_generation | [string](#string) |  |  |
+| ready | [bool](#bool) |  |  |
+| error | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.ContentLibraryStatusSpec"></a>
 
 ### ContentLibraryStatusSpec
@@ -9086,6 +9132,24 @@ VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented
 | sockets | [uint32](#uint32) |  |  |
 | cores | [uint32](#uint32) |  |  |
 | threads | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec"></a>
+
+### VirtualMachineCloudInitSpec
+VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library | [string](#string) |  |  |
+| meta_data | [string](#string) |  |  |
+| user_data | [string](#string) |  |  |
+| network_config | [string](#string) |  |  |
 
 
 
@@ -9197,6 +9261,7 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | domain_xml | [string](#string) |  | DomainXML is the libvirt domain description used to start the guest. |
 | power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
 | disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
+| cloud_init | [string](#string) |  | CloudInit identifies the seed status this domain has attached and must hold. |
 
 
 
@@ -9320,6 +9385,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | console | [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec) |  |  |
 | disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated |  |
 | interfaces | [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec) | repeated |  |
+| cloud_init | [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec) |  |  |
 
 
 

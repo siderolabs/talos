@@ -48,6 +48,21 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.CloudInitSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.CloudInitStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.ContentLibraryStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDomainStatusType,
 			Kind:      controller.InputWeak,
 		},
@@ -140,7 +155,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		_, _, renderErr := renderVirtualMachineDomain(name, spec.TypedSpec(), links, resolvedDisks)
+		_, _, _, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
 
 		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])
 

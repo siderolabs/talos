@@ -14,8 +14,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
-// validateVirtualMachineImageReferences checks the content libraries virtual machine disks are
-// provisioned from.
+// validateVirtualMachineImageReferences checks the content libraries used by virtual machine disks
+// and cloud-init seed assets.
 func validateVirtualMachineImageReferences(container *Container) error {
 	configs := container.VirtualMachineConfigs()
 
@@ -37,6 +37,10 @@ func validateVirtualMachineImageReferences(container *Container) error {
 	var errs *multierror.Error
 
 	for _, virtualMachineConfig := range sorted {
+		if err := validateVirtualMachineCloudInitLibrary(virtualMachineConfig, declaredLibraries); err != nil {
+			errs = multierror.Append(errs, err)
+		}
+
 		for i, disk := range virtualMachineConfig.Disks() {
 			fromImage, ok := disk.Provision().FromImage().Get()
 			if !ok {
@@ -59,4 +63,23 @@ func validateVirtualMachineImageReferences(container *Container) error {
 	}
 
 	return errs.ErrorOrNil()
+}
+
+func validateVirtualMachineCloudInitLibrary(vm config.VirtualMachineConfig, declaredLibraries map[string]struct{}) error {
+	cloudInit, ok := vm.Guest().CloudInit().Get()
+	if !ok {
+		return nil
+	}
+
+	libraryName := cloudInit.Library()
+	if libraryName == "" {
+		// A missing library name is reported by the document's own validation.
+		return nil
+	}
+
+	if _, declared := declaredLibraries[libraryName]; !declared {
+		return fmt.Errorf("virtual machine %q: guest.cloudInit: no ContentLibraryConfig declares content library %q", vm.Name(), libraryName)
+	}
+
+	return nil
 }

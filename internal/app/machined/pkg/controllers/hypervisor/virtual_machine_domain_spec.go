@@ -10,12 +10,14 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"path/filepath"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
@@ -47,6 +49,21 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDiskStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.CloudInitSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.CloudInitStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.ContentLibraryStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -121,7 +138,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		if err := safe.WriterModify(ctx, r,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				domainXML, attachedDisks, renderErr := renderVirtualMachineDomain(name, vm.TypedSpec(), links, resolvedDisks)
+				domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, resolvedDisks)
 				if renderErr != nil {
 					if res.TypedSpec().DomainXML == "" {
 						// Nothing was ever defined, so there is nothing to stop.
@@ -142,6 +159,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 					DomainXML:  domainXML,
 					PowerState: vm.TypedSpec().PowerState,
 					Disks:      attachedDisks,
+					CloudInit:  seedID,
 				}
 
 				return nil
@@ -161,6 +179,165 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 	// spec is torn down to ask for that hold back, and destroyed only once it comes.
 	return errors.Join(append(errs,
 		cleanupOutputs[*hypervisor.VirtualMachineDomainSpec](ctx, r, "virtual machine domain spec", desired))...)
+}
+
+// renderVirtualMachineDomainWithSeed appends the projected seed to a valid base domain.
+func renderVirtualMachineDomainWithSeed(
+	ctx context.Context, r controller.Reader, name string, spec *hypervisor.VirtualMachineSpecSpec,
+	links hostLinks, resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+) (string, []string, string, error) {
+	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, links, resolvedDisks)
+	if err != nil || spec.CloudInit == nil {
+		return domainXML, attachedDisks, "", err
+	}
+
+	seedID, err := attachCloudInit(ctx, r, name, spec.CloudInit, &domainXML)
+
+	return domainXML, attachedDisks, seedID, err
+}
+
+// attachCloudInit requires the exact projected seed and its current library backing before rendering.
+func attachCloudInit(ctx context.Context, r controller.Reader, name string, desired *hypervisor.VirtualMachineCloudInitSpec, domainXML *string) (string, error) {
+	seed := hypervisor.CloudInitSpecSpec{
+		Library:       desired.Library,
+		MetaData:      desired.MetaData,
+		UserData:      desired.UserData,
+		NetworkConfig: desired.NetworkConfig,
+	}
+
+	if seed.Library == "" || strings.ContainsAny(seed.Library, "/\\\x00") {
+		return "", fmt.Errorf("virtual machine %q: invalid cloud-init library", name)
+	}
+
+	projected, status, library, id, err := loadCloudInitBacking(ctx, r, name, seed)
+	if err != nil {
+		return "", err
+	}
+
+	asset := status.TypedSpec()
+	if !cloudInitProjectionReady(projected, seed) ||
+		!cloudInitAssetCurrent(status, seed, projected.Metadata().Version().String(), name) ||
+		!cloudInitLibraryMatches(library, asset) || !cloudInitAssetNameValid(asset) {
+		return "", fmt.Errorf("virtual machine %q: cloud-init seed is %w", name, errDiskNotReady)
+	}
+
+	var domain libvirtxml.Domain
+	if err := domain.Unmarshal(*domainXML); err != nil {
+		return "", fmt.Errorf("decode domain: %w", err)
+	}
+
+	dev := freeCloudInitSATATarget(&domain)
+	if dev == "" {
+		return "", fmt.Errorf("virtual machine %q: cloud-init seed: %w: no free SATA target", name, errDiskUnsupported)
+	}
+
+	appendCloudInitCDROM(&domain, asset, dev)
+
+	*domainXML, err = domain.Marshal()
+
+	return id, err
+}
+
+// loadCloudInitBacking reads the projection, its seed status, and the library in dependency order.
+func loadCloudInitBacking(
+	ctx context.Context, r controller.Reader, name string, seed hypervisor.CloudInitSpecSpec,
+) (*hypervisor.CloudInitSpec, *hypervisor.CloudInitStatus, *hypervisor.ContentLibraryStatus, string, error) {
+	pending := func() error {
+		return fmt.Errorf("virtual machine %q: cloud-init seed is %w", name, errDiskNotReady)
+	}
+
+	projected, err := safe.ReaderGetByID[*hypervisor.CloudInitSpec](ctx, r, name)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil, nil, "", pending()
+		}
+
+		return nil, nil, nil, "", err
+	}
+
+	id := hypervisor.CloudInitStatusID(name, seed)
+
+	status, err := safe.ReaderGetByID[*hypervisor.CloudInitStatus](ctx, r, id)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil, nil, "", pending()
+		}
+
+		return nil, nil, nil, "", err
+	}
+
+	library, err := safe.ReaderGetByID[*hypervisor.ContentLibraryStatus](ctx, r, seed.Library)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil, nil, "", pending()
+		}
+
+		return nil, nil, nil, "", err
+	}
+
+	return projected, status, library, id, nil
+}
+
+func cloudInitProjectionReady(projected *hypervisor.CloudInitSpec, seed hypervisor.CloudInitSpecSpec) bool {
+	return projected.Metadata().Phase() == resource.PhaseRunning && *projected.TypedSpec() == seed
+}
+
+func cloudInitAssetCurrent(status *hypervisor.CloudInitStatus, seed hypervisor.CloudInitSpecSpec, generation, name string) bool {
+	asset := status.TypedSpec()
+
+	return status.Metadata().Phase() == resource.PhaseRunning && asset.Ready &&
+		asset.InputDigest == seed.InputDigest() && asset.ObservedGeneration == generation &&
+		asset.VirtualMachine == name && asset.Library == seed.Library
+}
+
+func cloudInitLibraryMatches(library *hypervisor.ContentLibraryStatus, asset *hypervisor.CloudInitStatusSpec) bool {
+	return library.Metadata().Phase() == resource.PhaseRunning && library.TypedSpec().Ready &&
+		asset.Path != "" && asset.VolumeID != "" &&
+		asset.Path == library.TypedSpec().Path && asset.VolumeID == library.TypedSpec().VolumeID
+}
+
+func cloudInitAssetNameValid(asset *hypervisor.CloudInitStatusSpec) bool {
+	return asset.Name != "" && filepath.Base(asset.Name) == asset.Name && asset.Digest != ""
+}
+
+// SATA shares sd* targets with SCSI; choose a free target without changing user boot order.
+func freeCloudInitSATATarget(domain *libvirtxml.Domain) string {
+	used := make(map[string]struct{}, len(domain.Devices.Disks))
+
+	for _, disk := range domain.Devices.Disks {
+		if disk.Target != nil {
+			used[disk.Target.Dev] = struct{}{}
+		}
+	}
+
+	for letter := 'a'; letter <= 'z'; letter++ {
+		candidate := "sd" + string(letter)
+		if _, exists := used[candidate]; !exists {
+			return candidate
+		}
+	}
+
+	return ""
+}
+
+func appendCloudInitCDROM(domain *libvirtxml.Domain, asset *hypervisor.CloudInitStatusSpec, dev string) {
+	domain.Devices.Disks = append(domain.Devices.Disks, libvirtxml.DomainDisk{
+		Device: "cdrom",
+		Driver: &libvirtxml.DomainDiskDriver{
+			Name: "qemu",
+			Type: "raw",
+		},
+		Source: &libvirtxml.DomainDiskSource{
+			File: &libvirtxml.DomainDiskSourceFile{
+				File: filepath.Join(asset.Path, asset.Name),
+			},
+		},
+		Target: &libvirtxml.DomainDiskTarget{
+			Dev: dev,
+			Bus: "sata",
+		},
+		ReadOnly: &libvirtxml.DomainDiskReadOnly{},
+	})
 }
 
 // listResolvedDisks indexes the published disk statuses by their resource ID, the key

@@ -891,6 +891,13 @@ func (VirtualMachineCloudInit) Doc() *encoder.Doc {
 		},
 		Fields: []encoder.Doc{
 			{
+				Name:        "library",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the content library where Talos stores the generated NoCloud ISO.\n\nMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a `ContentLibraryConfig`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the content library where Talos stores the generated NoCloud ISO." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "metaData",
 				Type:        "string",
 				Note:        "",
@@ -914,7 +921,8 @@ func (VirtualMachineCloudInit) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.Fields[0].AddExample("", "instance-id: vm1-001\nlocal-hostname: vm1\n")
+	doc.Fields[0].AddExample("", "targetlibrary")
+	doc.Fields[1].AddExample("", "instance-id: vm1-001\nlocal-hostname: vm1\n")
 
 	return doc
 }

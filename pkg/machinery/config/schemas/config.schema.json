@@ -2466,6 +2466,13 @@
     },
     "hypervisor.VirtualMachineCloudInit": {
       "properties": {
+        "library": {
+          "type": "string",
+          "title": "library",
+          "description": "Name of the content library where Talos stores the generated NoCloud ISO.\n\nMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a ContentLibraryConfig.\n",
+          "markdownDescription": "Name of the content library where Talos stores the generated NoCloud ISO.\n\nMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a `ContentLibraryConfig`.",
+          "x-intellij-html-description": "\u003cp\u003eName of the content library where Talos stores the generated NoCloud ISO.\u003c/p\u003e\n\n\u003cp\u003eMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a \u003ccode\u003eContentLibraryConfig\u003c/code\u003e.\u003c/p\u003e\n"
+        },
         "metaData": {
           "type": "string",
           "title": "metaData",
@@ -2490,6 +2497,9 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "library"
+      ],
       "description": "VirtualMachineCloudInit describes the NoCloud seed handed to the guest."
     },
     "hypervisor.VirtualMachineConfigV1Alpha1": {

@@ -232,6 +232,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:       "targetlibrary",
 					MetaDataConfig:      exampleMetaData,
 					UserDataConfig:      exampleUserData,
 					NetworkConfigConfig: exampleNetworkConfig,
@@ -635,10 +636,65 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: "guest.cloudInit: at least one of metaData, userData or networkConfig must be set",
 		},
 		{
+			name: "library alone is not a seed payload",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig: "targetlibrary",
+				}
+
+				return c
+			},
+
+			expectedErrors: "guest.cloudInit: at least one of metaData, userData or networkConfig must be set",
+		},
+		{
+			name: "cloudInit needs a library",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					MetaDataConfig: exampleMetaData,
+				}
+
+				return c
+			},
+
+			expectedErrors: "guest.cloudInit.library is required",
+		},
+		{
+			name: "invalid cloudInit library characters",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  "bad/library",
+					MetaDataConfig: exampleMetaData,
+				}
+
+				return c
+			},
+
+			expectedErrors: `guest.cloudInit.library: name "bad/library": name can only contain ASCII letters, digits and hyphens`,
+		},
+		{
+			name: "cloudInit library name too long",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  strings.Repeat("a", 64),
+					MetaDataConfig: exampleMetaData,
+				}
+
+				return c
+			},
+
+			expectedErrors: fmt.Sprintf("guest.cloudInit.library: name %q must be 63 characters or fewer", strings.Repeat("a", 64)),
+		},
+		{
 			name: "metaData is not YAML",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  "targetlibrary",
 					MetaDataConfig: "instance-id: vm1\n  local-hostname: vm1\n",
 				}
 
@@ -652,6 +708,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:       "targetlibrary",
 					NetworkConfigConfig: "version: 2\n  ethernets: {}\n",
 				}
 
@@ -669,6 +726,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  "targetlibrary",
 					UserDataConfig: "#!/bin/sh\necho hello\n",
 				}
 
@@ -682,6 +740,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  "targetlibrary",
 					MetaDataConfig: "local-hostname: vm1\n",
 					UserDataConfig: exampleUserData,
 				}
@@ -697,6 +756,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  "targetlibrary",
 					UserDataConfig: exampleUserData,
 				}
 
@@ -710,6 +770,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:  "targetlibrary",
 					MetaDataConfig: "- instance-id: vm1\n",
 				}
 
@@ -723,6 +784,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+					LibraryConfig:       "targetlibrary",
 					MetaDataConfig:      exampleMetaData,
 					UserDataConfig:      exampleUserData,
 					NetworkConfigConfig: exampleNetworkConfig,
@@ -1683,6 +1745,7 @@ func TestVirtualMachineConfigRedact(t *testing.T) {
 
 		cfg := validVirtualMachineConfig()
 		cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+			LibraryConfig:       "targetlibrary",
 			MetaDataConfig:      exampleMetaData,
 			UserDataConfig:      exampleUserData,
 			NetworkConfigConfig: exampleNetworkConfig,
@@ -1691,6 +1754,7 @@ func TestVirtualMachineConfigRedact(t *testing.T) {
 		cfg.Redact("REDACTED")
 
 		assert.Equal(t, "REDACTED", cfg.GuestConfig.CloudInitConfig.UserDataConfig)
+		assert.Equal(t, "targetlibrary", cfg.GuestConfig.CloudInitConfig.Library())
 		assert.Equal(t, exampleMetaData, cfg.GuestConfig.CloudInitConfig.MetaDataConfig)
 		assert.Equal(t, exampleNetworkConfig, cfg.GuestConfig.CloudInitConfig.NetworkConfigConfig)
 	})
@@ -1700,6 +1764,7 @@ func TestVirtualMachineConfigRedact(t *testing.T) {
 
 		cfg := validVirtualMachineConfig()
 		cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+			LibraryConfig:  "targetlibrary",
 			MetaDataConfig: exampleMetaData,
 		}
 

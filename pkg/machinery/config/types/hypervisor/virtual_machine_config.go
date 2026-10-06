@@ -294,6 +294,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 	}
 	cfg.GuestConfig = VirtualMachineGuest{
 		CloudInitConfig: &VirtualMachineCloudInit{
+			LibraryConfig:  "targetlibrary",
 			MetaDataConfig: "instance-id: vm1-001\nlocal-hostname: vm1\n",
 			UserDataConfig: "#cloud-config\nusers:\n  - name: op\n    ssh_authorized_keys:\n      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...\n",
 		},

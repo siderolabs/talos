@@ -702,3 +702,69 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 		asrt.Equal("stopped", res.TypedSpec().PowerState)
 	})
 }
+
+type VirtualMachineCloudInitDomainSuite struct {
+	ctest.DefaultSuite
+}
+
+func TestVirtualMachineCloudInitDomainSuite(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, &VirtualMachineCloudInitDomainSuite{
+		ctest.DefaultSuite{
+			Timeout: 30 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitSpecController{}))
+				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitISOController{State: s.State()}))
+				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+			},
+		},
+	})
+}
+
+func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "guest")
+	vm.TypedSpec().CPU.Count = 1
+	vm.TypedSpec().Memory.Size = 512 << 20
+	vm.TypedSpec().PowerState = "running"
+	vm.TypedSpec().Firmware.Type = "bios"
+	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
+		Library:  "images",
+		MetaData: "instance-id: guest\n",
+		UserData: "secret",
+	}
+
+	s.Create(vm)
+
+	// No library: rendering must not start an unseeded guest.
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](s, "guest")
+
+	dir := s.T().TempDir()
+	lib := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
+	lib.TypedSpec().Ready = true
+	lib.TypedSpec().Path = dir
+	lib.TypedSpec().VolumeID = "volume-a"
+	s.Create(lib)
+
+	ctest.AssertResource(s, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
+		a.Contains(domain.TypedSpec().DomainXML, `device="cdrom"`)
+		a.Contains(domain.TypedSpec().DomainXML, `bus="sata"`)
+		a.Contains(domain.TypedSpec().DomainXML, `<readonly></readonly>`)
+		a.NotContains(domain.TypedSpec().DomainXML, `<boot order=`)
+		a.Contains(domain.TypedSpec().DomainXML, `cloud-init-`)
+		a.NotEmpty(domain.TypedSpec().CloudInit)
+		a.Equal("running", domain.TypedSpec().PowerState)
+	})
+
+	// A remount invalidates the old seed even while its status is held.
+	ctest.UpdateWithConflicts(s, lib, func(current *hypervisor.ContentLibraryStatus) error {
+		current.TypedSpec().VolumeID = "volume-b"
+		current.TypedSpec().Ready = false
+
+		return nil
+	})
+
+	ctest.AssertResource(s, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
+		a.Equal("stopped", domain.TypedSpec().PowerState)
+	})
+}

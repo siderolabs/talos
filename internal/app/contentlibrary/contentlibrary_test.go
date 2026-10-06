@@ -695,6 +695,34 @@ func TestReplacesAnImageNoDomainHolds(t *testing.T) {
 	}
 }
 
+func TestHeldCloudInitSeedCannotBeReplacedOrDeleted(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+
+	const name = "cloud-init-guest.iso"
+
+	require.NoError(t, os.WriteFile(filepath.Join(path, name), []byte("original"), 0o600))
+
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "guest@seed")
+	seed.TypedSpec().VirtualMachine = "guest"
+	seed.TypedSpec().Library = testLibrary
+	seed.TypedSpec().Name = name
+	require.NoError(t, st.Create(t.Context(), seed))
+	require.NoError(t, st.AddFinalizer(t.Context(), seed.Metadata(), "hypervisor.VirtualMachineController"))
+
+	err := upload(t, svc, name, true, "replacement")
+	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: name})
+	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+
+	contents, err := os.ReadFile(filepath.Join(path, name))
+	require.NoError(t, err)
+	assert.Equal(t, "original", string(contents))
+	assert.True(t, libraryFinalizers(t, st).Empty(), "failed mutations release their markers")
+}
+
 // libraryMetadata points at the status the mutation markers live on.
 func libraryMetadata() resource.Pointer {
 	return hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary).Metadata()
