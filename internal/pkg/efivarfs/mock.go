@@ -15,6 +15,9 @@ import (
 // Mock is a mock implementation of ReaderWriter interface for testing purposes.
 type Mock struct {
 	Variables map[uuid.UUID]map[string]MockVariable
+
+	// ReadErrors makes Read fail with the given error for a variable name.
+	ReadErrors map[string]error
 }
 
 // MockVariable represents a mock EFI variable with its attributes and data.
@@ -67,14 +70,19 @@ func (mock *Mock) Read(scope uuid.UUID, varName string) ([]byte, Attribute, erro
 		return nil, 0, fs.ErrNotExist
 	}
 
+	if err := mock.ReadErrors[varName]; err != nil {
+		return nil, 0, err
+	}
+
 	return variable.Data, variable.Attrs, nil
 }
 
-// List lists all variable names in the given scope.
+// List lists all variable names in the given scope sorted by their names,
+// matching FilesystemReaderWriter.
 func (mock *Mock) List(scope uuid.UUID) ([]string, error) {
 	if mock.Variables == nil || mock.Variables[scope] == nil {
 		return nil, nil
 	}
 
-	return slices.Collect(maps.Keys(mock.Variables[scope])), nil
+	return slices.Sorted(maps.Keys(mock.Variables[scope])), nil
 }

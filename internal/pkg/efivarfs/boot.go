@@ -111,6 +111,17 @@ func (e *LoadOption) Marshal() ([]byte, error) {
 	return data, nil
 }
 
+// isZeroPadding reports whether data consists only of zero bytes.
+func isZeroPadding(data []byte) bool {
+	for _, b := range data {
+		if b != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
 // ucs2Terminator returns the offset of the first 00 00 null code on a 2-byte
 // boundary in data, or -1 if there is none.
 //
@@ -169,6 +180,13 @@ func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
 	}
 
 	for len(filePathData) > 0 {
+		// Some firmware (e.g. AMI) declares a FilePathListLength which includes
+		// a few zero bytes of padding after the End of Device Path node. Those
+		// are not an ExtraPath, so stop parsing there.
+		if isZeroPadding(filePathData) {
+			break
+		}
+
 		var extraPath DevicePath
 
 		extraPath, filePathData, err = UnmarshalDevicePath(filePathData)
