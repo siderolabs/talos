@@ -5,6 +5,7 @@
 package sdboot_test
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"testing"
@@ -348,6 +349,98 @@ func TestSetBootEntry(t *testing.T) {
 
 				require.Equal(t, desc, entry.Description, "boot entry description does not match expected value")
 			}
+		})
+	}
+}
+
+// "UEFI OS" entry written by AMI firmware on a Gigabyte B85N PHOENIX-CF (BIOS F6):
+// FilePathListLength is 96, but the device path ends after 94 bytes, so it cannot
+// be decoded.
+const amiUEFIOSBootEntry = "01000000600055004500460049002000" +
+	"4f005300000004012a00010000000008" +
+	"00000000000000a8410000000000da44" +
+	"a6173c249a4c8c1f89e000db7cbc0202" +
+	"040430005c004500460049005c004200" +
+	"4f004f0054005c0042004f004f005400" +
+	"5800360034002e004500460049000000" +
+	"7fff04000000"
+
+func TestCreateBootEntryUndecodableEntry(t *testing.T) {
+	t.Parallel()
+
+	undecodable, err := hex.DecodeString(amiUEFIOSBootEntry)
+	require.NoError(t, err)
+
+	talosBootEntry, err := (&efivarfs.LoadOption{
+		Description: sdboot.TalosBootEntryDescription,
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/EFI/TALOS/UKI.efi"),
+		},
+	}).Marshal()
+	require.NoError(t, err)
+
+	blkidInfo := &blkid.Info{
+		Name:       "loop0",
+		SectorSize: 512,
+		Parts: []blkid.NestedProbeResult{
+			{
+				PartitionUUID:   new(uuid.MustParse("3c8f4e2e-1dd2-4a5b-9f6d-8f3c9e6d7c3b")),
+				PartitionLabel:  new(constants.EFIPartitionLabel),
+				PartitionOffset: 2048,
+				PartitionSize:   409600,
+				PartitionIndex:  1,
+				PartitionType:   new(uuid.MustParse("c12a7328-f81f-11d2-ba4b-00a0c93ec93b")),
+			},
+		},
+	}
+
+	for _, testData := range []struct {
+		name          string
+		variables     map[string]efivarfs.MockVariable
+		expectedTalos int
+	}{
+		{
+			name: "no Talos entry",
+			variables: map[string]efivarfs.MockVariable{
+				"BootOrder": {Data: []byte{0x00, 0x00}}, // BootOrder: [0]
+				"Boot0000":  {Data: undecodable},
+			},
+			expectedTalos: 1,
+		},
+		{
+			name: "existing Talos entry",
+			variables: map[string]efivarfs.MockVariable{
+				"BootOrder": {Data: []byte{0x02, 0x00, 0x00, 0x00}}, // BootOrder: [2, 0]
+				"Boot0000":  {Data: undecodable},
+				"Boot0002":  {Data: talosBootEntry},
+			},
+			expectedTalos: 2,
+		},
+	} {
+		t.Run(testData.name, func(t *testing.T) {
+			t.Parallel()
+
+			efivarfsMock := &efivarfs.Mock{
+				Variables: map[uuid.UUID]map[string]efivarfs.MockVariable{
+					efivarfs.ScopeGlobal: testData.variables,
+				},
+			}
+
+			logger := &mockLogger{}
+
+			require.NoError(t, sdboot.CreateBootEntry(efivarfsMock, blkidInfo, logger.Printf, "test-entry"))
+			require.Contains(t, logger.String(),
+				"Skipping boot entry at index 0: cannot be decoded: failed unmarshaling ExtraPath: dangling bytes at the end of device path: 0000")
+
+			bootEntries, err := efivarfs.ListBootEntries(efivarfsMock)
+			require.NoError(t, err)
+
+			require.Len(t, bootEntries, 2)
+			require.Nil(t, bootEntries[0])
+			require.Equal(t, undecodable, efivarfsMock.Variables[efivarfs.ScopeGlobal]["Boot0000"].Data)
+
+			require.NotNil(t, bootEntries[testData.expectedTalos])
+			require.Equal(t, sdboot.TalosBootEntryDescription, bootEntries[testData.expectedTalos].Description)
 		})
 	}
 }
