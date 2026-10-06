@@ -453,6 +453,8 @@ func renderVirtualMachineDomain(
 
 	renderVirtualMachineConsole(&domain, spec.Console)
 
+	renderVirtualMachineGuest(&domain, spec.Guest)
+
 	attachedDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
 	if err != nil {
 		return "", nil, err
@@ -491,6 +493,27 @@ func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.V
 			},
 		}
 	}
+}
+
+func renderVirtualMachineGuest(domain *libvirtxml.Domain, guest hypervisor.VirtualMachineGuestSpec) {
+	if !guest.Agent.Enabled {
+		return
+	}
+
+	// mode="bind" is required: without it libvirt renders the channel but does not open a host
+	// endpoint, and the guest agent appears disconnected.
+	domain.Devices.Channels = append(domain.Devices.Channels, libvirtxml.DomainChannel{
+		Source: &libvirtxml.DomainChardevSource{
+			UNIX: &libvirtxml.DomainChardevSourceUNIX{
+				Mode: "bind",
+			},
+		},
+		Target: &libvirtxml.DomainChannelTarget{
+			VirtIO: &libvirtxml.DomainChannelTargetVirtIO{
+				Name: "org.qemu.guest_agent.0",
+			},
+		},
+	})
 }
 
 func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor.VirtualMachineFirmwareSpec) {

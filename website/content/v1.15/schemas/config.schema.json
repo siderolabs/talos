@@ -2351,9 +2351,9 @@
         "enabled": {
           "type": "boolean",
           "title": "enabled",
-          "description": "Attach the qemu-guest-agent virtio channel.\n\nWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\nreport the addresses the guest holds. The agent has to be installed and running inside\nthe guest for the channel to be of any use.\n\nOptional; defaults to disabled.\n",
-          "markdownDescription": "Attach the qemu-guest-agent virtio channel.\n\nWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\nreport the addresses the guest holds. The agent has to be installed and running inside\nthe guest for the channel to be of any use.\n\nOptional; defaults to disabled.",
-          "x-intellij-html-description": "\u003cp\u003eAttach the qemu-guest-agent virtio channel.\u003c/p\u003e\n\n\u003cp\u003eWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\nreport the addresses the guest holds. The agent has to be installed and running inside\nthe guest for the channel to be of any use.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+          "description": "Attach the qemu-guest-agent virtio-serial channel to the domain.\n\nThe host does not use the channel yet; this field is the plumbing that lets future\nfeatures (such as reporting guest addresses or requesting a graceful shutdown) talk to\na qemu-guest-agent process inside the guest.\n\nOptional; defaults to enabled. Set to false to omit the channel entirely.\n",
+          "markdownDescription": "Attach the qemu-guest-agent virtio-serial channel to the domain.\n\nThe host does not use the channel yet; this field is the plumbing that lets future\nfeatures (such as reporting guest addresses or requesting a graceful shutdown) talk to\na qemu-guest-agent process inside the guest.\n\nOptional; defaults to enabled. Set to `false` to omit the channel entirely.",
+          "x-intellij-html-description": "\u003cp\u003eAttach the qemu-guest-agent virtio-serial channel to the domain.\u003c/p\u003e\n\n\u003cp\u003eThe host does not use the channel yet; this field is the plumbing that lets future\nfeatures (such as reporting guest addresses or requesting a graceful shutdown) talk to\na qemu-guest-agent process inside the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to enabled. Set to \u003ccode\u003efalse\u003c/code\u003e to omit the channel entirely.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2827,9 +2827,9 @@
         "agent": {
           "$ref": "#/$defs/hypervisor.VirtualMachineAgent",
           "title": "agent",
-          "description": "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.\n",
-          "markdownDescription": "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.",
-          "x-intellij-html-description": "\u003cp\u003eqemu-guest-agent settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; the agent channel is not attached when this section is omitted.\u003c/p\u003e\n"
+          "description": "qemu-guest-agent settings.\n\nOptional; omitting this section is equivalent to the default {enabled: true}.\nSet agent.enabled: false to omit the channel entirely.\n",
+          "markdownDescription": "qemu-guest-agent settings.\n\nOptional; omitting this section is equivalent to the default `{enabled: true}`.\nSet `agent.enabled: false` to omit the channel entirely.",
+          "x-intellij-html-description": "\u003cp\u003eqemu-guest-agent settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting this section is equivalent to the default \u003ccode\u003e{enabled: true}\u003c/code\u003e.\nSet \u003ccode\u003eagent.enabled: false\u003c/code\u003e to omit the channel entirely.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

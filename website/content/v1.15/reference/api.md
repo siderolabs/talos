@@ -517,6 +517,7 @@ description: Talos gRPC API reference.
     - [CloudInitSpecSpec](#talos.resource.definitions.hypervisor.CloudInitSpecSpec)
     - [CloudInitStatusSpec](#talos.resource.definitions.hypervisor.CloudInitStatusSpec)
     - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
+    - [VirtualMachineAgentSpec](#talos.resource.definitions.hypervisor.VirtualMachineAgentSpec)
     - [VirtualMachineCPUPlacementSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec)
     - [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec)
     - [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec)
@@ -529,6 +530,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
     - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
+    - [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec)
     - [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
@@ -9085,6 +9087,21 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineAgentSpec"></a>
+
+### VirtualMachineAgentSpec
+VirtualMachineAgentSpec describes the qemu-guest-agent channel attached to the guest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  | Enabled attaches the org.qemu.guest_agent.0 virtio-serial channel to the domain. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec"></a>
 
 ### VirtualMachineCPUPlacementSpec
@@ -9306,6 +9323,21 @@ VirtualMachineFirmwareSpec describes firmware selection without host firmware pa
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineGuestSpec"></a>
+
+### VirtualMachineGuestSpec
+VirtualMachineGuestSpec describes guest-side features that need host-side plumbing.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| agent | [VirtualMachineAgentSpec](#talos.resource.definitions.hypervisor.VirtualMachineAgentSpec) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec"></a>
 
 ### VirtualMachineInterfaceSpec
@@ -9387,6 +9419,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated |  |
 | interfaces | [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec) | repeated |  |
 | cloud_init | [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec) |  |  |
+| guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
 
 
 

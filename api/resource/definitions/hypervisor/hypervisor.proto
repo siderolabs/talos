@@ -47,6 +47,12 @@ message ContentLibraryStatusSpec {
   string fingerprint = 5;
 }
 
+// VirtualMachineAgentSpec describes the qemu-guest-agent channel attached to the guest.
+message VirtualMachineAgentSpec {
+  // Enabled attaches the org.qemu.guest_agent.0 virtio-serial channel to the domain.
+  bool enabled = 1;
+}
+
 // VirtualMachineCPUPlacementSpec is the spec for VirtualMachineCPUPlacement.
 message VirtualMachineCPUPlacementSpec {
   string partition = 1;
@@ -171,6 +177,11 @@ message VirtualMachineFirmwareSpec {
   bool secure_boot = 2;
 }
 
+// VirtualMachineGuestSpec describes guest-side features that need host-side plumbing.
+message VirtualMachineGuestSpec {
+  VirtualMachineAgentSpec agent = 1;
+}
+
 // VirtualMachineInterfaceSpec describes a network interface attached to a host link.
 message VirtualMachineInterfaceSpec {
   // Name of the virtual machine interface config (not reflected in the guest)
@@ -213,6 +224,7 @@ message VirtualMachineSpecSpec {
   repeated VirtualMachineDiskSpec disks = 6;
   repeated VirtualMachineInterfaceSpec interfaces = 7;
   VirtualMachineCloudInitSpec cloud_init = 8;
+  VirtualMachineGuestSpec guest = 9;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.

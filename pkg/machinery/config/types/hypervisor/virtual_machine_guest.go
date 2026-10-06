@@ -11,7 +11,6 @@ import (
 	"fmt"
 
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -34,20 +33,21 @@ type VirtualMachineGuest struct {
 	//   description: |
 	//     qemu-guest-agent settings.
 	//
-	//     Optional; the agent channel is not attached when this section is omitted.
+	//     Optional; omitting this section is equivalent to the default `{enabled: true}`.
+	//     Set `agent.enabled: false` to omit the channel entirely.
 	AgentConfig *VirtualMachineAgent `yaml:"agent,omitempty"`
 }
 
 // VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machine.
 type VirtualMachineAgent struct {
 	//   description: |
-	//     Attach the qemu-guest-agent virtio channel.
+	//     Attach the qemu-guest-agent virtio-serial channel to the domain.
 	//
-	//     Without the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot
-	//     report the addresses the guest holds. The agent has to be installed and running inside
-	//     the guest for the channel to be of any use.
+	//     The host does not use the channel yet; this field is the plumbing that lets future
+	//     features (such as reporting guest addresses or requesting a graceful shutdown) talk to
+	//     a qemu-guest-agent process inside the guest.
 	//
-	//     Optional; defaults to disabled.
+	//     Optional; defaults to enabled. Set to `false` to omit the channel entirely.
 	AgentEnabled *bool `yaml:"enabled,omitempty"`
 }
 
@@ -118,7 +118,11 @@ func (g *VirtualMachineGuest) Agent() config.VirtualMachineAgentConfig {
 
 // Enabled implements config.VirtualMachineAgentConfig interface.
 func (a *VirtualMachineAgent) Enabled() bool {
-	return pointer.SafeDeref(a.AgentEnabled)
+	if a.AgentEnabled == nil {
+		return true
+	}
+
+	return *a.AgentEnabled
 }
 
 // Library implements config.VirtualMachineCloudInitConfig interface.

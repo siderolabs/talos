@@ -17,6 +17,10 @@
   </features>
   <cpu mode="host-model"></cpu>
   <devices>
+    <channel type="unix">
+      <source mode="bind"></source>
+      <target type="virtio" name="org.qemu.guest_agent.0"></target>
+    </channel>
     <memballoon model="none"></memballoon>
   </devices>
 </domain>

@@ -125,6 +125,11 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 			Serial: vm.Console().Serial().Enabled(),
 			VNC:    vm.Console().VNC().Enabled(),
 		},
+		Guest: hypervisor.VirtualMachineGuestSpec{
+			Agent: hypervisor.VirtualMachineAgentSpec{
+				Enabled: vm.Guest().Agent().Enabled(),
+			},
+		},
 	}
 
 	topology := vm.CPU().Topology()

@@ -56,6 +56,9 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 			Ballooning: hypervisor.VirtualMachineMemoryBallooningSpec{Enabled: true},
 			NUMA:       &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "1"},
 		},
+		Guest: hypervisor.VirtualMachineGuestSpec{
+			Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true},
+		},
 	}
 	encoded, err := protobuf.FromResource(res)
 	require.NoError(t, err)
@@ -74,6 +77,7 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, res.TypedSpec().Firmware.SecureBoot, spec.GetFirmware().GetSecureBoot())
 	assert.Equal(t, res.TypedSpec().Console.Serial, spec.GetConsole().GetSerial())
 	assert.Equal(t, res.TypedSpec().Console.VNC, spec.GetConsole().GetVnc())
+	assert.Equal(t, res.TypedSpec().Guest.Agent.Enabled, spec.GetGuest().GetAgent().GetEnabled())
 	assert.Equal(t, res.TypedSpec().Disks[0].Provision.FromImage.Digest, spec.GetDisks()[0].GetProvision().GetFromImage().GetDigest())
 
 	decoded, err := protobuf.Unmarshal(wire)
@@ -146,6 +150,9 @@ disks:
             file: system.qcow2
             digest: sha256:abc
             mode: linked
+guest:
+    agent:
+        enabled: true
 `, string(marshaled))
 
 	var yamlSpec hypervisor.VirtualMachineSpecSpec

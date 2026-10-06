@@ -136,7 +136,7 @@ guest:
                   - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...
     # qemu-guest-agent settings.
     agent:
-        enabled: true # Attach the qemu-guest-agent virtio channel.
+        enabled: true # Attach the qemu-guest-agent virtio-serial channel to the domain.
 {{< /highlight >}}
 
 
@@ -514,7 +514,7 @@ VirtualMachineGuest describes the settings which apply inside the guest.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`cloudInit` |<a href="#VirtualMachineConfig.guest.cloudInit">VirtualMachineCloudInit</a> |Seed handed to the guest on first boot.  | |
-|`agent` |<a href="#VirtualMachineConfig.guest.agent">VirtualMachineAgent</a> |qemu-guest-agent settings.<br><br>Optional; the agent channel is not attached when this section is omitted.  | |
+|`agent` |<a href="#VirtualMachineConfig.guest.agent">VirtualMachineAgent</a> |qemu-guest-agent settings.<br><br>Optional; omitting this section is equivalent to the default `{enabled: true}`.<br>Set `agent.enabled: false` to omit the channel entirely.  | |
 
 
 
@@ -553,7 +553,7 @@ VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machin
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`enabled` |bool |Attach the qemu-guest-agent virtio channel.<br><br>Without the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot<br>report the addresses the guest holds. The agent has to be installed and running inside<br>the guest for the channel to be of any use.<br><br>Optional; defaults to disabled.  | |
+|`enabled` |bool |Attach the qemu-guest-agent virtio-serial channel to the domain.<br><br>The host does not use the channel yet; this field is the plumbing that lets future<br>features (such as reporting guest addresses or requesting a graceful shutdown) talk to<br>a qemu-guest-agent process inside the guest.<br><br>Optional; defaults to enabled. Set to `false` to omit the channel entirely.  | |
 
 
 
