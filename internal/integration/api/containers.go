@@ -227,6 +227,111 @@ func (suite *ContainersSuite) TestRestartAfterTermination() {
 	}
 }
 
+// TestContainerStatus verifies the aggregated, user-facing ContainerStatus.
+func (suite *ContainersSuite) TestContainerStatus() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	ctx, name, _ := suite.setupContainer("status")
+
+	// Runs long enough for "running" to be observable, then exits with a code nothing else here
+	// produces, so the exit reported afterwards is unambiguously this container's. shellContainer
+	// restarts it, so every stage below recurs and a missed window is caught on the next cycle.
+	const exitCode = 7
+
+	suite.applyContainers(ctx, suite.shellContainer(name, fmt.Sprintf("sleep 15; exit %d", exitCode)))
+
+	running := suite.assertContainerStatus(ctx, name, "running",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateRunning, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthHealthy, status.Health)
+			asrt.NotZero(status.PID, "no PID reported")
+			asrt.Empty(status.WaitingFor, "a running container is waiting on something")
+			asrt.Empty(status.Error)
+		})
+
+	// What is reported is what the pull resolved to, not the reference that was asked for: the
+	// instance runs the digest, so that is what the status has to show.
+	suite.Assert().True(strings.HasPrefix(running.Image, "sha256:"),
+		"reported image %q is not the resolved digest", running.Image)
+
+	exited := suite.assertContainerStatus(ctx, name, "exited",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateExited, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthDegraded, status.Health)
+			asrt.Equal(int32(exitCode), status.ExitCode)
+			asrt.Zero(status.PID, "a container that has exited still reports a PID")
+		})
+
+	// The replacement instance is created a restart interval after the exit, and for that whole
+	// window there is no instance status to fold at all. The counter still has to climb across it:
+	// the last execution's outcome is exactly what an operator is looking at while the restart is
+	// pending.
+	suite.T().Logf("waiting for container %q to be restarted", name)
+
+	suite.assertContainerStatus(ctx, name, "restarted",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Greater(status.RestartCount, exited.RestartCount,
+				"still at restart %d, no replacement instance yet", exited.RestartCount)
+		})
+
+	suite.T().Logf("removing container config %q", name)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+
+	rtestutils.AssertNoResource[*containers.ContainerStatus](ctx, suite.T(), suite.Client.COSI, name)
+}
+
+// TestContainerStatusWaitingFor verifies that the gates holding a container back reach the
+// aggregated status, which is the only place an operator can see why it has not started.
+func (suite *ContainersSuite) TestContainerStatusWaitingFor() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	ctx, name, node := suite.setupContainer("status-gates")
+
+	// Named but not declared, so the mount cannot resolve and the container is withheld. The same
+	// gate TestUserVolumeMountGate covers at the mount-status level; what is asserted here is that
+	// the verdict is relayed all the way to the user-facing status.
+	volumeName := fmt.Sprintf("itv-stgate-%04x", rand.Int31())
+
+	doc := suite.newContainer(name, containerPauseImage)
+	doc.MountsConfig = []containercfg.ContainerMount{
+		{
+			UserVolumeMount: &containercfg.UserVolumeMount{
+				VolumeName:       volumeName,
+				MountDestination: "/mnt/data",
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, doc)
+
+	suite.assertContainerStatus(ctx, name, "pending on the undeclared volume",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthPending, status.Health)
+			asrt.Contains(status.WaitingFor, "mounts")
+			asrt.Zero(status.PID)
+		})
+
+	suite.declareUserVolume(ctx, node, volumeName)
+
+	// The state and health of the started container are asserted by the helper; that the gate list
+	// empties out again is what this adds.
+	suite.assertContainerRunning(ctx, name, "once the volume was declared")
+
+	suite.assertContainerStatus(ctx, name, "no gates left",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Empty(status.WaitingFor)
+		})
+}
+
 // TestUnresolvableImage verifies that a container whose image cannot be pulled is withheld while the
 // pull keeps retrying, and starts once the reference is corrected.
 func (suite *ContainersSuite) TestUnresolvableImage() {
@@ -254,6 +359,15 @@ func (suite *ContainersSuite) TestUnresolvableImage() {
 			asrt.Equal(containers.ContainerImagePhasePulling, status.TypedSpec().Phase,
 				"image is in phase %s (error %q)", status.TypedSpec().Phase, status.TypedSpec().Error)
 			asrt.Empty(status.TypedSpec().Digest, "an unresolvable reference produced a digest")
+		})
+
+	// The image phase is what the aggregate reports in its own right here: there is no instance to
+	// fold, so pulling is read straight off the image status rather than from the gate list.
+	suite.assertContainerStatus(ctx, name, "pulling an image that will not resolve",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePulling, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthPulling, status.Health)
 		})
 
 	// The point of the test: ContainerSpec.Ready withholds the container while the digest is
@@ -836,6 +950,15 @@ func (suite *ContainersSuite) TestDependsOnFailingContainer() {
 	// to span several restart/backoff cycles, so a start that only wins the race after one particular
 	// restart is still caught, not just the first one.
 	suite.assertNoInstanceFor(ctx, waiter, 30*time.Second)
+
+	// And the reason is legible: the waiter names the dependency it is held on rather than just
+	// sitting in pending with nothing to explain it.
+	suite.assertContainerStatus(ctx, waiter, "held on its failing dependency",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Contains(status.WaitingFor, "container: "+dependency)
+		})
 }
 
 // TestMultipleContainers verifies that containers declared side by side are independent of each other.
@@ -1267,12 +1390,26 @@ func (suite *ContainersSuite) applyContainers(ctx context.Context, docs ...*cont
 func (suite *ContainersSuite) assertContainerRunning(
 	ctx context.Context, containerName, stage string,
 ) (resource.ID, containers.ContainerInstanceStatusSpec) {
-	return suite.assertNewestInstance(ctx, containerName, stage,
+	instanceID, instanceStatus := suite.assertNewestInstance(ctx, containerName, stage,
 		func(status *containers.ContainerInstanceStatusSpec, asrt *assert.Assertions) bool {
 			return asrt.Equal(containers.ContainerInstancePhaseRunning, status.Phase,
 				"phase is %s (error %q)", status.Phase, status.Error) &&
 				asrt.NotZero(status.PID, "no PID reported")
 		})
+
+	// The aggregate is folded from the instance status by another controller, so it trails it by a
+	// pass and needs a wait of its own rather than a bare read here. Asserting it from the one helper
+	// every test starting a container goes through is what keeps the user-facing resource covered
+	// wherever the instance-level one already is.
+	suite.assertContainerStatus(ctx, containerName, stage+", aggregated status",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateRunning, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthHealthy, status.Health)
+			asrt.NotZero(status.PID, "no PID reported")
+		})
+
+	return instanceID, instanceStatus
 }
 
 // assertNewestInstanceID waits for any instance of containerName to be reported and returns the newest.
@@ -1356,6 +1493,32 @@ func (suite *ContainersSuite) assertImageReady(ctx context.Context, containerNam
 				"image is in phase %s (error %q)", status.TypedSpec().Phase, status.TypedSpec().Error)
 			asrt.NotEmpty(status.TypedSpec().Digest)
 		})
+}
+
+// assertContainerStatus waits until the aggregated ContainerStatus of containerName satisfies check,
+// and returns it.
+//
+// Unlike the instance statuses there is exactly one of these per container and it is named after the
+// container, so this needs none of the newest-generation bookkeeping assertNewestInstance does.
+func (suite *ContainersSuite) assertContainerStatus(
+	ctx context.Context,
+	containerName, stage string,
+	check func(*containers.ContainerStatusSpec, *assert.Assertions),
+) containers.ContainerStatusSpec {
+	suite.T().Logf("waiting for the status of container %q: %s", containerName, stage)
+
+	var status containers.ContainerStatusSpec
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, containerName,
+		func(res *containers.ContainerStatus, asrt *assert.Assertions) {
+			check(res.TypedSpec(), asrt)
+
+			// Only the last, satisfied iteration is what the caller gets: rtestutils stops retrying
+			// once check records no failures.
+			status = *res.TypedSpec()
+		})
+
+	return status
 }
 
 // assertNoInstance verifies that no instance is created for containerName, and keeps checking for long

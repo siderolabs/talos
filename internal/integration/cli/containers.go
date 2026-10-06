@@ -146,6 +146,32 @@ func (suite *ContainersSuite) TestTalosContainers() {
 	)
 }
 
+// TestGetContainerStatus covers the aggregated status through the CLI: the resource alias and the
+// print columns declared on ContainerStatus.
+func (suite *ContainersSuite) TestGetContainerStatus() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if suite.Airgapped {
+		suite.T().Skip("skipping test in airgapped mode, the test pulls an image")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	name := "talosctl-it-containerstatus"
+
+	cleanup := applyTalosContainer(&suite.CLISuite, node, name, images.DefaultSandboxImage, nil, nil)
+	defer cleanup()
+
+	// State and Health are two of the resource's print columns, so matching them adjacently also
+	// pins the column order the operator sees.
+	suite.RunAndWaitForMatch(
+		[]string{"get", "containerstatus", name, "--nodes", node},
+		regexp.MustCompile(`running\s+healthy`),
+		talosContainerStartTimeout,
+	)
+}
+
 // TestNamespaceFlagsMutuallyExclusive verifies that --kubernetes and --namespace are refused together
 // by the actual binary, end to end with the unit-level check in namespace_test.go which only exercises
 // cobra's flag-group validation directly.
