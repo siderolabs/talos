@@ -76,6 +76,7 @@ var descriptions = []string{
 func FuzzDecode(f *testing.F) {
 	f.Add(ref)
 	f.Add(appleBootFFFF)
+	f.Add(amiUEFIOSBootEntry)
 
 	for _, description := range descriptions {
 		raw, err := (&efivarfs.LoadOption{
@@ -120,6 +121,42 @@ func TestDecodeEmptyDescription(t *testing.T) {
 	reencoded, err := got.Marshal()
 	require.NoError(t, err)
 	require.Equal(t, appleBootFFFF, reencoded)
+}
+
+// "UEFI OS" entry written by AMI firmware on a Gigabyte B85N PHOENIX-CF (BIOS F6).
+// FilePathListLength is 96, but the device path ends after 94 bytes, leaving two
+// zero bytes of padding after the end node.
+var amiUEFIOSBootEntry = mustDecodeHex(
+	"01000000600055004500460049002000" +
+		"4f005300000004012a00010000000008" +
+		"00000000000000a8410000000000da44" +
+		"a6173c249a4c8c1f89e000db7cbc0202" +
+		"040430005c004500460049005c004200" +
+		"4f004f0054005c0042004f004f005400" +
+		"5800360034002e004500460049000000" +
+		"7fff04000000",
+)
+
+func TestDecodeTrailingPadding(t *testing.T) {
+	t.Parallel()
+
+	got, err := efivarfs.UnmarshalLoadOption(amiUEFIOSBootEntry)
+	require.NoError(t, err)
+
+	require.Equal(t, "UEFI OS", got.Description)
+	require.False(t, got.Inactive)
+	require.Len(t, got.FilePath, 2) // HD, File
+	require.IsType(t, &efivarfs.HardDrivePath{}, got.FilePath[0])
+	require.Equal(t, efivarfs.FilePath("/EFI/BOOT/BOOTX64.EFI"), got.FilePath[1])
+	require.Empty(t, got.ExtraPaths)
+	require.Empty(t, got.OptionalData)
+
+	// Non-zero trailing bytes are still an error.
+	garbage := append([]byte{}, amiUEFIOSBootEntry...)
+	garbage[len(garbage)-1] = 0x01
+
+	_, err = efivarfs.UnmarshalLoadOption(garbage)
+	require.ErrorContains(t, err, "failed unmarshaling ExtraPath")
 }
 
 func TestDescriptionRoundTrip(t *testing.T) {

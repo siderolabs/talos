@@ -55,9 +55,24 @@ func ReadLoaderDevicePartUUID(rw ReadWriter) (uuid.UUID, error) {
 // thus accept these here as well.
 var bootVarRegexp = regexp.MustCompile(`^Boot([0-9A-Fa-f]{4})$`)
 
+// BootEntry is an EFI boot entry as returned by ListBootEntries.
+//
+// Exactly one of Option and Err is set.
+type BootEntry struct {
+	// Option is the decoded load option.
+	Option *LoadOption
+	// Err is set if the entry exists, but could not be read or decoded
+	// (firmware is known to write load options which do not follow the
+	// specification). The index of such an entry is still occupied.
+	Err error
+}
+
 // ListBootEntries lists all EFI boot entries present in the system by their index.
-func ListBootEntries(rw ReadWriter) (map[int]*LoadOption, error) {
-	bootEntries := make(map[int]*LoadOption)
+//
+// Entries which exist but cannot be read or decoded are returned with Err set,
+// so that their index is still reported as occupied.
+func ListBootEntries(rw ReadWriter) (map[int]BootEntry, error) {
+	bootEntries := make(map[int]BootEntry)
 
 	varNames, err := rw.List(ScopeGlobal)
 	if err != nil {
@@ -77,15 +92,36 @@ func ListBootEntries(rw ReadWriter) (map[int]*LoadOption, error) {
 			panic(err)
 		}
 
-		entry, err := GetBootEntry(rw, int(idx))
-		if err != nil {
-			return nil, fmt.Errorf("failed to get boot entry %s: %w", varName, err)
+		entry := readBootEntry(rw, varName)
+		if errors.Is(entry.Err, fs.ErrNotExist) {
+			// The variable was removed between List and Read.
+			continue
+		}
+
+		// The same index might be present under both upper- and lowercase
+		// spellings: never let a broken entry shadow a decoded one.
+		if existing, ok := bootEntries[int(idx)]; ok && existing.Err == nil {
+			continue
 		}
 
 		bootEntries[int(idx)] = entry
 	}
 
 	return bootEntries, nil
+}
+
+func readBootEntry(rw ReadWriter, varName string) BootEntry {
+	raw, _, err := rw.Read(ScopeGlobal, varName)
+	if err != nil {
+		return BootEntry{Err: fmt.Errorf("failed to read boot entry %s: %w", varName, err)}
+	}
+
+	option, err := UnmarshalLoadOption(raw)
+	if err != nil {
+		return BootEntry{Err: fmt.Errorf("failed to decode boot entry %s: %w", varName, err)}
+	}
+
+	return BootEntry{Option: option}
 }
 
 // AddBootEntry creates an new EFI boot entry variable and returns its
