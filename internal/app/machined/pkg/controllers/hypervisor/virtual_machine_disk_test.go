@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -206,8 +207,10 @@ func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 	// A library a disk is still waiting on stays held throughout: giving the hold back and taking it
 	// again on the next pass would be an endless churn of its finalizers.
 	suite.assertLibraryHeld(true)
+	ctx, st := suite.Ctx(), suite.State()
+
 	suite.Require().Never(func() bool {
-		library, err := ctest.Get[*hypervisor.ContentLibraryStatus](suite, status.Metadata())
+		library, err := safe.StateGet[*hypervisor.ContentLibraryStatus](ctx, st, status.Metadata())
 
 		return err != nil || !library.Metadata().Finalizers().Has("hypervisor.VirtualMachineDiskController")
 	}, 200*time.Millisecond, 10*time.Millisecond)

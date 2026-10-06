@@ -444,8 +444,10 @@ func (suite *ContentLibrarySuite) TestPublishesFingerprint() {
 	// An upload in flight is staged under a reserved prefix, and is not contents yet.
 	suite.Require().NoError(os.WriteFile(filepath.Join(target, staging.Prefix+"partial"), []byte("half"), 0o600))
 
+	ctx, st := suite.Ctx(), suite.State()
+
 	suite.Assert().Never(func() bool {
-		status, err := ctest.Get[*hypervisor.ContentLibraryStatus](suite,
+		status, err := safe.StateGet[*hypervisor.ContentLibraryStatus](ctx, st,
 			hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary).Metadata())
 
 		return err == nil && status.TypedSpec().Fingerprint != withImage

@@ -231,22 +231,26 @@ func (s *VirtualMachineDomainSuite) start() {
 }
 
 func (s *VirtualMachineDomainSuite) assertDomain(name, text string, present bool) {
-	s.Require().Eventually(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+	client := s.client
 
-		domain, ok := s.client.domains[name]
+	s.Require().Eventually(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		domain, ok := client.domains[name]
 		if !present {
 			return !ok
 		}
 
-		return ok && domain.UUID == libvirtdomain.UUID(uuid.MustParse(machineUUID), name) && s.client.texts[name] == text
+		return ok && domain.UUID == libvirtdomain.UUID(uuid.MustParse(machineUUID), name) && client.texts[name] == text
 	}, 5*time.Second, 10*time.Millisecond)
 }
 
 func (s *VirtualMachineDomainSuite) assertFinalizer(name string, present bool) {
+	ctx, st := s.Ctx(), s.State()
+
 	s.Require().Eventually(func() bool {
-		spec, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+		spec, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, name)
 
 		return err == nil && spec.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == present
 	}, 5*time.Second, 10*time.Millisecond)
@@ -261,11 +265,13 @@ func (s *VirtualMachineDomainSuite) TestWaitsForLogVolume() {
 	spec.TypedSpec().PowerState = "running"
 	s.Create(spec)
 
-	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+	client := s.client
 
-		return s.client.starts["log-gated"] != 0
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		return client.starts["log-gated"] != 0
 	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	mount := newVirtualMachineLogMount()
@@ -305,13 +311,15 @@ func (s *VirtualMachineDomainSuite) TestLogMountTeardownPreservesServiceShutdown
 	second.TypedSpec().PowerState = "running"
 	s.Create(second)
 
+	client := s.client
+
 	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+		client.mu.Lock()
+		defer client.mu.Unlock()
 
-		_, running := s.client.domains["log-teardown"]
+		_, running := client.domains["log-teardown"]
 
-		return s.client.starts["waiting"] != 0 || !running
+		return client.starts["waiting"] != 0 || !running
 	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	current, err := safe.StateGetByID[*block.VolumeMountStatus](s.Ctx(), s.State(), mount.Metadata().ID())
@@ -374,11 +382,13 @@ func (s *VirtualMachineDomainSuite) TestRejectsUnusableLogMount() {
 			spec.TypedSpec().DomainXML = `<domain><name>` + name + `</name><devices><serial type="pty"/></devices></domain>`
 			spec.TypedSpec().PowerState = "running"
 			s.Create(spec)
-			s.Require().Never(func() bool {
-				s.client.mu.Lock()
-				defer s.client.mu.Unlock()
+			client := s.client
 
-				return s.client.starts[name] != 0
+			s.Require().Never(func() bool {
+				client.mu.Lock()
+				defer client.mu.Unlock()
+
+				return client.starts[name] != 0
 			}, 100*time.Millisecond, 10*time.Millisecond)
 		})
 	}
@@ -431,21 +441,23 @@ func (s *VirtualMachineDomainSuite) TestServiceReadinessGatesReconciliationAndCl
 	s.Create(spec)
 	s.start()
 
-	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+	client := s.client
 
-		return s.client.opens != 0
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		return client.opens != 0
 	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	starting := v1alpha1.NewService(virtqemudServiceID)
 	starting.TypedSpec().Unknown = true
 	s.Create(starting)
 	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+		client.mu.Lock()
+		defer client.mu.Unlock()
 
-		return s.client.opens != 0
+		return client.opens != 0
 	}, 100*time.Millisecond, 10*time.Millisecond)
 
 	ctest.UpdateWithConflicts(s, starting, func(resource *v1alpha1.Service) error {
@@ -472,10 +484,10 @@ func (s *VirtualMachineDomainSuite) TestServiceReadinessGatesReconciliationAndCl
 	s.client.mu.Unlock()
 
 	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+		client.mu.Lock()
+		defer client.mu.Unlock()
 
-		return s.client.opens != opensWhileReady || s.client.texts["gated"] == updated.TypedSpec().DomainXML
+		return client.opens != opensWhileReady || client.texts["gated"] == updated.TypedSpec().DomainXML
 	}, 100*time.Millisecond, 10*time.Millisecond)
 	s.assertFinalizer("gated", true)
 
@@ -637,13 +649,15 @@ func (s *VirtualMachineDomainSuite) TestUnexpectedShutdownRestartsRunningDomain(
 	s.client.mu.Unlock()
 	s.Destroy(status)
 
+	client := s.client
+
 	s.Require().Eventually(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+		client.mu.Lock()
+		defer client.mu.Unlock()
 
-		_, exists := s.client.domains["restart"]
+		_, exists := client.domains["restart"]
 
-		return exists && s.client.starts["restart"] >= 2
+		return exists && client.starts["restart"] >= 2
 	}, 5*time.Second, 10*time.Millisecond, "running transient domain was not restored")
 }
 
@@ -702,9 +716,11 @@ func (s *VirtualMachineDomainSuite) TestReplacedClaimedDomainIsNotRemoved() {
 	s.Require().NoError(err)
 	s.Require().False(ready)
 
+	client := s.client
+
 	s.Require().Eventually(func() bool {
 		select {
-		case <-s.client.attemptedRemove:
+		case <-client.attemptedRemove:
 			return true
 		default:
 			return false
@@ -795,19 +811,23 @@ func (s *VirtualMachineDomainSuite) newContentLibraryStatus(path string) *hyperv
 }
 
 func (s *VirtualMachineDomainSuite) assertNeverStarted() {
-	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+	client := s.client
 
-		_, started := s.client.domains[diskStatusVM]
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		_, started := client.domains[diskStatusVM]
 
 		return started
 	}, 200*time.Millisecond, 10*time.Millisecond)
 }
 
 func (s *VirtualMachineDomainSuite) assertDiskHeld(id string, held bool) {
+	ctx, st := s.Ctx(), s.State()
+
 	s.Require().Eventually(func() bool {
-		status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](s.Ctx(), s.State(), id)
+		status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](ctx, st, id)
 
 		return err == nil && status.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == held
 	}, 5*time.Second, 10*time.Millisecond)
@@ -869,11 +889,13 @@ func (s *VirtualMachineDomainSuite) TestRefusesToStartOnADiskOnItsWayOut() {
 	s.Create(spec)
 	s.start()
 
-	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+	client := s.client
 
-		_, started := s.client.domains["vm"]
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		_, started := client.domains["vm"]
 
 		return started
 	}, 200*time.Millisecond, 10*time.Millisecond)
@@ -950,8 +972,10 @@ func (s *VirtualMachineDomainSuite) TestKeepsTheDisksOfAnUnclaimedDomainStillPre
 	case <-time.After(100 * time.Millisecond):
 	}
 
+	ctx, st := s.Ctx(), s.State()
+
 	s.Require().Never(func() bool {
-		held, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](s.Ctx(), s.State(), status.Metadata().ID())
+		held, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](ctx, st, status.Metadata().ID())
 
 		return err != nil || !held.Metadata().Finalizers().Has("hypervisor.VirtualMachineController")
 	}, 200*time.Millisecond, 10*time.Millisecond)
@@ -1111,11 +1135,13 @@ func (s *VirtualMachineDomainSuite) TestVerifiesAnImageSwappedUnderARunningDomai
 	})
 
 	// The running domain is left alone, still on the definition which was verified.
-	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
+	client := s.client
 
-		return s.client.texts[diskStatusVM] == swapped
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		return client.texts[diskStatusVM] == swapped
 	}, 200*time.Millisecond, 10*time.Millisecond)
 
 	// The first image is still read by the domain which is still running, so its hold stays.
