@@ -5704,6 +5704,13 @@
           "description": "Wake-on-LAN modes to enable.\n\nIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\n\nThis is similar to ethtool -s \u0026lt;link\u0026gt; wol \u0026lt;options\u0026gt; command.\n",
           "markdownDescription": "Wake-on-LAN modes to enable.\n\nIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\n\nThis is similar to `ethtool -s \u003clink\u003e wol \u003coptions\u003e` command.",
           "x-intellij-html-description": "\u003cp\u003eWake-on-LAN modes to enable.\u003c/p\u003e\n\n\u003cp\u003eIf this field is omitted, Wake-on-LAN configuration is not changed.\nAn empty list disables Wake-on-LAN.\u003c/p\u003e\n\n\u003cp\u003eThis is similar to \u003ccode\u003eethtool -s \u0026lt;link\u0026gt; wol \u0026lt;options\u0026gt;\u003c/code\u003e command.\u003c/p\u003e\n"
+        },
+        "flowControl": {
+          "$ref": "#/$defs/network.EthernetFlowControlConfig",
+          "title": "flowControl",
+          "description": "Configuration for Ethernet link flow control (802.3x pause frames).\n\nIf this field is omitted, flow control configuration is not changed.\n\nThis is similar to ethtool -A \u0026lt;link\u0026gt; command.\n",
+          "markdownDescription": "Configuration for Ethernet link flow control (802.3x pause frames).\n\nIf this field is omitted, flow control configuration is not changed.\n\nThis is similar to `ethtool -A \u003clink\u003e` command.",
+          "x-intellij-html-description": "\u003cp\u003eConfiguration for Ethernet link flow control (802.3x pause frames).\u003c/p\u003e\n\n\u003cp\u003eIf this field is omitted, flow control configuration is not changed.\u003c/p\u003e\n\n\u003cp\u003eThis is similar to \u003ccode\u003eethtool -A \u0026lt;link\u0026gt;\u003c/code\u003e command.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -5714,6 +5721,34 @@
         "name"
       ],
       "description": "EthernetConfig is a config document to configure Ethernet interfaces."
+    },
+    "network.EthernetFlowControlConfig": {
+      "properties": {
+        "rx": {
+          "type": "boolean",
+          "title": "rx",
+          "description": "Whether to enable RX flow control (accepting pause frames from the link peer).\n",
+          "markdownDescription": "Whether to enable RX flow control (accepting pause frames from the link peer).",
+          "x-intellij-html-description": "\u003cp\u003eWhether to enable RX flow control (accepting pause frames from the link peer).\u003c/p\u003e\n"
+        },
+        "tx": {
+          "type": "boolean",
+          "title": "tx",
+          "description": "Whether to enable TX flow control (sending pause frames to the link peer).\n",
+          "markdownDescription": "Whether to enable TX flow control (sending pause frames to the link peer).",
+          "x-intellij-html-description": "\u003cp\u003eWhether to enable TX flow control (sending pause frames to the link peer).\u003c/p\u003e\n"
+        },
+        "autoneg": {
+          "type": "boolean",
+          "title": "autoneg",
+          "description": "Whether to enable flow control autonegotiation.\n",
+          "markdownDescription": "Whether to enable flow control autonegotiation.",
+          "x-intellij-html-description": "\u003cp\u003eWhether to enable flow control autonegotiation.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "EthernetFlowControlConfig is a configuration for Ethernet link flow control."
     },
     "network.EthernetRingsConfig": {
       "properties": {

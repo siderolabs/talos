@@ -29,6 +29,10 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 	cfg1.ChannelsConfig = &networkcfg.EthernetChannelsConfig{
 		RX: new(uint32(4)),
 	}
+	cfg1.FlowControlConfig = &networkcfg.EthernetFlowControlConfig{
+		RX: new(bool(true)),
+		TX: new(bool(false)),
+	}
 
 	ctr, err := container.New(cfg1)
 	suite.Require().NoError(err)
@@ -38,6 +42,8 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 
 	ctest.AssertResource(suite, "enp0s1", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
 		asrt.Equal(uint32(4), pointer.SafeDeref(spec.TypedSpec().Channels.RX))
+		asrt.True(pointer.SafeDeref(spec.TypedSpec().FlowControl.RX))
+		asrt.False(pointer.SafeDeref(spec.TypedSpec().FlowControl.TX))
 	})
 
 	cfg2 := networkcfg.NewEthernetConfigV1Alpha1("enp0s2")
@@ -57,6 +63,8 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 
 	ctest.AssertResource(suite, "enp0s1", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
 		asrt.Equal(uint32(4), pointer.SafeDeref(spec.TypedSpec().Channels.RX))
+		asrt.True(pointer.SafeDeref(spec.TypedSpec().FlowControl.RX))
+		asrt.False(pointer.SafeDeref(spec.TypedSpec().FlowControl.TX))
 	})
 	ctest.AssertResource(suite, "enp0s2", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
 		asrt.Equal(uint32(16), pointer.SafeDeref(spec.TypedSpec().Rings.RX))

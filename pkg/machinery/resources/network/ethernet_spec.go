@@ -24,10 +24,11 @@ type EthernetSpec = typed.Resource[EthernetSpecSpec, EthernetSpecExtension]
 //
 //gotagsrewrite:gen
 type EthernetSpecSpec struct {
-	Rings     EthernetRingsSpec    `yaml:"rings,omitempty" protobuf:"1"`
-	Features  map[string]bool      `yaml:"features,omitempty" protobuf:"2"`
-	Channels  EthernetChannelsSpec `yaml:"channels,omitempty" protobuf:"3"`
-	WakeOnLAN []nethelpers.WOLMode `yaml:"wakeOnLan,omitempty" protobuf:"4"`
+	Rings       EthernetRingsSpec       `yaml:"rings,omitempty" protobuf:"1"`
+	Features    map[string]bool         `yaml:"features,omitempty" protobuf:"2"`
+	Channels    EthernetChannelsSpec    `yaml:"channels,omitempty" protobuf:"3"`
+	WakeOnLAN   []nethelpers.WOLMode    `yaml:"wakeOnLan,omitempty" protobuf:"4"`
+	FlowControl EthernetFlowControlSpec `yaml:"flowControl,omitempty" protobuf:"5"`
 }
 
 // EthernetRingsSpec describes config of Ethernet rings.
@@ -44,6 +45,15 @@ type EthernetRingsSpec struct {
 	RXPush       *bool   `yaml:"rx-push,omitempty" protobuf:"8"`
 	TXPushBufLen *uint32 `yaml:"tx-push-buf-len,omitempty" protobuf:"9"`
 	TCPDataSplit *bool   `yaml:"tcp-data-split,omitempty" protobuf:"10"`
+}
+
+// EthernetFlowControlSpec describes config of Ethernet flow control.
+//
+//gotagsrewrite:gen
+type EthernetFlowControlSpec struct {
+	RX      *bool `yaml:"rx,omitempty" protobuf:"1"`
+	TX      *bool `yaml:"tx,omitempty" protobuf:"2"`
+	Autoneg *bool `yaml:"autoneg,omitempty" protobuf:"3"`
 }
 
 // EthernetChannelsSpec describes config of Ethernet channels.

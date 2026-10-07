@@ -77,6 +77,7 @@ type EthernetConfig interface {
 	Channels() EthernetChannelsConfig
 	Features() map[string]bool
 	WakeOnLAN() []nethelpers.WOLMode
+	FlowControl() EthernetFlowControlConfig
 }
 
 // EthernetRingsConfig defines a configuration for Ethernet link rings.
@@ -99,6 +100,13 @@ type EthernetChannelsConfig struct {
 	TX       *uint32
 	Other    *uint32
 	Combined *uint32
+}
+
+// EthernetFlowControlConfig defines a configuration for Ethernet link flow control.
+type EthernetFlowControlConfig struct {
+	RX      *bool
+	TX      *bool
+	Autoneg *bool
 }
 
 // NetworkStaticHostConfig defines a static host configuration.

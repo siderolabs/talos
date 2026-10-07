@@ -10,3 +10,7 @@ channels:
 wakeOnLan:
     - unicast
     - multicast
+flowControl:
+    rx: true
+    tx: false
+    autoneg: true

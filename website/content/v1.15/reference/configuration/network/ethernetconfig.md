@@ -45,6 +45,7 @@ wakeOnLan:
     - unicast
     - magic
 {{< /highlight >}}</details> |`phy`<br />`unicast`<br />`multicast`<br />`broadcast`<br />`arp`<br />`magic`<br />`magicsecure`<br />`filter`<br /> |
+|`flowControl` |<a href="#EthernetConfig.flowControl">EthernetFlowControlConfig</a> |Configuration for Ethernet link flow control (802.3x pause frames).<br><br>If this field is omitted, flow control configuration is not changed.<br><br>This is similar to `ethtool -A <link>` command.  | |
 
 
 
@@ -87,6 +88,24 @@ EthernetChannelsConfig is a configuration for Ethernet link channels.
 |`tx` |uint32 |Number of TX channels.  | |
 |`other` |uint32 |Number of other channels.  | |
 |`combined` |uint32 |Number of combined channels.  | |
+
+
+
+
+
+
+## flowControl {#EthernetConfig.flowControl}
+
+EthernetFlowControlConfig is a configuration for Ethernet link flow control.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`rx` |bool |Whether to enable RX flow control (accepting pause frames from the link peer).  | |
+|`tx` |bool |Whether to enable TX flow control (sending pause frames to the link peer).  | |
+|`autoneg` |bool |Whether to enable flow control autonegotiation.  | |
 
 
 

@@ -670,6 +670,8 @@ description: Talos gRPC API reference.
     - [EthernetChannelsSpec](#talos.resource.definitions.network.EthernetChannelsSpec)
     - [EthernetChannelsStatus](#talos.resource.definitions.network.EthernetChannelsStatus)
     - [EthernetFeatureStatus](#talos.resource.definitions.network.EthernetFeatureStatus)
+    - [EthernetFlowControlSpec](#talos.resource.definitions.network.EthernetFlowControlSpec)
+    - [EthernetFlowControlStatus](#talos.resource.definitions.network.EthernetFlowControlStatus)
     - [EthernetRingsSpec](#talos.resource.definitions.network.EthernetRingsSpec)
     - [EthernetRingsStatus](#talos.resource.definitions.network.EthernetRingsStatus)
     - [EthernetSpecSpec](#talos.resource.definitions.network.EthernetSpecSpec)
@@ -11660,6 +11662,40 @@ EthernetFeatureStatus describes status of Ethernet features.
 
 
 
+<a name="talos.resource.definitions.network.EthernetFlowControlSpec"></a>
+
+### EthernetFlowControlSpec
+EthernetFlowControlSpec describes config of Ethernet flow control.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rx | [bool](#bool) |  |  |
+| tx | [bool](#bool) |  |  |
+| autoneg | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.EthernetFlowControlStatus"></a>
+
+### EthernetFlowControlStatus
+EthernetFlowControlStatus describes status of Ethernet flow control.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| rx | [bool](#bool) |  |  |
+| tx | [bool](#bool) |  |  |
+| autoneg | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.EthernetRingsSpec"></a>
 
 ### EthernetRingsSpec
@@ -11725,6 +11761,7 @@ EthernetSpecSpec describes config of Ethernet link.
 | features | [EthernetSpecSpec.FeaturesEntry](#talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry) | repeated |  |
 | channels | [EthernetChannelsSpec](#talos.resource.definitions.network.EthernetChannelsSpec) |  |  |
 | wake_on_lan | [talos.resource.definitions.enums.NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode) | repeated |  |
+| flow_control | [EthernetFlowControlSpec](#talos.resource.definitions.network.EthernetFlowControlSpec) |  |  |
 
 
 
@@ -11765,6 +11802,7 @@ EthernetStatusSpec describes status of rendered secrets.
 | features | [EthernetFeatureStatus](#talos.resource.definitions.network.EthernetFeatureStatus) | repeated |  |
 | channels | [EthernetChannelsStatus](#talos.resource.definitions.network.EthernetChannelsStatus) |  |  |
 | wake_on_lan | [talos.resource.definitions.enums.NethelpersWOLMode](#talos.resource.definitions.enums.NethelpersWOLMode) | repeated |  |
+| flow_control | [EthernetFlowControlStatus](#talos.resource.definitions.network.EthernetFlowControlStatus) |  |  |
 
 
 

@@ -10,7 +10,7 @@ replace (
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.14.53
 
 	// forked ethtool introduces missing APIs
-	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero
+	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero.0.20260922143555-6f9c412a2ce9
 
 	// see https://github.com/mdlayher/kobject/pull/5
 	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389

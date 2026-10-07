@@ -171,6 +171,18 @@ func (o EthernetSpecSpec) DeepCopy() EthernetSpecSpec {
 		cp.WakeOnLAN = make([]nethelpers.WOLMode, len(o.WakeOnLAN))
 		copy(cp.WakeOnLAN, o.WakeOnLAN)
 	}
+	if o.FlowControl.RX != nil {
+		cp.FlowControl.RX = new(bool)
+		*cp.FlowControl.RX = *o.FlowControl.RX
+	}
+	if o.FlowControl.TX != nil {
+		cp.FlowControl.TX = new(bool)
+		*cp.FlowControl.TX = *o.FlowControl.TX
+	}
+	if o.FlowControl.Autoneg != nil {
+		cp.FlowControl.Autoneg = new(bool)
+		*cp.FlowControl.Autoneg = *o.FlowControl.Autoneg
+	}
 	return cp
 }
 
@@ -296,6 +308,22 @@ func (o EthernetStatusSpec) DeepCopy() EthernetStatusSpec {
 	if o.WakeOnLAN != nil {
 		cp.WakeOnLAN = make([]nethelpers.WOLMode, len(o.WakeOnLAN))
 		copy(cp.WakeOnLAN, o.WakeOnLAN)
+	}
+	if o.FlowControl != nil {
+		cp.FlowControl = new(EthernetFlowControlStatus)
+		*cp.FlowControl = *o.FlowControl
+		if o.FlowControl.RX != nil {
+			cp.FlowControl.RX = new(bool)
+			*cp.FlowControl.RX = *o.FlowControl.RX
+		}
+		if o.FlowControl.TX != nil {
+			cp.FlowControl.TX = new(bool)
+			*cp.FlowControl.TX = *o.FlowControl.TX
+		}
+		if o.FlowControl.Autoneg != nil {
+			cp.FlowControl.Autoneg = new(bool)
+			*cp.FlowControl.Autoneg = *o.FlowControl.Autoneg
+		}
 	}
 	return cp
 }

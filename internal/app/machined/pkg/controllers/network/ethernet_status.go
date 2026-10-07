@@ -151,6 +151,11 @@ func (ctrl *EthernetStatusController) reconcile(
 			lgger.Warn("error getting Wake-on-LAN", zap.Error(err))
 		}
 
+		pause, err := ethClient.Pause(iface)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			lgger.Warn("error getting flow control", zap.Error(err))
+		}
+
 		if err := safe.WriterModify(ctx, r, network.NewEthernetStatus(network.NamespaceName, iface.Name), func(res *network.EthernetStatus) error {
 			res.TypedSpec().Port = nethelpers.Port(linkInfo.Port)
 
@@ -224,6 +229,16 @@ func (ctrl *EthernetStatusController) reconcile(
 					if (nethelpers.WOLMode(wolMode.Modes) & mode) == mode {
 						res.TypedSpec().WakeOnLAN = append(res.TypedSpec().WakeOnLAN, mode)
 					}
+				}
+			}
+
+			res.TypedSpec().FlowControl = nil
+
+			if pause != nil {
+				res.TypedSpec().FlowControl = &network.EthernetFlowControlStatus{
+					RX:      pause.RX.Ptr(),
+					TX:      pause.TX.Ptr(),
+					Autoneg: pause.Autoneg.Ptr(),
 				}
 			}
 
