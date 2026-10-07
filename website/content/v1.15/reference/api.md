@@ -69,6 +69,9 @@ description: Talos gRPC API reference.
     - [ConsoleAttach](#machine.ConsoleAttach)
     - [ConsoleRequest](#machine.ConsoleRequest)
     - [ConsoleResponse](#machine.ConsoleResponse)
+    - [VNCAttach](#machine.VNCAttach)
+    - [VNCRequest](#machine.VNCRequest)
+    - [VNCResponse](#machine.VNCResponse)
   
     - [HypervisorService](#machine.HypervisorService)
   
@@ -1617,6 +1620,52 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+
+<a name="machine.VNCAttach"></a>
+
+### VNCAttach
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.VNCRequest"></a>
+
+### VNCRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| attach | [VNCAttach](#machine.VNCAttach) |  |  |
+| data | [bytes](#bytes) |  |  |
+
+
+
+
+
+
+<a name="machine.VNCResponse"></a>
+
+### VNCResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| data | [bytes](#bytes) |  |  |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -1632,6 +1681,7 @@ HypervisorService exposes virtual machine APIs.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ConsoleStream | [ConsoleRequest](#machine.ConsoleRequest) stream | [ConsoleResponse](#machine.ConsoleResponse) stream | ConsoleStream attaches exclusively to one managed VM's live serial console. The first request must be an attach with a nonempty name; subsequent requests must contain stdin_data, at most 64 KiB per frame. Bytes pass through unchanged. Client input EOF (half-close), cancellation, or guest EOF detaches the session. Only live output is sent: there is no replay, persistent log, or resize support. |
+| VNCStream | [VNCRequest](#machine.VNCRequest) stream | [VNCResponse](#machine.VNCResponse) stream | VNCStream attaches exclusively to one managed VM's live VNC endpoint. The first request must attach a nonempty name; subsequent requests contain opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end. Input EOF, cancellation, or guest EOF detaches; serial attachment is separate. |
 
  <!-- end services -->
 

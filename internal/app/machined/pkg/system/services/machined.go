@@ -55,6 +55,7 @@ var rules = map[string]role.Set{
 
 	"/machine.DebugService/ContainerRun":       role.MakeSet(role.Admin),
 	"/machine.HypervisorService/ConsoleStream": role.MakeSet(role.Admin),
+	"/machine.HypervisorService/VNCStream":     role.MakeSet(role.Admin),
 
 	"/machine.LifecycleService/Install": role.MakeSet(role.Admin),
 	"/machine.LifecycleService/Upgrade": role.MakeSet(role.Admin),

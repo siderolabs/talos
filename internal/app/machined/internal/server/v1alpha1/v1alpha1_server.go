@@ -164,7 +164,10 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
 	machine.RegisterStorageServiceServer(obj, machinestorage.NewService())
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
-	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(resourceState, libvirt.New().DomainConnector().OpenConsole))
+
+	connector := libvirt.New().DomainConnector()
+	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(resourceState, connector.OpenConsole,
+		hypervisord.WithVNCConnector(connector.OpenVNC)))
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
 	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(rawResourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)

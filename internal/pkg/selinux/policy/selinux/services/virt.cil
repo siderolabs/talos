@@ -18,6 +18,10 @@
 (allow init_t svirt_t (process (transition dyntransition)))
 (allow init_t svirt_tcg_t (process (transition dyntransition)))
 
+; machined connects directly to guest VNC sockets.
+(allow init_t svirt_t (unix_stream_socket (connectto)))
+(allow init_t svirt_tcg_t (unix_stream_socket (connectto)))
+
 ; sVirt domains access their disk images and read-only content.
 (allow svirt_t svirt_image_t (fs_classes (rw)))
 (allow svirt_t virt_content_t (fs_classes (ro)))

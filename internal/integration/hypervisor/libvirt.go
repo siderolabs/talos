@@ -190,6 +190,57 @@ func (suite *LibvirtSuite) TestConsoleAttach() {
 	}
 }
 
+// TestVNCAttach verifies machined can connect to the guest's sVirt-labeled VNC socket.
+func (suite *LibvirtSuite) TestVNCAttach() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+	name := "vm-vnc-" + uuid.NewString()
+
+	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
+
+	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
+	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
+	doc.CPUConfig.CPUCount = 1
+	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
+	doc.ConsoleConfig.VNCConfig.VNCEnabled = new(true)
+
+	suite.T().Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, node), hypervisorcfg.VirtualMachineConfigKind, name)
+	})
+
+	suite.PatchMachineConfig(nodeCtx, doc)
+	suite.assertVirtualMachineStatus(nodeCtx, name, hypervisor.VirtualMachinePowerStateRunning)
+
+	ctx, cancel := context.WithTimeout(nodeCtx, 10*time.Second)
+	defer cancel()
+
+	stream, err := suite.Client.HypervisorClient.VNCStream(ctx)
+	suite.Require().NoError(err)
+	suite.Require().NoError(stream.Send(&machine.VNCRequest{
+		Request: &machine.VNCRequest_Attach{
+			Attach: &machine.VNCAttach{Name: name},
+		},
+	}))
+
+	const version = "RFB 003.008\n"
+
+	var greeting []byte
+
+	for len(greeting) < len(version) {
+		response, recvErr := stream.Recv()
+		suite.Require().NoError(recvErr, "VNC attachment must reach the guest socket and receive its RFB greeting")
+
+		greeting = append(greeting, response.GetData()...)
+	}
+
+	suite.Require().Equal(version, string(greeting))
+}
+
 func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name string) {
 	suite.T().Helper()
 

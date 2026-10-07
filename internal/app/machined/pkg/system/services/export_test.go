@@ -54,3 +54,6 @@ func (svc *Extension) ApplyExtensionServiceConfig(
 ) ([]specs.Mount, []string, error) {
 	return svc.applyExtensionServiceConfig(spec, mounts, envVars)
 }
+
+// AuthorizationRules exposes production authorization rules for external tests.
+var AuthorizationRules = rules

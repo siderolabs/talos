@@ -15,6 +15,17 @@ preface = """
 """
 
 [notes]
+    [notes.vm_vnc]
+        title = "Virtual Machine VNC Console"
+        description = """\
+The new `talosctl hypervisor vnc <vm-name>` command forwards a virtual machine's graphical console to a local loopback TCP port.
+Enable `console.vnc.enabled` in its `VirtualMachineConfig`; access requires the `os:admin` role and exactly one target node.
+
+The listener accepts one viewer at a time and supports reconnecting without restarting the command.
+Use a viewer that supports unauthenticated RFB.
+Talos authenticates the tunnel, and no VNC TCP port is opened on the node.
+"""
+
     [notes.workload_memory_limits]
         title = "Workload Memory Limits"
         description = """\

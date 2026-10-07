@@ -29,24 +29,43 @@ import (
 
 const maxInputChunk = 64 * 1024
 
-// Service attaches only to managed, running serial consoles.
+// Service attaches to managed, running virtual machine consoles.
 type Service struct {
 	machine.UnimplementedHypervisorServiceServer
-	resources state.State
-	open      func(context.Context, domain.Domain) (io.ReadWriteCloser, error)
-	mu        sync.Mutex
-	attached  map[string]struct{}
+	resources   state.State
+	open        func(context.Context, domain.Domain) (io.ReadWriteCloser, error)
+	mu          sync.Mutex
+	attached    map[string]struct{}
+	openVNC     func(context.Context, domain.Domain) (io.ReadWriteCloser, error)
+	vncAttached map[string]struct{}
+}
+
+// ServiceOption configures optional hypervisor service capabilities.
+type ServiceOption func(*Service)
+
+// WithVNCConnector enables VNC attachment. The connector must verify live ownership,
+// UUID, running state and a supported graphics endpoint, honor ctx, and return a
+// connection whose Close interrupts concurrent reads and writes.
+func WithVNCConnector(open func(context.Context, domain.Domain) (io.ReadWriteCloser, error)) ServiceOption {
+	return func(s *Service) { s.openVNC = open }
 }
 
 // NewService binds resource state and a dedicated libvirt console connector.
 // The connector must verify live ownership, UUID and running state, honor ctx,
 // and return a console whose Close interrupts concurrent reads and writes.
-func NewService(resources state.State, open func(context.Context, domain.Domain) (io.ReadWriteCloser, error)) *Service {
-	return &Service{
-		resources: resources,
-		open:      open,
-		attached:  make(map[string]struct{}),
+func NewService(resources state.State, open func(context.Context, domain.Domain) (io.ReadWriteCloser, error), options ...ServiceOption) *Service {
+	s := &Service{
+		resources:   resources,
+		open:        open,
+		attached:    make(map[string]struct{}),
+		vncAttached: make(map[string]struct{}),
 	}
+
+	for _, option := range options {
+		option(s)
+	}
+
+	return s
 }
 
 // ConsoleStream requires attach first. Input EOF detaches the entire session.
@@ -122,6 +141,10 @@ func openConsoleError(err error) error {
 }
 
 func (s *Service) identity(ctx context.Context, name string) (domain.Domain, error) {
+	return s.attachmentIdentity(ctx, name, false)
+}
+
+func (s *Service) attachmentIdentity(ctx context.Context, name string, vnc bool) (domain.Domain, error) {
 	spec, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](ctx, s.resources, name)
 	if state.IsNotFoundError(err) {
 		return domain.Domain{}, status.Error(codes.NotFound, "virtual machine is not managed")
@@ -131,8 +154,13 @@ func (s *Service) identity(ctx context.Context, name string) (domain.Domain, err
 		return domain.Domain{}, fmt.Errorf("read virtual machine spec: %w", err)
 	}
 
-	if spec.Metadata().Phase() != resource.PhaseRunning || !spec.TypedSpec().Console.Serial || spec.TypedSpec().PowerState != "running" {
-		return domain.Domain{}, status.Error(codes.FailedPrecondition, "virtual machine serial console is not enabled and running")
+	enabled := spec.TypedSpec().Console.Serial
+	if vnc {
+		enabled = spec.TypedSpec().Console.VNC
+	}
+
+	if spec.Metadata().Phase() != resource.PhaseRunning || !enabled || spec.TypedSpec().PowerState != "running" {
+		return domain.Domain{}, status.Error(codes.FailedPrecondition, "virtual machine attachment is not enabled and running")
 	}
 
 	system, err := safe.StateGetByID[*hardware.SystemInformation](ctx, s.resources, hardware.SystemInformationID)

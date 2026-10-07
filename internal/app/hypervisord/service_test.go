@@ -54,12 +54,12 @@ func addVM(t *testing.T, st state.State, serial bool, power string) {
 	require.NoError(t, st.Create(t.Context(), vm))
 }
 
-func client(t *testing.T, st state.State, open func(context.Context, domain.Domain) (io.ReadWriteCloser, error)) machine.HypervisorServiceClient {
+func client(t *testing.T, st state.State, open func(context.Context, domain.Domain) (io.ReadWriteCloser, error), options ...hypervisord.ServiceOption) machine.HypervisorServiceClient {
 	t.Helper()
 
 	listener := bufconn.Listen(1024 * 1024)
 	server := grpc.NewServer()
-	machine.RegisterHypervisorServiceServer(server, hypervisord.NewService(st, open))
+	machine.RegisterHypervisorServiceServer(server, hypervisord.NewService(st, open, options...))
 
 	done := make(chan error, 1)
 

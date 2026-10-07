@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"unicode/utf8"
 
@@ -135,7 +136,8 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		// COSI tracks attempted modifications even when the callback fails. Keep
 		// validation inside the callback so an invalid update preserves the last
 		// good domain without preventing unrelated renders and output cleanup.
-		if err := safe.WriterModify(ctx, r,
+		if err := safe.WriterModify(
+			ctx, r,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
 				domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, resolvedDisks)
@@ -482,15 +484,26 @@ func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.V
 	}
 
 	if console.VNC {
-		// Bind locally; a remote graphics endpoint requires a separate access policy.
+		// libvirt allocates a Unix socket; never open a host TCP listener or prescribe a path.
 		domain.Devices.Graphics = []libvirtxml.DomainGraphic{
 			{
 				VNC: &libvirtxml.DomainGraphicVNC{
-					AutoPort: "yes",
-					Port:     -1,
-					Listen:   "127.0.0.1",
+					Listeners: []libvirtxml.DomainGraphicListener{{Socket: &libvirtxml.DomainGraphicListenerSocket{}}},
 				},
 			},
+		}
+
+		if runtime.GOARCH == "amd64" {
+			// Standard VGA and USB HID work before guest drivers are installed.
+			// Leave other architectures' device defaults to libvirt.
+			domain.Devices.Videos = []libvirtxml.DomainVideo{{Model: libvirtxml.DomainVideoModel{Type: "vga"}}}
+			domain.Devices.Controllers = append(domain.Devices.Controllers, libvirtxml.DomainController{
+				Type: "usb", Model: "qemu-xhci", USB: &libvirtxml.DomainControllerUSB{},
+			})
+			domain.Devices.Inputs = []libvirtxml.DomainInput{
+				{Type: "tablet", Bus: "usb"},
+				{Type: "keyboard", Bus: "usb"},
+			}
 		}
 	}
 }
