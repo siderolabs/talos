@@ -93,6 +93,7 @@ function run_talos_integration_test {
     -talos.provisioner "${PROVISIONER}" \
     -talos.name "${CLUSTER_NAME}" \
     -talos.image "${REGISTRY}/siderolabs/talos" \
+    -talos.numa-nodes "${QEMU_NUMA_NODES:-0}" \
     ${EXTRA_TEST_ARGS:-} \
     "${TEST_RUN[@]}" \
     "${TEST_SHORT[@]}" \

@@ -137,6 +137,20 @@ message MemoryModuleSpec {
   string product_name = 8;
 }
 
+// NUMANodeSpec includes CPUless and memoryless nodes.
+message NUMANodeSpec {
+  uint32 id = 1;
+  repeated uint32 cp_us = 2;
+  uint64 memory_total_bytes = 3;
+}
+
+// NUMATopologySpec contains sorted node and logical CPU inventories.
+message NUMATopologySpec {
+  repeated NUMANodeSpec nodes = 1;
+  repeated uint32 present_cp_us = 2;
+  repeated uint32 online_cp_us = 3;
+}
+
 // PCIDeviceSpec represents a single processor.
 message PCIDeviceSpec {
   string class = 1;

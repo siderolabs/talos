@@ -48,6 +48,15 @@ Kubelet drop-in directories are rejected while any cap is active; without caps, 
 Removing the Kubernetes cap restores the original kubelet configuration. The document has no effect in container mode.
 """
 
+    [notes.numa_topology]
+        title = "NUMA Topology and VM Placement Validation"
+        description = """\
+Talos reports host NUMA nodes, CPU membership and total node memory through the `NUMATopology` resource.
+Explicit VM CPU pins and memory-node selections are checked against the host before starting or replacing a guest.
+Invalid placement leaves an existing guest running; CPUs and guest memory may intentionally use different nodes.
+This validates placement, not available memory capacity or reservations. Host inventory is not exposed in container mode.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\

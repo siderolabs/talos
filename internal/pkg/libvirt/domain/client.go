@@ -115,7 +115,7 @@ type Client interface {
 	Domains() ([]Domain, error)
 	Active(Domain) (bool, error)
 	Info(Domain) (Info, error)
-	Start(Domain, string) error
+	Start(Domain, string, ...StartOption) error
 	Remove(Domain) error
 	Close()
 }
@@ -251,9 +251,44 @@ func validateDomain(d Domain) error {
 	return nil
 }
 
+type startOptions struct {
+	admissions []func() error
+}
+
+// StartOption configures one Start call.
+type StartOption func(*startOptions)
+
+// WithStartAdmission adds a check Start runs only when it is about to create or
+// replace the domain: after an unchanged active domain has been left alone, and
+// before an existing domain is removed. An error aborts Start and is returned
+// as is, leaving any existing domain untouched.
+func WithStartAdmission(check func() error) StartOption {
+	return func(o *startOptions) {
+		o.admissions = append(o.admissions, check)
+	}
+}
+
+// Admit runs the admission checks of opts in order, stopping at the first error.
+// Client implementations call it at the point Start would create or replace a domain.
+func Admit(opts ...StartOption) error {
+	var o startOptions
+
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	for _, check := range o.admissions {
+		if err := check(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Start creates an active transient domain or replaces an owned domain when its
 // definition changes. Replacing a running domain interrupts the guest.
-func (c *client) Start(d Domain, renderedXML string) error {
+func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error {
 	if err := validateDomain(d); err != nil {
 		return err
 	}
@@ -275,6 +310,10 @@ func (c *client) Start(d Domain, renderedXML string) error {
 
 	if !restart {
 		return nil
+	}
+
+	if err = Admit(opts...); err != nil {
+		return err
 	}
 
 	if exists {

@@ -185,6 +185,7 @@ talosctl cluster create dev [flags]
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
+      --numa-nodes int                           number of NUMA nodes per VM (0 preserves the default topology)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
@@ -327,6 +328,7 @@ talosctl cluster create qemu [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.38.0-alpha.1")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
+      --numa-nodes int                           number of NUMA nodes per VM (0 preserves the default topology)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --presets strings                          list of presets to apply (default [iso])
       --schematic-id string                      Image Factory schematic id (defaults to an empty schematic)

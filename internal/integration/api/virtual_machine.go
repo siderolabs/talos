@@ -139,6 +139,11 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 				Enabled: true,
 			},
 		},
+		Guest: hypervisor.VirtualMachineGuestSpec{
+			Agent: hypervisor.VirtualMachineAgentSpec{
+				Enabled: true,
+			},
+		},
 	}, virtualMachineCreatedXML)
 
 	suite.applyVirtualMachineConfig(nodeCtx, updatedBytes)
@@ -154,6 +159,11 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 			Size: 512 * 1024 * 1024,
 			Ballooning: hypervisor.VirtualMachineMemoryBallooningSpec{
 				Enabled: false,
+			},
+		},
+		Guest: hypervisor.VirtualMachineGuestSpec{
+			Agent: hypervisor.VirtualMachineAgentSpec{
+				Enabled: true,
 			},
 		},
 	}, virtualMachineUpdatedXML)

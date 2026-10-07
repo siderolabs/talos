@@ -39,6 +39,7 @@ func init() {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
 		addDisksFlag(qemu, &qOps.Disks)
+		qemu.IntVar(&qOps.NUMANodes, "numa-nodes", qOps.NUMANodes, "number of NUMA nodes per VM (0 preserves the default topology)")
 		qemu.StringVar(&presetOptions.schematicID, "schematic-id", "", "Image Factory schematic id (defaults to an empty schematic)")
 		qemu.StringVar(&presetOptions.imageFactoryURL, "image-factory-url", constants.ImageFactoryURL, "Image Factory url")
 		qemu.StringVar(&presetOptions.imageFactoryAuth, "image-factory-auth", "", "username:password for authenticating with the Image Factory")

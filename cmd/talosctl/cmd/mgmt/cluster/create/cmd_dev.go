@@ -232,6 +232,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.BoolVar(&qOps.UefiEnabled, uefiEnabledFlag, qOps.UefiEnabled, "enable UEFI on x86_64 architecture")
 		qemu.BoolVar(&qOps.Tpm1_2Enabled, tpmEnabledFlag, qOps.Tpm1_2Enabled, "enable TPM 1.2 emulation support using swtpm")
 		qemu.BoolVar(&qOps.Tpm2Enabled, tpm2EnabledFlag, qOps.Tpm2Enabled, "enable TPM 2.0 emulation support using swtpm")
+		qemu.IntVar(&qOps.NUMANodes, "numa-nodes", qOps.NUMANodes, "number of NUMA nodes per VM (0 preserves the default topology)")
 		qemu.BoolVar(&qOps.IPMIEnabled, ipmiEnabledFlag, qOps.IPMIEnabled, "enable BMC (IPMI) emulation using QEMU's built-in BMC simulator (amd64 only)")
 		qemu.BoolVar(&qOps.WithIOMMU, withIOMMUFlag, qOps.WithIOMMU, "enable IOMMU support, this also add a new PCI root port and an interface attached to it")
 		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")

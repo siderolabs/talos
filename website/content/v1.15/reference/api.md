@@ -507,6 +507,8 @@ description: Talos gRPC API reference.
     - [CPUScalingSpecSpec](#talos.resource.definitions.hardware.CPUScalingSpecSpec)
     - [CPUScalingStatusSpec](#talos.resource.definitions.hardware.CPUScalingStatusSpec)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
+    - [NUMANodeSpec](#talos.resource.definitions.hardware.NUMANodeSpec)
+    - [NUMATopologySpec](#talos.resource.definitions.hardware.NUMATopologySpec)
     - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
     - [PCIDriverRebindConfigSpec](#talos.resource.definitions.hardware.PCIDriverRebindConfigSpec)
     - [PCIDriverRebindStatusSpec](#talos.resource.definitions.hardware.PCIDriverRebindStatusSpec)
@@ -8900,6 +8902,40 @@ MemoryModuleSpec represents a single Memory.
 | serial_number | [string](#string) |  |  |
 | asset_tag | [string](#string) |  |  |
 | product_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.NUMANodeSpec"></a>
+
+### NUMANodeSpec
+NUMANodeSpec includes CPUless and memoryless nodes.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [uint32](#uint32) |  |  |
+| cp_us | [uint32](#uint32) | repeated |  |
+| memory_total_bytes | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hardware.NUMATopologySpec"></a>
+
+### NUMATopologySpec
+NUMATopologySpec contains sorted node and logical CPU inventories.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| nodes | [NUMANodeSpec](#talos.resource.definitions.hardware.NUMANodeSpec) | repeated |  |
+| present_cp_us | [uint32](#uint32) | repeated |  |
+| online_cp_us | [uint32](#uint32) | repeated |  |
 
 
 

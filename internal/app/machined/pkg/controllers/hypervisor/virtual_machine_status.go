@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/uuid"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -72,6 +73,12 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.NUMATopologyType,
+			ID:        optional.Some(hardware.NUMATopologyID),
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: network.NamespaceName,
 			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
@@ -110,6 +117,7 @@ func (ctrl *VirtualMachineStatusController) Run(ctx context.Context, runtime con
 	}
 }
 
+//nolint:gocyclo
 func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runtime controller.Runtime) error {
 	specs, err := safe.ReaderListAll[*hypervisor.VirtualMachineSpec](ctx, runtime)
 	if err != nil {
@@ -144,6 +152,11 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		return err
 	}
 
+	topology, err := readNUMATopology(ctx, runtime)
+	if err != nil {
+		return err
+	}
+
 	machineUUID, machineErr := getMachineUUID(ctx, runtime)
 
 	var errs error
@@ -155,7 +168,14 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		_, _, _, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
+		domainXML, _, _, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
+
+		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
+		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
+		// running, and only its next start or replacement is held back.
+		if renderErr == nil && spec.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateRunning.String() {
+			renderErr = validateDomainPlacement(name, domainXML, topology)
+		}
 
 		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])
 
@@ -177,7 +197,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
 func renderStage(err error) hypervisor.VirtualMachineStage {
-	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) {
+	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, errPlacementPending) {
 		return hypervisor.VirtualMachineStagePending
 	}
 

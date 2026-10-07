@@ -133,7 +133,7 @@ func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
 	return nil
 }
 
-func (c *domainClient) Start(domain libvirtdomain.Domain, text string) error {
+func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...libvirtdomain.StartOption) error {
 	c.mu.Lock()
 
 	if c.startErr != nil {
@@ -144,16 +144,20 @@ func (c *domainClient) Start(domain libvirtdomain.Domain, text string) error {
 	}
 
 	_, exists := c.domains[domain.Name]
-
 	unchanged := exists && c.texts[domain.Name] == text
-	if !unchanged {
-		c.starts[domain.Name]++
-	}
 	c.mu.Unlock()
 
 	if unchanged {
 		return nil
 	}
+
+	if err := libvirtdomain.Admit(opts...); err != nil {
+		return err
+	}
+
+	c.mu.Lock()
+	c.starts[domain.Name]++
+	c.mu.Unlock()
 
 	return c.Define(domain, text)
 }

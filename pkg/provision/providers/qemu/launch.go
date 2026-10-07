@@ -53,6 +53,7 @@ type LaunchConfig struct {
 	DiskSerials               []string
 	DiskBlockSizes            []uint
 	VCPUCount                 int64
+	NUMANodes                 int
 	MemSize                   int64
 	MemShmPath                string
 	KernelImagePath           string
@@ -160,7 +161,7 @@ func launchVM(config *LaunchConfig) error {
 
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
-		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
+		"-smp", smpArg(config),
 		"-cpu", cpuArg,
 		"-nographic",
 		// TODO: uncomment the following line to get another eth interface not connected to anything
@@ -178,6 +179,13 @@ func launchVM(config *LaunchConfig) error {
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action", "pause",
 	}
+
+	memory, err := memoryArgs(config)
+	if err != nil {
+		return err
+	}
+
+	args = append(args, memory...)
 
 	// management net0 (skipped for authentic full-CLOS nodes, which have only fabric uplinks).
 	if !config.CLOSNoNet0 {
@@ -202,8 +210,8 @@ func launchVM(config *LaunchConfig) error {
 	}
 
 	var (
-		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached, xhciAttached bool
-		ahciBus                                                                                    int
+		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, xhciAttached bool
+		ahciBus                                                                  int
 	)
 
 	for i, disk := range config.DiskPaths {
@@ -314,16 +322,6 @@ func launchVM(config *LaunchConfig) error {
 		case "virtiofs":
 			if runtime.GOOS != "linux" {
 				return fmt.Errorf("virtiofs driver is only supported on linux hosts")
-			}
-
-			if !virtiofsAttached {
-				args = append(
-					args,
-					"-object", fmt.Sprintf("memory-backend-file,id=mem,size=%sM,mem-path=%s,share=on", strconv.FormatInt(config.MemSize, 10), config.MemShmPath),
-					"-numa", "node,memdev=mem",
-				)
-
-				virtiofsAttached = true
 			}
 
 			args = append(

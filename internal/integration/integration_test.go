@@ -50,6 +50,7 @@ var (
 	virtiofsd           bool
 	nfs                 bool
 	ipmi                bool
+	numaNodes           int
 	race                bool
 	skipEphemeralPolicy bool
 
@@ -159,6 +160,7 @@ func TestIntegration(t *testing.T) {
 				Virtiofsd:               virtiofsd,
 				NFS:                     nfs,
 				IPMI:                    ipmi,
+				NUMANodes:               numaNodes,
 				Race:                    race,
 				SkipEphemeralPolicy:     skipEphemeralPolicy,
 				DedicatedSystemVolumes:  dedicatedSystemVolumes,
@@ -237,6 +239,7 @@ func init() {
 	flag.BoolVar(&virtiofsd, "talos.virtiofsd", false, "Marker to skip tests that should not be run without virtiofsd")
 	flag.BoolVar(&nfs, "talos.nfs", false, "enable tests for the embedded NFS server and external volumes")
 	flag.BoolVar(&ipmi, "talos.ipmi", false, "Marker to skip tests that should not be run without an emulated BMC (IPMI)")
+	flag.IntVar(&numaNodes, "talos.numa-nodes", 0, "Expected NUMA nodes per machine, matching cluster create --numa-nodes (0 skips the test)")
 	flag.BoolVar(&skipEphemeralPolicy, "talos.skip-ephemeral-policy", false,
 		"Skip MountsSuite assertions for EPHEMERAL-backed fixture mounts")
 	flag.BoolVar(&dedicatedSystemVolumes, "talos.dedicated-system-volumes", false,

@@ -433,6 +433,7 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             QEMU_CONTROLPLANES: 2
             QEMU_WORKERS: 0
+            QEMU_NUMA_NODES: 2
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
@@ -1521,6 +1522,7 @@ spec:
             # themselves on this cluster.
             QEMU_CONTROLPLANES: 2
             QEMU_WORKERS: 0
+            QEMU_NUMA_NODES: 2
             # Double the default, so a node can hold a nested Talos guest of its own: one runs a
             # virtual machine booting a real ISO, which needs a couple of gigabytes to itself on
             # top of what the node already uses.

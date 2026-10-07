@@ -5,6 +5,7 @@
 package provision
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"runtime"
@@ -92,6 +93,19 @@ func WithTPM2(enabled bool) Option {
 func WithIPMI(enabled bool) Option {
 	return func(o *Options) error {
 		o.IPMIEnabled = enabled
+
+		return nil
+	}
+}
+
+// WithNUMANodes sets the number of NUMA nodes per VM (zero preserves the default topology).
+func WithNUMANodes(count int) Option {
+	return func(o *Options) error {
+		if count < 0 {
+			return fmt.Errorf("NUMA node count must not be negative: %d", count)
+		}
+
+		o.NUMANodes = count
 
 		return nil
 	}
@@ -279,6 +293,8 @@ type Options struct {
 	IOMMUEnabled bool
 	// Enable BMC (IPMI) emulation using QEMU's built-in BMC simulator.
 	IPMIEnabled bool
+	// Number of NUMA nodes per VM; zero preserves the default topology.
+	NUMANodes int
 	// Configure additional search paths to look for UEFI firmware.
 	ExtraUEFISearchPaths []string
 

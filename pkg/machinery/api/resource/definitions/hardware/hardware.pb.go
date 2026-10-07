@@ -683,6 +683,128 @@ func (x *MemoryModuleSpec) GetProductName() string {
 	return ""
 }
 
+// NUMANodeSpec includes CPUless and memoryless nodes.
+type NUMANodeSpec struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               uint32                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	CpUs             []uint32               `protobuf:"varint,2,rep,packed,name=cp_us,json=cpUs,proto3" json:"cp_us,omitempty"`
+	MemoryTotalBytes uint64                 `protobuf:"varint,3,opt,name=memory_total_bytes,json=memoryTotalBytes,proto3" json:"memory_total_bytes,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *NUMANodeSpec) Reset() {
+	*x = NUMANodeSpec{}
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NUMANodeSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NUMANodeSpec) ProtoMessage() {}
+
+func (x *NUMANodeSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NUMANodeSpec.ProtoReflect.Descriptor instead.
+func (*NUMANodeSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *NUMANodeSpec) GetId() uint32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *NUMANodeSpec) GetCpUs() []uint32 {
+	if x != nil {
+		return x.CpUs
+	}
+	return nil
+}
+
+func (x *NUMANodeSpec) GetMemoryTotalBytes() uint64 {
+	if x != nil {
+		return x.MemoryTotalBytes
+	}
+	return 0
+}
+
+// NUMATopologySpec contains sorted node and logical CPU inventories.
+type NUMATopologySpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Nodes         []*NUMANodeSpec        `protobuf:"bytes,1,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	PresentCpUs   []uint32               `protobuf:"varint,2,rep,packed,name=present_cp_us,json=presentCpUs,proto3" json:"present_cp_us,omitempty"`
+	OnlineCpUs    []uint32               `protobuf:"varint,3,rep,packed,name=online_cp_us,json=onlineCpUs,proto3" json:"online_cp_us,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *NUMATopologySpec) Reset() {
+	*x = NUMATopologySpec{}
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *NUMATopologySpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*NUMATopologySpec) ProtoMessage() {}
+
+func (x *NUMATopologySpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use NUMATopologySpec.ProtoReflect.Descriptor instead.
+func (*NUMATopologySpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *NUMATopologySpec) GetNodes() []*NUMANodeSpec {
+	if x != nil {
+		return x.Nodes
+	}
+	return nil
+}
+
+func (x *NUMATopologySpec) GetPresentCpUs() []uint32 {
+	if x != nil {
+		return x.PresentCpUs
+	}
+	return nil
+}
+
+func (x *NUMATopologySpec) GetOnlineCpUs() []uint32 {
+	if x != nil {
+		return x.OnlineCpUs
+	}
+	return nil
+}
+
 // PCIDeviceSpec represents a single processor.
 type PCIDeviceSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -701,7 +823,7 @@ type PCIDeviceSpec struct {
 
 func (x *PCIDeviceSpec) Reset() {
 	*x = PCIDeviceSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -713,7 +835,7 @@ func (x *PCIDeviceSpec) String() string {
 func (*PCIDeviceSpec) ProtoMessage() {}
 
 func (x *PCIDeviceSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[5]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -726,7 +848,7 @@ func (x *PCIDeviceSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PCIDeviceSpec.ProtoReflect.Descriptor instead.
 func (*PCIDeviceSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *PCIDeviceSpec) GetClass() string {
@@ -803,7 +925,7 @@ type PCIDriverRebindConfigSpec struct {
 
 func (x *PCIDriverRebindConfigSpec) Reset() {
 	*x = PCIDriverRebindConfigSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -815,7 +937,7 @@ func (x *PCIDriverRebindConfigSpec) String() string {
 func (*PCIDriverRebindConfigSpec) ProtoMessage() {}
 
 func (x *PCIDriverRebindConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[6]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -828,7 +950,7 @@ func (x *PCIDriverRebindConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PCIDriverRebindConfigSpec.ProtoReflect.Descriptor instead.
 func (*PCIDriverRebindConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PCIDriverRebindConfigSpec) GetPciid() string {
@@ -856,7 +978,7 @@ type PCIDriverRebindStatusSpec struct {
 
 func (x *PCIDriverRebindStatusSpec) Reset() {
 	*x = PCIDriverRebindStatusSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[7]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -868,7 +990,7 @@ func (x *PCIDriverRebindStatusSpec) String() string {
 func (*PCIDriverRebindStatusSpec) ProtoMessage() {}
 
 func (x *PCIDriverRebindStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[7]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -881,7 +1003,7 @@ func (x *PCIDriverRebindStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PCIDriverRebindStatusSpec.ProtoReflect.Descriptor instead.
 func (*PCIDriverRebindStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PCIDriverRebindStatusSpec) GetPciid() string {
@@ -921,7 +1043,7 @@ type ProcessorSpec struct {
 
 func (x *ProcessorSpec) Reset() {
 	*x = ProcessorSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[8]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -933,7 +1055,7 @@ func (x *ProcessorSpec) String() string {
 func (*ProcessorSpec) ProtoMessage() {}
 
 func (x *ProcessorSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[8]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -946,7 +1068,7 @@ func (x *ProcessorSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProcessorSpec.ProtoReflect.Descriptor instead.
 func (*ProcessorSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ProcessorSpec) GetSocket() string {
@@ -1050,7 +1172,7 @@ type SystemInformationSpec struct {
 
 func (x *SystemInformationSpec) Reset() {
 	*x = SystemInformationSpec{}
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[9]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1062,7 +1184,7 @@ func (x *SystemInformationSpec) String() string {
 func (*SystemInformationSpec) ProtoMessage() {}
 
 func (x *SystemInformationSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[9]
+	mi := &file_resource_definitions_hardware_hardware_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1075,7 +1197,7 @@ func (x *SystemInformationSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemInformationSpec.ProtoReflect.Descriptor instead.
 func (*SystemInformationSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_hardware_hardware_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *SystemInformationSpec) GetManufacturer() string {
@@ -1202,7 +1324,16 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\fmanufacturer\x18\x05 \x01(\tR\fmanufacturer\x12#\n" +
 	"\rserial_number\x18\x06 \x01(\tR\fserialNumber\x12\x1b\n" +
 	"\tasset_tag\x18\a \x01(\tR\bassetTag\x12!\n" +
-	"\fproduct_name\x18\b \x01(\tR\vproductName\"\x83\x02\n" +
+	"\fproduct_name\x18\b \x01(\tR\vproductName\"a\n" +
+	"\fNUMANodeSpec\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\rR\x02id\x12\x13\n" +
+	"\x05cp_us\x18\x02 \x03(\rR\x04cpUs\x12,\n" +
+	"\x12memory_total_bytes\x18\x03 \x01(\x04R\x10memoryTotalBytes\"\xa1\x01\n" +
+	"\x10NUMATopologySpec\x12G\n" +
+	"\x05nodes\x18\x01 \x03(\v21.talos.resource.definitions.hardware.NUMANodeSpecR\x05nodes\x12\"\n" +
+	"\rpresent_cp_us\x18\x02 \x03(\rR\vpresentCpUs\x12 \n" +
+	"\fonline_cp_us\x18\x03 \x03(\rR\n" +
+	"onlineCpUs\"\x83\x02\n" +
 	"\rPCIDeviceSpec\x12\x14\n" +
 	"\x05class\x18\x01 \x01(\tR\x05class\x12\x1a\n" +
 	"\bsubclass\x18\x02 \x01(\tR\bsubclass\x12\x16\n" +
@@ -1263,29 +1394,32 @@ func file_resource_definitions_hardware_hardware_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_hardware_hardware_proto_rawDescData
 }
 
-var file_resource_definitions_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_resource_definitions_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_resource_definitions_hardware_hardware_proto_goTypes = []any{
 	(*BMCDeviceSpec)(nil),             // 0: talos.resource.definitions.hardware.BMCDeviceSpec
 	(*CPUCoreSpec)(nil),               // 1: talos.resource.definitions.hardware.CPUCoreSpec
 	(*CPUScalingSpecSpec)(nil),        // 2: talos.resource.definitions.hardware.CPUScalingSpecSpec
 	(*CPUScalingStatusSpec)(nil),      // 3: talos.resource.definitions.hardware.CPUScalingStatusSpec
 	(*MemoryModuleSpec)(nil),          // 4: talos.resource.definitions.hardware.MemoryModuleSpec
-	(*PCIDeviceSpec)(nil),             // 5: talos.resource.definitions.hardware.PCIDeviceSpec
-	(*PCIDriverRebindConfigSpec)(nil), // 6: talos.resource.definitions.hardware.PCIDriverRebindConfigSpec
-	(*PCIDriverRebindStatusSpec)(nil), // 7: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec
-	(*ProcessorSpec)(nil),             // 8: talos.resource.definitions.hardware.ProcessorSpec
-	(*SystemInformationSpec)(nil),     // 9: talos.resource.definitions.hardware.SystemInformationSpec
-	(*common.NetIPPrefix)(nil),        // 10: common.NetIPPrefix
-	(*common.NetIP)(nil),              // 11: common.NetIP
+	(*NUMANodeSpec)(nil),              // 5: talos.resource.definitions.hardware.NUMANodeSpec
+	(*NUMATopologySpec)(nil),          // 6: talos.resource.definitions.hardware.NUMATopologySpec
+	(*PCIDeviceSpec)(nil),             // 7: talos.resource.definitions.hardware.PCIDeviceSpec
+	(*PCIDriverRebindConfigSpec)(nil), // 8: talos.resource.definitions.hardware.PCIDriverRebindConfigSpec
+	(*PCIDriverRebindStatusSpec)(nil), // 9: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec
+	(*ProcessorSpec)(nil),             // 10: talos.resource.definitions.hardware.ProcessorSpec
+	(*SystemInformationSpec)(nil),     // 11: talos.resource.definitions.hardware.SystemInformationSpec
+	(*common.NetIPPrefix)(nil),        // 12: common.NetIPPrefix
+	(*common.NetIP)(nil),              // 13: common.NetIP
 }
 var file_resource_definitions_hardware_hardware_proto_depIdxs = []int32{
-	10, // 0: talos.resource.definitions.hardware.BMCDeviceSpec.address:type_name -> common.NetIPPrefix
-	11, // 1: talos.resource.definitions.hardware.BMCDeviceSpec.gateway:type_name -> common.NetIP
-	2,  // [2:2] is the sub-list for method output_type
-	2,  // [2:2] is the sub-list for method input_type
-	2,  // [2:2] is the sub-list for extension type_name
-	2,  // [2:2] is the sub-list for extension extendee
-	0,  // [0:2] is the sub-list for field type_name
+	12, // 0: talos.resource.definitions.hardware.BMCDeviceSpec.address:type_name -> common.NetIPPrefix
+	13, // 1: talos.resource.definitions.hardware.BMCDeviceSpec.gateway:type_name -> common.NetIP
+	5,  // 2: talos.resource.definitions.hardware.NUMATopologySpec.nodes:type_name -> talos.resource.definitions.hardware.NUMANodeSpec
+	3,  // [3:3] is the sub-list for method output_type
+	3,  // [3:3] is the sub-list for method input_type
+	3,  // [3:3] is the sub-list for extension type_name
+	3,  // [3:3] is the sub-list for extension extendee
+	0,  // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_hardware_hardware_proto_init() }
@@ -1299,7 +1433,7 @@ func file_resource_definitions_hardware_hardware_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_hardware_hardware_proto_rawDesc), len(file_resource_definitions_hardware_hardware_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
