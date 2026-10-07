@@ -14,12 +14,14 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/containerd/containerd/v2/core/events"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"k8s.io/utils/cpuset"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	k8sctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	runtimectrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/cpupartition"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -297,12 +299,13 @@ func (fs *fakeCgroupFS) callCount() int {
 type cpuPartitionSuite struct {
 	ctest.DefaultSuite
 
-	fs *fakeCgroupFS
+	fs  *fakeCgroupFS
+	cpu *partitionKubeletClient
 }
 
 // newCPUPartitionSuite must be called inside the synctest bubble; the caller defers TearDownTest.
 func newCPUPartitionSuite(t *testing.T) *cpuPartitionSuite {
-	s := &cpuPartitionSuite{fs: newFakeCgroupFS()}
+	s := &cpuPartitionSuite{fs: newFakeCgroupFS(), cpu: &partitionKubeletClient{events: make(chan *events.Envelope, 1)}}
 	s.Timeout = time.Hour
 	s.SetT(t)
 	s.SetupTest()
@@ -321,6 +324,9 @@ func (s *cpuPartitionSuite) startWith(ctrl *runtimectrls.CPUPartitionController)
 		ctrl.PollInterval = time.Second
 	}
 
+	s.Require().NoError(s.Runtime().RegisterController(&k8sctrls.KubeletCPUObservationController{
+		NewClient: func() (k8sctrls.KubeletCPUClient, error) { return s.cpu, nil },
+	}))
 	s.Require().NoError(s.Runtime().RegisterController(ctrl))
 }
 
@@ -373,10 +379,15 @@ func (s *cpuPartitionSuite) kubelet(reserved string) {
 	spec.TypedSpec().Config = map[string]any{}
 
 	if reserved != "" {
+		spec.Metadata().Annotations().Set(k8s.KubeletCPUManagedAnnotation, "true")
 		spec.TypedSpec().Config["reservedSystemCPUs"] = reserved
+		spec.TypedSpec().Args = []string{"--reserved-cpus=" + reserved, "--cpu-manager-policy=static", "--cpu-manager-policy-options=strict-cpu-reservation=true"}
 	}
 
 	replace(s, spec)
+	current, err := safe.StateGetByID[*k8s.KubeletSpec](s.Ctx(), s.State(), k8s.KubeletID)
+	s.Require().NoError(err)
+	s.Require().NoError(s.cpu.launch(current))
 }
 
 func (s *cpuPartitionSuite) vm(name, slice string, pins ...string) {
@@ -607,6 +618,41 @@ func TestCPUPartitionKubernetesOnlyLifecycle(t *testing.T) {
 		// Widened to every CPU while the reservation is still managed; inheriting again afterwards
 		// keeps the same CPUs.
 		s.Assert().Equal([]string{"kubepods=1-3", "kubepods=0-7", "kubepods= after the reservation was withdrawn"}, kubepodsCap)
+	})
+}
+
+func TestCPUPartitionKubepodsRemovalKeepsReservationUntilRootRestored(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		s := newCPUPartitionSuite(t)
+		defer s.TearDownTest()
+
+		s.fs.set("kubepods", "0-7")
+		s.kubelet("0,4-7")
+		s.start()
+		s.publish(kubernetesOnlyPolicy())
+		synctest.Wait()
+		s.requirePhase(runtime.CPUPartitionPhaseReady)
+		s.Require().Equal("1-3", s.fs.mask("kubepods"))
+		s.Require().True(s.reservation().Managed)
+
+		var restored bool
+
+		s.fs.beforeWrite = func(op string) {
+			if op == "kubepods=0-7" {
+				restored = true
+
+				s.Assert().True(s.reservation().Managed, "reservation must remain managed until kubepods root is restored")
+			}
+		}
+
+		spec := kubernetesOnlyPolicy()
+		delete(spec.TypedSpec().Roots, "kubepods")
+		spec.TypedSpec().Roots["init"] = "0-1"
+		s.publish(spec)
+		synctest.Wait()
+
+		s.Require().True(restored, "must exercise the root restoration write: status=%+v writes=%v reservation=%+v", s.status(), s.fs.recordedWrites(), s.reservation())
+		s.Assert().False(s.reservation().Managed)
 	})
 }
 

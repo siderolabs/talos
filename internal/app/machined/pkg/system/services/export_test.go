@@ -12,6 +12,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/xslices"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -57,3 +58,16 @@ func (svc *Extension) ApplyExtensionServiceConfig(
 
 // AuthorizationRules exposes production authorization rules for external tests.
 var AuthorizationRules = rules
+
+// KubeletCPUArguments exposes the same-read process options for tests.
+var KubeletCPUArguments = kubeletCPUArguments
+
+// SetKubeletPullImage replaces only the containerd image pull for service boundary tests.
+func (k *Kubelet) SetKubeletPullImage(pull func(context.Context, runtime.Runtime, string) (string, error)) {
+	k.pullImageFn = pull
+}
+
+// SetKubeletRunnerFactory captures the actual process arguments and OCI options.
+func (k *Kubelet) SetKubeletRunnerFactory(factory func(bool, *runner.Args, ...runner.Option) runner.Runner) {
+	k.newRunnerFn = factory
+}

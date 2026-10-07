@@ -575,6 +575,7 @@ description: Talos gRPC API reference.
     - [KubePrismEndpoint](#talos.resource.definitions.k8s.KubePrismEndpoint)
     - [KubePrismEndpointsSpec](#talos.resource.definitions.k8s.KubePrismEndpointsSpec)
     - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
+    - [KubeletCPUObservationSpec](#talos.resource.definitions.k8s.KubeletCPUObservationSpec)
     - [KubeletCPUReservationSpec](#talos.resource.definitions.k8s.KubeletCPUReservationSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
@@ -10077,6 +10078,27 @@ KubePrismStatusesSpec describes KubePrismStatuses data.
 | ----- | ---- | ----- | ----------- |
 | host | [string](#string) |  |  |
 | healthy | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletCPUObservationSpec"></a>
+
+### KubeletCPUObservationSpec
+KubeletCPUObservationSpec contains only the observed CPU binding.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec_token | [string](#string) |  |  |
+| managed | [bool](#bool) |  |  |
+| reserved_cp_us | [string](#string) |  |  |
+| cpu_manager_policy | [string](#string) |  |  |
+| strict_cpu_reservation | [bool](#bool) |  |  |
+| container_created | [string](#string) |  |  |
+| task_pid | [uint32](#uint32) |  |  |
 
 
 

@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
@@ -29,6 +30,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
+	"k8s.io/utils/cpuset"
 
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -72,6 +74,12 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.NodeIPType,
+			ID:        optional.Some(k8s.KubeletID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletCPUReservationType,
 			ID:        optional.Some(k8s.KubeletID),
 			Kind:      controller.InputWeak,
 		},
@@ -208,6 +216,63 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
 
+		reservation, err := safe.ReaderGetByID[*k8s.KubeletCPUReservation](ctx, r, k8s.KubeletID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		if state.IsNotFoundError(err) {
+			reservation = nil
+		}
+
+		if reservation != nil {
+			if reservation.Metadata().Phase() != resource.PhaseRunning {
+				return fmt.Errorf("kubelet CPU reservation is tearing down")
+			}
+
+			if reservation.TypedSpec().Managed {
+				if err = kubelet.ValidateCPUReservation(cfgSpec.ExtraConfig, map[string][]string(extraArgs), cfgSpec.ExtraMounts); err != nil {
+					return err
+				}
+
+				if err = kubelet.ValidateCPUReservationGates(kubeletVersion.Minor, kubeletConfig.FeatureGates, map[string][]string(extraArgs)); err != nil {
+					return err
+				}
+
+				reserved, parseErr := cpuset.Parse(reservation.TypedSpec().ReservedCPUs)
+				if parseErr != nil {
+					return fmt.Errorf("invalid managed kubelet CPU reservation %q", reservation.TypedSpec().ReservedCPUs)
+				}
+
+				kubeletConfig.ReservedSystemCPUs = reserved.String()
+
+				kubeletConfig.CPUManagerPolicy = "static"
+
+				kubeletConfig.CPUManagerPolicyOptions, err = kubelet.CPUReservationOptions(kubeletConfig.CPUManagerPolicyOptions, map[string][]string(extraArgs))
+				if err != nil {
+					return err
+				}
+
+				for key := range args {
+					switch strings.ReplaceAll(key, "_", "-") {
+					case "cpu-manager-policy", "cpu-manager-policy-options":
+						delete(args, key)
+					}
+				}
+
+				args["reserved-cpus"] = argsbuilder.Value{reserved.String()}
+				args["cpu-manager-policy"] = argsbuilder.Value{"static"}
+				args["cpu-manager-policy-options"] = nil
+
+				keys := maps.Keys(kubeletConfig.CPUManagerPolicyOptions)
+				slices.Sort(keys)
+
+				for _, key := range keys {
+					args["cpu-manager-policy-options"] = append(args["cpu-manager-policy-options"], key+"="+kubeletConfig.CPUManagerPolicyOptions[key])
+				}
+			}
+		}
+
 		// If our platform is container, we cannot rely on the ability to change kernel parameters.
 		// Therefore, we need to NOT attempt to enforce the kernel parameter checking done by the kubelet
 		// when the `ProtectKernelDefaults` setting is enabled.
@@ -225,6 +290,12 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			r,
 			k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID),
 			func(r *k8s.KubeletSpec) error {
+				if reservation != nil && reservation.TypedSpec().Managed {
+					r.Metadata().Annotations().Set(k8s.KubeletCPUManagedAnnotation, "true")
+				} else {
+					r.Metadata().Annotations().Delete(k8s.KubeletCPUManagedAnnotation)
+				}
+
 				kubeletSpec := r.TypedSpec()
 
 				kubeletSpec.Image = cfgSpec.Image

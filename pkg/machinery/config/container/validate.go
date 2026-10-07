@@ -222,6 +222,16 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs     error
 	)
 
+	if partition := container.CPUPartitionConfig(); partition != nil && !mode.InContainer() {
+		if _, managed := partition.Roots()[constants.CgroupKubepods]; managed {
+			if cfg := container.K8sKubeletConfig(); cfg != nil {
+				if err := kubelet.ValidateCPUReservation(cfg.ExtraConfig(), cfg.ExtraArgs(), cfg.ExtraMounts()); err != nil {
+					errs = multierror.Append(errs, err)
+				}
+			}
+		}
+	}
+
 	// A cpufreq attribute set both by CPUScalingConfig and through sysfs has two controllers writing
 	// it, each reverting the other on every reconcile. Reject that rather than let the machine flap.
 	if len(container.CPUScalingConfigs()) > 0 {

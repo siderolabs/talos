@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
@@ -114,11 +115,11 @@ func kubeletReadBack(ctx context.Context, r controller.Runtime, reserved *cpuset
 	}
 
 	if reserved == nil {
-		if value != "" {
-			return barrierError{fmt.Sprintf("kubelet configuration still reserves CPUs %q", value)}
+		if k8s.KubeletCPUManaged(spec) {
+			return barrierError{"kubelet configuration still owns CPU settings"}
 		}
 
-		return nil
+		return kubeletObservedBinding(ctx, r, spec, nil)
 	}
 
 	if value == "" {
@@ -132,6 +133,45 @@ func kubeletReadBack(ctx context.Context, r controller.Runtime, reserved *cpuset
 
 	if !configured.Equals(*reserved) {
 		return barrierError{fmt.Sprintf("kubelet configuration reserves CPUs %q, waiting for %q", configured, reserved)}
+	}
+
+	return kubeletObservedBinding(ctx, r, spec, reserved)
+}
+
+func kubeletObservedBinding(ctx context.Context, r controller.Runtime, spec *k8s.KubeletSpec, reserved *cpuset.CPUSet) error {
+	observed, err := safe.ReaderGetByID[*k8s.KubeletCPUObservation](ctx, r, k8s.KubeletID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return barrierError{"kubelet CPU arguments have not been observed yet"}
+		}
+
+		return err
+	}
+
+	binding := observed.TypedSpec()
+	if binding.SpecToken != k8s.KubeletSpecToken(spec) || spec.Metadata().Phase() != resource.PhaseRunning {
+		return barrierError{"kubelet CPU argument binding does not match the rendered spec"}
+	}
+
+	return kubeletObservedReservation(binding, reserved)
+}
+
+func kubeletObservedReservation(binding *k8s.KubeletCPUObservationSpec, reserved *cpuset.CPUSet) error {
+	if reserved == nil {
+		if binding.Managed {
+			return barrierError{"kubelet CPU arguments are still managed"}
+		}
+
+		return nil
+	}
+
+	if !binding.Managed || binding.CPUManagerPolicy != "static" || !binding.StrictCPUReservation {
+		return barrierError{"kubelet CPU argument binding does not match the staged reservation"}
+	}
+
+	actual, err := cpuset.Parse(binding.ReservedCPUs)
+	if err != nil || !actual.Equals(*reserved) {
+		return barrierError{"observed kubelet CPU reservation does not match the staged reservation"}
 	}
 
 	return nil

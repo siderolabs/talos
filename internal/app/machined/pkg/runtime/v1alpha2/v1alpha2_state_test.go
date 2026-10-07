@@ -34,6 +34,7 @@ func TestNewStateRegistersWorkloadPartitionResources(t *testing.T) {
 		{runtime.CPUPartitionStatusType, runtime.NamespaceName},
 		{runtime.WorkloadMemorySpecType, runtime.NamespaceName},
 		{k8s.KubeletCPUReservationType, k8s.NamespaceName},
+		{k8s.KubeletCPUObservationType, k8s.NamespaceName},
 		{hypervisor.VirtualMachineCPUPlacementType, hypervisor.NamespaceName},
 	} {
 		rd, err := safe.StateGetByID[*meta.ResourceDefinition](t.Context(), s.Resources(), strings.ToLower(test.typ))

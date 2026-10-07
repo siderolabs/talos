@@ -79,6 +79,12 @@ func (ctrl *CPUPartitionController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletCPUObservationType,
+			ID:        optional.Some(k8s.KubeletID),
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineSpecType,
 			Kind:      controller.InputWeak,

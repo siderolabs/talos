@@ -177,6 +177,17 @@ message KubePrismStatusesSpec {
   bool healthy = 2;
 }
 
+// KubeletCPUObservationSpec contains only the observed CPU binding.
+message KubeletCPUObservationSpec {
+  string spec_token = 1;
+  bool managed = 2;
+  string reserved_cp_us = 3;
+  string cpu_manager_policy = 4;
+  bool strict_cpu_reservation = 5;
+  string container_created = 6;
+  uint32 task_pid = 7;
+}
+
 // KubeletCPUReservationSpec describes the staged reservation.
 message KubeletCPUReservationSpec {
   bool managed = 1;

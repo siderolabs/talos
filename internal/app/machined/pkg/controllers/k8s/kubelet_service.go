@@ -200,51 +200,87 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error converting kubelet configuration from unstructured: %w", err)
 		}
 
-		if err = ctrl.writePKI(secretSpec); err != nil {
-			return fmt.Errorf("error writing kubelet PKI: %w", err)
-		}
-
-		if err = ctrl.writeConfig(&kubeletConfiguration); err != nil {
-			return fmt.Errorf("error writing kubelet configuration: %w", err)
-		}
-
-		if err = ctrl.writeKubeletCredentialProviderConfig(cfgSpec); err != nil {
-			return fmt.Errorf("error writing kubelet credential provider configuration: %w", err)
-		}
-
-		_, running, err := ctrl.V1Alpha1Services.IsRunning("kubelet")
-		if err != nil {
-			ctrl.V1Alpha1Services.Load(&services.Kubelet{})
-		}
-
-		if running {
-			if err = ctrl.V1Alpha1Services.Stop(ctx, "kubelet"); err != nil {
-				return fmt.Errorf("error stopping kubelet service: %w", err)
+		if err = ctrl.prepareAndStart(ctx, cfg, func() error {
+			if err = ctrl.writePKI(secretSpec); err != nil {
+				return fmt.Errorf("error writing kubelet PKI: %w", err)
 			}
-		}
 
-		if err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename, secretSpec.AcceptedCAs, logger); err != nil {
+			if err = ctrl.writeConfig(&kubeletConfiguration); err != nil {
+				return fmt.Errorf("error writing kubelet configuration: %w", err)
+			}
+
+			if err = ctrl.writeKubeletCredentialProviderConfig(cfgSpec); err != nil {
+				return fmt.Errorf("error writing kubelet credential provider configuration: %w", err)
+			}
+
+			if err = ctrl.refreshKubeletCerts(cfgSpec.ExpectedNodename, secretSpec.AcceptedCAs, logger); err != nil {
+				return err
+			}
+
+			if err = ctrl.cleanupResourceManagerState(kubeletMountStatus.TypedSpec().Target, &kubeletConfiguration, logger); err != nil {
+				return err
+			}
+
+			if err = ctrl.refreshSelfServingCert(); err != nil {
+				return err
+			}
+
+			if err = ctrl.updateKubeconfig(secretSpec.Endpoint, secretSpec.EndpointTLSServerName, secretSpec.AcceptedCAs, logger); err != nil {
+				return err
+			}
+
+			return nil
+		}); err != nil {
 			return err
-		}
-
-		if err = ctrl.cleanupResourceManagerState(kubeletMountStatus.TypedSpec().Target, &kubeletConfiguration, logger); err != nil {
-			return err
-		}
-
-		if err = ctrl.refreshSelfServingCert(); err != nil {
-			return err
-		}
-
-		if err = ctrl.updateKubeconfig(secretSpec.Endpoint, secretSpec.EndpointTLSServerName, secretSpec.AcceptedCAs, logger); err != nil {
-			return err
-		}
-
-		if err = ctrl.V1Alpha1Services.Start("kubelet"); err != nil {
-			return fmt.Errorf("error starting kubelet service: %w", err)
 		}
 
 		r.ResetRestartBackoff()
 	}
+}
+
+// prepareAndStart retires even a service still waiting on its start conditions before
+// touching shared files. Failed preparation leaves no old snapshot available to restart.
+func (ctrl *KubeletServiceController) prepareAndStart(ctx context.Context, spec *k8s.KubeletSpec, prepare func() error) error {
+	service, _, err := ctrl.V1Alpha1Services.IsRunning("kubelet")
+	if err != nil {
+		ctrl.V1Alpha1Services.Load(&services.Kubelet{})
+
+		service, _, err = ctrl.V1Alpha1Services.IsRunning("kubelet")
+		if err != nil {
+			return fmt.Errorf("error finding kubelet service: %w", err)
+		}
+	}
+
+	// Load ignores duplicate IDs, so always retire and publish to the actual service.
+	kubelet, ok := service.(*services.Kubelet)
+	if !ok {
+		return fmt.Errorf("unexpected kubelet service type %T", service)
+	}
+
+	kubelet.Retire()
+
+	_, running, err := ctrl.V1Alpha1Services.IsRunning("kubelet")
+	if err != nil {
+		return err
+	}
+
+	if running {
+		if err = ctrl.V1Alpha1Services.Stop(ctx, "kubelet"); err != nil {
+			return fmt.Errorf("error stopping kubelet service: %w", err)
+		}
+	}
+
+	if err = prepare(); err != nil {
+		return err
+	}
+
+	kubelet.Publish(spec)
+
+	if err := ctrl.V1Alpha1Services.Start("kubelet"); err != nil {
+		return fmt.Errorf("error starting kubelet service: %w", err)
+	}
+
+	return nil
 }
 
 // cleanupResourceManagerState removes the kubelet resource manager (CPU manager, memory manager) state files

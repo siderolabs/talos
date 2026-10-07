@@ -386,6 +386,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&k8s.KubeletStaticPodController{},
 		k8s.NewKubeletStatusController(),
+		&k8s.KubeletCPUObservationController{},
 		k8s.NewKubePrismEndpointsController(),
 		k8s.NewKubePrismConfigController(),
 		&k8s.KubePrismController{},
