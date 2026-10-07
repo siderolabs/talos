@@ -299,3 +299,63 @@ func TestRouteID(t *testing.T) {
 		})
 	}
 }
+
+// TestEthernetFlowControlProtobuf verifies that flow control settings survive
+// the resource->protobuf->resource roundtrip, including explicit `false` values,
+// which must not be confused with unset fields.
+func TestEthernetFlowControlProtobuf(t *testing.T) {
+	t.Parallel()
+
+	t.Run("spec", func(t *testing.T) {
+		t.Parallel()
+
+		res := network.NewEthernetSpec(network.NamespaceName, "enp0s1")
+		res.TypedSpec().FlowControl = network.EthernetFlowControlSpec{
+			RX: new(true),
+			TX: new(false),
+		}
+
+		var spec networkpb.EthernetSpecSpec
+
+		require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+		require.NotNil(t, spec.GetFlowControl(), "flow control field must survive the resource->protobuf conversion")
+		assert.True(t, spec.GetFlowControl().GetRx())
+
+		marshaled, err := protoenc.Marshal(res.TypedSpec())
+		require.NoError(t, err)
+
+		var decoded network.EthernetSpecSpec
+
+		require.NoError(t, protoenc.Unmarshal(marshaled, &decoded))
+
+		assert.Equal(t, res.TypedSpec().FlowControl, decoded.FlowControl)
+	})
+
+	t.Run("status", func(t *testing.T) {
+		t.Parallel()
+
+		res := network.NewEthernetStatus(network.NamespaceName, "enp0s1")
+		res.TypedSpec().FlowControl = &network.EthernetFlowControlStatus{
+			RX:      new(false),
+			TX:      new(true),
+			Autoneg: new(false),
+		}
+
+		var spec networkpb.EthernetStatusSpec
+
+		require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+		require.NotNil(t, spec.GetFlowControl(), "flow control field must survive the resource->protobuf conversion")
+		assert.True(t, spec.GetFlowControl().GetTx())
+
+		marshaled, err := protoenc.Marshal(res.TypedSpec())
+		require.NoError(t, err)
+
+		var decoded network.EthernetStatusSpec
+
+		require.NoError(t, protoenc.Unmarshal(marshaled, &decoded))
+
+		assert.Equal(t, res.TypedSpec().FlowControl, decoded.FlowControl)
+	})
+}

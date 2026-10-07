@@ -204,6 +204,74 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 	})
 }
 
+// TestFlowControl verifies changing Ethernet flow control settings.
+func (suite *EthernetSuite) TestFlowControl() {
+	// pick up a random node to test the Ethernet on, and use it throughout the test
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	suite.T().Logf("testing Ethernet flow control on node %s", node)
+
+	// build a Talos API context which is tied to the node
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	ethStatuses, err := safe.StateListAll[*network.EthernetStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var (
+		linkName string
+		prevRX   bool
+	)
+
+	// flow control is driver specific (e.g. virtio-net doesn't support it), so pick a link which reports it
+	for ethStatus := range ethStatuses.All() {
+		if ethStatus.TypedSpec().FlowControl != nil && ethStatus.TypedSpec().FlowControl.RX != nil {
+			linkName = ethStatus.Metadata().ID()
+			prevRX = *ethStatus.TypedSpec().FlowControl.RX
+
+			break
+		}
+	}
+
+	if linkName == "" {
+		suite.T().Skip("no link supports flow control")
+	}
+
+	suite.T().Logf("testing flow control RX on link %s: %v -> %v", linkName, prevRX, !prevRX)
+
+	cfgDocument := networkconfig.NewEthernetConfigV1Alpha1(linkName)
+	cfgDocument.FlowControlConfig = &networkconfig.EthernetFlowControlConfig{
+		RX: new(!prevRX),
+	}
+	suite.PatchMachineConfig(nodeCtx, cfgDocument)
+
+	// now EthernetStatus should reflect the new flow control settings
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, linkName,
+		func(ethStatus *network.EthernetStatus, asrt *assert.Assertions) {
+			if asrt.NotNil(ethStatus.TypedSpec().FlowControl) {
+				asrt.Equal(!prevRX, pointer.SafeDeref(ethStatus.TypedSpec().FlowControl.RX))
+			}
+		},
+	)
+
+	// now, let's revert the flow control settings to what they were before
+	cfgDocument.FlowControlConfig.RX = new(prevRX)
+
+	suite.PatchMachineConfig(nodeCtx, cfgDocument)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, linkName,
+		func(ethStatus *network.EthernetStatus, asrt *assert.Assertions) {
+			if asrt.NotNil(ethStatus.TypedSpec().FlowControl) {
+				asrt.Equal(prevRX, pointer.SafeDeref(ethStatus.TypedSpec().FlowControl.RX))
+			}
+		},
+	)
+
+	// remove the config document
+	suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
+}
+
 // TestBridgeMAC verifies bridge MAC address.
 func (suite *EthernetSuite) TestBridgeMAC() {
 	// pick up a random node to test the Ethernet on, and use it throughout the test

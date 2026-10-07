@@ -626,6 +626,26 @@ they take effect on the next deliberate stop and start of the virtual machine.
 Hardware profiles are currently available only on amd64.
 """
 
+    [notes.ethernet_flow_control]
+        title = "Ethernet Flow Control"
+        description = """\
+The `EthernetConfig` document now supports configuring Ethernet link flow control (802.3x pause frames)
+with the new `flowControl` field, similar to the `ethtool -A` command:
+
+```yaml
+apiVersion: v1alpha1
+kind: EthernetConfig
+name: eno1
+flowControl:
+  rx: true      # accept incoming pause frames
+  tx: false     # don't transmit pause frames
+  autoneg: true # autonegotiate flow control
+```
+
+Omitting the `flowControl` field leaves the link's flow control configuration unchanged.
+Current flow control settings are reported on the `EthernetStatus` resource.
+"""
+
 [make_deps]
 
     [make_deps.tools]

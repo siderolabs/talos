@@ -25,16 +25,17 @@ type EthernetStatus = typed.Resource[EthernetStatusSpec, EthernetStatusExtension
 //
 //gotagsrewrite:gen
 type EthernetStatusSpec struct {
-	LinkState     *bool                     `yaml:"linkState,omitempty" protobuf:"1"`
-	SpeedMegabits int                       `yaml:"speedMbit,omitempty" protobuf:"2"`
-	Port          nethelpers.Port           `yaml:"port" protobuf:"3"`
-	Duplex        nethelpers.Duplex         `yaml:"duplex" protobuf:"4"`
-	OurModes      []string                  `yaml:"ourModes,omitempty" protobuf:"5"`
-	PeerModes     []string                  `yaml:"peerModes,omitempty" protobuf:"6"`
-	Rings         *EthernetRingsStatus      `yaml:"rings,omitempty" protobuf:"7"`
-	Features      EthernetFeatureStatusList `yaml:"features,omitempty" protobuf:"8"`
-	Channels      *EthernetChannelsStatus   `yaml:"channels,omitempty" protobuf:"9"`
-	WakeOnLAN     []nethelpers.WOLMode      `yaml:"wakeOnLAN,omitempty" protobuf:"10"`
+	LinkState     *bool                      `yaml:"linkState,omitempty" protobuf:"1"`
+	SpeedMegabits int                        `yaml:"speedMbit,omitempty" protobuf:"2"`
+	Port          nethelpers.Port            `yaml:"port" protobuf:"3"`
+	Duplex        nethelpers.Duplex          `yaml:"duplex" protobuf:"4"`
+	OurModes      []string                   `yaml:"ourModes,omitempty" protobuf:"5"`
+	PeerModes     []string                   `yaml:"peerModes,omitempty" protobuf:"6"`
+	Rings         *EthernetRingsStatus       `yaml:"rings,omitempty" protobuf:"7"`
+	Features      EthernetFeatureStatusList  `yaml:"features,omitempty" protobuf:"8"`
+	Channels      *EthernetChannelsStatus    `yaml:"channels,omitempty" protobuf:"9"`
+	WakeOnLAN     []nethelpers.WOLMode       `yaml:"wakeOnLAN,omitempty" protobuf:"10"`
+	FlowControl   *EthernetFlowControlStatus `yaml:"flowControl,omitempty" protobuf:"11"`
 }
 
 // EthernetFeatureStatusList is a list of EthernetFeatureStatus.
@@ -109,6 +110,15 @@ type EthernetChannelsStatus struct {
 type EthernetFeatureStatus struct {
 	Name   string `yaml:"name" protobuf:"1"`
 	Status string `yaml:"status" protobuf:"2"`
+}
+
+// EthernetFlowControlStatus describes status of Ethernet flow control.
+//
+//gotagsrewrite:gen
+type EthernetFlowControlStatus struct {
+	RX      *bool `yaml:"rx,omitempty" protobuf:"1"`
+	TX      *bool `yaml:"tx,omitempty" protobuf:"2"`
+	Autoneg *bool `yaml:"autoneg,omitempty" protobuf:"3"`
 }
 
 // NewEthernetStatus initializes a EthernetStatus resource.

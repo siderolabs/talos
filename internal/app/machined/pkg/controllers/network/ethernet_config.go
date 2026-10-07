@@ -98,6 +98,7 @@ func (ctrl *EthernetConfigController) apply(
 			spec.TypedSpec().Channels = network.EthernetChannelsSpec(cfg.Channels())
 			spec.TypedSpec().Features = cfg.Features()
 			spec.TypedSpec().WakeOnLAN = cfg.WakeOnLAN()
+			spec.TypedSpec().FlowControl = network.EthernetFlowControlSpec(cfg.FlowControl())
 
 			return nil
 		}); err != nil {

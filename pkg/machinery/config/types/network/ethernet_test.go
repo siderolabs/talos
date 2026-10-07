@@ -38,6 +38,11 @@ func TestEthernetConfigMarshalStability(t *testing.T) {
 		nethelpers.WOLModeUnicast,
 		nethelpers.WOLModeMulticast,
 	}
+	cfg.FlowControlConfig = &network.EthernetFlowControlConfig{
+		RX:      new(bool(true)),
+		TX:      new(bool(false)),
+		Autoneg: new(bool(true)),
+	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -75,6 +80,11 @@ func TestEthernetConfigUnmarshal(t *testing.T) {
 			nethelpers.WOLModeUnicast,
 			nethelpers.WOLModeMulticast,
 		},
+		FlowControlConfig: &network.EthernetFlowControlConfig{
+			RX:      new(bool(true)),
+			TX:      new(bool(false)),
+			Autoneg: new(bool(true)),
+		},
 	}, docs[0])
 }
 
@@ -106,9 +116,23 @@ func TestEthernetValidate(t *testing.T) {
 				cfg.RingsConfig = &network.EthernetRingsConfig{
 					RX: new(uint32(16)),
 				}
+				cfg.FlowControlConfig = &network.EthernetFlowControlConfig{
+					TX: new(false),
+				}
 
 				return cfg
 			},
+		},
+		{
+			name: "empty flow control",
+			cfg: func() *network.EthernetConfigV1Alpha1 {
+				cfg := network.NewEthernetConfigV1Alpha1("enp0s1")
+				cfg.FlowControlConfig = &network.EthernetFlowControlConfig{}
+
+				return cfg
+			},
+
+			expectedError: "flowControl must set at least one of rx, tx or autoneg",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

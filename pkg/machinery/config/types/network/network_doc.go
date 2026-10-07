@@ -1174,12 +1174,58 @@ func (EthernetConfigV1Alpha1) Doc() *encoder.Doc {
 					"filter",
 				},
 			},
+			{
+				Name:        "flowControl",
+				Type:        "EthernetFlowControlConfig",
+				Note:        "",
+				Description: "Configuration for Ethernet link flow control (802.3x pause frames).\n\nIf this field is omitted, flow control configuration is not changed.\n\nThis is similar to `ethtool -A <link>` command.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for Ethernet link flow control (802.3x pause frames)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleEthernetConfigV1Alpha1())
 
 	doc.Fields[5].AddExample("", []nethelpers.WOLMode{nethelpers.WOLModeUnicast, nethelpers.WOLModeMagic})
+
+	return doc
+}
+
+func (EthernetFlowControlConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EthernetFlowControlConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetFlowControlConfig is a configuration for Ethernet link flow control." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EthernetFlowControlConfig is a configuration for Ethernet link flow control.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "EthernetConfigV1Alpha1",
+				FieldName: "flowControl",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "rx",
+				Type:        "bool",
+				Note:        "",
+				Description: "Whether to enable RX flow control (accepting pause frames from the link peer).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to enable RX flow control (accepting pause frames from the link peer)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tx",
+				Type:        "bool",
+				Note:        "",
+				Description: "Whether to enable TX flow control (sending pause frames to the link peer).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to enable TX flow control (sending pause frames to the link peer)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "autoneg",
+				Type:        "bool",
+				Note:        "",
+				Description: "Whether to enable flow control autonegotiation.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to enable flow control autonegotiation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -2764,6 +2810,7 @@ func GetFileDoc() *encoder.FileDoc {
 			DHCPv6ConfigV1Alpha1{}.Doc(),
 			DummyLinkConfigV1Alpha1{}.Doc(),
 			EthernetConfigV1Alpha1{}.Doc(),
+			EthernetFlowControlConfig{}.Doc(),
 			EthernetRingsConfig{}.Doc(),
 			EthernetChannelsConfig{}.Doc(),
 			HCloudVIPConfigV1Alpha1{}.Doc(),

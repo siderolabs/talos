@@ -244,6 +244,20 @@ message EthernetFeatureStatus {
   string status = 2;
 }
 
+// EthernetFlowControlSpec describes config of Ethernet flow control.
+message EthernetFlowControlSpec {
+  bool rx = 1;
+  bool tx = 2;
+  bool autoneg = 3;
+}
+
+// EthernetFlowControlStatus describes status of Ethernet flow control.
+message EthernetFlowControlStatus {
+  bool rx = 1;
+  bool tx = 2;
+  bool autoneg = 3;
+}
+
 // EthernetRingsSpec describes config of Ethernet rings.
 message EthernetRingsSpec {
   uint32 rx = 1;
@@ -285,6 +299,7 @@ message EthernetSpecSpec {
   map<string, bool> features = 2;
   EthernetChannelsSpec channels = 3;
   repeated talos.resource.definitions.enums.NethelpersWOLMode wake_on_lan = 4;
+  EthernetFlowControlSpec flow_control = 5;
 }
 
 // EthernetStatusSpec describes status of rendered secrets.
@@ -299,6 +314,7 @@ message EthernetStatusSpec {
   repeated EthernetFeatureStatus features = 8;
   EthernetChannelsStatus channels = 9;
   repeated talos.resource.definitions.enums.NethelpersWOLMode wake_on_lan = 10;
+  EthernetFlowControlStatus flow_control = 11;
 }
 
 // HTTPProbeSpec describes the HTTP Probe.

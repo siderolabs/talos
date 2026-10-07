@@ -9,6 +9,7 @@ package network
 import (
 	"errors"
 
+	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -94,6 +95,26 @@ type EthernetConfigV1Alpha1 struct {
 	//    - value: >
 	//       []nethelpers.WOLMode{nethelpers.WOLModeUnicast, nethelpers.WOLModeMagic}
 	WakeOnLANConfig []nethelpers.WOLMode `yaml:"wakeOnLan,omitempty"`
+	//   description: |
+	//     Configuration for Ethernet link flow control (802.3x pause frames).
+	//
+	//     If this field is omitted, flow control configuration is not changed.
+	//
+	//     This is similar to `ethtool -A <link>` command.
+	FlowControlConfig *EthernetFlowControlConfig `yaml:"flowControl,omitempty"`
+}
+
+// EthernetFlowControlConfig is a configuration for Ethernet link flow control.
+type EthernetFlowControlConfig struct {
+	//   description: |
+	//     Whether to enable RX flow control (accepting pause frames from the link peer).
+	RX *bool `yaml:"rx,omitempty"`
+	//   description: |
+	//     Whether to enable TX flow control (sending pause frames to the link peer).
+	TX *bool `yaml:"tx,omitempty"`
+	//   description: |
+	//     Whether to enable flow control autonegotiation.
+	Autoneg *bool `yaml:"autoneg,omitempty"`
 }
 
 // EthernetRingsConfig is a configuration for Ethernet link rings.
@@ -168,6 +189,10 @@ func exampleEthernetConfigV1Alpha1() *EthernetConfigV1Alpha1 {
 	cfg.ChannelsConfig = &EthernetChannelsConfig{
 		RX: new(uint32(4)),
 	}
+	cfg.FlowControlConfig = &EthernetFlowControlConfig{
+		RX: new(true),
+		TX: new(false),
+	}
 
 	return cfg
 }
@@ -202,10 +227,19 @@ func (s *EthernetConfigV1Alpha1) WakeOnLAN() []nethelpers.WOLMode {
 	return s.WakeOnLANConfig
 }
 
+// FlowControl implements config.EthernetConfig interface.
+func (s *EthernetConfigV1Alpha1) FlowControl() config.EthernetFlowControlConfig {
+	return config.EthernetFlowControlConfig(pointer.SafeDeref(s.FlowControlConfig))
+}
+
 // Validate implements config.Validator interface.
 func (s *EthernetConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	if s.MetaName == "" {
 		return nil, errors.New("name is required")
+	}
+
+	if s.FlowControlConfig != nil && value.IsZero(*s.FlowControlConfig) {
+		return nil, errors.New("flowControl must set at least one of rx, tx or autoneg")
 	}
 
 	return nil, nil
