@@ -981,6 +981,332 @@ func (s *VirtualMachineDomainSuite) TestKeepsTheDisksOfAnUnclaimedDomainStillPre
 	}, 200*time.Millisecond, 10*time.Millisecond)
 }
 
+// The start-time intent check reads the same projected seed as the domain renderer. A ready
+// status alone does not grant the starter access to that projection in COSI.
+func (s *VirtualMachineDomainSuite) TestStartsMatchingProjectedCloudInitSeed() {
+	path := s.T().TempDir()
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, diskStatusVM)
+	vm.TypedSpec().CPU.Count = 1
+	vm.TypedSpec().Memory.Size = 512 << 20
+	vm.TypedSpec().Firmware.Type = "bios"
+	vm.TypedSpec().PowerState = "running"
+	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
+		Library:  diskStatusLibrary,
+		MetaData: "instance-id: vm\n",
+		UserData: "guest-data",
+	}
+	s.Create(vm)
+
+	projection := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, diskStatusVM)
+	projection.TypedSpec().Library = vm.TypedSpec().CloudInit.Library
+	projection.TypedSpec().MetaData = vm.TypedSpec().CloudInit.MetaData
+	projection.TypedSpec().UserData = vm.TypedSpec().CloudInit.UserData
+	s.Create(projection)
+
+	currentProjection, err := safe.StateGetByID[*hypervisor.CloudInitSpec](s.Ctx(), s.State(), diskStatusVM)
+	s.Require().NoError(err)
+
+	library := s.newContentLibraryStatus(path)
+	seedID := hypervisor.CloudInitStatusID(diskStatusVM, *currentProjection.TypedSpec())
+	seedName := "cloud-init-test.iso"
+	seedContents := []byte("seed-content")
+	s.Require().NoError(os.WriteFile(filepath.Join(path, seedName), seedContents, 0o600))
+
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, seedID)
+	seed.TypedSpec().VirtualMachine = diskStatusVM
+	seed.TypedSpec().Library = diskStatusLibrary
+	seed.TypedSpec().Name = seedName
+	seed.TypedSpec().Path = path
+	seed.TypedSpec().VolumeID = library.TypedSpec().VolumeID
+	seed.TypedSpec().Digest = digest.FromBytes(seedContents).String()
+	seed.TypedSpec().SizeBytes = uint64(len(seedContents))
+	seed.TypedSpec().InputDigest = currentProjection.TypedSpec().InputDigest()
+	seed.TypedSpec().ObservedGeneration = currentProjection.Metadata().Version().String()
+	seed.TypedSpec().Ready = true
+	s.Create(seed)
+
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+	s.Require().Eventually(func() bool {
+		domain, getErr := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), diskStatusVM)
+
+		return getErr == nil && domain.TypedSpec().PowerState == "running" && domain.TypedSpec().CloudInit == seedID &&
+			len(domain.TypedSpec().DomainXML) > 0
+	}, 5*time.Second, 10*time.Millisecond)
+
+	domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), diskStatusVM)
+	s.Require().NoError(err)
+	s.Require().Contains(domain.TypedSpec().DomainXML, filepath.Join(path, seedName))
+	s.start()
+	s.assertDomain(diskStatusVM, domain.TypedSpec().DomainXML, true)
+	s.assertSeedHeld(seedID, true)
+
+	s.client.mu.Lock()
+	starts := s.client.starts[diskStatusVM]
+	s.client.mu.Unlock()
+	s.Require().Equal(1, starts, "matching current VM intent must reach client.Start")
+}
+
+func (s *VirtualMachineDomainSuite) TestCloudInitSeedHeldUntilDomainRemoval() {
+	path := s.T().TempDir()
+	seedName := "cloud-init-test.iso"
+	seedPath := filepath.Join(path, seedName)
+	s.Require().NoError(os.WriteFile(seedPath, []byte("seed-content"), 0o600))
+	library := s.newContentLibraryStatus(path)
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "vm@seed")
+	seed.TypedSpec().VirtualMachine = diskStatusVM
+	seed.TypedSpec().Library = diskStatusLibrary
+	seed.TypedSpec().Name = seedName
+	seed.TypedSpec().Path = path
+	seed.TypedSpec().VolumeID = library.TypedSpec().VolumeID
+	seed.TypedSpec().Digest = digest.FromString("seed-content").String()
+	seed.TypedSpec().SizeBytes = uint64(len("seed-content"))
+	seed.TypedSpec().InputDigest = "sha256:input"
+	seed.TypedSpec().Ready = true
+	s.Create(seed)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().CloudInit = seed.Metadata().ID()
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><devices><disk type="file" device="cdrom"><source file="` + seedPath + `"/><target dev="hdz" bus="ide"/><readonly/></disk></devices></domain>`
+	s.Create(spec)
+	s.client.mu.Lock()
+	s.client.startErr = errors.New("daemon unavailable")
+	s.client.mu.Unlock()
+	s.start()
+	s.Require().Eventually(func() bool {
+		current, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), seed.Metadata().ID())
+
+		return err == nil && current.Metadata().Finalizers().Has("hypervisor.VirtualMachineController")
+	}, 5*time.Second, 10*time.Millisecond)
+	s.client.mu.Lock()
+	s.client.startErr = nil
+	s.client.mu.Unlock()
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().DomainXML = spec.TypedSpec().DomainXML
+
+		return nil
+	})
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.Require().Eventually(func() bool {
+		current, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), seed.Metadata().ID())
+
+		return err == nil && current.Metadata().Finalizers().Has("hypervisor.VirtualMachineController")
+	}, 5*time.Second, 10*time.Millisecond)
+	ready, err := s.State().Teardown(s.Ctx(), seed.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "running domain must hold its seed")
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().PowerState = "stopped"
+
+		return nil
+	})
+	s.assertDomain(diskStatusVM, "", false)
+	s.Require().Eventually(func() bool {
+		current, getErr := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), seed.Metadata().ID())
+
+		return getErr == nil && current.Metadata().Finalizers().Empty()
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+// A newly updated VM may still have the old runnable domain definition while the renderer
+// waits for seed B. The starter must not hand seed A to libvirt in that interval.
+func (s *VirtualMachineDomainSuite) TestDoesNotStartStaleSeedAfterVMIntentChanges() {
+	path := s.T().TempDir()
+	seedName := "seed-a.iso"
+	seedPath := filepath.Join(path, seedName)
+	s.Require().NoError(os.WriteFile(seedPath, []byte("seed-a"), 0o600))
+	library := s.newContentLibraryStatus(path)
+
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "vm@seed-a")
+	seed.TypedSpec().VirtualMachine = diskStatusVM
+	seed.TypedSpec().Library = diskStatusLibrary
+	seed.TypedSpec().Name = seedName
+	seed.TypedSpec().Path = path
+	seed.TypedSpec().VolumeID = library.TypedSpec().VolumeID
+	seed.TypedSpec().Digest = digest.FromString("seed-a").String()
+	seed.TypedSpec().SizeBytes = uint64(len("seed-a"))
+	seed.TypedSpec().InputDigest = "sha256:old"
+	seed.TypedSpec().Ready = true
+	s.Create(seed)
+
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, diskStatusVM)
+	vm.TypedSpec().PowerState = "running"
+	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
+		Library:  diskStatusLibrary,
+		UserData: "old",
+	}
+	s.Create(vm)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().CloudInit = seed.Metadata().ID()
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><devices><disk type="file" device="cdrom"><source file="` +
+		seedPath + `"/><target dev="hdz" bus="ide"/><readonly/></disk></devices></domain>`
+	s.Create(spec)
+
+	ctest.UpdateWithConflicts(s, vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().CloudInit.UserData = "new"
+
+		return nil
+	})
+	s.start()
+
+	s.Require().Eventually(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.opens > 0
+	}, 5*time.Second, 10*time.Millisecond)
+	s.assertNeverStarted()
+}
+
+// Two failed starts without any domain must not pin the first, obsolete seed indefinitely.
+func (s *VirtualMachineDomainSuite) TestReleasesObsoleteFailedStartSeedWithoutDomain() {
+	path := s.T().TempDir()
+	library := s.newContentLibraryStatus(path)
+
+	newSeed := func(id, content string) (*hypervisor.CloudInitStatus, string) {
+		s.T().Helper()
+
+		name := id + ".iso"
+		seedPath := filepath.Join(path, name)
+		s.Require().NoError(os.WriteFile(seedPath, []byte(content), 0o600))
+
+		seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, id)
+		seed.TypedSpec().VirtualMachine = diskStatusVM
+		seed.TypedSpec().Library = diskStatusLibrary
+		seed.TypedSpec().Name = name
+		seed.TypedSpec().Path = path
+		seed.TypedSpec().VolumeID = library.TypedSpec().VolumeID
+		seed.TypedSpec().Digest = digest.FromString(content).String()
+		seed.TypedSpec().SizeBytes = uint64(len(content))
+		seed.TypedSpec().InputDigest = "sha256:" + id
+		seed.TypedSpec().Ready = true
+		s.Create(seed)
+
+		return seed, `<domain><name>vm</name><devices><disk type="file" device="cdrom"><source file="` +
+			seedPath + `"/><target dev="hdz" bus="ide"/><readonly/></disk></devices></domain>`
+	}
+
+	seedA, xmlA := newSeed("vm@a", "seed-a")
+	seedB, xmlB := newSeed("vm@b", "seed-b")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().CloudInit = seedA.Metadata().ID()
+	spec.TypedSpec().DomainXML = xmlA
+	s.Create(spec)
+
+	s.client.mu.Lock()
+	s.client.startErr = errors.New("start refused")
+	s.client.mu.Unlock()
+	s.start()
+	s.assertSeedHeld(seedA.Metadata().ID(), true)
+	s.assertFinalizer(diskStatusVM, true)
+
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().CloudInit = seedB.Metadata().ID()
+		current.TypedSpec().DomainXML = xmlB
+
+		return nil
+	})
+	s.assertSeedHeld(seedB.Metadata().ID(), true)
+	s.assertSeedHeld(seedA.Metadata().ID(), false)
+	s.assertNeverStarted()
+}
+
+// A domain still present after Remove fails may still be reading its original seed,
+// regardless of a newer stopped definition.
+func (s *VirtualMachineDomainSuite) TestKeepsSeedWhenDomainRemovalFails() {
+	path := s.T().TempDir()
+	name := "seed.iso"
+	seedPath := filepath.Join(path, name)
+	s.Require().NoError(os.WriteFile(seedPath, []byte("seed"), 0o600))
+	library := s.newContentLibraryStatus(path)
+
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "vm@seed")
+	seed.TypedSpec().VirtualMachine = diskStatusVM
+	seed.TypedSpec().Library = diskStatusLibrary
+	seed.TypedSpec().Name = name
+	seed.TypedSpec().Path = path
+	seed.TypedSpec().VolumeID = library.TypedSpec().VolumeID
+	seed.TypedSpec().Digest = digest.FromString("seed").String()
+	seed.TypedSpec().SizeBytes = uint64(len("seed"))
+	seed.TypedSpec().InputDigest = "sha256:seed"
+	seed.TypedSpec().Ready = true
+	s.Create(seed)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().CloudInit = seed.Metadata().ID()
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><devices><disk type="file" device="cdrom"><source file="` +
+		seedPath + `"/><target dev="hdz" bus="ide"/><readonly/></disk></devices></domain>`
+	s.Create(spec)
+	s.start()
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.assertSeedHeld(seed.Metadata().ID(), true)
+
+	s.client.mu.Lock()
+	s.client.removeErr = errors.New("removal uncertain")
+	s.client.mu.Unlock()
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().PowerState = "stopped"
+		current.TypedSpec().CloudInit = ""
+
+		return nil
+	})
+
+	select {
+	case <-s.client.attemptedRemove:
+	case <-s.Ctx().Done():
+		s.FailNow("controller did not attempt domain removal")
+	}
+
+	s.assertSeedHeld(seed.Metadata().ID(), true)
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+}
+
+func (s *VirtualMachineDomainSuite) assertSeedHeld(id string, held bool) {
+	s.T().Helper()
+
+	s.Require().Eventually(func() bool {
+		seed, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
+
+		return err == nil && seed.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == held
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineDomainSuite) TestCloudInitSeedRejectedWhenMutationPending() {
+	path := s.T().TempDir()
+	seedName := "cloud-init-test.iso"
+	s.Require().NoError(os.WriteFile(filepath.Join(path, seedName), []byte("seed-content"), 0o600))
+	library := s.newContentLibraryStatus(path)
+	s.AddFinalizer(library.Metadata(), hypervisor.ContentLibraryMutationFinalizer(seedName))
+
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "vm@seed")
+	seed.TypedSpec().VirtualMachine = diskStatusVM
+	seed.TypedSpec().Library = diskStatusLibrary
+	seed.TypedSpec().Name = seedName
+	seed.TypedSpec().Path = path
+	seed.TypedSpec().VolumeID = library.TypedSpec().VolumeID
+	seed.TypedSpec().Digest = digest.FromString("seed-content").String()
+	seed.TypedSpec().SizeBytes = uint64(len("seed-content"))
+	seed.TypedSpec().InputDigest = "sha256:input"
+	seed.TypedSpec().Ready = true
+	s.Create(seed)
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().CloudInit = seed.Metadata().ID()
+	spec.TypedSpec().DomainXML = `<domain><name>vm</name><devices><disk type="file" device="cdrom"><source file="` +
+		filepath.Join(path, seedName) + `"/><target dev="hdz" bus="ide"/><readonly/></disk></devices></domain>`
+	s.Create(spec)
+	s.start()
+	s.assertNeverStarted()
+	s.RemoveFinalizer(library.Metadata(), hypervisor.ContentLibraryMutationFinalizer(seedName))
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+}
+
 // A definition can name a disk status which is not published yet. That is something to wait for,
 // not a failure of the controller: the other domains keep being reconciled meanwhile.
 func (s *VirtualMachineDomainSuite) TestWaitsForADiskStatusThatIsNotThereYet() {

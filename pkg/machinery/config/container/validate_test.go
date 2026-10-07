@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -687,6 +688,325 @@ func TestCPUScalingSysfsConflict(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.ErrorContains(t, err, test.expectedError)
+			}
+		})
+	}
+}
+
+func TestWorkloadResourceKubeletConflict(t *testing.T) {
+	t.Parallel()
+
+	newV1Alpha1 := func(kubelet *v1alpha1.KubeletConfig, withKubernetes bool) *v1alpha1.Config { //nolint:staticcheck // testing legacy features
+		cfg := &v1alpha1.Config{
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineType:    "worker",
+				MachineCA:      &x509.PEMEncodedCertificateAndKey{Crt: []byte("cert")},
+				MachineKubelet: kubelet, //nolint:staticcheck // testing legacy features
+				MachineFeatures: &v1alpha1.FeaturesConfig{
+					HostDNSSupport: &v1alpha1.HostDNSConfig{ //nolint:staticcheck // testing legacy features
+						HostDNSConfigEnabled:        new(true),
+						HostDNSForwardKubeDNSToHost: new(true),
+					},
+				},
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
+					Endpoint: &v1alpha1.Endpoint{URL: must.Value(url.Parse("https://localhost:6443"))(t)},
+				},
+			},
+		}
+
+		if withKubernetes {
+			cfg.ClusterConfig.ClusterNetwork = &v1alpha1.ClusterNetworkConfig{} //nolint:staticcheck // testing legacy features
+		}
+
+		return cfg
+	}
+
+	newWorkloadResources := func(kubepods, talosContainers string) *runtime.WorkloadResourceConfigV1Alpha1 {
+		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+
+		if kubepods != "" {
+			cfg.KubepodsConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(kubepods)}}
+		}
+
+		if talosContainers != "" {
+			cfg.TalosContainersConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(talosContainers)}}
+		}
+
+		return cfg
+	}
+
+	newVirtualMachineResources := func(limit string) *runtime.WorkloadResourceConfigV1Alpha1 {
+		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+		cfg.VirtualMachinesConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(limit)}}
+
+		return cfg
+	}
+
+	newKubelet := func(extraConfig map[string]any, extraArgs meta.Args) *v1alpha1.KubeletConfig { //nolint:staticcheck // testing legacy features
+		return &v1alpha1.KubeletConfig{ //nolint:staticcheck // testing legacy features
+			KubeletImage:       "kubelet",                              //nolint:staticcheck // testing legacy features
+			KubeletExtraConfig: meta.Unstructured{Object: extraConfig}, //nolint:staticcheck // testing legacy features
+			KubeletExtraArgs:   extraArgs,                              //nolint:staticcheck // testing legacy features
+		}
+	}
+
+	talosRootKubelet := newKubelet(map[string]any{
+		"systemReserved":         map[string]any{"memory": "1Gi"},
+		"systemReservedCgroup":   "/taloscontainers",
+		"enforceNodeAllocatable": []any{"pods", "system-reserved"},
+	}, nil)
+
+	talosRootCompressibleKubelet := newKubelet(map[string]any{
+		"systemReserved":         map[string]any{"memory": "1Gi"},
+		"systemReservedCgroup":   "/taloscontainers",
+		"enforceNodeAllocatable": []any{"pods", "system-reserved-compressible"},
+	}, nil)
+
+	talosRootArgsKubelet := newKubelet(map[string]any{"kubeReserved": map[string]any{"memory": "2Gi"}}, meta.Args{
+		"enforce_node_allocatable": meta.NewArgValue("pods,kube-reserved", nil),
+		"kube-reserved-cgroup":     meta.NewArgValue("virtualmachines.partition", nil),
+	})
+
+	talosRootDefaultedKubelet := newKubelet(map[string]any{
+		"systemReservedCgroup":   "/taloscontainers",
+		"enforceNodeAllocatable": []any{"pods", "system-reserved"},
+	}, nil)
+
+	configDirKubelet := newKubelet(nil, meta.Args{"config_dir": meta.NewArgValue("/etc/kubernetes/kubelet.conf.d", nil)})
+
+	talosRootError := `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved"`
+
+	conflictingKubelet := &v1alpha1.KubeletConfig{ //nolint:staticcheck // testing legacy features
+		KubeletImage: "kubelet", //nolint:staticcheck // testing legacy features
+		KubeletExtraConfig: meta.Unstructured{ //nolint:staticcheck // testing legacy features
+			Object: map[string]any{"systemReserved": map[string]any{"memory": "1Gi"}},
+		},
+		KubeletExtraArgs: meta.Args{ //nolint:staticcheck // testing legacy features
+			"eviction-hard": meta.NewArgValue("memory.available<100Mi", nil),
+		},
+	}
+
+	compatibleKubelet := &v1alpha1.KubeletConfig{ //nolint:staticcheck // testing legacy features
+		KubeletImage: "kubelet", //nolint:staticcheck // testing legacy features
+		KubeletExtraConfig: meta.Unstructured{ //nolint:staticcheck // testing legacy features
+			Object: map[string]any{
+				"systemReserved":         map[string]any{"cpu": "500m"},
+				"kubeReserved":           map[string]any{"memory": "512Mi"},
+				"enforceNodeAllocatable": []any{"pods", "system-reserved-compressible"},
+				"systemReservedCgroup":   "/system",
+			},
+		},
+	}
+
+	multidocKubelet := k8s.NewKubeletConfigV1Alpha1()
+	multidocKubelet.KubeletImage = "kubelet"
+	multidocKubelet.KubeletConfig = meta.Unstructured{Object: map[string]any{"cgroupsPerQOS": false}}
+
+	multidocNetwork := k8s.NewKubeNetworkConfigV1Alpha1()
+	multidocNetwork.NetworkPodSubnets = []meta.Prefix{{Prefix: netip.MustParsePrefix("10.244.0.0/16")}}
+	multidocNetwork.NetworkServiceSubnets = []meta.Prefix{{Prefix: netip.MustParsePrefix("10.96.0.0/12")}}
+
+	for _, test := range []struct {
+		name        string
+		documents   []config.Document
+		inContainer bool
+
+		expectedErrors []string
+	}{
+		{
+			name:      "no limit imposes nothing",
+			documents: []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("", "4GiB")},
+		},
+		{
+			name:           "no document rejects system memory on containers root",
+			documents:      []config.Document{newV1Alpha1(talosRootKubelet, true)},
+			expectedErrors: []string{talosRootError},
+		},
+		{
+			name: "no document rejects system memory on VM root",
+			documents: []config.Document{newV1Alpha1(newKubelet(map[string]any{
+				"systemReserved":         map[string]any{"memory": "1Gi"},
+				"systemReservedCgroup":   "/virtualmachines.partition",
+				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
+			}, nil), true)},
+			expectedErrors: []string{`"systemReserved.memory" reservation on the Talos-managed cgroup "/virtualmachines.partition"`},
+		},
+		{
+			name: "no document rejects kube memory on containers root",
+			documents: []config.Document{newV1Alpha1(newKubelet(map[string]any{
+				"kubeReserved":           map[string]any{"memory": "1Gi"},
+				"kubeReservedCgroup":     "/taloscontainers",
+				"enforceNodeAllocatable": []any{"pods", "kube-reserved"},
+			}, nil), true)},
+			expectedErrors: []string{`"kubeReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers"`},
+		},
+		{
+			name:           "no document rejects kube memory on VM root via aliases",
+			documents:      []config.Document{newV1Alpha1(talosRootArgsKubelet, true)},
+			expectedErrors: []string{`"kubeReserved.memory" reservation on the Talos-managed cgroup "virtualmachines.partition"`},
+		},
+		{
+			name:           "no document rejects default system memory on containers root",
+			documents:      []config.Document{newV1Alpha1(talosRootDefaultedKubelet, true)},
+			expectedErrors: []string{talosRootError},
+		},
+		{
+			name: "no document rejects default system memory on VM root via aliases",
+			documents: []config.Document{newV1Alpha1(newKubelet(nil, meta.Args{
+				"system_reserved_cgroup":   meta.NewArgValue("/virtualmachines.partition", nil),
+				"enforce_node_allocatable": meta.NewArgValue("pods,system-reserved", nil),
+			}), true)},
+			expectedErrors: []string{`"systemReserved.memory" reservation on the Talos-managed cgroup "/virtualmachines.partition"`},
+		},
+		{
+			name:      "no document allows compressible enforcement",
+			documents: []config.Document{newV1Alpha1(talosRootCompressibleKubelet, true)},
+		},
+		{
+			name: "no document allows CPU-only enforcement on both roots",
+			documents: []config.Document{newV1Alpha1(newKubelet(map[string]any{
+				"systemReserved":         map[string]any{"cpu": "500m"},
+				"systemReservedCgroup":   "/taloscontainers",
+				"kubeReserved":           map[string]any{"cpu": "500m"},
+				"kubeReservedCgroup":     "/virtualmachines.partition",
+				"enforceNodeAllocatable": []any{"pods", "system-reserved", "kube-reserved"},
+			}, nil), true)},
+		},
+		{
+			name: "no document allows memory enforcement on unrelated roots",
+			documents: []config.Document{newV1Alpha1(newKubelet(map[string]any{
+				"systemReservedCgroup":   "/system",
+				"kubeReserved":           map[string]any{"memory": "1Gi"},
+				"kubeReservedCgroup":     "/kube-reserved",
+				"enforceNodeAllocatable": []any{"pods", "system-reserved", "kube-reserved"},
+			}, nil), true)},
+		},
+		{
+			name:      "no document allows drop-in directory",
+			documents: []config.Document{newV1Alpha1(configDirKubelet, true)},
+		},
+		{
+			name:        "no document skips container mode",
+			documents:   []config.Document{newV1Alpha1(talosRootKubelet, true)},
+			inContainer: true,
+		},
+		{
+			name:      "no document skips absent Kubernetes",
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, false)},
+		},
+		{
+			name:      "containers limit with compressible enforcement on its root",
+			documents: []config.Document{newV1Alpha1(talosRootCompressibleKubelet, true), newWorkloadResources("", "4GiB")},
+		},
+		{
+			name:      "containers limit without Kubernetes",
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, false), newWorkloadResources("", "4GiB")},
+		},
+		{
+			name:        "containers limit in container mode",
+			documents:   []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("", "4GiB")},
+			inContainer: true,
+		},
+		{
+			name:      "containers limit with memory enforcement on its root",
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("", "4GiB")},
+
+			expectedErrors: []string{talosRootError},
+		},
+		{
+			name:      "containers limit with Talos-defaulted memory enforcement on its root",
+			documents: []config.Document{newV1Alpha1(talosRootDefaultedKubelet, true), newWorkloadResources("", "4GiB")},
+
+			expectedErrors: []string{talosRootError},
+		},
+		{
+			name:      "kubepods limit with memory enforcement on the containers root",
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("16GiB", "")},
+
+			expectedErrors: []string{talosRootError},
+		},
+		{
+			name:      "virtual machines limit with argument enforcement on its root",
+			documents: []config.Document{newV1Alpha1(talosRootArgsKubelet, true), newVirtualMachineResources("32GiB")},
+
+			expectedErrors: []string{`kubelet enforces the "kubeReserved.memory" reservation on the Talos-managed cgroup "virtualmachines.partition" through "enforceNodeAllocatable" "kube-reserved"`},
+		},
+		{
+			name:      "containers limit with a configuration directory",
+			documents: []config.Document{newV1Alpha1(configDirKubelet, true), newWorkloadResources("", "4GiB")},
+
+			expectedErrors: []string{`kubelet argument "config_dir" conflicts with WorkloadResourceConfig`},
+		},
+		{
+			name:      "kubepods limit with a configuration directory",
+			documents: []config.Document{newV1Alpha1(configDirKubelet, true), newWorkloadResources("16GiB", "")},
+
+			expectedErrors: []string{`kubelet argument "config_dir" conflicts with the kubepods memory limit`},
+		},
+		{
+			name:        "kubepods limit in container mode",
+			documents:   []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("16GiB", "4GiB")},
+			inContainer: true,
+		},
+		{
+			name: "kubepods limit with multi-doc kubelet in container mode",
+			documents: []config.Document{
+				newV1Alpha1(nil, false),
+				multidocNetwork,
+				k8s.NewKubeNodeConfigV1Alpha1(),
+				multidocKubelet,
+				newWorkloadResources("16GiB", ""),
+			},
+			inContainer: true,
+		},
+		{
+			name:      "compatible kubelet settings",
+			documents: []config.Document{newV1Alpha1(compatibleKubelet, true), newWorkloadResources("16GiB", "")},
+		},
+		{
+			name:      "inactive limit without Kubernetes",
+			documents: []config.Document{newV1Alpha1(conflictingKubelet, false), newWorkloadResources("16GiB", "4GiB")},
+		},
+		{
+			name:      "active limit with legacy kubelet conflicts",
+			documents: []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("16GiB", "")},
+
+			expectedErrors: []string{
+				`kubelet argument "eviction-hard" conflicts with the kubepods memory limit: use the "evictionHard" configuration field instead`,
+				`kubelet configuration field "systemReserved.memory" conflicts with the kubepods memory limit`,
+			},
+		},
+		{
+			name: "active limit with multi-doc kubelet conflicts",
+			documents: []config.Document{
+				newV1Alpha1(nil, false),
+				multidocNetwork,
+				k8s.NewKubeNodeConfigV1Alpha1(),
+				multidocKubelet,
+				newWorkloadResources("16GiB", ""),
+			},
+
+			expectedErrors: []string{`kubelet configuration field "cgroupsPerQOS" must be enabled with the kubepods memory limit`},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg, err := container.New(test.documents...)
+			require.NoError(t, err)
+
+			_, err = cfg.ValidateAsClient(validationMode{inContainer: test.inContainer}, validation.WithLocal())
+
+			if len(test.expectedErrors) == 0 {
+				assert.NoError(t, err)
+
+				return
+			}
+
+			for _, expected := range test.expectedErrors {
+				assert.ErrorContains(t, err, expected)
 			}
 		})
 	}

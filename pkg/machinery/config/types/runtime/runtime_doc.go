@@ -692,6 +692,107 @@ func (CPUPartitionSlice) Doc() *encoder.Doc {
 	return doc
 }
 
+func (WorkloadResourceConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "WorkloadResourceConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "WorkloadResourceConfig is a workload resource config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "WorkloadResourceConfig is a workload resource config document.\nWorkloadResourceConfig declares an aggregate memory ceiling for each Talos workload root.\n\nThe roots are `kubepods`, `taloscontainers` and `virtualMachines`; every root is optional\nand independent of the others. Omitting a root removes its aggregate cap; individual child\nlimits still apply.\nA limit must be positive; it is rounded down to the host page size before it is applied,\nand bounds RAM only (including page cache charged to the root): swap and hugepages are\nnot limited by it.\n\nTalos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`,\neven without this document. An omitted limit (zero internally) means an unlimited aggregate cap.\nKubelet reserved-memory enforcement on these roots is rejected; CPU-only or compressible\nenforcement is allowed. Static validation cannot inspect external kubelet drop-in files;\ndrop-in directories are rejected while any workload cap is active.\nLowering a limit below current usage makes the kernel reclaim and OOM-kill within that root,\nwhich can terminate containers or virtual machines.\n\nThe `kubepods` limit is applied by the kubelet, which stays the only writer of its cgroup:\nTalos derives `systemReserved.memory` from the limit, so changing it restarts the kubelet,\nand a limit below the memory used by pods (control plane static pods included) causes\nOOM kills. The schedulable Node Allocatable is the limit minus the hard eviction\nthreshold and any hugepage capacity, so it is lower than the limit. Setting\n`systemReserved.memory`, the equivalent kubelet command line flags or the `Static` memory\nmanager policy together with the limit is rejected. The limit is inactive while Kubernetes\nis not configured on the machine; the other roots are enforced regardless.\n\nIn container mode the document is validated but declares no policy.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "kubepods",
+				Type:        "WorkloadResourceRoot",
+				Note:        "",
+				Description: "Limits for Kubernetes pods.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Limits for Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "taloscontainers",
+				Type:        "WorkloadResourceRoot",
+				Note:        "",
+				Description: "Limits for containers declared via `ContainerConfig`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Limits for containers declared via `ContainerConfig`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "virtualMachines",
+				Type:        "WorkloadResourceRoot",
+				Note:        "",
+				Description: "Limits for virtual machines.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Limits for virtual machines." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("Kubernetes node with containers and virtual machines.", exampleWorkloadResourceConfigV1Alpha1())
+
+	doc.AddExample("Virtual machine host without Kubernetes.", exampleWorkloadResourceConfigV1Alpha1VirtualMachines())
+
+	return doc
+}
+
+func (WorkloadResourceRoot) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "WorkloadResourceRoot",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "WorkloadResourceRoot holds the limits of one workload root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "WorkloadResourceRoot holds the limits of one workload root.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "WorkloadResourceConfigV1Alpha1",
+				FieldName: "kubepods",
+			},
+			{
+				TypeName:  "WorkloadResourceConfigV1Alpha1",
+				FieldName: "taloscontainers",
+			},
+			{
+				TypeName:  "WorkloadResourceConfigV1Alpha1",
+				FieldName: "virtualMachines",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "memory",
+				Type:        "WorkloadMemoryResource",
+				Note:        "",
+				Description: "Memory limits of the root.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory limits of the root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (WorkloadMemoryResource) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "WorkloadMemoryResource",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "WorkloadMemoryResource bounds the memory of one workload root." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "WorkloadMemoryResource bounds the memory of one workload root.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "WorkloadResourceRoot",
+				FieldName: "memory",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "limit",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "Aggregate memory ceiling of the root, in bytes.\n\nThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Aggregate memory ceiling of the root, in bytes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "16GiB")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -717,6 +818,9 @@ func GetFileDoc() *encoder.FileDoc {
 			CPUPartitionRoot{}.Doc(),
 			CPUPartitionVirtualMachines{}.Doc(),
 			CPUPartitionSlice{}.Doc(),
+			WorkloadResourceConfigV1Alpha1{}.Doc(),
+			WorkloadResourceRoot{}.Doc(),
+			WorkloadMemoryResource{}.Doc(),
 		},
 	}
 }

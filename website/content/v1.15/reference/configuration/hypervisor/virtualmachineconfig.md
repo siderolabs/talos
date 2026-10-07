@@ -124,6 +124,7 @@ networking:
 guest:
     # Seed handed to the guest on first boot.
     cloudInit:
+        library: targetlibrary # Name of the content library where Talos stores the generated NoCloud ISO.
         metaData: | # Contents of the seed's `meta-data` file, carrying the guest's identity.
             instance-id: vm1-001
             local-hostname: vm1
@@ -135,7 +136,7 @@ guest:
                   - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5...
     # qemu-guest-agent settings.
     agent:
-        enabled: true # Attach the qemu-guest-agent virtio channel.
+        enabled: true # Attach the qemu-guest-agent virtio-serial channel to the domain.
 {{< /highlight >}}
 
 
@@ -513,7 +514,7 @@ VirtualMachineGuest describes the settings which apply inside the guest.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`cloudInit` |<a href="#VirtualMachineConfig.guest.cloudInit">VirtualMachineCloudInit</a> |Seed handed to the guest on first boot.  | |
-|`agent` |<a href="#VirtualMachineConfig.guest.agent">VirtualMachineAgent</a> |qemu-guest-agent settings.<br><br>Optional; the agent channel is not attached when this section is omitted.  | |
+|`agent` |<a href="#VirtualMachineConfig.guest.agent">VirtualMachineAgent</a> |qemu-guest-agent settings.<br><br>Optional; omitting this section is equivalent to the default `{enabled: true}`.<br>Set `agent.enabled: false` to omit the channel entirely.  | |
 
 
 
@@ -527,6 +528,9 @@ VirtualMachineCloudInit describes the NoCloud seed handed to the guest.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
+|`library` |string |Name of the content library where Talos stores the generated NoCloud ISO.<br><br>Must name a content library with a nonempty identifier of at most 63 ASCII letters,<br>digits or hyphens. The library is declared separately by a `ContentLibraryConfig`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+library: targetlibrary
+{{< /highlight >}}</details> | |
 |`metaData` |string |Contents of the seed's `meta-data` file, carrying the guest's identity.<br><br>`instance-id` is what decides whether a boot is a reboot or a new instance. An unchanged<br>id means edits to `userData` are inert; a changed id re-runs provisioning, which<br>regenerates the SSH host keys in most images.<br><br>Must be valid YAML. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 metaData: |
     instance-id: vm1-001
@@ -549,7 +553,7 @@ VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machin
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`enabled` |bool |Attach the qemu-guest-agent virtio channel.<br><br>Without the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot<br>report the addresses the guest holds. The agent has to be installed and running inside<br>the guest for the channel to be of any use.<br><br>Optional; defaults to disabled.  | |
+|`enabled` |bool |Attach the qemu-guest-agent virtio-serial channel to the domain.<br><br>The host does not use the channel yet; this field is the plumbing that lets future<br>features (such as reporting guest addresses or requesting a graceful shutdown) talk to<br>a qemu-guest-agent process inside the guest.<br><br>Optional; defaults to enabled. Set to `false` to omit the channel entirely.  | |
 
 
 

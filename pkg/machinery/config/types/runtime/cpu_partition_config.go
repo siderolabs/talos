@@ -267,7 +267,7 @@ func (s *CPUPartitionConfigV1Alpha1) Validate(validation.RuntimeMode, ...validat
 
 		name := string(root)
 		if root == constants.CgroupVirtualMachinesRoot {
-			name = "virtualMachines"
+			name = virtualMachinesRootField
 		}
 
 		set, err := parseRequiredCPUList(name+".cpus", list)

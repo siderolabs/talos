@@ -125,6 +125,11 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 			Serial: vm.Console().Serial().Enabled(),
 			VNC:    vm.Console().VNC().Enabled(),
 		},
+		Guest: hypervisor.VirtualMachineGuestSpec{
+			Agent: hypervisor.VirtualMachineAgentSpec{
+				Enabled: vm.Guest().Agent().Enabled(),
+			},
+		},
 	}
 
 	topology := vm.CPU().Topology()
@@ -175,6 +180,8 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 		spec.Disks = append(spec.Disks, intent)
 	}
 
+	spec.CloudInit = projectCloudInit(vm)
+
 	for _, iface := range vm.Networking().Interfaces() {
 		var hardwareAddr string
 
@@ -190,4 +197,19 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 	}
 
 	return spec
+}
+
+// projectCloudInit preserves the guest's opaque seed payload in the backend-neutral intent.
+func projectCloudInit(vm configcfg.VirtualMachineConfig) *hypervisor.VirtualMachineCloudInitSpec {
+	cloud, ok := vm.Guest().CloudInit().Get()
+	if !ok {
+		return nil
+	}
+
+	return &hypervisor.VirtualMachineCloudInitSpec{
+		Library:       cloud.Library(),
+		MetaData:      cloud.MetaData(),
+		UserData:      cloud.UserData(),
+		NetworkConfig: cloud.NetworkConfig(),
+	}
 }

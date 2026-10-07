@@ -64,6 +64,7 @@ require (
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/digitalocean/go-libvirt v0.0.0-20260814190004-1a83157e1858
 	github.com/digitorus/pkcs7 v0.0.0-20250730155240-ffadbf3f398c
+	github.com/diskfs/go-diskfs v1.9.4
 	github.com/distribution/reference v0.6.0
 	github.com/docker/cli v29.8.1+incompatible
 	github.com/dustin/go-humanize v1.1.0
@@ -278,6 +279,7 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/dgryski/go-farm v0.0.0-20240924180020-3414d57e47da // indirect
 	github.com/digitorus/timestamp v0.0.0-20250524132541-c45532741eea // indirect
+	github.com/djherbis/times v1.6.0 // indirect
 	github.com/dlclark/regexp2 v1.12.0 // indirect
 	github.com/docker/docker-credential-helpers v0.9.8 // indirect
 	github.com/docker/go-connections v0.8.1 // indirect

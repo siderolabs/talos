@@ -689,6 +689,178 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUnti
 	s.assertStatus(name, "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
 }
 
+func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryEvents() {
+	const name = "seeded"
+
+	s.client.domains[name] = libvirtdomain.Domain{
+		Name: name,
+		UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name),
+	}
+
+	vm := newRenderableSpec(name, "running")
+	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
+		Library:  "images",
+		MetaData: "instance-id: seeded\n",
+		UserData: "#cloud-config\n",
+	}
+	s.Create(vm)
+	s.start()
+
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, name)
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{
+		Library:  vm.TypedSpec().CloudInit.Library,
+		MetaData: vm.TypedSpec().CloudInit.MetaData,
+		UserData: vm.TypedSpec().CloudInit.UserData,
+	}
+	s.Create(seed)
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	projected, err := safe.StateGetByID[*hypervisor.CloudInitSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+
+	asset := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, hypervisor.CloudInitStatusID(name, *seed.TypedSpec()))
+	*asset.TypedSpec() = hypervisor.CloudInitStatusSpec{
+		VirtualMachine:     name,
+		Library:            "images",
+		Name:               "seed.iso",
+		Path:               "/images",
+		VolumeID:           "volume-a",
+		Digest:             "sha256:seed",
+		InputDigest:        seed.TypedSpec().InputDigest(),
+		ObservedGeneration: projected.Metadata().Version().String(),
+		Error:              "seed generation failed",
+	}
+	s.Create(asset)
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	ctest.UpdateWithConflicts(s, asset, func(current *hypervisor.CloudInitStatus) error {
+		current.TypedSpec().Error = ""
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	ctest.UpdateWithConflicts(s, asset, func(current *hypervisor.CloudInitStatus) error {
+		current.TypedSpec().Ready = true
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
+		Path:     "/images",
+		VolumeID: "volume-a",
+		Ready:    true,
+	}
+	s.Create(library)
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+
+	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitSpec) error {
+		current.TypedSpec().UserData = "different seed"
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitSpec) error {
+		current.TypedSpec().UserData = vm.TypedSpec().CloudInit.UserData
+
+		return nil
+	})
+	projected, err = safe.StateGetByID[*hypervisor.CloudInitSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+
+	ctest.UpdateWithConflicts(s, asset, func(current *hypervisor.CloudInitStatus) error {
+		current.TypedSpec().ObservedGeneration = projected.Metadata().Version().String()
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+
+	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
+		current.TypedSpec().Ready = false
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
+		current.TypedSpec().Ready = true
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+
+	s.Destroy(asset)
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+
+	republished := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, hypervisor.CloudInitStatusID(name, *seed.TypedSpec()))
+	*republished.TypedSpec() = *asset.TypedSpec()
+	republished.TypedSpec().Ready = true
+	republished.TypedSpec().Error = ""
+	republished.TypedSpec().ObservedGeneration = projected.Metadata().Version().String()
+	s.Create(republished)
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+
+	ctest.UpdateWithConflicts(s, republished, func(current *hypervisor.CloudInitStatus) error {
+		current.TypedSpec().Ready = false
+		current.TypedSpec().Error = "seed generation failed"
+
+		return nil
+	})
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded": cloud-init seed is not ready`)
+}
+
+func (s *VirtualMachineStatusSuite) TestCloudInitInvalidationStopsOldDomainWithoutReportingReady() {
+	const name = "seeded-old-domain"
+
+	s.client.domains[name] = libvirtdomain.Domain{
+		Name: name,
+		UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name),
+	}
+
+	vm := newRenderableSpec(name, "running")
+	s.Create(vm)
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+	s.start()
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+
+	s.Require().Eventually(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+
+		return err == nil && domain.TypedSpec().PowerState == "running" && domain.TypedSpec().DomainXML != ""
+	}, 5*time.Second, 10*time.Millisecond)
+
+	ctest.UpdateWithConflicts(s, vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
+			Library:  "images",
+			UserData: "#cloud-config\n",
+		}
+
+		return nil
+	})
+
+	s.Require().Eventually(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+
+		return err == nil && domain.TypedSpec().PowerState == "stopped" && domain.TypedSpec().DomainXML != ""
+	}, 5*time.Second, 10*time.Millisecond)
+	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+		`virtual machine "seeded-old-domain": cloud-init seed is not ready`)
+}
+
 func (s *VirtualMachineStatusSuite) TestStatusRemovedWithSpec() {
 	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)

@@ -27,6 +27,25 @@ import (
 //go:embed schemas/config.schema.json
 var schemaData string
 
+func TestCloudInitLibrarySchema(t *testing.T) {
+	t.Parallel()
+
+	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schemaData))
+	require.NoError(t, err)
+
+	compiler := validatejsonschema.NewCompiler()
+	require.NoError(t, compiler.AddResource("test-id", schemaJSON))
+
+	schema, err := compiler.Compile("test-id#/$defs/hypervisor.VirtualMachineCloudInit")
+	require.NoError(t, err)
+
+	assert.Error(t, schema.Validate(map[string]any{"metaData": "instance-id: vm1"}), "library must be present")
+	assert.NoError(t, schema.Validate(map[string]any{
+		"library":  "targetlibrary",
+		"metaData": "instance-id: vm1",
+	}))
+}
+
 func TestSchemaValidation(t *testing.T) {
 	t.Parallel()
 

@@ -1047,6 +1047,16 @@ func (container *Container) CPUPartitionConfig() config.CPUPartitionConfig {
 	return matching[0]
 }
 
+// WorkloadResourceConfig implements config.Config interface.
+func (container *Container) WorkloadResourceConfig() config.WorkloadResourceConfig {
+	matching := findMatchingDocs[config.WorkloadResourceConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)

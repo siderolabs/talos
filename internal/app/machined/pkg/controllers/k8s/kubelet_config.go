@@ -94,6 +94,12 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
 				kubeletConfig.RegisterWithTaints = cfgProvider.K8sNodeConfig().Taints()
 
+				if workloadResources := cfgProvider.WorkloadResourceConfig(); workloadResources != nil {
+					kubeletConfig.KubepodsMemoryLimit = workloadResources.KubepodsMemoryLimit()
+				} else {
+					kubeletConfig.KubepodsMemoryLimit = 0
+				}
+
 				if k8sCredentialProviderConfig := cfgProvider.K8sCredentialProviderConfig(); k8sCredentialProviderConfig != nil {
 					kubeletConfig.CredentialProviderConfig = k8sCredentialProviderConfig.Configuration()
 				} else {

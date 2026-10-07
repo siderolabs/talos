@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: WorkloadResourceConfig
+kubepods:
+    memory:
+        limit: 16GiB
+taloscontainers:
+    memory:
+        limit: 4GiB
+virtualMachines:
+    memory:
+        limit: 32GiB

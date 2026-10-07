@@ -48,8 +48,8 @@ func (suite *DisksSuite) TestRecreatedDevice() {
 	subjectImage := createRawImage(suite.T(), loopImageSize)
 	subject := attachLoopDevice(suite.T(), subjectImage)
 
-	// the barrier is a loop device which stays attached; once the controller has produced a disk for it,
-	// it has processed everything created before it
+	// the barrier is a loop device which stays attached; its disk tracks reconciliation of
+	// snapshots containing the subject's first incarnation and, later, its absence
 	barrierImage := createRawImage(suite.T(), loopImageSize)
 	barrier := attachLoopDevice(suite.T(), barrierImage)
 
@@ -73,9 +73,11 @@ func (suite *DisksSuite) TestRecreatedDevice() {
 	})
 	ctest.AssertNoResource[*block.Disk](suite, subjectID)
 
-	// the device goes away
+	// the device goes away; wait for the controller to observe its absence before recreating it
+	// the subject never produced a disk, so use the existing barrier disk to track reconciliation
 	suite.Destroy(newDiskDevice(subjectID, generation))
-	ctest.AssertNoResource[*block.Disk](suite, subjectID)
+	suite.Destroy(newDiskDevice(barrierID, 1))
+	ctest.AssertNoResource[*block.Disk](suite, barrierID)
 
 	// second incarnation of the device under the same name and with the same generation number, but now it has a size
 	reattachLoopDevice(suite.T(), subject, subjectImage)

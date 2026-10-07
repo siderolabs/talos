@@ -10,6 +10,7 @@ firmware:
     type: uefi
 guest:
     cloudInit:
+        library: targetlibrary
         metaData: |
             instance-id: vm1-001
             local-hostname: vm1

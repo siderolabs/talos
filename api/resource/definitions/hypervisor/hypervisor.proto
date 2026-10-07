@@ -7,6 +7,30 @@ option java_package = "dev.talos.api.resource.definitions.hypervisor";
 
 import "resource/definitions/enums/enums.proto";
 
+// CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
+message CloudInitSpecSpec {
+  string library = 1;
+  string meta_data = 2;
+  string user_data = 3;
+  string network_config = 4;
+}
+
+// CloudInitStatusSpec never contains the raw guest seed.
+message CloudInitStatusSpec {
+  string virtual_machine = 1;
+  string library = 2;
+  string name = 3;
+  // Path and VolumeID pin the backing identity and prevent stale readiness across remounts.
+  string path = 4;
+  string volume_id = 5;
+  string digest = 6;
+  uint64 size_bytes = 7;
+  string input_digest = 8;
+  string observed_generation = 9;
+  bool ready = 10;
+  string error = 11;
+}
+
 // ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 message ContentLibraryStatusSpec {
   // VolumeID is the ID of the volume backing the library.
@@ -21,6 +45,12 @@ message ContentLibraryStatusSpec {
   string error = 4;
   // Fingerprint changes whenever the files in the library do (name, size, modification time).
   string fingerprint = 5;
+}
+
+// VirtualMachineAgentSpec describes the qemu-guest-agent channel attached to the guest.
+message VirtualMachineAgentSpec {
+  // Enabled attaches the org.qemu.guest_agent.0 virtio-serial channel to the domain.
+  bool enabled = 1;
 }
 
 // VirtualMachineCPUPlacementSpec is the spec for VirtualMachineCPUPlacement.
@@ -49,6 +79,14 @@ message VirtualMachineCPUTopologySpec {
   uint32 sockets = 1;
   uint32 cores = 2;
   uint32 threads = 3;
+}
+
+// VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
+message VirtualMachineCloudInitSpec {
+  string library = 1;
+  string meta_data = 2;
+  string user_data = 3;
+  string network_config = 4;
 }
 
 // VirtualMachineConsoleSpec describes requested guest consoles.
@@ -118,6 +156,8 @@ message VirtualMachineDomainSpecSpec {
   // It is what the controller which starts the domain holds against, rather than the virtual
   // machine's configuration, which moves ahead of the definition libvirt is running.
   repeated string disks = 3;
+  // CloudInit identifies the seed status this domain has attached and must hold.
+  string cloud_init = 4;
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
@@ -135,6 +175,11 @@ message VirtualMachineDomainStatusSpec {
 message VirtualMachineFirmwareSpec {
   string type = 1;
   bool secure_boot = 2;
+}
+
+// VirtualMachineGuestSpec describes guest-side features that need host-side plumbing.
+message VirtualMachineGuestSpec {
+  VirtualMachineAgentSpec agent = 1;
 }
 
 // VirtualMachineInterfaceSpec describes a network interface attached to a host link.
@@ -178,6 +223,8 @@ message VirtualMachineSpecSpec {
   VirtualMachineConsoleSpec console = 5;
   repeated VirtualMachineDiskSpec disks = 6;
   repeated VirtualMachineInterfaceSpec interfaces = 7;
+  VirtualMachineCloudInitSpec cloud_init = 8;
+  VirtualMachineGuestSpec guest = 9;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.

@@ -12,7 +12,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	mathrand "math/rand/v2"
+	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -20,6 +23,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/remotecommand"
@@ -31,6 +36,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -398,6 +405,221 @@ func (suite *KubeletSuite) execInPod(ctx context.Context, namespace, podName, co
 	}
 
 	return stdout.String(), stderr.String(), nil
+}
+
+// kubeletExtraConfigPatch preserves the node's kubelet configuration format and image.
+func kubeletExtraConfigPatch(cfg config.K8sKubeletConfig, extraConfig map[string]any) any {
+	if _, ok := cfg.(*k8s.KubeletConfigV1Alpha1); ok {
+		patch := k8s.NewKubeletConfigV1Alpha1()
+		patch.KubeletConfig.Object = extraConfig
+
+		return patch
+	}
+
+	return map[string]any{
+		"machine": map[string]any{
+			"kubelet": map[string]any{
+				"extraConfig": extraConfig,
+			},
+		},
+	}
+}
+
+// TestKubepodsMemoryLimitEnforced verifies that the kernel enforces the kubepods limit on a worker
+// pod which has no memory limit of its own: it is OOM-killed by the kubepods memcg, and only there.
+//
+//nolint:gocyclo,cyclop
+func (suite *KubeletSuite) TestKubepodsMemoryLimitEnforced() {
+	if !suite.Capabilities().RunsTalosKernel {
+		suite.T().Skip("cgroups are nested in container mode, so the kubepods limit is inactive")
+	}
+
+	if suite.Cluster == nil {
+		suite.T().Skip("cluster state is required to tell workers from control planes")
+	}
+
+	// Control planes are never used: their static pods live under kubepods too.
+	workers := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)
+	if len(workers) == 0 {
+		suite.T().Skip("cluster has no worker nodes")
+	}
+
+	node := workers[mathrand.IntN(len(workers))]
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	originalBytes := suite.RequireNoWorkloadResourceConfig(nodeCtx, node)
+
+	cfg, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	// The limit is sized for the kubelet reservation defaults, and the eviction settings are replaced
+	// below; a node carrying its own values for either is not a fair fixture.
+	if kubeletCfg := cfg.K8sKubeletConfig(); kubeletCfg != nil {
+		for _, key := range []string{"evictionHard", "evictionSoft", "kubeReserved", "systemReserved", "mergeDefaultEvictionSettings"} {
+			if _, set := kubeletCfg.ExtraConfig()[key]; set {
+				suite.T().Skipf("node %s customizes kubelet %q, the test is sized for the kubelet defaults", node, key)
+			}
+		}
+	}
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	memTotal := suite.ReadMemTotal(nodeCtx)
+
+	// A quarter of the node, MiB-aligned: above the default 100Mi eviction threshold, and the
+	// derived systemReserved (MemTotal - limit) stays positive.
+	const alignment = uint64(1 << 20)
+
+	limit := memTotal / 4 / alignment * alignment
+
+	podsCharge, err := suite.ReadCgroupUint(nodeCtx, constants.CgroupKubepods, "memory.current")
+	suite.Require().NoError(err)
+
+	if podsCharge*2 > limit {
+		suite.T().Skipf("worker %s already charges %d bytes to kubepods, too close to the %d byte test limit", node, podsCharge, limit)
+	}
+
+	kubepodsMax := suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, constants.CgroupKubepods, "memory.max"))
+	suite.T().Logf("worker %s (%s): MemTotal %d, kubepods memory.max %s, pods charge %d, test limit %d", node, k8sNode.Name, memTotal, kubepodsMax, podsCharge, limit)
+
+	nodeReady := func(status corev1.ConditionStatus) bool { return status == corev1.ConditionTrue }
+
+	kubeletRestartSince := suite.LatestServiceEventTimestamp(suite.ctx, node, "kubelet")
+
+	suite.RestoreMachineConfigOnCleanup(node, originalBytes, func(cleanupCtx context.Context) {
+		suite.AssertCgroupFile(cleanupCtx, constants.CgroupKubepods, "memory.max", kubepodsMax)
+		suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(cleanupCtx, k8sNode.Name, nodeReady))
+	})
+
+	doc := runtimecfg.NewWorkloadResourceConfigV1Alpha1()
+	doc.KubepodsConfig = workloadMemoryRoot(limit)
+
+	// The kubelet watches memory.available against allocatable (limit - threshold) and evicts the
+	// victim shortly before the charge reaches the kernel limit. Memory eviction is switched off for
+	// the test, so the root's own limit is the only ceiling; the disk signals keep their defaults.
+	// Both patches go in one apply, so the kubelet restarts once.
+	kubeletPatch := kubeletExtraConfigPatch(cfg.K8sKubeletConfig(), map[string]any{
+		"evictionHard": map[string]any{
+			"memory.available": "0%",
+		},
+		"mergeDefaultEvictionSettings": true,
+	})
+
+	suite.PatchMachineConfig(nodeCtx, doc, kubeletPatch)
+
+	// The kubelet, not Talos, writes the kubepods limit, so it has to restart first.
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "kubelet", kubeletRestartSince, []string{"Stopping", "Finished", "Starting", "Waiting", "Preparing", "Running"})
+	suite.AssertCgroupFile(nodeCtx, constants.CgroupKubepods, "memory.max", strconv.FormatUint(limit, 10))
+	suite.Require().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, k8sNode.Name, nodeReady))
+
+	unrelated := []string{constants.CgroupTalosContainersRoot, constants.CgroupVirtualMachines, constants.CgroupSystem, constants.CgroupPodRuntimeRoot}
+	before := suite.MemoryEventsSnapshot(nodeCtx, append([]string{constants.CgroupKubepods}, unrelated...)...)
+	started := time.Now()
+
+	// BestEffort (no requests, no limits), so the root's limit is the only ceiling. The memory-backed
+	// emptyDir holds the whole write, so ENOSPC cannot end the run before the memcg does.
+	victimBytes := 2 * limit
+
+	randomSuffix := make([]byte, 4)
+	_, err = rand.Read(randomSuffix)
+	suite.Require().NoError(err)
+
+	const namespace = "default"
+
+	podName := fmt.Sprintf("kubepods-memcap-%x", randomSuffix)
+	sizeLimit := resource.NewQuantity(int64(victimBytes+alignment), resource.BinarySI)
+
+	victim := &corev1.Pod{
+		Name:      podName,
+		Namespace: namespace,
+		Spec: corev1.PodSpec{
+			NodeName:      k8sNode.Name,
+			RestartPolicy: corev1.RestartPolicyNever,
+			Tolerations:   []corev1.Toleration{{Operator: corev1.TolerationOpExists}},
+			Containers: []corev1.Container{
+				{
+					Name:    "fill",
+					Image:   "alpine",
+					Command: []string{"/bin/sh", "-c", "--"},
+					Args: []string{
+						"dd if=/dev/zero of=/scratch/fill bs=1M count=" + strconv.FormatUint(victimBytes>>20, 10) + " && echo FILL_COMPLETED && sleep 3600",
+					},
+					VolumeMounts: []corev1.VolumeMount{{Name: "scratch", MountPath: "/scratch"}},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{
+					Name:     "scratch",
+					EmptyDir: &corev1.EmptyDirVolumeSource{Medium: corev1.StorageMediumMemory, SizeLimit: sizeLimit},
+				},
+			},
+		},
+	}
+
+	deletePod := func(ctx context.Context) error {
+		err := suite.Clientset.CoreV1().Pods(namespace).Delete(ctx, podName, metav1.DeleteOptions{GracePeriodSeconds: new(int64(0))})
+		if apierrors.IsNotFound(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	// Registered after the config restore, so the victim is gone before the limit.
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cleanupCancel()
+
+		suite.Assert().NoError(deletePod(cleanupCtx))
+	})
+
+	_, err = suite.Clientset.CoreV1().Pods(namespace).Create(suite.ctx, victim, metav1.CreateOptions{})
+	suite.Require().NoError(err)
+
+	after := suite.AssertMemcgOOMKill(nodeCtx, constants.CgroupKubepods, before[constants.CgroupKubepods], 3*time.Minute)
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		pod, getErr := suite.Clientset.CoreV1().Pods(namespace).Get(suite.ctx, podName, metav1.GetOptions{})
+		if !assert.NoError(collect, getErr) {
+			return
+		}
+
+		if !assert.Len(collect, pod.Status.ContainerStatuses, 1, "pod phase %s", pod.Status.Phase) {
+			return
+		}
+
+		if !assert.NotEqual(collect, "Evicted", pod.Status.Reason, "the kubelet evicted the victim instead of the kernel killing it: %s", pod.Status.Message) {
+			return
+		}
+
+		terminated := pod.Status.ContainerStatuses[0].State.Terminated
+		if !assert.NotNil(collect, terminated, "victim container not terminated yet, pod phase %s", pod.Status.Phase) {
+			return
+		}
+
+		assert.Equal(collect, "OOMKilled", terminated.Reason, "victim terminated for another reason: %+v", terminated)
+		assert.EqualValues(collect, 137, terminated.ExitCode)
+	}, 2*time.Minute, 2*time.Second, "victim pod should be reported OOMKilled")
+
+	logs, err := suite.Clientset.CoreV1().Pods(namespace).GetLogs(podName, &corev1.PodLogOptions{}).DoRaw(suite.ctx)
+	if suite.Assert().NoError(err) {
+		suite.Assert().NotContains(string(logs), "FILL_COMPLETED", "victim completed its write despite the kubepods limit")
+	}
+
+	suite.AssertNoNewOOMKills(nodeCtx, before, unrelated...)
+	suite.AssertNoUserspaceOOMSince(nodeCtx, started)
+
+	suite.Require().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, k8sNode.Name, nodeReady))
+	suite.Require().NoError(deletePod(suite.ctx))
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		_, getErr := suite.Clientset.CoreV1().Pods(namespace).Get(suite.ctx, podName, metav1.GetOptions{})
+		assert.True(collect, apierrors.IsNotFound(getErr), "victim pod still present: %v", getErr)
+	}, time.Minute, time.Second)
+
+	suite.T().Logf("kubepods on %s OOM-killed the victim %d time(s)", node,
+		after.Hierarchical["oom_kill"]-before[constants.CgroupKubepods].Hierarchical["oom_kill"])
 }
 
 func init() {

@@ -51,6 +51,7 @@ func (suite *VirtualMachineSpecSuite) externalSpecLifecycle(owner string) {
 		},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec, state.WithCreateOwner(owner)))
 	suite.assertDomain("balloon", "balloon-enabled")
@@ -64,6 +65,7 @@ func (suite *VirtualMachineSpecSuite) externalSpecLifecycle(owner string) {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), spec, state.WithUpdateOwner(owner)))
 	suite.assertDomain("balloon", "balloon-omitted")
@@ -93,6 +95,7 @@ func (suite *VirtualMachineSpecSuite) TestBIOSDomainUsesDefaultFirmware() {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 128 << 20},
 		PowerState: "stopped",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "bios"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(spec)
 	ctest.AssertResource(suite, spec.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
@@ -109,6 +112,7 @@ func (suite *VirtualMachineSpecSuite) TestUEFIDomainEnablesACPI() {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
 		PowerState: "stopped",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(spec)
 	ctest.AssertResource(suite, spec.Metadata().ID(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
@@ -123,6 +127,7 @@ func (suite *VirtualMachineSpecSuite) TestDomainSpecCleanupWaitsForFinalizer() {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
 		PowerState: "stopped",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(spec)
 
@@ -147,6 +152,7 @@ func (suite *VirtualMachineSpecSuite) TestExternalSpecRejectsConfigCollision() {
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 			PowerState: "running",
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		}
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), spec, state.WithCreateOwner(owner)))
 		suite.assertDomain("guest-one", "default")
@@ -194,6 +200,7 @@ func (suite *VirtualMachineSpecSuite) TestPersistentCollisionDoesNotBlockProject
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), external, state.WithCreateOwner("external")))
 	suite.assertDomain("guest-one", "default")
@@ -231,6 +238,7 @@ func (suite *VirtualMachineSpecSuite) TestEqualConfigCollisionPreservesExternalO
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 			PowerState: "running",
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		}
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), spec, state.WithCreateOwner(owner)))
 		suite.assertDomain("guest-one", "default")
@@ -265,6 +273,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidNames() {
 				Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 				PowerState: "running",
 				Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+				Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 			}
 
 			suite.Create(spec)
@@ -283,6 +292,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedEscapedName() {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(spec)
 	suite.assertDomain(spec.Metadata().ID(), "escaped-name")
@@ -295,6 +305,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidSpecs() {
 			CPU:      hypervisor.VirtualMachineCPUSpec{Count: 1},
 			Memory:   hypervisor.VirtualMachineMemorySpec{Size: 1024},
 			Firmware: hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Guest:    hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		},
 		{
 			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
@@ -389,6 +400,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidSpecs() {
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 			PowerState: "running",
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		}
 		suite.Create(barrier)
 		suite.assertDomain("balloon", "balloon-disabled")
@@ -404,6 +416,7 @@ func (suite *VirtualMachineSpecSuite) TestInvalidSpecDoesNotBlockOtherDomains() 
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(stale)
 	suite.assertDomain("balloon", "balloon-disabled")
@@ -427,6 +440,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidUpdateRecovers() {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(spec)
 	suite.assertDomain("balloon", "balloon-disabled")
@@ -618,6 +632,7 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		Disks:      []hypervisor.VirtualMachineDiskSpec{wanted},
 	}
 	suite.Create(spec)
@@ -671,6 +686,7 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		Disks:      []hypervisor.VirtualMachineDiskSpec{disk},
 	}
 	suite.Create(spec)
@@ -700,5 +716,71 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 
 	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Equal("stopped", res.TypedSpec().PowerState)
+	})
+}
+
+type VirtualMachineCloudInitDomainSuite struct {
+	ctest.DefaultSuite
+}
+
+func TestVirtualMachineCloudInitDomainSuite(t *testing.T) {
+	t.Parallel()
+
+	suite.Run(t, &VirtualMachineCloudInitDomainSuite{
+		ctest.DefaultSuite{
+			Timeout: 30 * time.Second,
+			AfterSetup: func(s *ctest.DefaultSuite) {
+				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitSpecController{}))
+				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitISOController{State: s.State()}))
+				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+			},
+		},
+	})
+}
+
+func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "guest")
+	vm.TypedSpec().CPU.Count = 1
+	vm.TypedSpec().Memory.Size = 512 << 20
+	vm.TypedSpec().PowerState = "running"
+	vm.TypedSpec().Firmware.Type = "bios"
+	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
+		Library:  "images",
+		MetaData: "instance-id: guest\n",
+		UserData: "secret",
+	}
+
+	s.Create(vm)
+
+	// No library: rendering must not start an unseeded guest.
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](s, "guest")
+
+	dir := s.T().TempDir()
+	lib := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
+	lib.TypedSpec().Ready = true
+	lib.TypedSpec().Path = dir
+	lib.TypedSpec().VolumeID = "volume-a"
+	s.Create(lib)
+
+	ctest.AssertResource(s, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
+		a.Contains(domain.TypedSpec().DomainXML, `device="cdrom"`)
+		a.Contains(domain.TypedSpec().DomainXML, `bus="sata"`)
+		a.Contains(domain.TypedSpec().DomainXML, `<readonly></readonly>`)
+		a.NotContains(domain.TypedSpec().DomainXML, `<boot order=`)
+		a.Contains(domain.TypedSpec().DomainXML, `cloud-init-`)
+		a.NotEmpty(domain.TypedSpec().CloudInit)
+		a.Equal("running", domain.TypedSpec().PowerState)
+	})
+
+	// A remount invalidates the old seed even while its status is held.
+	ctest.UpdateWithConflicts(s, lib, func(current *hypervisor.ContentLibraryStatus) error {
+		current.TypedSpec().VolumeID = "volume-b"
+		current.TypedSpec().Ready = false
+
+		return nil
+	})
+
+	ctest.AssertResource(s, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
+		a.Equal("stopped", domain.TypedSpec().PowerState)
 	})
 }

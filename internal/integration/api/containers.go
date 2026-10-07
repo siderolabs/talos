@@ -14,6 +14,7 @@ import (
 	"math/rand"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -31,6 +32,7 @@ import (
 	configcontainer "github.com/siderolabs/talos/pkg/machinery/config/config"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -1788,6 +1790,114 @@ func (suite *ContainersSuite) assertNoContainerdContainer(ctx context.Context, c
 			}
 		}
 	}, time.Minute, time.Second)
+}
+
+// TestWorkloadMemoryLimitEnforced verifies that the kernel enforces the aggregate taloscontainers
+// limit on a container which has no memory limit of its own: it is OOM-killed by the root's memcg,
+// and only there.
+//
+// The victim fills a tmpfs it mounts: tmpfs pages are charged to the writer's cgroup.
+func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
+	if testing.Short() {
+		suite.T().Skip("skipping machine configuration changes in short mode")
+	}
+
+	if !suite.Capabilities().RunsTalosKernel {
+		suite.T().Skip("cgroups are nested in container mode, so the workload roots are not managed")
+	}
+
+	// The ordered cleanup below runs before setupContainer's idempotent config removal.
+	ctx, name, node := suite.setupContainer("memcap")
+
+	originalBytes := suite.RequireNoWorkloadResourceConfig(ctx, node)
+
+	suite.Require().Equal("max", suite.ReadFile(ctx, filepath.Join(constants.CgroupMountPath, constants.CgroupTalosContainersRoot, "memory.max")))
+
+	idle := suite.RequireWorkloadRootIdle(ctx, constants.CgroupTalosContainersRoot)
+
+	// MiB-aligned, so the kernel applies it exactly; fits the smallest (2 GiB) e2e workers.
+	const (
+		limit       = uint64(256 << 20)
+		victimBytes = 2 * limit
+	)
+
+	suite.Require().Less(idle, limit/4, "root %s retains %d bytes without a container", constants.CgroupTalosContainersRoot, idle)
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cleanupCancel()
+
+		cleanupCtx = client.WithNode(cleanupCtx, node)
+
+		// Keep removal and restoration in one callback: a fatal removal/wait failure must not lift the cap.
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, containercfg.ContainerConfigKind, name)
+		suite.assertNoContainerdContainer(cleanupCtx, name)
+
+		_, applyErr := suite.Client.ApplyConfiguration(cleanupCtx, &machine.ApplyConfigurationRequest{
+			Data: originalBytes,
+			Mode: machine.ApplyConfigurationRequest_NO_REBOOT,
+		})
+		suite.Require().NoError(applyErr, "restore original configuration on node %s", node)
+		suite.AssertCgroupFile(cleanupCtx, constants.CgroupTalosContainersRoot, "memory.max", "max")
+	})
+
+	doc := runtimecfg.NewWorkloadResourceConfigV1Alpha1()
+	doc.TalosContainersConfig = workloadMemoryRoot(limit)
+
+	suite.PatchMachineConfig(ctx, doc)
+	suite.AssertCgroupFile(ctx, constants.CgroupTalosContainersRoot, "memory.max", strconv.FormatUint(limit, 10))
+
+	unrelated := []string{constants.CgroupVirtualMachines, constants.CgroupSystem, constants.CgroupPodRuntimeRoot}
+	before := suite.MemoryEventsSnapshot(ctx, append([]string{constants.CgroupTalosContainersRoot}, unrelated...)...)
+	started := time.Now()
+
+	// No per-container limit. The tmpfs holds the whole write, so ENOSPC cannot end the run before
+	// the memcg does; the completion marker must never be logged.
+	victim := suite.shellContainer(name, "dd if=/dev/zero of=/scratch/fill bs=1M count="+strconv.FormatUint(victimBytes>>20, 10)+" && echo FILL_COMPLETED")
+	victim.MountsConfig = []containercfg.ContainerMount{
+		{
+			TmpfsMount: &containercfg.TmpfsMount{
+				MountDestination: "/scratch",
+				MountSize:        strconv.FormatUint(victimBytes>>20+1, 10) + "MiB",
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, victim)
+
+	_, first := suite.assertNewestInstanceID(ctx, name)
+
+	// The victim's own cgroup carries no limit: only the root can stop it.
+	victimMax, err := suite.ReadCgroupFile(ctx, filepath.Join(constants.CgroupTalosContainersRoot, name), "memory.max")
+	if err == nil {
+		suite.Require().Equal("max", victimMax, "victim cgroup carries its own memory limit")
+	}
+
+	after := suite.AssertMemcgOOMKill(ctx, constants.CgroupTalosContainersRoot, before[constants.CgroupTalosContainersRoot], 2*time.Minute)
+
+	suite.assertNewestInstance(ctx, name, "victim terminated by the root limit",
+		func(status *containers.ContainerInstanceStatusSpec, asrt *assert.Assertions) bool {
+			return asrt.NotEqual(containers.ContainerInstancePhaseRunning, status.Phase, "victim still running") &&
+				(status.Generation > first.Generation || asrt.NotZero(status.ExitCode, "victim exited cleanly"))
+		})
+
+	logs, err := suite.readContainerLog(ctx, name)
+	suite.Require().NoError(err)
+	suite.Assert().NotContains(logs, "FILL_COMPLETED", "victim completed its write despite the root limit")
+
+	// Stop the restart/kill loop before checking the blast radius.
+	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+	suite.assertNoContainerdContainer(ctx, name)
+
+	suite.AssertNoNewOOMKills(ctx, before, unrelated...)
+	suite.AssertNoUserspaceOOMSince(ctx, started)
+
+	current, err := suite.ReadCgroupUint(ctx, constants.CgroupTalosContainersRoot, "memory.current")
+	suite.Require().NoError(err)
+	suite.Assert().LessOrEqual(current, limit, "root %s charge %d still above the limit after the victim was removed", constants.CgroupTalosContainersRoot, current)
+
+	suite.T().Logf("root %s OOM-killed the victim %d time(s)", constants.CgroupTalosContainersRoot,
+		after.Hierarchical["oom_kill"]-before[constants.CgroupTalosContainersRoot].Hierarchical["oom_kill"])
 }
 
 func init() {

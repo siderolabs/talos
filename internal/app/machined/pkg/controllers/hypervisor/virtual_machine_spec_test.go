@@ -63,6 +63,9 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsUpdatesAndRemovesTypedSp
 				Firmware: hypervisor.VirtualMachineFirmwareSpec{
 					Type: "uefi",
 				},
+				Guest: hypervisor.VirtualMachineGuestSpec{
+					Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true},
+				},
 			},
 			*res.TypedSpec(),
 		)
@@ -99,6 +102,9 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsUpdatesAndRemovesTypedSp
 				PowerState: "running",
 				Firmware: hypervisor.VirtualMachineFirmwareSpec{
 					Type: "uefi",
+				},
+				Guest: hypervisor.VirtualMachineGuestSpec{
+					Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true},
 				},
 			},
 			*res.TypedSpec(),
@@ -224,6 +230,9 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 				{Name: "net0", Link: "eth0"},
 				{Name: "net1", Link: "uplink"},
 			},
+			Guest: hypervisor.VirtualMachineGuestSpec{
+				Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true},
+			},
 		}, *res.TypedSpec())
 	})
 }
@@ -267,6 +276,24 @@ func (suite *VirtualMachineSpecSuite) TestFirmwareAndConsoles() {
 		asrt.Contains(res.TypedSpec().DomainXML, `name="secure-boot"`)
 		asrt.Contains(res.TypedSpec().DomainXML, `<serial type="pty">`)
 		asrt.Contains(res.TypedSpec().DomainXML, `<graphics type="vnc"`)
+	})
+}
+
+func (suite *VirtualMachineSpecSuite) TestGuestAgentChannel() {
+	defaultOn := newVirtualMachine("agent-default")
+	explicitOff := newVirtualMachine("agent-off")
+	explicitOff.GuestConfig.AgentConfig = &hypervisorcfg.VirtualMachineAgent{AgentEnabled: new(false)}
+	cfg, err := container.New(defaultOn, explicitOff)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+	// The channel is attached by default: the operator should not have to flip anything to
+	// benefit from guest-agent features when the agent is installed inside the guest.
+	ctest.AssertResource(suite, "agent-default", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, `<channel type="unix">`)
+		asrt.Contains(res.TypedSpec().DomainXML, `<target type="virtio" name="org.qemu.guest_agent.0">`)
+	})
+	ctest.AssertResource(suite, "agent-off", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.NotContains(res.TypedSpec().DomainXML, "org.qemu.guest_agent.0")
 	})
 }
 
@@ -648,6 +675,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidCPUTopology() {
 			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 4, Topology: &topology},
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30},
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 			PowerState: "running",
 		}
 		suite.Create(spec)
@@ -717,6 +745,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedInvalidPlacement() {
 				Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024, NUMA: test.numa},
 				PowerState: "running",
 				Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+				Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 			}
 
 			suite.Create(spec)
@@ -739,6 +768,7 @@ func (suite *VirtualMachineSpecSuite) TestInjectedNonCanonicalPlacement() {
 		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 4 << 30, NUMA: &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "1,1"}},
 		PowerState: "running",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 	}
 	suite.Create(spec)
 	suite.assertDomain("guest-one", "cpu-pinning")
@@ -755,6 +785,7 @@ func (suite *VirtualMachineSpecSuite) TestRejectsCPULimitOutsideSchemaRange() {
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1024},
 			PowerState: "running",
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
 		}
 
 		suite.Create(spec)

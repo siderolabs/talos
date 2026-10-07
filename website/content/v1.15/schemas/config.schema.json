@@ -2351,9 +2351,9 @@
         "enabled": {
           "type": "boolean",
           "title": "enabled",
-          "description": "Attach the qemu-guest-agent virtio channel.\n\nWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\nreport the addresses the guest holds. The agent has to be installed and running inside\nthe guest for the channel to be of any use.\n\nOptional; defaults to disabled.\n",
-          "markdownDescription": "Attach the qemu-guest-agent virtio channel.\n\nWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\nreport the addresses the guest holds. The agent has to be installed and running inside\nthe guest for the channel to be of any use.\n\nOptional; defaults to disabled.",
-          "x-intellij-html-description": "\u003cp\u003eAttach the qemu-guest-agent virtio channel.\u003c/p\u003e\n\n\u003cp\u003eWithout the agent, stopping a virtual machine is ACPI-or-destroy, and status cannot\nreport the addresses the guest holds. The agent has to be installed and running inside\nthe guest for the channel to be of any use.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
+          "description": "Attach the qemu-guest-agent virtio-serial channel to the domain.\n\nThe host does not use the channel yet; this field is the plumbing that lets future\nfeatures (such as reporting guest addresses or requesting a graceful shutdown) talk to\na qemu-guest-agent process inside the guest.\n\nOptional; defaults to enabled. Set to false to omit the channel entirely.\n",
+          "markdownDescription": "Attach the qemu-guest-agent virtio-serial channel to the domain.\n\nThe host does not use the channel yet; this field is the plumbing that lets future\nfeatures (such as reporting guest addresses or requesting a graceful shutdown) talk to\na qemu-guest-agent process inside the guest.\n\nOptional; defaults to enabled. Set to `false` to omit the channel entirely.",
+          "x-intellij-html-description": "\u003cp\u003eAttach the qemu-guest-agent virtio-serial channel to the domain.\u003c/p\u003e\n\n\u003cp\u003eThe host does not use the channel yet; this field is the plumbing that lets future\nfeatures (such as reporting guest addresses or requesting a graceful shutdown) talk to\na qemu-guest-agent process inside the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to enabled. Set to \u003ccode\u003efalse\u003c/code\u003e to omit the channel entirely.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2466,6 +2466,13 @@
     },
     "hypervisor.VirtualMachineCloudInit": {
       "properties": {
+        "library": {
+          "type": "string",
+          "title": "library",
+          "description": "Name of the content library where Talos stores the generated NoCloud ISO.\n\nMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a ContentLibraryConfig.\n",
+          "markdownDescription": "Name of the content library where Talos stores the generated NoCloud ISO.\n\nMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a `ContentLibraryConfig`.",
+          "x-intellij-html-description": "\u003cp\u003eName of the content library where Talos stores the generated NoCloud ISO.\u003c/p\u003e\n\n\u003cp\u003eMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a \u003ccode\u003eContentLibraryConfig\u003c/code\u003e.\u003c/p\u003e\n"
+        },
         "metaData": {
           "type": "string",
           "title": "metaData",
@@ -2490,6 +2497,9 @@
       },
       "additionalProperties": false,
       "type": "object",
+      "required": [
+        "library"
+      ],
       "description": "VirtualMachineCloudInit describes the NoCloud seed handed to the guest."
     },
     "hypervisor.VirtualMachineConfigV1Alpha1": {
@@ -2817,9 +2827,9 @@
         "agent": {
           "$ref": "#/$defs/hypervisor.VirtualMachineAgent",
           "title": "agent",
-          "description": "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.\n",
-          "markdownDescription": "qemu-guest-agent settings.\n\nOptional; the agent channel is not attached when this section is omitted.",
-          "x-intellij-html-description": "\u003cp\u003eqemu-guest-agent settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; the agent channel is not attached when this section is omitted.\u003c/p\u003e\n"
+          "description": "qemu-guest-agent settings.\n\nOptional; omitting this section is equivalent to the default {enabled: true}.\nSet agent.enabled: false to omit the channel entirely.\n",
+          "markdownDescription": "qemu-guest-agent settings.\n\nOptional; omitting this section is equivalent to the default `{enabled: true}`.\nSet `agent.enabled: false` to omit the channel entirely.",
+          "x-intellij-html-description": "\u003cp\u003eqemu-guest-agent settings.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting this section is equivalent to the default \u003ccode\u003e{enabled: true}\u003c/code\u003e.\nSet \u003ccode\u003eagent.enabled: false\u003c/code\u003e to omit the channel entirely.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -8428,6 +8438,90 @@
       ],
       "description": "WatchdogTimerConfig is a watchdog timer config document."
     },
+    "runtime.WorkloadMemoryResource": {
+      "properties": {
+        "limit": {
+          "type": "string",
+          "title": "limit",
+          "description": "Aggregate memory ceiling of the root, in bytes.\n\nThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.\n",
+          "markdownDescription": "Aggregate memory ceiling of the root, in bytes.\n\nThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.",
+          "x-intellij-html-description": "\u003cp\u003eAggregate memory ceiling of the root, in bytes.\u003c/p\u003e\n\n\u003cp\u003eThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "limit"
+      ],
+      "description": "WorkloadMemoryResource bounds the memory of one workload root."
+    },
+    "runtime.WorkloadResourceConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "WorkloadResourceConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "kubepods": {
+          "$ref": "#/$defs/runtime.WorkloadResourceRoot",
+          "title": "kubepods",
+          "description": "Limits for Kubernetes pods.\n",
+          "markdownDescription": "Limits for Kubernetes pods.",
+          "x-intellij-html-description": "\u003cp\u003eLimits for Kubernetes pods.\u003c/p\u003e\n"
+        },
+        "taloscontainers": {
+          "$ref": "#/$defs/runtime.WorkloadResourceRoot",
+          "title": "taloscontainers",
+          "description": "Limits for containers declared via ContainerConfig.\n",
+          "markdownDescription": "Limits for containers declared via `ContainerConfig`.",
+          "x-intellij-html-description": "\u003cp\u003eLimits for containers declared via \u003ccode\u003eContainerConfig\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "virtualMachines": {
+          "$ref": "#/$defs/runtime.WorkloadResourceRoot",
+          "title": "virtualMachines",
+          "description": "Limits for virtual machines.\n",
+          "markdownDescription": "Limits for virtual machines.",
+          "x-intellij-html-description": "\u003cp\u003eLimits for virtual machines.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "WorkloadResourceConfig is a workload resource config document.\\nWorkloadResourceConfig declares an aggregate memory ceiling for each Talos workload root.\\n\\nThe roots are `kubepods`, `taloscontainers` and `virtualMachines`; every root is optional\\nand independent of the others. Omitting a root removes its aggregate cap; individual child\\nlimits still apply.\\nA limit must be positive; it is rounded down to the host page size before it is applied,\\nand bounds RAM only (including page cache charged to the root): swap and hugepages are\\nnot limited by it.\\n\\nTalos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`,\\neven without this document. An omitted limit (zero internally) means an unlimited aggregate cap.\\nKubelet reserved-memory enforcement on these roots is rejected; CPU-only or compressible\\nenforcement is allowed. Static validation cannot inspect external kubelet drop-in files;\\ndrop-in directories are rejected while any workload cap is active.\\nLowering a limit below current usage makes the kernel reclaim and OOM-kill within that root,\\nwhich can terminate containers or virtual machines.\\n\\nThe `kubepods` limit is applied by the kubelet, which stays the only writer of its cgroup:\\nTalos derives `systemReserved.memory` from the limit, so changing it restarts the kubelet,\\nand a limit below the memory used by pods (control plane static pods included) causes\\nOOM kills. The schedulable Node Allocatable is the limit minus the hard eviction\\nthreshold and any hugepage capacity, so it is lower than the limit. Setting\\n`systemReserved.memory`, the equivalent kubelet command line flags or the `Static` memory\\nmanager policy together with the limit is rejected. The limit is inactive while Kubernetes\\nis not configured on the machine; the other roots are enforced regardless.\\n\\nIn container mode the document is validated but declares no policy.\\n"
+    },
+    "runtime.WorkloadResourceRoot": {
+      "properties": {
+        "memory": {
+          "$ref": "#/$defs/runtime.WorkloadMemoryResource",
+          "title": "memory",
+          "description": "Memory limits of the root.\n",
+          "markdownDescription": "Memory limits of the root.",
+          "x-intellij-html-description": "\u003cp\u003eMemory limits of the root.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "memory"
+      ],
+      "description": "WorkloadResourceRoot holds the limits of one workload root."
+    },
     "security.TrustedRootsConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -9465,6 +9559,9 @@
     },
     {
       "$ref": "#/$defs/runtime.WatchdogTimerV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.WorkloadResourceConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/security.TrustedRootsConfigV1Alpha1"

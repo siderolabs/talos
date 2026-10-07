@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -303,6 +304,11 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	// Talos owns the container and VM roots even without workload limits; kubelet must not write their memory.max.
+	if err := container.validateWorkloadResourceKubelet(mode); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// A virtual machine disk provisioned from an image names the content library holding it, which
 	// only the rest of the configuration can resolve.
 	if err := validateVirtualMachineImageReferences(container); err != nil {
@@ -393,6 +399,39 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 	}
 
 	return warnings, errs
+}
+
+// validateWorkloadResourceKubelet protects Talos-managed roots and active workload limits from competing kubelet writers.
+func (container *Container) validateWorkloadResourceKubelet(mode validation.RuntimeMode) error {
+	if mode.InContainer() || !container.kubeletEligible() {
+		return nil
+	}
+
+	kubeletConfig := container.K8sKubeletConfig()
+	workloadResources := container.WorkloadResourceConfig()
+
+	if workloadResources == nil ||
+		(workloadResources.KubepodsMemoryLimit() == 0 && workloadResources.TalosContainersMemoryLimit() == 0 && workloadResources.VirtualMachinesMemoryLimit() == 0) {
+		return kubelet.ValidateWorkloadRootReservations(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs())
+	}
+
+	kubepodsLimit := workloadResources.KubepodsMemoryLimit()
+
+	var multiErr *multierror.Error
+
+	if kubepodsLimit > 0 {
+		multiErr = multierror.Append(multiErr, kubelet.ValidateMemoryLimitConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs()))
+	}
+
+	multiErr = multierror.Append(multiErr, kubelet.ValidateWorkloadRootConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs()))
+
+	return multiErr.ErrorOrNil()
+}
+
+// kubeletEligible mirrors the inputs the kubelet configuration controller requires before it renders anything.
+func (container *Container) kubeletEligible() bool {
+	return container.Cluster() != nil && container.Machine() != nil &&
+		container.K8sNetworkConfig() != nil && container.K8sNodeConfig() != nil && container.K8sKubeletConfig() != nil
 }
 
 // Validate is the legacy validation method.

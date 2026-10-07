@@ -24,6 +24,7 @@ type VirtualMachineSpec = typed.Resource[VirtualMachineSpecSpec, VirtualMachineS
 // VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type VirtualMachineSpecSpec struct {
 	CPU        VirtualMachineCPUSpec         `yaml:"cpu" protobuf:"1"`
 	Memory     VirtualMachineMemorySpec      `yaml:"memory" protobuf:"2"`
@@ -32,6 +33,33 @@ type VirtualMachineSpecSpec struct {
 	Console    VirtualMachineConsoleSpec     `yaml:"console" protobuf:"5"`
 	Disks      []VirtualMachineDiskSpec      `yaml:"disks,omitempty" protobuf:"6"`
 	Interfaces []VirtualMachineInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"7"`
+	CloudInit  *VirtualMachineCloudInitSpec  `yaml:"cloudInit,omitempty" protobuf:"8"`
+	Guest      VirtualMachineGuestSpec       `yaml:"guest" protobuf:"9"`
+}
+
+// VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
+//
+//gotagsrewrite:gen
+type VirtualMachineCloudInitSpec struct {
+	Library       string `yaml:"library" protobuf:"1"`
+	MetaData      string `yaml:"metaData,omitempty" protobuf:"2" redact:"replace"`
+	UserData      string `yaml:"userData,omitempty" protobuf:"3" redact:"replace"`
+	NetworkConfig string `yaml:"networkConfig,omitempty" protobuf:"4" redact:"replace"`
+}
+
+// VirtualMachineGuestSpec describes guest-side features that need host-side plumbing.
+//
+//gotagsrewrite:gen
+type VirtualMachineGuestSpec struct {
+	Agent VirtualMachineAgentSpec `yaml:"agent" protobuf:"1"`
+}
+
+// VirtualMachineAgentSpec describes the qemu-guest-agent channel attached to the guest.
+//
+//gotagsrewrite:gen
+type VirtualMachineAgentSpec struct {
+	// Enabled attaches the org.qemu.guest_agent.0 virtio-serial channel to the domain.
+	Enabled bool `yaml:"enabled" protobuf:"1"`
 }
 
 // VirtualMachineInterfaceSpec describes a network interface attached to a host link.
@@ -171,6 +199,7 @@ func (VirtualMachineSpecExtension) ResourceDefinition() meta.ResourceDefinitionS
 	return meta.ResourceDefinitionSpec{
 		Type:             VirtualMachineSpecType,
 		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

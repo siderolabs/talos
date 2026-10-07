@@ -56,6 +56,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.UniqueMachineToken{},
 		&runtime.WatchdogTimerConfig{},
 		&runtime.WatchdogTimerStatus{},
+		&runtime.WorkloadMemorySpec{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

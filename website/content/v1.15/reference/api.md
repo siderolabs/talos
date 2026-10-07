@@ -514,10 +514,14 @@ description: Talos gRPC API reference.
     - [SystemInformationSpec](#talos.resource.definitions.hardware.SystemInformationSpec)
   
 - [resource/definitions/hypervisor/hypervisor.proto](#resource/definitions/hypervisor/hypervisor.proto)
+    - [CloudInitSpecSpec](#talos.resource.definitions.hypervisor.CloudInitSpecSpec)
+    - [CloudInitStatusSpec](#talos.resource.definitions.hypervisor.CloudInitStatusSpec)
     - [ContentLibraryStatusSpec](#talos.resource.definitions.hypervisor.ContentLibraryStatusSpec)
+    - [VirtualMachineAgentSpec](#talos.resource.definitions.hypervisor.VirtualMachineAgentSpec)
     - [VirtualMachineCPUPlacementSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUPlacementSpec)
     - [VirtualMachineCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUSpec)
     - [VirtualMachineCPUTopologySpec](#talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec)
+    - [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec)
     - [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec)
     - [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec)
     - [VirtualMachineDiskProvisionSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec)
@@ -526,6 +530,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
     - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
+    - [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec)
     - [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
@@ -649,6 +654,7 @@ description: Talos gRPC API reference.
     - [VersionSpec](#talos.resource.definitions.runtime.VersionSpec)
     - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
     - [WatchdogTimerStatusSpec](#talos.resource.definitions.runtime.WatchdogTimerStatusSpec)
+    - [WorkloadMemorySpecSpec](#talos.resource.definitions.runtime.WorkloadMemorySpecSpec)
   
 - [resource/definitions/network/network.proto](#resource/definitions/network/network.proto)
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
@@ -9021,6 +9027,49 @@ SystemInformationSpec represents the system information obtained from smbios.
 
 
 
+<a name="talos.resource.definitions.hypervisor.CloudInitSpecSpec"></a>
+
+### CloudInitSpecSpec
+CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library | [string](#string) |  |  |
+| meta_data | [string](#string) |  |  |
+| user_data | [string](#string) |  |  |
+| network_config | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.CloudInitStatusSpec"></a>
+
+### CloudInitStatusSpec
+CloudInitStatusSpec never contains the raw guest seed.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| virtual_machine | [string](#string) |  |  |
+| library | [string](#string) |  |  |
+| name | [string](#string) |  |  |
+| path | [string](#string) |  | Path and VolumeID pin the backing identity and prevent stale readiness across remounts. |
+| volume_id | [string](#string) |  |  |
+| digest | [string](#string) |  |  |
+| size_bytes | [uint64](#uint64) |  |  |
+| input_digest | [string](#string) |  |  |
+| observed_generation | [string](#string) |  |  |
+| ready | [bool](#bool) |  |  |
+| error | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.ContentLibraryStatusSpec"></a>
 
 ### ContentLibraryStatusSpec
@@ -9034,6 +9083,21 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 | ready | [bool](#bool) |  | Ready is true once the backing volume is mounted. |
 | error | [string](#string) |  | Error describes why the library is not ready. |
 | fingerprint | [string](#string) |  | Fingerprint changes whenever the files in the library do (name, size, modification time). |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineAgentSpec"></a>
+
+### VirtualMachineAgentSpec
+VirtualMachineAgentSpec describes the qemu-guest-agent channel attached to the guest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| enabled | [bool](#bool) |  | Enabled attaches the org.qemu.guest_agent.0 virtio-serial channel to the domain. |
 
 
 
@@ -9088,6 +9152,24 @@ VirtualMachineCPUTopologySpec describes the sockets, cores and threads presented
 | sockets | [uint32](#uint32) |  |  |
 | cores | [uint32](#uint32) |  |  |
 | threads | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec"></a>
+
+### VirtualMachineCloudInitSpec
+VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| library | [string](#string) |  |  |
+| meta_data | [string](#string) |  |  |
+| user_data | [string](#string) |  |  |
+| network_config | [string](#string) |  |  |
 
 
 
@@ -9199,6 +9281,7 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | domain_xml | [string](#string) |  | DomainXML is the libvirt domain description used to start the guest. |
 | power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
 | disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
+| cloud_init | [string](#string) |  | CloudInit identifies the seed status this domain has attached and must hold. |
 
 
 
@@ -9236,6 +9319,21 @@ VirtualMachineFirmwareSpec describes firmware selection without host firmware pa
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  |  |
 | secure_boot | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineGuestSpec"></a>
+
+### VirtualMachineGuestSpec
+VirtualMachineGuestSpec describes guest-side features that need host-side plumbing.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| agent | [VirtualMachineAgentSpec](#talos.resource.definitions.hypervisor.VirtualMachineAgentSpec) |  |  |
 
 
 
@@ -9322,6 +9420,8 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | console | [VirtualMachineConsoleSpec](#talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec) |  |  |
 | disks | [VirtualMachineDiskSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskSpec) | repeated |  |
 | interfaces | [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec) | repeated |  |
+| cloud_init | [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec) |  |  |
+| guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
 
 
 
@@ -9916,6 +10016,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
 | register_with_taints | [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry) | repeated |  |
+| kubepods_memory_limit | [uint64](#uint64) |  | KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset. |
 
 
 
@@ -11262,6 +11363,24 @@ WatchdogTimerStatusSpec describes configuration of watchdog timer.
 | device | [string](#string) |  |  |
 | timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | feed_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.WorkloadMemorySpecSpec"></a>
+
+### WorkloadMemorySpecSpec
+WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+
+Zero means no limit is configured for that root; roots are independent.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| talos_containers_limit | [uint64](#uint64) |  |  |
+| virtual_machines_limit | [uint64](#uint64) |  |  |
 
 
 
