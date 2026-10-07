@@ -25,6 +25,7 @@ import (
 	"github.com/thejerf/suture/v4"
 	"go.uber.org/goleak"
 	"go.uber.org/zap/zaptest"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
@@ -226,6 +227,14 @@ func TestRunnerRestart(t *testing.T) {
 func TestRunAllReportsBindFailure(t *testing.T) {
 	t.Cleanup(func() { goleak.VerifyNone(t) })
 
+	// Hold the socket open so the bind fails regardless of other tests' interface addresses.
+	listener, err := (&net.ListenConfig{}).ListenPacket(t.Context(), "udp4", "127.0.0.1:0")
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, listener.Close()) })
+
+	addr, err := netip.ParseAddrPort(listener.LocalAddr().String())
+	require.NoError(t, err)
+
 	m := dns.NewManager(&testMemberReader{}, &testStaticHostReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
 
 	m.ServeBackground(t.Context())
@@ -233,9 +242,7 @@ func TestRunAllReportsBindFailure(t *testing.T) {
 	var gotErr error
 
 	for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
-		// 192.0.2.0/24 (TEST-NET-1) is not assigned to any interface, so the
-		// bind fails with "cannot assign requested address".
-		{Network: "udp", Addr: netip.MustParseAddrPort("192.0.2.1:10700")},
+		{Network: "udp", Addr: addr},
 	}), false) {
 		if err != nil {
 			gotErr = err
@@ -243,6 +250,7 @@ func TestRunAllReportsBindFailure(t *testing.T) {
 	}
 
 	require.ErrorIs(t, gotErr, dns.ErrCreatingRunner)
+	require.ErrorIs(t, gotErr, unix.EADDRINUSE)
 
 	require.NoError(t, m.ClearAll(false))
 }
