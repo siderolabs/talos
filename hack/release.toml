@@ -483,6 +483,23 @@ with the higher configuration layer taking precedence.
 `RouteStatus` resource IDs are not changed.
 """
 
+    [notes.vm_serial_console]
+        title = "Virtual Machine Serial Console"
+        description = """\
+Talos-managed virtual machines now expose their serial console over the Talos API, with no host shell access required.
+
+`talosctl hypervisor console <vm-name>` attaches to the live serial console of a running VM.
+Press `Ctrl-]` to detach without stopping the VM; `Ctrl-C` is forwarded to the guest.
+Only one session can be attached to a VM at a time, and previous output is not replayed.
+The command is supported on Unix clients only.
+
+Serial output is also persisted on the host (with bounded retention), and can be read with `talosctl logs --kind=vm <vm-name>`,
+including `--tail` and `--follow`. The new `--kind` flag (`container`, `vm` or `service`) selects the log source explicitly;
+omitting it keeps the previous service/container routing.
+
+Both the console and the VM logs require the `os:admin` role and a single target node.
+"""
+
 [make_deps]
 
     [make_deps.tools]
