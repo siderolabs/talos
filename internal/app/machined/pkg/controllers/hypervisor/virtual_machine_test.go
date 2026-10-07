@@ -45,6 +45,7 @@ type domainClient struct {
 	domains         map[string]libvirtdomain.Domain
 	texts           map[string]string
 	starts          map[string]int
+	guestInterfaces []libvirtdomain.GuestInterface
 	opens           int
 	closes          int
 	removeErr       error
@@ -106,6 +107,17 @@ func (c *domainClient) Info(domain libvirtdomain.Domain) (libvirtdomain.Info, er
 	}
 
 	return libvirtdomain.Info{State: 1, MaxMemoryKiB: 1048576, MemoryKiB: 524288, VCPUs: 2}, nil
+}
+
+func (c *domainClient) GuestInterfaces(domain libvirtdomain.Domain) ([]libvirtdomain.GuestInterface, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if existing, ok := c.domains[domain.Name]; !ok || existing.UUID != domain.UUID {
+		return nil, fmt.Errorf("domain %q disappeared", domain.Name)
+	}
+
+	return c.guestInterfaces, nil
 }
 
 func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {

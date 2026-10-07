@@ -5,6 +5,7 @@
 package hypervisor_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -24,6 +25,15 @@ func TestVirtualMachineDomainStatusRoundTrip(t *testing.T) {
 	status.TypedSpec().MaxMemoryKiB = 1048576
 	status.TypedSpec().MemoryKiB = 524288
 	status.TypedSpec().VCPUs = 2
+	status.TypedSpec().Interfaces = []hypervisor.VirtualMachineGuestInterfaceSpec{
+		{
+			Name: "eth0",
+			IPAddresses: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.5/24"),
+				netip.MustParsePrefix("2001:db8::5/64"),
+			},
+		},
+	}
 
 	encoded, err := protobuf.FromResource(status)
 	require.NoError(t, err)
@@ -41,4 +51,6 @@ func TestVirtualMachineDomainStatusRoundTrip(t *testing.T) {
 	text, err := yaml.Marshal(status.TypedSpec())
 	require.NoError(t, err)
 	require.Contains(t, string(text), "powerState: running")
+	require.Contains(t, string(text), "10.0.0.5/24")
+	require.Contains(t, string(text), "2001:db8::5/64")
 }

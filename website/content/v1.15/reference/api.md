@@ -535,6 +535,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineDomainSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainSpecSpec)
     - [VirtualMachineDomainStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec)
     - [VirtualMachineFirmwareSpec](#talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec)
+    - [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec)
     - [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec)
     - [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec)
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
@@ -9387,6 +9388,7 @@ VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
 | max_memory_ki_b | [uint64](#uint64) |  |  |
 | memory_ki_b | [uint64](#uint64) |  |  |
 | vcp_us | [uint32](#uint32) |  |  |
+| interfaces | [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec) | repeated |  |
 
 
 
@@ -9403,6 +9405,23 @@ VirtualMachineFirmwareSpec describes firmware selection without host firmware pa
 | ----- | ---- | ----- | ----------- |
 | type | [string](#string) |  |  |
 | secure_boot | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec"></a>
+
+### VirtualMachineGuestInterfaceSpec
+VirtualMachineGuestInterfaceSpec is one guest interface reported by the qemu-guest-agent.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| hardware_addr | [string](#string) |  |  |
+| ip_addresses | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 
 
 
@@ -9523,6 +9542,8 @@ VirtualMachineStatusSpec describes observed power state and reconciliation stage
 | power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  | PowerState is the matched domain's observed power, or unknown when no domain was observed. |
 | stage | [talos.resource.definitions.enums.HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage) |  | Stage distinguishes unknown observation, convergence, readiness, and observed obstacles. |
 | error | [string](#string) |  | Error describes an observation failure or obstacle, when known. |
+| addresses | [string](#string) | repeated | Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent. |
+| interfaces | [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec) | repeated | Interfaces is the per-interface view returned by qemu-guest-agent. |
 
 
 

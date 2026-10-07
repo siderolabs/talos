@@ -5,6 +5,7 @@ package talos.resource.definitions.hypervisor;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisor";
 option java_package = "dev.talos.api.resource.definitions.hypervisor";
 
+import "common/common.proto";
 import "resource/definitions/enums/enums.proto";
 
 // CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
@@ -169,12 +170,20 @@ message VirtualMachineDomainStatusSpec {
   uint64 max_memory_ki_b = 5;
   uint64 memory_ki_b = 6;
   uint32 vcp_us = 7;
+  repeated VirtualMachineGuestInterfaceSpec interfaces = 8;
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
 message VirtualMachineFirmwareSpec {
   string type = 1;
   bool secure_boot = 2;
+}
+
+// VirtualMachineGuestInterfaceSpec is one guest interface reported by the qemu-guest-agent.
+message VirtualMachineGuestInterfaceSpec {
+  string name = 1;
+  string hardware_addr = 2;
+  repeated common.NetIPPrefix ip_addresses = 3;
 }
 
 // VirtualMachineGuestSpec describes guest-side features that need host-side plumbing.
@@ -235,6 +244,10 @@ message VirtualMachineStatusSpec {
   talos.resource.definitions.enums.HypervisorVirtualMachineStage stage = 2;
   // Error describes an observation failure or obstacle, when known.
   string error = 3;
+  // Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent.
+  repeated string addresses = 4;
+  // Interfaces is the per-interface view returned by qemu-guest-agent.
+  repeated VirtualMachineGuestInterfaceSpec interfaces = 5;
 }
 
 // VirtualMachineVCPUPinSpec pins one guest vCPU to a host CPU list.

@@ -29,6 +29,10 @@ type VirtualMachineStatusSpec struct {
 	Stage VirtualMachineStage `yaml:"stage" protobuf:"2"`
 	// Error describes an observation failure or obstacle, when known.
 	Error string `yaml:"error,omitempty" protobuf:"3"`
+	// Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent.
+	Addresses []string `yaml:"addresses,omitempty" protobuf:"4"`
+	// Interfaces is the per-interface view returned by qemu-guest-agent.
+	Interfaces []VirtualMachineGuestInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"5"`
 }
 
 // NewVirtualMachineStatus initializes a VirtualMachineStatus resource.
@@ -55,6 +59,10 @@ func (VirtualMachineStatusExtension) ResourceDefinition() meta.ResourceDefinitio
 			{
 				Name:     "Stage",
 				JSONPath: "{.stage}",
+			},
+			{
+				Name:     "Addresses",
+				JSONPath: "{.addresses}",
 			},
 			{
 				Name:     "Error",

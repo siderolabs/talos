@@ -119,6 +119,7 @@ func TestDomainsReturnsCompleteInventory(t *testing.T) {
 type domainRecord struct {
 	identity    libvirtdomain.Domain
 	xml         string
+	interfaces  []libvirt.DomainInterface
 	lookupError libvirt.ErrorNumber
 	inactive    bool
 }
@@ -183,17 +184,15 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	case 23: // DOMAIN_LOOKUP_BY_NAME
 		return f.handleLookup(conn, call)
 	case 10: // DOMAIN_CREATE_XML
-		var err error
-
-		payload, err = f.createDomain(call)
-		if err != nil {
-			return err
-		}
+		return f.createDomain(conn, call)
 	case 14: // DOMAIN_GET_XML_DESC
 		name := decodeString(call[24:])
 		payload = encodeString(f.records[name].xml)
 	case 16: // DOMAIN_GET_INFO
 		return replyDomainInfo(conn, call)
+	case 353: // DOMAIN_INTERFACE_ADDRESSES
+		name := decodeString(call[24:])
+		payload = encodeGuestInterfaces(f.records[name].interfaces)
 	case 150: // DOMAIN_IS_ACTIVE
 		name := decodeString(call[24:])
 
@@ -215,21 +214,21 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	return replyCall(conn, call, payload)
 }
 
-func (f *domainWireFixture) createDomain(call []byte) ([]byte, error) {
+func (f *domainWireFixture) createDomain(conn net.Conn, call []byte) error {
 	var description libvirtxml.Domain
 	if err := description.Unmarshal(decodeString(call[24:])); err != nil {
-		return nil, err
+		return err
 	}
 
 	id, err := uuid.Parse(description.UUID)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	identity := libvirtdomain.Domain{Name: description.Name, UUID: id}
 	f.records[identity.Name] = domainRecord{identity: identity, xml: decodeString(call[24:])}
 
-	return encodeDomain(identity), nil
+	return replyCall(conn, call, encodeDomain(identity))
 }
 
 func replyDomainInfo(conn net.Conn, call []byte) error {

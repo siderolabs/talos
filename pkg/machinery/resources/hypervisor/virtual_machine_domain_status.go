@@ -5,6 +5,8 @@
 package hypervisor
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -23,13 +25,23 @@ type VirtualMachineDomainStatus = typed.Resource[VirtualMachineDomainStatusSpec,
 //
 //gotagsrewrite:gen
 type VirtualMachineDomainStatusSpec struct {
-	UUID         string                   `yaml:"uuid" protobuf:"1"`
-	PowerState   VirtualMachinePowerState `yaml:"powerState" protobuf:"2"`
-	Error        string                   `yaml:"error,omitempty" protobuf:"3"`
-	State        uint32                   `yaml:"state" protobuf:"4"`
-	MaxMemoryKiB uint64                   `yaml:"maxMemoryKiB" protobuf:"5"`
-	MemoryKiB    uint64                   `yaml:"memoryKiB" protobuf:"6"`
-	VCPUs        uint32                   `yaml:"vCPUs" protobuf:"7"`
+	UUID         string                             `yaml:"uuid" protobuf:"1"`
+	PowerState   VirtualMachinePowerState           `yaml:"powerState" protobuf:"2"`
+	Error        string                             `yaml:"error,omitempty" protobuf:"3"`
+	State        uint32                             `yaml:"state" protobuf:"4"`
+	MaxMemoryKiB uint64                             `yaml:"maxMemoryKiB" protobuf:"5"`
+	MemoryKiB    uint64                             `yaml:"memoryKiB" protobuf:"6"`
+	VCPUs        uint32                             `yaml:"vCPUs" protobuf:"7"`
+	Interfaces   []VirtualMachineGuestInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"8"`
+}
+
+// VirtualMachineGuestInterfaceSpec is one guest interface reported by the qemu-guest-agent.
+//
+//gotagsrewrite:gen
+type VirtualMachineGuestInterfaceSpec struct {
+	Name         string         `yaml:"name" protobuf:"1"`
+	HardwareAddr string         `yaml:"hardwareAddr,omitempty" protobuf:"2"`
+	IPAddresses  []netip.Prefix `yaml:"ips,omitempty" protobuf:"3"`
 }
 
 // NewVirtualMachineDomainStatus initializes a domain observation.

@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"time"
 
 	libvirt "github.com/digitalocean/go-libvirt"
@@ -110,11 +111,19 @@ type Info struct {
 	VCPUs        uint32
 }
 
+// GuestInterface is one network interface as reported by the qemu-guest-agent.
+type GuestInterface struct {
+	Name         string
+	HardwareAddr string
+	IPs          []netip.Prefix
+}
+
 // Client represents one bounded reconciliation session; callers must Close it.
 type Client interface {
 	Domains() ([]Domain, error)
 	Active(Domain) (bool, error)
 	Info(Domain) (Info, error)
+	GuestInterfaces(Domain) ([]GuestInterface, error)
 	Start(Domain, string, ...StartOption) error
 	Remove(Domain) error
 	Close()
@@ -140,6 +149,7 @@ type definitionRPC interface {
 type lifecycleRPC interface {
 	DomainIsActive(libvirt.Domain) (int32, error)
 	DomainGetInfo(libvirt.Domain) (uint8, uint64, uint64, uint16, uint64, error)
+	DomainInterfaceAddresses(libvirt.Domain, uint32, uint32) ([]libvirt.DomainInterface, error)
 	DomainDestroy(libvirt.Domain) error
 	DomainHasManagedSaveImage(libvirt.Domain, uint32) (int32, error)
 	DomainManagedSaveRemove(libvirt.Domain, uint32) error
@@ -224,6 +234,53 @@ func (c *client) Info(domain Domain) (Info, error) {
 		MemoryKiB:    memory,
 		VCPUs:        uint32(vcpus),
 	}, nil
+}
+
+// GuestInterfaces reports interfaces as seen by the qemu-guest-agent running inside the guest.
+func (c *client) GuestInterfaces(domain Domain) ([]GuestInterface, error) {
+	found, exists, err := c.lookup(domain)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		return nil, fmt.Errorf("domain %q disappeared before reading guest interfaces", domain.Name)
+	}
+
+	raw, err := c.rpc.DomainInterfaceAddresses(found, uint32(libvirt.DomainInterfaceAddressesSrcAgent), 0)
+	if err != nil {
+		return nil, err
+	}
+
+	ifaces := make([]GuestInterface, 0, len(raw))
+
+	for _, iface := range raw {
+		converted := GuestInterface{
+			Name: iface.Name,
+		}
+
+		if len(iface.Hwaddr) > 0 {
+			converted.HardwareAddr = iface.Hwaddr[0]
+		}
+
+		for _, addr := range iface.Addrs {
+			ip, err := netip.ParseAddr(addr.Addr)
+			if err != nil {
+				return nil, fmt.Errorf("parse guest interface %q address: %w", iface.Name, err)
+			}
+
+			prefix := netip.PrefixFrom(ip, int(addr.Prefix))
+			if !prefix.IsValid() {
+				return nil, fmt.Errorf("invalid guest interface %q prefix %s/%d", iface.Name, ip, addr.Prefix)
+			}
+
+			converted.IPs = append(converted.IPs, prefix)
+		}
+
+		ifaces = append(ifaces, converted)
+	}
+
+	return ifaces, nil
 }
 
 func (c *client) lookup(d Domain) (libvirt.Domain, bool, error) {

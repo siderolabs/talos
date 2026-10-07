@@ -6,6 +6,10 @@
 
 package hypervisor
 
+import (
+	"net/netip"
+)
+
 // DeepCopy generates a deep copy of ContentLibraryStatusSpec.
 func (o ContentLibraryStatusSpec) DeepCopy() ContentLibraryStatusSpec {
 	var cp ContentLibraryStatusSpec = o
@@ -79,12 +83,36 @@ func (o VirtualMachineDomainSpecSpec) DeepCopy() VirtualMachineDomainSpecSpec {
 // DeepCopy generates a deep copy of VirtualMachineDomainStatusSpec.
 func (o VirtualMachineDomainStatusSpec) DeepCopy() VirtualMachineDomainStatusSpec {
 	var cp VirtualMachineDomainStatusSpec = o
+	if o.Interfaces != nil {
+		cp.Interfaces = make([]VirtualMachineGuestInterfaceSpec, len(o.Interfaces))
+		copy(cp.Interfaces, o.Interfaces)
+		for i2 := range o.Interfaces {
+			if o.Interfaces[i2].IPAddresses != nil {
+				cp.Interfaces[i2].IPAddresses = make([]netip.Prefix, len(o.Interfaces[i2].IPAddresses))
+				copy(cp.Interfaces[i2].IPAddresses, o.Interfaces[i2].IPAddresses)
+			}
+		}
+	}
 	return cp
 }
 
 // DeepCopy generates a deep copy of VirtualMachineStatusSpec.
 func (o VirtualMachineStatusSpec) DeepCopy() VirtualMachineStatusSpec {
 	var cp VirtualMachineStatusSpec = o
+	if o.Addresses != nil {
+		cp.Addresses = make([]string, len(o.Addresses))
+		copy(cp.Addresses, o.Addresses)
+	}
+	if o.Interfaces != nil {
+		cp.Interfaces = make([]VirtualMachineGuestInterfaceSpec, len(o.Interfaces))
+		copy(cp.Interfaces, o.Interfaces)
+		for i2 := range o.Interfaces {
+			if o.Interfaces[i2].IPAddresses != nil {
+				cp.Interfaces[i2].IPAddresses = make([]netip.Prefix, len(o.Interfaces[i2].IPAddresses))
+				copy(cp.Interfaces[i2].IPAddresses, o.Interfaces[i2].IPAddresses)
+			}
+		}
+	}
 	return cp
 }
 

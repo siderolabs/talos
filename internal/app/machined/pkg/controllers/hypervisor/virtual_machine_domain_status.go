@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -26,8 +27,12 @@ const virtqemudNotReadyError = "virtqemud service is not ready"
 // VirtualMachineDomainStatusController inventories all libvirt domains, regardless of Talos ownership.
 type VirtualMachineDomainStatusController struct {
 	V1Alpha1Mode machineruntime.Mode
-	Open         func(context.Context) (libvirtdomain.Client, error)
-	Watch        func(context.Context) (<-chan struct{}, error)
+	// Open is the long-lived observation session that feeds Watch and lifecycle queries.
+	Open func(context.Context) (libvirtdomain.Client, error)
+	// OpenBounded is used for the guest-agent query, which the controller does not pace: a hung
+	// agent on the inventory session would stall every VM observed after it in the same pass.
+	OpenBounded func(context.Context) (libvirtdomain.Client, error)
+	Watch       func(context.Context) (<-chan struct{}, error)
 }
 
 type domainObservationSession struct {
@@ -77,6 +82,10 @@ func (*VirtualMachineDomainStatusController) Outputs() []controller.Output {
 	}
 }
 
+// agentPollInterval drives re-queries of qemu-guest-agent between libvirt lifecycle events, which
+// do not announce agent connect.
+const agentPollInterval = 15 * time.Second
+
 // Run implements controller.Controller.
 func (ctrl *VirtualMachineDomainStatusController) Run(ctx context.Context, runtime controller.Runtime, _ *zap.Logger) error {
 	if ctrl.V1Alpha1Mode.InContainer() {
@@ -85,6 +94,9 @@ func (ctrl *VirtualMachineDomainStatusController) Run(ctx context.Context, runti
 
 	var session domainObservationSession
 	defer session.close()
+
+	poll := time.NewTicker(agentPollInterval)
+	defer poll.Stop()
 
 	for {
 		select {
@@ -95,17 +107,53 @@ func (ctrl *VirtualMachineDomainStatusController) Run(ctx context.Context, runti
 				return err
 			}
 		case _, ok := <-session.events:
-			if err := ctrl.handleWatchEvent(ctx, runtime, &session, ok); err != nil {
-				if ctx.Err() != nil {
-					return nil
-				}
-
+			if err := ctrl.dispatchWatchEvent(ctx, runtime, &session, ok); err != nil {
+				return err
+			}
+		case <-poll.C:
+			if err := ctrl.handlePoll(ctx, runtime, &session); err != nil {
 				return err
 			}
 		}
 
 		runtime.ResetRestartBackoff()
 	}
+}
+
+func (ctrl *VirtualMachineDomainStatusController) dispatchWatchEvent(
+	ctx context.Context,
+	runtime controller.Runtime,
+	session *domainObservationSession,
+	ok bool,
+) error {
+	err := ctrl.handleWatchEvent(ctx, runtime, session, ok)
+	if err == nil {
+		return nil
+	}
+
+	if ctx.Err() != nil {
+		return nil //nolint:nilerr // cancellation is not an observation failure.
+	}
+
+	return err
+}
+
+func (ctrl *VirtualMachineDomainStatusController) handlePoll(
+	ctx context.Context,
+	runtime controller.Runtime,
+	session *domainObservationSession,
+) error {
+	if session.client == nil {
+		return nil
+	}
+
+	if err := ctrl.reconcile(ctx, runtime, session.client); err != nil {
+		session.close()
+
+		return ctrl.observationError(ctx, runtime, err)
+	}
+
+	return nil
 }
 
 func (ctrl *VirtualMachineDomainStatusController) handleServiceEvent(
@@ -226,6 +274,9 @@ func (ctrl *VirtualMachineDomainStatusController) markUnavailable(
 		if writeErr := safe.WriterModify(ctx, r, status, func(resource *hypervisor.VirtualMachineDomainStatus) error {
 			resource.TypedSpec().PowerState = hypervisor.VirtualMachinePowerStateUnknown
 			resource.TypedSpec().Error = reason
+			// Dropped alongside the error: the last values were only true for the previous
+			// observation, and keeping them would surface stale IPs on an unreachable VM.
+			resource.TypedSpec().Interfaces = nil
 
 			return nil
 		}); writeErr != nil {
@@ -247,7 +298,7 @@ func (ctrl *VirtualMachineDomainStatusController) reconcile(ctx context.Context,
 	var errs error
 
 	for _, domain := range domains {
-		status := observeDomain(client, domain)
+		status := ctrl.observeDomain(ctx, client, domain)
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, domain.Name),
@@ -264,7 +315,7 @@ func (ctrl *VirtualMachineDomainStatusController) reconcile(ctx context.Context,
 	return errors.Join(errs, safe.CleanupOutputs[*hypervisor.VirtualMachineDomainStatus](ctx, runtime))
 }
 
-func observeDomain(client libvirtdomain.Client, domain libvirtdomain.Domain) hypervisor.VirtualMachineDomainStatusSpec {
+func (ctrl *VirtualMachineDomainStatusController) observeDomain(ctx context.Context, client libvirtdomain.Client, domain libvirtdomain.Domain) hypervisor.VirtualMachineDomainStatusSpec {
 	status := hypervisor.VirtualMachineDomainStatusSpec{UUID: domain.UUID.String()}
 
 	info, err := client.Info(domain)
@@ -292,5 +343,52 @@ func observeDomain(client libvirtdomain.Client, domain libvirtdomain.Domain) hyp
 		status.PowerState = hypervisor.VirtualMachinePowerStateUnknown
 	}
 
+	// Agent query runs on a short-lived sub-session so a hung agent sheds on its own deadline
+	// instead of stalling the inventory session for every later VM.
+	if status.PowerState == hypervisor.VirtualMachinePowerStateRunning && ctrl.OpenBounded != nil {
+		status.Interfaces = ctrl.queryGuestInterfaces(ctx, domain)
+	}
+
 	return status
+}
+
+// queryGuestInterfaces opens a short-lived session and returns what the guest agent reports.
+// Any failure yields nil; the status's own error field surfaces unreachability.
+func (ctrl *VirtualMachineDomainStatusController) queryGuestInterfaces(ctx context.Context, domain libvirtdomain.Domain) []hypervisor.VirtualMachineGuestInterfaceSpec {
+	client, err := ctrl.OpenBounded(ctx)
+	if err != nil {
+		return nil
+	}
+
+	defer client.Close()
+
+	ifaces, err := client.GuestInterfaces(domain)
+	if err != nil {
+		return nil
+	}
+
+	return convertGuestInterfaces(ifaces)
+}
+
+func convertGuestInterfaces(src []libvirtdomain.GuestInterface) []hypervisor.VirtualMachineGuestInterfaceSpec {
+	out := make([]hypervisor.VirtualMachineGuestInterfaceSpec, 0, len(src))
+
+	for _, iface := range src {
+		converted := hypervisor.VirtualMachineGuestInterfaceSpec{
+			Name:         iface.Name,
+			HardwareAddr: iface.HardwareAddr,
+		}
+
+		for _, addr := range iface.IPs {
+			if addr.Addr().IsLoopback() {
+				continue
+			}
+
+			converted.IPAddresses = append(converted.IPAddresses, addr)
+		}
+
+		out = append(out, converted)
+	}
+
+	return out
 }

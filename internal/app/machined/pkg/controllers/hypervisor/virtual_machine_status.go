@@ -8,11 +8,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -244,6 +246,9 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 	}
 
 	status.PowerState = domain.TypedSpec().PowerState
+	status.Interfaces = domain.TypedSpec().Interfaces
+	status.Addresses = flattenGuestAddresses(domain.TypedSpec().Interfaces)
+
 	if domain.TypedSpec().Error != "" {
 		status.Stage = hypervisor.VirtualMachineStageError
 		status.Error = domain.TypedSpec().Error
@@ -261,6 +266,12 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 	}
 
 	return reconcileVirtualMachinePower(desired, status)
+}
+
+func flattenGuestAddresses(ifaces []hypervisor.VirtualMachineGuestInterfaceSpec) []string {
+	return xslices.FlatMap(ifaces, func(iface hypervisor.VirtualMachineGuestInterfaceSpec) []string {
+		return xslices.Map(iface.IPAddresses, netip.Prefix.String)
+	})
 }
 
 func reconcileVirtualMachinePower(desired string,

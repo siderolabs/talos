@@ -7,6 +7,7 @@ package hypervisor_test
 import (
 	"context"
 	"errors"
+	"net/netip"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -30,16 +31,18 @@ type openFailure struct{ err error }
 
 type VirtualMachineStatusSuite struct {
 	ctest.DefaultSuite
-	client  *domainClient
-	openErr atomic.Pointer[openFailure]
-	opens   atomic.Int32
-	events  chan struct{}
+	client       *domainClient
+	openErr      atomic.Pointer[openFailure]
+	opens        atomic.Int32
+	boundedOpens atomic.Int32
+	events       chan struct{}
 }
 
 func (s *VirtualMachineStatusSuite) SetupTest() {
 	s.DefaultSuite.SetupTest()
 	s.openErr.Store(nil)
 	s.opens.Store(0)
+	s.boundedOpens.Store(0)
 	s.events = make(chan struct{}, 1)
 	s.client = &domainClient{
 		domains:         make(map[string]libvirtdomain.Domain),
@@ -76,9 +79,49 @@ func (s *VirtualMachineStatusSuite) open(ctx context.Context) (libvirtdomain.Cli
 	return s.client.open(ctx)
 }
 
+// openBounded wires OpenBounded to a wrapper whose Close is a no-op, so bounded-session
+// accounting does not leak into assertions on the long-lived observation session's counters.
+func (s *VirtualMachineStatusSuite) openBounded(_ context.Context) (libvirtdomain.Client, error) {
+	s.boundedOpens.Add(1)
+
+	return &boundedDomainClient{inner: s.client}, nil
+}
+
+// boundedDomainClient is the test fake used for guest-agent sub-sessions. Only the methods
+// observeDomain actually calls are implemented; the rest panic to flag unexpected use.
+type boundedDomainClient struct {
+	inner *domainClient
+}
+
+func (c *boundedDomainClient) Close() {}
+
+func (c *boundedDomainClient) GuestInterfaces(domain libvirtdomain.Domain) ([]libvirtdomain.GuestInterface, error) {
+	return c.inner.GuestInterfaces(domain)
+}
+
+func (c *boundedDomainClient) Domains() ([]libvirtdomain.Domain, error) {
+	panic("bounded client used for domain inventory")
+}
+
+func (c *boundedDomainClient) Active(libvirtdomain.Domain) (bool, error) {
+	panic("bounded client used for active check")
+}
+
+func (c *boundedDomainClient) Info(libvirtdomain.Domain) (libvirtdomain.Info, error) {
+	panic("bounded client used for info")
+}
+
+func (c *boundedDomainClient) Start(libvirtdomain.Domain, string, ...libvirtdomain.StartOption) error {
+	panic("bounded client used for start")
+}
+
+func (c *boundedDomainClient) Remove(libvirtdomain.Domain) error {
+	panic("bounded client used for remove")
+}
+
 func (s *VirtualMachineStatusSuite) startObserver() {
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainStatusController{
-		Open: s.open, Watch: func(context.Context) (<-chan struct{}, error) { return s.events, nil },
+		Open: s.open, OpenBounded: s.openBounded, Watch: func(context.Context) (<-chan struct{}, error) { return s.events, nil },
 	}))
 }
 
@@ -86,7 +129,7 @@ func (s *VirtualMachineStatusSuite) TestLifecycleEventRefreshesUnmanagedDomainWi
 	domain := libvirtdomain.Domain{Name: "event-only", UUID: uuid.New()}
 
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainStatusController{
-		Open: s.open, Watch: func(context.Context) (<-chan struct{}, error) { return s.events, nil },
+		Open: s.open, OpenBounded: s.openBounded, Watch: func(context.Context) (<-chan struct{}, error) { return s.events, nil },
 	}))
 
 	s.Require().Eventually(func() bool {
@@ -124,6 +167,7 @@ func (s *VirtualMachineStatusSuite) registerReadinessObserver(
 
 			return s.open(ctx)
 		},
+		OpenBounded: s.openBounded,
 		Watch: func(ctx context.Context) (<-chan struct{}, error) {
 			subscriptions.Add(1)
 
@@ -250,7 +294,7 @@ func (s *VirtualMachineStatusSuite) TestLifecycleEventRemovesDisappearedDomainWi
 	domain := libvirtdomain.Domain{Name: "event-only", UUID: uuid.New()}
 	s.client.domains[domain.Name] = domain
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainStatusController{
-		Open: s.open, Watch: func(context.Context) (<-chan struct{}, error) { return s.events, nil },
+		Open: s.open, OpenBounded: s.openBounded, Watch: func(context.Context) (<-chan struct{}, error) { return s.events, nil },
 	}))
 
 	s.Require().Eventually(func() bool {
@@ -282,7 +326,8 @@ func (s *VirtualMachineStatusSuite) TestClosedLifecycleWatchKeepsObservationUnti
 	var subscriptions atomic.Int32
 
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainStatusController{
-		Open: s.open,
+		Open:        s.open,
+		OpenBounded: s.openBounded,
 		Watch: func(ctx context.Context) (<-chan struct{}, error) {
 			switch subscriptions.Add(1) {
 			case 1:
@@ -510,6 +555,119 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStageReady, "")
 }
 
+// Guest-agent interfaces surface on the VirtualMachineStatus, loopback addresses are dropped
+// regardless of interface name, and the per-interface view is preserved.
+func (s *VirtualMachineStatusSuite) TestGuestAgentAddressesSurfaceOnStatus() {
+	name := "vm1"
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+	s.client.guestInterfaces = []libvirtdomain.GuestInterface{
+		{
+			// Linux loopback: all addresses must be dropped.
+			Name: "lo",
+			IPs: []netip.Prefix{
+				netip.MustParsePrefix("127.0.0.1/8"),
+				netip.MustParsePrefix("::1/128"),
+			},
+		},
+		{
+			// Non-loopback interface with a mix of real and loopback-range addresses.
+			Name:         "eth0",
+			HardwareAddr: "52:54:00:12:34:56",
+			IPs: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.5/24"),
+				netip.MustParsePrefix("127.0.0.2/8"),
+				netip.MustParsePrefix("fe80::1/64"),
+			},
+		},
+	}
+
+	spec := newRenderableSpec(name, "running")
+	s.Create(spec)
+
+	domainSpec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+	domainSpec.TypedSpec().PowerState = "running"
+	domainSpec.TypedSpec().DomainXML = `<domain><name>vm1</name></domain>`
+	s.Create(domainSpec)
+	s.start()
+
+	s.assertGuestAddresses(name, []string{"10.0.0.5/24", "fe80::1/64"}, 2)
+
+	// A refresh after the guest reports new addresses must propagate.
+	s.client.mu.Lock()
+	s.client.guestInterfaces[1].IPs = []netip.Prefix{
+		netip.MustParsePrefix("10.0.0.6/24"),
+	}
+	s.client.mu.Unlock()
+
+	s.events <- struct{}{}
+
+	s.assertGuestAddresses(name, []string{"10.0.0.6/24"}, 2)
+}
+
+// Addresses must drop when observation stops: the status's error field already names the outage,
+// and keeping the last known values would misreport reachability. virtqemud leaving triggers
+// markUnavailable across every observed domain.
+func (s *VirtualMachineStatusSuite) TestObservationOutageClearsGuestAddresses() {
+	name := "vm1"
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+	s.client.guestInterfaces = []libvirtdomain.GuestInterface{
+		{
+			Name:         "eth0",
+			HardwareAddr: "52:54:00:12:34:56",
+			IPs: []netip.Prefix{
+				netip.MustParsePrefix("10.0.0.5/24"),
+			},
+		},
+	}
+
+	spec := newRenderableSpec(name, "running")
+	s.Create(spec)
+
+	domainSpec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+	domainSpec.TypedSpec().PowerState = "running"
+	domainSpec.TypedSpec().DomainXML = `<domain><name>vm1</name></domain>`
+	s.Create(domainSpec)
+	s.start()
+
+	s.assertGuestAddresses(name, []string{"10.0.0.5/24"}, 1)
+
+	// virtqemud away triggers markUnavailable, which must drop interfaces as well as power state.
+	service, err := safe.StateGetByID[*v1alpha1.Service](s.Ctx(), s.State(), virtqemudServiceID)
+	s.Require().NoError(err)
+	s.Destroy(service)
+
+	s.Require().Eventually(func() bool {
+		status, err := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
+		if err != nil {
+			return false
+		}
+
+		return len(status.TypedSpec().Addresses) == 0 && len(status.TypedSpec().Interfaces) == 0
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func (s *VirtualMachineStatusSuite) assertGuestAddresses(name string, want []string, interfaces int) {
+	s.Require().Eventually(func() bool {
+		status, err := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
+		if err != nil {
+			return false
+		}
+
+		actual := status.TypedSpec()
+		if len(actual.Addresses) != len(want) || len(actual.Interfaces) != interfaces {
+			return false
+		}
+
+		for i, addr := range want {
+			if actual.Addresses[i] != addr {
+				return false
+			}
+		}
+
+		return true
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
 // A link the host lacks costs the spec its power intent, so the running domain is on its way out:
 // readiness would be a lie.
 func (s *VirtualMachineStatusSuite) TestUnresolvedLinkHoldsBackReadiness() {
@@ -649,7 +807,8 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUnti
 	var subscriptions atomic.Int32
 
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainStatusController{
-		Open: s.open,
+		Open:        s.open,
+		OpenBounded: s.openBounded,
 		Watch: func(ctx context.Context) (<-chan struct{}, error) {
 			switch subscriptions.Add(1) {
 			case 1:
