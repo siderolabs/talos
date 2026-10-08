@@ -544,6 +544,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
     - [VirtualMachineStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineStatusSpec)
     - [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec)
+    - [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec)
   
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
     - [LinuxIDMapping](#talos.resource.definitions.proto.LinuxIDMapping)
@@ -9525,6 +9526,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | interfaces | [VirtualMachineInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec) | repeated |  |
 | cloud_init | [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec) |  |  |
 | guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
+| video | [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec) |  | Video is the graphics device presented when a VNC console is enabled. |
 
 
 
@@ -9560,6 +9562,22 @@ VirtualMachineVCPUPinSpec pins one guest vCPU to a host CPU list.
 | ----- | ---- | ----- | ----------- |
 | vcpu | [uint32](#uint32) |  |  |
 | cp_us | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineVideoSpec"></a>
+
+### VirtualMachineVideoSpec
+VirtualMachineVideoSpec describes the virtual graphics device.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| model | [string](#string) |  |  |
+| vram_mi_b | [uint32](#uint32) |  |  |
 
 
 

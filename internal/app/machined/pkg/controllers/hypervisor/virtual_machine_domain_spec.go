@@ -453,7 +453,7 @@ func renderVirtualMachineDomain(
 
 	renderVirtualMachineFirmware(&domain, spec.Firmware)
 
-	renderVirtualMachineConsole(&domain, spec.Console)
+	renderVirtualMachineConsole(&domain, spec.Console, spec.Video)
 
 	renderVirtualMachineGuest(&domain, spec.Guest)
 
@@ -470,7 +470,7 @@ func renderVirtualMachineDomain(
 	return domainXML, attachedDisks, nil
 }
 
-func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec) {
+func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec, video hypervisor.VirtualMachineVideoSpec) {
 	if console.Serial {
 		// libvirt allocates the PTY; no host device path is prescribed.
 		// The definition adapter adds capture after assigning the host-specific UUID.
@@ -494,9 +494,20 @@ func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.V
 		}
 
 		if runtime.GOARCH == "amd64" {
-			// Standard VGA and USB HID work before guest drivers are installed.
+			// Default to VGA; an explicitly selected model may require guest drivers.
 			// Leave other architectures' device defaults to libvirt.
-			domain.Devices.Videos = []libvirtxml.DomainVideo{{Model: libvirtxml.DomainVideoModel{Type: "vga"}}}
+			videoModel := video.Model
+			if videoModel == "" {
+				videoModel = "vga"
+			}
+
+			videoDev := libvirtxml.DomainVideo{Model: libvirtxml.DomainVideoModel{Type: videoModel}}
+			if video.VRAMMiB > 0 {
+				// libvirt's vram attribute is in KiB.
+				videoDev.Model.VRam = uint(video.VRAMMiB) * 1024
+			}
+
+			domain.Devices.Videos = []libvirtxml.DomainVideo{videoDev}
 			domain.Devices.Controllers = append(domain.Devices.Controllers, libvirtxml.DomainController{
 				Type: "usb", Model: "qemu-xhci", USB: &libvirtxml.DomainControllerUSB{},
 			})
@@ -908,6 +919,10 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 
 	if err := validateVirtualMachineFirmware(name, spec.Firmware); err != nil {
 		return err
+	}
+
+	if err := hypervisorhelpers.ValidateVirtualMachineVideo(spec.Video.Model, spec.Video.VRAMMiB); err != nil {
+		return fmt.Errorf("virtual machine %q: %w", name, err)
 	}
 
 	if err := validateVirtualMachineInterfaces(name, spec.Interfaces); err != nil {

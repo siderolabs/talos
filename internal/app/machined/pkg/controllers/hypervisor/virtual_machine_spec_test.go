@@ -795,6 +795,58 @@ func (suite *VirtualMachineSpecSuite) TestRejectsCPULimitOutsideSchemaRange() {
 	}
 }
 
+func (suite *VirtualMachineSpecSuite) TestInjectedInvalidVideo() {
+	for _, video := range []hypervisor.VirtualMachineVideoSpec{
+		{Model: "qxl"},
+		{Model: "unknown"},
+		{Model: "virtio", VRAMMiB: 32},
+		{Model: "cirrus", VRAMMiB: 32},
+		{Model: "vga", VRAMMiB: 1024},
+		{Model: "bochs", VRAMMiB: 2},
+	} {
+		suite.logs.TakeAll()
+
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "video-invalid")
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+			PowerState: "stopped",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Console:    hypervisor.VirtualMachineConsoleSpec{VNC: true},
+			Video:      video,
+		}
+		suite.Create(spec)
+
+		reason := "video.vramMiB"
+		if video.Model == "qxl" || video.Model == "unknown" {
+			reason = "unsupported video.model"
+		}
+
+		suite.assertConversionError("video-invalid", reason)
+		ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "video-invalid")
+		suite.Destroy(spec)
+	}
+}
+
+func (suite *VirtualMachineSpecSuite) TestVideoLifecycle() {
+	doc := newVirtualMachine("video")
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	for _, video := range []hypervisorcfg.VirtualMachineVideo{
+		{ModelConfig: "bochs", VRAMMiBConfig: 32},
+		{ModelConfig: "vga", VRAMMiBConfig: 64},
+		{},
+	} {
+		doc.VideoConfig = video
+		suite.replaceConfig(doc)
+		ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+			asrt.Equal(hypervisor.VirtualMachineVideoSpec{Model: video.ModelConfig, VRAMMiB: video.VRAMMiBConfig}, res.TypedSpec().Video)
+		})
+	}
+}
+
 func (suite *VirtualMachineSpecSuite) replaceConfig(docs ...configcfg.Document) {
 	cfg, err := container.New(docs...)
 	suite.Require().NoError(err)

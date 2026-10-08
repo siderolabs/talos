@@ -151,6 +151,7 @@ guest:
 |`console` |<a href="#VirtualMachineConfig.console">VirtualMachineConsole</a> |Consoles attached to the virtual machine.<br><br>Optional; omitting it leaves both consoles detached.  | |
 |`networking` |<a href="#VirtualMachineConfig.networking">VirtualMachineNetworking</a> |Networking settings for the virtual machine.<br><br>Optional; a virtual machine with no interfaces has no network connectivity at all.  | |
 |`guest` |<a href="#VirtualMachineConfig.guest">VirtualMachineGuest</a> |Settings which apply inside the guest.<br><br>Optional; omitting it leaves the guest to boot its image unmodified.  | |
+|`video` |<a href="#VirtualMachineConfig.video">VirtualMachineVideo</a> |Video device presented to the guest on amd64 when a VNC console is enabled.<br>Other architectures use libvirt's defaults; without VNC this block has no effect.<br>Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.  | |
 
 
 
@@ -556,6 +557,25 @@ VirtualMachineAgent describes the qemu-guest-agent settings for a virtual machin
 |`enabled` |bool |Attach the qemu-guest-agent virtio-serial channel to the domain.<br><br>The host does not use the channel yet; this field is the plumbing that lets future<br>features (such as reporting guest addresses or requesting a graceful shutdown) talk to<br>a qemu-guest-agent process inside the guest.<br><br>Optional; defaults to enabled. Set to `false` to omit the channel entirely.  | |
 
 
+
+
+
+
+
+
+## video {#VirtualMachineConfig.video}
+
+VirtualMachineVideo describes the virtual graphics device.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`model` |string |Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+model: vga
+{{< /highlight >}}</details> | |
+|`vramMiB` |uint32 |Video RAM in MiB for `vga` and `bochs`. Zero leaves libvirt's default.<br>Nonzero values must be powers of two: 1–512 MiB for `vga`, 4–256 MiB for `bochs`.<br>Must be zero for `virtio` and `cirrus`, for which libvirt ignores this setting.<br>This does not set the guest's resolution or enable 3D acceleration.  | |
 
 
 

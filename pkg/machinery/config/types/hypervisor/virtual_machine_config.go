@@ -115,6 +115,29 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//
 	//     Optional; omitting it leaves the guest to boot its image unmodified.
 	GuestConfig VirtualMachineGuest `yaml:"guest,omitempty"`
+	//   description: |
+	//     Video device presented to the guest on amd64 when a VNC console is enabled.
+	//     Other architectures use libvirt's defaults; without VNC this block has no effect.
+	//     Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.
+	VideoConfig VirtualMachineVideo `yaml:"video,omitempty"`
+}
+
+// VirtualMachineVideo describes the virtual graphics device.
+type VirtualMachineVideo struct {
+	//   description: |
+	//     Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`.
+	//   examples:
+	//     - value: >
+	//        "vga"
+	//   schema:
+	//     enum: ["", vga, virtio, bochs, cirrus]
+	ModelConfig string `yaml:"model,omitempty"`
+	//   description: |
+	//     Video RAM in MiB for `vga` and `bochs`. Zero leaves libvirt's default.
+	//     Nonzero values must be powers of two: 1–512 MiB for `vga`, 4–256 MiB for `bochs`.
+	//     Must be zero for `virtio` and `cirrus`, for which libvirt ignores this setting.
+	//     This does not set the guest's resolution or enable 3D acceleration.
+	VRAMMiBConfig uint32 `yaml:"vramMiB,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.
@@ -417,6 +440,17 @@ func (c *VirtualMachineConfigV1Alpha1) Guest() config.VirtualMachineGuestConfig 
 	return &c.GuestConfig
 }
 
+// Video implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Video() config.VirtualMachineVideoConfig {
+	return &c.VideoConfig
+}
+
+// Model implements config.VirtualMachineVideoConfig interface.
+func (v *VirtualMachineVideo) Model() string { return v.ModelConfig }
+
+// VRAMMiB implements config.VirtualMachineVideoConfig interface.
+func (v *VirtualMachineVideo) VRAMMiB() uint32 { return v.VRAMMiBConfig }
+
 // Redact implements config.SecretDocument interface.
 //
 // Only the guest's `user-data` is redacted: it is where SSH keys, passwords and join tokens end up.
@@ -438,6 +472,7 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	validationErrors = errors.Join(validationErrors, c.ValidateCPU())
 	validationErrors = errors.Join(validationErrors, c.ValidateMemory())
 	validationErrors = errors.Join(validationErrors, c.ValidateFirmware())
+	validationErrors = errors.Join(validationErrors, c.ValidateVideo())
 	validationErrors = errors.Join(validationErrors, c.ValidateDisks())
 	validationErrors = errors.Join(validationErrors, c.ValidateNetworking())
 
@@ -557,6 +592,11 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateNetworking() error {
 	}
 
 	return validationErrors
+}
+
+// ValidateVideo checks the graphics device settings.
+func (c *VirtualMachineConfigV1Alpha1) ValidateVideo() error {
+	return hypervisorhelpers.ValidateVirtualMachineVideo(c.VideoConfig.ModelConfig, c.VideoConfig.VRAMMiBConfig)
 }
 
 // ValidateFirmware checks the firmware the virtual machine boots.

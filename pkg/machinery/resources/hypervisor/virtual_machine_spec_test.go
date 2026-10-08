@@ -32,6 +32,7 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 		PowerState: "suspended",
 		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi", SecureBoot: true},
 		Console:    hypervisor.VirtualMachineConsoleSpec{Serial: true, VNC: true},
+		Video:      hypervisor.VirtualMachineVideoSpec{Model: "bochs", VRAMMiB: 32},
 		Disks: []hypervisor.VirtualMachineDiskSpec{
 			{
 				Name:      "system",
@@ -86,6 +87,15 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, res, roundTrip)
 	assert.Equal(t, res.TypedSpec(), roundTrip.(*hypervisor.VirtualMachineSpec).TypedSpec())
+
+	// Dynamic COSI encoding uses struct tags; also verify the generated public API
+	// knows field 10, rather than merely preserving it as unknown protobuf data.
+	videoField := spec.ProtoReflect().Descriptor().Fields().ByName("video")
+	require.NotNil(t, videoField)
+	assert.EqualValues(t, 10, videoField.Number())
+	video := spec.ProtoReflect().Get(videoField).Message()
+	assert.Equal(t, "bochs", video.Get(video.Descriptor().Fields().ByNumber(1)).String())
+	assert.EqualValues(t, 32, video.Get(video.Descriptor().Fields().ByNumber(2)).Uint())
 
 	clone := res.DeepCopy().(*hypervisor.VirtualMachineSpec)
 	clone.TypedSpec().CPU.Count++
@@ -153,6 +163,9 @@ disks:
 guest:
     agent:
         enabled: true
+video:
+    model: bochs
+    vramMiB: 32
 `, string(marshaled))
 
 	var yamlSpec hypervisor.VirtualMachineSpecSpec

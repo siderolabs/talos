@@ -46,6 +46,37 @@ func TestCloudInitLibrarySchema(t *testing.T) {
 	}))
 }
 
+func TestVirtualMachineVideoSchema(t *testing.T) {
+	t.Parallel()
+
+	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schemaData))
+	require.NoError(t, err)
+
+	compiler := validatejsonschema.NewCompiler()
+	require.NoError(t, compiler.AddResource("test-id", schemaJSON))
+	schema, err := compiler.Compile("test-id#/$defs/hypervisor.VirtualMachineConfigV1Alpha1")
+	require.NoError(t, err)
+
+	var doc map[string]any
+	require.NoError(t, yaml.Unmarshal([]byte(`apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: video
+powerState: running
+cpu:
+  count: 1
+memory:
+  size: 512MiB
+firmware:
+  type: uefi
+video:
+  model: bochs
+  vramMiB: 32
+`), &doc))
+	require.NoError(t, schema.Validate(doc))
+	doc["video"] = map[string]any{"model": "qxl"}
+	require.Error(t, schema.Validate(doc))
+}
+
 func TestSchemaValidation(t *testing.T) {
 	t.Parallel()
 

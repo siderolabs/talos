@@ -130,6 +130,10 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 				Enabled: vm.Guest().Agent().Enabled(),
 			},
 		},
+		Video: hypervisor.VirtualMachineVideoSpec{
+			Model:   vm.Video().Model(),
+			VRAMMiB: vm.Video().VRAMMiB(),
+		},
 	}
 
 	topology := vm.CPU().Topology()

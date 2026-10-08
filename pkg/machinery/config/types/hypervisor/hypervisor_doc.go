@@ -147,10 +147,51 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Settings which apply inside the guest.\n\nOptional; omitting it leaves the guest to boot its image unmodified.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Settings which apply inside the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "video",
+				Type:        "VirtualMachineVideo",
+				Note:        "",
+				Description: "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt's defaults; without VNC this block has no effect.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Video device presented to the guest on amd64 when a VNC console is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleVirtualMachineConfigV1Alpha1())
+
+	return doc
+}
+
+func (VirtualMachineVideo) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineVideo",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineVideo describes the virtual graphics device." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineVideo describes the virtual graphics device.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "video",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "model",
+				Type:        "string",
+				Note:        "",
+				Description: "Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "vramMiB",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Video RAM in MiB for `vga` and `bochs`. Zero leaves libvirt's default.\nNonzero values must be powers of two: 1–512 MiB for `vga`, 4–256 MiB for `bochs`.\nMust be zero for `virtio` and `cirrus`, for which libvirt ignores this setting.\nThis does not set the guest's resolution or enable 3D acceleration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Video RAM in MiB for `vga` and `bochs`. Zero leaves libvirt's default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "vga")
 
 	return doc
 }
@@ -936,6 +977,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ContentLibraryConfigV1Alpha1{}.Doc(),
 			ContentLibraryBacking{}.Doc(),
 			VirtualMachineConfigV1Alpha1{}.Doc(),
+			VirtualMachineVideo{}.Doc(),
 			VirtualMachineCPU{}.Doc(),
 			VirtualMachineMemory{}.Doc(),
 			VirtualMachineBallooning{}.Doc(),

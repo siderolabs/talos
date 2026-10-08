@@ -1120,6 +1120,57 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 	}
 }
 
+func TestVirtualMachineConfigVideo(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name  string
+		model string
+		vram  uint32
+		valid bool
+	}{
+		{"default", "", 0, true},
+		{"default-vram", "", 32, true},
+		{"vga-min", "vga", 1, true},
+		{"vga-max", "vga", 512, true},
+		{"bochs-min", "bochs", 4, true},
+		{"bochs-max", "bochs", 256, true},
+		{"virtio", "virtio", 0, true},
+		{"cirrus", "cirrus", 0, true},
+		{"qxl", "qxl", 0, false},
+		{"unknown", "unknown", 0, false},
+		{"virtio-vram", "virtio", 32, false},
+		{"cirrus-vram", "cirrus", 32, false},
+		{"vga-too-large", "vga", 1024, false},
+		{"vga-rounded", "vga", 3, false},
+		{"bochs-too-small", "bochs", 2, false},
+		{"bochs-too-large", "bochs", 512, false},
+		{"bochs-rounded", "bochs", 5, false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := validVirtualMachineConfig()
+			cfg.VideoConfig = hypervisor.VirtualMachineVideo{ModelConfig: test.model, VRAMMiBConfig: test.vram}
+			marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+			require.NoError(t, err)
+			provider, err := configloader.NewFromBytes(marshaled)
+			require.NoError(t, err)
+			require.Len(t, provider.Documents(), 1)
+			decoded := provider.Documents()[0].(*hypervisor.VirtualMachineConfigV1Alpha1)
+			assert.Equal(t, test.model, decoded.Video().Model())
+			assert.Equal(t, test.vram, decoded.Video().VRAMMiB())
+
+			_, err = decoded.Validate(validationMode{})
+			if test.valid {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, "video")
+			}
+		})
+	}
+}
+
 func TestVirtualMachineDiskBusDefault(t *testing.T) {
 	t.Parallel()
 

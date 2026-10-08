@@ -2591,6 +2591,13 @@
           "description": "Settings which apply inside the guest.\n\nOptional; omitting it leaves the guest to boot its image unmodified.\n",
           "markdownDescription": "Settings which apply inside the guest.\n\nOptional; omitting it leaves the guest to boot its image unmodified.",
           "x-intellij-html-description": "\u003cp\u003eSettings which apply inside the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it leaves the guest to boot its image unmodified.\u003c/p\u003e\n"
+        },
+        "video": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineVideo",
+          "title": "video",
+          "description": "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt’s defaults; without VNC this block has no effect.\nOptional; omitting it uses vga with libvirt’s default VRAM on amd64.\n",
+          "markdownDescription": "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt's defaults; without VNC this block has no effect.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
+          "x-intellij-html-description": "\u003cp\u003eVideo device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt\u0026rsquo;s defaults; without VNC this block has no effect.\nOptional; omitting it uses \u003ccode\u003evga\u003c/code\u003e with libvirt\u0026rsquo;s default VRAM on amd64.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2997,6 +3004,33 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VirtualMachineVNC describes the VNC console of a virtual machine."
+    },
+    "hypervisor.VirtualMachineVideo": {
+      "properties": {
+        "model": {
+          "enum": [
+            "",
+            "vga",
+            "virtio",
+            "bochs",
+            "cirrus"
+          ],
+          "title": "model",
+          "description": "Video model: vga (default), virtio, bochs, or cirrus.\n",
+          "markdownDescription": "Video model: `vga` (default), `virtio`, `bochs`, or `cirrus`.",
+          "x-intellij-html-description": "\u003cp\u003eVideo model: \u003ccode\u003evga\u003c/code\u003e (default), \u003ccode\u003evirtio\u003c/code\u003e, \u003ccode\u003ebochs\u003c/code\u003e, or \u003ccode\u003ecirrus\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "vramMiB": {
+          "type": "integer",
+          "title": "vramMiB",
+          "description": "Video RAM in MiB for vga and bochs. Zero leaves libvirt’s default.\nNonzero values must be powers of two: 1–512 MiB for vga, 4–256 MiB for bochs.\nMust be zero for virtio and cirrus, for which libvirt ignores this setting.\nThis does not set the guest’s resolution or enable 3D acceleration.\n",
+          "markdownDescription": "Video RAM in MiB for `vga` and `bochs`. Zero leaves libvirt's default.\nNonzero values must be powers of two: 1–512 MiB for `vga`, 4–256 MiB for `bochs`.\nMust be zero for `virtio` and `cirrus`, for which libvirt ignores this setting.\nThis does not set the guest's resolution or enable 3D acceleration.",
+          "x-intellij-html-description": "\u003cp\u003eVideo RAM in MiB for \u003ccode\u003evga\u003c/code\u003e and \u003ccode\u003ebochs\u003c/code\u003e. Zero leaves libvirt\u0026rsquo;s default.\nNonzero values must be powers of two: 1–512 MiB for \u003ccode\u003evga\u003c/code\u003e, 4–256 MiB for \u003ccode\u003ebochs\u003c/code\u003e.\nMust be zero for \u003ccode\u003evirtio\u003c/code\u003e and \u003ccode\u003ecirrus\u003c/code\u003e, for which libvirt ignores this setting.\nThis does not set the guest\u0026rsquo;s resolution or enable 3D acceleration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineVideo describes the virtual graphics device."
     },
     "k8s.AcceptedServiceAccountConfig": {
       "properties": {

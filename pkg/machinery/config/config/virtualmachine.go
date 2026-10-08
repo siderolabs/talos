@@ -13,6 +13,8 @@ import (
 )
 
 // VirtualMachineConfig defines the interface to access virtual machine configuration.
+//
+//nolint:interfacebloat
 type VirtualMachineConfig interface {
 	NamedDocument
 
@@ -35,6 +37,22 @@ type VirtualMachineConfig interface {
 	Networking() VirtualMachineNetworkingConfig
 	// Guest settings; never nil, and zero-valued when the guest section is omitted.
 	Guest() VirtualMachineGuestConfig
+	// Video device settings; never nil.
+	Video() VirtualMachineVideoConfig
+}
+
+// VirtualMachineVideoConfig is the graphics device attached when a VNC console is enabled.
+// Observed on amd64 only; other architectures use libvirt's defaults.
+//
+//nolint:iface
+type VirtualMachineVideoConfig interface {
+	// Model is the video model: "vga", "virtio", "cirrus", or "bochs".
+	// Empty falls back to "vga".
+	Model() string
+	// VRAMMiB is the video RAM in MiB for vga and bochs; zero leaves libvirt's default.
+	// Nonzero values must be powers of two: 1–512 for vga, 4–256 for bochs.
+	// It must be zero for virtio and cirrus.
+	VRAMMiB() uint32
 }
 
 // VirtualMachineCPUConfig defines the processors presented to the guest.

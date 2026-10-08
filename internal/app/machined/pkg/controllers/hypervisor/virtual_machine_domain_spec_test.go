@@ -113,6 +113,59 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 	}
 }
 
+// Video model + VRAM flow through to <video><model type="…" vram="…">; empty model falls
+// back to "vga" and zero vramMiB omits the attribute.
+func (suite *VirtualMachineSpecSuite) TestVideoDevice() {
+	for _, tc := range []struct {
+		name    string
+		video   hypervisor.VirtualMachineVideoSpec
+		model   string
+		vramKiB uint
+		noVNC   bool
+	}{
+		{name: "default", model: "vga"},
+		{name: "default-vram", video: hypervisor.VirtualMachineVideoSpec{VRAMMiB: 32}, model: "vga", vramKiB: 32 * 1024},
+		{name: "vga-512", video: hypervisor.VirtualMachineVideoSpec{Model: "vga", VRAMMiB: 512}, model: "vga", vramKiB: 512 * 1024},
+		{name: "bochs-32", video: hypervisor.VirtualMachineVideoSpec{Model: "bochs", VRAMMiB: 32}, model: "bochs", vramKiB: 32 * 1024},
+		{name: "virtio-no-vram", video: hypervisor.VirtualMachineVideoSpec{Model: "virtio"}, model: "virtio"},
+		{name: "cirrus-no-vram", video: hypervisor.VirtualMachineVideoSpec{Model: "cirrus"}, model: "cirrus"},
+		{name: "no-vnc", video: hypervisor.VirtualMachineVideoSpec{Model: "bochs", VRAMMiB: 32}, noVNC: true},
+	} {
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "video-"+tc.name)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+			PowerState: "stopped",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Console:    hypervisor.VirtualMachineConsoleSpec{VNC: !tc.noVNC},
+			Video:      tc.video,
+		}
+		suite.Create(spec)
+
+		ctest.AssertResource(suite, "video-"+tc.name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			var domain libvirtxml.Domain
+			if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) {
+				return
+			}
+
+			asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+
+			if tc.noVNC || runtime.GOARCH != "amd64" {
+				asrt.Empty(domain.Devices.Videos)
+
+				return
+			}
+
+			if !asrt.Len(domain.Devices.Videos, 1) {
+				return
+			}
+
+			asrt.Equal(tc.model, domain.Devices.Videos[0].Model.Type)
+			asrt.Equal(tc.vramKiB, domain.Devices.Videos[0].Model.VRam)
+		})
+	}
+}
+
 // Both production controllers remain registered in these tests. No MachineConfig
 // is needed to create, update, validate, or remove externally authored specs.
 func (suite *VirtualMachineSpecSuite) TestExternalSpecLifecycle() {

@@ -234,6 +234,8 @@ message VirtualMachineSpecSpec {
   repeated VirtualMachineInterfaceSpec interfaces = 7;
   VirtualMachineCloudInitSpec cloud_init = 8;
   VirtualMachineGuestSpec guest = 9;
+  // Video is the graphics device presented when a VNC console is enabled.
+  VirtualMachineVideoSpec video = 10;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.
@@ -254,5 +256,11 @@ message VirtualMachineStatusSpec {
 message VirtualMachineVCPUPinSpec {
   uint32 vcpu = 1;
   string cp_us = 2;
+}
+
+// VirtualMachineVideoSpec describes the virtual graphics device.
+message VirtualMachineVideoSpec {
+  string model = 1;
+  uint32 vram_mi_b = 2;
 }
 
