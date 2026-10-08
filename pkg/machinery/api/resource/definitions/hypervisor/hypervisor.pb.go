@@ -1079,14 +1079,8 @@ type VirtualMachineDomainSpecSpec struct {
 	CloudInit string `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
 	// ObservedGeneration identifies the VM intent used to render this definition.
 	ObservedGeneration string `protobuf:"bytes,5,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
-	// HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on
-	// a running domain instead of redefining it.
-	//
-	// Only drives the machine configuration declares are listed. The cloud-init seed's drive is
-	// not, which is what makes a seed change restart the guest that has to read it.
-	HotPluggableDisks []string `protobuf:"bytes,6,rep,name=hot_pluggable_disks,json=hotPluggableDisks,proto3" json:"hot_pluggable_disks,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *VirtualMachineDomainSpecSpec) Reset() {
@@ -1152,13 +1146,6 @@ func (x *VirtualMachineDomainSpecSpec) GetObservedGeneration() string {
 		return x.ObservedGeneration
 	}
 	return ""
-}
-
-func (x *VirtualMachineDomainSpecSpec) GetHotPluggableDisks() []string {
-	if x != nil {
-		return x.HotPluggableDisks
-	}
-	return nil
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
@@ -2042,7 +2029,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x06volume\x18\n" +
 	" \x01(\tR\x06volume\x12\x12\n" +
 	"\x04size\x18\v \x01(\x04R\x04size\x12\x14\n" +
-	"\x05blank\x18\f \x01(\bR\x05blank\"\xf4\x01\n" +
+	"\x05blank\x18\f \x01(\bR\x05blank\"\xc4\x01\n" +
 	"\x1cVirtualMachineDomainSpecSpec\x12\x1d\n" +
 	"\n" +
 	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
@@ -2051,8 +2038,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x05disks\x18\x03 \x03(\tR\x05disks\x12\x1d\n" +
 	"\n" +
 	"cloud_init\x18\x04 \x01(\tR\tcloudInit\x12/\n" +
-	"\x13observed_generation\x18\x05 \x01(\tR\x12observedGeneration\x12.\n" +
-	"\x13hot_pluggable_disks\x18\x06 \x03(\tR\x11hotPluggableDisks\"\x8e\x03\n" +
+	"\x13observed_generation\x18\x05 \x01(\tR\x12observedGeneration\"\x8e\x03\n" +
 	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12e\n" +
 	"\vpower_state\x18\x02 \x01(\x0e2D.talos.resource.definitions.enums.HypervisorVirtualMachinePowerStateR\n" +
