@@ -129,7 +129,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 		},
 	)
 

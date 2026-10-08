@@ -22,11 +22,13 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 // VirtualMachineDomainSpecController renders backend-neutral specs into libvirt XML.
@@ -50,6 +52,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDiskStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -140,31 +147,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 			ctx, r,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, resolvedDisks)
-				if renderErr != nil {
-					if res.TypedSpec().DomainXML == "" {
-						// Nothing was ever defined, so there is nothing to stop.
-						return renderErr
-					}
-
-					// The config validated but cannot be applied; the disks stay as they are,
-					// held for the definition which may still be running.
-					res.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
-
-					logger.Error("stopping virtual machine: spec cannot be rendered",
-						zap.String("virtual_machine", name), zap.Error(renderErr))
-
-					return nil
-				}
-
-				*res.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-					DomainXML:  domainXML,
-					PowerState: vm.TypedSpec().PowerState,
-					Disks:      attachedDisks,
-					CloudInit:  seedID,
-				}
-
-				return nil
+				return updateRenderedDomain(ctx, r, logger, vm, res, links, resolvedDisks)
 			},
 		); err != nil {
 			if isHeldBack(err) {
@@ -180,7 +163,178 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 	// VirtualMachineController holds a finalizer on every domain spec it has claimed, so an unwanted
 	// spec is torn down to ask for that hold back, and destroyed only once it comes.
 	return errors.Join(append(errs,
-		cleanupOutputs[*hypervisor.VirtualMachineDomainSpec](ctx, r, "virtual machine domain spec", desired))...)
+		cleanup.Outputs[*hypervisor.VirtualMachineDomainSpec](ctx, r, "virtual machine domain spec", desired))...)
+}
+
+func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.Logger, vm *hypervisor.VirtualMachineSpec,
+	domain *hypervisor.VirtualMachineDomainSpec, links hostLinks, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+) error {
+	name := vm.Metadata().ID()
+
+	domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
+	if renderErr != nil {
+		retain, checkErr := retainDomainOnStorageOutage(ctx, r, vm, domain, disks, renderErr)
+		if checkErr != nil {
+			return checkErr
+		}
+
+		if retain {
+			return nil
+		}
+
+		if domain.TypedSpec().DomainXML == "" {
+			return renderErr
+		}
+
+		// Keep the attached disks held until the runtime has stopped.
+		domain.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
+		logger.Error("stopping virtual machine: spec cannot be rendered", zap.String("virtual_machine", name), zap.Error(renderErr))
+
+		return nil
+	}
+
+	*domain.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
+		DomainXML:          domainXML,
+		PowerState:         vm.TypedSpec().PowerState,
+		Disks:              attachedDisks,
+		CloudInit:          seedID,
+		ObservedGeneration: vm.Metadata().Version().String(),
+	}
+
+	return nil
+}
+
+// retainDomainOnStorageOutage preserves only an unchanged running definition whose
+// blank disk observation was lost because its pool daemon could not be contacted.
+// Readiness remains false: the starter must not use this definition for a new start.
+func retainDomainOnStorageOutage(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec,
+	domain *hypervisor.VirtualMachineDomainSpec, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, renderErr error,
+) (bool, error) {
+	if !errors.Is(renderErr, errDiskNotReady) || !runningDomainMatchesVM(vm, domain) {
+		return false, nil
+	}
+
+	unavailable, valid, err := outageDisksMatchDomain(ctx, r, vm, domain, disks)
+	if err != nil || !valid || !unavailable {
+		return false, err
+	}
+
+	if vm.TypedSpec().CloudInit == nil {
+		return true, nil
+	}
+
+	return retainedCloudInitCurrent(ctx, r, vm, domain)
+}
+
+func runningDomainMatchesVM(vm *hypervisor.VirtualMachineSpec, domain *hypervisor.VirtualMachineDomainSpec) bool {
+	return vm.Metadata().Phase() == resource.PhaseRunning && vm.TypedSpec().PowerState == "running" &&
+		domain.TypedSpec().PowerState == "running" && domain.TypedSpec().DomainXML != "" &&
+		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == vm.Metadata().Version().String() &&
+		len(domain.TypedSpec().Disks) == len(vm.TypedSpec().Disks)
+}
+
+// outageDisksMatchDomain checks every attached disk, not only the disk which made rendering fail.
+func outageDisksMatchDomain(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec,
+	domain *hypervisor.VirtualMachineDomainSpec, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+) (unavailable, valid bool, err error) {
+	attached := make(map[string]struct{}, len(domain.TypedSpec().Disks))
+	for _, id := range domain.TypedSpec().Disks {
+		attached[id] = struct{}{}
+	}
+
+	for _, disk := range vm.TypedSpec().Disks {
+		id := hypervisor.VirtualMachineDiskStatusID(vm.Metadata().ID(), disk)
+		if _, ok := attached[id]; !ok {
+			return false, false, nil
+		}
+
+		status, exists := disks[id]
+		if !exists {
+			return false, false, nil
+		}
+
+		if status.Phase == hypervisor.VirtualMachineDiskPhaseReady {
+			continue
+		}
+
+		poolValid, poolErr := outageDiskBackingCurrent(ctx, r, disk, status)
+		if poolErr != nil || !poolValid {
+			return false, false, poolErr
+		}
+
+		unavailable = true
+	}
+
+	return unavailable, true, nil
+}
+
+func outageDiskBackingCurrent(ctx context.Context, r controller.Reader, disk hypervisor.VirtualMachineDiskSpec,
+	status hypervisor.VirtualMachineDiskStatusSpec,
+) (bool, error) {
+	if !disk.Provision.Blank || status.Phase != hypervisor.VirtualMachineDiskPhaseObservationUnavailable || status.Pool != disk.Pool {
+		return false, nil
+	}
+
+	return outagePoolBackingCurrent(ctx, r, disk.Pool)
+}
+
+func outagePoolBackingCurrent(ctx context.Context, r controller.Reader, id string) (bool, error) {
+	pool, err := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, id)
+	if state.IsNotFoundError(err) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return pool.Metadata().Phase() == resource.PhaseRunning &&
+		(pool.TypedSpec().Phase == storage.StoragePoolPhaseReady || pool.TypedSpec().Phase == storage.StoragePoolPhaseObservationUnavailable), nil
+}
+
+func retainedCloudInitCurrent(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec,
+	domain *hypervisor.VirtualMachineDomainSpec,
+) (bool, error) {
+	// The base renderer exited on a blank disk before checking the seed. Do not keep
+	// a domain running when its separately backed cloud-init media has changed.
+	seed := hypervisor.CloudInitSpecSpec{
+		Library:       vm.TypedSpec().CloudInit.Library,
+		MetaData:      vm.TypedSpec().CloudInit.MetaData,
+		UserData:      vm.TypedSpec().CloudInit.UserData,
+		NetworkConfig: vm.TypedSpec().CloudInit.NetworkConfig,
+	}
+
+	projected, status, library, id, err := loadCloudInitBacking(ctx, r, vm.Metadata().ID(), seed)
+	if err != nil {
+		if errors.Is(err, errDiskNotReady) {
+			return false, nil
+		}
+
+		return false, err
+	}
+
+	asset := status.TypedSpec()
+
+	return id == domain.TypedSpec().CloudInit && cloudInitProjectionReady(projected, seed) &&
+		cloudInitAssetCurrent(status, seed, projected.Metadata().Version().String(), vm.Metadata().ID()) &&
+		cloudInitLibraryMatches(library, asset) && cloudInitAssetNameValid(asset) &&
+		domainAttachesCurrentSeed(domain.TypedSpec().DomainXML, asset), nil
+}
+
+func domainAttachesCurrentSeed(domainXML string, asset *hypervisor.CloudInitStatusSpec) bool {
+	var definition libvirtxml.Domain
+	if err := definition.Unmarshal(domainXML); err != nil {
+		return false
+	}
+
+	path := filepath.Join(asset.Path, asset.Name)
+	for _, disk := range definition.Devices.Disks {
+		if seedDiskIsAttached(disk, path) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // renderVirtualMachineDomainWithSeed appends the projected seed to a valid base domain.
@@ -287,13 +441,13 @@ func cloudInitProjectionReady(projected *hypervisor.CloudInitSpec, seed hypervis
 func cloudInitAssetCurrent(status *hypervisor.CloudInitStatus, seed hypervisor.CloudInitSpecSpec, generation, name string) bool {
 	asset := status.TypedSpec()
 
-	return status.Metadata().Phase() == resource.PhaseRunning && asset.Ready &&
+	return status.Metadata().Phase() == resource.PhaseRunning && asset.Phase == hypervisor.CloudInitPhaseReady &&
 		asset.InputDigest == seed.InputDigest() && asset.ObservedGeneration == generation &&
 		asset.VirtualMachine == name && asset.Library == seed.Library
 }
 
 func cloudInitLibraryMatches(library *hypervisor.ContentLibraryStatus, asset *hypervisor.CloudInitStatusSpec) bool {
-	return library.Metadata().Phase() == resource.PhaseRunning && library.TypedSpec().Ready &&
+	return library.Metadata().Phase() == resource.PhaseRunning && library.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady &&
 		asset.Path != "" && asset.VolumeID != "" &&
 		asset.Path == library.TypedSpec().Path && asset.VolumeID == library.TypedSpec().VolumeID
 }
@@ -945,7 +1099,7 @@ func renderVirtualMachineDisks(
 		switch {
 		case !found:
 			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, errDiskNotReady)
-		case !resolved.Ready:
+		case resolved.Phase != hypervisor.VirtualMachineDiskPhaseReady:
 			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, errDiskNotReady, resolved.Error)
 		}
 
@@ -980,6 +1134,12 @@ func renderVirtualMachineDisks(
 
 		if resolved.ReadOnly {
 			rendered.ReadOnly = &libvirtxml.DomainDiskReadOnly{}
+		} else {
+			// A writable disk is sparse in a pool nothing accounts for, so it can hit ENOSPC with
+			// the pool's filesystem full. Pausing the guest is recoverable; letting it see a failed
+			// write is how a qcow2 loses the L2 table it was growing.
+			rendered.Driver.ErrorPolicy = "stop"
+			rendered.Driver.RErrorPolicy = "stop"
 		}
 
 		// Talos renders no <os><boot dev>, so per-device boot elements are free to use; libvirt

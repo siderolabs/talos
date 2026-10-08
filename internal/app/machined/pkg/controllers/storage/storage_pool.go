@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
@@ -30,8 +31,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
+const poolMutationFinalizer = "storage.StoragePoolController/mutating/backing"
+
 // errPoolPending marks conditions resolved by an input event, not by restart backoff.
-var errPoolPending = errors.New("pool pending")
+var (
+	errPoolPending           = errors.New("pool pending")
+	errPoolRetargetHeld      = errors.New("pool retarget held")
+	errPoolMutationUncertain = errors.New("pool mutation outcome uncertain")
+)
 
 // StoragePoolController defines libvirt directory pools on existing volume mounts.
 //
@@ -66,6 +73,16 @@ func (ctrl *StoragePoolController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeMountStatusType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolVolumeStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolStatusType,
 			Kind:      controller.InputStrong,
 		},
 	}
@@ -117,12 +134,15 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 			return err
 		}
 
-		client, err := ctrl.Open(ctx)
-		if err != nil {
-			// The daemon stops before volumes are finalized on shutdown. Without it no
-			// pool is running, so a tearing-down mount can be released right away;
-			// otherwise volume teardown would block until its deadline.
-			if err = ctrl.releaseTearingDown(ctx, r, mounts); err != nil {
+		client, openErr := ctrl.Open(ctx)
+		if openErr != nil {
+			// The daemon stops before volumes are finalized on shutdown, so a tearing-down mount
+			// can be released right away rather than blocking until its deadline -- except under a
+			// held pool, where a guest holds its disk open whether or not the daemon is up.
+			//
+			// Kept apart from openErr: this reported the wrong reason when it shared one variable,
+			// and the daemon's own error is the only thing that says why it could not be reached.
+			if err := ctrl.releaseTearingDown(ctx, r, mounts); err != nil {
 				return err
 			}
 
@@ -132,11 +152,11 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 			}
 
 			// Daemon recovery emits no resource event: report and retry via backoff.
-			if err = ctrl.reportUnavailable(ctx, r, specs, fmt.Errorf("waiting for storage daemon: %w", err)); err != nil {
+			if err := ctrl.reportUnavailable(ctx, r, specs, fmt.Errorf("waiting for storage daemon: %w", openErr)); err != nil {
 				return err
 			}
 
-			return fmt.Errorf("waiting for storage daemon")
+			return fmt.Errorf("waiting for storage daemon: %w", openErr)
 		}
 
 		err = ctrl.reconcile(ctx, r, client, machineUUID, specs, mounts)
@@ -152,7 +172,7 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 //nolint:gocyclo,cyclop
 func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.Runtime, client libvirtstorage.Client,
 	machineUUID uuid.UUID, specs safe.List[*storage.StoragePoolSpec], mounts safe.List[*block.VolumeMountStatus],
-) error {
+) (reconcileErr error) {
 	desired := map[string]string{}
 
 	for spec := range specs.All() {
@@ -168,12 +188,109 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 		return fmt.Errorf("error listing storage pools: %w", err)
 	}
 
+	statuses, err := safe.ReaderListAll[*storage.StoragePoolStatus](ctx, r)
+	if err != nil {
+		return fmt.Errorf("error listing storage pool statuses: %w", err)
+	}
+
+	// Inventory, status, and request withdrawal cannot prove that an operation
+	// has stopped after its client session returned an error. An orphan marker
+	// needs manual recovery after confirming the daemon is quiescent.
+	uncertain := map[string]struct{}{}
+	for status := range statuses.All() {
+		if status.Metadata().Finalizers().Has(poolMutationFinalizer) {
+			uncertain[status.Metadata().ID()] = struct{}{}
+		}
+	}
+
+	// The preliminary census only permits deferral. Avoid marker churn while
+	// a guest pins a retargeted or removed pool; a fresh census after publishing
+	// exclusion is still required before any operation.
+	alreadyHeld, err := heldPools(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	// Publish exclusion before the fresh hold census. Consumers commit their
+	// hold before rechecking this marker and the pool identity.
+	changing := map[string]*storage.StoragePoolStatus{}
+	failed := map[string]struct{}{}
+
+	defer func() {
+		for name, status := range changing {
+			if _, ambiguous := failed[name]; ambiguous {
+				continue
+			}
+
+			if releaseErr := r.RemoveFinalizer(ctx, status.Metadata(), poolMutationFinalizer); releaseErr != nil && !state.IsNotFoundError(releaseErr) {
+				reconcileErr = errors.Join(reconcileErr, fmt.Errorf("error releasing storage pool exclusion %q: %w", status.Metadata().ID(), releaseErr))
+			}
+		}
+	}()
+
 	for _, pool := range pools {
-		if _, wanted := desired[pool.Name]; wanted || pool.UUID != libvirtstorage.UUID(machineUUID, pool.Name) {
+		volumeID, wanted := desired[pool.Name]
+		if pool.UUID != libvirtstorage.UUID(machineUUID, pool.Name) {
+			continue
+		}
+		if _, blocked := uncertain[pool.Name]; blocked {
 			continue
 		}
 
+		status, getErr := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, pool.Name)
+		if state.IsNotFoundError(getErr) {
+			continue
+		}
+
+		if getErr != nil {
+			return fmt.Errorf("error getting storage pool status %q: %w", pool.Name, getErr)
+		}
+
+		if wanted && status.TypedSpec().VolumeID == volumeID {
+			continue
+		}
+
+		if _, heldBeforePublication := alreadyHeld[pool.Name]; heldBeforePublication {
+			continue
+		}
+
+		if err = r.AddFinalizer(ctx, status.Metadata(), poolMutationFinalizer); err != nil {
+			return fmt.Errorf("error excluding storage pool %q: %w", pool.Name, err)
+		}
+
+		changing[pool.Name] = status
+	}
+
+	// A pool whose status something still holds is one a guest may have a volume of open. Its
+	// definition and its mount both stay until the hold comes back, which the teardown below asks
+	// for.
+	held, err := heldPools(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	for name := range alreadyHeld {
+		held[name] = struct{}{}
+	}
+	for name := range uncertain {
+		held[name] = struct{}{}
+	}
+
+	for _, pool := range pools {
+		_, wanted := desired[pool.Name]
+		if wanted || pool.UUID != libvirtstorage.UUID(machineUUID, pool.Name) {
+			continue
+		}
+
+		if _, isHeld := held[pool.Name]; isHeld {
+			continue
+		}
+		if err = excludePoolMutation(ctx, r, pool.Name, changing); err != nil {
+			return err
+		}
+
 		if err = client.Remove(pool); err != nil {
+			failed[pool.Name] = struct{}{}
 			return fmt.Errorf("error removing storage pool %q: %w", pool.Name, err)
 		}
 	}
@@ -190,10 +307,27 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 			continue
 		}
 
+		// An uncertain retarget can still be using either backing mount even
+		// when the old inventory or current spec names only one of them.
+		if len(uncertain) != 0 {
+			continue
+		}
+
 		// Match on the libvirt definition's target, not the spec: a retargeted pool
 		// still points at the old mount until Ensure redefines it.
+		if poolsHeldUnder(pools, held, machineUUID, mount.TypedSpec().Target) {
+			// Releasing now would unmount the filesystem a guest is writing into. Stopping the pool
+			// would not: a directory pool is metadata, and a domain opens its disks by absolute
+			// path. The mount is the part that cannot be taken away, so neither happens until the
+			// hold does come back.
+			continue
+		}
+
 		for _, pool := range pools {
 			if pool.UUID != libvirtstorage.UUID(machineUUID, pool.Name) || !pathUnder(pool.Target, mount.TypedSpec().Target) {
+				continue
+			}
+			if _, blocked := uncertain[pool.Name]; blocked {
 				continue
 			}
 
@@ -207,24 +341,101 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 		}
 	}
 
-	r.StartTrackingOutputs()
-
 	var activateErrors error
 
 	for name, volumeID := range desired {
 		pool := libvirtstorage.Pool{Name: name, UUID: libvirtstorage.UUID(machineUUID, name)}
 
-		target, activateErr := ctrl.activate(ctx, r, client, pool, volumeID)
+		var (
+			target      string
+			activateErr error
+		)
+
+		// A volume consumer holds the old directory through a retarget. Do not redefine the
+		// libvirt pool before that hold is returned: the new definition would hide the old
+		// target from the mount-release guard on the following pass.
+		if _, blocked := uncertain[name]; blocked {
+			activateErr = fmt.Errorf("storage pool %q has an uncertain prior mutation; recovery requires confirming the daemon is quiescent before retiring its mutation marker: %w", name, errPoolPending)
+		} else if _, isHeld := held[name]; isHeld {
+			var previous *storage.StoragePoolStatus
+
+			previous, activateErr = safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, name)
+			if activateErr == nil && previous.TypedSpec().VolumeID != volumeID {
+				activateErr = fmt.Errorf("pool is held by a consumer on volume %q: %w", previous.TypedSpec().VolumeID, errors.Join(errPoolPending, errPoolRetargetHeld))
+			}
+		}
+
+		if activateErr == nil {
+			// A confirmed Ready definition with the same backing needs its mount
+			// hold refreshed, but not another daemon mutation (or marker churn).
+			knownReadyTarget := ""
+			if previous, readErr := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, name); readErr == nil &&
+				previous.Metadata().Phase() == resource.PhaseRunning && previous.TypedSpec().Phase == storage.StoragePoolPhaseReady &&
+				previous.TypedSpec().VolumeID == volumeID {
+				for _, existing := range pools {
+					if existing.Name == name && existing.UUID == pool.UUID && existing.Target == previous.TypedSpec().TargetPath {
+						knownReadyTarget = existing.Target
+						break
+					}
+				}
+			}
+
+			knownReady := false
+			if knownReadyTarget != "" {
+				if mount, mountErr := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, volumeID); mountErr == nil &&
+					filepath.Join(mount.TypedSpec().Target, name) == knownReadyTarget {
+					knownReady = true
+				}
+			}
+
+			if !knownReady {
+				if err = excludePoolMutation(ctx, r, name, changing); err != nil {
+					return err
+				}
+			}
+
+			target, activateErr = ctrl.activate(ctx, r, client, pool, volumeID, knownReady)
+			if errors.Is(activateErr, errPoolMutationUncertain) {
+				failed[name] = struct{}{}
+			}
+		}
+
 		if activateErr != nil && !errors.Is(activateErr, errPoolPending) {
 			// libvirt/filesystem failures emit no resource event: retry via backoff.
 			activateErrors = errors.Join(activateErrors, fmt.Errorf("pool %q: %w", name, activateErr))
 		}
 
+		if _, blocked := uncertain[name]; blocked {
+			current, readErr := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, name)
+			if readErr != nil {
+				return fmt.Errorf("error getting excluded storage pool status %q: %w", name, readErr)
+			}
+
+			if current.TypedSpec().VolumeID == volumeID && current.TypedSpec().Phase == storage.StoragePoolPhaseNotReady &&
+				current.TypedSpec().Error == activateErr.Error() {
+				continue
+			}
+		}
+
 		if err = safe.WriterModify(ctx, r, storage.NewStoragePoolStatus(storage.NamespaceName, name), func(status *storage.StoragePoolStatus) error {
-			*status.TypedSpec() = storage.StoragePoolStatusSpec{
-				VolumeID:   volumeID,
-				TargetPath: target,
-				Ready:      activateErr == nil,
+			if activateErr == nil || !errors.Is(activateErr, errPoolRetargetHeld) {
+				status.TypedSpec().VolumeID = volumeID
+			}
+
+			status.TypedSpec().Phase = storage.StoragePoolPhaseNotReady
+			if activateErr == nil {
+				status.TypedSpec().Phase = storage.StoragePoolPhaseReady
+			}
+
+			status.TypedSpec().Error = ""
+
+			// Kept rather than cleared when activation fails: TargetPath is the record of where the
+			// pool was last put, and releaseTearingDown matches a tearing-down mount against it to
+			// decide whether a guest may still be writing there. A failed activation clearing it --
+			// which a mount beginning to tear down causes -- hands that mount straight back.
+			// Nothing reads it while Ready is false.
+			if target != "" {
+				status.TypedSpec().TargetPath = target
 			}
 
 			if activateErr != nil {
@@ -237,11 +448,105 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 		}
 	}
 
-	if err = safe.CleanupOutputs[*storage.StoragePoolStatus](ctx, r); err != nil {
+	// Torn down rather than destroyed outright: a status a consumer holds cannot be destroyed, and
+	// attempting it would fail this reconciliation for as long as the hold lasts.
+	wanted := wantedPoolStatuses(desired)
+	for name := range uncertain {
+		wanted[name] = struct{}{}
+	}
+	for name := range changing {
+		wanted[name] = struct{}{}
+	}
+	if err = cleanup.Outputs[*storage.StoragePoolStatus](ctx, r, "storage pool status", wanted); err != nil {
 		return err
 	}
 
 	return activateErrors
+}
+
+// excludePoolMutation publishes admission exclusion before submitting a daemon
+// operation. An orphan owned definition also needs a durable marker even though
+// its status is initially absent.
+func excludePoolMutation(ctx context.Context, r controller.Runtime, name string, changing map[string]*storage.StoragePoolStatus) error {
+	if _, excluded := changing[name]; excluded {
+		return nil
+	}
+
+	status := storage.NewStoragePoolStatus(storage.NamespaceName, name)
+	if err := safe.WriterModify(ctx, r, status, func(*storage.StoragePoolStatus) error { return nil }); err != nil {
+		return fmt.Errorf("error preparing storage pool exclusion %q: %w", name, err)
+	}
+
+	if err := r.AddFinalizer(ctx, status.Metadata(), poolMutationFinalizer); err != nil {
+		return fmt.Errorf("error excluding storage pool %q: %w", name, err)
+	}
+
+	changing[name] = status
+
+	return nil
+}
+
+// wantedPoolStatuses names the statuses the configuration still asks for.
+func wantedPoolStatuses(desired map[string]string) map[resource.ID]struct{} {
+	wanted := make(map[resource.ID]struct{}, len(desired))
+
+	for name := range desired {
+		wanted[name] = struct{}{}
+	}
+
+	return wanted
+}
+
+// heldPools names the pools whose status something still holds, by pool name.
+//
+// A hold means a consumer -- a volume of this pool, and through it a running guest -- is still
+// relying on the pool's directory being where it is.
+func heldPools(ctx context.Context, r controller.Reader) (map[string]struct{}, error) {
+	statuses, err := safe.ReaderListAll[*storage.StoragePoolStatus](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("error listing storage pool statuses: %w", err)
+	}
+
+	held := map[string]struct{}{}
+
+	for status := range statuses.All() {
+		if slices.ContainsFunc(*status.Metadata().Finalizers(), func(finalizer resource.Finalizer) bool {
+			return finalizer != poolMutationFinalizer
+		}) {
+			held[status.Metadata().ID()] = struct{}{}
+		}
+	}
+
+	// The volume controller may release its pool-status hold after the pool
+	// becomes pending, while a VM acquires a hold on the still-Ready volume.
+	// Count that consumer directly, including in the post-marker census.
+	volumes, err := safe.ReaderListAll[*storage.StoragePoolVolumeStatus](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("error listing storage pool volume statuses: %w", err)
+	}
+
+	for volume := range volumes.All() {
+		if !volume.Metadata().Finalizers().Empty() && volume.TypedSpec().Pool != "" {
+			held[volume.TypedSpec().Pool] = struct{}{}
+		}
+	}
+
+	return held, nil
+}
+
+// poolsHeldUnder reports whether any held pool is defined under target.
+func poolsHeldUnder(pools []libvirtstorage.Pool, held map[string]struct{}, machineUUID uuid.UUID, target string) bool {
+	for _, pool := range pools {
+		if pool.UUID != libvirtstorage.UUID(machineUUID, pool.Name) || !pathUnder(pool.Target, target) {
+			continue
+		}
+
+		if _, isHeld := held[pool.Name]; isHeld {
+			return true
+		}
+	}
+
+	return false
 }
 
 // activate exposes the pool once its backing mount is held.
@@ -249,7 +554,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 // A pending mount is reported through the status wrapped in errPoolPending, not
 // retried: the mount status input wakes the controller when it changes.
 func (ctrl *StoragePoolController) activate(ctx context.Context, r controller.Runtime, client libvirtstorage.Client,
-	pool libvirtstorage.Pool, volumeID string,
+	pool libvirtstorage.Pool, volumeID string, knownReady bool,
 ) (string, error) {
 	mount, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, volumeID)
 	if err != nil {
@@ -271,18 +576,59 @@ func (ctrl *StoragePoolController) activate(ctx context.Context, r controller.Ru
 	}
 
 	target := filepath.Join(mount.TypedSpec().Target, pool.Name)
+	if knownReady {
+		return target, nil
+	}
 
 	if err = client.Ensure(pool, target, func() error { return preparePoolDirectory(target) }); err != nil {
-		return "", err
+		return "", errors.Join(err, errPoolMutationUncertain)
 	}
 
 	return target, nil
 }
 
 // releaseTearingDown drops our hold on mounts being torn down while the daemon is unavailable.
+//
+// A mount under a held pool is kept, though. "No daemon means no pool is running, so nothing is
+// writing" holds only for a pool whose contents are read through libvirt. A guest holds its disk
+// open by file descriptor, so the storage daemon dying says nothing about whether the filesystem is
+// busy -- and a daemon which merely crashed is not a shutdown.
 func (ctrl *StoragePoolController) releaseTearingDown(ctx context.Context, r controller.Runtime, mounts safe.List[*block.VolumeMountStatus]) error {
+	statuses, err := safe.ReaderListAll[*storage.StoragePoolStatus](ctx, r)
+	if err != nil {
+		return fmt.Errorf("error listing storage pool statuses: %w", err)
+	}
+
+	// Without the daemon we cannot identify which backing mount an accepted
+	// but uncompleted retarget may touch. Keep all of our mount holds until
+	// quiesced recovery has retired every uncertain mutation marker.
+	for status := range statuses.All() {
+		if status.Metadata().Finalizers().Has(poolMutationFinalizer) {
+			return nil
+		}
+	}
+
+	held, err := heldPools(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	var targets map[string]struct{}
+
+	if len(held) > 0 {
+		// Without a daemon the pools cannot be enumerated, so the status's own record of where the
+		// pool was put is the only thing left to match a mount against.
+		if targets, err = heldPoolTargets(ctx, r, held); err != nil {
+			return err
+		}
+	}
+
 	for mount := range mounts.All() {
 		if mount.Metadata().Phase() != resource.PhaseTearingDown || !mount.Metadata().Finalizers().Has(ctrl.Name()) {
+			continue
+		}
+
+		if mountUnderAny(mount.TypedSpec().Target, targets) {
 			continue
 		}
 
@@ -294,28 +640,89 @@ func (ctrl *StoragePoolController) releaseTearingDown(ctx context.Context, r con
 	return nil
 }
 
+// heldPoolTargets collects the directories of the held pools, as their statuses last reported them.
+func heldPoolTargets(ctx context.Context, r controller.Reader, held map[string]struct{}) (map[string]struct{}, error) {
+	statuses, err := safe.ReaderListAll[*storage.StoragePoolStatus](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("error listing storage pool statuses: %w", err)
+	}
+
+	targets := map[string]struct{}{}
+
+	for status := range statuses.All() {
+		if _, isHeld := held[status.Metadata().ID()]; !isHeld {
+			continue
+		}
+
+		if target := status.TypedSpec().TargetPath; target != "" {
+			targets[target] = struct{}{}
+		}
+	}
+
+	return targets, nil
+}
+
+// mountUnderAny reports whether any of the directories lies at or below the mount's target.
+func mountUnderAny(mountTarget string, targets map[string]struct{}) bool {
+	for target := range targets {
+		if pathUnder(target, mountTarget) {
+			return true
+		}
+	}
+
+	return false
+}
+
 // reportUnavailable writes the daemon error to every desired pool status.
 func (ctrl *StoragePoolController) reportUnavailable(ctx context.Context, r controller.Runtime, specs safe.List[*storage.StoragePoolSpec], reason error) error {
-	r.StartTrackingOutputs()
+	wanted := map[resource.ID]struct{}{}
+
+	held, err := heldPools(ctx, r)
+	if err != nil {
+		return err
+	}
 
 	for spec := range specs.All() {
 		if spec.Metadata().Phase() != resource.PhaseRunning {
 			continue
 		}
 
-		if err := safe.WriterModify(ctx, r, storage.NewStoragePoolStatus(storage.NamespaceName, spec.Metadata().ID()), func(status *storage.StoragePoolStatus) error {
-			*status.TypedSpec() = storage.StoragePoolStatusSpec{
-				VolumeID: spec.TypedSpec().VolumeID,
-				Error:    reason.Error(),
-			}
+		wanted[spec.Metadata().ID()] = struct{}{}
 
-			return nil
-		}); err != nil {
+		_, isHeld := held[spec.Metadata().ID()]
+		if err := reportPoolUnavailable(ctx, r, spec, isHeld, reason); err != nil {
 			return fmt.Errorf("error updating storage pool status %q: %w", spec.Metadata().ID(), err)
 		}
 	}
 
-	return safe.CleanupOutputs[*storage.StoragePoolStatus](ctx, r)
+	return cleanup.Outputs[*storage.StoragePoolStatus](ctx, r, "storage pool status", wanted)
+}
+
+// reportPoolUnavailable preserves observed identity but distinguishes backing
+// withdrawal from observation loss. Consumers must not reconstruct pool intent.
+func reportPoolUnavailable(ctx context.Context, r controller.ReaderWriter, spec *storage.StoragePoolSpec, held bool, reason error) error {
+	mount, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, spec.TypedSpec().VolumeID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return err
+	}
+
+	return safe.WriterModify(ctx, r, storage.NewStoragePoolStatus(storage.NamespaceName, spec.Metadata().ID()), func(status *storage.StoragePoolStatus) error {
+		// Preserve TargetPath and held VolumeID: with the daemon unreachable these
+		// remain the only record of which mount an attached consumer uses.
+		retarget := status.TypedSpec().VolumeID != "" && status.TypedSpec().VolumeID != spec.TypedSpec().VolumeID
+		if !held || status.TypedSpec().VolumeID == "" {
+			status.TypedSpec().VolumeID = spec.TypedSpec().VolumeID
+		}
+
+		status.TypedSpec().Phase = storage.StoragePoolPhaseObservationUnavailable
+		if retarget || mount == nil || !mountWritable(mount) {
+			status.TypedSpec().Phase = storage.StoragePoolPhaseNotReady
+		}
+
+		status.TypedSpec().Error = reason.Error()
+
+		return nil
+	})
 }
 
 // mountWritable is the single predicate for a mount a pool may be defined on.

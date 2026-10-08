@@ -346,6 +346,9 @@ description: Talos gRPC API reference.
     - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
+    - [HypervisorCloudInitPhase](#talos.resource.definitions.enums.HypervisorCloudInitPhase)
+    - [HypervisorContentLibraryPhase](#talos.resource.definitions.enums.HypervisorContentLibraryPhase)
+    - [HypervisorVirtualMachineDiskPhase](#talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase)
     - [HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState)
     - [HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage)
     - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
@@ -407,6 +410,8 @@ description: Talos gRPC API reference.
     - [StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase)
     - [StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel)
     - [StorageMDMetadata](#talos.resource.definitions.enums.StorageMDMetadata)
+    - [StorageStoragePoolPhase](#talos.resource.definitions.enums.StorageStoragePoolPhase)
+    - [StorageStoragePoolVolumePhase](#talos.resource.definitions.enums.StorageStoragePoolVolumePhase)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
@@ -788,6 +793,8 @@ description: Talos gRPC API reference.
     - [MDRefreshRequestSpec](#talos.resource.definitions.storage.MDRefreshRequestSpec)
     - [StoragePoolSpecSpec](#talos.resource.definitions.storage.StoragePoolSpecSpec)
     - [StoragePoolStatusSpec](#talos.resource.definitions.storage.StoragePoolStatusSpec)
+    - [StoragePoolVolumeSpecSpec](#talos.resource.definitions.storage.StoragePoolVolumeSpecSpec)
+    - [StoragePoolVolumeStatusSpec](#talos.resource.definitions.storage.StoragePoolVolumeStatusSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
@@ -5901,6 +5908,46 @@ CriImageCacheStatus describes image cache status type.
 
 
 
+<a name="talos.resource.definitions.enums.HypervisorCloudInitPhase"></a>
+
+### HypervisorCloudInitPhase
+HypervisorCloudInitPhase describes observed seed availability, not COSI metadata lifecycle.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CLOUD_INIT_PHASE_UNKNOWN | 0 |  |
+| CLOUD_INIT_PHASE_NOT_READY | 1 |  |
+| CLOUD_INIT_PHASE_READY | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorContentLibraryPhase"></a>
+
+### HypervisorContentLibraryPhase
+HypervisorContentLibraryPhase describes observed library availability, not COSI metadata lifecycle.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTENT_LIBRARY_PHASE_UNKNOWN | 0 |  |
+| CONTENT_LIBRARY_PHASE_NOT_READY | 1 |  |
+| CONTENT_LIBRARY_PHASE_READY | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase"></a>
+
+### HypervisorVirtualMachineDiskPhase
+HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COSI metadata lifecycle.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_DISK_PHASE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_DISK_PHASE_NOT_READY | 1 |  |
+| VIRTUAL_MACHINE_DISK_PHASE_READY | 2 |  |
+| VIRTUAL_MACHINE_DISK_PHASE_OBSERVATION_UNAVAILABLE | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorVirtualMachinePowerState"></a>
 
 ### HypervisorVirtualMachinePowerState
@@ -7130,6 +7177,34 @@ StorageMDMetadata describes the on-disk metadata format of an MD (software RAID)
 | ---- | ------ | ----------- |
 | MD_METADATA10 | 0 |  |
 | MD_METADATA12 | 1 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageStoragePoolPhase"></a>
+
+### StorageStoragePoolPhase
+StorageStoragePoolPhase describes observed pool attachability, not COSI metadata lifecycle.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STORAGE_POOL_PHASE_UNKNOWN | 0 |  |
+| STORAGE_POOL_PHASE_NOT_READY | 1 |  |
+| STORAGE_POOL_PHASE_READY | 2 |  |
+| STORAGE_POOL_PHASE_OBSERVATION_UNAVAILABLE | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageStoragePoolVolumePhase"></a>
+
+### StorageStoragePoolVolumePhase
+StorageStoragePoolVolumePhase describes observed volume attachability, not COSI metadata lifecycle.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STORAGE_POOL_VOLUME_PHASE_UNKNOWN | 0 |  |
+| STORAGE_POOL_VOLUME_PHASE_NOT_READY | 1 |  |
+| STORAGE_POOL_VOLUME_PHASE_READY | 2 |  |
+| STORAGE_POOL_VOLUME_PHASE_OBSERVATION_UNAVAILABLE | 3 |  |
 
 
  <!-- end enums -->
@@ -9146,7 +9221,7 @@ CloudInitStatusSpec never contains the raw guest seed.
 | size_bytes | [uint64](#uint64) |  |  |
 | input_digest | [string](#string) |  |  |
 | observed_generation | [string](#string) |  |  |
-| ready | [bool](#bool) |  |  |
+| phase | [talos.resource.definitions.enums.HypervisorCloudInitPhase](#talos.resource.definitions.enums.HypervisorCloudInitPhase) |  |  |
 | error | [string](#string) |  |  |
 
 
@@ -9164,7 +9239,7 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 | ----- | ---- | ----- | ----------- |
 | volume_id | [string](#string) |  | VolumeID is the ID of the volume backing the library. |
 | path | [string](#string) |  | Path is the absolute path of the library's contents, the target the backing volume is mounted at.<br><br>Only meaningful when Ready. |
-| ready | [bool](#bool) |  | Ready is true once the backing volume is mounted. |
+| phase | [talos.resource.definitions.enums.HypervisorContentLibraryPhase](#talos.resource.definitions.enums.HypervisorContentLibraryPhase) |  | Phase is Ready once the backing volume is mounted. |
 | error | [string](#string) |  | Error describes why the library is not ready. |
 | fingerprint | [string](#string) |  | Fingerprint changes whenever the files in the library do (name, size, modification time). |
 
@@ -9345,9 +9420,13 @@ VirtualMachineDiskStatusSpec is the spec for VirtualMachineDiskStatus.
 | source_path | [string](#string) |  | SourcePath is the absolute host path libvirt opens.<br><br>Only meaningful when Ready. |
 | format | [string](#string) |  | Format is the on-host format of SourcePath, as libvirt's disk driver type.<br><br>Only meaningful when Ready. |
 | read_only | [bool](#bool) |  | ReadOnly is true when the guest must not write to the source. |
-| ready | [bool](#bool) |  | Ready is true once the source exists and may be attached. |
+| phase | [talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase](#talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase) |  | Phase reports whether the source may be attached or observation is unavailable. |
 | error | [string](#string) |  | Error describes why the disk is not ready. |
 | image | [VirtualMachineDiskFromImageSpec](#talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec) |  | Image is the content library image this status resolved. |
+| pool | [string](#string) |  | Pool is the storage pool the disk's volume lives in, for a disk provisioned into one.<br><br>Stamped whether or not the disk resolved, so a failed one still names what it was for. That is what lets a pool a running guest is reading from be recognized as in use: a status which did not resolve has no SourcePath to go on. |
+| volume | [string](#string) |  | Volume is the name of that volume within the pool.<br><br>Stamped whether or not the disk resolved, for the same reason as Pool. |
+| size | [uint64](#uint64) |  | Size is the volume's actual logical capacity in bytes.<br><br>It may exceed the size configured: a volume is never shrunk. |
+| blank | [bool](#bool) |  | Blank is true when the disk was provisioned as an empty volume. |
 
 
 
@@ -9366,6 +9445,7 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
 | disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
 | cloud_init | [string](#string) |  | CloudInit identifies the seed status this domain has attached and must hold. |
+| observed_generation | [string](#string) |  | ObservedGeneration identifies the VM intent used to render this definition. |
 
 
 
@@ -13867,15 +13947,57 @@ StoragePoolSpecSpec identifies the backing volume; the resource ID identifies th
 <a name="talos.resource.definitions.storage.StoragePoolStatusSpec"></a>
 
 ### StoragePoolStatusSpec
-StoragePoolStatusSpec reports the pool's backing volume, directory and readiness.
+StoragePoolStatusSpec reports the pool's backing volume, directory and observed attachability.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | volume_id | [string](#string) |  |  |
 | target_path | [string](#string) |  |  |
-| ready | [bool](#bool) |  |  |
+| phase | [talos.resource.definitions.enums.StorageStoragePoolPhase](#talos.resource.definitions.enums.StorageStoragePoolPhase) |  |  |
 | error | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.StoragePoolVolumeSpecSpec"></a>
+
+### StoragePoolVolumeSpecSpec
+StoragePoolVolumeSpecSpec is the spec for StoragePoolVolumeSpec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pool | [string](#string) |  | Pool is the name of the storage pool the volume lives in. |
+| name | [string](#string) |  | Name is the volume's name within that pool, which is its file name in the pool directory. |
+| capacity | [uint64](#uint64) |  | Capacity is the logical size in bytes the volume is asked to have.<br><br>A volume is only ever grown towards it. One already larger is left alone: shrinking would truncate a filesystem its owner, not Talos, laid out. |
+| format | [string](#string) |  | Format is the on-disk format the volume is created with, as libvirt names it.<br><br>It applies at creation only. A volume already in the pool under another format is refused rather than rewritten. |
+| backing_file | [string](#string) |  | BackingFile is an optional base image path used only when creating the volume. An existing volume is not rebased when this changes. |
+| backing_format | [string](#string) |  | BackingFormat is the format of BackingFile, independent of the overlay Format. If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.StoragePoolVolumeStatusSpec"></a>
+
+### StoragePoolVolumeStatusSpec
+StoragePoolVolumeStatusSpec is the spec for StoragePoolVolumeStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pool | [string](#string) |  | Pool is the name of the storage pool the volume lives in. |
+| name | [string](#string) |  | Name is the volume's name within that pool. |
+| path | [string](#string) |  | Path is the absolute host path of the volume's file.<br><br>Only meaningful when Ready. |
+| format | [string](#string) |  | Format is the volume's actual on-disk format, as libvirt reports it.<br><br>Only meaningful when Ready. |
+| capacity | [uint64](#uint64) |  | Capacity is the volume's actual logical size in bytes.<br><br>It may exceed the capacity asked for: a volume is never shrunk. |
+| pending_capacity | [uint64](#uint64) |  | PendingCapacity is a growth which has been asked for but not applied yet, in bytes.<br><br>Zero when there is none. A volume a guest has open cannot be grown underneath it, so the change waits for the guest to stop rather than being lost or forced. |
+| phase | [talos.resource.definitions.enums.StorageStoragePoolVolumePhase](#talos.resource.definitions.enums.StorageStoragePoolVolumePhase) |  | Phase reports whether the volume may be attached, independently of deferred growth or Error. |
+| error | [string](#string) |  | Error describes why the volume is not ready, or -- when it is -- which part of what was asked for was refused. |
 
 
 

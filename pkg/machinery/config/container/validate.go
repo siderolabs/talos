@@ -315,6 +315,12 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	// A virtual machine disk's volume lives in a storage pool declared elsewhere in the
+	// configuration, which only the rest of the configuration can resolve.
+	if err := validateVirtualMachinePoolReferences(container); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
 	// or by a DiscoveryIdentityConfig document. The identity may live in a separate document, so this
 	// cross-document check is done at the container level.

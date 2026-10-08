@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -96,5 +97,5 @@ func (ctrl *CloudInitSpecController) reconcile(ctx context.Context, r controller
 		}
 	}
 
-	return errors.Join(append(errs, cleanupOutputs[*hypervisor.CloudInitSpec](ctx, r, "cloud-init spec", wanted))...)
+	return errors.Join(append(errs, cleanup.Outputs[*hypervisor.CloudInitSpec](ctx, r, "cloud-init spec", wanted))...)
 }

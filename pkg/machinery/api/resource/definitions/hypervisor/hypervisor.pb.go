@@ -100,14 +100,14 @@ type CloudInitStatusSpec struct {
 	Library        string                 `protobuf:"bytes,2,opt,name=library,proto3" json:"library,omitempty"`
 	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// Path and VolumeID pin the backing identity and prevent stale readiness across remounts.
-	Path               string `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
-	VolumeId           string `protobuf:"bytes,5,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	Digest             string `protobuf:"bytes,6,opt,name=digest,proto3" json:"digest,omitempty"`
-	SizeBytes          uint64 `protobuf:"varint,7,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
-	InputDigest        string `protobuf:"bytes,8,opt,name=input_digest,json=inputDigest,proto3" json:"input_digest,omitempty"`
-	ObservedGeneration string `protobuf:"bytes,9,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
-	Ready              bool   `protobuf:"varint,10,opt,name=ready,proto3" json:"ready,omitempty"`
-	Error              string `protobuf:"bytes,11,opt,name=error,proto3" json:"error,omitempty"`
+	Path               string                         `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
+	VolumeId           string                         `protobuf:"bytes,5,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	Digest             string                         `protobuf:"bytes,6,opt,name=digest,proto3" json:"digest,omitempty"`
+	SizeBytes          uint64                         `protobuf:"varint,7,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	InputDigest        string                         `protobuf:"bytes,8,opt,name=input_digest,json=inputDigest,proto3" json:"input_digest,omitempty"`
+	ObservedGeneration string                         `protobuf:"bytes,9,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
+	Phase              enums.HypervisorCloudInitPhase `protobuf:"varint,10,opt,name=phase,proto3,enum=talos.resource.definitions.enums.HypervisorCloudInitPhase" json:"phase,omitempty"`
+	Error              string                         `protobuf:"bytes,11,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }
@@ -205,11 +205,11 @@ func (x *CloudInitStatusSpec) GetObservedGeneration() string {
 	return ""
 }
 
-func (x *CloudInitStatusSpec) GetReady() bool {
+func (x *CloudInitStatusSpec) GetPhase() enums.HypervisorCloudInitPhase {
 	if x != nil {
-		return x.Ready
+		return x.Phase
 	}
-	return false
+	return enums.HypervisorCloudInitPhase(0)
 }
 
 func (x *CloudInitStatusSpec) GetError() string {
@@ -228,8 +228,8 @@ type ContentLibraryStatusSpec struct {
 	//
 	// Only meaningful when Ready.
 	Path string `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
-	// Ready is true once the backing volume is mounted.
-	Ready bool `protobuf:"varint,3,opt,name=ready,proto3" json:"ready,omitempty"`
+	// Phase is Ready once the backing volume is mounted.
+	Phase enums.HypervisorContentLibraryPhase `protobuf:"varint,3,opt,name=phase,proto3,enum=talos.resource.definitions.enums.HypervisorContentLibraryPhase" json:"phase,omitempty"`
 	// Error describes why the library is not ready.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// Fingerprint changes whenever the files in the library do (name, size, modification time).
@@ -282,11 +282,11 @@ func (x *ContentLibraryStatusSpec) GetPath() string {
 	return ""
 }
 
-func (x *ContentLibraryStatusSpec) GetReady() bool {
+func (x *ContentLibraryStatusSpec) GetPhase() enums.HypervisorContentLibraryPhase {
 	if x != nil {
-		return x.Ready
+		return x.Phase
 	}
-	return false
+	return enums.HypervisorContentLibraryPhase(0)
 }
 
 func (x *ContentLibraryStatusSpec) GetError() string {
@@ -922,12 +922,28 @@ type VirtualMachineDiskStatusSpec struct {
 	Format string `protobuf:"bytes,4,opt,name=format,proto3" json:"format,omitempty"`
 	// ReadOnly is true when the guest must not write to the source.
 	ReadOnly bool `protobuf:"varint,5,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
-	// Ready is true once the source exists and may be attached.
-	Ready bool `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"`
+	// Phase reports whether the source may be attached or observation is unavailable.
+	Phase enums.HypervisorVirtualMachineDiskPhase `protobuf:"varint,6,opt,name=phase,proto3,enum=talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase" json:"phase,omitempty"`
 	// Error describes why the disk is not ready.
 	Error string `protobuf:"bytes,7,opt,name=error,proto3" json:"error,omitempty"`
 	// Image is the content library image this status resolved.
-	Image         *VirtualMachineDiskFromImageSpec `protobuf:"bytes,8,opt,name=image,proto3" json:"image,omitempty"`
+	Image *VirtualMachineDiskFromImageSpec `protobuf:"bytes,8,opt,name=image,proto3" json:"image,omitempty"`
+	// Pool is the storage pool the disk's volume lives in, for a disk provisioned into one.
+	//
+	// Stamped whether or not the disk resolved, so a failed one still names what it was for. That
+	// is what lets a pool a running guest is reading from be recognized as in use: a status which
+	// did not resolve has no SourcePath to go on.
+	Pool string `protobuf:"bytes,9,opt,name=pool,proto3" json:"pool,omitempty"`
+	// Volume is the name of that volume within the pool.
+	//
+	// Stamped whether or not the disk resolved, for the same reason as Pool.
+	Volume string `protobuf:"bytes,10,opt,name=volume,proto3" json:"volume,omitempty"`
+	// Size is the volume's actual logical capacity in bytes.
+	//
+	// It may exceed the size configured: a volume is never shrunk.
+	Size uint64 `protobuf:"varint,11,opt,name=size,proto3" json:"size,omitempty"`
+	// Blank is true when the disk was provisioned as an empty volume.
+	Blank         bool `protobuf:"varint,12,opt,name=blank,proto3" json:"blank,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -997,11 +1013,11 @@ func (x *VirtualMachineDiskStatusSpec) GetReadOnly() bool {
 	return false
 }
 
-func (x *VirtualMachineDiskStatusSpec) GetReady() bool {
+func (x *VirtualMachineDiskStatusSpec) GetPhase() enums.HypervisorVirtualMachineDiskPhase {
 	if x != nil {
-		return x.Ready
+		return x.Phase
 	}
-	return false
+	return enums.HypervisorVirtualMachineDiskPhase(0)
 }
 
 func (x *VirtualMachineDiskStatusSpec) GetError() string {
@@ -1018,6 +1034,34 @@ func (x *VirtualMachineDiskStatusSpec) GetImage() *VirtualMachineDiskFromImageSp
 	return nil
 }
 
+func (x *VirtualMachineDiskStatusSpec) GetPool() string {
+	if x != nil {
+		return x.Pool
+	}
+	return ""
+}
+
+func (x *VirtualMachineDiskStatusSpec) GetVolume() string {
+	if x != nil {
+		return x.Volume
+	}
+	return ""
+}
+
+func (x *VirtualMachineDiskStatusSpec) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+func (x *VirtualMachineDiskStatusSpec) GetBlank() bool {
+	if x != nil {
+		return x.Blank
+	}
+	return false
+}
+
 // VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 type VirtualMachineDomainSpecSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1031,9 +1075,11 @@ type VirtualMachineDomainSpecSpec struct {
 	// machine's configuration, which moves ahead of the definition libvirt is running.
 	Disks []string `protobuf:"bytes,3,rep,name=disks,proto3" json:"disks,omitempty"`
 	// CloudInit identifies the seed status this domain has attached and must hold.
-	CloudInit     string `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	CloudInit string `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
+	// ObservedGeneration identifies the VM intent used to render this definition.
+	ObservedGeneration string `protobuf:"bytes,5,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *VirtualMachineDomainSpecSpec) Reset() {
@@ -1090,6 +1136,13 @@ func (x *VirtualMachineDomainSpecSpec) GetDisks() []string {
 func (x *VirtualMachineDomainSpecSpec) GetCloudInit() string {
 	if x != nil {
 		return x.CloudInit
+	}
+	return ""
+}
+
+func (x *VirtualMachineDomainSpecSpec) GetObservedGeneration() string {
+	if x != nil {
+		return x.ObservedGeneration
 	}
 	return ""
 }
@@ -1747,7 +1800,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\alibrary\x18\x01 \x01(\tR\alibrary\x12\x1b\n" +
 	"\tmeta_data\x18\x02 \x01(\tR\bmetaData\x12\x1b\n" +
 	"\tuser_data\x18\x03 \x01(\tR\buserData\x12%\n" +
-	"\x0enetwork_config\x18\x04 \x01(\tR\rnetworkConfig\"\xd4\x02\n" +
+	"\x0enetwork_config\x18\x04 \x01(\tR\rnetworkConfig\"\x90\x03\n" +
 	"\x13CloudInitStatusSpec\x12'\n" +
 	"\x0fvirtual_machine\x18\x01 \x01(\tR\x0evirtualMachine\x12\x18\n" +
 	"\alibrary\x18\x02 \x01(\tR\alibrary\x12\x12\n" +
@@ -1758,14 +1811,14 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\n" +
 	"size_bytes\x18\a \x01(\x04R\tsizeBytes\x12!\n" +
 	"\finput_digest\x18\b \x01(\tR\vinputDigest\x12/\n" +
-	"\x13observed_generation\x18\t \x01(\tR\x12observedGeneration\x12\x14\n" +
-	"\x05ready\x18\n" +
-	" \x01(\bR\x05ready\x12\x14\n" +
-	"\x05error\x18\v \x01(\tR\x05error\"\x99\x01\n" +
+	"\x13observed_generation\x18\t \x01(\tR\x12observedGeneration\x12P\n" +
+	"\x05phase\x18\n" +
+	" \x01(\x0e2:.talos.resource.definitions.enums.HypervisorCloudInitPhaseR\x05phase\x12\x14\n" +
+	"\x05error\x18\v \x01(\tR\x05error\"\xda\x01\n" +
 	"\x18ContentLibraryStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x12\n" +
-	"\x04path\x18\x02 \x01(\tR\x04path\x12\x14\n" +
-	"\x05ready\x18\x03 \x01(\bR\x05ready\x12\x14\n" +
+	"\x04path\x18\x02 \x01(\tR\x04path\x12U\n" +
+	"\x05phase\x18\x03 \x01(\x0e2?.talos.resource.definitions.enums.HypervisorContentLibraryPhaseR\x05phase\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12 \n" +
 	"\vfingerprint\x18\x05 \x01(\tR\vfingerprint\"3\n" +
 	"\x17VirtualMachineAgentSpec\x12\x18\n" +
@@ -1811,17 +1864,22 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x04type\x18\x06 \x01(\tR\x04type\x12\x1d\n" +
 	"\n" +
 	"boot_order\x18\a \x01(\rR\tbootOrder\x12d\n" +
-	"\tprovision\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpecR\tprovision\"\xbb\x02\n" +
+	"\tprovision\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpecR\tprovision\"\xd6\x03\n" +
 	"\x1cVirtualMachineDiskStatusSpec\x12'\n" +
 	"\x0fvirtual_machine\x18\x01 \x01(\tR\x0evirtualMachine\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1f\n" +
 	"\vsource_path\x18\x03 \x01(\tR\n" +
 	"sourcePath\x12\x16\n" +
 	"\x06format\x18\x04 \x01(\tR\x06format\x12\x1b\n" +
-	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x14\n" +
-	"\x05ready\x18\x06 \x01(\bR\x05ready\x12\x14\n" +
+	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12Y\n" +
+	"\x05phase\x18\x06 \x01(\x0e2C.talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhaseR\x05phase\x12\x14\n" +
 	"\x05error\x18\a \x01(\tR\x05error\x12\\\n" +
-	"\x05image\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpecR\x05image\"\x93\x01\n" +
+	"\x05image\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpecR\x05image\x12\x12\n" +
+	"\x04pool\x18\t \x01(\tR\x04pool\x12\x16\n" +
+	"\x06volume\x18\n" +
+	" \x01(\tR\x06volume\x12\x12\n" +
+	"\x04size\x18\v \x01(\x04R\x04size\x12\x14\n" +
+	"\x05blank\x18\f \x01(\bR\x05blank\"\xc4\x01\n" +
 	"\x1cVirtualMachineDomainSpecSpec\x12\x1d\n" +
 	"\n" +
 	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
@@ -1829,7 +1887,8 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"powerState\x12\x14\n" +
 	"\x05disks\x18\x03 \x03(\tR\x05disks\x12\x1d\n" +
 	"\n" +
-	"cloud_init\x18\x04 \x01(\tR\tcloudInit\"\xa5\x02\n" +
+	"cloud_init\x18\x04 \x01(\tR\tcloudInit\x12/\n" +
+	"\x13observed_generation\x18\x05 \x01(\tR\x12observedGeneration\"\xa5\x02\n" +
 	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12e\n" +
 	"\vpower_state\x18\x02 \x01(\x0e2D.talos.resource.definitions.enums.HypervisorVirtualMachinePowerStateR\n" +
@@ -1922,34 +1981,40 @@ var file_resource_definitions_hypervisor_hypervisor_proto_goTypes = []any{
 	(*VirtualMachineSpecSpec)(nil),                // 21: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec
 	(*VirtualMachineStatusSpec)(nil),              // 22: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec
 	(*VirtualMachineVCPUPinSpec)(nil),             // 23: talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
-	(enums.HypervisorVirtualMachinePowerState)(0), // 24: talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
-	(enums.HypervisorVirtualMachineStage)(0),      // 25: talos.resource.definitions.enums.HypervisorVirtualMachineStage
+	(enums.HypervisorCloudInitPhase)(0),           // 24: talos.resource.definitions.enums.HypervisorCloudInitPhase
+	(enums.HypervisorContentLibraryPhase)(0),      // 25: talos.resource.definitions.enums.HypervisorContentLibraryPhase
+	(enums.HypervisorVirtualMachineDiskPhase)(0),  // 26: talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase
+	(enums.HypervisorVirtualMachinePowerState)(0), // 27: talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	(enums.HypervisorVirtualMachineStage)(0),      // 28: talos.resource.definitions.enums.HypervisorVirtualMachineStage
 }
 var file_resource_definitions_hypervisor_hypervisor_proto_depIdxs = []int32{
-	23, // 0: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.pins:type_name -> talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
-	6,  // 1: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.topology:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec
-	9,  // 2: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec.from_image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
-	10, // 3: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec.provision:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
-	9,  // 4: talos.resource.definitions.hypervisor.VirtualMachineDiskStatusSpec.image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
-	24, // 5: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
-	3,  // 6: talos.resource.definitions.hypervisor.VirtualMachineGuestSpec.agent:type_name -> talos.resource.definitions.hypervisor.VirtualMachineAgentSpec
-	18, // 7: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.ballooning:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
-	19, // 8: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.numa:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec
-	5,  // 9: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cpu:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
-	20, // 10: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.memory:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
-	15, // 11: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.firmware:type_name -> talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
-	8,  // 12: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.console:type_name -> talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
-	11, // 13: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.disks:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
-	17, // 14: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.interfaces:type_name -> talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec
-	7,  // 15: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cloud_init:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec
-	16, // 16: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.guest:type_name -> talos.resource.definitions.hypervisor.VirtualMachineGuestSpec
-	24, // 17: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
-	25, // 18: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachineStage
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	24, // 0: talos.resource.definitions.hypervisor.CloudInitStatusSpec.phase:type_name -> talos.resource.definitions.enums.HypervisorCloudInitPhase
+	25, // 1: talos.resource.definitions.hypervisor.ContentLibraryStatusSpec.phase:type_name -> talos.resource.definitions.enums.HypervisorContentLibraryPhase
+	23, // 2: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.pins:type_name -> talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec
+	6,  // 3: talos.resource.definitions.hypervisor.VirtualMachineCPUSpec.topology:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUTopologySpec
+	9,  // 4: talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec.from_image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
+	10, // 5: talos.resource.definitions.hypervisor.VirtualMachineDiskSpec.provision:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskProvisionSpec
+	26, // 6: talos.resource.definitions.hypervisor.VirtualMachineDiskStatusSpec.phase:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase
+	9,  // 7: talos.resource.definitions.hypervisor.VirtualMachineDiskStatusSpec.image:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpec
+	27, // 8: talos.resource.definitions.hypervisor.VirtualMachineDomainStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	3,  // 9: talos.resource.definitions.hypervisor.VirtualMachineGuestSpec.agent:type_name -> talos.resource.definitions.hypervisor.VirtualMachineAgentSpec
+	18, // 10: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.ballooning:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec
+	19, // 11: talos.resource.definitions.hypervisor.VirtualMachineMemorySpec.numa:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec
+	5,  // 12: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cpu:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCPUSpec
+	20, // 13: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.memory:type_name -> talos.resource.definitions.hypervisor.VirtualMachineMemorySpec
+	15, // 14: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.firmware:type_name -> talos.resource.definitions.hypervisor.VirtualMachineFirmwareSpec
+	8,  // 15: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.console:type_name -> talos.resource.definitions.hypervisor.VirtualMachineConsoleSpec
+	11, // 16: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.disks:type_name -> talos.resource.definitions.hypervisor.VirtualMachineDiskSpec
+	17, // 17: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.interfaces:type_name -> talos.resource.definitions.hypervisor.VirtualMachineInterfaceSpec
+	7,  // 18: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.cloud_init:type_name -> talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec
+	16, // 19: talos.resource.definitions.hypervisor.VirtualMachineSpecSpec.guest:type_name -> talos.resource.definitions.hypervisor.VirtualMachineGuestSpec
+	27, // 20: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.power_state:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachinePowerState
+	28, // 21: talos.resource.definitions.hypervisor.VirtualMachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.HypervisorVirtualMachineStage
+	22, // [22:22] is the sub-list for method output_type
+	22, // [22:22] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_hypervisor_hypervisor_proto_init() }

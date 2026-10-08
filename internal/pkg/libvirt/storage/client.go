@@ -21,6 +21,13 @@ import (
 
 const operationTimeout = 5 * time.Second
 
+// VolumeOperationTimeout is the budget a session doing volume work is given.
+//
+// Larger than operationTimeout: creating a volume is real filesystem work behind an RPC, where pool
+// metadata calls are not. A session which expires mid-create has its transport closed while libvirt
+// carries on server-side, which is exactly what the staged name in volume.go exists to survive.
+const VolumeOperationTimeout = 2 * time.Minute
+
 // Connector opens bounded sessions against one modular storage daemon.
 type Connector struct {
 	socket string
@@ -36,7 +43,13 @@ func New(socket, uri string) *Connector {
 // timeout context. Cancellation closes the transport because go-libvirt RPCs
 // do not accept a context.
 func (c *Connector) Open(ctx context.Context) (Client, error) {
-	sessionCtx, cancel := context.WithTimeout(ctx, operationTimeout)
+	return c.OpenWithTimeout(ctx, operationTimeout)
+}
+
+// OpenWithTimeout is Open with an explicit session budget, for callers whose work does not fit the
+// default one.
+func (c *Connector) OpenWithTimeout(ctx context.Context, timeout time.Duration) (Client, error) {
+	sessionCtx, cancel := context.WithTimeout(ctx, timeout)
 
 	conn, err := (&net.Dialer{}).DialContext(sessionCtx, "unix", c.socket)
 	if err != nil {
@@ -97,9 +110,18 @@ type Client interface {
 	Ensure(Pool, string, func() error) error
 	Remove(Pool) error
 	Stop(Pool) error
+
+	// Volume looks a volume up within a pool. There is deliberately no verb which deletes one: a
+	// volume outlives the configuration that asked for it, exactly as a pool's contents outlive the
+	// pool, and nothing on this interface can take a guest's data away.
+	Volume(Pool, string) (Volume, bool, error)
+	CreateVolume(Pool, string, string, uint64, string, string) (Volume, error)
+	ResizeVolume(Pool, string, uint64) error
+
 	Close()
 }
 
+//nolint:interfacebloat // libvirt's own RPC surface; it is mirrored here, not designed here.
 type poolRPC interface {
 	ConnectListAllStoragePools(int32, libvirt.ConnectListAllStoragePoolsFlags) ([]libvirt.StoragePool, uint32, error)
 	StoragePoolLookupByName(string) (libvirt.StoragePool, error)
@@ -111,6 +133,13 @@ type poolRPC interface {
 	StoragePoolDefineXML(string, uint32) (libvirt.StoragePool, error)
 	StoragePoolCreate(libvirt.StoragePool, libvirt.StoragePoolCreateFlags) error
 	StoragePoolUndefine(libvirt.StoragePool) error
+	StoragePoolRefresh(libvirt.StoragePool, uint32) error
+	StorageVolLookupByName(libvirt.StoragePool, string) (libvirt.StorageVol, error)
+	StorageVolCreateXML(libvirt.StoragePool, string, libvirt.StorageVolCreateFlags) (libvirt.StorageVol, error)
+	StorageVolGetXMLDesc(libvirt.StorageVol, uint32) (string, error)
+	StorageVolGetInfo(libvirt.StorageVol) (int8, uint64, uint64, error)
+	StorageVolGetPath(libvirt.StorageVol) (string, error)
+	StorageVolResize(libvirt.StorageVol, uint64, libvirt.StorageVolResizeFlags) error
 }
 
 type client struct {

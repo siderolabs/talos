@@ -56,7 +56,11 @@ func setupWithState(t *testing.T, ready bool) (*contentlibrary.Service, string, 
 
 	contentLibraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
 	contentLibraryStatus.TypedSpec().VolumeID = "u-vm-images"
-	contentLibraryStatus.TypedSpec().Ready = ready
+
+	contentLibraryStatus.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
+	if ready {
+		contentLibraryStatus.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
+	}
 
 	if ready {
 		contentLibraryStatus.TypedSpec().Path = path

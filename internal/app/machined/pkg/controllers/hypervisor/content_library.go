@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/gen/panicsafe"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -263,7 +264,7 @@ func (ctrl *ContentLibraryController) reconcile(
 		return err
 	}
 
-	return cleanupOutputs[*hypervisor.ContentLibraryStatus](ctx, r, "content library status", configured)
+	return cleanup.Outputs[*hypervisor.ContentLibraryStatus](ctx, r, "content library status", configured)
 }
 
 // heldLibraries reports the libraries something outside this controller is using, by ID.
@@ -366,11 +367,16 @@ func (ctrl *ContentLibraryController) publishStatus(
 		ctx, r,
 		hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryID),
 		func(res *hypervisor.ContentLibraryStatus) error {
-			becameReady = ready && !res.TypedSpec().Ready
+			becameReady = ready && res.TypedSpec().Phase != hypervisor.ContentLibraryPhaseReady
 
 			res.TypedSpec().VolumeID = volumeID
 			res.TypedSpec().Path = path
-			res.TypedSpec().Ready = ready
+
+			res.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
+			if ready {
+				res.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
+			}
+
 			res.TypedSpec().Error = reason
 
 			if ready {

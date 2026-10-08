@@ -27,7 +27,7 @@ message CloudInitStatusSpec {
   uint64 size_bytes = 7;
   string input_digest = 8;
   string observed_generation = 9;
-  bool ready = 10;
+  talos.resource.definitions.enums.HypervisorCloudInitPhase phase = 10;
   string error = 11;
 }
 
@@ -39,8 +39,8 @@ message ContentLibraryStatusSpec {
   //
   // Only meaningful when Ready.
   string path = 2;
-  // Ready is true once the backing volume is mounted.
-  bool ready = 3;
+  // Phase is Ready once the backing volume is mounted.
+  talos.resource.definitions.enums.HypervisorContentLibraryPhase phase = 3;
   // Error describes why the library is not ready.
   string error = 4;
   // Fingerprint changes whenever the files in the library do (name, size, modification time).
@@ -137,12 +137,28 @@ message VirtualMachineDiskStatusSpec {
   string format = 4;
   // ReadOnly is true when the guest must not write to the source.
   bool read_only = 5;
-  // Ready is true once the source exists and may be attached.
-  bool ready = 6;
+  // Phase reports whether the source may be attached or observation is unavailable.
+  talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase phase = 6;
   // Error describes why the disk is not ready.
   string error = 7;
   // Image is the content library image this status resolved.
   VirtualMachineDiskFromImageSpec image = 8;
+  // Pool is the storage pool the disk's volume lives in, for a disk provisioned into one.
+  //
+  // Stamped whether or not the disk resolved, so a failed one still names what it was for. That
+  // is what lets a pool a running guest is reading from be recognized as in use: a status which
+  // did not resolve has no SourcePath to go on.
+  string pool = 9;
+  // Volume is the name of that volume within the pool.
+  //
+  // Stamped whether or not the disk resolved, for the same reason as Pool.
+  string volume = 10;
+  // Size is the volume's actual logical capacity in bytes.
+  //
+  // It may exceed the size configured: a volume is never shrunk.
+  uint64 size = 11;
+  // Blank is true when the disk was provisioned as an empty volume.
+  bool blank = 12;
 }
 
 // VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
@@ -158,6 +174,8 @@ message VirtualMachineDomainSpecSpec {
   repeated string disks = 3;
   // CloudInit identifies the seed status this domain has attached and must hold.
   string cloud_init = 4;
+  // ObservedGeneration identifies the VM intent used to render this definition.
+  string observed_generation = 5;
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.

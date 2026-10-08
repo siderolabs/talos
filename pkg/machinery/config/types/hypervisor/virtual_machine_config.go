@@ -245,11 +245,7 @@ func exampleVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 			DiskSize:      meta.MustByteSize("20GiB"),
 			DiskBootOrder: 1,
 			ProvisionConfig: VirtualMachineDiskProvision{
-				FromImageConfig: &VirtualMachineDiskFromImage{
-					ImageLibrary: "images",
-					ImageFile:    "talos-1.14.qcow2",
-					ImageMode:    hypervisorhelpers.VirtualMachineDiskImageModeLinked,
-				},
+				BlankConfig: &VirtualMachineDiskBlank{},
 			},
 		},
 		{

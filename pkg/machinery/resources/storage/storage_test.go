@@ -31,6 +31,8 @@ func TestRegisterResource(t *testing.T) {
 		&storage.MDRefreshRequest{},
 		&storage.StoragePoolSpec{},
 		&storage.StoragePoolStatus{},
+		&storage.StoragePoolVolumeSpec{},
+		&storage.StoragePoolVolumeStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

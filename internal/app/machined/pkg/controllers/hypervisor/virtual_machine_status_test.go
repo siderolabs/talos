@@ -572,7 +572,7 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
 	status.TypedSpec().Name = "install"
 	status.TypedSpec().SourcePath = "/var/lib/libvirt/images/vm1-install.qcow2"
 	status.TypedSpec().Format = "qcow2"
-	status.TypedSpec().Ready = true
+	status.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseReady
 	status.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"}
 	s.Create(status)
 
@@ -597,20 +597,45 @@ func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
 
 // A disk this slice does not provision is not something to wait for: no host resource will ever
 // resolve it, so the stage says error rather than pending.
+// A disk nothing on the host will ever make attachable is an error rather than something to wait
+// for: only a change to the configuration helps. Copying a disk from a content library image is not
+// implemented, so that is the case here.
 func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
+	spec := newRenderableSpec("vm1", "running")
+	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
+		Name:   "system",
+		Pool:   "pool1",
+		Size:   20 << 30,
+		Format: hypervisorhelpers.VirtualMachineDiskFormatQCOW2.String(),
+		Type:   hypervisorhelpers.VirtualMachineDiskTypeDisk.String(),
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "images", File: "talos.qcow2"},
+		},
+	}}
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
+		`virtual machine "vm1": disk "system": unsupported disk: a disk is only provisioned from provision.blank today`)
+}
+
+// A blank disk whose volume is not there yet is worth waiting for, so it is Pending rather than an
+// error: the pool may simply not have reconciled.
+func (s *VirtualMachineStatusSuite) TestBlankDiskAwaitingItsVolumeIsPending() {
 	spec := newRenderableSpec("vm1", "running")
 	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
 		Name:      "data",
 		Pool:      "pool1",
 		Size:      20 << 30,
+		Format:    hypervisorhelpers.VirtualMachineDiskFormatQCOW2.String(),
 		Type:      hypervisorhelpers.VirtualMachineDiskTypeDisk.String(),
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true},
 	}}
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
-		`virtual machine "vm1": disk "data": unsupported disk: only cdrom disks are provisioned today, this one is "disk"`)
+	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStagePending,
+		`virtual machine "vm1": disk "data" is not ready: no disk status yet`)
 }
 
 func (s *VirtualMachineStatusSuite) TestForeignDomainIsError() {
@@ -747,7 +772,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	ctest.UpdateWithConflicts(s, asset, func(current *hypervisor.CloudInitStatus) error {
-		current.TypedSpec().Ready = true
+		current.TypedSpec().Phase = hypervisor.CloudInitPhaseReady
 
 		return nil
 	})
@@ -758,7 +783,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
 		Path:     "/images",
 		VolumeID: "volume-a",
-		Ready:    true,
+		Phase:    hypervisor.ContentLibraryPhaseReady,
 	}
 	s.Create(library)
 	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
@@ -787,7 +812,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
 
 	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
-		current.TypedSpec().Ready = false
+		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
 
 		return nil
 	})
@@ -795,7 +820,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
-		current.TypedSpec().Ready = true
+		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 
 		return nil
 	})
@@ -807,14 +832,14 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 	republished := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, hypervisor.CloudInitStatusID(name, *seed.TypedSpec()))
 	*republished.TypedSpec() = *asset.TypedSpec()
-	republished.TypedSpec().Ready = true
+	republished.TypedSpec().Phase = hypervisor.CloudInitPhaseReady
 	republished.TypedSpec().Error = ""
 	republished.TypedSpec().ObservedGeneration = projected.Metadata().Version().String()
 	s.Create(republished)
 	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
 
 	ctest.UpdateWithConflicts(s, republished, func(current *hypervisor.CloudInitStatus) error {
-		current.TypedSpec().Ready = false
+		current.TypedSpec().Phase = hypervisor.CloudInitPhaseNotReady
 		current.TypedSpec().Error = "seed generation failed"
 
 		return nil

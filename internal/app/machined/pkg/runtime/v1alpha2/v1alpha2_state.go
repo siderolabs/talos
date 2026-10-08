@@ -312,6 +312,8 @@ func NewState() (*State, error) {
 		&siderolink.Tunnel{},
 		&storage.StoragePoolSpec{},
 		&storage.StoragePoolStatus{},
+		&storage.StoragePoolVolumeSpec{},
+		&storage.StoragePoolVolumeStatus{},
 		&storage.LVMRefreshRequest{},
 		&storage.LVMPhysicalVolumeSpec{},
 		&storage.LVMLogicalVolumeSpec{},

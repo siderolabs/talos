@@ -16,6 +16,7 @@ import (
 	"testing/synctest"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
@@ -38,16 +39,18 @@ const (
 // poolClient records libvirt operations; every operation on an active pool
 // verifies the controller holds the backing mount.
 type poolClient struct {
-	pools     []libvirtstorage.Pool
-	events    []string
-	active    map[string]struct{}
-	checkHold func(string) error
-	changed   chan struct{}
-	openErr   error
-	removeErr error
-	ensureErr error
-	mu        sync.Mutex
-	completed int
+	pools        []libvirtstorage.Pool
+	events       []string
+	active       map[string]struct{}
+	checkHold    func(string) error
+	changed      chan struct{}
+	openErr      error
+	poolsErr     error
+	removeErr    error
+	ensureErr    error
+	mu           sync.Mutex
+	completed    int
+	beforeEnsure func(string)
 }
 
 func (c *poolClient) find(name string) (libvirtstorage.Pool, bool) {
@@ -88,10 +91,18 @@ func (c *poolClient) Pools() ([]libvirtstorage.Pool, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	return slices.Clone(c.pools), nil
+	return slices.Clone(c.pools), c.poolsErr
 }
 
 func (c *poolClient) Ensure(p libvirtstorage.Pool, target string, prepare func() error) error {
+	c.mu.Lock()
+	beforeEnsure := c.beforeEnsure
+	c.mu.Unlock()
+
+	if beforeEnsure != nil {
+		beforeEnsure(target)
+	}
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -160,6 +171,20 @@ func (c *poolClient) Stop(p libvirtstorage.Pool) error {
 	return c.stop(p.Name)
 }
 
+// StoragePoolController reconciles pool definitions and nothing within them. A volume call here
+// would mean it had grown a second responsibility, and with it a second writer of the same pool.
+func (*poolClient) Volume(libvirtstorage.Pool, string) (libvirtstorage.Volume, bool, error) {
+	panic("StoragePoolController must not touch volumes")
+}
+
+func (*poolClient) CreateVolume(libvirtstorage.Pool, string, string, uint64, string, string) (libvirtstorage.Volume, error) {
+	panic("StoragePoolController must not touch volumes")
+}
+
+func (*poolClient) ResizeVolume(libvirtstorage.Pool, string, uint64) error {
+	panic("StoragePoolController must not touch volumes")
+}
+
 func (c *poolClient) Close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -177,6 +202,13 @@ func (c *poolClient) completedEvents() []string {
 	defer c.mu.Unlock()
 
 	return slices.Clone(c.events[:c.completed])
+}
+
+func (c *poolClient) setPoolsError(err error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.poolsErr = err
 }
 
 func (c *poolClient) setEnsureError(err error) {
@@ -271,7 +303,7 @@ func (suite *StoragePoolSuite) assertHold(volume string, held bool) {
 
 func (suite *StoragePoolSuite) assertReady(volume string) {
 	ctest.AssertResource(suite, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == storageres.StoragePoolPhaseReady, status.TypedSpec().Error)
 		asrt.Empty(status.TypedSpec().Error)
 		asrt.Equal(volume, status.TypedSpec().VolumeID)
 		asrt.Equal(filepath.Join(suite.root, volume, "images"), status.TypedSpec().TargetPath)
@@ -280,7 +312,7 @@ func (suite *StoragePoolSuite) assertReady(volume string) {
 
 func (suite *StoragePoolSuite) assertError(reason string) {
 	ctest.AssertResource(suite, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
-		asrt.False(status.TypedSpec().Ready)
+		asrt.False(status.TypedSpec().Phase == storageres.StoragePoolPhaseReady)
 		asrt.Contains(status.TypedSpec().Error, reason)
 	})
 }
@@ -362,8 +394,13 @@ func (suite *StoragePoolSuite) TestFailedRemovalKeepsHold() {
 	suite.assertHold("u-vms", true)
 
 	suite.client.setErrors(nil, nil)
-	suite.assertHold("u-vms", false)
-	ctest.AssertNoResource[*storageres.StoragePoolStatus](suite, "images")
+	suite.volume("x-wakeup")
+	suite.mount("x-wakeup")
+	ctest.AssertResource(suite, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
+		asrt.True(status.Metadata().Finalizers().Has(poolExclusion))
+	})
+	suite.assertHold("u-vms", true)
+	suite.Require().Equal([]string{"ensure:" + filepath.Join(suite.root, "u-vms", "images"), "remove:images"}, suite.client.completedEvents())
 }
 
 func (suite *StoragePoolSuite) TestRetargetStopsBeforeRelease() {
@@ -379,6 +416,37 @@ func (suite *StoragePoolSuite) TestRetargetStopsBeforeRelease() {
 	suite.assertReady("x-new")
 	suite.assertHold("x-new", true)
 	suite.Require().NotContains(suite.client.completedEvents(), "remove:images")
+}
+
+// A consumer keeps the old pool path live even after configuration retargets it.
+// The controller must not redefine the directory or release its mount until the consumer lets go.
+func (suite *StoragePoolSuite) TestHeldRetargetWaitsForConsumerAcrossPasses() {
+	suite.activate()
+	suite.holdPoolStatus()
+	suite.volume("x-new")
+	suite.mount("x-new")
+	suite.setVolumeID("x-new")
+
+	suite.assertError("held by a consumer")
+	suite.assertHold("u-vms", true)
+	suite.assertHold("x-new", false)
+
+	// Force another pass while the hold remains; the old target must still be the definition.
+	suite.volume("another")
+	suite.mount("another")
+	suite.assertError("held by a consumer")
+	suite.assertHold("u-vms", true)
+
+	pools, err := suite.client.Pools()
+	suite.Require().NoError(err)
+	suite.Require().Len(pools, 1)
+	suite.Require().Equal(filepath.Join(suite.root, "u-vms", "images"), pools[0].Target)
+	suite.Require().NotContains(suite.client.completedEvents(), "ensure:"+filepath.Join(suite.root, "x-new", "images"))
+
+	suite.releasePoolStatus()
+	suite.assertReady("x-new")
+	suite.assertHold("u-vms", false)
+	suite.assertHold("x-new", true)
 }
 
 func (suite *StoragePoolSuite) TestSpecTeardownRemovesPool() {
@@ -405,7 +473,7 @@ func (suite *StoragePoolSuite) TestMountTeardownIsolatedPerVolume() {
 	suite.start()
 	suite.assertReady("u-vms")
 	ctest.AssertResource(suite, "backups", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == storageres.StoragePoolPhaseReady, status.TypedSpec().Error)
 	})
 
 	_, err := suite.State().Teardown(suite.Ctx(), images.Metadata(), state.WithTeardownOwner("block.MountStatusController"))
@@ -549,16 +617,16 @@ func TestStoragePoolRetryWithoutPolling(t *testing.T) {
 
 		fixture.mount("u-vms")
 		fixture.client.setErrors(os.ErrNotExist, nil)
-		fixture.client.setEnsureError(errors.New("ensure failed"))
 		fixture.start()
 		fixture.assertError("waiting for storage daemon")
 		synctest.Wait()
 
 		// Daemon recovery emits no resource event: only backoff can pick it up.
+		fixture.client.setPoolsError(errors.New("inventory unavailable"))
 		fixture.client.setErrors(nil, nil)
-		fixture.assertError("ensure failed")
 		synctest.Wait()
-		fixture.client.setEnsureError(nil)
+		fixture.Require().Empty(fixture.client.completedEvents(), "failed inventory must not submit a mutation")
+		fixture.client.setPoolsError(nil)
 		fixture.assertReady("u-vms")
 		synctest.Wait()
 
@@ -567,7 +635,8 @@ func TestStoragePoolRetryWithoutPolling(t *testing.T) {
 		synctest.Sleep(10 * time.Second)
 		fixture.Require().Equal(events, fixture.client.completedEvents(), "a healthy pool must not be reconciled by a periodic timer")
 
-		// Removal must retry through backoff after the last spec is gone.
+		// A submitted removal with a lost reply cannot be retried just because
+		// the next daemon connection succeeds: the first operation may still run.
 		fixture.client.setErrors(nil, errors.New("daemon disconnected"))
 		fixture.Destroy(fixture.spec)
 		fixture.waitForEvent("remove:images")
@@ -575,8 +644,14 @@ func TestStoragePoolRetryWithoutPolling(t *testing.T) {
 		fixture.assertHold("u-vms", true)
 
 		fixture.client.setErrors(nil, nil)
-		ctest.AssertNoResource[*storageres.StoragePoolStatus](fixture, "images")
-		fixture.assertHold("u-vms", false)
+		fixture.volume("x-wakeup")
+		fixture.mount("x-wakeup")
+		synctest.Wait()
+		ctest.AssertResource(fixture, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
+			asrt.True(status.Metadata().Finalizers().Has(poolExclusion))
+		})
+		fixture.assertHold("u-vms", true)
+		fixture.Require().Equal([]string{"ensure:" + filepath.Join(fixture.root, "u-vms", "images"), "remove:images"}, fixture.client.completedEvents())
 	})
 }
 
@@ -604,7 +679,7 @@ func TestStoragePoolRetargetOrdering(t *testing.T) {
 
 		status, err := safe.StateGetByID[*storageres.StoragePoolStatus](fixture.Ctx(), fixture.State(), "images")
 		fixture.Require().NoError(err)
-		fixture.Require().True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		fixture.Require().True(status.TypedSpec().Phase == storageres.StoragePoolPhaseReady, status.TypedSpec().Error)
 		fixture.Require().Equal(filepath.Join(fixture.root, "x-data", "images"), status.TypedSpec().TargetPath)
 
 		fixture.assertHold("u-vms", false)
@@ -621,10 +696,200 @@ func TestStoragePoolRetargetOrdering(t *testing.T) {
 	})
 }
 
+// A volume arriving after the pool's hold census but before Ensure must not
+// act on the old Ready identity. This uses the real shared COSI state and both
+// controllers; only the daemon operation is paused.
+func TestPoolRetargetExcludesLateVolume(t *testing.T) {
+	t.Parallel()
+
+	fixture := &StoragePoolSuite{Timeout: 10 * time.Second}
+	fixture.SetT(t)
+
+	fixture.SetupTest()
+	defer fixture.TearDownTest()
+
+	fixture.mount("u-vms")
+	fixture.volume("x-new")
+	fixture.mount("x-new")
+	fixture.start()
+	fixture.assertReady("u-vms")
+
+	entered := make(chan struct{})
+	release := make(chan struct{})
+
+	var enterOnce, releaseOnce sync.Once
+
+	unblock := func() { releaseOnce.Do(func() { close(release) }) }
+	defer unblock()
+
+	fixture.client.mu.Lock()
+	fixture.client.beforeEnsure = func(target string) {
+		if target != filepath.Join(fixture.root, "x-new", "images") {
+			return
+		}
+
+		enterOnce.Do(func() {
+			close(entered)
+
+			select {
+			case <-release:
+			case <-fixture.Ctx().Done():
+			}
+		})
+	}
+	fixture.client.mu.Unlock()
+
+	fixture.setVolumeID("x-new")
+
+	select {
+	case <-entered:
+	case <-fixture.Ctx().Done():
+		fixture.Require().FailNow("pool did not reach retarget operation")
+	}
+
+	ctx, st := fixture.Ctx(), fixture.State()
+	poolStatus, err := safe.StateGetByID[*storageres.StoragePoolStatus](ctx, st, "images")
+	fixture.Require().NoError(err)
+	fixture.Require().True(poolStatus.Metadata().Finalizers().Has("storage.StoragePoolController/mutating/backing"),
+		"pool retarget must publish exclusion before Ensure")
+
+	volumeClient := &volumeClient{checkHold: func(pool string) error {
+		status, err := safe.StateGetByID[*storageres.StoragePoolStatus](ctx, st, pool)
+		if err != nil {
+			return err
+		}
+
+		if !status.Metadata().Finalizers().Has(volumeFinalizer) {
+			return fmt.Errorf("volume operation without pool hold")
+		}
+
+		return nil
+	}}
+	request := storageres.NewStoragePoolVolumeSpec(storageres.NamespaceName, "images/late.raw")
+	request.TypedSpec().Pool = "images"
+	request.TypedSpec().Name = "late.raw"
+	request.TypedSpec().Format = "raw"
+	request.TypedSpec().Capacity = 64 << 20
+	fixture.Create(request, state.WithCreateOwner("hypervisor.VirtualMachineDiskController"))
+	fixture.Require().NoError(fixture.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{Open: volumeClient.open}))
+
+	ctest.AssertResource(fixture, request.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.NotEqual(storageres.StoragePoolVolumePhaseReady, status.TypedSpec().Phase,
+			"late volume must not use the old Ready pool while its backing changes")
+	})
+	fixture.Require().Empty(volumeClient.recorded(), "late volume must not be created on old backing")
+	unblock()
+	fixture.assertReady("x-new")
+	ctest.AssertResource(fixture, request.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.StoragePoolVolumePhaseReady, status.TypedSpec().Phase)
+	})
+}
+
 func TestStoragePoolSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &StoragePoolSuite{
 		Timeout: 10 * time.Second,
 	})
+}
+
+// consumerFinalizer stands in for whatever holds a pool's status while a guest has a volume of that
+// pool open -- StoragePoolVolumeController in practice.
+const consumerFinalizer = "storage.StoragePoolVolumeController"
+
+func (suite *StoragePoolSuite) holdPoolStatus() {
+	status, err := safe.StateGetByID[*storageres.StoragePoolStatus](suite.Ctx(), suite.State(), "images")
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.State().AddFinalizer(suite.Ctx(), status.Metadata(), consumerFinalizer))
+}
+
+func (suite *StoragePoolSuite) releasePoolStatus() {
+	status, err := safe.StateGetByID[*storageres.StoragePoolStatus](suite.Ctx(), suite.State(), "images")
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.State().RemoveFinalizer(suite.Ctx(), status.Metadata(), consumerFinalizer))
+}
+
+// Removing the pool's configuration while a consumer still holds its status must not undefine the
+// pool, and above all must not release the mount: a guest holds its disk open by descriptor, so
+// unmounting underneath it is what actually breaks.
+func (suite *StoragePoolSuite) TestHeldPoolSurvivesConfigurationRemoval() {
+	suite.activate()
+	suite.holdPoolStatus()
+
+	suite.Destroy(suite.spec)
+
+	// The status is withdrawn so the holder notices, but it cannot go away while held.
+	ctest.AssertResource(suite, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, status.Metadata().Phase())
+	})
+
+	suite.assertHold("u-vms", true)
+	suite.Require().NotContains(suite.client.completedEvents(), "remove:images",
+		"a pool a guest may be writing into must not be undefined")
+
+	suite.releasePoolStatus()
+
+	ctest.AssertNoResource[*storageres.StoragePoolStatus](suite, "images")
+	suite.waitForEvent("remove:images")
+	suite.assertHold("u-vms", false)
+}
+
+// Outage must not erase the old volume identity needed to defer a held retarget on recovery.
+func (suite *StoragePoolSuite) TestHeldRetargetAcrossDaemonOutage() {
+	suite.activate()
+	suite.holdPoolStatus()
+	suite.volume("x-new")
+	suite.mount("x-new")
+	suite.client.setErrors(os.ErrNotExist, nil)
+	suite.setVolumeID("x-new")
+
+	suite.assertError("waiting for storage daemon")
+	ctest.AssertResource(suite, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
+		asrt.Equal("u-vms", status.TypedSpec().VolumeID)
+		asrt.Equal(filepath.Join(suite.root, "u-vms", "images"), status.TypedSpec().TargetPath)
+		asrt.Equal(storageres.StoragePoolPhaseNotReady, status.TypedSpec().Phase,
+			"retarget is intentional withdrawal, not uncertain observation")
+	})
+
+	suite.client.setErrors(nil, nil)
+	suite.assertError("held by a consumer")
+	suite.assertHold("u-vms", true)
+	suite.assertHold("x-new", false)
+
+	suite.releasePoolStatus()
+	suite.assertReady("x-new")
+	suite.assertHold("u-vms", false)
+}
+
+// The same guard on the shutdown path: with the daemon gone the pools cannot be enumerated, so the
+// status's own record of where the pool was put is what a mount is matched against.
+func (suite *StoragePoolSuite) TestHeldPoolKeepsItsMountWithoutTheDaemon() {
+	suite.activate()
+	suite.holdPoolStatus()
+
+	mount, err := safe.StateGetByID[*block.VolumeMountStatus](suite.Ctx(), suite.State(), "u-vms")
+	suite.Require().NoError(err)
+
+	_, err = suite.State().Teardown(suite.Ctx(), mount.Metadata(), state.WithTeardownOwner("block.MountStatusController"))
+	suite.Require().NoError(err)
+
+	// With the daemon still up, the pool is held, so the mount is kept. The hold staying put is a
+	// negative, and a negative asserted against a controller which has not run yet proves nothing,
+	// so a pass after the teardown is waited for first.
+	suite.assertError("is not mounted for writing")
+	suite.assertHold("u-vms", true)
+
+	// Now take the daemon away, which is the path that used to release unconditionally. Setting the
+	// error emits no resource event of its own, so an unrelated mount is what wakes the controller;
+	// without it this races the pass the teardown triggered. The error is distinct so that observing
+	// it proves the pass ran after the daemon went.
+	suite.client.setErrors(errors.New("daemon stopped after the mount began tearing down"), nil)
+	suite.volume("x-data")
+	suite.mount("x-data")
+
+	suite.assertError("daemon stopped after the mount began tearing down")
+	suite.assertHold("u-vms", true)
+
+	suite.releasePoolStatus()
+	suite.assertHold("u-vms", false)
 }

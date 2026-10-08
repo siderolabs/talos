@@ -47,6 +47,14 @@ type rpc struct {
 	lookupErr   error
 	listCalls   int
 	active      bool
+
+	// known is libvirt's own view of the pool's contents, which it only rebuilds on a refresh.
+	// The directory at target is the truth; the two deliberately disagree until one happens.
+	known     map[string]struct{}
+	volCalls  []string
+	refreshes int
+	createErr error
+	resizeErr error
 }
 
 func (r *rpc) ConnectListAllStoragePools(int32, libvirt.ConnectListAllStoragePoolsFlags) ([]libvirt.StoragePool, uint32, error) {
