@@ -1087,9 +1087,15 @@ type VirtualMachineDomainSpecSpec struct {
 	// demand a stop the guest cannot refuse.
 	StopMode string `protobuf:"bytes,6,opt,name=stop_mode,json=stopMode,proto3" json:"stop_mode,omitempty"`
 	// StopRequest identifies the immutable stop whose shutdown delivery is being tracked.
-	StopRequest   string `protobuf:"bytes,7,opt,name=stop_request,json=stopRequest,proto3" json:"stop_request,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	StopRequest string `protobuf:"bytes,7,opt,name=stop_request,json=stopRequest,proto3" json:"stop_request,omitempty"`
+	// HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on
+	// a running domain instead of redefining it.
+	//
+	// Only drives the machine configuration declares are listed. The cloud-init seed's drive is
+	// not, which is what makes a seed change restart the guest that has to read it.
+	HotPluggableDisks []string `protobuf:"bytes,8,rep,name=hot_pluggable_disks,json=hotPluggableDisks,proto3" json:"hot_pluggable_disks,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *VirtualMachineDomainSpecSpec) Reset() {
@@ -1169,6 +1175,13 @@ func (x *VirtualMachineDomainSpecSpec) GetStopRequest() string {
 		return x.StopRequest
 	}
 	return ""
+}
+
+func (x *VirtualMachineDomainSpecSpec) GetHotPluggableDisks() []string {
+	if x != nil {
+		return x.HotPluggableDisks
+	}
+	return nil
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
@@ -2309,7 +2322,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x06volume\x18\n" +
 	" \x01(\tR\x06volume\x12\x12\n" +
 	"\x04size\x18\v \x01(\x04R\x04size\x12\x14\n" +
-	"\x05blank\x18\f \x01(\bR\x05blank\"\x84\x02\n" +
+	"\x05blank\x18\f \x01(\bR\x05blank\"\xb4\x02\n" +
 	"\x1cVirtualMachineDomainSpecSpec\x12\x1d\n" +
 	"\n" +
 	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
@@ -2320,7 +2333,8 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"cloud_init\x18\x04 \x01(\tR\tcloudInit\x12/\n" +
 	"\x13observed_generation\x18\x05 \x01(\tR\x12observedGeneration\x12\x1b\n" +
 	"\tstop_mode\x18\x06 \x01(\tR\bstopMode\x12!\n" +
-	"\fstop_request\x18\a \x01(\tR\vstopRequest\"\x95\x03\n" +
+	"\fstop_request\x18\a \x01(\tR\vstopRequest\x12.\n" +
+	"\x13hot_pluggable_disks\x18\b \x03(\tR\x11hotPluggableDisks\"\x95\x03\n" +
 	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12l\n" +
 	"\vpower_state\x18\x02 \x01(\x0e2K.talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerStateR\n" +

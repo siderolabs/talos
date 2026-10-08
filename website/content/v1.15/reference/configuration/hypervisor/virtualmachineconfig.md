@@ -364,7 +364,7 @@ Exactly one source must be set.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
+|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>On a `cdrom` there is no volume to create: this is an empty drive, no medium in it.<br>Loading and ejecting a medium is changing this disk between `blank` and<br>`fromImage`, which is applied to a running virtual machine without restarting it. A<br>`bootOrder` on an empty drive is a boot entry the firmware tries and fails.  | |
 |`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach read-only CD-ROM media from a content library.<br><br>Set `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is<br>attached in place, not copied into a volume. Writable image-derived disks (copy or<br>linked) are not supported. Use `provision.blank` for a writable disk and install from<br>CD-ROM media.  | |
 
 
@@ -372,7 +372,7 @@ Exactly one source must be set.
 
 #### blank {#VirtualMachineConfig.disks..provision.blank}
 
-VirtualMachineDiskBlank provisions an empty volume.
+VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive.
 
 
 
