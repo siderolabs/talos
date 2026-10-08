@@ -1031,9 +1031,15 @@ type VirtualMachineDomainSpecSpec struct {
 	// machine's configuration, which moves ahead of the definition libvirt is running.
 	Disks []string `protobuf:"bytes,3,rep,name=disks,proto3" json:"disks,omitempty"`
 	// CloudInit identifies the seed status this domain has attached and must hold.
-	CloudInit     string `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	CloudInit string `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
+	// HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on
+	// a running domain instead of redefining it.
+	//
+	// Only drives the machine configuration declares are listed. The cloud-init seed's drive is
+	// not, which is what makes a seed change restart the guest that has to read it.
+	HotPluggableDisks []string `protobuf:"bytes,5,rep,name=hot_pluggable_disks,json=hotPluggableDisks,proto3" json:"hot_pluggable_disks,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *VirtualMachineDomainSpecSpec) Reset() {
@@ -1092,6 +1098,13 @@ func (x *VirtualMachineDomainSpecSpec) GetCloudInit() string {
 		return x.CloudInit
 	}
 	return ""
+}
+
+func (x *VirtualMachineDomainSpecSpec) GetHotPluggableDisks() []string {
+	if x != nil {
+		return x.HotPluggableDisks
+	}
+	return nil
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
@@ -1821,7 +1834,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x14\n" +
 	"\x05ready\x18\x06 \x01(\bR\x05ready\x12\x14\n" +
 	"\x05error\x18\a \x01(\tR\x05error\x12\\\n" +
-	"\x05image\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpecR\x05image\"\x93\x01\n" +
+	"\x05image\x18\b \x01(\v2F.talos.resource.definitions.hypervisor.VirtualMachineDiskFromImageSpecR\x05image\"\xc3\x01\n" +
 	"\x1cVirtualMachineDomainSpecSpec\x12\x1d\n" +
 	"\n" +
 	"domain_xml\x18\x01 \x01(\tR\tdomainXml\x12\x1f\n" +
@@ -1829,7 +1842,8 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"powerState\x12\x14\n" +
 	"\x05disks\x18\x03 \x03(\tR\x05disks\x12\x1d\n" +
 	"\n" +
-	"cloud_init\x18\x04 \x01(\tR\tcloudInit\"\xa5\x02\n" +
+	"cloud_init\x18\x04 \x01(\tR\tcloudInit\x12.\n" +
+	"\x13hot_pluggable_disks\x18\x05 \x03(\tR\x11hotPluggableDisks\"\xa5\x02\n" +
 	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12e\n" +
 	"\vpower_state\x18\x02 \x01(\x0e2D.talos.resource.definitions.enums.HypervisorVirtualMachinePowerStateR\n" +

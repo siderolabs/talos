@@ -268,6 +268,12 @@ func (ctrl *VirtualMachineDiskController) resolve(
 		return hypervisor.VirtualMachineDiskStatusSpec{}, err
 	}
 
+	// An empty drive resolves to no host source at all, so it holds no library: the guest is shown
+	// a cdrom with its tray open. Checked before the library lookup, which has nothing to look up.
+	if disk.Provision.FromImage == nil {
+		return emptyDriveStatus(), nil
+	}
+
 	image := disk.Provision.FromImage
 
 	library, found := libraries[image.Library]
@@ -291,13 +297,26 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 	case disk.Type != hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
 		return fmt.Errorf("%w: only %s disks are provisioned today, this one is %q",
 			errDiskUnsupported, hypervisorhelpers.VirtualMachineDiskTypeCDROM, disk.Type)
-	case disk.Provision.FromImage == nil:
-		// Machine configuration validation already requires this of a cdrom; check anyway, so the
-		// status is the whole truth about a disk rather than a partial one.
-		return fmt.Errorf("%w: a cdrom requires provision.fromImage", errDiskUnsupported)
+	case disk.Provision.FromImage == nil && !disk.Provision.Blank:
+		// Machine configuration validation already requires one of the two of a cdrom; check anyway,
+		// so the status is the whole truth about a disk rather than a partial one.
+		return fmt.Errorf("%w: a cdrom requires provision.fromImage or provision.blank", errDiskUnsupported)
 	}
 
 	return nil
+}
+
+// emptyDriveStatus is a cdrom with no medium in it.
+//
+// Format and ReadOnly match what a loaded drive resolves to, and they have to: the definition of a
+// loaded and an empty drive differ only in the source element, which is what lets the medium be
+// changed on a running domain instead of restarting it.
+func emptyDriveStatus() hypervisor.VirtualMachineDiskStatusSpec {
+	return hypervisor.VirtualMachineDiskStatusSpec{
+		Format:   rawDiskFormat,
+		ReadOnly: true,
+		Ready:    true,
+	}
 }
 
 // resolveVirtualMachineDisk finds the host source for a disk within a library already held for it.
@@ -305,6 +324,10 @@ func resolveVirtualMachineDisk(
 	disk hypervisor.VirtualMachineDiskSpec,
 	library hypervisor.ContentLibraryStatusSpec,
 ) (hypervisor.VirtualMachineDiskStatusSpec, error) {
+	if disk.Provision.FromImage == nil {
+		return emptyDriveStatus(), nil
+	}
+
 	image := disk.Provision.FromImage
 
 	if !library.Ready {

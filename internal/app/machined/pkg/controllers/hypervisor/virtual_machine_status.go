@@ -168,13 +168,13 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		domainXML, _, _, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
+		rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
 
 		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
 		// running, and only its next start or replacement is held back.
 		if renderErr == nil && spec.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateRunning.String() {
-			renderErr = validateDomainPlacement(name, domainXML, topology)
+			renderErr = validateDomainPlacement(name, rendered.DomainXML, topology)
 		}
 
 		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])

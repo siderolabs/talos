@@ -430,7 +430,7 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "blank",
 				Type:        "VirtualMachineDiskBlank",
 				Note:        "",
-				Description: "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
+				Description: "Create an empty volume, formatted per `format`.\n\nOn a `cdrom` there is no volume to create: this is an empty drive, no medium in it.\nLoading and ejecting a medium is changing this disk between `blank` and\n`fromImage`, which is applied to a running virtual machine without restarting it. A\n`bootOrder` on an empty drive is a boot entry the firmware tries and fails.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Create an empty volume, formatted per `format`." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -449,8 +449,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 func (VirtualMachineDiskBlank) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineDiskBlank",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineDiskBlank provisions an empty volume.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VirtualMachineDiskProvision",

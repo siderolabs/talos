@@ -2709,7 +2709,7 @@
       "properties": {},
       "additionalProperties": false,
       "type": "object",
-      "description": "VirtualMachineDiskBlank provisions an empty volume."
+      "description": "VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive."
     },
     "hypervisor.VirtualMachineDiskFromImage": {
       "properties": {
@@ -2758,9 +2758,9 @@
         "blank": {
           "$ref": "#/$defs/hypervisor.VirtualMachineDiskBlank",
           "title": "blank",
-          "description": "Create an empty volume, formatted per format.\n\nNot allowed on a cdrom, which has no meaningful empty contents.\n",
-          "markdownDescription": "Create an empty volume, formatted per `format`.\n\nNot allowed on a `cdrom`, which has no meaningful empty contents.",
-          "x-intellij-html-description": "\u003cp\u003eCreate an empty volume, formatted per \u003ccode\u003eformat\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eNot allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which has no meaningful empty contents.\u003c/p\u003e\n"
+          "description": "Create an empty volume, formatted per format.\n\nOn a cdrom there is no volume to create: this is an empty drive, no medium in it.\nLoading and ejecting a medium is changing this disk between blank and\nfromImage, which is applied to a running virtual machine without restarting it. A\nbootOrder on an empty drive is a boot entry the firmware tries and fails.\n",
+          "markdownDescription": "Create an empty volume, formatted per `format`.\n\nOn a `cdrom` there is no volume to create: this is an empty drive, no medium in it.\nLoading and ejecting a medium is changing this disk between `blank` and\n`fromImage`, which is applied to a running virtual machine without restarting it. A\n`bootOrder` on an empty drive is a boot entry the firmware tries and fails.",
+          "x-intellij-html-description": "\u003cp\u003eCreate an empty volume, formatted per \u003ccode\u003eformat\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOn a \u003ccode\u003ecdrom\u003c/code\u003e there is no volume to create: this is an empty drive, no medium in it.\nLoading and ejecting a medium is changing this disk between \u003ccode\u003eblank\u003c/code\u003e and\n\u003ccode\u003efromImage\u003c/code\u003e, which is applied to a running virtual machine without restarting it. A\n\u003ccode\u003ebootOrder\u003c/code\u003e on an empty drive is a boot entry the firmware tries and fails.\u003c/p\u003e\n"
         },
         "fromImage": {
           "$ref": "#/$defs/hypervisor.VirtualMachineDiskFromImage",
