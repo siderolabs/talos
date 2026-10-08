@@ -337,7 +337,7 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the disk, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It names the volume created in the storage pool.  | |
-|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for both `disk` and `cdrom`. CD-ROM media is copied from the content library<br>into an independent volume in this pool, not attached directly from the library. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for a `disk` and for a `cdrom` provisioned `fromImage`. CD-ROM media is copied<br>from the content library into an independent volume in this pool, not attached directly<br>from the library. Optional on an empty `cdrom` (provisioned `blank`), which has no<br>volume; loading a medium into it later requires a pool. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pool: pool1
 {{< /highlight >}}</details> | |
 |`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |
@@ -362,7 +362,7 @@ Exactly one source must be set.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
+|`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>On a `cdrom` there is no volume to create: this is an empty drive, no medium in it, and<br>`pool` may be omitted. Loading and ejecting a medium is changing this disk between `blank` and<br>`fromImage`, which is applied to a running virtual machine without restarting it. A<br>`bootOrder` on an empty drive is a boot entry the firmware tries and fails.  | |
 |`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach read-only CD-ROM media from a content library.<br><br>Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.<br>Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit<br>`size` and `format`; `mode: copy` may be explicit or omitted. Writable image-derived<br>disks are not supported. Use `provision.blank` for a writable disk and install from<br>CD-ROM media.  | |
 
 
@@ -370,7 +370,7 @@ Exactly one source must be set.
 
 #### blank {#VirtualMachineConfig.disks..provision.blank}
 
-VirtualMachineDiskBlank provisions an empty volume.
+VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive.
 
 
 

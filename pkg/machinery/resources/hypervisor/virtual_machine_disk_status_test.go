@@ -199,6 +199,35 @@ func TestVirtualMachineDiskStatusIDCoversBlankProvisioning(t *testing.T) {
 	assert.NotEqual(t, id(base), id(fromImage))
 }
 
+// An empty cdrom drive provisions nothing, so it must never take over the status of a blank disk
+// of the same name which a running domain still holds its volume through.
+func TestVirtualMachineDiskStatusIDSeparatesEmptyDrivesFromBlankDisks(t *testing.T) {
+	t.Parallel()
+
+	disk := hypervisor.VirtualMachineDiskSpec{
+		Name:      "data",
+		Pool:      "pool1",
+		Format:    "raw",
+		Type:      "disk",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{Blank: true},
+	}
+
+	drive := disk
+	drive.Type = "cdrom"
+
+	id := func(disk hypervisor.VirtualMachineDiskSpec) string {
+		return hypervisor.VirtualMachineDiskStatusID("guest", disk)
+	}
+
+	assert.NotEqual(t, id(disk), id(drive))
+
+	// Pool and format point an empty drive at nothing, so neither moves its status.
+	moved := drive
+	moved.Pool = "pool2"
+	moved.Format = ""
+	assert.Equal(t, id(drive), id(moved))
+}
+
 func TestVirtualMachineDiskStatusIDCoversImageDestination(t *testing.T) {
 	t.Parallel()
 

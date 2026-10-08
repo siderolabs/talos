@@ -145,6 +145,26 @@ func (c *domainClient) GuestInterfaces(domain libvirtdomain.Domain) ([]libvirtdo
 	return c.guestInterfaces, nil
 }
 
+// Definition reports what libvirt would record for the definition a domain was last started on. A
+// domain the test placed directly was started on none, and records nothing, as one which carries no
+// Talos ownership marker.
+func (c *domainClient) Definition(domain libvirtdomain.Domain) (libvirtdomain.Definition, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	existing, ok := c.domains[domain.Name]
+	if !ok || existing.UUID != domain.UUID {
+		return libvirtdomain.Definition{}, fmt.Errorf("domain %q disappeared", domain.Name)
+	}
+
+	text, started := c.texts[domain.Name]
+	if !started {
+		return libvirtdomain.Definition{}, nil
+	}
+
+	return libvirtdomain.DefinitionOf(existing, text)
+}
+
 func (c *domainClient) Define(domain libvirtdomain.Domain, text string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -3495,6 +3515,35 @@ func (s *VirtualMachineDomainSuite) TestCoalescedStartAndSuccessorStopAskTheGues
 		return nil
 	})
 	s.assertAsked("coalesced", 2)
+}
+
+// A guest which has locked its tray refuses a medium change, and nothing about the resources changes
+// when it lets go. The change is tried again every retry interval until it goes through.
+func (s *VirtualMachineDomainSuite) TestRefusedMediaChangeIsRetriedWithoutAnEvent() {
+	var refusals atomic.Int32
+
+	s.client.checkStart = func() error {
+		// More refusals than the passes the controller's own writes cause, so only the retry
+		// interval can get the change through.
+		if refusals.Add(1) <= 3 {
+			return fmt.Errorf("%w: tray is locked", libvirtdomain.ErrMediaChange)
+		}
+
+		return nil
+	}
+
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: 200 * time.Millisecond,
+	}))
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "media")
+	spec.TypedSpec().DomainXML = `<domain><name>media</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+
+	s.assertDomain("media", spec.TypedSpec().DomainXML, true)
+	s.Require().Greater(refusals.Load(), int32(3))
 }
 
 // A press the guest was not listening for yet is lost, so a guest which has not powered off is

@@ -1184,17 +1184,24 @@ func (x *VirtualMachineDomainSpecSpec) GetStopRequest() string {
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
 type VirtualMachineDomainStatusSpec struct {
-	state         protoimpl.MessageState                          `protogen:"open.v1"`
-	Uuid          string                                          `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	PowerState    enums.HypervisorhelpersVirtualMachinePowerState `protobuf:"varint,2,opt,name=power_state,json=powerState,proto3,enum=talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState" json:"power_state,omitempty"`
-	Error         string                                          `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
-	State         uint32                                          `protobuf:"varint,4,opt,name=state,proto3" json:"state,omitempty"`
-	MaxMemoryKiB  uint64                                          `protobuf:"varint,5,opt,name=max_memory_ki_b,json=maxMemoryKiB,proto3" json:"max_memory_ki_b,omitempty"`
-	MemoryKiB     uint64                                          `protobuf:"varint,6,opt,name=memory_ki_b,json=memoryKiB,proto3" json:"memory_ki_b,omitempty"`
-	VcpUs         uint32                                          `protobuf:"varint,7,opt,name=vcp_us,json=vcpUs,proto3" json:"vcp_us,omitempty"`
-	Interfaces    []*VirtualMachineGuestInterfaceSpec             `protobuf:"bytes,8,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state        protoimpl.MessageState                          `protogen:"open.v1"`
+	Uuid         string                                          `protobuf:"bytes,1,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	PowerState   enums.HypervisorhelpersVirtualMachinePowerState `protobuf:"varint,2,opt,name=power_state,json=powerState,proto3,enum=talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState" json:"power_state,omitempty"`
+	Error        string                                          `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	State        uint32                                          `protobuf:"varint,4,opt,name=state,proto3" json:"state,omitempty"`
+	MaxMemoryKiB uint64                                          `protobuf:"varint,5,opt,name=max_memory_ki_b,json=maxMemoryKiB,proto3" json:"max_memory_ki_b,omitempty"`
+	MemoryKiB    uint64                                          `protobuf:"varint,6,opt,name=memory_ki_b,json=memoryKiB,proto3" json:"memory_ki_b,omitempty"`
+	VcpUs        uint32                                          `protobuf:"varint,7,opt,name=vcp_us,json=vcpUs,proto3" json:"vcp_us,omitempty"`
+	Interfaces   []*VirtualMachineGuestInterfaceSpec             `protobuf:"bytes,8,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
+	// DefinitionDigest is the digest of the definition the domain records it runs, empty for a
+	// domain without a Talos ownership marker. Recorded only once a definition has been applied in
+	// full, so a medium change still waiting on the guest leaves it naming the previous one.
+	DefinitionDigest string `protobuf:"bytes,9,opt,name=definition_digest,json=definitionDigest,proto3" json:"definition_digest,omitempty"`
+	// ConfigurationDigest is the same definition digested without the fields a hardware profile
+	// controls, which a running domain picks up only at its next stop and start.
+	ConfigurationDigest string `protobuf:"bytes,10,opt,name=configuration_digest,json=configurationDigest,proto3" json:"configuration_digest,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *VirtualMachineDomainStatusSpec) Reset() {
@@ -1281,6 +1288,20 @@ func (x *VirtualMachineDomainStatusSpec) GetInterfaces() []*VirtualMachineGuestI
 		return x.Interfaces
 	}
 	return nil
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetDefinitionDigest() string {
+	if x != nil {
+		return x.DefinitionDigest
+	}
+	return ""
+}
+
+func (x *VirtualMachineDomainStatusSpec) GetConfigurationDigest() string {
+	if x != nil {
+		return x.ConfigurationDigest
+	}
+	return ""
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
@@ -2333,7 +2354,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"cloud_init\x18\x04 \x01(\tR\tcloudInit\x12/\n" +
 	"\x13observed_generation\x18\x05 \x01(\tR\x12observedGeneration\x12\x1b\n" +
 	"\tstop_mode\x18\x06 \x01(\tR\bstopMode\x12!\n" +
-	"\fstop_request\x18\a \x01(\tR\vstopRequest\"\x95\x03\n" +
+	"\fstop_request\x18\a \x01(\tR\vstopRequest\"\xf5\x03\n" +
 	"\x1eVirtualMachineDomainStatusSpec\x12\x12\n" +
 	"\x04uuid\x18\x01 \x01(\tR\x04uuid\x12l\n" +
 	"\vpower_state\x18\x02 \x01(\x0e2K.talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerStateR\n" +
@@ -2345,7 +2366,10 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x06vcp_us\x18\a \x01(\rR\x05vcpUs\x12g\n" +
 	"\n" +
 	"interfaces\x18\b \x03(\v2G.talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpecR\n" +
-	"interfaces\"Q\n" +
+	"interfaces\x12+\n" +
+	"\x11definition_digest\x18\t \x01(\tR\x10definitionDigest\x121\n" +
+	"\x14configuration_digest\x18\n" +
+	" \x01(\tR\x13configurationDigest\"Q\n" +
 	"\x1aVirtualMachineFirmwareSpec\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x1f\n" +
 	"\vsecure_boot\x18\x02 \x01(\bR\n" +

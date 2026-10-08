@@ -202,6 +202,13 @@ message VirtualMachineDomainStatusSpec {
   uint64 memory_ki_b = 6;
   uint32 vcp_us = 7;
   repeated VirtualMachineGuestInterfaceSpec interfaces = 8;
+  // DefinitionDigest is the digest of the definition the domain records it runs, empty for a
+  // domain without a Talos ownership marker. Recorded only once a definition has been applied in
+  // full, so a medium change still waiting on the guest leaves it naming the previous one.
+  string definition_digest = 9;
+  // ConfigurationDigest is the same definition digested without the fields a hardware profile
+  // controls, which a running domain picks up only at its next stop and start.
+  string configuration_digest = 10;
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.

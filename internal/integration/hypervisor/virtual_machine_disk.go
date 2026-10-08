@@ -642,20 +642,23 @@ func (suite *LibvirtSuite) provisionContentLibraryPool(ctx context.Context, node
 // The ID covers what the disk is provisioned from as well as its name, so it is built from the same
 // document the test applied rather than written out by hand.
 func diskStatusID(vm string, disk hypervisorcfg.VirtualMachineDisk) string {
-	image := disk.ProvisionConfig.FromImageConfig
-
-	return hypervisor.VirtualMachineDiskStatusID(vm, hypervisor.VirtualMachineDiskSpec{
+	spec := hypervisor.VirtualMachineDiskSpec{
 		Name:   disk.Name(),
 		Pool:   disk.Pool(),
 		Format: disk.Format().String(),
 		Type:   disk.Type().String(),
-		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
-			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{
-				Library: image.ImageLibrary,
-				File:    image.ImageFile,
-				Digest:  image.ImageDigest,
-				Mode:    image.Mode().String(),
-			},
-		},
-	})
+	}
+
+	if image := disk.ProvisionConfig.FromImageConfig; image != nil {
+		spec.Provision.FromImage = &hypervisor.VirtualMachineDiskFromImageSpec{
+			Library: image.ImageLibrary,
+			File:    image.ImageFile,
+			Digest:  image.ImageDigest,
+			Mode:    image.Mode().String(),
+		}
+	} else {
+		spec.Provision.Blank = disk.ProvisionConfig.BlankConfig != nil
+	}
+
+	return hypervisor.VirtualMachineDiskStatusID(vm, spec)
 }

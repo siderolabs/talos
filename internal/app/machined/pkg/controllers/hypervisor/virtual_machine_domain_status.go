@@ -332,6 +332,19 @@ func (ctrl *VirtualMachineDomainStatusController) observeDomain(ctx context.Cont
 	status.MemoryKiB = info.MemoryKiB
 	status.VCPUs = info.VCPUs
 
+	// What the domain records it runs, so readiness can tell a definition libvirt has applied from
+	// one it has only been handed: a medium change waits on the guest to release its tray.
+	definition, err := client.Definition(domain)
+	if err != nil {
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateUnknown
+		status.Error = err.Error()
+
+		return status
+	}
+
+	status.DefinitionDigest = definition.Digest
+	status.ConfigurationDigest = definition.Configuration
+
 	switch libvirt.DomainState(info.State) {
 	case libvirt.DomainRunning, libvirt.DomainBlocked:
 		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning

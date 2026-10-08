@@ -219,13 +219,13 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
+		rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
 
 		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
 		// running, and only its next start or replacement is held back.
 		if renderErr == nil && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
-			renderErr = placement.Validate(name, domainXML, topology)
+			renderErr = placement.Validate(name, rendered.DomainXML, topology)
 		}
 
 		definition := definitions[name]
@@ -239,7 +239,8 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		}
 
 		status := composeVirtualMachineStatus(&effective, stopMode, name, released, machineUUID, machineErr, renderErr, byName[name])
-		setVirtualMachineStatusGeneration(&status, &effective, generation, definition, domainXML, attachedDisks, seedID)
+		setVirtualMachineStatusGeneration(&status, &effective, generation, definition, rendered)
+		holdUntilDefinitionApplied(&status, name, machineUUID, definition, byName[name])
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, name),
@@ -257,19 +258,54 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 }
 
 func setVirtualMachineStatusGeneration(status *hypervisor.VirtualMachineStatusSpec, effective *hypervisor.VirtualMachineSpecSpec,
-	generation string, definition *hypervisor.VirtualMachineDomainSpec, domainXML string, attachedDisks []string, seedID string,
+	generation string, definition *hypervisor.VirtualMachineDomainSpec, rendered renderedDomain,
 ) {
 	status.ObservedGeneration = generation
 
 	if status.Stage == hypervisorhelpers.VirtualMachineStageReady && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
 		(definition == nil || definition.TypedSpec().ObservedGeneration != generation ||
-			!matchesVMStartIntent(definition.TypedSpec(), domainXML, attachedDisks, seedID, effective.PowerState)) {
+			!matchesVMStartIntent(definition.TypedSpec(), rendered, effective.PowerState)) {
 		status.Stage = hypervisorhelpers.VirtualMachineStagePending
 		status.Error = "domain definition has not caught up"
 	}
 
 	if definition != nil && definition.TypedSpec().ObservedGeneration == generation {
 		status.ObservedGeneration = hypervisor.VirtualMachineStatusGeneration(generation, definition)
+	}
+}
+
+// holdUntilDefinitionApplied keeps a running virtual machine pending until libvirt runs the
+// definition its domain spec carries, rather than one it has only been handed.
+//
+// The two part ways while a medium change waits on a guest which holds its tray shut: the domain
+// keeps running the previous medium, and VirtualMachineController keeps retrying. The domain records
+// a definition only once it has been applied in full, so its record is what tells the two apart.
+func holdUntilDefinitionApplied(status *hypervisor.VirtualMachineStatusSpec, name string, machineUUID uuid.UUID,
+	definition *hypervisor.VirtualMachineDomainSpec, domain *hypervisor.VirtualMachineDomainStatus,
+) {
+	// A domain with no record carries no Talos ownership marker, which VirtualMachineController
+	// refuses to adopt and reports on its own.
+	if status.Stage != hypervisorhelpers.VirtualMachineStageReady ||
+		status.PowerState != hypervisorhelpers.VirtualMachinePowerStateRunning ||
+		definition == nil || domain == nil || domain.TypedSpec().DefinitionDigest == "" {
+		return
+	}
+
+	running := libvirtdomain.Definition{
+		Digest:        domain.TypedSpec().DefinitionDigest,
+		Configuration: domain.TypedSpec().ConfigurationDigest,
+	}
+
+	desired, err := libvirtdomain.DefinitionOf(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)},
+		definition.TypedSpec().DomainXML)
+
+	switch {
+	case err != nil:
+		status.Stage = hypervisorhelpers.VirtualMachineStagePending
+		status.Error = fmt.Sprintf("domain definition cannot be compared with the running domain: %s", err)
+	case !running.Runs(desired):
+		status.Stage = hypervisorhelpers.VirtualMachineStagePending
+		status.Error = "domain has not applied its definition yet"
 	}
 }
 
