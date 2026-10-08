@@ -51,8 +51,7 @@ func consolePreconditionError(message string) error {
 
 // OpenConsole attaches exclusively to the first serial device of an active,
 // owned domain. It uses a dedicated connection; Close or context cancellation
-// releases the attachment. Slow readers are disconnected when the bounded
-// output queue fills, rather than retaining unbounded guest output.
+// releases the attachment.
 func (c *Connector) OpenConsole(ctx context.Context, d Domain) (io.ReadWriteCloser, error) {
 	if err := validateDomain(d); err != nil {
 		return nil, err
@@ -413,8 +412,6 @@ func (c *consoleTransport) route(frame []byte) error {
 		return nil
 	case <-c.done:
 		return net.ErrClosed
-	default:
-		return errors.New("console output queue overflow")
 	}
 }
 

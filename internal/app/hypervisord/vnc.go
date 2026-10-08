@@ -84,8 +84,6 @@ func (s *Service) VNCStream(stream grpc.BidiStreamingServer[machine.VNCRequest, 
 	stop := context.AfterFunc(stream.Context(), closeConnection)
 	defer stop()
 
-	// No data queues: both directions propagate destination backpressure.
-	// Returning closes the connection and gRPC cancels blocked Send/Recv calls.
 	done := make(chan error, 2)
 	go func() { done <- sendVNCOutput(stream, conn) }()
 	go func() { done <- receiveVNCInput(stream, conn) }()
