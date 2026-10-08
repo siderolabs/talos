@@ -11,6 +11,7 @@ import (
 	"net"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -120,44 +121,66 @@ func TestVNCPreconditions(t *testing.T) {
 }
 
 func TestVNCCancellationClosesBlockedIO(t *testing.T) {
-	st := setup(t)
-	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
-	vm.TypedSpec().PowerState = "running"
-	vm.TypedSpec().Console.VNC = true
-	require.NoError(t, st.Create(t.Context(), vm))
+	synctest.Test(t, func(t *testing.T) {
+		st := setup(t)
+		vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
+		vm.TypedSpec().PowerState = "running"
+		vm.TypedSpec().Console.VNC = true
+		require.NoError(t, st.Create(t.Context(), vm))
 
-	peers := make(chan net.Conn, 1)
-	c := client(t, st, nil, hypervisord.WithVNCConnector(func(context.Context, domain.Domain) (io.ReadWriteCloser, error) {
-		a, b := net.Pipe()
-		peers <- b
+		server, peer := net.Pipe()
+		defer func() { require.NoError(t, server.Close()) }()
+		defer func() { require.NoError(t, peer.Close()) }()
 
-		return a, nil
-	}))
+		require.NoError(t, peer.SetReadDeadline(time.Now().Add(5*time.Second)))
 
-	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
-	defer cancel()
+		conn := &vncObservedConn{Conn: server}
+		c := client(t, st, nil, hypervisord.WithVNCConnector(func(context.Context, domain.Domain) (io.ReadWriteCloser, error) {
+			return conn, nil
+		}))
 
-	stream, err := c.VNCStream(ctx)
-	require.NoError(t, err)
-	require.NoError(t, stream.Send(vncAttach()))
+		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+		defer cancel()
 
-	var peer net.Conn
-	select {
-	case peer = <-peers:
-	case <-ctx.Done():
-		t.Fatal(ctx.Err())
-	}
+		stream, err := c.VNCStream(ctx)
+		require.NoError(t, err)
+		require.NoError(t, stream.Send(vncAttach()))
+		require.NoError(t, stream.Send(vncData([]byte{1, 2, 3})))
 
-	defer func() { require.NoError(t, peer.Close()) }()
-	// The server read blocks on the peer; input also blocks until the peer reads.
-	require.NoError(t, stream.Send(vncData([]byte{1, 2, 3})))
-	cancel()
+		synctest.Wait()
+		require.True(t, conn.readStarted.Load(), "cancellation must exercise a blocked server read")
+		require.True(t, conn.writeStarted.Load(), "cancellation must exercise a blocked server write")
+		cancel()
 
-	_, err = stream.Recv()
-	require.Equal(t, codes.Canceled, status.Code(err))
-	require.NoError(t, peer.SetReadDeadline(time.Now().Add(5*time.Second)))
-	_, err = io.ReadAll(peer)
-	require.NoError(t, err)
+		_, err = stream.Recv()
+		require.Equal(t, codes.Canceled, status.Code(err))
+		synctest.Wait()
+
+		var buf [1]byte
+
+		n, err := peer.Read(buf[:])
+		require.ErrorIs(t, err, io.EOF, "cancellation must close the pipe, not leave a write pending")
+		require.Zero(t, n)
+	})
+}
+
+type vncObservedConn struct {
+	net.Conn
+
+	readStarted  atomic.Bool
+	writeStarted atomic.Bool
+}
+
+func (c *vncObservedConn) Read(buf []byte) (int, error) {
+	c.readStarted.Store(true)
+
+	return c.Conn.Read(buf)
+}
+
+func (c *vncObservedConn) Write(buf []byte) (int, error) {
+	c.writeStarted.Store(true)
+
+	return c.Conn.Write(buf)
 }
 
 func TestVNCRelayAndReservations(t *testing.T) {
