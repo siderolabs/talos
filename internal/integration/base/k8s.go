@@ -238,12 +238,15 @@ func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, che
 	})
 }
 
-type podInfo interface {
+type podInfo interface { //nolint:interfacebloat
 	Name() string
 	WithNodeName(nodeName string) podInfo
 	WithQuiet(quiet bool) podInfo
 	WithNamespace(namespace string) podInfo
 	WithHostVolumeMount(hostPath, mountPath string) podInfo
+	WithSELinuxOptions(opts *corev1.SELinuxOptions) podInfo
+	WithHostPID() podInfo
+	WithPersistentVolumeClaim(claim, mountPath string) podInfo
 	Create(ctx context.Context, waitTimeout time.Duration) error
 	Delete(ctx context.Context) error
 	Exec(ctx context.Context, command string) (string, string, error)
@@ -293,6 +296,35 @@ func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
 
 	p.pod.Spec.Containers[0].VolumeMounts = append(p.pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
 		Name:      name,
+		MountPath: mountPath,
+	})
+
+	return p
+}
+
+func (p *pod) WithSELinuxOptions(opts *corev1.SELinuxOptions) podInfo {
+	if p.pod.Spec.SecurityContext == nil {
+		p.pod.Spec.SecurityContext = &corev1.PodSecurityContext{}
+	}
+
+	p.pod.Spec.SecurityContext.SELinuxOptions = opts
+
+	return p
+}
+
+func (p *pod) WithHostPID() podInfo {
+	p.pod.Spec.HostPID = true
+
+	return p
+}
+
+func (p *pod) WithPersistentVolumeClaim(claim, mountPath string) podInfo {
+	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, corev1.Volume{
+		Name:                  claim,
+		PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: claim},
+	})
+	p.pod.Spec.Containers[0].VolumeMounts = append(p.pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
+		Name:      claim,
 		MountPath: mountPath,
 	})
 
