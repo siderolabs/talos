@@ -177,6 +177,14 @@ On UEFI systems booted via `systemd-boot` the boot partition comes from the `Loa
 now passes the `talos.boot.partuuid=<UUID>` kernel argument (probed by GRUB at boot). The detected boot partition is published as the `bootpartition` resource.
 """
 
+    [notes.selinux_workloads]
+        title = "SELinux Workload Domains"
+        description = """\
+When the CRI labels containers (`enable_selinux = true` in a `CRICustomizationConfig` document), pods run as `pod_t` with
+MCS categories, and privileged containers as `pod_privileged_t`, which reads the host files and `/proc` and ignores the
+categories. `spc_t` is an alias of it, so charts written for Fedora and RHEL keep working.
+"""
+
     [notes.kubespan_peer_endpoint_filters]
         title = "KubeSpan Peer Endpoint Filters"
         description = """\
