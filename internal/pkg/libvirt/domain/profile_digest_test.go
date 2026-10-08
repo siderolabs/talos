@@ -47,7 +47,7 @@ func TestProfileIndependentDefinitionDigest(t *testing.T) {
 	}
 	xml, err := original.Marshal()
 	require.NoError(t, err)
-	_, initial, err := libvirtdomain.DomainDefinition(owned, xml)
+	initialFull, initialConfiguration, err := libvirtdomain.DefinitionDigests(owned, xml)
 	require.NoError(t, err)
 
 	for _, test := range []struct {
@@ -106,14 +106,14 @@ func TestProfileIndependentDefinitionDigest(t *testing.T) {
 			test.mutate(&changed)
 			changedXML, err := changed.Marshal()
 			require.NoError(t, err)
-			_, next, err := libvirtdomain.DomainDefinition(owned, changedXML)
+			nextFull, nextConfiguration, err := libvirtdomain.DefinitionDigests(owned, changedXML)
 			require.NoError(t, err)
-			require.NotEqual(t, initial.Full, next.Full)
+			require.NotEqual(t, initialFull, nextFull)
 
 			if test.profileOnly {
-				require.Equal(t, initial.Configuration, next.Configuration)
+				require.Equal(t, initialConfiguration, nextConfiguration)
 			} else {
-				require.NotEqual(t, initial.Configuration, next.Configuration)
+				require.NotEqual(t, initialConfiguration, nextConfiguration)
 			}
 		})
 	}

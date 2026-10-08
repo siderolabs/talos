@@ -24,6 +24,7 @@ import (
 
 	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -205,9 +206,18 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 
 	generation := hypervisor.VirtualMachineEffectiveGeneration(vm, override)
 
-	domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
+	rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
 	if renderErr != nil {
 		retain, checkErr := retainDomainOnStorageOutage(ctx, r, vm, powerState, generation, domain, disks, renderErr)
+		if checkErr != nil {
+			return checkErr
+		}
+
+		if retain {
+			return nil
+		}
+
+		retain, checkErr = retainDomainOnPendingMedium(ctx, r, vm, powerState, domain, disks, renderErr)
 		if checkErr != nil {
 			return checkErr
 		}
@@ -235,10 +245,10 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 	}
 
 	*domain.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-		DomainXML:          domainXML,
+		DomainXML:          rendered.DomainXML,
 		PowerState:         powerState,
-		Disks:              attachedDisks,
-		CloudInit:          seedID,
+		Disks:              rendered.Disks,
+		CloudInit:          rendered.CloudInit,
 		ObservedGeneration: generation,
 		StopMode:           stopModeOf(stopRequest),
 		StopRequest:        stopRequest,
@@ -271,11 +281,79 @@ func retainDomainOnStorageOutage(ctx context.Context, r controller.Reader, vm *h
 	return seedCurrent && (unavailable || seedUnavailable), err
 }
 
-func runningDomainMatchesVM(vm *hypervisor.VirtualMachineSpec, powerState, generation string, domain *hypervisor.VirtualMachineDomainSpec) bool {
-	return vm.Metadata().Phase() == resource.PhaseRunning && powerState == "running" &&
-		domain.TypedSpec().PowerState == "running" && domain.TypedSpec().DomainXML != "" &&
-		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == generation &&
+// retainDomainOnPendingMedium keeps a running definition while the only thing it waits for is the
+// new medium of a cdrom drive it already has.
+//
+// A medium is part of what a disk status is identified by, so a medium loaded, swapped or ejected
+// gets a status of its own which is not ready the moment the configuration changes. Stopping the
+// domain for that window would replace the guest the change was meant to leave running: the old
+// definition is kept instead, with its old generation, so nothing starts from it and the status
+// still reports the change as pending. Once the medium resolves the definition is rendered anew
+// and the medium is changed under the running guest.
+func retainDomainOnPendingMedium(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec, powerState string,
+	domain *hypervisor.VirtualMachineDomainSpec, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, renderErr error,
+) (bool, error) {
+	if !errors.Is(renderErr, errDiskNotReady) || !pendingMediumOnly(vm, powerState, domain, disks) {
+		return false, nil
+	}
+
+	if vm.TypedSpec().CloudInit == nil {
+		return true, nil
+	}
+
+	_, current, err := retainedCloudInitCurrent(ctx, r, vm, domain)
+
+	return current, err
+}
+
+// pendingMediumOnly reports whether every disk of a running domain is either unchanged and ready, or
+// a cdrom drive the domain already has whose new medium is not ready yet -- and at least one is the
+// latter.
+func pendingMediumOnly(vm *hypervisor.VirtualMachineSpec, powerState string,
+	domain *hypervisor.VirtualMachineDomainSpec, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+) bool {
+	if !runningWithSameDrives(vm, powerState, domain) {
+		return false
+	}
+
+	pending := false
+
+	for i, disk := range vm.TypedSpec().Disks {
+		id := hypervisor.VirtualMachineDiskStatusID(vm.Metadata().ID(), disk)
+		attached := domain.TypedSpec().Disks[i]
+		status, found := disks[id]
+		ready := found && status.Phase == hypervisor.VirtualMachineDiskPhaseReady
+
+		switch {
+		case id == attached:
+			// An attached medium which stopped resolving is not a change in flight.
+			if !ready {
+				return false
+			}
+		case !ready && disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() &&
+			strings.HasPrefix(attached, hypervisor.VirtualMachineDiskStatusIDPrefix(vm.Metadata().ID(), disk.Name)):
+			pending = true
+		default:
+			return false
+		}
+	}
+
+	return pending
+}
+
+// runningWithSameDrives reports whether a domain is meant to keep running and attaches as many
+// disks as the virtual machine now declares.
+func runningWithSameDrives(vm *hypervisor.VirtualMachineSpec, powerState string, domain *hypervisor.VirtualMachineDomainSpec) bool {
+	running := hypervisorhelpers.PowerStateRunning.String()
+
+	return vm.Metadata().Phase() == resource.PhaseRunning && powerState == running &&
+		domain.TypedSpec().PowerState == running && domain.TypedSpec().DomainXML != "" &&
 		len(domain.TypedSpec().Disks) == len(vm.TypedSpec().Disks)
+}
+
+func runningDomainMatchesVM(vm *hypervisor.VirtualMachineSpec, powerState, generation string, domain *hypervisor.VirtualMachineDomainSpec) bool {
+	return runningWithSameDrives(vm, powerState, domain) &&
+		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == generation
 }
 
 // outageDisksMatchDomain checks every attached disk, not only the disk which made rendering fail.
@@ -301,19 +379,37 @@ func outageDisksMatchDomain(ctx context.Context, r controller.Reader, vm *hyperv
 		}
 
 		status, exists := disks[id]
-		if !retainedDiskMatchesVM(vm.Metadata().ID(), disk, status, exists, definition.Devices.Disks[i]) {
-			return false, false, nil
+
+		diskUnavailable, diskValid, diskErr := outageDiskMatchesDomain(ctx, r, vm.Metadata().ID(), disk, status, exists, definition.Devices.Disks[i])
+		if diskErr != nil || !diskValid {
+			return false, false, diskErr
 		}
 
-		poolValid, poolErr := outageDiskBackingCurrent(ctx, r, disk, status)
-		if poolErr != nil || !poolValid {
-			return false, false, poolErr
-		}
-
-		unavailable = unavailable || status.Phase == hypervisor.VirtualMachineDiskPhaseObservationUnavailable
+		unavailable = unavailable || diskUnavailable
 	}
 
 	return unavailable, true, nil
+}
+
+// outageDiskMatchesDomain checks one attached disk of a definition retained through an outage.
+func outageDiskMatchesDomain(ctx context.Context, r controller.Reader, name string, disk hypervisor.VirtualMachineDiskSpec,
+	status hypervisor.VirtualMachineDiskStatusSpec, exists bool, attached libvirtxml.DomainDisk,
+) (unavailable, valid bool, err error) {
+	if isEmptyDrive(disk) {
+		// An empty drive has no medium and no pool behind it: nothing an outage can invalidate.
+		return false, retainedEmptyDriveAttached(name, disk, status, exists, attached), nil
+	}
+
+	if !retainedDiskMatchesVM(name, disk, status, exists, attached) {
+		return false, false, nil
+	}
+
+	valid, err = outageDiskBackingCurrent(ctx, r, disk, status)
+	if err != nil || !valid {
+		return false, false, err
+	}
+
+	return status.Phase == hypervisor.VirtualMachineDiskPhaseObservationUnavailable, true, nil
 }
 
 func retainedDiskCountMatches(definition libvirtxml.Domain, count int) bool {
@@ -331,6 +427,22 @@ func retainedDiskAttached(attached libvirtxml.DomainDisk, disk hypervisor.Virtua
 		attached.Source.File.File == status.SourcePath && attached.Driver != nil && attached.Driver.Type == status.Format &&
 		attached.Device == disk.Type && attached.Target != nil && attached.Target.Bus == disk.Bus &&
 		(attached.ReadOnly != nil) == status.ReadOnly
+}
+
+// retainedEmptyDriveAttached reports whether an attached drive is the empty cdrom a disk declares.
+func retainedEmptyDriveAttached(name string, disk hypervisor.VirtualMachineDiskSpec,
+	status hypervisor.VirtualMachineDiskStatusSpec, exists bool, attached libvirtxml.DomainDisk,
+) bool {
+	return exists && status.VirtualMachine == name && status.Name == disk.Name &&
+		status.Phase == hypervisor.VirtualMachineDiskPhaseReady && emptyDriveAttached(attached, disk)
+}
+
+// emptyDriveAttached reports whether an attached drive is a read-only cdrom on the declared bus with
+// no medium in it.
+func emptyDriveAttached(attached libvirtxml.DomainDisk, disk hypervisor.VirtualMachineDiskSpec) bool {
+	return (attached.Source == nil || attached.Source.File == nil || attached.Source.File.File == "") &&
+		attached.Device == disk.Type && attached.Target != nil && attached.Target.Bus == disk.Bus &&
+		attached.ReadOnly != nil
 }
 
 func outageDiskBackingCurrent(ctx context.Context, r controller.Reader, disk hypervisor.VirtualMachineDiskSpec,
@@ -478,13 +590,23 @@ func domainAttachesCurrentSeed(domainXML string, asset *hypervisor.CloudInitStat
 	return false
 }
 
+// renderedDomain is one rendered definition and what the render decided about it.
+type renderedDomain struct {
+	// DomainXML is the definition libvirt is handed.
+	DomainXML string
+	// Disks are the IDs of the disk statuses the definition attaches, in configuration order.
+	Disks []string
+	// CloudInit is the ID of the seed status the definition attaches, if any.
+	CloudInit string
+}
+
 // renderVirtualMachineDomainWithSeed appends the projected seed to a valid base domain.
 func renderVirtualMachineDomainWithSeed(
 	ctx context.Context, r controller.Reader, name string, spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks, resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, string, error) {
+) (renderedDomain, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
-		return "", nil, "", err
+		return renderedDomain{}, err
 	}
 
 	profileName := spec.Profile
@@ -495,28 +617,28 @@ func renderVirtualMachineDomainWithSeed(
 	profile, err := safe.ReaderGetByID[*hypervisor.VirtualMachineProfileSpec](ctx, r, profileName)
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return "", nil, "", fmt.Errorf("virtual machine %q: profile %q not found: %w", name, profileName, vmprofile.ErrNotReady)
+			return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q not found: %w", name, profileName, vmprofile.ErrNotReady)
 		}
 
-		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
+		return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
 	}
 
 	if profile.Metadata().Phase() != resource.PhaseRunning {
-		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q is not available: %w", name, profileName, vmprofile.ErrNotReady)
+		return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q is not available: %w", name, profileName, vmprofile.ErrNotReady)
 	}
 
 	if err := vmprofile.Validate(profileName, *profile.TypedSpec()); err != nil {
-		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
+		return renderedDomain{}, fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
 	}
 
-	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, profile.TypedSpec(), links, resolvedDisks)
+	rendered, err := renderVirtualMachineDomain(name, spec, profile.TypedSpec(), links, resolvedDisks)
 	if err != nil || spec.CloudInit == nil {
-		return domainXML, attachedDisks, "", err
+		return rendered, err
 	}
 
-	seedID, err := attachCloudInit(ctx, r, name, spec.CloudInit, &domainXML)
+	rendered.CloudInit, err = attachCloudInit(ctx, r, name, spec.CloudInit, &rendered.DomainXML)
 
-	return domainXML, attachedDisks, seedID, err
+	return rendered, err
 }
 
 // attachCloudInit requires the exact projected seed and its current pool backing before rendering.
@@ -724,10 +846,10 @@ func renderVirtualMachineDomain(
 	profile *hypervisor.VirtualMachineProfileSpecSpec,
 	links hostLinks,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, error) {
+) (renderedDomain, error) {
 	interfaces, err := renderVirtualMachineInterfaces(name, spec.Interfaces, links)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	// Profile validation rejects unsupported architectures before rendering.
@@ -801,7 +923,7 @@ func renderVirtualMachineDomain(
 
 	cputune, err := renderVirtualMachineCPUTune(name, spec.CPU)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	domain.CPUTune = cputune
@@ -809,7 +931,7 @@ func renderVirtualMachineDomain(
 	if spec.Memory.NUMA != nil {
 		nodes, err := canonicalHostIDList(name, "NUMA nodes", spec.Memory.NUMA.Nodes, hypervisorhelpers.MaxHostNUMANodeID)
 		if err != nil {
-			return "", nil, err
+			return renderedDomain{}, err
 		}
 
 		// The mode is always written, even the default: libvirt's own default is also strict, but
@@ -830,15 +952,15 @@ func renderVirtualMachineDomain(
 
 	attachedDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	domainXML, err := domain.Marshal()
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
+		return renderedDomain{}, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
 	}
 
-	return domainXML, attachedDisks, nil
+	return renderedDomain{DomainXML: domainXML, Disks: attachedDisks}, nil
 }
 
 func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec, video hypervisor.VirtualMachineVideoSpec) {
@@ -1351,19 +1473,29 @@ func renderVirtualMachineDisks(
 
 		rendered := libvirtxml.DomainDisk{
 			Device: device,
+			// Names the device as one the machine configuration declares, which is what allows a
+			// change to it to be applied to a running domain rather than redefining it. Devices the
+			// renderer adds on its own account, such as the cloud-init seed below, carry no such
+			// alias and are never touched under a running guest.
+			Alias: &libvirtxml.DomainAlias{Name: libvirtdomain.DeviceAlias("disk", disk.Name)},
 			Driver: &libvirtxml.DomainDiskDriver{
 				Name: "qemu",
 				Type: resolved.Format,
-			},
-			Source: &libvirtxml.DomainDiskSource{
-				File: &libvirtxml.DomainDiskSourceFile{
-					File: resolved.SourcePath,
-				},
 			},
 			Target: &libvirtxml.DomainDiskTarget{
 				Dev: dev,
 				Bus: disk.Bus,
 			},
+		}
+
+		// A drive with no host source is an empty cdrom. Everything else about the device stays as
+		// it is when loaded, so loading and ejecting a medium changes only this element.
+		if resolved.SourcePath != "" {
+			rendered.Source = &libvirtxml.DomainDiskSource{
+				File: &libvirtxml.DomainDiskSourceFile{
+					File: resolved.SourcePath,
+				},
+			}
 		}
 
 		if resolved.ReadOnly {
