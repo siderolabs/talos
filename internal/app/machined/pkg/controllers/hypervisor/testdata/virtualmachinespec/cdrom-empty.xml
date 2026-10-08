@@ -17,9 +17,8 @@
   </features>
   <cpu mode="host-model"></cpu>
   <devices>
-    <disk type="file" device="cdrom">
+    <disk device="cdrom">
       <driver name="qemu" type="raw"></driver>
-      <source file="/content-library/talos.iso"></source>
       <target dev="sda" bus="sata"></target>
       <readonly></readonly>
       <boot order="1"></boot>

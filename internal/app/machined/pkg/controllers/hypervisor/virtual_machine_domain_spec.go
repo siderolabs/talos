@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -140,7 +141,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 			ctx, r,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, resolvedDisks)
+				rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, resolvedDisks)
 				if renderErr != nil {
 					if res.TypedSpec().DomainXML == "" {
 						// Nothing was ever defined, so there is nothing to stop.
@@ -158,10 +159,10 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 				}
 
 				*res.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-					DomainXML:  domainXML,
+					DomainXML:  rendered.DomainXML,
 					PowerState: vm.TypedSpec().PowerState,
-					Disks:      attachedDisks,
-					CloudInit:  seedID,
+					Disks:      rendered.Disks,
+					CloudInit:  rendered.CloudInit,
 				}
 
 				return nil
@@ -183,19 +184,29 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		cleanupOutputs[*hypervisor.VirtualMachineDomainSpec](ctx, r, "virtual machine domain spec", desired))...)
 }
 
+// renderedDomain is one rendered definition and what the render decided about it.
+type renderedDomain struct {
+	// DomainXML is the definition libvirt is handed.
+	DomainXML string
+	// Disks are the IDs of the disk statuses the definition attaches, in configuration order.
+	Disks []string
+	// CloudInit is the ID of the seed status the definition attaches, if any.
+	CloudInit string
+}
+
 // renderVirtualMachineDomainWithSeed appends the projected seed to a valid base domain.
 func renderVirtualMachineDomainWithSeed(
 	ctx context.Context, r controller.Reader, name string, spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks, resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, string, error) {
-	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, links, resolvedDisks)
+) (renderedDomain, error) {
+	rendered, err := renderVirtualMachineDomain(name, spec, links, resolvedDisks)
 	if err != nil || spec.CloudInit == nil {
-		return domainXML, attachedDisks, "", err
+		return rendered, err
 	}
 
-	seedID, err := attachCloudInit(ctx, r, name, spec.CloudInit, &domainXML)
+	rendered.CloudInit, err = attachCloudInit(ctx, r, name, spec.CloudInit, &rendered.DomainXML)
 
-	return domainXML, attachedDisks, seedID, err
+	return rendered, err
 }
 
 // attachCloudInit requires the exact projected seed and its current library backing before rendering.
@@ -370,14 +381,14 @@ func renderVirtualMachineDomain(
 	spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, error) {
+) (renderedDomain, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	interfaces, err := renderVirtualMachineInterfaces(name, spec.Interfaces, links)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	// KVM guests use the host architecture. Leave architecture and machine
@@ -430,7 +441,7 @@ func renderVirtualMachineDomain(
 
 	cputune, err := renderVirtualMachineCPUTune(name, spec.CPU)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	domain.CPUTune = cputune
@@ -438,7 +449,7 @@ func renderVirtualMachineDomain(
 	if spec.Memory.NUMA != nil {
 		nodes, err := canonicalHostIDList(name, "NUMA nodes", spec.Memory.NUMA.Nodes, hypervisorhelpers.MaxHostNUMANodeID)
 		if err != nil {
-			return "", nil, err
+			return renderedDomain{}, err
 		}
 
 		// The mode is always written, even the default: libvirt's own default is also strict, but
@@ -459,15 +470,15 @@ func renderVirtualMachineDomain(
 
 	attachedDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	domainXML, err := domain.Marshal()
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
+		return renderedDomain{}, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
 	}
 
-	return domainXML, attachedDisks, nil
+	return renderedDomain{DomainXML: domainXML, Disks: attachedDisks}, nil
 }
 
 func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec) {
@@ -963,19 +974,29 @@ func renderVirtualMachineDisks(
 
 		rendered := libvirtxml.DomainDisk{
 			Device: device,
+			// Names the device as one the machine configuration declares, which is what allows a
+			// change to it to be applied to a running domain rather than redefining it. Devices the
+			// renderer adds on its own account, such as the cloud-init seed below, carry no such
+			// alias and are never touched under a running guest.
+			Alias: &libvirtxml.DomainAlias{Name: libvirtdomain.DeviceAlias("disk", disk.Name)},
 			Driver: &libvirtxml.DomainDiskDriver{
 				Name: "qemu",
 				Type: resolved.Format,
-			},
-			Source: &libvirtxml.DomainDiskSource{
-				File: &libvirtxml.DomainDiskSourceFile{
-					File: resolved.SourcePath,
-				},
 			},
 			Target: &libvirtxml.DomainDiskTarget{
 				Dev: dev,
 				Bus: disk.Bus,
 			},
+		}
+
+		// A drive with no host source is an empty cdrom. Everything else about the device stays as
+		// it is when loaded, so loading and ejecting a medium changes only this element.
+		if resolved.SourcePath != "" {
+			rendered.Source = &libvirtxml.DomainDiskSource{
+				File: &libvirtxml.DomainDiskSourceFile{
+					File: resolved.SourcePath,
+				},
+			}
 		}
 
 		if resolved.ReadOnly {

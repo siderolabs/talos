@@ -243,6 +243,11 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 			// Retried when the host NUMA topology or the definition changes.
 			logger.Warn("virtual machine is held back by its host placement",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
+		case errors.Is(err, libvirtdomain.ErrMediaChange):
+			// The guest was not interrupted and still runs its previous definition. Retried on
+			// every pass, which is all a guest holding its tray shut needs.
+			logger.Warn("virtual machine is waiting to change the medium of a drive",
+				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
 		case err != nil:
 			reconcileErrors = errors.Join(reconcileErrors, err)
 		}
@@ -348,7 +353,8 @@ func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controlle
 		return checkDomainPlacement(ctx, r, name, spec.TypedSpec().DomainXML)
 	})
 
-	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}, spec.TypedSpec().DomainXML, admission); err != nil {
+	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)},
+		spec.TypedSpec().DomainXML, admission); err != nil {
 		return fmt.Errorf("failed to start domain %q: %w", name, err)
 	}
 
@@ -391,7 +397,7 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 		return err
 	}
 
-	text, attachedDisks, seedID, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
+	rendered, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
 	if err != nil {
 		if isHeldBack(err) {
 			return pending()
@@ -400,15 +406,16 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 		return err
 	}
 
-	if !matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, vm.TypedSpec().PowerState) {
+	if !matchesVMStartIntent(spec.TypedSpec(), rendered, vm.TypedSpec().PowerState) {
 		return pending()
 	}
 
 	return nil
 }
 
-func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, text string, disks []string, seedID, powerState string) bool {
-	return text == spec.DomainXML && slices.Equal(disks, spec.Disks) && seedID == spec.CloudInit && powerState == spec.PowerState
+func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, rendered renderedDomain, powerState string) bool {
+	return rendered.DomainXML == spec.DomainXML && slices.Equal(rendered.Disks, spec.Disks) &&
+		rendered.CloudInit == spec.CloudInit && powerState == spec.PowerState
 }
 
 // holdSeed pins the status before inspecting mutable library state or handing XML to libvirt.

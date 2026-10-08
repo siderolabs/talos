@@ -516,6 +516,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: "disks[0]: bus virtio is not allowed on a cdrom, which presents ejectable media",
 		},
 		{
+			// A blank cdrom is an empty drive: valid, and the form an ejected medium takes.
 			name: "blank cdrom",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
@@ -526,8 +527,6 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 
 				return c
 			},
-
-			expectedErrors: "disks[0]: provision.blank: a cdrom has no contents of its own",
 		},
 		{
 			name: "bus outside the enum",
