@@ -276,6 +276,11 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 					extraArgs[k] = k8s.ArgValues{Values: v}
 				}
 
+				var selinuxLevel string
+				if cfgProvider.SecurityProfileConfig() != nil && cfgProvider.SecurityProfileConfig().SELinuxCategories() {
+					selinuxLevel = constants.KubernetesAPIServerSELinuxLevel
+				}
+
 				*res.TypedSpec() = k8s.APIServerConfigSpec{
 					Image:                   cfgProvider.K8sAPIServerConfig().Image(),
 					CloudProvider:           cloudProvider,
@@ -290,6 +295,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 					Resources:               convertResources(cfgProvider.K8sAPIServerConfig().Resources()),
 					StartupProbesEnabled:    cfgProvider.K8sAPIServerConfig().StartupProbesEnabled(),
 					UseAuthenticationConfig: cfgProvider.K8sAPIServerConfig().UseAuthenticationConfig(),
+					SELinuxLevel:            selinuxLevel,
 				}
 
 				return nil

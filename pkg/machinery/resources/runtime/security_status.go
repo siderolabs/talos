@@ -73,6 +73,8 @@ type SecurityStateSpec struct {
 	// SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the
 	// firmware used to authorize the images loaded in this boot, as recorded in PCR 7.
 	SecureBootAuthorityFingerprints []string `yaml:"secureBootAuthorityFingerprints,omitempty" protobuf:"9"`
+	// SELinuxCategories is set when SELinux is enabled and workloads are labeled with MCS categories.
+	SELinuxCategories bool `yaml:"selinuxCategories,omitempty" protobuf:"10"`
 }
 
 // NewSecurityStateSpec initializes a security state resource.
@@ -103,6 +105,10 @@ func (SecurityStateExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 			{
 				Name:     "SELinuxState",
 				JSONPath: `{.selinuxState}`,
+			},
+			{
+				Name:     "SELinuxCategories",
+				JSONPath: `{.selinuxCategories}`,
 			},
 			{
 				Name:     "ModuleSignatureEnforced",

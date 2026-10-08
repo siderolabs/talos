@@ -108,6 +108,8 @@ type SecurityProfileConfig interface {
 	WorkloadIsolation() bool
 	// IgnoreCtrlAltDelete reports whether Ctrl-Alt-Delete should be ignored.
 	IgnoreCtrlAltDelete() bool
+	// SELinuxCategories reports whether workloads should be labeled with SELinux MCS categories.
+	SELinuxCategories() bool
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.

@@ -44,8 +44,10 @@ type APIServerConfigSpec struct {
 	StartupProbesEnabled    bool                   `protobuf:"varint,14,opt,name=startup_probes_enabled,json=startupProbesEnabled,proto3" json:"startup_probes_enabled,omitempty"`
 	UseAuthenticationConfig bool                   `protobuf:"varint,15,opt,name=use_authentication_config,json=useAuthenticationConfig,proto3" json:"use_authentication_config,omitempty"`
 	Args                    []string               `protobuf:"bytes,16,rep,name=args,proto3" json:"args,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// SELinuxLevel is the fixed MCS level of the kube-apiserver pod, empty when pods run without categories.
+	SeLinuxLevel  string `protobuf:"bytes,17,opt,name=se_linux_level,json=seLinuxLevel,proto3" json:"se_linux_level,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *APIServerConfigSpec) Reset() {
@@ -174,6 +176,13 @@ func (x *APIServerConfigSpec) GetArgs() []string {
 		return x.Args
 	}
 	return nil
+}
+
+func (x *APIServerConfigSpec) GetSeLinuxLevel() string {
+	if x != nil {
+		return x.SeLinuxLevel
+	}
+	return ""
 }
 
 // AdmissionControlConfigSpec is configuration for kube-apiserver.
@@ -2832,7 +2841,7 @@ var File_resource_definitions_k8s_k8s_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\n" +
-	"\"resource/definitions/k8s/k8s.proto\x12\x1etalos.resource.definitions.k8s\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/proto/proto.proto\"\xda\a\n" +
+	"\"resource/definitions/k8s/k8s.proto\x12\x1etalos.resource.definitions.k8s\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/proto/proto.proto\"\x80\b\n" +
 	"\x13APIServerConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12%\n" +
 	"\x0ecloud_provider\x18\x02 \x01(\tR\rcloudProvider\x124\n" +
@@ -2849,7 +2858,8 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"extra_args\x18\r \x03(\v2B.talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntryR\textraArgs\x124\n" +
 	"\x16startup_probes_enabled\x18\x0e \x01(\bR\x14startupProbesEnabled\x12:\n" +
 	"\x19use_authentication_config\x18\x0f \x01(\bR\x17useAuthenticationConfig\x12\x12\n" +
-	"\x04args\x18\x10 \x03(\tR\x04args\x1aG\n" +
+	"\x04args\x18\x10 \x03(\tR\x04args\x12$\n" +
+	"\x0ese_linux_level\x18\x11 \x01(\tR\fseLinuxLevel\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +

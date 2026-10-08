@@ -18,7 +18,10 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -165,6 +168,40 @@ func (suite *SecurityStateSuite) TestNoChurn() {
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(version.Next().String(), res.Metadata().Version().String(), "the state should have been published exactly twice")
+}
+
+// TestSELinuxCategories covers the SELinux categories following the machine configuration; they are
+// only reported when SELinux is enabled on the host running the test.
+func (suite *SecurityStateSuite) TestSELinuxCategories() {
+	startMachined(&suite.DefaultSuite)
+
+	suite.assertLockdownState(runtime.LockdownStateNone)
+
+	securityProfile := runtimecfg.NewSecurityProfileConfigV1Alpha1()
+	securityProfile.SELinuxCategoriesEnabled = new(true)
+
+	ctr, err := container.New(securityProfile)
+	suite.Require().NoError(err)
+
+	machineConfig := config.NewMachineConfig(ctr)
+	suite.Create(machineConfig)
+
+	ctest.AssertResource(suite, runtime.SecurityStateID, func(res *runtime.SecurityState, asrt *assert.Assertions) {
+		asrt.Equal(res.TypedSpec().SELinuxState != runtime.SELinuxStateDisabled, res.TypedSpec().SELinuxCategories)
+	})
+
+	securityProfile.SELinuxCategoriesEnabled = new(false)
+
+	ctr, err = container.New(securityProfile)
+	suite.Require().NoError(err)
+
+	newMachineConfig := config.NewMachineConfig(ctr)
+	newMachineConfig.Metadata().SetVersion(machineConfig.Metadata().Version())
+	suite.Update(newMachineConfig)
+
+	ctest.AssertResource(suite, runtime.SecurityStateID, func(res *runtime.SecurityState, asrt *assert.Assertions) {
+		asrt.False(res.TypedSpec().SELinuxCategories)
+	})
 }
 
 // SecurityStateContainerSuite covers container mode, where the host security state, including

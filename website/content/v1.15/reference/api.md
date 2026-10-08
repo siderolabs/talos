@@ -8487,6 +8487,7 @@ ContainerSecuritySpec is the resolved security posture.
 | capabilities_add | [string](#string) | repeated |  |
 | capabilities_drop | [string](#string) | repeated |  |
 | machined_access | [bool](#bool) |  | MachinedAccess publishes the container's PID as a ServicePID resource and mounts the machined API socket into the container. |
+| se_linux_level | [string](#string) |  | SELinuxLevel is the MCS level the container runs at, stable across restarts so that it keeps access to the files it writes; empty when containers run without categories. |
 
 
 
@@ -9997,6 +9998,7 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | startup_probes_enabled | [bool](#bool) |  |  |
 | use_authentication_config | [bool](#bool) |  |  |
 | args | [string](#string) | repeated |  |
+| se_linux_level | [string](#string) |  | SELinuxLevel is the fixed MCS level of the kube-apiserver pod, empty when pods run without categories. |
 
 
 
@@ -11714,6 +11716,7 @@ SecurityStateSpec describes the security state resource properties.
 | module_signature_enforced | [bool](#bool) |  |  |
 | lockdown_state | [talos.resource.definitions.enums.RuntimeLockdownState](#talos.resource.definitions.enums.RuntimeLockdownState) |  |  |
 | secure_boot_authority_fingerprints | [string](#string) | repeated | SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the firmware used to authorize the images loaded in this boot, as recorded in PCR 7. |
+| se_linux_categories | [bool](#bool) |  | SELinuxCategories is set when SELinux is enabled and workloads are labeled with MCS categories. |
 
 
 

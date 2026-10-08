@@ -22,12 +22,22 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/containers/cri/containerd"
 	"github.com/siderolabs/talos/internal/pkg/toml"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/xfs"
 )
 
-const criRegistryConfigPart = "01-registries.part"
+const (
+	criRegistryConfigPart = "01-registries.part"
+	criSELinuxConfigPart  = "02-selinux.part"
+)
+
+// criSELinuxConfig labels pods with MCS categories drawn from the CRI's share of them.
+var criSELinuxConfig = fmt.Sprintf(`[plugins."io.containerd.cri.v1.runtime"]
+  enable_selinux = true
+  selinux_category_range = %d
+`, constants.SELinuxCRICategoryRange)
 
 // CRIConfigController generates the merged CRI configuration and registry hosts.
 type CRIConfigController struct {
@@ -52,6 +62,12 @@ func (ctrl *CRIConfigController) Inputs() []controller.Input {
 		{
 			Namespace: cri.NamespaceName,
 			Type:      cri.CustomizationConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -108,13 +124,18 @@ func (ctrl *CRIConfigController) reconcile(
 		return fmt.Errorf("error listing customization configs: %w", err)
 	}
 
+	selinuxCategories, err := ctrl.selinuxCategories(ctx, r)
+	if err != nil {
+		return err
+	}
+
 	customizations := make(map[string]string, customizationConfigs.Len())
 
 	for customization := range customizationConfigs.All() {
 		customizations[customization.Metadata().ID()] = customization.TypedSpec().Content
 	}
 
-	if err = ctrl.renderConfig(ctx, r, registriesConfig.TypedSpec(), customizations); err != nil {
+	if err = ctrl.renderConfig(ctx, r, registriesConfig.TypedSpec(), selinuxCategories, customizations); err != nil {
 		return err
 	}
 
@@ -130,10 +151,27 @@ func (ctrl *CRIConfigController) reconcile(
 	return nil
 }
 
+// selinuxCategories reports whether the CRI labels pods with MCS categories.
+func (ctrl *CRIConfigController) selinuxCategories(ctx context.Context, r controller.Reader) (bool, error) {
+	machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error getting machine config: %w", err)
+	}
+
+	securityProfile := machineConfig.Config().SecurityProfileConfig()
+
+	return securityProfile != nil && securityProfile.SELinuxCategories(), nil
+}
+
 func (ctrl *CRIConfigController) renderConfig(
 	ctx context.Context,
 	r controller.Writer,
 	registriesConfig *cri.RegistriesConfigSpec,
+	selinuxCategories bool,
 	customizations map[string]string,
 ) error {
 	criRegistryContents, err := containerd.GenerateCRIConfig(registriesConfig)
@@ -149,6 +187,13 @@ func (ctrl *CRIConfigController) renderConfig(
 	parts[criRegistryConfigPart] = toml.Part{
 		Contents: criRegistryContents,
 		Origin:   "in-memory registries",
+	}
+
+	if selinuxCategories {
+		parts[criSELinuxConfigPart] = toml.Part{
+			Contents: []byte(criSELinuxConfig),
+			Origin:   "in-memory SELinux categories",
+		}
 	}
 
 	for name, contents := range customizations {
