@@ -533,6 +533,11 @@ func (container *Container) FilesystemTrimConfig() config.FilesystemTrimConfig {
 	return matching[0]
 }
 
+// SELinuxPolicyConfigs implements config.Config interface.
+func (container *Container) SELinuxPolicyConfigs() []config.SELinuxPolicyConfig {
+	return findMatchingDocs[config.SELinuxPolicyConfig](container.documents)
+}
+
 // SecurityProfileConfig implements config.Config interface.
 func (container *Container) SecurityProfileConfig() config.SecurityProfileConfig {
 	matching := findMatchingDocs[config.SecurityProfileConfig](container.documents)

@@ -675,6 +675,7 @@ description: Talos gRPC API reference.
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
+    - [SELinuxPolicyStatusSpec](#talos.resource.definitions.runtime.SELinuxPolicyStatusSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
     - [UnattendedInstallStatusSpec](#talos.resource.definitions.runtime.UnattendedInstallStatusSpec)
@@ -11730,6 +11731,22 @@ SBOMItemSpec describes the SBOM item resource properties.
 | cp_es | [string](#string) | repeated |  |
 | pur_ls | [string](#string) | repeated |  |
 | extension | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.SELinuxPolicyStatusSpec"></a>
+
+### SELinuxPolicyStatusSpec
+SELinuxPolicyStatusSpec describes the SELinuxPolicyStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| modules | [string](#string) | repeated | Modules are the SELinuxPolicyConfig documents of the machine config at the last reconcile. |
+| error | [string](#string) |  | Error names the modules the compiler rejected at the last reconcile, with its error; the other modules are loaded. |
 
 
 

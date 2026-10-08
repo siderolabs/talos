@@ -80,6 +80,13 @@ func WrapSysfsConfigList(configs ...SysfsConfig) map[string]string {
 	})
 }
 
+// SELinuxPolicyConfig defines the interface to access a SELinux policy module document.
+type SELinuxPolicyConfig interface {
+	NamedDocument
+	SELinuxPolicyConfigSignal()
+	Content() string
+}
+
 // KernelModuleConfig defines the interface to access a Talos kernel module to load.
 type KernelModuleConfig interface {
 	Name() string

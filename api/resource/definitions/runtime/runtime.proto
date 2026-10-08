@@ -263,6 +263,14 @@ message SBOMItemSpec {
   bool extension = 6;
 }
 
+// SELinuxPolicyStatusSpec describes the SELinuxPolicyStatus resource.
+message SELinuxPolicyStatusSpec {
+  // Modules are the SELinuxPolicyConfig documents of the machine config at the last reconcile.
+  repeated string modules = 1;
+  // Error names the modules the compiler rejected at the last reconcile, with its error; the other modules are loaded.
+  string error = 2;
+}
+
 // SecurityStateSpec describes the security state resource properties.
 message SecurityStateSpec {
   bool secure_boot = 1;

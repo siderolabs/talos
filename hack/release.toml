@@ -304,6 +304,17 @@ else the pod of the next start cannot read them. The CRI skips the pairs of runn
 the pair is exclusive only while the pod runs.
 """
 
+    [notes.selinux_policy_modules]
+        title = "SELinux Policy Modules"
+        description = """\
+The new `SELinuxPolicyConfig` document carries a policy module in CIL, which machined compiles with the Talos policy and loads
+without a reboot. A module declares one type per workload with the `pod_domain`, `pod_privileged_domain` or `pod_hostmon_domain`
+macro, and the workload selects it with `securityContext.seLinuxOptions.type`, which the CRI applies when `selinuxCategories`
+is set. A module the compiler rejects is left out and the others are loaded, at boot as well as on a change, and
+`talosctl get selinuxpolicystatus` names it with the error. The image ships the policy sources and `secilc` in
+`/usr/share/selinux/talos`.
+"""
+
     [notes.kubespan_peer_endpoint_filters]
         title = "KubeSpan Peer Endpoint Filters"
         description = """\

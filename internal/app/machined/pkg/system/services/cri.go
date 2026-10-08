@@ -24,7 +24,9 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/environment"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -119,7 +121,21 @@ func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 		)
 	}
 
+	// pods select the types of the policy modules, so the modules are loaded (or rejected) before the CRI serves them
+	if cfg != nil && selinux.IsEnabled() {
+		cond = append(cond, runtimeres.NewSELinuxPolicyCondition(r.State().V1Alpha2().Resources(), func() []string { return configSELinuxModules(r.Config()) }))
+	}
+
 	return conditions.WaitForAll(cond...)
+}
+
+// configSELinuxModules lists the SELinuxPolicyConfig documents of the machine config.
+func configSELinuxModules(cfg config.Config) []string {
+	if cfg == nil {
+		return nil
+	}
+
+	return xslices.Map(cfg.SELinuxPolicyConfigs(), func(module config.SELinuxPolicyConfig) string { return module.Name() })
 }
 
 // DependsOn implements the Service interface.

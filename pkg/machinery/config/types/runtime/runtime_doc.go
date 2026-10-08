@@ -800,6 +800,38 @@ func (WorkloadMemoryResource) Doc() *encoder.Doc {
 	return doc
 }
 
+func (SELinuxPolicyConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SELinuxPolicyConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SELinuxPolicyConfig is a SELinux policy module document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SELinuxPolicyConfig is a SELinux policy module document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the policy module.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the policy module." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "content",
+				Type:        "string",
+				Note:        "",
+				Description: "Policy module in CIL, compiled with the Talos policy and loaded without a reboot.\nA module declares a type and calls a macro of the base policy, whose sources are in `/usr/share/selinux/talos`:\n`pod_domain` gives the rights of `pod_t`, `pod_privileged_domain` those of `pod_privileged_t`, and\n`pod_hostmon_domain` those of a process monitor, which reads `/proc` and the files of every pod and writes none.\nWhatever a module grants, a workload domain never reads STATE, connects to machined or ptraces a host service:\n`secilc` rejects such a module, which is left out while the other modules are loaded.\nA workload selects the type with `securityContext.seLinuxOptions.type`, which the CRI applies when the\n`SecurityProfileConfig` document sets `selinuxCategories`: load the module before the workload starts, and\nremove the workload before the module. A privileged container cannot select a type, it runs as\n`pod_privileged_t`, which `spc_t` is an alias of.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Policy module in CIL, compiled with the Talos policy and loaded without a reboot." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleSELinuxPolicyConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -828,6 +860,7 @@ func GetFileDoc() *encoder.FileDoc {
 			WorkloadResourceConfigV1Alpha1{}.Doc(),
 			WorkloadResourceRoot{}.Doc(),
 			WorkloadMemoryResource{}.Doc(),
+			SELinuxPolicyConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: SELinuxPolicyConfig
+name: hostmon
+content: |
+    (type pod_hostmon_t)
+    (call pod_domain (pod_hostmon_t))

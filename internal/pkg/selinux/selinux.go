@@ -7,9 +7,13 @@ package selinux
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
+	"fmt"
 	"log"
+	"maps"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"sync"
@@ -25,6 +29,9 @@ import (
 
 //go:embed policy/policy.33
 var policy []byte
+
+// policyDir holds the sources of the policy, which Compile builds the modules with.
+const policyDir = "/usr/share/selinux/talos"
 
 // IsEnabled checks if SELinux is enabled on the system by reading
 // the kernel command line. It returns true if SELinux is enabled,
@@ -207,11 +214,54 @@ func Init() error {
 
 	log.Println("selinux: loading policy")
 
-	if err := os.WriteFile("/sys/fs/selinux/load", policy, 0o777); err != nil {
+	if err := LoadPolicy(policy); err != nil {
 		return err
 	}
 
 	log.Println("selinux: policy loaded")
 
 	return nil
+}
+
+// LoadPolicy loads the binary policy into the kernel.
+func LoadPolicy(policy []byte) error {
+	return os.WriteFile("/sys/fs/selinux/load", policy, 0o777)
+}
+
+// Compile compiles the Talos policy sources with the modules (name to CIL source), returning the binary policy.
+func Compile(ctx context.Context, modules map[string]string) ([]byte, error) {
+	if len(modules) == 0 {
+		return policy, nil
+	}
+
+	dir, err := os.MkdirTemp("", "selinux-")
+	if err != nil {
+		return nil, err
+	}
+
+	defer os.RemoveAll(dir) //nolint:errcheck
+
+	files, err := filepath.Glob(filepath.Join(policyDir, "*", "*.cil"))
+	if err != nil {
+		return nil, err
+	}
+
+	for _, name := range slices.Sorted(maps.Keys(modules)) {
+		file := filepath.Join(dir, name+".cil")
+
+		if err = os.WriteFile(file, []byte(modules[name]), 0o600); err != nil {
+			return nil, err
+		}
+
+		files = append(files, file)
+	}
+
+	cmd := exec.CommandContext(ctx, "/usr/bin/secilc", append([]string{"-c", "33", "-O", "-o", "policy.33", "-f", "file_contexts"}, files...)...)
+	cmd.Dir = dir
+
+	if output, err := cmd.CombinedOutput(); err != nil {
+		return nil, fmt.Errorf("secilc: %w: %s", err, bytes.TrimSpace(output))
+	}
+
+	return os.ReadFile(filepath.Join(dir, "policy.33"))
 }

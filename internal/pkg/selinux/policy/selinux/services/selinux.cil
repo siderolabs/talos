@@ -1,8 +1,12 @@
 (allow initramfs_t security_t (security (setbool setsecparam)))
 (allow init_t security_t (security (setbool setsecparam)))
-; Policy is loaded by initramfs init and mustn't be modified
+; Policy is loaded by initramfs init and reloaded only by machined with the SELinuxPolicyConfig modules
 ; The only way to set mode to permissive is setting enforcing=0 in kernel cmdline
-(neverallow any_p security_t (security (load_policy setenforce)))
+(neverallow any_p security_t (security (setenforce)))
+(typeattribute policy_locked_p)
+(typeattributeset policy_locked_p (and any_p (not init_t)))
+(neverallow policy_locked_p security_t (security (load_policy)))
+(allow init_t security_t (security (load_policy)))
 (allow any_p security_t (security (
     check_context
     compute_av

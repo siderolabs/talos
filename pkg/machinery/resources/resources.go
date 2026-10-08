@@ -252,6 +252,7 @@ func All() []meta.ResourceWithRD {
 		&runtime.PlatformMetadata{},
 		&runtime.SBOMItem{},
 		&runtime.SecurityState{},
+		&runtime.SELinuxPolicyStatus{},
 		&runtime.ServicePID{},
 		&runtime.UniqueMachineToken{},
 		&runtime.UnattendedInstallStatus{},

@@ -15,9 +15,26 @@
 (allow kubelet_t kubelet_state_t (fs_classes (relabelfrom)))
 (allow kubelet_t pod_file_t (fs_classes (relabelfrom relabelto)))
 
+; Kubernetes workloads: pod_t and every type a module declares through the macros below.
+; Whatever a module adds, these hold: no STATE, no machined socket, no ptrace on the host.
+(typeattribute workload_p)
+(neverallow workload_p system_state_t (file (read write)))
+(neverallow workload_p system_socket_f (sock_file (write)))
+(neverallow workload_p init_t (unix_stream_socket (connectto)))
+(neverallow workload_p system_p (process (ptrace)))
+; Every domain the CRI starts is a workload, the system services it runs aside, and a workload enters no other domain.
+; The exceptions are types, not an attribute a module could add to.
+(typeattribute not_cri_workload_p)
+(typeattributeset not_cri_workload_p (not (or workload_p (or pod_containerd_t (or kubelet_t (or etcd_t (or taloscontainer_t taloscontainer_machined_t)))))))
+(neverallow pod_containerd_t not_cri_workload_p (process (transition dyntransition)))
+(typeattribute not_workload_p)
+(typeattributeset not_workload_p (not workload_p))
+(neverallow workload_p not_workload_p (process (transition dyntransition)))
+
 ; The rights of a regular pod: pod_t is built on this macro, and so is any other pod domain.
 (macro pod_domain ((type ARG1))
     (call pod_p (ARG1))
+    (typeattributeset workload_p ARG1)
     ; the rootfs of the container, pod_file_t when the CRI labels containers
     (allow ARG1 pod_file_t (file (entrypoint)))
     ; Network filesystems are labeled network_fs_t by genfscon. Let regular pods use
@@ -47,6 +64,13 @@
     ; semctl(IPC_INFO) from lvm
     (allow ARG1 kernel_t (system (ipc_info)))
     (allow pod_p ARG1 (unix_stream_socket (connectto)))
+)
+
+; A process monitor: reads /proc and the files of every pod across MCS categories, writes none of them.
+(macro pod_hostmon_domain ((type ARG1))
+    (call pod_domain (ARG1))
+    (typeattributeset mcs_read_exempt_p ARG1)
+    (allow ARG1 any_p (fs_classes (ro)))
 )
 
 ; containerd clears the label of a privileged container, which then enters pod_privileged_t from its pod_file_t rootfs
