@@ -115,6 +115,23 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//
 	//     Optional; omitting it leaves the guest to boot its image unmodified.
 	GuestConfig VirtualMachineGuest `yaml:"guest,omitempty"`
+	//   description: |
+	//     Video device presented to the guest when a VNC console is enabled.
+	//     Optional; omitting it uses `vga` with libvirt's default VRAM.
+	VideoConfig VirtualMachineVideo `yaml:"video,omitempty"`
+}
+
+// VirtualMachineVideo describes the virtual graphics device.
+type VirtualMachineVideo struct {
+	//   description: |
+	//     Libvirt video model, e.g. `vga` (default), `qxl`, `virtio`, `cirrus`, `bochs`.
+	//   examples:
+	//     - value: >
+	//        "qxl"
+	ModelConfig string `yaml:"model,omitempty"`
+	//   description: |
+	//     Video RAM in MiB. Zero leaves libvirt's default (varies by model).
+	VRAMMiBConfig uint32 `yaml:"vramMiB,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.
@@ -416,6 +433,17 @@ func (c *VirtualMachineConfigV1Alpha1) Networking() config.VirtualMachineNetwork
 func (c *VirtualMachineConfigV1Alpha1) Guest() config.VirtualMachineGuestConfig {
 	return &c.GuestConfig
 }
+
+// Video implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Video() config.VirtualMachineVideoConfig {
+	return &c.VideoConfig
+}
+
+// Model implements config.VirtualMachineVideoConfig interface.
+func (v *VirtualMachineVideo) Model() string { return v.ModelConfig }
+
+// VRAMMiB implements config.VirtualMachineVideoConfig interface.
+func (v *VirtualMachineVideo) VRAMMiB() uint32 { return v.VRAMMiBConfig }
 
 // Redact implements config.SecretDocument interface.
 //

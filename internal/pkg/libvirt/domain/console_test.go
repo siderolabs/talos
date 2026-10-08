@@ -5,6 +5,7 @@
 package domain_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"errors"
@@ -213,8 +214,8 @@ func serveConsoleStream(conn net.Conn, call []byte, mode string, release <-chan 
 	switch mode {
 	case "loss":
 		return nil
-	case "flood":
-		return floodConsole(conn, call)
+	case "burst":
+		return burstConsole(conn, call)
 	}
 
 	_, err := io.Copy(io.Discard, conn)
@@ -237,37 +238,60 @@ func consoleTerminalFrame(mode string) (uint32, []byte, bool) {
 	}
 }
 
-func floodConsole(conn net.Conn, call []byte) error {
-	for range 64 {
-		if err := consoleReply(conn, call, 3, 2, []byte("output")); err != nil {
-			return err
-		} // overflow closes the peer
+// The burst exceeds the 16-frame queue several times over but fits in the
+// socket buffer, so the peer finishes writing with nobody reading.
+const (
+	consoleBurstFrames  = 64
+	consoleBurstPayload = 1024
+)
+
+func consoleBurstFrame(index int) []byte {
+	payload := make([]byte, consoleBurstPayload)
+	for i := range payload {
+		payload[i] = byte('a' + (index+i)%26)
 	}
 
-	_, err := io.Copy(io.Discard, conn)
-
-	return err
+	return payload
 }
 
-func TestConsoleWireBoundsUnreadOutput(t *testing.T) {
+func consoleBurstOutput() []byte {
+	output := make([]byte, 0, consoleBurstFrames*consoleBurstPayload)
+	for i := range consoleBurstFrames {
+		output = append(output, consoleBurstFrame(i)...)
+	}
+
+	return output
+}
+
+// burstConsole reproduces a guest boot, which dumps its serial output far faster
+// than the reader can forward it. The client must apply backpressure: it is
+// never disconnected, and no byte may be dropped or reordered.
+func burstConsole(conn net.Conn, call []byte) error {
+	for i := range consoleBurstFrames {
+		if err := consoleReply(conn, call, 3, 2, consoleBurstFrame(i)); err != nil {
+			return err
+		}
+	}
+
+	return consoleReply(conn, call, 3, 0, nil)
+}
+
+func TestConsoleWireBackpressuresUnreadOutput(t *testing.T) {
 	defer goleak.VerifyNone(t, goleak.IgnoreCurrent())
 
-	connector, d, done, release := consoleFixture(t, "flood")
+	connector, d, done, release := consoleFixture(t, "burst")
 	stream, err := connector.OpenConsole(t.Context(), d)
 
 	require.NoError(t, err)
 	defer func() { require.NoError(t, stream.Close()) }()
 
 	close(release)
+	// The whole burst is on the wire before the first read, so the queue is full.
+	require.NoError(t, <-done)
 
-	select {
-	case <-done: // the peer may observe EOF or a write error at the queue bound
-	case <-time.After(3 * time.Second):
-		t.Fatal("unread output did not terminate at queue bound")
-	}
-
-	_, err = io.ReadAll(stream)
-	require.ErrorContains(t, err, "queue overflow")
+	output, err := io.ReadAll(stream)
+	require.NoError(t, err)
+	require.True(t, bytes.Equal(consoleBurstOutput(), output), "guest output was dropped or reordered")
 }
 
 func consoleRoundtrip(conn net.Conn, call []byte) error {

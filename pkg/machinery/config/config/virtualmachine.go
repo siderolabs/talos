@@ -35,6 +35,20 @@ type VirtualMachineConfig interface {
 	Networking() VirtualMachineNetworkingConfig
 	// Guest settings; never nil, and zero-valued when the guest section is omitted.
 	Guest() VirtualMachineGuestConfig
+	// Video device settings; never nil.
+	Video() VirtualMachineVideoConfig
+}
+
+// VirtualMachineVideoConfig is the graphics device attached when a VNC console is enabled.
+// Observed on amd64 only; other architectures use libvirt's defaults.
+//
+//nolint:iface
+type VirtualMachineVideoConfig interface {
+	// Model is the libvirt video model (e.g. "vga", "qxl", "virtio", "cirrus", "bochs").
+	// Empty falls back to "vga".
+	Model() string
+	// VRAMMiB is the video RAM in MiB; zero leaves libvirt's default.
+	VRAMMiB() uint32
 }
 
 // VirtualMachineCPUConfig defines the processors presented to the guest.

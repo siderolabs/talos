@@ -198,9 +198,6 @@ func (s *Service) release(name string) {
 }
 
 func relay(stream grpc.BidiStreamingServer[machine.ConsoleRequest, machine.ConsoleResponse], console io.ReadWriter) error {
-	// There is no guest-data queue. Each direction blocks on its destination.
-	// Returning closes the console and lets gRPC cancel blocked Send/Recv calls.
-	// Each worker can publish its terminal result without waiting for the handler.
 	done := make(chan error, 2)
 
 	go func() { done <- sendOutput(stream, console) }()
