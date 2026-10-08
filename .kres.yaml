@@ -202,6 +202,29 @@ spec:
           command: talosctl-all kernel sd-boot sd-stub initramfs installer-base imager talos talosctl-cni-bundle
           environment:
             PLATFORM: linux/amd64,linux/arm64
+        - name: sign-windows-binaries
+          nonMakeStep: true
+          command: |-
+            if [ -z "$WINDOWS_CODESIGN_CERT_B64" ]; then
+              echo "WINDOWS_CODESIGN_CERT_B64 not set, skipping Authenticode signing"
+              exit 0
+            fi
+            umask 077
+            pfx="$(mktemp --tmpdir="${RUNNER_TEMP:-/tmp}" codesign.XXXXXX.pfx)"
+            trap 'rm -f "$pfx"' EXIT
+            echo "$WINDOWS_CODESIGN_CERT_B64" | base64 -d > "$pfx"
+            for arch in amd64 arm64; do
+              osslsigncode sign \
+                -pkcs12 "$pfx" \
+                -pass "$WINDOWS_CODESIGN_PASSWORD" \
+                -n "talosctl" \
+                -i "https://github.com/siderolabs/talos" \
+                -ts http://timestamp.digicert.com \
+                -h sha256 \
+                -in _out/talosctl-windows-${arch}.exe \
+                -out _out/talosctl-windows-${arch}.exe.signed
+              mv _out/talosctl-windows-${arch}.exe.signed _out/talosctl-windows-${arch}.exe
+            done
         - name: release-notes
         - name: sbom
         - name: login-to-registry
