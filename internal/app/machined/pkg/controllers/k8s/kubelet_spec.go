@@ -20,6 +20,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
@@ -38,8 +40,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
+
+var kubeletSELinuxMounts = []specs.Mount{
+	{Type: "bind", Destination: "/sys/fs/selinux", Source: "/sys/fs/selinux", Options: []string{"bind", "rw"}},
+	{Type: "bind", Destination: "/usr/share/containers/selinux", Source: "/usr/share/containers/selinux", Options: []string{"bind", "ro"}},
+}
 
 // KubeletSpecController renders manifests based on templates and config/secrets.
 type KubeletSpecController struct {
@@ -56,7 +65,7 @@ func (ctrl *KubeletSpecController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *KubeletSpecController) Inputs() []controller.Input {
-	return []controller.Input{
+	return slices.Concat([]controller.Input{
 		{
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubeletConfigType,
@@ -81,7 +90,10 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 			ID:        optional.Some(config.MachineTypeID),
 			Kind:      controller.InputWeak,
 		},
-	}
+	}, []controller.Input{
+		{Namespace: files.NamespaceName, Type: files.EtcFileSpecType, ID: optional.Some(constants.CRIConfig), Kind: controller.InputWeak},
+		{Namespace: runtimeres.NamespaceName, Type: runtimeres.SecurityStateType, ID: optional.Some(runtimeres.SecurityStateID), Kind: controller.InputWeak},
+	})
 }
 
 // Outputs implements controller.Controller interface.
@@ -215,6 +227,14 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			kubeletConfig.ProtectKernelDefaults = false
 		}
 
+		extraMounts := cfgSpec.ExtraMounts
+
+		if selinuxMounts, err := ctrl.criLabelsContainers(ctx, r); err != nil {
+			return err
+		} else if selinuxMounts {
+			extraMounts = append(slices.Clone(extraMounts), kubeletSELinuxMounts...)
+		}
+
 		unstructuredConfig, err := runtime.DefaultUnstructuredConverter.ToUnstructured(kubeletConfig)
 		if err != nil {
 			return fmt.Errorf("error converting to unstructured: %w", err)
@@ -228,7 +248,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 				kubeletSpec := r.TypedSpec()
 
 				kubeletSpec.Image = cfgSpec.Image
-				kubeletSpec.ExtraMounts = cfgSpec.ExtraMounts
+				kubeletSpec.ExtraMounts = extraMounts
 				kubeletSpec.Args = args.Args()
 				kubeletSpec.Config = unstructuredConfig
 				kubeletSpec.ExpectedNodename = expectedNodename
@@ -262,6 +282,49 @@ func (ctrl *KubeletSpecController) kubeletConfigurationOptions(cfgSpec *k8s.Kube
 	}
 
 	return []KubeletConfigurationOption{WithHostMemory(readCapacity, os.Getpagesize())}
+}
+
+// criLabelsContainers reports whether the CRI labels containers, in which case the kubelet needs selinuxfs and the contexts file.
+func (ctrl *KubeletSpecController) criLabelsContainers(ctx context.Context, r controller.Reader) (bool, error) {
+	securityState, err := safe.ReaderGetByID[*runtimeres.SecurityState](ctx, r, runtimeres.SecurityStateID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error getting security state: %w", err)
+	}
+
+	if securityState.TypedSpec().SELinuxState == runtimeres.SELinuxStateDisabled {
+		return false, nil
+	}
+
+	criConfig, err := safe.ReaderGetByID[*files.EtcFileSpec](ctx, r, constants.CRIConfig)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error getting CRI config: %w", err)
+	}
+
+	var cfg struct {
+		Plugins map[string]struct {
+			EnableSELinux bool `toml:"enable_selinux"`
+		} `toml:"plugins"`
+	}
+
+	if err = toml.Unmarshal(criConfig.TypedSpec().Contents, &cfg); err != nil {
+		return false, fmt.Errorf("error parsing CRI config: %w", err)
+	}
+
+	for _, plugin := range cfg.Plugins {
+		if plugin.EnableSELinux {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func prepareExtraConfig(extraConfig map[string]any) (*kubeletconfig.KubeletConfiguration, error) {

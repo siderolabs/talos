@@ -28,11 +28,51 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type KubeletSpecSuite struct {
 	ctest.DefaultSuite
+}
+
+func (suite *KubeletSpecSuite) TestReconcileSELinux() {
+	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().Image = "kubelet:v1.29.0"
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	nodeIP := k8s.NewNodeIP(k8s.NamespaceName, k8s.KubeletID)
+	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.2")}
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeIP))
+
+	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
+	nodename.TypedSpec().Nodename = "example.com"
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
+
+	machineType := config.NewMachineType()
+	machineType.SetMachineType(machine.TypeWorker)
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
+
+	securityState := runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName)
+	securityState.TypedSpec().SELinuxState = runtimeres.SELinuxStateEnforcing
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), securityState))
+
+	criConfig := files.NewEtcFileSpec(files.NamespaceName, constants.CRIConfig)
+	criConfig.TypedSpec().Contents = []byte("[plugins.\"io.containerd.cri.v1.runtime\"]\n  enable_selinux = true\n")
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), criConfig))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
+		asrt.Len(kubeletSpec.TypedSpec().ExtraMounts, 2)
+		asrt.Equal("/sys/fs/selinux", kubeletSpec.TypedSpec().ExtraMounts[0].Destination)
+	})
+
+	criConfig.TypedSpec().Contents = []byte("[plugins.\"io.containerd.cri.v1.runtime\"]\n  enable_selinux = false\n")
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), criConfig))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
+		asrt.Empty(kubeletSpec.TypedSpec().ExtraMounts)
+	})
 }
 
 func (suite *KubeletSpecSuite) TestReconcileDefault() {
