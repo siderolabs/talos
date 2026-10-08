@@ -163,6 +163,7 @@ func NewState() (*State, error) {
 		&hardware.CPUScalingSpec{},
 		&hardware.CPUScalingStatus{},
 		&hardware.MemoryModule{},
+		&hardware.NUMATopology{},
 		&hardware.PCIDevice{},
 		&hardware.PCIDriverRebindConfig{},
 		&hardware.PCIDriverRebindStatus{},

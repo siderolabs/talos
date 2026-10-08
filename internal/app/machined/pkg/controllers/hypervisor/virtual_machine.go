@@ -90,6 +90,12 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.NUMATopologyType,
+			ID:        optional.Some(hardware.NUMATopologyID),
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDomainStatusType,
 			Kind:      controller.InputWeak,
@@ -233,6 +239,10 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		case errors.Is(err, errDiskNotReady):
 			logger.Info("virtual machine is waiting for its disks",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
+		case isPlacementHeld(err):
+			// Retried when the host NUMA topology or the definition changes.
+			logger.Warn("virtual machine is held back by its host placement",
+				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
 		case err != nil:
 			reconcileErrors = errors.Join(reconcileErrors, err)
 		}
@@ -332,7 +342,13 @@ func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controlle
 		return err
 	}
 
-	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}, spec.TypedSpec().DomainXML); err != nil {
+	// Admitted only when libvirt would create or replace the domain: an unchanged running domain
+	// is never stopped because the host inventory changed under it.
+	admission := libvirtdomain.WithStartAdmission(func() error {
+		return checkDomainPlacement(ctx, r, name, spec.TypedSpec().DomainXML)
+	})
+
+	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}, spec.TypedSpec().DomainXML, admission); err != nil {
 		return fmt.Errorf("failed to start domain %q: %w", name, err)
 	}
 

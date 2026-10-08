@@ -41,6 +41,8 @@ type CgroupFS interface {
 	// LeafEffective returns the effective set of every leaf cgroup under path with a configured
 	// cpuset.cpus, keyed by its path relative to path.
 	LeafEffective(path string) (map[string]cpuset.CPUSet, error)
+	// Children returns the sorted names of the direct child cgroups; none when path does not exist.
+	Children(path string) ([]string, error)
 }
 
 var _ CgroupFS = HostFS{}
@@ -182,6 +184,28 @@ func (h HostFS) Populated(path string) (bool, error) {
 	}
 
 	return populated.Val == 1, nil
+}
+
+// Children implements CgroupFS.
+func (h HostFS) Children(path string) ([]string, error) {
+	entries, err := os.ReadDir(filepath.Join(h.CgroupRoot, path))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	var children []string
+
+	for _, entry := range entries {
+		if entry.IsDir() {
+			children = append(children, entry.Name())
+		}
+	}
+
+	return children, nil
 }
 
 // LeafEffective implements CgroupFS.

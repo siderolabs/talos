@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	HypervisorService_ConsoleStream_FullMethodName = "/machine.HypervisorService/ConsoleStream"
+	HypervisorService_VNCStream_FullMethodName     = "/machine.HypervisorService/VNCStream"
 )
 
 // HypervisorServiceClient is the client API for HypervisorService service.
@@ -35,6 +36,11 @@ type HypervisorServiceClient interface {
 	// Client input EOF (half-close), cancellation, or guest EOF detaches the session.
 	// Only live output is sent: there is no replay, persistent log, or resize support.
 	ConsoleStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[ConsoleRequest, ConsoleResponse], error)
+	// VNCStream attaches exclusively to one managed VM's live VNC endpoint.
+	// The first request must attach a nonempty name; subsequent requests contain
+	// opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
+	// Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
+	VNCStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[VNCRequest, VNCResponse], error)
 }
 
 type hypervisorServiceClient struct {
@@ -58,6 +64,19 @@ func (c *hypervisorServiceClient) ConsoleStream(ctx context.Context, opts ...grp
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HypervisorService_ConsoleStreamClient = grpc.BidiStreamingClient[ConsoleRequest, ConsoleResponse]
 
+func (c *hypervisorServiceClient) VNCStream(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[VNCRequest, VNCResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &HypervisorService_ServiceDesc.Streams[1], HypervisorService_VNCStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[VNCRequest, VNCResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type HypervisorService_VNCStreamClient = grpc.BidiStreamingClient[VNCRequest, VNCResponse]
+
 // HypervisorServiceServer is the server API for HypervisorService service.
 // All implementations must embed UnimplementedHypervisorServiceServer
 // for forward compatibility.
@@ -70,6 +89,11 @@ type HypervisorServiceServer interface {
 	// Client input EOF (half-close), cancellation, or guest EOF detaches the session.
 	// Only live output is sent: there is no replay, persistent log, or resize support.
 	ConsoleStream(grpc.BidiStreamingServer[ConsoleRequest, ConsoleResponse]) error
+	// VNCStream attaches exclusively to one managed VM's live VNC endpoint.
+	// The first request must attach a nonempty name; subsequent requests contain
+	// opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
+	// Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
+	VNCStream(grpc.BidiStreamingServer[VNCRequest, VNCResponse]) error
 	mustEmbedUnimplementedHypervisorServiceServer()
 }
 
@@ -82,6 +106,9 @@ type UnimplementedHypervisorServiceServer struct{}
 
 func (UnimplementedHypervisorServiceServer) ConsoleStream(grpc.BidiStreamingServer[ConsoleRequest, ConsoleResponse]) error {
 	return status.Error(codes.Unimplemented, "method ConsoleStream not implemented")
+}
+func (UnimplementedHypervisorServiceServer) VNCStream(grpc.BidiStreamingServer[VNCRequest, VNCResponse]) error {
+	return status.Error(codes.Unimplemented, "method VNCStream not implemented")
 }
 func (UnimplementedHypervisorServiceServer) mustEmbedUnimplementedHypervisorServiceServer() {}
 func (UnimplementedHypervisorServiceServer) testEmbeddedByValue()                           {}
@@ -111,6 +138,13 @@ func _HypervisorService_ConsoleStream_Handler(srv interface{}, stream grpc.Serve
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type HypervisorService_ConsoleStreamServer = grpc.BidiStreamingServer[ConsoleRequest, ConsoleResponse]
 
+func _HypervisorService_VNCStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(HypervisorServiceServer).VNCStream(&grpc.GenericServerStream[VNCRequest, VNCResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type HypervisorService_VNCStreamServer = grpc.BidiStreamingServer[VNCRequest, VNCResponse]
+
 // HypervisorService_ServiceDesc is the grpc.ServiceDesc for HypervisorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -122,6 +156,12 @@ var HypervisorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ConsoleStream",
 			Handler:       _HypervisorService_ConsoleStream_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "VNCStream",
+			Handler:       _HypervisorService_VNCStream_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

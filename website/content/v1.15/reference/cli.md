@@ -185,6 +185,7 @@ talosctl cluster create dev [flags]
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
+      --numa-nodes int                           number of NUMA nodes per VM (0 preserves the default topology)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
@@ -327,6 +328,7 @@ talosctl cluster create qemu [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.38.0-alpha.1")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
+      --numa-nodes int                           number of NUMA nodes per VM (0 preserves the default topology)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --presets strings                          list of presets to apply (default [iso])
       --schematic-id string                      Image Factory schematic id (defaults to an empty schematic)
@@ -2277,6 +2279,40 @@ ContentLibraryConfig document; this command manages what is stored in them.
 * [talosctl hypervisor content-library list](#talosctl-hypervisor-content-library-list)	 - List the files stored in a content library
 * [talosctl hypervisor content-library upload](#talosctl-hypervisor-content-library-upload)	 - Upload a file to a content library
 
+## talosctl hypervisor vnc
+
+Expose a virtual machine's VNC console on a local TCP port
+
+### Synopsis
+
+Expose a VM's VNC console on IPv4 loopback. Requires Admin access and exactly one target node. Connect your VNC viewer to the printed TCP endpoint (not a VNC display number). Local processes that can connect to this port gain access to the guest console. Only one viewer may connect at a time. The listener stays open for reconnects until Ctrl-C; no viewer is launched automatically.
+
+```
+talosctl hypervisor vnc <vm-name> [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for vnc
+      --port int   Local loopback TCP port (0 selects an available port)
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
+
 ## talosctl hypervisor
 
 Manage the Talos hypervisor
@@ -2298,6 +2334,7 @@ Manage the Talos hypervisor
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl hypervisor console](#talosctl-hypervisor-console)	 - Attach to a virtual machine's live serial console
 * [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
+* [talosctl hypervisor vnc](#talosctl-hypervisor-vnc)	 - Expose a virtual machine's VNC console on a local TCP port
 
 ## talosctl image cache-cert-gen
 

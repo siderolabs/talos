@@ -242,6 +242,7 @@ func (m *Qemu) AddExtraProvisionOpts() error {
 		provision.WithTPM2(m.EOps.Tpm2Enabled),
 		provision.WithIOMMU(m.EOps.WithIOMMU),
 		provision.WithIPMI(m.EOps.IPMIEnabled),
+		provision.WithNUMANodes(m.EOps.NUMANodes),
 		provision.WithExtraUEFISearchPaths(m.EOps.ExtraUEFISearchPaths),
 		provision.WithTargetArch(m.EOps.TargetArch),
 		provision.WithSiderolinkAgent(m.EOps.WithSiderolinkAgent.IsEnabled()),

@@ -7,6 +7,7 @@ package domain_test
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"testing"
@@ -452,4 +453,119 @@ func TestMatchingUUIDWithoutOwnershipMetadata(t *testing.T) {
 	require.Equal(t, foreign, fixture.records["first"])
 	require.Zero(t, countProcedure(fixture.calls, 10))
 	require.Zero(t, countProcedure(fixture.calls, 12))
+}
+
+func TestStartAdmission(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	initial := `<domain type="kvm"><name>first</name><vcpu>1</vcpu></domain>`
+	updated := `<domain type="kvm"><name>first</name><vcpu>2</vcpu></domain>`
+	rejected := errors.New("placement rejected")
+
+	admission := func(calls *int, err error) libvirtdomain.StartOption {
+		return libvirtdomain.WithStartAdmission(func() error {
+			*calls++
+
+			return err
+		})
+	}
+
+	t.Run("new domain", func(t *testing.T) {
+		t.Parallel()
+
+		client, finished, served := openDomainFixture(t)
+
+		var calls int
+
+		require.ErrorIs(t, client.Start(domain, initial, admission(&calls, rejected)), rejected)
+		require.Equal(t, 1, calls)
+		require.NoError(t, client.Start(domain, initial, admission(&calls, nil)))
+		require.Equal(t, 2, calls)
+		client.Close()
+		require.NoError(t, <-served)
+
+		fixture := <-finished
+		require.Equal(t, 1, countProcedure(fixture.calls, 10), "a rejected start must not create the domain")
+		require.Contains(t, fixture.records, "first")
+	})
+
+	t.Run("unchanged active domain", func(t *testing.T) {
+		t.Parallel()
+
+		client, finished, served := openDomainFixture(t)
+		require.NoError(t, client.Start(domain, initial))
+
+		var calls int
+
+		require.NoError(t, client.Start(domain, initial, admission(&calls, rejected)))
+		require.Zero(t, calls, "an unchanged running domain is left alone without admission")
+		client.Close()
+		require.NoError(t, <-served)
+
+		fixture := <-finished
+		require.Equal(t, 1, countProcedure(fixture.calls, 10))
+		require.Zero(t, countProcedure(fixture.calls, 12))
+	})
+
+	t.Run("replacement", func(t *testing.T) {
+		t.Parallel()
+
+		client, finished, served := openDomainFixture(t)
+		require.NoError(t, client.Start(domain, initial))
+
+		var calls int
+
+		require.ErrorIs(t, client.Start(domain, updated, admission(&calls, rejected)), rejected)
+		require.Equal(t, 1, calls)
+		require.NoError(t, client.Start(domain, initial), "a rejected replacement keeps the old domain running")
+		require.NoError(t, client.Start(domain, updated, admission(&calls, nil), admission(&calls, nil)))
+		require.Equal(t, 3, calls, "every admission check runs")
+		client.Close()
+		require.NoError(t, <-served)
+
+		fixture := <-finished
+		require.Equal(t, 2, countProcedure(fixture.calls, 10), "only the admitted replacement is created")
+		require.Equal(t, 1, countProcedure(fixture.calls, 12), "only the admitted replacement destroys the old domain")
+	})
+
+	t.Run("inactive domain", func(t *testing.T) {
+		t.Parallel()
+
+		client, finished, served := openDomainFixture(t)
+		require.NoError(t, client.Start(domain, initial))
+		client.Close()
+		require.NoError(t, <-served)
+
+		record := (<-finished).records["first"]
+		record.inactive = true
+
+		client, finished, served = openDomainFixture(t, record)
+
+		var calls int
+
+		require.ErrorIs(t, client.Start(domain, initial, admission(&calls, rejected)), rejected)
+		require.Equal(t, 1, calls, "restarting a stopped domain is admitted like a new one")
+		client.Close()
+		require.NoError(t, <-served)
+
+		fixture := <-finished
+		require.Zero(t, countProcedure(fixture.calls, 10))
+		require.Zero(t, countProcedure(fixture.calls, 12))
+		require.Equal(t, record, fixture.records["first"])
+	})
+
+	t.Run("invalid definition", func(t *testing.T) {
+		t.Parallel()
+
+		client, finished, served := openDomainFixture(t)
+
+		var calls int
+
+		require.Error(t, client.Start(domain, `<not-a-domain/>`, admission(&calls, nil)))
+		require.Zero(t, calls)
+		client.Close()
+		require.NoError(t, <-served)
+		require.Empty(t, (<-finished).calls)
+	})
 }

@@ -341,3 +341,27 @@ func TestHostFSOnline(t *testing.T) {
 	_, err = hostFS.Online()
 	assert.Error(t, err)
 }
+
+func TestHostFSChildren(t *testing.T) {
+	t.Parallel()
+
+	hostFS, root := newHostFS(t)
+	vmRoot := filepath.Join(root, "virtualmachines.partition")
+
+	require.NoError(t, os.MkdirAll(filepath.Join(vmRoot, "shared.partition"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(vmRoot, "machine-qemu-legacy.scope", "vcpu0"), 0o755))
+	writeFile(t, filepath.Join(vmRoot, "cgroup.events"), "populated 1\n")
+
+	children, err := hostFS.Children("virtualmachines.partition")
+	require.NoError(t, err)
+	assert.Equal(t, []string{"machine-qemu-legacy.scope", "shared.partition"}, children, "direct child cgroups only, no interface files")
+
+	children, err = hostFS.Children("virtualmachines.partition/missing.partition")
+	require.NoError(t, err)
+	assert.Empty(t, children, "a missing cgroup has no children")
+
+	writeFile(t, filepath.Join(root, "notadir"), "")
+
+	_, err = hostFS.Children("notadir")
+	require.Error(t, err, "a read failure is not an empty cgroup")
+}

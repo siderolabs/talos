@@ -13,6 +13,27 @@ service HypervisorService {
   // Client input EOF (half-close), cancellation, or guest EOF detaches the session.
   // Only live output is sent: there is no replay, persistent log, or resize support.
   rpc ConsoleStream(stream ConsoleRequest) returns (stream ConsoleResponse);
+
+  // VNCStream attaches exclusively to one managed VM's live VNC endpoint.
+  // The first request must attach a nonempty name; subsequent requests contain
+  // opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
+  // Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
+  rpc VNCStream(stream VNCRequest) returns (stream VNCResponse);
+}
+
+message VNCRequest {
+  oneof request {
+    VNCAttach attach = 1;
+    bytes data = 2;
+  }
+}
+
+message VNCAttach {
+  string name = 1;
+}
+
+message VNCResponse {
+  bytes data = 1;
 }
 
 message ConsoleRequest {

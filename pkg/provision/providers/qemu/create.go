@@ -26,6 +26,12 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
+	for _, node := range request.Nodes {
+		if err := validateNUMANodes(options.NUMANodes, nodeVCPUCount(node.NanoCPUs), node.Memory/1024/1024); err != nil {
+			return nil, fmt.Errorf("node %s: %w", node.Name, err)
+		}
+	}
+
 	arch := Arch(options.TargetArch)
 	if err := arch.Valid(); err != nil {
 		return nil, err

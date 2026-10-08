@@ -398,6 +398,7 @@ function create_cluster {
     --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \
     --cpus="${QEMU_CPUS:-4}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
+    --numa-nodes="${QEMU_NUMA_NODES:-0}" \
     --cidr=172.20.1.0/24 \
     --install-image="${INSTALLER_IMAGE}" \
     --with-init-node=false \

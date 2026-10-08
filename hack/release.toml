@@ -15,6 +15,17 @@ preface = """
 """
 
 [notes]
+    [notes.vm_vnc]
+        title = "Virtual Machine VNC Console"
+        description = """\
+The new `talosctl hypervisor vnc <vm-name>` command forwards a virtual machine's graphical console to a local loopback TCP port.
+Enable `console.vnc.enabled` in its `VirtualMachineConfig`; access requires the `os:admin` role and exactly one target node.
+
+The listener accepts one viewer at a time and supports reconnecting without restarting the command.
+Use a viewer that supports unauthenticated RFB.
+Talos authenticates the tunnel, and no VNC TCP port is opened on the node.
+"""
+
     [notes.workload_memory_limits]
         title = "Workload Memory Limits"
         description = """\
@@ -46,6 +57,15 @@ Kubelet system-reserved or kube-reserved memory enforcement on these roots is re
 CPU-only or compressible enforcement and reservations on unrelated roots remain supported.
 Kubelet drop-in directories are rejected while any cap is active; without caps, their contents remain the operator's responsibility.
 Removing the Kubernetes cap restores the original kubelet configuration. The document has no effect in container mode.
+"""
+
+    [notes.numa_topology]
+        title = "NUMA Topology and VM Placement Validation"
+        description = """\
+Talos reports host NUMA nodes, CPU membership and total node memory through the `NUMATopology` resource.
+Explicit VM CPU pins and memory-node selections are checked against the host before starting or replacing a guest.
+Invalid placement leaves an existing guest running; CPUs and guest memory may intentionally use different nodes.
+This validates placement, not available memory capacity or reservations. Host inventory is not exposed in container mode.
 """
 
     [notes.cpu_scaling_config]
@@ -494,6 +514,22 @@ machine:
 
 Omitting the `flowControl` field leaves the link's flow control configuration unchanged.
 Current flow control settings are reported on the `EthernetStatus` resource.
+
+    [notes.vm_serial_console]
+        title = "Virtual Machine Serial Console"
+        description = """\
+Talos-managed virtual machines now expose their serial console over the Talos API, with no host shell access required.
+
+`talosctl hypervisor console <vm-name>` attaches to the live serial console of a running VM.
+Press `Ctrl-]` to detach without stopping the VM; `Ctrl-C` is forwarded to the guest.
+Only one session can be attached to a VM at a time, and previous output is not replayed.
+The command is supported on Unix clients only.
+
+Serial output is also persisted on the host (with bounded retention), and can be read with `talosctl logs --kind=vm <vm-name>`,
+including `--tail` and `--follow`. The new `--kind` flag (`container`, `vm` or `service`) selects the log source explicitly;
+omitting it keeps the previous service/container routing.
+
+Both the console and the VM logs require the `os:admin` role and a single target node.
 """
 
 [make_deps]

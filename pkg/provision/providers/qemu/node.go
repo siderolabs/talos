@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net"
 	"os"
 	"os/exec"
@@ -37,6 +36,13 @@ import (
 
 //nolint:gocyclo,cyclop
 func (p *provisioner) createNode(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
+	vcpuCount := nodeVCPUCount(nodeReq.NanoCPUs)
+	memSize := nodeReq.Memory / 1024 / 1024
+
+	if err := validateNUMANodes(opts.NUMANodes, vcpuCount, memSize); err != nil {
+		return provision.NodeInfo{}, fmt.Errorf("node %s: %w", nodeReq.Name, err)
+	}
+
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
@@ -53,13 +59,6 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 
 		pflashSpec = spec
 	}
-
-	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
-	if vcpuCount < 2 {
-		vcpuCount = 1
-	}
-
-	memSize := nodeReq.Memory / 1024 / 1024
 
 	diskPaths, err := p.CreateDisks(state, nodeReq)
 	if err != nil {
@@ -175,6 +174,7 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 			return disk.BlockSize
 		}),
 		VCPUCount:                 vcpuCount,
+		NUMANodes:                 opts.NUMANodes,
 		MemSize:                   memSize,
 		MemShmPath:                state.GetShmPath(fmt.Sprintf("shm-%s", nodeReq.Name)), // this is used only when attaching virtiofs disks
 		KernelArgs:                cmdline.String(),

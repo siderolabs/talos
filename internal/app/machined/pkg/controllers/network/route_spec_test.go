@@ -93,21 +93,28 @@ func (suite *RouteSpecSuite) assertRoute(
 // assertMultipathRoute finds the single route of the family to the destination in the table and runs check on it.
 //
 // A multipath route carries no top-level gateway, so unlike assertRoute it is identified by its table.
+// A zero priority leaves the metric unconstrained (the kernel may supply a default for IPv6).
 func (suite *RouteSpecSuite) assertMultipathRoute(
 	family nethelpers.Family,
 	destination netip.Prefix,
 	table nethelpers.RoutingTable,
+	priority uint32,
 	check func(rtnetlink.RouteMessage) error,
 ) error {
 	return suite.assertSingleRoute(
 		fmt.Sprintf("%s route to %s in table %s", family, destination, table),
 		func(route *rtnetlink.RouteMessage) bool {
 			return route.Family == uint8(family) &&
-				nethelpers.RoutingTable(route.Table) == table &&
-				netctrl.RouteDestinationMatches(route, destination)
+				routeMatches(route, destination, table, priority)
 		},
 		check,
 	)
+}
+
+func routeMatches(route *rtnetlink.RouteMessage, destination netip.Prefix, table nethelpers.RoutingTable, priority uint32) bool {
+	return nethelpers.RoutingTable(route.Table) == table &&
+		(priority == 0 || route.Attributes.Priority == priority) &&
+		netctrl.RouteDestinationMatches(route, destination)
 }
 
 func (suite *RouteSpecSuite) assertNoRoute(destination netip.Prefix, gateway netip.Addr) error {
@@ -585,7 +592,8 @@ func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
 //
 // A spec the kernel never reports back verbatim makes the controller delete and re-add the route on
 // every reconcile, and since the controller watches the route groups, its own writes wake it up again.
-func (suite *RouteSpecSuite) assertNoRouteChurn(family nethelpers.Family, destination netip.Prefix, duration time.Duration) {
+// A zero priority leaves the metric unconstrained.
+func (suite *RouteSpecSuite) assertNoRouteChurn(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable, priority uint32, duration time.Duration) {
 	group := uint32(unix.RTMGRP_IPV4_ROUTE)
 
 	if family == nethelpers.FamilyInet6 {
@@ -617,7 +625,7 @@ func (suite *RouteSpecSuite) assertNoRouteChurn(family nethelpers.Family, destin
 				continue
 			}
 
-			if netctrl.RouteDestinationMatches(route, destination) {
+			if routeMatches(route, destination, table, priority) {
 				suite.Require().Failf(
 					"route churn",
 					"unexpected RTM_DELROUTE for %s: the route is being rewritten on every reconcile",
@@ -676,7 +684,7 @@ func (suite *RouteSpecSuite) TestIPv6GatewaylessRoute() {
 		),
 	)
 
-	suite.assertNoRouteChurn(nethelpers.FamilyInet6, destination, time.Second)
+	suite.assertNoRouteChurn(nethelpers.FamilyInet6, destination, route.TypedSpec().Table, route.TypedSpec().Priority, time.Second)
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
 	suite.Require().NoError(
@@ -731,7 +739,7 @@ func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
 	suite.Require().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+				return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, route.TypedSpec().Priority, func(message rtnetlink.RouteMessage) error {
 					if len(message.Attributes.Multipath) != len(gateways) {
 						return retry.ExpectedErrorf(
 							"expected %d next-hops, got %d",
@@ -757,7 +765,7 @@ func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
 		),
 	)
 
-	suite.assertNoRouteChurn(nethelpers.FamilyInet4, destination, time.Second)
+	suite.assertNoRouteChurn(nethelpers.FamilyInet4, destination, route.TypedSpec().Table, route.TypedSpec().Priority, time.Second)
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
 	suite.Require().NoError(
@@ -846,7 +854,8 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 }
 
 // watchRouteDeletes counts RTM_DELROUTE notifications for the destination in the table until stopped.
-func (suite *RouteSpecSuite) watchRouteDeletes(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable) (stop func() int) {
+// A zero priority leaves the metric unconstrained.
+func (suite *RouteSpecSuite) watchRouteDeletes(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable, priority uint32) (stop func() int) {
 	group := uint32(unix.RTMGRP_IPV4_ROUTE)
 
 	if family == nethelpers.FamilyInet6 {
@@ -875,7 +884,7 @@ func (suite *RouteSpecSuite) watchRouteDeletes(family nethelpers.Family, destina
 					continue
 				}
 
-				if nethelpers.RoutingTable(route.Table) == table && netctrl.RouteDestinationMatches(route, destination) {
+				if routeMatches(route, destination, table, priority) {
 					count++
 				}
 			}
@@ -957,7 +966,7 @@ func (suite *RouteSpecSuite) TestNextHopChangeInPlace() {
 			// assertHops checks the kernel route next-hops: a single next-hop route is reported without RTA_MULTIPATH
 			assertHops := func(hops []network.RouteNextHop) {
 				suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
-					return suite.assertMultipathRoute(test.family, test.destination, table, func(message rtnetlink.RouteMessage) error {
+					return suite.assertMultipathRoute(test.family, test.destination, table, route.TypedSpec().Priority, func(message rtnetlink.RouteMessage) error {
 						type hop struct {
 							gateway string
 							index   uint32
@@ -992,7 +1001,7 @@ func (suite *RouteSpecSuite) TestNextHopChangeInPlace() {
 			suite.Create(route)
 			assertHops([]network.RouteNextHop{hopA})
 
-			stop := suite.watchRouteDeletes(test.family, test.destination, table)
+			stop := suite.watchRouteDeletes(test.family, test.destination, table, route.TypedSpec().Priority)
 
 			for _, hops := range [][]network.RouteNextHop{
 				{hopA, hopB}, // the second path comes back
@@ -1046,7 +1055,7 @@ func (suite *RouteSpecSuite) TestReplaceOwnedRoute() {
 		},
 	}))
 
-	stop := suite.watchRouteDeletes(nethelpers.FamilyInet4, destination, table)
+	stop := suite.watchRouteDeletes(nethelpers.FamilyInet4, destination, table, 100)
 
 	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, 100))
 	*route.TypedSpec() = network.RouteSpecSpec{
@@ -1064,7 +1073,7 @@ func (suite *RouteSpecSuite) TestReplaceOwnedRoute() {
 	suite.Create(route)
 
 	suite.Require().NoError(retry.Constant(3*time.Second, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
-		return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+		return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, route.TypedSpec().Priority, func(message rtnetlink.RouteMessage) error {
 			if !message.Attributes.Gateway.Equal(route.TypedSpec().Gateway.AsSlice()) {
 				return retry.ExpectedErrorf("expected gateway %s, got %s", route.TypedSpec().Gateway, message.Attributes.Gateway)
 			}
@@ -1093,6 +1102,10 @@ func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
 
 	destination := netip.MustParsePrefix("10.96.0.0/16")
 	table := nethelpers.RoutingTable(206)
+
+	// The output interface is not part of the IPv4 route key. Use its unique
+	// index as the metric to distinguish concurrently live fixtures.
+	priority := ifaceIndex
 	foreignGateway := netip.MustParseAddr("192.0.2.2")
 
 	suite.Require().NoError(conn.Route.Add(&rtnetlink.RouteMessage{
@@ -1105,20 +1118,20 @@ func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
 			Dst:      destination.Addr().AsSlice(),
 			Gateway:  foreignGateway.AsSlice(),
 			OutIface: ifaceIndex,
-			Priority: 100,
+			Priority: priority,
 			Table:    uint32(table),
 		},
 	}))
 
-	stop := suite.watchRouteDeletes(nethelpers.FamilyInet4, destination, table)
+	stop := suite.watchRouteDeletes(nethelpers.FamilyInet4, destination, table, priority)
 
-	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, 100))
+	route := network.NewRouteSpec(network.NamespaceName, network.RouteID(table, nethelpers.FamilyInet4, destination, priority))
 	*route.TypedSpec() = network.RouteSpecSpec{
 		Family:      nethelpers.FamilyInet4,
 		Destination: destination,
 		Gateway:     netip.MustParseAddr("192.0.2.3"),
 		Table:       table,
-		Priority:    100,
+		Priority:    priority,
 		Protocol:    nethelpers.ProtocolStatic,
 		Type:        nethelpers.TypeUnicast,
 		Scope:       nethelpers.ScopeGlobal,
@@ -1128,9 +1141,9 @@ func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
 	suite.Create(route)
 
 	// the controller can't install the route next to the foreign one (the kernel rejects it), but it must not touch the foreign route
-	suite.assertNoRouteChurn(nethelpers.FamilyInet4, destination, time.Second)
+	suite.assertNoRouteChurn(nethelpers.FamilyInet4, destination, route.TypedSpec().Table, route.TypedSpec().Priority, time.Second)
 
-	suite.Require().NoError(suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+	suite.Require().NoError(suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, route.TypedSpec().Priority, func(message rtnetlink.RouteMessage) error {
 		if !message.Attributes.Gateway.Equal(foreignGateway.AsSlice()) {
 			return fmt.Errorf("expected foreign gateway %s, got %s", foreignGateway, message.Attributes.Gateway)
 		}
@@ -1142,7 +1155,7 @@ func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
 
 	suite.Assert().Zero(stop(), "foreign route was deleted")
 
-	suite.Require().NoError(suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, func(message rtnetlink.RouteMessage) error {
+	suite.Require().NoError(suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, table, route.TypedSpec().Priority, func(message rtnetlink.RouteMessage) error {
 		if !message.Attributes.Gateway.Equal(foreignGateway.AsSlice()) {
 			return fmt.Errorf("expected foreign gateway %s, got %s", foreignGateway, message.Attributes.Gateway)
 		}
@@ -1155,7 +1168,7 @@ func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
 		DstLength: uint8(destination.Bits()),
 		Attributes: rtnetlink.RouteAttributes{
 			Dst:      destination.Addr().AsSlice(),
-			Priority: 100,
+			Priority: priority,
 			Table:    uint32(table),
 		},
 	}))

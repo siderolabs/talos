@@ -265,6 +265,7 @@ type wireOptions struct {
 	TPM2Enabled               bool   `json:"tpm2_enabled"`
 	IOMMUEnabled              bool   `json:"iommu_enabled"`
 	IPMIEnabled               bool   `json:"ipmi_enabled"`
+	NUMANodes                 int    `json:"numa_nodes,omitempty"`
 	KMSEndpoint               string `json:"kms_endpoint"`
 	JSONLogsEndpoint          string `json:"json_logs_endpoint"`
 	NFSEnabled                bool   `json:"nfs_enabled"`
@@ -305,6 +306,7 @@ func MarshalOptions(opts []provision.Option) ([]byte, error) {
 		TPM2Enabled:               o.TPM2Enabled,
 		IOMMUEnabled:              o.IOMMUEnabled,
 		IPMIEnabled:               o.IPMIEnabled,
+		NUMANodes:                 o.NUMANodes,
 		KMSEndpoint:               o.KMSEndpoint,
 		JSONLogsEndpoint:          o.JSONLogsEndpoint,
 		NFSEnabled:                o.NFSEnabled,
@@ -344,6 +346,7 @@ func UnmarshalOptions(b []byte) ([]provision.Option, error) {
 		provision.WithTPM2(w.TPM2Enabled),
 		provision.WithIOMMU(w.IOMMUEnabled),
 		provision.WithIPMI(w.IPMIEnabled),
+		provision.WithNUMANodes(w.NUMANodes),
 		provision.WithKMS(w.KMSEndpoint),
 		provision.WithJSONLogs(w.JSONLogsEndpoint),
 		provision.WithNFS(w.NFSEnabled),

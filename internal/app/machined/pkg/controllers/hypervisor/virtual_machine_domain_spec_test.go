@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
+	"libvirt.org/go/libvirtxml"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
@@ -30,6 +32,86 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
+
+//nolint:gocyclo // Verify both architecture-specific defaults across console lifecycle transitions.
+func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
+	for _, firmware := range []string{"bios", "uefi"} {
+		for _, serial := range []bool{false, true} {
+			name := fmt.Sprintf("vnc-%s-serial-%t", firmware, serial)
+			spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+			*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+				CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+				Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+				PowerState: "stopped",
+				Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: firmware},
+				Console:    hypervisor.VirtualMachineConsoleSpec{Serial: serial},
+			}
+			suite.Create(spec)
+
+			// Exercise enabling, disabling and re-enabling without leaving stale devices.
+			for _, vnc := range []bool{false, true, false, true} {
+				ctest.UpdateWithConflicts(suite, spec, func(current *hypervisor.VirtualMachineSpec) error {
+					current.TypedSpec().Console.VNC = vnc
+
+					return nil
+				})
+				ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+					var domain libvirtxml.Domain
+					if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.NotNil(domain.Devices) {
+						return
+					}
+
+					if serial {
+						if asrt.Len(domain.Devices.Serials, 1) {
+							asrt.Equal(&libvirtxml.DomainChardevSource{
+								Pty: &libvirtxml.DomainChardevSourcePty{},
+							}, domain.Devices.Serials[0].Source)
+						}
+					} else {
+						asrt.Empty(domain.Devices.Serials)
+					}
+
+					if vnc {
+						if asrt.Len(domain.Devices.Graphics, 1) {
+							// Exact equality excludes TCP, websocket and prescribed socket paths.
+							asrt.Equal(&libvirtxml.DomainGraphicVNC{
+								Listeners: []libvirtxml.DomainGraphicListener{{Socket: &libvirtxml.DomainGraphicListenerSocket{}}},
+							}, domain.Devices.Graphics[0].VNC)
+						}
+					} else {
+						asrt.Empty(domain.Devices.Graphics)
+					}
+
+					if vnc && runtime.GOARCH == "amd64" {
+						if asrt.Len(domain.Devices.Videos, 1) {
+							asrt.Equal("vga", domain.Devices.Videos[0].Model.Type)
+						}
+
+						if asrt.Len(domain.Devices.Controllers, 1) {
+							asrt.Equal("usb", domain.Devices.Controllers[0].Type)
+							asrt.Equal("qemu-xhci", domain.Devices.Controllers[0].Model)
+						}
+
+						if asrt.Len(domain.Devices.Inputs, 2) {
+							asrt.Equal("tablet", domain.Devices.Inputs[0].Type)
+							asrt.Equal("usb", domain.Devices.Inputs[0].Bus)
+							asrt.Equal("keyboard", domain.Devices.Inputs[1].Type)
+							asrt.Equal("usb", domain.Devices.Inputs[1].Bus)
+						}
+					} else {
+						asrt.Empty(domain.Devices.Videos)
+						asrt.Empty(domain.Devices.Controllers)
+						asrt.Empty(domain.Devices.Inputs)
+					}
+				})
+
+				rendered, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), name)
+				suite.Require().NoError(err)
+				suite.Require().NoError(validateDomainXML([]byte(rendered.TypedSpec().DomainXML)))
+			}
+		}
+	}
+}
 
 // Both production controllers remain registered in these tests. No MachineConfig
 // is needed to create, update, validate, or remove externally authored specs.

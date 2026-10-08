@@ -60,6 +60,25 @@ func (f *fakeReceiver) Close() error {
 	return nil
 }
 
+func TestWatcherMultipleSubsystems(t *testing.T) {
+	fake := newFakeReceiver(
+		&kobject.Event{Subsystem: "cpu"},
+		&kobject.Event{Subsystem: "block"},
+		&kobject.Event{Subsystem: "node"},
+		&kobject.Event{Subsystem: "memory"},
+	)
+	watcher := kobject.NewWatcherFromReceiver(fake, zaptest.NewLogger(t))
+	events := watcher.Run("cpu", "node", "memory")
+	require.NoError(t, watcher.Close())
+
+	var subsystems []string
+	for event := range events {
+		subsystems = append(subsystems, event.Subsystem)
+	}
+
+	require.Equal(t, []string{"cpu", "node", "memory"}, subsystems)
+}
+
 func TestWatcherSubsystemFilter(t *testing.T) {
 	for _, tc := range []struct {
 		name      string
