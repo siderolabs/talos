@@ -154,6 +154,9 @@ func createDebugContainer(
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithHostNamespace(specs.IPCNamespace),
+		// with host IPC, /dev/mqueue is the host's mqueue, which runc of a hostIPC pod relabels with
+		// the MCS categories of the pod
+		oci.WithoutMounts("/dev/mqueue"),
 		oci.WithHostDevices,
 		oci.WithAllDevicesAllowed,
 		oci.WithHostHostsFile,

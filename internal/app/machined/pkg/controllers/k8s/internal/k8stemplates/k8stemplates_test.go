@@ -185,6 +185,27 @@ func TestTemplates(t *testing.T) {
 			},
 		},
 		{
+			name: "apiserver-with-selinux-level",
+			obj: func() runtime.Object {
+				cfg := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
+				*cfg.TypedSpec() = k8s.APIServerConfigSpec{
+					Image:        "registry.k8s.io/kube-apiserver:v1.36.0",
+					LocalPort:    6443,
+					SELinuxLevel: constants.KubernetesAPIServerSELinuxLevel,
+					Args: []string{
+						"/usr/local/bin/kube-apiserver",
+						"--etcd-servers=https://127.0.0.1:2379",
+						"--secure-port=6443",
+					},
+				}
+
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
 			name: "apiserver-with-startup-probes",
 			obj: func() runtime.Object {
 				cfg := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)

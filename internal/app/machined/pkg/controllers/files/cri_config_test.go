@@ -20,7 +20,10 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/xfs"
@@ -190,5 +193,49 @@ func (suite *CRIConfigSuite) TestMergedConfigAndHosts() {
 		asrt.Contains(contents, "[replacement]")
 		asrt.Contains(contents, "[physical_collision]")
 		asrt.NotContains(contents, "[qualified]")
+	})
+}
+
+func (suite *CRIConfigSuite) TestSELinuxCategories() {
+	suite.Create(crires.NewRegistriesConfig())
+
+	ctest.AssertResource(suite, constants.CRIConfig, func(res *files.EtcFileSpec, asrt *assert.Assertions) {
+		asrt.NotContains(string(res.TypedSpec().Contents), "enable_selinux")
+	})
+
+	securityProfile := runtimecfg.NewSecurityProfileConfigV1Alpha1()
+	securityProfile.SELinuxCategoriesEnabled = new(true)
+
+	ctr, err := container.New(securityProfile)
+	suite.Require().NoError(err)
+
+	machineConfig := config.NewMachineConfig(ctr)
+	suite.Create(machineConfig)
+
+	ctest.AssertResource(suite, constants.CRIConfig, func(res *files.EtcFileSpec, asrt *assert.Assertions) {
+		var cfg struct {
+			Plugins map[string]map[string]any `toml:"plugins"`
+		}
+
+		if !asrt.NoError(toml.Unmarshal(res.TypedSpec().Contents, &cfg)) {
+			return
+		}
+
+		runtimePlugin := cfg.Plugins["io.containerd.cri.v1.runtime"]
+		asrt.Equal(true, runtimePlugin["enable_selinux"])
+		asrt.EqualValues(constants.SELinuxCRICategoryRange, runtimePlugin["selinux_category_range"])
+	})
+
+	securityProfile.SELinuxCategoriesEnabled = new(false)
+
+	ctr, err = container.New(securityProfile)
+	suite.Require().NoError(err)
+
+	newMachineConfig := config.NewMachineConfig(ctr)
+	newMachineConfig.Metadata().SetVersion(machineConfig.Metadata().Version())
+	suite.Update(newMachineConfig)
+
+	ctest.AssertResource(suite, constants.CRIConfig, func(res *files.EtcFileSpec, asrt *assert.Assertions) {
+		asrt.NotContains(string(res.TypedSpec().Contents), "enable_selinux")
 	})
 }

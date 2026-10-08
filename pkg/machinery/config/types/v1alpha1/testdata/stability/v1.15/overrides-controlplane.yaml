@@ -65,6 +65,7 @@ interval: 30m0s
 apiVersion: v1alpha1
 kind: SecurityProfileConfig
 workloadIsolation: true
+selinuxCategories: true
 ---
 apiVersion: v1alpha1
 kind: RegistryMirrorConfig

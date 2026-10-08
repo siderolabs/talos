@@ -24,6 +24,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/foxboron/go-uefi/efi"
 	"github.com/fsnotify/fsnotify"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/panicsafe"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -36,6 +37,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -75,6 +77,12 @@ func (ctrl *SecurityStateController) Inputs() []controller.Input {
 			Type:      v1alpha1.ServiceType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -92,7 +100,8 @@ func (ctrl *SecurityStateController) Outputs() []controller.Output {
 //
 // Most of the security state is fixed at boot time and is therefore only gathered once, but
 // the kernel lockdown level can still be raised at runtime by anything holding CAP_SYS_ADMIN,
-// so it is watched for the lifetime of the controller.
+// so it is watched for the lifetime of the controller, and the SELinux categories follow the
+// machine configuration.
 func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if err := waitForMachined(ctx, r); err != nil {
 		return err
@@ -109,7 +118,7 @@ func (ctrl *SecurityStateController) Run(ctx context.Context, r controller.Runti
 		return err
 	}
 
-	return ctrl.watchLockdownState(ctx, r, logger, spec)
+	return ctrl.watchState(ctx, r, logger, spec)
 }
 
 // waitForMachined waits for the `machined` service to start, as by that time initial mounts
@@ -192,11 +201,11 @@ func bootTimeState(logger *zap.Logger) (runtimeres.SecurityStateSpec, error) {
 	return spec, nil
 }
 
-// watchLockdownState publishes the security state, keeping the kernel lockdown level in it up
-// to date for the lifetime of the controller.
+// watchState publishes the security state, keeping the kernel lockdown level and the SELinux
+// categories in it up to date for the lifetime of the controller.
 //
 //nolint:gocyclo
-func (ctrl *SecurityStateController) watchLockdownState(
+func (ctrl *SecurityStateController) watchState(
 	ctx context.Context,
 	r controller.Runtime,
 	logger *zap.Logger,
@@ -215,10 +224,12 @@ func (ctrl *SecurityStateController) watchLockdownState(
 	//
 	// the file is only missing when the lockdown LSM is disabled, in which case the kernel can
 	// never be locked down and there is nothing to watch.
+	lockdownWatched := true
+
 	switch err = watcher.Add(ctrl.lockdownPath()); {
 	case err == nil:
 	case errors.Is(err, os.ErrNotExist):
-		return publishSecurityState(ctx, r, spec)
+		lockdownWatched = false
 	default:
 		return fmt.Errorf("failed to watch %q: %w", ctrl.lockdownPath(), err)
 	}
@@ -235,17 +246,25 @@ func (ctrl *SecurityStateController) watchLockdownState(
 		fsnotifyWg.Wait()
 	}()
 
-	fsnotifyWg.Go(func() {
-		if notifyErr := panicsafe.RunErr(func() error { return queueOnLockdownChange(watchCtx, watcher, r) }); notifyErr != nil {
-			logger.Error("kernel lockdown watch failed", zap.Error(notifyErr))
-		}
-	})
+	if lockdownWatched {
+		fsnotifyWg.Go(func() {
+			if notifyErr := panicsafe.RunErr(func() error { return queueOnLockdownChange(watchCtx, watcher, r) }); notifyErr != nil {
+				logger.Error("kernel lockdown watch failed", zap.Error(notifyErr))
+			}
+		})
+	}
 
 	for {
 		// the level is read after the watch has been established, so that a change landing while
 		// it is being read queues another reconcile instead of being missed
-		if spec.LockdownState, err = lockdown.ReadState(ctrl.lockdownPath()); err != nil {
-			return fmt.Errorf("failed to get kernel lockdown state: %w", err)
+		if lockdownWatched {
+			if spec.LockdownState, err = lockdown.ReadState(ctrl.lockdownPath()); err != nil {
+				return fmt.Errorf("failed to get kernel lockdown state: %w", err)
+			}
+		}
+
+		if spec.SELinuxCategories, err = selinuxCategories(ctx, r, spec.SELinuxState); err != nil {
+			return err
 		}
 
 		if err = publishSecurityState(ctx, r, spec); err != nil {
@@ -259,6 +278,27 @@ func (ctrl *SecurityStateController) watchLockdownState(
 		case <-time.After(lockdownPollInterval):
 		}
 	}
+}
+
+// selinuxCategories reports whether workloads are labeled with MCS categories: the machine
+// configuration asks for them, and SELinux is there to enforce them.
+func selinuxCategories(ctx context.Context, r controller.Reader, selinuxState runtimeres.SELinuxState) (bool, error) {
+	if selinuxState == runtimeres.SELinuxStateDisabled {
+		return false, nil
+	}
+
+	machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get machine config: %w", err)
+	}
+
+	securityProfile := machineConfig.Config().SecurityProfileConfig()
+
+	return securityProfile != nil && securityProfile.SELinuxCategories(), nil
 }
 
 // publishSecurityState updates the security state resource.

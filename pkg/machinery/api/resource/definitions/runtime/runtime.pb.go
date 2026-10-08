@@ -2103,8 +2103,10 @@ type SecurityStateSpec struct {
 	// SecureBootAuthorityFingerprints are the fingerprints of the `db` certificates which the
 	// firmware used to authorize the images loaded in this boot, as recorded in PCR 7.
 	SecureBootAuthorityFingerprints []string `protobuf:"bytes,9,rep,name=secure_boot_authority_fingerprints,json=secureBootAuthorityFingerprints,proto3" json:"secure_boot_authority_fingerprints,omitempty"`
-	unknownFields                   protoimpl.UnknownFields
-	sizeCache                       protoimpl.SizeCache
+	// SELinuxCategories is set when SELinux is enabled and workloads are labeled with MCS categories.
+	SeLinuxCategories bool `protobuf:"varint,10,opt,name=se_linux_categories,json=seLinuxCategories,proto3" json:"se_linux_categories,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *SecurityStateSpec) Reset() {
@@ -2198,6 +2200,13 @@ func (x *SecurityStateSpec) GetSecureBootAuthorityFingerprints() []string {
 		return x.SecureBootAuthorityFingerprints
 	}
 	return nil
+}
+
+func (x *SecurityStateSpec) GetSeLinuxCategories() bool {
+	if x != nil {
+		return x.SeLinuxCategories
+	}
+	return false
 }
 
 // ServicePIDSpec is the spec for the service PID.
@@ -2790,7 +2799,7 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\alicense\x18\x03 \x01(\tR\alicense\x12\x13\n" +
 	"\x05cp_es\x18\x04 \x03(\tR\x04cpEs\x12\x15\n" +
 	"\x06pur_ls\x18\x05 \x03(\tR\x05purLs\x12\x1c\n" +
-	"\textension\x18\x06 \x01(\bR\textension\"\xf2\x04\n" +
+	"\textension\x18\x06 \x01(\bR\textension\"\xa2\x05\n" +
 	"\x11SecurityStateSpec\x12\x1f\n" +
 	"\vsecure_boot\x18\x01 \x01(\bR\n" +
 	"secureBoot\x12=\n" +
@@ -2802,7 +2811,9 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"fips_state\x18\x06 \x01(\x0e22.talos.resource.definitions.enums.RuntimeFIPSStateR\tfipsState\x12:\n" +
 	"\x19module_signature_enforced\x18\a \x01(\bR\x17moduleSignatureEnforced\x12]\n" +
 	"\x0elockdown_state\x18\b \x01(\x0e26.talos.resource.definitions.enums.RuntimeLockdownStateR\rlockdownState\x12K\n" +
-	"\"secure_boot_authority_fingerprints\x18\t \x03(\tR\x1fsecureBootAuthorityFingerprints\"K\n" +
+	"\"secure_boot_authority_fingerprints\x18\t \x03(\tR\x1fsecureBootAuthorityFingerprints\x12.\n" +
+	"\x13se_linux_categories\x18\n" +
+	" \x01(\bR\x11seLinuxCategories\"K\n" +
 	"\x0eServicePIDSpec\x12\x10\n" +
 	"\x03pid\x18\x01 \x01(\x05R\x03pid\x12'\n" +
 	"\x0fmount_namespace\x18\x02 \x01(\tR\x0emountNamespace\"\xa0\x01\n" +

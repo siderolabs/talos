@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 	"time"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/golang/mock/gomock"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -178,6 +180,34 @@ func TestGetOCIOptions(t *testing.T) {
 		// then
 		assert.NoError(t, err)
 		assert.Equal(t, true, spec.Root.Readonly)
+	})
+
+	t.Run("host mqueue is not mounted unless explicitly requested", func(t *testing.T) {
+		mqueue := func(m specs.Mount) bool { return m.Destination == "/dev/mqueue" }
+
+		assert.False(t, slices.ContainsFunc(defaultOCISpec.Mounts, mqueue))
+
+		// given
+		svc := &services.Extension{
+			Spec: extservices.Spec{
+				Container: extservices.Container{
+					Mounts: []specs.Mount{
+						{
+							Destination: "/dev/mqueue",
+							Type:        "mqueue",
+							Source:      "mqueue",
+						},
+					},
+				},
+			},
+		}
+
+		// when
+		spec, err := generateOCISpec(svc)
+
+		// then
+		assert.NoError(t, err)
+		assert.True(t, slices.ContainsFunc(spec.Mounts, mqueue))
 	})
 
 	t.Run("allows setting extra env vars", func(t *testing.T) {

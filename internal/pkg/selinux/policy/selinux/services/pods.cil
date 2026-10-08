@@ -1,0 +1,57 @@
+(type pod_file_t)
+(call system_f (pod_file_t))
+(allow pod_file_t self (filesystem (associate)))
+(allow pod_file_t tmpfs_t (filesystem (associate)))
+(allow pod_p pod_file_t (fs_classes (rw)))
+(allow pod_containerd_t pod_file_t (fs_classes (rw)))
+(allow pod_containerd_t pod_file_t (fs_classes (relabelfrom relabelto)))
+(allow pod_containerd_t pod_file_t (file (execute execute_no_trans)))
+(allow pod_containerd_t fs_t (filesystem (relabelfrom)))
+(allow pod_containerd_t tmpfs_t (fs_classes (relabelfrom)))
+(allow pod_containerd_t devpts_t (filesystem (relabelfrom)))
+(allow pod_containerd_t kubelet_state_t (fs_classes (relabelfrom)))
+(typealias container_file_t)
+(typealiasactual container_file_t pod_file_t)
+(allow kubelet_t kubelet_state_t (fs_classes (relabelfrom)))
+(allow kubelet_t pod_file_t (fs_classes (relabelfrom relabelto)))
+
+; The rights of a regular pod: pod_t is built on this macro, and so is any other pod domain.
+(macro pod_domain ((type ARG1))
+    (call pod_p (ARG1))
+    ; the rootfs of the container, pod_file_t when the CRI labels containers
+    (allow ARG1 pod_file_t (file (entrypoint)))
+    ; Network filesystems are labeled network_fs_t by genfscon. Let regular pods use
+    ; NFS/CIFS volumes while the filesystem and mount options continue to enforce
+    ; read-only and Unix-level access controls.
+    (allow ARG1 network_fs_t (fs_classes (rw)))
+    ; Calico and basically any CNI installing plugins
+    (allow ARG1 cni_plugin_t (fs_classes (rw)))
+    ; `install` also seems to test the plugin
+    (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
+    ; nsenter from Cilium's apply-sysctl-overwrites
+    ; Actually does not find sysctl directories and exits
+    (allow ARG1 sandboxd_t (fs_classes (ro)))
+)
+
+(typeattribute privileged_readable_f)
+(typeattributeset privileged_readable_f (and any_f (not (or protected_f (or protected_device_f (or system_socket_f unlabeled_t))))))
+
+; The rights of a privileged container: it reads the host files and the /proc of every domain, writes /run, ignores the
+; MCS categories, and pods may connect to its sockets.
+(macro pod_privileged_domain ((type ARG1))
+    (call pod_domain (ARG1))
+    (typeattributeset mcs_exempt_p ARG1)
+    (allow ARG1 privileged_readable_f (fs_classes (ro)))
+    (allow ARG1 any_p (fs_classes (ro)))
+    (allow ARG1 run_t (fs_classes (rw)))
+    ; semctl(IPC_INFO) from lvm
+    (allow ARG1 kernel_t (system (ipc_info)))
+    (allow pod_p ARG1 (unix_stream_socket (connectto)))
+)
+
+; containerd clears the label of a privileged container, which then enters pod_privileged_t from its pod_file_t rootfs
+(type pod_privileged_t)
+(call pod_privileged_domain (pod_privileged_t))
+(typetransition pod_containerd_t pod_file_t process pod_privileged_t)
+(typealias spc_t)
+(typealiasactual spc_t pod_privileged_t)

@@ -190,7 +190,7 @@
 (typeattributeset containerd_p pod_containerd_t)
 
 (type pod_t)
-(call pod_p (pod_t))
+(call pod_domain (pod_t))
 (typeattribute not_containerd_exec_t)
 (typeattributeset not_containerd_exec_t (not containerd_exec_t))
 (typetransition pod_containerd_t containerd_state_t process pod_t)
@@ -210,11 +210,6 @@
 ; TODO: label
 (allow pod_p kubelet_state_t (fs_classes (rw)))
 
-; Network filesystems are labeled network_fs_t by genfscon. Let regular pods use
-; NFS/CIFS volumes while the filesystem and mount options continue to enforce
-; read-only and Unix-level access controls.
-(allow pod_t network_fs_t (fs_classes (rw)))
-
 ; getattr, unmount called by containers and should be guarded by their mount namespaces
 (allow pod_p fs_t (filesystem (
     ; associate
@@ -231,11 +226,6 @@
     unmount
     watch
 )))
-
-; Calico and basically any CNI installing plugins
-(allow pod_t cni_plugin_t (fs_classes (rw)))
-; `install` also seems to test the plugin
-(allow pod_t cni_plugin_t (file (execute execute_no_trans)))
 
 ; TinK is an example of what needs this. Docker in a pod will also require this.
 (allow pod_p cgroup_t (fs_classes (rw)))
@@ -267,3 +257,6 @@
 ; CRI containerd should talk machined API to call machine.ImageService/Verify API
 (allow pod_containerd_t machine_socket_t (fs_classes (rw)))
 (allow pod_containerd_t init_t (unix_stream_socket (connectto)))
+
+; the CRI creates and relabels the files of every pod, whatever its categories
+(typeattributeset mcs_exempt_p pod_containerd_t)

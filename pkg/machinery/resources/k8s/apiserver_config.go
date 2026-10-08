@@ -63,6 +63,8 @@ type APIServerConfigSpec struct {
 	Resources               Resources            `yaml:"resources" protobuf:"12"`
 	StartupProbesEnabled    bool                 `yaml:"startupProbesEnabled" protobuf:"14"`
 	UseAuthenticationConfig bool                 `yaml:"useAuthenticationConfig" protobuf:"15"`
+	// SELinuxLevel is the fixed MCS level of the kube-apiserver pod, empty when pods run without categories.
+	SELinuxLevel string `yaml:"selinuxLevel,omitempty" protobuf:"17"`
 }
 
 // ArgValues represents values for a command line argument which can be specified multiple times.

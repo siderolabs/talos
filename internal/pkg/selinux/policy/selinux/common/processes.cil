@@ -134,9 +134,6 @@
 (allow pod_p self (perf_event (all)))
 ; bpffs for pinning BPF objects
 (allow pod_p bpf_t (fs_classes (rw)))
-; nsenter from Cilium's apply-sysctl-overwrites
-; Actually does not find sysctl directories and exits
-(allow pod_t sandboxd_t (fs_classes (ro)))
 
 ; fio
 (allow any_p self (shm (all)))

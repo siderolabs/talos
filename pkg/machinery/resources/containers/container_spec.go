@@ -294,6 +294,10 @@ type ContainerSecuritySpec struct {
 
 	// SeccompUnconfined applies no seccomp filter instead of the default profile.
 	SeccompUnconfined bool `yaml:"seccompUnconfined,omitempty" protobuf:"5"`
+
+	// SELinuxLevel is the MCS level the container runs at, stable across restarts so that it keeps
+	// access to the files it writes; empty when containers run without categories.
+	SELinuxLevel string `yaml:"selinuxLevel,omitempty" protobuf:"6"`
 }
 
 // Equal compares two security specs field by field, as they carry slices.
@@ -302,7 +306,8 @@ func (a ContainerSecuritySpec) Equal(b ContainerSecuritySpec) bool {
 		slices.Equal(a.CapabilitiesAdd, b.CapabilitiesAdd) &&
 		slices.Equal(a.CapabilitiesDrop, b.CapabilitiesDrop) &&
 		a.MachinedAccess == b.MachinedAccess &&
-		a.SeccompUnconfined == b.SeccompUnconfined
+		a.SeccompUnconfined == b.SeccompUnconfined &&
+		a.SELinuxLevel == b.SELinuxLevel
 }
 
 // ContainerNetworkSpec is the resolved network configuration.
