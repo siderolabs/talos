@@ -771,7 +771,7 @@ func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
 	suite.Require().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				return suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table)
+				return suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table, 0)
 			},
 		),
 	)
@@ -791,6 +791,8 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("10.29.0.0/24")
+	// A live interface index gives concurrent fixtures distinct route keys in the shared namespace.
+	priority := ifaceIndex
 
 	// install the route out of band with a global scope: everything else matches the spec below, so
 	// the scope is the only reason for the controller to rewrite it
@@ -805,7 +807,7 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 				Attributes: rtnetlink.RouteAttributes{
 					Dst:      destination.Addr().AsSlice(),
 					OutIface: ifaceIndex,
-					Priority: network.DefaultRouteMetric,
+					Priority: priority,
 					Table:    unix.RT_TABLE_MAIN,
 				},
 			},
@@ -818,7 +820,7 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 		Destination: destination,
 		OutLinkName: dummyInterface,
 		Table:       nethelpers.TableMain,
-		Priority:    network.DefaultRouteMetric,
+		Priority:    priority,
 		Protocol:    nethelpers.ProtocolStatic,
 		Type:        nethelpers.TypeUnicast,
 		Scope:       nethelpers.ScopeLink,
@@ -830,7 +832,7 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 	suite.Require().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
-				return suite.assertRoute(destination, netip.Addr{}, func(message rtnetlink.RouteMessage) error {
+				return suite.assertMultipathRoute(nethelpers.FamilyInet4, destination, nethelpers.TableMain, priority, func(message rtnetlink.RouteMessage) error {
 					if message.Scope != uint8(nethelpers.ScopeLink) {
 						return retry.ExpectedErrorf(
 							"route scope expected %d, got %d",
@@ -848,7 +850,9 @@ func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
 	suite.Require().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error { return suite.assertNoRoute(destination, netip.Addr{}) },
+			func() error {
+				return suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, nethelpers.TableMain, priority)
+			},
 		),
 	)
 }
@@ -1021,7 +1025,7 @@ func (suite *RouteSpecSuite) TestNextHopChangeInPlace() {
 			suite.Assert().Zero(stop(), "route was deleted while changing next-hops")
 
 			suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
-			suite.Assert().NoError(suite.assertNoRouteInTable(test.family, test.destination, table))
+			suite.Assert().NoError(suite.assertNoRouteInTable(test.family, test.destination, table, 0))
 		})
 	}
 }
@@ -1085,7 +1089,7 @@ func (suite *RouteSpecSuite) TestReplaceOwnedRoute() {
 	suite.Assert().Zero(stop(), "route was deleted instead of being replaced")
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
-	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table))
+	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table, 0))
 }
 
 // TestForeignRouteUntouched verifies that a route with the same key created by someone else (another protocol, e.g.
@@ -1215,7 +1219,7 @@ func (suite *RouteSpecSuite) TestTeardownByKey() {
 	})
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
-	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table))
+	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table, 0))
 }
 
 // TestTeardownAfterProtocolChange verifies that the route is removed on teardown if the spec changed the protocol
@@ -1263,11 +1267,12 @@ func (suite *RouteSpecSuite) TestTeardownAfterProtocolChange() {
 	})
 
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
-	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table))
+	suite.Assert().NoError(suite.assertNoRouteInTable(nethelpers.FamilyInet4, destination, table, 0))
 }
 
 // assertNoRouteInTable checks that there's no route of the family to the destination in the table.
-func (suite *RouteSpecSuite) assertNoRouteInTable(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable) error {
+// A zero priority leaves the metric unconstrained.
+func (suite *RouteSpecSuite) assertNoRouteInTable(family nethelpers.Family, destination netip.Prefix, table nethelpers.RoutingTable, priority uint32) error {
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
 
@@ -1280,8 +1285,7 @@ func (suite *RouteSpecSuite) assertNoRouteInTable(family nethelpers.Family, dest
 
 	for i := range routes {
 		if routes[i].Family == uint8(family) &&
-			nethelpers.RoutingTable(routes[i].Table) == table &&
-			netctrl.RouteDestinationMatches(&routes[i], destination) {
+			routeMatches(&routes[i], destination, table, priority) {
 			matching++
 		}
 	}
