@@ -297,11 +297,15 @@ func (suite *VirtualMachineSpecSuite) TestGuestAgentChannel() {
 	})
 }
 
+// Copying a disk from a content library image is not implemented, so a virtual machine asking for
+// one never gets a domain, and says so.
 func (suite *VirtualMachineSpecSuite) TestRejectsUnsupportedDisks() {
 	doc := newVirtualMachine("unsupported")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{{
-		DiskName: "data", DiskPool: "pool1", DiskSize: meta.MustByteSize("20GiB"),
-		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{}},
+		DiskName: "system", DiskPool: "pool1", DiskSize: meta.MustByteSize("20GiB"),
+		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+			FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{ImageLibrary: "images", ImageFile: "talos.qcow2"},
+		},
 	}}
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
@@ -309,7 +313,7 @@ func (suite *VirtualMachineSpecSuite) TestRejectsUnsupportedDisks() {
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.Equal("pool1", res.TypedSpec().Disks[0].Pool)
 	})
-	suite.assertConversionError(doc.Name(), `disk "data": unsupported disk: only cdrom disks are provisioned today`)
+	suite.assertConversionError(doc.Name(), `disk "system": unsupported disk: a disk is only provisioned from provision.blank today`)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
 }
 
@@ -483,7 +487,7 @@ func (suite *VirtualMachineSpecSuite) TestIgnoresPersistentConfigButRejectsUnsup
 			DiskPool: "unresolved",
 			DiskSize: meta.MustByteSize("20GiB"),
 			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
-				BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{},
+				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{ImageLibrary: "images", ImageFile: "talos.qcow2"},
 			},
 		},
 	}
@@ -491,7 +495,7 @@ func (suite *VirtualMachineSpecSuite) TestIgnoresPersistentConfigButRejectsUnsup
 	cfg, err := container.New(doc)
 	suite.Require().NoError(err)
 	suite.Create(config.NewMachineConfig(cfg))
-	suite.assertConversionError(doc.Name(), `disk "deferred": unsupported disk: only cdrom disks are provisioned today`)
+	suite.assertConversionError(doc.Name(), `disk "deferred": unsupported disk: a disk is only provisioned from provision.blank today`)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, "staged-only")
 }

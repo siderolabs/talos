@@ -270,13 +270,19 @@ func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name 
 func (suite *LibvirtSuite) assertNoDomain(node, name string) {
 	suite.T().Helper()
 
+	suite.assertNoDomainWithContext(suite.ctx, node, name)
+}
+
+func (suite *LibvirtSuite) assertNoDomainWithContext(ctx context.Context, node, name string) {
+	suite.T().Helper()
+
 	suite.Require().Eventually(func() bool {
-		_, listCode := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "list", "--all")
+		_, listCode := suite.RunDebugContainer(ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "list", "--all")
 		if listCode != 0 {
 			return false
 		}
 
-		_, lookupCode := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dominfo", name)
+		_, lookupCode := suite.RunDebugContainer(ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dominfo", name)
 
 		return lookupCode != 0
 	}, 2*time.Minute, time.Second, "domain %q still exists", name)

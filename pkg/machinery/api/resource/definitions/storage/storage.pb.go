@@ -1487,13 +1487,13 @@ func (x *StoragePoolSpecSpec) GetVolumeId() string {
 	return ""
 }
 
-// StoragePoolStatusSpec reports the pool's backing volume, directory and readiness.
+// StoragePoolStatusSpec reports the pool's backing volume, directory and observed attachability.
 type StoragePoolStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	VolumeId      string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	TargetPath    string                 `protobuf:"bytes,2,opt,name=target_path,json=targetPath,proto3" json:"target_path,omitempty"`
-	Ready         bool                   `protobuf:"varint,3,opt,name=ready,proto3" json:"ready,omitempty"`
-	Error         string                 `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	state         protoimpl.MessageState        `protogen:"open.v1"`
+	VolumeId      string                        `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	TargetPath    string                        `protobuf:"bytes,2,opt,name=target_path,json=targetPath,proto3" json:"target_path,omitempty"`
+	Phase         enums.StorageStoragePoolPhase `protobuf:"varint,3,opt,name=phase,proto3,enum=talos.resource.definitions.enums.StorageStoragePoolPhase" json:"phase,omitempty"`
+	Error         string                        `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1542,14 +1542,232 @@ func (x *StoragePoolStatusSpec) GetTargetPath() string {
 	return ""
 }
 
-func (x *StoragePoolStatusSpec) GetReady() bool {
+func (x *StoragePoolStatusSpec) GetPhase() enums.StorageStoragePoolPhase {
 	if x != nil {
-		return x.Ready
+		return x.Phase
 	}
-	return false
+	return enums.StorageStoragePoolPhase(0)
 }
 
 func (x *StoragePoolStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// StoragePoolVolumeSpecSpec is the spec for StoragePoolVolumeSpec.
+type StoragePoolVolumeSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Pool is the name of the storage pool the volume lives in.
+	Pool string `protobuf:"bytes,1,opt,name=pool,proto3" json:"pool,omitempty"`
+	// Name is the volume's name within that pool, which is its file name in the pool directory.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Capacity is the logical size in bytes the volume is asked to have.
+	//
+	// A volume is only ever grown towards it. One already larger is left alone: shrinking would
+	// truncate a filesystem its owner, not Talos, laid out.
+	Capacity uint64 `protobuf:"varint,3,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	// Format is the on-disk format the volume is created with, as libvirt names it.
+	//
+	// It applies at creation only. A volume already in the pool under another format is refused
+	// rather than rewritten.
+	Format string `protobuf:"bytes,4,opt,name=format,proto3" json:"format,omitempty"`
+	// BackingFile is an optional base image path used only when creating the volume.
+	// An existing volume is not rebased when this changes.
+	BackingFile string `protobuf:"bytes,5,opt,name=backing_file,json=backingFile,proto3" json:"backing_file,omitempty"`
+	// BackingFormat is the format of BackingFile, independent of the overlay Format.
+	// If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased.
+	BackingFormat string `protobuf:"bytes,6,opt,name=backing_format,json=backingFormat,proto3" json:"backing_format,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StoragePoolVolumeSpecSpec) Reset() {
+	*x = StoragePoolVolumeSpecSpec{}
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoragePoolVolumeSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoragePoolVolumeSpecSpec) ProtoMessage() {}
+
+func (x *StoragePoolVolumeSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoragePoolVolumeSpecSpec.ProtoReflect.Descriptor instead.
+func (*StoragePoolVolumeSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *StoragePoolVolumeSpecSpec) GetPool() string {
+	if x != nil {
+		return x.Pool
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeSpecSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeSpecSpec) GetCapacity() uint64 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
+func (x *StoragePoolVolumeSpecSpec) GetFormat() string {
+	if x != nil {
+		return x.Format
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeSpecSpec) GetBackingFile() string {
+	if x != nil {
+		return x.BackingFile
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeSpecSpec) GetBackingFormat() string {
+	if x != nil {
+		return x.BackingFormat
+	}
+	return ""
+}
+
+// StoragePoolVolumeStatusSpec is the spec for StoragePoolVolumeStatus.
+type StoragePoolVolumeStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Pool is the name of the storage pool the volume lives in.
+	Pool string `protobuf:"bytes,1,opt,name=pool,proto3" json:"pool,omitempty"`
+	// Name is the volume's name within that pool.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Path is the absolute host path of the volume's file.
+	//
+	// Only meaningful when Ready.
+	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	// Format is the volume's actual on-disk format, as libvirt reports it.
+	//
+	// Only meaningful when Ready.
+	Format string `protobuf:"bytes,4,opt,name=format,proto3" json:"format,omitempty"`
+	// Capacity is the volume's actual logical size in bytes.
+	//
+	// It may exceed the capacity asked for: a volume is never shrunk.
+	Capacity uint64 `protobuf:"varint,5,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	// PendingCapacity is a growth which has been asked for but not applied yet, in bytes.
+	//
+	// Zero when there is none. A volume a guest has open cannot be grown underneath it, so the
+	// change waits for the guest to stop rather than being lost or forced.
+	PendingCapacity uint64 `protobuf:"varint,6,opt,name=pending_capacity,json=pendingCapacity,proto3" json:"pending_capacity,omitempty"`
+	// Phase reports whether the volume may be attached, independently of deferred growth or Error.
+	Phase enums.StorageStoragePoolVolumePhase `protobuf:"varint,7,opt,name=phase,proto3,enum=talos.resource.definitions.enums.StorageStoragePoolVolumePhase" json:"phase,omitempty"`
+	// Error describes why the volume is not ready, or -- when it is -- which part of what was asked
+	// for was refused.
+	Error         string `protobuf:"bytes,8,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StoragePoolVolumeStatusSpec) Reset() {
+	*x = StoragePoolVolumeStatusSpec{}
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StoragePoolVolumeStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StoragePoolVolumeStatusSpec) ProtoMessage() {}
+
+func (x *StoragePoolVolumeStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StoragePoolVolumeStatusSpec.ProtoReflect.Descriptor instead.
+func (*StoragePoolVolumeStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetPool() string {
+	if x != nil {
+		return x.Pool
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetFormat() string {
+	if x != nil {
+		return x.Format
+	}
+	return ""
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetCapacity() uint64 {
+	if x != nil {
+		return x.Capacity
+	}
+	return 0
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetPendingCapacity() uint64 {
+	if x != nil {
+		return x.PendingCapacity
+	}
+	return 0
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetPhase() enums.StorageStoragePoolVolumePhase {
+	if x != nil {
+		return x.Phase
+	}
+	return enums.StorageStoragePoolVolumePhase(0)
+}
+
+func (x *StoragePoolVolumeStatusSpec) GetError() string {
 	if x != nil {
 		return x.Error
 	}
@@ -1710,13 +1928,29 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x14MDRefreshRequestSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"2\n" +
 	"\x13StoragePoolSpecSpec\x12\x1b\n" +
-	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\"\x81\x01\n" +
+	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\"\xbc\x01\n" +
 	"\x15StoragePoolStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1f\n" +
 	"\vtarget_path\x18\x02 \x01(\tR\n" +
-	"targetPath\x12\x14\n" +
-	"\x05ready\x18\x03 \x01(\bR\x05ready\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05errorBx\n" +
+	"targetPath\x12O\n" +
+	"\x05phase\x18\x03 \x01(\x0e29.talos.resource.definitions.enums.StorageStoragePoolPhaseR\x05phase\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\"\xc1\x01\n" +
+	"\x19StoragePoolVolumeSpecSpec\x12\x12\n" +
+	"\x04pool\x18\x01 \x01(\tR\x04pool\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1a\n" +
+	"\bcapacity\x18\x03 \x01(\x04R\bcapacity\x12\x16\n" +
+	"\x06format\x18\x04 \x01(\tR\x06format\x12!\n" +
+	"\fbacking_file\x18\x05 \x01(\tR\vbackingFile\x12%\n" +
+	"\x0ebacking_format\x18\x06 \x01(\tR\rbackingFormat\"\xa5\x02\n" +
+	"\x1bStoragePoolVolumeStatusSpec\x12\x12\n" +
+	"\x04pool\x18\x01 \x01(\tR\x04pool\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12\x16\n" +
+	"\x06format\x18\x04 \x01(\tR\x06format\x12\x1a\n" +
+	"\bcapacity\x18\x05 \x01(\x04R\bcapacity\x12)\n" +
+	"\x10pending_capacity\x18\x06 \x01(\x04R\x0fpendingCapacity\x12U\n" +
+	"\x05phase\x18\a \x01(\x0e2?.talos.resource.definitions.enums.StorageStoragePoolVolumePhaseR\x05phase\x12\x14\n" +
+	"\x05error\x18\b \x01(\tR\x05errorBx\n" +
 	"*dev.talos.api.resource.definitions.storageZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storageb\x06proto3"
 
 var (
@@ -1731,39 +1965,45 @@ func file_resource_definitions_storage_storage_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_storage_storage_proto_rawDescData
 }
 
-var file_resource_definitions_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_resource_definitions_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_resource_definitions_storage_storage_proto_goTypes = []any{
-	(*LVMLogicalVolumeSpecSpec)(nil),       // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec
-	(*LVMLogicalVolumeStatusSpec)(nil),     // 1: talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec
-	(*LVMPhysicalVolumeSpecSpec)(nil),      // 2: talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec
-	(*LVMPhysicalVolumeStatusSpec)(nil),    // 3: talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec
-	(*LVMRefreshRequestSpec)(nil),          // 4: talos.resource.definitions.storage.LVMRefreshRequestSpec
-	(*LVMValidationErrorSpec)(nil),         // 5: talos.resource.definitions.storage.LVMValidationErrorSpec
-	(*LVMVolumeGroupSpecSpec)(nil),         // 6: talos.resource.definitions.storage.LVMVolumeGroupSpecSpec
-	(*LVMVolumeGroupStatusSpec)(nil),       // 7: talos.resource.definitions.storage.LVMVolumeGroupStatusSpec
-	(*MDArraySpecSpec)(nil),                // 8: talos.resource.definitions.storage.MDArraySpecSpec
-	(*MDArrayStatusSpec)(nil),              // 9: talos.resource.definitions.storage.MDArrayStatusSpec
-	(*MDRefreshRequestSpec)(nil),           // 10: talos.resource.definitions.storage.MDRefreshRequestSpec
-	(*StoragePoolSpecSpec)(nil),            // 11: talos.resource.definitions.storage.StoragePoolSpecSpec
-	(*StoragePoolStatusSpec)(nil),          // 12: talos.resource.definitions.storage.StoragePoolStatusSpec
-	(enums.StorageLVMLogicalVolumeType)(0), // 13: talos.resource.definitions.enums.StorageLVMLogicalVolumeType
-	(enums.StorageMDLevel)(0),              // 14: talos.resource.definitions.enums.StorageMDLevel
-	(*v1alpha1.CheckedExpr)(nil),           // 15: google.api.expr.v1alpha1.CheckedExpr
-	(enums.StorageMDMetadata)(0),           // 16: talos.resource.definitions.enums.StorageMDMetadata
-	(enums.StorageMDArrayPhase)(0),         // 17: talos.resource.definitions.enums.StorageMDArrayPhase
+	(*LVMLogicalVolumeSpecSpec)(nil),         // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec
+	(*LVMLogicalVolumeStatusSpec)(nil),       // 1: talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec
+	(*LVMPhysicalVolumeSpecSpec)(nil),        // 2: talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec
+	(*LVMPhysicalVolumeStatusSpec)(nil),      // 3: talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec
+	(*LVMRefreshRequestSpec)(nil),            // 4: talos.resource.definitions.storage.LVMRefreshRequestSpec
+	(*LVMValidationErrorSpec)(nil),           // 5: talos.resource.definitions.storage.LVMValidationErrorSpec
+	(*LVMVolumeGroupSpecSpec)(nil),           // 6: talos.resource.definitions.storage.LVMVolumeGroupSpecSpec
+	(*LVMVolumeGroupStatusSpec)(nil),         // 7: talos.resource.definitions.storage.LVMVolumeGroupStatusSpec
+	(*MDArraySpecSpec)(nil),                  // 8: talos.resource.definitions.storage.MDArraySpecSpec
+	(*MDArrayStatusSpec)(nil),                // 9: talos.resource.definitions.storage.MDArrayStatusSpec
+	(*MDRefreshRequestSpec)(nil),             // 10: talos.resource.definitions.storage.MDRefreshRequestSpec
+	(*StoragePoolSpecSpec)(nil),              // 11: talos.resource.definitions.storage.StoragePoolSpecSpec
+	(*StoragePoolStatusSpec)(nil),            // 12: talos.resource.definitions.storage.StoragePoolStatusSpec
+	(*StoragePoolVolumeSpecSpec)(nil),        // 13: talos.resource.definitions.storage.StoragePoolVolumeSpecSpec
+	(*StoragePoolVolumeStatusSpec)(nil),      // 14: talos.resource.definitions.storage.StoragePoolVolumeStatusSpec
+	(enums.StorageLVMLogicalVolumeType)(0),   // 15: talos.resource.definitions.enums.StorageLVMLogicalVolumeType
+	(enums.StorageMDLevel)(0),                // 16: talos.resource.definitions.enums.StorageMDLevel
+	(*v1alpha1.CheckedExpr)(nil),             // 17: google.api.expr.v1alpha1.CheckedExpr
+	(enums.StorageMDMetadata)(0),             // 18: talos.resource.definitions.enums.StorageMDMetadata
+	(enums.StorageMDArrayPhase)(0),           // 19: talos.resource.definitions.enums.StorageMDArrayPhase
+	(enums.StorageStoragePoolPhase)(0),       // 20: talos.resource.definitions.enums.StorageStoragePoolPhase
+	(enums.StorageStoragePoolVolumePhase)(0), // 21: talos.resource.definitions.enums.StorageStoragePoolVolumePhase
 }
 var file_resource_definitions_storage_storage_proto_depIdxs = []int32{
-	13, // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec.type:type_name -> talos.resource.definitions.enums.StorageLVMLogicalVolumeType
-	14, // 1: talos.resource.definitions.storage.MDArraySpecSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
-	15, // 2: talos.resource.definitions.storage.MDArraySpecSpec.volume_selector:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	16, // 3: talos.resource.definitions.storage.MDArraySpecSpec.metadata:type_name -> talos.resource.definitions.enums.StorageMDMetadata
-	14, // 4: talos.resource.definitions.storage.MDArrayStatusSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
-	17, // 5: talos.resource.definitions.storage.MDArrayStatusSpec.status:type_name -> talos.resource.definitions.enums.StorageMDArrayPhase
-	6,  // [6:6] is the sub-list for method output_type
-	6,  // [6:6] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	15, // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec.type:type_name -> talos.resource.definitions.enums.StorageLVMLogicalVolumeType
+	16, // 1: talos.resource.definitions.storage.MDArraySpecSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
+	17, // 2: talos.resource.definitions.storage.MDArraySpecSpec.volume_selector:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	18, // 3: talos.resource.definitions.storage.MDArraySpecSpec.metadata:type_name -> talos.resource.definitions.enums.StorageMDMetadata
+	16, // 4: talos.resource.definitions.storage.MDArrayStatusSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
+	19, // 5: talos.resource.definitions.storage.MDArrayStatusSpec.status:type_name -> talos.resource.definitions.enums.StorageMDArrayPhase
+	20, // 6: talos.resource.definitions.storage.StoragePoolStatusSpec.phase:type_name -> talos.resource.definitions.enums.StorageStoragePoolPhase
+	21, // 7: talos.resource.definitions.storage.StoragePoolVolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.StorageStoragePoolVolumePhase
+	8,  // [8:8] is the sub-list for method output_type
+	8,  // [8:8] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_storage_storage_proto_init() }
@@ -1777,7 +2017,7 @@ func file_resource_definitions_storage_storage_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_storage_storage_proto_rawDesc), len(file_resource_definitions_storage_storage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

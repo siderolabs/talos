@@ -2,7 +2,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package hypervisor
+// Package cleanup withdraws a controller's outputs in a way the controllers holding them can
+// notice.
+package cleanup
 
 import (
 	"context"
@@ -15,11 +17,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 )
 
-// cleanupOutputs tears down every output of type T which wanted no longer names, or which is already
+// Outputs tears down every output of type T which wanted no longer names, or which is already
 // leaving, and destroys the ones nothing holds any more. what names the resource in the error
 // messages. Unlike safe.CleanupOutputs, which destroys without tearing down first, this leaves a
 // controller holding the output a moment to notice and give its hold back.
-func cleanupOutputs[T generic.ResourceWithRD](
+//
+// A controller whose outputs anything may hold needs this rather than safe.CleanupOutputs: a
+// resource with a finalizer cannot be destroyed, so destroying one outright fails the reconciliation
+// and the controller restart-loops for as long as the hold lasts.
+func Outputs[T generic.ResourceWithRD](
 	ctx context.Context, r controller.ReaderWriter, what string, wanted map[resource.ID]struct{},
 ) error {
 	outputs, err := safe.ReaderListAll[T](ctx, r)

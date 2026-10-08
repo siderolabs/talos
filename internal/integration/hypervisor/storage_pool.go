@@ -180,7 +180,7 @@ func (f *storagePoolFixture) waitPool(ctx context.Context, volumeIndex int, expe
 		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
 			asrt.Equal(f.volumeIDs[volumeIndex], status.TypedSpec().VolumeID)
 			asrt.Equal(f.paths[volumeIndex], status.TypedSpec().TargetPath)
-			asrt.True(status.TypedSpec().Ready)
+			asrt.True(status.TypedSpec().Phase == storage.StoragePoolPhaseReady)
 			asrt.Empty(status.TypedSpec().Error)
 		})
 

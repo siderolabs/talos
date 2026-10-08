@@ -68,6 +68,53 @@ Invalid placement leaves an existing guest running; CPUs and guest memory may in
 This validates placement, not available memory capacity or reservations. Host inventory is not exposed in container mode.
 """
 
+    [notes.hypervisor_blank_disk]
+        title = "Blank Virtual Machine Disks"
+        description = """A virtual machine disk can now be provisioned as an empty volume in a storage pool, rather than only
+as a CD-ROM attached from a content library:
+
+```yaml
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+disks:
+  - name: data
+    pool: pool1
+    size: 100GiB
+    format: qcow2
+    provision:
+      blank: {}
+```
+
+The pool must be declared by a `StoragePool` document in the same machine configuration; a disk
+naming an undeclared pool is now a configuration error rather than a virtual machine that silently
+never starts.
+
+Four behaviours are worth knowing before you rely on this:
+
+* **Volumes are adopted by name and are never deleted.** The volume is named after the virtual
+  machine and the disk, so removing the disk from the configuration leaves the data in place, and
+  re-declaring the same virtual machine and disk names in the same pool reattaches it. Reclaiming
+  the space is a deliberate, out-of-band act. `talosctl get storagepoolvolumestatuses` lists
+  managed volumes, not retained orphan files: their statuses disappear when their requests and
+  consumers are gone. Inspect the pool's backing directory to discover retained files before
+  reclaiming space; confirm a file is no longer in use before deleting it.
+* **Disks grow only.** Raising `size` grows the volume the next time no virtual machine has it open,
+  because growing one underneath a running guest corrupts qcow2 metadata and is invisible to the
+  guest for raw. The pending growth is reported on the volume's status.
+* **A smaller `size` is reported and ignored.** Shrinking would truncate a filesystem the guest laid
+  out, so it is refused rather than applied; the disk stays attachable and the virtual machine keeps
+  running.
+* **Remove all virtual machine references together with a `StoragePool` document.** Removing a
+  referenced pool alone is rejected by configuration validation. Remove or update every virtual
+  machine referencing it in the same configuration change. During teardown, consumers release
+  the pool before it is undefined and its backing directory can be unmounted. The volume files
+  survive.
+
+Provisioning a disk from a content library image is not implemented yet; `provision.fromImage` is
+still only supported on a `cdrom`.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\

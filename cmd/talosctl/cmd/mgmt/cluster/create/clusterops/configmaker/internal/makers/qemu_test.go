@@ -478,3 +478,25 @@ func TestQemuMaker_DiskEncryption_ErrorNoKeyTypes(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "no disk encryption key types enabled")
 }
+
+func TestQemuMaker_ExtraDHCPReservations(t *testing.T) {
+	qOps := clusterops.GetQemu()
+	qOps.ExtraDHCPRecordsCount = 2
+
+	m, err := makers.NewQemu(makers.MakerOptions[clusterops.Qemu]{
+		ExtraOps:    qOps,
+		CommonOps:   clusterops.GetCommon(),
+		Provisioner: testProvisioner{},
+	})
+	require.NoError(t, err)
+
+	config, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	records := config.ClusterRequest.Network.ExtraDHCPRecords
+	require.Len(t, records, 2)
+	assert.NotEqual(t, records[0].MAC, records[1].MAC)
+	assert.NotEqual(t, records[0].IP, records[1].IP)
+	assert.Equal(t, records[0].Gateway, records[1].Gateway)
+	assert.Empty(t, config.ClusterRequest.IPXEBootScript)
+}

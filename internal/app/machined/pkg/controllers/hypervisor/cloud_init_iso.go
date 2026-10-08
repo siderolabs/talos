@@ -195,7 +195,7 @@ func (ctrl *CloudInitISOController) publicationError(ctx context.Context, r cont
 		return err
 	}
 
-	if status.Metadata().Phase() != resource.PhaseRunning || status.TypedSpec().Ready {
+	if status.Metadata().Phase() != resource.PhaseRunning || status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady {
 		return nil
 	}
 
@@ -205,7 +205,8 @@ func (ctrl *CloudInitISOController) publicationError(ctx context.Context, r cont
 	}
 
 	return safe.WriterModify(ctx, r, hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, id), func(current *hypervisor.CloudInitStatus) error {
-		if !current.TypedSpec().Ready {
+		if current.TypedSpec().Phase != hypervisor.CloudInitPhaseReady {
+			current.TypedSpec().Phase = hypervisor.CloudInitPhaseNotReady
 			current.TypedSpec().Error = reason
 		}
 
@@ -225,6 +226,7 @@ func (ctrl *CloudInitISOController) waiting(ctx context.Context, r controller.Re
 			InputDigest:        spec.TypedSpec().InputDigest(),
 			ObservedGeneration: spec.Metadata().Version().String(),
 			Error:              reason,
+			Phase:              hypervisor.CloudInitPhaseNotReady,
 		}
 
 		return nil
@@ -232,7 +234,7 @@ func (ctrl *CloudInitISOController) waiting(ctx context.Context, r controller.Re
 }
 
 func cloudInitLibraryReady(library *hypervisor.ContentLibraryStatus) bool {
-	return library.TypedSpec().Ready && library.Metadata().Phase() == resource.PhaseRunning
+	return library.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady && library.Metadata().Phase() == resource.PhaseRunning
 }
 
 func (ctrl *CloudInitISOController) handleExistingISO(
@@ -247,7 +249,7 @@ func (ctrl *CloudInitISOController) handleExistingISO(
 		return true, ctrl.retire(ctx, r, old, library)
 	}
 
-	if !old.TypedSpec().Ready {
+	if old.TypedSpec().Phase != hypervisor.CloudInitPhaseReady {
 		// Resume a previously linked asset only when its durable witness proves ownership.
 		return false, nil
 	}
@@ -261,7 +263,7 @@ func (ctrl *CloudInitISOController) handleExistingISO(
 	// A finalizer prevents destruction, not modification. Retire a held status
 	// instead of repointing it to different bytes.
 	if err := safe.WriterModify(ctx, r, hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, id), func(status *hypervisor.CloudInitStatus) error {
-		status.TypedSpec().Ready = false
+		status.TypedSpec().Phase = hypervisor.CloudInitPhaseNotReady
 		status.TypedSpec().Error = "cloud-init ISO is missing or changed"
 
 		return nil
@@ -336,7 +338,7 @@ func unavailableLibraryReason(library *hypervisor.ContentLibraryStatus) string {
 		return "content library is not configured"
 	}
 
-	if !library.TypedSpec().Ready || library.Metadata().Phase() != resource.PhaseRunning || library.TypedSpec().Path == "" {
+	if library.TypedSpec().Phase != hypervisor.ContentLibraryPhaseReady || library.Metadata().Phase() != resource.PhaseRunning || library.TypedSpec().Path == "" {
 		return "waiting for content library to become ready"
 	}
 
@@ -481,6 +483,7 @@ func (ctrl *CloudInitISOController) reserveISO(
 				InputDigest:        spec.TypedSpec().InputDigest(),
 				ObservedGeneration: spec.Metadata().Version().String(),
 				Error:              "building cloud-init ISO",
+				Phase:              hypervisor.CloudInitPhaseNotReady,
 			}
 
 			return nil
@@ -493,7 +496,7 @@ func (ctrl *CloudInitISOController) reserveISO(
 }
 
 func sameReadyLibraryBacking(current, library *hypervisor.ContentLibraryStatus) bool {
-	return current.TypedSpec().Ready && current.Metadata().Phase() == resource.PhaseRunning &&
+	return current.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady && current.Metadata().Phase() == resource.PhaseRunning &&
 		current.TypedSpec().Path == library.TypedSpec().Path && current.TypedSpec().VolumeID == library.TypedSpec().VolumeID
 }
 
@@ -525,7 +528,7 @@ func (ctrl *CloudInitISOController) completeISO(
 
 		status.TypedSpec().Digest = digest
 		status.TypedSpec().SizeBytes = size
-		status.TypedSpec().Ready = true
+		status.TypedSpec().Phase = hypervisor.CloudInitPhaseReady
 		status.TypedSpec().Error = ""
 
 		return nil

@@ -43,12 +43,28 @@ type VirtualMachineDiskStatusSpec struct {
 	Format string `yaml:"format,omitempty" protobuf:"4"`
 	// ReadOnly is true when the guest must not write to the source.
 	ReadOnly bool `yaml:"readOnly" protobuf:"5"`
-	// Ready is true once the source exists and may be attached.
-	Ready bool `yaml:"ready" protobuf:"6"`
+	// Phase reports whether the source may be attached or observation is unavailable.
+	Phase VirtualMachineDiskPhase `yaml:"phase" protobuf:"6"`
 	// Error describes why the disk is not ready.
 	Error string `yaml:"error,omitempty" protobuf:"7"`
 	// Image is the content library image this status resolved.
 	Image VirtualMachineDiskFromImageSpec `yaml:"image,omitempty" protobuf:"8"`
+	// Pool is the storage pool the disk's volume lives in, for a disk provisioned into one.
+	//
+	// Stamped whether or not the disk resolved, so a failed one still names what it was for. That
+	// is what lets a pool a running guest is reading from be recognized as in use: a status which
+	// did not resolve has no SourcePath to go on.
+	Pool string `yaml:"pool,omitempty" protobuf:"9"`
+	// Volume is the name of that volume within the pool.
+	//
+	// Stamped whether or not the disk resolved, for the same reason as Pool.
+	Volume string `yaml:"volume,omitempty" protobuf:"10"`
+	// Size is the volume's actual logical capacity in bytes.
+	//
+	// It may exceed the size configured: a volume is never shrunk.
+	Size uint64 `yaml:"size,omitempty" protobuf:"11"`
+	// Blank is true when the disk was provisioned as an empty volume.
+	Blank bool `yaml:"blank,omitempty" protobuf:"12"`
 }
 
 // diskStatusIDDigestLength is how much of the provisioning digest the ID carries. It only has to
@@ -62,15 +78,35 @@ const diskStatusIDDigestLength = 12
 // resource being destroyed, not updated, so re-provisioning from another image must create a second
 // status rather than rewrite the one a running domain holds.
 func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSpec) resource.ID {
-	var image VirtualMachineDiskFromImageSpec
+	var parts []string
 
-	if disk.Provision.FromImage != nil {
-		image = *disk.Provision.FromImage
+	if disk.Provision.Blank {
+		// Pool and format are in, because each changes the file the domain is pointed at -- and
+		// format changes its driver type too -- so a running domain must be re-rendered onto a new
+		// status rather than silently retargeted.
+		//
+		// Size is deliberately out. The volume's file name cannot depend on it, or growing a volume
+		// would create a fresh empty one beside it, so a size in the ID would put two statuses on
+		// one file at two capacities with no way to say which wins. Keeping it out makes a resize a
+		// plain update of the status a running domain already holds, which is legal, and which the
+		// domain XML -- carrying no capacity at all -- needs no change for.
+		//
+		// "provision=blank" cannot collide with the image branch below: '=' is outside the charset
+		// a library name is validated against.
+		parts = []string{"provision=blank", disk.Pool, disk.Format}
+	} else {
+		var image VirtualMachineDiskFromImageSpec
+
+		if disk.Provision.FromImage != nil {
+			image = *disk.Provision.FromImage
+		}
+
+		// A disk provisioned from neither hashes the zero value, so it still has one stable ID to
+		// report its own unsupportedness under.
+		parts = []string{image.Library, image.File, image.Digest, image.Mode}
 	}
 
-	// A disk provisioned from no image hashes the zero value, so it still has one stable ID to
-	// report its own unsupportedness under.
-	sum := sha256.Sum256([]byte(strings.Join([]string{image.Library, image.File, image.Digest, image.Mode}, "\x00")))
+	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
 
 	return virtualMachine + "/" + disk.Name + "@" + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
 }
@@ -101,8 +137,12 @@ func (VirtualMachineDiskStatusExtension) ResourceDefinition() meta.ResourceDefin
 				JSONPath: `{.name}`,
 			},
 			{
-				Name:     "Ready",
-				JSONPath: `{.ready}`,
+				Name:     "Pool",
+				JSONPath: `{.pool}`,
+			},
+			{
+				Name:     "Phase",
+				JSONPath: `{.phase}`,
 			},
 			{
 				Name:     "Source",

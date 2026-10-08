@@ -60,6 +60,14 @@ func (c *Client) Storage(ctx context.Context) (storage.Client, error) {
 	return c.storage.Open(ctx)
 }
 
+// StorageVolumes connects to the modular storage daemon with the budget volume work needs.
+//
+// Creating or growing a volume is real filesystem work behind an RPC, unlike the pool metadata
+// calls Storage is sized for.
+func (c *Client) StorageVolumes(ctx context.Context) (storage.Client, error) {
+	return c.storage.OpenWithTimeout(ctx, storage.VolumeOperationTimeout)
+}
+
 // Domain connects to the modular QEMU daemon with the caller's context.
 func (c *Client) Domain(ctx context.Context) (domain.Client, error) {
 	return c.domain.Open(ctx)

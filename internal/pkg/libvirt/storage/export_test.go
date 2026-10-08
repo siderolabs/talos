@@ -5,4 +5,4 @@
 package storage
 
 // NewTestClient exposes only the RPC seam to external-package tests.
-func NewTestClient(rpc poolRPC) Client { return &client{rpc: rpc} }
+func NewTestClient(rpc poolRPC) EvidenceClient { return &client{rpc: rpc} }

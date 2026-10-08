@@ -135,7 +135,7 @@ func provisionContentLibrary(suite *base.APISuite, ctx context.Context, node str
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{name},
 		func(cls *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-			asrt.True(cls.TypedSpec().Ready, "error: %q", cls.TypedSpec().Error)
+			asrt.True(cls.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", cls.TypedSpec().Error)
 		},
 	)
 

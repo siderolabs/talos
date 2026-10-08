@@ -119,7 +119,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().SourcePath)
 			asrt.Equal("raw", status.TypedSpec().Format)
 			asrt.True(status.TypedSpec().ReadOnly)
@@ -203,7 +203,7 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.False(status.TypedSpec().Ready)
+			asrt.False(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady)
 			asrt.Contains(status.TypedSpec().Error, isoName)
 		},
 	)
@@ -293,7 +293,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
 		},
 	)
@@ -383,7 +383,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
 		},
 	)
@@ -414,7 +414,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, swappedDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, replacementISO), status.TypedSpec().SourcePath)
 		},
 	)
@@ -463,7 +463,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, pinnedDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.False(status.TypedSpec().Ready)
+			asrt.False(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady)
 			asrt.Contains(status.TypedSpec().Error, "digest mismatch")
 		},
 	)
@@ -541,7 +541,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
-			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().SourcePath)
 		},
 	)

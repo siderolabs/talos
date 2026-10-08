@@ -105,14 +105,14 @@ type CloudInitStatusSpec struct {
 	Name           string `yaml:"name" protobuf:"3"`
 
 	// Path and VolumeID pin the backing identity and prevent stale readiness across remounts.
-	Path               string `yaml:"path,omitempty" protobuf:"4"`
-	VolumeID           string `yaml:"volumeID,omitempty" protobuf:"5"`
-	Digest             string `yaml:"digest,omitempty" protobuf:"6"`
-	SizeBytes          uint64 `yaml:"sizeBytes" protobuf:"7"`
-	InputDigest        string `yaml:"inputDigest" protobuf:"8"`
-	ObservedGeneration string `yaml:"observedGeneration,omitempty" protobuf:"9"`
-	Ready              bool   `yaml:"ready" protobuf:"10"`
-	Error              string `yaml:"error,omitempty" protobuf:"11"`
+	Path               string         `yaml:"path,omitempty" protobuf:"4"`
+	VolumeID           string         `yaml:"volumeID,omitempty" protobuf:"5"`
+	Digest             string         `yaml:"digest,omitempty" protobuf:"6"`
+	SizeBytes          uint64         `yaml:"sizeBytes" protobuf:"7"`
+	InputDigest        string         `yaml:"inputDigest" protobuf:"8"`
+	ObservedGeneration string         `yaml:"observedGeneration,omitempty" protobuf:"9"`
+	Phase              CloudInitPhase `yaml:"phase" protobuf:"10"`
+	Error              string         `yaml:"error,omitempty" protobuf:"11"`
 }
 
 // NewCloudInitStatus constructs a produced seed resource.
@@ -131,6 +131,12 @@ func (CloudInitStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec
 	return meta.ResourceDefinitionSpec{
 		Type:             CloudInitStatusType,
 		DefaultNamespace: NamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Phase",
+				JSONPath: `{.phase}`,
+			},
+		},
 	}
 }
 

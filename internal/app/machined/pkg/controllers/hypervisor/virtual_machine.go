@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -29,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -47,6 +49,10 @@ type VirtualMachineController struct {
 	// hold does not outlive the process, and an entry is dropped with the hold it stands for.
 	verified      map[string]struct{}
 	verifiedSeeds map[string]struct{}
+
+	// Rejected acquisitions never reached Start. Keep failed releases distinct
+	// from existing attachments across controller retries.
+	rejectedVolumeHolds map[string]resource.Pointer
 }
 
 // Name implements controller.Controller interface.
@@ -103,17 +109,22 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.ContentLibraryStatusType,
-			// Weak: this controller never holds a library, it only reads the marker saying a file in
-			// one is being replaced. Watched so that giving a marker back wakes the domains waiting
-			// on it.
-			Kind: controller.InputWeak,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolVolumeStatusType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolStatusType,
+			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDiskStatusType,
-			// Strong: this controller holds every disk status its domains read from, and is the
-			// only one which can give such a hold back.
-			Kind: controller.InputStrong,
+			Kind:      controller.InputStrong,
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
@@ -196,10 +207,6 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		known[spec.Metadata().ID()] = struct{}{}
 	}
 
-	if err = ctrl.releaseOrphanHolds(ctx, r, known); err != nil {
-		return err
-	}
-
 	// Seed holds require a daemon inventory even when no domain specs remain.
 
 	logReady, err := virtualMachineLogsReady(ctx, r)
@@ -223,9 +230,20 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		return fmt.Errorf("failed to list libvirt domains: %w", err)
 	}
 
+	if err := ctrl.retryRejectedVolumeHolds(ctx, r); err != nil {
+		return err
+	}
+
 	byName := make(map[string]libvirtdomain.Domain, len(domains))
 	for _, domain := range domains {
 		byName[domain.Name] = domain
+		known[domain.Name] = struct{}{}
+	}
+
+	// Only authoritative inventory can release orphan backing holds. Failure to
+	// contact the daemon says nothing about whether a guest is still reading.
+	if err = ctrl.releaseOrphanHolds(ctx, r, known); err != nil {
+		return err
 	}
 
 	if err := ctrl.releaseOrphanSeeds(ctx, r, byName); err != nil {
@@ -381,30 +399,77 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 		return pending()
 	}
 
+	// A disk status can still be Ready between pool observation loss and its own
+	// reconciliation. Reject new starts at the final boundary in that window.
+	ready, err := blankDiskPoolsReady(ctx, r, vm.TypedSpec().Disks)
+	if err != nil {
+		return err
+	}
+
+	if !ready {
+		return pending()
+	}
+
+	match, err := currentVMDefinitionMatches(ctx, r, spec, vm)
+	if err != nil {
+		return err
+	}
+
+	if !match {
+		return pending()
+	}
+
+	return nil
+}
+
+func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *hypervisor.VirtualMachineDomainSpec,
+	vm *hypervisor.VirtualMachineSpec,
+) (bool, error) {
+	name := spec.Metadata().ID()
+
 	links, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 	if err != nil {
-		return fmt.Errorf("list links for domain %q: %w", name, err)
+		return false, fmt.Errorf("list links for domain %q: %w", name, err)
 	}
 
 	disks, err := listResolvedDisks(ctx, r)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	text, attachedDisks, seedID, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
 	if err != nil {
 		if isHeldBack(err) {
-			return pending()
+			return false, nil
 		}
 
-		return err
+		return false, err
 	}
 
-	if !matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, vm.TypedSpec().PowerState) {
-		return pending()
+	return matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, vm.TypedSpec().PowerState), nil
+}
+
+func blankDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hypervisor.VirtualMachineDiskSpec) (bool, error) {
+	for _, disk := range disks {
+		if !disk.Provision.Blank {
+			continue
+		}
+
+		pool, err := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, disk.Pool)
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		if err != nil {
+			return false, err
+		}
+
+		if pool.Metadata().Phase() != resource.PhaseRunning || pool.TypedSpec().Phase != storage.StoragePoolPhaseReady {
+			return false, nil
+		}
 	}
 
-	return nil
+	return true, nil
 }
 
 func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, text string, disks []string, seedID, powerState string) bool {
@@ -436,7 +501,7 @@ func (ctrl *VirtualMachineController) holdSeed(ctx context.Context, r controller
 		return pending("tearing down")
 	}
 	// Do not pin an unpublished/failed seed indefinitely while its producer needs to retire it.
-	if !seed.TypedSpec().Ready || seed.TypedSpec().VirtualMachine != name {
+	if seed.TypedSpec().Phase != hypervisor.CloudInitPhaseReady || seed.TypedSpec().VirtualMachine != name {
 		return pending("status invalid or not ready")
 	}
 
@@ -470,7 +535,7 @@ func (ctrl *VirtualMachineController) verifyHeldSeed(ctx context.Context, r cont
 		return err
 	}
 
-	if library.Metadata().Phase() != resource.PhaseRunning || !library.TypedSpec().Ready ||
+	if library.Metadata().Phase() != resource.PhaseRunning || library.TypedSpec().Phase != hypervisor.ContentLibraryPhaseReady ||
 		library.TypedSpec().Path != asset.Path || library.TypedSpec().VolumeID != asset.VolumeID ||
 		library.Metadata().Finalizers().Has(hypervisor.ContentLibraryMutationFinalizer(asset.Name)) {
 		return pending("library backing changed or file being mutated")
@@ -481,7 +546,7 @@ func (ctrl *VirtualMachineController) verifyHeldSeed(ctx context.Context, r cont
 
 // validHeldSeedAsset checks the status fields required to locate and verify the ISO.
 func validHeldSeedAsset(asset *hypervisor.CloudInitStatusSpec, name string) bool {
-	return asset.Ready && asset.VirtualMachine == name && asset.Library != "" && asset.Path != "" && asset.Name != "" &&
+	return asset.Phase == hypervisor.CloudInitPhaseReady && asset.VirtualMachine == name && asset.Library != "" && asset.Path != "" && asset.Name != "" &&
 		filepath.Base(asset.Name) == asset.Name && asset.Digest != "" && asset.VolumeID != "" && asset.InputDigest != ""
 }
 
@@ -657,12 +722,8 @@ func (ctrl *VirtualMachineController) holdDisks(
 	}
 
 	for _, diskStatus := range statuses {
-		if diskStatus.Metadata().Finalizers().Has(ctrl.Name()) {
-			continue
-		}
-
-		if err := r.AddFinalizer(ctx, diskStatus.Metadata(), ctrl.Name()); err != nil {
-			return nil, fmt.Errorf("failed to hold disk status %q of domain %q: %w", diskStatus.Metadata().ID(), name, err)
+		if err := ctrl.holdDisk(ctx, r, name, diskStatus); err != nil {
+			return nil, err
 		}
 	}
 
@@ -673,16 +734,118 @@ func (ctrl *VirtualMachineController) holdDisks(
 	return statuses, nil
 }
 
-// checkNotBeingReplaced refuses the disks of an image the content library service is replacing.
+// holdDisk commits both ownership links before the final mutation-marker check.
+func (ctrl *VirtualMachineController) holdDisk(ctx context.Context, r controller.ReaderWriter, name string, disk *hypervisor.VirtualMachineDiskStatus) error {
+	if !disk.Metadata().Finalizers().Has(ctrl.Name()) {
+		if err := r.AddFinalizer(ctx, disk.Metadata(), ctrl.Name()); err != nil {
+			return fmt.Errorf("failed to hold disk status %q of domain %q: %w", disk.Metadata().ID(), name, err)
+		}
+	}
+
+	return ctrl.holdVolume(ctx, r, disk)
+}
+
+func (ctrl *VirtualMachineController) holdVolume(ctx context.Context, r controller.ReaderWriter, disk *hypervisor.VirtualMachineDiskStatus) (retErr error) {
+	spec := disk.TypedSpec()
+	if spec.Pool == "" || spec.Volume == "" {
+		return nil
+	}
+
+	id := storage.StoragePoolVolumeID(spec.Pool, spec.Volume)
+
+	volume, err := safe.ReaderGetByID[*storage.StoragePoolVolumeStatus](ctx, r, id)
+	if state.IsNotFoundError(err) {
+		return fmt.Errorf("volume %q is %w: not published", id, errDiskNotReady)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	// Separate holds let attached disks share a backing volume without early release.
+	finalizer := ctrl.Name() + "/" + disk.Metadata().ID()
+	if !volume.Metadata().Finalizers().Has(finalizer) {
+		if volume.Metadata().Phase() != resource.PhaseRunning {
+			return fmt.Errorf("volume %q is %w: going away", id, errDiskNotReady)
+		}
+
+		if err := r.AddFinalizer(ctx, volume.Metadata(), finalizer); err != nil {
+			return err
+		}
+
+		metadata := volume.Metadata()
+
+		defer func() {
+			if retErr != nil {
+				retErr = ctrl.releaseRejectedVolumeHold(ctx, r, metadata, finalizer, retErr)
+			}
+		}()
+	}
+
+	return checkHeldVolume(ctx, r, id, spec)
+}
+
+func (ctrl *VirtualMachineController) releaseRejectedVolumeHold(ctx context.Context, r controller.Writer, metadata resource.Pointer, finalizer string, cause error) error {
+	if err := r.RemoveFinalizer(ctx, metadata, finalizer); err != nil && !state.IsNotFoundError(err) {
+		if ctrl.rejectedVolumeHolds == nil {
+			ctrl.rejectedVolumeHolds = map[string]resource.Pointer{}
+		}
+
+		ctrl.rejectedVolumeHolds[finalizer] = metadata
+
+		return fmt.Errorf("failed to release rejected volume hold %q: %w", metadata.ID(), err)
+	}
+
+	delete(ctrl.rejectedVolumeHolds, finalizer)
+
+	return cause
+}
+
+func (ctrl *VirtualMachineController) retryRejectedVolumeHolds(ctx context.Context, r controller.Writer) error {
+	for finalizer, metadata := range ctrl.rejectedVolumeHolds {
+		if err := ctrl.releaseRejectedVolumeHold(ctx, r, metadata, finalizer, nil); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func checkHeldVolume(ctx context.Context, r controller.Reader, id resource.ID, spec *hypervisor.VirtualMachineDiskStatusSpec) error {
+	// AddFinalizer permits tearing-down resources. Validate a fresh observation
+	// after acquisition, and never release a hold belonging to an existing attachment.
+	volume, err := safe.ReaderGetByID[*storage.StoragePoolVolumeStatus](ctx, r, id)
+	if err != nil {
+		return err
+	}
+
+	if volume.Metadata().Phase() != resource.PhaseRunning || volume.TypedSpec().Phase != storage.StoragePoolVolumePhaseReady {
+		return fmt.Errorf("volume %q is %w: backing unavailable", id, errDiskNotReady)
+	}
+
+	if volume.TypedSpec().Pool != spec.Pool || volume.TypedSpec().Name != spec.Volume ||
+		volume.TypedSpec().Path != spec.SourcePath || volume.TypedSpec().Format != spec.Format {
+		return fmt.Errorf("volume %q is %w: backing observation changed", id, errDiskNotReady)
+	}
+
+	return nil
+}
+
+// checkNotBeingReplaced refuses disks whose image is being replaced or volume resized.
 //
-// Read after the holds above are in place, against a marker the service publishes before it reads
-// those holds: whichever wrote second sees the other, so exactly one of them backs off. This side
-// waits, and keeps its holds while it does, so the service is the one which gives way.
+// Read after the holds above are in place, against a marker the mutator publishes before its
+// fresh hold census: whichever wrote second sees the other, so exactly one backs off. This side
+// waits and keeps its holds. Storage clears its marker immediately when a hold defers growth,
+// rather than waiting for the pin and deadlocking a start.
 func (ctrl *VirtualMachineController) checkNotBeingReplaced(
 	ctx context.Context, r controller.Reader, name string, statuses []*hypervisor.VirtualMachineDiskStatus,
 ) error {
 	for _, diskStatus := range statuses {
 		image := diskStatus.TypedSpec().Image
+
+		if err := checkVolumeNotBeingResized(ctx, r, name, diskStatus.TypedSpec()); err != nil {
+			return err
+		}
 
 		if image.Library == "" {
 			continue
@@ -703,6 +866,36 @@ func (ctrl *VirtualMachineController) checkNotBeingReplaced(
 			return fmt.Errorf("domain %q: disk status %q is %w: its image is being replaced",
 				name, diskStatus.Metadata().ID(), errDiskNotReady)
 		}
+	}
+
+	return nil
+}
+
+// checkVolumeNotBeingResized checks the pool's exclusion under the caller's disk hold.
+func checkVolumeNotBeingResized(ctx context.Context, r controller.Reader, name string, disk *hypervisor.VirtualMachineDiskStatusSpec) error {
+	if disk.Pool == "" || disk.Volume == "" {
+		return nil
+	}
+
+	pool, err := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, disk.Pool)
+	if state.IsNotFoundError(err) {
+		return fmt.Errorf("domain %q: disk %q is %w: pool status missing", name, disk.Name, errDiskNotReady)
+	}
+
+	if err != nil {
+		return fmt.Errorf("get pool status for domain %q: %w", name, err)
+	}
+
+	if pool.Metadata().Finalizers().Has("storage.StoragePoolController/mutating/backing") {
+		return fmt.Errorf("domain %q: disk %q is %w: pool backing is changing", name, disk.Name, errDiskNotReady)
+	}
+
+	if pool.Metadata().Finalizers().Has(storage.StoragePoolVolumeMutationFinalizer(disk.Volume)) {
+		return fmt.Errorf("domain %q: disk %q is %w: volume is being resized", name, disk.Name, errDiskNotReady)
+	}
+
+	if pool.Metadata().Phase() != resource.PhaseRunning || pool.TypedSpec().Phase != storage.StoragePoolPhaseReady {
+		return fmt.Errorf("domain %q: disk %q is %w: pool unavailable", name, disk.Name, errDiskNotReady)
 	}
 
 	return nil
@@ -769,7 +962,61 @@ func (ctrl *VirtualMachineController) releaseHolds(
 		delete(ctrl.verified, md.ID())
 	}
 
+	return ctrl.releaseVolumeHolds(ctx, r, diskStatuses, keep)
+}
+
+func (ctrl *VirtualMachineController) releaseVolumeHolds(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	disks safe.List[*hypervisor.VirtualMachineDiskStatus],
+	keep func(*hypervisor.VirtualMachineDiskStatus) bool,
+) error {
+	statuses := map[string]*hypervisor.VirtualMachineDiskStatus{}
+
+	for disk := range disks.All() {
+		statuses[disk.Metadata().ID()] = disk
+	}
+
+	volumes, err := safe.ReaderListAll[*storage.StoragePoolVolumeStatus](ctx, r)
+	if err != nil {
+		return err
+	}
+
+	for volume := range volumes.All() {
+		for _, finalizer := range *volume.Metadata().Finalizers() {
+			if !strings.HasPrefix(finalizer, ctrl.Name()+"/") {
+				continue
+			}
+
+			id := strings.TrimPrefix(finalizer, ctrl.Name()+"/")
+			if disk := volumeHoldDisk(id, statuses); disk != nil && keep(disk) {
+				continue
+			}
+
+			if err := r.RemoveFinalizer(ctx, volume.Metadata(), finalizer); err != nil && !state.IsNotFoundError(err) {
+				return err
+			}
+		}
+	}
+
 	return nil
+}
+
+func volumeHoldDisk(id string, statuses map[string]*hypervisor.VirtualMachineDiskStatus) *hypervisor.VirtualMachineDiskStatus {
+	if disk, present := statuses[id]; present {
+		return disk
+	}
+
+	// A missing disk status still has a VM identity in its canonical ID.
+	name, _, found := strings.CutLast(id, "/")
+	if !found {
+		return nil
+	}
+
+	disk := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id)
+	disk.TypedSpec().VirtualMachine = name
+
+	return disk
 }
 
 // releaseDisksExcept gives back the hold on every disk status of a domain which the definition now

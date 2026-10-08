@@ -46,3 +46,15 @@
 ; The guest reaches its network through the tap fd it inherits from libvirtd.
 (allow svirt_t tap_device_t (fs_classes (rw)))
 (allow svirt_tcg_t tap_device_t (fs_classes (rw)))
+
+; Storage pool volumes: the writable disks of a virtual machine.
+;
+; A pool is a directory under a user volume's mount, so its files are created
+; ephemeral_t. sVirt relabels a disk into the guest's category set before the
+; domain starts, and a missing relabel rule is fatal to domain start rather
+; than a fallback -- the same way the tap device entry above is.
+;
+; virtstoraged creates the volume and virtqemud relabels it; both run as init_t,
+; which, unlike svirt_t, is not typepermissive.
+(allow init_t ephemeral_t (fs_classes (relabelfrom)))
+(allow init_t svirt_image_t (fs_classes (relabelto rw)))

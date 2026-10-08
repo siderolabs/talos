@@ -99,7 +99,7 @@ func (LVMVolumeGroupStatusExtension) ResourceDefinition() meta.ResourceDefinitio
 		Aliases:          []resource.Type{"vgs"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
-			{Name: "Name", JSONPath: "{.name}"},
+			{Name: "Name", JSONPath: "{.name}"}, //nolint:goconst
 			{Name: "Permissions", JSONPath: "{.permissions}"},
 			{Name: "Size", JSONPath: "{.prettySize}"},
 			{Name: "Free", JSONPath: "{.prettyFree}"},

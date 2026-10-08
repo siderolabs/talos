@@ -83,3 +83,45 @@ func validateVirtualMachineCloudInitLibrary(vm config.VirtualMachineConfig, decl
 
 	return nil
 }
+
+// validateVirtualMachinePoolReferences checks the storage pools virtual machine disks live in.
+func validateVirtualMachinePoolReferences(container *Container) error {
+	configs := container.VirtualMachineConfigs()
+
+	if len(configs) == 0 {
+		return nil
+	}
+
+	// Sorted by name, so the same configuration always reports its problems in the same order.
+	sorted := slices.SortedFunc(slices.Values(configs), func(a, b config.VirtualMachineConfig) int {
+		return cmp.Compare(a.Name(), b.Name())
+	})
+
+	declaredPools := map[string]struct{}{}
+
+	for _, storagePoolConfig := range container.StoragePoolConfigs() {
+		declaredPools[storagePoolConfig.Name()] = struct{}{}
+	}
+
+	var errs *multierror.Error
+
+	for _, virtualMachineConfig := range sorted {
+		for i, disk := range virtualMachineConfig.Disks() {
+			poolName := disk.Pool()
+
+			if poolName == "" {
+				// A missing pool name, where one is required, is reported by the document's own
+				// validation; a cdrom is allowed none at all.
+				continue
+			}
+
+			if _, declared := declaredPools[poolName]; !declared {
+				errs = multierror.Append(errs, fmt.Errorf(
+					"virtual machine %q: disks[%d]: no StoragePool document declares storage pool %q",
+					virtualMachineConfig.Name(), i, poolName))
+			}
+		}
+	}
+
+	return errs.ErrorOrNil()
+}

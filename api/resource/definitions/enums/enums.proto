@@ -935,6 +935,22 @@ enum StorageMDMetadata {
   MD_METADATA12 = 1;
 }
 
+// StorageStoragePoolPhase describes observed pool attachability, not COSI metadata lifecycle.
+enum StorageStoragePoolPhase {
+  STORAGE_POOL_PHASE_UNKNOWN = 0;
+  STORAGE_POOL_PHASE_NOT_READY = 1;
+  STORAGE_POOL_PHASE_READY = 2;
+  STORAGE_POOL_PHASE_OBSERVATION_UNAVAILABLE = 3;
+}
+
+// StorageStoragePoolVolumePhase describes observed volume attachability, not COSI metadata lifecycle.
+enum StorageStoragePoolVolumePhase {
+  STORAGE_POOL_VOLUME_PHASE_UNKNOWN = 0;
+  STORAGE_POOL_VOLUME_PHASE_NOT_READY = 1;
+  STORAGE_POOL_VOLUME_PHASE_READY = 2;
+  STORAGE_POOL_VOLUME_PHASE_OBSERVATION_UNAVAILABLE = 3;
+}
+
 // NetworkConfigLayer describes network configuration layers, with lowest priority first.
 enum NetworkConfigLayer {
   CONFIG_DEFAULT = 0;
@@ -1001,6 +1017,28 @@ enum CriImageCacheCopyStatus {
   IMAGE_CACHE_COPY_STATUS_SKIPPED = 1;
   IMAGE_CACHE_COPY_STATUS_PENDING = 2;
   IMAGE_CACHE_COPY_STATUS_READY = 3;
+}
+
+// HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COSI metadata lifecycle.
+enum HypervisorVirtualMachineDiskPhase {
+  VIRTUAL_MACHINE_DISK_PHASE_UNKNOWN = 0;
+  VIRTUAL_MACHINE_DISK_PHASE_NOT_READY = 1;
+  VIRTUAL_MACHINE_DISK_PHASE_READY = 2;
+  VIRTUAL_MACHINE_DISK_PHASE_OBSERVATION_UNAVAILABLE = 3;
+}
+
+// HypervisorContentLibraryPhase describes observed library availability, not COSI metadata lifecycle.
+enum HypervisorContentLibraryPhase {
+  CONTENT_LIBRARY_PHASE_UNKNOWN = 0;
+  CONTENT_LIBRARY_PHASE_NOT_READY = 1;
+  CONTENT_LIBRARY_PHASE_READY = 2;
+}
+
+// HypervisorCloudInitPhase describes observed seed availability, not COSI metadata lifecycle.
+enum HypervisorCloudInitPhase {
+  CLOUD_INIT_PHASE_UNKNOWN = 0;
+  CLOUD_INIT_PHASE_NOT_READY = 1;
+  CLOUD_INIT_PHASE_READY = 2;
 }
 
 // HypervisorVirtualMachinePowerState is the observed power state of a virtual machine.

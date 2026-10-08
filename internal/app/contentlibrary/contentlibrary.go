@@ -72,7 +72,7 @@ func (svc *Service) openLibrary(ctx context.Context, libraryID string) (*os.Root
 		return nil, status.Errorf(codes.Internal, "failed to get content library %q: %v", libraryID, err)
 	}
 
-	if !contentLibraryStatus.TypedSpec().Ready {
+	if contentLibraryStatus.TypedSpec().Phase != hypervisor.ContentLibraryPhaseReady {
 		return nil, status.Errorf(codes.FailedPrecondition, "content library %q is not ready: %s", libraryID, contentLibraryStatus.TypedSpec().Error)
 	}
 

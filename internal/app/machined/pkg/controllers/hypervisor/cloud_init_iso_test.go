@@ -43,7 +43,7 @@ func (s *CloudInitISOSuite) TestPublishesRealAssetAndCleansUp() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
@@ -55,7 +55,7 @@ func (s *CloudInitISOSuite) TestPublishesRealAssetAndCleansUp() {
 	id := hypervisor.CloudInitStatusID("guest", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 		a.Equal("images", status.TypedSpec().Library)
 		a.Equal("vol-a", status.TypedSpec().VolumeID)
 		a.Equal(dir, status.TypedSpec().Path)
@@ -87,7 +87,7 @@ func (s *CloudInitISOSuite) TestMissingLibraryPublishesWaitingStatus() {
 	id := hypervisor.CloudInitStatusID("waiting", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Ready)
+		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
 		a.NotEmpty(status.TypedSpec().Error)
 		a.NotContains(status.TypedSpec().Error, "secret")
 		a.Equal(spec.TypedSpec().InputDigest(), status.TypedSpec().InputDigest)
@@ -97,10 +97,10 @@ func (s *CloudInitISOSuite) TestMissingLibraryPublishesWaitingStatus() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 }
 
@@ -109,7 +109,7 @@ func (s *CloudInitISOSuite) TestRetiresWhileLibraryIsTearingDown() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "leaving")
@@ -119,7 +119,7 @@ func (s *CloudInitISOSuite) TestRetiresWhileLibraryIsTearingDown() {
 	id := hypervisor.CloudInitStatusID("leaving", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 	_, err := s.State().Teardown(s.Ctx(), library.Metadata())
 	s.Require().NoError(err)
@@ -135,7 +135,7 @@ func (s *CloudInitISOSuite) TestRetiresOwnedISOWhenLibraryTearsDownWithStaleRead
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "retained")
@@ -145,7 +145,7 @@ func (s *CloudInitISOSuite) TestRetiresOwnedISOWhenLibraryTearsDownWithStaleRead
 	id := hypervisor.CloudInitStatusID(spec.Metadata().ID(), *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
@@ -158,7 +158,7 @@ func (s *CloudInitISOSuite) TestRetiresOwnedISOWhenLibraryTearsDownWithStaleRead
 	current, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
 	s.Require().NoError(err)
 	s.Require().Equal(resource.PhaseTearingDown, current.Metadata().Phase())
-	s.Require().True(current.TypedSpec().Ready, "teardown must exercise stale Ready")
+	s.Require().Equal(hypervisor.ContentLibraryPhaseReady, current.TypedSpec().Phase, "teardown must exercise stale Ready")
 
 	s.Require().Eventually(func() bool {
 		_, statErr := os.Stat(asset)
@@ -168,7 +168,7 @@ func (s *CloudInitISOSuite) TestRetiresOwnedISOWhenLibraryTearsDownWithStaleRead
 		return os.IsNotExist(statErr) && libraryReleased
 	}, 3*time.Second, 10*time.Millisecond, "owned ISO and library hold must retire while the seed spec remains")
 	ctest.AssertResource(s, id, func(currentStatus *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(currentStatus.TypedSpec().Ready)
+		a.Equal(hypervisor.CloudInitPhaseNotReady, currentStatus.TypedSpec().Phase)
 		a.Empty(currentStatus.TypedSpec().Path)
 	})
 }
@@ -178,7 +178,7 @@ func (s *CloudInitISOSuite) TestHeldISOIsNotRemovedWhenReadyLibraryTearsDown() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "held")
@@ -188,7 +188,7 @@ func (s *CloudInitISOSuite) TestHeldISOIsNotRemovedWhenReadyLibraryTearsDown() {
 	id := hypervisor.CloudInitStatusID(spec.Metadata().ID(), *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
@@ -229,7 +229,7 @@ func (s *CloudInitISOSuite) TestRetirementWaitsForMutationClaimEnteredBeforeLibr
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "leaving-with-claim")
@@ -239,7 +239,7 @@ func (s *CloudInitISOSuite) TestRetirementWaitsForMutationClaimEnteredBeforeLibr
 	id := hypervisor.CloudInitStatusID(spec.Metadata().ID(), *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
@@ -290,7 +290,7 @@ func (s *CloudInitISOSuite) TestInvalidLibraryPublishesSanitizedError() {
 	id := hypervisor.CloudInitStatusID("invalid", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Ready)
+		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
 		a.Contains(status.TypedSpec().Error, "invalid content library")
 		a.NotContains(status.TypedSpec().Error, "secret")
 	})
@@ -302,7 +302,7 @@ func (s *CloudInitISOSuite) TestBackingChangeNeverDeletesOldPathThroughNewMount(
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = oldDir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "backing")
@@ -312,7 +312,7 @@ func (s *CloudInitISOSuite) TestBackingChangeNeverDeletesOldPathThroughNewMount(
 	id := hypervisor.CloudInitStatusID("backing", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
 	s.Require().NoError(err)
@@ -343,14 +343,14 @@ func (s *CloudInitISOSuite) TestBrokenLibraryDoesNotBlockIndependentGuest() {
 	broken := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "broken")
 	broken.TypedSpec().Path = brokenDir
 	broken.TypedSpec().VolumeID = "vol-b"
-	broken.TypedSpec().Ready = true
+	broken.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(broken)
 
 	goodDir := s.T().TempDir()
 	good := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "good")
 	good.TypedSpec().Path = goodDir
 	good.TypedSpec().VolumeID = "vol-g"
-	good.TypedSpec().Ready = true
+	good.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(good)
 
 	badSpec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "bad")
@@ -365,7 +365,7 @@ func (s *CloudInitISOSuite) TestBrokenLibraryDoesNotBlockIndependentGuest() {
 	}
 	s.Create(goodSpec)
 	ctest.AssertResource(s, hypervisor.CloudInitStatusID("good", *goodSpec.TypedSpec()), func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 }
 
@@ -374,7 +374,7 @@ func (s *CloudInitISOSuite) TestRecoversLinkedISOAfterStatusPublicationFailure()
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "recover")
@@ -385,14 +385,14 @@ func (s *CloudInitISOSuite) TestRecoversLinkedISOAfterStatusPublicationFailure()
 	id := hypervisor.CloudInitStatusID("recover", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
 	s.Require().NoError(err)
 	before, err := os.Stat(filepath.Join(dir, status.TypedSpec().Name))
 	s.Require().NoError(err)
 
-	status.TypedSpec().Ready = false
+	status.TypedSpec().Phase = hypervisor.CloudInitPhaseNotReady
 	status.TypedSpec().Digest = ""
 	status.TypedSpec().SizeBytes = 0
 	status.TypedSpec().Error = "building cloud-init ISO"
@@ -403,7 +403,7 @@ func (s *CloudInitISOSuite) TestRecoversLinkedISOAfterStatusPublicationFailure()
 	currentLibrary.TypedSpec().Fingerprint = "trigger-reconciliation-after-restart"
 	s.Update(currentLibrary, state.WithUpdateOwner(currentLibrary.Metadata().Owner()))
 	ctest.AssertResource(s, id, func(current *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(current.TypedSpec().Ready, current.TypedSpec().Error)
+		a.Equal(hypervisor.CloudInitPhaseReady, current.TypedSpec().Phase, current.TypedSpec().Error)
 		a.NotEmpty(current.TypedSpec().Digest)
 	})
 
@@ -417,7 +417,7 @@ func (s *CloudInitISOSuite) TestFailedOpenRetriesWithoutResourceEvent() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "retry")
@@ -428,12 +428,12 @@ func (s *CloudInitISOSuite) TestFailedOpenRetriesWithoutResourceEvent() {
 	id := hypervisor.CloudInitStatusID("retry", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Ready)
+		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
 		a.NotEmpty(status.TypedSpec().Error)
 	})
 	s.Require().NoError(os.Mkdir(dir, 0o700))
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 }
 
@@ -442,7 +442,7 @@ func (s *CloudInitISOSuite) TestForeignSameNameIsNeverAdopted() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "foreign")
@@ -455,7 +455,7 @@ func (s *CloudInitISOSuite) TestForeignSameNameIsNeverAdopted() {
 	s.Require().NoError(os.WriteFile(filepath.Join(dir, name), []byte("foreign"), 0o600))
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Ready)
+		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
 		a.NotEmpty(status.TypedSpec().Error)
 		a.NotContains(status.TypedSpec().Error, "secret")
 	})
@@ -470,7 +470,7 @@ func (s *CloudInitISOSuite) TestChangedPublishedFileIsNotDeleted() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "changed")
@@ -481,7 +481,7 @@ func (s *CloudInitISOSuite) TestChangedPublishedFileIsNotDeleted() {
 	id := hypervisor.CloudInitStatusID("changed", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
 	s.Require().NoError(err)
@@ -504,7 +504,7 @@ func (s *CloudInitISOSuite) TestHeldOldGenerationSurvivesUpdate() {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	library.TypedSpec().Path = dir
 	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Ready = true
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	s.Create(library)
 
 	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
@@ -515,7 +515,7 @@ func (s *CloudInitISOSuite) TestHeldOldGenerationSurvivesUpdate() {
 	oldID := hypervisor.CloudInitStatusID("guest", *spec.TypedSpec())
 	s.Create(spec)
 	ctest.AssertResource(s, oldID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 	old, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), oldID)
 	s.Require().NoError(err)
@@ -528,7 +528,7 @@ func (s *CloudInitISOSuite) TestHeldOldGenerationSurvivesUpdate() {
 	s.Update(current)
 	newID := hypervisor.CloudInitStatusID("guest", *current.TypedSpec())
 	ctest.AssertResource(s, newID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Ready, status.TypedSpec().Error)
+		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
 	})
 	ctest.AssertResource(s, oldID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
 		a.Equal("original", spec.TypedSpec().UserData)

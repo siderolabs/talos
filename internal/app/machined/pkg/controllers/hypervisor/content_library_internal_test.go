@@ -158,7 +158,7 @@ func (suite *ContentLibrarySuite) satisfyMount(requestID, volumeID, target strin
 
 func (suite *ContentLibrarySuite) assertNotReady(expectedError string) {
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.False(status.TypedSpec().Ready)
+		asrt.False(status.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady)
 		asrt.Equal(expectedError, status.TypedSpec().Error)
 		asrt.Empty(status.TypedSpec().Path)
 	})
@@ -275,7 +275,7 @@ func (suite *ContentLibrarySuite) TestBecomesReady() {
 	suite.satisfyMount(testRequestID, testVolumeID, target, false)
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", status.TypedSpec().Error)
 		asrt.Equal(target, status.TypedSpec().Path)
 		asrt.Empty(status.TypedSpec().Error)
 	})
@@ -303,7 +303,7 @@ func (suite *ContentLibrarySuite) TestSweepsStagedUploads() {
 	suite.satisfyMount(testRequestID, testVolumeID, target, false)
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", status.TypedSpec().Error)
 	})
 
 	// The sweep runs just after the status is written, so the leftover goes a moment after ready.
@@ -425,7 +425,7 @@ func (suite *ContentLibrarySuite) TestPublishesFingerprint() {
 	var empty string
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", status.TypedSpec().Error)
 		asrt.NotEmpty(status.TypedSpec().Fingerprint)
 
 		empty = status.TypedSpec().Fingerprint
@@ -473,7 +473,7 @@ func (suite *ContentLibrarySuite) TestWatchesAnotherVolumesContents() {
 	var empty string
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", status.TypedSpec().Error)
 
 		empty = status.TypedSpec().Fingerprint
 	})
@@ -492,7 +492,7 @@ func (suite *ContentLibrarySuite) TestWatchesAnotherVolumesContents() {
 	suite.satisfyMount(otherRequestID, otherVolumeID, otherTarget, false)
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", status.TypedSpec().Error)
 		asrt.Equal(otherTarget, status.TypedSpec().Path)
 	})
 

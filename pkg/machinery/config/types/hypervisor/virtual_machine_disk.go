@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/storagehelpers"
 )
 
 // maxFileNameLength bounds a content library file name at NAME_MAX.
@@ -94,9 +95,14 @@ type VirtualMachineDisk struct {
 	//   description: |
 	//     Name of the `StoragePool` document this disk's volume lives in.
 	//
-	//     The pool is declared separately and is not provisioned by this document. The reference
-	//     is checked for shape only: nothing resolves it against the rest of the machine
-	//     configuration yet.
+	//     The pool is declared separately and is not provisioned by this document, but it must be
+	//     declared: a disk naming a pool no `StoragePool` document declares is a configuration
+	//     error.
+	//
+	//     The volume is named after this virtual machine and this disk, so a volume of that name
+	//     already in the pool is adopted with its existing contents. Removing the disk from the
+	//     configuration never deletes the volume, so re-declaring the same virtual machine and disk
+	//     names in the same pool reattaches the same data.
 	//
 	//     Required for a `disk`, and not allowed on a `cdrom`, whose image is attached in place
 	//     from its content library and never lands in a pool.
@@ -113,10 +119,10 @@ type VirtualMachineDisk struct {
 	//     type: string
 	DiskSize meta.ByteSize `yaml:"size,omitempty"`
 	//   description: |
-	//     On-disk format of the volume.
+	//     On-disk format of a blank volume.
 	//
-	//     This is not cosmetic: `provision.fromImage.mode: linked` requires `qcow2`, since backing
-	//     chains are a qcow2 feature, while `raw` is faster on block-backed pools.
+	//     Choose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not
+	//     inferred from a content library image. Writable image-derived disks are not supported.
 	//
 	//     Optional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.
 	//   values:
@@ -134,7 +140,6 @@ type VirtualMachineDisk struct {
 	//     - virtio
 	//     - scsi
 	//     - sata
-	//     - nvme
 	DiskBus hypervisorhelpers.VirtualMachineDiskBus `yaml:"bus,omitempty"`
 	//   description: |
 	//     Kind of device the disk is presented as.
@@ -174,7 +179,12 @@ type VirtualMachineDiskProvision struct {
 	//     Not allowed on a `cdrom`, which has no meaningful empty contents.
 	BlankConfig *VirtualMachineDiskBlank `yaml:"blank,omitempty"`
 	//   description: |
-	//     Derive the volume from an image held in a content library.
+	//     Attach read-only CD-ROM media from a content library.
+	//
+	//     Set `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is
+	//     attached in place, not copied into a volume. Writable image-derived disks (copy or
+	//     linked) are not supported. Use `provision.blank` for a writable disk and install from
+	//     CD-ROM media.
 	FromImageConfig *VirtualMachineDiskFromImage `yaml:"fromImage,omitempty"`
 }
 
@@ -183,7 +193,7 @@ type VirtualMachineDiskProvision struct {
 // It carries no settings: the volume's size and format are the disk's own.
 type VirtualMachineDiskBlank struct{}
 
-// VirtualMachineDiskFromImage derives a volume from a content library image.
+// VirtualMachineDiskFromImage references media in a content library.
 type VirtualMachineDiskFromImage struct {
 	//   description: |
 	//     Name of the `ContentLibraryConfig` document holding the image.
@@ -194,11 +204,11 @@ type VirtualMachineDiskFromImage struct {
 	//   description: |
 	//     Name of the file within that library.
 	//   examples:
-	//     - value: '"talos-1.14.qcow2"'
+	//     - value: '"ubuntu-24.04.iso"'
 	//   schemaRequired: true
 	ImageFile string `yaml:"file"`
 	//   description: |
-	//     Integrity check of the library file, verified before the volume is provisioned.
+	//     Integrity check of the library file, verified before the media is attached.
 	//
 	//     Written as `<algorithm>:<hex>`, under either `sha256` or `sha512`.
 	//
@@ -207,14 +217,14 @@ type VirtualMachineDiskFromImage struct {
 	//     - value: '"sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c"'
 	ImageDigest string `yaml:"digest,omitempty"`
 	//   description: |
-	//     How the volume is derived from the image.
+	//     Mode for deriving a writable disk from an image (not supported yet).
 	//
-	//     `copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library
-	//     image: fast and space-cheap, but it pins that image for the lifetime of the disk, and it
-	//     requires `format: qcow2`.
+	//     Neither `copy` nor `linked` currently provisions a writable image-derived disk. For a
+	//     writable disk, use `provision.blank` instead; for image media, use a read-only `cdrom`.
 	//
-	//     Optional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never
-	//     diverges from the image, and which is therefore attached in place.
+	//     Omit this field on a `cdrom`: even an explicit `copy` is rejected because its read-only
+	//     medium is attached in place. An omitted mode defaults to `copy` for a disk, but that
+	//     writable image-derived configuration is not supported.
 	//   values:
 	//     - copy
 	//     - linked
@@ -328,9 +338,12 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: %w", index, err))
 	}
 
-	if d.DiskPool != "" && !hypervisorhelpers.ValidNameCharset(d.DiskPool) {
-		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: pool %q: pool name can only contain ASCII letters, digits and hyphens", index, d.DiskPool))
+	// Validated against the same rule the StoragePool document applies to its own name: a
+	// reference this accepted but that document would not is a pool nothing can ever declare.
+	if d.DiskPool != "" {
+		if err := storagehelpers.ValidateStoragePoolName(d.DiskPool); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: pool: %w", index, err))
+		}
 	}
 
 	//nolint:exhaustive // Type() resolves the zero member to disk, so it never reaches this switch.
@@ -381,7 +394,15 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 	if d.DiskBus != hypervisorhelpers.VirtualMachineDiskBusUnknown && !d.DiskBus.IsAVirtualMachineDiskBus() {
 		validationErrors = errors.Join(validationErrors,
 			fmt.Errorf("disks[%d]: unsupported bus %q, expected %s", index, d.DiskBus,
-				expectedValues(hypervisorhelpers.VirtualMachineDiskBusStrings())))
+				expectedValues([]string{
+					hypervisorhelpers.VirtualMachineDiskBusVirtio.String(),
+					hypervisorhelpers.VirtualMachineDiskBusSCSI.String(),
+					hypervisorhelpers.VirtualMachineDiskBusSATA.String(),
+				})))
+	}
+
+	if d.DiskBus == hypervisorhelpers.VirtualMachineDiskBusNVMe {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: bus nvme is not supported", index))
 	}
 
 	validationErrors = errors.Join(validationErrors, d.validateProvision(index))
