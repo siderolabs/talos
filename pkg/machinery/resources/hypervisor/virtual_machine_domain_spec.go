@@ -45,12 +45,6 @@ type VirtualMachineDomainSpecSpec struct {
 	StopMode string `yaml:"stopMode" protobuf:"6"`
 	// StopRequest identifies the immutable stop whose shutdown delivery is being tracked.
 	StopRequest string `yaml:"stopRequest,omitempty" protobuf:"7"`
-	// HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on
-	// a running domain instead of redefining it.
-	//
-	// Only drives the machine configuration declares are listed. The cloud-init seed's drive is
-	// not, which is what makes a seed change restart the guest that has to read it.
-	HotPluggableDisks []string `yaml:"hotPluggableDisks,omitempty" protobuf:"8"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

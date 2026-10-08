@@ -59,7 +59,6 @@ type domainClient struct {
 	texts           map[string]string
 	starts          map[string]int
 	guestInterfaces []libvirtdomain.GuestInterface
-	hotPluggable    map[string][]string
 	opens           int
 	closes          int
 	removeErr       error
@@ -199,7 +198,6 @@ func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...l
 
 	c.mu.Lock()
 	c.starts[domain.Name]++
-	c.hotPluggable[domain.Name] = libvirtdomain.HotPluggableDisks(opts...)
 	c.mu.Unlock()
 
 	return c.Define(domain, text)
@@ -313,7 +311,6 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 		starts:          make(map[string]int),
 		shutdowns:       make(map[string]int),
 		reboots:         make(map[string]int),
-		hotPluggable:    make(map[string][]string),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
@@ -1760,30 +1757,6 @@ func (s *VirtualMachineDomainSuite) assertDiskHeld(id string, held bool) {
 
 		return err == nil && status.Metadata().Finalizers().Has("hypervisor.VirtualMachineController") == held
 	}, 5*time.Second, 10*time.Millisecond)
-}
-
-// Which drives may have their medium changed under a running guest is decided where the definition
-// is rendered, and the controller only carries it through: nothing here reopens the question.
-func (s *VirtualMachineDomainSuite) TestForwardsTheHotPluggableDrives() {
-	s.start()
-
-	disk := s.newDiskStatus("vm/install@aaaaaaaaaaaa")
-
-	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
-	spec.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
-	spec.TypedSpec().PowerState = "running"
-	spec.TypedSpec().Disks = []string{disk.Metadata().ID()}
-	spec.TypedSpec().HotPluggableDisks = []string{"sda"}
-	s.Create(spec)
-
-	s.assertDomain("vm", spec.TypedSpec().DomainXML, true)
-
-	client := s.client
-
-	client.mu.Lock()
-	defer client.mu.Unlock()
-
-	s.Require().Equal([]string{"sda"}, client.hotPluggable["vm"])
 }
 
 // A domain reads its disks from the moment it starts, and goes on reading them until libvirt is

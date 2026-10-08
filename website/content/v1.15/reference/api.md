@@ -9620,7 +9620,6 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | observed_generation | [string](#string) |  | ObservedGeneration identifies the producer spec and power override used to render this definition. |
 | stop_mode | [string](#string) |  | StopMode selects whether a stop asks the guest to power off or destroys the domain.<br><br>Carried alongside PowerState rather than read off the virtual machine's configuration, so that the way a domain is taken down is the one which was declared for the definition that is running, and so that the controller which withdraws an unrenderable definition can demand a stop the guest cannot refuse. |
 | stop_request | [string](#string) |  | StopRequest identifies the immutable stop whose shutdown delivery is being tracked. |
-| hot_pluggable_disks | [string](#string) | repeated | HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on a running domain instead of redefining it.<br><br>Only drives the machine configuration declares are listed. The cloud-init seed's drive is not, which is what makes a seed change restart the guest that has to read it. |
 
 
 

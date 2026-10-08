@@ -12,7 +12,7 @@ type DefinitionDigests struct {
 
 // DomainDefinition renders the definition of d and returns its text and digests.
 func DomainDefinition(d Domain, renderedXML string) (string, DefinitionDigests, error) {
-	def, err := domainDefinition(d, renderedXML, nil)
+	def, err := domainDefinition(d, renderedXML)
 	if err != nil {
 		return "", DefinitionDigests{}, err
 	}
