@@ -5,10 +5,12 @@
 package hardware_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -31,7 +33,9 @@ func writeNUMAFile(t *testing.T, root, path, data string) {
 
 	path = filepath.Join(root, path)
 	require.NoError(t, os.MkdirAll(filepath.Dir(path), 0o755))
-	require.NoError(t, os.WriteFile(path, []byte(data), 0o644))
+	// Publish complete records: a controller retry can read concurrently with a repair.
+	require.NoError(t, os.WriteFile(path+".tmp", []byte(data), 0o644))
+	require.NoError(t, os.Rename(path+".tmp", path))
 }
 
 func numaFixture(t *testing.T) string {
@@ -61,6 +65,45 @@ func numaFixture(t *testing.T) string {
 	return root
 }
 
+func triggerNUMAReconcile(ctx context.Context, reconcileCh chan<- struct{}) error {
+	select {
+	case reconcileCh <- struct{}{}:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func TestNUMAReconcileCancellation(t *testing.T) {
+	t.Parallel()
+
+	synctest.Test(t, func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
+
+		reconcileCh := make(chan struct{}, 1)
+		require.NoError(t, triggerNUMAReconcile(ctx, reconcileCh))
+
+		done := make(chan error, 1)
+
+		go func() {
+			done <- triggerNUMAReconcile(ctx, reconcileCh)
+		}()
+
+		synctest.Wait()
+
+		select {
+		case err := <-done:
+			t.Fatalf("trigger returned before delivery or cancellation: %v", err)
+		default:
+		}
+
+		cancel()
+		require.ErrorIs(t, <-done, context.Canceled)
+		require.Len(t, reconcileCh, 1)
+	})
+}
+
 func (suite *NUMATopologySuite) register(root string) chan struct{} {
 	reconcileCh := make(chan struct{}, 1)
 	suite.Require().NoError(suite.Runtime().RegisterController(&hardwarectrl.NUMATopologyController{
@@ -85,7 +128,7 @@ func (suite *NUMATopologySuite) TestInventoryAndRefresh() {
 	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Equal(expected, *r.TypedSpec()) })
 	writeNUMAFile(suite.T(), root, "devices/system/cpu/online", "0-3,8\n")
 
-	reconcileCh <- struct{}{}
+	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
 
 	expected.OnlineCPUs = []uint32{0, 1, 2, 3, 8}
 
@@ -98,7 +141,7 @@ func (suite *NUMATopologySuite) TestWithdrawAndRecover() {
 	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
 	suite.Require().NoError(os.Remove(filepath.Join(root, "devices/system/node/node2/meminfo")))
 
-	reconcileCh <- struct{}{}
+	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
 
 	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
 	writeNUMAFile(suite.T(), root, "devices/system/node/node2/meminfo", "Node 2 MemTotal: 4096 kB\n")
@@ -120,31 +163,46 @@ func (suite *NUMATopologySuite) TestFallbackAndMissingNodeInterface() {
 	// A present interface with a missing online file is not a non-NUMA machine.
 	suite.Require().NoError(os.MkdirAll(filepath.Join(root, "devices/system/node"), 0o755))
 
-	reconcileCh <- struct{}{}
+	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
 
 	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
 }
 
-func (suite *NUMATopologySuite) TestMalformedMemory() {
+// Each malformed record gets its own runtime and deadline, without queued triggers
+// or restart backoff carried over from a previous withdrawal/recovery cycle.
+func (suite *NUMATopologySuite) TestMalformedMemoryMissingTotal() {
+	suite.assertMalformedMemory("Node 2 MemFree: 12 kB\n")
+}
+
+func (suite *NUMATopologySuite) TestMalformedMemoryInvalidTotal() {
+	suite.assertMalformedMemory("Node 2 MemTotal: broken kB\n")
+}
+
+func (suite *NUMATopologySuite) TestMalformedMemoryInvalidUnit() {
+	suite.assertMalformedMemory("Node 2 MemTotal: 12 MB\n")
+}
+
+func (suite *NUMATopologySuite) TestMalformedMemoryOverflow() {
+	suite.assertMalformedMemory("Node 2 MemTotal: 18446744073709551616 kB\n")
+}
+
+func (suite *NUMATopologySuite) assertMalformedMemory(record string) {
+	suite.T().Helper()
+
 	root := numaFixture(suite.T())
-
 	reconcileCh := suite.register(root)
-	for _, record := range []string{
-		"Node 2 MemFree: 12 kB\n",
-		"Node 2 MemTotal: broken kB\n",
-		"Node 2 MemTotal: 12 MB\n",
-		"Node 2 MemTotal: 18446744073709551616 kB\n",
-	} {
-		ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
-		writeNUMAFile(suite.T(), root, "devices/system/node/node2/meminfo", record)
-
-		reconcileCh <- struct{}{}
-
-		ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
-		writeNUMAFile(suite.T(), root, "devices/system/node/node2/meminfo", "Node 2 MemTotal: 0 kB\n")
-	}
-
 	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
+	writeNUMAFile(suite.T(), root, "devices/system/node/node2/meminfo", record)
+
+	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
+
+	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
+	writeNUMAFile(suite.T(), root, "devices/system/node/node2/meminfo", "Node 2 MemTotal: 4096 kB\n")
+	// No trigger: each malformed snapshot must recover through controller restart.
+	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) {
+		asrt.Len(r.TypedSpec().Nodes, 3)
+		asrt.Equal(uint64(4096*1024), r.TypedSpec().Nodes[1].MemoryTotalBytes)
+	})
 }
 
 func (suite *NUMATopologySuite) TestInconsistentMembership() {
@@ -153,7 +211,7 @@ func (suite *NUMATopologySuite) TestInconsistentMembership() {
 	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
 	writeNUMAFile(suite.T(), root, "devices/system/cpu/online", "0-3,9\n")
 
-	reconcileCh <- struct{}{}
+	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
 
 	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
 	writeNUMAFile(suite.T(), root, "devices/system/cpu/online", "0-3,8\n")
@@ -166,7 +224,7 @@ func (suite *NUMATopologySuite) TestIncompleteCPUDiscovery() {
 	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
 	suite.Require().NoError(os.Remove(filepath.Join(root, "devices/system/node/node2/cpu8/topology/core_id")))
 
-	reconcileCh <- struct{}{}
+	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
 
 	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
 	writeNUMAFile(suite.T(), root, "devices/system/node/node2/cpu8/topology/core_id", "4")
