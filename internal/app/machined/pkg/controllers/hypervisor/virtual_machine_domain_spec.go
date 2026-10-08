@@ -171,7 +171,7 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 ) error {
 	name := vm.Metadata().ID()
 
-	domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
+	rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
 	if renderErr != nil {
 		retain, checkErr := retainDomainOnStorageOutage(ctx, r, vm, domain, disks, renderErr)
 		if checkErr != nil {
@@ -194,10 +194,11 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 	}
 
 	*domain.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-		DomainXML:          domainXML,
+		DomainXML:          rendered.DomainXML,
 		PowerState:         vm.TypedSpec().PowerState,
-		Disks:              attachedDisks,
-		CloudInit:          seedID,
+		Disks:              rendered.Disks,
+		HotPluggableDisks:  rendered.HotPluggableDisks,
+		CloudInit:          rendered.CloudInit,
 		ObservedGeneration: vm.Metadata().Version().String(),
 	}
 
@@ -271,7 +272,7 @@ func outageDisksMatchDomain(ctx context.Context, r controller.Reader, vm *hyperv
 func outageDiskBackingCurrent(ctx context.Context, r controller.Reader, disk hypervisor.VirtualMachineDiskSpec,
 	status hypervisor.VirtualMachineDiskStatusSpec,
 ) (bool, error) {
-	if !disk.Provision.Blank || status.Phase != hypervisor.VirtualMachineDiskPhaseObservationUnavailable || status.Pool != disk.Pool {
+	if !provisionsVolume(disk) || status.Phase != hypervisor.VirtualMachineDiskPhaseObservationUnavailable || status.Pool != disk.Pool {
 		return false, nil
 	}
 
@@ -337,19 +338,33 @@ func domainAttachesCurrentSeed(domainXML string, asset *hypervisor.CloudInitStat
 	return false
 }
 
+// renderedDomain is one rendered definition and what the render decided about it.
+type renderedDomain struct {
+	// DomainXML is the definition libvirt is handed.
+	DomainXML string
+	// Disks are the IDs of the disk statuses the definition attaches, in configuration order.
+	Disks []string
+	// HotPluggableDisks are the guest target devices whose medium may be changed on a running
+	// domain. Only drives the machine configuration declares are in it; the cloud-init seed's is
+	// not, and that omission is the whole reason a seed change still redefines the domain.
+	HotPluggableDisks []string
+	// CloudInit is the ID of the seed status the definition attaches, if any.
+	CloudInit string
+}
+
 // renderVirtualMachineDomainWithSeed appends the projected seed to a valid base domain.
 func renderVirtualMachineDomainWithSeed(
 	ctx context.Context, r controller.Reader, name string, spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks, resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, string, error) {
-	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, links, resolvedDisks)
+) (renderedDomain, error) {
+	rendered, err := renderVirtualMachineDomain(name, spec, links, resolvedDisks)
 	if err != nil || spec.CloudInit == nil {
-		return domainXML, attachedDisks, "", err
+		return rendered, err
 	}
 
-	seedID, err := attachCloudInit(ctx, r, name, spec.CloudInit, &domainXML)
+	rendered.CloudInit, err = attachCloudInit(ctx, r, name, spec.CloudInit, &rendered.DomainXML)
 
-	return domainXML, attachedDisks, seedID, err
+	return rendered, err
 }
 
 // attachCloudInit requires the exact projected seed and its current library backing before rendering.
@@ -524,14 +539,14 @@ func renderVirtualMachineDomain(
 	spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) (string, []string, error) {
+) (renderedDomain, error) {
 	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	interfaces, err := renderVirtualMachineInterfaces(name, spec.Interfaces, links)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	// KVM guests use the host architecture. Leave architecture and machine
@@ -584,7 +599,7 @@ func renderVirtualMachineDomain(
 
 	cputune, err := renderVirtualMachineCPUTune(name, spec.CPU)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	domain.CPUTune = cputune
@@ -592,7 +607,7 @@ func renderVirtualMachineDomain(
 	if spec.Memory.NUMA != nil {
 		nodes, err := canonicalHostIDList(name, "NUMA nodes", spec.Memory.NUMA.Nodes, hypervisorhelpers.MaxHostNUMANodeID)
 		if err != nil {
-			return "", nil, err
+			return renderedDomain{}, err
 		}
 
 		// The mode is always written, even the default: libvirt's own default is also strict, but
@@ -611,17 +626,17 @@ func renderVirtualMachineDomain(
 
 	renderVirtualMachineGuest(&domain, spec.Guest)
 
-	attachedDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
+	attachedDisks, hotPluggableDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
 	if err != nil {
-		return "", nil, err
+		return renderedDomain{}, err
 	}
 
 	domainXML, err := domain.Marshal()
 	if err != nil {
-		return "", nil, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
+		return renderedDomain{}, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
 	}
 
-	return domainXML, attachedDisks, nil
+	return renderedDomain{DomainXML: domainXML, Disks: attachedDisks, HotPluggableDisks: hotPluggableDisks}, nil
 }
 
 func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec, video hypervisor.VirtualMachineVideoSpec) {
@@ -1088,21 +1103,24 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 
 // renderVirtualMachineDisks attaches every disk of the virtual machine, in configuration order.
 // Reports the IDs of the disk statuses it attached, in the same order, so the definition carries
-// what it was rendered from.
+// what it was rendered from, and the target devices of the drives whose medium may be changed on a
+// running domain.
 func renderVirtualMachineDisks(
 	domain *libvirtxml.Domain,
 	name string,
 	disks []hypervisor.VirtualMachineDiskSpec,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) ([]string, error) {
+) ([]string, []string, error) {
 	devs := targetDevAllocator{}
 	attached := make([]string, 0, len(disks))
+
+	var hotPluggable []string
 
 	for _, disk := range disks {
 		// Graded before the disk status is consulted, because every status failure reads as waiting:
 		// a disk this slice does not provision would otherwise leave the machine pending forever.
 		if err := checkVirtualMachineDiskSupported(disk); err != nil {
-			return nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
+			return nil, nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
 		}
 
 		// The ID covers what the disk is provisioned from, so a status left over from another
@@ -1113,21 +1131,27 @@ func renderVirtualMachineDisks(
 
 		switch {
 		case !found:
-			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, errDiskNotReady)
+			return nil, nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, errDiskNotReady)
 		case resolved.Phase != hypervisor.VirtualMachineDiskPhaseReady:
-			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, errDiskNotReady, resolved.Error)
+			return nil, nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, errDiskNotReady, resolved.Error)
 		}
 
 		attached = append(attached, id)
 
 		dev, err := devs.allocate(disk.Bus)
 		if err != nil {
-			return nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
+			return nil, nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
 		}
 
 		device := "disk"
 		if disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() {
 			device = "cdrom"
+
+			// Every configured cdrom is a drive the machine configuration decides the contents of,
+			// so loading and ejecting a medium is applied to a running domain rather than
+			// redefining it. The cloud-init seed's cdrom is rendered elsewhere and is deliberately
+			// not listed here: a seed is boot-time intent, and changing it has to restart the guest.
+			hotPluggable = append(hotPluggable, dev)
 		}
 
 		rendered := libvirtxml.DomainDisk{
@@ -1136,15 +1160,20 @@ func renderVirtualMachineDisks(
 				Name: "qemu",
 				Type: resolved.Format,
 			},
-			Source: &libvirtxml.DomainDiskSource{
-				File: &libvirtxml.DomainDiskSourceFile{
-					File: resolved.SourcePath,
-				},
-			},
 			Target: &libvirtxml.DomainDiskTarget{
 				Dev: dev,
 				Bus: disk.Bus,
 			},
+		}
+
+		// A drive with no host source is an empty cdrom. Everything else about the device stays as
+		// it is when loaded, so loading and ejecting a medium changes only this element.
+		if resolved.SourcePath != "" {
+			rendered.Source = &libvirtxml.DomainDiskSource{
+				File: &libvirtxml.DomainDiskSourceFile{
+					File: resolved.SourcePath,
+				},
+			}
 		}
 
 		if resolved.ReadOnly {
@@ -1166,7 +1195,7 @@ func renderVirtualMachineDisks(
 		domain.Devices.Disks = append(domain.Devices.Disks, rendered)
 	}
 
-	return attached, nil
+	return attached, hotPluggable, nil
 }
 
 // targetDevAllocator hands out the guest device names libvirt requires to be unique.

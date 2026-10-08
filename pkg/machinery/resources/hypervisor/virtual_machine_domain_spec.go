@@ -36,6 +36,12 @@ type VirtualMachineDomainSpecSpec struct {
 	CloudInit string `yaml:"cloudInit,omitempty" protobuf:"4"`
 	// ObservedGeneration identifies the VM intent used to render this definition.
 	ObservedGeneration string `yaml:"observedGeneration,omitempty" protobuf:"5"`
+	// HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on
+	// a running domain instead of redefining it.
+	//
+	// Only drives the machine configuration declares are listed. The cloud-init seed's drive is
+	// not, which is what makes a seed change restart the guest that has to read it.
+	HotPluggableDisks []string `yaml:"hotPluggableDisks,omitempty" protobuf:"6"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

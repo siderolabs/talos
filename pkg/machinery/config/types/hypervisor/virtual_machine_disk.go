@@ -176,7 +176,10 @@ type VirtualMachineDiskProvision struct {
 	//   description: |
 	//     Create an empty volume, formatted per `format`.
 	//
-	//     Not allowed on a `cdrom`, which has no meaningful empty contents.
+	//     On a `cdrom` there is no volume to create: this is an empty drive, no medium in it.
+	//     Loading and ejecting a medium is changing this disk between `blank` and
+	//     `fromImage`, which is applied to a running virtual machine without restarting it. A
+	//     `bootOrder` on an empty drive is a boot entry the firmware tries and fails.
 	BlankConfig *VirtualMachineDiskBlank `yaml:"blank,omitempty"`
 	//   description: |
 	//     Attach read-only CD-ROM media from a content library.
@@ -188,9 +191,9 @@ type VirtualMachineDiskProvision struct {
 	FromImageConfig *VirtualMachineDiskFromImage `yaml:"fromImage,omitempty"`
 }
 
-// VirtualMachineDiskBlank provisions an empty volume.
+// VirtualMachineDiskBlank provisions an empty volume, or on a cdrom an empty drive.
 //
-// It carries no settings: the volume's size and format are the disk's own.
+// It carries no settings: the volume's size and format are the disk's own, and a cdrom has neither.
 type VirtualMachineDiskBlank struct{}
 
 // VirtualMachineDiskFromImage references media in a content library.
@@ -418,10 +421,8 @@ func (d *VirtualMachineDisk) validateProvision(index int) error {
 	case d.ProvisionConfig.BlankConfig == nil && d.ProvisionConfig.FromImageConfig == nil:
 		return fmt.Errorf("disks[%d]: provision: exactly one of blank or fromImage must be set", index)
 	case d.ProvisionConfig.BlankConfig != nil:
-		if d.Type() == hypervisorhelpers.VirtualMachineDiskTypeCDROM {
-			return fmt.Errorf("disks[%d]: provision.blank: a cdrom has no contents of its own", index)
-		}
-
+		// A blank cdrom is an empty drive rather than an empty volume: nothing is provisioned, and
+		// the guest is shown a drive with its tray open.
 		return nil
 	}
 
