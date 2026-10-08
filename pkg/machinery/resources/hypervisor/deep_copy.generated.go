@@ -73,10 +73,6 @@ func (o VirtualMachineDomainSpecSpec) DeepCopy() VirtualMachineDomainSpecSpec {
 		cp.Disks = make([]string, len(o.Disks))
 		copy(cp.Disks, o.Disks)
 	}
-	if o.HotPluggableDisks != nil {
-		cp.HotPluggableDisks = make([]string, len(o.HotPluggableDisks))
-		copy(cp.HotPluggableDisks, o.HotPluggableDisks)
-	}
 	return cp
 }
 

@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	libvirt "github.com/digitalocean/go-libvirt"
@@ -270,19 +271,7 @@ func validateDomain(d Domain) error {
 }
 
 type startOptions struct {
-	admissions   []func() error
-	hotPluggable []string
-}
-
-// hotPluggableSet indexes the target devices whose medium may be changed in place.
-func (o startOptions) hotPluggableSet() map[string]struct{} {
-	set := make(map[string]struct{}, len(o.hotPluggable))
-
-	for _, dev := range o.hotPluggable {
-		set[dev] = struct{}{}
-	}
-
-	return set
+	admissions []func() error
 }
 
 func collectStartOptions(opts ...StartOption) startOptions {
@@ -308,22 +297,6 @@ func WithStartAdmission(check func() error) StartOption {
 	}
 }
 
-// WithHotPluggableDisks names the guest target devices whose medium Start may change on the running
-// domain instead of replacing its definition. This is the whole hot-plug policy: a device not named
-// here is never changed in place, and one that is is only treated so while the definition presents
-// it as a cdrom.
-func WithHotPluggableDisks(targets ...string) StartOption {
-	return func(o *startOptions) {
-		o.hotPluggable = append(o.hotPluggable, targets...)
-	}
-}
-
-// HotPluggableDisks reports the target devices opts names as hot-pluggable, for Client
-// implementations which do their own classification.
-func HotPluggableDisks(opts ...StartOption) []string {
-	return collectStartOptions(opts...).hotPluggable
-}
-
 // Admit runs the admission checks of opts in order, stopping at the first error.
 // Client implementations call it at the point Start would create or replace a domain.
 func Admit(opts ...StartOption) error {
@@ -344,10 +317,7 @@ func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error 
 		return err
 	}
 
-	options := collectStartOptions(opts...)
-	hotPluggable := options.hotPluggableSet()
-
-	desired, err := domainDefinition(d, renderedXML, hotPluggable)
+	desired, err := domainDefinition(d, renderedXML)
 	if err != nil {
 		return err
 	}
@@ -369,7 +339,7 @@ func (c *client) Start(d Domain, renderedXML string, opts ...StartOption) error 
 		// Deliberately not admitted: an admission check guards what a new domain would take from
 		// the host, and a medium changing in a drive the running domain already has takes nothing.
 		// Calling Admit here would stop guests over inventory that has not moved.
-		if err = c.changeMedia(found, live, desired, hotPluggable); err != nil {
+		if err = c.changeMedia(found, live, desired); err != nil {
 			return fmt.Errorf("%w: %w", ErrMediaChange, err)
 		}
 
@@ -401,28 +371,20 @@ func (c *client) replace(d Domain, desired definition, exists bool, opts ...Star
 var ErrMediaChange = errors.New("failed to change the medium of a running domain")
 
 // changeMedia loads, swaps or ejects the medium of every hot-pluggable drive whose source moved.
-func (c *client) changeMedia(found libvirt.Domain, live libvirtxml.Domain, desired definition, hotPluggable map[string]struct{}) error {
-	running := map[string]*libvirtxml.DomainDisk{}
-
-	if live.Devices != nil {
-		for i := range live.Devices.Disks {
-			if disk := &live.Devices.Disks[i]; disk.Target != nil {
-				running[disk.Target.Dev] = disk
-			}
-		}
-	}
+func (c *client) changeMedia(found libvirt.Domain, live libvirtxml.Domain, desired definition) error {
+	running := runningDisks(live)
 
 	for i := range desired.desc.Devices.Disks {
 		disk := &desired.desc.Devices.Disks[i]
-		if !hotPluggableMedium(disk, hotPluggable) {
+		if !hotPluggableMedium(disk) {
 			continue
 		}
 
-		dev := disk.Target.Dev
+		name := disk.Alias.Name
 
-		current, present := running[dev]
+		current, present := matchRunningDisk(running, disk)
 		if !present {
-			return fmt.Errorf("domain %q has no drive %q to change the medium of", found.Name, dev)
+			return fmt.Errorf("domain %q is not running the drive %q", found.Name, name)
 		}
 
 		if diskSourceFile(current) == diskSourceFile(disk) {
@@ -437,13 +399,43 @@ func (c *client) changeMedia(found libvirt.Domain, live libvirtxml.Domain, desir
 		// Live only: a transient domain has no persistent definition to also change. Not forced
 		// either, so a guest which has locked its tray is reported rather than overruled.
 		if err = c.rpc.DomainUpdateDeviceFlags(found, update, libvirt.DomainDeviceModifyLive); err != nil {
-			return fmt.Errorf("failed to change the medium of drive %q of domain %q: %w", dev, found.Name, err)
+			return fmt.Errorf("failed to change the medium of drive %q of domain %q: %w", name, found.Name, err)
 		}
 	}
 
 	// Written last. Until it lands the domain still carries the previous digests, and the next pass
 	// finds every medium already where it wants it and does nothing but write this again.
 	return c.setDefinitionMetadata(found, desired)
+}
+
+// runningDisks indexes the disks of a running domain under every identity they can be found by.
+func runningDisks(live libvirtxml.Domain) map[string]*libvirtxml.DomainDisk {
+	running := map[string]*libvirtxml.DomainDisk{}
+
+	if live.Devices == nil {
+		return running
+	}
+
+	for i := range live.Devices.Disks {
+		disk := &live.Devices.Disks[i]
+
+		for _, key := range deviceKeys(disk) {
+			running[key] = disk
+		}
+	}
+
+	return running
+}
+
+// matchRunningDisk finds the running disk a rendered one describes, by alias first.
+func matchRunningDisk(running map[string]*libvirtxml.DomainDisk, disk *libvirtxml.DomainDisk) (*libvirtxml.DomainDisk, bool) {
+	for _, key := range deviceKeys(disk) {
+		if current, present := running[key]; present {
+			return current, true
+		}
+	}
+
+	return nil, false
 }
 
 // mediaChangeXML is the running device with a new medium in it.
@@ -456,10 +448,15 @@ func (c *client) changeMedia(found libvirt.Domain, live libvirtxml.Domain, desir
 func mediaChangeXML(current, desired *libvirtxml.DomainDisk) (string, error) {
 	update := *current
 	update.Source = desired.Source
-	update.Alias = nil
 	update.Address = nil
 	update.BackingStore = nil
 	update.Mirror = nil
+
+	// libvirt accepts the alias it was given and rejects the one it assigned itself, so keep ours
+	// -- which is also how it recognizes the device -- and drop anything else.
+	if !configOwned(update.Alias) {
+		update.Alias = nil
+	}
 
 	text, err := xml.Marshal(&update)
 	if err != nil {
@@ -497,18 +494,53 @@ func diskSourceFile(disk *libvirtxml.DomainDisk) string {
 	return disk.Source.File.File
 }
 
+// aliasPrefix marks a device the machine configuration declares, as opposed to one the renderer
+// adds on its own account. libvirt reserves the "ua-" prefix for aliases its callers set, and
+// carries them through to the running domain, so one is both a mark and a stable device identity.
+const aliasPrefix = "ua-talos-"
+
+// DeviceAlias names a device the machine configuration declares. Renderers set it; it is what tells
+// this package which devices a definition change is allowed to be applied to in place.
+//
+// kind and name must be the character set libvirt allows an alias, which is letters, digits,
+// hyphens and underscores.
+func DeviceAlias(kind, name string) string {
+	return aliasPrefix + kind + "-" + name
+}
+
+// configOwned reports whether an alias is one DeviceAlias produced.
+func configOwned(alias *libvirtxml.DomainAlias) bool {
+	return alias != nil && strings.HasPrefix(alias.Name, aliasPrefix)
+}
+
 // hotPluggableMedium reports whether a drive's medium may be changed in place.
 //
-// A named device which is not a cdrom is not one: libvirt only changes the source of removable
-// drives, so misreading one as hot-pluggable would leave a definition change unapplied.
-func hotPluggableMedium(disk *libvirtxml.DomainDisk, hotPluggable map[string]struct{}) bool {
-	if disk.Device != "cdrom" || disk.Target == nil {
-		return false
+// Two conditions, and both are load-bearing. The drive has to be one the machine configuration
+// declares, because a drive the renderer added for its own purposes -- a cloud-init seed -- is
+// boot-time intent, and swapping it under a running guest would not be applying it. And it has to
+// be a cdrom, because libvirt changes the source of removable drives only, so treating a fixed disk
+// as one would leave a definition change unapplied rather than apply it.
+func hotPluggableMedium(disk *libvirtxml.DomainDisk) bool {
+	return configOwned(disk.Alias) && disk.Device == "cdrom"
+}
+
+// deviceKey identifies one disk across the rendered and the running definition.
+//
+// The alias is the identity libvirt was given and carries through, and unlike a target device it
+// exists for devices that have no target at all. The target device is kept as a fallback for a
+// definition whose alias did not survive.
+func deviceKeys(disk *libvirtxml.DomainDisk) []string {
+	var keys []string
+
+	if disk.Alias != nil && disk.Alias.Name != "" {
+		keys = append(keys, "alias:"+disk.Alias.Name)
 	}
 
-	_, ok := hotPluggable[disk.Target.Dev]
+	if disk.Target != nil && disk.Target.Dev != "" {
+		keys = append(keys, "dev:"+disk.Target.Dev)
+	}
 
-	return ok
+	return keys
 }
 
 func (c *client) createTransient(d Domain, desired string) error {
@@ -572,7 +604,7 @@ const (
 	changeRestart
 )
 
-func domainDefinition(d Domain, renderedXML string, hotPluggable map[string]struct{}) (definition, error) {
+func domainDefinition(d Domain, renderedXML string) (definition, error) {
 	var desc libvirtxml.Domain
 
 	if err := desc.Unmarshal(renderedXML); err != nil {
@@ -610,7 +642,7 @@ func domainDefinition(d Domain, renderedXML string, hotPluggable map[string]stru
 		return definition{}, fmt.Errorf("marshal domain XML: %w", err)
 	}
 
-	core, err := coreDigest(&desc, hotPluggable)
+	core, err := coreDigest(&desc)
 	if err != nil {
 		return definition{}, err
 	}
@@ -660,15 +692,15 @@ func markedDefinition(desc libvirtxml.Domain, full, core string) (string, error)
 //
 // Empty when there is nothing hot-pluggable in it, which reads downstream as "never change this one
 // in place".
-func coreDigest(desc *libvirtxml.Domain, hotPluggable map[string]struct{}) (string, error) {
-	if len(hotPluggable) == 0 || desc.Devices == nil {
+func coreDigest(desc *libvirtxml.Domain) (string, error) {
+	if desc.Devices == nil {
 		return "", nil
 	}
 
 	var masked []*libvirtxml.DomainDisk
 
 	for i := range desc.Devices.Disks {
-		if disk := &desc.Devices.Disks[i]; hotPluggableMedium(disk, hotPluggable) {
+		if disk := &desc.Devices.Disks[i]; hotPluggableMedium(disk) {
 			masked = append(masked, disk)
 		}
 	}

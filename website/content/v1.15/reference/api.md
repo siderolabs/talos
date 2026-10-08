@@ -9366,7 +9366,6 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
 | disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
 | cloud_init | [string](#string) |  | CloudInit identifies the seed status this domain has attached and must hold. |
-| hot_pluggable_disks | [string](#string) | repeated | HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on a running domain instead of redefining it.<br><br>Only drives the machine configuration declares are listed. The cloud-init seed's drive is not, which is what makes a seed change restart the guest that has to read it. |
 
 
 

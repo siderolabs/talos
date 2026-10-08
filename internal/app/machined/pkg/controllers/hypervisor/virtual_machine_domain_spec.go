@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -158,11 +159,10 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 				}
 
 				*res.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
-					DomainXML:         rendered.DomainXML,
-					PowerState:        vm.TypedSpec().PowerState,
-					Disks:             rendered.Disks,
-					HotPluggableDisks: rendered.HotPluggableDisks,
-					CloudInit:         rendered.CloudInit,
+					DomainXML:  rendered.DomainXML,
+					PowerState: vm.TypedSpec().PowerState,
+					Disks:      rendered.Disks,
+					CloudInit:  rendered.CloudInit,
 				}
 
 				return nil
@@ -190,10 +190,6 @@ type renderedDomain struct {
 	DomainXML string
 	// Disks are the IDs of the disk statuses the definition attaches, in configuration order.
 	Disks []string
-	// HotPluggableDisks are the guest target devices whose medium may be changed on a running
-	// domain. Only drives the machine configuration declares are in it; the cloud-init seed's is
-	// not, and that omission is the whole reason a seed change still redefines the domain.
-	HotPluggableDisks []string
 	// CloudInit is the ID of the seed status the definition attaches, if any.
 	CloudInit string
 }
@@ -472,7 +468,7 @@ func renderVirtualMachineDomain(
 
 	renderVirtualMachineGuest(&domain, spec.Guest)
 
-	attachedDisks, hotPluggableDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
+	attachedDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
 	if err != nil {
 		return renderedDomain{}, err
 	}
@@ -482,7 +478,7 @@ func renderVirtualMachineDomain(
 		return renderedDomain{}, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
 	}
 
-	return renderedDomain{DomainXML: domainXML, Disks: attachedDisks, HotPluggableDisks: hotPluggableDisks}, nil
+	return renderedDomain{DomainXML: domainXML, Disks: attachedDisks}, nil
 }
 
 func renderVirtualMachineConsole(domain *libvirtxml.Domain, console hypervisor.VirtualMachineConsoleSpec) {
@@ -934,24 +930,21 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 
 // renderVirtualMachineDisks attaches every disk of the virtual machine, in configuration order.
 // Reports the IDs of the disk statuses it attached, in the same order, so the definition carries
-// what it was rendered from, and the target devices of the drives whose medium may be changed on a
-// running domain.
+// what it was rendered from.
 func renderVirtualMachineDisks(
 	domain *libvirtxml.Domain,
 	name string,
 	disks []hypervisor.VirtualMachineDiskSpec,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
-) ([]string, []string, error) {
+) ([]string, error) {
 	devs := targetDevAllocator{}
 	attached := make([]string, 0, len(disks))
-
-	var hotPluggable []string
 
 	for _, disk := range disks {
 		// Graded before the disk status is consulted, because every status failure reads as waiting:
 		// a disk this slice does not provision would otherwise leave the machine pending forever.
 		if err := checkVirtualMachineDiskSupported(disk); err != nil {
-			return nil, nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
+			return nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
 		}
 
 		// The ID covers what the disk is provisioned from, so a status left over from another
@@ -962,31 +955,30 @@ func renderVirtualMachineDisks(
 
 		switch {
 		case !found:
-			return nil, nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, errDiskNotReady)
+			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: no disk status yet", name, disk.Name, errDiskNotReady)
 		case !resolved.Ready:
-			return nil, nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, errDiskNotReady, resolved.Error)
+			return nil, fmt.Errorf("virtual machine %q: disk %q is %w: %s", name, disk.Name, errDiskNotReady, resolved.Error)
 		}
 
 		attached = append(attached, id)
 
 		dev, err := devs.allocate(disk.Bus)
 		if err != nil {
-			return nil, nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
+			return nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
 		}
 
 		device := "disk"
 		if disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() {
 			device = "cdrom"
-
-			// Every configured cdrom is a drive the machine configuration decides the contents of,
-			// so loading and ejecting a medium is applied to a running domain rather than
-			// redefining it. The cloud-init seed's cdrom is rendered elsewhere and is deliberately
-			// not listed here: a seed is boot-time intent, and changing it has to restart the guest.
-			hotPluggable = append(hotPluggable, dev)
 		}
 
 		rendered := libvirtxml.DomainDisk{
 			Device: device,
+			// Names the device as one the machine configuration declares, which is what allows a
+			// change to it to be applied to a running domain rather than redefining it. Devices the
+			// renderer adds on its own account, such as the cloud-init seed below, carry no such
+			// alias and are never touched under a running guest.
+			Alias: &libvirtxml.DomainAlias{Name: libvirtdomain.DeviceAlias("disk", disk.Name)},
 			Driver: &libvirtxml.DomainDiskDriver{
 				Name: "qemu",
 				Type: resolved.Format,
@@ -1020,7 +1012,7 @@ func renderVirtualMachineDisks(
 		domain.Devices.Disks = append(domain.Devices.Disks, rendered)
 	}
 
-	return attached, hotPluggable, nil
+	return attached, nil
 }
 
 // targetDevAllocator hands out the guest device names libvirt requires to be unique.

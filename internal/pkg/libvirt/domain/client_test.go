@@ -743,17 +743,29 @@ func TestStartAdmission(t *testing.T) {
 // cdromDomainName is the one domain the medium cases work on.
 const cdromDomainName = "first"
 
-// cdromDomain renders a one-drive domain. An empty source is a drive with no medium in it, spelled
-// the way the renderer spells it: no source element, and so no source type on the disk either.
-func cdromDomain(vcpu int, source, device string) string {
+// cdromDomain renders a one-drive domain the way the renderer renders one: the drive carries the
+// alias naming it a device the machine configuration declares. An empty source is a drive with no
+// medium in it, which has no source element and so no source type on the disk either.
+func cdromDomain(vcpu int, source string) string {
+	return cdromDomainWithAlias(vcpu, source, "cdrom", libvirtdomain.DeviceAlias("disk", "install"))
+}
+
+// cdromDomainWithAlias is cdromDomain with the device's identity spelled out, for the cases which
+// turn on what the alias says the device is.
+func cdromDomainWithAlias(vcpu int, source, device, alias string) string {
 	diskType, element := "", ""
 	if source != "" {
 		diskType, element = ` type="file"`, fmt.Sprintf(`<source file=%q/>`, source)
 	}
 
+	aliasElement := ""
+	if alias != "" {
+		aliasElement = fmt.Sprintf(`<alias name=%q/>`, alias)
+	}
+
 	return fmt.Sprintf(`<domain type="kvm"><name>%s</name><vcpu>%d</vcpu><devices>`+
-		`<disk%s device=%q><driver name="qemu" type="raw"/>%s<target dev="sda" bus="sata"/><readonly/></disk>`+
-		`</devices></domain>`, cdromDomainName, vcpu, diskType, device, element)
+		`<disk%s device=%q><driver name="qemu" type="raw"/>%s<target dev="sda" bus="sata"/><readonly/>%s</disk>`+
+		`</devices></domain>`, cdromDomainName, vcpu, diskType, device, element, aliasElement)
 }
 
 // liveSource is the medium the fixture currently has in the drive.
@@ -777,16 +789,14 @@ func TestMediaChangeLeavesTheDomainRunning(t *testing.T) {
 	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
 	client, finished, served := openDomainFixture(t)
 
-	hotPluggable := libvirtdomain.WithHotPluggableDisks("sda")
-
-	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso", "cdrom"), hotPluggable))
-	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso", "cdrom"), hotPluggable),
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")),
 		"unchanged reapply must do nothing")
-	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso", "cdrom"), hotPluggable),
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso")),
 		"swapping the medium must not restart")
-	require.NoError(t, client.Start(domain, cdromDomain(1, "", "cdrom"), hotPluggable),
+	require.NoError(t, client.Start(domain, cdromDomain(1, "")),
 		"ejecting the medium must not restart")
-	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso", "cdrom"), hotPluggable),
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")),
 		"loading a medium into a drive left open by an eject must not restart")
 
 	client.Close()
@@ -806,21 +816,29 @@ func TestMediaChangeOnlyCoversWhatItWasToldAbout(t *testing.T) {
 	for _, test := range []struct {
 		name string
 
-		device       string
-		hotPluggable []libvirtdomain.StartOption
+		device string
+		alias  string
 	}{
 		{
-			// Nothing is hot-pluggable unless the caller says so, which is the behavior of every
-			// domain defined before this existed.
-			name:   "drive not named",
+			// A device the renderer added on its own account, such as a cloud-init seed, carries no
+			// alias naming it a declared one. Its medium is boot-time intent, not something to swap
+			// under a guest which already read it.
+			name:   "drive is not a declared device",
 			device: "cdrom",
+			alias:  "",
 		},
 		{
-			// libvirt changes the source of removable drives only, so a named fixed disk has to
+			// libvirt changes the source of removable drives only, so a declared fixed disk has to
 			// fall back to a restart rather than be sent an update it would refuse.
-			name:         "named device is not removable",
-			device:       "disk",
-			hotPluggable: []libvirtdomain.StartOption{libvirtdomain.WithHotPluggableDisks("sda")},
+			name:   "declared device is not removable",
+			device: "disk",
+			alias:  libvirtdomain.DeviceAlias("disk", "install"),
+		},
+		{
+			// An alias libvirt assigned itself says nothing about who declared the device.
+			name:   "alias is not one of ours",
+			device: "cdrom",
+			alias:  "ide0-0-0",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -829,8 +847,8 @@ func TestMediaChangeOnlyCoversWhatItWasToldAbout(t *testing.T) {
 			domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
 			client, finished, served := openDomainFixture(t)
 
-			require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso", test.device), test.hotPluggable...))
-			require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso", test.device), test.hotPluggable...))
+			require.NoError(t, client.Start(domain, cdromDomainWithAlias(1, "/lib/a.iso", test.device, test.alias)))
+			require.NoError(t, client.Start(domain, cdromDomainWithAlias(1, "/lib/b.iso", test.device, test.alias)))
 
 			client.Close()
 			require.NoError(t, <-served)
@@ -850,10 +868,8 @@ func TestChangeOutsideTheMediumRestarts(t *testing.T) {
 	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
 	client, finished, served := openDomainFixture(t)
 
-	hotPluggable := libvirtdomain.WithHotPluggableDisks("sda")
-
-	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso", "cdrom"), hotPluggable))
-	require.NoError(t, client.Start(domain, cdromDomain(2, "/lib/b.iso", "cdrom"), hotPluggable),
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, cdromDomain(2, "/lib/b.iso")),
 		"a medium moving alongside anything else is not a medium change")
 
 	client.Close()
@@ -874,7 +890,7 @@ func TestDomainWithoutCoreDigestRestarts(t *testing.T) {
 	domain := libvirtdomain.Domain{Name: "first", UUID: id}
 
 	var description libvirtxml.Domain
-	require.NoError(t, description.Unmarshal(cdromDomain(1, "/lib/a.iso", "cdrom")))
+	require.NoError(t, description.Unmarshal(cdromDomain(1, "/lib/a.iso")))
 
 	description.UUID = id.String()
 	description.Metadata = &libvirtxml.DomainMetadata{
@@ -886,8 +902,7 @@ func TestDomainWithoutCoreDigestRestarts(t *testing.T) {
 
 	client, finished, served := openDomainFixture(t, domainRecord{identity: domain, xml: legacy})
 
-	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso", "cdrom"),
-		libvirtdomain.WithHotPluggableDisks("sda")))
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso")))
 
 	client.Close()
 	require.NoError(t, <-served)

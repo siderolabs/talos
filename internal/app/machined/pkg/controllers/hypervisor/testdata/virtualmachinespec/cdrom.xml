@@ -23,6 +23,7 @@
       <target dev="sda" bus="sata"></target>
       <readonly></readonly>
       <boot order="1"></boot>
+      <alias name="ua-talos-disk-install"></alias>
     </disk>
     <channel type="unix">
       <source mode="bind"></source>

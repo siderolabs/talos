@@ -34,12 +34,6 @@ type VirtualMachineDomainSpecSpec struct {
 	Disks []string `yaml:"disks,omitempty" protobuf:"3"`
 	// CloudInit identifies the seed status this domain has attached and must hold.
 	CloudInit string `yaml:"cloudInit,omitempty" protobuf:"4"`
-	// HotPluggableDisks lists the guest target devices of DomainXML whose medium may be changed on
-	// a running domain instead of redefining it.
-	//
-	// Only drives the machine configuration declares are listed. The cloud-init seed's drive is
-	// not, which is what makes a seed change restart the guest that has to read it.
-	HotPluggableDisks []string `yaml:"hotPluggableDisks,omitempty" protobuf:"5"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

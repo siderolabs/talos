@@ -353,12 +353,8 @@ func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controlle
 		return checkDomainPlacement(ctx, r, name, spec.TypedSpec().DomainXML)
 	})
 
-	// The definition says which of its drives hold a medium the configuration decides, and so which
-	// of them may be loaded and ejected without interrupting the guest.
-	hotPluggable := libvirtdomain.WithHotPluggableDisks(spec.TypedSpec().HotPluggableDisks...)
-
 	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)},
-		spec.TypedSpec().DomainXML, admission, hotPluggable); err != nil {
+		spec.TypedSpec().DomainXML, admission); err != nil {
 		return fmt.Errorf("failed to start domain %q: %w", name, err)
 	}
 
@@ -419,7 +415,6 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 
 func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, rendered renderedDomain, powerState string) bool {
 	return rendered.DomainXML == spec.DomainXML && slices.Equal(rendered.Disks, spec.Disks) &&
-		slices.Equal(rendered.HotPluggableDisks, spec.HotPluggableDisks) &&
 		rendered.CloudInit == spec.CloudInit && powerState == spec.PowerState
 }
 

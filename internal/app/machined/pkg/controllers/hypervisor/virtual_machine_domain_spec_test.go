@@ -614,9 +614,9 @@ func (suite *VirtualMachineSpecSuite) TestRendersCDROMFromContentLibrary() {
 	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 }
 
-// A cdrom declared by the machine configuration is a drive whose medium the configuration decides,
-// so the definition records it as one that can be loaded and ejected without restarting the guest.
-func (suite *VirtualMachineSpecSuite) TestRecordsConfiguredCDROMsAsHotPluggable() {
+// A disk declared by the machine configuration is named by it in the definition. That alias is what
+// lets a change to the device be applied to a running domain rather than redefining it.
+func (suite *VirtualMachineSpecSuite) TestNamesConfiguredDisks() {
 	path := suite.T().TempDir()
 	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
 
@@ -644,7 +644,7 @@ func (suite *VirtualMachineSpecSuite) TestRecordsConfiguredCDROMsAsHotPluggable(
 	suite.Create(config.NewMachineConfig(cfg))
 
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
-		asrt.Equal([]string{"sda"}, res.TypedSpec().HotPluggableDisks)
+		asrt.Contains(res.TypedSpec().DomainXML, `<alias name="ua-talos-disk-install">`)
 		asrt.Contains(res.TypedSpec().DomainXML, filepath.Join(path, "talos.iso"))
 	})
 }
@@ -674,7 +674,6 @@ func (suite *VirtualMachineSpecSuite) TestRendersAnEmptyCDROM() {
 
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Equal(string(want), res.TypedSpec().DomainXML+"\n")
-		asrt.Equal([]string{"sda"}, res.TypedSpec().HotPluggableDisks)
 	})
 
 	res, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), doc.Name())
@@ -929,9 +928,9 @@ func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
 		a.Contains(domain.TypedSpec().DomainXML, `cloud-init-`)
 		a.NotEmpty(domain.TypedSpec().CloudInit)
 		a.Equal("running", domain.TypedSpec().PowerState)
-		// The seed's drive is a cdrom like any other, and is deliberately not listed: a seed is
-		// what the guest read when it booted, so changing one has to restart the guest.
-		a.Empty(domain.TypedSpec().HotPluggableDisks)
+		// The seed's drive is a cdrom like any other, and is deliberately not named as a declared
+		// device: a seed is what the guest read when it booted, so changing one restarts the guest.
+		a.NotContains(domain.TypedSpec().DomainXML, "ua-talos-")
 	})
 
 	// A remount invalidates the old seed even while its status is held.
