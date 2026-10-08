@@ -344,6 +344,14 @@ func (ctrl *VirtualMachineDomainStatusController) observeDomain(ctx context.Cont
 		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateUnknown
 	}
 
+	// Best effort: an unreadable definition leaves the digests empty, not the power state wrong.
+	if status.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning {
+		if definition, err := client.Definition(domain); err == nil {
+			status.DefinitionDigest = definition.Digest
+			status.ConfigurationDigest = definition.Configuration
+		}
+	}
+
 	// Agent query runs on a short-lived sub-session so a hung agent sheds on its own deadline
 	// instead of stalling the inventory session for every later VM.
 	if status.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning && ctrl.OpenBounded != nil {

@@ -7,9 +7,11 @@ package domain_test
 import (
 	"context"
 	"encoding/binary"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 	"testing"
 	"time"
 
@@ -129,6 +131,8 @@ type domainRecord struct {
 type domainWireFixture struct {
 	records map[string]domainRecord
 	calls   []uint32
+	// updateError, when set, answers every device update.
+	updateError libvirt.ErrorNumber
 }
 
 func decodeString(payload []byte) string {
@@ -176,6 +180,7 @@ func (f *domainWireFixture) handleLookup(conn net.Conn, call []byte) error {
 	return replyCall(conn, call, encodeDomain(record.identity))
 }
 
+//nolint:gocyclo
 func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	procedure := binary.BigEndian.Uint32(call[8:12])
 	f.calls = append(f.calls, procedure)
@@ -204,6 +209,18 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 		delete(f.records, name)
 	case 258, 27: // DOMAIN_SHUTDOWN_FLAGS, DOMAIN_REBOOT
 		return f.deliverRequest(conn, call)
+	case 174: // DOMAIN_UPDATE_DEVICE_FLAGS
+		if f.updateError != libvirt.ErrOk {
+			return replyDomainError(conn, call, f.updateError)
+		}
+
+		if err := f.updateDevice(call); err != nil {
+			return replyDomainError(conn, call, libvirt.ErrConfigUnsupported)
+		}
+	case 264: // DOMAIN_SET_METADATA
+		if err := f.setMetadata(call); err != nil {
+			return replyDomainError(conn, call, libvirt.ErrXMLError)
+		}
 	default:
 		return fmt.Errorf("unexpected domain RPC %d", procedure)
 	}
@@ -257,6 +274,155 @@ func (f *domainWireFixture) createDomain(call []byte) ([]byte, error) {
 	return encodeDomain(identity), nil
 }
 
+// domainArgsOffset is where a call's payload continues after its leading domain argument.
+func domainArgsOffset(call []byte) int {
+	length := binary.BigEndian.Uint32(call[24:28])
+
+	return 28 + int(length) + int((4-length%4)%4) + 16 + 4
+}
+
+// decodeOptString reads one XDR optional string and reports where the next one starts.
+func decodeOptString(payload []byte) (string, int) {
+	if binary.BigEndian.Uint32(payload[:4]) == 0 {
+		return "", 4
+	}
+
+	length := binary.BigEndian.Uint32(payload[4:8])
+
+	return string(payload[8 : 8+length]), 8 + int(length) + int((4-length%4)%4)
+}
+
+// updateDevice changes the medium of a drive, refusing any other difference as libvirt does.
+//
+//nolint:gocyclo
+func (f *domainWireFixture) updateDevice(call []byte) error {
+	name := decodeString(call[24:])
+
+	record, ok := f.records[name]
+	if !ok {
+		return fmt.Errorf("domain %q does not exist", name)
+	}
+
+	var update libvirtxml.DomainDisk
+	if err := xml.Unmarshal([]byte(decodeString(call[domainArgsOffset(call):])), &update); err != nil {
+		return err
+	}
+
+	if update.Target == nil {
+		return errors.New("device update names no target")
+	}
+
+	var description libvirtxml.Domain
+	if err := description.Unmarshal(record.xml); err != nil {
+		return err
+	}
+
+	for i := range description.Devices.Disks {
+		disk := &description.Devices.Disks[i]
+		if disk.Target == nil || disk.Target.Dev != update.Target.Dev {
+			continue
+		}
+
+		if err := requireOnlySourceDiffers(*disk, update); err != nil {
+			return err
+		}
+
+		// Judge the medium by the file: a round trip turns no source into an empty one.
+		disk.Source, disk.Target.Tray = update.Source, ""
+
+		if update.Source == nil || update.Source.File == nil || update.Source.File.File == "" {
+			disk.Source, disk.Target.Tray = nil, "open"
+		}
+
+		updatedXML, err := description.Marshal()
+		if err != nil {
+			return err
+		}
+
+		record.xml = updatedXML
+		f.records[name] = record
+
+		return nil
+	}
+
+	return fmt.Errorf("domain %q has no drive %q", name, update.Target.Dev)
+}
+
+// requireOnlySourceDiffers fails unless running and update match in everything but the source.
+func requireOnlySourceDiffers(running, update libvirtxml.DomainDisk) error {
+	running.Source, update.Source = nil, nil
+
+	before, err := xml.Marshal(&running)
+	if err != nil {
+		return err
+	}
+
+	after, err := xml.Marshal(&update)
+	if err != nil {
+		return err
+	}
+
+	if string(before) != string(after) {
+		return fmt.Errorf("cannot modify a field of the disk: %s is not %s", after, before)
+	}
+
+	return nil
+}
+
+// setMetadata replaces the element of the given namespace, as libvirt does.
+func (f *domainWireFixture) setMetadata(call []byte) error {
+	name := decodeString(call[24:])
+
+	record, ok := f.records[name]
+	if !ok {
+		return fmt.Errorf("domain %q does not exist", name)
+	}
+
+	payload := call[domainArgsOffset(call)+4:] // the metadata type precedes the strings
+
+	metadata, read := decodeOptString(payload)
+	if metadata == "" {
+		return errors.New("refusing to delete the metadata")
+	}
+
+	_, keyRead := decodeOptString(payload[read:])
+
+	uri, _ := decodeOptString(payload[read+keyRead:])
+	if uri == "" {
+		return errors.New("element metadata needs a namespace")
+	}
+
+	var description libvirtxml.Domain
+	if err := description.Unmarshal(record.xml); err != nil {
+		return err
+	}
+
+	if description.Metadata == nil {
+		description.Metadata = &libvirtxml.DomainMetadata{}
+	}
+
+	description.Metadata.XML = replaceNamespacedElement(description.Metadata.XML, uri, metadata)
+
+	updatedXML, err := description.Marshal()
+	if err != nil {
+		return err
+	}
+
+	record.xml = updatedXML
+	f.records[name] = record
+
+	return nil
+}
+
+// replaceNamespacedElement swaps the one child declaring uri, or appends when there is none.
+func replaceNamespacedElement(existing, uri, element string) string {
+	if strings.Contains(existing, uri) {
+		return element
+	}
+
+	return existing + element
+}
+
 func replyDomainInfo(conn net.Conn, call []byte) error {
 	payload := binary.BigEndian.AppendUint32(nil, uint32(libvirt.DomainRunning))
 	payload = binary.BigEndian.AppendUint64(payload, 1048576)
@@ -270,9 +436,16 @@ func replyDomainInfo(conn net.Conn, call []byte) error {
 func openDomainFixture(t *testing.T, records ...domainRecord) (libvirtdomain.Client, <-chan *domainWireFixture, <-chan error) {
 	t.Helper()
 
+	return openFixture(t, &domainWireFixture{}, records...)
+}
+
+// openFixture serves fixture, seeded with records, to a new client.
+func openFixture(t *testing.T, fixture *domainWireFixture, records ...domainRecord) (libvirtdomain.Client, <-chan *domainWireFixture, <-chan error) {
+	t.Helper()
+
 	raw, server := net.Pipe()
 
-	fixture := &domainWireFixture{records: make(map[string]domainRecord)}
+	fixture.records = make(map[string]domainRecord)
 	for _, record := range records {
 		fixture.records[record.identity.Name] = record
 	}
@@ -720,4 +893,475 @@ func TestRebootRequiresARunningDomain(t *testing.T) {
 
 	fixture := <-finished
 	require.Zero(t, countProcedure(fixture.calls, 27))
+}
+
+// cdromDomainName is the one domain the medium cases work on.
+const cdromDomainName = "first"
+
+// cdromDomain renders a one-drive domain with a declared cdrom. An empty source is an empty drive.
+func cdromDomain(vcpu int, source string) string {
+	return cdromDomainWithAlias(vcpu, source, "cdrom", libvirtdomain.DeviceAlias("disk", "install"))
+}
+
+// cdromDomainWithAlias is cdromDomain with an explicit device and alias.
+func cdromDomainWithAlias(vcpu int, source, device, alias string) string {
+	diskType, element := "", ""
+	if source != "" {
+		diskType, element = ` type="file"`, fmt.Sprintf(`<source file=%q/>`, source)
+	}
+
+	aliasElement := ""
+	if alias != "" {
+		aliasElement = fmt.Sprintf(`<alias name=%q/>`, alias)
+	}
+
+	return fmt.Sprintf(`<domain type="kvm"><name>%s</name><vcpu>%d</vcpu><devices>`+
+		`<disk%s device=%q><driver name="qemu" type="raw"/>%s<target dev="sda" bus="sata"/><readonly/>%s</disk>`+
+		`</devices></domain>`, cdromDomainName, vcpu, diskType, device, element, aliasElement)
+}
+
+// liveSource is the medium the fixture currently has in the drive.
+func liveSource(t *testing.T, fixture *domainWireFixture) string {
+	t.Helper()
+
+	var description libvirtxml.Domain
+	require.NoError(t, description.Unmarshal(fixture.records[cdromDomainName].xml))
+
+	disk := description.Devices.Disks[0]
+	if disk.Source == nil || disk.Source.File == nil {
+		return ""
+	}
+
+	return disk.Source.File.File
+}
+
+func TestMediaChangeLeavesTheDomainRunning(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	client, finished, served := openDomainFixture(t)
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")),
+		"unchanged reapply must do nothing")
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso")),
+		"swapping the medium must not restart")
+	require.NoError(t, client.Start(domain, cdromDomain(1, "")),
+		"ejecting the medium must not restart")
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")),
+		"loading a medium into a drive left open by an eject must not restart")
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, "/lib/a.iso", liveSource(t, fixture))
+	require.Equal(t, 1, countProcedure(fixture.calls, 10), "the domain is defined exactly once")
+	require.Zero(t, countProcedure(fixture.calls, 12), "no medium change destroys the domain")
+	require.Equal(t, 3, countProcedure(fixture.calls, 174), "one device update per medium that moved")
+	require.Equal(t, 3, countProcedure(fixture.calls, 264), "every applied change records its digests")
+}
+
+// Only a guest not releasing its tray is ErrMediaChange.
+func TestMediaChangeFailureIsRefusalOnlyWhenTheGuestHoldsTheTray(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		code    libvirt.ErrorNumber
+		refusal bool
+	}{
+		{name: "tray not released", code: libvirt.ErrOperationFailed, refusal: true},
+		{name: "update not supported", code: libvirt.ErrConfigUnsupported},
+		{name: "internal error", code: libvirt.ErrInternalError},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+			client, finished, served := openFixture(t, &domainWireFixture{updateError: tc.code})
+
+			require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")))
+
+			err := client.Start(domain, cdromDomain(1, "/lib/b.iso"))
+			require.Error(t, err)
+			require.Equal(t, tc.refusal, errors.Is(err, libvirtdomain.ErrMediaChange), "%v", err)
+
+			client.Close()
+			require.NoError(t, <-served)
+
+			fixture := <-finished
+			require.Equal(t, "/lib/a.iso", liveSource(t, fixture))
+			require.Zero(t, countProcedure(fixture.calls, 12), "a failed medium change destroys nothing")
+			require.Zero(t, countProcedure(fixture.calls, 264), "a failed medium change records no digests")
+		})
+	}
+}
+
+// Definition follows a completed medium change, and is empty on an unowned domain.
+func TestDefinitionFollowsWhatTheDomainRecords(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	client, _, served := openDomainFixture(t)
+
+	first, second := cdromDomain(1, "/lib/a.iso"), cdromDomain(1, "/lib/b.iso")
+
+	firstDefinition, err := libvirtdomain.DefinitionOf(domain, first)
+	require.NoError(t, err)
+
+	secondDefinition, err := libvirtdomain.DefinitionOf(domain, second)
+	require.NoError(t, err)
+	require.False(t, firstDefinition.Runs(secondDefinition), "a medium change is a change of definition")
+
+	require.NoError(t, client.Start(domain, first))
+
+	recorded, err := client.Definition(domain)
+	require.NoError(t, err)
+	require.Equal(t, firstDefinition, recorded)
+
+	require.NoError(t, client.Start(domain, second))
+
+	recorded, err = client.Definition(domain)
+	require.NoError(t, err)
+	require.Equal(t, secondDefinition, recorded, "with no profile edit waiting, the domain runs all of the definition")
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	foreign := domainRecord{identity: domain, xml: `<domain><name>first</name><uuid>` + domain.UUID.String() + `</uuid></domain>`}
+	unmarked, _, unmarkedServed := openDomainFixture(t, foreign)
+
+	recorded, err = unmarked.Definition(domain)
+	require.NoError(t, err)
+	require.Zero(t, recorded)
+
+	unmarked.Close()
+	require.NoError(t, <-unmarkedServed)
+}
+
+func TestMediaChangeOnlyCoversWhatItWasToldAbout(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		device string
+		alias  string
+	}{
+		{
+			// A renderer-added device, such as a cloud-init seed, is not hot-swapped.
+			name:   "drive is not a declared device",
+			device: "cdrom",
+			alias:  "",
+		},
+		{
+			// libvirt changes the source of removable drives only.
+			name:   "declared device is not removable",
+			device: "disk",
+			alias:  libvirtdomain.DeviceAlias("disk", "install"),
+		},
+		{
+			// An alias libvirt assigned itself says nothing about who declared the device.
+			name:   "alias is not one of ours",
+			device: "cdrom",
+			alias:  "ide0-0-0",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+			client, finished, served := openDomainFixture(t)
+
+			require.NoError(t, client.Start(domain, cdromDomainWithAlias(1, "/lib/a.iso", test.device, test.alias)))
+			require.NoError(t, client.Start(domain, cdromDomainWithAlias(1, "/lib/b.iso", test.device, test.alias)))
+
+			client.Close()
+			require.NoError(t, <-served)
+
+			fixture := <-finished
+			require.Equal(t, 2, countProcedure(fixture.calls, 10), "the source change redefines the domain")
+			require.Equal(t, 1, countProcedure(fixture.calls, 12))
+			require.Zero(t, countProcedure(fixture.calls, 174))
+			require.Zero(t, countProcedure(fixture.calls, 264))
+		})
+	}
+}
+
+func TestChangeOutsideTheMediumRestarts(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	client, finished, served := openDomainFixture(t)
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, cdromDomain(2, "/lib/b.iso")),
+		"a medium moving alongside anything else is not a medium change")
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 2, countProcedure(fixture.calls, 10))
+	require.Equal(t, 1, countProcedure(fixture.calls, 12))
+	require.Zero(t, countProcedure(fixture.calls, 174))
+}
+
+// A marker carrying no core digest is restarted rather than changed in place.
+func TestDomainWithoutCoreDigestRestarts(t *testing.T) {
+	t.Parallel()
+
+	id := libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")
+	domain := libvirtdomain.Domain{Name: "first", UUID: id}
+
+	var description libvirtxml.Domain
+	require.NoError(t, description.Unmarshal(cdromDomain(1, "/lib/a.iso")))
+
+	description.UUID = id.String()
+	description.Metadata = &libvirtxml.DomainMetadata{
+		XML: `<talos:definition xmlns:talos="https://talos.dev/libvirt/domain">stale</talos:definition>`,
+	}
+
+	running, err := description.Marshal()
+	require.NoError(t, err)
+
+	client, finished, served := openDomainFixture(t, domainRecord{identity: domain, xml: running})
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso")))
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 1, countProcedure(fixture.calls, 10))
+	require.Equal(t, 1, countProcedure(fixture.calls, 12))
+	require.Zero(t, countProcedure(fixture.calls, 174))
+}
+
+// runningRecord is a domain running runningXML while carrying the marker for markedXML.
+func runningRecord(t *testing.T, domain libvirtdomain.Domain, runningXML, markedXML string) domainRecord {
+	t.Helper()
+
+	marker, err := libvirtdomain.DefinitionMarker(domain, markedXML)
+	require.NoError(t, err)
+
+	var description libvirtxml.Domain
+	require.NoError(t, description.Unmarshal(runningXML))
+
+	description.UUID = domain.UUID.String()
+	description.Metadata = &libvirtxml.DomainMetadata{XML: marker}
+
+	text, err := description.Marshal()
+	require.NoError(t, err)
+
+	return domainRecord{identity: domain, xml: text}
+}
+
+// After a partial medium change, the previous definition puts the previous medium back.
+func TestMarkerIsNotTrustedOverTheRunningMedia(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+
+	client, finished, served := openDomainFixture(t,
+		runningRecord(t, domain, cdromDomain(1, "/lib/b.iso"), cdromDomain(1, "/lib/a.iso")))
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso")))
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, "/lib/a.iso", liveSource(t, fixture))
+	require.Zero(t, countProcedure(fixture.calls, 10), "the domain is not redefined")
+	require.Zero(t, countProcedure(fixture.calls, 12), "the guest is not interrupted")
+	require.Equal(t, 1, countProcedure(fixture.calls, 174))
+}
+
+// A configured drive missing from the running domain gets the domain replaced.
+func TestMissingDriveRestarts(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+
+	client, finished, served := openDomainFixture(t,
+		runningRecord(t, domain, cdromDomainWithAlias(1, "/lib/a.iso", "cdrom", ""), cdromDomain(1, "/lib/a.iso")))
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/b.iso")))
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, "/lib/b.iso", liveSource(t, fixture))
+	require.Equal(t, 1, countProcedure(fixture.calls, 12), "the domain is replaced")
+	require.Equal(t, 1, countProcedure(fixture.calls, 10))
+	require.Zero(t, countProcedure(fixture.calls, 174), "no medium change is attempted")
+}
+
+// cdromDomainWithCPU is cdromDomain with a CPU mode.
+func cdromDomainWithCPU(mode, source string) string {
+	var description libvirtxml.Domain
+	if err := description.Unmarshal(cdromDomain(1, source)); err != nil {
+		panic(err)
+	}
+
+	description.CPU = &libvirtxml.DomainCPU{Mode: mode}
+
+	text, err := description.Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	return text
+}
+
+// A medium change while a profile edit waits does not restart the guest.
+func TestMediaChangeWhileAProfileEditIsPending(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+	client, finished, served := openDomainFixture(t)
+
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-model", "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-passthrough", "/lib/a.iso")),
+		"a profile-only edit waits")
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-passthrough", "/lib/b.iso")),
+		"a medium change alongside a pending profile edit must not restart")
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, "/lib/b.iso", liveSource(t, fixture))
+	require.Equal(t, 1, countProcedure(fixture.calls, 10), "the domain is defined exactly once")
+	require.Zero(t, countProcedure(fixture.calls, 12), "the guest is not interrupted")
+	require.Equal(t, 1, countProcedure(fixture.calls, 174))
+}
+
+// A profile edit left waiting by a medium change applies on the next start.
+func TestPendingProfileAppliesAtRestartAfterMediaChange(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+	client, finished, served := openDomainFixture(t)
+
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-model", "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-passthrough", "/lib/b.iso")),
+		"a medium change alongside a profile edit changes the medium in place")
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-passthrough", "/lib/b.iso")),
+		"once the medium is in, the running domain is left alone")
+
+	// The guest stopping takes the transient domain with it.
+	require.NoError(t, client.Remove(domain))
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-passthrough", "/lib/b.iso")))
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, "/lib/b.iso", liveSource(t, fixture))
+	require.Equal(t, "host-passthrough", liveCPUMode(t, fixture), "the pending profile is applied at the restart")
+	require.Equal(t, 2, countProcedure(fixture.calls, 10), "defined at first and again after the stop, never in between")
+	require.Equal(t, 1, countProcedure(fixture.calls, 12), "destroyed only by the stop")
+	require.Equal(t, 1, countProcedure(fixture.calls, 174), "the medium is changed exactly once")
+}
+
+// liveCPUMode is the CPU mode the fixture's domain runs with.
+func liveCPUMode(t *testing.T, fixture *domainWireFixture) string {
+	t.Helper()
+
+	var description libvirtxml.Domain
+	require.NoError(t, description.Unmarshal(fixture.records[cdromDomainName].xml))
+
+	if description.CPU == nil {
+		return ""
+	}
+
+	return description.CPU.Mode
+}
+
+// A medium change while a profile edit waits records the configuration, not the whole definition.
+func TestMediaChangeRecordsThePendingProfile(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+	client, _, served := openDomainFixture(t)
+
+	desiredXML := cdromDomainWithCPU("host-passthrough", "/lib/b.iso")
+
+	desired, err := libvirtdomain.DefinitionOf(domain, desiredXML)
+	require.NoError(t, err)
+
+	require.NoError(t, client.Start(domain, cdromDomainWithCPU("host-model", "/lib/a.iso")))
+	require.NoError(t, client.Start(domain, desiredXML))
+
+	recorded, err := client.Definition(domain)
+	require.NoError(t, err)
+	require.True(t, recorded.Runs(desired), "the medium is in, and only the profile waits")
+	require.Equal(t, desired.Configuration, recorded.Configuration)
+	require.NotEqual(t, desired.Digest, recorded.Digest, "the guest does not run the new profile")
+
+	// Another medium change while the profile still waits keeps saying so.
+	desiredXML = cdromDomainWithCPU("host-passthrough", "/lib/c.iso")
+
+	desired, err = libvirtdomain.DefinitionOf(domain, desiredXML)
+	require.NoError(t, err)
+
+	require.NoError(t, client.Start(domain, desiredXML))
+
+	recorded, err = client.Definition(domain)
+	require.NoError(t, err)
+	require.True(t, recorded.Runs(desired))
+	require.NotEqual(t, desired.Digest, recorded.Digest)
+
+	client.Close()
+	require.NoError(t, <-served)
+}
+
+// A deferred medium change changes nothing.
+func TestDeferredMediaChangeChangesNothing(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+	client, finished, served := openDomainFixture(t)
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso"), libvirtdomain.WithDeferredMediaChange()),
+		"creating a domain is not a medium change")
+	require.ErrorIs(t, client.Start(domain, cdromDomain(1, "/lib/b.iso"), libvirtdomain.WithDeferredMediaChange()),
+		libvirtdomain.ErrMediaChangeDeferred)
+	require.NoError(t, client.Start(domain, cdromDomain(1, "/lib/a.iso"), libvirtdomain.WithDeferredMediaChange()),
+		"a domain which already runs its definition has nothing to defer")
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, "/lib/a.iso", liveSource(t, fixture))
+	require.Zero(t, countProcedure(fixture.calls, 174), "no device is updated")
+	require.Zero(t, countProcedure(fixture.calls, 264), "no marker is rewritten")
+}
+
+// A non-file medium does not read as an empty drive.
+func TestForeignMediumIsChanged(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: cdromDomainName, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), cdromDomainName)}
+
+	running := fmt.Sprintf(`<domain type="kvm"><name>%s</name><vcpu>1</vcpu><devices>`+
+		`<disk type="block" device="cdrom"><driver name="qemu" type="raw"/><source dev="/dev/sr0"/>`+
+		`<target dev="sda" bus="sata"/><readonly/><alias name=%q/></disk></devices></domain>`,
+		cdromDomainName, libvirtdomain.DeviceAlias("disk", "install"))
+
+	client, finished, served := openDomainFixture(t, runningRecord(t, domain, running, cdromDomain(1, "")))
+
+	require.NoError(t, client.Start(domain, cdromDomain(1, "")))
+
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 1, countProcedure(fixture.calls, 174), "the foreign medium is ejected")
+	require.Zero(t, countProcedure(fixture.calls, 12), "the guest is not interrupted")
 }

@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	diskhelpers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/placement"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
@@ -60,6 +61,23 @@ type VirtualMachineController struct {
 	// including one a different virtual machine raises on every pass, and a reset would have each
 	// restart press the button again on every guest which is slow to power off or refuses to.
 	shutdownRequested map[string]shutdownPress
+
+	// mediaPending holds VMs whose guest refused to release a tray. No event fires when it does, so
+	// the retry ticker retries with back-off. Not reset per Run, like shutdownRequested.
+	mediaPending map[string]mediaRetry
+}
+
+// mediaRetry records the refused medium changes of one virtual machine.
+type mediaRetry struct {
+	// domainXML is the definition the refusals were for; a different one is tried at once.
+	domainXML string
+	attempts  int
+	next      time.Time
+}
+
+// due reports whether the change for domainXML may be tried at now.
+func (m mediaRetry) due(domainXML string, now time.Time) bool {
+	return m.domainXML != domainXML || !now.Before(m.next)
 }
 
 // shutdownPress records a power button press delivered for a stop request.
@@ -176,10 +194,7 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 		return nil
 	}
 
-	// A power button already pressed stays pressed across a restart; see the field comment.
-	if ctrl.shutdownRequested == nil {
-		ctrl.shutdownRequested = map[string]shutdownPress{}
-	}
+	ctrl.initState()
 
 	retry := time.NewTicker(ctrl.gracefulStopRetryInterval())
 	defer retry.Stop()
@@ -190,7 +205,7 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 			return nil
 		case <-runtime.EventCh():
 		case <-retry.C:
-			if len(ctrl.shutdownRequested) == 0 {
+			if !ctrl.hasRetryWork() {
 				continue
 			}
 		}
@@ -201,6 +216,63 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 
 		runtime.ResetRestartBackoff()
 	}
+}
+
+// initState prepares the state one Run works from.
+func (ctrl *VirtualMachineController) initState() {
+	if ctrl.shutdownRequested == nil {
+		ctrl.shutdownRequested = map[string]shutdownPress{}
+	}
+
+	if ctrl.mediaPending == nil {
+		ctrl.mediaPending = map[string]mediaRetry{}
+	}
+}
+
+// hasRetryWork reports whether anything is waiting on the retry ticker rather than on an event.
+func (ctrl *VirtualMachineController) hasRetryWork() bool {
+	if len(ctrl.shutdownRequested) > 0 {
+		return true
+	}
+
+	now := time.Now()
+
+	for _, pending := range ctrl.mediaPending {
+		if !now.Before(pending.next) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// mediaRetryLimit caps the back-off between medium change attempts, in retry intervals.
+const mediaRetryLimit = 10
+
+// mediaRefused records a refusal and schedules the next attempt with exponential back-off.
+func (ctrl *VirtualMachineController) mediaRefused(name, domainXML string, now time.Time) {
+	pending := ctrl.mediaPending[name]
+	if pending.domainXML != domainXML {
+		pending = mediaRetry{domainXML: domainXML}
+	}
+
+	pending.attempts++
+
+	// Shift capped against overflow; 2^4 already exceeds mediaRetryLimit.
+	interval := ctrl.gracefulStopRetryInterval()
+	backoff := min(interval<<min(pending.attempts-1, 4), interval*mediaRetryLimit)
+
+	pending.next = now.Add(backoff)
+	ctrl.mediaPending[name] = pending
+}
+
+// pruneUnspecified drops the records of virtual machines which no longer have a domain spec.
+func pruneUnspecified[V any](records map[string]V, known map[string]struct{}) {
+	maps.DeleteFunc(records, func(name string, _ V) bool {
+		_, stillSpecified := known[name]
+
+		return !stillSpecified
+	})
 }
 
 func (ctrl *VirtualMachineController) reconcileWhenReady(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger) error {
@@ -245,11 +317,8 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 	// A virtual machine with no domain spec has no stop in flight. Swept here rather than only
 	// where a stop ends, so that a spec destroyed mid-stop cannot leave a record behind which
 	// would have a later stop of the same name skip its power button press and wait forever.
-	maps.DeleteFunc(ctrl.shutdownRequested, func(name string, _ shutdownPress) bool {
-		_, stillSpecified := known[name]
-
-		return !stillSpecified
-	})
+	pruneUnspecified(ctrl.shutdownRequested, known)
+	pruneUnspecified(ctrl.mediaPending, known)
 
 	// Seed holds require a daemon inventory even when no domain specs remain.
 	logReady, err := virtualMachineLogsReady(ctx, r)
@@ -293,23 +362,79 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		return err
 	}
 
-	var reconcileErrors error
+	var (
+		reconcileErrors error
+		deferred        []*hypervisor.VirtualMachineDomainSpec
+	)
 
 	for spec := range specs.All() {
-		switch err = ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, byName, spec, logReady); {
-		case errors.Is(err, errDiskNotReady):
-			logger.Info("virtual machine is waiting for its disks",
-				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
-		case placement.IsHeld(err):
-			// Retried when the host NUMA topology or the definition changes.
-			logger.Warn("virtual machine is held back by its host placement",
-				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
-		case err != nil:
-			reconcileErrors = errors.Join(reconcileErrors, err)
+		err = ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, byName, spec, logReady, true)
+		if errors.Is(err, libvirtdomain.ErrMediaChangeDeferred) {
+			deferred = append(deferred, spec)
+
+			continue
 		}
+
+		reconcileErrors = errors.Join(reconcileErrors, ctrl.reconciled(logger, spec, err))
+	}
+
+	// Medium changes run last, each in its own session: a timeout ends the session it runs in.
+	for _, spec := range deferred {
+		reconcileErrors = errors.Join(reconcileErrors,
+			ctrl.changeMedia(ctx, r, logger, machineUUID, byName, spec, logReady))
 	}
 
 	return reconcileErrors
+}
+
+// changeMedia applies a deferred medium change in its own session, honoring the back-off.
+func (ctrl *VirtualMachineController) changeMedia(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
+	machineUUID uuid.UUID, domains map[string]libvirtdomain.Domain, spec *hypervisor.VirtualMachineDomainSpec, logReady bool,
+) error {
+	name := spec.Metadata().ID()
+
+	if pending, ok := ctrl.mediaPending[name]; ok && !pending.due(spec.TypedSpec().DomainXML, time.Now()) {
+		return nil
+	}
+
+	client, err := ctrl.Open(ctx)
+	if err != nil {
+		return fmt.Errorf("waiting for QEMU daemon: %w", err)
+	}
+	defer client.Close()
+
+	return ctrl.reconciled(logger, spec, ctrl.reconcileSpec(ctx, r, logger, client, machineUUID, domains, spec, logReady, false))
+}
+
+// reconciled logs conditions which retry on their own and returns any other error.
+func (ctrl *VirtualMachineController) reconciled(logger *zap.Logger, spec *hypervisor.VirtualMachineDomainSpec, err error) error {
+	name := spec.Metadata().ID()
+
+	if errors.Is(err, libvirtdomain.ErrMediaChange) {
+		ctrl.mediaRefused(name, spec.TypedSpec().DomainXML, time.Now())
+
+		logger.Warn("virtual machine is waiting to change the medium of a drive",
+			zap.String("virtual_machine", name), zap.Error(err))
+
+		return nil
+	}
+
+	// Any other outcome ends the wait on the guest.
+	delete(ctrl.mediaPending, name)
+
+	switch {
+	case errors.Is(err, errDiskNotReady):
+		logger.Info("virtual machine is waiting for its disks",
+			zap.String("virtual_machine", name), zap.Error(err))
+	case placement.IsHeld(err):
+		// Retried when the host NUMA topology or the definition changes.
+		logger.Warn("virtual machine is held back by its host placement",
+			zap.String("virtual_machine", name), zap.Error(err))
+	case err != nil:
+		return err
+	}
+
+	return nil
 }
 
 // The existing log persistence controller owns the LOG mount's lifetime. Observe
@@ -341,7 +466,7 @@ func getMachineUUID(ctx context.Context, reader controller.Reader) (uuid.UUID, e
 
 func (ctrl *VirtualMachineController) reconcileSpec(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
 	client libvirtdomain.Client, machineUUID uuid.UUID, domains map[string]libvirtdomain.Domain,
-	spec *hypervisor.VirtualMachineDomainSpec, logReady bool,
+	spec *hypervisor.VirtualMachineDomainSpec, logReady, deferMedia bool,
 ) error {
 	name := spec.Metadata().ID()
 	_, exists := domains[name]
@@ -363,12 +488,12 @@ func (ctrl *VirtualMachineController) reconcileSpec(ctx context.Context, r contr
 		return nil
 	}
 
-	return ctrl.startSpec(ctx, r, client, machineUUID, spec, claimed)
+	return ctrl.startSpec(ctx, r, client, machineUUID, spec, claimed, deferMedia)
 }
 
 // startSpec brings one domain up on its definition.
 func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controller.ReaderWriter,
-	client libvirtdomain.Client, machineUUID uuid.UUID, spec *hypervisor.VirtualMachineDomainSpec, claimed bool,
+	client libvirtdomain.Client, machineUUID uuid.UUID, spec *hypervisor.VirtualMachineDomainSpec, claimed, deferMedia bool,
 ) error {
 	name := spec.Metadata().ID()
 
@@ -399,7 +524,13 @@ func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controlle
 		return checkDomainPlacement(ctx, r, name, spec.TypedSpec().DomainXML)
 	})
 
-	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}, spec.TypedSpec().DomainXML, admission); err != nil {
+	opts := []libvirtdomain.StartOption{admission}
+	if deferMedia {
+		opts = append(opts, libvirtdomain.WithDeferredMediaChange())
+	}
+
+	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)},
+		spec.TypedSpec().DomainXML, opts...); err != nil {
 		return fmt.Errorf("failed to start domain %q: %w", name, err)
 	}
 
@@ -481,7 +612,7 @@ func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *
 		return false, err
 	}
 
-	text, attachedDisks, seedID, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
+	rendered, err := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), newHostLinks(links), disks)
 	if err != nil {
 		if isHeldBack(err) {
 			return false, nil
@@ -490,7 +621,7 @@ func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *
 		return false, err
 	}
 
-	return matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, powerState), nil
+	return matchesVMStartIntent(spec.TypedSpec(), rendered, powerState), nil
 }
 
 func effectiveVMPowerState(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec) (string, error) {
@@ -508,7 +639,7 @@ func effectiveVMPowerState(ctx context.Context, r controller.Reader, vm *hypervi
 
 func writableDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hypervisor.VirtualMachineDiskSpec) (bool, error) {
 	for _, disk := range disks {
-		if !disk.Provision.Blank && !disk.IsWritableImage() {
+		if !diskhelpers.ProvisionsVolume(disk) && !disk.IsWritableImage() {
 			continue
 		}
 
@@ -529,8 +660,9 @@ func writableDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hy
 	return true, nil
 }
 
-func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, text string, disks []string, seedID, powerState string) bool {
-	return text == spec.DomainXML && slices.Equal(disks, spec.Disks) && seedID == spec.CloudInit && powerState == spec.PowerState
+func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, rendered renderedDomain, powerState string) bool {
+	return rendered.DomainXML == spec.DomainXML && slices.Equal(rendered.Disks, spec.Disks) &&
+		rendered.CloudInit == spec.CloudInit && powerState == spec.PowerState
 }
 
 // holdSeed pins the status before inspecting its pool backing or handing XML to libvirt.
