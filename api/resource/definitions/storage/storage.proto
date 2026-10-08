@@ -283,11 +283,65 @@ message StoragePoolSpecSpec {
   string volume_id = 1;
 }
 
-// StoragePoolStatusSpec reports the pool's backing volume, directory and readiness.
+// StoragePoolStatusSpec reports the pool's backing volume, directory and observed attachability.
 message StoragePoolStatusSpec {
   string volume_id = 1;
   string target_path = 2;
-  bool ready = 3;
+  talos.resource.definitions.enums.StorageStoragePoolPhase phase = 3;
   string error = 4;
+}
+
+// StoragePoolVolumeSpecSpec is the spec for StoragePoolVolumeSpec.
+message StoragePoolVolumeSpecSpec {
+  // Pool is the name of the storage pool the volume lives in.
+  string pool = 1;
+  // Name is the volume's name within that pool, which is its file name in the pool directory.
+  string name = 2;
+  // Capacity is the logical size in bytes the volume is asked to have.
+  //
+  // A volume is only ever grown towards it. One already larger is left alone: shrinking would
+  // truncate a filesystem its owner, not Talos, laid out.
+  uint64 capacity = 3;
+  // Format is the on-disk format the volume is created with, as libvirt names it.
+  //
+  // It applies at creation only. A volume already in the pool under another format is refused
+  // rather than rewritten.
+  string format = 4;
+  // BackingFile is an optional base image path used only when creating the volume.
+  // An existing volume is not rebased when this changes.
+  string backing_file = 5;
+  // BackingFormat is the format of BackingFile, independent of the overlay Format.
+  // If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased.
+  string backing_format = 6;
+}
+
+// StoragePoolVolumeStatusSpec is the spec for StoragePoolVolumeStatus.
+message StoragePoolVolumeStatusSpec {
+  // Pool is the name of the storage pool the volume lives in.
+  string pool = 1;
+  // Name is the volume's name within that pool.
+  string name = 2;
+  // Path is the absolute host path of the volume's file.
+  //
+  // Only meaningful when Ready.
+  string path = 3;
+  // Format is the volume's actual on-disk format, as libvirt reports it.
+  //
+  // Only meaningful when Ready.
+  string format = 4;
+  // Capacity is the volume's actual logical size in bytes.
+  //
+  // It may exceed the capacity asked for: a volume is never shrunk.
+  uint64 capacity = 5;
+  // PendingCapacity is a growth which has been asked for but not applied yet, in bytes.
+  //
+  // Zero when there is none. A volume a guest has open cannot be grown underneath it, so the
+  // change waits for the guest to stop rather than being lost or forced.
+  uint64 pending_capacity = 6;
+  // Phase reports whether the volume may be attached, independently of deferred growth or Error.
+  talos.resource.definitions.enums.StorageStoragePoolVolumePhase phase = 7;
+  // Error describes why the volume is not ready, or -- when it is -- which part of what was asked
+  // for was refused.
+  string error = 8;
 }
 

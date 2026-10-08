@@ -2639,9 +2639,9 @@
         "pool": {
           "type": "string",
           "title": "pool",
-          "description": "Name of the StoragePool document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n\nRequired for a disk, and not allowed on a cdrom, whose image is attached in place\nfrom its content library and never lands in a pool.\n",
-          "markdownDescription": "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
-          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePool\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose image is attached in place\nfrom its content library and never lands in a pool.\u003c/p\u003e\n"
+          "description": "Name of the StoragePool document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no StoragePool document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a disk, and not allowed on a cdrom, whose image is attached in place\nfrom its content library and never lands in a pool.\n",
+          "markdownDescription": "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePool` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePool\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no \u003ccode\u003eStoragePool\u003c/code\u003e document declares is a configuration\nerror.\u003c/p\u003e\n\n\u003cp\u003eThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose image is attached in place\nfrom its content library and never lands in a pool.\u003c/p\u003e\n"
         },
         "size": {
           "type": "string",
@@ -2656,16 +2656,15 @@
             "qcow2"
           ],
           "title": "format",
-          "description": "On-disk format of the volume.\n\nThis is not cosmetic: provision.fromImage.mode: linked requires qcow2, since backing\nchains are a qcow2 feature, while raw is faster on block-backed pools.\n\nOptional; defaults to qcow2. Not allowed on a cdrom, which is used as-is.\n",
-          "markdownDescription": "On-disk format of the volume.\n\nThis is not cosmetic: `provision.fromImage.mode: linked` requires `qcow2`, since backing\nchains are a qcow2 feature, while `raw` is faster on block-backed pools.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
-          "x-intellij-html-description": "\u003cp\u003eOn-disk format of the volume.\u003c/p\u003e\n\n\u003cp\u003eThis is not cosmetic: \u003ccode\u003eprovision.fromImage.mode: linked\u003c/code\u003e requires \u003ccode\u003eqcow2\u003c/code\u003e, since backing\nchains are a qcow2 feature, while \u003ccode\u003eraw\u003c/code\u003e is faster on block-backed pools.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003eqcow2\u003c/code\u003e. Not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which is used as-is.\u003c/p\u003e\n"
+          "description": "On-disk format of a blank volume.\n\nChoose raw or qcow2 for a writable disk provisioned with blank. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\n\nOptional; defaults to qcow2. Not allowed on a cdrom, which is used as-is.\n",
+          "markdownDescription": "On-disk format of a blank volume.\n\nChoose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
+          "x-intellij-html-description": "\u003cp\u003eOn-disk format of a blank volume.\u003c/p\u003e\n\n\u003cp\u003eChoose \u003ccode\u003eraw\u003c/code\u003e or \u003ccode\u003eqcow2\u003c/code\u003e for a writable disk provisioned with \u003ccode\u003eblank\u003c/code\u003e. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003eqcow2\u003c/code\u003e. Not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, which is used as-is.\u003c/p\u003e\n"
         },
         "bus": {
           "enum": [
             "virtio",
             "scsi",
-            "sata",
-            "nvme"
+            "sata"
           ],
           "title": "bus",
           "description": "Controller the disk is attached to.\n\nvirtio for anything modern; sata for guests without virtio drivers at install time.\n\nOptional; defaults to virtio on a disk and to sata on a cdrom. A cdrom cannot\nbe attached to virtio, which presents no ejectable media.\n",
@@ -2730,9 +2729,9 @@
         "digest": {
           "type": "string",
           "title": "digest",
-          "description": "Integrity check of the library file, verified before the volume is provisioned.\n\nWritten as \u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;, under either sha256 or sha512.\n\nOptional; the file is used as-is when this is unset.\n",
-          "markdownDescription": "Integrity check of the library file, verified before the volume is provisioned.\n\nWritten as `\u003calgorithm\u003e:\u003chex\u003e`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
-          "x-intellij-html-description": "\u003cp\u003eIntegrity check of the library file, verified before the volume is provisioned.\u003c/p\u003e\n\n\u003cp\u003eWritten as \u003ccode\u003e\u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;\u003c/code\u003e, under either \u003ccode\u003esha256\u003c/code\u003e or \u003ccode\u003esha512\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; the file is used as-is when this is unset.\u003c/p\u003e\n"
+          "description": "Integrity check of the library file, verified before the media is attached.\n\nWritten as \u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;, under either sha256 or sha512.\n\nOptional; the file is used as-is when this is unset.\n",
+          "markdownDescription": "Integrity check of the library file, verified before the media is attached.\n\nWritten as `\u003calgorithm\u003e:\u003chex\u003e`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
+          "x-intellij-html-description": "\u003cp\u003eIntegrity check of the library file, verified before the media is attached.\u003c/p\u003e\n\n\u003cp\u003eWritten as \u003ccode\u003e\u0026lt;algorithm\u0026gt;:\u0026lt;hex\u0026gt;\u003c/code\u003e, under either \u003ccode\u003esha256\u003c/code\u003e or \u003ccode\u003esha512\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; the file is used as-is when this is unset.\u003c/p\u003e\n"
         },
         "mode": {
           "enum": [
@@ -2740,9 +2739,9 @@
             "linked"
           ],
           "title": "mode",
-          "description": "How the volume is derived from the image.\n\ncopy makes a full, independent copy. linked makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires format: qcow2.\n\nOptional; defaults to copy. Not allowed on a cdrom, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.\n",
-          "markdownDescription": "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.",
-          "x-intellij-html-description": "\u003cp\u003eHow the volume is derived from the image.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003ecopy\u003c/code\u003e makes a full, independent copy. \u003ccode\u003elinked\u003c/code\u003e makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires \u003ccode\u003eformat: qcow2\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to \u003ccode\u003ecopy\u003c/code\u003e. Not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.\u003c/p\u003e\n"
+          "description": "Mode for deriving a writable disk from an image (not supported yet).\n\nNeither copy nor linked currently provisions a writable image-derived disk. For a\nwritable disk, use provision.blank instead; for image media, use a read-only cdrom.\n\nOmit this field on a cdrom: even an explicit copy is rejected because its read-only\nmedium is attached in place. An omitted mode defaults to copy for a disk, but that\nwritable image-derived configuration is not supported.\n",
+          "markdownDescription": "Mode for deriving a writable disk from an image (not supported yet).\n\nNeither `copy` nor `linked` currently provisions a writable image-derived disk. For a\nwritable disk, use `provision.blank` instead; for image media, use a read-only `cdrom`.\n\nOmit this field on a `cdrom`: even an explicit `copy` is rejected because its read-only\nmedium is attached in place. An omitted mode defaults to `copy` for a disk, but that\nwritable image-derived configuration is not supported.",
+          "x-intellij-html-description": "\u003cp\u003eMode for deriving a writable disk from an image (not supported yet).\u003c/p\u003e\n\n\u003cp\u003eNeither \u003ccode\u003ecopy\u003c/code\u003e nor \u003ccode\u003elinked\u003c/code\u003e currently provisions a writable image-derived disk. For a\nwritable disk, use \u003ccode\u003eprovision.blank\u003c/code\u003e instead; for image media, use a read-only \u003ccode\u003ecdrom\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eOmit this field on a \u003ccode\u003ecdrom\u003c/code\u003e: even an explicit \u003ccode\u003ecopy\u003c/code\u003e is rejected because its read-only\nmedium is attached in place. An omitted mode defaults to \u003ccode\u003ecopy\u003c/code\u003e for a disk, but that\nwritable image-derived configuration is not supported.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2751,7 +2750,7 @@
         "file",
         "library"
       ],
-      "description": "VirtualMachineDiskFromImage derives a volume from a content library image."
+      "description": "VirtualMachineDiskFromImage references media in a content library."
     },
     "hypervisor.VirtualMachineDiskProvision": {
       "properties": {
@@ -2765,9 +2764,9 @@
         "fromImage": {
           "$ref": "#/$defs/hypervisor.VirtualMachineDiskFromImage",
           "title": "fromImage",
-          "description": "Derive the volume from an image held in a content library.\n",
-          "markdownDescription": "Derive the volume from an image held in a content library.",
-          "x-intellij-html-description": "\u003cp\u003eDerive the volume from an image held in a content library.\u003c/p\u003e\n"
+          "description": "Attach read-only CD-ROM media from a content library.\n\nSet type: cdrom and omit pool, size, format, and mode; the library file is\nattached in place, not copied into a volume. Writable image-derived disks (copy or\nlinked) are not supported. Use provision.blank for a writable disk and install from\nCD-ROM media.\n",
+          "markdownDescription": "Attach read-only CD-ROM media from a content library.\n\nSet `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is\nattached in place, not copied into a volume. Writable image-derived disks (copy or\nlinked) are not supported. Use `provision.blank` for a writable disk and install from\nCD-ROM media.",
+          "x-intellij-html-description": "\u003cp\u003eAttach read-only CD-ROM media from a content library.\u003c/p\u003e\n\n\u003cp\u003eSet \u003ccode\u003etype: cdrom\u003c/code\u003e and omit \u003ccode\u003epool\u003c/code\u003e, \u003ccode\u003esize\u003c/code\u003e, \u003ccode\u003eformat\u003c/code\u003e, and \u003ccode\u003emode\u003c/code\u003e; the library file is\nattached in place, not copied into a volume. Writable image-derived disks (copy or\nlinked) are not supported. Use \u003ccode\u003eprovision.blank\u003c/code\u003e for a writable disk and install from\nCD-ROM media.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

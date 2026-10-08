@@ -6,34 +6,60 @@ package hypervisor
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"maps"
-	"os"
-	"path/filepath"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/opencontainers/go-digest"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
+	"github.com/siderolabs/talos/pkg/machinery/storagehelpers"
 )
 
-// rawDiskFormat is libvirt's driver type for a file attached as-is.
-const rawDiskFormat = "raw"
-
 const diskControllerName = "hypervisor.VirtualMachineDiskController"
+
+// verifyDigest keeps the domain controller's under-hold verification on the same hashing path
+// as disk source observation, without changing its callers or when they verify.
+func verifyDigest(reader io.Reader, expected string) error {
+	return disks.VerifyDigest(reader, expected)
+}
+
+// blankDiskFormats are the formats a volume can be made in: the enum's members less its zero one.
+//
+// Not VirtualMachineDiskFormatStrings(), and not VirtualMachineDiskFormatString(): enumer puts the
+// zero member in its name map, so both accept "unknown", which names no format and which libvirt
+// would be handed verbatim.
+var blankDiskFormats = []string{
+	hypervisorhelpers.VirtualMachineDiskFormatRaw.String(),
+	hypervisorhelpers.VirtualMachineDiskFormatQCOW2.String(),
+}
 
 // errHoldFailed marks the controller's own failure to hold a library.
 var errHoldFailed = errors.New("failed to hold content library")
 
 // VirtualMachineDiskController resolves each disk of a virtual machine to a host source.
 type VirtualMachineDiskController struct{}
+
+// diskReconciliation records the dependencies wanted or held during one event. It is rebuilt
+// every pass: Ready sources still need observation, and obsolete held statuses are considered
+// separately during teardown before any backing-resource holds are released.
+type diskReconciliation struct {
+	libraries map[string]*hypervisor.ContentLibraryStatus
+	wanted    map[resource.ID]struct{}
+	held      map[string]struct{}
+	volumes   map[resource.ID]struct{}
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *VirtualMachineDiskController) Name() string {
@@ -51,13 +77,22 @@ func (ctrl *VirtualMachineDiskController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.ContentLibraryStatusType,
-			// Strong: an image is attached where it lies, so a library's mount has to outlive every guest reading one.
-			Kind: controller.InputStrong,
+			Kind:      controller.InputStrong,
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDiskStatusType,
 			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolVolumeStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolVolumeSpecType,
+			Kind:      controller.InputDestroyReady,
 		},
 	}
 }
@@ -68,6 +103,10 @@ func (ctrl *VirtualMachineDiskController) Outputs() []controller.Output {
 		{
 			Type: hypervisor.VirtualMachineDiskStatusType,
 			Kind: controller.OutputExclusive,
+		},
+		{
+			Type: storage.StoragePoolVolumeSpecType,
+			Kind: controller.OutputShared,
 		},
 	}
 }
@@ -106,30 +145,57 @@ func (ctrl *VirtualMachineDiskController) reconcile(ctx context.Context, r contr
 		libraries[library.Metadata().ID()] = library
 	}
 
-	wanted := make(map[resource.ID]struct{}, specs.Len())
-	held := map[string]struct{}{}
+	pass := &diskReconciliation{
+		libraries: libraries,
+		wanted:    make(map[resource.ID]struct{}, specs.Len()),
+		held:      map[string]struct{}{},
+		volumes:   map[resource.ID]struct{}{},
+	}
 
 	var errs []error
 
 	for vm := range specs.All() {
+		if vm.Metadata().Phase() != resource.PhaseRunning {
+			continue
+		}
+
 		name := vm.Metadata().ID()
 
 		for _, disk := range vm.TypedSpec().Disks {
 			id := hypervisor.VirtualMachineDiskStatusID(name, disk)
-			wanted[id] = struct{}{}
+			pass.wanted[id] = struct{}{}
 
-			if err := ctrl.reconcileDisk(ctx, r, logger, name, id, disk, libraries, held); err != nil {
+			if err := ctrl.reconcileDisk(ctx, r, logger, name, id, disk, pass); err != nil {
 				errs = append(errs, err)
 			}
 		}
 	}
 
-	// A status the configuration has dropped is torn down to ask VirtualMachineController for its hold back.
-	if err := cleanupOutputs[*hypervisor.VirtualMachineDiskStatus](ctx, r, "virtual machine disk status", wanted); err != nil {
-		return errors.Join(append(errs, err)...)
+	return errors.Join(append(errs, ctrl.teardown(ctx, r, logger, pass))...)
+}
+
+// teardown first asks domains to release obsolete disk statuses, then withdraws volume requests,
+// then releases libraries. Held statuses continue protecting both kinds of backing resource.
+func (ctrl *VirtualMachineDiskController) teardown(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, pass *diskReconciliation,
+) error {
+	if err := cleanup.Outputs[*hypervisor.VirtualMachineDiskStatus](ctx, r, "virtual machine disk status", pass.wanted); err != nil {
+		return err
 	}
 
-	return errors.Join(append(errs, ctrl.releaseLibraries(ctx, r, logger, libraries, held))...)
+	if err := ctrl.releaseVolumeSpecs(ctx, r, pass); err != nil {
+		return err
+	}
+
+	return ctrl.releaseLibraries(ctx, r, logger, pass)
+}
+
+// releaseVolumeSpecs withdraws requests no longer present in desired VM intent.
+// Attached consumers hold the corresponding statuses until confirmed detach.
+func (ctrl *VirtualMachineDiskController) releaseVolumeSpecs(
+	ctx context.Context, r controller.ReaderWriter, pass *diskReconciliation,
+) error {
+	return cleanup.Outputs[*storage.StoragePoolVolumeSpec](ctx, r, "storage pool volume spec", pass.volumes)
 }
 
 // reconcileDisk publishes the status of one disk of one virtual machine.
@@ -140,8 +206,7 @@ func (ctrl *VirtualMachineDiskController) reconcileDisk(
 	name string,
 	id resource.ID,
 	disk hypervisor.VirtualMachineDiskSpec,
-	libraries map[string]*hypervisor.ContentLibraryStatus,
-	held map[string]struct{},
+	pass *diskReconciliation,
 ) error {
 	// A status of this exact disk may still be tearing down, held by a domain reading from it:
 	// nothing can be written to it, and downstream reads it as absent.
@@ -154,7 +219,7 @@ func (ctrl *VirtualMachineDiskController) reconcileDisk(
 
 	// The library is held before the status resolved against it is published: a ready disk is one
 	// something may start using at any moment.
-	resolved, resolveErr := ctrl.resolve(ctx, r, logger, disk, libraries, held)
+	resolved, resolveErr := ctrl.progressDisk(ctx, r, logger, name, disk, pass)
 	if errors.Is(resolveErr, errHoldFailed) {
 		return fmt.Errorf("failed to resolve virtual machine disk %q: %w", id, resolveErr)
 	}
@@ -162,18 +227,7 @@ func (ctrl *VirtualMachineDiskController) reconcileDisk(
 	if err := safe.WriterModify(ctx, r,
 		hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, id),
 		func(res *hypervisor.VirtualMachineDiskStatus) error {
-			*res.TypedSpec() = resolved
-			res.TypedSpec().VirtualMachine = name
-			res.TypedSpec().Name = disk.Name
-
-			// Stamped outside the resolution, so a failed one is still attributed to the image it was for.
-			if image := disk.Provision.FromImage; image != nil {
-				res.TypedSpec().Image = *image
-			}
-
-			if resolveErr != nil {
-				res.TypedSpec().Error = resolveErr.Error()
-			}
+			stampDiskStatus(res.TypedSpec(), name, disk, resolved, resolveErr)
 
 			return nil
 		},
@@ -182,6 +236,40 @@ func (ctrl *VirtualMachineDiskController) reconcileDisk(
 	}
 
 	return nil
+}
+
+// stampDiskStatus fills in what a disk status says about itself, resolved or not.
+//
+// What the disk was for is stamped outside the resolution, so a status which did not resolve still
+// names its image and its volume. The volume matters doubly: it is what tells a pool its volume is
+// still in use, and a status which did not resolve has no source path to go on.
+func stampDiskStatus(
+	status *hypervisor.VirtualMachineDiskStatusSpec,
+	name string,
+	disk hypervisor.VirtualMachineDiskSpec,
+	resolved hypervisor.VirtualMachineDiskStatusSpec,
+	resolveErr error,
+) {
+	*status = resolved
+	status.VirtualMachine = name
+	status.Name = disk.Name
+
+	if image := disk.Provision.FromImage; image != nil {
+		status.Image = *image
+	}
+
+	if disk.Provision.Blank {
+		status.Blank = true
+		status.Pool = disk.Pool
+
+		if volumeName, err := blankVolumeName(name, disk); err == nil {
+			status.Volume = volumeName
+		}
+	}
+
+	if resolveErr != nil {
+		status.Error = resolveErr.Error()
+	}
 }
 
 // holdLibrary keeps a library's mount in place for as long as a disk resolves against it. One which
@@ -209,14 +297,14 @@ func holdLibrary(
 // releaseLibraries gives back the hold on every library nothing resolves against any more.
 func (ctrl *VirtualMachineDiskController) releaseLibraries(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
-	libraries map[string]*hypervisor.ContentLibraryStatus, held map[string]struct{},
+	pass *diskReconciliation,
 ) error {
-	inUse, err := librariesInUse(ctx, r, held)
+	inUse, err := librariesInUse(ctx, r, pass.held)
 	if err != nil {
 		return err
 	}
 
-	for id, library := range libraries {
+	for id, library := range pass.libraries {
 		if _, used := inUse[id]; used || !library.Metadata().Finalizers().Has(diskControllerName) {
 			continue
 		}
@@ -254,126 +342,152 @@ func librariesInUse(ctx context.Context, reader controller.Reader, held map[stri
 	return inUse, nil
 }
 
-// resolve finds the host source for a disk, holding the library it resolved against first and
-// recording it in held so the same pass does not give it straight back.
-func (ctrl *VirtualMachineDiskController) resolve(
+// progressDisk validates the disk, publishes its backing-volume request or acquires its library
+// hold, then observes the host source. It deliberately runs for Ready disks too; readiness is
+// not a cache of a file's digest.
+func (ctrl *VirtualMachineDiskController) progressDisk(
 	ctx context.Context,
 	r controller.ReaderWriter,
 	logger *zap.Logger,
+	name string,
 	disk hypervisor.VirtualMachineDiskSpec,
-	libraries map[string]*hypervisor.ContentLibraryStatus,
-	held map[string]struct{},
+	pass *diskReconciliation,
 ) (hypervisor.VirtualMachineDiskStatusSpec, error) {
 	if err := checkVirtualMachineDiskSupported(disk); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, err
+		return hypervisor.VirtualMachineDiskStatusSpec{
+			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
+		}, err
+	}
+
+	if disk.Provision.Blank {
+		request, err := ctrl.requestBlankVolume(ctx, r, name, disk, pass)
+		if err != nil {
+			return hypervisor.VirtualMachineDiskStatusSpec{
+				Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
+			}, err
+		}
+
+		return disks.ObserveVolume(ctx, r, request)
 	}
 
 	image := disk.Provision.FromImage
 
-	library, found := libraries[image.Library]
+	library, found := pass.libraries[image.Library]
 	if !found {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, fmt.Errorf("content library %q is not configured", image.Library)
+		return hypervisor.VirtualMachineDiskStatusSpec{
+			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
+		}, fmt.Errorf("content library %q is not configured", image.Library)
 	}
 
 	if err := holdLibrary(ctx, r, logger, library); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, err
+		return hypervisor.VirtualMachineDiskStatusSpec{
+			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
+		}, err
 	}
 
-	held[image.Library] = struct{}{}
+	pass.held[image.Library] = struct{}{}
 
-	return resolveVirtualMachineDisk(disk, *library.TypedSpec())
+	return disks.ObserveImage(disk, *library.TypedSpec())
 }
 
 // checkVirtualMachineDiskSupported reports whether a disk is one this slice provisions at all, as
 // opposed to one that is merely not resolved yet. Kept apart so the status and the render grade it alike.
+//
+// Machine configuration validation already rejects most of this. It is checked again because
+// VirtualMachineSpec is a shared output: another producer may author one, and nothing binds it to
+// the rules a machine configuration document is held to.
 func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
-	switch {
-	case disk.Type != hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
-		return fmt.Errorf("%w: only %s disks are provisioned today, this one is %q",
-			errDiskUnsupported, hypervisorhelpers.VirtualMachineDiskTypeCDROM, disk.Type)
-	case disk.Provision.FromImage == nil:
-		// Machine configuration validation already requires this of a cdrom; check anyway, so the
-		// status is the whole truth about a disk rather than a partial one.
-		return fmt.Errorf("%w: a cdrom requires provision.fromImage", errDiskUnsupported)
+	if disk.Provision.Blank && disk.Provision.FromImage != nil {
+		return fmt.Errorf("%w: provision: blank and fromImage are mutually exclusive", errDiskUnsupported)
 	}
 
-	return nil
-}
+	switch disk.Type {
+	case hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
+		switch {
+		case disk.Provision.Blank:
+			return fmt.Errorf("%w: a cdrom has no contents of its own", errDiskUnsupported)
+		case disk.Provision.FromImage == nil:
+			return fmt.Errorf("%w: a cdrom requires provision.fromImage", errDiskUnsupported)
+		}
 
-// resolveVirtualMachineDisk finds the host source for a disk within a library already held for it.
-func resolveVirtualMachineDisk(
-	disk hypervisor.VirtualMachineDiskSpec,
-	library hypervisor.ContentLibraryStatusSpec,
-) (hypervisor.VirtualMachineDiskStatusSpec, error) {
-	image := disk.Provision.FromImage
-
-	if !library.Ready {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, fmt.Errorf("content library %q is not ready: %s", image.Library, library.Error)
-	}
-
-	if err := checkLibraryFile(library.Path, image.File, image.Digest); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{}, fmt.Errorf("content library %q: file %q: %w", image.Library, image.File, err)
-	}
-
-	return hypervisor.VirtualMachineDiskStatusSpec{
-		// Attached where it lies: nothing copies the image, so the library's mount has to stay under it.
-		SourcePath: filepath.Join(library.Path, image.File),
-		Format:     rawDiskFormat,
-		ReadOnly:   true,
-		Ready:      true,
-	}, nil
-}
-
-// checkLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
-func checkLibraryFile(libraryPath, name, expected string) error {
-	root, err := os.OpenRoot(libraryPath)
-	if err != nil {
-		return fmt.Errorf("failed to open content library directory: %w", err)
-	}
-
-	defer root.Close() //nolint:errcheck
-
-	f, err := root.Open(name)
-	if err != nil {
-		return err
-	}
-
-	defer f.Close() //nolint:errcheck
-
-	info, err := f.Stat()
-	if err != nil {
-		return err
-	}
-
-	if !info.Mode().IsRegular() {
-		return errors.New("not a regular file")
-	}
-
-	if expected == "" {
 		return nil
-	}
+	case hypervisorhelpers.VirtualMachineDiskTypeDisk.String():
+		if !disk.Provision.Blank {
+			// Copying or backing a disk from a content library image is not implemented yet; see
+			// the follow-up to siderolabs/talos#14511.
+			return fmt.Errorf("%w: a disk is only provisioned from provision.blank today", errDiskUnsupported)
+		}
 
-	return verifyDigest(f, expected)
+		return checkBlankDiskSupported(disk)
+	default:
+		return fmt.Errorf("%w: unsupported type %q", errDiskUnsupported, disk.Type)
+	}
 }
 
-// verifyDigest rehashes the whole file. It runs on every reconciliation: a library file is not
-// immutable, and nothing else notices when it changes underneath a virtual machine.
-func verifyDigest(r io.Reader, expected string) error {
-	// Machine configuration validation already accepted this digest, including its algorithm.
-	dgst, err := digest.Parse(expected)
-	if err != nil {
-		return fmt.Errorf("digest %q is invalid: %w", expected, err)
+// checkBlankDiskSupported reports whether a blank disk describes a volume that can be made.
+func checkBlankDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
+	if disk.Size == 0 {
+		return fmt.Errorf("%w: a blank disk requires a size", errDiskUnsupported)
 	}
 
-	verifier := dgst.Verifier()
-
-	if _, err := io.Copy(verifier, r); err != nil {
-		return fmt.Errorf("failed to read for digest verification: %w", err)
+	if !slices.Contains(blankDiskFormats, disk.Format) {
+		return fmt.Errorf("%w: unsupported format %q, expected one of %v",
+			errDiskUnsupported, disk.Format, blankDiskFormats)
 	}
 
-	if !verifier.Verified() {
-		return fmt.Errorf("digest mismatch: expected %s", dgst)
+	if err := storagehelpers.ValidateStoragePoolName(disk.Pool); err != nil {
+		return fmt.Errorf("%w: %w", errDiskUnsupported, err)
 	}
 
 	return nil
+}
+
+// blankVolumeName preserves filenames for configuration-valid VM and disk names.
+// Resource IDs have no such alphabet or length bound. Those use a separate namespace
+// (a leading underscore cannot occur in a legacy name) and the full SHA-256 of the
+// ID. The disk name remains validated and separated unambiguously. Digest collisions
+// are cryptographically improbable, not mathematically impossible; no ID is truncated.
+func blankVolumeName(virtualMachine string, disk hypervisor.VirtualMachineDiskSpec) (string, error) {
+	if err := hypervisorhelpers.ValidateName(disk.Name); err != nil {
+		return "", fmt.Errorf("%w: disk %w", errDiskUnsupported, err)
+	}
+
+	if hypervisorhelpers.ValidateName(virtualMachine) == nil {
+		return virtualMachine + "__" + disk.Name + "." + disk.Format, nil
+	}
+
+	return fmt.Sprintf("_vm-%x__%s.%s", sha256.Sum256([]byte(virtualMachine)), disk.Name, disk.Format), nil
+}
+
+// requestBlankVolume publishes the desired backing resource before any source observation.
+// Storage alone provisions the volume; marking it wanted before writing also preserves it when
+// the write fails. Nothing here takes ownership of storage's finalizers or the volume file.
+func (ctrl *VirtualMachineDiskController) requestBlankVolume(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	name string,
+	disk hypervisor.VirtualMachineDiskSpec,
+	pass *diskReconciliation,
+) (*storage.StoragePoolVolumeSpec, error) {
+	volumeName, err := blankVolumeName(name, disk)
+	if err != nil {
+		return nil, err
+	}
+
+	request := disks.BlankVolumeSpec(disk, volumeName)
+	id := request.Metadata().ID()
+	pass.volumes[id] = struct{}{}
+
+	if err = safe.WriterModify(ctx, r,
+		request,
+		func(spec *storage.StoragePoolVolumeSpec) error {
+			*spec.TypedSpec() = *request.TypedSpec()
+
+			return nil
+		},
+	); err != nil {
+		return nil, fmt.Errorf("failed to ask for storage pool volume %q: %w", id, err)
+	}
+
+	return request, nil
 }

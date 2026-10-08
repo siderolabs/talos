@@ -34,6 +34,8 @@ type VirtualMachineDomainSpecSpec struct {
 	Disks []string `yaml:"disks,omitempty" protobuf:"3"`
 	// CloudInit identifies the seed status this domain has attached and must hold.
 	CloudInit string `yaml:"cloudInit,omitempty" protobuf:"4"`
+	// ObservedGeneration identifies the VM intent used to render this definition.
+	ObservedGeneration string `yaml:"observedGeneration,omitempty" protobuf:"5"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

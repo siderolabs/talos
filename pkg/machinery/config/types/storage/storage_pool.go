@@ -8,18 +8,16 @@ package storage
 
 import (
 	"errors"
-	"regexp"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/storagehelpers"
 )
 
 // StoragePoolKind is a config document kind.
 const StoragePoolKind = "StoragePool"
-
-var storagePoolNamePattern = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}$`)
 
 func init() {
 	registry.Register(StoragePoolKind, func(version string) config.Document {
@@ -102,8 +100,8 @@ func (s *StoragePoolV1Alpha1) VolumeName() string { return s.VolumeConfig.Volume
 func (s *StoragePoolV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var errs error
 
-	if !storagePoolNamePattern.MatchString(s.MetaName) {
-		errs = errors.Join(errs, errors.New("name must be 1-63 ASCII letters, digits, hyphens or underscores, starting with a letter or digit"))
+	if err := storagehelpers.ValidateStoragePoolName(s.MetaName); err != nil {
+		errs = errors.Join(errs, err)
 	}
 
 	if s.VolumeConfig.VolumeName == "" {

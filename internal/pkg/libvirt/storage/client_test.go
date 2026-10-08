@@ -40,13 +40,27 @@ func TestUUID(t *testing.T) {
 }
 
 type rpc struct {
-	pools       []libvirt.StoragePool
-	calls       []string
-	target      string
-	description string
-	lookupErr   error
-	listCalls   int
-	active      bool
+	pools         []libvirt.StoragePool
+	calls         []string
+	target        string
+	description   string
+	lookupErr     error
+	listCalls     int
+	active        bool
+	autostart     bool
+	activeErr     error
+	defineErr     error
+	poolCreateErr error
+	destroyErr    error
+	undefineErr   error
+
+	// known is libvirt's own view of the pool's contents, which it only rebuilds on a refresh.
+	// The directory at target is the truth; the two deliberately disagree until one happens.
+	known     map[string]struct{}
+	volCalls  []string
+	refreshes int
+	createErr error
+	resizeErr error
 }
 
 func (r *rpc) ConnectListAllStoragePools(int32, libvirt.ConnectListAllStoragePoolsFlags) ([]libvirt.StoragePool, uint32, error) {
@@ -77,15 +91,30 @@ func (r *rpc) StoragePoolGetXMLDesc(libvirt.StoragePool, libvirt.StorageXMLFlags
 	return (&libvirtxml.StoragePool{Type: "dir", Target: &libvirtxml.StoragePoolTarget{Path: r.target}}).Marshal()
 }
 func (*rpc) StoragePoolIsPersistent(libvirt.StoragePool) (int32, error) { return 1, nil }
+
+func (r *rpc) StoragePoolGetAutostart(libvirt.StoragePool) (int32, error) {
+	if r.autostart {
+		return 1, nil
+	}
+
+	return 0, nil
+}
+
 func (r *rpc) StoragePoolSetAutostart(_ libvirt.StoragePool, value int32) error {
 	if value != 0 {
 		panic("autostart must remain disabled")
 	}
 
+	r.autostart = false
+
 	return nil
 }
 
 func (r *rpc) StoragePoolIsActive(libvirt.StoragePool) (int32, error) {
+	if r.activeErr != nil {
+		return 0, r.activeErr
+	}
+
 	if r.active {
 		return 1, nil
 	}
@@ -94,6 +123,10 @@ func (r *rpc) StoragePoolIsActive(libvirt.StoragePool) (int32, error) {
 }
 
 func (r *rpc) StoragePoolDestroy(libvirt.StoragePool) error {
+	if r.destroyErr != nil {
+		return r.destroyErr
+	}
+
 	r.calls = append(r.calls, "stop")
 	r.active = false
 
@@ -101,6 +134,10 @@ func (r *rpc) StoragePoolDestroy(libvirt.StoragePool) error {
 }
 
 func (r *rpc) StoragePoolDefineXML(text string, _ uint32) (libvirt.StoragePool, error) {
+	if r.defineErr != nil {
+		return libvirt.StoragePool{}, r.defineErr
+	}
+
 	var desc libvirtxml.StoragePool
 	if err := desc.Unmarshal(text); err != nil {
 		return libvirt.StoragePool{}, err
@@ -115,6 +152,10 @@ func (r *rpc) StoragePoolDefineXML(text string, _ uint32) (libvirt.StoragePool, 
 }
 
 func (r *rpc) StoragePoolCreate(libvirt.StoragePool, libvirt.StoragePoolCreateFlags) error {
+	if r.poolCreateErr != nil {
+		return r.poolCreateErr
+	}
+
 	r.calls = append(r.calls, "start")
 	r.active = true
 
@@ -122,6 +163,10 @@ func (r *rpc) StoragePoolCreate(libvirt.StoragePool, libvirt.StoragePoolCreateFl
 }
 
 func (r *rpc) StoragePoolUndefine(libvirt.StoragePool) error {
+	if r.undefineErr != nil {
+		return r.undefineErr
+	}
+
 	r.calls = append(r.calls, "undefine")
 	r.pools = nil
 
@@ -226,6 +271,117 @@ func TestCollisionRefusedBeforePreparingDirectory(t *testing.T) {
 	require.ErrorContains(t, client.Remove(pool), "not owned")
 	require.ErrorContains(t, client.Stop(pool), "not owned")
 	require.Empty(t, rpc.calls)
+}
+
+func TestPoolObservationReadinessEvidence(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New()
+	r := &rpc{pools: []libvirt.StoragePool{{Name: "images", UUID: libvirt.UUID(id)}}, target: "/mnt/images"}
+	client := libvirtstorage.NewTestClient(r)
+	pools, err := client.Pools()
+	require.NoError(t, err)
+	require.Equal(t, []libvirtstorage.Pool{{Name: "images", UUID: id, Target: "/mnt/images", Type: "dir", Persistent: true}}, pools)
+
+	r.active, r.autostart = true, true
+	pools, err = client.Pools()
+	require.NoError(t, err)
+	require.True(t, pools[0].Active)
+	require.True(t, pools[0].Autostart)
+}
+
+func TestEnsureMatchingPoolActivationWithoutRetarget(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New()
+	pool := libvirtstorage.Pool{Name: "images", UUID: id}
+	r := &rpc{pools: []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}}, target: "/mnt/images"}
+	client := libvirtstorage.NewTestClient(r)
+	outcome, err := client.EnsureOperation(pool, "/mnt/images", func() error { return nil })
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.Finished, outcome)
+	require.Equal(t, []string{"start"}, r.calls)
+	r.calls = nil
+	outcome, err = client.EnsureOperation(pool, "/mnt/images", func() error { return nil })
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+	require.Empty(t, r.calls)
+}
+
+func TestPoolOperationEvidence(t *testing.T) {
+	t.Parallel()
+
+	id := uuid.New()
+	pool := libvirtstorage.Pool{Name: "images", UUID: id}
+	transportErr := errors.New("lost reply")
+	terminalErr := libvirt.Error{Code: uint32(libvirt.ErrOperationFailed), Message: "failed"}
+
+	for _, tc := range []struct {
+		name   string
+		rpc    *rpc
+		invoke func(libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error)
+		want   libvirtstorage.OperationOutcome
+	}{
+		{"ensure read", &rpc{lookupErr: transportErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
+		}, libvirtstorage.NoMutationSubmitted},
+		{"ensure prepare", &rpc{}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.EnsureOperation(pool, "/mnt", func() error { return transportErr })
+		}, libvirtstorage.NoMutationSubmitted},
+		{"ensure define lost", &rpc{defineErr: transportErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
+		}, libvirtstorage.Unknown},
+		{"ensure define terminal", &rpc{defineErr: terminalErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
+		}, libvirtstorage.Finished},
+		{"ensure read after mutation", &rpc{
+			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
+			target: "/mnt", autostart: true, activeErr: transportErr,
+		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
+		}, libvirtstorage.Finished},
+		{"ensure activation lost", &rpc{
+			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
+			target: "/mnt", poolCreateErr: transportErr,
+		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
+		}, libvirtstorage.Unknown},
+		{"remove read", &rpc{lookupErr: transportErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.RemoveOperation(pool)
+		}, libvirtstorage.NoMutationSubmitted},
+		{"remove partial terminal", &rpc{
+			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
+			active: true, undefineErr: terminalErr,
+		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.RemoveOperation(pool)
+		}, libvirtstorage.Finished},
+		{"remove stop lost", &rpc{
+			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
+			active: true, destroyErr: transportErr,
+		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.RemoveOperation(pool)
+		}, libvirtstorage.Unknown},
+		{"stop inactive", &rpc{pools: []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}}}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.StopOperation(pool)
+		}, libvirtstorage.NoMutationSubmitted},
+		{"stop terminal", &rpc{
+			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
+			active: true, destroyErr: terminalErr,
+		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+			return c.StopOperation(pool)
+		}, libvirtstorage.Finished},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			outcome, err := tc.invoke(libvirtstorage.NewTestClient(tc.rpc))
+			require.Equal(t, tc.want, outcome)
+
+			if tc.name != "stop inactive" {
+				require.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestHandshakeCancellationClosesTransport(t *testing.T) {

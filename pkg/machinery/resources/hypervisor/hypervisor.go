@@ -9,7 +9,7 @@ import "github.com/cosi-project/runtime/pkg/resource"
 
 //go:generate go tool github.com/siderolabs/deep-copy -type ContentLibraryStatusSpec -type VirtualMachineSpecSpec -type CloudInitSpecSpec -type CloudInitStatusSpec -type VirtualMachineDiskStatusSpec -type VirtualMachineDomainSpecSpec -type VirtualMachineDomainStatusSpec -type VirtualMachineStatusSpec -type VirtualMachineCPUPlacementSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 //go:generate go tool github.com/siderolabs/talos/tools/redactgen -header-file ../../../../hack/boilerplate.txt -o redact.generated.go .
-//go:generate go tool github.com/dmarkham/enumer -type=VirtualMachinePowerState,VirtualMachineStage -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=VirtualMachinePowerState,VirtualMachineStage,ContentLibraryPhase,CloudInitPhase,VirtualMachineDiskPhase -linecomment -text
 
 // NamespaceName contains resources of the Talos hypervisor.
 const NamespaceName resource.Namespace = "hypervisor"

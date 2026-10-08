@@ -99,7 +99,7 @@ func TestStoragePoolValidate(t *testing.T) {
 			pool.MetaName = name
 			pool.VolumeConfig.VolumeName = "vm-data"
 			_, err := pool.Validate(validationMode{})
-			require.ErrorContains(t, err, "name must be")
+			require.ErrorContains(t, err, "storage pool name")
 		})
 	}
 

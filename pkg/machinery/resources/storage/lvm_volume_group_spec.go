@@ -46,7 +46,7 @@ func (LVMVolumeGroupSpecExtension) ResourceDefinition() meta.ResourceDefinitionS
 		Type:             LVMVolumeGroupSpecType,
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
-			{Name: "Name", JSONPath: "{.name}"},
+			{Name: "Name", JSONPath: "{.name}"}, //nolint:goconst
 		},
 	}
 }
