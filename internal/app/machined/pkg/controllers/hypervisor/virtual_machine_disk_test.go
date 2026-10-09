@@ -276,12 +276,13 @@ func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 	})
 }
 
-// A disk this slice does not provision is reported, not silently dropped: the operator sees why
-// the virtual machine never gets a domain.
+// A materialized disk whose format is not qcow2 is reported, not silently dropped: both linked
+// and copy modes write a qcow2 file, and letting a raw-format request through would make the
+// status disagree with what landed on disk.
 func (suite *VirtualMachineDiskSuite) TestReportsUnsupportedDisks() {
 	suite.createVM(
 		hypervisor.VirtualMachineDiskSpec{
-			Name: "system", Pool: "pool1", Size: 20 << 30, Format: "qcow2", Bus: "virtio", Type: "disk",
+			Name: "system", Pool: "pool1", Size: 20 << 30, Format: "raw", Bus: "virtio", Type: "disk",
 			Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 				FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.qcow2"},
 			},
@@ -290,7 +291,7 @@ func (suite *VirtualMachineDiskSuite) TestReportsUnsupportedDisks() {
 
 	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.False(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
-		asrt.Contains(spec.Error, "a disk is only provisioned from provision.blank today")
+		asrt.Contains(spec.Error, "a materialized disk must be qcow2")
 	})
 }
 

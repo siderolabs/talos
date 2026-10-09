@@ -595,18 +595,16 @@ func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
 		`virtual machine "vm1": interface "net0": host link is not an Ethernet link: "lo"`)
 }
 
-// A disk this slice does not provision is not something to wait for: no host resource will ever
-// resolve it, so the stage says error rather than pending.
 // A disk nothing on the host will ever make attachable is an error rather than something to wait
-// for: only a change to the configuration helps. Copying a disk from a content library image is not
-// implemented, so that is the case here.
+// for: only a change to the configuration helps. A materialized disk whose format isn't qcow2 is
+// the case here -- both linked and copy modes write a qcow2 file.
 func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
 	spec := newRenderableSpec("vm1", "running")
 	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
 		Name:   "system",
 		Pool:   "pool1",
 		Size:   20 << 30,
-		Format: hypervisorhelpers.VirtualMachineDiskFormatQCOW2.String(),
+		Format: hypervisorhelpers.VirtualMachineDiskFormatRaw.String(),
 		Type:   hypervisorhelpers.VirtualMachineDiskTypeDisk.String(),
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "images", File: "talos.qcow2"},
@@ -616,7 +614,7 @@ func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
 	s.start()
 
 	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
-		`virtual machine "vm1": disk "system": unsupported disk: a disk is only provisioned from provision.blank today`)
+		`virtual machine "vm1": disk "system": unsupported disk: a materialized disk must be qcow2, got "raw"`)
 }
 
 // A blank disk whose volume is not there yet is worth waiting for, so it is Pending rather than an
