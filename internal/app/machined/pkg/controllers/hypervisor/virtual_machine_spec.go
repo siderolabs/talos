@@ -134,6 +134,7 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 			Model:   vm.Video().Model(),
 			VRAMMiB: vm.Video().VRAMMiB(),
 		},
+		MachineType: vm.MachineType(),
 	}
 
 	topology := vm.CPU().Topology()

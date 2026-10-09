@@ -37,6 +37,8 @@ type VirtualMachineSpecSpec struct {
 	Guest      VirtualMachineGuestSpec       `yaml:"guest" protobuf:"9"`
 	// Video is the graphics device presented when a VNC console is enabled.
 	Video VirtualMachineVideoSpec `yaml:"video" protobuf:"10"`
+	// MachineType is the QEMU machine type; empty leaves it to libvirt.
+	MachineType string `yaml:"machineType,omitempty" protobuf:"11"`
 }
 
 // VirtualMachineVideoSpec describes the virtual graphics device.

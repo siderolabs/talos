@@ -120,6 +120,15 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     Other architectures use libvirt's defaults; without VNC this block has no effect.
 	//     Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.
 	VideoConfig VirtualMachineVideo `yaml:"video,omitempty"`
+	//   description: |
+	//     QEMU machine type exposed to the guest, rendered as the `<os><type machine="…">`
+	//     attribute. Optional; omitting it uses libvirt's default.
+	//   examples:
+	//     - value: >
+	//        "q35"
+	//     - value: >
+	//        "pc"
+	MachineTypeConfig string `yaml:"machineType,omitempty"`
 }
 
 // VirtualMachineVideo describes the virtual graphics device.
@@ -446,6 +455,11 @@ func (v *VirtualMachineVideo) Model() string { return v.ModelConfig }
 
 // VRAMMiB implements config.VirtualMachineVideoConfig interface.
 func (v *VirtualMachineVideo) VRAMMiB() uint32 { return v.VRAMMiBConfig }
+
+// MachineType implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) MachineType() string {
+	return c.MachineTypeConfig
+}
 
 // Redact implements config.SecretDocument interface.
 //

@@ -39,6 +39,8 @@ type VirtualMachineConfig interface {
 	Guest() VirtualMachineGuestConfig
 	// Video device settings; never nil.
 	Video() VirtualMachineVideoConfig
+	// MachineType is the QEMU machine type (e.g. "q35", "pc"); empty leaves it to libvirt.
+	MachineType() string
 }
 
 // VirtualMachineVideoConfig is the graphics device attached when a VNC console is enabled.
