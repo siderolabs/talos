@@ -61,6 +61,11 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 						return
 					}
 
+					// ACPI is enabled regardless of firmware type.
+					if asrt.NotNil(domain.Features) {
+						asrt.NotNil(domain.Features.ACPI)
+					}
+
 					if serial {
 						if asrt.Len(domain.Devices.Serials, 1) {
 							asrt.Equal(&libvirtxml.DomainChardevSource{
