@@ -477,8 +477,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "fromImage",
 				Type:        "VirtualMachineDiskFromImage",
 				Note:        "",
-				Description: "Attach read-only CD-ROM media from a content library.\n\nSet `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is\nattached in place, not copied into a volume. Writable image-derived disks (copy or\nlinked) are not supported. Use `provision.blank` for a writable disk and install from\nCD-ROM media.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach read-only CD-ROM media from a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Attach a content library image.\n\nOn a `cdrom`, the library file is attached in place, read-only; omit `pool`, `size`,\n`format`, and `mode`. On a `disk`, the image is materialized into the disk's pool as\n`<vm>/<disk>.qcow2`; see `fromImage.mode` for the disk-type semantics (`copy` makes an\nindependent qcow2, `linked` makes a thin overlay).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a content library image." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}

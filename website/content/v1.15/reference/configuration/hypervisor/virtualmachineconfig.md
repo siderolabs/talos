@@ -82,7 +82,7 @@ disks:
       bootOrder: 2 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
       provision:
-        # Attach read-only CD-ROM media from a content library.
+        # Attach a content library image.
         fromImage:
             library: images # Name of the `ContentLibraryConfig` document holding the image.
             file: ubuntu-24.04.iso # Name of the file within that library.
@@ -364,7 +364,7 @@ Exactly one source must be set.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
-|`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach read-only CD-ROM media from a content library.<br><br>Set `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is<br>attached in place, not copied into a volume. Writable image-derived disks (copy or<br>linked) are not supported. Use `provision.blank` for a writable disk and install from<br>CD-ROM media.  | |
+|`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach a content library image.<br><br>On a `cdrom`, the library file is attached in place, read-only; omit `pool`, `size`,<br>`format`, and `mode`. On a `disk`, the image is materialized into the disk's pool as<br>`<vm>/<disk>.qcow2`; see `fromImage.mode` for the disk-type semantics (`copy` makes an<br>independent qcow2, `linked` makes a thin overlay).  | |
 
 
 
