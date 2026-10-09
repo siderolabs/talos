@@ -24,10 +24,6 @@ import (
 // AccessPolicy defines the access policy for resources accessed via the API.
 func AccessPolicy(st state.State) state.FilteringRule {
 	return func(ctx context.Context, access state.Access) error {
-		if !access.Verb.Readonly() {
-			return status.Error(codes.PermissionDenied, "write access is not allowed")
-		}
-
 		rd, err := safe.StateGet[*meta.ResourceDefinition](ctx, st, resource.NewMetadata(meta.NamespaceName, meta.ResourceDefinitionType, strings.ToLower(access.ResourceType), resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -39,6 +35,10 @@ func AccessPolicy(st state.State) state.FilteringRule {
 
 		roles := authz.GetRoles(ctx)
 		spec := rd.TypedSpec()
+
+		if !access.Verb.Readonly() && !roles.Includes(role.Admin) {
+			return status.Error(codes.PermissionDenied, "write access requires os:admin role")
+		}
 
 		switch spec.Sensitivity {
 		case meta.Sensitive:
