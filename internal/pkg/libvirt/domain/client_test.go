@@ -121,6 +121,8 @@ type domainRecord struct {
 	xml         string
 	lookupError libvirt.ErrorNumber
 	inactive    bool
+	// requestError is what libvirt answers a power button press with.
+	requestError libvirt.ErrorNumber
 }
 
 type domainWireFixture struct {
@@ -183,36 +185,55 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	case 23: // DOMAIN_LOOKUP_BY_NAME
 		return f.handleLookup(conn, call)
 	case 10: // DOMAIN_CREATE_XML
-		var err error
-
-		payload, err = f.createDomain(call)
-		if err != nil {
-			return err
-		}
+		return f.handleCreate(conn, call)
 	case 14: // DOMAIN_GET_XML_DESC
 		name := decodeString(call[24:])
 		payload = encodeString(f.records[name].xml)
 	case 16: // DOMAIN_GET_INFO
 		return replyDomainInfo(conn, call)
 	case 150: // DOMAIN_IS_ACTIVE
-		name := decodeString(call[24:])
-
-		var active uint32 = 1
-		if f.records[name].inactive {
-			active = 0
-		}
-
-		payload = binary.BigEndian.AppendUint32(nil, active)
+		payload = binary.BigEndian.AppendUint32(nil, f.activeFlag(call))
 	case 151: // DOMAIN_IS_PERSISTENT
 		payload = binary.BigEndian.AppendUint32(nil, 0)
 	case 12: // DOMAIN_DESTROY
 		name := decodeString(call[24:])
 		delete(f.records, name)
+	case 258, 27: // DOMAIN_SHUTDOWN_FLAGS, DOMAIN_REBOOT
+		return f.deliverRequest(conn, call)
 	default:
 		return fmt.Errorf("unexpected domain RPC %d", procedure)
 	}
 
 	return replyCall(conn, call, payload)
+}
+
+// handleCreate defines a domain and answers with it.
+func (f *domainWireFixture) handleCreate(conn net.Conn, call []byte) error {
+	payload, err := f.createDomain(call)
+	if err != nil {
+		return err
+	}
+
+	return replyCall(conn, call, payload)
+}
+
+// activeFlag reports what the record says about the domain being up.
+func (f *domainWireFixture) activeFlag(call []byte) uint32 {
+	if f.records[decodeString(call[24:])].inactive {
+		return 0
+	}
+
+	return 1
+}
+
+// deliverRequest answers a request which is delivered rather than obeyed: the domain stays exactly
+// as it was, unless the record was set up to refuse the request.
+func (f *domainWireFixture) deliverRequest(conn net.Conn, call []byte) error {
+	if record, ok := f.records[decodeString(call[24:])]; ok && record.requestError != libvirt.ErrOk {
+		return replyDomainError(conn, call, record.requestError)
+	}
+
+	return replyCall(conn, call, nil)
 }
 
 func (f *domainWireFixture) createDomain(call []byte) ([]byte, error) {
@@ -568,4 +589,129 @@ func TestStartAdmission(t *testing.T) {
 		require.NoError(t, <-served)
 		require.Empty(t, (<-finished).calls)
 	})
+}
+
+// ownedDomain is the name every domain these fixtures define goes by.
+const ownedDomain = "first"
+
+// ownedRecord is a domain this machine defined, which the ownership checks accept.
+func ownedRecord() domainRecord {
+	id := libvirtdomain.UUID(uuid.MustParse(machineUUID), ownedDomain)
+	digest := `<talos:definition xmlns:talos="https://talos.dev/libvirt/domain">deadbeef</talos:definition>`
+
+	return domainRecord{
+		identity: libvirtdomain.Domain{Name: ownedDomain, UUID: id},
+		xml: `<domain><name>` + ownedDomain + `</name><uuid>` + id.String() + `</uuid>` +
+			`<metadata>` + digest + `</metadata></domain>`,
+	}
+}
+
+func TestShutdownAsksTheGuestAndLeavesTheDomainAlone(t *testing.T) {
+	t.Parallel()
+
+	record := ownedRecord()
+	client, finished, served := openDomainFixture(t, record)
+
+	require.NoError(t, client.Shutdown(record.identity))
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 1, countProcedure(fixture.calls, 258), "the guest is asked exactly once per call")
+	require.Zero(t, countProcedure(fixture.calls, 12), "asking the guest must not destroy the domain")
+	require.Contains(t, fixture.records, "first", "the domain goes away with the guest, not with the request")
+}
+
+func TestShutdownRefusesDomainsThisMachineDoesNotOwn(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	foreign := domainRecord{identity: libvirtdomain.Domain{Name: "first", UUID: uuid.New()}}
+	unmarked := domainRecord{identity: domain, xml: `<domain><name>first</name></domain>`}
+
+	for name, record := range map[string]domainRecord{"foreign UUID": foreign, "no metadata": unmarked} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			client, finished, served := openDomainFixture(t, record)
+
+			require.Error(t, client.Shutdown(domain))
+			require.Error(t, client.Reboot(domain))
+			client.Close()
+			require.NoError(t, <-served)
+
+			fixture := <-finished
+			require.Zero(t, countProcedure(fixture.calls, 258))
+			require.Zero(t, countProcedure(fixture.calls, 27))
+		})
+	}
+}
+
+// A domain which is already gone, or already not running, is in the state the caller asked for.
+func TestShutdownOfAnAbsentDomainIsNotAnError(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+	client, finished, served := openDomainFixture(t)
+
+	require.NoError(t, client.Shutdown(domain))
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Zero(t, countProcedure(fixture.calls, 258))
+}
+
+func TestShutdownOfADomainWhichStoppedMidRequestIsNotAnError(t *testing.T) {
+	t.Parallel()
+
+	record := ownedRecord()
+	record.requestError = libvirt.ErrOperationInvalid
+	client, finished, served := openDomainFixture(t, record)
+
+	require.NoError(t, client.Shutdown(record.identity))
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 1, countProcedure(fixture.calls, 258))
+}
+
+func TestRebootAsksTheGuestAndKeepsTheDomain(t *testing.T) {
+	t.Parallel()
+
+	record := ownedRecord()
+	client, finished, served := openDomainFixture(t, record)
+
+	require.NoError(t, client.Reboot(record.identity))
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 1, countProcedure(fixture.calls, 27))
+	require.Zero(t, countProcedure(fixture.calls, 12))
+	require.Contains(t, fixture.records, "first")
+}
+
+// Unlike a shutdown, a reboot of something which is not running has nothing to ask.
+func TestRebootRequiresARunningDomain(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+
+	absent, _, absentServed := openDomainFixture(t)
+	require.ErrorIs(t, absent.Reboot(domain), libvirtdomain.ErrDomainNotRunning)
+	absent.Close()
+	require.NoError(t, <-absentServed)
+
+	stopped := ownedRecord()
+	stopped.inactive = true
+	client, finished, served := openDomainFixture(t, stopped)
+
+	require.ErrorIs(t, client.Reboot(domain), libvirtdomain.ErrDomainNotRunning)
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Zero(t, countProcedure(fixture.calls, 27))
 }

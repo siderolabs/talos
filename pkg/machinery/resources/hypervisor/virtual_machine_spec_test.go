@@ -167,6 +167,7 @@ func TestVirtualMachineDomainSpecRoundTrip(t *testing.T) {
 	res := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "guest")
 	res.TypedSpec().DomainXML = `<domain type="kvm"><name>guest</name></domain>`
 	res.TypedSpec().PowerState = "running"
+	res.TypedSpec().StopMode = "forced"
 	res.TypedSpec().Disks = []string{"guest/system@0123456789ab", "guest/data@ba9876543210"}
 	encoded, err := protobuf.FromResource(res)
 	require.NoError(t, err)

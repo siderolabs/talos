@@ -19,6 +19,13 @@ service HypervisorService {
   // opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
   // Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
   rpc VNCStream(stream VNCRequest) returns (stream VNCResponse);
+
+  // Start drives a virtual machine towards running by setting powerState in the machine configuration.
+  rpc Start(VirtualMachineStartRequest) returns (VirtualMachineStartResponse);
+  // Stop drives a virtual machine towards stopped by setting powerState in the machine configuration.
+  rpc Stop(VirtualMachineStopRequest) returns (VirtualMachineStopResponse);
+  // Reboot restarts a running virtual machine, leaving the machine configuration alone.
+  rpc Reboot(VirtualMachineRebootRequest) returns (VirtualMachineRebootResponse);
 }
 
 message VNCRequest {
@@ -35,6 +42,35 @@ message VNCAttach {
 message VNCResponse {
   bytes data = 1;
 }
+
+message VirtualMachineStartRequest {
+  // Name of the virtual machine, which must be declared in the machine configuration.
+  string name = 1;
+}
+
+message VirtualMachineStartResponse {}
+
+message VirtualMachineStopRequest {
+  // Name of the virtual machine, which must be declared in the machine configuration.
+  string name = 1;
+  // Destroy the domain instead of asking the guest to power itself off.
+  //
+  // Unset asks the guest, so pulling the plug on it is something a caller opts into.
+  bool force = 2;
+}
+
+message VirtualMachineStopResponse {}
+
+message VirtualMachineRebootRequest {
+  // Name of the virtual machine, which must be running.
+  string name = 1;
+  // Destroy the domain instead of asking the guest to restart itself.
+  //
+  // Unset asks the guest, so pulling the plug on it is something a caller opts into.
+  bool force = 2;
+}
+
+message VirtualMachineRebootResponse {}
 
 message ConsoleRequest {
   oneof request {

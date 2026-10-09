@@ -141,6 +141,14 @@ func (r *Runtime) CancelConfigRollbackTimeout() {
 	}
 }
 
+// ConfigRollbackPending implements the Runtime interface.
+func (r *Runtime) ConfigRollbackPending() bool {
+	r.rollbackTimerMu.Lock()
+	defer r.rollbackTimerMu.Unlock()
+
+	return r.rollbackTimer != nil
+}
+
 // SetConfig implements the Runtime interface.
 func (r *Runtime) SetConfig(cfg config.Provider) error {
 	return r.s.V1Alpha2().SetConfig(context.TODO(), machineconfig.ActiveID, cfg)

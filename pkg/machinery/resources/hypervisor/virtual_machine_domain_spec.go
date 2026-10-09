@@ -34,6 +34,13 @@ type VirtualMachineDomainSpecSpec struct {
 	Disks []string `yaml:"disks,omitempty" protobuf:"3"`
 	// CloudInit identifies the seed status this domain has attached and must hold.
 	CloudInit string `yaml:"cloudInit,omitempty" protobuf:"4"`
+	// StopMode selects whether a stop asks the guest to power off or destroys the domain.
+	//
+	// Carried alongside PowerState rather than read off the virtual machine's configuration, so
+	// that the way a domain is taken down is the one which was declared for the definition that
+	// is running, and so that the controller which withdraws an unrenderable definition can
+	// demand a stop the guest cannot refuse.
+	StopMode string `yaml:"stopMode" protobuf:"5"`
 }
 
 // NewVirtualMachineDomainSpec initializes a VirtualMachineDomainSpec resource.

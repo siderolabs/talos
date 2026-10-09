@@ -72,6 +72,12 @@ description: Talos gRPC API reference.
     - [VNCAttach](#machine.VNCAttach)
     - [VNCRequest](#machine.VNCRequest)
     - [VNCResponse](#machine.VNCResponse)
+    - [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest)
+    - [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse)
+    - [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest)
+    - [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse)
+    - [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest)
+    - [VirtualMachineStopResponse](#machine.VirtualMachineStopResponse)
   
     - [HypervisorService](#machine.HypervisorService)
   
@@ -349,6 +355,7 @@ description: Talos gRPC API reference.
     - [HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState)
     - [HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage)
     - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
+    - [HypervisorhelpersStopMode](#talos.resource.definitions.enums.HypervisorhelpersStopMode)
     - [HypervisorhelpersVirtualMachineDiskBus](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus)
     - [HypervisorhelpersVirtualMachineDiskFormat](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat)
     - [HypervisorhelpersVirtualMachineDiskImageMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskImageMode)
@@ -542,6 +549,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
     - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
     - [VirtualMachineStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineStatusSpec)
+    - [VirtualMachineStopModeSpec](#talos.resource.definitions.hypervisor.VirtualMachineStopModeSpec)
     - [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec)
   
 - [resource/definitions/proto/proto.proto](#resource/definitions/proto/proto.proto)
@@ -1666,6 +1674,83 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+
+<a name="machine.VirtualMachineRebootRequest"></a>
+
+### VirtualMachineRebootRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be running. |
+| force | [bool](#bool) |  | Destroy the domain instead of asking the guest to restart itself.<br><br>Unset asks the guest, so pulling the plug on it is something a caller opts into. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineRebootResponse"></a>
+
+### VirtualMachineRebootResponse
+
+
+
+
+
+
+
+<a name="machine.VirtualMachineStartRequest"></a>
+
+### VirtualMachineStartRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be declared in the machine configuration. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineStartResponse"></a>
+
+### VirtualMachineStartResponse
+
+
+
+
+
+
+
+<a name="machine.VirtualMachineStopRequest"></a>
+
+### VirtualMachineStopRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be declared in the machine configuration. |
+| force | [bool](#bool) |  | Destroy the domain instead of asking the guest to power itself off.<br><br>Unset asks the guest, so pulling the plug on it is something a caller opts into. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineStopResponse"></a>
+
+### VirtualMachineStopResponse
+
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -1682,6 +1767,9 @@ HypervisorService exposes virtual machine APIs.
 | ----------- | ------------ | ------------- | ------------|
 | ConsoleStream | [ConsoleRequest](#machine.ConsoleRequest) stream | [ConsoleResponse](#machine.ConsoleResponse) stream | ConsoleStream attaches exclusively to one managed VM's live serial console. The first request must be an attach with a nonempty name; subsequent requests must contain stdin_data, at most 64 KiB per frame. Bytes pass through unchanged. Client input EOF (half-close), cancellation, or guest EOF detaches the session. Only live output is sent: there is no replay, persistent log, or resize support. |
 | VNCStream | [VNCRequest](#machine.VNCRequest) stream | [VNCResponse](#machine.VNCResponse) stream | VNCStream attaches exclusively to one managed VM's live VNC endpoint. The first request must attach a nonempty name; subsequent requests contain opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end. Input EOF, cancellation, or guest EOF detaches; serial attachment is separate. |
+| Start | [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest) | [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse) | Start drives a virtual machine towards running by setting powerState in the machine configuration. |
+| Stop | [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest) | [VirtualMachineStopResponse](#machine.VirtualMachineStopResponse) | Stop drives a virtual machine towards stopped by setting powerState in the machine configuration. |
+| Reboot | [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest) | [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse) | Reboot restarts a running virtual machine, leaving the machine configuration alone. |
 
  <!-- end services -->
 
@@ -5942,6 +6030,24 @@ HypervisorhelpersPowerState is the power state a virtual machine is driven towar
 
 
 
+<a name="talos.resource.definitions.enums.HypervisorhelpersStopMode"></a>
+
+### HypervisorhelpersStopMode
+HypervisorhelpersStopMode is the way a virtual machine is taken down when it is driven towards the stopped power
+state.
+
+It is a parameter of a transition rather than a desired state, so it is not something a machine
+configuration declares: it is carried by the VirtualMachineStopMode resource the hypervisor API
+writes. The zero member stands for a stop nothing asked anything of, which destroys the domain.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STOP_MODE_UNKNOWN | 0 |  |
+| STOP_MODE_GRACEFUL | 1 |  |
+| STOP_MODE_FORCED | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus"></a>
 
 ### HypervisorhelpersVirtualMachineDiskBus
@@ -9366,6 +9472,7 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | power_state | [string](#string) |  | PowerState selects running or stopped transient-domain behavior. |
 | disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
 | cloud_init | [string](#string) |  | CloudInit identifies the seed status this domain has attached and must hold. |
+| stop_mode | [string](#string) |  | StopMode selects whether a stop asks the guest to power off or destroys the domain.<br><br>Carried alongside PowerState rather than read off the virtual machine's configuration, so that the way a domain is taken down is the one which was declared for the definition that is running, and so that the controller which withdraws an unrenderable definition can demand a stop the guest cannot refuse. |
 
 
 
@@ -9523,6 +9630,21 @@ VirtualMachineStatusSpec describes observed power state and reconciliation stage
 | power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  | PowerState is the matched domain's observed power, or unknown when no domain was observed. |
 | stage | [talos.resource.definitions.enums.HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage) |  | Stage distinguishes unknown observation, convergence, readiness, and observed obstacles. |
 | error | [string](#string) |  | Error describes an observation failure or obstacle, when known. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineStopModeSpec"></a>
+
+### VirtualMachineStopModeSpec
+VirtualMachineStopModeSpec is the spec for VirtualMachineStopMode.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mode | [string](#string) |  | Mode is how the next stop is to be carried out. |
 
 
 

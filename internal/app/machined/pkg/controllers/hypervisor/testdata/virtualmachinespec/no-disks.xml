@@ -8,6 +8,9 @@
   <os>
     <type>hvm</type>
   </os>
+  <features>
+    <acpi></acpi>
+  </features>
   <cpu mode="host-model"></cpu>
   <devices>
     <channel type="unix">

@@ -17,6 +17,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -81,6 +82,11 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineDomainSpecType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -159,6 +165,18 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 
 	machineUUID, machineErr := getMachineUUID(ctx, runtime)
 
+	// The stop mode reported is the one the domain spec carries, not the one recorded: a stop the
+	// controller demands of a definition it cannot render is forced, whatever was asked for.
+	domainSpecs, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, runtime)
+	if err != nil {
+		return fmt.Errorf("list virtual machine domain specs: %w", err)
+	}
+
+	stopModes := make(map[string]string, domainSpecs.Len())
+	for domainSpec := range domainSpecs.All() {
+		stopModes[domainSpec.Metadata().ID()] = domainSpec.TypedSpec().StopMode
+	}
+
 	var errs error
 
 	for spec := range specs.All() {
@@ -177,7 +195,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 			renderErr = validateDomainPlacement(name, domainXML, topology)
 		}
 
-		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])
+		status := composeVirtualMachineStatus(spec.TypedSpec(), stopModes[name], name, machineUUID, machineErr, renderErr, byName[name])
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, name),
@@ -204,9 +222,10 @@ func renderStage(err error) hypervisor.VirtualMachineStage {
 	return hypervisor.VirtualMachineStageError
 }
 
-func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, machineErr, renderErr error,
-	domain *hypervisor.VirtualMachineDomainStatus,
+func composeVirtualMachineStatus(spec *hypervisor.VirtualMachineSpecSpec, stopMode, name string, machineUUID uuid.UUID,
+	machineErr, renderErr error, domain *hypervisor.VirtualMachineDomainStatus,
 ) hypervisor.VirtualMachineStatusSpec {
+	desired := spec.PowerState
 	status := hypervisor.VirtualMachineStatusSpec{PowerState: hypervisor.VirtualMachinePowerStateUnknown}
 
 	if desired != hypervisor.VirtualMachinePowerStateRunning.String() &&
@@ -231,6 +250,10 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 			return status
 		}
 
+		// No observation, which for a machine driven towards stopped is also what the end of a
+		// successful stop looks like. The two are not told apart here: nothing publishes whether
+		// the libvirt inventory is being read at all, so a host whose scan is failing would
+		// otherwise be reported as one whose machines are all off.
 		status.Error = "domain has not been observed"
 
 		return status
@@ -260,14 +283,20 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 		return status
 	}
 
-	return reconcileVirtualMachinePower(desired, status)
+	return reconcileVirtualMachinePower(spec.PowerState, stopMode, status)
 }
 
-func reconcileVirtualMachinePower(desired string,
+func reconcileVirtualMachinePower(desired, stopMode string,
 	status hypervisor.VirtualMachineStatusSpec,
 ) hypervisor.VirtualMachineStatusSpec {
 	switch {
 	case desired == hypervisor.VirtualMachinePowerStateStopped.String():
+		if stopMode == hypervisorhelpers.StopModeGraceful.String() {
+			status.Error = hypervisor.GracefulStopPendingError
+
+			break
+		}
+
 		status.Error = "domain is still defined"
 	default:
 		if status.PowerState.String() == desired {

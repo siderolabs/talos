@@ -2279,6 +2279,107 @@ ContentLibraryConfig document; this command manages what is stored in them.
 * [talosctl hypervisor content-library list](#talosctl-hypervisor-content-library-list)	 - List the files stored in a content library
 * [talosctl hypervisor content-library upload](#talosctl-hypervisor-content-library-upload)	 - Upload a file to a content library
 
+## talosctl hypervisor reboot
+
+Reboot a running virtual machine
+
+### Synopsis
+
+Restarts the guest of a running virtual machine. The machine configuration is not affected.
+
+```
+talosctl hypervisor reboot <vm-name> [flags]
+```
+
+### Options
+
+```
+      --graceful   ask the guest to restart itself; --graceful=false destroys the domain instead (default true)
+  -h, --help       help for reboot
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
+
+## talosctl hypervisor start
+
+Start a virtual machine
+
+### Synopsis
+
+Sets powerState to running in the VirtualMachineConfig document of the virtual machine.
+
+```
+talosctl hypervisor start <vm-name> [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for start
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
+
+## talosctl hypervisor stop
+
+Stop a virtual machine
+
+### Synopsis
+
+Sets powerState to stopped in the VirtualMachineConfig document of the virtual machine.
+
+```
+talosctl hypervisor stop <vm-name> [flags]
+```
+
+### Options
+
+```
+      --graceful   ask the guest to power itself off; --graceful=false destroys the domain instead (default true)
+  -h, --help       help for stop
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
+
 ## talosctl hypervisor vnc
 
 Expose a virtual machine's VNC console on a local TCP port
@@ -2334,6 +2435,9 @@ Manage the Talos hypervisor
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl hypervisor console](#talosctl-hypervisor-console)	 - Attach to a virtual machine's live serial console
 * [talosctl hypervisor content-library](#talosctl-hypervisor-content-library)	 - Manage the contents of content libraries
+* [talosctl hypervisor reboot](#talosctl-hypervisor-reboot)	 - Reboot a running virtual machine
+* [talosctl hypervisor start](#talosctl-hypervisor-start)	 - Start a virtual machine
+* [talosctl hypervisor stop](#talosctl-hypervisor-stop)	 - Stop a virtual machine
 * [talosctl hypervisor vnc](#talosctl-hypervisor-vnc)	 - Expose a virtual machine's VNC console on a local TCP port
 
 ## talosctl image cache-cert-gen

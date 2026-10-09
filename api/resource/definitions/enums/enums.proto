@@ -97,6 +97,18 @@ enum HypervisorhelpersPowerState {
   POWER_STATE_SUSPENDED = 3;
 }
 
+// HypervisorhelpersStopMode is the way a virtual machine is taken down when it is driven towards the stopped power
+// state.
+//
+// It is a parameter of a transition rather than a desired state, so it is not something a machine
+// configuration declares: it is carried by the VirtualMachineStopMode resource the hypervisor API
+// writes. The zero member stands for a stop nothing asked anything of, which destroys the domain.
+enum HypervisorhelpersStopMode {
+  STOP_MODE_UNKNOWN = 0;
+  STOP_MODE_GRACEFUL = 1;
+  STOP_MODE_FORCED = 2;
+}
+
 // HypervisorhelpersVirtualMachineDiskBus is the controller a disk is attached to.
 enum HypervisorhelpersVirtualMachineDiskBus {
   VIRTUAL_MACHINE_DISK_BUS_UNKNOWN = 0;

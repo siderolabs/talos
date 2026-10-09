@@ -96,6 +96,17 @@ func UUID(machine uuid.UUID, name string) uuid.UUID {
 	return uuid.NewHash(sha256.New(), namespace, append(machine[:], []byte(name)...), 8)
 }
 
+// ParseMachineUUID validates the machine UUID every domain of a host is named under, as published
+// by SystemInformation. A nil UUID is refused: it would name every host's domains alike.
+func ParseMachineUUID(machine string) (uuid.UUID, error) {
+	parsed, err := uuid.Parse(machine)
+	if err != nil || parsed == uuid.Nil {
+		return uuid.Nil, fmt.Errorf("invalid machine UUID %q", machine)
+	}
+
+	return parsed, nil
+}
+
 // Domain identifies a domain by name and UUID; it does not prove ownership.
 type Domain struct {
 	Name string
@@ -116,6 +127,8 @@ type Client interface {
 	Active(Domain) (bool, error)
 	Info(Domain) (Info, error)
 	Start(Domain, string, ...StartOption) error
+	Shutdown(Domain) error
+	Reboot(Domain) error
 	Remove(Domain) error
 	Close()
 }
@@ -141,6 +154,8 @@ type lifecycleRPC interface {
 	DomainIsActive(libvirt.Domain) (int32, error)
 	DomainGetInfo(libvirt.Domain) (uint8, uint64, uint64, uint16, uint64, error)
 	DomainDestroy(libvirt.Domain) error
+	DomainShutdownFlags(libvirt.Domain, libvirt.DomainShutdownFlagValues) error
+	DomainReboot(libvirt.Domain, libvirt.DomainRebootFlagValues) error
 	DomainHasManagedSaveImage(libvirt.Domain, uint32) (int32, error)
 	DomainManagedSaveRemove(libvirt.Domain, uint32) error
 	DomainUndefineFlags(libvirt.Domain, libvirt.DomainUndefineFlagsValues) error
@@ -477,6 +492,102 @@ func (c *client) stopIfActive(found libvirt.Domain) error {
 	}
 
 	return c.rpc.DomainDestroy(found)
+}
+
+// owned looks a claimed domain up and proves Talos defined it.
+//
+// It reports exists=false both when there is no such domain and when the domain went away between
+// the inventory which named it and this call.
+func (c *client) owned(d Domain) (libvirt.Domain, bool, error) {
+	if err := validateDomain(d); err != nil {
+		return libvirt.Domain{}, false, err
+	}
+
+	found, exists, err := c.lookup(d)
+	if err != nil || !exists {
+		return libvirt.Domain{}, false, err
+	}
+
+	if _, err = c.definitionDigest(found); err != nil {
+		return libvirt.Domain{}, false, err
+	}
+
+	return found, true, nil
+}
+
+// isGone reports whether an error says the operation had already happened.
+//
+// A domain which is no longer there, or no longer running, is one nothing further is owed on: the
+// caller asked for a state the domain is already in.
+func isGone(err error) bool {
+	rpcErr, ok := errors.AsType[libvirt.Error](err)
+	if !ok {
+		return false
+	}
+
+	code := libvirt.ErrorNumber(rpcErr.Code)
+
+	return code == libvirt.ErrNoDomain || code == libvirt.ErrOperationInvalid
+}
+
+// Shutdown asks the guest of a claimed domain to power itself off by pressing the virtual ACPI
+// power button.
+//
+// The request is delivered, not obeyed: a guest which ignores the button keeps running, and
+// nothing here waits for or enforces an outcome. The domain is transient, so a guest which does
+// power off takes its domain with it.
+func (c *client) Shutdown(d Domain) error {
+	found, exists, err := c.owned(d)
+	if err != nil || !exists {
+		return err
+	}
+
+	if err = c.rpc.DomainShutdownFlags(found, libvirt.DomainShutdownAcpiPowerBtn); err != nil && !isGone(err) {
+		return err
+	}
+
+	return nil
+}
+
+// ErrDomainNotRunning says a domain exists but is not running, so a guest cannot be asked anything.
+var ErrDomainNotRunning = errors.New("domain is not running")
+
+// Reboot asks the guest of a claimed domain to restart itself through its virtual ACPI power
+// button. As with Shutdown, the request is delivered rather than obeyed.
+//
+// The domain object, its definition and its ownership metadata all survive a reboot, so nothing
+// downstream sees the definition change: that is libvirt's default
+// <on_reboot>restart</on_reboot>, which nothing in the rendered definition overrides. Were it
+// destroy instead, a reboot would read downstream as the domain going away, and the controller
+// would cold-boot it from the definition which is live rather than leave it alone.
+func (c *client) Reboot(d Domain) error {
+	found, exists, err := c.owned(d)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return ErrDomainNotRunning
+	}
+
+	active, err := c.rpc.DomainIsActive(found)
+	if err != nil {
+		return err
+	}
+
+	if active == 0 {
+		return ErrDomainNotRunning
+	}
+
+	if err = c.rpc.DomainReboot(found, libvirt.DomainRebootAcpiPowerBtn); err != nil {
+		if isGone(err) {
+			return ErrDomainNotRunning
+		}
+
+		return err
+	}
+
+	return nil
 }
 
 // Remove destroys a claimed domain. Previously defined persistent domains are

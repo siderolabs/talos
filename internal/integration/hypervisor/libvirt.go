@@ -490,10 +490,15 @@ func (suite *LibvirtSuite) TestDomain() {
 
 	suite.Require().Equal("running", suite.runVirsh(node, "domstate", libvirtDomainName))
 
-	suite.Require().Eventually(func() bool {
+	// The last observed PID and error are reported on failure: 0 means QEMU is gone, another PID
+	// means QEMU was restarted, an error means the process list could not be read.
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		pidAfterServiceRestart, err := suite.libvirtDomainPID(nodeCtx)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-		return err == nil && pidAfterServiceRestart == pidBeforeReboot
+		assert.Equal(collect, pidBeforeReboot, pidAfterServiceRestart, "QEMU PID after the service restart")
 	}, 30*time.Second, 100*time.Millisecond, "service restart must preserve the QEMU process with PID %d", pidBeforeReboot)
 
 	// Node-level reboot check: this suite runs without Kubernetes.

@@ -69,6 +69,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineStopModeType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDomainSpecType,
 			Kind:      controller.InputDestroyReady,
 		},
@@ -125,6 +130,11 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		return err
 	}
 
+	stopModes, err := listStopModes(ctx, r)
+	if err != nil {
+		return err
+	}
+
 	desired := make(map[resource.ID]struct{}, specs.Len())
 
 	var errs []error
@@ -151,6 +161,11 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 					// held for the definition which may still be running.
 					res.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
 
+					// Whatever was asked for, this stop is not one the operator asked for at all:
+					// it is one the controller demands to clear a definition it cannot render off
+					// the host, and a guest may not refuse it.
+					res.TypedSpec().StopMode = hypervisorhelpers.StopModeForced.String()
+
 					logger.Error("stopping virtual machine: spec cannot be rendered",
 						zap.String("virtual_machine", name), zap.Error(renderErr))
 
@@ -162,6 +177,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 					PowerState: vm.TypedSpec().PowerState,
 					Disks:      attachedDisks,
 					CloudInit:  seedID,
+					StopMode:   stopModes[name],
 				}
 
 				return nil
@@ -342,6 +358,29 @@ func appendCloudInitCDROM(domain *libvirtxml.Domain, asset *hypervisor.CloudInit
 	})
 }
 
+// listStopModes reads the way each virtual machine's next stop has been asked to be carried out.
+//
+// A machine with no entry is stopped by having its domain destroyed, which is what a stop driven
+// by a machine configuration patch rather than by the API always is.
+func listStopModes(ctx context.Context, reader controller.Reader) (map[resource.ID]string, error) {
+	stopModes, err := safe.ReaderListAll[*hypervisor.VirtualMachineStopMode](ctx, reader)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list virtual machine stop modes: %w", err)
+	}
+
+	modes := make(map[resource.ID]string, stopModes.Len())
+
+	for stopMode := range stopModes.All() {
+		if stopMode.Metadata().Phase() != resource.PhaseRunning {
+			continue
+		}
+
+		modes[stopMode.Metadata().ID()] = stopMode.TypedSpec().Mode
+	}
+
+	return modes, nil
+}
+
 // listResolvedDisks indexes the published disk statuses by their resource ID, the key
 // renderVirtualMachineDisks looks a disk up under.
 func listResolvedDisks(ctx context.Context, reader controller.Reader) (map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, error) {
@@ -402,6 +441,12 @@ func renderVirtualMachineDomain(
 			Type: &libvirtxml.DomainOSType{
 				Type: "hvm",
 			},
+		},
+		// ACPI is what carries a power button press into the guest, so a domain without it can
+		// only ever be stopped by destroying it. Declared for every domain rather than only for
+		// the UEFI ones which cannot boot without it.
+		Features: &libvirtxml.DomainFeatureList{
+			ACPI: &libvirtxml.DomainFeature{},
 		},
 		// Omitting the balloon would let libvirt add one by default.
 		Devices: &libvirtxml.DomainDeviceList{
@@ -536,11 +581,8 @@ func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor
 		return
 	}
 
+	// QEMU rejects UEFI domains without ACPI on supported architectures; every domain declares it.
 	domain.OS.Firmware = "efi"
-	// QEMU rejects UEFI domains without ACPI on supported architectures.
-	domain.Features = &libvirtxml.DomainFeatureList{
-		ACPI: &libvirtxml.DomainFeature{},
-	}
 
 	enabled := "no"
 	if firmware.SecureBoot {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -47,6 +48,15 @@ type VirtualMachineController struct {
 	// hold does not outlive the process, and an entry is dropped with the hold it stands for.
 	verified      map[string]struct{}
 	verifiedSeeds map[string]struct{}
+
+	// shutdownRequested is the set of virtual machines whose guest has already been asked to power
+	// itself off, so that a graceful stop presses the power button once rather than once per
+	// reconciliation. An entry is dropped when the stop it stands for ends, however it ends.
+	//
+	// Deliberately not reset per Run, unlike verified: this controller restarts on any error,
+	// including one a different virtual machine raises on every pass, and a reset would have each
+	// restart press the button again on every guest which is slow to power off or refuses to.
+	shutdownRequested map[string]struct{}
 }
 
 // Name implements controller.Controller interface.
@@ -144,6 +154,11 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 	ctrl.verified = map[string]struct{}{}
 	ctrl.verifiedSeeds = map[string]struct{}{}
 
+	// A power button already pressed stays pressed across a restart; see the field comment.
+	if ctrl.shutdownRequested == nil {
+		ctrl.shutdownRequested = map[string]struct{}{}
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -200,8 +215,16 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		return err
 	}
 
-	// Seed holds require a daemon inventory even when no domain specs remain.
+	// A virtual machine with no domain spec has no stop in flight. Swept here rather than only
+	// where a stop ends, so that a spec destroyed mid-stop cannot leave a record behind which
+	// would have a later stop of the same name skip its power button press and wait forever.
+	maps.DeleteFunc(ctrl.shutdownRequested, func(name string, _ struct{}) bool {
+		_, stillSpecified := known[name]
 
+		return !stillSpecified
+	})
+
+	// Seed holds require a daemon inventory even when no domain specs remain.
 	logReady, err := virtualMachineLogsReady(ctx, r)
 	if err != nil {
 		return err
@@ -275,12 +298,7 @@ func getMachineUUID(ctx context.Context, reader controller.Reader) (uuid.UUID, e
 		return uuid.Nil, fmt.Errorf("failed to get system information: %w", err)
 	}
 
-	machineUUID, err := uuid.Parse(machine.TypedSpec().UUID)
-	if err != nil || machineUUID == uuid.Nil {
-		return uuid.Nil, fmt.Errorf("invalid machine UUID %q", machine.TypedSpec().UUID)
-	}
-
-	return machineUUID, nil
+	return libvirtdomain.ParseMachineUUID(machine.TypedSpec().UUID)
 }
 
 func (ctrl *VirtualMachineController) reconcileSpec(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
@@ -351,6 +369,12 @@ func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controlle
 	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}, spec.TypedSpec().DomainXML, admission); err != nil {
 		return fmt.Errorf("failed to start domain %q: %w", name, err)
 	}
+
+	// Whatever was asked of the previous guest was asked of a stop which is over, so a later one
+	// asks again. A guest which is still powering itself off is left alone: the press cannot be
+	// recalled, and this controller cannot tell a guest which accepted it from one which refused
+	// it, which is the very case an operator escapes by driving the machine back to running.
+	delete(ctrl.shutdownRequested, name)
 
 	if err := ctrl.releaseDisksExcept(ctx, r, name, spec.TypedSpec().Disks); err != nil {
 		return err
@@ -802,18 +826,68 @@ func (ctrl *VirtualMachineController) stopClaimed(
 ) error {
 	name := spec.Metadata().ID()
 
-	switch {
-	case claimed && exists:
-		if err := client.Remove(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}); err != nil {
-			return fmt.Errorf("failed to remove domain %q: %w", name, err)
-		}
-	case exists:
+	// Teardown is forced whatever the spec says: the definition is being withdrawn, and a guest
+	// which refuses to power off would hold this controller's claim, and with it every disk, for
+	// as long as it liked.
+	graceful := spec.Metadata().Phase() == resource.PhaseRunning &&
+		spec.TypedSpec().StopMode == hypervisorhelpers.StopModeGraceful.String()
+
+	if exists && !claimed {
 		// Not this controller's domain to remove, and it goes on reading whatever it was given.
 		logger.Warn("keeping the disks of an unclaimed domain which is still there",
 			zap.String("virtual_machine", name))
 
 		return nil
 	}
+
+	if exists {
+		if graceful {
+			// The guest is still running and still reading its disks, so the claim and every hold
+			// stay. Nothing here bounds the wait; the domain going away is what ends this stop, and
+			// that arrives as a libvirt lifecycle event through VirtualMachineDomainStatus.
+			//
+			// That a guest powering itself off takes its domain with it is libvirt's default
+			// <on_poweroff>destroy</on_poweroff>, which nothing in the rendered definition overrides.
+			return ctrl.askGuestToPowerOff(logger, client, machineUUID, name)
+		}
+
+		if err := client.Remove(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}); err != nil {
+			return fmt.Errorf("failed to remove domain %q: %w", name, err)
+		}
+	}
+
+	return ctrl.releaseStopped(ctx, r, spec, claimed)
+}
+
+// askGuestToPowerOff presses the virtual power button once, and only once per stop: the request is
+// delivered rather than obeyed, and asking again every reconcile would say nothing new.
+func (ctrl *VirtualMachineController) askGuestToPowerOff(
+	logger *zap.Logger, client libvirtdomain.Client, machineUUID uuid.UUID, name string,
+) error {
+	if _, asked := ctrl.shutdownRequested[name]; asked {
+		return nil
+	}
+
+	if err := client.Shutdown(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}); err != nil {
+		return fmt.Errorf("failed to ask domain %q to power off: %w", name, err)
+	}
+
+	// Recorded only once libvirt has taken the request, so an ask which failed is asked again.
+	ctrl.shutdownRequested[name] = struct{}{}
+
+	logger.Info("asked the guest to power itself off", zap.String("virtual_machine", name))
+
+	return nil
+}
+
+// releaseStopped gives back everything a domain which is gone was holding.
+func (ctrl *VirtualMachineController) releaseStopped(
+	ctx context.Context, r controller.ReaderWriter, spec *hypervisor.VirtualMachineDomainSpec, claimed bool,
+) error {
+	name := spec.Metadata().ID()
+
+	// The domain is gone, so whichever way this stop ended, it has ended.
+	delete(ctrl.shutdownRequested, name)
 
 	// No domain of this virtual machine reads a disk any more. Released even when the spec was never
 	// claimed: a start refused before the claim leaves holds behind no claim.
