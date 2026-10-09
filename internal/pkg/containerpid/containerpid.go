@@ -65,6 +65,16 @@ func NewResolverWithPaths(cgroupMountPath, procPath string) *Resolver {
 //
 // If the container init is not (or no longer) in the cgroup, the error is [ErrGone].
 func (r *Resolver) Resolve(cgroupPath string, nsPID uint32) (int32, error) {
+	return r.resolve(cgroupPath, nsPID, 0)
+}
+
+// ResolveOwnPIDNamespace is like [Resolver.Resolve], for a container with a PID namespace of its
+// own: containerd's PID is then one level above the innermost NSpid entry.
+func (r *Resolver) ResolveOwnPIDNamespace(cgroupPath string, nsPID uint32) (int32, error) {
+	return r.resolve(cgroupPath, nsPID, 1)
+}
+
+func (r *Resolver) resolve(cgroupPath string, nsPID uint32, levelsAboveInnermost int) (int32, error) {
 	procsPath := filepath.Join(r.cgroupMountPath, cgroupPath, "cgroup.procs")
 
 	contents, err := os.ReadFile(procsPath)
@@ -78,7 +88,7 @@ func (r *Resolver) Resolve(cgroupPath string, nsPID uint32) (int32, error) {
 			return 0, fmt.Errorf("failed to parse PID %q from %s: %w", field, procsPath, err)
 		}
 
-		innermost, err := r.readInnermostPID(int32(candidate))
+		innermost, err := r.readNSPID(int32(candidate), levelsAboveInnermost)
 
 		switch {
 		case errors.Is(err, fs.ErrNotExist):
@@ -96,18 +106,10 @@ func (r *Resolver) Resolve(cgroupPath string, nsPID uint32) (int32, error) {
 	return 0, fmt.Errorf("%w: no process with PID %d (as seen by containerd) found in %s", ErrGone, nsPID, procsPath)
 }
 
-// readInnermostPID returns the PID the process sees for itself, i.e. its PID in the
-// innermost PID namespace it belongs to.
+// readNSPID returns the NSpid entry of the process levelsAboveInnermost levels above the last one.
 //
-// The pid argument is resolved in the caller's PID namespace, as usual for /proc.
-// The NSpid field of /proc/<pid>/status lists the process PID at every namespace level,
-// starting at the level of the reading process and descending to the namespace the process
-// itself lives in, so its last entry is the PID the process sees for itself. For a process
-// in the caller's own namespace there is a single entry and the result equals pid.
-//
-// If the process is gone, the returned error wraps [io/fs.ErrNotExist], so callers racing
-// against process exit can tell that apart from a malformed status file.
-func (r *Resolver) readInnermostPID(pid int32) (int32, error) {
+// If the process is gone, the returned error wraps [io/fs.ErrNotExist].
+func (r *Resolver) readNSPID(pid int32, levelsAboveInnermost int) (int32, error) {
 	statusPath := filepath.Join(r.procPath, strconv.Itoa(int(pid)), "status")
 
 	// /proc/<pid>/status is small enough to read in one go.
@@ -122,7 +124,7 @@ func (r *Resolver) readInnermostPID(pid int32) (int32, error) {
 		return 0, err
 	}
 
-	innermost, err := parseInnermostPID(contents)
+	innermost, err := parseNSPID(contents, levelsAboveInnermost)
 	if err != nil {
 		return 0, fmt.Errorf("failed to parse %s: %w", statusPath, err)
 	}
@@ -130,8 +132,8 @@ func (r *Resolver) readInnermostPID(pid int32) (int32, error) {
 	return innermost, nil
 }
 
-// parseInnermostPID extracts the last NSpid entry from the contents of /proc/<pid>/status.
-func parseInnermostPID(contents []byte) (int32, error) {
+// parseNSPID extracts the NSpid entry levelsAboveInnermost levels above the last one, or -1 if there is none.
+func parseNSPID(contents []byte, levelsAboveInnermost int) (int32, error) {
 	for line := range strings.Lines(string(contents)) {
 		rest, ok := strings.CutPrefix(line, "NSpid:")
 		if !ok {
@@ -143,9 +145,14 @@ func parseInnermostPID(contents []byte) (int32, error) {
 			return 0, errors.New("NSpid field is empty")
 		}
 
-		innermost, err := strconv.ParseInt(fields[len(fields)-1], 10, 32)
+		idx := len(fields) - 1 - levelsAboveInnermost
+		if idx < 0 {
+			return -1, nil
+		}
+
+		innermost, err := strconv.ParseInt(fields[idx], 10, 32)
 		if err != nil {
-			return 0, fmt.Errorf("failed to parse NSpid entry %q: %w", fields[len(fields)-1], err)
+			return 0, fmt.Errorf("failed to parse NSpid entry %q: %w", fields[idx], err)
 		}
 
 		return int32(innermost), nil
