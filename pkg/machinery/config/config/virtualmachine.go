@@ -35,6 +35,8 @@ type VirtualMachineConfig interface {
 	Networking() VirtualMachineNetworkingConfig
 	// Guest settings; never nil, and zero-valued when the guest section is omitted.
 	Guest() VirtualMachineGuestConfig
+	// MachineType is the QEMU machine type (e.g. "q35", "pc"); empty leaves it to libvirt.
+	MachineType() string
 }
 
 // VirtualMachineCPUConfig defines the processors presented to the guest.

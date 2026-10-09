@@ -457,6 +457,10 @@ func renderVirtualMachineDomain(
 
 	renderVirtualMachineGuest(&domain, spec.Guest)
 
+	if spec.MachineType != "" {
+		domain.OS.Type.Machine = spec.MachineType
+	}
+
 	attachedDisks, err := renderVirtualMachineDisks(&domain, name, spec.Disks, resolvedDisks)
 	if err != nil {
 		return "", nil, err

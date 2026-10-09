@@ -130,6 +130,7 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 				Enabled: vm.Guest().Agent().Enabled(),
 			},
 		},
+		MachineType: vm.MachineType(),
 	}
 
 	topology := vm.CPU().Topology()

@@ -35,6 +35,8 @@ type VirtualMachineSpecSpec struct {
 	Interfaces []VirtualMachineInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"7"`
 	CloudInit  *VirtualMachineCloudInitSpec  `yaml:"cloudInit,omitempty" protobuf:"8"`
 	Guest      VirtualMachineGuestSpec       `yaml:"guest" protobuf:"9"`
+	// MachineType is the QEMU machine type; empty leaves it to libvirt.
+	MachineType string `yaml:"machineType,omitempty" protobuf:"10"`
 }
 
 // VirtualMachineCloudInitSpec is backend-neutral guest seed intent.

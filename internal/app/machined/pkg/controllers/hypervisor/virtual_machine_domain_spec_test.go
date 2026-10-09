@@ -113,6 +113,35 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 	}
 }
 
+// MachineType is passed through to <os><type machine="…">; absence leaves it unset.
+func (suite *VirtualMachineSpecSuite) TestMachineType() {
+	for _, mt := range []string{"", "q35", "pc-i440fx-11.1"} {
+		name := fmt.Sprintf("machinetype-%s", mt)
+		if mt == "" {
+			name = "machinetype-default"
+		}
+
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:         hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:      hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+			PowerState:  "stopped",
+			Firmware:    hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			MachineType: mt,
+		}
+		suite.Create(spec)
+
+		ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			var domain libvirtxml.Domain
+			if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.NotNil(domain.OS.Type) {
+				return
+			}
+
+			asrt.Equal(mt, domain.OS.Type.Machine)
+		})
+	}
+}
+
 // Both production controllers remain registered in these tests. No MachineConfig
 // is needed to create, update, validate, or remove externally authored specs.
 func (suite *VirtualMachineSpecSuite) TestExternalSpecLifecycle() {
