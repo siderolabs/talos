@@ -17,7 +17,7 @@ title: KubeControllerManagerConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig
-image: registry.k8s.io/kube-controller-manager:v1.38.0-alpha.1 # The container image used to run the kube-controller-manager component.
+image: registry.k8s.io/kube-controller-manager:v1.38.0-alpha.2 # The container image used to run the kube-controller-manager component.
 # Extra command line arguments to supply to the kube-controller-manager.
 extraArgs:
     feature-gates: AllBeta=true

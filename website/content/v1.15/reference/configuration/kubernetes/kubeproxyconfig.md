@@ -16,7 +16,7 @@ title: KubeProxyConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeProxyConfig
-image: registry.k8s.io/kube-proxy:v1.38.0-alpha.1 # The container image used in the kube-proxy manifest.
+image: registry.k8s.io/kube-proxy:v1.38.0-alpha.2 # The container image used in the kube-proxy manifest.
 mode: nftables # description: |
 # Provide configuration for the kube-proxy.
 config:

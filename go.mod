@@ -195,19 +195,19 @@ require (
 	google.golang.org/grpc v1.84.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
-	k8s.io/api v0.38.0-alpha.1
-	k8s.io/apiextensions-apiserver v0.38.0-alpha.1
-	k8s.io/apimachinery v0.38.0-alpha.1
-	k8s.io/apiserver v0.38.0-alpha.1
-	k8s.io/client-go v0.38.0-alpha.1
-	k8s.io/component-base v0.38.0-alpha.1
-	k8s.io/cri-api v0.38.0-alpha.1
+	k8s.io/api v0.38.0-alpha.2
+	k8s.io/apiextensions-apiserver v0.38.0-alpha.2
+	k8s.io/apimachinery v0.38.0-alpha.2
+	k8s.io/apiserver v0.38.0-alpha.2
+	k8s.io/client-go v0.38.0-alpha.2
+	k8s.io/component-base v0.38.0-alpha.2
+	k8s.io/cri-api v0.38.0-alpha.2
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-proxy v0.38.0-alpha.1
-	k8s.io/kube-scheduler v0.38.0-alpha.1
-	k8s.io/kubectl v0.38.0-alpha.1
-	k8s.io/kubelet v0.38.0-alpha.1
-	k8s.io/pod-security-admission v0.38.0-alpha.1
+	k8s.io/kube-proxy v0.38.0-alpha.2
+	k8s.io/kube-scheduler v0.38.0-alpha.2
+	k8s.io/kubectl v0.38.0-alpha.2
+	k8s.io/kubelet v0.38.0-alpha.2
+	k8s.io/pod-security-admission v0.38.0-alpha.2
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12007.0
@@ -314,21 +314,18 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/go-openapi/analysis v0.26.0 // indirect
 	github.com/go-openapi/errors v0.22.8 // indirect
-	github.com/go-openapi/jsonpointer v1.0.1 // indirect
+	github.com/go-openapi/jsonpointer v1.0.2 // indirect
 	github.com/go-openapi/jsonreference v1.0.2 // indirect
 	github.com/go-openapi/loads v0.25.1 // indirect
 	github.com/go-openapi/runtime v0.33.0 // indirect
 	github.com/go-openapi/runtime/server-middleware v0.32.4 // indirect
 	github.com/go-openapi/spec v0.22.9 // indirect
 	github.com/go-openapi/strfmt v0.27.0 // indirect
-	github.com/go-openapi/swag v0.29.2 // indirect
-	github.com/go-openapi/swag/cmdutils v0.29.2 // indirect
 	github.com/go-openapi/swag/conv v0.29.2 // indirect
 	github.com/go-openapi/swag/fileutils v0.29.2 // indirect
 	github.com/go-openapi/swag/jsonutils v0.29.2 // indirect
 	github.com/go-openapi/swag/loading v0.29.2 // indirect
 	github.com/go-openapi/swag/mangling v0.29.2 // indirect
-	github.com/go-openapi/swag/netutils v0.29.2 // indirect
 	github.com/go-openapi/swag/pools v0.29.2 // indirect
 	github.com/go-openapi/swag/stringutils v0.29.2 // indirect
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
@@ -428,7 +425,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/orcaman/concurrent-map/v2 v2.0.1 // indirect
-	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
+	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/petermattis/goid v0.0.0-20260918085751-abfca077860b // indirect
 	github.com/pierrec/lz4/v4 v4.1.30 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
@@ -510,9 +507,9 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.3 // indirect
 	gorm.io/gorm v1.31.2 // indirect
-	k8s.io/cli-runtime v0.38.0-alpha.1 // indirect
-	k8s.io/kube-openapi v0.0.0-20260908163437-c4db2bdfbfe6 // indirect
-	k8s.io/streaming v0.38.0-alpha.1 // indirect
+	k8s.io/cli-runtime v0.38.0-alpha.2 // indirect
+	k8s.io/kube-openapi v0.0.0-20260929181212-2cfbdf149b9a // indirect
+	k8s.io/streaming v0.38.0-alpha.2 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.78 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 	modernc.org/libc v1.74.1 // indirect
