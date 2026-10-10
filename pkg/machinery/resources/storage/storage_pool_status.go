@@ -16,17 +16,27 @@ import (
 // StoragePoolStatusType is the type of StoragePoolStatus resource.
 const StoragePoolStatusType = resource.Type("StoragePoolStatuses.storage.talos.dev")
 
+// StoragePoolVolumeMutationFinalizerPrefix identifies recoverable volume mutation markers.
+const StoragePoolVolumeMutationFinalizerPrefix = "storage.StoragePoolVolumeController/mutating/"
+
+// StoragePoolVolumeMutationFinalizer excludes new domain starts on one pool volume.
+// Storage publishes it on the pool status before reading disk holds, and removes
+// it after mutation or immediately when a hold defers growth.
+func StoragePoolVolumeMutationFinalizer(name string) resource.Finalizer {
+	return StoragePoolVolumeMutationFinalizerPrefix + name
+}
+
 // StoragePoolStatus is the observed state of a directory storage pool, keyed by pool name.
 type StoragePoolStatus = typed.Resource[StoragePoolStatusSpec, StoragePoolStatusExtension]
 
-// StoragePoolStatusSpec reports the pool's backing volume, directory and readiness.
+// StoragePoolStatusSpec reports the pool's backing volume, directory and observed attachability.
 //
 //gotagsrewrite:gen
 type StoragePoolStatusSpec struct {
-	VolumeID   string `yaml:"volumeID" protobuf:"1"`
-	TargetPath string `yaml:"targetPath" protobuf:"2"`
-	Ready      bool   `yaml:"ready" protobuf:"3"`
-	Error      string `yaml:"error,omitempty" protobuf:"4"`
+	VolumeID   string           `yaml:"volumeID" protobuf:"1"`
+	TargetPath string           `yaml:"targetPath" protobuf:"2"`
+	Phase      StoragePoolPhase `yaml:"phase" protobuf:"3"`
+	Error      string           `yaml:"error,omitempty" protobuf:"4"`
 }
 
 // NewStoragePoolStatus initializes a StoragePoolStatus resource.
@@ -48,7 +58,7 @@ func (StoragePoolStatusExtension) ResourceDefinition() meta.ResourceDefinitionSp
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Volume", JSONPath: "{.volumeID}"},
 			{Name: "Target", JSONPath: "{.targetPath}"},
-			{Name: "Ready", JSONPath: "{.ready}"},
+			{Name: "Phase", JSONPath: "{.phase}"},
 			{Name: "Error", JSONPath: "{.error}"},
 		},
 	}

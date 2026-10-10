@@ -28,9 +28,12 @@ import (
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 //nolint:gocyclo // Verify both architecture-specific defaults across console lifecycle transitions.
@@ -380,6 +383,66 @@ func (suite *VirtualMachineSpecSuite) TestInjectedEscapedName() {
 	suite.assertDomain(spec.Metadata().ID(), "escaped-name")
 }
 
+// Resource IDs are not machine-configuration names. Each escaped ID must reach
+// the storage request boundary without being treated as a path or truncated.
+func (suite *VirtualMachineDiskSuite) TestInjectedEscapedBlankVolumeNames() {
+	ids := []string{
+		"guest/&<\u96ea>	\r🙂",
+		"guest/&<\u96ea>	\r🙂-other",
+		"../guest",
+		"guest__data",
+		strings.Repeat("long", 1024),
+		strings.Repeat("long", 1024) + "different",
+		"vm-a",
+		"vm",
+	}
+	seen := map[string]struct{}{}
+
+	for _, id := range ids {
+		for _, diskName := range []string{"data", "a-data"} {
+			disk := blankDiskSpec(diskName, "pool1", "raw", 1<<20)
+			vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, id)
+
+			vm.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{disk}
+			if diskName == "data" {
+				suite.Create(vm)
+			} else {
+				ctest.UpdateWithConflicts(suite, vm, func(current *hypervisor.VirtualMachineSpec) error {
+					current.TypedSpec().Disks = append(current.TypedSpec().Disks, disk)
+
+					return nil
+				})
+			}
+
+			var volume string
+
+			ctest.AssertResource(suite, hypervisor.VirtualMachineDiskStatusID(id, disk), func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
+				asrt.NotEmpty(status.TypedSpec().Volume)
+				asrt.NotContains(status.TypedSpec().Error, "unsupported")
+				volume = status.TypedSpec().Volume
+			})
+			suite.Require().NotEmpty(volume)
+			suite.Require().LessOrEqual(len(volume), 255)
+			suite.Require().NotContains(volume, "/")
+			suite.Require().Equal(filepath.Base(volume), volume)
+			_, duplicate := seen[volume]
+			suite.Require().False(duplicate, "distinct ID/disk pairs must not share a volume")
+
+			seen[volume] = struct{}{}
+			suite.Equal(volume, hypervisorctrl.BlankVolumeNameForTest(id, disk), "mapping must be stable")
+
+			if id == "vm" || id == "vm-a" {
+				suite.Equal(id+"__"+diskName+".raw", volume, "preserve existing filenames")
+			}
+
+			ctest.AssertResource(suite, storage.StoragePoolVolumeID("pool1", volume), func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+				asrt.Equal(volume, request.TypedSpec().Name)
+				asrt.Equal(uint64(1<<20), request.TypedSpec().Capacity)
+			})
+		}
+	}
+}
+
 func (suite *VirtualMachineSpecSuite) TestInjectedInvalidSpecs() {
 	for _, invalid := range []hypervisor.VirtualMachineSpecSpec{
 		// Missing power and firmware are independently invalid even with valid CPU/memory.
@@ -580,7 +643,11 @@ func (suite *VirtualMachineSpecSuite) TestRendersCDROMFromContentLibrary() {
 	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeID: "u-images", Path: path, Ready: true}
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
+		VolumeID: "u-images",
+		Path:     path,
+		Phase:    hypervisor.ContentLibraryPhaseReady,
+	}
 	suite.Create(library)
 
 	doc := newVirtualMachine("booted")
@@ -620,7 +687,11 @@ func (suite *VirtualMachineSpecSuite) TestAllocatesDistinctTargetDevices() {
 	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "two-images")
-	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeID: "u-two-images", Path: path, Ready: true}
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
+		VolumeID: "u-two-images",
+		Path:     path,
+		Phase:    hypervisor.ContentLibraryPhaseReady,
+	}
 	suite.Create(library)
 
 	cdrom := func(name string, bus hypervisorhelpers.VirtualMachineDiskBus) hypervisorcfg.VirtualMachineDisk {
@@ -659,7 +730,11 @@ func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBus() {
 	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte("iso"), 0o600))
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "nvme-images")
-	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{VolumeID: "u-nvme-images", Path: path, Ready: true}
+	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
+		VolumeID: "u-nvme-images",
+		Path:     path,
+		Phase:    hypervisor.ContentLibraryPhaseReady,
+	}
 	suite.Create(library)
 
 	doc := newVirtualMachine("nvme-cdrom")
@@ -702,6 +777,190 @@ func TestVirtualMachineStaleDiskSuite(t *testing.T) {
 	})
 }
 
+func (suite *VirtualMachineStaleDiskSuite) TestDiskPhasesGateDomainRendering() {
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*vm.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU: hypervisor.VirtualMachineCPUSpec{
+			Count: 1,
+		},
+		Memory: hypervisor.VirtualMachineMemorySpec{
+			Size: 512 << 20,
+		},
+		PowerState: "running",
+		Firmware: hypervisor.VirtualMachineFirmwareSpec{
+			Type: "bios",
+		},
+		Disks: []hypervisor.VirtualMachineDiskSpec{disk},
+	}
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, disk))
+	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName,
+		Name:           disk.Name,
+		SourcePath:     filepath.Join(contentLibraryPlaceholder, "talos.iso"),
+		Format:         "raw",
+		ReadOnly:       true,
+	}
+	suite.Create(status)
+	suite.Create(vm)
+
+	for _, phase := range []hypervisor.VirtualMachineDiskPhase{
+		hypervisor.VirtualMachineDiskPhaseUnknown,
+		hypervisor.VirtualMachineDiskPhaseNotReady,
+		hypervisor.VirtualMachineDiskPhaseObservationUnavailable,
+	} {
+		ctest.UpdateWithConflicts(suite, status, func(current *hypervisor.VirtualMachineDiskStatus) error {
+			current.TypedSpec().Phase = phase
+
+			return nil
+		})
+		suite.Require().Never(func() bool {
+			_, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+
+			return !state.IsNotFoundError(err)
+		}, 100*time.Millisecond, 10*time.Millisecond)
+	}
+
+	ctest.UpdateWithConflicts(suite, status, func(current *hypervisor.VirtualMachineDiskStatus) error {
+		current.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseReady
+
+		return nil
+	})
+	ctest.AssertResource(suite, vmName, func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", domain.TypedSpec().PowerState)
+	})
+
+	ctest.UpdateWithConflicts(suite, status, func(current *hypervisor.VirtualMachineDiskStatus) error {
+		current.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseUnknown
+
+		return nil
+	})
+	ctest.AssertResource(suite, vmName, func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", domain.TypedSpec().PowerState)
+	})
+}
+
+// Disk observation can lag behind the pool's recovered Ready status.
+func (suite *VirtualMachineStaleDiskSuite) TestRecoveredPoolBeforeDiskObservation() {
+	disk := hypervisor.VirtualMachineDiskSpec{
+		Name:   "system",
+		Pool:   "vms",
+		Type:   "disk",
+		Bus:    "virtio",
+		Format: "raw",
+		Size:   1 << 20,
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			Blank: true,
+		},
+	}
+	otherDisk := disk
+	otherDisk.Name = "data"
+
+	poolSpec := storage.NewStoragePoolSpec(storage.NamespaceName, "vms")
+	poolSpec.TypedSpec().VolumeID = "u-vms"
+	suite.Create(poolSpec)
+
+	pool := storage.NewStoragePoolStatus(storage.NamespaceName, "vms")
+	pool.TypedSpec().VolumeID = "u-vms"
+	pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
+	suite.Create(pool)
+
+	mount := block.NewVolumeMountStatus(block.NamespaceName, pool.TypedSpec().VolumeID)
+	mount.TypedSpec().Target = suite.T().TempDir()
+	suite.Create(mount)
+
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, disk))
+	*status.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: vmName, Name: disk.Name, Blank: true, Pool: disk.Pool, Volume: "vm__system.raw",
+		SourcePath: "/tmp/vm__system.raw",
+		Format:     "raw",
+		Size:       disk.Size,
+		Phase:      hypervisor.VirtualMachineDiskPhaseReady,
+	}
+	suite.Create(status)
+
+	otherStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(vmName, otherDisk))
+	*otherStatus.TypedSpec() = *status.TypedSpec()
+	otherStatus.TypedSpec().Name = otherDisk.Name
+	otherStatus.TypedSpec().Volume = "vm__data.raw"
+	otherStatus.TypedSpec().SourcePath = "/tmp/vm__data.raw"
+	suite.Create(otherStatus)
+
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	*vm.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "running", Firmware: hypervisor.VirtualMachineFirmwareSpec{Type: "bios"},
+		Disks: []hypervisor.VirtualMachineDiskSpec{disk, otherDisk},
+	}
+	suite.Create(vm)
+
+	var original string
+
+	suite.Require().Eventually(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+		if err != nil || domain.TypedSpec().DomainXML == "" || domain.TypedSpec().PowerState != "running" {
+			return false
+		}
+
+		original = domain.TypedSpec().DomainXML
+
+		return true
+	}, 5*time.Second, 10*time.Millisecond)
+
+	ctest.UpdateWithConflicts(suite, status, func(current *hypervisor.VirtualMachineDiskStatus) error {
+		current.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseObservationUnavailable
+		current.TypedSpec().Error = "storage observation unavailable"
+
+		return nil
+	})
+	// Pool is already Ready: current pool state alone cannot explain the stale disk.
+	ctx := suite.Ctx()
+	st := suite.State()
+	suite.Require().Never(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, vmName)
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != original
+	}, 200*time.Millisecond, 10*time.Millisecond)
+
+	// Another attached disk disappearing during the outage must stop the guest,
+	// even though the renderer reports the first disk's observation error.
+	suite.Destroy(otherStatus)
+	ctest.AssertResource(suite, vmName, func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", domain.TypedSpec().PowerState)
+	})
+
+	// Restore the missing disk and a fully observed definition before independently
+	// exercising the owner's retarget signal.
+	otherStatus.Metadata().SetVersion(resource.VersionUndefined)
+	suite.Create(otherStatus)
+	ctest.UpdateWithConflicts(suite, status, func(current *hypervisor.VirtualMachineDiskStatus) error {
+		current.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseReady
+
+		return nil
+	})
+	ctest.AssertResource(suite, vmName, func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", domain.TypedSpec().PowerState)
+	})
+	ctest.UpdateWithConflicts(suite, status, func(current *hypervisor.VirtualMachineDiskStatus) error {
+		current.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseObservationUnavailable
+
+		return nil
+	})
+
+	// Storage owns retarget/mount lifecycle and reports intentional withdrawal as
+	// NotReady; the renderer reads status, never reconstructs the pool specification.
+	ctest.UpdateWithConflicts(suite, pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolPhaseNotReady
+		current.TypedSpec().Error = "backing retarget held"
+
+		return nil
+	})
+	ctest.AssertResource(suite, vmName, func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", domain.TypedSpec().PowerState)
+	})
+}
+
 // A disk status is keyed by what the disk is provisioned from, so a status left over from another
 // image is a different resource and is simply not found. Rendering from it would attach the
 // previous image, and a rendered domain is started.
@@ -728,7 +987,7 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 		SourcePath:     filepath.Join(contentLibraryPlaceholder, "old.iso"),
 		Format:         "raw",
 		ReadOnly:       true,
-		Ready:          true,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
 		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "old.iso"},
 	}
 	suite.Create(status)
@@ -742,7 +1001,7 @@ func (suite *VirtualMachineStaleDiskSuite) TestWaitsOutADiskStatusForAnotherImag
 		SourcePath:     filepath.Join(contentLibraryPlaceholder, "new.iso"),
 		Format:         "raw",
 		ReadOnly:       true,
-		Ready:          true,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
 		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "new.iso"},
 	}
 	suite.Create(current)
@@ -780,7 +1039,7 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 		SourcePath:     filepath.Join(contentLibraryPlaceholder, "talos.iso"),
 		Format:         "raw",
 		ReadOnly:       true,
-		Ready:          true,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
 		Image:          hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.iso"},
 	}
 	suite.Create(status)
@@ -839,7 +1098,7 @@ func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
 
 	dir := s.T().TempDir()
 	lib := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	lib.TypedSpec().Ready = true
+	lib.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	lib.TypedSpec().Path = dir
 	lib.TypedSpec().VolumeID = "volume-a"
 	s.Create(lib)
@@ -857,7 +1116,7 @@ func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
 	// A remount invalidates the old seed even while its status is held.
 	ctest.UpdateWithConflicts(s, lib, func(current *hypervisor.ContentLibraryStatus) error {
 		current.TypedSpec().VolumeID = "volume-b"
-		current.TypedSpec().Ready = false
+		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
 
 		return nil
 	})
@@ -865,4 +1124,49 @@ func (s *VirtualMachineCloudInitDomainSuite) TestSeedIsAttachedOnlyWhenReady() {
 	ctest.AssertResource(s, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
 		a.Equal("stopped", domain.TypedSpec().PowerState)
 	})
+}
+
+// blankVolumePath stands in for the pool directory, which lives under a temporary mount in tests.
+const blankVolumePath = "/storage-pool/booted__data.qcow2"
+
+func (suite *VirtualMachineSpecSuite) TestRendersBlankDisk() {
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, storage.StoragePoolVolumeID("pool1", "booted__data.qcow2"))
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool:     "pool1",
+		Name:     "booted__data.qcow2",
+		Path:     blankVolumePath,
+		Format:   "qcow2",
+		Capacity: 20 << 30,
+		Phase:    storage.StoragePoolVolumePhaseReady,
+	}
+	suite.Create(volume, state.WithCreateOwner("storage.StoragePoolVolumeController"))
+
+	doc := newVirtualMachine("booted")
+	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
+		{
+			DiskName:      "data",
+			DiskPool:      "pool1",
+			DiskSize:      meta.MustByteSize("20GiB"),
+			DiskFormat:    hypervisorhelpers.VirtualMachineDiskFormatQCOW2,
+			DiskBootOrder: 1,
+			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
+				BlankConfig: &hypervisorcfg.VirtualMachineDiskBlank{},
+			},
+		},
+	}
+
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	want, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", "blank-disk.xml"))
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal(string(want), res.TypedSpec().DomainXML+"\n")
+	})
+
+	res, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), doc.Name())
+	suite.Require().NoError(err)
+	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
 }

@@ -347,7 +347,7 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "pool",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document. The reference\nis checked for shape only: nothing resolves it against the rest of the machine\nconfiguration yet.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
+				Description: "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePool` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePool` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -361,8 +361,8 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "format",
 				Type:        "VirtualMachineDiskFormat",
 				Note:        "",
-				Description: "On-disk format of the volume.\n\nThis is not cosmetic: `provision.fromImage.mode: linked` requires `qcow2`, since backing\nchains are a qcow2 feature, while `raw` is faster on block-backed pools.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "On-disk format of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "On-disk format of a blank volume.\n\nChoose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "On-disk format of a blank volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"raw",
 					"qcow2",
@@ -378,7 +378,6 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 					"virtio",
 					"scsi",
 					"sata",
-					"nvme",
 				},
 			},
 			{
@@ -437,8 +436,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "fromImage",
 				Type:        "VirtualMachineDiskFromImage",
 				Note:        "",
-				Description: "Derive the volume from an image held in a content library.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Derive the volume from an image held in a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Attach read-only CD-ROM media from a content library.\n\nSet `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is\nattached in place, not copied into a volume. Writable image-derived disks (copy or\nlinked) are not supported. Use `provision.blank` for a writable disk and install from\nCD-ROM media.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach read-only CD-ROM media from a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -466,8 +465,8 @@ func (VirtualMachineDiskBlank) Doc() *encoder.Doc {
 func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineDiskFromImage",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskFromImage derives a volume from a content library image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineDiskFromImage derives a volume from a content library image.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskFromImage references media in a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskFromImage references media in a content library.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VirtualMachineDiskProvision",
@@ -493,15 +492,15 @@ func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 				Name:        "digest",
 				Type:        "string",
 				Note:        "",
-				Description: "Integrity check of the library file, verified before the volume is provisioned.\n\nWritten as `<algorithm>:<hex>`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Integrity check of the library file, verified before the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Integrity check of the library file, verified before the media is attached.\n\nWritten as `<algorithm>:<hex>`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Integrity check of the library file, verified before the media is attached." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "mode",
 				Type:        "VirtualMachineDiskImageMode",
 				Note:        "",
-				Description: "How the volume is derived from the image.\n\n`copy` makes a full, independent copy. `linked` makes a thin qcow2 backed by the library\nimage: fast and space-cheap, but it pins that image for the lifetime of the disk, and it\nrequires `format: qcow2`.\n\nOptional; defaults to `copy`. Not allowed on a `cdrom`, whose read-only medium never\ndiverges from the image, and which is therefore attached in place.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "How the volume is derived from the image." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mode for deriving a writable disk from an image (not supported yet).\n\nNeither `copy` nor `linked` currently provisions a writable image-derived disk. For a\nwritable disk, use `provision.blank` instead; for image media, use a read-only `cdrom`.\n\nOmit this field on a `cdrom`: even an explicit `copy` is rejected because its read-only\nmedium is attached in place. An omitted mode defaults to `copy` for a disk, but that\nwritable image-derived configuration is not supported.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mode for deriving a writable disk from an image (not supported yet)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"copy",
 					"linked",
@@ -511,7 +510,7 @@ func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 	}
 
 	doc.Fields[0].AddExample("", "images")
-	doc.Fields[1].AddExample("", "talos-1.14.qcow2")
+	doc.Fields[1].AddExample("", "ubuntu-24.04.iso")
 	doc.Fields[2].AddExample("", "sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c")
 
 	return doc

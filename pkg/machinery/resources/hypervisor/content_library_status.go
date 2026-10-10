@@ -31,8 +31,8 @@ type ContentLibraryStatusSpec struct {
 	//
 	// Only meaningful when Ready.
 	Path string `yaml:"path,omitempty" protobuf:"2"`
-	// Ready is true once the backing volume is mounted.
-	Ready bool `yaml:"ready" protobuf:"3"`
+	// Phase is Ready once the backing volume is mounted.
+	Phase ContentLibraryPhase `yaml:"phase" protobuf:"3"`
 	// Error describes why the library is not ready.
 	Error string `yaml:"error,omitempty" protobuf:"4"`
 	// Fingerprint changes whenever the files in the library do (name, size, modification time).
@@ -73,8 +73,8 @@ func (ContentLibraryStatusExtension) ResourceDefinition() meta.ResourceDefinitio
 				JSONPath: `{.volumeID}`,
 			},
 			{
-				Name:     "Ready",
-				JSONPath: `{.ready}`,
+				Name:     "Phase",
+				JSONPath: `{.phase}`,
 			},
 			{
 				Name:     "Path",

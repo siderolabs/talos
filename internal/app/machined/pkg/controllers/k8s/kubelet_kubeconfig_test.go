@@ -194,6 +194,22 @@ func hashWithoutCert(kubeconfig []byte, certPath string) string {
 	return hex.EncodeToString(sum.Sum(nil))
 }
 
+// writeClientCertAtomically replaces the credential file without exposing an intermediate
+// key-only file to the watcher, as kubelet does when switching its current-cert symlink.
+func (suite *KubeletKubeconfigSuite) writeClientCertAtomically(certPath string, data []byte) {
+	suite.T().Helper()
+
+	file, err := os.CreateTemp(filepath.Dir(certPath), "kubelet-client-*.pem")
+	suite.Require().NoError(err)
+
+	defer os.Remove(file.Name()) //nolint:errcheck
+
+	_, err = file.Write(data)
+	suite.Require().NoError(err)
+	suite.Require().NoError(file.Close())
+	suite.Require().NoError(os.Rename(file.Name(), certPath))
+}
+
 // TestClientCertificateRotation verifies that the hash follows the certificate the
 // kubeconfig points at: kubelet rotates it behind the `kubelet-client-current.pem`
 // symlink without ever rewriting the kubeconfig itself.
@@ -205,7 +221,7 @@ func (suite *KubeletKubeconfigSuite) TestClientCertificateRotation() {
 	certPath := filepath.Join(pkiDir, "kubelet-client-current.pem")
 
 	crt, key := newCertificatePEM(suite.T())
-	suite.Require().NoError(os.WriteFile(certPath, slices.Concat(key, crt), 0o600))
+	suite.writeClientCertAtomically(certPath, slices.Concat(key, crt))
 
 	suite.writeKubeconfigWithClientCert(certPath)
 
@@ -223,7 +239,7 @@ func (suite *KubeletKubeconfigSuite) TestClientCertificateRotation() {
 
 	// rotate the certificate, keeping the kubeconfig untouched
 	rotatedCrt, rotatedKey := newCertificatePEM(suite.T())
-	suite.Require().NoError(os.WriteFile(certPath, slices.Concat(rotatedKey, rotatedCrt), 0o600))
+	suite.writeClientCertAtomically(certPath, slices.Concat(rotatedKey, rotatedCrt))
 
 	var (
 		rotatedHash    string
@@ -244,7 +260,7 @@ func (suite *KubeletKubeconfigSuite) TestClientCertificateRotation() {
 	// replacing the key alone should not be visible in the hash: private key material is
 	// deliberately left out of the digest
 	_, otherKey := newCertificatePEM(suite.T())
-	suite.Require().NoError(os.WriteFile(certPath, slices.Concat(otherKey, rotatedCrt), 0o600))
+	suite.writeClientCertAtomically(certPath, slices.Concat(otherKey, rotatedCrt))
 
 	// give the fsnotify-driven reconcile a chance to run: an unchanged hash is a no-op
 	// write, so the resource version stays put as well

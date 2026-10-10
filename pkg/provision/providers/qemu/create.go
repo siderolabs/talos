@@ -147,17 +147,8 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
-	for _, extraDHCPRecord := range request.Network.ExtraDHCPRecords {
-		if err = vm.DumpIPAMRecord(statePath, vm.IPAMRecord{
-			IP:       extraDHCPRecord.IP.Addr(),
-			Netmask:  byte(extraDHCPRecord.IP.Bits()),
-			Gateway:  extraDHCPRecord.Gateway,
-			MAC:      extraDHCPRecord.MAC,
-			Hostname: extraDHCPRecord.Name,
-			MTU:      request.Network.MTU,
-		}); err != nil {
-			return nil, fmt.Errorf("error dumping extra IPAM record: %w", err)
-		}
+	if err = vm.DumpExtraIPAMRecords(statePath, request.Network); err != nil {
+		return nil, err
 	}
 
 	var nodeInfo []provision.NodeInfo //nolint:prealloc // this is created by p.createNodes
