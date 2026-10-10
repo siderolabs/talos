@@ -162,6 +162,9 @@ func GrowFilesystem(ctx context.Context, logger *zap.Logger, volumeContext Manag
 			mountv3.WithFsopen(
 				volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
 				fsopen.WithSource(volumeContext.Status.MountLocation),
+				// A quota-less XFS mount clears accounting state even when it is
+				// only used for growth, forcing quotacheck on the final mount.
+				fsopen.WithProjectQuota(volumeContext.Status.MountSpec.ProjectQuotaSupport),
 			),
 		)
 
