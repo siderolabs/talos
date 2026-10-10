@@ -113,6 +113,46 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 	}
 }
 
+// Video model + VRAM flow through to <video><model type="…" vram="…">; empty model falls
+// back to "vga" and zero vramMiB omits the attribute.
+func (suite *VirtualMachineSpecSuite) TestVideoDevice() {
+	if runtime.GOARCH != "amd64" {
+		suite.T().Skip("video device is only rendered on amd64")
+	}
+
+	for _, tc := range []struct {
+		name    string
+		video   hypervisor.VirtualMachineVideoSpec
+		model   string
+		vramKiB uint
+	}{
+		{name: "default", video: hypervisor.VirtualMachineVideoSpec{}, model: "vga", vramKiB: 0},
+		{name: "qxl-32", video: hypervisor.VirtualMachineVideoSpec{Model: "qxl", VRAMMiB: 32}, model: "qxl", vramKiB: 32 * 1024},
+		{name: "virtio-no-vram", video: hypervisor.VirtualMachineVideoSpec{Model: "virtio"}, model: "virtio", vramKiB: 0},
+	} {
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "video-"+tc.name)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+			PowerState: "stopped",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Console:    hypervisor.VirtualMachineConsoleSpec{VNC: true},
+			Video:      tc.video,
+		}
+		suite.Create(spec)
+
+		ctest.AssertResource(suite, "video-"+tc.name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			var domain libvirtxml.Domain
+			if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.Len(domain.Devices.Videos, 1) {
+				return
+			}
+
+			asrt.Equal(tc.model, domain.Devices.Videos[0].Model.Type)
+			asrt.Equal(tc.vramKiB, domain.Devices.Videos[0].Model.VRam)
+		})
+	}
+}
+
 // Both production controllers remain registered in these tests. No MachineConfig
 // is needed to create, update, validate, or remove externally authored specs.
 func (suite *VirtualMachineSpecSuite) TestExternalSpecLifecycle() {
