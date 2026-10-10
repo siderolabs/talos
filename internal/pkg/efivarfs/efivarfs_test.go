@@ -6,6 +6,7 @@ package efivarfs_test
 
 import (
 	"encoding/binary"
+	"encoding/hex"
 	"io/fs"
 	"testing"
 
@@ -156,4 +157,96 @@ func TestUniqueBootOrder(t *testing.T) {
 	require.Equal(t, efivarfs.BootOrder{1, 2, 3}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{1, 2, 3, 2, 1, 3}), "BootOrder with duplicates should have duplicates removed preserving order of first appearance") //nolint:lll
 
 	require.Equal(t, efivarfs.BootOrder{0, 1, 3, 2}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{0, 1, 0, 1, 0, 1, 1, 3, 2, 2, 3, 3, 1}), "BootOrder with all entries duplicated should have duplicates removed preserving order of first appearance") //nolint:lll
+}
+
+// "UEFI OS" entry written by AMI firmware on a Gigabyte B85N PHOENIX-CF (BIOS F6).
+// FilePathListLength is 96, but the device path ends after 94 bytes, leaving two
+// zero bytes after the end node.
+const amiUEFIOSBootEntry = "01000000600055004500460049002000" +
+	"4f005300000004012a00010000000008" +
+	"00000000000000a8410000000000da44" +
+	"a6173c249a4c8c1f89e000db7cbc0202" +
+	"040430005c004500460049005c004200" +
+	"4f004f0054005c0042004f004f005400" +
+	"5800360034002e004500460049000000" +
+	"7fff04000000"
+
+func TestListBootEntriesUndecodable(t *testing.T) {
+	t.Parallel()
+
+	undecodable, err := hex.DecodeString(amiUEFIOSBootEntry)
+	require.NoError(t, err)
+
+	_, err = efivarfs.UnmarshalLoadOption(undecodable)
+	require.ErrorContains(t, err, "dangling bytes at the end of device path")
+
+	valid, err := (&efivarfs.LoadOption{
+		Description: "Valid",
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/valid.efi"),
+		},
+	}).Marshal()
+	require.NoError(t, err)
+
+	efiRW := efivarfs.Mock{
+		Variables: map[uuid.UUID]map[string]efivarfs.MockVariable{
+			efivarfs.ScopeGlobal: {
+				"Boot0000": {Data: undecodable},
+				"Boot0001": {Data: valid},
+			},
+		},
+	}
+
+	entries, err := efivarfs.ListBootEntries(&efiRW)
+	require.NoError(t, err)
+
+	require.Len(t, entries, 2)
+	require.Contains(t, entries, 0)
+	require.Nil(t, entries[0])
+	require.NotNil(t, entries[1])
+	require.Equal(t, "Valid", entries[1].Description)
+
+	// The index of the undecodable entry must stay occupied.
+	idx, err := efivarfs.AddBootEntry(&efiRW, &efivarfs.LoadOption{
+		Description: "New",
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/new.efi"),
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, 2, idx)
+	require.Equal(t, undecodable, efiRW.Variables[efivarfs.ScopeGlobal]["Boot0000"].Data)
+}
+
+func TestListBootEntriesUndecodableDuplicateCase(t *testing.T) {
+	t.Parallel()
+
+	undecodable, err := hex.DecodeString(amiUEFIOSBootEntry)
+	require.NoError(t, err)
+
+	valid, err := (&efivarfs.LoadOption{
+		Description: "Valid",
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/valid.efi"),
+		},
+	}).Marshal()
+	require.NoError(t, err)
+
+	// Both spellings of the same index: the decodable one must win,
+	// regardless of the order the variables are listed in.
+	efiRW := efivarfs.Mock{
+		Variables: map[uuid.UUID]map[string]efivarfs.MockVariable{
+			efivarfs.ScopeGlobal: {
+				"Boot000A": {Data: valid},
+				"Boot000a": {Data: undecodable},
+			},
+		},
+	}
+
+	entries, err := efivarfs.ListBootEntries(&efiRW)
+	require.NoError(t, err)
+
+	require.Len(t, entries, 1)
+	require.NotNil(t, entries[10])
+	require.Equal(t, "Valid", entries[10].Description)
 }

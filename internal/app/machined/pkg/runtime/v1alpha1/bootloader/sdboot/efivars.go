@@ -152,6 +152,13 @@ func CreateBootEntry(rw efivarfs.ReadWriter, blkidInfo *blkid.Info, printf func(
 
 	// Find all boot entries with the Talos Linux UKI description.
 	for idx, entry := range bootEntries {
+		if entry == nil {
+			_, decodeErr := efivarfs.GetBootEntry(rw, idx)
+			printf("Skipping boot entry at index %d: cannot be decoded: %v", idx, decodeErr)
+
+			continue
+		}
+
 		if entry.Description == TalosBootEntryDescription {
 			existingTalosBootEntryIndexes = append(existingTalosBootEntryIndexes, idx)
 		}
