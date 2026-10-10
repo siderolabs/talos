@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: selinux
+content: |
+  [plugins."io.containerd.cri.v1.runtime"]
+    enable_selinux = true
+    selinux_category_range = 512

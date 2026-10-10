@@ -1,0 +1,2 @@
+process = "system_u:system_r:pod_t:s0"
+file = "system_u:object_r:pod_file_t:s0"

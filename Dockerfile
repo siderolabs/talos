@@ -833,6 +833,7 @@ COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/selinux/virtual_domain_context hack/selinux/virtual_image_context /rootfs/etc/selinux/targeted/contexts/
 COPY --link --chmod=0644 --from=selinux-generate /policy/file_contexts /rootfs/etc/selinux/targeted/contexts/files/file_contexts
+COPY --chmod=0644 hack/selinux/containers_contexts /rootfs/usr/share/containers/selinux/contexts
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
@@ -925,6 +926,7 @@ COPY --chmod=0644 hack/zoneinfo/Etc/UTC /rootfs/usr/share/zoneinfo/Etc/UTC
 COPY --chmod=0644 hack/nfsmount.conf /rootfs/etc/nfsmount.conf
 COPY --chmod=0644 hack/selinux/virtual_domain_context hack/selinux/virtual_image_context /rootfs/etc/selinux/targeted/contexts/
 COPY --link --chmod=0644 --from=selinux-generate /policy/file_contexts /rootfs/etc/selinux/targeted/contexts/files/file_contexts
+COPY --chmod=0644 hack/selinux/containers_contexts /rootfs/usr/share/containers/selinux/contexts
 COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
