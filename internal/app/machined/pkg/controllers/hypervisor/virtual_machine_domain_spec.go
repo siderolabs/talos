@@ -530,6 +530,10 @@ func renderVirtualMachineGuest(domain *libvirtxml.Domain, guest hypervisor.Virtu
 }
 
 func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor.VirtualMachineFirmwareSpec) {
+	domain.Features = &libvirtxml.DomainFeatureList{
+		ACPI: &libvirtxml.DomainFeature{},
+	}
+
 	if firmware.Type != "uefi" {
 		// Omit firmware autoselection: the libvirt extension runs legacy BIOS
 		// domains without a firmware descriptor.
@@ -537,10 +541,6 @@ func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor
 	}
 
 	domain.OS.Firmware = "efi"
-	// QEMU rejects UEFI domains without ACPI on supported architectures.
-	domain.Features = &libvirtxml.DomainFeatureList{
-		ACPI: &libvirtxml.DomainFeature{},
-	}
 
 	enabled := "no"
 	if firmware.SecureBoot {
