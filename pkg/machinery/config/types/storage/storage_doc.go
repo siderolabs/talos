@@ -58,11 +58,54 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 				Name:        "volumeSelector",
 				Type:        "LVMVolumeSelectorSpec",
 				Note:        "",
-				Description: "Matches disks to initialize as physical volumes.",
+				Description: "Matches disks to initialize as physical volumes.\n\nMutually exclusive with `parents`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Matches disks to initialize as physical volumes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "parents",
+				Type:        "[]ProvisioningVolumeParent",
+				Note:        "",
+				Description: "References existing Talos-managed volumes to use as physical\nvolumes, instead of matching disks with `volumeSelector`.\n\nOnly `RawVolume` is currently supported as a parent kind. Talos\nwaits for each referenced volume to be ready before using it, and\nkeeps it from being torn down while this volume group depends on\nit.\n\nMutually exclusive with `volumeSelector`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "References existing Talos-managed volumes to use as physical" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
+
+	doc.Fields[1].AddExample("", exampleLVMVolumeGroupParents())
+
+	return doc
+}
+
+func (ProvisioningVolumeParent) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ProvisioningVolumeParent",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningVolumeParent references a Talos-managed volume to use as a" /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ProvisioningVolumeParent references a Talos-managed volume to use as a\nphysical volume, by kind and name.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ProvisioningSpec",
+				FieldName: "parents",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "kind",
+				Type:        "string",
+				Note:        "",
+				Description: "The kind of the referenced volume config document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The kind of the referenced volume config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "The name of the referenced volume config document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The name of the referenced volume config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLVMVolumeGroupParents())
 
 	return doc
 }
@@ -363,6 +406,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			LVMVolumeGroupConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),
+			ProvisioningVolumeParent{}.Doc(),
 			LVMVolumeSelectorSpec{}.Doc(),
 			LVMLogicalVolumeConfigV1Alpha1{}.Doc(),
 			LVMLogicalVolumeProvisioningSpec{}.Doc(),

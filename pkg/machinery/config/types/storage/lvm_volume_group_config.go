@@ -69,22 +69,66 @@ type LVMVolumeGroupConfigV1Alpha1 struct {
 type ProvisioningSpec struct {
 	//   description: |
 	//     Matches disks to initialize as physical volumes.
+	//
+	//     Mutually exclusive with `parents`.
 	VolumeSelector LVMVolumeSelectorSpec `yaml:"volumeSelector,omitempty"`
+	//   description: |
+	//     References existing Talos-managed volumes to use as physical
+	//     volumes, instead of matching disks with `volumeSelector`.
+	//
+	//     Only `RawVolume` is currently supported as a parent kind. Talos
+	//     waits for each referenced volume to be ready before using it, and
+	//     keeps it from being torn down while this volume group depends on
+	//     it.
+	//
+	//     Mutually exclusive with `volumeSelector`.
+	//   examples:
+	//     - value: exampleLVMVolumeGroupParents()
+	Parents []ProvisioningVolumeParent `yaml:"parents,omitempty"`
+}
+
+// ProvisioningVolumeParent references a Talos-managed volume to use as a
+// physical volume, by kind and name.
+type ProvisioningVolumeParent struct {
+	//   description: |
+	//     The kind of the referenced volume config document.
+	//   schema:
+	//     enum: ["RawVolume"]
+	ParentKind string `yaml:"kind"`
+	//   description: |
+	//     The name of the referenced volume config document.
+	ParentName string `yaml:"name"`
 }
 
 // IsZero reports whether the spec is empty.
 func (s ProvisioningSpec) IsZero() bool {
-	return s.VolumeSelector.IsZero()
+	return s.VolumeSelector.IsZero() && len(s.Parents) == 0
 }
 
 // Validate parses selector without mutating stored config.
 func (s ProvisioningSpec) Validate() error {
-	if s.VolumeSelector.Match.IsZero() {
-		return errors.New("provisioning.volumeSelector.match is required")
-	}
+	hasSelector := !s.VolumeSelector.Match.IsZero()
+	hasParents := len(s.Parents) > 0
 
-	if err := s.VolumeSelector.Match.ParseBool(celenv.MemberVolumeLocator()); err != nil {
-		return fmt.Errorf("provisioning.volumeSelector.match: %w", err)
+	switch {
+	case hasSelector && hasParents:
+		return errors.New("provisioning.volumeSelector and provisioning.parents are mutually exclusive")
+	case hasParents:
+		for i, parent := range s.Parents {
+			if parent.ParentKind != "RawVolume" {
+				return fmt.Errorf("provisioning.parents[%d].kind: unsupported kind %q, only \"RawVolume\" is supported", i, parent.ParentKind)
+			}
+
+			if parent.ParentName == "" {
+				return fmt.Errorf("provisioning.parents[%d].name is required", i)
+			}
+		}
+	case hasSelector:
+		if err := s.VolumeSelector.Match.ParseBool(celenv.MemberVolumeLocator()); err != nil {
+			return fmt.Errorf("provisioning.volumeSelector.match: %w", err)
+		}
+	default:
+		return errors.New("either provisioning.volumeSelector.match or provisioning.parents is required")
 	}
 
 	return nil
@@ -159,6 +203,13 @@ func exampleLVMVolumeIDSelector() cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression(`volume_id == "r-lvmdata"`, celenv.MemberVolumeLocator()))
 }
 
+func exampleLVMVolumeGroupParents() []ProvisioningVolumeParent {
+	return []ProvisioningVolumeParent{
+		{ParentKind: "RawVolume", ParentName: "data1"},
+		{ParentKind: "RawVolume", ParentName: "data2"},
+	}
+}
+
 // Name implements config.NamedDocument interface.
 func (s *LVMVolumeGroupConfigV1Alpha1) Name() string {
 	return s.MetaName
@@ -175,6 +226,21 @@ func (s *LVMVolumeGroupConfigV1Alpha1) LVMVolumeGroupConfigSignal() {}
 // PhysicalVolumeSelector implements config.LVMVolumeGroupConfig.
 func (s *LVMVolumeGroupConfigV1Alpha1) PhysicalVolumeSelector() cel.Expression {
 	return s.ProvisioningSpec.VolumeSelector.Match
+}
+
+// Parents implements config.LVMVolumeGroupConfig.
+func (s *LVMVolumeGroupConfigV1Alpha1) Parents() []config.ProvisioningVolumeParent {
+	if len(s.ProvisioningSpec.Parents) == 0 {
+		return nil
+	}
+
+	parents := make([]config.ProvisioningVolumeParent, 0, len(s.ProvisioningSpec.Parents))
+
+	for _, p := range s.ProvisioningSpec.Parents {
+		parents = append(parents, config.ProvisioningVolumeParent{Kind: p.ParentKind, Name: p.ParentName})
+	}
+
+	return parents
 }
 
 // Validate implements config.Validator interface.
