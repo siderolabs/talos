@@ -494,6 +494,27 @@ with the higher configuration layer taking precedence.
 `RouteStatus` resource IDs are not changed.
 """
 
+    [notes.ethernet_flow_control]
+        title = "Ethernet Flow Control"
+        description = """\
+The `EthernetConfig` document now supports configuring Ethernet link flow control (802.3x pause frames)
+with the new `flowControl` field, similar to the `ethtool -A` command:
+
+```yaml
+machine:
+  network:
+    interfaces:
+      - name: eno1
+        ethernet:
+          flowControl:
+            rx: true    # accept incoming pause frames
+            tx: false   # transmit pause frames
+            autoneg: true # autonegotiate flow control
+```
+
+Omitting the `flowControl` field leaves the link's flow control configuration unchanged.
+Current flow control settings are reported on the `EthernetStatus` resource.
+
     [notes.vm_serial_console]
         title = "Virtual Machine Serial Console"
         description = """\
