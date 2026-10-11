@@ -18,11 +18,9 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
-	"github.com/siderolabs/talos/pkg/conditions"
 )
 
 // singleton the system services API interface.
@@ -37,7 +35,7 @@ type singleton struct {
 	// Service might be in any state, but service ID in the map
 	// implies ServiceRunner.Start() method is running at the momemnt
 	runningMu sync.Mutex
-	running   map[string]struct{}
+	running   map[string]*serviceLaunch
 
 	mu sync.Mutex
 	wg sync.WaitGroup
@@ -46,6 +44,13 @@ type singleton struct {
 	denyNewServices bool
 	// terminating is set on Shutdown, and it rejects any further Load/Start/Stop calls, and allows Shutdown to proceed without deadlock.
 	terminating bool
+}
+
+// serviceLaunch identifies one invocation, including its terminal state publication.
+// Cancellation and completion belong to this invocation, never to a later restart.
+type serviceLaunch struct {
+	cancel context.CancelFunc
+	done   chan struct{}
 }
 
 var (
@@ -57,7 +62,7 @@ func newServices(runtime runtime.Runtime) *singleton {
 	return &singleton{
 		runtime: runtime,
 		state:   map[string]*ServiceRunner{},
-		running: map[string]struct{}{},
+		running: map[string]*serviceLaunch{},
 	}
 }
 
@@ -114,16 +119,23 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	}
 
 	servicesToRemove := make([]string, 0, len(serviceIDs))
+	original := make(map[string]*ServiceRunner, len(serviceIDs))
 
 	for _, id := range serviceIDs {
-		if _, exists := s.state[id]; exists {
+		if service, exists := s.state[id]; exists {
 			servicesToRemove = append(servicesToRemove, id)
+			original[id] = service
 		}
 	}
 
+	launches := s.captureLaunches(servicesToRemove)
 	s.mu.Unlock()
 
-	if err := s.Stop(ctx, servicesToRemove...); err != nil {
+	for _, launch := range launches {
+		launch.cancel()
+	}
+
+	if err := waitForLaunches(ctx, launches); err != nil {
 		return fmt.Errorf("error stopping services %v: %w", servicesToRemove, err)
 	}
 
@@ -134,8 +146,15 @@ func (s *singleton) Unload(ctx context.Context, serviceIDs ...string) error {
 	defer s.runningMu.Unlock()
 
 	for _, id := range servicesToRemove {
+		if s.state[id] != original[id] {
+			continue
+		}
+
+		if s.running[id] != nil {
+			return fmt.Errorf("service %q restarted while unloading", id)
+		}
+
 		delete(s.state, id)
-		delete(s.running, id) // this fixes an edge case when defer() in Start() doesn't have time to remove stopped service from running
 	}
 
 	return nil
@@ -158,37 +177,38 @@ func (s *singleton) Start(serviceIDs ...string) error {
 		svcrunner := s.state[id]
 		if svcrunner == nil {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("service %q not defined", id))
+
+			continue
 		}
 
 		s.runningMu.Lock()
 
-		_, running := s.running[id]
-		if !running {
-			s.running[id] = struct{}{}
-		}
+		if _, running := s.running[id]; running {
+			s.runningMu.Unlock()
 
-		s.runningMu.Unlock()
-
-		if running {
-			// service already running, skip
 			continue
 		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		launch := &serviceLaunch{cancel: cancel, done: make(chan struct{})}
+		s.running[id] = launch
+		s.runningMu.Unlock()
 
 		runNotify := make(chan struct{})
 
 		s.wg.Add(1)
 
 		go func(id string, svcrunner *ServiceRunner) {
-			err := func() error {
-				defer func() {
-					s.runningMu.Lock()
-					delete(s.running, id)
-					s.runningMu.Unlock()
-				}()
-				defer s.wg.Done()
-
-				return svcrunner.Run(runNotify)
+			defer s.wg.Done()
+			defer cancel()
+			defer func() {
+				s.runningMu.Lock()
+				delete(s.running, id)
+				close(launch.done)
+				s.runningMu.Unlock()
 			}()
+
+			err := svcrunner.runWithContext(ctx, runNotify)
 
 			switch {
 			case err == nil:
@@ -373,6 +393,7 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 		}
 	}
 
+	launches := s.captureLaunches(maps.Keys(servicesToStop))
 	s.mu.Unlock()
 
 	// shutdown all the services waiting for rev deps
@@ -382,30 +403,59 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 	shutdownCtx, shutdownCtxCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer shutdownCtxCancel()
 
-	stoppedConds := make([]conditions.Condition, 0, len(servicesToStop))
-
-	for name, svcrunner := range servicesToStop {
-		shutdownWg.Add(1)
-
-		stoppedConds = append(stoppedConds, waitForService(s, []StateEvent{StateEventDown}, name))
-
-		go func(svcrunner *ServiceRunner, reverseDeps []string) {
-			defer shutdownWg.Done()
-
-			conds := xslices.Map(reverseDeps, func(dep string) conditions.Condition { return waitForService(s, []StateEvent{StateEventDown}, dep) })
-			allDeps := conditions.WaitForAll(conds...)
-
-			if err := allDeps.Wait(shutdownCtx); err != nil {
-				log.Printf("gave up on %s while stopping %q", allDeps, svcrunner.id)
+	for name, launch := range launches {
+		shutdownWg.Go(func() {
+			for _, dependency := range reverseDependencies[name] {
+				if err := waitForLaunch(shutdownCtx, launches[dependency]); err != nil {
+					log.Printf("gave up on %q while stopping %q", dependency, name)
+				}
 			}
 
-			svcrunner.Shutdown()
-		}(svcrunner, reverseDependencies[name])
+			launch.cancel()
+		})
 	}
 
 	shutdownWg.Wait()
 
-	return conditions.WaitForAll(stoppedConds...).Wait(ctx)
+	return waitForLaunches(ctx, launches)
+}
+
+// captureLaunches is called while s.mu prevents concurrent registration and start.
+func (s *singleton) captureLaunches(ids []string) map[string]*serviceLaunch {
+	s.runningMu.Lock()
+	defer s.runningMu.Unlock()
+
+	launches := make(map[string]*serviceLaunch, len(ids))
+	for _, id := range ids {
+		if launch := s.running[id]; launch != nil {
+			launches[id] = launch
+		}
+	}
+
+	return launches
+}
+
+func waitForLaunches(ctx context.Context, launches map[string]*serviceLaunch) error {
+	for _, launch := range launches {
+		if err := waitForLaunch(ctx, launch); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func waitForLaunch(ctx context.Context, launch *serviceLaunch) error {
+	if launch == nil {
+		return nil
+	}
+
+	select {
+	case <-launch.done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // List returns snapshot of ServiceRunner instances.

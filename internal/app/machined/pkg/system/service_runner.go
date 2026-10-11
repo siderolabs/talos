@@ -205,7 +205,14 @@ type volumeRequest struct {
 //
 //nolint:gocyclo
 func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
-	ctx, cancel := context.WithCancel(context.Background())
+	return svcrunner.runWithContext(context.Background(), notifyChannels...)
+}
+
+// runWithContext gives the manager a launch-specific cancellation handle.
+//
+//nolint:gocyclo
+func (svcrunner *ServiceRunner) runWithContext(parent context.Context, notifyChannels ...chan<- struct{}) error {
+	ctx, cancel := context.WithCancel(parent)
 	defer cancel()
 
 	go func() {

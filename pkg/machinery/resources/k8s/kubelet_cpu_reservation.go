@@ -18,7 +18,7 @@ const KubeletCPUReservationType = resource.Type("KubeletCPUReservations.kubernet
 
 // KubeletCPUReservation supplies the kubelet's reservedSystemCPUs.
 //
-// A missing resource blocks kubelet startup; Managed=false preserves unmanaged configuration.
+// A missing resource or Managed=false preserves unmanaged configuration.
 type KubeletCPUReservation = typed.Resource[KubeletCPUReservationSpec, KubeletCPUReservationExtension]
 
 // KubeletCPUReservationSpec describes the staged reservation.
