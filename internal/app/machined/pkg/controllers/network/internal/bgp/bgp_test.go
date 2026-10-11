@@ -5,6 +5,8 @@
 package bgp_test
 
 import (
+	"context"
+	"net"
 	"net/netip"
 	"slices"
 	"testing"
@@ -13,6 +15,7 @@ import (
 	gobgpapi "github.com/osrg/gobgp/v4/api"
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
+	gobgpserver "github.com/osrg/gobgp/v4/pkg/server"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +25,33 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+func TestBFDTransportSource(t *testing.T) {
+	listener, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.ParseIP("127.0.0.2")})
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, listener.Close()) })
+
+	server := gobgpserver.NewBgpServer()
+	go server.Serve()
+	t.Cleanup(server.Stop)
+
+	require.NoError(t, server.StartBgp(context.Background(), &gobgpapi.StartBgpRequest{
+		Global: &gobgpapi.Global{Asn: 65001, RouterId: "192.0.2.1", ListenPort: -1},
+	}))
+
+	peer := internalbgp.BuildPeer(internalbgp.Peer{
+		Address: "127.0.0.2", LocalAddress: "127.0.0.3",
+		Config: network.BGPNeighborConfigSpec{PeerASN: 65002, Passive: true},
+	}, false)
+	peer.Bfd = &gobgpapi.BfdPeerConfig{Enabled: true, Port: uint32(listener.LocalAddr().(*net.UDPAddr).Port)}
+	require.NoError(t, server.AddPeer(context.Background(), &gobgpapi.AddPeerRequest{Peer: peer}))
+	require.NoError(t, listener.SetReadDeadline(time.Now().Add(5*time.Second)))
+	buffer := make([]byte, 512)
+	_, source, err := listener.ReadFromUDP(buffer)
+	require.NoError(t, err)
+	assert.Equal(t, "127.0.0.3", source.IP.String())
+	assert.GreaterOrEqual(t, source.Port, 49152)
+}
 
 func TestBuildPeer(t *testing.T) {
 	t.Parallel()

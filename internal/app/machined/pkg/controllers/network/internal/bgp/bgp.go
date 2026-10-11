@@ -28,6 +28,8 @@ type Peer struct {
 	Link      string
 	// BindInterface constrains the outbound transport to a VRF or interface.
 	BindInterface string
+	// LocalAddress keeps BGP and BFD on the same connected source address.
+	LocalAddress string
 }
 
 // BuildPeer translates a resolved peer into a GoBGP peer.
@@ -48,10 +50,11 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 		result.Conf.ReplacePeerAsn = true
 	}
 
-	if peer.Config.Passive || peer.BindInterface != "" {
+	if peer.Config.Passive || peer.BindInterface != "" || peer.LocalAddress != "" {
 		result.Transport = &gobgpapi.Transport{
 			PassiveMode:   peer.Config.Passive,
 			BindInterface: peer.BindInterface,
+			LocalAddress:  peer.LocalAddress,
 		}
 	}
 
@@ -376,13 +379,14 @@ func PeerKey(peer Peer) string {
 
 	fmt.Fprintf(
 		&builder,
-		"%s/%d/%d/%t/%s/%s",
+		"%s/%d/%d/%t/%s/%s/%s",
 		peer.Address,
 		peer.Config.PeerASN,
 		peer.Config.LocalASN,
 		peer.Config.Passive,
 		peer.BindInterface,
 		peer.Config.HoldTime,
+		peer.LocalAddress,
 	)
 
 	if peer.Config.BFD != nil {
