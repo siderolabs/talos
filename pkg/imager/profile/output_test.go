@@ -140,3 +140,13 @@ func TestBootloaderOverride(t *testing.T) {
 		})
 	}
 }
+
+func TestBootMenuOptions(t *testing.T) {
+	t.Parallel()
+
+	timeout := uint(0)
+	output := profile.Output{BootMenuTimeout: &timeout, DisableResetMenu: true}
+
+	require.Equal(t, uint(0), *output.BootMenuTimeout)
+	require.True(t, output.DisableResetMenu)
+}

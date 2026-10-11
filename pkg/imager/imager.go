@@ -453,20 +453,22 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 		OutUKIPath:    i.ukiPath,
 	}
 
-	switch i.prof.Output.Kind { //nolint:exhaustive
-	case profile.OutKindISO:
-		builder.Profiles = append(builder.Profiles, uki.Profile{
-			ID:      "reset",
-			Title:   "Reset system disk",
-			Cmdline: builder.Cmdline + fmt.Sprintf(" %s=system", constants.KernelParamWipe),
-		})
-	case profile.OutKindImage, profile.OutKindInstaller:
-		builder.Profiles = append(builder.Profiles, uki.Profile{
-			ID:    "reset-maintenance",
-			Title: "Reset to maintenance mode",
+	if !i.prof.Output.DisableResetMenu {
+		switch i.prof.Output.Kind { //nolint:exhaustive
+		case profile.OutKindISO:
+			builder.Profiles = append(builder.Profiles, uki.Profile{
+				ID:      "reset",
+				Title:   "Reset system disk",
+				Cmdline: builder.Cmdline + fmt.Sprintf(" %s=system", constants.KernelParamWipe),
+			})
+		case profile.OutKindImage, profile.OutKindInstaller:
+			builder.Profiles = append(builder.Profiles, uki.Profile{
+				ID:    "reset-maintenance",
+				Title: "Reset to maintenance mode",
 
-			Cmdline: builder.Cmdline + fmt.Sprintf(" %s=system:EPHEMERAL,STATE", constants.KernelParamWipe),
-		})
+				Cmdline: builder.Cmdline + fmt.Sprintf(" %s=system:EPHEMERAL,STATE", constants.KernelParamWipe),
+			})
+		}
 	}
 
 	buildFunc := builder.Build
