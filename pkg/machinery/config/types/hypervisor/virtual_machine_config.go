@@ -115,6 +115,15 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//
 	//     Optional; omitting it leaves the guest to boot its image unmodified.
 	GuestConfig VirtualMachineGuest `yaml:"guest,omitempty"`
+	//   description: |
+	//     QEMU machine type exposed to the guest, rendered as the `<os><type machine="…">`
+	//     attribute. Optional; omitting it uses libvirt's default.
+	//   examples:
+	//     - value: >
+	//        "q35"
+	//     - value: >
+	//        "pc"
+	MachineTypeConfig string `yaml:"machineType,omitempty"`
 }
 
 // VirtualMachineCPU describes the processors presented to the guest and the host time they may consume.
@@ -415,6 +424,11 @@ func (c *VirtualMachineConfigV1Alpha1) Networking() config.VirtualMachineNetwork
 // Guest implements config.VirtualMachineConfig interface.
 func (c *VirtualMachineConfigV1Alpha1) Guest() config.VirtualMachineGuestConfig {
 	return &c.GuestConfig
+}
+
+// MachineType implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) MachineType() string {
+	return c.MachineTypeConfig
 }
 
 // Redact implements config.SecretDocument interface.
