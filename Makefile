@@ -112,11 +112,11 @@ KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v4.3.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.20.0
+CILIUM_CLI_VERSION ?= v0.20.1
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 # renovate: datasource=github-tags depName=libvirt/libvirt
-LIBVIRT_VERSION ?= v12.7.0
+LIBVIRT_VERSION ?= v12.8.0
 # SHA-256 of https://download.libvirt.org/libvirt-$(patsubst v%,%,$(LIBVIRT_VERSION)).tar.xz; update with LIBVIRT_VERSION.
 LIBVIRT_SHA256 ?= 7ec1a04e7e4f4069353d4daac117bbe869287f5b202695de61fe1b079efb6cb6
 # renovate: datasource=docker depName=alpine
