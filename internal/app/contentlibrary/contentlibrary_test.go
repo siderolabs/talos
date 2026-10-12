@@ -65,7 +65,7 @@ func setupWithState(t *testing.T, ready bool) (*contentlibrary.Service, string, 
 	if ready {
 		contentLibraryStatus.TypedSpec().Path = path
 	} else {
-		contentLibraryStatus.TypedSpec().Error = "waiting for volume \"u-vm-images\" to be mounted"
+		contentLibraryStatus.TypedSpec().Error = "waiting for the backing volume to be mounted"
 	}
 
 	require.NoError(t, st.Create(t.Context(), contentLibraryStatus))

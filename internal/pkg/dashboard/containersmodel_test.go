@@ -206,7 +206,7 @@ func TestFormatContainerDetail(t *testing.T) {
 			MemoryLimit: 512 << 20,
 		},
 		Mounts: []containers.ContainerMountSpec{
-			{Kind: containers.MountKindUserVolume, VolumeID: "u-web-content", Destination: "/var/www"},
+			{Kind: containers.MountKindUserVolume, VolumeName: "web-content", Destination: "/var/www"},
 			{Kind: containers.MountKindTmpfs, Size: 64 << 20, Destination: "/var/cache", Options: []string{"rw"}},
 		},
 		DependsOn: containers.ContainerDependsOnSpec{
@@ -235,9 +235,18 @@ func TestFormatContainerDetail(t *testing.T) {
 	assert.Contains(t, detail, "privileged")
 	assert.Contains(t, detail, "cpu 1500m")
 	assert.Contains(t, detail, "memory 512 MiB")
-	assert.Contains(t, detail, "volume u-web-content to /var/www")
+	assert.Contains(t, detail, "user volume web-content to /var/www")
 	assert.Contains(t, detail, "tmpfs 64 MiB to /var/cache (rw)")
 	assert.Contains(t, detail, "network addresses · time · containers collector")
+}
+
+func TestFormatMountsLegacyVolumeID(t *testing.T) {
+	// Nodes running Talos 1.14 and older only set the deprecated VolumeID.
+	rendered := formatMounts([]containers.ContainerMountSpec{
+		{Kind: containers.MountKindUserVolume, VolumeID: "u-web-content", Destination: "/var/www"}, //nolint:staticcheck // backward compatibility
+	})
+
+	assert.Contains(t, rendered, "user volume web-content to /var/www")
 }
 
 func TestFormatContainerDetailPartial(t *testing.T) {

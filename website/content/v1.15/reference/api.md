@@ -8240,17 +8240,18 @@ ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
 ### ContainerMountSpec
 ContainerMountSpec is a resolved mount.
 
-Exactly one of VolumeID, Tmpfs or HostPath describes the source; Kind says which.
+Exactly one of VolumeName, Tmpfs or HostPath describes the source; Kind says which.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | kind | [string](#string) |  | Kind is one of "userVolume", "tmpfs" or "hostPath". |
-| volume_id | [string](#string) |  | VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content". |
+| volume_id | [string](#string) |  | VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content".<br><br>Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes. |
 | source | [string](#string) |  | Source is the host path for a hostPath mount. |
 | destination | [string](#string) |  | Destination inside the container. |
 | size | [uint64](#uint64) |  | Size of a tmpfs mount, in bytes; zero means the kernel default. |
 | options | [string](#string) | repeated | Options with the writable default already applied. |
+| volume_name | [string](#string) |  | VolumeName is the name of the UserVolumeConfig a userVolume mount refers to, e.g. "web-content". |
 
 
 
@@ -8403,7 +8404,8 @@ ResolvedMountSpec is a mount with its host-side source resolved.
 | destination | [string](#string) |  |  |
 | size | [uint64](#uint64) |  |  |
 | options | [string](#string) | repeated |  |
-| volume_id | [string](#string) |  | VolumeID is the resolved userVolume's ID; empty for tmpfs and hostPath. |
+| volume_id | [string](#string) |  | VolumeID is the resolved userVolume's block volume ID; empty for tmpfs and hostPath.<br><br>Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes. |
+| volume_name | [string](#string) |  | VolumeName is the name of the UserVolumeConfig a userVolume mount refers to; empty for tmpfs and hostPath. |
 
 
 

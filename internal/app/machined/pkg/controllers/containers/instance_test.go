@@ -535,7 +535,7 @@ func (suite *InstanceSuite) TestUserVolumeMountStaysPending() {
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
 				Kind:        containers.MountKindUserVolume,
-				VolumeID:    "u-web-content",
+				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 			},
 		}
@@ -554,7 +554,7 @@ func (suite *InstanceSuite) TestStartsOnceUserVolumeIsMounted() {
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
 				Kind:        containers.MountKindUserVolume,
-				VolumeID:    "u-web-content",
+				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 			},
 		}
@@ -861,7 +861,7 @@ func (suite *InstanceSuite) TestGatedSpecChangeKeepsInstanceOnUnresolvableMount(
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
 				Kind:        containers.MountKindUserVolume,
-				VolumeID:    "u-web-content",
+				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 			},
 		}

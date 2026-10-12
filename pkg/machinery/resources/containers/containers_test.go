@@ -61,7 +61,8 @@ func TestProtobufRoundTrip(t *testing.T) {
 		Mounts: []containers.ContainerMountSpec{
 			{
 				Kind:        containers.MountKindUserVolume,
-				VolumeID:    "u-web-content",
+				VolumeID:    "u-web-content", //nolint:staticcheck // backward compatibility
+				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 				Options:     []string{"ro"},
 			},
@@ -180,7 +181,8 @@ func TestMountStatusProtobufRoundTrip(t *testing.T) {
 				Source:      "/var/mnt/web-content",
 				Destination: "/usr/share/nginx/html",
 				Options:     []string{"ro"},
-				VolumeID:    "u-web-content",
+				VolumeID:    "u-web-content", //nolint:staticcheck // backward compatibility
+				VolumeName:  "web-content",
 			},
 			{
 				Kind:        containers.MountKindTmpfs,

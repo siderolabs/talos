@@ -108,10 +108,11 @@ func (suite *ConfigSuite) TestResolvesMounts() {
 		mounts := spec.TypedSpec().Mounts
 		asrt.Len(mounts, 4)
 
-		// A user volume resolves to its block volume ID, not a host path: the path is only known
+		// A user volume resolves to its name, not a host path: the path is only known
 		// once the volume is mounted, which is a different controller's job.
 		asrt.Equal(containers.MountKindUserVolume, mounts[0].Kind)
-		asrt.Equal("u-director-data", mounts[0].VolumeID)
+		asrt.Equal("director-data", mounts[0].VolumeName)
+		asrt.Equal("u-director-data", mounts[0].VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 		asrt.Empty(mounts[0].Source)
 		asrt.NotContains(mounts[0].Options, "ro")
 

@@ -77,8 +77,20 @@ type ResolvedMountSpec struct {
 	Destination string   `yaml:"destination" protobuf:"3"`
 	Size        uint64   `yaml:"size,omitempty" protobuf:"4"`
 	Options     []string `yaml:"options,omitempty" protobuf:"5"`
-	// VolumeID is the resolved userVolume's ID; empty for tmpfs and hostPath.
+	// VolumeID is the resolved userVolume's block volume ID; empty for tmpfs and hostPath.
+	//
+	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
 	VolumeID string `yaml:"volumeID,omitempty" protobuf:"6"`
+	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to; empty for tmpfs and hostPath.
+	VolumeName string `yaml:"volumeName,omitempty" protobuf:"7"`
+}
+
+// UserVolumeName returns the name of the UserVolumeConfig a userVolume mount refers to.
+//
+// It falls back to the deprecated VolumeID with the user volume prefix stripped, as resources from
+// Talos 1.14 and older only carry VolumeID.
+func (m ResolvedMountSpec) UserVolumeName() string {
+	return userVolumeName(m.VolumeName, m.VolumeID) //nolint:staticcheck // backward compatibility
 }
 
 // NewContainerInstanceSpec initializes a ContainerInstanceSpec resource.
@@ -362,7 +374,7 @@ func ResolvedMountsEqual(a, b []ResolvedMountSpec) bool {
 			x.Source == y.Source &&
 			x.Destination == y.Destination &&
 			x.Size == y.Size &&
-			x.VolumeID == y.VolumeID &&
+			x.UserVolumeName() == y.UserVolumeName() &&
 			slices.Equal(x.Options, y.Options)
 	})
 }

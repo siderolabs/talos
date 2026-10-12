@@ -192,9 +192,6 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 }
 
 // resolveMounts turns typed configuration mounts into resolved mount specs.
-//
-// A user volume is resolved to its block volume ID here rather than to a host path: the path is
-// only known once the volume is actually mounted, which is ContainerMountController's job.
 func resolveMounts(configMounts []configcfg.ContainerMountConfig) ([]containers.ContainerMountSpec, error) {
 	if len(configMounts) == 0 {
 		return nil, nil
@@ -209,7 +206,8 @@ func resolveMounts(configMounts []configcfg.ContainerMountConfig) ([]containers.
 
 			containerMountSpecs = append(containerMountSpecs, containers.ContainerMountSpec{
 				Kind:        containers.MountKindUserVolume,
-				VolumeID:    constants.UserVolumePrefix + userVolume.Name(),
+				VolumeID:    constants.UserVolumePrefix + userVolume.Name(), //nolint:staticcheck // backward compatibility
+				VolumeName:  userVolume.Name(),
 				Destination: userVolume.Destination(),
 				Options:     userVolume.MountOptions(),
 			})

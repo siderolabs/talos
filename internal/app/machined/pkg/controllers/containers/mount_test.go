@@ -22,8 +22,10 @@ import (
 const (
 	// mountContainer is the container name the mount tests use.
 	mountContainer = "nginx"
-	// testVolumeID is the block volume ID a userVolume mount resolves to.
-	testVolumeID = "u-web-content"
+	// testVolumeName is the user volume a userVolume mount names.
+	testVolumeName = "web-content"
+	// testVolumeID is the block volume ID the user volume is known by.
+	testVolumeID = "u-" + testVolumeName
 	// testVolumeTarget is the host path the block subsystem mounts the volume at.
 	testVolumeTarget = "/var/mnt/web-content"
 )
@@ -69,7 +71,7 @@ func (suite *MountSuite) createSpec(mounts ...containers.ContainerMountSpec) {
 func (suite *MountSuite) userVolumeMount(options ...string) containers.ContainerMountSpec {
 	return containers.ContainerMountSpec{
 		Kind:        containers.MountKindUserVolume,
-		VolumeID:    testVolumeID,
+		VolumeName:  testVolumeName,
 		Destination: "/usr/share/nginx/html",
 		Options:     options,
 	}
@@ -152,7 +154,8 @@ func (suite *MountSuite) TestRequestsAndResolvesUserVolume() {
 	// Until the volume is mounted there is no host path, so the container cannot start.
 	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 		asrt.False(status.TypedSpec().Ready)
-		asrt.Contains(status.TypedSpec().Error, testVolumeID)
+		// The reason names the user volume, not the internal block volume ID.
+		asrt.Equal(`waiting for user volume "web-content" to be mounted`, status.TypedSpec().Error)
 	})
 
 	suite.satisfyMount(false)
@@ -167,7 +170,8 @@ func (suite *MountSuite) TestRequestsAndResolvesUserVolume() {
 		// The host path is only knowable from the mount status.
 		asrt.Equal(testVolumeTarget, status.TypedSpec().Mounts[0].Source)
 		asrt.Equal("/usr/share/nginx/html", status.TypedSpec().Mounts[0].Destination)
-		asrt.Equal(testVolumeID, status.TypedSpec().Mounts[0].VolumeID)
+		asrt.Equal(testVolumeName, status.TypedSpec().Mounts[0].VolumeName)
+		asrt.Equal(testVolumeID, status.TypedSpec().Mounts[0].VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 	})
 
 	// Without the finalizer the volume could be unmounted from under the container.
@@ -187,6 +191,36 @@ func (suite *MountSuite) TestReadOnlyOptionIsRequested() {
 		})
 }
 
+// TestLegacyVolumeIDOnly covers a spec carrying only the deprecated VolumeID: it still requests the
+// right block volume and reports the user volume name.
+func (suite *MountSuite) TestLegacyVolumeIDOnly() {
+	suite.createSpec(containers.ContainerMountSpec{
+		Kind:        containers.MountKindUserVolume,
+		VolumeID:    testVolumeID, //nolint:staticcheck // backward compatibility
+		Destination: "/usr/share/nginx/html",
+	})
+
+	ctest.AssertResource(suite, testRequestID, func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(testVolumeID, request.TypedSpec().VolumeID)
+	})
+
+	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(`waiting for user volume "web-content" to be mounted`, status.TypedSpec().Error)
+	})
+
+	suite.satisfyMount(false)
+
+	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+
+		if !asrt.Len(status.TypedSpec().Mounts, 1) {
+			return
+		}
+
+		asrt.Equal(testVolumeName, status.TypedSpec().Mounts[0].VolumeName)
+	})
+}
+
 // TestReadOnlyMountIsNotAcceptedForWritable covers the volume coming back with less access than was
 // asked for.
 //
@@ -202,7 +236,7 @@ func (suite *MountSuite) TestReadOnlyMountIsNotAcceptedForWritable() {
 
 	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 		asrt.False(status.TypedSpec().Ready)
-		asrt.Contains(status.TypedSpec().Error, "read-only")
+		asrt.Equal(`user volume "web-content" is mounted read-only`, status.TypedSpec().Error)
 	})
 }
 
@@ -226,6 +260,10 @@ func (suite *MountSuite) TestTearingDownMountMarksNotReady() {
 	suite.Require().NoError(err)
 
 	suite.assertMountsReady(false)
+
+	ctest.AssertResource(suite, mountContainer, func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+		asrt.Equal(`user volume "web-content" is being unmounted`, status.TypedSpec().Error)
+	})
 
 	ctest.AssertResource(suite, testRequestID, func(status *block.VolumeMountStatus, asrt *assert.Assertions) {
 		asrt.True(status.Metadata().Finalizers().Has(mountControllerName),

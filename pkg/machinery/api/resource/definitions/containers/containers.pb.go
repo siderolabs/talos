@@ -509,12 +509,14 @@ func (x *ContainerInstanceStatusSpec) GetFinishedAt() *timestamppb.Timestamp {
 
 // ContainerMountSpec is a resolved mount.
 //
-// Exactly one of VolumeID, Tmpfs or HostPath describes the source; Kind says which.
+// Exactly one of VolumeName, Tmpfs or HostPath describes the source; Kind says which.
 type ContainerMountSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Kind is one of "userVolume", "tmpfs" or "hostPath".
 	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
 	// VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content".
+	//
+	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
 	VolumeId string `protobuf:"bytes,2,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// Source is the host path for a hostPath mount.
 	Source string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
@@ -523,7 +525,9 @@ type ContainerMountSpec struct {
 	// Size of a tmpfs mount, in bytes; zero means the kernel default.
 	Size uint64 `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
 	// Options with the writable default already applied.
-	Options       []string `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty"`
+	Options []string `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty"`
+	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to, e.g. "web-content".
+	VolumeName    string `protobuf:"bytes,7,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -598,6 +602,13 @@ func (x *ContainerMountSpec) GetOptions() []string {
 		return x.Options
 	}
 	return nil
+}
+
+func (x *ContainerMountSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
+	}
+	return ""
 }
 
 // ContainerMountStatusSpec is the spec for ContainerMountStatus.
@@ -1137,8 +1148,12 @@ type ResolvedMountSpec struct {
 	Destination string   `protobuf:"bytes,3,opt,name=destination,proto3" json:"destination,omitempty"`
 	Size        uint64   `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
 	Options     []string `protobuf:"bytes,5,rep,name=options,proto3" json:"options,omitempty"`
-	// VolumeID is the resolved userVolume's ID; empty for tmpfs and hostPath.
-	VolumeId      string `protobuf:"bytes,6,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	// VolumeID is the resolved userVolume's block volume ID; empty for tmpfs and hostPath.
+	//
+	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
+	VolumeId string `protobuf:"bytes,6,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to; empty for tmpfs and hostPath.
+	VolumeName    string `protobuf:"bytes,7,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1215,6 +1230,13 @@ func (x *ResolvedMountSpec) GetVolumeId() string {
 	return ""
 }
 
+func (x *ResolvedMountSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
+	}
+	return ""
+}
+
 var File_resource_definitions_containers_containers_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_containers_containers_proto_rawDesc = "" +
@@ -1268,14 +1290,16 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\n" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"finishedAt\"\xad\x01\n" +
+	"finishedAt\"\xce\x01\n" +
 	"\x12ContainerMountSpec\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1b\n" +
 	"\tvolume_id\x18\x02 \x01(\tR\bvolumeId\x12\x16\n" +
 	"\x06source\x18\x03 \x01(\tR\x06source\x12 \n" +
 	"\vdestination\x18\x04 \x01(\tR\vdestination\x12\x12\n" +
 	"\x04size\x18\x05 \x01(\x04R\x04size\x12\x18\n" +
-	"\aoptions\x18\x06 \x03(\tR\aoptions\"\x98\x01\n" +
+	"\aoptions\x18\x06 \x03(\tR\aoptions\x12\x1f\n" +
+	"\vvolume_name\x18\a \x01(\tR\n" +
+	"volumeName\"\x98\x01\n" +
 	"\x18ContainerMountStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12P\n" +
 	"\x06mounts\x18\x02 \x03(\v28.talos.resource.definitions.containers.ResolvedMountSpecR\x06mounts\x12\x14\n" +
@@ -1321,14 +1345,16 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\rrestart_count\x18\x06 \x01(\x04R\frestartCount\x12\x14\n" +
 	"\x05error\x18\a \x01(\tR\x05error\x12\x1f\n" +
 	"\vwaiting_for\x18\b \x03(\tR\n" +
-	"waitingFor\"\xac\x01\n" +
+	"waitingFor\"\xcd\x01\n" +
 	"\x11ResolvedMountSpec\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x12 \n" +
 	"\vdestination\x18\x03 \x01(\tR\vdestination\x12\x12\n" +
 	"\x04size\x18\x04 \x01(\x04R\x04size\x12\x18\n" +
 	"\aoptions\x18\x05 \x03(\tR\aoptions\x12\x1b\n" +
-	"\tvolume_id\x18\x06 \x01(\tR\bvolumeIdB~\n" +
+	"\tvolume_id\x18\x06 \x01(\tR\bvolumeId\x12\x1f\n" +
+	"\vvolume_name\x18\a \x01(\tR\n" +
+	"volumeNameB~\n" +
 	"-dev.talos.api.resource.definitions.containersZMgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/containersb\x06proto3"
 
 var (

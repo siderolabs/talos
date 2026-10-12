@@ -443,14 +443,24 @@ func TestResolvedMountsEqual(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "different VolumeID",
+			name: "different VolumeName",
 			resolvedMountSpecA: []containers.ResolvedMountSpec{
-				{VolumeID: "u-web-content"},
+				{VolumeName: "web-content"},
 			},
 			resolvedMountSpecB: []containers.ResolvedMountSpec{
-				{VolumeID: "u-other-volume"},
+				{VolumeName: "other-volume"},
 			},
 			want: false,
+		},
+		{
+			name: "legacy VolumeID equals VolumeName",
+			resolvedMountSpecA: []containers.ResolvedMountSpec{
+				{VolumeID: "u-web-content"}, //nolint:staticcheck // backward compatibility
+			},
+			resolvedMountSpecB: []containers.ResolvedMountSpec{
+				{VolumeName: "web-content"},
+			},
+			want: true,
 		},
 		{
 			name: "nil and empty Options are equal",

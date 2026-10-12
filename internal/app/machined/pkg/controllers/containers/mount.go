@@ -251,7 +251,10 @@ func (ctrl *MountController) reconcileContainer(
 			continue
 		}
 
-		requestID := ctrl.mountRequestID(containerSpecID, containerMountSpec.VolumeID)
+		volumeName := containerMountSpec.UserVolumeName()
+		volumeID := containerMountSpec.UserVolumeID()
+
+		requestID := ctrl.mountRequestID(containerSpecID, volumeID)
 		wanted[requestID] = struct{}{}
 
 		// Writable unless the options say otherwise; the writable default is already applied by
@@ -263,7 +266,7 @@ func (ctrl *MountController) reconcileContainer(
 			func(res *block.VolumeMountRequest) error {
 				res.Metadata().Labels().Set(containerLabel, containerSpecID)
 
-				res.TypedSpec().VolumeID = containerMountSpec.VolumeID
+				res.TypedSpec().VolumeID = volumeID
 				res.TypedSpec().Requester = ctrl.Name()
 				res.TypedSpec().ReadOnly = readOnly
 				// Detached must stay false: a detached mount is reachable only through a file
@@ -284,7 +287,7 @@ func (ctrl *MountController) reconcileContainer(
 
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("waiting for volume %q to be mounted", containerMountSpec.VolumeID))
+			reasons = append(reasons, fmt.Sprintf("waiting for user volume %q to be mounted", volumeName))
 
 			continue
 		}
@@ -295,7 +298,7 @@ func (ctrl *MountController) reconcileContainer(
 			// report not-ready instead so the container won't start/restart while the volume is unavailable.
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("volume %q is being unmounted", containerMountSpec.VolumeID))
+			reasons = append(reasons, fmt.Sprintf("user volume %q is being unmounted", volumeName))
 
 			continue
 		}
@@ -305,7 +308,7 @@ func (ctrl *MountController) reconcileContainer(
 			// read-only, so another holder can leave this one with less access than it asked for.
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("volume %q is mounted read-only", containerMountSpec.VolumeID))
+			reasons = append(reasons, fmt.Sprintf("user volume %q is mounted read-only", volumeName))
 
 			continue
 		}
@@ -317,7 +320,8 @@ func (ctrl *MountController) reconcileContainer(
 
 			logger.Info("holding volume mount for container",
 				zap.String("container", containerSpecID),
-				zap.String("volume", containerMountSpec.VolumeID),
+				zap.String("volume", volumeName),
+				zap.String("volumeID", volumeID),
 				zap.String("target", volumeMountStatus.TypedSpec().Target),
 				zap.Bool("readOnly", readOnly),
 			)
@@ -328,7 +332,8 @@ func (ctrl *MountController) reconcileContainer(
 			Source:      volumeMountStatus.TypedSpec().Target,
 			Destination: containerMountSpec.Destination,
 			Options:     containerMountSpec.Options,
-			VolumeID:    containerMountSpec.VolumeID,
+			VolumeID:    volumeID, //nolint:staticcheck // backward compatibility
+			VolumeName:  volumeName,
 		})
 	}
 
