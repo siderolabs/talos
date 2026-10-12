@@ -1405,6 +1405,18 @@ const (
 	// KubePrismHealthCheckTimeout is the timeout for health checks for the KubePrism loadbalancer.
 	KubePrismHealthCheckTimeout = 15 * time.Second
 
+	// KubePrismLowScore is the lowest score for an upstream in the KubePrism loadbalancer.
+	//
+	// An upstream is used only when its score is non-negative, so the low score controls how many
+	// successful health checks are required for an upstream to be used again after it failed.
+	KubePrismLowScore = -1
+
+	// KubePrismHighScore is the highest score for an upstream in the KubePrism loadbalancer.
+	//
+	// The high score controls how many consecutive failed health checks (or dial errors) are required
+	// for an upstream to be taken out of rotation.
+	KubePrismHighScore = 3
+
 	// TalosAPIDefaultCertificateValidityDuration specifies default certificate duration for Talos API generated client certificates.
 	TalosAPIDefaultCertificateValidityDuration = time.Hour * 24 * 365
 
