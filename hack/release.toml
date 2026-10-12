@@ -528,6 +528,15 @@ Setting `ignoreCtrlAltDelete: true` in the `SecurityProfileConfig` document make
 Ctrl-Alt-Delete still reboots the machine until a configuration with this option is applied.
 """
 
+    [notes.talosctl_upgrade]
+        title = "Talosctl upgrade improvements"
+        description = """\
+For nodes running Talos 1.14 and newer the upgrade image is now automatically detected for each node.
+It can be optionally modified with the cli flags.
+
+The `--image` flag no longer defaults to the `ghcr.io/siderolabs/installer` image, and is now mandatory when upgrading nodes running Talos versions before 1.14.
+"""
+
     [notes.route_spec_id]
         title = "Route Updates"
         description = """\

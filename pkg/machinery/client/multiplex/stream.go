@@ -76,9 +76,23 @@ func Streaming[ResponseT any](ctx context.Context, nodes []string, initiate func
 	return responseCh
 }
 
+// NodeRef is the node a multiplexed request is sent to.
+type NodeRef = string
+
 // StreamingViaFactory is a helper which performs streaming multiplexing using a ClientFactory to create clients for each node.
 func StreamingViaFactory[ResponseT any](
 	origCtx context.Context, factory ClientFactory, initiate func(context.Context, *client.Client) (grpc.ServerStreamingClient[ResponseT], error),
+) <-chan Response[*ResponseT] {
+	return StreamingViaFactoryPerNode(origCtx, factory,
+		func(ctx context.Context, c *client.Client, _ NodeRef) (grpc.ServerStreamingClient[ResponseT], error) {
+			return initiate(ctx, c)
+		},
+	)
+}
+
+// StreamingViaFactoryPerNode is like StreamingViaFactory, but passes the target node to initiate.
+func StreamingViaFactoryPerNode[ResponseT any](
+	origCtx context.Context, factory ClientFactory, initiate func(context.Context, *client.Client, NodeRef) (grpc.ServerStreamingClient[ResponseT], error),
 ) <-chan Response[*ResponseT] {
 	responseCh := make(chan Response[*ResponseT])
 
@@ -99,7 +113,7 @@ func StreamingViaFactory[ResponseT any](
 				return
 			}
 
-			stream, err := initiate(ctx, client)
+			stream, err := initiate(ctx, client, node)
 			if err != nil {
 				channel.SendWithContext(
 					ctx, responseCh,

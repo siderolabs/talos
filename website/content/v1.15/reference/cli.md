@@ -3606,7 +3606,11 @@ talosctl time [--check server] [flags]
 
 ## talosctl upgrade
 
-Upgrade Talos on the target node
+Upgrade Talos on the target node(s)
+
+For nodes running Talos versions before 1.14 supplying an --image flag is necessary.
+For nodes running Talos 1.14 and newer the upgrade image is automatically detected for each node.
+It can be optionally modified with the cli flags.
 
 ```
 talosctl upgrade [flags]
@@ -3615,24 +3619,28 @@ talosctl upgrade [flags]
 ### Options
 
 ```
-  -c, --cluster string             cluster to connect to if a proxy endpoint is used
-      --context string             context to be used in command
-      --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
-      --drain                      drain the Kubernetes node before rebooting (cordon + evict pods) (default true)
-      --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
-  -e, --endpoints strings          override default endpoints in Talos configuration
-  -h, --help                       help for upgrade
-  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.15.0-alpha.1")
-      --legacy                     force use of legacy upgrade method
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
-      --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)
-  -n, --nodes strings              target the specified nodes
-      --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
-  -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
-      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
-      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
-      --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
-      --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
+  -c, --cluster string              cluster to connect to if a proxy endpoint is used
+      --context string              context to be used in command
+      --debug                       debug operation from kernel logs. --wait is set to true when this flag is set
+      --drain                       drain the Kubernetes node before rebooting (cordon + evict pods) (default true)
+      --drain-timeout duration      timeout for draining the Kubernetes node (default 5m0s)
+  -e, --endpoints strings           override default endpoints in Talos configuration
+  -h, --help                        help for upgrade
+      --image-factory-host string   Image Factory host to use for the installer image, e.g. factory.talos.dev (defaults to the node's factory)
+      --legacy                      force use of legacy upgrade method
+      --namespace string            namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
+      --no-reboot                   do not reboot the node after upgrade (skip reboot and drain)
+  -n, --nodes strings               target the specified nodes
+      --platform string             platform to use for the installer image (defaults to the node's platform)
+      --progress string             output mode for upgrade progress. Values: [auto plain] (default "auto")
+  -m, --reboot-mode string          select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
+      --schematic-id string         Image Factory schematic ID to use for the installer image (defaults to the node's current schematic)
+      --secure-boot                 use the SecureBoot installer image (defaults to the node's current SecureBoot state)
+      --siderov1-keys-dir string    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talos-version string        Talos version to upgrade to (defaults to talosctl version) (default "latest")
+      --talosconfig string          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+      --timeout duration            time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
+      --wait                        wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
 ```
 
 ### SEE ALSO
@@ -4038,7 +4046,11 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl stats](#talosctl-stats)	 - Get container stats
 * [talosctl support](#talosctl-support)	 - Dump debug information about the cluster
 * [talosctl time](#talosctl-time)	 - Gets current server time
-* [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node
+* [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node(s)
+
+For nodes running Talos versions before 1.14 supplying an --image flag is necessary.
+For nodes running Talos 1.14 and newer the upgrade image is automatically detected for each node.
+It can be optionally modified with the cli flags.
 * [talosctl upgrade-k8s](#talosctl-upgrade-k8s)	 - Upgrade Kubernetes control plane in the Talos cluster.
 * [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
 * [talosctl validate](#talosctl-validate)	 - Validate config
