@@ -117,16 +117,11 @@ func (s Size) IsZero() bool {
 // Merge implements merger interface.
 //
 // A size is replaced whole rather than field by field, so that a patch switching between
-// a byte size and a percentage does not leave both set. A zero value is skipped: the
-// generic merge consults this interface before its own zero check.
+// a byte size and a percentage does not leave both set.
 func (s *Size) Merge(other any) error {
 	otherSize, ok := other.(Size)
 	if !ok {
 		return fmt.Errorf("cannot merge %T with %T", s, other)
-	}
-
-	if otherSize.IsZero() {
-		return nil
 	}
 
 	*s = otherSize.DeepCopy()

@@ -86,18 +86,11 @@ func (bs ByteSize) IsZero() bool {
 	return bs.value == nil && bs.raw == nil
 }
 
-// Merge implements merger interface.
-//
-// A zero value is skipped: the generic merge consults this interface before its own
-// zero check, so a patch which omits the field must not erase the base value.
+// Merge implements merger interface: the size is replaced as a whole.
 func (bs *ByteSize) Merge(other any) error {
 	otherBS, ok := other.(ByteSize)
 	if !ok {
 		return fmt.Errorf("cannot merge %T with %T", bs, other)
-	}
-
-	if otherBS.IsZero() {
-		return nil
 	}
 
 	*bs = otherBS.DeepCopy()

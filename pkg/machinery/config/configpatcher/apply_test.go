@@ -23,6 +23,69 @@ var config []byte
 //go:embed testdata/apply/expected.yaml
 var expected string
 
+//go:embed testdata/patchpreserve/base.yaml
+var preserveBase []byte
+
+//go:embed testdata/patchpreserve/omitted_expected.yaml
+var preserveOmittedExpected string
+
+//go:embed testdata/patchpreserve/explicit_expected.yaml
+var preserveExplicitExpected string
+
+// TestApplyPreservesOmitted is a regression test for https://github.com/siderolabs/talos/issues/14584:
+// fields with custom merge (CEL expressions, sizes) omitted in the patch should keep the base value,
+// while explicit values (including `false`) should still replace it.
+func TestApplyPreservesOmitted(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		patch    string
+		expected string
+	}{
+		{
+			name:     "Omitted",
+			patch:    "@testdata/patchpreserve/omitted.yaml",
+			expected: preserveOmittedExpected,
+		},
+		{
+			name:     "Explicit",
+			patch:    "@testdata/patchpreserve/explicit.yaml",
+			expected: preserveExplicitExpected,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			patches, err := configpatcher.LoadPatches([]string{tc.patch})
+			require.NoError(t, err)
+
+			cfg, err := configloader.NewFromBytes(preserveBase)
+			require.NoError(t, err)
+
+			for _, tt := range []struct {
+				name  string
+				input configpatcher.Input
+			}{
+				{
+					name:  "WithConfig",
+					input: configpatcher.WithConfig(cfg),
+				},
+				{
+					name:  "WithBytes",
+					input: configpatcher.WithBytes(preserveBase),
+				},
+			} {
+				t.Run(tt.name, func(t *testing.T) {
+					out, err := configpatcher.Apply(tt.input, patches)
+					require.NoError(t, err)
+
+					data, err := out.Bytes()
+					require.NoError(t, err)
+
+					assert.Equal(t, tc.expected, string(data))
+				})
+			}
+		})
+	}
+}
+
 //go:embed testdata/multidoc/config.yaml
 var configMultidoc []byte
 

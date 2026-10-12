@@ -97,18 +97,11 @@ func (ps PercentageSize) IsNegative() bool {
 	return ps.negative
 }
 
-// Merge implements merger interface.
-//
-// A zero value is skipped: the generic merge consults this interface before its own
-// zero check, so a patch which omits the field must not erase the base value.
+// Merge implements merger interface: the size is replaced as a whole.
 func (ps *PercentageSize) Merge(other any) error {
 	otherPS, ok := other.(PercentageSize)
 	if !ok {
 		return fmt.Errorf("cannot merge %T with %T", ps, other)
-	}
-
-	if otherPS.IsZero() {
-		return nil
 	}
 
 	*ps = otherPS.DeepCopy()

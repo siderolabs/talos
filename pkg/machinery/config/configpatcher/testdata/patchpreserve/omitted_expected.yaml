@@ -1,0 +1,40 @@
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer:
+    image: ghcr.io/siderolabs/installer:v1.14.2
+provisioning:
+    diskSelector:
+        match: disk.dev_path == "/dev/nvme0n1"
+    wipe: false
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+provisioning:
+    diskSelector:
+        match: disk.transport == "nvme"
+    grow: true
+    minSize: 10GiB
+    maxSize: 50%
+mount:
+    secure: true
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: data
+provisioning:
+    diskSelector:
+        match: disk.size > 1u
+    grow: true
+    minSize: 1GiB
+---
+apiVersion: v1alpha1
+kind: OOMConfig
+triggerExpression: time_since_trigger > duration("5s")
+sampleInterval: 200ms
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0
+selector:
+    match: mac(link.permanent_addr) == "00:1a:2b:3c:4d:5e"

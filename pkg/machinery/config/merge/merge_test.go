@@ -24,6 +24,7 @@ type Config struct {
 	ReplacedSlice []string `merge:"replace"`
 	Map           map[string]Struct
 	CustomSlice   CustomSlice
+	Atomic        Atomic
 }
 
 type Struct struct {
@@ -41,6 +42,24 @@ func (s *CustomSlice) Merge(other any) error {
 
 	*s = append(*s, otherSlice...)
 	slices.Sort(*s)
+
+	return nil
+}
+
+// Atomic is a type with unexported fields which is replaced as a whole on merge.
+//
+// Merge doesn't check for zero value: the generic merge should skip it.
+type Atomic struct {
+	value *string
+}
+
+func (a *Atomic) Merge(other any) error {
+	otherAtomic, ok := other.(Atomic)
+	if !ok {
+		return fmt.Errorf("other is not Atomic: %v", other)
+	}
+
+	*a = otherAtomic
 
 	return nil
 }
@@ -147,6 +166,8 @@ func TestMerge(t *testing.T) {
 						DB: new(2),
 					},
 				},
+				CustomSlice: []string{"a"},
+				Atomic:      Atomic{value: new("x")},
 			},
 			right: &Config{},
 			expected: &Config{
@@ -167,6 +188,8 @@ func TestMerge(t *testing.T) {
 						DB: new(2),
 					},
 				},
+				CustomSlice: []string{"a"},
+				Atomic:      Atomic{value: new("x")},
 			},
 		},
 		{
@@ -243,6 +266,28 @@ func TestMerge(t *testing.T) {
 			},
 			expected: &Config{
 				CustomSlice: []string{"a", "b", "c", "d"},
+			},
+		},
+		{
+			name: "custom atomic",
+			left: &Config{
+				Atomic: Atomic{value: new("x")},
+			},
+			right: &Config{
+				Atomic: Atomic{value: new("y")},
+			},
+			expected: &Config{
+				Atomic: Atomic{value: new("y")},
+			},
+		},
+		{
+			name: "custom atomic from zero",
+			left: &Config{},
+			right: &Config{
+				Atomic: Atomic{value: new("y")},
+			},
+			expected: &Config{
+				Atomic: Atomic{value: new("y")},
 			},
 		},
 		{
