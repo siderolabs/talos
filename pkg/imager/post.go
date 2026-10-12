@@ -11,7 +11,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -38,13 +37,9 @@ func (i *Imager) postProcessTar(ctx context.Context, filename string, report *re
 		return "", xerrors.NewTaggedf[IOTag]("%w", err)
 	}
 
-	timestamp, ok, err := utils.SourceDateEpoch()
+	timestamp, err := utils.SourceDateEpochTime()
 	if err != nil {
 		return "", xerrors.NewTaggedf[InvalidInputTag]("failed to get SOURCE_DATE_EPOCH: %w", err)
-	}
-
-	if !ok {
-		timestamp = time.Now().Unix()
 	}
 
 	cmd1 := exec.CommandContext(
@@ -59,7 +54,7 @@ func (i *Imager) postProcessTar(ctx context.Context, filename string, report *re
 		"--owner=0",
 		"--group=0",
 		"--numeric-owner",
-		"--mtime=@"+strconv.FormatInt(timestamp, 10),
+		"--mtime=@"+strconv.FormatInt(timestamp.Unix(), 10),
 		src,
 	)
 

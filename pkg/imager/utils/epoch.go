@@ -8,6 +8,7 @@ package utils
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 // SourceDateEpoch returns parsed value of SOURCE_DATE_EPOCH.
@@ -23,4 +24,23 @@ func SourceDateEpoch() (int64, bool, error) {
 	}
 
 	return epochInt, true, nil
+}
+
+// SourceDateEpochTime returns the build timestamp as a time.Time in UTC.
+//
+// If SOURCE_DATE_EPOCH is set, it is used, otherwise the current time is returned.
+//
+// The returned time is always in UTC, so that it serializes identically regardless
+// of the local timezone of the build host (e.g. in OCI image config 'created' field).
+func SourceDateEpochTime() (time.Time, error) {
+	epoch, ok, err := SourceDateEpoch()
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	if !ok {
+		return time.Now().UTC(), nil
+	}
+
+	return time.Unix(epoch, 0).UTC(), nil
 }

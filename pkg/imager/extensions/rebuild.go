@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/siderolabs/talos/pkg/imager/utils"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -21,6 +22,12 @@ import (
 // Contents from compressedListing will be appended to the initramfs compressed (xz/zstd) as a second block.
 // Original initramfs.xz contents will stay without changes.
 func (builder *Builder) rebuildInitramfs(ctx context.Context, tempDir string, quirks quirks.Quirks) error {
+	// cpio --reproducible does not reset mtimes, and the .sqsh images are created
+	// during the build, so normalize them to SOURCE_DATE_EPOCH (no-op when unset).
+	if err := utils.TouchFiles(builder.Printf, tempDir); err != nil {
+		return fmt.Errorf("error touching files in %s: %w", tempDir, err)
+	}
+
 	compressedListing, uncompressedListing, err := buildInitramfsContents(tempDir)
 	if err != nil {
 		return err
