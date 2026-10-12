@@ -86,7 +86,16 @@ ${TALOSCTL} get extensions | grep "${FACTORY_SCHEMATIC}"
 assert_secureboot
 
 if [[ "${FACTORY_UPGRADE:-false}" == "true" ]]; then
-    ${TALOSCTL} upgrade -i "${FACTORY_HOSTNAME}/${INSTALLER_IMAGE_NAME}/${FACTORY_UPGRADE_SCHEMATIC:-$FACTORY_SCHEMATIC}:${FACTORY_UPGRADE_VERSION:-$FACTORY_VERSION}"
+    # Use new talosctl upgrade flow for nodes running Talos >= 1.14 
+    if [[ "$(printf '%s\n' "1.14.0" "${FACTORY_VERSION#v}" | sort -V | head -n1)" == "1.14.0" ]]; then
+      ${TALOSCTL} upgrade \
+        --schematic-id="${FACTORY_UPGRADE_SCHEMATIC:-$FACTORY_SCHEMATIC}" \
+        --talos-version="${FACTORY_UPGRADE_VERSION:-$FACTORY_VERSION}"
+    # Drop once 1.13 is no longer being tested
+    else
+      ${TALOSCTL} upgrade -i "${FACTORY_HOSTNAME}/${INSTALLER_IMAGE_NAME}/${FACTORY_UPGRADE_SCHEMATIC:-$FACTORY_SCHEMATIC}:${FACTORY_UPGRADE_VERSION:-$FACTORY_VERSION}"
+    fi
+
     ${TALOSCTL} version | grep "${FACTORY_UPGRADE_VERSION:-$FACTORY_VERSION}"
     ${TALOSCTL} get extensions | grep "${FACTORY_UPGRADE_SCHEMATIC:-$FACTORY_SCHEMATIC}"
     assert_secureboot
