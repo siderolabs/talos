@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer:
+    image: ghcr.io/siderolabs/installer:v1.14.2
+provisioning:
+    diskSelector:
+        match: disk.dev_path == "/dev/nvme0n1"
+    wipe: false

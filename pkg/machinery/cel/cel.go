@@ -87,6 +87,10 @@ func (expr *Expression) Merge(v any) error {
 		return fmt.Errorf("unexpected type for expression merge %T", v)
 	}
 
+	if other.IsZero() {
+		return nil
+	}
+
 	expr.ast = other.ast
 	expr.expression = other.expression
 
