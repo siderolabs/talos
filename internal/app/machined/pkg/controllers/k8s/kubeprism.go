@@ -196,6 +196,10 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 		controlplane.WithHealthCheckOptions(
 			upstream.WithHealthcheckInterval(constants.KubePrismHealthCheckInterval),
 			upstream.WithHealthcheckTimeout(constants.KubePrismHealthCheckTimeout),
+			// A healthy upstream has to fail several consecutive checks (or dials) before it is taken out of rotation,
+			// but a single successful health check is enough to bring it back: with the health check interval being
+			// long, requiring several consecutive successful checks delays the recovery after e.g. API server restart.
+			upstream.WithLowHighScores(constants.KubePrismLowScore, constants.KubePrismHighScore),
 		),
 	)
 	if err != nil {
