@@ -328,7 +328,6 @@ talosctl cluster create qemu [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.38.0-alpha.2")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
-      --numa-nodes int                           number of NUMA nodes per VM (0 preserves the default topology)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --presets strings                          list of presets to apply (default [iso])
       --schematic-id string                      Image Factory schematic id (defaults to an empty schematic)
