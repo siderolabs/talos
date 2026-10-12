@@ -37,6 +37,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/pkg/imager/filemap"
+	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
 const (
@@ -145,7 +146,12 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 	newImg := mutate.MediaType(empty.Image, types.OCIManifestSchema1)
 	newImg = mutate.ConfigMediaType(newImg, types.OCIConfigJSON)
 
-	newImg, err = mutate.CreatedAt(newImg, v1.Time{Time: time.Now()})
+	createdAt, err := utils.SourceDateEpochTime()
+	if err != nil {
+		return fmt.Errorf("getting SOURCE_DATE_EPOCH: %w", err)
+	}
+
+	newImg, err = mutate.CreatedAt(newImg, v1.Time{Time: createdAt})
 	if err != nil {
 		return fmt.Errorf("setting created at: %w", err)
 	}

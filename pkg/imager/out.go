@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/dustin/go-humanize"
 	"github.com/google/go-containerregistry/pkg/name"
@@ -524,7 +523,12 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 		return xerrors.NewTaggedf[DependencyTag]("failed to set config: %w", err)
 	}
 
-	newInstallerImg, err = mutate.CreatedAt(newInstallerImg, v1.Time{Time: time.Now()})
+	createdAt, err := utils.SourceDateEpochTime()
+	if err != nil {
+		return xerrors.NewTaggedf[InvalidInputTag]("failed to get SOURCE_DATE_EPOCH: %w", err)
+	}
+
+	newInstallerImg, err = mutate.CreatedAt(newInstallerImg, v1.Time{Time: createdAt})
 	if err != nil {
 		return xerrors.NewTaggedf[DependencyTag]("failed to set created at: %w", err)
 	}

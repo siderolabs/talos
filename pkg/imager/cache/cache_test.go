@@ -90,3 +90,42 @@ func TestGenerateReusesUncompressedLayer(t *testing.T) {
 		require.True(t, bytes.Equal(layerData.Bytes(), actual), "cached layer bytes changed")
 	}
 }
+
+func TestGenerateReproducible(t *testing.T) {
+	t.Setenv("SOURCE_DATE_EPOCH", "1700000000")
+
+	layer := static.NewLayer([]byte("data"), types.OCILayer)
+	image, err := mutate.AppendLayers(empty.Image, layer)
+	require.NoError(t, err)
+
+	registryHandler := registry.New()
+	server := httptest.NewServer(registryHandler)
+	t.Cleanup(server.Close)
+
+	ref, err := name.NewTag(strings.TrimPrefix(server.URL, "http://")+"/test/image:latest", name.Insecure)
+	require.NoError(t, err)
+	require.NoError(t, remote.Write(ref, image))
+
+	tempDir := t.TempDir()
+
+	indexes := make([]string, 0, 2)
+
+	for _, destination := range []string{filepath.Join(tempDir, "first"), filepath.Join(tempDir, "second")} {
+		require.NoError(t, cache.Generate(
+			[]string{ref.String()},
+			[]string{"linux/amd64"},
+			false,
+			filepath.Join(tempDir, "layers"),
+			destination,
+			false,
+			false,
+		))
+
+		index, err := os.ReadFile(filepath.Join(destination, "index.json"))
+		require.NoError(t, err)
+
+		indexes = append(indexes, string(index))
+	}
+
+	require.Equal(t, indexes[0], indexes[1], "image cache index is not reproducible")
+}
