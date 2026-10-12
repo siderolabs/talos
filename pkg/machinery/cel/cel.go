@@ -80,7 +80,7 @@ func parseExpressionWithOutputType(expression string, env *cel.Env, expectedType
 	return ast, nil
 }
 
-// Merge imlements merge.Mergeable.
+// Merge implements the merger interface: the expression is replaced as a whole.
 func (expr *Expression) Merge(v any) error {
 	other, ok := v.(Expression)
 	if !ok {

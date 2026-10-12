@@ -83,7 +83,7 @@ func (bs ByteSize) IsZero() bool {
 	return bs.value == nil && bs.raw == nil
 }
 
-// Merge implements merger interface.
+// Merge implements merger interface: the size is replaced as a whole.
 func (bs *ByteSize) Merge(other any) error {
 	otherBS, ok := other.(ByteSize)
 	if !ok {

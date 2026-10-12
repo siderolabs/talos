@@ -1,0 +1,22 @@
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer:
+    image: ghcr.io/siderolabs/installer:v1.14.2
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+mount:
+    secure: true
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: data
+---
+apiVersion: v1alpha1
+kind: OOMConfig
+sampleInterval: 200ms
+---
+apiVersion: v1alpha1
+kind: LinkAliasConfig
+name: net0

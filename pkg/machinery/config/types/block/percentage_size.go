@@ -94,7 +94,7 @@ func (ps PercentageSize) IsNegative() bool {
 	return ps.negative
 }
 
-// Merge implements merger interface.
+// Merge implements merger interface: the size is replaced as a whole.
 func (ps *PercentageSize) Merge(other any) error {
 	otherPS, ok := other.(PercentageSize)
 	if !ok {
