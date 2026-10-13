@@ -27,7 +27,7 @@ name: %[1]s
 volumeType: directory
 ---
 apiVersion: v1alpha1
-kind: StoragePool
+kind: StoragePoolConfig
 name: images
 volume:
   name: %[1]s
@@ -49,7 +49,7 @@ func TestStoragePoolSwapExcluded(t *testing.T) {
 	t.Parallel()
 
 	provider, err := configloader.NewFromBytes([]byte(`apiVersion: v1alpha1
-kind: StoragePool
+kind: StoragePoolConfig
 name: images
 volume:
   name: data

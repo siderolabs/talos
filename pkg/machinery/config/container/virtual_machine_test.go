@@ -18,11 +18,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
 
-// newStoragePoolDoc builds a StoragePool document on its own backing volume. Every virtual machine
+// newStoragePoolConfigDoc builds a StoragePoolConfig document on its own backing volume. Every virtual machine
 // document here puts its disks in "pool1", so declaring it keeps the image-reference test about
 // image references.
-func newStoragePoolDoc(name, volumeName string) *storagecfg.StoragePoolV1Alpha1 {
-	doc := storagecfg.NewStoragePoolV1Alpha1()
+func newStoragePoolConfigDoc(name, volumeName string) *storagecfg.StoragePoolConfigV1Alpha1 {
+	doc := storagecfg.NewStoragePoolConfigV1Alpha1()
 	doc.MetaName = name
 	doc.VolumeConfig.VolumeName = volumeName
 
@@ -31,7 +31,7 @@ func newStoragePoolDoc(name, volumeName string) *storagecfg.StoragePoolV1Alpha1 
 
 // poolDocs are the documents a virtual machine with a disk in "pool1" needs to resolve it.
 func poolDocs() []config.Document {
-	return []config.Document{newUserVolumeDoc("vm-pool"), newStoragePoolDoc("pool1", "vm-pool")}
+	return []config.Document{newUserVolumeDoc("vm-pool"), newStoragePoolConfigDoc("pool1", "vm-pool")}
 }
 
 // newVirtualMachineDoc builds a VirtualMachineConfig document whose disks are provisioned from the
@@ -266,7 +266,7 @@ func TestVirtualMachinePoolReferences(t *testing.T) {
 			name: "pool not declared",
 			docs: []config.Document{newBlankDiskVirtualMachineDoc("vm1")},
 			expectedErrs: []string{
-				`virtual machine "vm1": disks[0]: no StoragePool document declares storage pool "pool1"`,
+				`virtual machine "vm1": disks[0]: no StoragePoolConfig document declares storage pool "pool1"`,
 			},
 		},
 		{
@@ -280,8 +280,8 @@ func TestVirtualMachinePoolReferences(t *testing.T) {
 				newBlankDiskVirtualMachineDoc("vm2"),
 			},
 			expectedErrs: []string{
-				`virtual machine "vm1": disks[0]: no StoragePool document declares storage pool "pool1"`,
-				`virtual machine "vm2": disks[0]: no StoragePool document declares storage pool "pool1"`,
+				`virtual machine "vm1": disks[0]: no StoragePoolConfig document declares storage pool "pool1"`,
+				`virtual machine "vm2": disks[0]: no StoragePoolConfig document declares storage pool "pool1"`,
 			},
 		},
 	} {
@@ -297,7 +297,7 @@ func TestVirtualMachinePoolReferences(t *testing.T) {
 				if err != nil {
 					// The bare documents fail their own validation, which is not what this test is
 					// about.
-					assert.NotContains(t, err.Error(), "no StoragePool document declares")
+					assert.NotContains(t, err.Error(), "no StoragePoolConfig document declares")
 				}
 
 				return

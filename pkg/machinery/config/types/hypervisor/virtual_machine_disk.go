@@ -93,10 +93,10 @@ type VirtualMachineDisk struct {
 	//   schemaRequired: true
 	DiskName string `yaml:"name"`
 	//   description: |
-	//     Name of the `StoragePool` document this disk's volume lives in.
+	//     Name of the `StoragePoolConfig` document this disk's volume lives in.
 	//
 	//     The pool is declared separately and is not provisioned by this document, but it must be
-	//     declared: a disk naming a pool no `StoragePool` document declares is a configuration
+	//     declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration
 	//     error.
 	//
 	//     The volume is named after this virtual machine and this disk, so a volume of that name
@@ -338,7 +338,7 @@ func (d *VirtualMachineDisk) Validate(index int) (string, error) {
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("disks[%d]: %w", index, err))
 	}
 
-	// Validated against the same rule the StoragePool document applies to its own name: a
+	// Validated against the same rule the StoragePoolConfig document applies to its own name: a
 	// reference this accepted but that document would not is a pool nothing can ever declare.
 	if d.DiskPool != "" {
 		if err := storagehelpers.ValidateStoragePoolName(d.DiskPool); err != nil {

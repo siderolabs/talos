@@ -1104,7 +1104,7 @@ func (suite *StoragePoolVolumeSuite) TestWaitsForAnUndeclaredPool() {
 	suite.spec("nowhere", "vm1__data.qcow2", "qcow2", 64<<20)
 	suite.start()
 
-	suite.assertError(storageres.StoragePoolVolumeID("nowhere", "vm1__data.qcow2"), "not declared by a StoragePool document")
+	suite.assertError(storageres.StoragePoolVolumeID("nowhere", "vm1__data.qcow2"), "not declared by a StoragePoolConfig document")
 	ctest.AssertResource(suite, storageres.StoragePoolVolumeID("nowhere", "vm1__data.qcow2"), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 		asrt.NotEqual(storageres.StoragePoolVolumePhaseObservationUnavailable, status.TypedSpec().Phase)
 	})

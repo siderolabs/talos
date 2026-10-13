@@ -63,7 +63,7 @@ firmware:
 # Disks attached to the virtual machine.
 disks:
     - name: system # Name of the disk, unique within the virtual machine.
-      pool: pool1 # Name of the `StoragePool` document this disk's volume lives in.
+      pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
       size: 20GiB # Size of the volume.
       bootOrder: 1 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
@@ -71,7 +71,7 @@ disks:
         # Create an empty volume, formatted per `format`.
         blank: {}
     - name: data # Name of the disk, unique within the virtual machine.
-      pool: pool1 # Name of the `StoragePool` document this disk's volume lives in.
+      pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
       size: 100GiB # Size of the volume.
       # Where the volume's contents come from.
       provision:
@@ -90,7 +90,7 @@ disks:
             # # Integrity check of the library file, verified before the media is attached.
             # digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
 
-      # # Name of the `StoragePool` document this disk's volume lives in.
+      # # Name of the `StoragePoolConfig` document this disk's volume lives in.
       # pool: pool1
 # Consoles attached to the virtual machine.
 console:
@@ -338,7 +338,7 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the disk, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It names the volume created in the storage pool.  | |
-|`pool` |string |Name of the `StoragePool` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePool` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose image is attached in place<br>from its content library and never lands in a pool. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose image is attached in place<br>from its content library and never lands in a pool. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pool: pool1
 {{< /highlight >}}</details> | |
 |`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |

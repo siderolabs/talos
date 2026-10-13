@@ -121,7 +121,7 @@ type VirtualMachineBallooningConfig interface {
 type VirtualMachineDiskConfig interface {
 	// Name of the disk, unique within the virtual machine.
 	Name() string
-	// Pool is the name of the StoragePool document this disk's volume lives in; empty for a cdrom,
+	// Pool is the name of the StoragePoolConfig document this disk's volume lives in; empty for a cdrom,
 	// which is attached in place from its content library.
 	Pool() string
 	// Size of the volume in bytes; zero for a cdrom.

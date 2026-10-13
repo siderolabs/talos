@@ -610,7 +610,7 @@ func (ctrl *StoragePoolVolumeController) resolvePool(
 	poolStatus, found := poolStatuses[name]
 	if !found {
 		return libvirtstorage.Pool{}, pending(
-			"storage pool %q has no status yet: it is either not declared by a StoragePool document, or not reconciled",
+			"storage pool %q has no status yet: it is either not declared by a StoragePoolConfig document, or not reconciled",
 			name)
 	}
 

@@ -2646,9 +2646,9 @@
         "pool": {
           "type": "string",
           "title": "pool",
-          "description": "Name of the StoragePool document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no StoragePool document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a disk, and not allowed on a cdrom, whose image is attached in place\nfrom its content library and never lands in a pool.\n",
-          "markdownDescription": "Name of the `StoragePool` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePool` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
-          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePool\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no \u003ccode\u003eStoragePool\u003c/code\u003e document declares is a configuration\nerror.\u003c/p\u003e\n\n\u003cp\u003eThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose image is attached in place\nfrom its content library and never lands in a pool.\u003c/p\u003e\n"
+          "description": "Name of the StoragePoolConfig document this disk’s volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no StoragePoolConfig document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a disk, and not allowed on a cdrom, whose image is attached in place\nfrom its content library and never lands in a pool.\n",
+          "markdownDescription": "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document this disk\u0026rsquo;s volume lives in.\u003c/p\u003e\n\n\u003cp\u003eThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no \u003ccode\u003eStoragePoolConfig\u003c/code\u003e document declares is a configuration\nerror.\u003c/p\u003e\n\n\u003cp\u003eThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\u003c/p\u003e\n\n\u003cp\u003eRequired for a \u003ccode\u003edisk\u003c/code\u003e, and not allowed on a \u003ccode\u003ecdrom\u003c/code\u003e, whose image is attached in place\nfrom its content library and never lands in a pool.\u003c/p\u003e\n"
         },
         "size": {
           "type": "string",
@@ -8861,7 +8861,7 @@
       "type": "object",
       "description": "RAIDVolumeSelector matches member disks with CEL."
     },
-    "storage.StoragePoolV1Alpha1": {
+    "storage.StoragePoolConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
           "enum": [
@@ -8874,7 +8874,7 @@
         },
         "kind": {
           "enum": [
-            "StoragePool"
+            "StoragePoolConfig"
           ],
           "title": "kind",
           "description": "kind is the kind of the resource.\n",
@@ -8902,7 +8902,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "StoragePool defines a directory storage pool on a configured filesystem volume.\\nDefines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,\\nor ExternalVolumeConfig. The backing volume must be writable and filesystem-backed.\\nOnly one pool may reference a backing volume. The pool directory is named after\\nthe pool beneath the volume mount target. Removing the configuration stops and\\nundefines the pool, but never deletes its files or backing volume.\\nRequires the libvirtd system extension. Changing the backing volume changes\\nthe pool target; it does not migrate existing disk images.\\n"
+      "description": "StoragePoolConfig defines a directory storage pool on a configured filesystem volume.\\nDefines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,\\nor ExternalVolumeConfig. The backing volume must be writable and filesystem-backed.\\nOnly one pool may reference a backing volume. The pool directory is named after\\nthe pool beneath the volume mount target. Removing the configuration stops and\\nundefines the pool, but never deletes its files or backing volume.\\nRequires the libvirtd system extension. Changing the backing volume changes\\nthe pool target; it does not migrate existing disk images.\\n"
     },
     "storage.StoragePoolVolume": {
       "properties": {
@@ -9577,7 +9577,7 @@
       "$ref": "#/$defs/storage.RAIDArrayConfigV1Alpha1"
     },
     {
-      "$ref": "#/$defs/storage.StoragePoolV1Alpha1"
+      "$ref": "#/$defs/storage.StoragePoolConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/v1alpha1.Config"

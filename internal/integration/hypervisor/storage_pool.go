@@ -52,7 +52,7 @@ func (suite *LibvirtSuite) TestStoragePool() {
 	suite.AssertServicesRunning(ctx, fixture.node, map[string]string{"ext-virtstoraged": "Running"})
 	fixture.createVolumes(ctx)
 
-	pool := storagecfg.NewStoragePoolV1Alpha1()
+	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 	pool.MetaName = fixture.poolName
 	pool.VolumeConfig.VolumeName = fixture.volumeNames[0]
 	suite.PatchMachineConfig(nodeCtx, pool)
@@ -64,7 +64,7 @@ func (suite *LibvirtSuite) TestStoragePool() {
 	fixture.waitPool(ctx, 0, poolUUID)
 
 	// An empty pool is removed without affecting either backing user volume.
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolKind, fixture.poolName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolConfigKind, fixture.poolName)
 	fixture.waitAbsent(ctx)
 	fixture.assertVolumes(ctx)
 
@@ -94,7 +94,7 @@ func (suite *LibvirtSuite) TestStoragePool() {
 	}
 
 	// Nonempty pools follow the same stop/undefine policy; neither target's data is removed.
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolKind, fixture.poolName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolConfigKind, fixture.poolName)
 	fixture.waitAbsent(ctx)
 	fixture.assertSentinel(ctx, 0, "original-data")
 	fixture.assertSentinel(ctx, 1, "new-data")
@@ -274,7 +274,7 @@ func (f *storagePoolFixture) cleanupPool() {
 	// A broken reconciler must not leave a test-owned libvirt definition behind.
 	defer f.cleanupDefinition()
 
-	f.suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, f.node), storagecfg.StoragePoolKind, f.poolName)
+	f.suite.RemoveMachineConfigDocumentsByName(client.WithNode(ctx, f.node), storagecfg.StoragePoolConfigKind, f.poolName)
 	f.waitAbsent(ctx)
 }
 

@@ -117,7 +117,7 @@ func validateVirtualMachinePoolReferences(container *Container) error {
 
 			if _, declared := declaredPools[poolName]; !declared {
 				errs = multierror.Append(errs, fmt.Errorf(
-					"virtual machine %q: disks[%d]: no StoragePool document declares storage pool %q",
+					"virtual machine %q: disks[%d]: no StoragePoolConfig document declares storage pool %q",
 					virtualMachineConfig.Name(), i, poolName))
 			}
 		}

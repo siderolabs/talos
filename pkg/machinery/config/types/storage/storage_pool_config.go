@@ -16,13 +16,13 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/storagehelpers"
 )
 
-// StoragePoolKind is a config document kind.
-const StoragePoolKind = "StoragePool"
+// StoragePoolConfigKind is a config document kind.
+const StoragePoolConfigKind = "StoragePoolConfig"
 
 func init() {
-	registry.Register(StoragePoolKind, func(version string) config.Document {
+	registry.Register(StoragePoolConfigKind, func(version string) config.Document {
 		if version == "v1alpha1" { //nolint:goconst
-			return &StoragePoolV1Alpha1{}
+			return &StoragePoolConfigV1Alpha1{}
 		}
 
 		return nil
@@ -30,11 +30,11 @@ func init() {
 }
 
 var (
-	_ config.StoragePoolConfig = &StoragePoolV1Alpha1{}
-	_ config.Validator         = &StoragePoolV1Alpha1{}
+	_ config.StoragePoolConfig = &StoragePoolConfigV1Alpha1{}
+	_ config.Validator         = &StoragePoolConfigV1Alpha1{}
 )
 
-// StoragePoolV1Alpha1 defines a directory storage pool on a configured filesystem volume.
+// StoragePoolConfigV1Alpha1 defines a directory storage pool on a configured filesystem volume.
 //
 //	description: |
 //	  Defines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,
@@ -45,11 +45,11 @@ var (
 //	  Requires the libvirtd system extension. Changing the backing volume changes
 //	  the pool target; it does not migrate existing disk images.
 //	examples:
-//	  - value: exampleStoragePoolV1Alpha1()
-//	alias: StoragePool
+//	  - value: exampleStoragePoolConfigV1Alpha1()
+//	alias: StoragePoolConfig
 //	schemaRoot: true
-//	schemaMeta: v1alpha1/StoragePool
-type StoragePoolV1Alpha1 struct {
+//	schemaMeta: v1alpha1/StoragePoolConfig
+type StoragePoolConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 
 	//   description: |
@@ -69,15 +69,15 @@ type StoragePoolVolume struct {
 	VolumeName string `yaml:"name"`
 }
 
-// NewStoragePoolV1Alpha1 creates a StoragePool document.
-func NewStoragePoolV1Alpha1() *StoragePoolV1Alpha1 {
-	return &StoragePoolV1Alpha1{
-		Meta: meta.Meta{MetaKind: StoragePoolKind, MetaAPIVersion: "v1alpha1"},
+// NewStoragePoolConfigV1Alpha1 creates a StoragePoolConfig document.
+func NewStoragePoolConfigV1Alpha1() *StoragePoolConfigV1Alpha1 {
+	return &StoragePoolConfigV1Alpha1{
+		Meta: meta.Meta{MetaKind: StoragePoolConfigKind, MetaAPIVersion: "v1alpha1"},
 	}
 }
 
-func exampleStoragePoolV1Alpha1() *StoragePoolV1Alpha1 {
-	cfg := NewStoragePoolV1Alpha1()
+func exampleStoragePoolConfigV1Alpha1() *StoragePoolConfigV1Alpha1 {
+	cfg := NewStoragePoolConfigV1Alpha1()
 	cfg.MetaName = "vm-images"
 	cfg.VolumeConfig.VolumeName = "vm-data"
 
@@ -85,19 +85,19 @@ func exampleStoragePoolV1Alpha1() *StoragePoolV1Alpha1 {
 }
 
 // Name implements config.NamedDocument.
-func (s *StoragePoolV1Alpha1) Name() string { return s.MetaName }
+func (s *StoragePoolConfigV1Alpha1) Name() string { return s.MetaName }
 
 // Clone implements config.Document.
-func (s *StoragePoolV1Alpha1) Clone() config.Document { return s.DeepCopy() }
+func (s *StoragePoolConfigV1Alpha1) Clone() config.Document { return s.DeepCopy() }
 
 // StoragePoolConfigSignal implements config.StoragePoolConfig.
-func (s *StoragePoolV1Alpha1) StoragePoolConfigSignal() {}
+func (s *StoragePoolConfigV1Alpha1) StoragePoolConfigSignal() {}
 
 // VolumeName implements config.StoragePoolConfig.
-func (s *StoragePoolV1Alpha1) VolumeName() string { return s.VolumeConfig.VolumeName }
+func (s *StoragePoolConfigV1Alpha1) VolumeName() string { return s.VolumeConfig.VolumeName }
 
 // Validate implements config.Validator.
-func (s *StoragePoolV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
+func (s *StoragePoolConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var errs error
 
 	if err := storagehelpers.ValidateStoragePoolName(s.MetaName); err != nil {

@@ -19,7 +19,7 @@ import (
 func TestStoragePoolRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	const document = "apiVersion: v1alpha1\nkind: StoragePool\nname: vm-images\nvolume:\n    name: vm-data\n"
+	const document = "apiVersion: v1alpha1\nkind: StoragePoolConfig\nname: vm-images\nvolume:\n    name: vm-data\n"
 
 	provider, err := configloader.NewFromBytes([]byte(document))
 	require.NoError(t, err)
@@ -32,7 +32,7 @@ func TestStoragePoolRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, document, string(encoded))
 
-	clone := provider.Documents()[0].Clone().(*storagecfg.StoragePoolV1Alpha1)
+	clone := provider.Documents()[0].Clone().(*storagecfg.StoragePoolConfigV1Alpha1)
 	clone.VolumeConfig.VolumeName = "other"
 	assert.Equal(t, "vm-data", pool.VolumeName())
 }
@@ -61,7 +61,7 @@ func TestStoragePoolVolumeNameValidate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			pool := storagecfg.NewStoragePoolV1Alpha1()
+			pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 			pool.MetaName = "vm-images"
 			pool.VolumeConfig.VolumeName = test.name
 
@@ -82,7 +82,7 @@ func TestStoragePoolValidate(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			pool := storagecfg.NewStoragePoolV1Alpha1()
+			pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 			pool.MetaName = name
 			pool.VolumeConfig.VolumeName = "vm-data"
 			warnings, err := pool.Validate(validationMode{})
@@ -95,7 +95,7 @@ func TestStoragePoolValidate(t *testing.T) {
 		t.Run("invalid-"+name, func(t *testing.T) {
 			t.Parallel()
 
-			pool := storagecfg.NewStoragePoolV1Alpha1()
+			pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 			pool.MetaName = name
 			pool.VolumeConfig.VolumeName = "vm-data"
 			_, err := pool.Validate(validationMode{})
@@ -103,7 +103,7 @@ func TestStoragePoolValidate(t *testing.T) {
 		})
 	}
 
-	pool := storagecfg.NewStoragePoolV1Alpha1()
+	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 	pool.MetaName = "vm-images"
 	_, err := pool.Validate(validationMode{})
 	require.ErrorContains(t, err, "volume.name is required")

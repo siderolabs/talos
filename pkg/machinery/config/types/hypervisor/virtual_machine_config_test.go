@@ -496,7 +496,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("system")}
-				// Accepted: a StoragePool document may be named with underscores, and a reference
+				// Accepted: a StoragePoolConfig document may be named with underscores, and a reference
 				// this rejected would be a pool nothing could ever name.
 				c.DisksConfig[0].DiskPool = "VM_images"
 

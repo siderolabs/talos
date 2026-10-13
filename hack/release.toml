@@ -86,7 +86,7 @@ disks:
       blank: {}
 ```
 
-The pool must be declared by a `StoragePool` document in the same machine configuration; a disk
+The pool must be declared by a `StoragePoolConfig` document in the same machine configuration; a disk
 naming an undeclared pool is now a configuration error rather than a virtual machine that silently
 never starts.
 
@@ -105,7 +105,7 @@ Four behaviours are worth knowing before you rely on this:
 * **A smaller `size` is reported and ignored.** Shrinking would truncate a filesystem the guest laid
   out, so it is refused rather than applied; the disk stays attachable and the virtual machine keeps
   running.
-* **Remove all virtual machine references together with a `StoragePool` document.** Removing a
+* **Remove all virtual machine references together with a `StoragePoolConfig` document.** Removing a
   referenced pool alone is rejected by configuration validation. Remove or update every virtual
   machine referencing it in the same configuration change. During teardown, consumers release
   the pool before it is undefined and its backing directory can be unmounted. The volume files

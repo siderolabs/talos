@@ -155,7 +155,7 @@ func TestBlankDiskAtomicPoolRemoval(t *testing.T) {
 	volume.MetaName = "backing"
 	volume.VolumeType = new(block.VolumeTypeDirectory)
 
-	pool := storagecfg.NewStoragePoolV1Alpha1()
+	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 	pool.MetaName = "target-pool"
 	pool.VolumeConfig.VolumeName = volume.MetaName
 
@@ -181,7 +181,7 @@ func TestBlankDiskAtomicPoolRemoval(t *testing.T) {
 	otherVolume.MetaName = "other-backing"
 	otherVolume.VolumeType = new(block.VolumeTypeDirectory)
 
-	otherPool := storagecfg.NewStoragePoolV1Alpha1()
+	otherPool := storagecfg.NewStoragePoolConfigV1Alpha1()
 	otherPool.MetaName = "other-pool"
 	otherPool.VolumeConfig.VolumeName = otherVolume.MetaName
 
@@ -198,7 +198,7 @@ func TestBlankDiskAtomicPoolRemoval(t *testing.T) {
 	}
 	deletePool := map[string]any{
 		"apiVersion": "v1alpha1",
-		"kind":       storagecfg.StoragePoolKind,
+		"kind":       storagecfg.StoragePoolConfigKind,
 		"name":       pool.MetaName,
 		"$patch":     "delete",
 	}
@@ -220,7 +220,7 @@ func TestBlankDiskAtomicPoolRemoval(t *testing.T) {
 	poolOnlyConfig, err := poolOnly.Config()
 	require.NoError(t, err)
 	_, err = poolOnlyConfig.ValidateAsClient(blankDiskValidationMode{}, validation.WithLocal())
-	require.ErrorContains(t, err, "no StoragePool document declares storage pool \"target-pool\"")
+	require.ErrorContains(t, err, "no StoragePoolConfig document declares storage pool \"target-pool\"")
 
 	combined, err := configpatcher.Apply(configpatcher.WithConfig(initial), patches)
 	require.NoError(t, err)
@@ -240,6 +240,6 @@ func TestBlankDiskAtomicPoolRemoval(t *testing.T) {
 	require.Equal(t, map[string]bool{
 		blockcfg.UserVolumeConfigKind + "/backing":       true,
 		blockcfg.UserVolumeConfigKind + "/other-backing": true,
-		storagecfg.StoragePoolKind + "/other-pool":       true,
+		storagecfg.StoragePoolConfigKind + "/other-pool": true,
 	}, remaining)
 }

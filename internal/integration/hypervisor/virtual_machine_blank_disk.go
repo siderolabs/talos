@@ -102,7 +102,7 @@ func newBlankDiskFixtureOnNode(ctx context.Context, suite *LibvirtSuite, kind, n
 
 	fixture.poolPath = filepath.Join(mount.TypedSpec().Target, fixture.poolName)
 
-	pool := storagecfg.NewStoragePoolV1Alpha1()
+	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 	pool.MetaName = fixture.poolName
 	pool.VolumeConfig.VolumeName = fixture.volumeName
 	suite.PatchMachineConfig(nodeCtx, pool)
@@ -219,7 +219,7 @@ func (f *blankDiskFixture) cleanup() {
 		})
 	}
 
-	f.suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolKind, f.poolName)
+	f.suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolConfigKind, f.poolName)
 	f.suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, f.volumeName)
 }
 
@@ -386,7 +386,7 @@ func (suite *LibvirtSuite) TestBlankDiskPoolRemovalStopsGuest() {
 		},
 		map[string]any{
 			"apiVersion": "v1alpha1",
-			"kind":       storagecfg.StoragePoolKind,
+			"kind":       storagecfg.StoragePoolConfigKind,
 			"name":       fixture.poolName,
 			"$patch":     "delete",
 		},

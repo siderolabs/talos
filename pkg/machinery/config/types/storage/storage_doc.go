@@ -298,11 +298,11 @@ func (RAIDVolumeSelector) Doc() *encoder.Doc {
 	return doc
 }
 
-func (StoragePoolV1Alpha1) Doc() *encoder.Doc {
+func (StoragePoolConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type:        "StoragePool",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "StoragePool defines a directory storage pool on a configured filesystem volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "StoragePool defines a directory storage pool on a configured filesystem volume.\nDefines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,\nor ExternalVolumeConfig. The backing volume must be writable and filesystem-backed.\nOnly one pool may reference a backing volume. The pool directory is named after\nthe pool beneath the volume mount target. Removing the configuration stops and\nundefines the pool, but never deletes its files or backing volume.\nRequires the libvirtd system extension. Changing the backing volume changes\nthe pool target; it does not migrate existing disk images.\n",
+		Type:        "StoragePoolConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "StoragePoolConfig defines a directory storage pool on a configured filesystem volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "StoragePoolConfig defines a directory storage pool on a configured filesystem volume.\nDefines a named storage pool backed by a UserVolumeConfig, ExistingVolumeConfig,\nor ExternalVolumeConfig. The backing volume must be writable and filesystem-backed.\nOnly one pool may reference a backing volume. The pool directory is named after\nthe pool beneath the volume mount target. Removing the configuration stops and\nundefines the pool, but never deletes its files or backing volume.\nRequires the libvirtd system extension. Changing the backing volume changes\nthe pool target; it does not migrate existing disk images.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -325,7 +325,7 @@ func (StoragePoolV1Alpha1) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.AddExample("", exampleStoragePoolV1Alpha1())
+	doc.AddExample("", exampleStoragePoolConfigV1Alpha1())
 
 	return doc
 }
@@ -337,7 +337,7 @@ func (StoragePoolVolume) Doc() *encoder.Doc {
 		Description: "StoragePoolVolume references a backing volume by its document name.",
 		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "StoragePoolV1Alpha1",
+				TypeName:  "StoragePoolConfigV1Alpha1",
 				FieldName: "volume",
 			},
 		},
@@ -369,7 +369,7 @@ func GetFileDoc() *encoder.FileDoc {
 			RAIDArrayConfigV1Alpha1{}.Doc(),
 			RAIDProvisioningSpec{}.Doc(),
 			RAIDVolumeSelector{}.Doc(),
-			StoragePoolV1Alpha1{}.Doc(),
+			StoragePoolConfigV1Alpha1{}.Doc(),
 			StoragePoolVolume{}.Doc(),
 		},
 	}

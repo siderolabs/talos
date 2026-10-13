@@ -26,10 +26,10 @@ type StoragePoolSpecSuite struct {
 }
 
 func (suite *StoragePoolSpecSuite) TestStoragePoolSpec() {
-	images := storagecfg.NewStoragePoolV1Alpha1()
+	images := storagecfg.NewStoragePoolConfigV1Alpha1()
 	images.MetaName = "images"
 	images.VolumeConfig.VolumeName = "data"
-	archives := storagecfg.NewStoragePoolV1Alpha1()
+	archives := storagecfg.NewStoragePoolConfigV1Alpha1()
 	archives.MetaName = "archives"
 	archives.VolumeConfig.VolumeName = "external"
 	user := blockcfg.NewUserVolumeConfigV1Alpha1()
@@ -70,7 +70,7 @@ func (suite *StoragePoolSpecSuite) TestStoragePoolSpec() {
 func (suite *StoragePoolSpecSuite) TestLiteralNameAndInvalidReferences() {
 	user := blockcfg.NewUserVolumeConfigV1Alpha1()
 	user.MetaName = "u-images"
-	pool := storagecfg.NewStoragePoolV1Alpha1()
+	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 	pool.MetaName = "images"
 	pool.VolumeConfig.VolumeName = "u-images"
 	cfg := applyMachineConfigDocs(&suite.DefaultSuite, user, pool)
@@ -99,7 +99,7 @@ func (suite *StoragePoolSpecSuite) TestUnusableBackingVolumes() {
 	for _, name := range names {
 		volume := blockcfg.NewUserVolumeConfigV1Alpha1()
 		volume.MetaName = name
-		pool := storagecfg.NewStoragePoolV1Alpha1()
+		pool := storagecfg.NewStoragePoolConfigV1Alpha1()
 		pool.MetaName = name
 		pool.VolumeConfig.VolumeName = name
 		initial = append(initial, volume, pool)
