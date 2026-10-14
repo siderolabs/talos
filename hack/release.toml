@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.14.1"
+previous = "v1.14.2"
 
 pre_release = false
 
@@ -15,28 +15,13 @@ preface = """
 """
 
 [notes]
-    [notes.kubelet_resource_managers]
-        title = "Kubelet Resource Manager State"
-        description = """\
-Talos now validates the kubelet CPU manager and memory manager state files (`/var/lib/kubelet/cpu_manager_state`, `/var/lib/kubelet/memory_manager_state`)
-the same way kubelet does on startup, and removes a state file kubelet would refuse to load before starting kubelet.
-
-Previously only a change of the manager policy was detected, so changing e.g. `reservedSystemCPUs` or `reservedMemory`, or
-a change of the CPU/NUMA topology of the machine, left kubelet unable to start until the state file was removed manually.
-
-Only the rendered `KubeletConfiguration` (`machine.kubelet.extraConfig`) is checked: the resource manager settings passed as kubelet
-command line flags via `machine.kubelet.extraArgs` (e.g. `--cpu-manager-policy`, `--reserved-cpus`) are not taken into account.
-"""
-
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.54
-containerd: 2.3.6
-runc: 1.5.2
-Kubernetes: 1.37.1
+Linux: 6.18.56
+containerd: 2.3.7
 
-Talos is built with Go 1.26.8.
+Talos is built with Go 1.26.9.
 """
 
 [make_deps]

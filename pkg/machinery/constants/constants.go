@@ -20,7 +20,7 @@ var SupportedArchitectures = []string{
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.54-talos"
+	DefaultKernelVersion = "6.18.56-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -562,7 +562,7 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.3.6"
+	DefaultContainerdVersion = "2.3.7"
 
 	// RuncVersion is the runc version.
 	RuncVersion = "1.5.2"
@@ -1248,7 +1248,7 @@ const (
 	ProcModulesPath = "/proc/modules"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.8"
+	GoVersion = "go1.26.9"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
