@@ -198,6 +198,7 @@ type K8sKubeletConfig interface {
 type K8sCredentialProviderConfig interface {
 	K8sCredentialProviderConfigSignal()
 	Configuration() map[string]any
+	ConfigFiles() map[string]string
 }
 
 // K8sStaticPodConfig defines the configuration options for a Kubernetes static pod.
