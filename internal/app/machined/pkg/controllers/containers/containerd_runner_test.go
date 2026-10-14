@@ -142,10 +142,10 @@ func TestMountsResolvedToOCI(t *testing.T) {
 		},
 		{
 			// The source is the path the volume is mounted at, filled in by MountController.
-			name: "user volume",
+			name: "volume",
 			mounts: []containers.ResolvedMountSpec{
 				{
-					Kind:        containers.MountKindUserVolume,
+					Kind:        containers.MountKindVolume,
 					Source:      "/var/mnt/data",
 					Destination: "/mnt/data",
 				},
@@ -162,7 +162,7 @@ func TestMountsResolvedToOCI(t *testing.T) {
 		{
 			name: "all kinds keep their declared order",
 			mounts: []containers.ResolvedMountSpec{
-				{Kind: containers.MountKindUserVolume, Source: "/var/mnt/data", Destination: "/mnt/data"},
+				{Kind: containers.MountKindVolume, Source: "/var/mnt/data", Destination: "/mnt/data"},
 				{Kind: containers.MountKindTmpfs, Destination: "/scratch"},
 				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log"},
 			},

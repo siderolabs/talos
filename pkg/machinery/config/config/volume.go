@@ -21,8 +21,6 @@ type BackingVolume struct {
 }
 
 // ResolveBackingVolume resolves a user, existing, or external volume by document name.
-// The document kind determines the runtime ID prefix; names are never stripped or guessed.
-// Raw and swap volumes cannot back a filesystem consumer.
 func ResolveBackingVolume(cfg Config, name string) (BackingVolume, bool) {
 	for _, volume := range cfg.UserVolumeConfigs() {
 		if volume.Name() == name {

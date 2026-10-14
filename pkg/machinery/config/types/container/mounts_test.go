@@ -160,7 +160,7 @@ func TestContainerMountValidate(t *testing.T) {
 		{
 			name:        "no source set",
 			mount:       container.ContainerMount{},
-			expectedErr: "exactly one of userVolume, tmpfs or hostPath must be set",
+			expectedErr: "exactly one of volume, tmpfs or hostPath must be set",
 		},
 		{
 			name: "two sources set",
@@ -168,21 +168,36 @@ func TestContainerMountValidate(t *testing.T) {
 				TmpfsMount:    &container.TmpfsMount{MountDestination: "/tmp"},
 				HostPathMount: &container.HostPathMount{MountSource: "/dev", MountDestination: "/dev"},
 			},
-			expectedErr: "exactly one of userVolume, tmpfs or hostPath must be set",
+			expectedErr: "exactly one of volume, tmpfs or hostPath must be set",
 		},
 		{
 			name: "three sources set",
 			mount: container.ContainerMount{
-				UserVolumeMount: &container.UserVolumeMount{VolumeName: "data", MountDestination: "/data"},
-				TmpfsMount:      &container.TmpfsMount{MountDestination: "/tmp"},
-				HostPathMount:   &container.HostPathMount{MountSource: "/dev", MountDestination: "/dev"},
+				VolumeMount:   &container.VolumeMount{VolumeName: "data", MountDestination: "/data"},
+				TmpfsMount:    &container.TmpfsMount{MountDestination: "/tmp"},
+				HostPathMount: &container.HostPathMount{MountSource: "/dev", MountDestination: "/dev"},
 			},
-			expectedErr: "exactly one of userVolume, tmpfs or hostPath must be set",
+			expectedErr: "exactly one of volume, tmpfs or hostPath must be set",
 		},
 		{
-			name: "valid userVolume",
+			name: "deprecated userVolume and tmpfs set",
 			mount: container.ContainerMount{
-				UserVolumeMount: &container.UserVolumeMount{VolumeName: "data", MountDestination: "/var/lib/data"},
+				UserVolumeMount: &container.VolumeMount{VolumeName: "data", MountDestination: "/data"},
+				TmpfsMount:      &container.TmpfsMount{MountDestination: "/tmp"},
+			},
+			expectedErr: "exactly one of volume, tmpfs or hostPath must be set",
+		},
+		{
+			name: "valid deprecated userVolume",
+			mount: container.ContainerMount{
+				UserVolumeMount: &container.VolumeMount{VolumeName: "data", MountDestination: "/var/lib/data"},
+			},
+			expectedDestination: "/var/lib/data",
+		},
+		{
+			name: "valid volume",
+			mount: container.ContainerMount{
+				VolumeMount: &container.VolumeMount{VolumeName: "data", MountDestination: "/var/lib/data"},
 			},
 			expectedDestination: "/var/lib/data",
 		},
@@ -201,12 +216,12 @@ func TestContainerMountValidate(t *testing.T) {
 			expectedDestination: "/dev",
 		},
 		{
-			name: "invalid userVolume still returns its destination",
+			name: "invalid volume still returns its destination",
 			mount: container.ContainerMount{
-				UserVolumeMount: &container.UserVolumeMount{MountDestination: "/var/lib/data"},
+				VolumeMount: &container.VolumeMount{MountDestination: "/var/lib/data"},
 			},
 			expectedDestination: "/var/lib/data",
-			expectedErr:         "userVolume.name is required",
+			expectedErr:         "volume.name is required",
 		},
 		{
 			name: "invalid tmpfs still returns its destination",
@@ -242,39 +257,39 @@ func TestContainerMountValidate(t *testing.T) {
 	}
 }
 
-func TestUserVolumeMountValidate(t *testing.T) {
+func TestVolumeMountValidate(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
 		name        string
-		mount       container.UserVolumeMount
+		mount       container.VolumeMount
 		expectedErr string
 	}{
 		{
 			name: "valid",
-			mount: container.UserVolumeMount{
+			mount: container.VolumeMount{
 				VolumeName:       "data",
 				MountDestination: "/var/lib/data",
 			},
 		},
 		{
 			name: "missing name",
-			mount: container.UserVolumeMount{
+			mount: container.VolumeMount{
 				MountDestination: "/var/lib/data",
 			},
-			expectedErr: "userVolume.name is required",
+			expectedErr: "volume.name is required",
 		},
 		{
 			name: "relative destination",
-			mount: container.UserVolumeMount{
+			mount: container.VolumeMount{
 				VolumeName:       "data",
 				MountDestination: "var/lib/data",
 			},
-			expectedErr: "userVolume.destination",
+			expectedErr: "volume.destination",
 		},
 		{
 			name: "unsupported mount option",
-			mount: container.UserVolumeMount{
+			mount: container.VolumeMount{
 				VolumeName:       "data",
 				MountDestination: "/var/lib/data",
 				MountOpts:        []string{"sync"},

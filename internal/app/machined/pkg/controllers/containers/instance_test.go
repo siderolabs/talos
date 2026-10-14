@@ -255,6 +255,9 @@ func (suite *InstanceSuite) SetupTest() {
 	// would ever become ready without it.
 	suite.Require().NoError(suite.State().Create(suite.Ctx(),
 		containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID)))
+
+	// MountController resolves volume names against the machine config.
+	declareTestVolume(&suite.DefaultSuite)
 }
 
 func (suite *InstanceSuite) TestNoInstanceUntilImageReady() {
@@ -530,11 +533,11 @@ func (suite *InstanceSuite) TestGatesOnPath() {
 	suite.assertInstance(0)
 }
 
-func (suite *InstanceSuite) TestUserVolumeMountStaysPending() {
+func (suite *InstanceSuite) TestVolumeMountStaysPending() {
 	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
-				Kind:        containers.MountKindUserVolume,
+				Kind:        containers.MountKindVolume,
 				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 			},
@@ -553,7 +556,7 @@ func (suite *InstanceSuite) TestStartsOnceUserVolumeIsMounted() {
 	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
-				Kind:        containers.MountKindUserVolume,
+				Kind:        containers.MountKindVolume,
 				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 			},
@@ -580,6 +583,73 @@ func (suite *InstanceSuite) TestStartsOnceUserVolumeIsMounted() {
 		asrt.Equal("/var/mnt/web-content", instance.TypedSpec().Mounts[0].Source)
 		asrt.Equal("/usr/share/nginx/html", instance.TypedSpec().Mounts[0].Destination)
 	})
+}
+
+// TestVolumeRemountWaitsForContainerToStop covers a volume the block subsystem wants to unmount from
+// under a running container, e.g. an external volume to be remounted with new mount parameters.
+//
+// The running container comes first: it keeps the volume mounted as it is, and the remount happens
+// only once the container has stopped on its own, after which it restarts on the new mount.
+func (suite *InstanceSuite) TestVolumeRemountWaitsForContainerToStop() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.Mounts = []containers.ContainerMountSpec{
+			{
+				Kind:        containers.MountKindVolume,
+				VolumeName:  "web-content",
+				Destination: "/usr/share/nginx/html",
+			},
+		}
+	})
+	suite.markImageReady()
+
+	requestID := "containers.MountController/" + testContainer + "/u-web-content"
+
+	ctest.AssertResource(suite, requestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+
+	mount := func() {
+		mountStatus := block.NewVolumeMountStatus(block.NamespaceName, requestID)
+		mountStatus.TypedSpec().VolumeID = "u-web-content"
+		mountStatus.TypedSpec().Requester = "containers.MountController"
+		mountStatus.TypedSpec().Target = "/var/mnt/web-content"
+
+		suite.Require().NoError(suite.State().Create(suite.Ctx(), mountStatus))
+	}
+
+	mount()
+
+	suite.assertInstance(0)
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseRunning, time.Time{})
+
+	// The block subsystem asks for the volume to be unmounted.
+	statusMD := block.NewVolumeMountStatus(block.NamespaceName, requestID).Metadata()
+
+	_, err := suite.State().Teardown(suite.Ctx(), statusMD)
+	suite.Require().NoError(err)
+
+	// The container keeps running, and keeps the volume held.
+	suite.tick()
+	suite.assertInstance(0)
+
+	ctest.AssertResource(suite, requestID, func(status *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.True(status.Metadata().Finalizers().Has("containers.MountController"))
+	})
+
+	// The container exits on its own, which releases the volume.
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseTerminated, time.Now().Add(-2*containersctrl.RestartInterval))
+
+	ctest.AssertResource(suite, requestID, func(status *block.VolumeMountStatus, asrt *assert.Assertions) {
+		asrt.Empty(status.Metadata().Finalizers())
+	})
+
+	// It is not restarted until the volume is mounted again.
+	suite.tick()
+	suite.assertNoInstance(1)
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), statusMD))
+	mount()
+
+	suite.assertInstance(1)
+	suite.assertNoInstance(0)
 }
 
 // TestResolvesTmpfsAndHostPathMounts covers the mount kinds that need no MountController.
@@ -850,7 +920,7 @@ func (suite *InstanceSuite) TestGatedSpecChangeKeepsInstance() {
 
 // TestGatedSpecChangeKeepsInstanceOnUnresolvableMount is the same case for a gate that never opens.
 //
-// Nothing resolves a userVolume yet, so replacing the instance over this edit would stop the
+// Nothing resolves a volume yet, so replacing the instance over this edit would stop the
 // container permanently rather than briefly.
 func (suite *InstanceSuite) TestGatedSpecChangeKeepsInstanceOnUnresolvableMount() {
 	suite.createSpec()
@@ -862,7 +932,7 @@ func (suite *InstanceSuite) TestGatedSpecChangeKeepsInstanceOnUnresolvableMount(
 		spec.Args = []string{"--verbose"}
 		spec.Mounts = []containers.ContainerMountSpec{
 			{
-				Kind:        containers.MountKindUserVolume,
+				Kind:        containers.MountKindVolume,
 				VolumeName:  "web-content",
 				Destination: "/usr/share/nginx/html",
 			},

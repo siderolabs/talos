@@ -512,12 +512,8 @@ func (x *ContainerInstanceStatusSpec) GetFinishedAt() *timestamppb.Timestamp {
 // Exactly one of VolumeName, Tmpfs or HostPath describes the source; Kind says which.
 type ContainerMountSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Kind is one of "userVolume", "tmpfs" or "hostPath".
+	// Kind is one of "volume", "tmpfs" or "hostPath".
 	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	// VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content".
-	//
-	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
-	VolumeId string `protobuf:"bytes,2,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// Source is the host path for a hostPath mount.
 	Source string `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
 	// Destination inside the container.
@@ -526,7 +522,8 @@ type ContainerMountSpec struct {
 	Size uint64 `protobuf:"varint,5,opt,name=size,proto3" json:"size,omitempty"`
 	// Options with the writable default already applied.
 	Options []string `protobuf:"bytes,6,rep,name=options,proto3" json:"options,omitempty"`
-	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to, e.g. "web-content".
+	// VolumeName is the name of the user, existing or external volume a volume mount refers to,
+	// e.g. "web-content".
 	VolumeName    string `protobuf:"bytes,7,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -565,13 +562,6 @@ func (*ContainerMountSpec) Descriptor() ([]byte, []int) {
 func (x *ContainerMountSpec) GetKind() string {
 	if x != nil {
 		return x.Kind
-	}
-	return ""
-}
-
-func (x *ContainerMountSpec) GetVolumeId() string {
-	if x != nil {
-		return x.VolumeId
 	}
 	return ""
 }
@@ -1151,16 +1141,15 @@ func (x *ContainerStatusSpec) GetWaitingFor() []string {
 type ResolvedMountSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Kind  string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
-	// Source is the host path to bind from; empty for tmpfs and userVolume.
+	// Source is the host path to bind from; empty for tmpfs.
 	Source      string   `protobuf:"bytes,2,opt,name=source,proto3" json:"source,omitempty"`
 	Destination string   `protobuf:"bytes,3,opt,name=destination,proto3" json:"destination,omitempty"`
 	Size        uint64   `protobuf:"varint,4,opt,name=size,proto3" json:"size,omitempty"`
 	Options     []string `protobuf:"bytes,5,rep,name=options,proto3" json:"options,omitempty"`
-	// VolumeID is the resolved userVolume's block volume ID; empty for tmpfs and hostPath.
-	//
-	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
+	// VolumeID is the block volume ID of a volume mount, e.g. "u-web-content"; empty for tmpfs and hostPath.
 	VolumeId string `protobuf:"bytes,6,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to; empty for tmpfs and hostPath.
+	// VolumeName is the name of the user, existing or external volume a volume mount refers to;
+	// empty for tmpfs and hostPath.
 	VolumeName    string `protobuf:"bytes,7,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1298,10 +1287,9 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\n" +
 	"started_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
 	"\vfinished_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"finishedAt\"\xce\x01\n" +
+	"finishedAt\"\xb1\x01\n" +
 	"\x12ContainerMountSpec\x12\x12\n" +
-	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1b\n" +
-	"\tvolume_id\x18\x02 \x01(\tR\bvolumeId\x12\x16\n" +
+	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
 	"\x06source\x18\x03 \x01(\tR\x06source\x12 \n" +
 	"\vdestination\x18\x04 \x01(\tR\vdestination\x12\x12\n" +
 	"\x04size\x18\x05 \x01(\x04R\x04size\x12\x18\n" +

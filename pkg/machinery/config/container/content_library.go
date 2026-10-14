@@ -37,8 +37,6 @@ func validateContentLibraryBackingVolumes(container *Container) error {
 
 	var errs *multierror.Error
 
-	backingVolumes := backingVolumeCandidates(container)
-
 	backedBy := map[string]string{}
 
 	for _, contentLibraryConfig := range sorted {
@@ -50,7 +48,7 @@ func validateContentLibraryBackingVolumes(container *Container) error {
 			continue
 		}
 
-		readOnly, declared := backingVolumes[volumeName]
+		backing, declared := config.ResolveBackingVolume(container, volumeName)
 
 		switch {
 		case !declared:
@@ -58,7 +56,7 @@ func validateContentLibraryBackingVolumes(container *Container) error {
 				"content library %q cannot be backed by volume %q: no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig declares that volume",
 				contentLibraryConfig.Name(), volumeName,
 			))
-		case readOnly:
+		case backing.ReadOnly:
 			errs = multierror.Append(errs, fmt.Errorf(
 				"content library %q cannot be backed by volume %q: the volume is configured read-only, and uploads write into the library",
 				contentLibraryConfig.Name(), volumeName,
@@ -78,29 +76,4 @@ func validateContentLibraryBackingVolumes(container *Container) error {
 	}
 
 	return errs.ErrorOrNil()
-}
-
-// backingVolumeCandidates maps the name of every volume which can back a content library or
-// storage pool to its read-only mount policy.
-//
-// These are the kinds mounted at `/var/mnt/<name>`, which consumers resolve backing volume
-// names against. The name is taken as the document declares it: the internal ID is derived from the
-// kind and the name, so a volume declared `u-images` is a volume of its own and not the ID of one
-// declared `images`. A user volume is never read-only, as the kind carries no such option.
-func backingVolumeCandidates(container *Container) map[string]bool {
-	readOnlyByName := map[string]bool{}
-
-	for _, userVolumeConfig := range container.UserVolumeConfigs() {
-		readOnlyByName[userVolumeConfig.Name()] = false
-	}
-
-	for _, existingVolumeConfig := range container.ExistingVolumeConfigs() {
-		readOnlyByName[existingVolumeConfig.Name()] = existingVolumeConfig.Mount().ReadOnly()
-	}
-
-	for _, externalVolumeConfig := range container.ExternalVolumeConfigs() {
-		readOnlyByName[externalVolumeConfig.Name()] = externalVolumeConfig.Mount().ReadOnly()
-	}
-
-	return readOnlyByName
 }

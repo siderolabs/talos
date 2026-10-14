@@ -7,7 +7,6 @@ package containers
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -17,7 +16,9 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -28,10 +29,6 @@ import (
 const containerLabel = "container"
 
 // MountController resolves a container's mounts to host paths, and holds the volumes they need.
-//
-// Its one side effect is the block.VolumeMountRequest resources it creates and the finalizers it
-// holds on the resulting block.VolumeMountStatus. That finalizer is what stops a volume being
-// unmounted from under a running container, so it is released only once nothing is running.
 type MountController struct{}
 
 // Name implements controller.Controller interface.
@@ -45,6 +42,13 @@ func (ctrl *MountController) Inputs() []controller.Input {
 		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerSpecType,
+			Kind:      controller.InputWeak,
+		},
+		// Volume names are resolved to volume IDs against the volume documents in the machine config.
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 		// Both instance types are read to decide whether a container is still using its mounts: a
@@ -155,6 +159,17 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 		return err
 	}
 
+	machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, runtime, config.ActiveID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("failed to get machine config: %w", err)
+	}
+
+	var cfg configcfg.Config
+
+	if machineConfig != nil {
+		cfg = machineConfig.Config()
+	}
+
 	runtime.StartTrackingOutputs()
 
 	wanted := map[string]struct{}{}
@@ -162,7 +177,9 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 	for containerSpec := range containerSpecs.All() {
 		containerSpecID := containerSpec.Metadata().ID()
 
-		resolvedMounts, ready, reason, err := ctrl.reconcileContainer(ctx, runtime, logger, containerSpec, wanted)
+		_, isLive := live[containerSpecID]
+
+		resolvedMounts, ready, reason, err := ctrl.reconcileContainer(ctx, runtime, logger, cfg, containerSpec, isLive, wanted)
 		if err != nil {
 			return err
 		}
@@ -196,26 +213,32 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 func (ctrl *MountController) liveContainers(ctx context.Context, runtime controller.Runtime) (map[string]struct{}, error) {
 	live := map[string]struct{}{}
 
-	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list instance specs: %w", err)
-	}
-
-	// An instance that exists is either running or on its way to it, so its mounts are in use even
-	// before any status has been written.
-	for containerInstanceSpec := range containerInstanceSpecs.All() {
-		live[containerInstanceSpec.TypedSpec().ContainerID] = struct{}{}
-	}
-
 	containerInstanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, runtime)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance statuses: %w", err)
 	}
 
+	done := map[string]struct{}{}
+
 	for containerInstanceStatus := range containerInstanceStatuses.All() {
-		if !containerInstanceStatus.TypedSpec().Phase.Done() {
+		if containerInstanceStatus.TypedSpec().Phase.Done() {
+			done[containerInstanceStatus.Metadata().ID()] = struct{}{}
+		} else {
 			live[containerInstanceStatus.TypedSpec().ContainerID] = struct{}{}
 		}
+	}
+
+	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list instance specs: %w", err)
+	}
+
+	for containerInstanceSpec := range containerInstanceSpecs.All() {
+		if _, isDone := done[containerInstanceSpec.Metadata().ID()]; isDone {
+			continue
+		}
+
+		live[containerInstanceSpec.TypedSpec().ContainerID] = struct{}{}
 	}
 
 	return live, nil
@@ -223,12 +246,17 @@ func (ctrl *MountController) liveContainers(ctx context.Context, runtime control
 
 // reconcileContainer requests the mounts one container needs and resolves them to host paths.
 //
+// isLive reports whether a task of the container may be using its mounts, which decides whether the
+// hold on a volume being unmounted has to be kept.
+//
 //nolint:gocyclo,cyclop
 func (ctrl *MountController) reconcileContainer(
 	ctx context.Context,
 	runtime controller.Runtime,
 	logger *zap.Logger,
+	cfg configcfg.Config,
 	containerSpec *containers.ContainerSpec,
+	isLive bool,
 	wanted map[string]struct{},
 ) (resolvedMounts []containers.ResolvedMountSpec, ready bool, reason string, err error) {
 	containerSpecID := containerSpec.Metadata().ID()
@@ -237,7 +265,7 @@ func (ctrl *MountController) reconcileContainer(
 	var reasons []string
 
 	for _, containerMountSpec := range containerSpec.TypedSpec().Mounts {
-		if containerMountSpec.Kind != containers.MountKindUserVolume {
+		if containerMountSpec.Kind != containers.MountKindVolume {
 			// tmpfs and hostPath need nothing from the block subsystem: the source is either nothing
 			// at all or a path which must already exist.
 			resolvedMounts = append(resolvedMounts, containers.ResolvedMountSpec{
@@ -251,15 +279,39 @@ func (ctrl *MountController) reconcileContainer(
 			continue
 		}
 
-		volumeName := containerMountSpec.UserVolumeName()
-		volumeID := containerMountSpec.UserVolumeID()
+		volumeName := containerMountSpec.VolumeName
 
+		// Names are unique across user, existing and external volumes, so a name resolves to at most
+		// one volume ID. Validation rejects a name nothing declares; one reaches here only while the
+		// machine config is missing or validation was bypassed, and the container is held back until
+		// the volume is declared.
+		var (
+			backing  configcfg.BackingVolume
+			resolved bool
+		)
+
+		if cfg != nil {
+			backing, resolved = configcfg.ResolveBackingVolume(cfg, volumeName)
+		}
+
+		if !resolved {
+			ready = false
+
+			reasons = append(
+				reasons,
+				fmt.Sprintf("no UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig named %q is configured", volumeName),
+			)
+
+			continue
+		}
+
+		volumeID := backing.ID
 		requestID := ctrl.mountRequestID(containerSpecID, volumeID)
 		wanted[requestID] = struct{}{}
 
 		// Writable unless the options say otherwise; the writable default is already applied by
 		// ConfigController.
-		readOnly := slices.Contains(containerMountSpec.Options, "ro")
+		readOnly := containerMountSpec.ReadOnly()
 
 		if err = safe.WriterModify(ctx, runtime,
 			block.NewVolumeMountRequest(block.NamespaceName, requestID),
@@ -287,18 +339,44 @@ func (ctrl *MountController) reconcileContainer(
 
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("waiting for user volume %q to be mounted", volumeName))
+			reasons = append(reasons, fmt.Sprintf("waiting for volume %q to be mounted", volumeName))
 
 			continue
 		}
 
 		if volumeMountStatus.Metadata().Phase() != resource.PhaseRunning {
-			// Either the volume is going away, or this status is left over from a previous generation
-			// and is still tearing down. Adding a finalizer now would block that teardown forever, so
-			// report not-ready instead so the container won't start/restart while the volume is unavailable.
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("user volume %q is being unmounted", volumeName))
+			if !volumeMountStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+				reasons = append(reasons, fmt.Sprintf("volume %q is being unmounted", volumeName))
+
+				continue
+			}
+
+			// isLive was read at the start of the pass, so an instance started since would be missed.
+			// Look again before giving up the hold, as that is what lets the volume be unmounted.
+			if !isLive {
+				live, liveErr := ctrl.liveContainers(ctx, runtime)
+				if liveErr != nil {
+					return nil, false, "", liveErr
+				}
+
+				_, isLive = live[containerSpecID]
+			}
+
+			if isLive {
+				// The running container comes first: the volume stays mounted as it is, and the
+				// unmount (and any remount with new parameters) waits until the container stops.
+				reasons = append(reasons, fmt.Sprintf("volume %q is pending unmount, waiting for the container to stop", volumeName))
+
+				continue
+			}
+
+			if err = ctrl.releaseFinalizer(ctx, runtime, logger, requestID); err != nil {
+				return nil, false, "", err
+			}
+
+			reasons = append(reasons, fmt.Sprintf("volume %q is being unmounted", volumeName))
 
 			continue
 		}
@@ -308,7 +386,7 @@ func (ctrl *MountController) reconcileContainer(
 			// read-only, so another holder can leave this one with less access than it asked for.
 			ready = false
 
-			reasons = append(reasons, fmt.Sprintf("user volume %q is mounted read-only", volumeName))
+			reasons = append(reasons, fmt.Sprintf("volume %q is mounted read-only", volumeName))
 
 			continue
 		}
@@ -332,7 +410,7 @@ func (ctrl *MountController) reconcileContainer(
 			Source:      volumeMountStatus.TypedSpec().Target,
 			Destination: containerMountSpec.Destination,
 			Options:     containerMountSpec.Options,
-			VolumeID:    volumeID, //nolint:staticcheck // backward compatibility
+			VolumeID:    volumeID,
 			VolumeName:  volumeName,
 		})
 	}

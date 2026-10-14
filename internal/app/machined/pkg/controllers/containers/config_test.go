@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -35,14 +36,8 @@ func TestConfigSuite(t *testing.T) {
 	})
 }
 
-// applyContainers puts the given ContainerConfig documents into the active machine config.
-func (suite *ConfigSuite) applyContainers(docs ...*containercfg.ContainerConfigV1Alpha1) {
-	documents := make([]configcfg.Document, 0, len(docs))
-
-	for _, doc := range docs {
-		documents = append(documents, doc)
-	}
-
+// applyContainers puts the given documents into the active machine config.
+func (suite *ConfigSuite) applyContainers(documents ...configcfg.Document) {
 	cfg, err := container.New(documents...)
 	suite.Require().NoError(err)
 
@@ -77,7 +72,7 @@ func (suite *ConfigSuite) TestResolvesMounts() {
 	doc := newDoc("director", "ghcr.io/siderolabs/director:v1.0.0")
 	doc.MountsConfig = []containercfg.ContainerMount{
 		{
-			UserVolumeMount: &containercfg.UserVolumeMount{
+			VolumeMount: &containercfg.VolumeMount{
 				VolumeName:       "director-data",
 				MountDestination: "/var/lib/director",
 				MountOpts:        []string{"rw"},
@@ -103,17 +98,19 @@ func (suite *ConfigSuite) TestResolvesMounts() {
 		},
 	}
 
-	suite.applyContainers(doc)
+	userVolume := blockcfg.NewUserVolumeConfigV1Alpha1()
+	userVolume.MetaName = "director-data"
+
+	suite.applyContainers(doc, userVolume)
 
 	ctest.AssertResource(suite, "director", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
 		mounts := spec.TypedSpec().Mounts
 		asrt.Len(mounts, 4)
 
-		// A user volume resolves to its name, not a host path: the path is only known
-		// once the volume is mounted, which is a different controller's job.
-		asrt.Equal(containers.MountKindUserVolume, mounts[0].Kind)
+		// A volume keeps its declared name, not a volume ID or host path: resolving the name and
+		// mounting the volume are MountController's job.
+		asrt.Equal(containers.MountKindVolume, mounts[0].Kind)
 		asrt.Equal("director-data", mounts[0].VolumeName)
-		asrt.Equal("u-director-data", mounts[0].VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 		asrt.Empty(mounts[0].Source)
 		asrt.NotContains(mounts[0].Options, "ro")
 

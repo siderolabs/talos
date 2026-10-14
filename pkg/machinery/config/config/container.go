@@ -43,14 +43,16 @@ type ContainerConfig interface {
 //
 // Exactly one of the three sources is present.
 type ContainerMountConfig interface {
-	UserVolume() optional.Optional[ContainerUserVolumeMountConfig]
+	Volume() optional.Optional[ContainerVolumeMountConfig]
 	Tmpfs() optional.Optional[ContainerTmpfsMountConfig]
 	HostPath() optional.Optional[ContainerHostPathMountConfig]
 }
 
-// ContainerUserVolumeMountConfig mounts a user volume by name.
-type ContainerUserVolumeMountConfig interface {
-	// Name of the UserVolumeConfig document.
+// ContainerVolumeMountConfig mounts a volume by name.
+type ContainerVolumeMountConfig interface {
+	// Name of the UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig document.
+	//
+	// Volume names are unique across those kinds, so the name resolves to one volume.
 	Name() string
 	// Destination inside the container.
 	Destination() string

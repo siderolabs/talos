@@ -87,6 +87,48 @@ func TestContainerConfigDependsOnDeprecatedNetworks(t *testing.T) {
 	}
 }
 
+func TestContainerConfigDeprecatedUserVolumeMount(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name                string
+		mount               string
+		expectedName        string
+		expectedDestination string
+	}{
+		{
+			name:                "userVolume only",
+			mount:               "  - userVolume:\n      name: data\n      destination: /data",
+			expectedName:        "data",
+			expectedDestination: "/data",
+		},
+		{
+			name:                "volume wins over userVolume",
+			mount:               "  - volume:\n      name: new\n      destination: /new\n    userVolume:\n      name: old\n      destination: /old",
+			expectedName:        "new",
+			expectedDestination: "/new",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := load(t, "apiVersion: v1alpha1\nkind: ContainerConfig\nname: nginx\nimage: nginx\nmounts:\n"+test.mount+"\n")
+
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+
+			mounts := cfg.Mounts()
+			require.Len(t, mounts, 1)
+
+			volume, ok := mounts[0].Volume().Get()
+			require.True(t, ok)
+
+			assert.Equal(t, test.expectedName, volume.Name())
+			assert.Equal(t, test.expectedDestination, volume.Destination())
+		})
+	}
+}
+
 func TestContainerConfigDigestPinnedDoesNotWarn(t *testing.T) {
 	t.Parallel()
 
@@ -117,7 +159,7 @@ runAs:
 environment:
   - LOG_LEVEL=debug
 mounts:
-  - userVolume:
+  - volume:
       name: director-data
       destination: /var/lib/director
   - tmpfs:
@@ -181,7 +223,7 @@ dependsOn:
 	require.Len(t, mounts, 3)
 
 	// A user volume with no options is writable by default.
-	uv, ok := mounts[0].UserVolume().Get()
+	uv, ok := mounts[0].Volume().Get()
 	require.True(t, ok)
 	assert.Equal(t, "director-data", uv.Name())
 	assert.NotContains(t, uv.MountOptions(), "rw")
@@ -244,7 +286,7 @@ func TestContainerConfigValidationErrors(t *testing.T) {
 		{
 			name:        "mount with no source",
 			doc:         "name: nginx\nimage: nginx\nmounts:\n  - {}",
-			expectedErr: "exactly one of userVolume, tmpfs or hostPath must be set",
+			expectedErr: "exactly one of volume, tmpfs or hostPath must be set",
 		},
 		{
 			name: "mount with two sources",
@@ -256,7 +298,7 @@ mounts:
     hostPath:
       source: /dev
       destination: /dev`,
-			expectedErr: "exactly one of userVolume, tmpfs or hostPath must be set",
+			expectedErr: "exactly one of volume, tmpfs or hostPath must be set",
 		},
 		{
 			name: "relative destination",
@@ -560,7 +602,7 @@ func TestContainerConfigValidateMounts(t *testing.T) {
 			mounts: []container.ContainerMount{
 				{},
 			},
-			expectedErrs: []string{"mounts[0]: exactly one of userVolume, tmpfs or hostPath must be set"},
+			expectedErrs: []string{"mounts[0]: exactly one of volume, tmpfs or hostPath must be set"},
 		},
 		{
 			name: "mount with two sources",
@@ -570,15 +612,15 @@ func TestContainerConfigValidateMounts(t *testing.T) {
 					HostPathMount: &container.HostPathMount{MountSource: "/dev", MountDestination: "/dev"},
 				},
 			},
-			expectedErrs: []string{"mounts[0]: exactly one of userVolume, tmpfs or hostPath must be set"},
+			expectedErrs: []string{"mounts[0]: exactly one of volume, tmpfs or hostPath must be set"},
 		},
 		{
 			name: "invalid sub-mount is wrapped with its index",
 			mounts: []container.ContainerMount{
 				{TmpfsMount: &container.TmpfsMount{MountDestination: "/tmp"}},
-				{UserVolumeMount: &container.UserVolumeMount{MountDestination: "/data"}},
+				{VolumeMount: &container.VolumeMount{MountDestination: "/data"}},
 			},
-			expectedErrs: []string{"mounts[1]: userVolume.name is required"},
+			expectedErrs: []string{"mounts[1]: volume.name is required"},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

@@ -139,7 +139,7 @@ func exampleContainerConfigV1Alpha1() *ContainerConfigV1Alpha1 {
 	cfg.ContainerEnvironment = []string{"NGINX_PORT=8080"}
 	cfg.MountsConfig = []ContainerMount{
 		{
-			UserVolumeMount: &UserVolumeMount{
+			VolumeMount: &VolumeMount{
 				VolumeName:       "web-content",
 				MountDestination: "/usr/share/nginx/html",
 				MountOpts:        []string{"ro"},

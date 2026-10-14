@@ -363,6 +363,23 @@ security:
 The `restricted` profile (the default) still mounts `/sys` read-only.
 """
 
+    [notes.container_volume_mounts]
+        title = "ContainerConfig Volume Mounts"
+        description = """\
+The `userVolume` mount source of `ContainerConfig` has been renamed to `volume`, and now accepts the name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document:
+
+```yaml
+mounts:
+  - volume:
+      name: data
+      destination: /data
+```
+
+The `userVolume` key is still accepted but deprecated, and is ignored when `volume` is set; migrate ContainerConfigs to `volume`.
+
+The mounts of the `ContainerSpec` resource no longer carry `volumeID`, as the volume is resolved by name; the resolved volume ID is reported on `ContainerMountStatus`.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

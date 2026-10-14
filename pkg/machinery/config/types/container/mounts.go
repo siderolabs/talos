@@ -34,11 +34,19 @@ var validMountOptions = []string{
 // typed so that Talos can reason about what a container is allowed to reach.
 type ContainerMount struct {
 	//   description: |
-	//     Mount a user volume, referenced by the name of its `UserVolumeConfig` document.
+	//     Mount a user, existing or external volume by name.
+	//
+	//     The name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or
+	//     `ExternalVolumeConfig` document. Volume names are unique across those kinds, so the
+	//     name resolves to one volume. The volume must be declared in the same configuration.
 	//
 	//     The volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also
 	//     makes the container wait for the volume to be mounted before it starts.
-	UserVolumeMount *UserVolumeMount `yaml:"userVolume,omitempty"`
+	VolumeMount *VolumeMount `yaml:"volume,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `volume` instead.
+	UserVolumeMount *VolumeMount `yaml:"userVolume,omitempty"`
 	//   description: |
 	//     Mount a tmpfs for scratch space.
 	TmpfsMount *TmpfsMount `yaml:"tmpfs,omitempty"`
@@ -50,16 +58,21 @@ type ContainerMount struct {
 	HostPathMount *HostPathMount `yaml:"hostPath,omitempty"`
 }
 
-// UserVolumeMount mounts a user volume by name.
-type UserVolumeMount struct {
+// VolumeMount mounts a volume by name.
+type VolumeMount struct {
 	//   description: |
-	//     Name of the `UserVolumeConfig` document to mount.
+	//     Name of the volume to mount.
+	//
+	//     The name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.
 	VolumeName string `yaml:"name"`
 	//   description: |
 	//     Absolute path inside the container's mount namespace.
 	MountDestination string `yaml:"destination"`
 	//   description: |
-	//     Mount options. User volume mounts are writable by default (`rw`).
+	//     Mount options. Volume mounts are writable by default (`rw`).
+	//
+	//     A volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it
+	//     read-only must be mounted with `ro`.
 	//   values:
 	//     - ro
 	//     - rw
@@ -106,7 +119,9 @@ type HostPathMount struct {
 func (m *ContainerMount) Validate() (string, error) {
 	matchCount := 0
 
-	if m.UserVolumeMount != nil {
+	volumeMount := m.volumeMount()
+
+	if volumeMount != nil {
 		matchCount++
 	}
 
@@ -119,7 +134,7 @@ func (m *ContainerMount) Validate() (string, error) {
 	}
 
 	if matchCount != 1 {
-		return "", errors.New("exactly one of userVolume, tmpfs or hostPath must be set")
+		return "", errors.New("exactly one of volume, tmpfs or hostPath must be set")
 	}
 
 	var (
@@ -128,9 +143,9 @@ func (m *ContainerMount) Validate() (string, error) {
 	)
 
 	switch {
-	case m.UserVolumeMount != nil:
-		destination = m.UserVolumeMount.MountDestination
-		err = m.UserVolumeMount.Validate()
+	case volumeMount != nil:
+		destination = volumeMount.MountDestination
+		err = volumeMount.Validate()
 	case m.TmpfsMount != nil:
 		destination = m.TmpfsMount.MountDestination
 		err = m.TmpfsMount.Validate()
@@ -142,16 +157,17 @@ func (m *ContainerMount) Validate() (string, error) {
 	return destination, err
 }
 
-func (m *UserVolumeMount) Validate() error {
+// Validate checks the volume mount.
+func (m *VolumeMount) Validate() error {
 	var validationErrors error
 
 	if m.VolumeName == "" {
-		validationErrors = errors.Join(validationErrors, errors.New("userVolume.name is required"))
+		validationErrors = errors.Join(validationErrors, errors.New("volume.name is required"))
 	}
 
 	return errors.Join(
 		validationErrors,
-		ValidateAbsPath("userVolume.destination", m.MountDestination),
+		ValidateAbsPath("volume.destination", m.MountDestination),
 		ValidateMountOptions(m.MountOpts),
 	)
 }
@@ -189,19 +205,31 @@ func ValidateMountOptions(options []string) error {
 
 // Check interfaces.
 var (
-	_ config.ContainerMountConfig           = &ContainerMount{}
-	_ config.ContainerUserVolumeMountConfig = &UserVolumeMount{}
-	_ config.ContainerTmpfsMountConfig      = &TmpfsMount{}
-	_ config.ContainerHostPathMountConfig   = &HostPathMount{}
+	_ config.ContainerMountConfig         = &ContainerMount{}
+	_ config.ContainerVolumeMountConfig   = &VolumeMount{}
+	_ config.ContainerTmpfsMountConfig    = &TmpfsMount{}
+	_ config.ContainerHostPathMountConfig = &HostPathMount{}
 )
 
-// UserVolume implements config.ContainerMountConfig interface.
-func (m *ContainerMount) UserVolume() optional.Optional[config.ContainerUserVolumeMountConfig] {
-	if m.UserVolumeMount == nil {
-		return optional.None[config.ContainerUserVolumeMountConfig]()
+// volumeMount returns the volume mount source.
+//
+// The deprecated `userVolume` key is used only when `volume` is not set.
+func (m *ContainerMount) volumeMount() *VolumeMount {
+	if m.VolumeMount != nil {
+		return m.VolumeMount
 	}
 
-	return optional.Some[config.ContainerUserVolumeMountConfig](m.UserVolumeMount)
+	return m.UserVolumeMount
+}
+
+// Volume implements config.ContainerMountConfig interface.
+func (m *ContainerMount) Volume() optional.Optional[config.ContainerVolumeMountConfig] {
+	volumeMount := m.volumeMount()
+	if volumeMount == nil {
+		return optional.None[config.ContainerVolumeMountConfig]()
+	}
+
+	return optional.Some[config.ContainerVolumeMountConfig](volumeMount)
 }
 
 // Tmpfs implements config.ContainerMountConfig interface.
@@ -222,14 +250,14 @@ func (m *ContainerMount) HostPath() optional.Optional[config.ContainerHostPathMo
 	return optional.Some[config.ContainerHostPathMountConfig](m.HostPathMount)
 }
 
-// Name implements config.ContainerUserVolumeMountConfig interface.
-func (m *UserVolumeMount) Name() string { return m.VolumeName }
+// Name implements config.ContainerVolumeMountConfig interface.
+func (m *VolumeMount) Name() string { return m.VolumeName }
 
-// Destination implements config.ContainerUserVolumeMountConfig interface.
-func (m *UserVolumeMount) Destination() string { return m.MountDestination }
+// Destination implements config.ContainerVolumeMountConfig interface.
+func (m *VolumeMount) Destination() string { return m.MountDestination }
 
-// MountOptions implements config.ContainerUserVolumeMountConfig interface.
-func (m *UserVolumeMount) MountOptions() []string { return normalizeWritableOptions(m.MountOpts) }
+// MountOptions implements config.ContainerVolumeMountConfig interface.
+func (m *VolumeMount) MountOptions() []string { return normalizeWritableOptions(m.MountOpts) }
 
 // Destination implements config.ContainerTmpfsMountConfig interface.
 func (m *TmpfsMount) Destination() string { return m.MountDestination }

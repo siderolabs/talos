@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 	"slices"
-	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -21,7 +20,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -193,7 +191,7 @@ func MountsResolvedMatchDeclared(resolved []ResolvedMountSpec, declared []Contai
 			return false
 		}
 
-		if mount.Kind == MountKindUserVolume && r.UserVolumeName() != mount.UserVolumeName() {
+		if mount.Kind == MountKindVolume && r.VolumeName != mount.VolumeName {
 			return false
 		}
 	}
@@ -207,12 +205,8 @@ func MountsResolvedMatchDeclared(resolved []ResolvedMountSpec, declared []Contai
 //
 //gotagsrewrite:gen
 type ContainerMountSpec struct {
-	// Kind is one of "userVolume", "tmpfs" or "hostPath".
+	// Kind is one of "volume", "tmpfs" or "hostPath".
 	Kind string `yaml:"kind" protobuf:"1"`
-	// VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content".
-	//
-	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
-	VolumeID string `yaml:"volumeID,omitempty" protobuf:"2"`
 	// Source is the host path for a hostPath mount.
 	Source string `yaml:"source,omitempty" protobuf:"3"`
 	// Destination inside the container.
@@ -221,37 +215,21 @@ type ContainerMountSpec struct {
 	Size uint64 `yaml:"size,omitempty" protobuf:"5"`
 	// Options with the writable default already applied.
 	Options []string `yaml:"options,omitempty" protobuf:"6"`
-	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to, e.g. "web-content".
+	// VolumeName is the name of the user, existing or external volume a volume mount refers to,
+	// e.g. "web-content".
 	VolumeName string `yaml:"volumeName,omitempty" protobuf:"7"`
 }
 
-// UserVolumeName returns the name of the UserVolumeConfig a userVolume mount refers to.
-//
-// It falls back to the deprecated VolumeID with the user volume prefix stripped, as resources from
-// Talos 1.14 and older only carry VolumeID.
-func (m ContainerMountSpec) UserVolumeName() string {
-	return userVolumeName(m.VolumeName, m.VolumeID) //nolint:staticcheck // backward compatibility
-}
-
-// UserVolumeID returns the block volume ID backing a userVolume mount, e.g. "u-web-content".
-func (m ContainerMountSpec) UserVolumeID() string {
-	return constants.UserVolumePrefix + m.UserVolumeName()
-}
-
-// userVolumeName prefers name, falling back to the legacy volume ID with the user volume prefix stripped.
-func userVolumeName(name, legacyVolumeID string) string {
-	if name != "" {
-		return name
-	}
-
-	return strings.TrimPrefix(legacyVolumeID, constants.UserVolumePrefix)
+// ReadOnly reports whether the mount asks for read-only access.
+func (m ContainerMountSpec) ReadOnly() bool {
+	return slices.Contains(m.Options, "ro")
 }
 
 // Mount kinds.
 const (
-	MountKindUserVolume = "userVolume"
-	MountKindTmpfs      = "tmpfs"
-	MountKindHostPath   = "hostPath"
+	MountKindVolume   = "volume"
+	MountKindTmpfs    = "tmpfs"
+	MountKindHostPath = "hostPath"
 )
 
 // ContainerSecuritySpec is the resolved security posture.

@@ -17,7 +17,6 @@ import (
 	"go.uber.org/zap"
 
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -192,7 +191,7 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 	return nil
 }
 
-// resolveMounts turns typed configuration mounts into resolved mount specs.
+// resolveMounts turns typed configuration mounts into mount specs.
 func resolveMounts(configMounts []configcfg.ContainerMountConfig) ([]containers.ContainerMountSpec, error) {
 	if len(configMounts) == 0 {
 		return nil, nil
@@ -202,15 +201,14 @@ func resolveMounts(configMounts []configcfg.ContainerMountConfig) ([]containers.
 
 	for i, containerMountConfig := range configMounts {
 		switch {
-		case containerMountConfig.UserVolume().IsPresent():
-			userVolume, _ := containerMountConfig.UserVolume().Get()
+		case containerMountConfig.Volume().IsPresent():
+			volume, _ := containerMountConfig.Volume().Get()
 
 			containerMountSpecs = append(containerMountSpecs, containers.ContainerMountSpec{
-				Kind:        containers.MountKindUserVolume,
-				VolumeID:    constants.UserVolumePrefix + userVolume.Name(), //nolint:staticcheck // backward compatibility
-				VolumeName:  userVolume.Name(),
-				Destination: userVolume.Destination(),
-				Options:     userVolume.MountOptions(),
+				Kind:        containers.MountKindVolume,
+				VolumeName:  volume.Name(),
+				Destination: volume.Destination(),
+				Options:     volume.MountOptions(),
 			})
 		case containerMountConfig.Tmpfs().IsPresent():
 			tmpfs, _ := containerMountConfig.Tmpfs().Get()

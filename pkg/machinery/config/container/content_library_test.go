@@ -51,11 +51,11 @@ func newExistingVolumeDoc(name string, readOnly bool) *blockcfg.ExistingVolumeCo
 	return doc
 }
 
-// validateContentLibraryDocs runs container-level validation over the given documents.
+// validateCrossDocs runs container-level validation over the given documents.
 //
 // The volume documents are left bare, so their own validation has plenty to say about them; only
-// what the content library check reports is of interest here.
-func validateContentLibraryDocs(t *testing.T, docs ...config.Document) error {
+// what the cross-document check under test reports is of interest here.
+func validateCrossDocs(t *testing.T, docs ...config.Document) error {
 	t.Helper()
 
 	ctr, err := container.New(docs...)
@@ -163,7 +163,7 @@ func TestContentLibraryBackingVolumes(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := validateContentLibraryDocs(t, test.docs...)
+			err := validateCrossDocs(t, test.docs...)
 
 			if len(test.expectedErrs) == 0 {
 				if err != nil {

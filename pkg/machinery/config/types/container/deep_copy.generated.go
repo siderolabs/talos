@@ -37,8 +37,16 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 		cp.MountsConfig = make([]ContainerMount, len(o.MountsConfig))
 		copy(cp.MountsConfig, o.MountsConfig)
 		for i2 := range o.MountsConfig {
+			if o.MountsConfig[i2].VolumeMount != nil {
+				cp.MountsConfig[i2].VolumeMount = new(VolumeMount)
+				*cp.MountsConfig[i2].VolumeMount = *o.MountsConfig[i2].VolumeMount
+				if o.MountsConfig[i2].VolumeMount.MountOpts != nil {
+					cp.MountsConfig[i2].VolumeMount.MountOpts = make([]string, len(o.MountsConfig[i2].VolumeMount.MountOpts))
+					copy(cp.MountsConfig[i2].VolumeMount.MountOpts, o.MountsConfig[i2].VolumeMount.MountOpts)
+				}
+			}
 			if o.MountsConfig[i2].UserVolumeMount != nil {
-				cp.MountsConfig[i2].UserVolumeMount = new(UserVolumeMount)
+				cp.MountsConfig[i2].UserVolumeMount = new(VolumeMount)
 				*cp.MountsConfig[i2].UserVolumeMount = *o.MountsConfig[i2].UserVolumeMount
 				if o.MountsConfig[i2].UserVolumeMount.MountOpts != nil {
 					cp.MountsConfig[i2].UserVolumeMount.MountOpts = make([]string, len(o.MountsConfig[i2].UserVolumeMount.MountOpts))

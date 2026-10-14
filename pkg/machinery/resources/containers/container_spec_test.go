@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -412,39 +411,4 @@ func TestReadyMissingStatuses(t *testing.T) {
 
 	_, wakeUpAfterSet := wakeUpAfter.Get()
 	assert.False(t, wakeUpAfterSet)
-}
-
-// TestUserVolumeName covers reading resources from Talos 1.14 and older, which only carry the
-// deprecated VolumeID.
-func TestUserVolumeName(t *testing.T) {
-	t.Parallel()
-
-	for _, test := range []struct {
-		name       string
-		volumeName string
-		volumeID   string
-		expected   string
-	}{
-		{name: "name only", volumeName: "web-content", expected: "web-content"},
-		{name: "legacy ID only", volumeID: "u-web-content", expected: "web-content"},
-		{name: "both, name wins", volumeName: "web-content", volumeID: "u-other", expected: "web-content"},
-		{name: "neither", expected: ""},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
-
-			mount := containers.ContainerMountSpec{
-				VolumeName: test.volumeName,
-				VolumeID:   test.volumeID, //nolint:staticcheck // backward compatibility
-			}
-
-			assert.Equal(t, test.expected, mount.UserVolumeName())
-			assert.Equal(t, constants.UserVolumePrefix+test.expected, mount.UserVolumeID())
-
-			assert.Equal(t, test.expected, containers.ResolvedMountSpec{
-				VolumeName: test.volumeName,
-				VolumeID:   test.volumeID, //nolint:staticcheck // backward compatibility
-			}.UserVolumeName())
-		})
-	}
 }

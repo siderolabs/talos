@@ -73,25 +73,16 @@ type ContainerInstanceSpecSpec struct {
 //gotagsrewrite:gen
 type ResolvedMountSpec struct {
 	Kind string `yaml:"kind" protobuf:"1"`
-	// Source is the host path to bind from; empty for tmpfs and userVolume.
+	// Source is the host path to bind from; empty for tmpfs.
 	Source      string   `yaml:"source,omitempty" protobuf:"2"`
 	Destination string   `yaml:"destination" protobuf:"3"`
 	Size        uint64   `yaml:"size,omitempty" protobuf:"4"`
 	Options     []string `yaml:"options,omitempty" protobuf:"5"`
-	// VolumeID is the resolved userVolume's block volume ID; empty for tmpfs and hostPath.
-	//
-	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
+	// VolumeID is the block volume ID of a volume mount, e.g. "u-web-content"; empty for tmpfs and hostPath.
 	VolumeID string `yaml:"volumeID,omitempty" protobuf:"6"`
-	// VolumeName is the name of the UserVolumeConfig a userVolume mount refers to; empty for tmpfs and hostPath.
+	// VolumeName is the name of the user, existing or external volume a volume mount refers to;
+	// empty for tmpfs and hostPath.
 	VolumeName string `yaml:"volumeName,omitempty" protobuf:"7"`
-}
-
-// UserVolumeName returns the name of the UserVolumeConfig a userVolume mount refers to.
-//
-// It falls back to the deprecated VolumeID with the user volume prefix stripped, as resources from
-// Talos 1.14 and older only carry VolumeID.
-func (m ResolvedMountSpec) UserVolumeName() string {
-	return userVolumeName(m.VolumeName, m.VolumeID) //nolint:staticcheck // backward compatibility
 }
 
 // NewContainerInstanceSpec initializes a ContainerInstanceSpec resource.
@@ -241,8 +232,9 @@ func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx contex
 	}
 
 	if !MountsResolvedMatchDeclared(expectedResolvedMounts, containerSpec.Mounts) {
-		// Nothing to compare against, and a mount that has gone away is not drift to be fixed by
-		// replacing the instance: it is handled by the container being stopped.
+		// Nothing to compare against. A mount that is not ready is not drift to be fixed by replacing
+		// the instance: a running container keeps its volumes held until it stops on its own, and only
+		// then is a replacement created, once the mounts are ready again.
 		return false, nil
 	}
 
@@ -380,7 +372,8 @@ func ResolvedMountsEqual(a, b []ResolvedMountSpec) bool {
 			x.Source == y.Source &&
 			x.Destination == y.Destination &&
 			x.Size == y.Size &&
-			x.UserVolumeName() == y.UserVolumeName() &&
+			x.VolumeID == y.VolumeID &&
+			x.VolumeName == y.VolumeName &&
 			slices.Equal(x.Options, y.Options)
 	})
 }

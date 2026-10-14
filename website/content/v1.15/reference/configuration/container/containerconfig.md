@@ -32,11 +32,11 @@ environment:
     - NGINX_PORT=8080
 # Filesystems to mount into the container.
 mounts:
-    - # Mount a user volume, referenced by the name of its `UserVolumeConfig` document.
-      userVolume:
-        name: web-content # Name of the `UserVolumeConfig` document to mount.
+    - # Mount a user, existing or external volume by name.
+      volume:
+        name: web-content # Name of the volume to mount.
         destination: /usr/share/nginx/html # Absolute path inside the container's mount namespace.
-        # Mount options. User volume mounts are writable by default (`rw`).
+        # Mount options. Volume mounts are writable by default (`rw`).
         options:
             - ro
     - # Mount a tmpfs for scratch space.
@@ -118,25 +118,25 @@ typed so that Talos can reason about what a container is allowed to reach.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`userVolume` |<a href="#ContainerConfig.mounts..userVolume">UserVolumeMount</a> |Mount a user volume, referenced by the name of its `UserVolumeConfig` document.<br><br>The volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also<br>makes the container wait for the volume to be mounted before it starts.  | |
+|`volume` |<a href="#ContainerConfig.mounts..volume">VolumeMount</a> |Mount a user, existing or external volume by name.<br><br>The name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or<br>`ExternalVolumeConfig` document. Volume names are unique across those kinds, so the<br>name resolves to one volume. The volume must be declared in the same configuration.<br><br>The volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also<br>makes the container wait for the volume to be mounted before it starts.  | |
 |`tmpfs` |<a href="#ContainerConfig.mounts..tmpfs">TmpfsMount</a> |Mount a tmpfs for scratch space.  | |
 |`hostPath` |<a href="#ContainerConfig.mounts..hostPath">HostPathMount</a> |Bind-mount a path from the host.<br><br>The source must already exist; Talos will not create it. This is the widest of the<br>three sources and the only one that can reach arbitrary host state.  | |
 
 
 
 
-### userVolume {#ContainerConfig.mounts..userVolume}
+### volume {#ContainerConfig.mounts..volume}
 
-UserVolumeMount mounts a user volume by name.
+VolumeMount mounts a volume by name.
 
 
 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`name` |string |Name of the `UserVolumeConfig` document to mount.  | |
+|`name` |string |Name of the volume to mount.<br><br>The name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.  | |
 |`destination` |string |Absolute path inside the container's mount namespace.  | |
-|`options` |[]string |Mount options. User volume mounts are writable by default (`rw`).  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
+|`options` |[]string |Mount options. Volume mounts are writable by default (`rw`).<br><br>A volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it<br>read-only must be mounted with `ro`.  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
 
 
 

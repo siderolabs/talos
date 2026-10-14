@@ -476,8 +476,8 @@ func formatMounts(mounts []containers.ContainerMountSpec) string {
 		source := mount.Kind
 
 		switch mount.Kind {
-		case containers.MountKindUserVolume:
-			source = "user volume " + mount.UserVolumeName()
+		case containers.MountKindVolume:
+			source = "volume " + mount.VolumeName
 		case containers.MountKindTmpfs:
 			source = "tmpfs"
 

@@ -1515,12 +1515,12 @@
     },
     "container.ContainerMount": {
       "properties": {
-        "userVolume": {
-          "$ref": "#/$defs/container.UserVolumeMount",
-          "title": "userVolume",
-          "description": "Mount a user volume, referenced by the name of its UserVolumeConfig document.\n\nThe volume is mounted from /var/mnt/\u0026lt;name\u0026gt; on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\n",
-          "markdownDescription": "Mount a user volume, referenced by the name of its `UserVolumeConfig` document.\n\nThe volume is mounted from `/var/mnt/\u003cname\u003e` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
-          "x-intellij-html-description": "\u003cp\u003eMount a user volume, referenced by the name of its \u003ccode\u003eUserVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n\n\u003cp\u003eThe volume is mounted from \u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\u003c/p\u003e\n"
+        "volume": {
+          "$ref": "#/$defs/container.VolumeMount",
+          "title": "volume",
+          "description": "Mount a user, existing or external volume by name.\n\nThe name is that of a UserVolumeConfig, ExistingVolumeConfig or\nExternalVolumeConfig document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from /var/mnt/\u0026lt;name\u0026gt; on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\n",
+          "markdownDescription": "Mount a user, existing or external volume by name.\n\nThe name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or\n`ExternalVolumeConfig` document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from `/var/mnt/\u003cname\u003e` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
+          "x-intellij-html-description": "\u003cp\u003eMount a user, existing or external volume by name.\u003c/p\u003e\n\n\u003cp\u003eThe name is that of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or\n\u003ccode\u003eExternalVolumeConfig\u003c/code\u003e document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\u003c/p\u003e\n\n\u003cp\u003eThe volume is mounted from \u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\u003c/p\u003e\n"
         },
         "tmpfs": {
           "$ref": "#/$defs/container.TmpfsMount",
@@ -1708,14 +1708,14 @@
       "type": "object",
       "description": "TmpfsMount mounts a tmpfs."
     },
-    "container.UserVolumeMount": {
+    "container.VolumeMount": {
       "properties": {
         "name": {
           "type": "string",
           "title": "name",
-          "description": "Name of the UserVolumeConfig document to mount.\n",
-          "markdownDescription": "Name of the `UserVolumeConfig` document to mount.",
-          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eUserVolumeConfig\u003c/code\u003e document to mount.\u003c/p\u003e\n"
+          "description": "Name of the volume to mount.\n\nThe name of a UserVolumeConfig, ExistingVolumeConfig or ExternalVolumeConfig document.\n",
+          "markdownDescription": "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume to mount.\u003c/p\u003e\n\n\u003cp\u003eThe name of a \u003ccode\u003eUserVolumeConfig\u003c/code\u003e, \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n"
         },
         "destination": {
           "type": "string",
@@ -1736,14 +1736,14 @@
             "rshared"
           ],
           "title": "options",
-          "description": "Mount options. User volume mounts are writable by default (rw).\n",
-          "markdownDescription": "Mount options. User volume mounts are writable by default (`rw`).",
-          "x-intellij-html-description": "\u003cp\u003eMount options. User volume mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n"
+          "description": "Mount options. Volume mounts are writable by default (rw).\n\nA volume whose ExistingVolumeConfig or ExternalVolumeConfig declares it\nread-only must be mounted with ro.\n",
+          "markdownDescription": "Mount options. Volume mounts are writable by default (`rw`).\n\nA volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it\nread-only must be mounted with `ro`.",
+          "x-intellij-html-description": "\u003cp\u003eMount options. Volume mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n\n\u003cp\u003eA volume whose \u003ccode\u003eExistingVolumeConfig\u003c/code\u003e or \u003ccode\u003eExternalVolumeConfig\u003c/code\u003e declares it\nread-only must be mounted with \u003ccode\u003ero\u003c/code\u003e.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
       "type": "object",
-      "description": "UserVolumeMount mounts a user volume by name."
+      "description": "VolumeMount mounts a volume by name."
     },
     "cri.CRIBaseRuntimeSpecConfigV1Alpha1": {
       "properties": {

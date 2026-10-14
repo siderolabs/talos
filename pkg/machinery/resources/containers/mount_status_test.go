@@ -118,10 +118,10 @@ func TestMountsResolvedMatchDeclared(t *testing.T) {
 		{
 			// The resolved source is what MountController fills in from the mounted volume; the
 			// declared side only ever carries a VolumeName, so the two are never compared for this kind.
-			name: "userVolume source is not compared",
+			name: "volume source is not compared",
 			resolved: []containers.ResolvedMountSpec{
 				{
-					Kind:        containers.MountKindUserVolume,
+					Kind:        containers.MountKindVolume,
 					Source:      "/var/mnt/web-content",
 					Destination: "/usr/share/nginx/html",
 					VolumeName:  "web-content",
@@ -129,7 +129,7 @@ func TestMountsResolvedMatchDeclared(t *testing.T) {
 			},
 			declared: []containers.ContainerMountSpec{
 				{
-					Kind:        containers.MountKindUserVolume,
+					Kind:        containers.MountKindVolume,
 					VolumeName:  "web-content",
 					Destination: "/usr/share/nginx/html",
 				},
@@ -137,10 +137,10 @@ func TestMountsResolvedMatchDeclared(t *testing.T) {
 			resolves: true,
 		},
 		{
-			name: "userVolume volumeName changed",
+			name: "volume volumeName changed",
 			resolved: []containers.ResolvedMountSpec{
 				{
-					Kind:        containers.MountKindUserVolume,
+					Kind:        containers.MountKindVolume,
 					Source:      "/var/mnt/web-content",
 					Destination: "/usr/share/nginx/html",
 					VolumeName:  "web-content",
@@ -148,32 +148,12 @@ func TestMountsResolvedMatchDeclared(t *testing.T) {
 			},
 			declared: []containers.ContainerMountSpec{
 				{
-					Kind:        containers.MountKindUserVolume,
+					Kind:        containers.MountKindVolume,
 					VolumeName:  "other-volume",
 					Destination: "/usr/share/nginx/html",
 				},
 			},
 			resolves: false,
-		},
-		{
-			// A side carrying only the deprecated VolumeID names the same user volume.
-			name: "userVolume legacy volumeID matches name",
-			resolved: []containers.ResolvedMountSpec{
-				{
-					Kind:        containers.MountKindUserVolume,
-					Source:      "/var/mnt/web-content",
-					Destination: "/usr/share/nginx/html",
-					VolumeName:  "web-content",
-				},
-			},
-			declared: []containers.ContainerMountSpec{
-				{
-					Kind:        containers.MountKindUserVolume,
-					VolumeID:    "u-web-content", //nolint:staticcheck // backward compatibility
-					Destination: "/usr/share/nginx/html",
-				},
-			},
-			resolves: true,
 		},
 		{
 			name: "mount count mismatch",

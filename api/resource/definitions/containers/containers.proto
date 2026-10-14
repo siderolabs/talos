@@ -86,12 +86,8 @@ message ContainerInstanceStatusSpec {
 //
 // Exactly one of VolumeName, Tmpfs or HostPath describes the source; Kind says which.
 message ContainerMountSpec {
-  // Kind is one of "userVolume", "tmpfs" or "hostPath".
+  // Kind is one of "volume", "tmpfs" or "hostPath".
   string kind = 1;
-  // VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content".
-  //
-  // Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
-  string volume_id = 2;
   // Source is the host path for a hostPath mount.
   string source = 3;
   // Destination inside the container.
@@ -100,7 +96,8 @@ message ContainerMountSpec {
   uint64 size = 5;
   // Options with the writable default already applied.
   repeated string options = 6;
-  // VolumeName is the name of the UserVolumeConfig a userVolume mount refers to, e.g. "web-content".
+  // VolumeName is the name of the user, existing or external volume a volume mount refers to,
+  // e.g. "web-content".
   string volume_name = 7;
 }
 
@@ -188,16 +185,15 @@ message ContainerStatusSpec {
 // ResolvedMountSpec is a mount with its host-side source resolved.
 message ResolvedMountSpec {
   string kind = 1;
-  // Source is the host path to bind from; empty for tmpfs and userVolume.
+  // Source is the host path to bind from; empty for tmpfs.
   string source = 2;
   string destination = 3;
   uint64 size = 4;
   repeated string options = 5;
-  // VolumeID is the resolved userVolume's block volume ID; empty for tmpfs and hostPath.
-  //
-  // Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
+  // VolumeID is the block volume ID of a volume mount, e.g. "u-web-content"; empty for tmpfs and hostPath.
   string volume_id = 6;
-  // VolumeName is the name of the UserVolumeConfig a userVolume mount refers to; empty for tmpfs and hostPath.
+  // VolumeName is the name of the user, existing or external volume a volume mount refers to;
+  // empty for tmpfs and hostPath.
   string volume_name = 7;
 }
 

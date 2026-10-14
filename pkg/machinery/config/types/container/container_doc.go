@@ -129,12 +129,13 @@ func (ContainerMount) Doc() *encoder.Doc {
 		},
 		Fields: []encoder.Doc{
 			{
-				Name:        "userVolume",
-				Type:        "UserVolumeMount",
+				Name:        "volume",
+				Type:        "VolumeMount",
 				Note:        "",
-				Description: "Mount a user volume, referenced by the name of its `UserVolumeConfig` document.\n\nThe volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount a user volume, referenced by the name of its `UserVolumeConfig` document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mount a user, existing or external volume by name.\n\nThe name is that of a `UserVolumeConfig`, `ExistingVolumeConfig` or\n`ExternalVolumeConfig` document. Volume names are unique across those kinds, so the\nname resolves to one volume. The volume must be declared in the same configuration.\n\nThe volume is mounted from `/var/mnt/<name>` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount a user, existing or external volume by name." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{},
 			{
 				Name:        "tmpfs",
 				Type:        "TmpfsMount",
@@ -155,15 +156,15 @@ func (ContainerMount) Doc() *encoder.Doc {
 	return doc
 }
 
-func (UserVolumeMount) Doc() *encoder.Doc {
+func (VolumeMount) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type:        "UserVolumeMount",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "UserVolumeMount mounts a user volume by name." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "UserVolumeMount mounts a user volume by name.",
+		Type:        "VolumeMount",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeMount mounts a volume by name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VolumeMount mounts a volume by name.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ContainerMount",
-				FieldName: "userVolume",
+				FieldName: "volume",
 			},
 		},
 		Fields: []encoder.Doc{
@@ -171,8 +172,8 @@ func (UserVolumeMount) Doc() *encoder.Doc {
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the `UserVolumeConfig` document to mount.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `UserVolumeConfig` document to mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Name of the volume to mount.\n\nThe name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume to mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "destination",
@@ -185,8 +186,8 @@ func (UserVolumeMount) Doc() *encoder.Doc {
 				Name:        "options",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Mount options. User volume mounts are writable by default (`rw`).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. User volume mounts are writable by default (`rw`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mount options. Volume mounts are writable by default (`rw`).\n\nA volume whose `ExistingVolumeConfig` or `ExternalVolumeConfig` declares it\nread-only must be mounted with `ro`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options. Volume mounts are writable by default (`rw`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"ro",
 					"rw",
@@ -557,7 +558,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			ContainerConfigV1Alpha1{}.Doc(),
 			ContainerMount{}.Doc(),
-			UserVolumeMount{}.Doc(),
+			VolumeMount{}.Doc(),
 			TmpfsMount{}.Doc(),
 			HostPathMount{}.Doc(),
 			ContainerRunAs{}.Doc(),

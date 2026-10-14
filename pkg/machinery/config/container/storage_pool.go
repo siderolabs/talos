@@ -7,23 +7,23 @@ package container
 import (
 	"errors"
 	"fmt"
+
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
 // validateStoragePools checks references against the complete configuration, not just one document.
 func (container *Container) validateStoragePools() error {
-	volumes := backingVolumeCandidates(container)
-
 	var errs error
 
 	owners := map[string]string{}
 
 	for _, pool := range container.StoragePoolConfigs() {
 		name := pool.VolumeName()
-		readOnly, exists := volumes[name]
+		backing, exists := config.ResolveBackingVolume(container, name)
 
 		if !exists {
 			errs = errors.Join(errs, fmt.Errorf("storage pool %q: volume.name %q must reference a UserVolumeConfig, ExistingVolumeConfig, or ExternalVolumeConfig", pool.Name(), name))
-		} else if readOnly {
+		} else if backing.ReadOnly {
 			errs = errors.Join(errs, fmt.Errorf("storage pool %q: backing volume %q is read-only", pool.Name(), name))
 		}
 
