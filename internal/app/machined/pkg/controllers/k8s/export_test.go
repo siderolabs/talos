@@ -6,7 +6,8 @@ package k8s
 
 // Exported for testing.
 var (
-	AuthorizationConfig         = authorizationConfig
-	APIServerWebhookKubeconfigs = apiServerWebhookKubeconfigs
-	RemoveStaleKubeconfigs      = removeStaleKubeconfigs
+	AuthorizationConfig                 = authorizationConfig
+	APIServerWebhookKubeconfigs         = apiServerWebhookKubeconfigs
+	RemoveStaleKubeconfigs              = removeStaleKubeconfigs
+	WriteKubeletCredentialProviderFiles = writeKubeletCredentialProviderFiles
 )

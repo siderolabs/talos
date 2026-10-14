@@ -359,6 +359,9 @@ const (
 	// KubeletCredentialProviderConfig is the path to the kubelet credential provider config.
 	KubeletCredentialProviderConfig = KubernetesConfigBaseDir + "/" + "kubelet-credentialproviderconfig.yaml"
 
+	// KubeletCredentialProviderConfigFilesDir is the path to the directory where kubelet credential provider config files are stored.
+	KubeletCredentialProviderConfigFilesDir = KubernetesConfigBaseDir + "/" + "credentialproviders"
+
 	// KubeletPort is the kubelet port for secure API.
 	KubeletPort = 10250
 

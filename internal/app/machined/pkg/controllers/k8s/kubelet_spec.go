@@ -233,6 +233,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 				kubeletSpec.Config = unstructuredConfig
 				kubeletSpec.ExpectedNodename = expectedNodename
 				kubeletSpec.CredentialProviderConfig = cfgSpec.CredentialProviderConfig
+				kubeletSpec.CredentialProviderFiles = cfgSpec.CredentialProviderFiles
 
 				return nil
 			},

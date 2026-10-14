@@ -356,6 +356,12 @@ func (o KubeletSpecSpec) DeepCopy() KubeletSpecSpec {
 			cp.CredentialProviderConfig[k2] = v2
 		}
 	}
+	if o.CredentialProviderFiles != nil {
+		cp.CredentialProviderFiles = make(map[string]string, len(o.CredentialProviderFiles))
+		for k2, v2 := range o.CredentialProviderFiles {
+			cp.CredentialProviderFiles[k2] = v2
+		}
+	}
 	return cp
 }
 
@@ -463,6 +469,12 @@ func (o KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
 		cp.RegisterWithTaints = make(map[string]string, len(o.RegisterWithTaints))
 		for k2, v2 := range o.RegisterWithTaints {
 			cp.RegisterWithTaints[k2] = v2
+		}
+	}
+	if o.CredentialProviderFiles != nil {
+		cp.CredentialProviderFiles = make(map[string]string, len(o.CredentialProviderFiles))
+		for k2, v2 := range o.CredentialProviderFiles {
+			cp.CredentialProviderFiles[k2] = v2
 		}
 	}
 	return cp

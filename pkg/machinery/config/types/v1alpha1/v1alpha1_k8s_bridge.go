@@ -556,6 +556,11 @@ func (s k8sCredentialProviderConfigShim) Configuration() map[string]any {
 	return s.kubeletConfig.CredentialProviderConfig()
 }
 
+// ConfigFiles implements config.K8sCredentialProviderConfig interface.
+func (s k8sCredentialProviderConfigShim) ConfigFiles() map[string]string {
+	return nil
+}
+
 // K8sStaticPodConfigs implements the config.Config interface.
 func (c *Config) K8sStaticPodConfigs() []config.K8sStaticPodConfig {
 	if c.MachineConfig == nil {

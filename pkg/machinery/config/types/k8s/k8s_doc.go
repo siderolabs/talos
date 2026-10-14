@@ -510,10 +510,55 @@ func (KubeCredentialProviderConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet's credential provider configuration.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubelet credential provider configuration (used for image registry authentication)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "configFiles",
+				Type:        "[]KubeCredentialProviderConfigFileV1Alpha1",
+				Note:        "",
+				Description: "Additional configuration files for the credential provider plugins.\n\nEach file is written to the `/etc/kubernetes/credentialproviders` directory\nwith the permissions `0600`, so it can be referenced in the `args` of a credential provider.\n\nRequires `configuration` to be set.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Additional configuration files for the credential provider plugins." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleKubeCredentialProviderConfigV1Alpha1())
+
+	doc.Fields[2].AddExample("", exampleKubeCredentialProviderConfigFileV1Alpha1())
+
+	return doc
+}
+
+func (KubeCredentialProviderConfigFileV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeCredentialProviderConfigFileV1Alpha1",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeCredentialProviderConfigFileV1Alpha1 is a configuration file for a credential provider plugin." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeCredentialProviderConfigFileV1Alpha1 is a configuration file for a credential provider plugin.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeCredentialProviderConfigV1Alpha1",
+				FieldName: "configFiles",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the file in the `/etc/kubernetes/credentialproviders` directory.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the file in the `/etc/kubernetes/credentialproviders` directory." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "content",
+				Type:        "string",
+				Note:        "",
+				Description: "Content of the file.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Content of the file." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeCredentialProviderConfigFileV1Alpha1())
+
+	doc.Fields[0].AddExample("", "azure.json")
 
 	return doc
 }
@@ -1234,6 +1279,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeControllerManagerConfigV1Alpha1{}.Doc(),
 			KubeCoreDNSConfigV1Alpha1{}.Doc(),
 			KubeCredentialProviderConfigV1Alpha1{}.Doc(),
+			KubeCredentialProviderConfigFileV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
 			KubeExternalManifestConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),

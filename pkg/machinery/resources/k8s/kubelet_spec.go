@@ -31,6 +31,8 @@ type KubeletSpecSpec struct {
 	ExpectedNodename         string         `yaml:"expectedNodename,omitempty" protobuf:"4"`
 	Config                   map[string]any `yaml:"config" protobuf:"5"`
 	CredentialProviderConfig map[string]any `yaml:"credentialProviderConfig,omitempty" protobuf:"6"`
+	// CredentialProviderFiles maps file names to the contents of the credential provider plugin configuration files.
+	CredentialProviderFiles map[string]string `yaml:"credentialProviderFiles,omitempty" protobuf:"7"`
 }
 
 // NewKubeletSpec initializes an empty KubeletSpec resource.

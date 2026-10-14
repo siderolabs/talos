@@ -40,6 +40,37 @@ Use a viewer that supports unauthenticated RFB.
 Talos authenticates the tunnel, and no VNC TCP port is opened on the node.
 """
 
+    [notes.credential_provider_config_files]
+        title = "Kubelet Credential Provider Config Files"
+        description = """\
+The `KubeCredentialProviderConfig` document supports a new `configFiles` field to provide configuration files for the credential provider plugins.
+Each file is written to the `/etc/kubernetes/credentialproviders` directory, so it can be referenced in the `args` of a credential provider:
+
+```yaml
+apiVersion: v1alpha1
+kind: KubeCredentialProviderConfig
+configuration:
+  apiVersion: kubelet.config.k8s.io/v1
+  kind: CredentialProviderConfig
+  providers:
+    - name: acr-credential-provider
+      apiVersion: credentialprovider.kubelet.k8s.io/v1
+      matchImages:
+        - "*.azurecr.io"
+      defaultCacheDuration: 10m
+      args:
+        - /etc/kubernetes/credentialproviders/azure.json
+configFiles:
+  - name: azure.json
+    content: |
+      {
+        "cloud": "AzurePublicCloud",
+        "tenantId": "<tenant-id>",
+        "useManagedIdentityExtension": true
+      }
+```
+"""
+
     [notes.workload_memory_limits]
         title = "Workload Memory Limits"
         description = """\

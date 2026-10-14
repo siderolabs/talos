@@ -44,6 +44,8 @@ type KubeletConfigSpec struct {
 	RegisterWithTaints           map[string]string    `yaml:"registerWithTaints,omitempty" protobuf:"16"`
 	// KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
 	KubepodsMemoryLimit uint64 `yaml:"kubepodsMemoryLimit,omitempty" protobuf:"17"`
+	// CredentialProviderFiles maps file names to the contents of the credential provider plugin configuration files.
+	CredentialProviderFiles map[string]string `yaml:"credentialProviderFiles,omitempty" protobuf:"18"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.
