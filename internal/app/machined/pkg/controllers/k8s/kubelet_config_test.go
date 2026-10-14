@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	k8scfg "github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -219,6 +220,58 @@ func (suite *KubeletConfigSuite) TestReconcileKubepodsMemoryLimit() {
 
 	ctest.AssertResource(suite, k8s.KubeletID, func(r *k8s.KubeletConfig, asrt *assert.Assertions) {
 		asrt.Zero(r.TypedSpec().KubepodsMemoryLimit)
+	})
+}
+
+func (suite *KubeletConfigSuite) TestReconcileCredentialProvider() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	suite.createStaticPodServerStatus()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{ //nolint:staticcheck // testing deprecated field
+				ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
+			},
+		},
+	}
+
+	credentialProviderCfg := k8scfg.NewKubeCredentialProviderConfigV1Alpha1()
+	credentialProviderCfg.CredentialProviderConfig.Object = map[string]any{
+		"apiVersion": "kubelet.config.k8s.io/v1",
+		"kind":       "CredentialProviderConfig",
+	}
+	credentialProviderCfg.CredentialProviderConfigFiles = []k8scfg.KubeCredentialProviderConfigFileV1Alpha1{
+		{
+			FileName:    "azure.json",
+			FileContent: "{}",
+		},
+	}
+
+	ctr, err := container.New(v1alpha1Cfg, credentialProviderCfg)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResource(suite, k8s.KubeletID, func(r *k8s.KubeletConfig, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
+
+		asrt.Equal(
+			map[string]any{
+				"apiVersion": "kubelet.config.k8s.io/v1",
+				"kind":       "CredentialProviderConfig",
+			},
+			spec.CredentialProviderConfig,
+		)
+		asrt.Equal(map[string]string{"azure.json": "{}"}, spec.CredentialProviderFiles)
 	})
 }
 
