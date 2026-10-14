@@ -117,6 +117,9 @@ spec:
     integration/qemu-default: "Run QEMU integration tests on default variant"
     integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
     integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
+    integration/qemu-ip-family: "Run QEMU integration tests on IPv4-only (IPv6 disabled via sysctls) and dual-stack clusters"
+    integration/qemu-ip-family-ipv4: "Run QEMU integration tests on IPv4-only (IPv6 disabled via sysctls) clusters"
+    integration/qemu-ip-family-dualstack: "Run QEMU integration tests on dual-stack clusters"
     integration/qemu-md-boot: "Run QEMU integration tests on an MD RAID1 boot array"
     integration/qemu-race: "Run QEMU integration tests with the race detector"
     integration/qemu-13: "Run QEMU integration tests with Talos version contract v1.13"
@@ -1087,6 +1090,54 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-misc-0-${{ matrix.test }}
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-qemu-ip-family
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/qemu-ip-family
+        - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [ipFamily]
+        include:
+          - ipFamily: ipv4
+            withBGP: "true"
+            extraTestArgs: -talos.bgp
+          - ipFamily: dualstack
+            withBGP: "true"
+            extraTestArgs: -talos.bgp
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.ipFamily }}
+            SHORT_INTEGRATION_TEST: "yes"
+            WITH_IP_FAMILY: ${{ matrix.ipFamily }}
+            WITH_BGP: ${{ matrix.withBGP }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-ip-family-${{ matrix.ipFamily }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

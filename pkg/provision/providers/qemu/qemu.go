@@ -77,15 +77,16 @@ func (p *provisioner) GenOptions(clusterReq provision.ClusterRequest, contract *
 		documents := []configconfig.Document{aliasConfig}
 
 		// NoDHCP leaves net0 IPv6-link-local only (BGP-reachability test: identity is on a loopback).
-		switch {
-		case networkReq.NoDHCP:
-			// no DHCP config injected
-		case hasIPv4:
-			dhcp4Config := networkcfg.NewDHCPv4ConfigV1Alpha1("net0")
-			documents = append(documents, dhcp4Config)
-		case hasIPv6:
-			dhcp6Config := networkcfg.NewDHCPv6ConfigV1Alpha1("net0")
-			documents = append(documents, dhcp6Config)
+		if !networkReq.NoDHCP {
+			if hasIPv4 {
+				dhcp4Config := networkcfg.NewDHCPv4ConfigV1Alpha1("net0")
+				documents = append(documents, dhcp4Config)
+			}
+
+			if hasIPv6 {
+				dhcp6Config := networkcfg.NewDHCPv6ConfigV1Alpha1("net0")
+				documents = append(documents, dhcp6Config)
+			}
 		}
 
 		ctr, err := container.New(documents...)

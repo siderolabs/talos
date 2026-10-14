@@ -124,6 +124,10 @@ func (suite *NetworkConfigSuite) TestStaticHostConfig() {
 
 // TestDummyLinkConfig tests creation of dummy link interfaces.
 func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
+	if !suite.IPv6Enabled {
+		suite.T().Skip("skipping test requiring IPv6 when IPv6 is disabled")
+	}
+
 	if suite.Cluster == nil {
 		suite.T().Skip("skipping if cluster is not qemu/docker")
 	}
@@ -199,6 +203,10 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 
 // TestLinkConfig tests configuring physical links.
 func (suite *NetworkConfigSuite) TestLinkConfig() {
+	if !suite.IPv6Enabled {
+		suite.T().Skip("skipping test requiring IPv6 when IPv6 is disabled")
+	}
+
 	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
 		suite.T().Skip("skipping if cluster is not qemu")
 	}
@@ -373,6 +381,10 @@ func (suite *NetworkConfigSuite) TestVirtualIPConfig() {
 
 // TestVLANConfig tests creation of VLAN interfaces.
 func (suite *NetworkConfigSuite) TestVLANConfig() {
+	if !suite.IPv6Enabled {
+		suite.T().Skip("skipping test requiring IPv6 when IPv6 is disabled")
+	}
+
 	if suite.Cluster == nil {
 		suite.T().Skip("skipping if cluster is not qemu/docker")
 	}
@@ -728,6 +740,10 @@ func (suite *NetworkConfigSuite) TestVXLANConfig() {
 
 // TestBondConfig tests creation of bond interfaces.
 func (suite *NetworkConfigSuite) TestBondConfig() {
+	if !suite.IPv6Enabled {
+		suite.T().Skip("skipping test requiring IPv6 when IPv6 is disabled")
+	}
+
 	if suite.Cluster == nil {
 		suite.T().Skip("skipping if cluster is not qemu/docker")
 	}
@@ -1168,6 +1184,10 @@ func (suite *NetworkConfigSuite) TestWireguardConfig() {
 
 // TestBlackholeRouteConfig tests creation of blackhole routes.
 func (suite *NetworkConfigSuite) TestBlackholeRouteConfig() {
+	if !suite.IPv6Enabled {
+		suite.T().Skip("skipping test requiring IPv6 when IPv6 is disabled")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
@@ -1298,6 +1318,10 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 //
 //nolint:dupl
 func (suite *NetworkConfigSuite) TestRoutingRuleIPv6() {
+	if !suite.IPv6Enabled {
+		suite.T().Skip("skipping test requiring IPv6 when IPv6 is disabled")
+	}
+
 	ctx, cancel := suite.routingRuleTestCtx()
 	defer cancel()
 

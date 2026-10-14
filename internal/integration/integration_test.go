@@ -42,6 +42,7 @@ var (
 	extensionsLibvirt   bool
 	extensionsNvidia    bool
 	lldpEnabled         bool
+	ipv6Enabled         bool
 	bgpEnabled          bool
 	bgpCLOSEnabled      bool
 	ciliumBGPEnabled    bool
@@ -147,6 +148,7 @@ func TestIntegration(t *testing.T) {
 				HypervisorTalosISOPath:  hypervisorTalosISOPath,
 				HypervisorAlpineISOPath: hypervisorAlpineISOPath,
 				LLDPEnabled:             lldpEnabled,
+				IPv6Enabled:             ipv6Enabled,
 				BGPEnabled:              bgpEnabled,
 				BGPCLOSEnabled:          bgpCLOSEnabled,
 				CiliumBGPEnabled:        ciliumBGPEnabled,
@@ -206,6 +208,7 @@ func init() {
 	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
 	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")
 	flag.BoolVar(&ciliumBGPEnabled, "talos.bgp.cilium", false, "enable the Cilium BGP-to-fabric test (requires Cilium CNI with BGP Control Plane and --with-bgp-clos)")
+	flag.BoolVar(&ipv6Enabled, "talos.networking.ipv6", true, "enable tests requiring IPv6 on the cluster")
 	flag.BoolVar(&race, "talos.race", false, "skip tests that are incompatible with race detector")
 	flag.BoolVar(&verifyUKIBooted, "talos.verifyukibooted", true, "enable tests for verifying that Talos was booted using a UKI")
 
