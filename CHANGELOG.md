@@ -1,3 +1,103 @@
+## [Talos 1.14.3](https://github.com/siderolabs/talos/releases/tag/v1.14.3) (2026-10-15)
+
+Welcome to the v1.14.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Time Check API
+
+The `TimeService/TimeCheck` API (`talosctl time --check`) is no longer available to the `os:reader` role, as it allows querying
+arbitrary time servers from the node. The `TimeService/Time` API (querying the configured time server) is still available to `os:reader`.
+
+PTP device paths are now strictly validated both in the machine configuration and in the API: the path should be directly under `/dev`,
+the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the device should be a PTP character device.
+
+
+### Component Updates
+
+Linux: 6.18.56
+containerd: 2.3.7
+etcd: 3.7.2
+
+Talos is built with Go 1.26.9.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Alexander Soelberg Heidarsson
+* Angelos Petheriotis
+* Brian Cappello
+* Christoph Engelbert (noctarius)
+* Mateusz Urbanek
+* Noel Georgi
+* Oguz Kilcan
+* Steve Wills
+* frauniki
+
+### Changes
+<details><summary>16 commits</summary>
+<p>
+
+* [`cbe344931`](https://github.com/siderolabs/talos/commit/cbe344931eb6950a29375960e0909a5849c56f45) fix: disable GSO offload on QEMU 10.2+
+* [`1e3f3ad5f`](https://github.com/siderolabs/talos/commit/1e3f3ad5f34cd19064587a1ab41cc44f67ba5293) test: adapt minimal settings to new QEMU version
+* [`59e1fcd63`](https://github.com/siderolabs/talos/commit/59e1fcd63667d6629ea9b7e522b55954d8470c62) fix: restrict raw disk helper to linux
+* [`08b213686`](https://github.com/siderolabs/talos/commit/08b21368699daa7d3e49902b9350a83f0367fa85) fix: make the imager installer reproducible with system extensions
+* [`a9b984aab`](https://github.com/siderolabs/talos/commit/a9b984aaba417ed684e2200151e4730224198c4f) fix: improve KubePrism load balancer recovery
+* [`d01538115`](https://github.com/siderolabs/talos/commit/d01538115ae12c6e4d6d0e913ab500da71804f72) fix: clean up mountpoints on unmount
+* [`146c2bd92`](https://github.com/siderolabs/talos/commit/146c2bd9224c43fb2460c7dd6cc32b957d525ffb) fix: roll back stacked try configs to the config before the first try
+* [`f5182237e`](https://github.com/siderolabs/talos/commit/f5182237ee5c8dc5e34f29ef42aeabd8a145a905) fix: correct handling of DHCP changing address
+* [`f97d79fc3`](https://github.com/siderolabs/talos/commit/f97d79fc31220bc24a02ce6dc5d167704753a19c) fix: image verification test
+* [`5fadce79d`](https://github.com/siderolabs/talos/commit/5fadce79d0e388adcb3a07428e259899d829e37e) fix: verify the claim for the legacy bundle image verification
+* [`6cade9fed`](https://github.com/siderolabs/talos/commit/6cade9fedefa33719a16f48602c9db13cd668f27) fix: restore source names for pseudo filesystem mounts
+* [`692e6796b`](https://github.com/siderolabs/talos/commit/692e6796b459ae0932ede2264fed2289674c5c91) fix: add validation for the PTP device name
+* [`b166b72ca`](https://github.com/siderolabs/talos/commit/b166b72ca5cc416e5ae8e4fff5c181bb092706ba) fix: network on azure (and might fix some other platforms)
+* [`4c4e57a4b`](https://github.com/siderolabs/talos/commit/4c4e57a4ba3cd9c105a2a378a5d7fd06b0928f68) feat: update etcd to 3.7.2
+* [`0d3b40c44`](https://github.com/siderolabs/talos/commit/0d3b40c4486e5da781c1d5ed260fb53abd1d277c) feat: update tools and pkgs
+* [`51d094f47`](https://github.com/siderolabs/talos/commit/51d094f47a8fefa5ec6e20f64ff68249f7f3793f) fix: tear down stale routes before adding their replacements
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`5fa47d1`](https://github.com/siderolabs/pkgs/commit/5fa47d10bd62b005a1c1362d87e20a3f076f4b4a) feat: update to containerd 2.3.7
+* [`6873154`](https://github.com/siderolabs/pkgs/commit/6873154bb1f25209848adc8ffda59aa3778f0695) feat: update Linux to 6.18.56
+* [`ecd53d0`](https://github.com/siderolabs/pkgs/commit/ecd53d0943edee82510fe4b82fd2bf0501fd38cc) feat: enable pNFS block and SCSI layouts in nfsd
+* [`473b20c`](https://github.com/siderolabs/pkgs/commit/473b20c83dbec4f84d8fe9f5ed58f48a4bdf3c05) feat: enable bhyve guest support on amd64
+* [`f3add0c`](https://github.com/siderolabs/pkgs/commit/f3add0c04f67e9b0749eb2a47f1dcd89132eb3bf) feat: enable Qualcomm Cloud AI 100 (QAIC) driver
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`6b71647`](https://github.com/siderolabs/tools/commit/6b7164796dfc98f35803841978d845492ae9d8ff) feat: update Go to 1.26.9
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/containerd/containerd/v2**  v2.3.6 -> v2.3.7
+* **github.com/siderolabs/pkgs**           v1.14.0-37-g6c312e4 -> v1.14.0-42-g5fa47d1
+* **github.com/siderolabs/tools**          v1.14.0-8-g9776960 -> v1.14.0-9-g6b71647
+* **go.etcd.io/etcd/api/v3**               v3.7.1 -> v3.7.2
+* **go.etcd.io/etcd/client/pkg/v3**        v3.7.1 -> v3.7.2
+* **go.etcd.io/etcd/client/v3**            v3.7.1 -> v3.7.2
+* **go.etcd.io/etcd/etcdutl/v3**           v3.7.1 -> v3.7.2
+* **golang.org/x/net**                     v0.58.0 -> v0.60.0
+* **golang.org/x/sync**                    v0.22.0 -> v0.23.0
+* **golang.org/x/sys**                     v0.47.0 -> v0.48.0
+* **golang.org/x/term**                    v0.45.0 -> v0.46.0
+* **golang.org/x/text**                    v0.41.0 -> v0.42.0
+
+Previous release can be found at [v1.14.2](https://github.com/siderolabs/talos/releases/tag/v1.14.2)
+
 ## [Talos 1.14.2](https://github.com/siderolabs/talos/releases/tag/v1.14.2) (2026-09-29)
 
 Welcome to the v1.14.2 release of Talos!
