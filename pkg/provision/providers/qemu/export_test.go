@@ -12,12 +12,19 @@ import (
 )
 
 // FabricDeviceForTest exposes fabric device argument construction for tests.
-func FabricDeviceForTest(clos bool, index int, mac string, mtu int) string {
+func FabricDeviceForTest(clos bool, index int, mac string, mtu int, virtioNetDeviceArgs string) string {
 	return fabricDevice(&LaunchConfig{
-		CLOSNoNet0: clos,
-		Network:    networkConfig{networkConfigBase: networkConfigBase{MTU: mtu}},
+		CLOSNoNet0:          clos,
+		Network:             networkConfig{networkConfigBase: networkConfigBase{MTU: mtu}},
+		virtioNetDeviceArgs: virtioNetDeviceArgs,
 	}, index, FabricUplink{mac: mac})
 }
+
+// ParseDevicePropertiesForTest exposes the `qemu -device <dev>,help` parser for tests.
+var ParseDevicePropertiesForTest = parseDeviceProperties
+
+// VirtioNetTunnelOffloadArgsForTest exposes the virtio-net tunnel offload argument construction for tests.
+var VirtioNetTunnelOffloadArgsForTest = virtioNetTunnelOffloadArgs
 
 // APIPortAllocatorForTest exposes apiPortAllocator for tests.
 type APIPortAllocatorForTest struct {

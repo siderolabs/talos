@@ -18,12 +18,17 @@ func TestFabricDevice(t *testing.T) {
 
 	assert.Equal(t,
 		"e1000,netdev=fabric0,mac=02:00:00:00:00:01",
-		qemu.FabricDeviceForTest(false, 0, "02:00:00:00:00:01", 0),
+		qemu.FabricDeviceForTest(false, 0, "02:00:00:00:00:01", 0, ",guest_tunnel=off"),
 	)
 
 	assert.Equal(t,
 		"virtio-net-pci,netdev=fabric1,mac=02:00:00:00:00:01,addr=0x11,host_mtu=1430",
-		qemu.FabricDeviceForTest(true, 1, "02:00:00:00:00:01", 1430),
+		qemu.FabricDeviceForTest(true, 1, "02:00:00:00:00:01", 1430, ""),
+	)
+
+	assert.Equal(t,
+		"virtio-net-pci,netdev=fabric1,mac=02:00:00:00:00:01,addr=0x11,host_mtu=1430,guest_tunnel=off,host_tunnel=off",
+		qemu.FabricDeviceForTest(true, 1, "02:00:00:00:00:01", 1430, ",guest_tunnel=off,host_tunnel=off"),
 	)
 }
 
