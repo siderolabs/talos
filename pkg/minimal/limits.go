@@ -15,15 +15,20 @@ import (
 
 // Memory returns the minimal/recommended amount of memory required to run the node.
 func Memory(typ machine.Type) (minimum, recommended uint64, err error) {
-	// We remove 150 MiB from the recommended memory to account for the kernel
+	// Account for memory unavailable to MemTotal, including kernel
+	// and firmware reservations.
 	switch typ { //nolint:exhaustive
 	case machine.TypeControlPlane, machine.TypeInit:
-		minimum = 1848*humanize.MiByte - 150*humanize.MiByte
-		recommended = 4*humanize.GiByte - 150*humanize.MiByte
+		const memoryOverhead = 150 * humanize.MiByte
+
+		minimum = 1848*humanize.MiByte - memoryOverhead
+		recommended = 4*humanize.GiByte - memoryOverhead
 
 	case machine.TypeWorker:
-		minimum = 1*humanize.GiByte - 150*humanize.MiByte
-		recommended = 2*humanize.GiByte - 150*humanize.MiByte
+		const memoryOverhead = 200 * humanize.MiByte
+
+		minimum = 1*humanize.GiByte - memoryOverhead
+		recommended = 2*humanize.GiByte - memoryOverhead
 
 	default:
 		return 0, 0, fmt.Errorf("unknown machine type %q", typ)
