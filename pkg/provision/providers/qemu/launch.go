@@ -79,6 +79,10 @@ type LaunchConfig struct {
 
 	VMMac string
 
+	// virtioNetDeviceArgs is appended to every virtio-net-pci device: it disables the GSO over UDP
+	// tunnel offload on QEMU versions which have it (see virtioNetTunnelOffloadProperties).
+	virtioNetDeviceArgs string
+
 	// signals
 	c chan os.Signal
 
@@ -125,7 +129,7 @@ func launchVM(config *LaunchConfig) error {
 		"-cpu", cpuArg,
 		"-nographic",
 		"-netdev", getNetdevParams(config.Network, "net0"),
-		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d", config.VMMac, config.Network.MTU),
+		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d%s", config.VMMac, config.Network.MTU, config.virtioNetDeviceArgs),
 		// TODO: uncomment the following line to get another eth interface not connected to anything
 		// "-nic", "tap,model=e1000,script=no,downscript=no",
 		"-device", "virtio-rng-pci",
@@ -447,6 +451,13 @@ func Launch() error {
 
 	config.c = vm.ConfigureSignals()
 	config.controller = NewController()
+
+	virtioNetProperties, err := virtioNetDeviceProperties(ctx, config.ArchitectureData.QemuExecutable())
+	if err != nil {
+		return err
+	}
+
+	config.virtioNetDeviceArgs = virtioNetTunnelOffloadArgs(virtioNetProperties)
 
 	apiBindAddrs, err := netip.ParseAddr(config.APIBindAddress.IP.String())
 	if err != nil {
