@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/dustin/go-humanize"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/maps"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/pkg/conditions"
@@ -27,6 +28,8 @@ import (
 )
 
 // AllNodesMemorySizes checks that all nodes have enough memory.
+//
+//nolint:gocyclo
 func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 	cl, err := cluster.Client()
 	if err != nil {
@@ -46,6 +49,9 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 		return nil
 	}
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	respCh := multiplex.Unary(
 		ctx, nodesIP,
 		func(ctx context.Context) (*machineapi.MemoryResponse, error) {
@@ -53,15 +59,15 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 		},
 	)
 
-	var resultErr error
-
 	nodeToType := getNodesTypes(cluster, machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker)
+
+	errorsByNode := map[string]error{}
 
 	for resp := range respCh {
 		hostname := resp.Node
 
 		if resp.Err != nil {
-			resultErr = multierror.Append(resultErr, fmt.Errorf("error getting memory info for node %q: %w", hostname, resp.Err))
+			errorsByNode[hostname] = fmt.Errorf("error getting memory info for node %q: %w", hostname, resp.Err)
 
 			continue
 		}
@@ -73,7 +79,13 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 
 		minimum, _, err := minimal.Memory(typ)
 		if err != nil {
-			resultErr = multierror.Append(resultErr, err)
+			errorsByNode[hostname] = fmt.Errorf("error getting minimal memory for node %q: %w", hostname, err)
+
+			continue
+		}
+
+		if len(resp.Payload.GetMessages()) == 0 {
+			errorsByNode[hostname] = fmt.Errorf("no memory info returned for node %q", hostname)
 
 			continue
 		}
@@ -81,16 +93,26 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 		msg := resp.Payload.GetMessages()[0]
 
 		if totalMemory := msg.Meminfo.Memtotal * humanize.KiByte; totalMemory < minimum {
-			resultErr = multierror.Append(
-				resultErr,
-				fmt.Errorf(
-					"node %q does not meet memory requirements: expected at least %d MiB, actual %d MiB",
-					hostname,
-					minimum/humanize.MiByte,
-					totalMemory/humanize.MiByte,
-				),
+			errorsByNode[hostname] = fmt.Errorf(
+				"node %q does not meet memory requirements: expected at least %d MiB, actual %d MiB",
+				hostname,
+				minimum/humanize.MiByte,
+				totalMemory/humanize.MiByte,
 			)
 		}
+	}
+
+	if len(errorsByNode) == 0 {
+		return nil
+	}
+
+	errorNodes := maps.Keys(errorsByNode)
+	slices.Sort(errorNodes)
+
+	var resultErr *multierror.Error
+
+	for _, node := range errorNodes {
+		resultErr = multierror.Append(resultErr, errorsByNode[node])
 	}
 
 	return resultErr
@@ -130,38 +152,58 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 		return nil
 	}
 
-	var resultErr error
+	// calculate EPHEMERAL by subtracting the size of all other partitions and GPT overhead
+	ps := quirks.New("").PartitionSizes()
+	minimalEphemeralSize := minimal.DiskSize() - (ps.UKIEFISize() + ps.StateSize() + ps.METASize() + 10*1048576 /* GPT overhead, including alignment */)
 
-	slices.Sort(nodesIP)
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-	for _, nodeIP := range nodesIP {
-		vs, err := safe.StateGetByID[*block.VolumeStatus](client.WithNode(ctx, nodeIP), cl.COSI, constants.EphemeralPartitionLabel)
-		if err != nil {
-			if client.StatusCode(err) == codes.PermissionDenied {
+	respCh := multiplex.Unary(
+		ctx, nodesIP,
+		func(ctx context.Context) (*block.VolumeStatus, error) {
+			return safe.StateGetByID[*block.VolumeStatus](ctx, cl.COSI, constants.EphemeralPartitionLabel)
+		},
+	)
+
+	errorsByNode := map[string]error{}
+
+	for resp := range respCh {
+		if resp.Err != nil {
+			if client.StatusCode(resp.Err) == codes.PermissionDenied {
 				// old Talos versions don't support this resource
 				return conditions.ErrSkipAssertion
 			}
 
-			resultErr = multierror.Append(resultErr, fmt.Errorf("error getting volume status for node %q: %w", nodeIP, err))
+			errorsByNode[resp.Node] = fmt.Errorf("error getting volume status for node %q: %w", resp.Node, resp.Err)
 
 			continue
 		}
 
-		actualSize := vs.TypedSpec().Size
-
-		// calculate EPHEMERAL by subtracting the size of all other partitions and GPT overhead
-		ps := quirks.New("").PartitionSizes()
-		minimalEphemeralSize := minimal.DiskSize() - (ps.UKIEFISize() + ps.StateSize() + ps.METASize() + 10*1048576 /* GPT overhead, including alignment */)
+		actualSize := resp.Payload.TypedSpec().Size
 
 		if actualSize < minimalEphemeralSize {
-			resultErr = multierror.Append(resultErr, fmt.Errorf(
+			errorsByNode[resp.Node] = fmt.Errorf(
 				"ephemeral partition %q for node %q is too small, expected at least %s, actual %s",
-				vs.TypedSpec().Location,
-				nodeIP,
+				resp.Payload.TypedSpec().Location,
+				resp.Node,
 				humanize.IBytes(minimalEphemeralSize),
 				humanize.IBytes(actualSize),
-			))
+			)
 		}
+	}
+
+	if len(errorsByNode) == 0 {
+		return nil
+	}
+
+	errorNodes := maps.Keys(errorsByNode)
+	slices.Sort(errorNodes)
+
+	var resultErr *multierror.Error
+
+	for _, node := range errorNodes {
+		resultErr = multierror.Append(resultErr, errorsByNode[node])
 	}
 
 	return resultErr

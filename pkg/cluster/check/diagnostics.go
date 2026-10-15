@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -32,19 +33,28 @@ func NoDiagnostics(ctx context.Context, cluster ClusterInfo) error {
 
 	warningsByNode := map[string][]*runtime.Diagnostic{}
 
-	for _, nodeIP := range nodeInternalIPs {
-		warnings, err := safe.StateListAll[*runtime.Diagnostic](client.WithNode(ctx, nodeIP), cli.COSI)
-		if err != nil {
-			if client.StatusCode(err) == codes.PermissionDenied {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	respCh := multiplex.Unary(
+		ctx, nodeInternalIPs,
+		func(ctx context.Context) (safe.List[*runtime.Diagnostic], error) {
+			return safe.StateListAll[*runtime.Diagnostic](ctx, cli.COSI)
+		},
+	)
+
+	for resp := range respCh {
+		if resp.Err != nil {
+			if client.StatusCode(resp.Err) == codes.PermissionDenied {
 				// not supported, skip
 				return conditions.ErrSkipAssertion
 			}
 
-			return err
+			return fmt.Errorf("error getting diagnostics for node %q: %w", resp.Node, resp.Err)
 		}
 
-		for res := range warnings.All() {
-			warningsByNode[nodeIP] = append(warningsByNode[nodeIP], res)
+		for res := range resp.Payload.All() {
+			warningsByNode[resp.Node] = append(warningsByNode[resp.Node], res)
 		}
 	}
 
