@@ -301,6 +301,11 @@ const (
 	// KubernetesAuditLogDir defines the ephemeral directory where the kube-apiserver will store its audit logs.
 	KubernetesAuditLogDir = EphemeralMountPoint + "/" + "log" + "/" + "audit" + "/" + "kube"
 
+	// KubernetesAPIServerSELinuxLevel is the fixed MCS level of the kube-apiserver static pod: its audit log persists
+	// across reboots, so the pod keeps the same categories. go-selinux reserves them once the pod runs; a
+	// selinux_category_range of 1020 or less keeps the CRI from drawing them for a pod started before it.
+	KubernetesAPIServerSELinuxLevel = "s0:c1020,c1021"
+
 	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
 

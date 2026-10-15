@@ -62,6 +62,8 @@ spec:
     runAsGroup: 65534
     runAsNonRoot: true
     runAsUser: 65534
+    seLinuxOptions:
+      level: s0:c1020,c1021
   volumes:
   - hostPath:
       path: /system/secrets/kubernetes/kube-apiserver

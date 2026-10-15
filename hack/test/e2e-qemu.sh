@@ -333,7 +333,7 @@ case "${WITH_ENFORCING:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--extra-boot-kernel-args=enforcing=1")
+    QEMU_FLAGS+=("--extra-boot-kernel-args=enforcing=1" "--config-patch=@hack/test/patches/selinux-workloads.yaml")
     ;;
 esac
 
