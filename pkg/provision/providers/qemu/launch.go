@@ -108,6 +108,10 @@ type LaunchConfig struct {
 	// netns is still created; the net0 netdev, net0 CNI, and IPAM dump are skipped.
 	CLOSNoNet0 bool
 
+	// virtioNetDeviceArgs is appended to every virtio-net-pci device: it disables the GSO over UDP
+	// tunnel offload on QEMU versions which have it (see virtioNetTunnelOffloadProperties).
+	virtioNetDeviceArgs string
+
 	// signals
 	c chan os.Signal
 
@@ -191,7 +195,7 @@ func launchVM(config *LaunchConfig) error {
 	if !config.CLOSNoNet0 {
 		args = append(args,
 			"-netdev", getNetdevParams(config.Network, "net0"),
-			"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d", config.VMMac, config.Network.MTU),
+			"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d%s", config.VMMac, config.Network.MTU, config.virtioNetDeviceArgs),
 		)
 	}
 
@@ -634,11 +638,12 @@ func fabricDevice(config *LaunchConfig, index int, link FabricUplink) string {
 	// Pin to a known PCI slot so the guest kernel interface name is deterministic. Advertise the host
 	// fabric MTU as well; otherwise virtio defaults to 1500 even when the CNI bridge uses a lower MTU.
 	return fmt.Sprintf(
-		"virtio-net-pci,netdev=fabric%d,mac=%s,addr=0x%x,host_mtu=%d",
+		"virtio-net-pci,netdev=fabric%d,mac=%s,addr=0x%x,host_mtu=%d%s",
 		index,
 		link.mac,
 		vm.CLOSFabricPCIBase+index,
 		config.Network.MTU,
+		config.virtioNetDeviceArgs,
 	)
 }
 
@@ -685,6 +690,13 @@ func Launch() error {
 
 	config.c = vm.ConfigureSignals()
 	config.controller = NewController()
+
+	virtioNetProperties, err := virtioNetDeviceProperties(ctx, config.ArchitectureData.QemuExecutable())
+	if err != nil {
+		return err
+	}
+
+	config.virtioNetDeviceArgs = virtioNetTunnelOffloadArgs(virtioNetProperties)
 
 	apiBindAddrs, err := netip.ParseAddr(config.APIBindAddress.IP.String())
 	if err != nil {
