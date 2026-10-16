@@ -3623,6 +3623,7 @@ talosctl upgrade [flags]
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for upgrade
   -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.15.0-alpha.1")
+      --k8s-endpoint string        use endpoint instead of kubeconfig default when draining the Kubernetes node
       --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
       --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)
