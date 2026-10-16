@@ -26,6 +26,56 @@ import (
 func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, args ...string) (string, int32) {
 	nodeCtx := client.WithNode(ctx, node)
 
+	cli := apiSuite.startDebugContainer(nodeCtx, args...)
+
+	var (
+		out         strings.Builder
+		exitCode    int32
+		gotExitCode bool
+	)
+
+	// drain the stream until EOF, remembering the exit code: returning early on the exit code
+	// message would leave the server-side stream hanging until the context is canceled.
+	for {
+		msg, err := cli.Recv()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+
+			apiSuite.Require().NoError(err, "error receiving debug container output")
+		}
+
+		switch resp := msg.GetResp().(type) {
+		case *machineapi.DebugContainerRunResponse_StdoutData:
+			out.Write(resp.StdoutData)
+		case *machineapi.DebugContainerRunResponse_ExitCode:
+			exitCode = resp.ExitCode
+			gotExitCode = true
+		}
+	}
+
+	if !gotExitCode {
+		apiSuite.Require().NoError(fmt.Errorf("debug container stream closed without an exit code"))
+	}
+
+	return out.String(), exitCode
+}
+
+// RunDebugContainerUntilDisconnect runs a debug container whose command is expected to take
+// the node down (e.g. a sysrq reboot), so the stream breaking mid-flight is not an error.
+func (apiSuite *APISuite) RunDebugContainerUntilDisconnect(ctx context.Context, node string, args ...string) {
+	cli := apiSuite.startDebugContainer(client.WithNode(ctx, node), args...)
+
+	for {
+		if _, err := cli.Recv(); err != nil {
+			return
+		}
+	}
+}
+
+// startDebugContainer pulls the debug image and starts a privileged host-ns container running args.
+func (apiSuite *APISuite) startDebugContainer(nodeCtx context.Context, args ...string) machineapi.DebugService_ContainerRunClient {
 	containerd := &common.ContainerdInstance{
 		Driver:    common.ContainerDriver_CONTAINERD,
 		Namespace: common.ContainerdNamespace_NS_SYSTEM,
@@ -74,36 +124,5 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 	err = cli.CloseSend()
 	apiSuite.Require().NoError(err, "failed to close debug container send stream")
 
-	var (
-		out         strings.Builder
-		exitCode    int32
-		gotExitCode bool
-	)
-
-	// drain the stream until EOF, remembering the exit code: returning early on the exit code
-	// message would leave the server-side stream hanging until the context is canceled.
-	for {
-		msg, err := cli.Recv()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
-			}
-
-			apiSuite.Require().NoError(err, "error receiving debug container output")
-		}
-
-		switch resp := msg.GetResp().(type) {
-		case *machineapi.DebugContainerRunResponse_StdoutData:
-			out.Write(resp.StdoutData)
-		case *machineapi.DebugContainerRunResponse_ExitCode:
-			exitCode = resp.ExitCode
-			gotExitCode = true
-		}
-	}
-
-	if !gotExitCode {
-		apiSuite.Require().NoError(fmt.Errorf("debug container stream closed without an exit code"))
-	}
-
-	return out.String(), exitCode
+	return cli
 }
