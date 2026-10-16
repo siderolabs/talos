@@ -1,3 +1,35 @@
+## [Talos 1.14.4](https://github.com/siderolabs/talos/releases/tag/v1.14.4) (2026-10-16)
+
+Welcome to the v1.14.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.57
+
+Talos is built with Go 1.26.9.
+
+
+### Contributors
+
+
+### Changes
+<details><summary>0 commit</summary>
+<p>
+
+</p>
+</details>
+
+### Dependency Changes
+
+This release has no dependency changes
+
+Previous release can be found at [v1.14.3](https://github.com/siderolabs/talos/releases/tag/v1.14.3)
+
 ## [Talos 1.14.3](https://github.com/siderolabs/talos/releases/tag/v1.14.3) (2026-10-15)
 
 Welcome to the v1.14.3 release of Talos!
