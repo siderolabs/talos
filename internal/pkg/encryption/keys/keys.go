@@ -102,3 +102,10 @@ func (k *KeyHandler) Slot() int {
 
 // ErrTokenInvalid is returned by the keys handler if the supplied token is not valid.
 var ErrTokenInvalid = errors.New("invalid token")
+
+// ErrKeyStale is returned by the keys handler if the key material stored for the slot
+// can't be unwrapped anymore on this machine, e.g. the TPM state changed since the key was sealed.
+//
+// The slot can't be used to unlock the volume, but it can be re-enrolled if the volume
+// is unlocked with another key.
+var ErrKeyStale = errors.New("stale key")
