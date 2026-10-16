@@ -542,6 +542,32 @@ func TestTemplates(t *testing.T) {
 					},
 					FlannelKubeNetworkPoliciesEnabled: true,
 					FlannelKubeNetworkPoliciesImage:   "registry.k8s.io/networking/kube-network-policies:v0.7.0",
+					FlannelKubeNetworkPoliciesVerbose: true,
+				})
+				require.NoError(t, err)
+
+				return spec
+			},
+		},
+		{
+			name: "flannel-daemonset-with-network-policies-non-verbose",
+			obj: func() runtime.Object {
+				spec, err := k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+					FlannelImage:     "quay.io/coreos/flannel:v0.14.0",
+					FlannelExtraArgs: []string{"--foo=bar"},
+					FlannelResources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "100m",
+							"memory": "50Mi",
+						},
+						Limits: map[string]string{
+							"cpu":    "200m",
+							"memory": "100Mi",
+						},
+					},
+					FlannelKubeNetworkPoliciesEnabled: true,
+					FlannelKubeNetworkPoliciesImage:   "registry.k8s.io/networking/kube-network-policies:v0.7.0",
+					FlannelKubeNetworkPoliciesVerbose: false,
 				})
 				require.NoError(t, err)
 
