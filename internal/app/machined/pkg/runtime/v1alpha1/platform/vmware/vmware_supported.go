@@ -19,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/equinix-ms/go-vmw-guestrpc/pkg/hypercall"
 	"github.com/equinix-ms/go-vmw-guestrpc/pkg/nanotoolbox"
+	"github.com/foxboron/go-uefi/efi"
 	"github.com/siderolabs/go-procfs/procfs"
 	yaml "go.yaml.in/yaml/v4"
 
@@ -132,6 +133,11 @@ func readConfigFromOvf(rpci *nanotoolbox.RPCI, key string) ([]byte, error) {
 
 func initializeRPCI() (*nanotoolbox.RPCI, error) {
 	inVMWare, err := hypercall.IsVMWareVM()
+	if errors.Is(err, hypercall.ErrSetPivilegeLevel) && efi.GetSecureBoot() && !efi.GetSetupMode() {
+		// kernel lockdown under SecureBoot denies iopl, the backdoor itself does not need it
+		inVMWare, err = hypercall.IsVirtual()
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("could not determine if we are running in VMWare VM: %w", err)
 	}
