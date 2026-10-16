@@ -240,6 +240,8 @@ func (suite *VirtualMachineSpecSuite) TestBIOSDomainUsesDefaultFirmware() {
 		asrt.Contains(res.TypedSpec().DomainXML, "<os>")
 		asrt.NotContains(res.TypedSpec().DomainXML, `firmware="bios"`)
 		asrt.Equal("stopped", res.TypedSpec().PowerState)
+		// Regression guard: ACPI must stay enabled for BIOS firmware too.
+		asrt.Contains(res.TypedSpec().DomainXML, "<acpi></acpi>")
 	})
 }
 
