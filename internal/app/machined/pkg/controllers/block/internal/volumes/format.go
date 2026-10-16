@@ -175,6 +175,9 @@ func withTemporaryMount(logger *zap.Logger, volumeContext ManagerContext, fn fun
 		mountv3.WithFsopen(
 			volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
 			fsopen.WithSource(volumeContext.Status.MountLocation),
+			// A quota-less XFS mount clears accounting state even when it is
+			// only used for growth, forcing quotacheck on the final mount.
+			fsopen.WithProjectQuota(volumeContext.Cfg.TypedSpec().Mount.ProjectQuotaSupport),
 		),
 	)
 
