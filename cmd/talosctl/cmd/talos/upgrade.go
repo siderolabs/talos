@@ -44,6 +44,7 @@ var upgradeCmdFlags = struct {
 
 	drain        bool
 	drainTimeout time.Duration
+	k8sEndpoint  string
 
 	legacy   bool
 	force    bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
@@ -145,7 +146,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	var nodeNames map[string]string
 
 	if upgradeCmdFlags.drain {
-		nodeNames, err = drainNodes(ctx, clientFactory, upgradeCmdFlags.drainTimeout, rep)
+		nodeNames, err = drainNodes(ctx, clientFactory, upgradeCmdFlags.k8sEndpoint, upgradeCmdFlags.drainTimeout, rep)
 		if err != nil {
 			return err
 		}
@@ -157,7 +158,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		}
 
 		if len(nodeNames) > 0 {
-			if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
+			if uncordonErr := uncordonNodes(ctx, clientFactory, upgradeCmdFlags.k8sEndpoint, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
 				retErr = errors.Join(retErr, uncordonErr)
 			}
 		}
@@ -373,6 +374,7 @@ func init() {
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.noReboot, "no-reboot", false, "do not reboot the node after upgrade (skip reboot and drain)")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.drain, "drain", true, "drain the Kubernetes node before rebooting (cordon + evict pods)")
 	upgradeCmd.Flags().DurationVar(&upgradeCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
+	helpers.KubernetesEndpointVar(upgradeCmd.Flags(), &upgradeCmdFlags.k8sEndpoint, "k8s-endpoint", "", "use endpoint instead of kubeconfig default when draining the Kubernetes node")
 
 	// Mark legacy-only flags as deprecated. These are only used when falling back
 	// to the legacy MachineService.Upgrade unary API for older Talos versions.

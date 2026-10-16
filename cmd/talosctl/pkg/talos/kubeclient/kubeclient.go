@@ -13,13 +13,34 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/kubeconfig"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
+type Options struct {
+	endpoint string
+}
+
+type Option func(*Options)
+
+// WithEndpoint overrides the Kubernetes API endpoint from the kubeconfig.
+// An empty endpoint keeps the endpoint from the kubeconfig.
+func WithEndpoint(endpoint string) Option {
+	return func(o *Options) {
+		o.endpoint = endpoint
+	}
+}
+
 // FromTalosClient fetches the admin kubeconfig from the Talos API and returns
 // a Kubernetes clientset. The kubeconfig is held entirely in memory.
-func FromTalosClient(ctx context.Context, c *client.Client) (kubernetes.Interface, error) {
+func FromTalosClient(ctx context.Context, c *client.Client, opts ...Option) (kubernetes.Interface, error) {
+	var options Options
+
+	for _, opt := range opts {
+		opt(&options)
+	}
+
 	kubeconfigBytes, err := c.Kubeconfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching kubeconfig from Talos API: %w", err)
@@ -39,6 +60,10 @@ func FromTalosClient(ctx context.Context, c *client.Client) (kubernetes.Interfac
 	restConfig, err := config.ClientConfig()
 	if err != nil {
 		return nil, fmt.Errorf("error building REST config: %w", err)
+	}
+
+	if err = cluster.ApplyKubernetesEndpointOverride(restConfig, options.endpoint); err != nil {
+		return nil, err
 	}
 
 	clientset, err := kubernetes.NewForConfig(restConfig)

@@ -30,7 +30,7 @@ type nodeUpdate struct {
 // and performs cordon + drain on all of them in parallel.
 //
 // It returns a map of talosIP -> k8sNodeName for use in the uncordon phase.
-func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
+func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, k8sEndpoint string, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
 	// For kubeconfig - build a random endpoint client (to go to the controlplane).
 	c, err := clientFactory.BuildRandomEndpointClient(ctx)
 	if err != nil {
@@ -38,7 +38,7 @@ func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainT
 	}
 
 	// Fetch kubeconfig once - it is cluster-global, not node-specific.
-	clientset, err := kubeclient.FromTalosClient(ctx, c)
+	clientset, err := kubeclient.FromTalosClient(ctx, c, kubeclient.WithEndpoint(k8sEndpoint))
 	if err != nil {
 		return nil, fmt.Errorf("error creating Kubernetes client for drain: %w", err)
 	}
@@ -113,7 +113,9 @@ func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainT
 // then uncordons all of them in parallel.
 //
 // nodeNames maps talosIP -> k8sNodeName (produced by drainNodes).
-func uncordonNodes(ctx context.Context, clientFactory *global.ClientFactory, nodeNames map[string]string, timeout time.Duration, rep *reporter.Reporter) error {
+func uncordonNodes(
+	ctx context.Context, clientFactory *global.ClientFactory, k8sEndpoint string, nodeNames map[string]string, timeout time.Duration, rep *reporter.Reporter,
+) error {
 	// For kubeconfig - build a random endpoint client (to go to the controlplane).
 	c, err := clientFactory.BuildRandomEndpointClient(ctx)
 	if err != nil {
@@ -123,7 +125,7 @@ func uncordonNodes(ctx context.Context, clientFactory *global.ClientFactory, nod
 	// Fetch a fresh kubeconfig (the previous connection may be stale after reboot).
 	// The context has no "nodes" metadata (called from WithClientAndNodes), so the
 	// request routes to the endpoint which is a control-plane node by convention.
-	clientset, err := kubeclient.FromTalosClient(ctx, c)
+	clientset, err := kubeclient.FromTalosClient(ctx, c, kubeclient.WithEndpoint(k8sEndpoint))
 	if err != nil {
 		return fmt.Errorf("error creating Kubernetes client for uncordon: %w", err)
 	}

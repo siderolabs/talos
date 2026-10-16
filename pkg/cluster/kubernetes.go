@@ -6,7 +6,10 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"net/netip"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -77,19 +80,126 @@ func (k *KubernetesClient) K8sRestConfig(ctx context.Context) (*rest.Config, err
 		return nil, err
 	}
 
-	if k.ForceEndpoint != "" {
-		forceEndpoint, _ := strings.CutPrefix(k.ForceEndpoint, "https://")
-
-		host, port, err := net.SplitHostPort(forceEndpoint)
-		if err != nil {
-			host = forceEndpoint
-			port = strconv.Itoa(constants.DefaultControlPlanePort)
-		}
-
-		config.Host = net.JoinHostPort(host, port)
+	if err = ApplyKubernetesEndpointOverride(config, k.ForceEndpoint); err != nil {
+		return nil, err
 	}
 
 	return config, nil
+}
+
+// ValidateKubernetesEndpoint checks that the endpoint has the format accepted by ApplyKubernetesEndpointOverride.
+//
+// The accepted format is [https://]host[:port][/], where host is a hostname, an IPv4 address,
+// or an IPv6 address (in brackets if a port is specified).
+func ValidateKubernetesEndpoint(endpoint string) error {
+	_, err := parseKubernetesEndpoint(endpoint)
+
+	return err
+}
+
+// ApplyKubernetesEndpointOverride overrides the Kubernetes API endpoint in the config.
+//
+// If endpoint is empty, the config is left unchanged. If the endpoint
+// doesn't specify a port, the default control plane port is used.
+func ApplyKubernetesEndpointOverride(config *rest.Config, endpoint string) error {
+	if endpoint == "" {
+		return nil
+	}
+
+	hostPort, err := parseKubernetesEndpoint(endpoint)
+	if err != nil {
+		return err
+	}
+
+	config.Host = hostPort
+
+	return nil
+}
+
+// parseKubernetesEndpoint parses the endpoint in the format [https://]host[:port][/] and returns host:port.
+//
+//nolint:gocyclo,cyclop
+func parseKubernetesEndpoint(endpoint string) (string, error) {
+	const defaultPort = constants.DefaultControlPlanePort
+
+	invalid := func(reason string) (string, error) {
+		return "", fmt.Errorf(
+			"invalid Kubernetes endpoint %q: %s",
+			endpoint, reason,
+		)
+	}
+
+	// Bare IPv4 or IPv6, including IPv6 zones.
+	if addr, err := netip.ParseAddr(endpoint); err == nil {
+		return (&url.URL{
+			Scheme: "https",
+			Host: net.JoinHostPort(
+				addr.String(),
+				strconv.Itoa(defaultPort),
+			),
+		}).String(), nil
+	}
+
+	if !strings.Contains(endpoint, "://") {
+		endpoint = "https://" + endpoint
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return invalid(err.Error())
+	}
+
+	if u.Scheme != "https" {
+		return invalid("only https is supported")
+	}
+
+	if u.Host == "" || u.Hostname() == "" {
+		return invalid("host is empty")
+	}
+
+	if u.User != nil {
+		return invalid("credentials are not allowed")
+	}
+
+	if (u.Path != "" && u.Path != "/") ||
+		u.RawQuery != "" || u.ForceQuery ||
+		u.Fragment != "" || u.RawFragment != "" {
+		return invalid("paths, queries and fragments are not allowed")
+	}
+
+	host := u.Hostname()
+
+	// IPv6 must be valid and bracketed in URLs.
+	if strings.Contains(host, ":") {
+		if _, err := netip.ParseAddr(host); err != nil {
+			return invalid("invalid IPv6 address")
+		}
+
+		if !strings.HasPrefix(u.Host, "[") {
+			return invalid("IPv6 address must be bracketed")
+		}
+	}
+
+	port := defaultPort
+
+	if strings.HasSuffix(u.Host, ":") {
+		return invalid("port is empty")
+	}
+
+	if rawPort := u.Port(); rawPort != "" {
+		n, err := strconv.ParseUint(rawPort, 10, 16)
+		if err != nil || n == 0 {
+			return invalid("invalid port")
+		}
+
+		port = int(n)
+	}
+
+	u.Host = net.JoinHostPort(host, strconv.Itoa(port))
+	u.Path = ""
+	u.RawPath = ""
+
+	return u.String(), nil
 }
 
 // K8sClient builds Kubernetes client via Talos Kubeconfig API.
