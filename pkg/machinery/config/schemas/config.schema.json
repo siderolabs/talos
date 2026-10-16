@@ -3646,6 +3646,27 @@
       ],
       "description": "KubeCoreDNSConfig configures CoreDNS deployment."
     },
+    "k8s.KubeCredentialProviderConfigFileV1Alpha1": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the file in the /etc/kubernetes/credentialproviders directory.\n",
+          "markdownDescription": "Name of the file in the `/etc/kubernetes/credentialproviders` directory.",
+          "x-intellij-html-description": "\u003cp\u003eName of the file in the \u003ccode\u003e/etc/kubernetes/credentialproviders\u003c/code\u003e directory.\u003c/p\u003e\n"
+        },
+        "content": {
+          "type": "string",
+          "title": "content",
+          "description": "Content of the file.\n",
+          "markdownDescription": "Content of the file.",
+          "x-intellij-html-description": "\u003cp\u003eContent of the file.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "KubeCredentialProviderConfigFileV1Alpha1 is a configuration file for a credential provider plugin."
+    },
     "k8s.KubeCredentialProviderConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -3672,6 +3693,16 @@
           "description": "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet’s credential provider configuration.\n",
           "markdownDescription": "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet's credential provider configuration.",
           "x-intellij-html-description": "\u003cp\u003eKubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet\u0026rsquo;s credential provider configuration.\u003c/p\u003e\n"
+        },
+        "configFiles": {
+          "items": {
+            "$ref": "#/$defs/k8s.KubeCredentialProviderConfigFileV1Alpha1"
+          },
+          "type": "array",
+          "title": "configFiles",
+          "description": "Additional configuration files for the credential provider plugins.\n\nEach file is written to the /etc/kubernetes/credentialproviders directory\nwith the permissions 0600, so it can be referenced in the args of a credential provider.\n",
+          "markdownDescription": "Additional configuration files for the credential provider plugins.\n\nEach file is written to the `/etc/kubernetes/credentialproviders` directory\nwith the permissions `0600`, so it can be referenced in the `args` of a credential provider.",
+          "x-intellij-html-description": "\u003cp\u003eAdditional configuration files for the credential provider plugins.\u003c/p\u003e\n\n\u003cp\u003eEach file is written to the \u003ccode\u003e/etc/kubernetes/credentialproviders\u003c/code\u003e directory\nwith the permissions \u003ccode\u003e0600\u003c/code\u003e, so it can be referenced in the \u003ccode\u003eargs\u003c/code\u003e of a credential provider.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
