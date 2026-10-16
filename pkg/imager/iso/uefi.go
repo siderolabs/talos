@@ -99,11 +99,17 @@ func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...an
 	printf("preparing loader.conf")
 
 	var loaderConfigOut bytes.Buffer
+	bootMenuTimeout := uint(10)
+	if options.BootMenuTimeout != nil {
+		bootMenuTimeout = *options.BootMenuTimeout
+	}
 
 	if err := template.Must(template.New("loader.conf").Parse(loaderConfigTemplate)).Execute(&loaderConfigOut, struct {
 		SecureBootEnroll string
+		BootMenuTimeout  uint
 	}{
 		SecureBootEnroll: options.SDBootSecureBootEnrollKeys,
+		BootMenuTimeout:  bootMenuTimeout,
 	}); err != nil {
 		return nil, fmt.Errorf("error rendering loader.conf: %w", err)
 	}
