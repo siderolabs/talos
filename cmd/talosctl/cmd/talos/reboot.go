@@ -77,13 +77,13 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 		return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 	}
 
-	nodeNames, err := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rep)
+	nodeNames, err := drainNodes(ctx, clientFactory, "", rebootCmdFlags.drainTimeout, rep)
 	if err != nil {
 		return fmt.Errorf("error draining nodes: %w", err)
 	}
 
 	defer func() {
-		if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, rebootCmdFlags.timeout, rep); uncordonErr != nil {
+		if uncordonErr := uncordonNodes(ctx, clientFactory, "", nodeNames, rebootCmdFlags.timeout, rep); uncordonErr != nil {
 			retErr = errors.Join(retErr, uncordonErr)
 		}
 	}()
