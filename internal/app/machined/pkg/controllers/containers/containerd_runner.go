@@ -33,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
+	"github.com/siderolabs/talos/internal/pkg/containerpid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	containersres "github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -163,7 +164,17 @@ func (r *containerdRunner) Run(
 	defer svc.Close() //nolint:errcheck
 
 	status, err := svc.Run(ctx, events.NullRecorder, func(pid int32) {
-		started(uint32(pid)) //nolint:gosec
+		// containerd may run in the sandbox PID namespace, so translate the task PID into the host
+		// one, otherwise the ServicePID recorded for machinedAccess points at an unrelated process.
+		hostPID, resolveErr := containerpid.NewResolver().ResolveOwnPIDNamespace(cgroupPath, uint32(pid)) //nolint:gosec
+		if resolveErr != nil {
+			r.logger.Warn("failed to resolve container PID in the host PID namespace",
+				zap.String("instance", id), zap.Int32("pid", pid), zap.Error(resolveErr))
+
+			hostPID = 0
+		}
+
+		started(uint32(hostPID)) //nolint:gosec
 	})
 
 	return int32(status.ExitCode), err //nolint:gosec

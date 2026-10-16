@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/siderolabs/talos/internal/app/lifecycle/internal/containerpid"
+	"github.com/siderolabs/talos/internal/pkg/containerpid"
 )
 
 const cgroupPath = "system/installer"
@@ -109,6 +109,45 @@ func TestResolve(t *testing.T) {
 			assert.Equal(t, test.expected, pid)
 		})
 	}
+}
+
+func TestResolveOwnPIDNamespace(t *testing.T) {
+	// host / sandbox / container PIDs
+	statuses := map[int32]string{
+		519: status(519, 78, 1),
+		520: status(520, 79, 2),
+		521: status(521),
+	}
+
+	for _, test := range []struct {
+		name     string
+		procs    string
+		nsPID    uint32
+		expected int32
+	}{
+		{
+			name:     "container init",
+			procs:    "521\n520\n519\n",
+			nsPID:    78,
+			expected: 519,
+		},
+		{
+			name:     "child",
+			procs:    "519\n520\n",
+			nsPID:    79,
+			expected: 520,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			pid, err := fakeProcfs(t, test.procs, statuses).ResolveOwnPIDNamespace(cgroupPath, test.nsPID)
+
+			require.NoError(t, err)
+			assert.Equal(t, test.expected, pid)
+		})
+	}
+
+	_, err := fakeProcfs(t, "519\n", statuses).ResolveOwnPIDNamespace(cgroupPath, 1)
+	require.ErrorIs(t, err, containerpid.ErrGone)
 }
 
 func TestResolveGone(t *testing.T) {
