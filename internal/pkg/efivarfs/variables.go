@@ -56,6 +56,10 @@ func ReadLoaderDevicePartUUID(rw ReadWriter) (uuid.UUID, error) {
 var bootVarRegexp = regexp.MustCompile(`^Boot([0-9A-Fa-f]{4})$`)
 
 // ListBootEntries lists all EFI boot entries present in the system by their index.
+//
+// Entries which exist but cannot be decoded (firmware is known to write load
+// options which do not follow the specification) are returned with a nil
+// value, so that their index is still reported as occupied.
 func ListBootEntries(rw ReadWriter) (map[int]*LoadOption, error) {
 	bootEntries := make(map[int]*LoadOption)
 
@@ -77,9 +81,21 @@ func ListBootEntries(rw ReadWriter) (map[int]*LoadOption, error) {
 			panic(err)
 		}
 
-		entry, err := GetBootEntry(rw, int(idx))
+		raw, _, err := rw.Read(ScopeGlobal, varName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get boot entry %s: %w", varName, err)
+			return nil, fmt.Errorf("failed to read boot entry %s: %w", varName, err)
+		}
+
+		entry, err := UnmarshalLoadOption(raw)
+		if err != nil {
+			// Talos only looks for its own entries, so a malformed entry written
+			// by the firmware should not fail the listing. Keep its index occupied,
+			// unless the same index was already decoded under another spelling.
+			if _, ok := bootEntries[int(idx)]; !ok {
+				bootEntries[int(idx)] = nil
+			}
+
+			continue
 		}
 
 		bootEntries[int(idx)] = entry
