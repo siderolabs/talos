@@ -5,6 +5,7 @@
 package cel_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -64,6 +65,42 @@ func TestCELMarshal(t *testing.T) {
 
 			require.Equal(t, test.expectedYAML, string(yaml))
 		})
+	}
+}
+
+func TestCELMerge(t *testing.T) {
+	t.Parallel()
+
+	for _, parsed := range []bool{false, true} {
+		for _, patch := range []string{"", "false"} {
+			t.Run(fmt.Sprintf("parsed=%t/patch=%q", parsed, patch), func(t *testing.T) {
+				t.Parallel()
+
+				var expr, other cel.Expression
+
+				require.NoError(t, other.UnmarshalText([]byte(patch)))
+
+				if parsed {
+					expr = cel.MustExpression(cel.ParseBooleanExpression("true", celenv.DiskLocator()))
+				} else {
+					require.NoError(t, expr.UnmarshalText([]byte("true")))
+				}
+
+				require.NoError(t, expr.Merge(other))
+
+				expected := "true"
+				if patch != "" {
+					expected = patch
+				}
+
+				assert.Equal(t, expected, expr.String())
+				require.False(t, expr.IsZero())
+
+				result, err := expr.EvalBool(celenv.DiskLocator(), nil)
+				require.NoError(t, err)
+				assert.Equal(t, patch == "", result)
+			})
+		}
 	}
 }
 

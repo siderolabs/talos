@@ -23,6 +23,44 @@ var config []byte
 //go:embed testdata/apply/expected.yaml
 var expected string
 
+//go:embed testdata/patchexpression/base.yaml
+var expressionBase []byte
+
+//go:embed testdata/patchexpression/expected.yaml
+var expressionExpected string
+
+func TestApplyPreservesExpression(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{"@testdata/patchexpression/patch.yaml"})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(expressionBase)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(expressionBase),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			data, err := out.Bytes()
+			require.NoError(t, err)
+
+			assert.Equal(t, expressionExpected, string(data))
+		})
+	}
+}
+
 //go:embed testdata/multidoc/config.yaml
 var configMultidoc []byte
 
