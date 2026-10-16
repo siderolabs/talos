@@ -23,11 +23,16 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/sysblock"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // DiscoveryController provides a filesystem/partition discovery for blockdevices.
-type DiscoveryController struct{}
+type DiscoveryController struct {
+	// NativeMultipath is set when Talos assembles multipath devices itself (see MultipathController):
+	// the disks which are going to be paths of a multipath device are never probed then.
+	NativeMultipath bool
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *DiscoveryController) Name() string {
@@ -79,6 +84,12 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 	// nextRescan holds the pool of devices to be rescanned in the next batch.
 	nextRescan := map[string]int{}
 
+	// multipathPaths holds the devices which are paths of a multipath device (and their partitions).
+	//
+	// a path reads the same data as the multipath device, so it is never probed: otherwise every
+	// volume of the multipath device would be discovered once per path as well.
+	multipathPaths := map[string]string{}
+
 	rescanTicker := time.NewTicker(100 * time.Millisecond)
 	defer rescanTicker.Stop()
 
@@ -93,7 +104,7 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 
 			logger.Debug("rescanning devices", zap.Strings("devices", maps.Keys(nextRescan)))
 
-			if nextRescanBatch, err := ctrl.rescan(ctx, r, logger, maps.Keys(nextRescan)); err != nil {
+			if nextRescanBatch, err := ctrl.rescan(ctx, r, logger, maps.Keys(nextRescan), multipathPaths); err != nil {
 				return fmt.Errorf("failed to rescan devices: %w", err)
 			} else {
 				nextRescan = map[string]int{}
@@ -131,6 +142,11 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 			parents := map[string]string{}
 			allDevices := map[string]struct{}{}
 
+			// a device turns into a path (or back) without a change of its own: it is the multipath
+			// device mapped over it which comes and goes, so such a device has to be rescanned as well
+			previousMultipathPaths := multipathPaths
+			multipathPaths = sysblock.MultipathPaths(devices.All(), ctrl.NativeMultipath)
+
 			for device := range devices.All() {
 				if device.TypedSpec().Major == 1 {
 					// ignore ram disks (/dev/ramX), major number is 1
@@ -145,7 +161,10 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 					parents[device.Metadata().ID()] = device.TypedSpec().Parent
 				}
 
-				if device.TypedSpec().Generation == lastObservedGenerations[device.Metadata().ID()] {
+				_, isPath := multipathPaths[device.Metadata().ID()]
+				_, wasPath := previousMultipathPaths[device.Metadata().ID()]
+
+				if device.TypedSpec().Generation == lastObservedGenerations[device.Metadata().ID()] && isPath == wasPath {
 					continue
 				}
 
@@ -174,12 +193,20 @@ func (ctrl *DiscoveryController) Run(ctx context.Context, r controller.Runtime, 
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtime, logger *zap.Logger, ids []string) (map[string]struct{}, error) {
+func (ctrl *DiscoveryController) rescan(
+	ctx context.Context, r controller.Runtime, logger *zap.Logger, ids []string, multipathPaths map[string]string,
+) (map[string]struct{}, error) {
 	failedIDs := map[string]struct{}{}
 	touchedIDs := map[string]struct{}{}
 	nextRescan := map[string]struct{}{}
 
 	for _, id := range ids {
+		if multipath, ok := multipathPaths[id]; ok {
+			logger.Debug("skipping multipath path", zap.String("device", id), zap.String("multipath", multipath))
+
+			continue
+		}
+
 		device, err := safe.ReaderGetByID[*block.Device](ctx, r, id)
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -218,17 +245,22 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 		}
 
 		_, isFailed := failedIDs[dv.Metadata().ID()]
+		_, isPath := multipathPaths[dv.Metadata().ID()]
 
 		parentTouched := false
 		parentFailed := false
+		parentIsPath := false
 
 		if dv.TypedSpec().Parent != "" {
 			_, parentTouched = touchedIDs[dv.TypedSpec().Parent]
 			_, parentFailed = failedIDs[dv.TypedSpec().Parent]
+			_, parentIsPath = multipathPaths[dv.TypedSpec().Parent]
 		}
 
-		if isFailed || parentTouched || parentFailed {
+		if isFailed || isPath || parentTouched || parentFailed || parentIsPath {
 			// if the probe failed, or if the parent was touched/failed, while this device was not, remove it
+			//
+			// the volumes of a multipath path are removed as well, as they are discovered via the multipath device
 			if err = r.Destroy(ctx, dv.Metadata()); err != nil {
 				return nil, fmt.Errorf("failed to destroy discovered volume: %w", err)
 			}

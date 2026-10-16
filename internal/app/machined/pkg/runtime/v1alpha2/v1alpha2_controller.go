@@ -164,6 +164,11 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 
 	virtClient := libvirt.New()
 
+	// native multipath is decided once for the lifetime of the machine: the disks which are going to
+	// be paths of a multipath device must never be put to use, from the very first probe
+	nativeMultipath := ctrl.v1alpha1Runtime.State().Platform().Mode() != runtime.ModeContainer &&
+		block.NativeMultipathEnabled(procfs.ProcCmdline())
+
 	for _, c := range []controller.Controller{
 		&block.DevicesController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -171,9 +176,16 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.DiscoveredVolumesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
-		&block.DiscoveryController{},
-		&block.DisksController{},
+		&block.DiscoveryController{
+			NativeMultipath: nativeMultipath,
+		},
+		&block.DisksController{
+			NativeMultipath: nativeMultipath,
+		},
 		&block.MountController{},
+		&block.MultipathController{
+			Enabled: nativeMultipath,
+		},
 		&block.MountRequestController{},
 		&block.MountStatusController{},
 		&block.SMARTStatusController{
