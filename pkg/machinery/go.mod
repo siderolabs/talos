@@ -3,7 +3,7 @@ module github.com/siderolabs/talos/pkg/machinery
 go 1.26.8
 
 // forked ethtool introduces missing APIs
-replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero
+replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero.0.20260922143555-6f9c412a2ce9
 
 require (
 	cel.dev/cel-go v0.32.0

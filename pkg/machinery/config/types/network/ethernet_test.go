@@ -38,6 +38,11 @@ func TestEthernetConfigMarshalStability(t *testing.T) {
 		nethelpers.WOLModeUnicast,
 		nethelpers.WOLModeMulticast,
 	}
+	cfg.FlowControlConfig = &network.EthernetFlowControlConfig{
+		RX:      new(bool(true)),
+		TX:      new(bool(false)),
+		Autoneg: new(bool(true)),
+	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -74,6 +79,11 @@ func TestEthernetConfigUnmarshal(t *testing.T) {
 		WakeOnLANConfig: []nethelpers.WOLMode{
 			nethelpers.WOLModeUnicast,
 			nethelpers.WOLModeMulticast,
+		},
+		FlowControlConfig: &network.EthernetFlowControlConfig{
+			RX:      new(bool(true)),
+			TX:      new(bool(false)),
+			Autoneg: new(bool(true)),
 		},
 	}, docs[0])
 }

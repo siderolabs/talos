@@ -100,6 +100,7 @@ func optionalFromPtr[T any](ptr *T) optional.Optional[T] {
 	return optional.Some(*ptr)
 }
 
+//gocyclo:ignore
 func (ctrl *EthernetSpecController) apply(
 	ethClient *ethtool.Client,
 	spec *network.EthernetSpec,
@@ -169,6 +170,21 @@ func (ctrl *EthernetSpecController) apply(
 			Modes: ethtool.WOLMode(wolModes),
 		}); err != nil {
 			return fmt.Errorf("error updating wake-on-lan: %w", err)
+		}
+	}
+
+	flowControlSpec := spec.TypedSpec().FlowControl
+
+	if !value.IsZero(flowControlSpec) {
+		if err := ethClient.SetPause(ethtool.Pause{
+			Interface: ethtool.Interface{
+				Name: spec.Metadata().ID(),
+			},
+			RX:      optionalFromPtr(flowControlSpec.RX),
+			TX:      optionalFromPtr(flowControlSpec.TX),
+			Autoneg: optionalFromPtr(flowControlSpec.Autoneg),
+		}); err != nil {
+			return fmt.Errorf("error updating flow control: %w", err)
 		}
 	}
 

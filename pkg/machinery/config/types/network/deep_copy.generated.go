@@ -481,6 +481,22 @@ func (o *EthernetConfigV1Alpha1) DeepCopy() *EthernetConfigV1Alpha1 {
 		cp.WakeOnLANConfig = make([]nethelpers.WOLMode, len(o.WakeOnLANConfig))
 		copy(cp.WakeOnLANConfig, o.WakeOnLANConfig)
 	}
+	if o.FlowControlConfig != nil {
+		cp.FlowControlConfig = new(EthernetFlowControlConfig)
+		*cp.FlowControlConfig = *o.FlowControlConfig
+		if o.FlowControlConfig.RX != nil {
+			cp.FlowControlConfig.RX = new(bool)
+			*cp.FlowControlConfig.RX = *o.FlowControlConfig.RX
+		}
+		if o.FlowControlConfig.TX != nil {
+			cp.FlowControlConfig.TX = new(bool)
+			*cp.FlowControlConfig.TX = *o.FlowControlConfig.TX
+		}
+		if o.FlowControlConfig.Autoneg != nil {
+			cp.FlowControlConfig.Autoneg = new(bool)
+			*cp.FlowControlConfig.Autoneg = *o.FlowControlConfig.Autoneg
+		}
+	}
 	return &cp
 }
 

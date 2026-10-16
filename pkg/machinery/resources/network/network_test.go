@@ -299,3 +299,25 @@ func TestRouteID(t *testing.T) {
 		})
 	}
 }
+
+func TestEthernetFlowControlProtobuf(t *testing.T) {
+	t.Parallel()
+
+	rx, tx, autoneg := true, false, true
+
+	res := network.NewEthernetSpec(network.NamespaceName, "enp0s1")
+	res.TypedSpec().FlowControl = network.EthernetFlowControlSpec{
+		RX:      &rx,
+		TX:      &tx,
+		Autoneg: &autoneg,
+	}
+
+	var spec networkpb.EthernetSpecSpec
+
+	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+	require.NotNil(t, spec.GetFlowControl(), "flow control field must survive the resource->protobuf roundtrip")
+	assert.True(t, spec.GetFlowControl().GetRx())
+	assert.False(t, spec.GetFlowControl().GetTx())
+	assert.True(t, spec.GetFlowControl().GetAutoneg())
+}
