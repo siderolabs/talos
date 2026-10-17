@@ -55,8 +55,11 @@ type KubePrismConfigV1Alpha1 struct {
 	//     The load balancer will be started on `127.0.0.1:<port>` and it will
 	//     automatically include a controlplane endpoint and direct addresses of
 	//     all controlplane nodes in the cluster.
-	//     The KubePrism will pick up the route(s) with the lowest RTT to the controlplane nodes,
-	//     excluding the unavailable ones, and will automatically update the route list when the controlplane nodes change.
+	//     KubePrism checks upstream readiness over HTTPS using the Kubernetes cluster CA and
+	//     picks the ready route(s) with the lowest RTT. If no upstream passes the readiness
+	//     check, it falls back to TCP-available upstreams. When an upstream repeatedly fails
+	//     readiness checks, existing connections to it are closed so clients can reconnect.
+	//     KubePrism automatically updates the route list when the controlplane nodes change.
 	//   schemaRequired: true
 	PortConfig int `yaml:"port"`
 	//   description: |
