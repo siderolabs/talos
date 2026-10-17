@@ -25,6 +25,12 @@ type KernelModuleSpec = typed.Resource[KernelModuleSpecSpec, KernelModuleSpecExt
 type KernelModuleSpecSpec struct {
 	Name       string   `yaml:"string" protobuf:"1"`
 	Parameters []string `yaml:"parameters" protobuf:"2"`
+	// Order is the 1-based position of the module in the machine config
+	// (the last one if the module is listed more than once).
+	//
+	// Modules are loaded in ascending Order, then by name. Modules requested by
+	// Talos itself have zero Order and are loaded first.
+	Order int `yaml:"order,omitempty" protobuf:"3"`
 	// more options in the future: aliases, etc.
 }
 

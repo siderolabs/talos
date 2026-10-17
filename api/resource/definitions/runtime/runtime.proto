@@ -136,6 +136,12 @@ message KernelCmdlineSpec {
 message KernelModuleSpecSpec {
   string name = 1;
   repeated string parameters = 2;
+  // Order is the 1-based position of the module in the machine config
+  // (the last one if the module is listed more than once).
+  //
+  // Modules are loaded in ascending Order, then by name. Modules requested by
+  // Talos itself have zero Order and are loaded first.
+  int64 order = 3;
 }
 
 // KernelModuleStatusSpec represents the status of a Linux kernel module.

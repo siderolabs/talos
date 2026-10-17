@@ -5,9 +5,12 @@
 package runtime
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -72,7 +75,7 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 		var multiErr error
 
 		// note: this code doesn't support module unloading in any way for now
-		for module := range modules.All() {
+		for _, module := range kernelModuleLoadOrder(modules.All()) {
 			moduleSpec := module.TypedSpec()
 			parameters := strings.Join(moduleSpec.Parameters, " ")
 
@@ -87,4 +90,15 @@ func (ctrl *KernelModuleSpecController) Run(ctx context.Context, r controller.Ru
 
 		r.ResetRestartBackoff()
 	}
+}
+
+// kernelModuleLoadOrder returns the modules in the order they should be loaded:
+// ascending Order (the position in the machine config), then by name.
+func kernelModuleLoadOrder(modules iter.Seq[*runtime.KernelModuleSpec]) []*runtime.KernelModuleSpec {
+	return slices.SortedFunc(modules, func(a, b *runtime.KernelModuleSpec) int {
+		return cmp.Or(
+			cmp.Compare(a.TypedSpec().Order, b.TypedSpec().Order),
+			cmp.Compare(a.TypedSpec().Name, b.TypedSpec().Name),
+		)
+	})
 }

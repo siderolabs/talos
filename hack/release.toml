@@ -15,6 +15,16 @@ preface = """
 """
 
 [notes]
+    [notes.kernel_module_order]
+        title = "Kernel Module Load Order"
+        description = """\
+Kernel modules from `machine.kernel.modules` and `KernelModuleConfig` documents are now loaded in the order they appear in the machine config, instead of sorted by name.
+
+Since Talos 1.14, the kernel no longer loads modules on demand (`request_module()`), so a driver which loads other modules while probing a device only works if they are already loaded.
+List such modules before the driver, e.g. `tc90522`, `qm1d1c0042` and `mxl301rf` before `earth-pt3`.
+If the driver was already loaded and failed to probe, reboot after reordering the modules, as the probe is not retried.
+"""
+
     [notes.vm_vnc]
         title = "Virtual Machine VNC Console"
         description = """\

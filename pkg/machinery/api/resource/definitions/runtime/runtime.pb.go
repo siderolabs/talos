@@ -1039,9 +1039,15 @@ func (x *KernelCmdlineSpec) GetCmdline() string {
 
 // KernelModuleSpecSpec describes Linux kernel module to load.
 type KernelModuleSpecSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Parameters    []string               `protobuf:"bytes,2,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Name       string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Parameters []string               `protobuf:"bytes,2,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	// Order is the 1-based position of the module in the machine config
+	// (the last one if the module is listed more than once).
+	//
+	// Modules are loaded in ascending Order, then by name. Modules requested by
+	// Talos itself have zero Order and are loaded first.
+	Order         int64 `protobuf:"varint,3,opt,name=order,proto3" json:"order,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1088,6 +1094,13 @@ func (x *KernelModuleSpecSpec) GetParameters() []string {
 		return x.Parameters
 	}
 	return nil
+}
+
+func (x *KernelModuleSpecSpec) GetOrder() int64 {
+	if x != nil {
+		return x.Order
+	}
+	return 0
 }
 
 // KernelModuleStatusSpec represents the status of a Linux kernel module.
@@ -2706,12 +2719,13 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x06flavor\x18\x02 \x01(\tR\x06flavor\x12\x16\n" +
 	"\x06apiurl\x18\x03 \x01(\tR\x06apiurl\"-\n" +
 	"\x11KernelCmdlineSpec\x12\x18\n" +
-	"\acmdline\x18\x01 \x01(\tR\acmdline\"J\n" +
+	"\acmdline\x18\x01 \x01(\tR\acmdline\"`\n" +
 	"\x14KernelModuleSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1e\n" +
 	"\n" +
 	"parameters\x18\x02 \x03(\tR\n" +
-	"parameters\"\xb4\x02\n" +
+	"parameters\x12\x14\n" +
+	"\x05order\x18\x03 \x01(\x03R\x05order\"\xb4\x02\n" +
 	"\x16KernelModuleStatusSpec\x12M\n" +
 	"\x04type\x18\x01 \x01(\x0e29.talos.resource.definitions.enums.RuntimeKernelModuleTypeR\x04type\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x03R\x04size\x12'\n" +
