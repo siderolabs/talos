@@ -1010,6 +1010,11 @@ func (m *KernelModuleSpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Order != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Order))
+		i--
+		dAtA[i] = 0x18
+	}
 	if len(m.Parameters) > 0 {
 		for iNdEx := len(m.Parameters) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.Parameters[iNdEx])
@@ -2875,6 +2880,9 @@ func (m *KernelModuleSpecSpec) SizeVT() (n int) {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.Order != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Order))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5840,6 +5848,25 @@ func (m *KernelModuleSpecSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Parameters = append(m.Parameters, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Order", wireType)
+			}
+			m.Order = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Order |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

@@ -451,7 +451,7 @@ func (KernelModuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KernelModuleConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelModuleConfig is a config document to configure a Linux kernel module to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KernelModuleConfig is a config document to configure a Linux kernel module to load.",
+		Description: "KernelModuleConfig is a config document to configure a Linux kernel module to load.\nModules are loaded in the order of the documents in the machine configuration,\nafter the modules required by Talos itself.\nThe kernel doesn't load modules on demand, so if a module loads other modules while probing a device\n(e.g. `earth-pt3` loads `tc90522`, `qm1d1c0042` and `mxl301rf`), list those modules before it.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

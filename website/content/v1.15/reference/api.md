@@ -11154,6 +11154,7 @@ KernelModuleSpecSpec describes Linux kernel module to load.
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | parameters | [string](#string) | repeated |  |
+| order | [int64](#int64) |  | Order is the 1-based position of the module in the machine config (the last one if the module is listed more than once).<br><br>Modules are loaded in ascending Order, then by name. Modules requested by Talos itself have zero Order and are loaded first. |
 
 
 

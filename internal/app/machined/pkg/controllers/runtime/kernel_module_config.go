@@ -90,18 +90,23 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 
 		r.StartTrackingOutputs()
 
+		configured := map[string]struct{}{}
+
 		if cfg != nil {
-			for _, module := range cfg.Config().KernelModuleConfigs() {
+			for i, module := range cfg.Config().KernelModuleConfigs() {
 				item := runtime.NewKernelModuleSpec(runtime.NamespaceName, module.Name())
 
 				if err = safe.WriterModify(ctx, r, item, func(res *runtime.KernelModuleSpec) error {
 					res.TypedSpec().Name = module.Name()
 					res.TypedSpec().Parameters = module.Parameters()
+					res.TypedSpec().Order = i + 1 // preserve machine config order, see KernelModuleSpecSpec.Order
 
 					return nil
 				}); err != nil {
 					return err
 				}
+
+				configured[module.Name()] = struct{}{}
 			}
 		}
 
@@ -123,11 +128,19 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 		}
 
 		for module := range modules {
+			if _, ok := configured[module]; ok {
+				// listed in the machine config, keep its parameters and order
+				continue
+			}
+
 			if err = safe.WriterModify(
 				ctx, r,
 				runtime.NewKernelModuleSpec(runtime.NamespaceName, module),
 				func(res *runtime.KernelModuleSpec) error {
 					res.TypedSpec().Name = module
+					// the module might have been listed in the machine config before
+					res.TypedSpec().Parameters = nil
+					res.TypedSpec().Order = 0
 
 					return nil
 				},
