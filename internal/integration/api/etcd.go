@@ -212,11 +212,25 @@ observe_isolation() {
 
                 bursts=$((bursts + 1))
 
+                if api_tcp_alive; then
+                        alive_before_burst=yes
+                else
+                        alive_before_burst=no
+                fi
+
                 if kubeprism_burst; then
                         request_http_status "$api_url" || true
 
                         if [ "$response_status" != 200 ]; then
-                                log_step "RESULT: not_ready_at=${not_ready_at}s excluded_by=$((SECONDS - started))s listener_down_at=${listener_down_at}s bursts=$bursts failed_bursts=$failed_bursts burst_size=$burst_size"
+                                # "yes" means the TCP listener of the target was open before and after the burst,
+                                # so only the L7 readiness check can explain the exclusion of this upstream.
+                                if [ "$alive_before_burst" = yes ] && api_tcp_alive; then
+                                        listener_alive_through_burst=yes
+                                else
+                                        listener_alive_through_burst=no
+                                fi
+
+                                log_step "RESULT: not_ready_at=${not_ready_at}s excluded_by=$((SECONDS - started))s listener_down_at=${listener_down_at}s listener_alive_through_burst=$listener_alive_through_burst bursts=$bursts failed_bursts=$failed_bursts burst_size=$burst_size"
 
                                 return 0
                         fi
@@ -234,7 +248,7 @@ observe_isolation() {
 
         return 1
 }
-
+		
 trap restore EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
