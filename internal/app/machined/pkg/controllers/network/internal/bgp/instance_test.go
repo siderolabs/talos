@@ -5,6 +5,7 @@
 package bgp_test
 
 import (
+	"context"
 	"net/netip"
 	"testing"
 	"time"
@@ -180,4 +181,99 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 	))
 	assert.NotSame(t, server, internalbgp.InstanceServerForTest(instance), "a changed server key must restart GoBGP")
 	assert.Equal(t, peerIfaces, internalbgp.InstancePeerIfacesForTest(instance), "server restart must retain peer interfaces")
+}
+
+func TestChangedPeersAreReplacedOneAtATime(t *testing.T) {
+	t.Parallel()
+
+	instance := internalbgp.NewInstance()
+	t.Cleanup(instance.Stop)
+
+	var established, synced map[string]bool
+
+	internalbgp.SetPeerStatesForTest(instance, func(context.Context) (map[string]bool, map[string]bool) {
+		return established, synced
+	})
+
+	signals := make(chan struct{}, 100)
+
+	peerA := internalbgp.Peer{Address: "192.0.2.2", Config: network.BGPNeighborConfigSpec{Address: netip.MustParseAddr("192.0.2.2"), PeerASN: 65002, Passive: true}}
+	peerB := internalbgp.Peer{Address: "192.0.2.3", Config: network.BGPNeighborConfigSpec{Address: netip.MustParseAddr("192.0.2.3"), PeerASN: 65003, Passive: true}}
+
+	ensure := func() map[string]string {
+		t.Helper()
+
+		require.NoError(t, instance.EnsureServer(
+			t.Context(),
+			zap.NewNop(),
+			network.BGPInstanceConfigSpec{LocalASN: 65001, Neighbors: []network.BGPNeighborConfigSpec{peerA.Config, peerB.Config}},
+			netip.MustParseAddr("10.0.0.1"),
+			0,
+			[]internalbgp.Peer{peerA, peerB},
+			nil,
+			-1,
+			func() { signals <- struct{}{} },
+		))
+
+		return internalbgp.InstancePeerKeysForTest(instance)
+	}
+
+	up := func(peers ...string) map[string]bool {
+		m := map[string]bool{}
+
+		for _, peer := range peers {
+			m[peer] = true
+		}
+
+		return m
+	}
+
+	initial := ensure()
+
+	// a change to both established peers in one apply replaces only the first one
+	established, synced = up(peerA.Address, peerB.Address), up(peerA.Address, peerB.Address)
+	peerA.Config.HoldTime, peerB.Config.HoldTime = 30*time.Second, 30*time.Second
+
+	current := ensure()
+	assert.NotEqual(t, initial[peerA.Address], current[peerA.Address], "the first changed peer must be replaced")
+	assert.Equal(t, initial[peerB.Address], current[peerB.Address], "the second changed peer must wait")
+
+	// the replaced peer is down, then established without End-of-RIB: the other one keeps waiting
+	established, synced = up(peerB.Address), up(peerB.Address)
+	assert.Equal(t, initial[peerB.Address], ensure()[peerB.Address])
+
+	established = up(peerA.Address, peerB.Address)
+	assert.Equal(t, initial[peerB.Address], ensure()[peerB.Address])
+
+	// the replaced peer is back: the other one is replaced
+	synced = up(peerA.Address, peerB.Address)
+	assert.NotEqual(t, initial[peerB.Address], ensure()[peerB.Address], "the second changed peer must be replaced once the first one is back")
+
+	// the replaced peer never comes back: the other one is replaced after the timeout, which also triggers a reconcile
+	internalbgp.SetPeerReplaceTimeoutForTest(instance, 200*time.Millisecond)
+
+	peerA.Config.HoldTime, peerB.Config.HoldTime = 60*time.Second, 60*time.Second
+	before := ensure()
+	established, synced = up(peerB.Address), up(peerB.Address)
+
+	time.Sleep(100 * time.Millisecond)
+
+	for len(signals) > 0 {
+		<-signals
+	}
+
+	select {
+	case <-signals:
+	case <-time.After(5 * time.Second):
+		require.FailNow(t, "no reconcile was triggered after the timeout")
+	}
+
+	assert.NotEqual(t, before[peerB.Address], ensure()[peerB.Address], "the second changed peer must be replaced after the timeout")
+
+	// changed peers that are down are replaced right away
+	established, synced = nil, nil
+	peerA.Config.HoldTime, peerB.Config.HoldTime = 90*time.Second, 90*time.Second
+	current = ensure()
+	assert.Equal(t, internalbgp.PeerKey(peerA), current[peerA.Address])
+	assert.Equal(t, internalbgp.PeerKey(peerB), current[peerB.Address])
 }

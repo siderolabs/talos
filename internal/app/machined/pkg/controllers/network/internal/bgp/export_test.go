@@ -5,8 +5,10 @@
 package bgp
 
 import (
+	"context"
 	"maps"
 	"net/netip"
+	"time"
 
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
@@ -65,4 +67,14 @@ func ListImportCandidatesForTest(instance *Instance, selectors []netip.Prefix) (
 // SetInstancePeerIfacesForTest replaces the learned link-local peer interface mapping.
 func SetInstancePeerIfacesForTest(instance *Instance, peerIfaces map[netip.Addr]string) {
 	instance.peerIfaces = peerIfaces
+}
+
+// SetPeerStatesForTest overrides how the instance reads the session state of its peers.
+func SetPeerStatesForTest(instance *Instance, fn func(ctx context.Context) (established, synced map[string]bool)) {
+	instance.peerStates = fn
+}
+
+// SetPeerReplaceTimeoutForTest overrides how long a changed peer waits for the previously replaced peer.
+func SetPeerReplaceTimeoutForTest(instance *Instance, timeout time.Duration) {
+	instance.peerReplaceTimeout = timeout
 }
