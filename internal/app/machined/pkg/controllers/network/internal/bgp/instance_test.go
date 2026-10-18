@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	gobgpapi "github.com/osrg/gobgp/v4/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -180,4 +181,81 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 	))
 	assert.NotSame(t, server, internalbgp.InstanceServerForTest(instance), "a changed server key must restart GoBGP")
 	assert.Equal(t, peerIfaces, internalbgp.InstancePeerIfacesForTest(instance), "server restart must retain peer interfaces")
+}
+
+func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
+	t.Parallel()
+
+	ctx := t.Context()
+	instancePort := freeBGPImportTestPort(t)
+
+	instance := internalbgp.NewInstance()
+	t.Cleanup(instance.Stop)
+
+	peer := internalbgp.Peer{
+		Address: "127.0.0.2",
+		Config:  network.BGPNeighborConfigSpec{Address: netip.MustParseAddr("127.0.0.2"), PeerASN: 65000, Passive: true},
+	}
+
+	ensure := func() {
+		t.Helper()
+
+		require.NoError(t, instance.EnsureServer(
+			ctx,
+			zap.NewNop(),
+			network.BGPInstanceConfigSpec{LocalASN: 65001, Neighbors: []network.BGPNeighborConfigSpec{peer.Config}},
+			netip.MustParseAddr("10.0.0.1"),
+			0,
+			[]internalbgp.Peer{peer},
+			nil,
+			instancePort,
+			func() {},
+		))
+	}
+
+	ensure()
+
+	fabric := startBGPImportTestServer(t, ctx, 65000, "10.0.0.2", -1, false)
+	require.NoError(t, fabric.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: &gobgpapi.Peer{
+		Conf:      &gobgpapi.PeerConf{NeighborAddress: "127.0.0.1", PeerAsn: 65001},
+		Transport: &gobgpapi.Transport{LocalAddress: "127.0.0.2", RemotePort: uint32(instancePort)},
+	}}))
+
+	peerState := func() *gobgpapi.Peer {
+		t.Helper()
+
+		var result *gobgpapi.Peer
+
+		require.NoError(t, internalbgp.InstanceServerForTest(instance).ListPeer(ctx, &gobgpapi.ListPeerRequest{Address: peer.Address}, func(p *gobgpapi.Peer) {
+			result = p
+		}))
+		require.NotNil(t, result)
+
+		return result
+	}
+
+	require.Eventually(t, func() bool {
+		return peerState().GetState().GetSessionState() == gobgpapi.PeerState_SESSION_STATE_ESTABLISHED
+	}, 5*time.Second, 10*time.Millisecond, "BGP session did not establish")
+
+	uptime := peerState().GetTimers().GetState().GetUptime().AsTime()
+
+	// BFD and hold time changes must not reset the session
+	peer.Config.HoldTime = 30 * time.Second
+	peer.Config.BFD = &network.BGPBFDConfigSpec{TransmitInterval: 300 * time.Millisecond, ReceiveInterval: 300 * time.Millisecond, DetectMultiplier: 3}
+
+	ensure()
+
+	assert.Equal(t, internalbgp.PeerKey(peer), internalbgp.InstancePeerKeysForTest(instance)[peer.Address])
+
+	updated := peerState()
+	assert.EqualValues(t, 30, updated.GetTimers().GetConfig().GetHoldTime())
+	assert.True(t, updated.GetBfd().GetEnabled())
+
+	for deadline := time.Now().Add(time.Second); time.Now().Before(deadline); time.Sleep(10 * time.Millisecond) {
+		state := peerState()
+
+		require.Equal(t, gobgpapi.PeerState_SESSION_STATE_ESTABLISHED, state.GetState().GetSessionState(), "BGP session must stay up through an in-place update")
+		require.Equal(t, uptime, state.GetTimers().GetState().GetUptime().AsTime(), "BGP session must not be reset by an in-place update")
+	}
 }
