@@ -233,6 +233,10 @@ func (instance *Instance) SetOutputState(
 	instance.installRoutes = installRoutes
 }
 
+// reconcilePeers adds, removes and updates peers to match the resolved set.
+//
+// Changed peers are updated in place: GoBGP applies BFD and timer changes to the live session, and resets it
+// only for changes which need a new OPEN message (e.g. ASN or transport settings).
 func (instance *Instance) reconcilePeers(
 	ctx context.Context,
 	config network.BGPInstanceConfigSpec,
@@ -244,8 +248,8 @@ func (instance *Instance) reconcilePeers(
 		desired[peer.Address] = PeerKey(peer)
 	}
 
-	for address, hash := range instance.peers {
-		if desired[address] == hash {
+	for address := range instance.peers {
+		if _, ok := desired[address]; ok {
 			continue
 		}
 
@@ -257,12 +261,17 @@ func (instance *Instance) reconcilePeers(
 	}
 
 	for _, peer := range resolved {
-		if _, ok := instance.peers[peer.Address]; ok {
-			continue
-		}
+		hash, ok := instance.peers[peer.Address]
 
-		if err := instance.server.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: BuildPeer(peer, config.Multipath)}); err != nil {
-			return fmt.Errorf("error adding BGP peer: %w", err)
+		switch {
+		case !ok:
+			if err := instance.server.AddPeer(ctx, &gobgpapi.AddPeerRequest{Peer: BuildPeer(peer, config.Multipath)}); err != nil {
+				return fmt.Errorf("error adding BGP peer: %w", err)
+			}
+		case hash != desired[peer.Address]:
+			if _, err := instance.server.UpdatePeer(ctx, &gobgpapi.UpdatePeerRequest{Peer: BuildPeer(peer, config.Multipath)}); err != nil {
+				return fmt.Errorf("error updating BGP peer: %w", err)
+			}
 		}
 
 		instance.peers[peer.Address] = desired[peer.Address]
