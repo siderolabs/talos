@@ -24,8 +24,8 @@ import (
 )
 
 const (
-	// Four failures move a fully healthy upstream from the configured high score (3) below zero.
-	drainFailureThreshold = 4
+	// Three failures move a fully healthy upstream from the configured high score (2) below zero.
+	drainFailureThreshold = 3
 )
 
 var healthCheckTierThresholds = []time.Duration{

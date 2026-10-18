@@ -32,11 +32,18 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
+// kubePrismEtcdIsolationScript isolates etcd peer traffic of the target control plane node and
+// waits until KubePrism serves a burst of new connections successfully while the target API server
+// does not pass its /readyz check.
+//
+// The target is considered unavailable on any response other than HTTP 200, including refused
+// connections: once the API server stops listening, the old TCP-only health check would also
+// exclude it, so the scenario does not require the TCP listener to stay open.
 const kubePrismEtcdIsolationScript = `
 set -eu
 
 log_step() {
-	printf '[kubeprism-e2e] %%s\n' "$*"
+        printf '[kubeprism-e2e] %%s\n' "$*"
 }
 
 bash=
@@ -47,219 +54,235 @@ kubeprism_url=https://127.0.0.1:%d/readyz
 etcd_peer_port=%d
 api_port=%d
 response_status=
+isolated=0
+
+burst_size=10
+observe_timeout=240
 
 request_http_status() {
-	url=$1
-	log_step "requesting $url"
+        url=$1
+        log_step "requesting $url"
 
-	if response_status=$("$curl" --silent --insecure --max-time 2 -o /dev/null -w '%%{http_code}' "$url" 2>/dev/null); then
-		log_step "request to $url returned HTTP $response_status"
+        if response_status=$("$curl" --silent --insecure --max-time 2 -o /dev/null -w '%%{http_code}' "$url" 2>/dev/null); then
+                log_step "request to $url returned HTTP $response_status"
 
-		return 0
-	else
-		status=$?
-		response_status=000
-		log_step "request to $url failed with curl exit code $status"
+                return 0
+        else
+                status=$?
+                response_status=000
+                log_step "request to $url failed with curl exit code $status"
 
-		return 1
-	fi
+                return 1
+        fi
 }
 
 request_ready() {
-	request_http_status "$1" && [ "$response_status" = 200 ]
-}
-
-request_not_ready() {
-	if request_http_status "$1" && [ "$response_status" = 200 ]; then
-		log_step "target API readiness check returned HTTP 200"
-
-		return 1
-	fi
-
-	log_step "target API readiness check is not healthy (HTTP $response_status)"
-
-	return 0
+        request_http_status "$1" && [ "$response_status" = 200 ]
 }
 
 api_tcp_alive() {
-	"$bash" -c 'exec 3<>/dev/tcp/127.0.0.1/$1' _ "$api_port" >/dev/null 2>&1
+        "$bash" -c 'exec 3<>/dev/tcp/127.0.0.1/$1' _ "$api_port" >/dev/null 2>&1
 }
 
 explain_request_failure() {
-	log_step "collecting verbose failure details for $1"
+        log_step "collecting verbose failure details for $1"
 
-	if "$curl" --verbose --insecure --max-time 5 -o /dev/null "$1" 2>&1; then
-		log_step "verbose diagnostic request unexpectedly succeeded for $1"
-	else
-		status=$?
-		log_step "verbose diagnostic request exited with code $status for $1"
-	fi
+        if "$curl" --verbose --insecure --max-time 5 -o /dev/null "$1" 2>&1; then
+                log_step "verbose diagnostic request unexpectedly succeeded for $1"
+        else
+                status=$?
+                log_step "verbose diagnostic request exited with code $status for $1"
+        fi
 }
 
 pause() {
-	read -r -t "$1" _ </dev/zero || true
+        read -r -t "$1" _ </dev/zero || true
 }
-
-log_step "starting etcd peer isolation scenario on port $etcd_peer_port"
-log_step "checking availability of nft"
-if command -v nft; then
-	log_step "nft is available"
-else
-	log_step "nft is not available"
-	exit 1
-fi
-
-log_step "locating curl and bash in the Nix store"
-for candidate in /nix/store/*-curl-*/bin/curl; do
-	if test -x "$candidate"; then
-		curl=$candidate
-		break
-	fi
-done
-for candidate in /nix/store/*-bash-*/bin/bash; do
-	if test -x "$candidate"; then
-		bash=$candidate
-		break
-	fi
-done
-
-log_step "checking that curl is available at $curl"
-if test -x "$curl"; then
-	log_step "curl executable is available"
-else
-	log_step "curl executable is missing or not executable"
-	exit 1
-fi
-
-log_step "checking that bash is available at $bash"
-if test -x "$bash"; then
-	log_step "bash executable is available"
-else
-	log_step "bash executable is missing or not executable"
-	exit 1
-fi
-
-log_step "PRECONDITION: checking that the target API is ready"
-if ! request_ready "$api_url"; then
-	echo "control-plane API is not ready before isolation"
-	explain_request_failure "$api_url"
-	exit 1
-fi
-
-log_step "PRECONDITION: checking that the target API TCP listener is available"
-if ! api_tcp_alive; then
-	log_step "target API TCP listener is not available before isolation"
-	exit 1
-fi
-
-log_step "PRECONDITION: checking that KubePrism is ready"
-if ! request_ready "$kubeprism_url"; then
-	echo "KubePrism is not serving ready upstreams before isolation"
-	explain_request_failure "$kubeprism_url"
-	exit 1
-fi
 
 run_nft() {
-	log_step "running nft $*"
+        log_step "running nft $*"
 
-	if nft "$@"; then
-		log_step "nft command succeeded"
-	else
-		status=$?
-		log_step "nft command failed with exit code $status"
+        if nft "$@"; then
+                log_step "nft command succeeded"
+        else
+                status=$?
+                log_step "nft command failed with exit code $status"
 
-		return "$status"
-	fi
+                return "$status"
+        fi
 }
 
-cleanup() {
-	log_step "removing nftables table inet $table"
-	if nft delete table inet "$table"; then
-		log_step "removed nftables table inet $table"
-	else
-		status=$?
-		log_step "failed to remove nftables table inet $table (exit code $status)"
-	fi
+restore() {
+        if [ "$isolated" -eq 0 ]; then
+                return 0
+        fi
+
+        log_step "removing nftables table inet $table"
+        if nft delete table inet "$table"; then
+                isolated=0
+                log_step "removed nftables table inet $table"
+        else
+                status=$?
+                log_step "failed to remove nftables table inet $table (exit code $status)"
+        fi
 }
 
-log_step "creating nftables table inet $table"
-run_nft add table inet "$table"
-trap cleanup EXIT
+isolate() {
+        log_step "ACTION: isolating etcd peer traffic"
+        run_nft add table inet "$table"
+        isolated=1
+        run_nft add chain inet "$table" input '{ type filter hook input priority -200; policy accept; }'
+        run_nft add chain inet "$table" output '{ type filter hook output priority -200; policy accept; }'
+        run_nft add rule inet "$table" input iifname != lo tcp dport "$etcd_peer_port" drop
+        run_nft add rule inet "$table" input iifname != lo tcp sport "$etcd_peer_port" drop
+        run_nft add rule inet "$table" output oifname != lo tcp dport "$etcd_peer_port" drop
+        run_nft add rule inet "$table" output oifname != lo tcp sport "$etcd_peer_port" drop
+        log_step "ACTION complete: etcd peer traffic is isolated"
+}
+
+check_preconditions() {
+        log_step "PRECONDITION: target API /readyz returns HTTP 200"
+        if ! request_ready "$api_url"; then
+                echo "control-plane API is not ready before isolation"
+                explain_request_failure "$api_url"
+
+                return 1
+        fi
+
+        log_step "PRECONDITION: target API TCP listener is available"
+        if ! api_tcp_alive; then
+                log_step "target API TCP listener is not available before isolation"
+
+                return 1
+        fi
+
+        log_step "PRECONDITION: KubePrism /readyz returns HTTP 200"
+        if ! request_ready "$kubeprism_url"; then
+                echo "KubePrism is not serving ready upstreams before isolation"
+                explain_request_failure "$kubeprism_url"
+
+                return 1
+        fi
+
+        return 0
+}
+
+kubeprism_burst() {
+        n=0
+
+        while [ "$n" -lt "$burst_size" ]; do
+                if ! request_ready "$kubeprism_url"; then
+                        log_step "KubePrism request $((n + 1))/$burst_size did not return HTTP 200"
+
+                        return 1
+                fi
+
+                n=$((n + 1))
+        done
+
+        return 0
+}
+
+observe_isolation() {
+        started=$SECONDS
+        not_ready_at=-1
+        listener_down_at=-1
+        bursts=0
+        failed_bursts=0
+
+        while [ $((SECONDS - started)) -lt "$observe_timeout" ]; do
+                if [ "$listener_down_at" -lt 0 ] && ! api_tcp_alive; then
+                        listener_down_at=$((SECONDS - started))
+                        log_step "target API TCP listener went down at +${listener_down_at}s"
+                fi
+
+                request_http_status "$api_url" || true
+
+                if [ "$response_status" = 200 ]; then
+                        log_step "target API is still ready at +$((SECONDS - started))s"
+                        pause 1
+
+                        continue
+                fi
+
+                if [ "$not_ready_at" -lt 0 ]; then
+                        not_ready_at=$((SECONDS - started))
+                        log_step "target API /readyz is not ready (HTTP $response_status) at +${not_ready_at}s"
+                fi
+
+                bursts=$((bursts + 1))
+
+                if kubeprism_burst; then
+                        request_http_status "$api_url" || true
+
+                        if [ "$response_status" != 200 ]; then
+                                log_step "RESULT: not_ready_at=${not_ready_at}s excluded_by=$((SECONDS - started))s listener_down_at=${listener_down_at}s bursts=$bursts failed_bursts=$failed_bursts burst_size=$burst_size"
+
+                                return 0
+                        fi
+
+                        log_step "target API became ready during the burst; sampling again"
+                else
+                        failed_bursts=$((failed_bursts + 1))
+                        log_step "KubePrism did not complete the burst ($failed_bursts failed so far); sampling again"
+                fi
+
+                pause 1
+        done
+
+        log_step "window not found: observation timeout after ${observe_timeout}s (not_ready_at=${not_ready_at}s, listener_down_at=${listener_down_at}s, -1 means never observed; bursts: $bursts, failed bursts: $failed_bursts)"
+
+        return 1
+}
+
+trap restore EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-log_step "ACTION: isolating etcd peer traffic"
-log_step "installing nftables input chain"
-run_nft add chain inet "$table" input '{ type filter hook input priority -200; policy accept; }'
-log_step "installing nftables output chain"
-run_nft add chain inet "$table" output '{ type filter hook output priority -200; policy accept; }'
-log_step "blocking inbound etcd peer traffic"
-run_nft add rule inet "$table" input iifname != lo tcp dport "$etcd_peer_port" drop
-log_step "blocking inbound etcd peer responses"
-run_nft add rule inet "$table" input iifname != lo tcp sport "$etcd_peer_port" drop
-log_step "blocking outbound etcd peer traffic"
-run_nft add rule inet "$table" output oifname != lo tcp dport "$etcd_peer_port" drop
-log_step "blocking outbound etcd peer responses"
-run_nft add rule inet "$table" output oifname != lo tcp sport "$etcd_peer_port" drop
-
-log_step "ACTION complete: etcd peer traffic is isolated"
-log_step "POSTCONDITION: waiting for target API /readyz to stop returning HTTP 200 while its TCP listener stays available"
-
-i=0
-while [ "$i" -lt 120 ]; do
-	log_step "direct API readiness poll $((i + 1))/120"
-	if request_not_ready "$api_url"; then
-		log_step "target API readiness indicator reports HTTP 500"
-		break
-	fi
-	if ! api_tcp_alive; then
-		log_step "POSTCONDITION failed: target API TCP listener stopped before /readyz reported not-ready"
-		exit 1
-	fi
-	i=$((i + 1))
-	log_step "target API has not reported not-ready yet; sleeping 1 second before poll $((i + 1))"
-	pause 1
-done
-
-if [ "$i" -ge 120 ]; then
-	log_step "POSTCONDITION failed: target API /readyz stayed healthy after all 120 polls"
-	exit 1
-fi
-
-if api_tcp_alive; then
-	log_step "control-plane API TCP listener is still available"
+log_step "starting etcd peer isolation scenario on port $etcd_peer_port"
+log_step "checking availability of nft"
+if command -v nft; then
+        log_step "nft is available"
 else
-	log_step "POSTCONDITION failed: target API TCP listener stopped after /readyz reported not-ready"
-	exit 1
+        log_step "nft is not available"
+        exit 1
 fi
 
-log_step "POSTCONDITION: checking KubePrism routes to a ready API while the isolated target is not-ready and stays TCP-alive"
-i=0
-while [ "$i" -lt 120 ]; do
-	log_step "KubePrism exclusion poll $((i + 1))/120"
-	if ! request_not_ready "$api_url"; then
-		log_step "POSTCONDITION failed: target API /readyz returned HTTP 200 during isolation"
-		exit 1
-	fi
-	if ! api_tcp_alive; then
-		log_step "target API TCP listener stopped; ending isolation observation"
-		break
-	fi
-
-	if request_ready "$kubeprism_url"; then
-		log_step "POSTCONDITION passed: KubePrism returned HTTP 200 while the isolated target was not-ready and remained TCP-alive"
-		exit 0
-	else
-		log_step "KubePrism has not returned HTTP 200 yet"
-	fi
-
-	i=$((i + 1))
-	pause 1
+log_step "locating curl and bash in the Nix store"
+for candidate in /nix/store/*-curl-*/bin/curl; do
+        if test -x "$candidate"; then
+                curl=$candidate
+                break
+        fi
+done
+for candidate in /nix/store/*-bash-*/bin/bash; do
+        if test -x "$candidate"; then
+                bash=$candidate
+                break
+        fi
 done
 
-log_step "POSTCONDITION failed: KubePrism never returned HTTP 200 while the isolated target was not-ready and TCP-alive"
-explain_request_failure "$kubeprism_url"
+if ! test -x "$curl"; then
+        log_step "curl executable is missing or not executable"
+        exit 1
+fi
+
+if ! test -x "$bash"; then
+        log_step "bash executable is missing or not executable"
+        exit 1
+fi
+
+check_preconditions || exit 1
+
+isolate
+
+if observe_isolation; then
+        log_step "POSTCONDITION passed: KubePrism served $burst_size new connections with HTTP 200 while the isolated target was not ready"
+        exit 0
+fi
+
+log_step "POSTCONDITION failed: KubePrism did not serve $burst_size consecutive new connections with HTTP 200 within ${observe_timeout}s while the isolated target was not ready"
 exit 1
 `
 
@@ -267,7 +290,7 @@ const kubePrismEtcdRecoveryScript = `
 set -eu
 
 log_step() {
-	printf '[kubeprism-e2e] %%s\n' "$*"
+        printf '[kubeprism-e2e] %%s\n' "$*"
 }
 
 bash=
@@ -280,82 +303,82 @@ required_successes=10
 response_status=
 
 request_http_status() {
-	url=$1
-	log_step "requesting $url"
+        url=$1
+        log_step "requesting $url"
 
-	if response_status=$("$curl" --silent --insecure --max-time 2 -o /dev/null -w '%%{http_code}' "$url" 2>/dev/null); then
-		log_step "request to $url returned HTTP $response_status"
+        if response_status=$("$curl" --silent --insecure --max-time 2 -o /dev/null -w '%%{http_code}' "$url" 2>/dev/null); then
+                log_step "request to $url returned HTTP $response_status"
 
-		return 0
-	else
-		status=$?
-		response_status=000
-		log_step "request to $url failed with curl exit code $status"
+                return 0
+        else
+                status=$?
+                response_status=000
+                log_step "request to $url failed with curl exit code $status"
 
-		return 1
-	fi
+                return 1
+        fi
 }
 
 request_ready() {
-	request_http_status "$1" && [ "$response_status" = 200 ]
+        request_http_status "$1" && [ "$response_status" = 200 ]
 }
 
 api_tcp_alive() {
-	"$bash" -c 'exec 3<>/dev/tcp/127.0.0.1/$1' _ "$api_port" >/dev/null 2>&1
+        "$bash" -c 'exec 3<>/dev/tcp/127.0.0.1/$1' _ "$api_port" >/dev/null 2>&1
 }
 
 pause() {
-	read -r -t "$1" _ </dev/zero || true
+        read -r -t "$1" _ </dev/zero || true
 }
 
 log_step "PRECONDITION: confirming etcd peer isolation table inet $table was removed"
 if nft list table inet "$table" >/dev/null 2>&1; then
-	log_step "PRECONDITION failed: isolation table inet $table still exists"
-	exit 1
+        log_step "PRECONDITION failed: isolation table inet $table still exists"
+        exit 1
 fi
 log_step "PRECONDITION passed: etcd peer isolation has been removed"
 
 log_step "locating curl and bash in the Nix store"
 for candidate in /nix/store/*-curl-*/bin/curl; do
-	if test -x "$candidate"; then
-		curl=$candidate
-		break
-	fi
+        if test -x "$candidate"; then
+                curl=$candidate
+                break
+        fi
 done
 for candidate in /nix/store/*-bash-*/bin/bash; do
-	if test -x "$candidate"; then
-		bash=$candidate
-		break
-	fi
+        if test -x "$candidate"; then
+                bash=$candidate
+                break
+        fi
 done
 
 if ! test -x "$curl" || ! test -x "$bash"; then
-	log_step "PRECONDITION failed: curl or bash is unavailable"
-	exit 1
+        log_step "PRECONDITION failed: curl or bash is unavailable"
+        exit 1
 fi
 
 log_step "ACTION: waiting for the target API and KubePrism to recover after etcd became healthy"
 i=0
 successes=0
 while [ "$i" -lt 120 ] && [ "$successes" -lt "$required_successes" ]; do
-	log_step "recovery poll $((i + 1))/120; consecutive successes: $successes/$required_successes"
-	if request_ready "$api_url" && api_tcp_alive && request_ready "$kubeprism_url"; then
-		successes=$((successes + 1))
-		log_step "both target API and KubePrism returned HTTP 200; consecutive successes: $successes/$required_successes"
-	else
-		successes=0
-		log_step "recovery readiness is not yet stable; resetting the consecutive success count"
-	fi
+        log_step "recovery poll $((i + 1))/120; consecutive successes: $successes/$required_successes"
+        if request_ready "$api_url" && api_tcp_alive && request_ready "$kubeprism_url"; then
+                successes=$((successes + 1))
+                log_step "both target API and KubePrism returned HTTP 200; consecutive successes: $successes/$required_successes"
+        else
+                successes=0
+                log_step "recovery readiness is not yet stable; resetting the consecutive success count"
+        fi
 
-	i=$((i + 1))
-	if [ "$successes" -lt "$required_successes" ]; then
-		pause 1
-	fi
+        i=$((i + 1))
+        if [ "$successes" -lt "$required_successes" ]; then
+                pause 1
+        fi
 done
 
 if [ "$successes" -lt "$required_successes" ]; then
-	log_step "POSTCONDITION failed: target API and KubePrism did not both return HTTP 200 for $required_successes consecutive polls"
-	exit 1
+        log_step "POSTCONDITION failed: target API and KubePrism did not both return HTTP 200 for $required_successes consecutive polls"
+        exit 1
 fi
 
 log_step "POSTCONDITION passed: target API and KubePrism recovered and returned HTTP 200 for $required_successes consecutive polls"
@@ -523,7 +546,8 @@ func (suite *EtcdSuite) TestMembers() {
 }
 
 // TestKubePrismExcludesEtcdIsolatedUpstream verifies that KubePrism stops routing new
-// connections to an API server which fails its readiness check after losing etcd peer connectivity.
+// connections to an API server which fails its readiness check after losing etcd peer
+// connectivity, whether or not its TCP listener is still accepting connections.
 func (suite *EtcdSuite) TestKubePrismExcludesEtcdIsolatedUpstream() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
