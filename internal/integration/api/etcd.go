@@ -32,13 +32,20 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-// kubePrismEtcdIsolationScript isolates etcd peer traffic of the target control plane node and
-// waits until KubePrism serves a burst of new connections successfully while the target API server
-// does not pass its /readyz check.
+// kubePrismEtcdIsolationScript is a state machine which blocks the connections of the kube-apiserver of the
+// target control plane node to the etcd client port and waits until KubePrism serves a burst of new
+// connections successfully while the target API server does not pass its /readyz check, but still accepts
+// TCP connections.
 //
-// The target is considered unavailable on any response other than HTTP 200, including refused
-// connections: once the API server stops listening, the old TCP-only health check would also
-// exclude it, so the scenario does not require the TCP listener to stay open.
+// Only the client connections of kube-apiserver are blocked, so etcd members, quorum and leadership are not
+// affected and nothing has to wait for etcd to recover. The observation is conclusive only while the TCP
+// listener of the target stays open: once it closes, the old TCP-only health check would exclude the
+// upstream as well. An attempt is also rejected when the upstream is excluded sooner than a fully healthy
+// upstream can possibly be excluded, which means its score had not recovered from a previous failure.
+// KubePrism does not expose per-upstream scores, so the settle time before every attempt is derived from
+// the KubePrism score and health check constants.
+//
+// States: INIT -> AWAIT_READY -> SETTLE -> FAULT_ON -> AWAIT_NOT_READY -> MEASURE -> FAULT_OFF -> PASS | FAIL | AWAIT_READY.
 const kubePrismEtcdIsolationScript = `
 set -eu
 
@@ -51,13 +58,32 @@ curl=
 table=%s
 api_url=https://%s/readyz
 kubeprism_url=https://127.0.0.1:%d/readyz
-etcd_peer_port=%d
 api_port=%d
+etcd_client_port=%d
+apiserver_uid=%d
+settle_seconds=%d
+min_exclusion_seconds=%d
 response_status=
 isolated=0
 
+max_attempts=3
 burst_size=10
-observe_timeout=240
+fault_timeout=60
+observe_timeout=150
+recovery_timeout=300
+
+state=INIT
+attempt=0
+verdict=
+reason=
+fault_started=0
+not_ready_at=-1
+excluded_by=-1
+
+goto() {
+        log_step "STATE $state -> $1: $2"
+        state=$1
+}
 
 request_http_status() {
         url=$1
@@ -99,6 +125,34 @@ pause() {
         read -r -t "$1" _ </dev/zero || true
 }
 
+await_ready() {
+        url=$1
+        limit=$2
+        waited_from=$SECONDS
+
+        while :; do
+                if request_ready "$url"; then
+                        return 0
+                fi
+
+                if [ $((SECONDS - waited_from)) -ge "$limit" ]; then
+                        return 1
+                fi
+
+                pause 2
+        done
+}
+
+settle() {
+        settle_from=$SECONDS
+        log_step "SETTLE: waiting ${settle_seconds}s for KubePrism upstream scores to recover after earlier failures"
+
+        while [ $((SECONDS - settle_from)) -lt "$settle_seconds" ]; do
+                pause 5
+                log_step "SETTLE: $((SECONDS - settle_from))s of ${settle_seconds}s elapsed"
+        done
+}
+
 run_nft() {
         log_step "running nft $*"
 
@@ -128,43 +182,12 @@ restore() {
 }
 
 isolate() {
-        log_step "ACTION: isolating etcd peer traffic"
+        log_step "ACTION: blocking connections of kube-apiserver (uid $apiserver_uid) to the etcd client port $etcd_client_port"
         run_nft add table inet "$table"
         isolated=1
-        run_nft add chain inet "$table" input '{ type filter hook input priority -200; policy accept; }'
         run_nft add chain inet "$table" output '{ type filter hook output priority -200; policy accept; }'
-        run_nft add rule inet "$table" input iifname != lo tcp dport "$etcd_peer_port" drop
-        run_nft add rule inet "$table" input iifname != lo tcp sport "$etcd_peer_port" drop
-        run_nft add rule inet "$table" output oifname != lo tcp dport "$etcd_peer_port" drop
-        run_nft add rule inet "$table" output oifname != lo tcp sport "$etcd_peer_port" drop
-        log_step "ACTION complete: etcd peer traffic is isolated"
-}
-
-check_preconditions() {
-        log_step "PRECONDITION: target API /readyz returns HTTP 200"
-        if ! request_ready "$api_url"; then
-                echo "control-plane API is not ready before isolation"
-                explain_request_failure "$api_url"
-
-                return 1
-        fi
-
-        log_step "PRECONDITION: target API TCP listener is available"
-        if ! api_tcp_alive; then
-                log_step "target API TCP listener is not available before isolation"
-
-                return 1
-        fi
-
-        log_step "PRECONDITION: KubePrism /readyz returns HTTP 200"
-        if ! request_ready "$kubeprism_url"; then
-                echo "KubePrism is not serving ready upstreams before isolation"
-                explain_request_failure "$kubeprism_url"
-
-                return 1
-        fi
-
-        return 0
+        run_nft add rule inet "$table" output meta skuid "$apiserver_uid" tcp dport "$etcd_client_port" drop
+        log_step "ACTION complete: kube-apiserver cannot reach etcd"
 }
 
 kubeprism_burst() {
@@ -183,121 +206,231 @@ kubeprism_burst() {
         return 0
 }
 
-observe_isolation() {
-        started=$SECONDS
-        not_ready_at=-1
-        listener_down_at=-1
-        bursts=0
-        failed_bursts=0
+st_init() {
+        log_step "checking availability of nft"
+        if command -v nft; then
+                log_step "nft is available"
+        else
+                reason="nft is not available"
+                goto FAIL "$reason"
 
-        while [ $((SECONDS - started)) -lt "$observe_timeout" ]; do
-                if [ "$listener_down_at" -lt 0 ] && ! api_tcp_alive; then
-                        listener_down_at=$((SECONDS - started))
-                        log_step "target API TCP listener went down at +${listener_down_at}s"
+                return 0
+        fi
+
+        log_step "locating curl and bash in the Nix store"
+        for candidate in /nix/store/*-curl-*/bin/curl; do
+                if test -x "$candidate"; then
+                        curl=$candidate
+                        break
+                fi
+        done
+        for candidate in /nix/store/*-bash-*/bin/bash; do
+                if test -x "$candidate"; then
+                        bash=$candidate
+                        break
+                fi
+        done
+
+        if ! test -x "$curl" || ! test -x "$bash"; then
+                reason="curl or bash is missing in the debug image"
+                goto FAIL "$reason"
+
+                return 0
+        fi
+
+        goto AWAIT_READY "tools are available"
+}
+
+st_await_ready() {
+        if ! await_ready "$api_url" "$recovery_timeout"; then
+                reason="the target API did not become ready within ${recovery_timeout}s"
+                explain_request_failure "$api_url"
+                goto FAIL "$reason"
+
+                return 0
+        fi
+
+        if ! await_ready "$kubeprism_url" "$recovery_timeout"; then
+                reason="KubePrism did not become ready within ${recovery_timeout}s"
+                explain_request_failure "$kubeprism_url"
+                goto FAIL "$reason"
+
+                return 0
+        fi
+
+        goto SETTLE "the target API and KubePrism are ready"
+}
+
+st_settle() {
+        settle
+
+        if ! request_ready "$api_url" || ! api_tcp_alive || ! request_ready "$kubeprism_url"; then
+                reason="the target API, its TCP listener or KubePrism is not healthy after the settle period"
+                goto FAIL "$reason"
+
+                return 0
+        fi
+
+        goto FAULT_ON "preconditions hold: the target API is ready and listening, KubePrism is ready"
+}
+
+st_fault_on() {
+        attempt=$((attempt + 1))
+        log_step "ATTEMPT $attempt/$max_attempts"
+
+        isolate
+        fault_started=$SECONDS
+        not_ready_at=-1
+
+        goto AWAIT_NOT_READY "the fault is installed"
+}
+
+st_await_not_ready() {
+        while [ $((SECONDS - fault_started)) -lt "$fault_timeout" ]; do
+                if ! api_tcp_alive; then
+                        verdict=retry
+                        reason="the target API TCP listener closed before the API reported not ready"
+                        goto FAULT_OFF "$reason"
+
+                        return 0
                 fi
 
                 request_http_status "$api_url" || true
 
-                if [ "$response_status" = 200 ]; then
-                        log_step "target API is still ready at +$((SECONDS - started))s"
-                        pause 1
+                if [ "$response_status" != 200 ]; then
+                        not_ready_at=$((SECONDS - fault_started))
+                        goto MEASURE "the target API reports HTTP $response_status after ${not_ready_at}s while its TCP listener is open"
 
-                        continue
-                fi
-
-                if [ "$not_ready_at" -lt 0 ]; then
-                        not_ready_at=$((SECONDS - started))
-                        log_step "target API /readyz is not ready (HTTP $response_status) at +${not_ready_at}s"
-                fi
-
-                bursts=$((bursts + 1))
-
-                if api_tcp_alive; then
-                        alive_before_burst=yes
-                else
-                        alive_before_burst=no
-                fi
-
-                if kubeprism_burst; then
-                        request_http_status "$api_url" || true
-
-                        if [ "$response_status" != 200 ]; then
-                                # "yes" means the TCP listener of the target was open before and after the burst,
-                                # so only the L7 readiness check can explain the exclusion of this upstream.
-                                if [ "$alive_before_burst" = yes ] && api_tcp_alive; then
-                                        listener_alive_through_burst=yes
-                                else
-                                        listener_alive_through_burst=no
-                                fi
-
-                                log_step "RESULT: not_ready_at=${not_ready_at}s excluded_by=$((SECONDS - started))s listener_down_at=${listener_down_at}s listener_alive_through_burst=$listener_alive_through_burst bursts=$bursts failed_bursts=$failed_bursts burst_size=$burst_size"
-
-                                return 0
-                        fi
-
-                        log_step "target API became ready during the burst; sampling again"
-                else
-                        failed_bursts=$((failed_bursts + 1))
-                        log_step "KubePrism did not complete the burst ($failed_bursts failed so far); sampling again"
+                        return 0
                 fi
 
                 pause 1
         done
 
-        log_step "window not found: observation timeout after ${observe_timeout}s (not_ready_at=${not_ready_at}s, listener_down_at=${listener_down_at}s, -1 means never observed; bursts: $bursts, failed bursts: $failed_bursts)"
-
-        return 1
+        verdict=fail
+        reason="the fault had no effect: the target API stayed ready for ${fault_timeout}s"
+        goto FAULT_OFF "$reason"
 }
-		
+
+st_measure() {
+        measure_from=$SECONDS
+        bursts=0
+        failed_bursts=0
+
+        while [ $((SECONDS - measure_from)) -lt "$observe_timeout" ]; do
+                if ! api_tcp_alive; then
+                        verdict=retry
+                        reason="the target API TCP listener closed at +$((SECONDS - fault_started))s before the exclusion was observed (bursts: $bursts, failed bursts: $failed_bursts)"
+                        goto FAULT_OFF "$reason"
+
+                        return 0
+                fi
+
+                request_http_status "$api_url" || true
+
+                if [ "$response_status" = 200 ]; then
+                        verdict=retry
+                        reason="the target API became ready again at +$((SECONDS - fault_started))s although the fault is still installed"
+                        goto FAULT_OFF "$reason"
+
+                        return 0
+                fi
+
+                bursts=$((bursts + 1))
+
+                if kubeprism_burst; then
+                        request_http_status "$api_url" || true
+
+                        if [ "$response_status" != 200 ] && api_tcp_alive; then
+                                excluded_by=$((SECONDS - fault_started))
+
+                                log_step "RESULT: not_ready_at=${not_ready_at}s excluded_by=${excluded_by}s min_exclusion=${min_exclusion_seconds}s listener_alive_through_burst=yes bursts=$bursts failed_bursts=$failed_bursts burst_size=$burst_size"
+
+                                if [ "$excluded_by" -lt "$min_exclusion_seconds" ]; then
+                                        verdict=retry
+                                        reason="the upstream was excluded in ${excluded_by}s, faster than the ${min_exclusion_seconds}s needed from a fully healthy state"
+                                        goto FAULT_OFF "$reason"
+
+                                        return 0
+                                fi
+
+                                verdict=pass
+                                goto FAULT_OFF "the exclusion is observed"
+
+                                return 0
+                        fi
+
+                        verdict=retry
+                        reason="the target API changed state during the burst"
+                        goto FAULT_OFF "$reason"
+
+                        return 0
+                fi
+
+                failed_bursts=$((failed_bursts + 1))
+                log_step "KubePrism did not complete the burst ($failed_bursts failed so far); sampling again"
+
+                pause 1
+        done
+
+        verdict=fail
+        reason="KubePrism did not serve $burst_size consecutive new connections within ${observe_timeout}s while the target API was not ready and listening (bursts: $bursts, failed bursts: $failed_bursts)"
+        goto FAULT_OFF "$reason"
+}
+
+st_fault_off() {
+        restore
+
+        case "$verdict" in
+        pass)
+                goto PASS "the fault is removed"
+                ;;
+        retry)
+                if [ "$attempt" -lt "$max_attempts" ]; then
+                        log_step "attempt $attempt/$max_attempts is inconclusive: $reason"
+                        verdict=
+                        goto AWAIT_READY "retrying after the fault is removed"
+                else
+                        reason="no conclusive attempt in $max_attempts attempts; last: $reason"
+                        goto FAIL "$reason"
+                fi
+                ;;
+        *)
+                goto FAIL "$reason"
+                ;;
+        esac
+}
+
 trap restore EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-log_step "starting etcd peer isolation scenario on port $etcd_peer_port"
-log_step "checking availability of nft"
-if command -v nft; then
-        log_step "nft is available"
-else
-        log_step "nft is not available"
-        exit 1
-fi
+log_step "starting the kube-apiserver to etcd client port isolation scenario"
 
-log_step "locating curl and bash in the Nix store"
-for candidate in /nix/store/*-curl-*/bin/curl; do
-        if test -x "$candidate"; then
-                curl=$candidate
-                break
-        fi
+while :; do
+        case "$state" in
+        INIT) st_init ;;
+        AWAIT_READY) st_await_ready ;;
+        SETTLE) st_settle ;;
+        FAULT_ON) st_fault_on ;;
+        AWAIT_NOT_READY) st_await_not_ready ;;
+        MEASURE) st_measure ;;
+        FAULT_OFF) st_fault_off ;;
+        PASS)
+                log_step "POSTCONDITION passed on attempt $attempt/$max_attempts: KubePrism served $burst_size new connections with HTTP 200 while the isolated target was not ready and still accepted TCP connections"
+                exit 0
+                ;;
+        FAIL)
+                log_step "POSTCONDITION failed in the state machine: $reason"
+                exit 1
+                ;;
+        *)
+                log_step "unknown state $state"
+                exit 1
+                ;;
+        esac
 done
-for candidate in /nix/store/*-bash-*/bin/bash; do
-        if test -x "$candidate"; then
-                bash=$candidate
-                break
-        fi
-done
-
-if ! test -x "$curl"; then
-        log_step "curl executable is missing or not executable"
-        exit 1
-fi
-
-if ! test -x "$bash"; then
-        log_step "bash executable is missing or not executable"
-        exit 1
-fi
-
-check_preconditions || exit 1
-
-isolate
-
-if observe_isolation; then
-        log_step "POSTCONDITION passed: KubePrism served $burst_size new connections with HTTP 200 while the isolated target was not ready"
-        exit 0
-fi
-
-log_step "POSTCONDITION failed: KubePrism did not serve $burst_size consecutive new connections with HTTP 200 within ${observe_timeout}s while the isolated target was not ready"
-exit 1
 `
 
 const kubePrismEtcdRecoveryScript = `
@@ -560,8 +693,9 @@ func (suite *EtcdSuite) TestMembers() {
 }
 
 // TestKubePrismExcludesEtcdIsolatedUpstream verifies that KubePrism stops routing new
-// connections to an API server which fails its readiness check after losing etcd peer
-// connectivity, whether or not its TCP listener is still accepting connections.
+// connections to an API server which fails its readiness check after losing its connection
+// to etcd, while the TCP listener of the API server is still accepting connections.
+// Only the client connections of kube-apiserver to etcd are blocked, etcd itself stays healthy.
 func (suite *EtcdSuite) TestKubePrismExcludesEtcdIsolatedUpstream() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
@@ -587,6 +721,11 @@ func (suite *EtcdSuite) TestKubePrismExcludesEtcdIsolatedUpstream() {
 	if len(nodes) < 3 {
 		suite.T().Skip("test only can be run on HA etcd clusters")
 	}
+
+	// The scenario waits for the KubePrism upstream scores to settle before every attempt on every node,
+	// which takes longer than the default time budget of a test.
+	suite.ctxCancel()
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 60*time.Minute)
 
 	suite.AssertClusterHealthy(suite.ctx)
 
@@ -616,13 +755,24 @@ func (suite *EtcdSuite) testKubePrismExcludesEtcdIsolatedUpstreamOnNode(targetNo
 	suite.Require().NoError(err)
 
 	table := fmt.Sprintf("talos_kubeprism_e2e_%x", time.Now().UnixNano())
+
+	// An upstream with the highest score is excluded after HighScore+1 failed health checks, so it cannot be
+	// excluded sooner than HighScore health check intervals after its first failed check. After an earlier
+	// isolation the score has to climb from the lowest to the highest value again, one step per health check,
+	// before the exclusion time can be measured from a fully healthy state.
+	settle := time.Duration(constants.KubePrismHighScore-constants.KubePrismLowScore+1) * constants.KubePrismHealthCheckInterval
+	minExclusion := time.Duration(constants.KubePrismHighScore) * constants.KubePrismHealthCheckInterval
+
 	script := fmt.Sprintf(
 		kubePrismEtcdIsolationScript,
 		table,
 		net.JoinHostPort(targetNode, strconv.Itoa(constants.DefaultControlPlanePort)),
 		kubePrismPort,
-		constants.EtcdPeerPort,
 		constants.DefaultControlPlanePort,
+		constants.EtcdClientPort,
+		constants.KubernetesAPIServerRunUser,
+		int(settle/time.Second),
+		int(minExclusion/time.Second),
 	)
 
 	out, exitCode := suite.RunDebugContainerWithImageAndLiveOutput(
