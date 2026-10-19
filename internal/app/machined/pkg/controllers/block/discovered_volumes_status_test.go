@@ -6,6 +6,7 @@ package block_test
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -32,7 +33,8 @@ func TestDiscoveredVolumesStatusSuite(t *testing.T) {
 			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
-					WaitForDevices: func(context.Context, *zap.Logger) error { return nil },
+					WaitForDevices:   func(context.Context, *zap.Logger) error { return nil },
+					InactiveMDArrays: func() ([]string, error) { return nil, nil },
 				}))
 			},
 		},
@@ -167,6 +169,7 @@ func TestDiscoveredVolumesStatusSettleSuite(t *testing.T) {
 						return nil
 					}
 				},
+				InactiveMDArrays: func() ([]string, error) { return nil, nil },
 			}))
 		},
 	}
@@ -192,4 +195,81 @@ func (suite *DiscoveredVolumesStatusSettleSuite) TestWaitsForDevices() {
 	ctest.AssertResource(suite, block.RefreshID, func(r *block.DiscoveryRefreshRequest, asrt *assert.Assertions) {
 		asrt.Equal(1, r.TypedSpec().Request)
 	})
+}
+
+// DiscoveredVolumesStatusMDSuite checks that the discovery refresh waits for inactive MD arrays: a degraded
+// mirrored system disk is force-run by MDLastResortController after a grace period, and if the volumes are
+// located before that, META/STATE are declared missing and the node drops to maintenance.
+type DiscoveredVolumesStatusMDSuite struct {
+	ctest.DefaultSuite
+
+	inactive    atomic.Bool
+	settleWaits atomic.Int32
+}
+
+func TestDiscoveredVolumesStatusMDSuite(t *testing.T) {
+	t.Parallel()
+
+	s := &DiscoveredVolumesStatusMDSuite{}
+
+	s.DefaultSuite = ctest.DefaultSuite{
+		Timeout: 5 * time.Second,
+		AfterSetup: func(suite *ctest.DefaultSuite) {
+			s.inactive.Store(true)
+			s.settleWaits.Store(0)
+
+			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.DiscoveredVolumesStatusController{
+				WaitForDevices: func(context.Context, *zap.Logger) error {
+					s.settleWaits.Add(1)
+
+					return nil
+				},
+				InactiveMDArrays: func() ([]string, error) {
+					if s.inactive.Load() {
+						return []string{"/dev/md127"}, nil
+					}
+
+					return nil, nil
+				},
+				MDArrayWaitTimeout: 2 * time.Second,
+			}))
+		},
+	}
+
+	suite.Run(t, s)
+}
+
+func (suite *DiscoveredVolumesStatusMDSuite) TestWaitsForInactiveArrays() {
+	devicesStatus := runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID)
+	devicesStatus.TypedSpec().Ready = true
+	suite.Create(devicesStatus)
+
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Assert().Never(func() bool {
+		_, err := safe.StateGetByID[*block.DiscoveryRefreshRequest](ctx, st, block.RefreshID)
+
+		return err == nil
+	}, time.Second, 100*time.Millisecond)
+
+	// force-run by MDLastResortController
+	suite.inactive.Store(false)
+
+	ctest.AssertResource(suite, block.RefreshID, func(r *block.DiscoveryRefreshRequest, asrt *assert.Assertions) {
+		asrt.Equal(1, r.TypedSpec().Request)
+	})
+
+	// devices settle again for the started array's partitions
+	suite.Assert().EqualValues(2, suite.settleWaits.Load())
+}
+
+func (suite *DiscoveredVolumesStatusMDSuite) TestInactiveArraysWaitIsBounded() {
+	devicesStatus := runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID)
+	devicesStatus.TypedSpec().Ready = true
+	suite.Create(devicesStatus)
+
+	ctest.AssertResource(suite, block.RefreshID, func(r *block.DiscoveryRefreshRequest, asrt *assert.Assertions) {
+		asrt.Equal(1, r.TypedSpec().Request)
+	})
+
+	suite.Assert().EqualValues(1, suite.settleWaits.Load())
 }
