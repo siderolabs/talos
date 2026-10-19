@@ -16,21 +16,21 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-loadbalancer/controlplane"
 	"github.com/siderolabs/go-loadbalancer/upstream"
 	"go.uber.org/zap"
 
+	kubeprismlb "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/kubeprism"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // KubePrismController creates KubePrism load balancer based on KubePrismEndpointsType resource.
 type KubePrismController struct {
 	balancerHost string
 	balancerPort int
-	lb           *controlplane.LoadBalancer
+	lb           *kubeprismlb.LoadBalancer
 	ticker       *time.Ticker
-	upstreamCh   chan []string
 }
 
 // Name implements controller.Controller interface.
@@ -45,6 +45,12 @@ func (ctrl *KubePrismController) Inputs() []controller.Input {
 			Namespace: k8s.NamespaceName,
 			Type:      k8s.KubePrismConfigType,
 			ID:        optional.Some(k8s.KubePrismConfigID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.KubernetesType,
+			ID:        optional.Some(secrets.KubernetesID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -93,9 +99,19 @@ func (ctrl *KubePrismController) Run(ctx context.Context, r controller.Runtime, 
 			return err
 		}
 
+		kubeSecrets, err := safe.ReaderGetByID[*secrets.Kubernetes](ctx, r, secrets.KubernetesID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		kubeconfig := ""
+		if kubeSecrets != nil {
+			kubeconfig = kubeSecrets.TypedSpec().LocalhostAdminKubeconfig
+		}
+
 		switch {
 		case ctrl.lb == nil && lbCfg != nil:
-			err = ctrl.startKubePrism(lbCfg, logger)
+			err = ctrl.startKubePrism(lbCfg, kubeconfig, logger)
 			if err != nil {
 				return err
 			}
@@ -111,12 +127,19 @@ func (ctrl *KubePrismController) Run(ctx context.Context, r controller.Runtime, 
 					return err
 				}
 
-				err = ctrl.startKubePrism(lbCfg, logger)
+				err = ctrl.startKubePrism(lbCfg, kubeconfig, logger)
 				if err != nil {
 					return err
 				}
 			} else {
-				ctrl.upstreamChan() <- makeEndpoints(lbCfg.TypedSpec())
+				if err = ctrl.lb.SetKubeconfig(kubeconfig); err != nil {
+					return err
+				}
+
+				err = ctrl.lb.Reconcile(makeEndpoints(lbCfg.TypedSpec()))
+				if err != nil {
+					return fmt.Errorf("failed to update KubePrism upstreams: %w", err)
+				}
 			}
 		}
 
@@ -182,38 +205,34 @@ func (ctrl *KubePrismController) writeKubePrismStatus(
 	return nil
 }
 
-func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logger *zap.Logger) error {
+func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, kubeconfig string, logger *zap.Logger) error {
 	spec := lbCfg.TypedSpec()
 	ctrl.balancerHost = spec.Host
 	ctrl.balancerPort = spec.Port
 
-	lb, err := controlplane.NewLoadBalancer(
-		ctrl.balancerHost, ctrl.balancerPort,
-		logger.WithOptions(zap.IncreaseLevel(zap.ErrorLevel)), // silence the load balancer logs
-		controlplane.WithDialTimeout(constants.KubePrismDialTimeout),
-		controlplane.WithKeepAlivePeriod(constants.KubePrismKeepAlivePeriod),
-		controlplane.WithTCPUserTimeout(constants.KubePrismTCPUserTimeout),
-		controlplane.WithHealthCheckOptions(
-			upstream.WithHealthcheckInterval(constants.KubePrismHealthCheckInterval),
-			upstream.WithHealthcheckTimeout(constants.KubePrismHealthCheckTimeout),
-			// A healthy upstream has to fail several consecutive checks (or dials) before it is taken out of rotation,
-			// but a single successful health check is enough to bring it back: with the health check interval being
-			// long, requiring several consecutive successful checks delays the recovery after e.g. API server restart.
-			upstream.WithLowHighScores(constants.KubePrismLowScore, constants.KubePrismHighScore),
-		),
+	lb := kubeprismlb.NewLoadBalancer(
+		ctrl.endpoint(),
+		logger,
+		constants.KubePrismDialTimeout,
+		constants.KubePrismKeepAlivePeriod,
+		constants.KubePrismTCPUserTimeout,
+		upstream.WithHealthcheckInterval(constants.KubePrismHealthCheckInterval),
+		upstream.WithHealthcheckTimeout(constants.KubePrismHealthCheckTimeout),
+		// A healthy upstream has to fail several consecutive checks (or dials) before it is taken out of rotation,
+		// but a single successful health check is enough to bring it back: with the health check interval being
+		// long, requiring several consecutive successful checks delays the recovery after e.g. API server restart.
+		upstream.WithLowHighScores(constants.KubePrismLowScore, constants.KubePrismHighScore),
 	)
-	if err != nil {
-		return fmt.Errorf("failed to create KubePrism: %w", err)
+
+	if err := lb.SetKubeconfig(kubeconfig); err != nil {
+		return fmt.Errorf("failed to configure KubePrism readiness check: %w", err)
 	}
 
-	err = lb.Start(ctrl.upstreamChan())
-	if err != nil {
+	if err := lb.Start(makeEndpoints(spec)); err != nil {
 		return fmt.Errorf("failed to start KubePrism: %w", err)
 	}
 
 	logger.Info("KubePrism is enabled", zap.String("endpoint", ctrl.endpoint()))
-
-	ctrl.upstreamChan() <- makeEndpoints(spec)
 
 	ctrl.lb = lb
 
@@ -250,17 +269,7 @@ func (ctrl *KubePrismController) endpoint() string {
 	return net.JoinHostPort(ctrl.balancerHost, strconv.FormatUint(uint64(ctrl.balancerPort), 10))
 }
 
-func (ctrl *KubePrismController) upstreamChan() chan []string {
-	if ctrl.upstreamCh == nil {
-		ctrl.upstreamCh = make(chan []string)
-	}
-
-	return ctrl.upstreamCh
-}
-
 func (ctrl *KubePrismController) stopKubePrism(logger *zap.Logger) error {
-	replaceWithZero(&ctrl.upstreamCh)
-
 	lb := replaceWithZero(&ctrl.lb)
 
 	err := lb.Shutdown()

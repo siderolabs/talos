@@ -163,6 +163,7 @@ require (
 	github.com/siderolabs/proto-codec v0.1.4
 	github.com/siderolabs/siderolink v0.3.18
 	github.com/siderolabs/talos/pkg/machinery v1.15.0-alpha.1
+	github.com/siderolabs/tcpproxy v0.1.0
 	github.com/sigstore/cosign/v3 v3.1.3
 	github.com/sigstore/sigstore v1.10.10
 	github.com/sigstore/sigstore-go v1.3.0
@@ -449,7 +450,6 @@ require (
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/siderolabs/go-api-signature v0.3.13 // indirect
 	github.com/siderolabs/protoenc v0.2.4 // indirect
-	github.com/siderolabs/tcpproxy v0.1.0 // indirect
 	github.com/sigstore/protobuf-specs v0.5.2 // indirect
 	github.com/sigstore/rekor v1.5.4 // indirect
 	github.com/sigstore/rekor-tiles/v2 v2.3.0 // indirect

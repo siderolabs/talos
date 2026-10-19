@@ -24,6 +24,21 @@ import (
 // Note: in non-TTY mode the server multiplexes stdout and stderr into a single stream, so the
 // returned output contains both.
 func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, args ...string) (string, int32) {
+	return apiSuite.runDebugContainer(ctx, node, constants.DebugNixyBoxImage, false, args...)
+}
+
+// RunDebugContainerWithLiveOutput runs a debug container and logs its output as it arrives.
+func (apiSuite *APISuite) RunDebugContainerWithLiveOutput(ctx context.Context, node string, args ...string) (string, int32) {
+	return apiSuite.runDebugContainer(ctx, node, constants.DebugNixyBoxImage, true, args...)
+}
+
+// RunDebugContainerWithImageAndLiveOutput runs a debug container from an explicit image and
+// logs its output as it arrives.
+func (apiSuite *APISuite) RunDebugContainerWithImageAndLiveOutput(ctx context.Context, node, image string, args ...string) (string, int32) {
+	return apiSuite.runDebugContainer(ctx, node, image, true, args...)
+}
+
+func (apiSuite *APISuite) runDebugContainer(ctx context.Context, node, image string, logOutput bool, args ...string) (string, int32) {
 	nodeCtx := client.WithNode(ctx, node)
 
 	containerd := &common.ContainerdInstance{
@@ -34,9 +49,9 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 	// pull the image into the system namespace first
 	rcv, err := apiSuite.Client.ImageClient.Pull(nodeCtx, &machineapi.ImageServicePullRequest{
 		Containerd: containerd,
-		ImageRef:   constants.DebugNixyBoxImage,
+		ImageRef:   image,
 	})
-	apiSuite.Require().NoError(err, "failed to pull image %q", constants.DebugNixyBoxImage)
+	apiSuite.Require().NoError(err, "failed to pull image %q", image)
 
 	var pulledImage string
 
@@ -47,7 +62,7 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 				break
 			}
 
-			apiSuite.Require().NoError(err, "failed to pull image %q", constants.DebugNixyBoxImage)
+			apiSuite.Require().NoError(err, "failed to pull image %q", image)
 		}
 
 		pulledImage = msg.GetName()
@@ -95,6 +110,9 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 		switch resp := msg.GetResp().(type) {
 		case *machineapi.DebugContainerRunResponse_StdoutData:
 			out.Write(resp.StdoutData)
+			if logOutput {
+				apiSuite.T().Logf("debug container output: %s", resp.StdoutData)
+			}
 		case *machineapi.DebugContainerRunResponse_ExitCode:
 			exitCode = resp.ExitCode
 			gotExitCode = true

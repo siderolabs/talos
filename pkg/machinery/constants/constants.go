@@ -1415,7 +1415,7 @@ const (
 	//
 	// The high score controls how many consecutive failed health checks (or dial errors) are required
 	// for an upstream to be taken out of rotation.
-	KubePrismHighScore = 3
+	KubePrismHighScore = 2
 
 	// TalosAPIDefaultCertificateValidityDuration specifies default certificate duration for Talos API generated client certificates.
 	TalosAPIDefaultCertificateValidityDuration = time.Hour * 24 * 365
