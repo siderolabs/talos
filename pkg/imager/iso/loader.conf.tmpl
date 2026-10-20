@@ -1,5 +1,5 @@
 # systemd-boot configuration
 
-timeout 10
+timeout {{ .BootMenuTimeout }}
 
 secure-boot-enroll {{ .SecureBootEnroll }}
