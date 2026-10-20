@@ -253,6 +253,13 @@ func (suite *LibvirtSuite) attachAlpineConsole(ctx context.Context, name string)
 func (suite *LibvirtSuite) loginAlpineConsole(ctx context.Context, name string) *alpineConsole {
 	suite.T().Helper()
 	console := suite.attachAlpineConsole(ctx, name)
+
+	defer func() {
+		if suite.T().Failed() {
+			suite.T().Logf("Alpine login serial transcript (bounded): %q", console.transcript)
+		}
+	}()
+
 	suite.Require().NoError(console.send("\n"))
 	suite.Require().NoError(console.expectAfter(0, []byte("login:")))
 	start := console.mark()

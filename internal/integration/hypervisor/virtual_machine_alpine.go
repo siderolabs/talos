@@ -26,6 +26,7 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"libvirt.org/go/libvirtxml"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -57,7 +58,7 @@ func (suite *LibvirtSuite) prepareAlpineGuest() (string, *hypervisorcfg.VirtualM
 	}
 
 	ourRecord := extraDHCPRecords[len(extraDHCPRecords)-1]
-	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, &ourRecord, 512<<20)
+	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, &ourRecord, 512<<20, "")
 
 	return node, doc, ourRecord.Gateway.String(), ourRecord.IP.Addr().String()
 }
@@ -87,9 +88,15 @@ func (suite *LibvirtSuite) requireAlpineGuestNode() (string, context.Context) {
 	return node, nodeCtx
 }
 
-// prepareAlpineGuestOnNode provisions the stock ISO with the requested RAM and optional NIC.
+// prepareAlpineGuestOnNode provisions the stock ISO with the requested RAM, profile and optional NIC.
 // A nil DHCP record needs neither a reservation nor host macvtap support.
-func (suite *LibvirtSuite) prepareAlpineGuestOnNode(node string, nodeCtx context.Context, ourRecord *provision.DHCPRecord, memoryBytes uint64) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
+func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
+	node string,
+	nodeCtx context.Context,
+	ourRecord *provision.DHCPRecord,
+	memoryBytes uint64,
+	profile string,
+) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
 	suite.T().Helper()
 
 	original, err := suite.ReadConfigFromNode(nodeCtx)
@@ -169,6 +176,11 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(node string, nodeCtx context
 
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
+
+	if profile != "" {
+		doc.ProfileConfig = &profile
+	}
+
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 	doc.CPUConfig.CPUCount = 1
@@ -197,6 +209,7 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(node string, nodeCtx context
 		cleanupCtx := client.WithNode(ctx, node)
 		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, hypervisorcfg.VirtualMachineConfigKind, name)
 		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		suite.assertNoDomainWithContext(cleanupCtx, node, name)
 	})
 
 	suite.PatchMachineConfig(nodeCtx, doc)
@@ -212,6 +225,320 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(node string, nodeCtx context
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, len(interfaces))
 
 	return doc
+}
+
+// TestAlpineBuiltinProfiles boots the stock ISO on each amd64 builtin guest ABI.
+// The selected profile is present before the VM is first created and started.
+func (suite *LibvirtSuite) TestAlpineBuiltinProfiles() {
+	node, nodeCtx := suite.requireAlpineGuestNode()
+
+	for _, test := range []struct {
+		name     string
+		machine  string
+		cpuMode  hypervisorhelpers.VirtualMachineProfileCPUMode
+		model    string
+		fallback string
+	}{
+		{
+			name:    "host",
+			machine: "q35",
+			cpuMode: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel,
+		},
+		{
+			name:    "passthrough",
+			machine: "q35",
+			cpuMode: hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough,
+		},
+		{
+			name:     "legacy",
+			machine:  "pc-i440fx-9.2",
+			cpuMode:  hypervisorhelpers.VirtualMachineProfileCPUModeCustom,
+			model:    "kvm64",
+			fallback: "forbid",
+		},
+	} {
+		suite.Run(test.name, func() {
+			const cpuCount = 1
+
+			doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, test.name)
+			suite.Require().NotNil(doc.ProfileConfig)
+			suite.Require().Equal(test.name, *doc.ProfileConfig)
+
+			rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, doc.Name(),
+				func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+					asrt.Equal(test.name, spec.TypedSpec().Profile)
+					asrt.EqualValues(cpuCount, spec.TypedSpec().CPU.Count)
+				})
+
+			rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, doc.Name(),
+				func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+					var domain libvirtxml.Domain
+					if !asrt.NoError(domain.Unmarshal(spec.TypedSpec().DomainXML)) || !asrt.NotNil(domain.CPU) || !asrt.NotNil(domain.OS) || !asrt.NotNil(domain.OS.Type) {
+						return
+					}
+
+					asrt.Equal("x86_64", domain.OS.Type.Arch)
+					asrt.Equal(test.machine, domain.OS.Type.Machine)
+					asrt.Equal(test.cpuMode.String(), domain.CPU.Mode)
+
+					if test.model == "" {
+						asrt.Nil(domain.CPU.Model, "host CPU mode must not pin a literal model")
+					} else if asrt.NotNil(domain.CPU.Model) {
+						asrt.Equal(test.model, domain.CPU.Model.Value)
+						asrt.Equal(test.fallback, domain.CPU.Model.Fallback)
+						asrt.Empty(domain.CPU.Features)
+					}
+				})
+
+			suite.T().Cleanup(func() {
+				if suite.T().Failed() {
+					suite.T().Logf("profile %q VM log: %q", test.name, suite.vmLogSnapshot(nodeCtx, doc.Name(), 200))
+				}
+			})
+
+			console := suite.attachAlpineConsole(nodeCtx, doc.Name())
+			defer func() {
+				if suite.T().Failed() {
+					suite.T().Logf("profile %q bounded Alpine console transcript: %q", test.name, console.transcript)
+				}
+
+				console.cancel()
+			}()
+
+			suite.Require().NoError(console.send("\n"))
+			suite.Require().NoError(console.expectAfter(0, []byte("login:")))
+			start := console.mark()
+			suite.Require().NoError(console.send("root\n"))
+			suite.Require().NoError(console.expectAfter(start, []byte("localhost:~#")))
+
+			suite.assertAlpineCPU(console)
+			suite.detachAlpineConsole(console)
+		})
+	}
+}
+
+// assertAlpineCPU checks the guest rather than inferring its ABI from rendered XML.
+func (suite *LibvirtSuite) assertAlpineCPU(console *alpineConsole) {
+	suite.T().Helper()
+
+	const cpuCount = 1
+
+	// The expanded exit status and terminating delimiter are absent from echoed input.
+	nonce := strings.ReplaceAll(uuid.NewString(), "-", "")
+	start := console.mark()
+	suite.Require().NoError(console.send(fmt.Sprintf(
+		"( arch=$(uname -m) && count=$(grep -c '^processor[[:space:]]*:' /proc/cpuinfo) && "+
+			"flags=$(sed -n '/^flags[[:space:]]*:/ {s/^[^:]*: //;p;q;}' /proc/cpuinfo) && "+
+			"printf 'arch=%%s cpus=%%s\\n' \"$arch\" \"$count\" && "+
+			"test \"$arch\" = x86_64 && test \"$count\" -eq %d && "+
+			"case \" $flags \" in *' fpu '*) true;; *) false;; esac && "+
+			"case \" $flags \" in *' lm '*) true;; *) false;; esac ); "+
+			"rc=$?; if [ \"$rc\" -ne 0 ]; then uname -a; grep -m 1 -E '^(model name|flags)' /proc/cpuinfo; fi; "+
+			"printf '\\nPROFILE_EXIT_%%s_%%s_END\\n' '%s' \"$rc\"\n",
+		cpuCount, nonce,
+	)))
+	prefix := "\r\nPROFILE_EXIT_" + nonce + "_"
+	suite.Require().NoError(console.expectAfter(start, []byte(prefix)))
+	completion := start + bytes.Index(console.transcript[start:], []byte(prefix)) + len(prefix)
+	suite.Require().NoError(console.expectAfter(completion, []byte("_END\r\n")))
+	suite.Require().Equal("0", strings.SplitN(string(console.transcript[completion:]), "_END\r\n", 2)[0], "Alpine CPU checks failed")
+}
+
+// alpineProfileBootIdentity returns both kernel boot identity and a tmpfs marker.
+func (suite *LibvirtSuite) alpineProfileBootIdentity(console *alpineConsole) (string, string) {
+	suite.T().Helper()
+
+	nonce := strings.ReplaceAll(uuid.NewString(), "-", "")
+	marker := strings.ReplaceAll(uuid.NewString(), "-", "")
+	start := console.mark()
+	suite.Require().NoError(console.send(fmt.Sprintf(
+		"test -e /tmp/profile-switch-marker || printf '%%s' '%s' >/tmp/profile-switch-marker; "+
+			"printf '\\nPROFILE_BOOT_%%s_%%s_%%s_END\\n' '%s' \"$(cat /proc/sys/kernel/random/boot_id)\" \"$(cat /tmp/profile-switch-marker)\"\n",
+		marker, nonce,
+	)))
+	prefix := "\r\nPROFILE_BOOT_" + nonce + "_"
+	suite.Require().NoError(console.expectAfter(start, []byte(prefix)))
+	completion := start + bytes.Index(console.transcript[start:], []byte(prefix)) + len(prefix)
+	suite.Require().NoError(console.expectAfter(completion, []byte("_END\r\n")))
+	identity, _, _ := strings.Cut(string(console.transcript[completion:]), "_END\r\n")
+	bootID, guestMarker, found := strings.Cut(identity, "_")
+	suite.Require().True(found, "invalid boot identity %q", identity)
+	suite.Require().NotEmpty(bootID)
+	suite.Require().NotEmpty(guestMarker)
+
+	return bootID, guestMarker
+}
+
+// TestAlpineProfileSwitch applies profile edits only after an explicit stop/start
+// of the same stock Alpine guest, never by replacing a running QEMU domain.
+//
+//nolint:gocyclo // Keep the sequential lifecycle and its failure diagnostics together.
+func (suite *LibvirtSuite) TestAlpineProfileSwitch() {
+	const (
+		cpuCount    = 1
+		memoryBytes = 512 << 20
+	)
+
+	node, nodeCtx := suite.requireAlpineGuestNode()
+	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, memoryBytes, "host")
+	name := doc.Name()
+
+	// Register before login: boot hangs must also leave bounded VM diagnostics.
+	suite.T().Cleanup(func() {
+		if suite.T().Failed() {
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			defer cancel()
+
+			suite.T().Logf("profile switch VM log: %q", suite.vmLogSnapshot(client.WithNode(ctx, node), name, 200))
+		}
+	})
+
+	assertProjected := func(profile, power, machine string, mode hypervisorhelpers.VirtualMachineProfileCPUMode) {
+		suite.T().Helper()
+
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+			func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+				asrt.Equal(profile, spec.TypedSpec().Profile)
+				asrt.Equal(power, spec.TypedSpec().PowerState)
+				asrt.EqualValues(cpuCount, spec.TypedSpec().CPU.Count)
+				asrt.EqualValues(memoryBytes, spec.TypedSpec().Memory.Size)
+			})
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+			func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+				asrt.Equal(power, spec.TypedSpec().PowerState)
+
+				var domain libvirtxml.Domain
+				if !asrt.NoError(domain.Unmarshal(spec.TypedSpec().DomainXML)) || !asrt.NotNil(domain.OS) ||
+					!asrt.NotNil(domain.OS.Type) || !asrt.NotNil(domain.CPU) {
+					return
+				}
+
+				asrt.Equal("x86_64", domain.OS.Type.Arch)
+				asrt.Equal(machine, domain.OS.Type.Machine)
+				asrt.Equal(mode.String(), domain.CPU.Mode)
+
+				if profile == "legacy" {
+					if asrt.NotNil(domain.CPU.Model) {
+						asrt.Equal("kvm64", domain.CPU.Model.Value)
+						asrt.Equal("forbid", domain.CPU.Model.Fallback)
+					}
+				} else {
+					asrt.Nil(domain.CPU.Model)
+				}
+			})
+	}
+
+	readLive := func() libvirtxml.Domain {
+		suite.T().Helper()
+
+		var domain libvirtxml.Domain
+		suite.Require().NoError(domain.Unmarshal(suite.runVirsh(node, "dumpxml", name)))
+		suite.Require().NotNil(domain.OS)
+		suite.Require().NotNil(domain.OS.Type)
+		suite.Require().NotNil(domain.VCPU)
+		suite.Require().NotNil(domain.Memory)
+
+		return domain
+	}
+
+	assertProjected("host", "running", "q35", hypervisorhelpers.VirtualMachineProfileCPUModeHostModel)
+
+	console := suite.loginAlpineConsole(nodeCtx, name)
+	consoles := make([]*alpineConsole, 0, 4)
+	consoles = append(consoles, console)
+
+	defer func() {
+		for _, attached := range consoles {
+			if suite.T().Failed() {
+				suite.T().Logf("profile switch bounded Alpine console transcript: %q", attached.transcript)
+			}
+
+			attached.cancel()
+		}
+	}()
+
+	initial := readLive()
+	suite.Require().NotEmpty(initial.UUID)
+	suite.Require().EqualValues(cpuCount, initial.VCPU.Value)
+	suite.assertAlpineCPU(console)
+	bootID, guestMarker := suite.alpineProfileBootIdentity(console)
+
+	for _, next := range []struct {
+		profile string
+		machine string
+		mode    hypervisorhelpers.VirtualMachineProfileCPUMode
+	}{
+		{profile: "legacy", machine: "pc-i440fx-9.2", mode: hypervisorhelpers.VirtualMachineProfileCPUModeCustom},
+		{profile: "passthrough", machine: "q35", mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough},
+		{profile: "host", machine: "q35", mode: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel},
+	} {
+		suite.T().Logf("switching running Alpine VM %q to %q", name, next.profile)
+		beforeID := suite.runVirsh(node, "domid", name)
+		beforeXML := suite.runVirsh(node, "dumpxml", name)
+		suite.Require().NotEqual("-", beforeID, "domain is not running")
+
+		doc.ProfileConfig = &next.profile
+		suite.PatchMachineConfig(nodeCtx, doc)
+		assertProjected(next.profile, "running", next.machine, next.mode)
+		// Desired XML moved ahead; QEMU must still be the original domain.
+		suite.Require().Equal(beforeID, suite.runVirsh(node, "domid", name))
+		suite.Require().Equal(beforeXML, suite.runVirsh(node, "dumpxml", name))
+		suite.assertAlpineCPU(console)
+		stillBootID, stillMarker := suite.alpineProfileBootIdentity(console)
+		suite.Require().Equal(bootID, stillBootID)
+		suite.Require().Equal(guestMarker, stillMarker)
+
+		suite.detachAlpineConsole(console)
+
+		doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
+		suite.PatchMachineConfig(nodeCtx, doc)
+		assertProjected(next.profile, "stopped", next.machine, next.mode)
+		suite.assertStoppedDomain(nodeCtx, node, name)
+
+		doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+		suite.PatchMachineConfig(nodeCtx, doc)
+		assertProjected(next.profile, "running", next.machine, next.mode)
+		suite.assertRunningTransientDomainWithDevices(node, name, cpuCount, 1, 0)
+
+		live := readLive()
+		suite.Require().Equal(initial.UUID, live.UUID)
+		suite.Require().EqualValues(cpuCount, live.VCPU.Value)
+		suite.Require().Equal(initial.Memory, live.Memory)
+
+		if next.profile == "legacy" {
+			suite.Require().Equal(next.machine, live.OS.Type.Machine)
+		} else {
+			// Libvirt may resolve the q35 alias to a versioned machine in live XML.
+			suite.Require().Contains(live.OS.Type.Machine, "q35")
+		}
+
+		suite.Require().NotNil(live.CPU)
+
+		switch next.mode {
+		case hypervisorhelpers.VirtualMachineProfileCPUModeCustom:
+			suite.Require().Equal("custom", live.CPU.Mode)
+			suite.Require().NotNil(live.CPU.Model)
+			suite.Require().Equal("kvm64", live.CPU.Model.Value)
+			suite.Require().Equal("forbid", live.CPU.Model.Fallback)
+		case hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough:
+			suite.Require().Equal("host-passthrough", live.CPU.Mode)
+		case hypervisorhelpers.VirtualMachineProfileCPUModeHostModel:
+			// Libvirt expands host-model to a custom model in active XML.
+			suite.Require().Contains([]string{"host-model", "custom"}, live.CPU.Mode)
+		case hypervisorhelpers.VirtualMachineProfileCPUModeUnknown:
+			suite.T().Fatalf("unexpected CPU mode %q", next.mode)
+		}
+
+		console = suite.loginAlpineConsole(nodeCtx, name)
+		consoles = append(consoles, console)
+		suite.assertAlpineCPU(console)
+		nextBootID, nextMarker := suite.alpineProfileBootIdentity(console)
+		suite.Require().NotEqual(bootID, nextBootID, "guest did not reboot")
+		suite.Require().NotEqual(guestMarker, nextMarker, "guest tmpfs marker survived reboot")
+		bootID, guestMarker = nextBootID, nextMarker
+	}
+
+	suite.detachAlpineConsole(console)
 }
 
 // TestAlpineSerialConsole boots the supplied stock Alpine virt ISO and
@@ -292,7 +619,7 @@ func (suite *LibvirtSuite) TestAlpineGuestWorkloadMemoryLimitEnforced() {
 	})
 
 	// Boot uncapped and measure, so the cap is placed on observed numbers.
-	guest := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, guestMemory)
+	guest := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, guestMemory, "")
 
 	console := suite.loginAlpineConsole(nodeCtx, guest.Name())
 	defer func() {

@@ -28,7 +28,7 @@ import (
 func (suite *LibvirtSuite) TestAlpineConsoleBlankDiskFormat() {
 	node, nodeCtx := suite.requireAlpineGuestNode()
 	// Reuse the ISO upload and cleanup, without a DHCP reservation or guest networking.
-	live := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20)
+	live := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, "")
 	live.PowerStateConfig = hypervisorhelpers.PowerStateStopped
 	suite.PatchMachineConfig(nodeCtx, live)
 	suite.assertStoppedDomain(nodeCtx, node, live.Name())
