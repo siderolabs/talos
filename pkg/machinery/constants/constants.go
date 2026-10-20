@@ -1405,6 +1405,9 @@ const (
 	// KubePrismHealthCheckTimeout is the timeout for health checks for the KubePrism loadbalancer.
 	KubePrismHealthCheckTimeout = 15 * time.Second
 
+	// KubePrismUnhealthyHealthCheckInterval is the interval between health checks when all upstreams are unhealthy.
+	KubePrismUnhealthyHealthCheckInterval = 1 * time.Second
+
 	// KubePrismLowScore is the lowest score for an upstream in the KubePrism loadbalancer.
 	//
 	// An upstream is used only when its score is non-negative, so the low score controls how many

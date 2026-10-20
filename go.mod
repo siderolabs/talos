@@ -149,7 +149,7 @@ require (
 	github.com/siderolabs/go-kubeconfig v0.1.2
 	github.com/siderolabs/go-kubernetes v0.2.43
 	github.com/siderolabs/go-lldp v0.1.0
-	github.com/siderolabs/go-loadbalancer v0.5.0
+	github.com/siderolabs/go-loadbalancer v0.5.1
 	github.com/siderolabs/go-pcidb v0.3.4
 	github.com/siderolabs/go-pointer v1.0.1
 	github.com/siderolabs/go-procfs v0.1.2
