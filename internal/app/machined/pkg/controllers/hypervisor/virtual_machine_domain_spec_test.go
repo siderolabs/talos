@@ -117,6 +117,311 @@ func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 	}
 }
 
+func (suite *VirtualMachineSpecSuite) TestBuiltinProfilesRenderGuestHardware() {
+	if runtime.GOARCH != "amd64" {
+		suite.T().Skip("VM hardware profiles are only supported on amd64")
+	}
+
+	for _, tc := range []struct {
+		name    string
+		profile string
+		machine string
+		cpu     libvirtxml.DomainCPU
+	}{
+		{
+			name:    "omitted",
+			machine: "q35",
+			cpu: libvirtxml.DomainCPU{
+				Mode: "host-model",
+			},
+		},
+		{
+			name:    "host",
+			profile: "host",
+			machine: "q35",
+			cpu: libvirtxml.DomainCPU{
+				Mode: "host-model",
+			},
+		},
+		{
+			name:    "passthrough",
+			profile: "passthrough",
+			machine: "q35",
+			cpu: libvirtxml.DomainCPU{
+				Mode: "host-passthrough",
+			},
+		},
+		{
+			name:    "legacy",
+			profile: "legacy",
+			machine: "pc-i440fx-9.2",
+			cpu: libvirtxml.DomainCPU{
+				Mode:  "custom",
+				Match: "exact",
+				Model: &libvirtxml.DomainCPUModel{
+					Value:    "kvm64",
+					Fallback: "forbid",
+				},
+			},
+		},
+	} {
+		for _, firmware := range []string{"bios", "uefi"} {
+			suite.Run(tc.name+"-"+firmware, func() {
+				name := "builtin-" + tc.name + "-" + firmware
+				spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+				*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+					Profile: tc.profile,
+					CPU: hypervisor.VirtualMachineCPUSpec{
+						Count: 6,
+						Topology: &hypervisor.VirtualMachineCPUTopologySpec{
+							Sockets: 2,
+							Cores:   3,
+							Threads: 1,
+						},
+					},
+					Memory: hypervisor.VirtualMachineMemorySpec{
+						Size: 768 << 20,
+					},
+					PowerState: "stopped",
+					Firmware: hypervisor.VirtualMachineFirmwareSpec{
+						Type: firmware,
+					},
+				}
+				suite.Create(spec)
+
+				wantXML, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", name+".xml"))
+				suite.Require().NoError(err)
+
+				expectedCPU := tc.cpu
+				expectedCPU.XMLName = xml.Name{Local: "cpu"}
+				expectedCPU.Topology = &libvirtxml.DomainCPUTopology{
+					Sockets: 2,
+					Cores:   3,
+					Threads: 1,
+				}
+
+				ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+					var domain libvirtxml.Domain
+					if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.NotNil(domain.OS) {
+						return
+					}
+
+					asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+					asrt.Equal(&libvirtxml.DomainOSType{
+						Type:    "hvm",
+						Arch:    "x86_64",
+						Machine: tc.machine,
+					}, domain.OS.Type)
+					asrt.Equal(string(wantXML), res.TypedSpec().DomainXML+"\n")
+					asrt.Equal(&expectedCPU, domain.CPU)
+					asrt.Equal(&libvirtxml.DomainVCPU{Value: 6}, domain.VCPU)
+					asrt.Equal(&libvirtxml.DomainMemory{Value: 768 << 20, Unit: "bytes"}, domain.Memory)
+
+					if firmware == "uefi" {
+						asrt.Equal("efi", domain.OS.Firmware)
+					} else {
+						asrt.Empty(domain.OS.Firmware)
+						asrt.Nil(domain.OS.Loader)
+						asrt.Nil(domain.OS.NVRam)
+					}
+				})
+			})
+		}
+	}
+}
+
+func (suite *VirtualMachineSpecSuite) TestCustomProfilesRenderGuestHardware() {
+	if runtime.GOARCH != "amd64" {
+		suite.T().Skip("VM hardware profiles are only supported on amd64")
+	}
+
+	for _, tc := range []struct {
+		name    string
+		machine string
+		cpu     hypervisorcfg.VirtualMachineProfileCPU
+		wantCPU libvirtxml.DomainCPU
+	}{
+		{
+			name:    "host-model",
+			machine: "pc-q35-9.2",
+			cpu: hypervisorcfg.VirtualMachineProfileCPU{
+				ModeConfig: hypervisorhelpers.VirtualMachineProfileCPUModeHostModel,
+			},
+			wantCPU: libvirtxml.DomainCPU{
+				Mode: "host-model",
+			},
+		},
+		{
+			name:    "host-passthrough",
+			machine: "pc",
+			cpu: hypervisorcfg.VirtualMachineProfileCPU{
+				ModeConfig: hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough,
+			},
+			wantCPU: libvirtxml.DomainCPU{
+				Mode: "host-passthrough",
+			},
+		},
+		{
+			name:    "default-fallback",
+			machine: "q35",
+			cpu: hypervisorcfg.VirtualMachineProfileCPU{
+				ModeConfig:  hypervisorhelpers.VirtualMachineProfileCPUModeCustom,
+				ModelConfig: "EPYC-Rome-v1",
+			},
+			wantCPU: libvirtxml.DomainCPU{
+				Mode:  "custom",
+				Match: "exact",
+				Model: &libvirtxml.DomainCPUModel{
+					Value:    "EPYC-Rome-v1",
+					Fallback: "forbid",
+				},
+			},
+		},
+		{
+			name:    "forbid-fallback",
+			machine: "pc-i440fx-9.2",
+			cpu: hypervisorcfg.VirtualMachineProfileCPU{
+				ModeConfig:     hypervisorhelpers.VirtualMachineProfileCPUModeCustom,
+				ModelConfig:    "Haswell-noTSX-IBRS",
+				FallbackConfig: "forbid",
+			},
+			wantCPU: libvirtxml.DomainCPU{
+				Mode:  "custom",
+				Match: "exact",
+				Model: &libvirtxml.DomainCPUModel{
+					Value:    "Haswell-noTSX-IBRS",
+					Fallback: "forbid",
+				},
+			},
+		},
+		{
+			name:    "allow-fallback-and-features",
+			machine: "pc-q35-9.2",
+			cpu: hypervisorcfg.VirtualMachineProfileCPU{
+				ModeConfig:     hypervisorhelpers.VirtualMachineProfileCPUModeCustom,
+				ModelConfig:    "Cascadelake-Server-v3",
+				FallbackConfig: "allow",
+				FeaturesConfig: []hypervisorcfg.VirtualMachineProfileCPUFeature{
+					{
+						NameConfig:   "aes",
+						PolicyConfig: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyRequire,
+					},
+					{
+						NameConfig:   "pku",
+						PolicyConfig: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyDisable,
+					},
+					{
+						NameConfig:   "avx2",
+						PolicyConfig: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyOptional,
+					},
+					{
+						NameConfig:   "hypervisor",
+						PolicyConfig: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyForce,
+					},
+					{
+						NameConfig:   "vmx",
+						PolicyConfig: hypervisorhelpers.VirtualMachineProfileCPUFeaturePolicyForbid,
+					},
+				},
+			},
+			wantCPU: libvirtxml.DomainCPU{
+				Mode:  "custom",
+				Match: "exact",
+				Model: &libvirtxml.DomainCPUModel{
+					Value:    "Cascadelake-Server-v3",
+					Fallback: "allow",
+				},
+				Features: []libvirtxml.DomainCPUFeature{
+					{
+						Name:   "aes",
+						Policy: "require",
+					},
+					{
+						Name:   "pku",
+						Policy: "disable",
+					},
+					{
+						Name:   "avx2",
+						Policy: "optional",
+					},
+					{
+						Name:   "hypervisor",
+						Policy: "force",
+					},
+					{
+						Name:   "vmx",
+						Policy: "forbid",
+					},
+				},
+			},
+		},
+	} {
+		for _, firmware := range []hypervisorhelpers.VirtualMachineFirmwareType{
+			hypervisorhelpers.VirtualMachineFirmwareTypeBIOS,
+			hypervisorhelpers.VirtualMachineFirmwareTypeUEFI,
+		} {
+			suite.Run(tc.name+"-"+firmware.String(), func() {
+				name := "custom-" + tc.name + "-" + firmware.String()
+				profile := hypervisorcfg.NewVirtualMachineProfileConfigV1Alpha1()
+				profile.MetaName = name
+				profile.MachineConfig = tc.machine
+				profile.CPUConfig = tc.cpu
+
+				vm := newVirtualMachine(name)
+				vm.ProfileConfig = new(name)
+				vm.FirmwareConfig.FirmwareType = firmware
+				vm.CPUConfig.CPUCount = 6
+				vm.CPUConfig.TopologyConfig.TopologySockets = new(uint32(2))
+				vm.CPUConfig.TopologyConfig.TopologyCores = new(uint32(3))
+				vm.CPUConfig.TopologyConfig.TopologyThreads = new(uint32(1))
+				vm.MemoryConfig.MemorySize = meta.MustByteSize("768MiB")
+				cfg, err := container.New(profile, vm)
+				suite.Require().NoError(err)
+
+				machine := config.NewMachineConfig(cfg)
+				suite.Create(machine)
+
+				wantXML, err := os.ReadFile(filepath.Join("testdata", "virtualmachinespec", name+".xml"))
+				suite.Require().NoError(err)
+
+				expectedCPU := tc.wantCPU
+				expectedCPU.XMLName = xml.Name{Local: "cpu"}
+				expectedCPU.Topology = &libvirtxml.DomainCPUTopology{
+					Sockets: 2,
+					Cores:   3,
+					Threads: 1,
+				}
+
+				ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+					var domain libvirtxml.Domain
+					if !asrt.NoError(domain.Unmarshal(res.TypedSpec().DomainXML)) || !asrt.NotNil(domain.OS) {
+						return
+					}
+
+					asrt.NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+					asrt.Equal(&libvirtxml.DomainOSType{
+						Type:    "hvm",
+						Arch:    "x86_64",
+						Machine: tc.machine,
+					}, domain.OS.Type)
+					asrt.Equal(string(wantXML), res.TypedSpec().DomainXML+"\n")
+					asrt.Equal(&expectedCPU, domain.CPU)
+					asrt.Equal(&libvirtxml.DomainVCPU{Value: 6}, domain.VCPU)
+					asrt.Equal(&libvirtxml.DomainMemory{Value: 768 << 20, Unit: "bytes"}, domain.Memory)
+
+					if firmware == hypervisorhelpers.VirtualMachineFirmwareTypeUEFI {
+						asrt.Equal("efi", domain.OS.Firmware)
+					} else {
+						asrt.Empty(domain.OS.Firmware)
+					}
+				})
+				suite.Destroy(machine)
+				ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, name)
+			})
+		}
+	}
+}
+
 func (suite *VirtualMachineSpecSuite) TestProfileUpdatesReplaceGuestHardware() {
 	if runtime.GOARCH != "amd64" {
 		suite.T().Skip("VM hardware profiles are only supported on amd64")

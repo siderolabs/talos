@@ -1,0 +1,20 @@
+<domain type="kvm">
+  <name>builtin-passthrough-bios</name>
+  <memory unit="bytes">805306368</memory>
+  <vcpu>6</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
+  <os>
+    <type arch="x86_64" machine="q35">hvm</type>
+  </os>
+  <features>
+    <acpi></acpi>
+  </features>
+  <cpu mode="host-passthrough">
+    <topology sockets="2" cores="3" threads="1"></topology>
+  </cpu>
+  <devices>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>

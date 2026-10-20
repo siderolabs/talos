@@ -1,0 +1,24 @@
+<domain type="kvm">
+  <name>builtin-host-uefi</name>
+  <memory unit="bytes">805306368</memory>
+  <vcpu>6</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
+  <os firmware="efi">
+    <type arch="x86_64" machine="q35">hvm</type>
+    <firmware>
+      <feature enabled="no" name="secure-boot"></feature>
+      <feature enabled="no" name="enrolled-keys"></feature>
+    </firmware>
+  </os>
+  <features>
+    <acpi></acpi>
+  </features>
+  <cpu mode="host-model">
+    <topology sockets="2" cores="3" threads="1"></topology>
+  </cpu>
+  <devices>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>

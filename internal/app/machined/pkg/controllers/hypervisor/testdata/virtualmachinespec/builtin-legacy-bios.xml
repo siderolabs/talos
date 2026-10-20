@@ -1,0 +1,21 @@
+<domain type="kvm">
+  <name>builtin-legacy-bios</name>
+  <memory unit="bytes">805306368</memory>
+  <vcpu>6</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
+  <os>
+    <type arch="x86_64" machine="pc-i440fx-9.2">hvm</type>
+  </os>
+  <features>
+    <acpi></acpi>
+  </features>
+  <cpu match="exact" mode="custom">
+    <model fallback="forbid">kvm64</model>
+    <topology sockets="2" cores="3" threads="1"></topology>
+  </cpu>
+  <devices>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>

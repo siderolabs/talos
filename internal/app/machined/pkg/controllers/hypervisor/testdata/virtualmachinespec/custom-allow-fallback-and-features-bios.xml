@@ -1,0 +1,30 @@
+<domain type="kvm">
+  <name>custom-allow-fallback-and-features-bios</name>
+  <memory unit="bytes">805306368</memory>
+  <vcpu>6</vcpu>
+  <resource>
+    <partition>/virtualmachines.partition</partition>
+  </resource>
+  <os>
+    <type arch="x86_64" machine="pc-q35-9.2">hvm</type>
+  </os>
+  <features>
+    <acpi></acpi>
+  </features>
+  <cpu match="exact" mode="custom">
+    <model fallback="allow">Cascadelake-Server-v3</model>
+    <topology sockets="2" cores="3" threads="1"></topology>
+    <feature policy="require" name="aes"></feature>
+    <feature policy="disable" name="pku"></feature>
+    <feature policy="optional" name="avx2"></feature>
+    <feature policy="force" name="hypervisor"></feature>
+    <feature policy="forbid" name="vmx"></feature>
+  </cpu>
+  <devices>
+    <channel type="unix">
+      <source mode="bind"></source>
+      <target type="virtio" name="org.qemu.guest_agent.0"></target>
+    </channel>
+    <memballoon model="none"></memballoon>
+  </devices>
+</domain>
