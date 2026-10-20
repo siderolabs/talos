@@ -40,6 +40,7 @@ type VirtualMachineStatusSuite struct {
 
 func (s *VirtualMachineStatusSuite) SetupTest() {
 	s.DefaultSuite.SetupTest()
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
 	s.openErr.Store(nil)
 	s.opens.Store(0)
 	s.boundedOpens.Store(0)
@@ -212,7 +213,7 @@ func (s *VirtualMachineStatusSuite) assertClientCloseCount(expected int) {
 
 func (s *VirtualMachineStatusSuite) assertDomainObservation(
 	name string,
-	powerState hypervisor.VirtualMachinePowerState,
+	powerState hypervisorhelpers.VirtualMachinePowerState,
 	errorText string,
 ) {
 	s.Require().Eventually(func() bool {
@@ -238,10 +239,10 @@ func (s *VirtualMachineStatusSuite) assertManagedStatusUnavailable(name string) 
 		}
 
 		return domainStatus.TypedSpec().UUID == libvirtdomain.UUID(uuid.MustParse(machineUUID), name).String() &&
-			domainStatus.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateUnknown &&
+			domainStatus.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateUnknown &&
 			domainStatus.TypedSpec().Error != "" &&
-			status.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateUnknown &&
-			status.TypedSpec().Stage == hypervisor.VirtualMachineStageError && status.TypedSpec().Error != ""
+			status.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateUnknown &&
+			status.TypedSpec().Stage == hypervisorhelpers.VirtualMachineStageError && status.TypedSpec().Error != ""
 	}, 5*time.Second, 10*time.Millisecond)
 }
 
@@ -270,17 +271,17 @@ func (s *VirtualMachineStatusSuite) TestServiceReadinessControlsObserverLifecycl
 
 		return nil
 	})
-	s.assertDomainObservation(domain.Name, hypervisor.VirtualMachinePowerStateRunning, "")
+	s.assertDomainObservation(domain.Name, hypervisorhelpers.VirtualMachinePowerStateRunning, "")
 	s.Require().EqualValues(1, subscriptions.Load())
 	s.Require().EqualValues(1, s.opens.Load())
 
 	s.Destroy(starting)
 	s.assertWatchCanceled(watchCanceled)
 	s.assertClientCloseCount(1)
-	s.assertDomainObservation(domain.Name, hypervisor.VirtualMachinePowerStateUnknown, "virtqemud service is not ready")
+	s.assertDomainObservation(domain.Name, hypervisorhelpers.VirtualMachinePowerStateUnknown, "virtqemud service is not ready")
 
 	s.Create(newReadyVirtqemudService())
-	s.assertDomainObservation(domain.Name, hypervisor.VirtualMachinePowerStateRunning, "")
+	s.assertDomainObservation(domain.Name, hypervisorhelpers.VirtualMachinePowerStateRunning, "")
 	s.Require().Eventually(func() bool {
 		return subscriptions.Load() == 2 && s.opens.Load() == 2
 	}, 5*time.Second, 10*time.Millisecond)
@@ -393,7 +394,7 @@ func (s *VirtualMachineStatusSuite) TestUnmanagedDomainIsObservedWithoutSpec() {
 		status, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainStatus](s.Ctx(), s.State(), domain.Name)
 
 		return err == nil && status.TypedSpec().UUID == domain.UUID.String() &&
-			status.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateRunning &&
+			status.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning &&
 			status.TypedSpec().State == 1 && status.TypedSpec().MaxMemoryKiB == 1048576 &&
 			status.TypedSpec().MemoryKiB == 524288 && status.TypedSpec().VCPUs == 2
 	}, 5*time.Second, 10*time.Millisecond)
@@ -494,7 +495,7 @@ func (s *VirtualMachineStatusSuite) TestAbsentDomainIsNotReadyDuringFailedScan()
 	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 }
 
 // newRenderableSpec builds a spec that renders, so a test about something other than rendering
@@ -509,7 +510,7 @@ func newRenderableSpec(name, powerState string) *hypervisor.VirtualMachineSpec {
 	return spec
 }
 
-func (s *VirtualMachineStatusSuite) assertStatus(name, state string, stage hypervisor.VirtualMachineStage, errorText string) {
+func (s *VirtualMachineStatusSuite) assertStatus(name, state string, stage hypervisorhelpers.VirtualMachineStage, errorText string) {
 	s.Require().Eventually(func() bool {
 		status, err := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
 		if err != nil {
@@ -526,20 +527,20 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 
 	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), "vm1")
 	s.Require().NoError(err)
 
 	updated.TypedSpec().PowerState = "running"
 	s.Update(updated)
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 
 	domainSpec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm1")
 	domainSpec.TypedSpec().PowerState = "running"
 	domainSpec.TypedSpec().DomainXML = `<domain><name>vm1</name></domain>`
 	s.Create(domainSpec)
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 
 	s.client.mu.Lock()
 	s.client.domains["vm1"] = libvirtdomain.Domain{Name: "vm1", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "vm1")}
@@ -547,12 +548,12 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 
 	s.events <- struct{}{}
 
-	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus("vm1", "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	second := newRenderableSpec("vm2", "stopped")
 	s.Create(second)
-	s.assertStatus("vm2", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
-	s.assertStatus("vm1", "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus("vm2", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }
 
 // Guest-agent interfaces surface on the VirtualMachineStatus, loopback addresses are dropped
@@ -679,7 +680,7 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedLinkHoldsBackReadiness() {
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "vm1": interface "net0": host link not found: "uplink"`)
 
 	link := network.NewLinkStatus(network.NamespaceName, "macvlan0")
@@ -687,7 +688,7 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedLinkHoldsBackReadiness() {
 	link.TypedSpec().Alias = "uplink"
 	s.Create(link)
 
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }
 
 // The same obstacle, before the domain was ever defined: the missing link is the reason, not the
@@ -698,7 +699,7 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedLinkExplainsUndefinedDomain() 
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStagePending,
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "vm1": interface "net0": host link not found: "uplink"`)
 }
 
@@ -722,7 +723,7 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "vm1": disk "install" is not ready: no disk status yet`)
 
 	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(name, disk))
@@ -734,7 +735,7 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
 	status.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"}
 	s.Create(status)
 
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }
 
 // A link of the wrong type is not something to wait for: the config has to change, so the stage
@@ -749,7 +750,7 @@ func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageError,
 		`virtual machine "vm1": interface "net0": host link is not an Ethernet link: "lo"`)
 }
 
@@ -773,7 +774,7 @@ func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError,
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageError,
 		`virtual machine "vm1": disk "system": unsupported disk: a disk is only provisioned from provision.blank today`)
 }
 
@@ -792,7 +793,7 @@ func (s *VirtualMachineStatusSuite) TestBlankDiskAwaitingItsVolumeIsPending() {
 	s.Create(spec)
 	s.start()
 
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStagePending,
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "vm1": disk "data" is not ready: no disk status yet`)
 }
 
@@ -801,14 +802,14 @@ func (s *VirtualMachineStatusSuite) TestForeignDomainIsError() {
 	s.Create(spec)
 	s.client.domains["vm1"] = libvirtdomain.Domain{Name: "vm1", UUID: uuid.New()}
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError, "domain name is occupied by another VM")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageError, "domain name is occupied by another VM")
 }
 
 func (s *VirtualMachineStatusSuite) TestUnsupportedPowerStateIsError() {
 	spec := newRenderableSpec("vm1", "suspended")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageError, `unsupported power state "suspended"`)
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageError, `unsupported power state "suspended"`)
 }
 
 func (s *VirtualMachineStatusSuite) TestDaemonUnavailable() {
@@ -817,7 +818,7 @@ func (s *VirtualMachineStatusSuite) TestDaemonUnavailable() {
 	spec := newRenderableSpec("vm1", "running")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 }
 
 func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUntilSuccessfulScan() {
@@ -851,7 +852,7 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUnti
 		},
 	}))
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineStatusController{}))
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	s.openErr.Store(&openFailure{err: errors.New("daemon unavailable")})
 	close(s.events)
@@ -870,7 +871,7 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUnti
 
 		return getErr != nil
 	}, 10*time.Second, 10*time.Millisecond)
-	s.assertStatus(name, "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus(name, "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 }
 
 func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryEvents() {
@@ -890,7 +891,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	s.Create(vm)
 	s.start()
 
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, name)
@@ -900,7 +901,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 		UserData: vm.TypedSpec().CloudInit.UserData,
 	}
 	s.Create(seed)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	projected, err := safe.StateGetByID[*hypervisor.CloudInitSpec](s.Ctx(), s.State(), name)
@@ -919,7 +920,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 		Error:              "seed generation failed",
 	}
 	s.Create(asset)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	ctest.UpdateWithConflicts(s, asset, func(current *hypervisor.CloudInitStatus) error {
@@ -927,7 +928,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	ctest.UpdateWithConflicts(s, asset, func(current *hypervisor.CloudInitStatus) error {
@@ -935,7 +936,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
@@ -945,14 +946,14 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 		Phase:    hypervisor.ContentLibraryPhaseReady,
 	}
 	s.Create(library)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitSpec) error {
 		current.TypedSpec().UserData = "different seed"
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitSpec) error {
@@ -968,14 +969,14 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
 		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
@@ -983,10 +984,10 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	s.Destroy(asset)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
 	republished := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, hypervisor.CloudInitStatusID(name, *seed.TypedSpec()))
@@ -995,7 +996,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	republished.TypedSpec().Error = ""
 	republished.TypedSpec().ObservedGeneration = projected.Metadata().Version().String()
 	s.Create(republished)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	ctest.UpdateWithConflicts(s, republished, func(current *hypervisor.CloudInitStatus) error {
 		current.TypedSpec().Phase = hypervisor.CloudInitPhaseNotReady
@@ -1003,7 +1004,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 		return nil
 	})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 }
 
@@ -1019,7 +1020,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitInvalidationStopsOldDomainWitho
 	s.Create(vm)
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
 	s.start()
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	s.Require().Eventually(func() bool {
 		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
@@ -1041,7 +1042,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitInvalidationStopsOldDomainWitho
 
 		return err == nil && domain.TypedSpec().PowerState == "stopped" && domain.TypedSpec().DomainXML != ""
 	}, 5*time.Second, 10*time.Millisecond)
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded-old-domain": cloud-init seed is not ready`)
 }
 
@@ -1049,7 +1050,7 @@ func (s *VirtualMachineStatusSuite) TestStatusRemovedWithSpec() {
 	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 	s.Destroy(spec)
 	s.Require().Eventually(func() bool {
 		_, err := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), "vm1")

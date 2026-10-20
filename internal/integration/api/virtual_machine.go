@@ -125,6 +125,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 
 	suite.applyVirtualMachineConfig(nodeCtx, createdBytes)
 	suite.assertVirtualMachineProjection(nodeCtx, name, hypervisor.VirtualMachineSpecSpec{
+		Profile:    "host",
 		PowerState: "stopped",
 		Firmware: hypervisor.VirtualMachineFirmwareSpec{
 			Type: "uefi",
@@ -148,6 +149,7 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 
 	suite.applyVirtualMachineConfig(nodeCtx, updatedBytes)
 	suite.assertVirtualMachineProjection(nodeCtx, name, hypervisor.VirtualMachineSpecSpec{
+		Profile:    "host",
 		PowerState: "stopped",
 		Firmware: hypervisor.VirtualMachineFirmwareSpec{
 			Type: "uefi",

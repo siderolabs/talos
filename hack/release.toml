@@ -558,6 +558,41 @@ omitting it keeps the previous service/container routing.
 Both the console and the VM logs require the `os:admin` role and a single target node.
 """
 
+    [notes.vm_profiles]
+        title = "Virtual Machine Hardware Profiles"
+        description = """\
+`VirtualMachineConfig` now accepts a `profile` field selecting the guest-visible CPU and machine type.
+Talos ships three builtin profiles on amd64:
+
+* `host` (default when `profile` is omitted): `q35` machine, `host-model` CPU.
+* `passthrough`: `q35` machine, `host-passthrough` CPU.
+* `legacy`: `pc-i440fx-9.2` machine, `kvm64` CPU, for guests that need a traditional PC chipset.
+
+Custom profiles are defined with the new `VirtualMachineProfileConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: VirtualMachineProfileConfig
+name: rack-a-compat
+machine: pc-q35-9.2
+cpu:
+  mode: custom
+  model: Haswell-noTSX-IBRS
+  features:
+    - name: pku
+      policy: disable
+```
+
+`machine` accepts `q35`, `pc`, `pc-q35-*` or `pc-i440fx-*`. `cpu.mode` is `host-model`, `host-passthrough` or `custom`;
+`model`, `fallback` (`forbid` by default, or `allow`) and `features` (policies `require`, `disable`, `optional`, `force`, `forbid`)
+are only allowed with `custom`. The names `host`, `legacy`, `passthrough` and the `compat-` prefix are reserved.
+Profiles are validated structurally only: Talos does not check that the host CPU supports the model, nor guarantee migration compatibility.
+
+Profile changes, including switching a VM to a different profile, are not applied to running guests;
+they take effect on the next deliberate stop and start of the virtual machine.
+Hardware profiles are currently available only on amd64.
+"""
+
 [make_deps]
 
     [make_deps.tools]

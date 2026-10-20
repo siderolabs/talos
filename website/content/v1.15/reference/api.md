@@ -349,8 +349,6 @@ description: Talos gRPC API reference.
     - [HypervisorCloudInitPhase](#talos.resource.definitions.enums.HypervisorCloudInitPhase)
     - [HypervisorContentLibraryPhase](#talos.resource.definitions.enums.HypervisorContentLibraryPhase)
     - [HypervisorVirtualMachineDiskPhase](#talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase)
-    - [HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState)
-    - [HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage)
     - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
     - [HypervisorhelpersVirtualMachineDiskBus](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus)
     - [HypervisorhelpersVirtualMachineDiskFormat](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat)
@@ -358,6 +356,10 @@ description: Talos gRPC API reference.
     - [HypervisorhelpersVirtualMachineDiskType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType)
     - [HypervisorhelpersVirtualMachineFirmwareType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineFirmwareType)
     - [HypervisorhelpersVirtualMachineNUMAMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineNUMAMode)
+    - [HypervisorhelpersVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState)
+    - [HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy)
+    - [HypervisorhelpersVirtualMachineProfileCPUMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUMode)
+    - [HypervisorhelpersVirtualMachineStage](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
     - [MachineType](#talos.resource.definitions.enums.MachineType)
     - [NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive)
@@ -546,6 +548,9 @@ description: Talos gRPC API reference.
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
+    - [VirtualMachineProfileCPUFeatureSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec)
+    - [VirtualMachineProfileCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec)
+    - [VirtualMachineProfileSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileSpecSpec)
     - [VirtualMachineSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineSpecSpec)
     - [VirtualMachineStatusSpec](#talos.resource.definitions.hypervisor.VirtualMachineStatusSpec)
     - [VirtualMachineVCPUPinSpec](#talos.resource.definitions.hypervisor.VirtualMachineVCPUPinSpec)
@@ -5950,33 +5955,6 @@ HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COS
 
 
 
-<a name="talos.resource.definitions.enums.HypervisorVirtualMachinePowerState"></a>
-
-### HypervisorVirtualMachinePowerState
-HypervisorVirtualMachinePowerState is the observed power state of a virtual machine.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| VIRTUAL_MACHINE_POWER_STATE_UNKNOWN | 0 |  |
-| VIRTUAL_MACHINE_POWER_STATE_RUNNING | 1 |  |
-| VIRTUAL_MACHINE_POWER_STATE_STOPPED | 2 |  |
-
-
-
-<a name="talos.resource.definitions.enums.HypervisorVirtualMachineStage"></a>
-
-### HypervisorVirtualMachineStage
-HypervisorVirtualMachineStage describes how far the observed VM has converged to its desired state.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| VIRTUAL_MACHINE_STAGE_UNKNOWN | 0 |  |
-| VIRTUAL_MACHINE_STAGE_PENDING | 1 |  |
-| VIRTUAL_MACHINE_STAGE_READY | 2 |  |
-| VIRTUAL_MACHINE_STAGE_ERROR | 3 |  |
-
-
-
 <a name="talos.resource.definitions.enums.HypervisorhelpersPowerState"></a>
 
 ### HypervisorhelpersPowerState
@@ -6069,6 +6047,63 @@ HypervisorhelpersVirtualMachineNUMAMode is how guest memory is bound to the host
 | VIRTUAL_MACHINE_NUMA_MODE_STRICT | 1 |  |
 | VIRTUAL_MACHINE_NUMA_MODE_PREFERRED | 2 |  |
 | VIRTUAL_MACHINE_NUMA_MODE_INTERLEAVE | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState"></a>
+
+### HypervisorhelpersVirtualMachinePowerState
+HypervisorhelpersVirtualMachinePowerState is the observed power state of a virtual machine.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_POWER_STATE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_POWER_STATE_RUNNING | 1 |  |
+| VIRTUAL_MACHINE_POWER_STATE_STOPPED | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy"></a>
+
+### HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy
+HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy selects a libvirt CPU feature policy.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_PROFILE_CPU_FEATURE_POLICY_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_FEATURE_POLICY_REQUIRE | 1 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_FEATURE_POLICY_DISABLE | 2 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_FEATURE_POLICY_OPTIONAL | 3 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_FEATURE_POLICY_FORCE | 4 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_FEATURE_POLICY_FORBID | 5 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUMode"></a>
+
+### HypervisorhelpersVirtualMachineProfileCPUMode
+HypervisorhelpersVirtualMachineProfileCPUMode selects the guest CPU exposure mode.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_PROFILE_CPU_MODE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_MODE_HOST_MODEL | 1 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_MODE_HOST_PASSTHROUGH | 2 |  |
+| VIRTUAL_MACHINE_PROFILE_CPU_MODE_CUSTOM | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage"></a>
+
+### HypervisorhelpersVirtualMachineStage
+HypervisorhelpersVirtualMachineStage describes how far the observed VM has converged to its desired state.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_STAGE_UNKNOWN | 0 |  |
+| VIRTUAL_MACHINE_STAGE_PENDING | 1 |  |
+| VIRTUAL_MACHINE_STAGE_READY | 2 |  |
+| VIRTUAL_MACHINE_STAGE_ERROR | 3 |  |
 
 
 
@@ -9465,7 +9500,7 @@ VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | uuid | [string](#string) |  |  |
-| power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  |  |
+| power_state | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState) |  |  |
 | error | [string](#string) |  |  |
 | state | [uint32](#uint32) |  |  |
 | max_memory_ki_b | [uint64](#uint64) |  |  |
@@ -9591,6 +9626,57 @@ VirtualMachineMemorySpec describes the desired guest memory.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec"></a>
+
+### VirtualMachineProfileCPUFeatureSpec
+VirtualMachineProfileCPUFeatureSpec defines a guest CPU feature policy.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| policy | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec"></a>
+
+### VirtualMachineProfileCPUSpec
+VirtualMachineProfileCPUSpec defines a guest-visible CPU model.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mode | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUMode) |  |  |
+| model | [string](#string) |  |  |
+| fallback | [string](#string) |  |  |
+| features | [VirtualMachineProfileCPUFeatureSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.hypervisor.VirtualMachineProfileSpecSpec"></a>
+
+### VirtualMachineProfileSpecSpec
+VirtualMachineProfileSpecSpec is the spec for VirtualMachineProfileSpec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| builtin | [bool](#bool) |  |  |
+| machine | [string](#string) |  |  |
+| cpu | [VirtualMachineProfileCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineSpecSpec"></a>
 
 ### VirtualMachineSpecSpec
@@ -9609,6 +9695,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | cloud_init | [VirtualMachineCloudInitSpec](#talos.resource.definitions.hypervisor.VirtualMachineCloudInitSpec) |  |  |
 | guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
 | video | [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec) |  | Video is the graphics device presented when a VNC console is enabled. |
+| profile | [string](#string) |  | Profile names the guest hardware profile; empty selects the builtin host profile. |
 
 
 
@@ -9623,8 +9710,8 @@ VirtualMachineStatusSpec describes observed power state and reconciliation stage
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| power_state | [talos.resource.definitions.enums.HypervisorVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorVirtualMachinePowerState) |  | PowerState is the matched domain's observed power, or unknown when no domain was observed. |
-| stage | [talos.resource.definitions.enums.HypervisorVirtualMachineStage](#talos.resource.definitions.enums.HypervisorVirtualMachineStage) |  | Stage distinguishes unknown observation, convergence, readiness, and observed obstacles. |
+| power_state | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState) |  | PowerState is the matched domain's observed power, or unknown when no domain was observed. |
+| stage | [talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage) |  | Stage distinguishes unknown observation, convergence, readiness, and observed obstacles. |
 | error | [string](#string) |  | Error describes an observation failure or obstacle, when known. |
 | addresses | [string](#string) | repeated | Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent. |
 | interfaces | [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec) | repeated | Interfaces is the per-interface view returned by qemu-guest-agent. |

@@ -23,7 +23,7 @@ const ContentLibraryConfigKind = "ContentLibraryConfig"
 func init() {
 	registry.Register(ContentLibraryConfigKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case versionV1Alpha1:
 			return &ContentLibraryConfigV1Alpha1{}
 		default:
 			return nil
@@ -92,7 +92,7 @@ func NewContentLibraryConfigV1Alpha1() *ContentLibraryConfigV1Alpha1 {
 	return &ContentLibraryConfigV1Alpha1{
 		Meta: meta.Meta{
 			MetaKind:       ContentLibraryConfigKind,
-			MetaAPIVersion: "v1alpha1",
+			MetaAPIVersion: versionV1Alpha1,
 		},
 	}
 }

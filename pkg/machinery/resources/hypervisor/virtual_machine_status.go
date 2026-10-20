@@ -10,6 +10,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -24,9 +25,9 @@ type VirtualMachineStatus = typed.Resource[VirtualMachineStatusSpec, VirtualMach
 //gotagsrewrite:gen
 type VirtualMachineStatusSpec struct {
 	// PowerState is the matched domain's observed power, or unknown when no domain was observed.
-	PowerState VirtualMachinePowerState `yaml:"powerState" protobuf:"1"`
+	PowerState hypervisorhelpers.VirtualMachinePowerState `yaml:"powerState" protobuf:"1"`
 	// Stage distinguishes unknown observation, convergence, readiness, and observed obstacles.
-	Stage VirtualMachineStage `yaml:"stage" protobuf:"2"`
+	Stage hypervisorhelpers.VirtualMachineStage `yaml:"stage" protobuf:"2"`
 	// Error describes an observation failure or obstacle, when known.
 	Error string `yaml:"error,omitempty" protobuf:"3"`
 	// Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent.

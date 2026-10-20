@@ -136,6 +136,7 @@ func NewState() (*State, error) {
 		&hypervisor.CloudInitSpec{},
 		&hypervisor.CloudInitStatus{},
 		&hypervisor.VirtualMachineSpec{},
+		&hypervisor.VirtualMachineProfileSpec{},
 		&hypervisor.VirtualMachineDiskStatus{},
 		&hypervisor.VirtualMachineDomainSpec{},
 		&hypervisor.VirtualMachineDomainStatus{},

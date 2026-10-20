@@ -81,6 +81,11 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineProfileSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.CloudInitSpecType,
 			Kind:      controller.InputWeak,
 		},

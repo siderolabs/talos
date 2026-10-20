@@ -21,6 +21,8 @@ type VirtualMachineConfig interface {
 	// Marker for findMatchingDocs[T]
 	VirtualMachineConfigSignal()
 
+	// Profile names the guest hardware profile; omission selects the builtin host profile.
+	Profile() optional.Optional[string]
 	// PowerState the virtual machine is driven towards.
 	PowerState() hypervisorhelpers.PowerState
 	// CPU settings; never nil.

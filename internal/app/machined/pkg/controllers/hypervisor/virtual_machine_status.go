@@ -17,8 +17,10 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -42,6 +44,11 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineProfileSpecType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -175,7 +182,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
 		// running, and only its next start or replacement is held back.
-		if renderErr == nil && spec.TypedSpec().PowerState == hypervisor.VirtualMachinePowerStateRunning.String() {
+		if renderErr == nil && spec.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
 			renderErr = validateDomainPlacement(name, domainXML, topology)
 		}
 
@@ -198,22 +205,22 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
-func renderStage(err error) hypervisor.VirtualMachineStage {
-	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, errPlacementPending) {
-		return hypervisor.VirtualMachineStagePending
+func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
+	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, errPlacementPending) || errors.Is(err, vmprofile.ErrNotReady) {
+		return hypervisorhelpers.VirtualMachineStagePending
 	}
 
-	return hypervisor.VirtualMachineStageError
+	return hypervisorhelpers.VirtualMachineStageError
 }
 
 func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, machineErr, renderErr error,
 	domain *hypervisor.VirtualMachineDomainStatus,
 ) hypervisor.VirtualMachineStatusSpec {
-	status := hypervisor.VirtualMachineStatusSpec{PowerState: hypervisor.VirtualMachinePowerStateUnknown}
+	status := hypervisor.VirtualMachineStatusSpec{PowerState: hypervisorhelpers.VirtualMachinePowerStateUnknown}
 
-	if desired != hypervisor.VirtualMachinePowerStateRunning.String() &&
-		desired != hypervisor.VirtualMachinePowerStateStopped.String() {
-		status.Stage = hypervisor.VirtualMachineStageError
+	if desired != hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
+		desired != hypervisorhelpers.VirtualMachinePowerStateStopped.String() {
+		status.Stage = hypervisorhelpers.VirtualMachineStageError
 		status.Error = fmt.Sprintf("unsupported power state %q", desired)
 
 		return status
@@ -239,7 +246,7 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 	}
 
 	if domain.TypedSpec().UUID != libvirtdomain.UUID(machineUUID, name).String() {
-		status.Stage = hypervisor.VirtualMachineStageError
+		status.Stage = hypervisorhelpers.VirtualMachineStageError
 		status.Error = "domain name is occupied by another VM"
 
 		return status
@@ -250,13 +257,13 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 	status.Addresses = flattenGuestAddresses(domain.TypedSpec().Interfaces)
 
 	if domain.TypedSpec().Error != "" {
-		status.Stage = hypervisor.VirtualMachineStageError
+		status.Stage = hypervisorhelpers.VirtualMachineStageError
 		status.Error = domain.TypedSpec().Error
 
 		return status
 	}
 
-	status.Stage = hypervisor.VirtualMachineStagePending
+	status.Stage = hypervisorhelpers.VirtualMachineStagePending
 
 	if renderErr != nil {
 		status.Stage = renderStage(renderErr)
@@ -278,11 +285,11 @@ func reconcileVirtualMachinePower(desired string,
 	status hypervisor.VirtualMachineStatusSpec,
 ) hypervisor.VirtualMachineStatusSpec {
 	switch {
-	case desired == hypervisor.VirtualMachinePowerStateStopped.String():
+	case desired == hypervisorhelpers.VirtualMachinePowerStateStopped.String():
 		status.Error = "domain is still defined"
 	default:
 		if status.PowerState.String() == desired {
-			status.Stage = hypervisor.VirtualMachineStageReady
+			status.Stage = hypervisorhelpers.VirtualMachineStageReady
 		}
 	}
 

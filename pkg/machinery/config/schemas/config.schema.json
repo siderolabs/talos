@@ -2529,6 +2529,13 @@
           "markdownDescription": "Name of the virtual machine.\n\nMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.",
           "x-intellij-html-description": "\u003cp\u003eName of the virtual machine.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain ASCII letters,\ndigits and hyphens. It is the ID used to address the virtual machine over the API.\u003c/p\u003e\n"
         },
+        "profile": {
+          "type": "string",
+          "title": "profile",
+          "description": "Guest hardware profile name. Omission selects builtin host. Profile edits\naffect the next guest boot; custom names require a VirtualMachineProfileConfig.\n",
+          "markdownDescription": "Guest hardware profile name. Omission selects builtin `host`. Profile edits\naffect the next guest boot; custom names require a VirtualMachineProfileConfig.",
+          "x-intellij-html-description": "\u003cp\u003eGuest hardware profile name. Omission selects builtin \u003ccode\u003ehost\u003c/code\u003e. Profile edits\naffect the next guest boot; custom names require a VirtualMachineProfileConfig.\u003c/p\u003e\n"
+        },
         "powerState": {
           "enum": [
             "running",
@@ -2950,6 +2957,135 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VirtualMachineNetworking describes the networking of a virtual machine."
+    },
+    "hypervisor.VirtualMachineProfileCPU": {
+      "properties": {
+        "mode": {
+          "enum": [
+            "host-model",
+            "host-passthrough",
+            "custom"
+          ],
+          "title": "mode",
+          "description": "host-model, host-passthrough or custom.\n",
+          "markdownDescription": "host-model, host-passthrough or custom.",
+          "x-intellij-html-description": "\u003cp\u003ehost-model, host-passthrough or custom.\u003c/p\u003e\n"
+        },
+        "model": {
+          "type": "string",
+          "title": "model",
+          "description": "Named CPU model; required only for custom.\n",
+          "markdownDescription": "Named CPU model; required only for custom.",
+          "x-intellij-html-description": "\u003cp\u003eNamed CPU model; required only for custom.\u003c/p\u003e\n"
+        },
+        "fallback": {
+          "type": "string",
+          "title": "fallback",
+          "description": "allow or forbid (default forbid) for custom model fallback.\n",
+          "markdownDescription": "allow or forbid (default forbid) for custom model fallback.",
+          "x-intellij-html-description": "\u003cp\u003eallow or forbid (default forbid) for custom model fallback.\u003c/p\u003e\n"
+        },
+        "features": {
+          "items": {
+            "$ref": "#/$defs/hypervisor.VirtualMachineProfileCPUFeature"
+          },
+          "type": "array",
+          "title": "features",
+          "description": "Explicit feature policies for a custom model.\n",
+          "markdownDescription": "Explicit feature policies for a custom model.",
+          "x-intellij-html-description": "\u003cp\u003eExplicit feature policies for a custom model.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "mode"
+      ],
+      "description": "VirtualMachineProfileCPU selects the guest-visible CPU."
+    },
+    "hypervisor.VirtualMachineProfileCPUFeature": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "CPU feature name.\n",
+          "markdownDescription": "CPU feature name.",
+          "x-intellij-html-description": "\u003cp\u003eCPU feature name.\u003c/p\u003e\n"
+        },
+        "policy": {
+          "enum": [
+            "require",
+            "disable",
+            "optional",
+            "force",
+            "forbid"
+          ],
+          "title": "policy",
+          "description": "require, disable, optional, force or forbid.\n",
+          "markdownDescription": "require, disable, optional, force or forbid.",
+          "x-intellij-html-description": "\u003cp\u003erequire, disable, optional, force or forbid.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "policy"
+      ],
+      "description": "VirtualMachineProfileCPUFeature selects one CPU flag."
+    },
+    "hypervisor.VirtualMachineProfileConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "VirtualMachineProfileConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Profile name. Builtin names and the compat- prefix are reserved.\n",
+          "markdownDescription": "Profile name. Builtin names and the compat- prefix are reserved.",
+          "x-intellij-html-description": "\u003cp\u003eProfile name. Builtin names and the compat- prefix are reserved.\u003c/p\u003e\n"
+        },
+        "machine": {
+          "type": "string",
+          "title": "machine",
+          "description": "q35 or i440fx machine family, preferably a versioned type.\n",
+          "markdownDescription": "q35 or i440fx machine family, preferably a versioned type.",
+          "x-intellij-html-description": "\u003cp\u003eq35 or i440fx machine family, preferably a versioned type.\u003c/p\u003e\n"
+        },
+        "cpu": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineProfileCPU",
+          "title": "cpu",
+          "description": "Guest CPU model and feature policy.\n",
+          "markdownDescription": "Guest CPU model and feature policy.",
+          "x-intellij-html-description": "\u003cp\u003eGuest CPU model and feature policy.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "cpu",
+        "kind",
+        "machine",
+        "name"
+      ],
+      "description": "VirtualMachineProfileConfig declares a named amd64 guest ABI.\\nProfiles bundle the guest machine type and CPU model. Use a versioned machine\\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\\n"
     },
     "hypervisor.VirtualMachineSerial": {
       "properties": {
@@ -9359,6 +9495,9 @@
     },
     {
       "$ref": "#/$defs/hypervisor.VirtualMachineConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/hypervisor.VirtualMachineProfileConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeAdmissionControlConfigV1Alpha1"

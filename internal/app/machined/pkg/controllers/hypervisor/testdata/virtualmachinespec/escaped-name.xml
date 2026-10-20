@@ -6,7 +6,7 @@
     <partition>/virtualmachines.partition</partition>
   </resource>
   <os firmware="efi">
-    <type>hvm</type>
+    <type arch="x86_64" machine="q35">hvm</type>
     <firmware>
       <feature enabled="no" name="secure-boot"></feature>
       <feature enabled="no" name="enrolled-keys"></feature>

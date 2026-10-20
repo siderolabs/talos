@@ -406,15 +406,20 @@ func (c *client) createTransient(d Domain, desired string) error {
 
 const metadataNamespace = "https://talos.dev/libvirt/domain"
 
-func domainDefinition(d Domain, renderedXML string) (string, string, error) {
+type definitionDigests struct {
+	Full          string `xml:",chardata"`
+	Configuration string `xml:"configuration,attr"`
+}
+
+func domainDefinition(d Domain, renderedXML string) (string, definitionDigests, error) {
 	var desc libvirtxml.Domain
 
 	if err := desc.Unmarshal(renderedXML); err != nil {
-		return "", "", fmt.Errorf("invalid domain XML: %w", err)
+		return "", definitionDigests{}, fmt.Errorf("invalid domain XML: %w", err)
 	}
 
 	if desc.Name != d.Name {
-		return "", "", fmt.Errorf("domain XML name %q does not match %q", desc.Name, d.Name)
+		return "", definitionDigests{}, fmt.Errorf("domain XML name %q does not match %q", desc.Name, d.Name)
 	}
 
 	desc.UUID = d.UUID.String()
@@ -422,45 +427,93 @@ func domainDefinition(d Domain, renderedXML string) (string, string, error) {
 	// Serial capture belongs to the owned backend definition, where the host-specific
 	// identity is known. Keep the PTY for exclusive live attachment and let virtlogd
 	// bound retention. Never accept a log path from the rendered input.
-	if desc.Devices != nil {
-		for i := range desc.Devices.Serials {
-			serial := &desc.Devices.Serials[i]
-			if serial.Source != nil && serial.Source.Pty != nil {
-				serial.Log = &libvirtxml.DomainChardevLog{
-					File:   fmt.Sprintf("%s/vm-%s-serial%d.log", constants.LogMountPoint, d.UUID, i),
-					Append: "on",
-				}
-			}
-		}
-	}
+	setSerialCapture(&desc, d.UUID)
 
 	canonical, err := desc.Marshal()
 	if err != nil {
-		return "", "", fmt.Errorf("marshal domain XML: %w", err)
+		return "", definitionDigests{}, fmt.Errorf("marshal domain XML: %w", err)
 	}
 
-	digest := fmt.Sprintf("%x", sha256.Sum256([]byte(canonical)))
+	configuration, err := profileIndependentDigest(desc)
+	if err != nil {
+		return "", definitionDigests{}, err
+	}
+
+	digests := definitionDigests{
+		Full:          fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))),
+		Configuration: configuration,
+	}
 
 	if desc.Metadata == nil {
 		desc.Metadata = &libvirtxml.DomainMetadata{}
 	}
 
-	desc.Metadata.XML += fmt.Sprintf(`<talos:definition xmlns:talos="%s">%s</talos:definition>`, metadataNamespace, digest)
+	desc.Metadata.XML += fmt.Sprintf(
+		`<talos:definition xmlns:talos="%s" configuration="%s">%s</talos:definition>`,
+		metadataNamespace, digests.Configuration, digests.Full,
+	)
 
 	definition, err := desc.Marshal()
 	if err != nil {
-		return "", "", fmt.Errorf("marshal domain metadata: %w", err)
+		return "", definitionDigests{}, fmt.Errorf("marshal domain metadata: %w", err)
 	}
 
-	return definition, digest, nil
+	return definition, digests, nil
 }
 
-func (c *client) needsRestart(found libvirt.Domain, exists bool, digest string) (bool, error) {
+func setSerialCapture(desc *libvirtxml.Domain, id uuid.UUID) {
+	if desc.Devices == nil {
+		return
+	}
+
+	for i := range desc.Devices.Serials {
+		serial := &desc.Devices.Serials[i]
+		if serial.Source != nil && serial.Source.Pty != nil {
+			serial.Log = &libvirtxml.DomainChardevLog{
+				File:   fmt.Sprintf("%s/vm-%s-serial%d.log", constants.LogMountPoint, id, i),
+				Append: "on",
+			}
+		}
+	}
+}
+
+// profileIndependentDigest excludes only fields controlled by a hardware profile.
+// Topology, vCPU count, tuning, memory, devices and all other VM intent remain in
+// this digest so a profile edit cannot hide an unrelated definition change.
+func profileIndependentDigest(desc libvirtxml.Domain) (string, error) {
+	if desc.OS != nil && desc.OS.Type != nil {
+		os := *desc.OS
+		kind := *os.Type
+		kind.Machine = ""
+		os.Type = &kind
+		desc.OS = &os
+	}
+
+	if desc.CPU != nil {
+		cpu := *desc.CPU
+		cpu.Mode = ""
+		cpu.Match = ""
+		cpu.Check = ""
+		cpu.Migratable = ""
+		cpu.Model = nil
+		cpu.Features = nil
+		desc.CPU = &cpu
+	}
+
+	canonical, err := desc.Marshal()
+	if err != nil {
+		return "", fmt.Errorf("marshal profile-independent domain XML: %w", err)
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(canonical))), nil
+}
+
+func (c *client) needsRestart(found libvirt.Domain, exists bool, desired definitionDigests) (bool, error) {
 	if !exists {
 		return true, nil
 	}
 
-	currentDigest, err := c.definitionDigest(found)
+	current, err := c.definitionMetadata(found)
 	if err != nil {
 		return false, err
 	}
@@ -479,38 +532,52 @@ func (c *client) needsRestart(found libvirt.Domain, exists bool, digest string) 
 		return false, err
 	}
 
-	return active == 0 || currentDigest != digest, nil
+	if active == 0 {
+		return true, nil
+	}
+
+	// A profile-only edit takes effect at the next stop/start. Both digests are
+	// stored by libvirt, so this survives a machined reconnect without pretending
+	// libvirt's expanded live CPU XML is identical to the requested profile.
+	return current.Full != desired.Full &&
+		(current.Configuration == "" || current.Configuration != desired.Configuration), nil
 }
 
 func (c *client) definitionDigest(found libvirt.Domain) (string, error) {
+	metadata, err := c.definitionMetadata(found)
+
+	return metadata.Full, err
+}
+
+func (c *client) definitionMetadata(found libvirt.Domain) (definitionDigests, error) {
 	currentXML, err := c.rpc.DomainGetXMLDesc(found, 0)
 	if err != nil {
-		return "", err
+		return definitionDigests{}, err
 	}
 
 	var current libvirtxml.Domain
 
 	if err = current.Unmarshal(currentXML); err != nil {
-		return "", err
+		return definitionDigests{}, err
 	}
 
 	if current.Metadata == nil {
-		return "", fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
+		return definitionDigests{}, fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
 	}
 
 	var metadata struct {
-		Digest string `xml:"https://talos.dev/libvirt/domain definition"`
+		Definition definitionDigests `xml:"https://talos.dev/libvirt/domain definition"`
 	}
 
 	if err = xml.Unmarshal([]byte("<metadata>"+current.Metadata.XML+"</metadata>"), &metadata); err != nil {
-		return "", fmt.Errorf("invalid domain metadata: %w", err)
+		return definitionDigests{}, fmt.Errorf("invalid domain metadata: %w", err)
 	}
 
-	if metadata.Digest == "" {
-		return "", fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
+	if metadata.Definition.Full == "" {
+		return definitionDigests{}, fmt.Errorf("domain %q has no Talos ownership metadata", found.Name)
 	}
 
-	return metadata.Digest, nil
+	return metadata.Definition, nil
 }
 
 func (c *client) removeManagedSave(found libvirt.Domain) error {

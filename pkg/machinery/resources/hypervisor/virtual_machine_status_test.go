@@ -15,6 +15,7 @@ import (
 
 	enumsapi "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 	hypervisorapi "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -22,8 +23,8 @@ func TestVirtualMachineStatusRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	status := hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, "vm1")
-	status.TypedSpec().PowerState = hypervisor.VirtualMachinePowerStateRunning
-	status.TypedSpec().Stage = hypervisor.VirtualMachineStageReady
+	status.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
+	status.TypedSpec().Stage = hypervisorhelpers.VirtualMachineStageReady
 	status.TypedSpec().Interfaces = []hypervisor.VirtualMachineGuestInterfaceSpec{
 		{
 			Name: "eth0",
@@ -42,8 +43,8 @@ func TestVirtualMachineStatusRoundTrip(t *testing.T) {
 
 	var spec hypervisorapi.VirtualMachineStatusSpec
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
-	require.Equal(t, enumsapi.HypervisorVirtualMachinePowerState_VIRTUAL_MACHINE_POWER_STATE_RUNNING, spec.GetPowerState())
-	require.Equal(t, enumsapi.HypervisorVirtualMachineStage_VIRTUAL_MACHINE_STAGE_READY, spec.GetStage())
+	require.Equal(t, enumsapi.HypervisorhelpersVirtualMachinePowerState_VIRTUAL_MACHINE_POWER_STATE_RUNNING, spec.GetPowerState())
+	require.Equal(t, enumsapi.HypervisorhelpersVirtualMachineStage_VIRTUAL_MACHINE_STAGE_READY, spec.GetStage())
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)

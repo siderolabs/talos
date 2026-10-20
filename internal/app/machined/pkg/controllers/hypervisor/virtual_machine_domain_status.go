@@ -18,6 +18,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -272,7 +273,7 @@ func (ctrl *VirtualMachineDomainStatusController) markUnavailable(
 
 	for status := range statuses.All() {
 		if writeErr := safe.WriterModify(ctx, r, status, func(resource *hypervisor.VirtualMachineDomainStatus) error {
-			resource.TypedSpec().PowerState = hypervisor.VirtualMachinePowerStateUnknown
+			resource.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateUnknown
 			resource.TypedSpec().Error = reason
 			// Dropped alongside the error: the last values were only true for the previous
 			// observation, and keeping them would surface stale IPs on an unreachable VM.
@@ -320,7 +321,7 @@ func (ctrl *VirtualMachineDomainStatusController) observeDomain(ctx context.Cont
 
 	info, err := client.Info(domain)
 	if err != nil {
-		status.PowerState = hypervisor.VirtualMachinePowerStateUnknown
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateUnknown
 		status.Error = err.Error()
 
 		return status
@@ -333,19 +334,19 @@ func (ctrl *VirtualMachineDomainStatusController) observeDomain(ctx context.Cont
 
 	switch libvirt.DomainState(info.State) {
 	case libvirt.DomainRunning, libvirt.DomainBlocked:
-		status.PowerState = hypervisor.VirtualMachinePowerStateRunning
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
 	case libvirt.DomainShutoff:
-		status.PowerState = hypervisor.VirtualMachinePowerStateStopped
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateStopped
 	case libvirt.DomainNostate, libvirt.DomainPaused, libvirt.DomainShutdown,
 		libvirt.DomainCrashed, libvirt.DomainPmsuspended:
-		status.PowerState = hypervisor.VirtualMachinePowerStateUnknown
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateUnknown
 	default:
-		status.PowerState = hypervisor.VirtualMachinePowerStateUnknown
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateUnknown
 	}
 
 	// Agent query runs on a short-lived sub-session so a hung agent sheds on its own deadline
 	// instead of stalling the inventory session for every later VM.
-	if status.PowerState == hypervisor.VirtualMachinePowerStateRunning && ctrl.OpenBounded != nil {
+	if status.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning && ctrl.OpenBounded != nil {
 		status.Interfaces = ctrl.queryGuestInterfaces(ctx, domain)
 	}
 

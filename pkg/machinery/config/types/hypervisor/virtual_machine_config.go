@@ -26,7 +26,7 @@ const VirtualMachineConfigKind = "VirtualMachineConfig"
 func init() {
 	registry.Register(VirtualMachineConfigKind, func(version string) config.Document {
 		switch version {
-		case "v1alpha1":
+		case versionV1Alpha1:
 			return &VirtualMachineConfigV1Alpha1{}
 		default:
 			return nil
@@ -70,6 +70,10 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     digits and hyphens. It is the ID used to address the virtual machine over the API.
 	//   schemaRequired: true
 	MetaName string `yaml:"name"`
+	//   description: |
+	//     Guest hardware profile name. Omission selects builtin `host`. Profile edits
+	//     affect the next guest boot; custom names require a VirtualMachineProfileConfig.
+	ProfileConfig *string `yaml:"profile,omitempty"`
 	//   description: |
 	//     Power state the virtual machine is driven towards.
 	//   values:
@@ -220,7 +224,7 @@ func NewVirtualMachineConfigV1Alpha1() *VirtualMachineConfigV1Alpha1 {
 	return &VirtualMachineConfigV1Alpha1{
 		Meta: meta.Meta{
 			MetaKind:       VirtualMachineConfigKind,
-			MetaAPIVersion: "v1alpha1",
+			MetaAPIVersion: versionV1Alpha1,
 		},
 	}
 }
@@ -337,6 +341,15 @@ func (c *VirtualMachineConfigV1Alpha1) Clone() config.Document {
 
 // VirtualMachineConfigSignal is a signal for virtual machine config.
 func (c *VirtualMachineConfigV1Alpha1) VirtualMachineConfigSignal() {}
+
+// Profile implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) Profile() optional.Optional[string] {
+	if c.ProfileConfig == nil {
+		return optional.None[string]()
+	}
+
+	return optional.Some(*c.ProfileConfig)
+}
 
 // CPU implements config.VirtualMachineConfig interface.
 func (c *VirtualMachineConfigV1Alpha1) CPU() config.VirtualMachineCPUConfig {
@@ -464,6 +477,12 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	)
 
 	validationErrors = errors.Join(validationErrors, c.ValidateName())
+	if profile, ok := c.Profile().Get(); ok {
+		if err := hypervisorhelpers.ValidateName(profile); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("profile: %w", err))
+		}
+	}
+
 	validationErrors = errors.Join(validationErrors, c.ValidatePowerState())
 	validationErrors = errors.Join(validationErrors, c.ValidateCPU())
 	validationErrors = errors.Join(validationErrors, c.ValidateMemory())

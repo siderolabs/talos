@@ -12,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -285,6 +286,80 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 			require.Len(t, docs, 1)
 
 			assert.Equal(t, cfg, docs[0])
+		})
+	}
+}
+
+func TestVirtualMachineConfigProfile(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name          string
+		field         string
+		profile       optional.Optional[string]
+		expectedError string
+	}{
+		{
+			name:    "omitted",
+			profile: optional.None[string](),
+		},
+		{
+			name:    "host",
+			field:   "profile: host\n",
+			profile: optional.Some("host"),
+		},
+		{
+			name:    "custom",
+			field:   "profile: rack-a\n",
+			profile: optional.Some("rack-a"),
+		},
+		{
+			name:          "empty",
+			field:         "profile: \"\"\n",
+			profile:       optional.Some(""),
+			expectedError: "profile: name is required",
+		},
+		{
+			name:          "invalid name",
+			field:         "profile: bad_name\n",
+			profile:       optional.Some("bad_name"),
+			expectedError: "profile:",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			provider, err := configloader.NewFromBytes([]byte(`apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+powerState: running
+cpu: {count: 1}
+memory: {size: 1GiB}
+firmware: {type: uefi}
+` + test.field))
+			require.NoError(t, err)
+
+			cfg := provider.VirtualMachineConfigs()[0]
+			assert.Equal(t, test.profile, cfg.Profile())
+
+			doc := provider.Documents()[0].(*hypervisor.VirtualMachineConfigV1Alpha1)
+
+			_, err = doc.Validate(validationMode{})
+			if test.expectedError != "" {
+				require.ErrorContains(t, err, test.expectedError)
+			} else {
+				require.NoError(t, err)
+			}
+
+			marshaled, err := encoder.NewEncoder(doc, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+			require.NoError(t, err)
+			reloaded, err := configloader.NewFromBytes(marshaled)
+			require.NoError(t, err)
+			assert.Equal(t, test.profile, reloaded.VirtualMachineConfigs()[0].Profile())
+
+			if test.name == "omitted" {
+				assert.NotContains(t, string(marshaled), "profile:")
+			}
 		})
 	}
 }

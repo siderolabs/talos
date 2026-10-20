@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
 
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -20,7 +21,7 @@ func TestVirtualMachineDomainStatusRoundTrip(t *testing.T) {
 
 	status := hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, "external")
 	status.TypedSpec().UUID = "c737f778-82a1-48dd-990b-67901031bcc5"
-	status.TypedSpec().PowerState = hypervisor.VirtualMachinePowerStateRunning
+	status.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
 	status.TypedSpec().State = 1
 	status.TypedSpec().MaxMemoryKiB = 1048576
 	status.TypedSpec().MemoryKiB = 524288

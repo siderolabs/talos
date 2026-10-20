@@ -214,7 +214,7 @@ func (suite *LibvirtSuite) TestVNCAttach() {
 	})
 
 	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.assertVirtualMachineStatus(nodeCtx, name, hypervisor.VirtualMachinePowerStateRunning)
+	suite.assertVirtualMachineStatus(nodeCtx, name, hypervisorhelpers.VirtualMachinePowerStateRunning)
 
 	ctx, cancel := context.WithTimeout(nodeCtx, 10*time.Second)
 	defer cancel()
@@ -249,19 +249,19 @@ func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name s
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](ctx, suite.T(), suite.Client.COSI, name)
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
 		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
-			asrt.Equal(hypervisor.VirtualMachinePowerStateUnknown, status.TypedSpec().PowerState)
-			asrt.Equal(hypervisor.VirtualMachineStageUnknown, status.TypedSpec().Stage)
+			asrt.Equal(hypervisorhelpers.VirtualMachinePowerStateUnknown, status.TypedSpec().PowerState)
+			asrt.Equal(hypervisorhelpers.VirtualMachineStageUnknown, status.TypedSpec().Stage)
 		},
 	)
 }
 
-func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name string, powerState hypervisor.VirtualMachinePowerState) {
+func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name string, powerState hypervisorhelpers.VirtualMachinePowerState) {
 	suite.T().Helper()
 
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
 		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
 			asrt.Equal(powerState, status.TypedSpec().PowerState)
-			asrt.Equal(hypervisor.VirtualMachineStageReady, status.TypedSpec().Stage)
+			asrt.Equal(hypervisorhelpers.VirtualMachineStageReady, status.TypedSpec().Stage)
 			asrt.Empty(status.TypedSpec().Error)
 		},
 	)
@@ -370,7 +370,7 @@ func (suite *LibvirtSuite) assertRunningTransientDomain(node, name string, cpus 
 func (suite *LibvirtSuite) assertRunningTransientDomainWithDevices(node, name string, cpus uint, disks, interfaces int) {
 	suite.T().Helper()
 
-	suite.assertVirtualMachineStatus(client.WithNode(suite.ctx, node), name, hypervisor.VirtualMachinePowerStateRunning)
+	suite.assertVirtualMachineStatus(client.WithNode(suite.ctx, node), name, hypervisorhelpers.VirtualMachinePowerStateRunning)
 
 	// The status contract does not include XML or persistence; verify those via libvirt.
 	suite.Require().Eventually(func() bool {

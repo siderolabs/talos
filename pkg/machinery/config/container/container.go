@@ -463,6 +463,11 @@ func (container *Container) VirtualMachineConfigs() []config.VirtualMachineConfi
 	return findMatchingDocs[config.VirtualMachineConfig](container.documents)
 }
 
+// VirtualMachineProfiles implements config.Config interface.
+func (container *Container) VirtualMachineProfileConfigs() []config.VirtualMachineProfileConfig {
+	return findMatchingDocs[config.VirtualMachineProfileConfig](container.documents)
+}
+
 // UserVolumeConfigs implements config.Config interface.
 func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)

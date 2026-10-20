@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/hypervisord"
 	"github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
@@ -169,7 +170,7 @@ func TestLiveValidationDoesNotTrustObservedStatus(t *testing.T) {
 
 			observed := hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, "vm1")
 			observed.TypedSpec().UUID = domain.UUID(uuid.MustParse(machineUUID), "vm1").String()
-			observed.TypedSpec().PowerState = hypervisor.VirtualMachinePowerStateRunning
+			observed.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
 			require.NoError(t, st.Create(t.Context(), observed))
 
 			identities := make(chan domain.Domain, 2)

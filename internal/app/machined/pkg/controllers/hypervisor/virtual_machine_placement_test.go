@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
@@ -208,17 +209,17 @@ func (s *VirtualMachineStatusSuite) TestHostPlacementStatus() {
 	s.Create(newRenderableSpec("plain", "running"))
 	s.start()
 
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStagePending,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "vm1": explicit host placement: host NUMA topology is not available yet`)
-	s.assertStatus("vm2", "unknown", hypervisor.VirtualMachineStagePending,
+	s.assertStatus("vm2", "unknown", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "vm2": explicit host placement: host NUMA topology is not available yet`)
-	s.assertStatus("plain", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("plain", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 
 	s.Create(newNUMATopology())
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageError,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageError,
 		`virtual machine "vm1": invalid host placement: vCPU 0 pin names offline host CPU 3`)
 	// Remote memory on a CPUless node is a valid selection.
-	s.assertStatus("vm2", "unknown", hypervisor.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm2", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 
 	ctest.UpdateWithConflicts(s, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name),
 		func(spec *hypervisor.VirtualMachineSpec) error {
@@ -227,7 +228,7 @@ func (s *VirtualMachineStatusSuite) TestHostPlacementStatus() {
 
 			return nil
 		})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageError,
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageError,
 		`virtual machine "vm1": invalid host placement: memory nodeset names host NUMA node 3 without memory`)
 
 	ctest.UpdateWithConflicts(s, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name),
@@ -236,5 +237,5 @@ func (s *VirtualMachineStatusSuite) TestHostPlacementStatus() {
 
 			return nil
 		})
-	s.assertStatus(name, "running", hypervisor.VirtualMachineStageReady, "")
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }

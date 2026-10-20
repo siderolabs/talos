@@ -6,7 +6,7 @@
     <partition>/virtualmachines.partition</partition>
   </resource>
   <os>
-    <type>hvm</type>
+    <type arch="x86_64" machine="q35">hvm</type>
   </os>
   <cpu mode="host-model"></cpu>
   <devices>

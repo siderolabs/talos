@@ -72,6 +72,7 @@ type Config interface { //nolint:interfacebloat
 	// - hypervisor:
 	ContentLibraryConfigs() []ContentLibraryConfig
 	VirtualMachineConfigs() []VirtualMachineConfig
+	VirtualMachineProfileConfigs() []VirtualMachineProfileConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

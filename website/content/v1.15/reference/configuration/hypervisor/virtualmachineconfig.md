@@ -137,6 +137,7 @@ guest:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It is the ID used to address the virtual machine over the API.  | |
+|`profile` |string |Guest hardware profile name. Omission selects builtin `host`. Profile edits<br>affect the next guest boot; custom names require a VirtualMachineProfileConfig.  | |
 |`powerState` |PowerState |Power state the virtual machine is driven towards.  |`running`<br />`stopped`<br />`suspended`<br /> |
 |`cpu` |<a href="#VirtualMachineConfig.cpu">VirtualMachineCPU</a> |Processor settings for the virtual machine.  | |
 |`memory` |<a href="#VirtualMachineConfig.memory">VirtualMachineMemory</a> |Memory settings for the virtual machine.  | |

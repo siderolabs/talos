@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -22,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
@@ -41,7 +43,82 @@ func TestVirtualMachineProjectionSuite(t *testing.T) {
 		Timeout: 30 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineSpecController{}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
 		},
+	})
+}
+
+func (suite *VirtualMachineProjectionSuite) TestProjectsProfileDefaultAndNamedReference() {
+	cfg, err := configloader.NewFromBytes([]byte(`apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: omitted
+powerState: running
+cpu: {count: 1}
+memory: {size: 1GiB}
+firmware: {type: uefi}
+---
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: named
+profile: rack-a
+powerState: running
+cpu: {count: 1}
+memory: {size: 1GiB}
+firmware: {type: uefi}
+`))
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, "omitted", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal("host", res.TypedSpec().Profile)
+	})
+	ctest.AssertResource(suite, "named", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal("rack-a", res.TypedSpec().Profile)
+	})
+}
+
+func (suite *VirtualMachineProjectionSuite) TestProfileCatalogueAndCleanup() {
+	if runtime.GOARCH != "amd64" {
+		suite.T().Skip("builtin VM profiles are only supported on amd64")
+	}
+
+	ctest.AssertResource(suite, "host", func(res *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
+		asrt.True(res.TypedSpec().Builtin)
+		asrt.Equal("q35", res.TypedSpec().Machine)
+		asrt.Equal(hypervisorhelpers.VirtualMachineProfileCPUModeHostModel, res.TypedSpec().CPU.Mode)
+	})
+	ctest.AssertResource(suite, "legacy", func(res *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
+		asrt.True(res.TypedSpec().Builtin)
+		asrt.Equal("pc-i440fx-9.2", res.TypedSpec().Machine)
+		asrt.Equal(hypervisorhelpers.VirtualMachineProfileCPUModeCustom, res.TypedSpec().CPU.Mode)
+		asrt.Equal("kvm64", res.TypedSpec().CPU.Model)
+		asrt.Equal("forbid", res.TypedSpec().CPU.Fallback)
+		asrt.Empty(res.TypedSpec().CPU.Features)
+	})
+	ctest.AssertResource(suite, "passthrough", func(res *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
+		asrt.True(res.TypedSpec().Builtin)
+		asrt.Equal(hypervisorhelpers.VirtualMachineProfileCPUModeHostPassthrough, res.TypedSpec().CPU.Mode)
+	})
+
+	doc := hypervisorcfg.NewVirtualMachineProfileConfigV1Alpha1()
+	doc.MetaName = "rack-a"
+	doc.MachineConfig = "pc-q35-9.2"
+	doc.CPUConfig.ModeConfig = hypervisorhelpers.VirtualMachineProfileCPUModeCustom
+	doc.CPUConfig.ModelConfig = "x86-64-v3"
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+
+	machine := config.NewMachineConfig(cfg)
+	suite.Create(machine)
+	ctest.AssertResource(suite, "rack-a", func(res *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
+		asrt.False(res.TypedSpec().Builtin)
+		asrt.Equal("pc-q35-9.2", res.TypedSpec().Machine)
+		asrt.Equal("x86-64-v3", res.TypedSpec().CPU.Model)
+	})
+	suite.Destroy(machine)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineProfileSpec](suite, "rack-a")
+	ctest.AssertResource(suite, "host", func(res *hypervisor.VirtualMachineProfileSpec, asrt *assert.Assertions) {
+		asrt.True(res.TypedSpec().Builtin)
 	})
 }
 
@@ -53,6 +130,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsUpdatesAndRemovesTypedSp
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.Equal(
 			hypervisor.VirtualMachineSpecSpec{
+				Profile: "host",
 				CPU: hypervisor.VirtualMachineCPUSpec{
 					Count: 3,
 				},
@@ -90,6 +168,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsUpdatesAndRemovesTypedSp
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.Equal(
 			hypervisor.VirtualMachineSpecSpec{
+				Profile: "host",
 				CPU: hypervisor.VirtualMachineCPUSpec{
 					Count: 65536,
 				},
@@ -131,6 +210,7 @@ func TestVirtualMachineSpecSuite(t *testing.T) {
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineSpecController{}))
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDiskController{}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
 		},
 		logs: logs,
@@ -188,6 +268,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 	suite.Create(config.NewMachineConfig(cfg))
 	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.Equal(hypervisor.VirtualMachineSpecSpec{
+			Profile: "host",
 			CPU: hypervisor.VirtualMachineCPUSpec{
 				Count:       3,
 				Limit:       2500,

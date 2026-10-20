@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
@@ -47,6 +48,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineProfileSpecType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -342,7 +348,33 @@ func renderVirtualMachineDomainWithSeed(
 	ctx context.Context, r controller.Reader, name string, spec *hypervisor.VirtualMachineSpecSpec,
 	links hostLinks, resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
 ) (string, []string, string, error) {
-	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, links, resolvedDisks)
+	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
+		return "", nil, "", err
+	}
+
+	profileName := spec.Profile
+	if profileName == "" {
+		profileName = "host"
+	}
+
+	profile, err := safe.ReaderGetByID[*hypervisor.VirtualMachineProfileSpec](ctx, r, profileName)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return "", nil, "", fmt.Errorf("virtual machine %q: profile %q not found: %w", name, profileName, vmprofile.ErrNotReady)
+		}
+
+		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
+	}
+
+	if profile.Metadata().Phase() != resource.PhaseRunning {
+		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q is not available: %w", name, profileName, vmprofile.ErrNotReady)
+	}
+
+	if err := vmprofile.Validate(profileName, *profile.TypedSpec()); err != nil {
+		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
+	}
+
+	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, profile.TypedSpec(), links, resolvedDisks)
 	if err != nil || spec.CloudInit == nil {
 		return domainXML, attachedDisks, "", err
 	}
@@ -522,20 +554,16 @@ func listResolvedDisks(ctx context.Context, reader controller.Reader) (map[resou
 func renderVirtualMachineDomain(
 	name string,
 	spec *hypervisor.VirtualMachineSpecSpec,
+	profile *hypervisor.VirtualMachineProfileSpecSpec,
 	links hostLinks,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
 ) (string, []string, error) {
-	if err := validateVirtualMachineDomainSpec(name, spec); err != nil {
-		return "", nil, err
-	}
-
 	interfaces, err := renderVirtualMachineInterfaces(name, spec.Interfaces, links)
 	if err != nil {
 		return "", nil, err
 	}
 
-	// KVM guests use the host architecture. Leave architecture and machine
-	// selection to libvirt rather than hard-coding an x86 machine on arm64.
+	// Profile validation rejects unsupported architectures before rendering.
 	domain := libvirtxml.Domain{
 		Type: "kvm",
 		Name: name,
@@ -554,7 +582,9 @@ func renderVirtualMachineDomain(
 		},
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
-				Type: "hvm",
+				Type:    "hvm",
+				Arch:    "x86_64",
+				Machine: profile.Machine,
 			},
 		},
 		// Omitting the balloon would let libvirt add one by default.
@@ -567,7 +597,27 @@ func renderVirtualMachineDomain(
 	}
 
 	domain.CPU = &libvirtxml.DomainCPU{
-		Mode: "host-model",
+		Mode: profile.CPU.Mode.String(),
+	}
+
+	if profile.CPU.Mode == hypervisorhelpers.VirtualMachineProfileCPUModeCustom {
+		fallback := profile.CPU.Fallback
+		if fallback == "" {
+			fallback = "forbid"
+		}
+
+		domain.CPU.Match = "exact"
+		domain.CPU.Model = &libvirtxml.DomainCPUModel{
+			Value:    profile.CPU.Model,
+			Fallback: fallback,
+		}
+
+		for _, feature := range profile.CPU.Features {
+			domain.CPU.Features = append(domain.CPU.Features, libvirtxml.DomainCPUFeature{
+				Name:   feature.Name,
+				Policy: feature.Policy.String(),
+			})
+		}
 	}
 
 	if topology := spec.CPU.Topology; topology != nil {
@@ -784,7 +834,7 @@ var errDiskUnsupported = errors.New("unsupported disk")
 // cannot satisfy is a permanent obstacle to report, but still no reason to restart the controller.
 func isHeldBack(err error) bool {
 	return errors.Is(err, errLinkNotFound) || errors.Is(err, errLinkNotEthernet) ||
-		errors.Is(err, errDiskNotReady) || errors.Is(err, errDiskUnsupported)
+		errors.Is(err, errDiskNotReady) || errors.Is(err, errDiskUnsupported) || errors.Is(err, vmprofile.ErrNotReady)
 }
 
 // hostLinks carries what an interface needs to know about the host's links: how to resolve a

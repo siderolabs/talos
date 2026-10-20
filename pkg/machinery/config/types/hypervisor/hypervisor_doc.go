@@ -87,6 +87,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "profile",
+				Type:        "string",
+				Note:        "",
+				Description: "Guest hardware profile name. Omission selects builtin `host`. Profile edits\naffect the next guest boot; custom names require a VirtualMachineProfileConfig.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Guest hardware profile name. Omission selects builtin `host`. Profile edits" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "powerState",
 				Type:        "PowerState",
 				Note:        "",
@@ -297,6 +304,135 @@ func (VirtualMachineBallooning) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using.\n\nBallooning only shrinks the guest below `memory.size`; growing beyond it is memory\nhot-add, which is a separate mechanism.\n\nOptional; defaults to disabled.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach a virtio-balloon device, letting the host reclaim memory the guest is not using." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineProfileConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfileConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileConfig declares a named amd64 guest ABI." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileConfig declares a named amd64 guest ABI.\nProfiles bundle the guest machine type and CPU model. Use a versioned machine\ntype and a CPU baseline tested on every host for migration. Aliases drift as QEMU\nchanges. A named CPU model is not a migration guarantee across arbitrary hosts.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Profile name. Builtin names and the compat- prefix are reserved.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Profile name. Builtin names and the compat- prefix are reserved." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "machine",
+				Type:        "string",
+				Note:        "",
+				Description: "q35 or i440fx machine family, preferably a versioned type.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "q35 or i440fx machine family, preferably a versioned type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "cpu",
+				Type:        "VirtualMachineProfileCPU",
+				Note:        "",
+				Description: "Guest CPU model and feature policy.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Guest CPU model and feature policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVirtualMachineProfileConfigV1Alpha1())
+
+	return doc
+}
+
+func (VirtualMachineProfileCPU) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfileCPU",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileCPU selects the guest-visible CPU." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileCPU selects the guest-visible CPU.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineProfileConfigV1Alpha1",
+				FieldName: "cpu",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "mode",
+				Type:        "VirtualMachineProfileCPUMode",
+				Note:        "",
+				Description: "host-model, host-passthrough or custom.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "host-model, host-passthrough or custom." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"host-model",
+					"host-passthrough",
+					"custom",
+				},
+			},
+			{
+				Name:        "model",
+				Type:        "string",
+				Note:        "",
+				Description: "Named CPU model; required only for custom.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Named CPU model; required only for custom." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "fallback",
+				Type:        "string",
+				Note:        "",
+				Description: "allow or forbid (default forbid) for custom model fallback.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "allow or forbid (default forbid) for custom model fallback." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "features",
+				Type:        "[]VirtualMachineProfileCPUFeature",
+				Note:        "",
+				Description: "Explicit feature policies for a custom model.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Explicit feature policies for a custom model." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachineProfileCPUFeature) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineProfileCPUFeature",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineProfileCPUFeature selects one CPU flag." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineProfileCPUFeature selects one CPU flag.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineProfileCPU",
+				FieldName: "features",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "CPU feature name.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "CPU feature name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "policy",
+				Type:        "VirtualMachineProfileCPUFeaturePolicy",
+				Note:        "",
+				Description: "require, disable, optional, force or forbid.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "require, disable, optional, force or forbid." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"require",
+					"disable",
+					"optional",
+					"force",
+					"forbid",
+				},
 			},
 		},
 	}
@@ -980,6 +1116,9 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineCPU{}.Doc(),
 			VirtualMachineMemory{}.Doc(),
 			VirtualMachineBallooning{}.Doc(),
+			VirtualMachineProfileConfigV1Alpha1{}.Doc(),
+			VirtualMachineProfileCPU{}.Doc(),
+			VirtualMachineProfileCPUFeature{}.Doc(),
 			VirtualMachineFirmware{}.Doc(),
 			VirtualMachineFirmwareSecureBoot{}.Doc(),
 			VirtualMachineDisk{}.Doc(),

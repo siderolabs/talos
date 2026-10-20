@@ -5,6 +5,7 @@
 package domain
 
 var (
-	OpenVNCConn = (*Connector).openVNCConn
-	VNCSocket   = vncSocket
+	DomainDefinition = domainDefinition
+	OpenVNCConn      = (*Connector).openVNCConn
+	VNCSocket        = vncSocket
 )

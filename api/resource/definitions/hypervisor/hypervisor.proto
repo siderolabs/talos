@@ -182,7 +182,7 @@ message VirtualMachineDomainSpecSpec {
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
 message VirtualMachineDomainStatusSpec {
   string uuid = 1;
-  talos.resource.definitions.enums.HypervisorVirtualMachinePowerState power_state = 2;
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState power_state = 2;
   string error = 3;
   uint32 state = 4;
   uint64 max_memory_ki_b = 5;
@@ -241,6 +241,27 @@ message VirtualMachineMemorySpec {
   VirtualMachineMemoryNUMASpec numa = 3;
 }
 
+// VirtualMachineProfileCPUFeatureSpec defines a guest CPU feature policy.
+message VirtualMachineProfileCPUFeatureSpec {
+  string name = 1;
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy policy = 2;
+}
+
+// VirtualMachineProfileCPUSpec defines a guest-visible CPU model.
+message VirtualMachineProfileCPUSpec {
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUMode mode = 1;
+  string model = 2;
+  string fallback = 3;
+  repeated VirtualMachineProfileCPUFeatureSpec features = 4;
+}
+
+// VirtualMachineProfileSpecSpec is the spec for VirtualMachineProfileSpec.
+message VirtualMachineProfileSpecSpec {
+  bool builtin = 1;
+  string machine = 2;
+  VirtualMachineProfileCPUSpec cpu = 3;
+}
+
 // VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 message VirtualMachineSpecSpec {
   VirtualMachineCPUSpec cpu = 1;
@@ -254,14 +275,16 @@ message VirtualMachineSpecSpec {
   VirtualMachineGuestSpec guest = 9;
   // Video is the graphics device presented when a VNC console is enabled.
   VirtualMachineVideoSpec video = 10;
+  // Profile names the guest hardware profile; empty selects the builtin host profile.
+  string profile = 11;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.
 message VirtualMachineStatusSpec {
   // PowerState is the matched domain's observed power, or unknown when no domain was observed.
-  talos.resource.definitions.enums.HypervisorVirtualMachinePowerState power_state = 1;
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState power_state = 1;
   // Stage distinguishes unknown observation, convergence, readiness, and observed obstacles.
-  talos.resource.definitions.enums.HypervisorVirtualMachineStage stage = 2;
+  talos.resource.definitions.enums.HypervisorhelpersVirtualMachineStage stage = 2;
   // Error describes an observation failure or obstacle, when known.
   string error = 3;
   // Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent.

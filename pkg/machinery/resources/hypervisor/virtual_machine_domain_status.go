@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
@@ -25,14 +26,14 @@ type VirtualMachineDomainStatus = typed.Resource[VirtualMachineDomainStatusSpec,
 //
 //gotagsrewrite:gen
 type VirtualMachineDomainStatusSpec struct {
-	UUID         string                             `yaml:"uuid" protobuf:"1"`
-	PowerState   VirtualMachinePowerState           `yaml:"powerState" protobuf:"2"`
-	Error        string                             `yaml:"error,omitempty" protobuf:"3"`
-	State        uint32                             `yaml:"state" protobuf:"4"`
-	MaxMemoryKiB uint64                             `yaml:"maxMemoryKiB" protobuf:"5"`
-	MemoryKiB    uint64                             `yaml:"memoryKiB" protobuf:"6"`
-	VCPUs        uint32                             `yaml:"vCPUs" protobuf:"7"`
-	Interfaces   []VirtualMachineGuestInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"8"`
+	UUID         string                                     `yaml:"uuid" protobuf:"1"`
+	PowerState   hypervisorhelpers.VirtualMachinePowerState `yaml:"powerState" protobuf:"2"`
+	Error        string                                     `yaml:"error,omitempty" protobuf:"3"`
+	State        uint32                                     `yaml:"state" protobuf:"4"`
+	MaxMemoryKiB uint64                                     `yaml:"maxMemoryKiB" protobuf:"5"`
+	MemoryKiB    uint64                                     `yaml:"memoryKiB" protobuf:"6"`
+	VCPUs        uint32                                     `yaml:"vCPUs" protobuf:"7"`
+	Interfaces   []VirtualMachineGuestInterfaceSpec         `yaml:"interfaces,omitempty" protobuf:"8"`
 }
 
 // VirtualMachineGuestInterfaceSpec is one guest interface reported by the qemu-guest-agent.

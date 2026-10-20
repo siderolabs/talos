@@ -105,6 +105,7 @@ func (ctrl *VirtualMachineSpecController) reconcile(ctx context.Context, runtime
 
 func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.VirtualMachineSpecSpec {
 	spec := hypervisor.VirtualMachineSpecSpec{
+		Profile: vm.Profile().ValueOr("host"),
 		CPU: hypervisor.VirtualMachineCPUSpec{
 			Count:       vm.CPU().Count(),
 			Limit:       vm.CPU().Limit().ValueOrZero(),
