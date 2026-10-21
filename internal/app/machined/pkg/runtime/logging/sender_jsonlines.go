@@ -7,10 +7,13 @@ package logging
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"maps"
 	"net"
 	"net/url"
+	"sync/atomic"
 	"time"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -23,6 +26,12 @@ type jsonLinesSender struct {
 
 	sema chan struct{}
 	conn net.Conn
+
+	// connClosed is closed once conn is closed (TCP only).
+	connClosed <-chan struct{}
+
+	// closed is set by Close; a closed sender doesn't connect again.
+	closed atomic.Bool
 }
 
 // NewJSONLines returns log sender that sends logs in JSON over TCP (newline-delimited)
@@ -83,14 +92,16 @@ func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 
 	defer unlock()
 
-	// Connect (or "connect" for UDP) if no connection is established already.
-	if j.conn == nil {
-		conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
-		if err != nil {
-			return err
+	// Close might have given up waiting for this Send, so close the connection on its behalf.
+	defer func() {
+		if j.closed.Load() && j.conn != nil {
+			j.conn.Close() //nolint:errcheck
+			j.conn = nil
 		}
+	}()
 
-		j.conn = conn
+	if err = j.connect(ctx); err != nil {
+		return err
 	}
 
 	d, _ := ctx.Deadline()
@@ -112,8 +123,57 @@ func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 	return nil
 }
 
+// connect establishes the connection (or "connects" for UDP) unless it is already established.
+func (j *jsonLinesSender) connect(ctx context.Context) error {
+	if j.closed.Load() {
+		return errors.New("log sender is closed")
+	}
+
+	// Reconnect if the receiver has closed the connection.
+	select {
+	case <-j.connClosed:
+		j.conn = nil
+	default:
+	}
+
+	if j.conn != nil {
+		return nil
+	}
+
+	conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
+	if err != nil {
+		return err
+	}
+
+	j.conn = conn
+
+	if j.endpoint.Scheme == "tcp" {
+		j.connClosed = closeOnEOF(conn)
+	}
+
+	return nil
+}
+
+// closeOnEOF closes the connection once the receiver closes it (or it fails), so that the sender
+// doesn't keep writing into it, and returns a channel which is closed at that point.
+func closeOnEOF(conn net.Conn) <-chan struct{} {
+	closed := make(chan struct{})
+
+	go func() {
+		io.Copy(io.Discard, conn) //nolint:errcheck
+
+		// signal first, so that once the connection is seen closed, the next Send reconnects
+		close(closed)
+		conn.Close() //nolint:errcheck
+	}()
+
+	return closed
+}
+
 // Close implements LogSender interface.
 func (j *jsonLinesSender) Close(ctx context.Context) error {
+	j.closed.Store(true)
+
 	unlock := j.tryLock(ctx)
 	if unlock == nil {
 		return ctx.Err()
@@ -131,7 +191,14 @@ func (j *jsonLinesSender) Close(ctx context.Context) error {
 	closed := make(chan error, 1)
 
 	go func() {
-		closed <- conn.Close()
+		err := conn.Close()
+
+		// the connection is already closed if the receiver has closed it
+		if errors.Is(err, net.ErrClosed) {
+			err = nil
+		}
+
+		closed <- err
 	}()
 
 	select {
