@@ -1,3 +1,71 @@
+## [Talos 1.13.12](https://github.com/siderolabs/talos/releases/tag/v1.13.12) (2026-10-21)
+
+Welcome to the v1.13.12 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.57
+containerd: 2.2.10
+
+Talos is built with Go 1.26.9
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`6491fc096`](https://github.com/siderolabs/talos/commit/6491fc096aa01e49f182c58bf55f27e884e11278) test: adapt minimal settings to new QEMU version
+* [`6d99d8a0c`](https://github.com/siderolabs/talos/commit/6d99d8a0cdaf4a71575cc7888cf55393c4a93305) fix: disable GSO offload on QEMU 10.2+
+* [`026852400`](https://github.com/siderolabs/talos/commit/026852400ca769faaccdc139e4936e80e062c5bf) fix: correct handling of DHCP changing address
+* [`ed1d9ddf9`](https://github.com/siderolabs/talos/commit/ed1d9ddf9e843269f877d1327cc6d7375743c3de) fix: image verification test
+* [`004736a33`](https://github.com/siderolabs/talos/commit/004736a33326dd83bc6094ca125368ab46434b75) fix: verify the claim for the legacy bundle image verification
+* [`fdd5d23a7`](https://github.com/siderolabs/talos/commit/fdd5d23a7511323db5c923a03ab086d20beff1c8) feat: update pkgs/tools
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`19e92dc`](https://github.com/siderolabs/pkgs/commit/19e92dceb2ed2ee5568a298ccf960aa2137dc9b7) feat: update Linux to 6.18.57
+* [`008f852`](https://github.com/siderolabs/pkgs/commit/008f85263fed81d29587f10e1186024e773f2fe2) fix: restore ACPI power button
+* [`e112479`](https://github.com/siderolabs/pkgs/commit/e11247973b914d620b4631211ed3151617158c7e) chore: update DRBD compat
+* [`97c9a42`](https://github.com/siderolabs/pkgs/commit/97c9a42af4e37ff3923715e45944823aa40fd75c) feat: update Linux to 6.18.56
+* [`2cb821e`](https://github.com/siderolabs/pkgs/commit/2cb821e3704c06af4e747b4be4429d9911bad3a8) feat: sync toolchain, tools, containerd 2.2.10
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`38b4a6e`](https://github.com/siderolabs/tools/commit/38b4a6e656cadd4127da665d5d8298e1af2514eb) feat: update Go to 1.26.10
+* [`3d10a45`](https://github.com/siderolabs/tools/commit/3d10a45c8a299100004c1942ea70c44d770fd80a) feat: update for Talos 1.13.12
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**   v1.13.0-75-g642a01b -> v1.13.0-80-g19e92dc
+* **github.com/siderolabs/tools**  v1.13.0-14-gb912600 -> v1.13.0-16-g38b4a6e
+* **golang.org/x/net**             v0.58.0 -> v0.60.0
+* **golang.org/x/sync**            v0.22.0 -> v0.23.0
+* **golang.org/x/sys**             v0.47.0 -> v0.48.0
+* **golang.org/x/term**            v0.45.0 -> v0.46.0
+* **golang.org/x/text**            v0.41.0 -> v0.42.0
+
+Previous release can be found at [v1.13.11](https://github.com/siderolabs/talos/releases/tag/v1.13.11)
+
 ## [Talos 1.13.11](https://github.com/siderolabs/talos/releases/tag/v1.13.11) (2026-10-01)
 
 Welcome to the v1.13.11 release of Talos!
