@@ -161,7 +161,7 @@
 (class fd (use))
 (class node (recvfrom sendto))
 
-(class bpf (map_create map_read map_write prog_load prog_run))
+(class bpf (map_create map_read map_write prog_load prog_run map_create_as prog_load_as))
 
 (common capability_common (
     audit_control
@@ -379,6 +379,9 @@
 (classcommon anon_inode file_common)
 (class io_uring (override_creds sqpoll cmd allowed))
 (class user_namespace (create))
+; memfd_file is only used by the kernel when the memfd_class policy capability is enabled
+(class memfd_file (entrypoint execute_no_trans))
+(classcommon memfd_file file_common)
 
 (classorder (
     security
@@ -481,4 +484,5 @@
     anon_inode
     io_uring
     user_namespace
+    memfd_file
 ))

@@ -95,8 +95,8 @@
     wake_alarm
 )))
 
-; Enable (e)BPF for all processes
-(allow any_p self (bpf (map_create map_read map_write prog_load prog_run)))
+; Enable (e)BPF for all processes, including delegation via BPF tokens
+(allow any_p self (bpf (map_create map_read map_write prog_load prog_run map_create_as prog_load_as)))
 
 ; Allow init to manage processes
 (allow init_t service_p (fs_classes (rw)))
