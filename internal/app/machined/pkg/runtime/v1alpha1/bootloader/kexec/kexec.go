@@ -43,25 +43,36 @@ func Load(r runtime.Runtime, kernel *os.File, initrdFD int, cmdline string) erro
 	}
 
 	if err := unix.KexecFileLoad(kernelFD, initrdFD, cmdline, 0); err != nil {
-		switch {
-		case errors.Is(err, unix.ENOSYS):
-			log.Printf("kexec support is disabled in the kernel")
+		if reason := loadSkipReason(err); reason != "" {
+			log.Print(reason)
 
 			return nil
-		case errors.Is(err, unix.EPERM):
-			log.Printf("kexec support is disabled via sysctl")
-
-			return nil
-		case errors.Is(err, unix.EBUSY):
-			log.Printf("kexec is busy")
-
-			return nil
-		default:
-			return fmt.Errorf("error loading kernel for kexec: %w", err)
 		}
+
+		return fmt.Errorf("error loading kernel for kexec: %w", err)
 	}
 
 	r.State().Machine().KexecPrepared(true)
 
 	return nil
+}
+
+// loadSkipReason returns a non-empty reason if the error from kexec_file_load means that kexec can't be used on this machine.
+//
+// The reboot then continues without kexec, as a normal reboot through the firmware: failing the reboot sequence
+// would make machined revert a pending upgrade although the new image was never booted.
+func loadSkipReason(err error) string {
+	switch {
+	case errors.Is(err, unix.ENOSYS):
+		return "kexec support is disabled in the kernel"
+	case errors.Is(err, unix.EPERM):
+		return "kexec support is disabled via sysctl"
+	case errors.Is(err, unix.EBUSY):
+		return "kexec is busy"
+	case errors.Is(err, unix.EADDRNOTAVAIL):
+		// the kernel found no free memory region for the new kernel (arm64: "Could not find any suitable kernel location!")
+		return "kexec is skipped as there is no free memory region for the kernel"
+	default:
+		return ""
+	}
 }
