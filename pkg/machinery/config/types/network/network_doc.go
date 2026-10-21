@@ -209,6 +209,13 @@ func (BGPNeighborConfig) Doc() *encoder.Doc {
 				Description: "BFD (Bidirectional Forwarding Detection) settings for this neighbor.\nThe presence of this block enables BFD; an empty block uses the implementation defaults.\nBFD is supported only when the BGP instance uses the default routing domain, not a VRF.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "BFD (Bidirectional Forwarding Detection) settings for this neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "authPassword",
+				Type:        "string",
+				Note:        "",
+				Description: "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nOutside of a VRF, the kernel matches the password by peer address only, so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

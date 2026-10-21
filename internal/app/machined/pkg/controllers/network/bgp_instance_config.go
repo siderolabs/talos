@@ -278,12 +278,13 @@ func buildBGPInstanceConfigSpec(cfg talosconfig.NetworkBGPInstanceConfig) networ
 
 	for _, neighbor := range cfg.Neighbors() {
 		neighborSpec := network.BGPNeighborConfigSpec{
-			Address:  neighbor.Address(),
-			Link:     neighbor.Link(),
-			PeerASN:  neighbor.PeerASN(),
-			LocalASN: neighbor.LocalASN(),
-			Passive:  neighbor.Passive(),
-			HoldTime: neighbor.HoldTime(),
+			Address:      neighbor.Address(),
+			Link:         neighbor.Link(),
+			PeerASN:      neighbor.PeerASN(),
+			LocalASN:     neighbor.LocalASN(),
+			Passive:      neighbor.Passive(),
+			HoldTime:     neighbor.HoldTime(),
+			AuthPassword: neighbor.AuthPassword(),
 		}
 
 		if bfd := neighbor.BFD(); bfd != nil {

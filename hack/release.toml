@@ -558,6 +558,26 @@ omitting it keeps the previous service/container routing.
 Both the console and the VM logs require the `os:admin` role and a single target node.
 """
 
+    [notes.bgp_md5_auth]
+        title = "BGP MD5 Authentication"
+        description = """\
+`BGPInstanceConfig` neighbors now accept an `authPassword` to enable TCP MD5 signature authentication (RFC 2385) of the BGP session,
+including for VRF-bound BGP instances:
+
+```yaml
+apiVersion: v1alpha1
+kind: BGPInstanceConfig
+name: fabric
+localASN: 65001
+neighbors:
+  - address: 192.0.2.1
+    peerASN: 65000
+    authPassword: s3cr3t
+```
+
+The password is redacted from the machine configuration output, and the `BGPInstanceConfigs` resource is now sensitive (it requires the `os:admin` role to read).
+"""
+
 [make_deps]
 
     [make_deps.tools]

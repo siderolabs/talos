@@ -36,6 +36,7 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 		Conf: &gobgpapi.PeerConf{
 			PeerAsn:         peer.Config.PeerASN,
 			NeighborAddress: peer.Address,
+			AuthPassword:    peer.Config.AuthPassword,
 		},
 		AfiSafis: []*gobgpapi.AfiSafi{
 			afiSafi(gobgpapi.Family_AFI_IP, multipath),
@@ -384,6 +385,11 @@ func PeerKey(peer Peer) string {
 		peer.BindInterface,
 		peer.Config.HoldTime,
 	)
+
+	if peer.Config.AuthPassword != "" {
+		// Track password changes without keeping the plaintext in the key.
+		fmt.Fprintf(&builder, "auth[%x]", sha256.Sum256([]byte(peer.Config.AuthPassword)))
+	}
 
 	if peer.Config.BFD != nil {
 		fmt.Fprintf(

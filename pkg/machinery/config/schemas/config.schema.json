@@ -4774,6 +4774,13 @@
           "description": "BFD (Bidirectional Forwarding Detection) settings for this neighbor.\nThe presence of this block enables BFD; an empty block uses the implementation defaults.\nBFD is supported only when the BGP instance uses the default routing domain, not a VRF.\n",
           "markdownDescription": "BFD (Bidirectional Forwarding Detection) settings for this neighbor.\nThe presence of this block enables BFD; an empty block uses the implementation defaults.\nBFD is supported only when the BGP instance uses the default routing domain, not a VRF.",
           "x-intellij-html-description": "\u003cp\u003eBFD (Bidirectional Forwarding Detection) settings for this neighbor.\nThe presence of this block enables BFD; an empty block uses the implementation defaults.\nBFD is supported only when the BGP instance uses the default routing domain, not a VRF.\u003c/p\u003e\n"
+        },
+        "authPassword": {
+          "type": "string",
+          "title": "authPassword",
+          "description": "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nOutside of a VRF, the kernel matches the password by peer address only, so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).\n",
+          "markdownDescription": "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nOutside of a VRF, the kernel matches the password by peer address only, so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).",
+          "x-intellij-html-description": "\u003cp\u003ePassword for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nOutside of a VRF, the kernel matches the password by peer address only, so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
