@@ -82,6 +82,9 @@ spec:
     integration/aws-nvidia-oss-lts: "Run AWS NVIDIA OSS LTS driver tests (all architectures)"
     integration/aws-nvidia-oss-lts-amd64: "Run AWS NVIDIA OSS LTS driver tests on AMD64"
     integration/aws-nvidia-oss-lts-arm64: "Run AWS NVIDIA OSS LTS driver tests on ARM64"
+    integration/aws-nvidia-oss-new-feature: "Run AWS NVIDIA OSS new feature driver tests (all architectures)"
+    integration/aws-nvidia-oss-new-feature-amd64: "Run AWS NVIDIA OSS new feature driver tests on AMD64"
+    integration/aws-nvidia-oss-new-feature-arm64: "Run AWS NVIDIA OSS new feature driver tests on ARM64"
     integration/aws-nvidia-oss-production: "Run AWS NVIDIA OSS production driver tests (all architectures)"
     integration/aws-nvidia-oss-production-amd64: "Run AWS NVIDIA OSS production driver tests on AMD64"
     integration/aws-nvidia-oss-production-arm64: "Run AWS NVIDIA OSS production driver tests on ARM64"
@@ -2272,6 +2275,9 @@ spec:
         - integration/aws-nvidia-oss-production
         - integration/aws-nvidia-oss-production-amd64
         - integration/aws-nvidia-oss-production-arm64
+        - integration/aws-nvidia-oss-new-feature
+        - integration/aws-nvidia-oss-new-feature-amd64
+        - integration/aws-nvidia-oss-new-feature-arm64
         - integration/aws-nvidia-nonfree
         - integration/aws-nvidia-nonfree-lts
         - integration/aws-nvidia-nonfree-lts-amd64
@@ -2426,6 +2432,34 @@ spec:
             buildPlatform: linux/arm64
             targetArch: arm64
             e2eTarget: nvidia-oss-production
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: oss
+            variant: new-feature
+            arch: amd64
+            triggerLabels:
+              [
+                integration/aws-nvidia-oss,
+                integration/aws-nvidia-oss-new-feature,
+                integration/aws-nvidia-oss-new-feature-amd64,
+              ]
+            buildTargets: nvidia-container-toolkit-new-feature nvidia-open-gpu-kernel-modules-new-feature extensions-metadata
+            buildPlatform: linux/amd64
+            targetArch: amd64
+            e2eTarget: nvidia-oss-new-feature
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: oss
+            variant: new-feature
+            arch: arm64
+            triggerLabels:
+              [
+                integration/aws-nvidia-oss,
+                integration/aws-nvidia-oss-new-feature,
+                integration/aws-nvidia-oss-new-feature-arm64,
+              ]
+            buildTargets: nvidia-container-toolkit-new-feature nvidia-open-gpu-kernel-modules-new-feature extensions-metadata
+            buildPlatform: linux/arm64
+            targetArch: arm64
+            e2eTarget: nvidia-oss-new-feature
             extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
           - driver: nonfree
             variant: lts
