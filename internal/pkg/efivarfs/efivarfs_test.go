@@ -6,6 +6,7 @@ package efivarfs_test
 
 import (
 	"encoding/binary"
+	"errors"
 	"io/fs"
 	"testing"
 
@@ -156,4 +157,118 @@ func TestUniqueBootOrder(t *testing.T) {
 	require.Equal(t, efivarfs.BootOrder{1, 2, 3}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{1, 2, 3, 2, 1, 3}), "BootOrder with duplicates should have duplicates removed preserving order of first appearance") //nolint:lll
 
 	require.Equal(t, efivarfs.BootOrder{0, 1, 3, 2}, efivarfs.UniqueBootOrder(efivarfs.BootOrder{0, 1, 0, 1, 0, 1, 1, 3, 2, 2, 3, 3, 1}), "BootOrder with all entries duplicated should have duplicates removed preserving order of first appearance") //nolint:lll
+}
+
+func TestListBootEntriesBroken(t *testing.T) {
+	t.Parallel()
+
+	valid, err := (&efivarfs.LoadOption{
+		Description: "Valid",
+		FilePath: efivarfs.DevicePath{
+			efivarfs.FilePath("/valid.efi"),
+		},
+	}).Marshal()
+	require.NoError(t, err)
+
+	// Truncated entry: the declared FilePath length overruns the data.
+	undecodable := valid[:len(valid)-2]
+
+	errRead := errors.New("input/output error")
+
+	for _, test := range []struct {
+		name       string
+		variables  map[string]efivarfs.MockVariable
+		readErrors map[string]error
+
+		expectedBroken map[int]string // index -> error substring
+		expectedValid  []int
+		expectedNewIdx int
+	}{
+		{
+			name: "undecodable entry",
+			variables: map[string]efivarfs.MockVariable{
+				"Boot0000": {Data: undecodable},
+				"Boot0001": {Data: valid},
+			},
+			expectedBroken: map[int]string{0: "failed to decode boot entry Boot0000"},
+			expectedValid:  []int{1},
+			expectedNewIdx: 2,
+		},
+		{
+			name: "unreadable entry",
+			variables: map[string]efivarfs.MockVariable{
+				"Boot0000": {Data: valid},
+				"Boot0001": {Data: valid},
+			},
+			readErrors:     map[string]error{"Boot0000": errRead},
+			expectedBroken: map[int]string{0: "failed to read boot entry Boot0000: input/output error"},
+			expectedValid:  []int{1},
+			expectedNewIdx: 2,
+		},
+		{
+			name: "entry removed between List and Read",
+			variables: map[string]efivarfs.MockVariable{
+				"Boot0000": {Data: valid},
+				"Boot0001": {Data: valid},
+			},
+			readErrors:     map[string]error{"Boot0000": fs.ErrNotExist},
+			expectedValid:  []int{1},
+			expectedNewIdx: 0,
+		},
+		{
+			// Mock.List is sorted, so the uppercase (valid) spelling is read first.
+			name: "duplicate spelling, valid first",
+			variables: map[string]efivarfs.MockVariable{
+				"Boot000A": {Data: valid},
+				"Boot000a": {Data: undecodable},
+			},
+			expectedValid:  []int{10},
+			expectedNewIdx: 0,
+		},
+		{
+			name: "duplicate spelling, broken first",
+			variables: map[string]efivarfs.MockVariable{
+				"Boot000A": {Data: undecodable},
+				"Boot000a": {Data: valid},
+			},
+			expectedValid:  []int{10},
+			expectedNewIdx: 0,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			efiRW := efivarfs.Mock{
+				Variables: map[uuid.UUID]map[string]efivarfs.MockVariable{
+					efivarfs.ScopeGlobal: test.variables,
+				},
+				ReadErrors: test.readErrors,
+			}
+
+			entries, err := efivarfs.ListBootEntries(&efiRW)
+			require.NoError(t, err)
+
+			require.Len(t, entries, len(test.expectedBroken)+len(test.expectedValid))
+
+			for idx, errSubstring := range test.expectedBroken {
+				require.Nil(t, entries[idx].Option)
+				require.ErrorContains(t, entries[idx].Err, errSubstring)
+			}
+
+			for _, idx := range test.expectedValid {
+				require.NoError(t, entries[idx].Err)
+				require.Equal(t, "Valid", entries[idx].Option.Description)
+			}
+
+			// Broken entries keep their index occupied.
+			idx, err := efivarfs.AddBootEntry(&efiRW, &efivarfs.LoadOption{
+				Description: "New",
+				FilePath: efivarfs.DevicePath{
+					efivarfs.FilePath("/new.efi"),
+				},
+			})
+			require.NoError(t, err)
+			require.Equal(t, test.expectedNewIdx, idx)
+		})
+	}
 }

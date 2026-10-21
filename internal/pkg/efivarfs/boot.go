@@ -8,9 +8,7 @@
 package efivarfs
 
 import (
-	"bytes"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -113,6 +111,32 @@ func (e *LoadOption) Marshal() ([]byte, error) {
 	return data, nil
 }
 
+// isZeroPadding reports whether data consists only of zero bytes.
+func isZeroPadding(data []byte) bool {
+	for _, b := range data {
+		if b != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+// ucs2Terminator returns the offset of the first 00 00 null code on a 2-byte
+// boundary in data, or -1 if there is none.
+//
+// bytes.Index is not suitable here: it also matches across characters (e.g.
+// "A\u0100" encodes as 41 00 00 01), and is off by one for an empty string.
+func ucs2Terminator(data []byte) int {
+	for i := 0; i+1 < len(data); i += 2 {
+		if data[i] == 0x00 && data[i+1] == 0x00 {
+			return i
+		}
+	}
+
+	return -1
+}
+
 // UnmarshalLoadOption decodes a binary EFI_LOAD_OPTION into a LoadOption.
 func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
 	if len(data) < 6 {
@@ -126,26 +150,27 @@ func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
 	opt.Hidden = attrs&0x08 != 0
 	opt.Inactive = attrs&0x01 == 0
 	lenPath := binary.LittleEndian.Uint16(data[4:6])
-	// Search for UTF-16 null code
-	nullIdx := bytes.Index(data[6:], []byte{0x00, 0x00})
-	if nullIdx == -1 {
-		return nil, errors.New("no null code point marking end of Description found")
+
+	if 6+int(lenPath) > len(data) {
+		return nil, fmt.Errorf("declared length of FilePath (%d) overruns available data (%d)", lenPath, len(data)-6)
 	}
 
-	descriptionEnd := 6 + nullIdx + 1
-	descriptionRaw := data[6:descriptionEnd]
+	// The Description terminator must leave room for FilePath: bounding the
+	// scan keeps it out of the device path on a malformed (odd length) description.
+	descriptionEnd := ucs2Terminator(data[6 : len(data)-int(lenPath)])
+	if descriptionEnd == -1 {
+		return nil, fmt.Errorf("no null code point marking end of Description found before FilePath (declared length %d)", lenPath)
+	}
 
-	description, err := Encoding.NewDecoder().Bytes(descriptionRaw)
+	descriptionEnd += 6
+
+	description, err := Encoding.NewDecoder().Bytes(data[6:descriptionEnd])
 	if err != nil {
 		return nil, fmt.Errorf("error decoding UTF-16 in Description: %w", err)
 	}
 
 	descriptionEnd += 2 // 2 null bytes terminating UTF-16 string
 	opt.Description = string(description)
-
-	if descriptionEnd+int(lenPath) > len(data) {
-		return nil, fmt.Errorf("declared length of FilePath (%d) overruns available data (%d)", lenPath, len(data)-descriptionEnd)
-	}
 
 	filePathData := data[descriptionEnd : descriptionEnd+int(lenPath)]
 
@@ -155,6 +180,13 @@ func UnmarshalLoadOption(data []byte) (*LoadOption, error) {
 	}
 
 	for len(filePathData) > 0 {
+		// Some firmware (e.g. AMI) declares a FilePathListLength which includes
+		// a few zero bytes of padding after the End of Device Path node. Those
+		// are not an ExtraPath, so stop parsing there.
+		if isZeroPadding(filePathData) {
+			break
+		}
+
 		var extraPath DevicePath
 
 		extraPath, filePathData, err = UnmarshalDevicePath(filePathData)

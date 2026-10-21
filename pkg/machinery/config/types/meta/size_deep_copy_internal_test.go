@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
 func TestByteSizeDeepCopy(t *testing.T) {
@@ -108,7 +110,8 @@ func TestByteSizeMergeZero(t *testing.T) {
 
 	dst := MustByteSize("1MiB")
 
-	require.NoError(t, dst.Merge(ByteSize{}))
+	// zero value is skipped by the generic merge before it reaches ByteSize.Merge
+	require.NoError(t, merge.Merge(&dst, &ByteSize{}))
 
 	assert.Equal(t, "1MiB", string(dst.raw))
 	assert.Equal(t, MustByteSize("1MiB").Value(), dst.Value())
@@ -132,7 +135,8 @@ func TestPercentageSizeMergeZero(t *testing.T) {
 
 	dst := *MustSize("10%").PercentageSize
 
-	require.NoError(t, dst.Merge(PercentageSize{}))
+	// zero value is skipped by the generic merge before it reaches PercentageSize.Merge
+	require.NoError(t, merge.Merge(&dst, &PercentageSize{}))
 
 	assert.Equal(t, "10%", string(dst.raw))
 	assert.Equal(t, uint64(10), dst.Value())
@@ -183,7 +187,21 @@ func TestSizeMerge(t *testing.T) {
 
 		dst := MustSize("1MiB")
 
-		require.NoError(t, dst.Merge(Size{}))
+		// zero value is skipped by the generic merge before it reaches Size.Merge
+		require.NoError(t, merge.Merge(&dst, &Size{}))
+
+		require.NotNil(t, dst.ByteSize)
+		assert.Equal(t, "1MiB", string(dst.ByteSize.raw))
+	})
+
+	t.Run("semantically zero source", func(t *testing.T) {
+		t.Parallel()
+
+		dst := MustSize("1MiB")
+
+		// not a Go zero value (the pointer is set), but Size.IsZero() reports it as empty,
+		// and the YAML encoder would omit it; the generic merge must skip it as well
+		require.NoError(t, merge.Merge(&dst, &Size{ByteSize: &ByteSize{}}))
 
 		require.NotNil(t, dst.ByteSize)
 		assert.Equal(t, "1MiB", string(dst.ByteSize.raw))
