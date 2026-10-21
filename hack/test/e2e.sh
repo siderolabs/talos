@@ -18,6 +18,7 @@
 #  - KUBESTR
 #  - HELM
 #  - CILIUM_CLI
+#  - CILIUM_VERSION
 
 set -eoux pipefail
 
@@ -215,7 +216,8 @@ function build_registry_mirrors {
 function install_and_run_cilium_cni_tests {
   get_kubeconfig
 
-  local cilium_install_args=()
+  # pin the Cilium version explicitly, as the default baked into cilium-cli lags behind the latest stable release
+  local cilium_install_args=("--version=${CILIUM_VERSION}")
 
   if [[ "${WITH_CILIUM_BGP:-false}" == "true" ]]; then
     cilium_install_args+=("--set=bgpControlPlane.enabled=true")

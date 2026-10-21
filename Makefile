@@ -113,6 +113,8 @@ KUBESTR_VERSION ?= v0.4.49
 HELM_VERSION ?= v4.3.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.20.0
+# renovate: datasource=github-releases depName=cilium/cilium
+CILIUM_VERSION ?= v1.20.3
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 # renovate: datasource=github-tags depName=libvirt/libvirt
@@ -675,7 +677,8 @@ e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH) external-art
 		KUBECTL=$(PWD)/$(ARTIFACTS)/kubectl \
 		KUBESTR=$(PWD)/$(ARTIFACTS)/kubestr \
 		HELM=$(PWD)/$(ARTIFACTS)/helm \
-		CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium
+		CILIUM_CLI=$(PWD)/$(ARTIFACTS)/cilium \
+		CILIUM_VERSION=$(CILIUM_VERSION)
 
 provision-tests-prepare: release-artifacts $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64
 
