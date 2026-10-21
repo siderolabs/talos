@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.13.10"
+previous = "v1.13.11"
 
 pre_release = false
 
@@ -15,23 +15,13 @@ preface = """
 """
 
 [notes]
-    [notes.time_check]
-        title = "Time Check API"
-        description = """\
-The `TimeService/TimeCheck` API (`talosctl time --check`) is no longer available to the `os:reader` role, as it allows querying
-arbitrary time servers from the node. The `TimeService/Time` API (querying the configured time server) is still available to `os:reader`.
-
-PTP device paths are now strictly validated both in the machine configuration and in the API: the path should be directly under `/dev`,
-the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the device should be a PTP character device.
-"""
-
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.54
-containerd: 2.2.9
+Linux: 6.18.57
+containerd: 2.2.10
 
-Talos is built with Go 1.26.7
+Talos is built with Go 1.26.9
 """
 
 [make_deps]
