@@ -7,15 +7,23 @@ package logging
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"maps"
 	"net"
 	"net/url"
+	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
+
+// tcpUserTimeout bounds how long data sent to the receiver may stay unacknowledged: without it, a receiver
+// which goes away without closing the connection is noticed only when TCP gives up retransmitting (~15 minutes).
+const tcpUserTimeout = 60 * time.Second
 
 type jsonLinesSender struct {
 	endpoint  *url.URL
@@ -83,14 +91,8 @@ func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 
 	defer unlock()
 
-	// Connect (or "connect" for UDP) if no connection is established already.
-	if j.conn == nil {
-		conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
-		if err != nil {
-			return err
-		}
-
-		j.conn = conn
+	if err = j.connect(ctx); err != nil {
+		return err
 	}
 
 	d, _ := ctx.Deadline()
@@ -110,6 +112,92 @@ func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 	}
 
 	return nil
+}
+
+// connect establishes the connection (or "connects" for UDP) unless it is already established.
+func (j *jsonLinesSender) connect(ctx context.Context) error {
+	// Reconnect if the receiver has closed the connection.
+	if j.conn != nil && receiverClosed(j.conn) {
+		j.conn.Close() //nolint:errcheck
+		j.conn = nil
+	}
+
+	if j.conn != nil {
+		return nil
+	}
+
+	var dialer net.Dialer
+
+	if j.endpoint.Scheme == "tcp" {
+		dialer.Control = setTCPUserTimeout
+	}
+
+	conn, err := dialer.DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
+	if err != nil {
+		return err
+	}
+
+	j.conn = conn
+
+	return nil
+}
+
+func setTCPUserTimeout(_, _ string, c syscall.RawConn) error {
+	var sockErr error
+
+	if err := c.Control(func(fd uintptr) {
+		sockErr = unix.SetsockoptInt(int(fd), unix.IPPROTO_TCP, unix.TCP_USER_TIMEOUT, int(tcpUserTimeout.Milliseconds()))
+	}); err != nil {
+		return err
+	}
+
+	if sockErr != nil {
+		return fmt.Errorf("failed to set TCP_USER_TIMEOUT: %w", sockErr)
+	}
+
+	return nil
+}
+
+// receiverClosed reports whether the receiver has closed the TCP connection (or it has failed).
+//
+// The sender never reads from the connection, so it doesn't see the FIN from the receiver, and writes
+// into the closed connection keep succeeding until the receiver responds with a RST, or, if the receiver
+// is gone, until TCP gives up retransmitting; anything written until then is lost.
+//
+// The check is a non-blocking read: EOF means the receiver has closed the connection.
+func receiverClosed(conn net.Conn) bool {
+	tcpConn, ok := conn.(*net.TCPConn)
+	if !ok {
+		return false
+	}
+
+	rawConn, err := tcpConn.SyscallConn()
+	if err != nil {
+		return true
+	}
+
+	var closed bool
+
+	if err = rawConn.Read(func(fd uintptr) bool {
+		var buf [64]byte
+
+		for {
+			n, err := unix.Read(int(fd), buf[:])
+			if n > 0 {
+				// the receiver is not expected to send anything, discard
+				continue
+			}
+
+			// n == 0 is EOF, any other error except for EAGAIN means the connection has failed
+			closed = !errors.Is(err, unix.EAGAIN)
+
+			return true
+		}
+	}); err != nil {
+		return true
+	}
+
+	return closed
 }
 
 // Close implements LogSender interface.
