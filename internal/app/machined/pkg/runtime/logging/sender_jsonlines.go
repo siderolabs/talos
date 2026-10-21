@@ -14,11 +14,51 @@ import (
 	"net"
 	"net/url"
 	"sync/atomic"
+	"syscall"
 	"time"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
+
+// Liveness settings for TCP connections to the receiver: without them, a receiver which goes away
+// without closing the connection is noticed only when TCP gives up retransmitting (~15 minutes).
+//
+// Keepalives cover the connection while it is idle; TCP_USER_TIMEOUT additionally bounds how long
+// data may stay unacknowledged, which keepalives on their own do not.
+const (
+	tcpKeepaliveIdle     = 30 * time.Second
+	tcpKeepaliveInterval = 10 * time.Second
+	tcpKeepaliveCount    = 3
+	tcpUserTimeout       = 60 * time.Second
+)
+
+// tcpDialer dials the receiver with dead peer detection enabled.
+func tcpDialer() *net.Dialer {
+	return &net.Dialer{
+		KeepAliveConfig: net.KeepAliveConfig{
+			Enable:   true,
+			Idle:     tcpKeepaliveIdle,
+			Interval: tcpKeepaliveInterval,
+			Count:    tcpKeepaliveCount,
+		},
+		Control: func(_, _ string, c syscall.RawConn) error {
+			var sockErr error
+
+			if err := c.Control(func(fd uintptr) {
+				sockErr = setTCPUserTimeout(fd, tcpUserTimeout)
+			}); err != nil {
+				return err
+			}
+
+			if sockErr != nil {
+				return fmt.Errorf("failed to set TCP_USER_TIMEOUT: %w", sockErr)
+			}
+
+			return nil
+		},
+	}
+}
 
 type jsonLinesSender struct {
 	endpoint  *url.URL
@@ -140,7 +180,13 @@ func (j *jsonLinesSender) connect(ctx context.Context) error {
 		return nil
 	}
 
-	conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
+	dialer := new(net.Dialer)
+
+	if j.endpoint.Scheme == "tcp" {
+		dialer = tcpDialer()
+	}
+
+	conn, err := dialer.DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
 	if err != nil {
 		return err
 	}
