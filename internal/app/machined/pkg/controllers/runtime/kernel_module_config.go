@@ -110,8 +110,11 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 		for linkSpec := range linkSpecs.All() {
 			// TODO: we can move link drivers to use same logic
 			// as long as they are created by Talos
-			if linkSpec.TypedSpec().Kind == network.LinkKindVRF {
+			switch linkSpec.TypedSpec().Kind {
+			case network.LinkKindVRF:
 				modules["vrf"] = struct{}{}
+			case network.LinkKindBond:
+				modules["bonding"] = struct{}{}
 			}
 		}
 

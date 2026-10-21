@@ -150,6 +150,7 @@ kernel/drivers/mmc/host/sdhci-uhs2.ko
 kernel/drivers/mmc/host/sdhci-xenon-driver.ko
 kernel/drivers/mmc/host/sdhci.ko
 kernel/drivers/mmc/host/sdhci_f_sdh30.ko
+kernel/drivers/net/bonding/bonding.ko
 kernel/drivers/net/ethernet/amazon/ena/ena.ko
 kernel/drivers/net/ethernet/amd/xgbe/amd-xgbe.ko
 kernel/drivers/net/ethernet/aquantia/atlantic/atlantic.ko
