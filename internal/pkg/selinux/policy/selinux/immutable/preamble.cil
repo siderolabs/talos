@@ -11,3 +11,4 @@
 (policycap userspace_initial_context)
 (policycap genfs_seclabel_symlinks)
 (policycap bpf_token_perms)
+(policycap memfd_class)

@@ -150,6 +150,15 @@
 ; ceph-osd accesses io_uring
 (allow any_p self (anon_inode (map read write create)))
 
+; With the memfd_class policy capability, memfd files are labeled with the
+; creating process's domain in the memfd_file class instead of inheriting the
+; backing tmpfs/hugetlbfs label. Every domain creates and uses its own memfds:
+; runc re-executes itself from one, JITs map them executable, machined hands
+; them to kexec_file_load (zboot, UKI), and the kernel checks read on them there.
+(allow any_p self (memfd_file (
+    append create execmod execute execute_no_trans getattr ioctl lock map open read setattr write
+)))
+
 ; ; cilium lock, socket and misc runtime files
 ; (allow any_p run_t (fs_classes (rw)))
 
