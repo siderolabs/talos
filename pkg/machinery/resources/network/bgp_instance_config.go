@@ -36,13 +36,14 @@ type BGPBFDConfigSpec struct {
 //
 //gotagsrewrite:gen
 type BGPNeighborConfigSpec struct {
-	Address  netip.Addr        `yaml:"address,omitempty" protobuf:"1"`
-	Link     string            `yaml:"link,omitempty" protobuf:"2"`
-	PeerASN  uint32            `yaml:"peerASN,omitempty" protobuf:"3"`
-	HoldTime time.Duration     `yaml:"holdTime,omitempty" protobuf:"4"`
-	BFD      *BGPBFDConfigSpec `yaml:"bfd,omitempty" protobuf:"5"`
-	LocalASN uint32            `yaml:"localASN,omitempty" protobuf:"6"`
-	Passive  bool              `yaml:"passive,omitempty" protobuf:"7"`
+	Address      netip.Addr        `yaml:"address,omitempty" protobuf:"1"`
+	Link         string            `yaml:"link,omitempty" protobuf:"2"`
+	PeerASN      uint32            `yaml:"peerASN,omitempty" protobuf:"3"`
+	HoldTime     time.Duration     `yaml:"holdTime,omitempty" protobuf:"4"`
+	BFD          *BGPBFDConfigSpec `yaml:"bfd,omitempty" protobuf:"5"`
+	LocalASN     uint32            `yaml:"localASN,omitempty" protobuf:"6"`
+	Passive      bool              `yaml:"passive,omitempty" protobuf:"7"`
+	AuthPassword string            `yaml:"authPassword,omitempty" protobuf:"8"`
 }
 
 // BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
@@ -91,8 +92,9 @@ func (BGPInstanceConfigExtension) ResourceDefinition() meta.ResourceDefinitionSp
 			{Name: "Local ASN", JSONPath: "{.localASN}"},
 			{Name: "Router ID", JSONPath: "{.routerID}"},
 			{Name: "VRF", JSONPath: "{.vrf}"},
-			{Name: "Neighbors", JSONPath: "{.neighbors}"},
+			{Name: "Neighbors", JSONPath: "{range .neighbors[*]}{.address}{.link} {end}"},
 		},
+		Sensitivity: meta.Sensitive,
 	}
 }
 

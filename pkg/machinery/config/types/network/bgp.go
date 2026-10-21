@@ -41,7 +41,11 @@ var (
 	_ config.NetworkBGPInstanceConfig = &BGPInstanceConfigV1Alpha1{}
 	_ config.NamedDocument            = &BGPInstanceConfigV1Alpha1{}
 	_ config.Validator                = &BGPInstanceConfigV1Alpha1{}
+	_ config.SecretDocument           = &BGPInstanceConfigV1Alpha1{}
 )
+
+// bgpMaxAuthPasswordLength is the maximum TCP MD5 signature key length supported by the Linux kernel (TCP_MD5SIG_MAXKEYLEN).
+const bgpMaxAuthPasswordLength = 80
 
 // BGPInstanceConfigV1Alpha1 configures a native BGP routing instance on the host.
 //
@@ -163,6 +167,13 @@ type BGPNeighborConfig struct {
 	//     The presence of this block enables BFD; an empty block uses the implementation defaults.
 	//     BFD is supported only when the BGP instance uses the default routing domain, not a VRF.
 	NeighborBFDConfig *BGPBFDConfig `yaml:"bfd,omitempty"`
+	//   description: |
+	//     Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.
+	//     The same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.
+	//     The password must not exceed 80 bytes. If unset, the session is not authenticated.
+	//     Outside of a VRF, the kernel matches the password by peer address only, so unnumbered neighbors
+	//     sharing the same link-local address on different links must all use the same password (or none).
+	NeighborAuthPassword string `yaml:"authPassword,omitempty"`
 }
 
 // BGPBFDConfig configures BFD for a BGP neighbor.
@@ -308,6 +319,8 @@ func (s *BGPInstanceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 		warnings = append(warnings, "BGPInstanceConfig has no neighbors configured")
 	}
 
+	warnings = append(warnings, bgpAuthPasswordWarnings(s.BGPVRF, s.BGPNeighborConfigs)...)
+
 	seen := map[string]struct{}{}
 
 	for i, n := range s.BGPNeighborConfigs {
@@ -328,6 +341,56 @@ func (s *BGPInstanceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 	errs = errors.Join(errs, validateBGPImportRoutes(s.MetaName, s.BGPImportRoutes))
 
 	return warnings, errs
+}
+
+// bgpAuthPasswordWarnings warns about unnumbered neighbors with different passwords outside of a VRF.
+//
+// The kernel matches TCP MD5 keys by peer address only, so neighbors sharing a link-local address would conflict,
+// including when only some of them have a password. Link-local addresses are discovered at runtime, so the
+// warning is conservative and also fires for neighbors that end up with different addresses.
+func bgpAuthPasswordWarnings(vrf string, neighbors []BGPNeighborConfig) []string {
+	if vrf != "" {
+		return nil
+	}
+
+	var (
+		password  string
+		seen      bool
+		different bool
+		anySet    bool
+	)
+
+	for _, n := range neighbors {
+		if n.NeighborLinkConfig == "" {
+			continue
+		}
+
+		anySet = anySet || n.NeighborAuthPassword != ""
+
+		if seen && password != n.NeighborAuthPassword {
+			different = true
+		}
+
+		password, seen = n.NeighborAuthPassword, true
+	}
+
+	if !anySet || !different {
+		return nil
+	}
+
+	return []string{
+		"unnumbered neighbors use different authPassword values outside of a VRF: " +
+			"the kernel matches TCP MD5 keys by peer address only, so neighbors sharing a link-local address must use the same password (or none)",
+	}
+}
+
+// Redact implements config.SecretDocument interface.
+func (s *BGPInstanceConfigV1Alpha1) Redact(replacement string) {
+	for i := range s.BGPNeighborConfigs {
+		if s.BGPNeighborConfigs[i].NeighborAuthPassword != "" {
+			s.BGPNeighborConfigs[i].NeighborAuthPassword = replacement
+		}
+	}
 }
 
 //docgen:nodoc
@@ -450,6 +513,10 @@ func validateBGPNeighborBehavior(index int, neighbor BGPNeighborConfig, vrf stri
 		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: holdTime must not be negative", index))
 	}
 
+	if len(neighbor.NeighborAuthPassword) > bgpMaxAuthPasswordLength {
+		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: authPassword must not exceed %d bytes", index, bgpMaxAuthPasswordLength))
+	}
+
 	if neighbor.NeighborBFDConfig == nil {
 		return errs
 	}
@@ -495,6 +562,9 @@ func (n BGPNeighborConfig) BFD() config.NetworkBGPBFD {
 
 	return n.NeighborBFDConfig
 }
+
+// AuthPassword implements config.NetworkBGPNeighbor interface.
+func (n BGPNeighborConfig) AuthPassword() string { return n.NeighborAuthPassword }
 
 // BGPInstance implements config.NetworkBGPImportRoute interface.
 func (route BGPImportRoute) BGPInstance() string { return route.ImportBGPInstance }

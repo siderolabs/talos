@@ -79,8 +79,9 @@ func TestBGPInstanceConfigProtobufRoundTrip(t *testing.T) {
 				},
 			},
 			{
-				Address: netip.MustParseAddr("198.51.100.1"),
-				PeerASN: 65003,
+				Address:      netip.MustParseAddr("198.51.100.1"),
+				PeerASN:      65003,
+				AuthPassword: "secret",
 			},
 		},
 	}

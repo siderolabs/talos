@@ -30,10 +30,11 @@ func TestBuildPeer(t *testing.T) {
 		Address:       "fe80::1%eth0",
 		BindInterface: "vrf-blue",
 		Config: network.BGPNeighborConfigSpec{
-			PeerASN:  65002,
-			LocalASN: 65003,
-			Passive:  true,
-			HoldTime: 90 * time.Second,
+			PeerASN:      65002,
+			LocalASN:     65003,
+			Passive:      true,
+			HoldTime:     90 * time.Second,
+			AuthPassword: "secret",
 			BFD: &network.BGPBFDConfigSpec{
 				TransmitInterval: 300 * time.Millisecond,
 				ReceiveInterval:  400 * time.Millisecond,
@@ -46,6 +47,7 @@ func TestBuildPeer(t *testing.T) {
 	assert.Equal(t, uint32(65002), peer.GetConf().GetPeerAsn())
 	assert.Equal(t, uint32(65003), peer.GetConf().GetLocalAsn())
 	assert.True(t, peer.GetConf().GetReplacePeerAsn())
+	assert.Equal(t, "secret", peer.GetConf().GetAuthPassword())
 	assert.True(t, peer.GetTransport().GetPassiveMode())
 	assert.Equal(t, "vrf-blue", peer.GetTransport().GetBindInterface())
 	assert.Equal(t, uint64(90), peer.GetTimers().GetConfig().GetHoldTime())
@@ -278,4 +280,15 @@ func TestKeys(t *testing.T) {
 			BFD:      &network.BGPBFDConfigSpec{DetectMultiplier: 3},
 		},
 	}))
+
+	// A changed password has to replace the peer, but the key must not carry the plaintext.
+	authenticated := peer
+	authenticated.Config.AuthPassword = "secret"
+
+	rotated := peer
+	rotated.Config.AuthPassword = "rotated"
+
+	assert.NotEqual(t, internalbgp.PeerKey(peer), internalbgp.PeerKey(authenticated))
+	assert.NotEqual(t, internalbgp.PeerKey(authenticated), internalbgp.PeerKey(rotated))
+	assert.NotContains(t, internalbgp.PeerKey(authenticated), "secret")
 }

@@ -54,6 +54,7 @@ func newFabricConfig(holdTime time.Duration) *networkcfg.BGPInstanceConfigV1Alph
 			NeighborLocalASN:      65004,
 			NeighborPassive:       true,
 			NeighborHoldTime:      15 * time.Second,
+			NeighborAuthPassword:  "secret",
 		},
 	}
 
@@ -87,6 +88,8 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 		assertions.True(spec.Neighbors[1].Passive)
 		assertions.Equal(15*time.Second, spec.Neighbors[1].HoldTime)
 		assertions.Nil(spec.Neighbors[1].BFD)
+		assertions.Empty(spec.Neighbors[0].AuthPassword)
+		assertions.Equal("secret", spec.Neighbors[1].AuthPassword)
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	updatedInstance := newFabricConfig(12 * time.Second)
