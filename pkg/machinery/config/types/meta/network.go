@@ -31,9 +31,7 @@ func (n *Prefix) Merge(other any) error {
 		return fmt.Errorf("cannot merge Prefix with %T", other)
 	}
 
-	if !otherPrefix.IsZero() {
-		*n = otherPrefix
-	}
+	*n = otherPrefix
 
 	return nil
 }
@@ -60,9 +58,7 @@ func (n *Addr) Merge(other any) error {
 		return fmt.Errorf("cannot merge Addr with %T", other)
 	}
 
-	if !otherAddr.IsZero() {
-		*n = otherAddr
-	}
+	*n = otherAddr
 
 	return nil
 }
@@ -89,9 +85,7 @@ func (n *AddrPort) Merge(other any) error {
 		return fmt.Errorf("cannot merge AddrPort with %T", other)
 	}
 
-	if !otherAddrPort.IsZero() {
-		*n = otherAddrPort
-	}
+	*n = otherAddrPort
 
 	return nil
 }

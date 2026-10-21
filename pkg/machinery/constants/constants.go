@@ -20,7 +20,7 @@ var SupportedArchitectures = []string{
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.56-talos"
+	DefaultKernelVersion = "7.3.0-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -1278,7 +1278,7 @@ const (
 	ProcModulesPath = "/proc/modules"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.27.2"
+	GoVersion = "go1.27.3"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
@@ -1404,6 +1404,9 @@ const (
 
 	// KubePrismHealthCheckTimeout is the timeout for health checks for the KubePrism loadbalancer.
 	KubePrismHealthCheckTimeout = 15 * time.Second
+
+	// KubePrismUnhealthyHealthCheckInterval is the interval between health checks when all upstreams are unhealthy.
+	KubePrismUnhealthyHealthCheckInterval = 1 * time.Second
 
 	// KubePrismLowScore is the lowest score for an upstream in the KubePrism loadbalancer.
 	//

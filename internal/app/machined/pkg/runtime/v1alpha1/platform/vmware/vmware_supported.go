@@ -24,6 +24,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	platformerrors "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/pkg/lockdown"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -132,6 +133,23 @@ func readConfigFromOvf(rpci *nanotoolbox.RPCI, key string) ([]byte, error) {
 
 func initializeRPCI() (*nanotoolbox.RPCI, error) {
 	inVMWare, err := hypercall.IsVMWareVM()
+	if errors.Is(err, hypercall.ErrSetPivilegeLevel) {
+		// kernel lockdown denies iopl(2), which the hypercall package only uses as a pre-check: the backdoor itself does not need it
+		ioplErr := err
+
+		switch lockdownState, lockdownErr := lockdown.ReadState(lockdown.Path); {
+		case lockdownErr != nil:
+			log.Printf("failed to read kernel lockdown state: %s", lockdownErr)
+		case lockdownState != runtimeres.LockdownStateNone:
+			log.Printf("kernel lockdown is %s, ignoring I/O privilege level error and probing the VMware backdoor directly", lockdownState)
+
+			inVMWare, err = hypercall.IsVirtual()
+			if err != nil {
+				err = fmt.Errorf("%w (I/O privilege level pre-check skipped under kernel lockdown: %w)", err, ioplErr)
+			}
+		}
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("could not determine if we are running in VMWare VM: %w", err)
 	}

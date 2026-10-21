@@ -312,7 +312,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			// or if the peer connection state is up.
 			if cfgSpec.ForceRouting || peerStatus.State == kubespan.PeerStateUp {
 				for _, prefix := range peerSpec.AllowedIPs {
-					if !network.IsULA(prefix.Addr(), network.ULAKubeSpan) {
+					if !localSpec.Subnet.Contains(prefix.Addr()) {
 						routedIPsBuilder.AddPrefix(prefix)
 					}
 				}

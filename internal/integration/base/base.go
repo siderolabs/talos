@@ -62,6 +62,8 @@ type TalosSuite struct {
 	NUMANodes int
 	// LLDPEnabled runs tests against a cluster created with --with-lldp.
 	LLDPEnabled bool
+	// IPv6Enabled enables tests that require IPv6 on the cluster.
+	IPv6Enabled bool
 	// BGPEnabled runs tests against a cluster created with an embedded BGP fabric peer (--with-bgp)
 	BGPEnabled bool
 	// BGPCLOSEnabled runs the full-CLOS BGP test against a cluster created with --with-bgp-clos (each

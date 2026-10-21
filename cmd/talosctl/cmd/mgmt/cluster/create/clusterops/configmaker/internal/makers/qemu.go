@@ -115,7 +115,9 @@ func (m *Qemu) InitExtra() error {
 	m.ProvisionOps = append(m.ProvisionOps, provision.WithLLDP(m.EOps.WithLLDP))
 
 	if m.EOps.WithBGP {
-		m.initBGP()
+		if err := m.initBGP(); err != nil {
+			return err
+		}
 	}
 
 	if m.EOps.WithBGPCLOS {
@@ -770,7 +772,12 @@ func (m *Qemu) initJSONLogs() {
 
 // initBGP starts an embedded gobgp fabric peer on the bridge gateway. Node-side BGPInstanceConfig is supplied
 // separately via config patches (each node needs a unique loopback, which a shared patch cannot express).
-func (m *Qemu) initBGP() {
+func (m *Qemu) initBGP() error {
+	// the fabric peer, its router-id and the VRF peer are IPv4; IPv4 CIDR always comes first when enabled.
+	if !m.Ops.NetworkIPv4 {
+		return errors.New("--with-bgp requires an IPv4 network (--ipv4)")
+	}
+
 	const (
 		fabricASN = 65000
 		nodeASN   = 65001
@@ -780,6 +787,8 @@ func (m *Qemu) initBGP() {
 	m.ProvisionOps = slices.Concat(m.ProvisionOps, []provision.Option{
 		provision.WithBGP(m.GatewayIPs[0].String(), m.Cidrs[0].String(), advertise, fabricASN, nodeASN),
 	})
+
+	return nil
 }
 
 // initBGPCLOS configures the authentic full-CLOS BGP test: nodes have NO management net0 (only virtio

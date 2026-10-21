@@ -200,6 +200,9 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 			// but a single successful health check is enough to bring it back: with the health check interval being
 			// long, requiring several consecutive successful checks delays the recovery after e.g. API server restart.
 			upstream.WithLowHighScores(constants.KubePrismLowScore, constants.KubePrismHighScore),
+			// Use a shorter interval when all upstreams are unhealthy to speed up recovery on initial cluster bootstrap or
+			// a full cluster reboot.
+			upstream.WithUnhealthyHealthcheckInterval(constants.KubePrismUnhealthyHealthCheckInterval),
 		),
 	)
 	if err != nil {

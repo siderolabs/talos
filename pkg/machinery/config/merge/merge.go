@@ -25,7 +25,10 @@ import (
 //   - slices of `[]byte` are always replaced
 //   - if it is a map, for each key value is merged recursively.
 //   - if it is a struct, merge is performed for each field of the struct.
-//   - if the type implements 'merger' interface, Merge function is called to handle the merge process.
+//   - if the type implements 'merger' interface, Merge function is called to handle the merge process,
+//     unless the right is zero value, so that a field omitted in the right is not merged; zero here means
+//     either Go's zero value (reflect.Value.IsZero) or, if the type implements 'IsZero() bool' (yaml.IsZeroer),
+//     the type's own notion of zero (the one the YAML encoder uses to omit the field).
 //   - merger interface should be implemented on the pointer to the type.
 func Merge(left, right any) error {
 	return merge(reflect.ValueOf(left), reflect.ValueOf(right), false, false)
@@ -36,6 +39,25 @@ type merger interface {
 }
 
 var mergerType = reflect.TypeFor[merger]()
+
+// zeroer matches yaml.IsZeroer: the type's own notion of "empty", which is what the YAML
+// encoder uses to decide whether a field is omitted.
+type zeroer interface {
+	IsZero() bool
+}
+
+// isZero reports whether the value is zero either in the reflect sense or in the type's own sense.
+func isZero(v reflect.Value) bool {
+	if v.IsZero() {
+		return true
+	}
+
+	if z, ok := reflect.TypeAssert[zeroer](v); ok {
+		return z.IsZero()
+	}
+
+	return false
+}
 
 //nolint:gocyclo,cyclop
 func merge(vl, vr reflect.Value, replace, overwrite bool) error {
@@ -50,6 +72,12 @@ func merge(vl, vr reflect.Value, replace, overwrite bool) error {
 	}
 
 	if reflect.PointerTo(tl).Implements(mergerType) {
+		// zero value on the right means the field was omitted, so there is nothing to merge;
+		// the check is done here so that each merger implementation doesn't have to repeat it
+		if isZero(vr) {
+			return nil
+		}
+
 		return vl.Addr().Interface().(merger).Merge(vr.Interface())
 	}
 

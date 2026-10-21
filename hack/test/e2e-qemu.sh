@@ -329,13 +329,30 @@ case "${QEMU_EXTRA_DISKS_ON_CONTROLPLANES:-false}" in
     ;;
 esac
 
+EXTRA_BOOT_KERNEL_ARGS=()
+
 case "${WITH_ENFORCING:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--extra-boot-kernel-args=enforcing=1")
+    EXTRA_BOOT_KERNEL_ARGS+=("enforcing=1")
     ;;
 esac
+
+case "${WITH_IP_FAMILY:-none}" in
+  ipv4)
+    EXTRA_BOOT_KERNEL_ARGS+=("ipv6.disable=1")
+    EXTRA_TEST_ARGS="${EXTRA_TEST_ARGS:-} -talos.networking.ipv6=false"
+    QEMU_FLAGS+=("--config-patch=@hack/test/patches/ipv6-disable.yaml" "--ipv4=true" "--ipv6=false")
+    ;;
+  dualstack)
+    QEMU_FLAGS+=("--ipv4=true" "--ipv6=true")
+    ;;
+esac
+
+if [[ ${#EXTRA_BOOT_KERNEL_ARGS[@]} -gt 0 ]]; then
+  QEMU_FLAGS+=("--extra-boot-kernel-args=${EXTRA_BOOT_KERNEL_ARGS[*]}")
+fi
 
 case "${WITH_AIRGAPPED:-false}" in
   no-proxy)
@@ -407,7 +424,7 @@ function create_cluster {
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
 
-  "${TALOSCTL}" config node 172.20.1.2
+  "${TALOSCTL}" config node "${NODE_ADDR:-172.20.1.2}"
 }
 
 function destroy_cluster() {

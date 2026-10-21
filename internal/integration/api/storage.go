@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -1414,6 +1415,66 @@ func (suite *StorageSuite) TestRAIDArrayGrow_RAID1() {
 	suite.Require().Eventually(func() bool {
 		return suite.mdArrayStatusMatches(nodeCtx, raidName, expectedDevice, grownMemberDisks)
 	}, raidAssertTimeout, raidAssertInterval, "MD array status was not grown for %q", raidName)
+}
+
+// TestRAIDBootArrayDegradedReboot simulates a boot array member dying and verifies the
+// node boots degraded from the survivor instead of dropping to maintenance mode (#14644).
+//
+// The member is zeroed behind md's back and the node is hard-reset via sysrq: a clean
+// reboot would let md rewrite the member's superblock, and failing it via mdadm would
+// record the degradation on the survivor, which udev then assembles right away.
+func (suite *StorageSuite) TestRAIDBootArrayDegradedReboot() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboot")
+	}
+
+	// the boot array name from hack/test/patches/md-boot-array.yaml
+	const raidName = "boot"
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	systemDisk, err := safe.StateGetByID[*block.SystemDisk](nodeCtx, suite.Client.COSI, block.SystemDiskID)
+	suite.Require().NoError(err)
+
+	if !strings.HasPrefix(systemDisk.TypedSpec().DiskID, "md") {
+		suite.T().Skipf("system disk %q is not an MD array", systemDisk.TypedSpec().DiskID)
+	}
+
+	status, err := safe.StateGetByID[*storageres.MDArrayStatus](nodeCtx, suite.Client.COSI, raidName)
+	suite.Require().NoError(err)
+
+	members := slices.Sorted(slices.Values(status.TypedSpec().Members))
+	suite.Require().GreaterOrEqual(len(members), 2, "boot array %q is not mirrored", raidName)
+
+	// keep the first member intact, so the firmware still boots from it
+	victim := members[len(members)-1]
+
+	suite.T().Logf("wiping boot array member %s on %s and hard-resetting the node", victim, node)
+
+	const busybox = "/nix/var/nix/profiles/default/bin/busybox"
+
+	suite.AssertRebooted(suite.ctx, node, func(nodeCtx context.Context) error {
+		// zero the GPT at the start and the md 1.0 superblock + backup GPT at the end
+		suite.RunDebugContainerUntilDisconnect(nodeCtx, node, busybox, "sh", "-c", `
+set -e
+blocks=$(( $(`+busybox+` blockdev --getsize64 "$1") / 4096 ))
+`+busybox+` dd if=/dev/zero of="$1" bs=4096 count=256 conv=fsync
+`+busybox+` dd if=/dev/zero of="$1" bs=4096 count=256 seek=$(( blocks - 256 )) conv=fsync
+echo b > /proc/sysrq-trigger
+`, "wipe-member", victim)
+
+		return nil
+	}, 10*time.Minute)
+
+	// the reconciler re-adds the blank disk as the recovery target
+	suite.Require().Eventually(func() bool {
+		return suite.mdArrayStatusMatches(nodeCtx, raidName, status.TypedSpec().Device, members)
+	}, raidAssertTimeout, raidAssertInterval, "boot array %q was not rebuilt", raidName)
 }
 
 // TestRAIDArrayUserVolumeDisk provisions a disk-backed (whole-device) UserVolume

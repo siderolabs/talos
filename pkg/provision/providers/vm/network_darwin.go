@@ -5,7 +5,9 @@
 package vm
 
 import (
+	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -24,6 +26,9 @@ import (
 
 // vmnetKeepalivePidFile is the pidfile of the keepalive VM that holds the vmnet bridge open.
 const vmnetKeepalivePidFile = "vmnet-keepalive.pid"
+
+// vmnetKeepaliveQMPSocket is the QMP socket of the keepalive VM, used once at start to idle it.
+const vmnetKeepaliveQMPSocket = "vmnet-keepalive.qmp"
 
 // CreateNetwork on darwin brings up the vmnet bridge and holds it open for the whole network lifetime.
 //
@@ -82,7 +87,13 @@ func (p *Provisioner) DestroyNetwork(state *provision.State) error {
 }
 
 // startVmnetKeepalive launches a minimal, paused qemu VM whose only job is to open one vmnet endpoint
-// on the network's subnet, which creates the bridge and holds it open. It never runs a CPU (-S).
+// on the network's subnet, which creates the bridge and holds it open.
+//
+// The VM starts paused (-S) and is then resumed and stopped once over QMP. qemu's vmnet backend arms its
+// "packets available" callback when the interface is created and disarms it only when the VM state changes
+// to stopped. A VM that never ran would keep the callback armed, with nothing reading the packets, and
+// would busy-loop at over 100% CPU. The resume/stop round trip disarms it while the interface (and so the
+// bridge) stays open.
 func startVmnetKeepalive(state *provision.State, gateway netip.Addr, cidr netip.Prefix) (*exec.Cmd, error) {
 	// The end address is the last usable host of the subnet, i.e., the broadcast address minus one.
 	netdev := fmt.Sprintf(
@@ -94,6 +105,8 @@ func startVmnetKeepalive(state *provision.State, gateway netip.Addr, cidr netip.
 	if err != nil {
 		return nil, err
 	}
+
+	qmpPath := state.GetRelativePath(vmnetKeepaliveQMPSocket)
 
 	logFile, err := os.OpenFile(state.GetRelativePath("vmnet-keepalive.log"), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
@@ -111,6 +124,7 @@ func startVmnetKeepalive(state *provision.State, gateway netip.Addr, cidr netip.
 		"-device", "virtio-net-pci,netdev=n0",
 		"-monitor", "none",
 		"-serial", "none",
+		"-qmp", "unix:"+qmpPath+",server,nowait",
 	)
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
@@ -120,7 +134,80 @@ func startVmnetKeepalive(state *provision.State, gateway netip.Addr, cidr netip.
 		return nil, err
 	}
 
+	if err = pauseVmnetKeepalive(qmpPath); err != nil {
+		_ = cmd.Process.Kill() //nolint:errcheck
+
+		return nil, fmt.Errorf("error idling the keepalive VM: %w", err)
+	}
+
 	return cmd, nil
+}
+
+// pauseVmnetKeepalive resumes and stops the keepalive VM over QMP, see [startVmnetKeepalive].
+func pauseVmnetKeepalive(qmpPath string) error {
+	var conn net.Conn
+
+	err := retry.Constant(10*time.Second, retry.WithUnits(50*time.Millisecond)).Retry(func() error {
+		var dialErr error
+
+		conn, dialErr = net.Dial("unix", qmpPath)
+		if dialErr != nil {
+			return retry.ExpectedError(dialErr)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	defer conn.Close() //nolint:errcheck
+
+	if err = conn.SetDeadline(time.Now().Add(10 * time.Second)); err != nil {
+		return err
+	}
+
+	reader := bufio.NewReader(conn)
+
+	// QMP greets first, and commands are accepted only after the capabilities are negotiated.
+	if _, err = reader.ReadBytes('\n'); err != nil {
+		return fmt.Errorf("error reading QMP greeting: %w", err)
+	}
+
+	for _, command := range []string{"qmp_capabilities", "cont", "stop"} {
+		if _, err = fmt.Fprintf(conn, "{\"execute\":%q}\n", command); err != nil {
+			return err
+		}
+
+		// skip asynchronous events until the reply to the command arrives
+		for {
+			line, readErr := reader.ReadBytes('\n')
+			if readErr != nil {
+				return fmt.Errorf("error reading QMP reply to %q: %w", command, readErr)
+			}
+
+			var reply struct {
+				Return json.RawMessage `json:"return"`
+				Error  *struct {
+					Desc string `json:"desc"`
+				} `json:"error"`
+			}
+
+			if err = json.Unmarshal(line, &reply); err != nil {
+				return fmt.Errorf("error parsing QMP reply %q: %w", line, err)
+			}
+
+			if reply.Error != nil {
+				return fmt.Errorf("QMP command %q failed: %s", command, reply.Error.Desc)
+			}
+
+			if reply.Return != nil {
+				break
+			}
+		}
+	}
+
+	return nil
 }
 
 // waitForInterfaceWithAddr waits for the interface that carries the given address to appear and

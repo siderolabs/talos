@@ -5,6 +5,7 @@
 package cel_test
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
 func TestCELMarshal(t *testing.T) {
@@ -65,6 +67,54 @@ func TestCELMarshal(t *testing.T) {
 			require.Equal(t, test.expectedYAML, string(yaml))
 		})
 	}
+}
+
+func TestCELMerge(t *testing.T) {
+	t.Parallel()
+
+	parse := func(t *testing.T, expression string, parsed bool) cel.Expression {
+		if parsed {
+			return cel.MustExpression(cel.ParseBooleanExpression(expression, celenv.DiskLocator()))
+		}
+
+		var expr cel.Expression
+
+		require.NoError(t, expr.UnmarshalText([]byte(expression)))
+
+		return expr
+	}
+
+	for _, exprParsed := range []bool{false, true} {
+		for _, otherParsed := range []bool{false, true} {
+			t.Run(fmt.Sprintf("exprParsed=%t/otherParsed=%t", exprParsed, otherParsed), func(t *testing.T) {
+				t.Parallel()
+
+				expr := parse(t, "true", exprParsed)
+				other := parse(t, "false", otherParsed)
+
+				require.NoError(t, expr.Merge(other))
+
+				assert.Equal(t, "false", expr.String())
+				require.False(t, expr.IsZero())
+
+				result, err := expr.EvalBool(celenv.DiskLocator(), nil)
+				require.NoError(t, err)
+				assert.False(t, result)
+			})
+		}
+	}
+}
+
+func TestCELMergeZero(t *testing.T) {
+	t.Parallel()
+
+	expr := cel.MustExpression(cel.ParseBooleanExpression("true", celenv.DiskLocator()))
+
+	// zero value is skipped by the generic merge before it reaches Expression.Merge
+	require.NoError(t, merge.Merge(&expr, &cel.Expression{}))
+
+	assert.Equal(t, "true", expr.String())
+	require.False(t, expr.IsZero())
 }
 
 func TestCELEvalFromYAML(t *testing.T) {

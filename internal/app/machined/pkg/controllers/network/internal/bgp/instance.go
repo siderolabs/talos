@@ -10,6 +10,7 @@ import (
 	"log/slog" //nolint:loglinter // GoBGP's logger compatibility interface requires slog.
 	"net/netip"
 	"slices"
+	"sync"
 	"time"
 
 	gobgpapi "github.com/osrg/gobgp/v4/api"
@@ -17,6 +18,7 @@ import (
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
 	"go.uber.org/zap"
 	"go.uber.org/zap/exp/zapslog"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -115,6 +117,7 @@ func (instance *Instance) EnsureServer(
 			Asn:              config.LocalASN,
 			RouterId:         routerID.String(),
 			ListenPort:       listenPort,
+			ListenAddresses:  listenAddresses(),
 			UseMultiplePaths: config.Multipath,
 			BindToDevice:     config.VRF,
 		}
@@ -154,6 +157,21 @@ func (instance *Instance) EnsureServer(
 
 	return instance.reconcilePeers(ctx, config, resolvedPeers)
 }
+
+// listenAddresses returns the wildcard addresses to listen on.
+var listenAddresses = sync.OnceValue(func() []string {
+	addrs := []string{
+		netip.IPv4Unspecified().String(),
+	}
+
+	if fd, err := unix.Socket(unix.AF_INET6, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0); err == nil {
+		unix.Close(fd) //nolint:errcheck
+
+		addrs = append(addrs, netip.IPv6Unspecified().String())
+	}
+
+	return addrs
+})
 
 // ReconcileOriginated diffs the desired advertised prefixes against what is currently originated.
 func (instance *Instance) ReconcileOriginated(advertised []netip.Prefix) error {

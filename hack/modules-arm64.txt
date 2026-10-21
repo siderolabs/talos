@@ -1,12 +1,10 @@
-kernel/arch/arm64/lib/xor-neon.ko
 kernel/crypto/async_tx/async_memcpy.ko
 kernel/crypto/async_tx/async_pq.ko
 kernel/crypto/async_tx/async_raid6_recov.ko
 kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
-kernel/crypto/hkdf.ko
-kernel/crypto/xor.ko
 kernel/drivers/acpi/ac.ko
+kernel/drivers/acpi/apei/ghes-nvidia.ko
 kernel/drivers/acpi/battery.ko
 kernel/drivers/acpi/button.ko
 kernel/drivers/acpi/fan.ko
@@ -34,7 +32,6 @@ kernel/drivers/gpu/drm/drm_gpuvm.ko
 kernel/drivers/gpu/drm/drm_panel_backlight_quirks.ko
 kernel/drivers/gpu/drm/drm_suballoc_helper.ko
 kernel/drivers/gpu/drm/drm_ttm_helper.ko
-kernel/drivers/gpu/drm/drm_vram_helper.ko
 kernel/drivers/gpu/drm/hisilicon/hibmc/hibmc-drm.ko
 kernel/drivers/gpu/drm/scheduler/gpu-sched.ko
 kernel/drivers/gpu/drm/tegra/tegra-drm.ko
@@ -78,6 +75,7 @@ kernel/drivers/infiniband/core/ib_cm.ko
 kernel/drivers/infiniband/core/ib_core.ko
 kernel/drivers/infiniband/core/ib_umad.ko
 kernel/drivers/infiniband/core/ib_uverbs.ko
+kernel/drivers/infiniband/core/ib_uverbs_support.ko
 kernel/drivers/infiniband/core/iw_cm.ko
 kernel/drivers/infiniband/core/rdma_cm.ko
 kernel/drivers/infiniband/core/rdma_ucm.ko
@@ -163,7 +161,9 @@ kernel/drivers/net/ethernet/intel/libeth/libeth.ko
 kernel/drivers/net/ethernet/intel/libeth/libeth_xdp.ko
 kernel/drivers/net/ethernet/intel/libie/libie.ko
 kernel/drivers/net/ethernet/intel/libie/libie_adminq.ko
+kernel/drivers/net/ethernet/intel/libie/libie_cp.ko
 kernel/drivers/net/ethernet/intel/libie/libie_fwlog.ko
+kernel/drivers/net/ethernet/intel/libie/libie_pci.ko
 kernel/drivers/net/ethernet/marvell/sky2.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko
@@ -197,6 +197,7 @@ kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-tegra.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-pci.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-platform.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac.ko
+kernel/drivers/net/ethernet/stmicro/stmmac/stmmac_libpci.ko
 kernel/drivers/net/hyperv/hv_netvsc.ko
 kernel/drivers/net/ifb.ko
 kernel/drivers/net/macsec.ko
@@ -331,7 +332,8 @@ kernel/drivers/watchdog/sbsa_gwdt.ko
 kernel/fs/fuse/virtiofs.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
-kernel/lib/raid6/raid6_pq.ko
+kernel/lib/raid/raid6/raid6_pq.ko
+kernel/lib/raid/xor/xor.ko
 kernel/net/ipv4/ip_gre.ko
 kernel/net/ipv6/ip6_gre.ko
 kernel/net/netfilter/ipvs/ip_vs.ko
@@ -341,7 +343,6 @@ kernel/net/netfilter/ipvs/ip_vs_rr.ko
 kernel/net/netfilter/ipvs/ip_vs_sh.ko
 kernel/net/netfilter/ipvs/ip_vs_wrr.ko
 kernel/net/netfilter/xt_ipvs.ko
-kernel/net/openvswitch/vport-gre.ko
 kernel/net/sunrpc/xprtrdma/rpcrdma.ko
 kernel/net/tls/tls.ko
 kernel/net/vmw_vsock/hv_sock.ko

@@ -204,14 +204,14 @@ the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the dev
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.56
+Linux: 7.3
 Kubernetes: 1.38.0-alpha.2
 containerd: 2.3.7
 runc: 1.5.2
 CoreDNS: 1.14.7
 systemd-udevd: 262
 
-Talos is built with Go 1.27.2.
+Talos is built with Go 1.27.3.
 """
 
     [notes.boot_partition]
