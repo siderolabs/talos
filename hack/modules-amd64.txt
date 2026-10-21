@@ -4,9 +4,8 @@ kernel/crypto/async_tx/async_raid6_recov.ko
 kernel/crypto/async_tx/async_tx.ko
 kernel/crypto/async_tx/async_xor.ko
 kernel/crypto/crypto_engine.ko
-kernel/crypto/hkdf.ko
-kernel/crypto/xor.ko
 kernel/drivers/acpi/ac.ko
+kernel/drivers/acpi/apei/ghes-nvidia.ko
 kernel/drivers/acpi/battery.ko
 kernel/drivers/acpi/button.ko
 kernel/drivers/acpi/fan.ko
@@ -107,6 +106,7 @@ kernel/drivers/infiniband/core/ib_cm.ko
 kernel/drivers/infiniband/core/ib_core.ko
 kernel/drivers/infiniband/core/ib_umad.ko
 kernel/drivers/infiniband/core/ib_uverbs.ko
+kernel/drivers/infiniband/core/ib_uverbs_support.ko
 kernel/drivers/infiniband/core/iw_cm.ko
 kernel/drivers/infiniband/core/rdma_cm.ko
 kernel/drivers/infiniband/core/rdma_ucm.ko
@@ -178,7 +178,9 @@ kernel/drivers/net/ethernet/intel/libeth/libeth.ko
 kernel/drivers/net/ethernet/intel/libeth/libeth_xdp.ko
 kernel/drivers/net/ethernet/intel/libie/libie.ko
 kernel/drivers/net/ethernet/intel/libie/libie_adminq.ko
+kernel/drivers/net/ethernet/intel/libie/libie_cp.ko
 kernel/drivers/net/ethernet/intel/libie/libie_fwlog.ko
+kernel/drivers/net/ethernet/intel/libie/libie_pci.ko
 kernel/drivers/net/ethernet/marvell/sky2.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_core.ko
 kernel/drivers/net/ethernet/mellanox/mlx4/mlx4_en.ko
@@ -202,6 +204,7 @@ kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-intel.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-pci.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-platform.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac.ko
+kernel/drivers/net/ethernet/stmicro/stmmac/stmmac_libpci.ko
 kernel/drivers/net/hyperv/hv_netvsc.ko
 kernel/drivers/net/ifb.ko
 kernel/drivers/net/macsec.ko
@@ -228,16 +231,17 @@ kernel/drivers/nvme/target/nvmet.ko
 kernel/drivers/pci/controller/pci-hyperv.ko
 kernel/drivers/pci/controller/vmd.ko
 kernel/drivers/pci/xen-pcifront.ko
+kernel/drivers/platform/wmi/wmi.ko
 kernel/drivers/platform/x86/eeepc-laptop.ko
 kernel/drivers/platform/x86/intel/intel-vsec.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_core.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_core_pltdrv.ko
+kernel/drivers/platform/x86/intel/pmc/intel_pmc_pwrm_telemetry.ko
 kernel/drivers/platform/x86/intel/pmc/intel_pmc_ssram_telemetry.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_class.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_discovery.ko
 kernel/drivers/platform/x86/intel/pmt/pmt_telemetry.ko
 kernel/drivers/platform/x86/wmi-bmof.ko
-kernel/drivers/platform/x86/wmi.ko
 kernel/drivers/powercap/intel_rapl_common.ko
 kernel/drivers/powercap/intel_rapl_msr.ko
 kernel/drivers/scsi/aacraid/aacraid.ko
@@ -305,7 +309,6 @@ kernel/drivers/virtio/virtio_pci_modern_dev.ko
 kernel/drivers/virtio/virtio_vdpa.ko
 kernel/drivers/watchdog/f71808e_wdt.ko
 kernel/drivers/watchdog/i6300esb.ko
-kernel/drivers/watchdog/iTCO_vendor_support.ko
 kernel/drivers/watchdog/iTCO_wdt.ko
 kernel/drivers/watchdog/sp5100_tco.ko
 kernel/drivers/watchdog/watchdog.ko
@@ -315,7 +318,8 @@ kernel/fs/fuse/virtiofs.ko
 kernel/lib/crc/crc8.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko
-kernel/lib/raid6/raid6_pq.ko
+kernel/lib/raid/raid6/raid6_pq.ko
+kernel/lib/raid/xor/xor.ko
 kernel/net/ipv4/ip_gre.ko
 kernel/net/ipv6/ip6_gre.ko
 kernel/net/netfilter/ipvs/ip_vs.ko
@@ -325,7 +329,6 @@ kernel/net/netfilter/ipvs/ip_vs_rr.ko
 kernel/net/netfilter/ipvs/ip_vs_sh.ko
 kernel/net/netfilter/ipvs/ip_vs_wrr.ko
 kernel/net/netfilter/xt_ipvs.ko
-kernel/net/openvswitch/vport-gre.ko
 kernel/net/sunrpc/xprtrdma/rpcrdma.ko
 kernel/net/tls/tls.ko
 kernel/net/vmw_vsock/hv_sock.ko
