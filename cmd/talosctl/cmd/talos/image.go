@@ -284,15 +284,40 @@ func imagePullInternal(
 	imageRef string,
 	rep *reporter.Reporter,
 ) (map[string]string, error) {
+	nodeImageMap := make(map[string]string, len(clientFactory.Nodes()))
+
+	for _, node := range clientFactory.Nodes() {
+		nodeImageMap[node] = imageRef
+	}
+
+	finishedPulls, err := imagePullPerNode(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
+	if status.Code(err) == codes.Unimplemented {
+		// fallback to legacy API for older Talos
+		return nil, imagePullLegacy(ctx, imageRef)
+	}
+
+	return finishedPulls, err
+}
+
+// imagePullPerNode pulls nodeImageMap[node] on each node.
+//
+// If any node doesn't support the ImageService API, the codes.Unimplemented error is returned as is.
+func imagePullPerNode(
+	ctx context.Context,
+	clientFactory *global.ClientFactory,
+	containerdInstance *common.ContainerdInstance,
+	nodeImageMap map[string]string,
+	rep *reporter.Reporter,
+) (map[string]string, error) {
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	responseChan := multiplex.StreamingViaFactory(
+	responseChan := multiplex.StreamingViaFactoryPerNode(
 		streamCtx, clientFactory,
-		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
+		func(ctx context.Context, c *client.Client, node multiplex.NodeRef) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
 			return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
 				Containerd: containerdInstance,
-				ImageRef:   imageRef,
+				ImageRef:   nodeImageMap[node],
 			})
 		},
 	)
@@ -307,10 +332,7 @@ func imagePullInternal(
 	for resp := range responseChan {
 		if resp.Err != nil {
 			if status.Code(resp.Err) == codes.Unimplemented {
-				cancel()
-
-				// fallback to legacy API for older Talos
-				return nil, imagePullLegacy(ctx, imageRef)
+				return nil, resp.Err
 			}
 
 			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
