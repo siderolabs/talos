@@ -71,6 +71,45 @@ func TestSysfsHelpers(t *testing.T) {
 	assert.True(t, syncing)
 }
 
+func TestInSyncMembers(t *testing.T) {
+	oldSysBlockDir := sysBlockDir
+	sysBlockDir = t.TempDir()
+	t.Cleanup(func() { sysBlockDir = oldSysBlockDir })
+
+	mdDir := filepath.Join(sysBlockDir, "md0", "md")
+
+	for member, state := range map[string]string{
+		"sdb":     "in_sync\n",
+		"sda":     "in_sync,writemostly\n",
+		"sdc":     "spare\n",
+		"nvme0n1": "faulty\n",
+	} {
+		require.NoError(t, os.MkdirAll(filepath.Join(mdDir, "dev-"+member), 0o755))
+		require.NoError(t, os.WriteFile(filepath.Join(mdDir, "dev-"+member, "state"), []byte(state), 0o644))
+	}
+
+	require.NoError(t, os.MkdirAll(filepath.Join(sysBlockDir, "sda"), 0o755))
+
+	// the device node is looked up in sysfs by the name it resolves to
+	devDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(devDir, "md0"), nil, 0o644))
+	require.NoError(t, os.Symlink(filepath.Join(devDir, "md0"), filepath.Join(devDir, "md-name-talos:boot")))
+
+	for _, device := range []string{filepath.Join(devDir, "md0"), filepath.Join(devDir, "md-name-talos:boot")} {
+		members, err := InSyncMembers(device)
+		require.NoError(t, err)
+		assert.Equal(t, []string{"/dev/sda", "/dev/sdb"}, members)
+	}
+
+	require.NoError(t, os.WriteFile(filepath.Join(devDir, "sda"), nil, 0o644))
+
+	_, err := InSyncMembers(filepath.Join(devDir, "sda"))
+	assert.ErrorIs(t, err, ErrNotFound)
+
+	_, err = InSyncMembers(filepath.Join(devDir, "missing"))
+	assert.Error(t, err)
+}
+
 func TestMonitorStreamsEvents(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "args")
 	script := filepath.Join(t.TempDir(), "mdadm")

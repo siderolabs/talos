@@ -96,6 +96,7 @@ FROM --platform=arm64 ${PKG_DOSFSTOOLS} AS pkg-dosfstools-arm64
 FROM --platform=amd64 ${PKG_E2FSPROGS} AS pkg-e2fsprogs-amd64
 FROM --platform=arm64 ${PKG_E2FSPROGS} AS pkg-e2fsprogs-arm64
 
+FROM ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd
 FROM --platform=amd64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-amd64
 FROM --platform=arm64 ${PKG_SYSTEMD_UDEVD} AS pkg-systemd-udevd-arm64
 
@@ -143,6 +144,7 @@ FROM --platform=arm64 ${PKG_LIBPOPT} AS pkg-libpopt-arm64
 FROM --platform=amd64 ${PKG_LIBURCU} AS pkg-liburcu-amd64
 FROM --platform=arm64 ${PKG_LIBURCU} AS pkg-liburcu-arm64
 
+FROM ${PKG_LIBUCONTEXT} AS pkg-libucontext
 FROM --platform=amd64 ${PKG_LIBUCONTEXT} AS pkg-libucontext-amd64
 FROM --platform=arm64 ${PKG_LIBUCONTEXT} AS pkg-libucontext-arm64
 
@@ -167,6 +169,7 @@ FROM --platform=arm64 ${PKG_LVM2} AS pkg-lvm2-arm64
 FROM --platform=amd64 ${PKG_LIBAIO} AS pkg-libaio-amd64
 FROM --platform=arm64 ${PKG_LIBAIO} AS pkg-libaio-arm64
 
+FROM ${PKG_MDADM} AS pkg-mdadm
 FROM --platform=amd64 ${PKG_MDADM} AS pkg-mdadm-amd64
 FROM --platform=arm64 ${PKG_MDADM} AS pkg-mdadm-arm64
 
@@ -1211,6 +1214,12 @@ COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libinih / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liblzma / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liburcu / /
+# grub-install runs mdadm to name an md boot disk by its UUID, which is the only name GRUB knows the array by.
+# mdadm needs libudev, which in turn needs libucontext.
+COPY --link --from=pkg-mdadm / /
+COPY --link --from=pkg-systemd-udevd /usr/lib/libudev.so.* /usr/lib/
+COPY --link --from=pkg-libucontext /usr/lib/libucontext.so.* /usr/lib/
+COPY --link --from=pkg-systemd-udevd /usr/share/spdx/systemd.spdx.json /usr/share/spdx/systemd.spdx.json
 COPY --link --from=pkg-mtools / /
 COPY --link --from=pkg-xfsprogs / /
 # Only copy the installer binary and none of the tools used for building it.
