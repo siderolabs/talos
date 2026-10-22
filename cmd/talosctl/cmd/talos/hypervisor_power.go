@@ -52,6 +52,28 @@ var hypervisorStopCmd = &cobra.Command{
 	},
 }
 
+var hypervisorRebootCmdFlags struct {
+	graceful bool
+}
+
+// hypervisorRebootCmd represents the hypervisor reboot command.
+var hypervisorRebootCmd = &cobra.Command{
+	Use:   "reboot <vm-name>",
+	Short: "Reboot a running virtual machine",
+	Long:  `Restarts the guest of a running virtual machine. The machine configuration is not affected.`,
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return withHypervisorNode(cmd.Context(), "talosctl hypervisor reboot", func(ctx context.Context, c *client.Client) error {
+			_, err := c.HypervisorClient.Reboot(ctx, &machine.VirtualMachineRebootRequest{
+				Name:  args[0],
+				Force: !hypervisorRebootCmdFlags.graceful,
+			})
+
+			return err
+		})
+	},
+}
+
 // withHypervisorNode runs f against exactly one node.
 //
 // Virtual machines are host-local, and the hypervisor API is not proxied to many nodes at once, so
@@ -75,7 +97,10 @@ func withHypervisorNode(ctx context.Context, command string, f func(context.Cont
 func init() {
 	hypervisorStopCmd.Flags().BoolVar(&hypervisorStopCmdFlags.graceful, "graceful", true,
 		"ask the guest to power itself off; --graceful=false destroys the domain instead")
+	hypervisorRebootCmd.Flags().BoolVar(&hypervisorRebootCmdFlags.graceful, "graceful", true,
+		"ask the guest to restart itself; --graceful=false destroys the domain instead")
 
 	hypervisorCmd.AddCommand(hypervisorStartCmd)
 	hypervisorCmd.AddCommand(hypervisorStopCmd)
+	hypervisorCmd.AddCommand(hypervisorRebootCmd)
 }

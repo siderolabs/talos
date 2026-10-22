@@ -51,6 +51,7 @@ func (s *VirtualMachineStatusSuite) SetupTest() {
 		texts:           make(map[string]string),
 		starts:          make(map[string]int),
 		shutdowns:       make(map[string]int),
+		reboots:         make(map[string]int),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
@@ -126,6 +127,10 @@ func (c *boundedDomainClient) Remove(libvirtdomain.Domain) error {
 
 func (c *boundedDomainClient) Shutdown(libvirtdomain.Domain) error {
 	panic("bounded client used for shutdown")
+}
+
+func (c *boundedDomainClient) Reboot(libvirtdomain.Domain) error {
+	panic("bounded client used for reboot")
 }
 
 func (s *VirtualMachineStatusSuite) startObserver() {

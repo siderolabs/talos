@@ -102,7 +102,7 @@ func (s *hookedState) Modify(ctx context.Context, res resource.Resource, update 
 }
 
 // powerClient wires a service which can drive power as well as serve consoles.
-func powerClient(t *testing.T, st state.State) machine.HypervisorServiceClient {
+func powerClient(t *testing.T, st state.State, domains func(context.Context) (domain.Client, error)) machine.HypervisorServiceClient {
 	t.Helper()
 
 	listener := bufconn.Listen(1024 * 1024)
@@ -113,7 +113,7 @@ func powerClient(t *testing.T, st state.State) machine.HypervisorServiceClient {
 	}
 
 	machine.RegisterHypervisorServiceServer(server, hypervisord.NewService(st, open,
-		hypervisord.WithPowerState(st)))
+		hypervisord.WithDomainConnector(domains), hypervisord.WithPowerState(st)))
 
 	done := make(chan error, 1)
 
@@ -140,7 +140,7 @@ func TestStopAndStartOverrideThePowerState(t *testing.T) {
 	st := setup(t)
 	addVM(t, st, false, "running")
 	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1", "vm2")
-	c := powerClient(t, st)
+	c := powerClient(t, st, nil)
 
 	_, err := c.Stop(t.Context(), &machine.VirtualMachineStopRequest{Name: "vm1"})
 	require.NoError(t, err)
@@ -171,7 +171,7 @@ func TestStartOverridesAStoppedConfiguration(t *testing.T) {
 
 	st := setup(t)
 	declare(t, st, hypervisorhelpers.PowerStateStopped, "vm1")
-	c := powerClient(t, st)
+	c := powerClient(t, st, nil)
 
 	_, err := c.Start(t.Context(), &machine.VirtualMachineStartRequest{Name: "vm1"})
 	require.NoError(t, err)
@@ -192,7 +192,7 @@ func TestStopAlreadyInEffectKeepsItsRequest(t *testing.T) {
 
 	st := setup(t)
 	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
-	c := powerClient(t, st)
+	c := powerClient(t, st, nil)
 
 	_, err := c.Stop(t.Context(), &machine.VirtualMachineStopRequest{Name: "vm1"})
 	require.NoError(t, err)
@@ -280,7 +280,7 @@ func TestFailedStopDoesNotUndoAConcurrentStop(t *testing.T) {
 
 		return nil
 	}}
-	c := powerClient(t, hooked)
+	c := powerClient(t, hooked, nil)
 
 	forced := make(chan error, 1)
 
@@ -318,7 +318,7 @@ func TestPowerRequestsRefuseUndeclaredMachines(t *testing.T) {
 
 	st := setup(t)
 	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
-	c := powerClient(t, st)
+	c := powerClient(t, st, nil)
 
 	_, err := c.Stop(t.Context(), &machine.VirtualMachineStopRequest{Name: "other"})
 	require.Equal(t, codes.FailedPrecondition, status.Code(err))
@@ -332,3 +332,380 @@ func TestPowerRequestsRefuseUndeclaredMachines(t *testing.T) {
 	_, err = c.Start(t.Context(), &machine.VirtualMachineStartRequest{Name: ""})
 	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }
+
+func TestRebootRequiresAReadyMachine(t *testing.T) {
+	t.Parallel()
+
+	for name, test := range map[string]struct {
+		stage   hypervisorhelpers.VirtualMachineStage
+		power   string
+		managed bool
+		code    codes.Code
+	}{
+		"unmanaged":  {managed: false, code: codes.NotFound},
+		"not driven": {managed: true, power: "stopped", stage: hypervisorhelpers.VirtualMachineStageReady, code: codes.FailedPrecondition},
+		"not ready":  {managed: true, power: "running", stage: hypervisorhelpers.VirtualMachineStagePending, code: codes.FailedPrecondition},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			st := setup(t)
+
+			if test.managed {
+				addVM(t, st, false, test.power)
+
+				spec, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](t.Context(), st, "vm1")
+				require.NoError(t, err)
+
+				vmStatus := hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, "vm1")
+				vmStatus.TypedSpec().ObservedGeneration = hypervisor.VirtualMachineSpecGeneration(spec)
+				vmStatus.TypedSpec().Stage = test.stage
+				require.NoError(t, st.Create(t.Context(), vmStatus))
+			}
+
+			c := powerClient(t, st, func(context.Context) (domain.Client, error) {
+				t.Error("libvirt must not be reached for a machine which cannot be rebooted")
+
+				return nil, errors.New("unreachable")
+			})
+
+			_, err := c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1"})
+			require.Equal(t, test.code, status.Code(err))
+		})
+	}
+}
+
+// A reboot leaves the power state the machine is driven towards alone.
+func TestRebootDoesNotTouchTheMachineConfiguration(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+
+	createReadyRebootStatus(t, st)
+
+	fake := &rebootClient{}
+	c := powerClient(t, st, func(context.Context) (domain.Client, error) { return fake, nil })
+
+	_, err := c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1"})
+	require.NoError(t, err)
+	require.Equal(t, 1, fake.reboots, "a reboot asks the guest unless it is told to force")
+	require.Zero(t, fake.removes)
+
+	_, err = c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+	require.NoError(t, err)
+	require.Equal(t, 1, fake.removes, "a forced reboot destroys the domain and lets it be defined again")
+
+	require.Empty(t, overridePower(t, st, "vm1"))
+	require.True(t, fake.closed, "the libvirt session is not left open")
+}
+
+func createReadyRebootStatus(t *testing.T, st state.State) {
+	t.Helper()
+
+	spec, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](t.Context(), st, "vm1")
+	require.NoError(t, err)
+
+	vmStatus := hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, "vm1")
+	vmStatus.TypedSpec().ObservedGeneration = hypervisor.VirtualMachineSpecGeneration(spec)
+	vmStatus.TypedSpec().Stage = hypervisorhelpers.VirtualMachineStageReady
+	vmStatus.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
+	require.NoError(t, st.Create(t.Context(), vmStatus))
+}
+
+func TestRebootRefusesStaleReadiness(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+	_, err := safe.StateUpdateWithConflicts(t.Context(), st,
+		hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1").Metadata(),
+		func(spec *hypervisor.VirtualMachineSpec) error {
+			spec.TypedSpec().Memory.Size++
+
+			return nil
+		})
+	require.NoError(t, err)
+
+	c := powerClient(t, st, func(context.Context) (domain.Client, error) {
+		t.Error("stale readiness must be refused before connecting to libvirt")
+
+		return &rebootClient{}, nil
+	})
+	_, err = c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+}
+
+func TestRebootRefusesReadinessFromPreviousVMLifetime(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+
+	previous, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](t.Context(), st, "vm1")
+	require.NoError(t, err)
+	require.NoError(t, st.Destroy(t.Context(), previous.Metadata()))
+
+	current := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
+	current.TypedSpec().PowerState = "running"
+	current.TypedSpec().Firmware.Type = "unsupported"
+	require.NoError(t, st.Create(t.Context(), current))
+	require.Equal(t, previous.Metadata().Version(), current.Metadata().Version(), "recreation must reuse the numeric version")
+
+	fake := &rebootClient{}
+	c := powerClient(t, st, func(context.Context) (domain.Client, error) {
+		return fake, nil
+	})
+
+	_, err = c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+	require.Zero(t, fake.removes, "readiness from a previous spec lifetime must never authorize destruction")
+}
+
+func TestRebootRechecksReadinessAfterConnecting(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+
+	fake := &rebootClient{}
+	c := powerClient(t, st, func(context.Context) (domain.Client, error) {
+		_, err := safe.StateUpdateWithConflicts(t.Context(), st,
+			hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1").Metadata(),
+			func(spec *hypervisor.VirtualMachineSpec) error {
+				spec.TypedSpec().PowerState = "stopped"
+
+				return nil
+			})
+		if err != nil {
+			return nil, err
+		}
+
+		return fake, nil
+	})
+
+	_, err := c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+	require.Zero(t, fake.removes, "a superseding stop must not turn into a destructive reboot")
+	require.True(t, fake.closed)
+}
+
+func TestRebootRefusesCommittedStopBeforeProjection(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+	c := powerClient(t, st, func(context.Context) (domain.Client, error) {
+		t.Error("a committed stop must not be rebooted while projections catch up")
+
+		return &rebootClient{}, nil
+	})
+	_, err := c.Stop(t.Context(), &machine.VirtualMachineStopRequest{Name: "vm1"})
+	require.NoError(t, err)
+	_, err = c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+}
+
+func TestStopCommitsWhileRebootIsConnecting(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+
+	connected := make(chan struct{})
+	release := make(chan struct{})
+
+	releaseConnect := sync.OnceFunc(func() { close(release) })
+	defer releaseConnect()
+
+	fake := &rebootClient{}
+	client := powerClient(t, st, func(context.Context) (domain.Client, error) {
+		close(connected)
+		<-release
+
+		return fake, nil
+	})
+	rebootDone := make(chan error, 1)
+
+	go func() {
+		_, err := client.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+		rebootDone <- err
+	}()
+
+	select {
+	case <-connected:
+	case <-time.After(5 * time.Second):
+		t.Fatal("reboot did not reach the connector")
+	}
+
+	stopDone := make(chan error, 1)
+
+	go func() {
+		_, err := client.Stop(t.Context(), &machine.VirtualMachineStopRequest{Name: "vm1", Force: true})
+		stopDone <- err
+	}()
+
+	blocked := false
+
+	var stopErr error
+	select {
+	case stopErr = <-stopDone:
+	case <-time.After(time.Second):
+		blocked = true
+	}
+
+	releaseConnect()
+
+	if blocked {
+		stopErr = <-stopDone
+	}
+
+	rebootErr := <-rebootDone
+
+	require.False(t, blocked, "Stop must commit while the libvirt connector is blocked")
+	require.NoError(t, stopErr)
+	require.Equal(t, codes.FailedPrecondition, status.Code(rebootErr))
+	require.Zero(t, fake.removes)
+	require.Zero(t, fake.reboots)
+}
+
+func TestRebootRejectsCanonicalStopBeforeProjectionWithoutAPIRequest(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+
+	fake := &rebootClient{}
+	client := powerClient(t, st, func(context.Context) (domain.Client, error) {
+		return fake, nil
+	})
+
+	// This is a plain config edit, not Stop: there is no override, and the desired VM/status
+	// projectors still show running.
+	declare(t, st, hypervisorhelpers.PowerStateStopped, "vm1")
+
+	_, err := client.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+	require.Equal(t, codes.FailedPrecondition, status.Code(err))
+	require.Zero(t, fake.removes)
+	require.Zero(t, fake.reboots)
+}
+
+func TestRebootWaitsForInFlightStop(t *testing.T) {
+	t.Parallel()
+
+	st := setup(t)
+	addVM(t, st, false, "running")
+	declare(t, st, hypervisorhelpers.PowerStateRunning, "vm1")
+	createReadyRebootStatus(t, st)
+
+	patchEntered := make(chan struct{})
+	releasePatch := make(chan struct{})
+
+	releaseStop := sync.OnceFunc(func() { close(releasePatch) })
+	defer releaseStop()
+
+	var once sync.Once
+
+	hooked := &hookedState{State: st, beforeWrite: func() error {
+		var err error
+
+		once.Do(func() {
+			close(patchEntered)
+			<-releasePatch
+
+			_, err = safe.StateUpdateWithConflicts(t.Context(), st,
+				hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1").Metadata(),
+				func(spec *hypervisor.VirtualMachineSpec) error {
+					spec.TypedSpec().PowerState = "stopped"
+
+					return nil
+				})
+		})
+
+		return err
+	}}
+	connected := make(chan struct{}, 1)
+	fake := &rebootClient{actions: make(chan struct{}, 1)}
+	c := powerClient(t, hooked, func(context.Context) (domain.Client, error) {
+		connected <- struct{}{}
+
+		return fake, nil
+	})
+	stopDone := make(chan error, 1)
+
+	go func() {
+		_, err := c.Stop(t.Context(), &machine.VirtualMachineStopRequest{Name: "vm1"})
+		stopDone <- err
+	}()
+
+	select {
+	case <-patchEntered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("stop did not reach its override write")
+	}
+
+	rebootDone := make(chan error, 1)
+
+	go func() {
+		_, err := c.Reboot(t.Context(), &machine.VirtualMachineRebootRequest{Name: "vm1", Force: true})
+		rebootDone <- err
+	}()
+
+	select {
+	case <-connected:
+	case <-time.After(5 * time.Second):
+		t.Fatal("reboot did not complete preflight")
+	}
+
+	select {
+	case <-fake.actions:
+		t.Error("reboot changed the domain while Stop was committing")
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	releaseStop()
+
+	require.NoError(t, <-stopDone)
+	require.Equal(t, codes.FailedPrecondition, status.Code(<-rebootDone))
+}
+
+type rebootClient struct {
+	domain.Client
+
+	reboots int
+	removes int
+	closed  bool
+	actions chan struct{}
+}
+
+func (c *rebootClient) Reboot(domain.Domain) error {
+	c.reboots++
+	if c.actions != nil {
+		c.actions <- struct{}{}
+	}
+
+	return nil
+}
+
+func (c *rebootClient) Remove(domain.Domain) error {
+	c.removes++
+	if c.actions != nil {
+		c.actions <- struct{}{}
+	}
+
+	return nil
+}
+
+func (c *rebootClient) Close() { c.closed = true }

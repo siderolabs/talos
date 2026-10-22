@@ -37,6 +37,7 @@ type Service struct {
 	attached    map[string]struct{}
 	openVNC     func(context.Context, domain.Domain) (io.ReadWriteCloser, error)
 	vncAttached map[string]struct{}
+	domains     func(context.Context) (domain.Client, error)
 	power       state.State
 	powerMu     sync.Mutex
 }
@@ -51,12 +52,20 @@ func WithVNCConnector(open func(context.Context, domain.Domain) (io.ReadWriteClo
 	return func(s *Service) { s.openVNC = open }
 }
 
-// WithPowerState enables the power operations, which write power overrides and read the declared
-// power state.
+// WithDomainConnector enables the power operations which act on a live domain rather than on the
+// machine configuration. The connector must honor ctx and return a client whose Close releases the
+// connection.
+func WithDomainConnector(open func(context.Context) (domain.Client, error)) ServiceOption {
+	return func(s *Service) { s.domains = open }
+}
+
+// WithPowerState enables the power operations, which write power overrides and read resource
+// state: the declared power state, and whether a virtual machine is ready to be rebooted.
 //
 // The state is unfiltered, unlike the one the console and VNC sessions read through: a power
-// override is not something a client may write for itself. Each RPC which reaches it is authorized
-// by its own role set, and it is used for nothing else.
+// override is not something a client may write for itself, and a reboot by an operator reads the
+// sensitive VirtualMachineSpec. Each RPC which reaches it is authorized by its own role set, and it
+// is used for nothing else.
 func WithPowerState(power state.State) ServiceOption {
 	return func(s *Service) { s.power = power }
 }

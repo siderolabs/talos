@@ -8,6 +8,8 @@ package hypervisor
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -65,7 +67,7 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 	node, nodeCtx, name := suite.preparePowerVM()
 
 	// A graceful stop asks the guest. Whether this guest obeys is the guest's business; what Talos
-	// owes is the request, the override it wrote, and a legible status either way.
+	// owes is the request, the configuration it wrote, and a legible status either way.
 	_, err := suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
 	suite.Require().NoError(err)
 
@@ -88,31 +90,85 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 	// The stop request of the override says how the stop was carried out.
 	suite.assertStopMode(nodeCtx, name, hypervisorhelpers.StopModeForced)
 
+	// Rebooting something which is not running has nothing to ask.
+	_, err = suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
+	suite.Require().Error(err, "a stopped virtual machine cannot be rebooted")
+
 	_, err = suite.Client.HypervisorClient.Start(nodeCtx, &machine.VirtualMachineStartRequest{Name: name})
 	suite.Require().NoError(err)
 
 	suite.assertPowerOverride(nodeCtx, name, "")
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 0, 0)
+
+	// A graceful reboot resets the guest inside the process it is already running in.
+	before := suite.qemuPID(nodeCtx, name)
+	suite.Require().NotZero(before)
+
+	_, err = suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
+	suite.Require().NoError(err)
+
+	suite.Require().Never(func() bool {
+		return suite.qemuPID(nodeCtx, name) != before
+	}, 15*time.Second, time.Second, "a graceful reboot must keep the domain it was started from")
+
+	// A forced one destroys the domain, and the definition which is live brings it back.
+	_, err = suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name, Force: true})
+	suite.Require().NoError(err)
+
+	suite.Require().Eventually(func() bool {
+		pid := suite.qemuPID(nodeCtx, name)
+
+		return pid != 0 && pid != before
+	}, 2*time.Minute, time.Second, "a forced reboot must have the domain defined again")
+
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 0, 0)
+	suite.assertPowerOverride(nodeCtx, name, "")
 }
 
-// TestAlpineGracefulPower requires guest-visible shutdown, not only an accepted RPC.
+// TestAlpineGracefulPower requires guest-visible reboot and shutdown, not only accepted RPCs.
 func (suite *LibvirtSuite) TestAlpineGracefulPower() {
 	node, nodeCtx := suite.requireAlpineGuestNode()
 	doc := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, 512<<20, "")
 	name := doc.Name()
 	console := suite.loginAlpineConsole(nodeCtx, name)
-	nonce := uuid.NewString()
-	start := console.mark()
-	suite.Require().NoError(console.send("rc-service acpid start && printf '\\nPOWER_ACPID_%s_END\\n' '" + nonce + "'\n"))
-	suite.Require().NoError(console.expectAfter(start, []byte("\r\nPOWER_ACPID_"+nonce+"_END\r\n")),
-		"ACPI setup failed: %q", console.transcript)
+	beforeBootID := suite.alpinePowerBootID(console)
 	suite.detachAlpineConsole(console)
+	beforePID := suite.qemuPID(nodeCtx, name)
+	suite.Require().Positive(beforePID, "the booted guest must have a live QEMU process")
 
-	_, err := suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
+	_, err := suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
+	suite.Require().NoError(err)
+
+	console = suite.loginAlpineConsole(nodeCtx, name)
+	afterBootID := suite.alpinePowerBootID(console)
+	suite.detachAlpineConsole(console)
+	suite.Require().NotEqual(beforeBootID, afterBootID, "the guest must actually reboot")
+	suite.Require().Equal(beforePID, suite.qemuPID(nodeCtx, name), "graceful reboot must retain QEMU")
+
+	_, err = suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
 	suite.Require().NoError(err)
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
 	suite.assertStoppedDomain(nodeCtx, node, name)
 	suite.assertStopMode(nodeCtx, name, hypervisorhelpers.StopModeGraceful)
+}
+
+// alpinePowerBootID enables the stock guest's ACPI handler and reads a guest-generated boot ID.
+func (suite *LibvirtSuite) alpinePowerBootID(console *alpineConsole) string {
+	suite.T().Helper()
+
+	nonce := uuid.NewString()
+	start := console.mark()
+	suite.Require().NoError(console.send("rc-service acpid start && " +
+		"printf '\\nPOWER_BOOT_%s_%s_END\\n' '" + nonce + "' \"$(cat /proc/sys/kernel/random/boot_id)\"\n"))
+	prefix := "\r\nPOWER_BOOT_" + nonce + "_"
+	suite.Require().NoError(console.expectAfter(start, []byte(prefix)), "ACPI setup/boot ID probe failed: %q", console.transcript)
+	begin := start + strings.Index(string(console.transcript[start:]), prefix) + len(prefix)
+	suite.Require().NoError(console.expectAfter(begin, []byte("_END\r\n")))
+	bootID, _, _ := strings.Cut(string(console.transcript[begin:]), "_END\r\n")
+	_, err := uuid.Parse(bootID)
+	suite.Require().NoError(err, "guest boot ID is not a UUID: %q", bootID)
+
+	return bootID
 }
 
 // TestPowerOverrideEndsWithHostReboot verifies a stop lasts only for the boot it was asked in: the
@@ -197,4 +253,28 @@ func (suite *LibvirtSuite) waitForGracefulStop(ctx context.Context, node, name s
 	)
 
 	return false
+}
+
+// qemuPID reports the process the named virtual machine is running in, or zero when it is not.
+func (suite *LibvirtSuite) qemuPID(ctx context.Context, name string) int32 {
+	suite.T().Helper()
+
+	response, err := suite.Client.Processes(ctx)
+	if err != nil {
+		if base.IgnoreGRPCUnavailable(err) == nil {
+			return 0
+		}
+
+		suite.Require().NoError(err)
+	}
+
+	for _, message := range response.Messages {
+		for _, process := range message.Processes {
+			if strings.Contains(process.Executable, "/qemu-system-") && strings.Contains(process.Args, fmt.Sprintf("guest=%s,", name)) {
+				return process.Pid
+			}
+		}
+	}
+
+	return 0
 }

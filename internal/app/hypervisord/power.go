@@ -6,8 +6,10 @@ package hypervisord
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
@@ -51,6 +53,53 @@ func (s *Service) Stop(ctx context.Context, in *machine.VirtualMachineStopReques
 	}
 
 	return &machine.VirtualMachineStopResponse{}, nil
+}
+
+// Reboot implements machine.HypervisorServiceServer.
+//
+// Unlike Start and Stop this leaves the power state a virtual machine is driven towards alone, and
+// acts only on the guest running under it.
+func (s *Service) Reboot(ctx context.Context, in *machine.VirtualMachineRebootRequest) (*machine.VirtualMachineRebootResponse, error) {
+	identity, err := s.rebootable(ctx, in.GetName())
+	if err != nil {
+		return nil, err
+	}
+
+	client, err := s.domains(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "connect to the QEMU daemon: %v", err)
+	}
+
+	defer client.Close()
+
+	s.powerMu.Lock()
+	defer s.powerMu.Unlock()
+
+	// Connecting can block while configuration and controller projections change.
+	if err = s.assertRunningAndReady(ctx, in.GetName()); err != nil {
+		return nil, err
+	}
+
+	// Force means the domain goes away; the controller which owns it defines it again from the
+	// configuration which is live, which is the same definition it was running.
+	//
+	// Remove is idempotent where Reboot is not, so a domain which went away between the readiness
+	// check and this call is reported as a reboot which happened. What makes a reboot of a machine
+	// which is not running fail is rebootable, not the libvirt call it ends in.
+	reboot := client.Reboot
+	if in.GetForce() {
+		reboot = client.Remove
+	}
+
+	if err = reboot(identity); err != nil {
+		if errors.Is(err, domain.ErrDomainNotRunning) {
+			return nil, status.Error(codes.FailedPrecondition, "virtual machine is not running")
+		}
+
+		return nil, status.Errorf(codes.Unavailable, "reboot virtual machine: %v", err)
+	}
+
+	return &machine.VirtualMachineRebootResponse{}, nil
 }
 
 // drive overrides the power state a virtual machine is driven towards for the current boot, and
@@ -137,6 +186,102 @@ func (s *Service) declaredPowerState(ctx context.Context, name string) (hypervis
 	}
 
 	return 0, status.Errorf(codes.FailedPrecondition, "virtual machine %q is not declared in the machine configuration", name)
+}
+
+// rebootable resolves a virtual machine which is ready to be rebooted.
+func (s *Service) rebootable(ctx context.Context, name string) (domain.Domain, error) {
+	if name == "" {
+		return domain.Domain{}, status.Error(codes.InvalidArgument, "virtual machine name is required")
+	}
+
+	if s.domains == nil || s.power == nil {
+		return domain.Domain{}, status.Error(codes.Unimplemented, "virtual machine power management is not available")
+	}
+
+	if err := s.assertRunningAndReady(ctx, name); err != nil {
+		return domain.Domain{}, err
+	}
+
+	machineUUID, err := readMachineUUID(ctx, s.power)
+	if err != nil {
+		return domain.Domain{}, err
+	}
+
+	return domain.Domain{Name: name, UUID: domain.UUID(machineUUID, name)}, nil
+}
+
+// assertNoPendingStop fences reboot while a stop is not projected yet.
+func (s *Service) assertNoPendingStop(ctx context.Context, name string) error {
+	override, err := safe.StateGetByID[*hypervisor.VirtualMachinePowerOverride](ctx, s.power, name)
+	if err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("read power override: %w", err)
+	}
+
+	if override != nil {
+		if override.TypedSpec().PowerState != hypervisorhelpers.PowerStateRunning.String() {
+			return status.Error(codes.FailedPrecondition, "virtual machine is not driven towards running")
+		}
+
+		return nil
+	}
+
+	declared, err := s.declaredPowerState(ctx, name)
+	if status.Code(err) == codes.FailedPrecondition {
+		return nil // Not declared: assertRunningAndReady reports it as not managed.
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if declared != hypervisorhelpers.PowerStateRunning {
+		return status.Error(codes.FailedPrecondition, "virtual machine is not driven towards running")
+	}
+
+	return nil
+}
+
+// assertRunningAndReady refuses a virtual machine which is not driven towards running, or which has
+// something outstanding against the definition which is.
+func (s *Service) assertRunningAndReady(ctx context.Context, name string) error {
+	if err := s.assertNoPendingStop(ctx, name); err != nil {
+		return err
+	}
+
+	spec, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](ctx, s.power, name)
+	if state.IsNotFoundError(err) {
+		return status.Error(codes.NotFound, "virtual machine is not managed")
+	}
+
+	if err != nil {
+		return fmt.Errorf("read virtual machine spec: %w", err)
+	}
+
+	if spec.Metadata().Phase() != resource.PhaseRunning ||
+		spec.TypedSpec().PowerState != hypervisorhelpers.PowerStateRunning.String() {
+		return status.Error(codes.FailedPrecondition, "virtual machine is not driven towards running")
+	}
+
+	vmStatus, err := safe.StateGetByID[*hypervisor.VirtualMachineStatus](ctx, s.power, name)
+	if state.IsNotFoundError(err) {
+		return status.Error(codes.FailedPrecondition, "virtual machine has not been observed yet")
+	}
+
+	if err != nil {
+		return fmt.Errorf("read virtual machine status: %w", err)
+	}
+
+	if vmStatus.TypedSpec().ObservedGeneration != hypervisor.VirtualMachineSpecGeneration(spec) {
+		return status.Error(codes.FailedPrecondition, "virtual machine status has not observed its current configuration yet")
+	}
+
+	// Taking an unready definition down would be taking down a guest which cannot be defined again
+	// until whatever is outstanding against it resolves.
+	if vmStatus.TypedSpec().Stage != hypervisorhelpers.VirtualMachineStageReady {
+		return status.Errorf(codes.FailedPrecondition, "virtual machine is not ready: %s", vmStatus.TypedSpec().Stage)
+	}
+
+	return nil
 }
 
 // readMachineUUID reads the identity every domain of this host is named under.

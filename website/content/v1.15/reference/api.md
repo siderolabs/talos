@@ -72,6 +72,8 @@ description: Talos gRPC API reference.
     - [VNCAttach](#machine.VNCAttach)
     - [VNCRequest](#machine.VNCRequest)
     - [VNCResponse](#machine.VNCResponse)
+    - [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest)
+    - [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse)
     - [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest)
     - [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse)
     - [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest)
@@ -1686,6 +1688,32 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+<a name="machine.VirtualMachineRebootRequest"></a>
+
+### VirtualMachineRebootRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be running. |
+| force | [bool](#bool) |  | Destroy the domain instead of asking the guest to restart itself.<br><br>Unset asks the guest, so pulling the plug on it is something a caller opts into. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineRebootResponse"></a>
+
+### VirtualMachineRebootResponse
+
+
+
+
+
+
+
 <a name="machine.VirtualMachineStartRequest"></a>
 
 ### VirtualMachineStartRequest
@@ -1754,6 +1782,7 @@ HypervisorService exposes virtual machine APIs.
 | VNCStream | [VNCRequest](#machine.VNCRequest) stream | [VNCResponse](#machine.VNCResponse) stream | VNCStream attaches exclusively to one managed VM's live VNC endpoint. The first request must attach a nonempty name; subsequent requests contain opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end. Input EOF, cancellation, or guest EOF detaches; serial attachment is separate. |
 | Start | [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest) | [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse) | Start drives a virtual machine towards running by setting powerState in the machine configuration. |
 | Stop | [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest) | [VirtualMachineStopResponse](#machine.VirtualMachineStopResponse) | Stop drives a virtual machine towards stopped by setting powerState in the machine configuration. |
+| Reboot | [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest) | [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse) | Reboot restarts a running virtual machine, leaving the machine configuration alone. |
 
  <!-- end services -->
 

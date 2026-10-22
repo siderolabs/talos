@@ -24,6 +24,7 @@ const (
 	HypervisorService_VNCStream_FullMethodName     = "/machine.HypervisorService/VNCStream"
 	HypervisorService_Start_FullMethodName         = "/machine.HypervisorService/Start"
 	HypervisorService_Stop_FullMethodName          = "/machine.HypervisorService/Stop"
+	HypervisorService_Reboot_FullMethodName        = "/machine.HypervisorService/Reboot"
 )
 
 // HypervisorServiceClient is the client API for HypervisorService service.
@@ -47,6 +48,8 @@ type HypervisorServiceClient interface {
 	Start(ctx context.Context, in *VirtualMachineStartRequest, opts ...grpc.CallOption) (*VirtualMachineStartResponse, error)
 	// Stop drives a virtual machine towards stopped by setting powerState in the machine configuration.
 	Stop(ctx context.Context, in *VirtualMachineStopRequest, opts ...grpc.CallOption) (*VirtualMachineStopResponse, error)
+	// Reboot restarts a running virtual machine, leaving the machine configuration alone.
+	Reboot(ctx context.Context, in *VirtualMachineRebootRequest, opts ...grpc.CallOption) (*VirtualMachineRebootResponse, error)
 }
 
 type hypervisorServiceClient struct {
@@ -103,6 +106,16 @@ func (c *hypervisorServiceClient) Stop(ctx context.Context, in *VirtualMachineSt
 	return out, nil
 }
 
+func (c *hypervisorServiceClient) Reboot(ctx context.Context, in *VirtualMachineRebootRequest, opts ...grpc.CallOption) (*VirtualMachineRebootResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(VirtualMachineRebootResponse)
+	err := c.cc.Invoke(ctx, HypervisorService_Reboot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // HypervisorServiceServer is the server API for HypervisorService service.
 // All implementations must embed UnimplementedHypervisorServiceServer
 // for forward compatibility.
@@ -124,6 +137,8 @@ type HypervisorServiceServer interface {
 	Start(context.Context, *VirtualMachineStartRequest) (*VirtualMachineStartResponse, error)
 	// Stop drives a virtual machine towards stopped by setting powerState in the machine configuration.
 	Stop(context.Context, *VirtualMachineStopRequest) (*VirtualMachineStopResponse, error)
+	// Reboot restarts a running virtual machine, leaving the machine configuration alone.
+	Reboot(context.Context, *VirtualMachineRebootRequest) (*VirtualMachineRebootResponse, error)
 	mustEmbedUnimplementedHypervisorServiceServer()
 }
 
@@ -145,6 +160,9 @@ func (UnimplementedHypervisorServiceServer) Start(context.Context, *VirtualMachi
 }
 func (UnimplementedHypervisorServiceServer) Stop(context.Context, *VirtualMachineStopRequest) (*VirtualMachineStopResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Stop not implemented")
+}
+func (UnimplementedHypervisorServiceServer) Reboot(context.Context, *VirtualMachineRebootRequest) (*VirtualMachineRebootResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Reboot not implemented")
 }
 func (UnimplementedHypervisorServiceServer) mustEmbedUnimplementedHypervisorServiceServer() {}
 func (UnimplementedHypervisorServiceServer) testEmbeddedByValue()                           {}
@@ -217,6 +235,24 @@ func _HypervisorService_Stop_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _HypervisorService_Reboot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VirtualMachineRebootRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(HypervisorServiceServer).Reboot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: HypervisorService_Reboot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(HypervisorServiceServer).Reboot(ctx, req.(*VirtualMachineRebootRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // HypervisorService_ServiceDesc is the grpc.ServiceDesc for HypervisorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -231,6 +267,10 @@ var HypervisorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Stop",
 			Handler:    _HypervisorService_Stop_Handler,
+		},
+		{
+			MethodName: "Reboot",
+			Handler:    _HypervisorService_Reboot_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
