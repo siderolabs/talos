@@ -364,10 +364,11 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 		ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 		defer cancel()
 
+		proxy := dialer.NewDynamicProxy(httpdefaults.RootCAsTLSConfig)
+
 		conn, connErr := grpc.NewClient(
-			cfg.TypedSpec().Host,
-			withTransportCredentials(cfg.TypedSpec().Insecure),
-			grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
+			proxy.Target(cfg.TypedSpec().Host),
+			append([]grpc.DialOption{withTransportCredentials(cfg.TypedSpec().Insecure)}, proxy.DialOptions()...)...,
 		)
 		if connErr != nil {
 			return nil, fmt.Errorf("error dialing SideroLink endpoint %q: %w", cfg.TypedSpec().Host, connErr)
