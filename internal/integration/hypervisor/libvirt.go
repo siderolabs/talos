@@ -244,15 +244,9 @@ func (suite *LibvirtSuite) TestVNCAttach() {
 func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name string) {
 	suite.T().Helper()
 
-	// A missing domain status alone cannot distinguish a stopped VM from an unavailable daemon.
-	suite.assertNoDomain(node, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](ctx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
-		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
-			asrt.Equal(hypervisorhelpers.VirtualMachinePowerStateUnknown, status.TypedSpec().PowerState)
-			asrt.Equal(hypervisorhelpers.VirtualMachineStageUnknown, status.TypedSpec().Stage)
-		},
-	)
+	// Check backend absence independently of the managed VM's observed stopped state.
+	suite.assertNoDomainWithContext(ctx, node, name)
+	suite.assertVirtualMachineStatus(ctx, name, hypervisorhelpers.VirtualMachinePowerStateStopped)
 }
 
 func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name string, powerState hypervisorhelpers.VirtualMachinePowerState) {
@@ -496,10 +490,15 @@ func (suite *LibvirtSuite) TestDomain() {
 
 	suite.Require().Equal("running", suite.runVirsh(node, "domstate", libvirtDomainName))
 
-	suite.Require().Eventually(func() bool {
+	// The last observed PID and error are reported on failure: 0 means QEMU is gone, another PID
+	// means QEMU was restarted, an error means the process list could not be read.
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		pidAfterServiceRestart, err := suite.libvirtDomainPID(nodeCtx)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-		return err == nil && pidAfterServiceRestart == pidBeforeReboot
+		assert.Equal(collect, pidBeforeReboot, pidAfterServiceRestart, "QEMU PID after the service restart")
 	}, 30*time.Second, 100*time.Millisecond, "service restart must preserve the QEMU process with PID %d", pidBeforeReboot)
 
 	// Node-level reboot check: this suite runs without Kubernetes.

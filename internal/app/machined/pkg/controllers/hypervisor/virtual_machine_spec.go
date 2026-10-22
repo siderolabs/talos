@@ -43,6 +43,11 @@ func (ctrl *VirtualMachineSpecController) Inputs() []controller.Input {
 			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachinePowerOverrideType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -85,6 +90,17 @@ func (ctrl *VirtualMachineSpecController) reconcile(ctx context.Context, runtime
 		return safe.CleanupOutputs[*hypervisor.VirtualMachineSpec](ctx, runtime)
 	}
 
+	overrides, err := safe.ReaderListAll[*hypervisor.VirtualMachinePowerOverride](ctx, runtime)
+	if err != nil {
+		return fmt.Errorf("failed to list virtual machine power overrides: %w", err)
+	}
+
+	byName := make(map[string]hypervisor.VirtualMachinePowerOverrideSpec, overrides.Len())
+
+	for override := range overrides.All() {
+		byName[override.Metadata().ID()] = *override.TypedSpec()
+	}
+
 	var errs []error
 
 	for _, vm := range machineConfig.Config().VirtualMachineConfigs() {
@@ -92,6 +108,12 @@ func (ctrl *VirtualMachineSpecController) reconcile(ctx context.Context, runtime
 			hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vm.Name()),
 			func(res *hypervisor.VirtualMachineSpec) error {
 				*res.TypedSpec() = projectVirtualMachineSpec(vm)
+
+				// An override set for this boot wins over the configured power state.
+				if override, ok := byName[vm.Name()]; ok {
+					res.TypedSpec().PowerState = override.PowerState
+					res.TypedSpec().StopRequest = override.StopRequest
+				}
 
 				return nil
 			},

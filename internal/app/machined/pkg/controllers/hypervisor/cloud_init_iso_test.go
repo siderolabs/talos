@@ -397,11 +397,14 @@ func (s *CloudInitISOSuite) TestRecoversLinkedISOAfterStatusPublicationFailure()
 	status.TypedSpec().SizeBytes = 0
 	status.TypedSpec().Error = "building cloud-init ISO"
 	s.Update(status, state.WithUpdateOwner(status.Metadata().Owner()))
-	currentLibrary, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-	s.Require().NoError(err)
+	_, err = safe.StateUpdateWithConflicts(s.Ctx(), s.State(), library.Metadata(),
+		func(current *hypervisor.ContentLibraryStatus) error {
+			current.TypedSpec().Fingerprint = "trigger-reconciliation-after-restart"
 
-	currentLibrary.TypedSpec().Fingerprint = "trigger-reconciliation-after-restart"
-	s.Update(currentLibrary, state.WithUpdateOwner(currentLibrary.Metadata().Owner()))
+			return nil
+		},
+	)
+	s.Require().NoError(err)
 	ctest.AssertResource(s, id, func(current *hypervisor.CloudInitStatus, a *assert.Assertions) {
 		a.Equal(hypervisor.CloudInitPhaseReady, current.TypedSpec().Phase, current.TypedSpec().Error)
 		a.NotEmpty(current.TypedSpec().Digest)

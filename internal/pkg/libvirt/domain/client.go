@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 	"time"
 
 	libvirt "github.com/digitalocean/go-libvirt"
@@ -97,6 +98,17 @@ func UUID(machine uuid.UUID, name string) uuid.UUID {
 	return uuid.NewHash(sha256.New(), namespace, append(machine[:], []byte(name)...), 8)
 }
 
+// ParseMachineUUID validates the machine UUID every domain of a host is named under, as published
+// by SystemInformation. A nil UUID is refused: it would name every host's domains alike.
+func ParseMachineUUID(machine string) (uuid.UUID, error) {
+	parsed, err := uuid.Parse(machine)
+	if err != nil || parsed == uuid.Nil {
+		return uuid.Nil, fmt.Errorf("invalid machine UUID %q", machine)
+	}
+
+	return parsed, nil
+}
+
 // Domain identifies a domain by name and UUID; it does not prove ownership.
 type Domain struct {
 	Name string
@@ -125,6 +137,7 @@ type Client interface {
 	Info(Domain) (Info, error)
 	GuestInterfaces(Domain) ([]GuestInterface, error)
 	Start(Domain, string, ...StartOption) error
+	Shutdown(Domain) error
 	Remove(Domain) error
 	Close()
 }
@@ -151,6 +164,7 @@ type lifecycleRPC interface {
 	DomainGetInfo(libvirt.Domain) (uint8, uint64, uint64, uint16, uint64, error)
 	DomainInterfaceAddresses(libvirt.Domain, uint32, uint32) ([]libvirt.DomainInterface, error)
 	DomainDestroy(libvirt.Domain) error
+	DomainShutdownFlags(libvirt.Domain, libvirt.DomainShutdownFlagValues) error
 	DomainHasManagedSaveImage(libvirt.Domain, uint32) (int32, error)
 	DomainManagedSaveRemove(libvirt.Domain, uint32) error
 	DomainUndefineFlags(libvirt.Domain, libvirt.DomainUndefineFlagsValues) error
@@ -543,12 +557,6 @@ func (c *client) needsRestart(found libvirt.Domain, exists bool, desired definit
 		(current.Configuration == "" || current.Configuration != desired.Configuration), nil
 }
 
-func (c *client) definitionDigest(found libvirt.Domain) (string, error) {
-	metadata, err := c.definitionMetadata(found)
-
-	return metadata.Full, err
-}
-
 func (c *client) definitionMetadata(found libvirt.Domain) (definitionDigests, error) {
 	currentXML, err := c.rpc.DomainGetXMLDesc(found, 0)
 	if err != nil {
@@ -603,6 +611,64 @@ func (c *client) stopIfActive(found libvirt.Domain) error {
 	return c.rpc.DomainDestroy(found)
 }
 
+// owned looks a claimed domain up and proves Talos defined it.
+//
+// It reports exists=false both when there is no such domain and when the domain went away between
+// the inventory which named it and this call.
+func (c *client) owned(d Domain) (libvirt.Domain, bool, error) {
+	if err := validateDomain(d); err != nil {
+		return libvirt.Domain{}, false, err
+	}
+
+	found, exists, err := c.lookup(d)
+	if err != nil || !exists {
+		return libvirt.Domain{}, false, err
+	}
+
+	if _, err = c.definitionMetadata(found); err != nil {
+		return libvirt.Domain{}, false, err
+	}
+
+	return found, true, nil
+}
+
+// hasCode reports whether err is a libvirt error with one of codes.
+func hasCode(err error, codes ...libvirt.ErrorNumber) bool {
+	rpcErr, ok := errors.AsType[libvirt.Error](err)
+
+	return ok && slices.Contains(codes, libvirt.ErrorNumber(rpcErr.Code))
+}
+
+// Shutdown asks the guest of a claimed domain to power itself off by pressing the virtual ACPI
+// power button.
+//
+// The request is delivered, not obeyed: a guest which ignores the button keeps running, and
+// nothing here waits for or enforces an outcome. The domain is transient, so a guest which does
+// power off takes its domain with it.
+//
+// A domain which is gone needs nothing pressed. One libvirt refuses the press for, such as a paused
+// domain, reports ErrDomainNotRunning: nothing was delivered.
+func (c *client) Shutdown(d Domain) error {
+	found, exists, err := c.owned(d)
+	if err != nil || !exists {
+		return err
+	}
+
+	err = c.rpc.DomainShutdownFlags(found, libvirt.DomainShutdownAcpiPowerBtn)
+
+	switch {
+	case err == nil, hasCode(err, libvirt.ErrNoDomain):
+		return nil
+	case hasCode(err, libvirt.ErrOperationInvalid):
+		return fmt.Errorf("%w: %w", ErrDomainNotRunning, err)
+	default:
+		return err
+	}
+}
+
+// ErrDomainNotRunning says a domain exists but is not running, so a guest cannot be asked anything.
+var ErrDomainNotRunning = errors.New("domain is not running")
+
 // Remove destroys a claimed domain. Previously defined persistent domains are
 // also undefined so upgrading the controller cannot leave them behind.
 func (c *client) Remove(d Domain) error {
@@ -615,7 +681,7 @@ func (c *client) Remove(d Domain) error {
 		return err
 	}
 
-	if _, err = c.definitionDigest(found); err != nil {
+	if _, err = c.definitionMetadata(found); err != nil {
 		return err
 	}
 
