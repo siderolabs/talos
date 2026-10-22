@@ -8,13 +8,13 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/mdlayher/netlink"
+	"golang.org/x/sys/unix"
 )
 
 type rtnetlinkWatcher struct {
 	wg   sync.WaitGroup
-	conn *rtnetlink.Conn
+	conn *netlink.Conn
 }
 
 // NewRtNetlink starts rtnetlink watch over specified groups.
@@ -23,7 +23,8 @@ func NewRtNetlink(trigger Trigger, groups uint32, netlinkGroups ...uint32) (Watc
 
 	var err error
 
-	watcher.conn, err = rtnetlink.Dial(&netlink.Config{
+	// the raw netlink connection is used, as the messages are never decoded
+	watcher.conn, err = netlink.Dial(unix.NETLINK_ROUTE, &netlink.Config{
 		Groups: groups,
 	})
 	if err != nil {
@@ -32,19 +33,14 @@ func NewRtNetlink(trigger Trigger, groups uint32, netlinkGroups ...uint32) (Watc
 
 	for _, group := range netlinkGroups {
 		if err := watcher.conn.JoinGroup(group); err != nil {
+			watcher.conn.Close() //nolint:errcheck
+
 			return nil, fmt.Errorf("error joining group %d: %w", group, err)
 		}
 	}
 
 	watcher.wg.Go(func() {
-		for {
-			_, _, watchErr := watcher.conn.Receive()
-			if watchErr != nil {
-				return
-			}
-
-			trigger.QueueReconcile()
-		}
+		watch(watcher.conn, trigger)
 	})
 
 	return watcher, nil
