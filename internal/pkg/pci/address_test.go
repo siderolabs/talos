@@ -60,3 +60,78 @@ func TestDiskAddresses(t *testing.T) {
 	assert.Equal(t, []string{"0000:85:00.0"}, pci.DiskAddresses(sysfs, "nvme6n1", "/pci0000:80/0000:80:05.1/0000:85:00.0/nvme"))
 	assert.Empty(t, pci.DiskAddresses(sysfs, "loop4", "/virtual"))
 }
+
+// sysfsBlock lays out a block device in a fake sysfs at the given device path, linked from
+// class/block, and returns its device directory.
+func sysfsBlock(t *testing.T, sysfs, devicePath string) string {
+	t.Helper()
+
+	dir := filepath.Join(sysfs, "devices", devicePath)
+	require.NoError(t, os.MkdirAll(dir, 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(sysfs, "class", "block"), 0o755))
+	require.NoError(t, os.Symlink(dir, filepath.Join(sysfs, "class", "block", filepath.Base(dir))))
+
+	return dir
+}
+
+func TestBlockDeviceAddresses(t *testing.T) {
+	t.Parallel()
+
+	sysfs := t.TempDir()
+
+	disk := sysfsBlock(t, sysfs, "pci0000:40/0000:40:01.1/0000:41:00.0/nvme/nvme0/nvme0n1")
+	partition := filepath.Join(disk, "nvme0n1p1")
+	require.NoError(t, os.MkdirAll(partition, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(partition, "partition"), []byte("1\n"), 0o644))
+	require.NoError(t, os.Symlink(partition, filepath.Join(sysfs, "class", "block", "nvme0n1p1")))
+
+	// A multipath head reached through a controller on 0000:42:00.0, and one with no path yet.
+	head := sysfsBlock(t, sysfs, "virtual/nvme-subsystem/nvme-subsys1/nvme1n1")
+	path := filepath.Join(sysfs, "devices", "pci0000:40", "0000:40:01.2", "0000:42:00.0", "nvme", "nvme1", "nvme1c1n1")
+	require.NoError(t, os.MkdirAll(path, 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(head, "multipath"), 0o755))
+	require.NoError(t, os.Symlink(path, filepath.Join(head, "multipath", "nvme1c1n1")))
+
+	pathless := sysfsBlock(t, sysfs, "virtual/nvme-subsystem/nvme-subsys2/nvme2n1")
+	require.NoError(t, os.MkdirAll(filepath.Join(pathless, "multipath"), 0o755))
+
+	// A head whose controllers all failed to enumerate, without even a multipath directory.
+	sysfsBlock(t, sysfs, "virtual/nvme-subsystem/nvme-subsys3/nvme3n1")
+
+	// A device-mapper device on the partition, and one not set up yet.
+	dm := sysfsBlock(t, sysfs, "virtual/block/dm-0")
+	require.NoError(t, os.MkdirAll(filepath.Join(dm, "dm"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(dm, "slaves"), 0o755))
+	require.NoError(t, os.Symlink(partition, filepath.Join(dm, "slaves", "nvme0n1p1")))
+
+	empty := sysfsBlock(t, sysfs, "virtual/block/dm-1")
+	require.NoError(t, os.MkdirAll(filepath.Join(empty, "dm"), 0o755))
+
+	sysfsBlock(t, sysfs, "virtual/block/loop0")
+
+	for _, test := range []struct {
+		name string
+
+		expected []string
+		known    bool
+	}{
+		{name: "nvme0n1", expected: []string{"0000:41:00.0"}, known: true},
+		{name: "nvme0n1p1", expected: []string{"0000:41:00.0"}, known: true},
+		{name: "nvme1n1", expected: []string{"0000:42:00.0"}, known: true},
+		{name: "nvme2n1"},
+		{name: "nvme3n1"},
+		{name: "dm-0", expected: []string{"0000:41:00.0"}, known: true},
+		{name: "dm-1"},
+		{name: "loop0", known: true},
+		{name: "sdz"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			addresses, known := pci.BlockDeviceAddresses(sysfs, test.name)
+
+			assert.Equal(t, test.expected, addresses)
+			assert.Equal(t, test.known, known)
+		})
+	}
+}
