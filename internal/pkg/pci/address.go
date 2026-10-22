@@ -62,3 +62,67 @@ func DiskAddresses(sysfsPath, disk, busPath string) []string {
 
 	return addresses
 }
+
+// BlockDeviceAddresses returns the addresses of the PCI devices a block device is on, read from
+// sysfs alone: a partition resolves to its disk, a device-mapper device to the devices it is built
+// on, and the namespace head of native NVMe multipath to the controllers of its paths.
+//
+// It reports false while that cannot be known yet: the device is not in sysfs, or a multipath
+// head or device-mapper device has no path or slave yet. A device on no PCI device (e.g. a loop
+// device) yields no address and true.
+func BlockDeviceAddresses(sysfsPath, name string) ([]string, bool) {
+	link := filepath.Join(sysfsPath, "class", "block", name)
+
+	resolved, err := filepath.EvalSymlinks(link)
+	if err != nil {
+		return nil, false
+	}
+
+	if _, err = os.Stat(filepath.Join(link, "partition")); err == nil {
+		return BlockDeviceAddresses(sysfsPath, filepath.Base(filepath.Dir(resolved)))
+	}
+
+	if address := AddressFromBusPath(resolved); address != "" {
+		return []string{address}, true
+	}
+
+	// A native NVMe multipath head is reached only through its paths: one with none left (its
+	// controllers did not enumerate) cannot be placed.
+	_, mpErr := os.Stat(filepath.Join(link, "multipath"))
+	if mpErr == nil || strings.Contains(resolved, "/nvme-subsystem/") {
+		addresses := DiskAddresses(sysfsPath, name, "")
+
+		return addresses, len(addresses) > 0
+	}
+
+	return slaveAddresses(sysfsPath, link)
+}
+
+// slaveAddresses returns the addresses of the PCI devices under the block devices a block device
+// is built on (e.g. a device-mapper device's slaves).
+func slaveAddresses(sysfsPath, link string) ([]string, bool) {
+	slaves, err := os.ReadDir(filepath.Join(link, "slaves"))
+	if err != nil || len(slaves) == 0 {
+		// Not built on other block devices; device-mapper devices always are, once set up.
+		_, dmErr := os.Stat(filepath.Join(link, "dm"))
+
+		return nil, dmErr != nil
+	}
+
+	var addresses []string
+
+	for _, slave := range slaves {
+		slaveAddresses, ok := BlockDeviceAddresses(sysfsPath, slave.Name())
+		if !ok {
+			return nil, false
+		}
+
+		for _, address := range slaveAddresses {
+			if !slices.Contains(addresses, address) {
+				addresses = append(addresses, address)
+			}
+		}
+	}
+
+	return addresses, true
+}
