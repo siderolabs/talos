@@ -44,6 +44,7 @@ var airgappedFlags struct {
 	injectHTTPProxy         bool
 	httpsReverseProxyPort   int
 	httpsReverseProxyTarget string
+	allowIPConnect          bool
 }
 
 // airgappedCmd represents the `gen ca` command.
@@ -152,6 +153,17 @@ func runHTTPServer(ctx context.Context, certPEM, keyPEM []byte) error {
 
 func handleTunneling(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	addr := r.URL.Host
+
+	if !airgappedFlags.allowIPConnect {
+		if host, _, err := net.SplitHostPort(addr); err == nil && net.ParseIP(host) != nil {
+			// mimic corporate proxies which allow CONNECT only by hostname, so that clients
+			// which resolve the hostname locally and tunnel to the IP address are caught by the tests
+			log.Printf("HTTP CONNECT: rejecting %s: CONNECT to an IP address is not allowed", addr)
+			http.Error(w, fmt.Sprintf("CONNECT to an IP address %q is not allowed, use the hostname", addr), http.StatusForbidden)
+
+			return
+		}
+	}
 
 	dstConn, err := (&net.Dialer{Timeout: 10 * time.Second}).DialContext(ctx, "tcp", addr)
 	if err != nil {
@@ -376,6 +388,7 @@ func init() {
 	airgappedCmd.Flags().BoolVar(&airgappedFlags.injectHTTPProxy, "inject-http-proxy", true, "Whether to inject HTTP proxy configuration.")
 	airgappedCmd.Flags().IntVar(&airgappedFlags.httpsReverseProxyPort, "https-reverse-proxy-port", 8004, "The HTTPS reverse proxy port.")
 	airgappedCmd.Flags().StringVar(&airgappedFlags.httpsReverseProxyTarget, "https-reverse-proxy-target", "http://localhost/", "The HTTPS reverse proxy target (URL).")
+	airgappedCmd.Flags().BoolVar(&airgappedFlags.allowIPConnect, "allow-ip-connect", false, "Whether to allow HTTP CONNECT to IP addresses (by default only hostnames are allowed).")
 
 	Cmd.AddCommand(airgappedCmd)
 }

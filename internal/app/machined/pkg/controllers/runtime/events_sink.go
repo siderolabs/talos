@@ -164,10 +164,11 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			// establish connection
 			logger.Debug("establishing connection to event sink", zap.String("endpoint", cfg.TypedSpec().Endpoint))
 
+			proxy := dialer.NewDynamicProxy(httpdefaults.RootCAsTLSConfig)
+
 			conn, err = grpc.NewClient(
-				cfg.TypedSpec().Endpoint,
-				grpc.WithTransportCredentials(insecure.NewCredentials()),
-				grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
+				proxy.Target(cfg.TypedSpec().Endpoint),
+				append([]grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())}, proxy.DialOptions()...)...,
 			)
 			if err != nil {
 				return fmt.Errorf("error establishing connection to event sink: %w", err)

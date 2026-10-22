@@ -24,7 +24,6 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
 
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
@@ -326,18 +325,18 @@ func (ctrl *DiscoveryServiceController) startClient(ctx context.Context, logger 
 		}
 	}
 
+	proxy := dialer.NewDynamicProxy(tlsConfigFunc)
+
 	client, err := discoveryclient.NewClient(discoveryclient.Options{
 		Cipher:        cipherBlock,
-		Endpoint:      spec.endpoint,
+		Endpoint:      proxy.Target(spec.endpoint),
 		ClusterID:     spec.clusterID,
 		AffiliateID:   spec.affiliateID,
 		TTL:           defaultDiscoveryTTL,
 		Insecure:      spec.insecure,
 		ClientVersion: version.Tag,
 		TLSConfig:     tlsConfigFunc,
-		DialOptions: []grpc.DialOption{
-			grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(tlsConfigFunc)),
-		},
+		DialOptions:   proxy.DialOptions(),
 	})
 	if err != nil {
 		return fmt.Errorf("error initializing discovery client %q: %w", name, err)
