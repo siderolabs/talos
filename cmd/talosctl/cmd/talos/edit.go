@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"runtime"
 	"strings"
@@ -40,11 +39,6 @@ var editCmdFlags struct {
 
 //nolint:gocyclo
 func editFn() func(ctx context.Context, c *client.Client, node string, mc resource.Resource) error {
-	var (
-		path      string
-		lastError string
-	)
-
 	edit := editor.NewDefaultEditor([]string{
 		"TALOS_EDITOR",
 		"EDITOR",
@@ -55,6 +49,8 @@ func editFn() func(ctx context.Context, c *client.Client, node string, mc resour
 		if err != nil {
 			return err
 		}
+
+		var lastError string
 
 		edited := body
 
@@ -90,26 +86,33 @@ func editFn() func(ctx context.Context, c *client.Client, node string, mc resour
 
 			editedDiff := edited
 
+			var path string
+
 			edited, path, err = edit.LaunchTempFile(fmt.Sprintf("%s-%s-edit-", mc.Metadata().Type(), mc.Metadata().ID()), ".yaml", &buf)
 			if err != nil {
+				if path != "" {
+					os.Remove(path) //nolint:errcheck
+				}
+
 				return err
 			}
 
-			defer os.Remove(path) //nolint:errcheck
-
 			edited = stripEditingComment(edited)
+			stripped := yamlstrip.Comments(edited)
 
 			// If we're retrying the loop because of an error, and no change was made in the file, short-circuit
-			if lastError != "" && bytes.Equal(yamlstrip.Comments(editedDiff), yamlstrip.Comments(edited)) {
-				if _, err = os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
-					message := addEditingComment(lastError)
-					message += fmt.Sprintf("A copy of your changes has been stored to %q\nEdit canceled, no valid changes were saved.\n", path)
+			// keeping the temporary file around as a recovery copy of the rejected changes.
+			if lastError != "" && bytes.Equal(yamlstrip.Comments(editedDiff), stripped) {
+				message := addEditingComment(lastError)
+				message += fmt.Sprintf("A copy of your changes has been stored to %q\nEdit canceled, no valid changes were saved.\n", path)
 
-					return errors.New(message)
-				}
+				return errors.New(message)
 			}
 
-			if len(bytes.TrimSpace(bytes.TrimSpace(yamlstrip.Comments(edited)))) == 0 {
+			// The contents have been read already, so the temporary file is no longer needed.
+			os.Remove(path) //nolint:errcheck
+
+			if len(bytes.TrimSpace(stripped)) == 0 {
 				fmt.Fprintln(safeout.Stderr(), "Apply was skipped: empty file.")
 
 				break
