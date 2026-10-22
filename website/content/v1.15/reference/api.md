@@ -346,6 +346,7 @@ description: Talos gRPC API reference.
     - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
+    - [HardwarePCIDriverRebindPhase](#talos.resource.definitions.enums.HardwarePCIDriverRebindPhase)
     - [HypervisorCloudInitPhase](#talos.resource.definitions.enums.HypervisorCloudInitPhase)
     - [HypervisorContentLibraryPhase](#talos.resource.definitions.enums.HypervisorContentLibraryPhase)
     - [HypervisorVirtualMachineDiskPhase](#talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase)
@@ -5915,6 +5916,24 @@ CriImageCacheStatus describes image cache status type.
 
 
 
+<a name="talos.resource.definitions.enums.HardwarePCIDriverRebindPhase"></a>
+
+### HardwarePCIDriverRebindPhase
+HardwarePCIDriverRebindPhase describes where a device stands in its rebind to a target driver.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| PCI_DRIVER_REBIND_PHASE_PENDING | 0 |  |
+| PCI_DRIVER_REBIND_PHASE_HELD | 1 |  |
+| PCI_DRIVER_REBIND_PHASE_ADOPTED | 2 |  |
+| PCI_DRIVER_REBIND_PHASE_MOVING | 3 |  |
+| PCI_DRIVER_REBIND_PHASE_BOUND | 4 |  |
+| PCI_DRIVER_REBIND_PHASE_UNBOUND | 5 |  |
+| PCI_DRIVER_REBIND_PHASE_RELEASING | 6 |  |
+| PCI_DRIVER_REBIND_PHASE_FAILED | 7 |  |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorCloudInitPhase"></a>
 
 ### HypervisorCloudInitPhase
@@ -9157,6 +9176,9 @@ PCIDriverRebindStatusSpec describes status of rebinded drivers.
 | ----- | ---- | ----- | ----------- |
 | pciid | [string](#string) |  |  |
 | target_driver | [string](#string) |  |  |
+| driver | [string](#string) |  | Driver is the driver the device was last observed bound to, empty when it has none. |
+| phase | [talos.resource.definitions.enums.HardwarePCIDriverRebindPhase](#talos.resource.definitions.enums.HardwarePCIDriverRebindPhase) |  | Phase is where the device stands in its rebind, including whether the controller took it from its driver. |
+| reason | [string](#string) |  | Reason explains why the device is not bound to its target driver, or not handed back yet. |
 
 
 
