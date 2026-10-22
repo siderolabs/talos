@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: LVMVolumeGroupConfig
+name: vg-pool
+provisioning:
+    parents:
+        - kind: RawVolume
+          name: data1
+        - kind: RawVolume
+          name: data2

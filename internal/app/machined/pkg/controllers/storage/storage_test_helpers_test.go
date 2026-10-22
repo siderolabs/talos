@@ -78,6 +78,24 @@ func newVGDoc(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	return doc
 }
 
+// newVGParentsDoc builds a v1alpha1 LVMVolumeGroupConfig doc referencing
+// RawVolume parents instead of a disk selector.
+func newVGParentsDoc(name string, parents ...storagecfg.ProvisioningVolumeParent) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+	doc.MetaName = name
+	doc.ProvisioningSpec.Parents = parents
+
+	return doc
+}
+
+// newRawVolumeDoc builds a minimal v1alpha1 RawVolumeConfig doc, unencrypted.
+func newRawVolumeDoc(name string) *blockcfg.RawVolumeConfigV1Alpha1 {
+	doc := blockcfg.NewRawVolumeConfigV1Alpha1()
+	doc.MetaName = name
+
+	return doc
+}
+
 // applyMachineConfig creates a MachineConfig resource carrying the given
 // v1alpha1 LVMVolumeGroupConfig docs and returns it so tests can later
 // destroy it.

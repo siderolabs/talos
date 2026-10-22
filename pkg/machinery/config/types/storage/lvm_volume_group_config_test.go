@@ -41,6 +41,20 @@ func TestLVMVolumeGroupConfigMarshalUnmarshal(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name:     "parents",
+			filename: "lvmvolumegroupconfig_parents.yaml",
+			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+				c.ProvisioningSpec.Parents = []storagecfg.ProvisioningVolumeParent{
+					{ParentKind: "RawVolume", ParentName: "data1"},
+					{ParentKind: "RawVolume", ParentName: "data2"},
+				}
+
+				return c
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -133,7 +147,72 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "provisioning.volumeSelector.match is required",
+			expectedErrors: "either provisioning.volumeSelector.match or provisioning.parents is required",
+		},
+		{
+			name: "selector and parents both set",
+
+			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+
+				c.ProvisioningSpec.Parents = []storagecfg.ProvisioningVolumeParent{
+					{ParentKind: "RawVolume", ParentName: "data1"},
+				}
+
+				return c
+			},
+
+			expectedErrors: "provisioning.volumeSelector and provisioning.parents are mutually exclusive",
+		},
+		{
+			name: "unsupported parent kind",
+
+			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+
+				c.ProvisioningSpec.Parents = []storagecfg.ProvisioningVolumeParent{
+					{ParentKind: "LVMLogicalVolume", ParentName: "data1"},
+				}
+
+				return c
+			},
+
+			expectedErrors: `provisioning.parents[0].kind: unsupported kind "LVMLogicalVolume", only "RawVolume" is supported`,
+		},
+		{
+			name: "empty parent name",
+
+			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+
+				c.ProvisioningSpec.Parents = []storagecfg.ProvisioningVolumeParent{
+					{ParentKind: "RawVolume", ParentName: ""},
+				}
+
+				return c
+			},
+
+			expectedErrors: "provisioning.parents[0].name is required",
+		},
+		{
+			name: "valid with parents",
+
+			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+				c.MetaName = "vg-pool"
+
+				c.ProvisioningSpec.Parents = []storagecfg.ProvisioningVolumeParent{
+					{ParentKind: "RawVolume", ParentName: "data1"},
+					{ParentKind: "RawVolume", ParentName: "data2"},
+				}
+
+				return c
+			},
 		},
 		{
 			name: "valid",

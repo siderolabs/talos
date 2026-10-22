@@ -88,16 +88,21 @@ type MatchContext struct {
 // either a controller.Reader or a state.State caller.
 //
 // Every volume gets a `volume` variable; `disk` is bound to the real disk only
-// for whole-disk volumes (partitions get an empty DiskSpec). `system_disk` is
-// true for the system disk and its partitions when systemDiskDevPath is known
-// ("" if not).
+// for whole-disk volumes (partitions get an empty DiskSpec, unless encrypted -
+// see below). `system_disk` is true for the system disk and its partitions
+// when systemDiskDevPath is known ("" if not).
 //
 // An encrypted volume splits identity from device. The operator's GPT label is
 // on the ciphertext partition, while the device to write to is the opened
 // device-mapper device, which carries no partition label and whose /dev/dm-N
 // path is assigned in open order. Such a device therefore matches on its
 // ciphertext identity but is reported under the volume's MountLocation, with
-// `volume_id` bound to the volume id.
+// `volume_id` bound to the volume id. `disk` follows suit for a whole-disk
+// ciphertext (its own record, e.g. an encrypted system disk's real hardware
+// properties survive the redirect), but for a partition ciphertext - which
+// has no disk record of its own either way - `disk` is instead bound to the
+// opened device's own record, since a device-mapper node is always a whole
+// disk in its own right regardless of the ciphertext's shape.
 //
 // statuses and cfg also let withhold hold back a device the volume manager is
 // not done with. cfg may be nil.
@@ -322,7 +327,7 @@ func buildMatchContext(
 	// spec stays the identity to match on; the volume decides the device.
 	devPath := cmp.Or(vol.mountLocation, spec.DevPath)
 
-	disk, isDisk := matchContextDisk(spec, diskByDevPath)
+	disk, isDisk := matchContextDisk(spec, devPath, diskByDevPath)
 	_, partitioned := hasPartitions[devPath]
 	systemDisk := systemDiskDevPath != "" && (spec.DevPath == systemDiskDevPath || spec.ParentDevPath == systemDiskDevPath)
 
@@ -341,12 +346,39 @@ func buildMatchContext(
 	}, true, nil
 }
 
+// matchContextDisk resolves the disk CEL variable. volume is the identity
+// matched on (the ciphertext, for an encrypted volume); devPath is the
+// device that decides it (the opened device, when redirected).
+//
+// A whole-disk identity (no parent) always binds disk to its own record -
+// its real hardware properties (transport, model, ...) are what disk.*
+// predicates describe, even when it's an encrypted system disk redirected
+// to an opened device with no such properties of its own.
+//
+// A partition identity has no disk record of its own (a partition is never
+// itself a disk), so disk previously stayed unconditionally unbound for it.
+// When redirected (encrypted), though, the opened device is always a whole,
+// unpartitioned disk in its own right - a device-mapper node is never
+// itself reported as a partition - so binding disk to ITS record, instead
+// of leaving it empty, lets disk-level predicates (e.g. disk.symlinks)
+// match a partition-provisioned encrypted volume by its opened device's own
+// identity, which was never possible before.
 func matchContextDisk(
 	volume *blockpb.DiscoveredVolumeSpec,
+	devPath string,
 	diskByDevPath map[string]*blockpb.DiskSpec,
 ) (*blockpb.DiskSpec, bool) {
 	if volume.ParentDevPath != "" {
-		return &blockpb.DiskSpec{}, false
+		if devPath == volume.DevPath {
+			return &blockpb.DiskSpec{}, false
+		}
+
+		disk := diskByDevPath[devPath]
+		if disk == nil {
+			disk = &blockpb.DiskSpec{}
+		}
+
+		return disk, true
 	}
 
 	disk := diskByDevPath[volume.DevPath]
