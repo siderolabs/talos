@@ -287,12 +287,30 @@ type ContainerNetworkSpec struct {
 
 // ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
 //
-// Zero means unset, which for a limit means unlimited.
+// Zero means unset, which for a limit means unlimited. The swap limit is a pointer because zero is
+// meaningful there: it keeps the container out of swap, while nil leaves swap unlimited.
 //
 //gotagsrewrite:gen
 type ContainerResourcesSpec struct {
-	MemoryLimit uint64 `yaml:"memoryLimit,omitempty" protobuf:"1"`
-	CPULimit    uint64 `yaml:"cpuLimit,omitempty" protobuf:"2"`
+	MemoryLimit uint64  `yaml:"memoryLimit,omitempty" protobuf:"1"`
+	CPULimit    uint64  `yaml:"cpuLimit,omitempty" protobuf:"2"`
+	SwapLimit   *uint64 `yaml:"swapLimit,omitempty" protobuf:"3"`
+}
+
+// Equal compares two resource specs by value: the swap limit is a pointer, which `==` would compare
+// by identity, and an instance read back from the state never shares the spec's pointer.
+func (a ContainerResourcesSpec) Equal(b ContainerResourcesSpec) bool {
+	return a.MemoryLimit == b.MemoryLimit &&
+		a.CPULimit == b.CPULimit &&
+		pointerValuesEqual(a.SwapLimit, b.SwapLimit)
+}
+
+func pointerValuesEqual[T comparable](a, b *T) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+
+	return *a == *b
 }
 
 // ContainerDependsOnSpec is the resolved dependency set.

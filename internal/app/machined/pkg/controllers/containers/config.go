@@ -178,6 +178,7 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 	containerSpecSpec.Resources = containers.ContainerResourcesSpec{
 		MemoryLimit: resources.MemoryLimit().ValueOrZero(),
 		CPULimit:    resources.CPULimit().ValueOrZero(),
+		SwapLimit:   resources.SwapLimit().Ptr(),
 	}
 
 	dependsOn := containerConfig.DependsOn()

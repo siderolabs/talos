@@ -723,11 +723,13 @@ func (x *ContainerNetworkSpec) GetHostNetwork() bool {
 
 // ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
 //
-// Zero means unset, which for a limit means unlimited.
+// Zero means unset, which for a limit means unlimited. The swap limit is a pointer because zero is
+// meaningful there: it keeps the container out of swap, while nil leaves swap unlimited.
 type ContainerResourcesSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	MemoryLimit   uint64                 `protobuf:"varint,1,opt,name=memory_limit,json=memoryLimit,proto3" json:"memory_limit,omitempty"`
 	CpuLimit      uint64                 `protobuf:"varint,2,opt,name=cpu_limit,json=cpuLimit,proto3" json:"cpu_limit,omitempty"`
+	SwapLimit     uint64                 `protobuf:"varint,3,opt,name=swap_limit,json=swapLimit,proto3" json:"swap_limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -772,6 +774,13 @@ func (x *ContainerResourcesSpec) GetMemoryLimit() uint64 {
 func (x *ContainerResourcesSpec) GetCpuLimit() uint64 {
 	if x != nil {
 		return x.CpuLimit
+	}
+	return 0
+}
+
+func (x *ContainerResourcesSpec) GetSwapLimit() uint64 {
+	if x != nil {
+		return x.SwapLimit
 	}
 	return 0
 }
@@ -1305,10 +1314,12 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x06mounts\x18\x02 \x03(\v28.talos.resource.definitions.containers.ResolvedMountSpecR\x06mounts\x12\x14\n" +
 	"\x05error\x18\x03 \x01(\tR\x05error\"9\n" +
 	"\x14ContainerNetworkSpec\x12!\n" +
-	"\fhost_network\x18\x01 \x01(\bR\vhostNetwork\"X\n" +
+	"\fhost_network\x18\x01 \x01(\bR\vhostNetwork\"w\n" +
 	"\x16ContainerResourcesSpec\x12!\n" +
 	"\fmemory_limit\x18\x01 \x01(\x04R\vmemoryLimit\x12\x1b\n" +
-	"\tcpu_limit\x18\x02 \x01(\x04R\bcpuLimit\"8\n" +
+	"\tcpu_limit\x18\x02 \x01(\x04R\bcpuLimit\x12\x1d\n" +
+	"\n" +
+	"swap_limit\x18\x03 \x01(\x04R\tswapLimit\"8\n" +
 	"\x12ContainerRunAsSpec\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x05R\x03uid\x12\x10\n" +
 	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\xb8\x01\n" +

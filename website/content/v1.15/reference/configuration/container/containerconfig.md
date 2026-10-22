@@ -49,6 +49,9 @@ resources:
     limits:
         cpu: 1500m # CPU ceiling in millicores, mapped onto cgroup v2 `cpu.max`.
         memory: 512MiB # Memory ceiling, mapped onto cgroup v2 `memory.max`.
+
+        # # Swap ceiling, mapped onto cgroup v2 `memory.swap.max`.
+        # swap: "0"
 # Conditions which must be satisfied before the container is started.
 dependsOn:
     # Host paths which must exist before the container starts.
@@ -265,6 +268,9 @@ cpu: 1500m
 {{< /highlight >}}</details> | |
 |`memory` |string |Memory ceiling, mapped onto cgroup v2 `memory.max`.<br><br>Exceeding it OOM-kills the container. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 memory: 512MiB
+{{< /highlight >}}</details> | |
+|`swap` |string |Swap ceiling, mapped onto cgroup v2 `memory.swap.max`.<br><br>`0` keeps the container's memory out of swap entirely, so its memory ceiling is enforced<br>by the OOM killer rather than by swapping. Unset leaves the container free to use the<br>node's swap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+swap: "0"
 {{< /highlight >}}</details> | |
 
 

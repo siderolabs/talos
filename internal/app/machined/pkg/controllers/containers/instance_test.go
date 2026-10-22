@@ -303,7 +303,7 @@ func (suite *InstanceSuite) TestInstanceMirrorsFullSpec() {
 			CapabilitiesDrop: []string{"ALL"},
 		}
 		spec.Network = containers.ContainerNetworkSpec{HostNetwork: true}
-		spec.Resources = containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500}
+		spec.Resources = containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500, SwapLimit: new(uint64(0))}
 		// DependsOn gates whether the instance exists; it is not carried onto it.
 		spec.DependsOn = containers.ContainerDependsOnSpec{Time: true}
 	})
@@ -344,7 +344,7 @@ func (suite *InstanceSuite) TestInstanceMirrorsFullSpec() {
 				CapabilitiesDrop: []string{"ALL"},
 			},
 			Network:   containers.ContainerNetworkSpec{HostNetwork: true},
-			Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500},
+			Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500, SwapLimit: new(uint64(0))},
 		}, *instance.TypedSpec())
 	})
 }
@@ -669,6 +669,8 @@ func (suite *InstanceSuite) TestEveryComparedFieldReplacesInstance() {
 		func(spec *containers.ContainerSpecSpec) { spec.Network.HostNetwork = true },
 		func(spec *containers.ContainerSpecSpec) { spec.Resources.MemoryLimit = 1 << 29 },
 		func(spec *containers.ContainerSpecSpec) { spec.Resources.CPULimit = 1500 },
+		// nil and zero differ for the swap limit, so the comparison must see the pointer appear.
+		func(spec *containers.ContainerSpecSpec) { spec.Resources.SwapLimit = new(uint64(0)) },
 		func(spec *containers.ContainerSpecSpec) {
 			spec.Mounts = []containers.ContainerMountSpec{{Kind: containers.MountKindTmpfs, Destination: "/tmp"}}
 		},

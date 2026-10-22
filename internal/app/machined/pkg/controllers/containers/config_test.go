@@ -69,6 +69,7 @@ func (suite *ConfigSuite) TestNormalizesImageAndResolvesDefaults() {
 		asrt.False(spec.TypedSpec().Security.Privileged)
 		asrt.False(spec.TypedSpec().Network.HostNetwork)
 		asrt.Zero(spec.TypedSpec().Resources.MemoryLimit)
+		asrt.Nil(spec.TypedSpec().Resources.SwapLimit)
 	})
 }
 
@@ -143,7 +144,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 	}
 	doc.NetworkConfig = &containercfg.ContainerNetwork{NetworkMode: "host"}
 	doc.ResourcesConfig = &containercfg.ContainerResources{
-		Limits: &containercfg.ContainerResourceLimits{CPU: "1500m", Memory: "512MiB"},
+		Limits: &containercfg.ContainerResourceLimits{CPU: "1500m", Memory: "512MiB", Swap: "0"},
 	}
 	doc.DependsOnConfig = &containercfg.ContainerDependsOn{
 		PathsConfig:    []string{"/var/mnt/data"},
@@ -165,6 +166,10 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		asrt.Equal(uint64(512<<20), spec.TypedSpec().Resources.MemoryLimit)
 		// CPU stays in millicores; the cgroup conversion happens where the cgroup is created.
 		asrt.Equal(uint64(1500), spec.TypedSpec().Resources.CPULimit)
+		// A zero swap limit must survive as a value, not collapse into "unset".
+		if asrt.NotNil(spec.TypedSpec().Resources.SwapLimit) {
+			asrt.Zero(*spec.TypedSpec().Resources.SwapLimit)
+		}
 
 		asrt.Equal([]string{"/var/mnt/data"}, spec.TypedSpec().DependsOn.Paths)
 		asrt.True(spec.TypedSpec().DependsOn.Time)

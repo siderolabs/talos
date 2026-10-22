@@ -102,6 +102,16 @@ func (a containerResourcesSpec) CgroupResources() *cgroup2.Resources {
 		}
 	}
 
+	// memory.swap.max stands on its own in cgroup v2: unlike the OCI memory+swap value, it needs no
+	// memory.max to go with it, so a container may be kept out of swap without a memory ceiling.
+	if spec.SwapLimit != nil {
+		if cgroupResources.Memory == nil {
+			cgroupResources.Memory = &cgroup2.Memory{}
+		}
+
+		cgroupResources.Memory.Swap = new(int64(*spec.SwapLimit)) //nolint:gosec
+	}
+
 	if spec.CPULimit > 0 {
 		// cpu.max is a quota over a period, unlike the weight used elsewhere in Talos: this is a
 		// ceiling, not a share.

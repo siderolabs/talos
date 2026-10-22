@@ -47,6 +47,10 @@ func (o ContainerSpecSpec) DeepCopy() ContainerSpecSpec {
 		cp.Security.CapabilitiesDrop = make([]string, len(o.Security.CapabilitiesDrop))
 		copy(cp.Security.CapabilitiesDrop, o.Security.CapabilitiesDrop)
 	}
+	if o.Resources.SwapLimit != nil {
+		cp.Resources.SwapLimit = new(uint64)
+		*cp.Resources.SwapLimit = *o.Resources.SwapLimit
+	}
 	if o.DependsOn.Paths != nil {
 		cp.DependsOn.Paths = make([]string, len(o.DependsOn.Paths))
 		copy(cp.DependsOn.Paths, o.DependsOn.Paths)
@@ -134,6 +138,10 @@ func (o ContainerInstanceSpecSpec) DeepCopy() ContainerInstanceSpecSpec {
 	if o.Security.CapabilitiesDrop != nil {
 		cp.Security.CapabilitiesDrop = make([]string, len(o.Security.CapabilitiesDrop))
 		copy(cp.Security.CapabilitiesDrop, o.Security.CapabilitiesDrop)
+	}
+	if o.Resources.SwapLimit != nil {
+		cp.Resources.SwapLimit = new(uint64)
+		*cp.Resources.SwapLimit = *o.Resources.SwapLimit
 	}
 	return cp
 }

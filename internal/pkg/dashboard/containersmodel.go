@@ -444,6 +444,14 @@ func formatRuntimeConfig(spec *containers.ContainerSpecSpec) string {
 		parts = append(parts, "memory "+humanize.IBytes(spec.Resources.MemoryLimit))
 	}
 
+	if spec.Resources.SwapLimit != nil {
+		if *spec.Resources.SwapLimit == 0 {
+			parts = append(parts, "no swap")
+		} else {
+			parts = append(parts, "swap "+humanize.IBytes(*spec.Resources.SwapLimit))
+		}
+	}
+
 	return strings.Join(parts, " · ")
 }
 

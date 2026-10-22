@@ -93,6 +93,17 @@ type ContainerResourceLimits struct {
 	//   schema:
 	//     type: string
 	Memory string `yaml:"memory,omitempty"`
+	//   description: |
+	//     Swap ceiling, mapped onto cgroup v2 `memory.swap.max`.
+	//
+	//     `0` keeps the container's memory out of swap entirely, so its memory ceiling is enforced
+	//     by the OOM killer rather than by swapping. Unset leaves the container free to use the
+	//     node's swap.
+	//   examples:
+	//     - value: '"0"'
+	//   schema:
+	//     type: string
+	Swap string `yaml:"swap,omitempty"`
 }
 
 // MemoryLimit implements config.ContainerResourcesConfig interface.
@@ -102,6 +113,20 @@ func (r *ContainerResources) MemoryLimit() optional.Optional[uint64] {
 	}
 
 	size, err := humanize.ParseBytes(r.Limits.Memory)
+	if err != nil {
+		return optional.None[uint64]()
+	}
+
+	return optional.Some(size)
+}
+
+// SwapLimit implements config.ContainerResourcesConfig interface.
+func (r *ContainerResources) SwapLimit() optional.Optional[uint64] {
+	if r.Limits == nil || r.Limits.Swap == "" {
+		return optional.None[uint64]()
+	}
+
+	size, err := humanize.ParseBytes(r.Limits.Swap)
 	if err != nil {
 		return optional.None[uint64]()
 	}
@@ -135,6 +160,13 @@ func (r *ContainerResources) Validate() error {
 		if _, err := humanize.ParseBytes(r.Limits.Memory); err != nil {
 			validationErrors = errors.Join(validationErrors,
 				fmt.Errorf("limits.memory %q is not a valid size: %w", r.Limits.Memory, err))
+		}
+	}
+
+	if r.Limits.Swap != "" {
+		if _, err := humanize.ParseBytes(r.Limits.Swap); err != nil {
+			validationErrors = errors.Join(validationErrors,
+				fmt.Errorf("limits.swap %q is not a valid size: %w", r.Limits.Swap, err))
 		}
 	}
 

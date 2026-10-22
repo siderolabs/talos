@@ -125,6 +125,8 @@ type ContainerNetworkConfig interface {
 type ContainerResourcesConfig interface {
 	// MemoryLimit maps onto cgroup v2 memory.max; None means unlimited.
 	MemoryLimit() optional.Optional[uint64]
+	// SwapLimit maps onto cgroup v2 memory.swap.max; None means unlimited, zero means no swap.
+	SwapLimit() optional.Optional[uint64]
 	// CPULimit maps onto cgroup v2 cpu.max, in millicores; None means unlimited.
 	CPULimit() optional.Optional[uint64]
 }

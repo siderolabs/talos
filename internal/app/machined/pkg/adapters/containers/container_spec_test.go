@@ -108,3 +108,58 @@ func TestPrefixCapabilities(t *testing.T) {
 		})
 	}
 }
+
+func TestCgroupResources(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name         string
+		spec         containers.ContainerResourcesSpec
+		expectMemory bool
+		expectMax    *int64
+		expectSwap   *int64
+	}{
+		{
+			name: "no limits",
+		},
+		{
+			name:         "memory only",
+			spec:         containers.ContainerResourcesSpec{MemoryLimit: 1 << 29},
+			expectMemory: true,
+			expectMax:    new(int64(1 << 29)),
+		},
+		{
+			// The swap ceiling needs no memory ceiling to go with it.
+			name:         "swap only",
+			spec:         containers.ContainerResourcesSpec{SwapLimit: new(uint64(0))},
+			expectMemory: true,
+			expectSwap:   new(int64(0)),
+		},
+		{
+			name:         "memory and swap",
+			spec:         containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, SwapLimit: new(uint64(1 << 28))},
+			expectMemory: true,
+			expectMax:    new(int64(1 << 29)),
+			expectSwap:   new(int64(1 << 28)),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			resources := containersadapter.ContainerResourcesSpec(&tt.spec).CgroupResources()
+
+			if !tt.expectMemory {
+				assert.Nil(t, resources.Memory)
+
+				return
+			}
+
+			if assert.NotNil(t, resources.Memory) {
+				assert.Equal(t, tt.expectMax, resources.Memory.Max)
+				assert.Equal(t, tt.expectSwap, resources.Memory.Swap)
+			}
+		})
+	}
+}

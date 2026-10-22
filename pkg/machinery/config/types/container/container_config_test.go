@@ -105,6 +105,7 @@ resources:
   limits:
     cpu: 1500m
     memory: 512MiB
+    swap: "0"
 dependsOn:
   paths:
     - /var/mnt/director-data
@@ -138,6 +139,11 @@ dependsOn:
 	cpu, ok := cfg.Resources().CPULimit().Get()
 	require.True(t, ok)
 	assert.Equal(t, uint64(1500), cpu)
+
+	// Zero is a value here, not "unset": it is what keeps the container out of swap.
+	swap, ok := cfg.Resources().SwapLimit().Get()
+	require.True(t, ok)
+	assert.Zero(t, swap)
 
 	mounts := cfg.Mounts()
 	require.Len(t, mounts, 3)
@@ -299,6 +305,11 @@ mounts:
 			name:        "bad memory size",
 			doc:         "name: nginx\nimage: nginx\nresources:\n  limits:\n    memory: lots",
 			expectedErr: "is not a valid size",
+		},
+		{
+			name:        "bad swap size",
+			doc:         "name: nginx\nimage: nginx\nresources:\n  limits:\n    swap: none",
+			expectedErr: "limits.swap \"none\" is not a valid size",
 		},
 		{
 			name:        "unknown network condition",

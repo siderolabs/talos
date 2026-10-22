@@ -282,6 +282,24 @@ The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
 `talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
 """
 
+    [notes.container_swap_limit]
+        title = "Container Swap Limit"
+        description = """\
+`ContainerConfig` documents can now cap the swap a container may use, independently of its memory limit:
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: collector
+image: ghcr.io/example/collector:v1.0.0
+resources:
+  limits:
+    swap: "0"
+```
+
+The value maps onto cgroup v2 `memory.swap.max`. Zero keeps the container out of swap entirely, so its memory ceiling is enforced by the OOM killer rather than by swapping; unset leaves the node's swap available to it.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

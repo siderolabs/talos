@@ -204,6 +204,7 @@ func TestFormatContainerDetail(t *testing.T) {
 		Resources: containers.ContainerResourcesSpec{
 			CPULimit:    1500,
 			MemoryLimit: 512 << 20,
+			SwapLimit:   new(uint64(0)),
 		},
 		Mounts: []containers.ContainerMountSpec{
 			{Kind: containers.MountKindUserVolume, VolumeName: "web-content", Destination: "/var/www"},
@@ -235,6 +236,7 @@ func TestFormatContainerDetail(t *testing.T) {
 	assert.Contains(t, detail, "privileged")
 	assert.Contains(t, detail, "cpu 1500m")
 	assert.Contains(t, detail, "memory 512 MiB")
+	assert.Contains(t, detail, "no swap")
 	assert.Contains(t, detail, "user volume web-content to /var/www")
 	assert.Contains(t, detail, "tmpfs 64 MiB to /var/cache (rw)")
 	assert.Contains(t, detail, "network addresses · time · containers collector")

@@ -399,11 +399,19 @@ func (ContainerResourceLimits) Doc() *encoder.Doc {
 				Description: "Memory ceiling, mapped onto cgroup v2 `memory.max`.\n\nExceeding it OOM-kills the container.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Memory ceiling, mapped onto cgroup v2 `memory.max`." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "swap",
+				Type:        "string",
+				Note:        "",
+				Description: "Swap ceiling, mapped onto cgroup v2 `memory.swap.max`.\n\n`0` keeps the container's memory out of swap entirely, so its memory ceiling is enforced\nby the OOM killer rather than by swapping. Unset leaves the container free to use the\nnode's swap.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Swap ceiling, mapped onto cgroup v2 `memory.swap.max`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", "1500m")
 	doc.Fields[1].AddExample("", "512MiB")
+	doc.Fields[2].AddExample("", "0")
 
 	return doc
 }

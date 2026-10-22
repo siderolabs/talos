@@ -1570,6 +1570,13 @@
           "description": "Memory ceiling, mapped onto cgroup v2 memory.max.\n\nExceeding it OOM-kills the container.\n",
           "markdownDescription": "Memory ceiling, mapped onto cgroup v2 `memory.max`.\n\nExceeding it OOM-kills the container.",
           "x-intellij-html-description": "\u003cp\u003eMemory ceiling, mapped onto cgroup v2 \u003ccode\u003ememory.max\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eExceeding it OOM-kills the container.\u003c/p\u003e\n"
+        },
+        "swap": {
+          "type": "string",
+          "title": "swap",
+          "description": "Swap ceiling, mapped onto cgroup v2 memory.swap.max.\n\n0 keeps the container’s memory out of swap entirely, so its memory ceiling is enforced\nby the OOM killer rather than by swapping. Unset leaves the container free to use the\nnode’s swap.\n",
+          "markdownDescription": "Swap ceiling, mapped onto cgroup v2 `memory.swap.max`.\n\n`0` keeps the container's memory out of swap entirely, so its memory ceiling is enforced\nby the OOM killer rather than by swapping. Unset leaves the container free to use the\nnode's swap.",
+          "x-intellij-html-description": "\u003cp\u003eSwap ceiling, mapped onto cgroup v2 \u003ccode\u003ememory.swap.max\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003e0\u003c/code\u003e keeps the container\u0026rsquo;s memory out of swap entirely, so its memory ceiling is enforced\nby the OOM killer rather than by swapping. Unset leaves the container free to use the\nnode\u0026rsquo;s swap.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

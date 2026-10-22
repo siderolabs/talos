@@ -122,10 +122,12 @@ message ContainerNetworkSpec {
 
 // ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
 //
-// Zero means unset, which for a limit means unlimited.
+// Zero means unset, which for a limit means unlimited. The swap limit is a pointer because zero is
+// meaningful there: it keeps the container out of swap, while nil leaves swap unlimited.
 message ContainerResourcesSpec {
   uint64 memory_limit = 1;
   uint64 cpu_limit = 2;
+  uint64 swap_limit = 3;
 }
 
 // ContainerRunAsSpec is the resolved uid/gid override.

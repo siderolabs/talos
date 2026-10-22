@@ -77,8 +77,9 @@ func TestProtobufRoundTrip(t *testing.T) {
 			CapabilitiesAdd:  []string{"NET_ADMIN"},
 			CapabilitiesDrop: []string{"ALL"},
 		},
-		Network:   containers.ContainerNetworkSpec{HostNetwork: true},
-		Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500},
+		Network: containers.ContainerNetworkSpec{HostNetwork: true},
+		// A zero swap limit is the interesting case: it must come back as a pointer to zero, not nil.
+		Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500, SwapLimit: new(uint64(0))},
 		DependsOn: containers.ContainerDependsOnSpec{
 			Paths:      []string{"/var/mnt/web-content"},
 			Networks:   []string{"addresses"},
@@ -141,8 +142,9 @@ func TestInstanceProtobufRoundTrip(t *testing.T) {
 			CapabilitiesAdd:  []string{"NET_ADMIN"},
 			CapabilitiesDrop: []string{"ALL"},
 		},
-		Network:   containers.ContainerNetworkSpec{HostNetwork: true},
-		Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500},
+		Network: containers.ContainerNetworkSpec{HostNetwork: true},
+		// A zero swap limit is the interesting case: it must come back as a pointer to zero, not nil.
+		Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500, SwapLimit: new(uint64(0))},
 	}
 
 	assertRoundTrip(t, spec)

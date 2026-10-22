@@ -244,7 +244,7 @@ func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx contex
 		ResolvedMountsEqual(expectedResolvedMounts, instanceSpec.Mounts) &&
 		containerSpec.Security.Equal(instanceSpec.Security) &&
 		containerSpec.Network == instanceSpec.Network &&
-		containerSpec.Resources == instanceSpec.Resources
+		containerSpec.Resources.Equal(instanceSpec.Resources)
 
 	return inSync, nil
 }

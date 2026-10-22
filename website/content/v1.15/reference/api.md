@@ -8330,13 +8330,15 @@ ContainerNetworkSpec is the resolved network configuration.
 ### ContainerResourcesSpec
 ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
 
-Zero means unset, which for a limit means unlimited.
+Zero means unset, which for a limit means unlimited. The swap limit is a pointer because zero is
+meaningful there: it keeps the container out of swap, while nil leaves swap unlimited.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | memory_limit | [uint64](#uint64) |  |  |
 | cpu_limit | [uint64](#uint64) |  |  |
+| swap_limit | [uint64](#uint64) |  |  |
 
 
 
