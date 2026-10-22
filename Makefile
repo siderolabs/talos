@@ -34,6 +34,8 @@ GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
+# in a git worktree, .git is a file pointing into the main checkout, so containers need that directory mounted too
+GIT_COMMON_DIR_MOUNT := $(shell git_dir=$$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null); if [ -n "$$git_dir" ] && [ "$${git_dir#$(PWD)/}" = "$$git_dir" ]; then echo "-v $$git_dir:$$git_dir:ro"; fi)
 IMAGE_SIGNER_RELEASE ?= v0.3.2
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
@@ -760,12 +762,12 @@ secureboot-stable-artifacts: ## Builds the stable-release secureboot ISO and ins
 .PHONY: rekres
 rekres:
 	@docker pull $(KRES_IMAGE)
-	@docker run --rm --net=host --user $(shell id -u):$(shell id -g) -v $(PWD):/src -w /src -e GITHUB_TOKEN $(KRES_IMAGE)
+	@docker run --rm --net=host --user $(shell id -u):$(shell id -g) -v $(PWD):/src $(GIT_COMMON_DIR_MOUNT) -w /src -e GITHUB_TOKEN $(KRES_IMAGE)
 
 .PHONY: conformance
 conformance:
 	@docker pull $(CONFORMANCE_IMAGE)
-	@docker run --rm -it -v $(PWD):/src -w /src $(CONFORMANCE_IMAGE) enforce
+	@docker run --rm -it -v $(PWD):/src $(GIT_COMMON_DIR_MOUNT) -w /src $(CONFORMANCE_IMAGE) enforce
 
 .PHONY: release-notes
 release-notes:

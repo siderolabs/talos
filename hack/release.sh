@@ -4,9 +4,22 @@ set -e
 
 RELEASE_TOOL_IMAGE="ghcr.io/siderolabs/release-tool:latest"
 
+# In a git worktree, .git is a file pointing into the main checkout, so the repository has to be mounted separately.
+function git_common_dir_mount {
+  local git_dir
+
+  git_dir=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+
+  case "${git_dir}" in
+    ""|"${PWD}"|"${PWD}"/*) ;;
+    *) echo "-v ${git_dir}:${git_dir}:ro" ;;
+  esac
+}
+
 function release-tool {
   docker pull "${RELEASE_TOOL_IMAGE}" >/dev/null
-  docker run --net=host --rm -w /src -v "${PWD}":/src:ro "${RELEASE_TOOL_IMAGE}" -l -d -n ${2} -t "${1}" ./hack/release.toml
+  # shellcheck disable=SC2046
+  docker run --net=host --rm -w /src -v "${PWD}":/src:ro $(git_common_dir_mount) "${RELEASE_TOOL_IMAGE}" -l -d -n ${2} -t "${1}" ./hack/release.toml
 }
 
 function changelog {
