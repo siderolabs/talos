@@ -200,5 +200,17 @@ func PrepareAuth(auth config.RegistryAuthConfig, host, expectedHost string) (str
 
 // newTransport creates HTTP transport with default settings.
 func newTransport() *http.Transport {
-	return httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
+	transport := httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
+
+	// Pull blobs over HTTP/1.1, as containerd CRI does.
+	//
+	// containerd's fetcher resumes an interrupted blob download with a Range request
+	// only when the read fails with io.ErrUnexpectedEOF, which is what HTTP/1.1 reports
+	// when the server closes the connection mid-body (e.g. when a time-limited signed
+	// blob URL expires). Over HTTP/2 the same cut arrives as RST_STREAM and surfaces as
+	// an http2.StreamError, which is not resumable, so the whole layer pull fails.
+	// Registry pulls are large sequential downloads, so HTTP/2 multiplexing buys nothing.
+	transport.ForceAttemptHTTP2 = false
+
+	return transport
 }
