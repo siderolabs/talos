@@ -7,9 +7,12 @@ package image_test
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/opencontainers/go-digest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
@@ -485,3 +488,57 @@ kdzt5fxQaxFGRrMcIQBiu77D5+jNB5n5DQtdcj7EqgIwH7y6C+IwJPt8bYBVCpk+
 gA0z5Wajs6O7pdWLjwkspl1+4vAHCGht0nxpbl/f5Wpl
 -----END CERTIFICATE-----
 `
+
+// TestRegistryHostsHTTP1 verifies that the registry pull transport negotiates HTTP/1.1
+// even against an HTTP/2-capable server.
+//
+// containerd's blob fetcher only resumes an interrupted download (with a Range request)
+// when the read fails with io.ErrUnexpectedEOF, which HTTP/1.1 reports on a mid-body
+// connection close, while HTTP/2 surfaces the same cut as a non-resumable stream error.
+func TestRegistryHostsHTTP1(t *testing.T) {
+	t.Parallel()
+
+	server := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	server.EnableHTTP2 = true
+	server.StartTLS()
+
+	t.Cleanup(server.Close)
+
+	// control: the server does speak HTTP/2 when the client asks for it
+	h2Client := server.Client()
+	h2Client.Transport.(*http.Transport).ForceAttemptHTTP2 = true //nolint:errcheck,forcetypeassert
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, server.URL, nil)
+	require.NoError(t, err)
+
+	resp, err := h2Client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	require.Equal(t, 2, resp.ProtoMajor, "test server should support HTTP/2")
+
+	hosts, err := image.RegistryHosts(&mockConfig{
+		mirrors: map[string]*cri.RegistryMirrorConfig{
+			"docker.io": {
+				MirrorEndpoints:    []cri.RegistryEndpointConfig{{EndpointEndpoint: server.URL}},
+				MirrorSkipFallback: true,
+			},
+		},
+	})("docker.io")
+	require.NoError(t, err)
+	require.Len(t, hosts, 1)
+
+	transport, ok := hosts[0].Client.Transport.(*http.Transport)
+	require.True(t, ok)
+
+	transport.TLSClientConfig.RootCAs = server.Client().Transport.(*http.Transport).TLSClientConfig.RootCAs //nolint:errcheck,forcetypeassert
+
+	req, err = http.NewRequestWithContext(t.Context(), http.MethodGet, server.URL, nil)
+	require.NoError(t, err)
+
+	resp, err = hosts[0].Client.Do(req)
+	require.NoError(t, err)
+	require.NoError(t, resp.Body.Close())
+	assert.Equal(t, 1, resp.ProtoMajor, "registry transport should negotiate HTTP/1.1")
+}
