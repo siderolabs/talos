@@ -51,6 +51,7 @@ func addVM(t *testing.T, st state.State, serial bool, power string) {
 
 	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "vm1")
 	vm.TypedSpec().PowerState = power
+
 	vm.TypedSpec().Console.Serial = serial
 	require.NoError(t, st.Create(t.Context(), vm))
 }

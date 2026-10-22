@@ -138,6 +138,7 @@ type Client interface {
 	GuestInterfaces(Domain) ([]GuestInterface, error)
 	Start(Domain, string, ...StartOption) error
 	Shutdown(Domain) error
+	Reboot(Domain) error
 	Remove(Domain) error
 	Close()
 }
@@ -165,6 +166,7 @@ type lifecycleRPC interface {
 	DomainInterfaceAddresses(libvirt.Domain, uint32, uint32) ([]libvirt.DomainInterface, error)
 	DomainDestroy(libvirt.Domain) error
 	DomainShutdownFlags(libvirt.Domain, libvirt.DomainShutdownFlagValues) error
+	DomainReboot(libvirt.Domain, libvirt.DomainRebootFlagValues) error
 	DomainHasManagedSaveImage(libvirt.Domain, uint32) (int32, error)
 	DomainManagedSaveRemove(libvirt.Domain, uint32) error
 	DomainUndefineFlags(libvirt.Domain, libvirt.DomainUndefineFlagsValues) error
@@ -668,6 +670,44 @@ func (c *client) Shutdown(d Domain) error {
 
 // ErrDomainNotRunning says a domain exists but is not running, so a guest cannot be asked anything.
 var ErrDomainNotRunning = errors.New("domain is not running")
+
+// Reboot asks the guest of a claimed domain to restart itself through its virtual ACPI power
+// button. As with Shutdown, the request is delivered rather than obeyed.
+//
+// The domain object, its definition and its ownership metadata all survive a reboot, so nothing
+// downstream sees the definition change: that is libvirt's default
+// <on_reboot>restart</on_reboot>, which nothing in the rendered definition overrides. Were it
+// destroy instead, a reboot would read downstream as the domain going away, and the controller
+// would cold-boot it from the definition which is live rather than leave it alone.
+func (c *client) Reboot(d Domain) error {
+	found, exists, err := c.owned(d)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
+		return ErrDomainNotRunning
+	}
+
+	active, err := c.rpc.DomainIsActive(found)
+	if err != nil {
+		return err
+	}
+
+	if active == 0 {
+		return ErrDomainNotRunning
+	}
+
+	if err = c.rpc.DomainReboot(found, libvirt.DomainRebootAcpiPowerBtn); err != nil {
+		if hasCode(err, libvirt.ErrNoDomain, libvirt.ErrOperationInvalid) {
+			return ErrDomainNotRunning
+		}
+
+		return err
+	}
+
+	return nil
+}
 
 // Remove destroys a claimed domain. Previously defined persistent domains are
 // also undefined so upgrading the controller cannot leave them behind.

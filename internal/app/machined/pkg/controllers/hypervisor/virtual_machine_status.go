@@ -48,6 +48,11 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachinePowerOverrideType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineProfileSpecType,
 			Kind:      controller.InputWeak,
 		},
@@ -138,6 +143,16 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		return fmt.Errorf("list virtual machine specs: %w", err)
 	}
 
+	overrides, err := safe.ReaderListAll[*hypervisor.VirtualMachinePowerOverride](ctx, runtime)
+	if err != nil {
+		return fmt.Errorf("list virtual machine power overrides: %w", err)
+	}
+
+	byOverride := make(map[string]*hypervisor.VirtualMachinePowerOverride, overrides.Len())
+	for override := range overrides.All() {
+		byOverride[override.Metadata().ID()] = override
+	}
+
 	runtime.StartTrackingOutputs()
 
 	if specs.Len() == 0 {
@@ -185,6 +200,14 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 	for spec := range specs.All() {
 		name := spec.Metadata().ID()
 
+		effective := spec.TypedSpec().DeepCopy()
+
+		if override := byOverride[name]; override != nil {
+			effective.PowerState = override.TypedSpec().PowerState
+		}
+
+		generation := hypervisor.VirtualMachineEffectiveGeneration(spec, byOverride[name])
+
 		// VirtualMachineDomainSpecController withdraws the power intent of a spec it cannot
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
@@ -194,7 +217,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
 		// running, and only its next start or replacement is held back.
-		if renderErr == nil && spec.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
+		if renderErr == nil && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
 			renderErr = validateDomainPlacement(name, domainXML, topology)
 		}
 
@@ -208,15 +231,8 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 				!definition.Metadata().Finalizers().Has((&VirtualMachineController{}).Name())
 		}
 
-		status := composeVirtualMachineStatus(spec.TypedSpec(), stopMode, name, released, machineUUID, machineErr, renderErr, byName[name])
-		status.ObservedGeneration = hypervisor.VirtualMachineSpecGeneration(spec)
-
-		if status.Stage == hypervisorhelpers.VirtualMachineStageReady && spec.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
-			(definition == nil || definition.TypedSpec().ObservedGeneration != hypervisor.VirtualMachineSpecGeneration(spec) ||
-				!matchesVMStartIntent(definition.TypedSpec(), domainXML, attachedDisks, seedID, spec.TypedSpec().PowerState)) {
-			status.Stage = hypervisorhelpers.VirtualMachineStagePending
-			status.Error = "domain definition has not caught up"
-		}
+		status := composeVirtualMachineStatus(&effective, stopMode, name, released, machineUUID, machineErr, renderErr, byName[name])
+		setVirtualMachineStatusGeneration(&status, &effective, generation, definition, domainXML, attachedDisks, seedID)
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, name),
@@ -231,6 +247,23 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 	}
 
 	return errors.Join(errs, safe.CleanupOutputs[*hypervisor.VirtualMachineStatus](ctx, runtime))
+}
+
+func setVirtualMachineStatusGeneration(status *hypervisor.VirtualMachineStatusSpec, effective *hypervisor.VirtualMachineSpecSpec,
+	generation string, definition *hypervisor.VirtualMachineDomainSpec, domainXML string, attachedDisks []string, seedID string,
+) {
+	status.ObservedGeneration = generation
+
+	if status.Stage == hypervisorhelpers.VirtualMachineStageReady && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
+		(definition == nil || definition.TypedSpec().ObservedGeneration != generation ||
+			!matchesVMStartIntent(definition.TypedSpec(), domainXML, attachedDisks, seedID, effective.PowerState)) {
+		status.Stage = hypervisorhelpers.VirtualMachineStagePending
+		status.Error = "domain definition has not caught up"
+	}
+
+	if definition != nil && definition.TypedSpec().ObservedGeneration == generation {
+		status.ObservedGeneration = hypervisor.VirtualMachineStatusGeneration(generation, definition)
+	}
 }
 
 func listVirtualMachineDomainSpecs(ctx context.Context, reader controller.Reader) (map[string]*hypervisor.VirtualMachineDomainSpec, error) {

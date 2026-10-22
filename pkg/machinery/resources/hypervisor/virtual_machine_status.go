@@ -40,7 +40,7 @@ type VirtualMachineStatusSpec struct {
 	Addresses []string `yaml:"addresses,omitempty" protobuf:"4"`
 	// Interfaces is the per-interface view returned by qemu-guest-agent.
 	Interfaces []VirtualMachineGuestInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"5"`
-	// ObservedGeneration identifies the VM spec incarnation and version this status was composed from.
+	// ObservedGeneration identifies the effective intent and exact domain incarnation and version this status was composed from.
 	ObservedGeneration string `yaml:"observedGeneration,omitempty" protobuf:"6"`
 }
 

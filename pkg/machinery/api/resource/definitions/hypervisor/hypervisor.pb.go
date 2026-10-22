@@ -1077,7 +1077,7 @@ type VirtualMachineDomainSpecSpec struct {
 	Disks []string `protobuf:"bytes,3,rep,name=disks,proto3" json:"disks,omitempty"`
 	// CloudInit identifies the seed status this domain has attached and must hold.
 	CloudInit string `protobuf:"bytes,4,opt,name=cloud_init,json=cloudInit,proto3" json:"cloud_init,omitempty"`
-	// ObservedGeneration identifies the VM intent used to render this definition.
+	// ObservedGeneration identifies the producer spec and power override used to render this definition.
 	ObservedGeneration string `protobuf:"bytes,5,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
 	// StopMode selects whether a stop asks the guest to power off or destroys the domain.
 	//
@@ -1898,9 +1898,10 @@ func (x *VirtualMachineProfileSpecSpec) GetCpu() *VirtualMachineProfileCPUSpec {
 
 // VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 type VirtualMachineSpecSpec struct {
-	state      protoimpl.MessageState         `protogen:"open.v1"`
-	Cpu        *VirtualMachineCPUSpec         `protobuf:"bytes,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
-	Memory     *VirtualMachineMemorySpec      `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"`
+	state  protoimpl.MessageState    `protogen:"open.v1"`
+	Cpu    *VirtualMachineCPUSpec    `protobuf:"bytes,1,opt,name=cpu,proto3" json:"cpu,omitempty"`
+	Memory *VirtualMachineMemorySpec `protobuf:"bytes,2,opt,name=memory,proto3" json:"memory,omitempty"`
+	// PowerState is the producer's intent, before temporary power overrides.
 	PowerState string                         `protobuf:"bytes,3,opt,name=power_state,json=powerState,proto3" json:"power_state,omitempty"`
 	Firmware   *VirtualMachineFirmwareSpec    `protobuf:"bytes,4,opt,name=firmware,proto3" json:"firmware,omitempty"`
 	Console    *VirtualMachineConsoleSpec     `protobuf:"bytes,5,opt,name=console,proto3" json:"console,omitempty"`
@@ -1911,9 +1912,7 @@ type VirtualMachineSpecSpec struct {
 	// Video is the graphics device presented when a VNC console is enabled.
 	Video *VirtualMachineVideoSpec `protobuf:"bytes,10,opt,name=video,proto3" json:"video,omitempty"`
 	// Profile names the guest hardware profile; empty selects the builtin host profile.
-	Profile string `protobuf:"bytes,11,opt,name=profile,proto3" json:"profile,omitempty"`
-	// StopRequest is the stop request committed with stopped intent, encoded as "<mode>/<id>".
-	StopRequest   string `protobuf:"bytes,12,opt,name=stop_request,json=stopRequest,proto3" json:"stop_request,omitempty"`
+	Profile       string `protobuf:"bytes,11,opt,name=profile,proto3" json:"profile,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2025,13 +2024,6 @@ func (x *VirtualMachineSpecSpec) GetProfile() string {
 	return ""
 }
 
-func (x *VirtualMachineSpecSpec) GetStopRequest() string {
-	if x != nil {
-		return x.StopRequest
-	}
-	return ""
-}
-
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.
 type VirtualMachineStatusSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -2045,7 +2037,7 @@ type VirtualMachineStatusSpec struct {
 	Addresses []string `protobuf:"bytes,4,rep,name=addresses,proto3" json:"addresses,omitempty"`
 	// Interfaces is the per-interface view returned by qemu-guest-agent.
 	Interfaces []*VirtualMachineGuestInterfaceSpec `protobuf:"bytes,5,rep,name=interfaces,proto3" json:"interfaces,omitempty"`
-	// ObservedGeneration identifies the VM spec incarnation and version this status was composed from.
+	// ObservedGeneration identifies the effective intent and exact domain incarnation and version this status was composed from.
 	ObservedGeneration string `protobuf:"bytes,6,opt,name=observed_generation,json=observedGeneration,proto3" json:"observed_generation,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
@@ -2381,7 +2373,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x1dVirtualMachineProfileSpecSpec\x12\x18\n" +
 	"\abuiltin\x18\x01 \x01(\bR\abuiltin\x12\x18\n" +
 	"\amachine\x18\x02 \x01(\tR\amachine\x12U\n" +
-	"\x03cpu\x18\x03 \x01(\v2C.talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpecR\x03cpu\"\xa2\a\n" +
+	"\x03cpu\x18\x03 \x01(\v2C.talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpecR\x03cpu\"\xff\x06\n" +
 	"\x16VirtualMachineSpecSpec\x12N\n" +
 	"\x03cpu\x18\x01 \x01(\v2<.talos.resource.definitions.hypervisor.VirtualMachineCPUSpecR\x03cpu\x12W\n" +
 	"\x06memory\x18\x02 \x01(\v2?.talos.resource.definitions.hypervisor.VirtualMachineMemorySpecR\x06memory\x12\x1f\n" +
@@ -2398,8 +2390,7 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x05guest\x18\t \x01(\v2>.talos.resource.definitions.hypervisor.VirtualMachineGuestSpecR\x05guest\x12T\n" +
 	"\x05video\x18\n" +
 	" \x01(\v2>.talos.resource.definitions.hypervisor.VirtualMachineVideoSpecR\x05video\x12\x18\n" +
-	"\aprofile\x18\v \x01(\tR\aprofile\x12!\n" +
-	"\fstop_request\x18\f \x01(\tR\vstopRequest\"\xb4\x03\n" +
+	"\aprofile\x18\v \x01(\tR\aprofile\"\xb4\x03\n" +
 	"\x18VirtualMachineStatusSpec\x12l\n" +
 	"\vpower_state\x18\x01 \x01(\x0e2K.talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerStateR\n" +
 	"powerState\x12\\\n" +

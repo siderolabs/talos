@@ -28,8 +28,9 @@ type VirtualMachineSpec = typed.Resource[VirtualMachineSpecSpec, VirtualMachineS
 //gotagsrewrite:gen
 //redactgen:gen
 type VirtualMachineSpecSpec struct {
-	CPU        VirtualMachineCPUSpec         `yaml:"cpu" protobuf:"1"`
-	Memory     VirtualMachineMemorySpec      `yaml:"memory" protobuf:"2"`
+	CPU    VirtualMachineCPUSpec    `yaml:"cpu" protobuf:"1"`
+	Memory VirtualMachineMemorySpec `yaml:"memory" protobuf:"2"`
+	// PowerState is the producer's intent, before temporary power overrides.
 	PowerState string                        `yaml:"powerState" protobuf:"3"`
 	Firmware   VirtualMachineFirmwareSpec    `yaml:"firmware" protobuf:"4"`
 	Console    VirtualMachineConsoleSpec     `yaml:"console" protobuf:"5"`
@@ -41,8 +42,6 @@ type VirtualMachineSpecSpec struct {
 	Video VirtualMachineVideoSpec `yaml:"video" protobuf:"10"`
 	// Profile names the guest hardware profile; empty selects the builtin host profile.
 	Profile string `yaml:"profile,omitempty" protobuf:"11"`
-	// StopRequest is the stop request committed with stopped intent, encoded as "<mode>/<id>".
-	StopRequest string `yaml:"stopRequest,omitempty" protobuf:"12"`
 }
 
 // VirtualMachineVideoSpec describes the virtual graphics device.
@@ -211,6 +210,24 @@ func NewVirtualMachineSpec(namespace resource.Namespace, id resource.ID) *Virtua
 // Numeric versions alone are reused when a same-name spec is recreated.
 func VirtualMachineSpecGeneration(spec *VirtualMachineSpec) string {
 	return fmt.Sprintf("%d/%s", spec.Metadata().Created().UnixNano(), spec.Metadata().Version())
+}
+
+// VirtualMachineEffectiveGeneration identifies the producer version and the active override.
+// Override removal restores the baseline token; consumers must also check the domain
+// incarnation/version before trusting previously published readiness.
+func VirtualMachineEffectiveGeneration(spec *VirtualMachineSpec, override *VirtualMachinePowerOverride) string {
+	generation := VirtualMachineSpecGeneration(spec)
+	if override != nil {
+		generation += fmt.Sprintf("/override/%d/%s", override.Metadata().Created().UnixNano(), override.Metadata().Version())
+	}
+
+	return generation
+}
+
+// VirtualMachineStatusGeneration binds readiness to the exact domain incarnation and version.
+// In particular, returning to baseline after an override cannot reuse stale readiness.
+func VirtualMachineStatusGeneration(effectiveGeneration string, domain *VirtualMachineDomainSpec) string {
+	return fmt.Sprintf("%s/domain/%d/%s", effectiveGeneration, domain.Metadata().Created().UnixNano(), domain.Metadata().Version())
 }
 
 // VirtualMachineSpecExtension is auxiliary resource data for VirtualMachineSpec.

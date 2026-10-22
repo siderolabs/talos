@@ -51,6 +51,7 @@ func (s *VirtualMachineStatusSuite) SetupTest() {
 		texts:           make(map[string]string),
 		starts:          make(map[string]int),
 		shutdowns:       make(map[string]int),
+		reboots:         make(map[string]int),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
@@ -126,6 +127,10 @@ func (c *boundedDomainClient) Remove(libvirtdomain.Domain) error {
 
 func (c *boundedDomainClient) Shutdown(libvirtdomain.Domain) error {
 	panic("bounded client used for shutdown")
+}
+
+func (c *boundedDomainClient) Reboot(libvirtdomain.Domain) error {
+	panic("bounded client used for reboot")
 }
 
 func (s *VirtualMachineStatusSuite) startObserver() {
@@ -677,8 +682,9 @@ func (s *VirtualMachineStatusSuite) TestStatusReportsCurrentSpecGeneration() {
 
 	s.Require().Eventually(func() bool {
 		status, getErr := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
+		definition, domainErr := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
 
-		return getErr == nil && status.TypedSpec().ObservedGeneration == initial &&
+		return getErr == nil && domainErr == nil && status.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineStatusGeneration(initial, definition) &&
 			status.TypedSpec().Stage == hypervisorhelpers.VirtualMachineStageReady
 	}, 5*time.Second, 10*time.Millisecond)
 
@@ -695,7 +701,10 @@ func (s *VirtualMachineStatusSuite) TestStatusReportsCurrentSpecGeneration() {
 	s.Require().Eventually(func() bool {
 		status, getErr := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
 
-		return getErr == nil && status.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineSpecGeneration(updated) &&
+		definition, domainErr := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+
+		return getErr == nil && domainErr == nil && definition.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineSpecGeneration(updated) &&
+			status.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineStatusGeneration(hypervisor.VirtualMachineSpecGeneration(updated), definition) &&
 			status.TypedSpec().Stage != hypervisorhelpers.VirtualMachineStageReady
 	}, 5*time.Second, 10*time.Millisecond)
 }

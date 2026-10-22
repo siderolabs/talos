@@ -52,6 +52,11 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachinePowerOverrideType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineProfileSpecType,
 			Kind:      controller.InputWeak,
 		},
@@ -126,6 +131,16 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 		return fmt.Errorf("failed to list virtual machine specs: %w", err)
 	}
 
+	overrides, err := safe.ReaderListAll[*hypervisor.VirtualMachinePowerOverride](ctx, r)
+	if err != nil {
+		return fmt.Errorf("failed to list virtual machine power overrides: %w", err)
+	}
+
+	byName := make(map[resource.ID]*hypervisor.VirtualMachinePowerOverride, overrides.Len())
+	for override := range overrides.All() {
+		byName[override.Metadata().ID()] = override
+	}
+
 	linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
 	if err != nil {
 		return fmt.Errorf("failed to list link statuses: %w", err)
@@ -153,7 +168,7 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 			ctx, r,
 			hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name),
 			func(res *hypervisor.VirtualMachineDomainSpec) error {
-				return updateRenderedDomain(ctx, r, logger, vm, res, links, resolvedDisks)
+				return updateRenderedDomain(ctx, r, logger, vm, byName[name], res, links, resolvedDisks)
 			},
 		); err != nil {
 			if isHeldBack(err) {
@@ -173,13 +188,21 @@ func (ctrl *VirtualMachineDomainSpecController) reconcile(ctx context.Context, r
 }
 
 func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.Logger, vm *hypervisor.VirtualMachineSpec,
+	override *hypervisor.VirtualMachinePowerOverride,
 	domain *hypervisor.VirtualMachineDomainSpec, links hostLinks, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
 ) error {
 	name := vm.Metadata().ID()
 
+	powerState, stopRequest := vm.TypedSpec().PowerState, ""
+	if override != nil {
+		powerState, stopRequest = override.TypedSpec().PowerState, override.TypedSpec().StopRequest
+	}
+
+	generation := hypervisor.VirtualMachineEffectiveGeneration(vm, override)
+
 	domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, r, name, vm.TypedSpec(), links, disks)
 	if renderErr != nil {
-		retain, checkErr := retainDomainOnStorageOutage(ctx, r, vm, domain, disks, renderErr)
+		retain, checkErr := retainDomainOnStorageOutage(ctx, r, vm, powerState, generation, domain, disks, renderErr)
 		if checkErr != nil {
 			return checkErr
 		}
@@ -194,6 +217,7 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 
 		// Keep the attached disks held until the runtime has stopped.
 		domain.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
+		domain.TypedSpec().StopRequest = stopRequest
 
 		// Whatever was asked for, this stop is not one the operator asked for at all: it is one the
 		// controller demands to clear a definition it cannot render off the host, and a guest may
@@ -207,12 +231,12 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 
 	*domain.TypedSpec() = hypervisor.VirtualMachineDomainSpecSpec{
 		DomainXML:          domainXML,
-		PowerState:         vm.TypedSpec().PowerState,
+		PowerState:         powerState,
 		Disks:              attachedDisks,
 		CloudInit:          seedID,
-		ObservedGeneration: hypervisor.VirtualMachineSpecGeneration(vm),
-		StopMode:           stopModeOf(vm.TypedSpec().StopRequest),
-		StopRequest:        vm.TypedSpec().StopRequest,
+		ObservedGeneration: generation,
+		StopMode:           stopModeOf(stopRequest),
+		StopRequest:        stopRequest,
 	}
 
 	return nil
@@ -221,10 +245,10 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 // retainDomainOnStorageOutage preserves only an unchanged running definition whose
 // blank disk observation was lost because its pool daemon could not be contacted.
 // Readiness remains false: the starter must not use this definition for a new start.
-func retainDomainOnStorageOutage(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec,
+func retainDomainOnStorageOutage(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec, powerState, generation string,
 	domain *hypervisor.VirtualMachineDomainSpec, disks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, renderErr error,
 ) (bool, error) {
-	if !errors.Is(renderErr, errDiskNotReady) || !runningDomainMatchesVM(vm, domain) {
+	if !errors.Is(renderErr, errDiskNotReady) || !runningDomainMatchesVM(vm, powerState, generation, domain) {
 		return false, nil
 	}
 
@@ -240,10 +264,10 @@ func retainDomainOnStorageOutage(ctx context.Context, r controller.Reader, vm *h
 	return retainedCloudInitCurrent(ctx, r, vm, domain)
 }
 
-func runningDomainMatchesVM(vm *hypervisor.VirtualMachineSpec, domain *hypervisor.VirtualMachineDomainSpec) bool {
-	return vm.Metadata().Phase() == resource.PhaseRunning && vm.TypedSpec().PowerState == "running" &&
+func runningDomainMatchesVM(vm *hypervisor.VirtualMachineSpec, powerState, generation string, domain *hypervisor.VirtualMachineDomainSpec) bool {
+	return vm.Metadata().Phase() == resource.PhaseRunning && powerState == "running" &&
 		domain.TypedSpec().PowerState == "running" && domain.TypedSpec().DomainXML != "" &&
-		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineSpecGeneration(vm) &&
+		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == generation &&
 		len(domain.TypedSpec().Disks) == len(vm.TypedSpec().Disks)
 }
 

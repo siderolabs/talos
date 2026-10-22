@@ -365,6 +365,98 @@ func (*VirtualMachineStopResponse) Descriptor() ([]byte, []int) {
 	return file_machine_hypervisor_proto_rawDescGZIP(), []int{6}
 }
 
+type VirtualMachineRebootRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Name of the virtual machine, which must be running.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Destroy the domain instead of asking the guest to restart itself.
+	//
+	// Unset asks the guest, so pulling the plug on it is something a caller opts into.
+	Force         bool `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VirtualMachineRebootRequest) Reset() {
+	*x = VirtualMachineRebootRequest{}
+	mi := &file_machine_hypervisor_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VirtualMachineRebootRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VirtualMachineRebootRequest) ProtoMessage() {}
+
+func (x *VirtualMachineRebootRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_hypervisor_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VirtualMachineRebootRequest.ProtoReflect.Descriptor instead.
+func (*VirtualMachineRebootRequest) Descriptor() ([]byte, []int) {
+	return file_machine_hypervisor_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *VirtualMachineRebootRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *VirtualMachineRebootRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
+type VirtualMachineRebootResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VirtualMachineRebootResponse) Reset() {
+	*x = VirtualMachineRebootResponse{}
+	mi := &file_machine_hypervisor_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VirtualMachineRebootResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VirtualMachineRebootResponse) ProtoMessage() {}
+
+func (x *VirtualMachineRebootResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_hypervisor_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VirtualMachineRebootResponse.ProtoReflect.Descriptor instead.
+func (*VirtualMachineRebootResponse) Descriptor() ([]byte, []int) {
+	return file_machine_hypervisor_proto_rawDescGZIP(), []int{8}
+}
+
 type ConsoleRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Request:
@@ -378,7 +470,7 @@ type ConsoleRequest struct {
 
 func (x *ConsoleRequest) Reset() {
 	*x = ConsoleRequest{}
-	mi := &file_machine_hypervisor_proto_msgTypes[7]
+	mi := &file_machine_hypervisor_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -390,7 +482,7 @@ func (x *ConsoleRequest) String() string {
 func (*ConsoleRequest) ProtoMessage() {}
 
 func (x *ConsoleRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_hypervisor_proto_msgTypes[7]
+	mi := &file_machine_hypervisor_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -403,7 +495,7 @@ func (x *ConsoleRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleRequest.ProtoReflect.Descriptor instead.
 func (*ConsoleRequest) Descriptor() ([]byte, []int) {
-	return file_machine_hypervisor_proto_rawDescGZIP(), []int{7}
+	return file_machine_hypervisor_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ConsoleRequest) GetRequest() isConsoleRequest_Request {
@@ -456,7 +548,7 @@ type ConsoleAttach struct {
 
 func (x *ConsoleAttach) Reset() {
 	*x = ConsoleAttach{}
-	mi := &file_machine_hypervisor_proto_msgTypes[8]
+	mi := &file_machine_hypervisor_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -468,7 +560,7 @@ func (x *ConsoleAttach) String() string {
 func (*ConsoleAttach) ProtoMessage() {}
 
 func (x *ConsoleAttach) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_hypervisor_proto_msgTypes[8]
+	mi := &file_machine_hypervisor_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -481,7 +573,7 @@ func (x *ConsoleAttach) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleAttach.ProtoReflect.Descriptor instead.
 func (*ConsoleAttach) Descriptor() ([]byte, []int) {
-	return file_machine_hypervisor_proto_rawDescGZIP(), []int{8}
+	return file_machine_hypervisor_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ConsoleAttach) GetName() string {
@@ -500,7 +592,7 @@ type ConsoleResponse struct {
 
 func (x *ConsoleResponse) Reset() {
 	*x = ConsoleResponse{}
-	mi := &file_machine_hypervisor_proto_msgTypes[9]
+	mi := &file_machine_hypervisor_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -512,7 +604,7 @@ func (x *ConsoleResponse) String() string {
 func (*ConsoleResponse) ProtoMessage() {}
 
 func (x *ConsoleResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_machine_hypervisor_proto_msgTypes[9]
+	mi := &file_machine_hypervisor_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -525,7 +617,7 @@ func (x *ConsoleResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConsoleResponse.ProtoReflect.Descriptor instead.
 func (*ConsoleResponse) Descriptor() ([]byte, []int) {
-	return file_machine_hypervisor_proto_rawDescGZIP(), []int{9}
+	return file_machine_hypervisor_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ConsoleResponse) GetStdoutData() []byte {
@@ -555,7 +647,11 @@ const file_machine_hypervisor_proto_rawDesc = "" +
 	"\x19VirtualMachineStopRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05force\x18\x02 \x01(\bR\x05force\"\x1c\n" +
-	"\x1aVirtualMachineStopResponse\"n\n" +
+	"\x1aVirtualMachineStopResponse\"G\n" +
+	"\x1bVirtualMachineRebootRequest\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
+	"\x05force\x18\x02 \x01(\bR\x05force\"\x1e\n" +
+	"\x1cVirtualMachineRebootResponse\"n\n" +
 	"\x0eConsoleRequest\x120\n" +
 	"\x06attach\x18\x01 \x01(\v2\x16.machine.ConsoleAttachH\x00R\x06attach\x12\x1f\n" +
 	"\n" +
@@ -565,12 +661,13 @@ const file_machine_hypervisor_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\"2\n" +
 	"\x0fConsoleResponse\x12\x1f\n" +
 	"\vstdout_data\x18\x01 \x01(\fR\n" +
-	"stdoutData2\xbc\x02\n" +
+	"stdoutData2\x93\x03\n" +
 	"\x11HypervisorService\x12F\n" +
 	"\rConsoleStream\x12\x17.machine.ConsoleRequest\x1a\x18.machine.ConsoleResponse(\x010\x01\x12:\n" +
 	"\tVNCStream\x12\x13.machine.VNCRequest\x1a\x14.machine.VNCResponse(\x010\x01\x12R\n" +
 	"\x05Start\x12#.machine.VirtualMachineStartRequest\x1a$.machine.VirtualMachineStartResponse\x12O\n" +
-	"\x04Stop\x12\".machine.VirtualMachineStopRequest\x1a#.machine.VirtualMachineStopResponseBN\n" +
+	"\x04Stop\x12\".machine.VirtualMachineStopRequest\x1a#.machine.VirtualMachineStopResponse\x12U\n" +
+	"\x06Reboot\x12$.machine.VirtualMachineRebootRequest\x1a%.machine.VirtualMachineRebootResponseBN\n" +
 	"\x15dev.talos.api.machineZ5github.com/siderolabs/talos/pkg/machinery/api/machineb\x06proto3"
 
 var (
@@ -585,35 +682,39 @@ func file_machine_hypervisor_proto_rawDescGZIP() []byte {
 	return file_machine_hypervisor_proto_rawDescData
 }
 
-var file_machine_hypervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_machine_hypervisor_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_machine_hypervisor_proto_goTypes = []any{
-	(*VNCRequest)(nil),                  // 0: machine.VNCRequest
-	(*VNCAttach)(nil),                   // 1: machine.VNCAttach
-	(*VNCResponse)(nil),                 // 2: machine.VNCResponse
-	(*VirtualMachineStartRequest)(nil),  // 3: machine.VirtualMachineStartRequest
-	(*VirtualMachineStartResponse)(nil), // 4: machine.VirtualMachineStartResponse
-	(*VirtualMachineStopRequest)(nil),   // 5: machine.VirtualMachineStopRequest
-	(*VirtualMachineStopResponse)(nil),  // 6: machine.VirtualMachineStopResponse
-	(*ConsoleRequest)(nil),              // 7: machine.ConsoleRequest
-	(*ConsoleAttach)(nil),               // 8: machine.ConsoleAttach
-	(*ConsoleResponse)(nil),             // 9: machine.ConsoleResponse
+	(*VNCRequest)(nil),                   // 0: machine.VNCRequest
+	(*VNCAttach)(nil),                    // 1: machine.VNCAttach
+	(*VNCResponse)(nil),                  // 2: machine.VNCResponse
+	(*VirtualMachineStartRequest)(nil),   // 3: machine.VirtualMachineStartRequest
+	(*VirtualMachineStartResponse)(nil),  // 4: machine.VirtualMachineStartResponse
+	(*VirtualMachineStopRequest)(nil),    // 5: machine.VirtualMachineStopRequest
+	(*VirtualMachineStopResponse)(nil),   // 6: machine.VirtualMachineStopResponse
+	(*VirtualMachineRebootRequest)(nil),  // 7: machine.VirtualMachineRebootRequest
+	(*VirtualMachineRebootResponse)(nil), // 8: machine.VirtualMachineRebootResponse
+	(*ConsoleRequest)(nil),               // 9: machine.ConsoleRequest
+	(*ConsoleAttach)(nil),                // 10: machine.ConsoleAttach
+	(*ConsoleResponse)(nil),              // 11: machine.ConsoleResponse
 }
 var file_machine_hypervisor_proto_depIdxs = []int32{
-	1, // 0: machine.VNCRequest.attach:type_name -> machine.VNCAttach
-	8, // 1: machine.ConsoleRequest.attach:type_name -> machine.ConsoleAttach
-	7, // 2: machine.HypervisorService.ConsoleStream:input_type -> machine.ConsoleRequest
-	0, // 3: machine.HypervisorService.VNCStream:input_type -> machine.VNCRequest
-	3, // 4: machine.HypervisorService.Start:input_type -> machine.VirtualMachineStartRequest
-	5, // 5: machine.HypervisorService.Stop:input_type -> machine.VirtualMachineStopRequest
-	9, // 6: machine.HypervisorService.ConsoleStream:output_type -> machine.ConsoleResponse
-	2, // 7: machine.HypervisorService.VNCStream:output_type -> machine.VNCResponse
-	4, // 8: machine.HypervisorService.Start:output_type -> machine.VirtualMachineStartResponse
-	6, // 9: machine.HypervisorService.Stop:output_type -> machine.VirtualMachineStopResponse
-	6, // [6:10] is the sub-list for method output_type
-	2, // [2:6] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	1,  // 0: machine.VNCRequest.attach:type_name -> machine.VNCAttach
+	10, // 1: machine.ConsoleRequest.attach:type_name -> machine.ConsoleAttach
+	9,  // 2: machine.HypervisorService.ConsoleStream:input_type -> machine.ConsoleRequest
+	0,  // 3: machine.HypervisorService.VNCStream:input_type -> machine.VNCRequest
+	3,  // 4: machine.HypervisorService.Start:input_type -> machine.VirtualMachineStartRequest
+	5,  // 5: machine.HypervisorService.Stop:input_type -> machine.VirtualMachineStopRequest
+	7,  // 6: machine.HypervisorService.Reboot:input_type -> machine.VirtualMachineRebootRequest
+	11, // 7: machine.HypervisorService.ConsoleStream:output_type -> machine.ConsoleResponse
+	2,  // 8: machine.HypervisorService.VNCStream:output_type -> machine.VNCResponse
+	4,  // 9: machine.HypervisorService.Start:output_type -> machine.VirtualMachineStartResponse
+	6,  // 10: machine.HypervisorService.Stop:output_type -> machine.VirtualMachineStopResponse
+	8,  // 11: machine.HypervisorService.Reboot:output_type -> machine.VirtualMachineRebootResponse
+	7,  // [7:12] is the sub-list for method output_type
+	2,  // [2:7] is the sub-list for method input_type
+	2,  // [2:2] is the sub-list for extension type_name
+	2,  // [2:2] is the sub-list for extension extendee
+	0,  // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_machine_hypervisor_proto_init() }
@@ -625,7 +726,7 @@ func file_machine_hypervisor_proto_init() {
 		(*VNCRequest_Attach)(nil),
 		(*VNCRequest_Data)(nil),
 	}
-	file_machine_hypervisor_proto_msgTypes[7].OneofWrappers = []any{
+	file_machine_hypervisor_proto_msgTypes[9].OneofWrappers = []any{
 		(*ConsoleRequest_Attach)(nil),
 		(*ConsoleRequest_StdinData)(nil),
 	}
@@ -635,7 +736,7 @@ func file_machine_hypervisor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_hypervisor_proto_rawDesc), len(file_machine_hypervisor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

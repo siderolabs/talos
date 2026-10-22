@@ -170,9 +170,10 @@ func (s *Server) Register(obj *grpc.Server) {
 		resourceState,
 		connector.OpenConsole,
 		hypervisord.WithVNCConnector(connector.OpenVNC),
+		hypervisord.WithDomainConnector(connector.Open),
 		// Raw rather than the client-facing filtered state, and only for the power operations: they
-		// write power overrides, which no client may write for itself. Console and VNC sessions keep
-		// reading through the filter.
+		// write power overrides, which no client may write for itself, and read the sensitive spec
+		// on behalf of operators. Console and VNC sessions keep reading through the filter.
 		hypervisord.WithPowerState(rawResourceState),
 	))
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))

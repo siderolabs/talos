@@ -108,6 +108,11 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachinePowerOverrideType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineProfileSpecType,
 			Kind:      controller.InputWeak,
 		},
@@ -450,7 +455,12 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 		return fmt.Errorf("domain %q: definition does not match current VM intent: %w", name, errDiskNotReady)
 	}
 
-	if vm.Metadata().Phase() != resource.PhaseRunning || vm.TypedSpec().PowerState != hypervisorhelpers.PowerStateRunning.String() {
+	powerState, err := effectiveVMPowerState(ctx, r, vm)
+	if err != nil {
+		return err
+	}
+
+	if vm.Metadata().Phase() != resource.PhaseRunning || powerState != hypervisorhelpers.PowerStateRunning.String() {
 		return pending()
 	}
 
@@ -465,7 +475,7 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 		return pending()
 	}
 
-	match, err := currentVMDefinitionMatches(ctx, r, spec, vm)
+	match, err := currentVMDefinitionMatches(ctx, r, spec, vm, powerState)
 	if err != nil {
 		return err
 	}
@@ -478,7 +488,7 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 }
 
 func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *hypervisor.VirtualMachineDomainSpec,
-	vm *hypervisor.VirtualMachineSpec,
+	vm *hypervisor.VirtualMachineSpec, powerState string,
 ) (bool, error) {
 	name := spec.Metadata().ID()
 
@@ -501,7 +511,20 @@ func currentVMDefinitionMatches(ctx context.Context, r controller.Reader, spec *
 		return false, err
 	}
 
-	return matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, vm.TypedSpec().PowerState), nil
+	return matchesVMStartIntent(spec.TypedSpec(), text, attachedDisks, seedID, powerState), nil
+}
+
+func effectiveVMPowerState(ctx context.Context, r controller.Reader, vm *hypervisor.VirtualMachineSpec) (string, error) {
+	override, err := safe.ReaderGetByID[*hypervisor.VirtualMachinePowerOverride](ctx, r, vm.Metadata().ID())
+	if state.IsNotFoundError(err) {
+		return vm.TypedSpec().PowerState, nil
+	}
+
+	if err != nil {
+		return "", fmt.Errorf("get virtual machine power override %q: %w", vm.Metadata().ID(), err)
+	}
+
+	return override.TypedSpec().PowerState, nil
 }
 
 func blankDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hypervisor.VirtualMachineDiskSpec) (bool, error) {
@@ -735,7 +758,12 @@ func seedMatchesCurrentVM(ctx context.Context, r controller.Reader, name, seedID
 		return false, err
 	}
 
-	if vm.Metadata().Phase() != resource.PhaseRunning || vm.TypedSpec().PowerState != hypervisorhelpers.PowerStateRunning.String() || vm.TypedSpec().CloudInit == nil {
+	powerState, err := effectiveVMPowerState(ctx, r, vm)
+	if err != nil {
+		return false, err
+	}
+
+	if vm.Metadata().Phase() != resource.PhaseRunning || powerState != hypervisorhelpers.PowerStateRunning.String() || vm.TypedSpec().CloudInit == nil {
 		return false, nil
 	}
 

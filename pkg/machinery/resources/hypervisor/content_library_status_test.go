@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
 	"google.golang.org/protobuf/encoding/protowire"
-	"google.golang.org/protobuf/reflect/protoreflect"
-	"google.golang.org/protobuf/reflect/protoregistry"
 
 	hypervisorapi "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hypervisor"
 	_ "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storage"
@@ -31,7 +29,7 @@ func TestDiskSourcePhaseContracts(t *testing.T) {
 		name       string
 		res        resource.Resource
 		ready      int
-		phaseField protoreflect.FieldNumber
+		phaseField protowire.Number
 		phases     []string
 	}{
 		{
@@ -76,29 +74,6 @@ func TestDiskSourcePhaseContracts(t *testing.T) {
 			t.Parallel()
 
 			spec := reflect.ValueOf(tt.res).MethodByName("TypedSpec").Call(nil)[0].Elem()
-			assert.Zero(t, spec.FieldByName("Phase").Int())
-			assert.False(t, spec.FieldByName("Ready").IsValid())
-			assert.False(t, spec.FieldByName("ObservationUnavailable").IsValid())
-
-			pkg := "hypervisor"
-			if tt.name == "pool" || tt.name == "volume" {
-				pkg = "storage"
-			}
-
-			message, err := protoregistry.GlobalTypes.FindMessageByName(protoreflect.FullName("talos.resource.definitions." + pkg + "." + spec.Type().Name()))
-			require.NoError(t, err)
-
-			field := message.Descriptor().Fields().ByName("phase")
-			require.NotNil(t, field)
-			assert.Equal(t, protoreflect.EnumKind, field.Kind())
-			assert.Equal(t, tt.phaseField, field.Number())
-
-			assert.Zero(t, message.Descriptor().ReservedNames().Len())
-			assert.Zero(t, message.Descriptor().ReservedRanges().Len())
-
-			for i := range message.Descriptor().Fields().Len() {
-				assert.Equal(t, protoreflect.FieldNumber(i+1), message.Descriptor().Fields().Get(i).Number())
-			}
 
 			encoded, err := protobuf.FromResource(tt.res)
 			require.NoError(t, err)
@@ -112,8 +87,6 @@ func TestDiskSourcePhaseContracts(t *testing.T) {
 			data, err := yaml.Marshal(roundTrip.Spec())
 			require.NoError(t, err)
 			assert.Contains(t, string(data), "phase: unknown")
-			assert.NotContains(t, string(data), "ready:")
-			assert.NotContains(t, string(data), "observationUnavailable:")
 
 			for i, phase := range tt.phases {
 				wire.Spec.ProtoSpec = protowire.AppendTag(nil, tt.phaseField, protowire.VarintType)

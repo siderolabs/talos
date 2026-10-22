@@ -247,12 +247,12 @@ func (suite *VirtualMachineProjectionSuite) TestPowerOverrideWinsOverConfiguredP
 	suite.Create(override)
 
 	ctest.AssertResource(suite, doc.Name(), func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
-		asrt.Equal("stopped", spec.TypedSpec().PowerState)
-		asrt.Equal("graceful/request-1", spec.TypedSpec().StopRequest)
+		asrt.Equal("running", spec.TypedSpec().PowerState)
 	})
 
 	edited := newVirtualMachine("overridden")
 	edited.CPUConfig.CPUCount = 2
+	edited.PowerStateConfig = hypervisorhelpers.PowerStateSuspended
 	cfg, err = container.New(edited)
 	suite.Require().NoError(err)
 
@@ -261,14 +261,13 @@ func (suite *VirtualMachineProjectionSuite) TestPowerOverrideWinsOverConfiguredP
 
 	ctest.AssertResource(suite, doc.Name(), func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 		asrt.EqualValues(2, spec.TypedSpec().CPU.Count)
-		asrt.Equal("stopped", spec.TypedSpec().PowerState)
+		asrt.Equal("suspended", spec.TypedSpec().PowerState)
 	})
 
 	suite.Destroy(override)
 
 	ctest.AssertResource(suite, doc.Name(), func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
-		asrt.Equal("running", spec.TypedSpec().PowerState)
-		asrt.Empty(spec.TypedSpec().StopRequest)
+		asrt.Equal("suspended", spec.TypedSpec().PowerState)
 	})
 }
 
@@ -325,6 +324,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 				NUMA: &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: "1"},
 			},
 			PowerState: "suspended",
+
 			Firmware: hypervisor.VirtualMachineFirmwareSpec{
 				Type:       "uefi",
 				SecureBoot: true,

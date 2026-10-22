@@ -37,6 +37,72 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
+func (suite *VirtualMachineSpecSuite) TestExternalProducerPowerOverrideProjectsToDomain() {
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "external-override")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+	}
+	suite.Create(spec)
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", domain.TypedSpec().PowerState)
+	})
+
+	override := hypervisor.NewVirtualMachinePowerOverride(hypervisor.NamespaceName, spec.Metadata().ID())
+	override.TypedSpec().PowerState = "stopped"
+	override.TypedSpec().StopRequest = "graceful/request-1"
+	suite.Create(override)
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", domain.TypedSpec().PowerState)
+		asrt.Equal("graceful/request-1", domain.TypedSpec().StopRequest)
+	})
+
+	current, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](suite.Ctx(), suite.State(), spec.Metadata().ID())
+	suite.Require().NoError(err)
+	suite.Require().Equal("running", current.TypedSpec().PowerState)
+
+	ctest.UpdateWithConflicts(suite, current, func(updated *hypervisor.VirtualMachineSpec) error {
+		updated.TypedSpec().CPU.Count = 2
+
+		return nil
+	})
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(projected *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		var rendered libvirtxml.Domain
+		if !asrt.NoError(rendered.Unmarshal(projected.TypedSpec().DomainXML)) {
+			return
+		}
+
+		asrt.Equal(&libvirtxml.DomainVCPU{Value: 2}, rendered.VCPU)
+		asrt.Equal("stopped", projected.TypedSpec().PowerState)
+		asrt.Equal("graceful/request-1", projected.TypedSpec().StopRequest)
+	})
+
+	ctest.UpdateWithConflicts(suite, current, func(updated *hypervisor.VirtualMachineSpec) error {
+		updated.TypedSpec().Profile = "missing"
+
+		return nil
+	})
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(projected *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", projected.TypedSpec().PowerState)
+		asrt.Equal("forced", projected.TypedSpec().StopMode)
+		asrt.Equal("graceful/request-1", projected.TypedSpec().StopRequest)
+		asrt.NotEmpty(projected.TypedSpec().DomainXML)
+	})
+
+	ctest.UpdateWithConflicts(suite, override, func(updated *hypervisor.VirtualMachinePowerOverride) error {
+		updated.TypedSpec().StopRequest = "graceful/request-2"
+
+		return nil
+	})
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(projected *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", projected.TypedSpec().PowerState)
+		asrt.Equal("forced", projected.TypedSpec().StopMode)
+		asrt.Equal("graceful/request-2", projected.TypedSpec().StopRequest)
+	})
+}
+
 //nolint:gocyclo // Verify both architecture-specific defaults across console lifecycle transitions.
 func (suite *VirtualMachineSpecSuite) TestVNCDevices() {
 	for _, firmware := range []string{"bios", "uefi"} {
@@ -817,18 +883,36 @@ func (suite *VirtualMachineSpecSuite) TestStopModeReachesTheDomainSpec() {
 		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
 			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
 			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
-			PowerState: "running",
+			PowerState: "stopped",
 			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
 		}
+
+		request := ""
+
 		if stopMode != "" {
-			spec.TypedSpec().StopRequest = stopMode + "/" + name
+			request = stopMode + "/" + name
+
+			override := hypervisor.NewVirtualMachinePowerOverride(hypervisor.NamespaceName, name)
+			override.TypedSpec().PowerState = "stopped"
+			override.TypedSpec().StopRequest = request
+			suite.Create(override)
 		}
 
 		suite.Create(spec)
 		ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			asrt.Equal(stopMode, res.TypedSpec().StopMode)
-			asrt.Equal(spec.TypedSpec().StopRequest, res.TypedSpec().StopRequest)
+			asrt.Equal(request, res.TypedSpec().StopRequest)
+			asrt.Equal("stopped", res.TypedSpec().PowerState)
 		})
+
+		if stopMode != "" {
+			suite.Destroy(hypervisor.NewVirtualMachinePowerOverride(hypervisor.NamespaceName, name))
+			ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+				asrt.Equal("stopped", res.TypedSpec().PowerState)
+				asrt.Empty(res.TypedSpec().StopRequest)
+				asrt.Empty(res.TypedSpec().StopMode)
+			})
+		}
 	}
 }
 
@@ -838,12 +922,16 @@ func (suite *VirtualMachineSpecSuite) TestStoppedVirtualMachineEditReachesTheDom
 	name := "stopped-edit"
 	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
 	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
-		CPU:         hypervisor.VirtualMachineCPUSpec{Count: 1},
-		Memory:      hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
-		PowerState:  "stopped",
-		Firmware:    hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
-		StopRequest: hypervisorhelpers.StopModeGraceful.String() + "/request-a",
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 512 << 20},
+		PowerState: "stopped",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
 	}
+
+	override := hypervisor.NewVirtualMachinePowerOverride(hypervisor.NamespaceName, name)
+	override.TypedSpec().PowerState = "stopped"
+	override.TypedSpec().StopRequest = hypervisorhelpers.StopModeGraceful.String() + "/request-a"
+	suite.Create(override)
 	suite.Create(spec)
 	ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Contains(res.TypedSpec().DomainXML, "<vcpu>1</vcpu>")
@@ -1683,13 +1771,12 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 	// A graceful stop was asked for, which the withdrawal below is entitled to ignore.
 	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
 	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
-		CPU:         hypervisor.VirtualMachineCPUSpec{Count: 1},
-		Memory:      hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
-		PowerState:  "running",
-		Firmware:    hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
-		Guest:       hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
-		Disks:       []hypervisor.VirtualMachineDiskSpec{disk},
-		StopRequest: hypervisorhelpers.StopModeGraceful.String() + "/" + vmName,
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Guest:      hypervisor.VirtualMachineGuestSpec{Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true}},
+		Disks:      []hypervisor.VirtualMachineDiskSpec{disk},
 	}
 	suite.Create(spec)
 
@@ -1708,6 +1795,16 @@ func (suite *VirtualMachineStaleDiskSuite) TestStopsOnADiskStatusWhichIsTearingD
 	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 		asrt.Equal("running", res.TypedSpec().PowerState)
 		asrt.Equal([]string{status.Metadata().ID()}, res.TypedSpec().Disks)
+	})
+
+	override := hypervisor.NewVirtualMachinePowerOverride(hypervisor.NamespaceName, vmName)
+	override.TypedSpec().PowerState = "stopped"
+	override.TypedSpec().StopRequest = hypervisorhelpers.StopModeGraceful.String() + "/" + vmName
+	suite.Create(override)
+	ctest.AssertResource(suite, vmName, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", res.TypedSpec().PowerState)
+		asrt.Equal(hypervisorhelpers.StopModeGraceful.String(), res.TypedSpec().StopMode)
+		asrt.Equal(override.TypedSpec().StopRequest, res.TypedSpec().StopRequest)
 	})
 
 	suite.AddFinalizer(status.Metadata(), "hypervisor.VirtualMachineController")

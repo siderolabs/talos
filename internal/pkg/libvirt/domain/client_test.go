@@ -202,7 +202,7 @@ func (f *domainWireFixture) handle(conn net.Conn, call []byte) error {
 	case 12: // DOMAIN_DESTROY
 		name := decodeString(call[24:])
 		delete(f.records, name)
-	case 258: // DOMAIN_SHUTDOWN_FLAGS
+	case 258, 27: // DOMAIN_SHUTDOWN_FLAGS, DOMAIN_REBOOT
 		return f.deliverRequest(conn, call)
 	default:
 		return fmt.Errorf("unexpected domain RPC %d", procedure)
@@ -640,11 +640,13 @@ func TestShutdownRefusesDomainsThisMachineDoesNotOwn(t *testing.T) {
 			client, finished, served := openDomainFixture(t, record)
 
 			require.Error(t, client.Shutdown(domain))
+			require.Error(t, client.Reboot(domain))
 			client.Close()
 			require.NoError(t, <-served)
 
 			fixture := <-finished
 			require.Zero(t, countProcedure(fixture.calls, 258))
+			require.Zero(t, countProcedure(fixture.calls, 27))
 		})
 	}
 }
@@ -679,4 +681,43 @@ func TestShutdownRefusedByLibvirtReportsNotRunning(t *testing.T) {
 
 	fixture := <-finished
 	require.Equal(t, 1, countProcedure(fixture.calls, 258))
+}
+
+func TestRebootAsksTheGuestAndKeepsTheDomain(t *testing.T) {
+	t.Parallel()
+
+	record := ownedRecord()
+	client, finished, served := openDomainFixture(t, record)
+
+	require.NoError(t, client.Reboot(record.identity))
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Equal(t, 1, countProcedure(fixture.calls, 27))
+	require.Zero(t, countProcedure(fixture.calls, 12))
+	require.Contains(t, fixture.records, "first")
+}
+
+// Unlike a shutdown, a reboot of something which is not running has nothing to ask.
+func TestRebootRequiresARunningDomain(t *testing.T) {
+	t.Parallel()
+
+	domain := libvirtdomain.Domain{Name: "first", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "first")}
+
+	absent, _, absentServed := openDomainFixture(t)
+	require.ErrorIs(t, absent.Reboot(domain), libvirtdomain.ErrDomainNotRunning)
+	absent.Close()
+	require.NoError(t, <-absentServed)
+
+	stopped := ownedRecord()
+	stopped.inactive = true
+	client, finished, served := openDomainFixture(t, stopped)
+
+	require.ErrorIs(t, client.Reboot(domain), libvirtdomain.ErrDomainNotRunning)
+	client.Close()
+	require.NoError(t, <-served)
+
+	fixture := <-finished
+	require.Zero(t, countProcedure(fixture.calls, 27))
 }

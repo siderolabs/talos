@@ -175,7 +175,7 @@ message VirtualMachineDomainSpecSpec {
   repeated string disks = 3;
   // CloudInit identifies the seed status this domain has attached and must hold.
   string cloud_init = 4;
-  // ObservedGeneration identifies the VM intent used to render this definition.
+  // ObservedGeneration identifies the producer spec and power override used to render this definition.
   string observed_generation = 5;
   // StopMode selects whether a stop asks the guest to power off or destroys the domain.
   //
@@ -283,6 +283,7 @@ message VirtualMachineProfileSpecSpec {
 message VirtualMachineSpecSpec {
   VirtualMachineCPUSpec cpu = 1;
   VirtualMachineMemorySpec memory = 2;
+  // PowerState is the producer's intent, before temporary power overrides.
   string power_state = 3;
   VirtualMachineFirmwareSpec firmware = 4;
   VirtualMachineConsoleSpec console = 5;
@@ -294,8 +295,6 @@ message VirtualMachineSpecSpec {
   VirtualMachineVideoSpec video = 10;
   // Profile names the guest hardware profile; empty selects the builtin host profile.
   string profile = 11;
-  // StopRequest is the stop request committed with stopped intent, encoded as "<mode>/<id>".
-  string stop_request = 12;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.
@@ -310,7 +309,7 @@ message VirtualMachineStatusSpec {
   repeated string addresses = 4;
   // Interfaces is the per-interface view returned by qemu-guest-agent.
   repeated VirtualMachineGuestInterfaceSpec interfaces = 5;
-  // ObservedGeneration identifies the VM spec incarnation and version this status was composed from.
+  // ObservedGeneration identifies the effective intent and exact domain incarnation and version this status was composed from.
   string observed_generation = 6;
 }
 

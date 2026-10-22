@@ -79,6 +79,8 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, res.TypedSpec().Console.Serial, spec.GetConsole().GetSerial())
 	assert.Equal(t, res.TypedSpec().Console.VNC, spec.GetConsole().GetVnc())
 	assert.Equal(t, res.TypedSpec().Guest.Agent.Enabled, spec.GetGuest().GetAgent().GetEnabled())
+	assert.Equal(t, res.TypedSpec().Video.Model, spec.GetVideo().GetModel())
+	assert.Equal(t, res.TypedSpec().Video.VRAMMiB, spec.GetVideo().GetVramMiB())
 	assert.Equal(t, res.TypedSpec().Disks[0].Provision.FromImage.Digest, spec.GetDisks()[0].GetProvision().GetFromImage().GetDigest())
 
 	decoded, err := protobuf.Unmarshal(wire)
@@ -87,15 +89,6 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.IsType(t, res, roundTrip)
 	assert.Equal(t, res.TypedSpec(), roundTrip.(*hypervisor.VirtualMachineSpec).TypedSpec())
-
-	// Dynamic COSI encoding uses struct tags; also verify the generated public API
-	// knows field 10, rather than merely preserving it as unknown protobuf data.
-	videoField := spec.ProtoReflect().Descriptor().Fields().ByName("video")
-	require.NotNil(t, videoField)
-	assert.EqualValues(t, 10, videoField.Number())
-	video := spec.ProtoReflect().Get(videoField).Message()
-	assert.Equal(t, "bochs", video.Get(video.Descriptor().Fields().ByNumber(1)).String())
-	assert.EqualValues(t, 32, video.Get(video.Descriptor().Fields().ByNumber(2)).Uint())
 
 	clone := res.DeepCopy().(*hypervisor.VirtualMachineSpec)
 	clone.TypedSpec().CPU.Count++
