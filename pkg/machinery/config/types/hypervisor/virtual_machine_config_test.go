@@ -419,6 +419,52 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: "disks[0]: bus nvme is not supported",
 		},
 		{
+			name: "PCI devices",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.HostDevicesConfig.PCIConfig = []hypervisor.VirtualMachinePCIDevice{
+					{PCIAddress: "0000:41:00.0", PCIBootOrder: 1},
+					{PCIAddress: "0000:41:00.1"},
+				}
+
+				return c
+			},
+		},
+		{
+			name: "PCI devices on the legacy profile and with ballooning",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.ProfileConfig = new("legacy")
+				c.MemoryConfig.BallooningConfig = &hypervisor.VirtualMachineBallooning{BallooningEnabled: new(true)}
+				c.HostDevicesConfig.PCIConfig = []hypervisor.VirtualMachinePCIDevice{{PCIAddress: "0000:41:00.0"}}
+
+				return c
+			},
+			expectedWarnings: []string{
+				"hostDevices.pci: profile legacy uses the i440FX chipset; a q35 profile, such as the default host, is recommended for passing through PCI Express devices",
+				"memory.ballooning.enabled: a passed-through PCI device pins all guest memory, so ballooning has no effect",
+			},
+		},
+		{
+			name: "invalid PCI devices",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("system")}
+				c.DisksConfig[0].DiskBootOrder = 1
+				c.HostDevicesConfig.PCIConfig = []hypervisor.VirtualMachinePCIDevice{
+					{PCIAddress: "41:00.0"},
+					{PCIAddress: "0000:af:00.0", PCIBootOrder: 1},
+					// The same device in uppercase still collides.
+					{PCIAddress: "0000:AF:00.0"},
+				}
+
+				return c
+			},
+			expectedErrors: `hostDevices.pci[0]: PCI address "41:00.0" must be in the form dddd:bb:ss.f, e.g. 0000:41:00.0` + "\n" +
+				`hostDevices.pci[1]: duplicate bootOrder 1` + "\n" +
+				`hostDevices.pci[2]: duplicate PCI address "0000:af:00.0"`,
+		},
+		{
 			name: "no vCPUs",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()

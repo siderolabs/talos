@@ -42,6 +42,18 @@ type VirtualMachineSpecSpec struct {
 	Video VirtualMachineVideoSpec `yaml:"video" protobuf:"10"`
 	// Profile names the guest hardware profile; empty selects the builtin host profile.
 	Profile string `yaml:"profile,omitempty" protobuf:"11"`
+	// PCIDevices are the host PCI devices passed through to the guest, in configuration order.
+	PCIDevices []VirtualMachinePCIDeviceSpec `yaml:"pciDevices,omitempty" protobuf:"12"`
+}
+
+// VirtualMachinePCIDeviceSpec describes a host PCI device passed through to the guest.
+//
+//gotagsrewrite:gen
+type VirtualMachinePCIDeviceSpec struct {
+	// Address of the device on the host, in its canonical sysfs form, e.g. "0000:41:00.0".
+	Address string `yaml:"address" protobuf:"1"`
+	// BootOrder is the position of the device in the guest boot order; zero leaves it out.
+	BootOrder uint32 `yaml:"bootOrder,omitempty" protobuf:"2"`
 }
 
 // VirtualMachineVideoSpec describes the virtual graphics device.

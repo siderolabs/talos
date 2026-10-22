@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	talosruntime "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // VirtualMachineStatusController combines desired VMs with independent libvirt observations, and
@@ -31,6 +32,10 @@ import (
 // its power intent.
 type VirtualMachineStatusController struct {
 	V1Alpha1Mode machineruntime.Mode
+
+	// SysfsPath is where the host's sysfs is read from to report on domains passing PCI devices
+	// through. Empty reads /sys.
+	SysfsPath string
 }
 
 // Name implements controller.Controller.
@@ -90,6 +95,16 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 			Namespace: hardware.NamespaceName,
 			Type:      hardware.NUMATopologyType,
 			ID:        optional.Some(hardware.NUMATopologyID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.PCIDriverRebindStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: talosruntime.NamespaceName,
+			Type:      talosruntime.KernelModuleStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -221,6 +236,12 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 			renderErr = validateDomainPlacement(name, domainXML, topology)
 		}
 
+		// Host devices are admitted the same way: a device not yet bound to vfio-pci holds the
+		// next start back without stopping a guest which already has it.
+		if renderErr == nil {
+			renderErr = ctrl.admitHostDevices(ctx, runtime, name, domainXML, &effective)
+		}
+
 		definition := definitions[name]
 		stopMode := ""
 		released := false
@@ -247,6 +268,23 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 	}
 
 	return errors.Join(errs, safe.CleanupOutputs[*hypervisor.VirtualMachineStatus](ctx, runtime))
+}
+
+// admitHostDevices checks the PCI devices a virtual machine meant to run passes through, as
+// VirtualMachineController does before it starts the domain.
+func (ctrl *VirtualMachineStatusController) admitHostDevices(ctx context.Context, r controller.Reader, name, domainXML string,
+	effective *hypervisor.VirtualMachineSpecSpec,
+) error {
+	if len(effective.PCIDevices) == 0 || effective.PowerState != hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
+		return nil
+	}
+
+	claims, err := listPCIClaims(ctx, r, name)
+	if err != nil {
+		return err
+	}
+
+	return checkDomainHostDevices(ctrl.SysfsPath, name, domainXML, claims)
 }
 
 func setVirtualMachineStatusGeneration(status *hypervisor.VirtualMachineStatusSpec, effective *hypervisor.VirtualMachineSpecSpec,
@@ -284,7 +322,8 @@ func listVirtualMachineDomainSpecs(ctx context.Context, reader controller.Reader
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
 func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
-	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, errPlacementPending) || errors.Is(err, vmprofile.ErrNotReady) {
+	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, errPlacementPending) || errors.Is(err, vmprofile.ErrNotReady) ||
+		errors.Is(err, errHostDevicePending) || errors.Is(err, errVFIOBackendPending) || errors.Is(err, errHostDeviceClaimed) {
 		return hypervisorhelpers.VirtualMachineStagePending
 	}
 

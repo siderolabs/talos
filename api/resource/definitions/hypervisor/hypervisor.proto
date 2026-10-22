@@ -250,6 +250,14 @@ message VirtualMachineMemorySpec {
   VirtualMachineMemoryNUMASpec numa = 3;
 }
 
+// VirtualMachinePCIDeviceSpec describes a host PCI device passed through to the guest.
+message VirtualMachinePCIDeviceSpec {
+  // Address of the device on the host, in its canonical sysfs form, e.g. "0000:41:00.0".
+  string address = 1;
+  // BootOrder is the position of the device in the guest boot order; zero leaves it out.
+  uint32 boot_order = 2;
+}
+
 // VirtualMachinePowerOverrideSpec describes the power state a virtual machine is driven towards.
 message VirtualMachinePowerOverrideSpec {
   // PowerState overrides the configured power state.
@@ -295,6 +303,8 @@ message VirtualMachineSpecSpec {
   VirtualMachineVideoSpec video = 10;
   // Profile names the guest hardware profile; empty selects the builtin host profile.
   string profile = 11;
+  // PCIDevices are the host PCI devices passed through to the guest, in configuration order.
+  repeated VirtualMachinePCIDeviceSpec pci_devices = 12;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.

@@ -7,6 +7,6 @@ package hypervisor
 
 const versionV1Alpha1 = "v1alpha1"
 
-//go:generate go tool github.com/siderolabs/talos/tools/docgen -output hypervisor_doc.go hypervisor.go content_library_config.go virtual_machine_config.go virtual_machine_profile_config.go virtual_machine_firmware.go virtual_machine_disk.go virtual_machine_console.go virtual_machine_networking.go virtual_machine_placement.go virtual_machine_guest.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output hypervisor_doc.go hypervisor.go content_library_config.go virtual_machine_config.go virtual_machine_profile_config.go virtual_machine_firmware.go virtual_machine_disk.go virtual_machine_console.go virtual_machine_networking.go virtual_machine_host_devices.go virtual_machine_placement.go virtual_machine_guest.go
 
 //go:generate go tool github.com/siderolabs/deep-copy -type ContentLibraryConfigV1Alpha1 -type VirtualMachineConfigV1Alpha1 -type VirtualMachineProfileConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .

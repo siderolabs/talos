@@ -709,6 +709,14 @@ func renderVirtualMachineDomain(
 		return "", nil, err
 	}
 
+	if err := renderVirtualMachinePCIDevices(&domain, spec.PCIDevices); err != nil {
+		return "", nil, fmt.Errorf("virtual machine %q: %w", name, err)
+	}
+
+	if len(spec.PCIDevices) > 0 {
+		renderVirtualMachinePassthroughClock(&domain)
+	}
+
 	domainXML, err := domain.Marshal()
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to marshal virtual machine %q: %w", name, err)
@@ -1175,6 +1183,10 @@ func validateVirtualMachineDomainSpec(name string, spec *hypervisor.VirtualMachi
 	}
 
 	if err := validateVirtualMachineInterfaces(name, spec.Interfaces); err != nil {
+		return err
+	}
+
+	if err := validateVirtualMachinePCIDevices(name, spec); err != nil {
 		return err
 	}
 
