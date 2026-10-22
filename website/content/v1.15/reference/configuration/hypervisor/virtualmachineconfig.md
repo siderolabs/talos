@@ -147,6 +147,7 @@ guest:
 |`networking` |<a href="#VirtualMachineConfig.networking">VirtualMachineNetworking</a> |Networking settings for the virtual machine.<br><br>Optional; a virtual machine with no interfaces has no network connectivity at all.  | |
 |`guest` |<a href="#VirtualMachineConfig.guest">VirtualMachineGuest</a> |Settings which apply inside the guest.<br><br>Optional; omitting it leaves the guest to boot its image unmodified.  | |
 |`video` |<a href="#VirtualMachineConfig.video">VirtualMachineVideo</a> |Video device presented to the guest on amd64 when a VNC console is enabled.<br>Other architectures use libvirt's defaults; without VNC this block has no effect.<br>Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.  | |
+|`hostDevices` |<a href="#VirtualMachineConfig.hostDevices">VirtualMachineHostDevices</a> |Host devices passed through to the guest.<br><br>Optional; omitting it passes no host devices through.  | |
 
 
 
@@ -571,6 +572,41 @@ VirtualMachineVideo describes the virtual graphics device.
 model: vga
 {{< /highlight >}}</details> | |
 |`vramMiB` |uint32 |Video RAM in MiB for `vga` and `bochs`. Zero leaves libvirt's default.<br>Nonzero values must be powers of two: 1–512 MiB for `vga`, 4–256 MiB for `bochs`.<br>Must be zero for `virtio` and `cirrus`, for which libvirt ignores this setting.<br>This does not set the guest's resolution or enable 3D acceleration.  | |
+
+
+
+
+
+
+## hostDevices {#VirtualMachineConfig.hostDevices}
+
+VirtualMachineHostDevices describes the host devices passed through to a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`pci` |<a href="#VirtualMachineConfig.hostDevices.pci.">[]VirtualMachinePCIDevice</a> |Host PCI devices passed through to the guest.<br><br>Each device must be bound to the `vfio-pci` driver on the host before the virtual<br>machine starts, e.g. with a `PCIDriverRebindConfig` document, and the `vfio_pci` and<br>`vfio_iommu_type1` kernel modules must be loaded (`KernelModuleConfig`). Until then the<br>virtual machine is held back and its status reports what it is waiting for.<br><br>Every other device in the same IOMMU group must be bound to `vfio-pci`, `pci-stub` or<br>no driver for the group to be usable; passing through only some functions of a<br>multi-function device usually still requires the others to be detached from their host<br>drivers. A device, or its IOMMU group, can be passed through to one virtual machine at a<br>time.<br><br>Each device gets a guest PCI slot of its own: functions which must share a slot in the<br>guest, such as a GPU and its audio function, are not supported yet.<br><br>A passed-through device pins all of the guest memory on the host, so memory ballooning<br>has no effect on such a guest.<br><br>A configuration patch replaces this list as a whole rather than appending to it.  | |
+
+
+
+
+### pci[] {#VirtualMachineConfig.hostDevices.pci.}
+
+VirtualMachinePCIDevice describes a single host PCI device passed through to a virtual machine.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`address` |string |Address of the device on the host, in the full form `domain:bus:slot.function`.<br><br>This is the device name under `/sys/bus/pci/devices` and the ID reported by<br>`talosctl get pcidevices`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+address: 0000:41:00.0
+{{< /highlight >}}</details> | |
+|`bootOrder` |uint32 |Position of the device in the guest boot order, shared with the disks of the virtual<br>machine; e.g. to boot from a passed-through NVMe drive or a network card's option ROM.<br><br>Optional; zero leaves the device out of the boot order.  | |
+
+
 
 
 

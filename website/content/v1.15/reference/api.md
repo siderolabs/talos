@@ -548,6 +548,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
+    - [VirtualMachinePCIDeviceSpec](#talos.resource.definitions.hypervisor.VirtualMachinePCIDeviceSpec)
     - [VirtualMachineProfileCPUFeatureSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec)
     - [VirtualMachineProfileCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec)
     - [VirtualMachineProfileSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileSpecSpec)
@@ -9628,6 +9629,22 @@ VirtualMachineMemorySpec describes the desired guest memory.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachinePCIDeviceSpec"></a>
+
+### VirtualMachinePCIDeviceSpec
+VirtualMachinePCIDeviceSpec describes a host PCI device passed through to the guest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| address | [string](#string) |  | Address of the device on the host, in its canonical sysfs form, e.g. "0000:41:00.0". |
+| boot_order | [uint32](#uint32) |  | BootOrder is the position of the device in the guest boot order; zero leaves it out. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec"></a>
 
 ### VirtualMachineProfileCPUFeatureSpec
@@ -9698,6 +9715,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
 | video | [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec) |  | Video is the graphics device presented when a VNC console is enabled. |
 | profile | [string](#string) |  | Profile names the guest hardware profile; empty selects the builtin host profile. |
+| pci_devices | [VirtualMachinePCIDeviceSpec](#talos.resource.definitions.hypervisor.VirtualMachinePCIDeviceSpec) | repeated | PCIDevices are the host PCI devices passed through to the guest, in configuration order. |
 
 
 

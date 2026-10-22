@@ -2612,6 +2612,13 @@
           "description": "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt’s defaults; without VNC this block has no effect.\nOptional; omitting it uses vga with libvirt’s default VRAM on amd64.\n",
           "markdownDescription": "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt's defaults; without VNC this block has no effect.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
           "x-intellij-html-description": "\u003cp\u003eVideo device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt\u0026rsquo;s defaults; without VNC this block has no effect.\nOptional; omitting it uses \u003ccode\u003evga\u003c/code\u003e with libvirt\u0026rsquo;s default VRAM on amd64.\u003c/p\u003e\n"
+        },
+        "hostDevices": {
+          "$ref": "#/$defs/hypervisor.VirtualMachineHostDevices",
+          "title": "hostDevices",
+          "description": "Host devices passed through to the guest.\n\nOptional; omitting it passes no host devices through.\n",
+          "markdownDescription": "Host devices passed through to the guest.\n\nOptional; omitting it passes no host devices through.",
+          "x-intellij-html-description": "\u003cp\u003eHost devices passed through to the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it passes no host devices through.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2856,6 +2863,23 @@
       "type": "object",
       "description": "VirtualMachineGuest describes the settings which apply inside the guest."
     },
+    "hypervisor.VirtualMachineHostDevices": {
+      "properties": {
+        "pci": {
+          "items": {
+            "$ref": "#/$defs/hypervisor.VirtualMachinePCIDevice"
+          },
+          "type": "array",
+          "title": "pci",
+          "description": "Host PCI devices passed through to the guest.\n\nEach device must be bound to the vfio-pci driver on the host before the virtual\nmachine starts, e.g. with a PCIDriverRebindConfig document, and the vfio_pci and\nvfio_iommu_type1 kernel modules must be loaded (KernelModuleConfig). Until then the\nvirtual machine is held back and its status reports what it is waiting for.\n\nEvery other device in the same IOMMU group must be bound to vfio-pci, pci-stub or\nno driver for the group to be usable; passing through only some functions of a\nmulti-function device usually still requires the others to be detached from their host\ndrivers. A device, or its IOMMU group, can be passed through to one virtual machine at a\ntime.\n\nEach device gets a guest PCI slot of its own: functions which must share a slot in the\nguest, such as a GPU and its audio function, are not supported yet.\n\nA passed-through device pins all of the guest memory on the host, so memory ballooning\nhas no effect on such a guest.\n\nA configuration patch replaces this list as a whole rather than appending to it.\n",
+          "markdownDescription": "Host PCI devices passed through to the guest.\n\nEach device must be bound to the `vfio-pci` driver on the host before the virtual\nmachine starts, e.g. with a `PCIDriverRebindConfig` document, and the `vfio_pci` and\n`vfio_iommu_type1` kernel modules must be loaded (`KernelModuleConfig`). Until then the\nvirtual machine is held back and its status reports what it is waiting for.\n\nEvery other device in the same IOMMU group must be bound to `vfio-pci`, `pci-stub` or\nno driver for the group to be usable; passing through only some functions of a\nmulti-function device usually still requires the others to be detached from their host\ndrivers. A device, or its IOMMU group, can be passed through to one virtual machine at a\ntime.\n\nEach device gets a guest PCI slot of its own: functions which must share a slot in the\nguest, such as a GPU and its audio function, are not supported yet.\n\nA passed-through device pins all of the guest memory on the host, so memory ballooning\nhas no effect on such a guest.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+          "x-intellij-html-description": "\u003cp\u003eHost PCI devices passed through to the guest.\u003c/p\u003e\n\n\u003cp\u003eEach device must be bound to the \u003ccode\u003evfio-pci\u003c/code\u003e driver on the host before the virtual\nmachine starts, e.g. with a \u003ccode\u003ePCIDriverRebindConfig\u003c/code\u003e document, and the \u003ccode\u003evfio_pci\u003c/code\u003e and\n\u003ccode\u003evfio_iommu_type1\u003c/code\u003e kernel modules must be loaded (\u003ccode\u003eKernelModuleConfig\u003c/code\u003e). Until then the\nvirtual machine is held back and its status reports what it is waiting for.\u003c/p\u003e\n\n\u003cp\u003eEvery other device in the same IOMMU group must be bound to \u003ccode\u003evfio-pci\u003c/code\u003e, \u003ccode\u003epci-stub\u003c/code\u003e or\nno driver for the group to be usable; passing through only some functions of a\nmulti-function device usually still requires the others to be detached from their host\ndrivers. A device, or its IOMMU group, can be passed through to one virtual machine at a\ntime.\u003c/p\u003e\n\n\u003cp\u003eEach device gets a guest PCI slot of its own: functions which must share a slot in the\nguest, such as a GPU and its audio function, are not supported yet.\u003c/p\u003e\n\n\u003cp\u003eA passed-through device pins all of the guest memory on the host, so memory ballooning\nhas no effect on such a guest.\u003c/p\u003e\n\n\u003cp\u003eA configuration patch replaces this list as a whole rather than appending to it.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "VirtualMachineHostDevices describes the host devices passed through to a virtual machine."
+    },
     "hypervisor.VirtualMachineInterface": {
       "properties": {
         "name": {
@@ -2964,6 +2988,31 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VirtualMachineNetworking describes the networking of a virtual machine."
+    },
+    "hypervisor.VirtualMachinePCIDevice": {
+      "properties": {
+        "address": {
+          "type": "string",
+          "pattern": "^[0-9a-fA-F]{4}:[0-9a-fA-F]{2}:[0-1][0-9a-fA-F]\\.[0-7]$",
+          "title": "address",
+          "description": "Address of the device on the host, in the full form domain:bus:slot.function.\n\nThis is the device name under /sys/bus/pci/devices and the ID reported by\ntalosctl get pcidevices.\n",
+          "markdownDescription": "Address of the device on the host, in the full form `domain:bus:slot.function`.\n\nThis is the device name under `/sys/bus/pci/devices` and the ID reported by\n`talosctl get pcidevices`.",
+          "x-intellij-html-description": "\u003cp\u003eAddress of the device on the host, in the full form \u003ccode\u003edomain:bus:slot.function\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eThis is the device name under \u003ccode\u003e/sys/bus/pci/devices\u003c/code\u003e and the ID reported by\n\u003ccode\u003etalosctl get pcidevices\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "bootOrder": {
+          "type": "integer",
+          "title": "bootOrder",
+          "description": "Position of the device in the guest boot order, shared with the disks of the virtual\nmachine; e.g. to boot from a passed-through NVMe drive or a network card’s option ROM.\n\nOptional; zero leaves the device out of the boot order.\n",
+          "markdownDescription": "Position of the device in the guest boot order, shared with the disks of the virtual\nmachine; e.g. to boot from a passed-through NVMe drive or a network card's option ROM.\n\nOptional; zero leaves the device out of the boot order.",
+          "x-intellij-html-description": "\u003cp\u003ePosition of the device in the guest boot order, shared with the disks of the virtual\nmachine; e.g. to boot from a passed-through NVMe drive or a network card\u0026rsquo;s option ROM.\u003c/p\u003e\n\n\u003cp\u003eOptional; zero leaves the device out of the boot order.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "address"
+      ],
+      "description": "VirtualMachinePCIDevice describes a single host PCI device passed through to a virtual machine."
     },
     "hypervisor.VirtualMachineProfileCPU": {
       "properties": {

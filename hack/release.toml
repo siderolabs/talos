@@ -115,6 +115,47 @@ Provisioning a disk from a content library image is not implemented yet; `provis
 still only supported on a `cdrom`.
 """
 
+    [notes.vm_pci_passthrough]
+        title = "Virtual Machine PCI Passthrough"
+        description = """Host PCI devices can now be passed through to a virtual machine with `hostDevices.pci`:
+
+```yaml
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: vfio_pci
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: vfio_iommu_type1
+---
+apiVersion: v1alpha1
+kind: PCIDriverRebindConfig
+name: 0000:41:00.0
+targetDriver: vfio-pci
+---
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: vm1
+hostDevices:
+  pci:
+    - address: 0000:41:00.0
+```
+
+Devices are attached unmanaged: Talos itself binds them to `vfio-pci` through `PCIDriverRebindConfig`, and every
+other device in the same IOMMU group must be detached from its host driver as well. Both `vfio_pci` and the VFIO IOMMU
+backend `vfio_iommu_type1` must be loaded; the latter is not pulled in automatically. Until a device is present, in an
+IOMMU group and bound to `vfio-pci`, every other device of its group is on `vfio-pci`, `pci-stub` or no driver, no
+other virtual machine passes the device or its group through, and the backend is loaded, the virtual machine is held
+back and `VirtualMachineStatus` reports what it is waiting for.
+
+Passed-through devices sit behind PCI Express root ports on the q35 chipset of the default `host` profile; the
+`legacy` profile's i440FX chipset puts them on a conventional PCI bus, and is not recommended for passthrough.
+
+Virtual machines with passed-through devices are created with the PIT's missed-tick re-injection disabled
+(`tickpolicy="discard"`): on AMD hosts KVM turns AVIC off for a guest which re-injects PIT ticks, and the host then
+handles every interrupt of its passed-through devices instead of posting them to the guest.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\
