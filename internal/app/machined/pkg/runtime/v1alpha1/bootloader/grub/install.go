@@ -6,6 +6,7 @@ package grub
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,6 +21,7 @@ import (
 	bootloaderutils "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/efiutils"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/mount"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
+	"github.com/siderolabs/talos/internal/pkg/md"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/internal/pkg/smbios"
 	"github.com/siderolabs/talos/internal/pkg/uki"
@@ -322,31 +324,86 @@ func (c *Config) runGrubInstall(ctx context.Context, opts options.InstallOptions
 	}
 
 	for _, platform := range platforms {
-		args := []string{
-			"--boot-directory=" + filepath.Join(opts.MountPrefix, constants.BootMountPoint),
-			"--removable",
+		devices, err := installDevices(platform, opts)
+		if err != nil {
+			return err
 		}
 
-		if efiMode {
-			args = append(args, "--efi-directory="+filepath.Join(opts.MountPrefix, constants.EFIMountPoint))
-		}
+		for _, device := range devices {
+			args := []string{
+				"--boot-directory=" + filepath.Join(opts.MountPrefix, constants.BootMountPoint),
+				"--removable",
+			}
 
-		if opts.ImageMode {
-			args = append(args, "--no-nvram")
-		}
+			if efiMode {
+				args = append(args, "--efi-directory="+filepath.Join(opts.MountPrefix, constants.EFIMountPoint))
+			}
 
-		if platform != "" {
-			args = append(args, "--target="+platform)
-		}
+			if opts.ImageMode {
+				args = append(args, "--no-nvram")
+			}
 
-		args = append(args, opts.BootDisk)
+			if platform != "" {
+				args = append(args, "--target="+platform)
+			}
 
-		opts.Printf("executing: grub-install %s", strings.Join(args, " "))
+			args = append(args, device)
 
-		if _, err := cmd.RunWithOptions(ctx, "grub-install", args); err != nil {
-			return fmt.Errorf("failed to install grub: %w", err)
+			opts.Printf("executing: grub-install %s", strings.Join(args, " "))
+
+			if _, err := cmd.RunWithOptions(ctx, "grub-install", args); err != nil {
+				return fmt.Errorf("failed to install grub: %w", err)
+			}
 		}
 	}
 
 	return nil
+}
+
+// installDevices returns the devices grub-install should be pointed at for the platform.
+//
+// The device only matters for the BIOS target, where grub-install writes the boot sector and embeds the core image
+// into the BIOS boot partition. GRUB refuses to do these writes through its own md layer ("diskfilter writes are not
+// supported"), so when the boot disk is an md array the boot code goes to every in-sync member instead: the array
+// data starts at sector 0 of each member (metadata 1.0), which is where the firmware looks for it.
+//
+// Image mode never deals with md arrays, and the EFI targets ignore the device, so both keep the boot disk as is.
+func installDevices(platform string, opts options.InstallOptions) ([]string, error) {
+	if opts.ImageMode || !installsBootSector(platform) {
+		return []string{opts.BootDisk}, nil
+	}
+
+	members, err := md.InSyncMembers(opts.BootDisk)
+	if err != nil {
+		if errors.Is(err, md.ErrNotFound) {
+			// not an md array
+			return []string{opts.BootDisk}, nil
+		}
+
+		return nil, fmt.Errorf("failed to list members of %s: %w", opts.BootDisk, err)
+	}
+
+	if len(members) == 0 {
+		return nil, fmt.Errorf("md array %s has no in-sync members to install the bootloader to", opts.BootDisk)
+	}
+
+	opts.Printf("boot disk %s is an md array, installing the BIOS boot code to its members: %s", opts.BootDisk, strings.Join(members, ", "))
+
+	return members, nil
+}
+
+// installsBootSector reports whether grub-install writes the boot sector for the platform, i.e. whether it is the BIOS target.
+//
+// When the platform is left for grub-install to pick, it goes for EFI if the firmware is EFI and for BIOS otherwise.
+func installsBootSector(platform string) bool {
+	switch platform {
+	case "i386-pc":
+		return true
+	case "":
+		_, err := os.Stat("/sys/firmware/efi")
+
+		return err != nil
+	default:
+		return false
+	}
 }

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -77,6 +78,56 @@ func FindDeviceByMember(member string) (string, error) {
 	}
 
 	return "", ErrNotFound
+}
+
+// InSyncMembers returns the /dev paths of the members of an MD array which are in sync with it.
+//
+// Spare, faulty and recovering members are left out: they do not carry the array data yet (or anymore).
+// The device path may be a symlink (e.g. the by-id path) to the /dev/mdN node.
+func InSyncMembers(device string) ([]string, error) {
+	if device == "" {
+		return nil, fmt.Errorf("%w: device must be set", ErrInvalidArgument)
+	}
+
+	resolved, err := filepath.EvalSymlinks(device)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve %s: %w", device, err)
+	}
+
+	mdDir := filepath.Join(sysBlockDir, filepath.Base(resolved), "md")
+
+	entries, err := os.ReadDir(mdDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrNotFound
+		}
+
+		return nil, fmt.Errorf("failed to read %s: %w", mdDir, err)
+	}
+
+	var members []string
+
+	for _, e := range entries {
+		name, ok := strings.CutPrefix(e.Name(), "dev-")
+		if !ok {
+			continue
+		}
+
+		state, err := os.ReadFile(filepath.Join(mdDir, e.Name(), "state"))
+		if err != nil {
+			return nil, fmt.Errorf("failed to read state of %s member %s: %w", resolved, name, err)
+		}
+
+		if !slices.Contains(strings.Split(strings.TrimSpace(string(state)), ","), "in_sync") {
+			continue
+		}
+
+		members = append(members, filepath.Join("/dev", name))
+	}
+
+	slices.Sort(members)
+
+	return members, nil
 }
 
 func freeMDNode() string {
@@ -242,7 +293,8 @@ func (md *MD) Create(ctx context.Context, name string, opts CreateOptions) (stri
 
 	node := freeMDNode()
 	args := make([]string, 0, 8+len(opts.Devices))
-	args = append(args,
+	args = append(
+		args,
 		"--create", node,
 		"--name", name,
 		"--homehost="+mdHomeHost,

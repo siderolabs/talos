@@ -1132,6 +1132,11 @@ spec:
             viaMaintenanceMode: "true"
             withIso: "true"
             extraTestArgs: -talos.verifyukibooted=false
+          - test: e2e-bios-md
+            withUefi: "false"
+            qemuSystemDisks: "2"
+            withConfigPatch: "@hack/test/patches/md-boot-array.yaml"
+            extraTestArgs: -talos.verifyukibooted=false
           - test: e2e-disk-image
             useDiskImage: "true"
             viaMaintenanceMode: "true"
@@ -1180,6 +1185,7 @@ spec:
             WITH_TPM1_2: ${{ matrix.withTpm12 }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             QEMU_SYSTEM_DISK_DRIVER: "${{ matrix.qemuSystemDiskDriver }}"
+            QEMU_SYSTEM_DISKS: "${{ matrix.qemuSystemDisks }}"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
