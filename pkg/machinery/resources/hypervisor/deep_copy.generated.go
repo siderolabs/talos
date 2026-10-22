@@ -49,6 +49,10 @@ func (o VirtualMachineSpecSpec) DeepCopy() VirtualMachineSpecSpec {
 		cp.CloudInit = new(VirtualMachineCloudInitSpec)
 		*cp.CloudInit = *o.CloudInit
 	}
+	if o.PCIDevices != nil {
+		cp.PCIDevices = make([]VirtualMachinePCIDeviceSpec, len(o.PCIDevices))
+		copy(cp.PCIDevices, o.PCIDevices)
+	}
 	return cp
 }
 

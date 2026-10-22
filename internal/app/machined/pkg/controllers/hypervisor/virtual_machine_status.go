@@ -33,6 +33,10 @@ import (
 // its power intent.
 type VirtualMachineStatusController struct {
 	V1Alpha1Mode machineruntime.Mode
+
+	// SysfsPath is where the host's sysfs is read from to check the PCI devices a domain passes
+	// through. Empty reads /sys.
+	SysfsPath string
 }
 
 // Name implements controller.Controller.
@@ -97,6 +101,11 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 			Namespace: hardware.NamespaceName,
 			Type:      hardware.NUMATopologyType,
 			ID:        optional.Some(hardware.NUMATopologyID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.PCIDriverRebindStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -228,6 +237,12 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 			renderErr = placement.Validate(name, domainXML, topology)
 		}
 
+		// So are the PCI devices it passes through: one not bound to vfio-pci yet holds the next
+		// start back.
+		if renderErr == nil && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
+			renderErr = checkDomainHostDevices(ctrl.SysfsPath, name, domainXML)
+		}
+
 		definition := definitions[name]
 		stopMode := ""
 		released := false
@@ -291,7 +306,8 @@ func listVirtualMachineDomainSpecs(ctx context.Context, reader controller.Reader
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
 func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
-	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, placement.ErrPending) || errors.Is(err, vmprofile.ErrNotReady) {
+	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, placement.ErrPending) || errors.Is(err, vmprofile.ErrNotReady) ||
+		errors.Is(err, errHostDeviceNotReady) {
 		return hypervisorhelpers.VirtualMachineStagePending
 	}
 

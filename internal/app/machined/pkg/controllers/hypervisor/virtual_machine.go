@@ -45,6 +45,10 @@ type VirtualMachineController struct {
 	V1Alpha1Mode machineruntime.Mode
 	Open         func(context.Context) (libvirtdomain.Client, error)
 
+	// SysfsPath is where the host's sysfs is read from to check the PCI devices a domain passes
+	// through. Empty reads /sys.
+	SysfsPath string
+
 	// Rejected acquisitions never reached Start. Keep failed releases distinct
 	// from existing attachments across controller retries.
 	rejectedVolumeHolds map[string]resource.Pointer
@@ -129,6 +133,12 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			Namespace: hardware.NamespaceName,
 			Type:      hardware.NUMATopologyType,
 			ID:        optional.Some(hardware.NUMATopologyID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			// A rebind of a passed-through device to vfio-pci is what a held back start waits for.
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.PCIDriverRebindStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -304,6 +314,10 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 			// Retried when the host NUMA topology or the definition changes.
 			logger.Warn("virtual machine is held back by its host placement",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
+		case errors.Is(err, errHostDeviceNotReady):
+			// Retried when a PCI driver rebind or the definition changes.
+			logger.Info("virtual machine is waiting for its host devices",
+				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
 		case err != nil:
 			reconcileErrors = errors.Join(reconcileErrors, err)
 		}
@@ -396,7 +410,11 @@ func (ctrl *VirtualMachineController) startSpec(ctx context.Context, r controlle
 	// Admitted only when libvirt would create or replace the domain: an unchanged running domain
 	// is never stopped because the host inventory changed under it.
 	admission := libvirtdomain.WithStartAdmission(func() error {
-		return checkDomainPlacement(ctx, r, name, spec.TypedSpec().DomainXML)
+		if err := checkDomainPlacement(ctx, r, name, spec.TypedSpec().DomainXML); err != nil {
+			return err
+		}
+
+		return checkDomainHostDevices(ctrl.SysfsPath, name, spec.TypedSpec().DomainXML)
 	})
 
 	if err := client.Start(libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(machineUUID, name)}, spec.TypedSpec().DomainXML, admission); err != nil {
