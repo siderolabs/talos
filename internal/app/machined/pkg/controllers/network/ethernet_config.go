@@ -31,6 +31,11 @@ func (ctrl *EthernetConfigController) Name() string {
 func (ctrl *EthernetConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
 			ID:        optional.Some(config.ActiveID),
@@ -65,8 +70,15 @@ func (ctrl *EthernetConfigController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error reading machine configuration: %w", err)
 		}
 
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
 		if cfg != nil {
-			if err = ctrl.apply(ctx, r, cfg.Config().EthernetConfigs()); err != nil {
+			if err = ctrl.apply(ctx, r, cfg.Config().EthernetConfigs(), linkNameResolver); err != nil {
 				return fmt.Errorf("error applying EthernetSpec: %w", err)
 			}
 		}
@@ -77,9 +89,11 @@ func (ctrl *EthernetConfigController) Run(ctx context.Context, r controller.Runt
 	}
 }
 
-func (ctrl *EthernetConfigController) apply(ctx context.Context, r controller.Runtime, configs []configtypes.EthernetConfig) error {
+func (ctrl *EthernetConfigController) apply(
+	ctx context.Context, r controller.Runtime, configs []configtypes.EthernetConfig, linkNameResolver *network.LinkResolver,
+) error {
 	for _, cfg := range configs {
-		if err := safe.WriterModify(ctx, r, network.NewEthernetSpec(network.NamespaceName, cfg.Name()), func(spec *network.EthernetSpec) error {
+		if err := safe.WriterModify(ctx, r, network.NewEthernetSpec(network.NamespaceName, linkNameResolver.Resolve(cfg.Name())), func(spec *network.EthernetSpec) error {
 			spec.TypedSpec().Rings = network.EthernetRingsSpec(cfg.Rings())
 			spec.TypedSpec().Channels = network.EthernetChannelsSpec(cfg.Channels())
 			spec.TypedSpec().Features = cfg.Features()

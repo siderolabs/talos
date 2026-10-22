@@ -42,6 +42,11 @@ func (ctrl *RoutingRuleConfigController) Name() string {
 func (ctrl *RoutingRuleConfigController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
 			ID:        optional.Some(config.ActiveID),
@@ -78,10 +83,18 @@ func (ctrl *RoutingRuleConfigController) Run(ctx context.Context, r controller.R
 			}
 		}
 
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
 		if machineConfig != nil {
 			rules := ctrl.processConfig(
 				logger,
 				machineConfig.Config().NetworkRoutingRuleConfigs(),
+				linkNameResolver,
 			)
 
 			if err = ctrl.apply(ctx, r, rules); err != nil {
@@ -120,6 +133,7 @@ func (ctrl *RoutingRuleConfigController) apply(ctx context.Context, r controller
 func (ctrl *RoutingRuleConfigController) processConfig(
 	logger *zap.Logger,
 	ruleConfigs []cfg.NetworkRoutingRuleConfig,
+	linkNameResolver *network.LinkResolver,
 ) []network.RoutingRuleSpecSpec {
 	rules := make([]network.RoutingRuleSpecSpec, 0, len(ruleConfigs))
 
@@ -142,8 +156,8 @@ func (ctrl *RoutingRuleConfigController) processConfig(
 
 		rule.Src = src
 		rule.Dst = dst
-		rule.IIFName = ruleCfg.IIFName()
-		rule.OIFName = ruleCfg.OIFName()
+		rule.IIFName = linkNameResolver.Resolve(ruleCfg.IIFName())
+		rule.OIFName = linkNameResolver.Resolve(ruleCfg.OIFName())
 		rule.FwMark = ruleCfg.FwMark()
 		rule.FwMask = ruleCfg.FwMask()
 		rule.ConfigLayer = network.ConfigMachineConfiguration

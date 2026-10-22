@@ -146,6 +146,43 @@ func (suite *RoutingRuleConfigSuite) TestMachineConfigurationWithFwMark() {
 	)
 }
 
+func (suite *RoutingRuleConfigSuite) TestMachineConfigurationWithLinkAlias() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleConfigController{}))
+
+	for _, link := range []struct {
+		name  string
+		alias string
+	}{
+		{name: "enp0s3", alias: "net0"},
+		{name: "enp0s4", alias: "net1"},
+	} {
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().Alias = link.alias
+		suite.Create(status)
+	}
+
+	rc1 := networkcfg.NewRoutingRuleConfigV1Alpha1(500)
+	rc1.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
+	rc1.RuleTable = nethelpers.RoutingTable(100)
+	rc1.RuleIIFName = "net0"
+	rc1.RuleOIFName = "net1"
+
+	ctr, err := container.New(rc1)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResource(
+		suite,
+		"configuration/inet4/00500",
+		func(r *network.RoutingRuleSpec, asrt *assert.Assertions) {
+			asrt.Equal("enp0s3", r.TypedSpec().IIFName)
+			asrt.Equal("enp0s4", r.TypedSpec().OIFName)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+}
+
 // TestReservedPrioritySkipped verifies that user configs at kernel-reserved
 // priorities never produce a RoutingRuleSpec, so the spec controller can
 // never tear down (and thus delete) kernel-managed rules at those priorities.

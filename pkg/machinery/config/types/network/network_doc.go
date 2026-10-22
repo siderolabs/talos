@@ -1848,8 +1848,8 @@ func (LinkAliasConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Alias for the link.\n\nDon't use system interface names like \"eth0\", \"ens3\", \"enp0s2\", etc. as those may conflict\nwith existing physical interfaces.\n\nThe name can contain a single integer format verb (`%d`) to create multiple aliases\nfrom a single config document. When a format verb is detected, each matched link receives a sequential\nalias (e.g. `net0`, `net1`, ...) based on hardware address order of the links.\nLinks already aliased by a previous config are automatically skipped.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Alias for the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Alias for a link.\n\nLink aliases can be used interchangeably with physical link names in all networking configuration\nsections that take an existing link name as input.\n\nDon't use system interface names like \"eth0\", \"ens3\", \"enp0s2\", etc. as those may conflict\nwith existing physical interfaces.\n\nThe name can contain a single integer format verb (`%d`) to create multiple aliases\nfrom a single config document. When a format verb is detected, each matched link receives a sequential\nalias (e.g. `net0`, `net1`, ...) based on hardware address order of the links.\nLinks already aliased by a previous config are automatically skipped.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Alias for a link." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "selector",

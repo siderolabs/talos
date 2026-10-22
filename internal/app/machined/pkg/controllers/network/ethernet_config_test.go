@@ -69,6 +69,27 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 	ctest.AssertNoResource[*network.EthernetSpec](suite, "enp0s2")
 }
 
+func (suite *EthernetConfigSuite) TestReconcileAlias() {
+	status := network.NewLinkStatus(network.NamespaceName, "enp0s3")
+	status.TypedSpec().Alias = "net0"
+	suite.Create(status)
+
+	ethCfg := networkcfg.NewEthernetConfigV1Alpha1("net0")
+	ethCfg.RingsConfig = &networkcfg.EthernetRingsConfig{
+		RX: new(uint32(16)),
+	}
+
+	ctr, err := container.New(ethCfg)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResource(suite, "enp0s3", func(spec *network.EthernetSpec, asrt *assert.Assertions) {
+		asrt.Equal(uint32(16), pointer.SafeDeref(spec.TypedSpec().Rings.RX))
+	})
+	ctest.AssertNoResource[*network.EthernetSpec](suite, "net0")
+}
+
 func TestEthernetConfigSuite(t *testing.T) {
 	t.Parallel()
 

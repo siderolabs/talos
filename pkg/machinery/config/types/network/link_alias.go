@@ -52,7 +52,10 @@ type LinkAliasConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 
 	//   description: |
-	//    Alias for the link.
+	//    Alias for a link.
+	//
+	//    Link aliases can be used interchangeably with physical link names in all networking configuration
+	//    sections that take an existing link name as input.
 	//
 	//    Don't use system interface names like "eth0", "ens3", "enp0s2", etc. as those may conflict
 	//    with existing physical interfaces.
