@@ -544,6 +544,8 @@ func (suite *ContainersSuite) TestResourceLimits() {
 	const (
 		memoryLimit      = "64Mi"
 		memoryLimitBytes = 64 * 1024 * 1024
+		swapLimit        = "16Mi"
+		swapLimitBytes   = 16 * 1024 * 1024
 		cpuLimit         = "500m"
 		// 500 millicores as a quota over the 100000us period the runner uses.
 		cpuMaxWant = "50000 100000"
@@ -554,6 +556,7 @@ func (suite *ContainersSuite) TestResourceLimits() {
 		Limits: &containercfg.ContainerResourceLimits{
 			CPU:    cpuLimit,
 			Memory: memoryLimit,
+			Swap:   swapLimit,
 		},
 	}
 
@@ -565,6 +568,10 @@ func (suite *ContainersSuite) TestResourceLimits() {
 		func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
 			asrt.EqualValues(memoryLimitBytes, instance.TypedSpec().Resources.MemoryLimit)
 			asrt.NotZero(instance.TypedSpec().Resources.CPULimit)
+
+			if asrt.NotNil(instance.TypedSpec().Resources.SwapLimit) {
+				asrt.EqualValues(swapLimitBytes, *instance.TypedSpec().Resources.SwapLimit)
+			}
 		})
 
 	if !suite.Capabilities().RunsTalosKernel {
@@ -578,6 +585,7 @@ func (suite *ContainersSuite) TestResourceLimits() {
 	cgroupPath := fmt.Sprintf("/sys/fs/cgroup/%s/%s", constants.CgroupTalosContainersRoot, name)
 
 	suite.Assert().Equal(fmt.Sprintf("%d", memoryLimitBytes), suite.ReadFile(ctx, cgroupPath+"/memory.max"))
+	suite.Assert().Equal(fmt.Sprintf("%d", swapLimitBytes), suite.ReadFile(ctx, cgroupPath+"/memory.swap.max"))
 	suite.Assert().Equal(cpuMaxWant, suite.ReadFile(ctx, cgroupPath+"/cpu.max"))
 }
 
@@ -1796,7 +1804,9 @@ func (suite *ContainersSuite) assertNoContainerdContainer(ctx context.Context, c
 // limit on a container which has no memory limit of its own: it is OOM-killed by the root's memcg,
 // and only there.
 //
-// The victim fills a tmpfs it mounts: tmpfs pages are charged to the writer's cgroup.
+// The victim fills a tmpfs it mounts: tmpfs pages are charged to the writer's cgroup. It is kept out
+// of swap, as tmpfs pages are swappable: on a node with swap (the e2e workers carry a swap volume),
+// the root limit would otherwise be met by swapping the victim out rather than by killing it.
 func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 	if testing.Short() {
 		suite.T().Skip("skipping machine configuration changes in short mode")
@@ -1851,9 +1861,12 @@ func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 	before := suite.MemoryEventsSnapshot(ctx, append([]string{constants.CgroupTalosContainersRoot}, unrelated...)...)
 	started := time.Now()
 
-	// No per-container limit. The tmpfs holds the whole write, so ENOSPC cannot end the run before
-	// the memcg does; the completion marker must never be logged.
+	// No per-container memory limit, only a swap ceiling of zero. The tmpfs holds the whole write,
+	// so ENOSPC cannot end the run before the memcg does; the completion marker must never be logged.
 	victim := suite.shellContainer(name, "dd if=/dev/zero of=/scratch/fill bs=1M count="+strconv.FormatUint(victimBytes>>20, 10)+" && echo FILL_COMPLETED")
+	victim.ResourcesConfig = &containercfg.ContainerResources{
+		Limits: &containercfg.ContainerResourceLimits{Swap: "0"},
+	}
 	victim.MountsConfig = []containercfg.ContainerMount{
 		{
 			TmpfsMount: &containercfg.TmpfsMount{
@@ -1867,11 +1880,19 @@ func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 
 	_, first := suite.assertNewestInstanceID(ctx, name)
 
-	// The victim's own cgroup carries no limit: only the root can stop it.
-	victimMax, err := suite.ReadCgroupFile(ctx, filepath.Join(constants.CgroupTalosContainersRoot, name), "memory.max")
-	if err == nil {
-		suite.Require().Equal("max", victimMax, "victim cgroup carries its own memory limit")
-	}
+	// The victim carries no memory limit of its own, so only the root can stop it, and no swap, so
+	// the root cannot swap it out instead. This is checked on the resolved spec rather than on the
+	// victim's cgroup: the kill comes within milliseconds of each start and takes the cgroup with
+	// it, so the files exist for a sliver of every restart interval. TestResourceLimits covers the
+	// spec reaching the cgroup.
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+			asrt.Zero(spec.TypedSpec().Resources.MemoryLimit, "victim carries its own memory limit")
+
+			if asrt.NotNil(spec.TypedSpec().Resources.SwapLimit, "victim may swap") {
+				asrt.Zero(*spec.TypedSpec().Resources.SwapLimit, "victim may swap")
+			}
+		})
 
 	after := suite.AssertMemcgOOMKill(ctx, constants.CgroupTalosContainersRoot, before[constants.CgroupTalosContainersRoot], 2*time.Minute)
 
