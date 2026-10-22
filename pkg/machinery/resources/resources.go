@@ -104,6 +104,7 @@ func All() []meta.ResourceWithRD {
 		&hypervisor.VirtualMachineDomainSpec{},
 		&hypervisor.VirtualMachineDomainStatus{},
 		&hypervisor.VirtualMachineStatus{},
+		&hypervisor.VirtualMachinePowerOverride{},
 		&hypervisor.VirtualMachineCPUPlacement{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},

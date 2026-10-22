@@ -166,8 +166,15 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 
 	connector := libvirt.New().DomainConnector()
-	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(resourceState, connector.OpenConsole,
-		hypervisord.WithVNCConnector(connector.OpenVNC)))
+	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(
+		resourceState,
+		connector.OpenConsole,
+		hypervisord.WithVNCConnector(connector.OpenVNC),
+		// Raw rather than the client-facing filtered state, and only for the power operations: they
+		// write power overrides, which no client may write for itself. Console and VNC sessions keep
+		// reading through the filter.
+		hypervisord.WithPowerState(rawResourceState),
+	))
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
 	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(rawResourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)

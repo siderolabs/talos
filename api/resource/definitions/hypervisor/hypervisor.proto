@@ -177,6 +177,15 @@ message VirtualMachineDomainSpecSpec {
   string cloud_init = 4;
   // ObservedGeneration identifies the VM intent used to render this definition.
   string observed_generation = 5;
+  // StopMode selects whether a stop asks the guest to power off or destroys the domain.
+  //
+  // Carried alongside PowerState rather than read off the virtual machine's configuration, so
+  // that the way a domain is taken down is the one which was declared for the definition that
+  // is running, and so that the controller which withdraws an unrenderable definition can
+  // demand a stop the guest cannot refuse.
+  string stop_mode = 6;
+  // StopRequest identifies the immutable stop whose shutdown delivery is being tracked.
+  string stop_request = 7;
 }
 
 // VirtualMachineDomainStatusSpec describes a domain as observed in libvirt.
@@ -241,6 +250,14 @@ message VirtualMachineMemorySpec {
   VirtualMachineMemoryNUMASpec numa = 3;
 }
 
+// VirtualMachinePowerOverrideSpec describes the power state a virtual machine is driven towards.
+message VirtualMachinePowerOverrideSpec {
+  // PowerState overrides the configured power state.
+  string power_state = 1;
+  // StopRequest is the stop asked for, encoded as "<mode>/<id>"; empty unless stopped.
+  string stop_request = 2;
+}
+
 // VirtualMachineProfileCPUFeatureSpec defines a guest CPU feature policy.
 message VirtualMachineProfileCPUFeatureSpec {
   string name = 1;
@@ -277,6 +294,8 @@ message VirtualMachineSpecSpec {
   VirtualMachineVideoSpec video = 10;
   // Profile names the guest hardware profile; empty selects the builtin host profile.
   string profile = 11;
+  // StopRequest is the stop request committed with stopped intent, encoded as "<mode>/<id>".
+  string stop_request = 12;
 }
 
 // VirtualMachineStatusSpec describes observed power state and reconciliation stage.
@@ -291,6 +310,8 @@ message VirtualMachineStatusSpec {
   repeated string addresses = 4;
   // Interfaces is the per-interface view returned by qemu-guest-agent.
   repeated VirtualMachineGuestInterfaceSpec interfaces = 5;
+  // ObservedGeneration identifies the VM spec incarnation and version this status was composed from.
+  string observed_generation = 6;
 }
 
 // VirtualMachineVCPUPinSpec pins one guest vCPU to a host CPU list.

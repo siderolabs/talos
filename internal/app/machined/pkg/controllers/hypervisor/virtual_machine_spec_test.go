@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"testing"
@@ -28,8 +29,10 @@ import (
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type VirtualMachineProjectionSuite struct {
@@ -226,6 +229,47 @@ func newVirtualMachine(name string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 
 	return doc
+}
+
+// A power override wins over the configured power state, whatever the configuration is changed
+// to, and dropping it gives the configured power state back.
+func (suite *VirtualMachineProjectionSuite) TestPowerOverrideWinsOverConfiguredPowerState() {
+	doc := newVirtualMachine("overridden")
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+
+	active := config.NewMachineConfig(cfg)
+	suite.Create(active)
+
+	override := hypervisor.NewVirtualMachinePowerOverride(hypervisor.NamespaceName, doc.Name())
+	override.TypedSpec().PowerState = "stopped"
+	override.TypedSpec().StopRequest = "graceful/request-1"
+	suite.Create(override)
+
+	ctest.AssertResource(suite, doc.Name(), func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", spec.TypedSpec().PowerState)
+		asrt.Equal("graceful/request-1", spec.TypedSpec().StopRequest)
+	})
+
+	edited := newVirtualMachine("overridden")
+	edited.CPUConfig.CPUCount = 2
+	cfg, err = container.New(edited)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), active.Metadata()))
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, doc.Name(), func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.EqualValues(2, spec.TypedSpec().CPU.Count)
+		asrt.Equal("stopped", spec.TypedSpec().PowerState)
+	})
+
+	suite.Destroy(override)
+
+	ctest.AssertResource(suite, doc.Name(), func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", spec.TypedSpec().PowerState)
+		asrt.Empty(spec.TypedSpec().StopRequest)
+	})
 }
 
 func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalIntent() {
@@ -941,4 +985,217 @@ func (suite *VirtualMachineSpecSuite) replaceConfig(docs ...configcfg.Document) 
 	res := config.NewMachineConfig(cfg)
 	res.Metadata().SetVersion(old.Metadata().Version())
 	suite.Update(res)
+}
+
+func (suite *VirtualMachineSpecSuite) assertWaitingForLink(reason string) {
+	suite.T().Helper()
+	suite.Require().Eventually(func() bool {
+		return suite.logs.Filter(func(entry observer.LoggedEntry) bool {
+			err, ok := entry.ContextMap()["error"].(string)
+
+			return ok && entry.Level < zap.ErrorLevel && strings.Contains(err, reason)
+		}).Len() > 0
+	}, 30*time.Second, time.Millisecond)
+
+	suite.Assert().Empty(suite.logs.FilterLevelExact(zap.ErrorLevel).All())
+}
+
+func (suite *VirtualMachineSpecSuite) createLink(id, alias string) {
+	suite.createLinkOfType(id, alias, nethelpers.LinkEther)
+}
+
+func (suite *VirtualMachineSpecSuite) createLinkOfType(id, alias string, linkType nethelpers.LinkType) {
+	link := network.NewLinkStatus(network.NamespaceName, id)
+	link.TypedSpec().Type = linkType
+	link.TypedSpec().Alias = alias
+	suite.Create(link)
+}
+
+func (suite *VirtualMachineSpecSuite) TestInterfacesAttachToResolvedLinks() {
+	suite.createLink("eth0", "")
+	suite.createLink("macvlan0", "uplink")
+
+	doc := newVirtualMachine("interfaces")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "eth0"},
+		{InterfaceName: "net1", InterfaceLink: "uplink"},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertDomain(doc.Name(), "interfaces")
+}
+
+// The fixture pins MACs derived from the names; this checks they also differ per interface and per
+// virtual machine.
+func (suite *VirtualMachineSpecSuite) TestInterfaceMACsAreDistinct() {
+	suite.createLink("eth0", "")
+
+	macs := map[string]struct{}{}
+
+	for _, name := range []string{"mac-one", "mac-two"} {
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+			PowerState: "running",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+				{Name: "net0", Link: "eth0"},
+				{Name: "net1", Link: "eth0"},
+			},
+		}
+		suite.Create(spec)
+
+		ctest.AssertResource(suite, name, func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+			found := regexp.MustCompile(`<mac address="([^"]+)">`).FindAllStringSubmatch(res.TypedSpec().DomainXML, -1)
+			asrt.Len(found, 2)
+
+			for _, match := range found {
+				asrt.Regexp(`^52:54:00:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$`, match[1])
+				macs[match[1]] = struct{}{}
+			}
+		})
+	}
+
+	suite.Assert().Len(macs, 4)
+}
+
+func (suite *VirtualMachineSpecSuite) TestMissingLinkBlocksRenderUntilItAppears() {
+	suite.logs.TakeAll()
+
+	doc := newVirtualMachine("missing-link")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "uplink"},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertWaitingForLink(`virtual machine "missing-link": interface "net0": host link not found: "uplink"`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
+
+	suite.createLink("macvlan0", "uplink")
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, `<source dev="macvlan0" mode="bridge">`)
+	})
+}
+
+// A link that goes away after the domain was rendered costs the spec its power intent, so
+// VirtualMachineController stops the guest instead of leaving it on a definition that can no
+// longer be reproduced. The last good definition stays, and the intent returns with the link.
+func (suite *VirtualMachineSpecSuite) TestVanishedLinkStopsVirtualMachine() {
+	suite.createLink("macvlan0", "uplink")
+
+	doc := newVirtualMachine("vanished-link")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "uplink"},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+	})
+
+	link, err := safe.StateGetByID[*network.LinkStatus](suite.Ctx(), suite.State(), "macvlan0")
+	suite.Require().NoError(err)
+	suite.Destroy(link)
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("stopped", res.TypedSpec().PowerState)
+		asrt.Contains(res.TypedSpec().DomainXML, `<source dev="macvlan0" mode="bridge">`)
+	})
+
+	suite.createLink("macvlan0", "uplink")
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", res.TypedSpec().PowerState)
+	})
+}
+
+// A macvtap needs an Ethernet lower link. A link of any other type resolves but cannot carry one,
+// so it is rejected here rather than at domain start.
+func (suite *VirtualMachineSpecSuite) TestNonEthernetLinkIsRejected() {
+	suite.logs.TakeAll()
+	suite.createLinkOfType("lo", "", nethelpers.LinkLoopbck)
+
+	doc := newVirtualMachine("non-ethernet-link")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "lo"},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertWaitingForLink(`virtual machine "non-ethernet-link": interface "net0": host link is not an Ethernet link: "lo"`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
+}
+
+// A configured address is what the guest gets, so it can be reserved against on the segment the
+// virtual machine lands on.
+func (suite *VirtualMachineSpecSuite) TestInterfaceHardwareAddressIsHonoured() {
+	suite.createLink("eth0", "")
+
+	spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "mac-pinned")
+	*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+		CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+		Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+		PowerState: "running",
+		Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+		Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+			{Name: "net0", Link: "eth0", HardwareAddr: "52:54:00:00:31:31"},
+			// Left to be derived, so both paths are covered in one domain.
+			{Name: "net1", Link: "eth0"},
+		},
+	}
+	suite.Create(spec)
+
+	ctest.AssertResource(suite, "mac-pinned", func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		found := regexp.MustCompile(`<mac address="([^"]+)">`).FindAllStringSubmatch(res.TypedSpec().DomainXML, -1)
+		asrt.Len(found, 2)
+
+		if len(found) != 2 {
+			return
+		}
+
+		asrt.Equal("52:54:00:00:31:31", found[0][1])
+		asrt.Regexp(`^52:54:00:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$`, found[1][1])
+		asrt.NotEqual("52:54:00:00:31:31", found[1][1], "the derived address must not collide with the configured one")
+	})
+}
+
+// An address the guest could never answer to fails that virtual machine rather than being passed
+// to libvirt, which would reject the whole domain.
+func (suite *VirtualMachineSpecSuite) TestInterfaceRejectsBadHardwareAddresses() {
+	suite.createLink("eth0", "")
+
+	for _, test := range []struct {
+		name string
+		addr string
+		want string
+	}{
+		{name: "malformed", addr: "not-a-mac", want: "address"},
+		{name: "multicast", addr: "01:54:00:00:31:31", want: "unicast"},
+		{name: "too-short", addr: "52:54:00:00:31", want: "unicast"},
+	} {
+		vmName := "mac-bad-" + test.name
+
+		spec := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+		*spec.TypedSpec() = hypervisor.VirtualMachineSpecSpec{
+			CPU:        hypervisor.VirtualMachineCPUSpec{Count: 1},
+			Memory:     hypervisor.VirtualMachineMemorySpec{Size: 1 << 30},
+			PowerState: "running",
+			Firmware:   hypervisor.VirtualMachineFirmwareSpec{Type: "uefi"},
+			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
+				{Name: "net0", Link: "eth0", HardwareAddr: test.addr},
+			},
+		}
+		suite.Create(spec)
+
+		ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, vmName)
+	}
 }

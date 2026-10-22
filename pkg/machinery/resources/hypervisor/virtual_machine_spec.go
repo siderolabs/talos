@@ -5,6 +5,8 @@
 package hypervisor
 
 import (
+	"fmt"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -39,6 +41,8 @@ type VirtualMachineSpecSpec struct {
 	Video VirtualMachineVideoSpec `yaml:"video" protobuf:"10"`
 	// Profile names the guest hardware profile; empty selects the builtin host profile.
 	Profile string `yaml:"profile,omitempty" protobuf:"11"`
+	// StopRequest is the stop request committed with stopped intent, encoded as "<mode>/<id>".
+	StopRequest string `yaml:"stopRequest,omitempty" protobuf:"12"`
 }
 
 // VirtualMachineVideoSpec describes the virtual graphics device.
@@ -201,6 +205,12 @@ func NewVirtualMachineSpec(namespace resource.Namespace, id resource.ID) *Virtua
 		resource.NewMetadata(namespace, VirtualMachineSpecType, id, resource.VersionUndefined),
 		VirtualMachineSpecSpec{},
 	)
+}
+
+// VirtualMachineSpecGeneration identifies a spec incarnation and its version.
+// Numeric versions alone are reused when a same-name spec is recreated.
+func VirtualMachineSpecGeneration(spec *VirtualMachineSpec) string {
+	return fmt.Sprintf("%d/%s", spec.Metadata().Created().UnixNano(), spec.Metadata().Version())
 }
 
 // VirtualMachineSpecExtension is auxiliary resource data for VirtualMachineSpec.

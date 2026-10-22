@@ -56,6 +56,11 @@ var rules = map[string]role.Set{
 	"/machine.DebugService/ContainerRun":       role.MakeSet(role.Admin),
 	"/machine.HypervisorService/ConsoleStream": role.MakeSet(role.Admin),
 	"/machine.HypervisorService/VNCStream":     role.MakeSet(role.Admin),
+	// Start and Stop override the power state of a virtual machine the machine configuration
+	// already declares, for the current boot only, and write nothing else.
+	"/machine.HypervisorService/Start":  role.MakeSet(role.Admin, role.Operator),
+	"/machine.HypervisorService/Stop":   role.MakeSet(role.Admin, role.Operator),
+	"/machine.HypervisorService/Reboot": role.MakeSet(role.Admin, role.Operator),
 
 	"/machine.LifecycleService/Install": role.MakeSet(role.Admin),
 	"/machine.LifecycleService/Upgrade": role.MakeSet(role.Admin),

@@ -25,6 +25,7 @@ func TestVirtualMachineStatusRoundTrip(t *testing.T) {
 	status := hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, "vm1")
 	status.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
 	status.TypedSpec().Stage = hypervisorhelpers.VirtualMachineStageReady
+	status.TypedSpec().ObservedGeneration = "7"
 	status.TypedSpec().Interfaces = []hypervisor.VirtualMachineGuestInterfaceSpec{
 		{
 			Name: "eth0",
@@ -45,6 +46,7 @@ func TestVirtualMachineStatusRoundTrip(t *testing.T) {
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
 	require.Equal(t, enumsapi.HypervisorhelpersVirtualMachinePowerState_VIRTUAL_MACHINE_POWER_STATE_RUNNING, spec.GetPowerState())
 	require.Equal(t, enumsapi.HypervisorhelpersVirtualMachineStage_VIRTUAL_MACHINE_STAGE_READY, spec.GetStage())
+	require.Equal(t, "7", spec.GetObservedGeneration())
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)
@@ -57,6 +59,7 @@ func TestVirtualMachineStatusRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, string(text), "powerState: running")
 	require.Contains(t, string(text), "stage: ready")
+	require.Contains(t, string(text), `observedGeneration: "7"`)
 	require.Contains(t, string(text), "10.0.0.5/24")
 	require.Contains(t, string(text), "2001:db8::5/64")
 }

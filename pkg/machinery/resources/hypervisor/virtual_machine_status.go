@@ -17,6 +17,12 @@ import (
 // VirtualMachineStatusType is the type of the VirtualMachineStatus resource.
 const VirtualMachineStatusType = resource.Type("VirtualMachineStatuses.hypervisor.talos.dev")
 
+// GracefulStopPendingError is the error a virtual machine carries while a graceful stop it was
+// asked for has not been obeyed. Nothing bounds that wait, so the message carries the way out of it.
+const GracefulStopPendingError = "the guest has been asked to power itself off and has not done so yet; " +
+	"stop the virtual machine again with force to power it off without the guest's cooperation. " +
+	"Its disks stay held until it is off"
+
 // VirtualMachineStatus reports the last observed state of a configured virtual machine.
 type VirtualMachineStatus = typed.Resource[VirtualMachineStatusSpec, VirtualMachineStatusExtension]
 
@@ -34,6 +40,8 @@ type VirtualMachineStatusSpec struct {
 	Addresses []string `yaml:"addresses,omitempty" protobuf:"4"`
 	// Interfaces is the per-interface view returned by qemu-guest-agent.
 	Interfaces []VirtualMachineGuestInterfaceSpec `yaml:"interfaces,omitempty" protobuf:"5"`
+	// ObservedGeneration identifies the VM spec incarnation and version this status was composed from.
+	ObservedGeneration string `yaml:"observedGeneration,omitempty" protobuf:"6"`
 }
 
 // NewVirtualMachineStatus initializes a VirtualMachineStatus resource.

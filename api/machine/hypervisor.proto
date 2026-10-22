@@ -19,6 +19,13 @@ service HypervisorService {
   // opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end.
   // Input EOF, cancellation, or guest EOF detaches; serial attachment is separate.
   rpc VNCStream(stream VNCRequest) returns (stream VNCResponse);
+
+  // Start temporarily overrides a virtual machine's power state to running for the current host boot.
+  // The machine configuration is unchanged; a host reboot drops the override.
+  rpc Start(VirtualMachineStartRequest) returns (VirtualMachineStartResponse);
+  // Stop temporarily overrides a virtual machine's power state to stopped for the current host boot.
+  // The machine configuration is unchanged; a host reboot drops the override.
+  rpc Stop(VirtualMachineStopRequest) returns (VirtualMachineStopResponse);
 }
 
 message VNCRequest {
@@ -35,6 +42,24 @@ message VNCAttach {
 message VNCResponse {
   bytes data = 1;
 }
+
+message VirtualMachineStartRequest {
+  // Name of the virtual machine, identified by its VirtualMachineSpec resource.
+  string name = 1;
+}
+
+message VirtualMachineStartResponse {}
+
+message VirtualMachineStopRequest {
+  // Name of the virtual machine, identified by its VirtualMachineSpec resource.
+  string name = 1;
+  // Destroy the domain instead of asking the guest to power itself off.
+  //
+  // Unset asks the guest, so pulling the plug on it is something a caller opts into.
+  bool force = 2;
+}
+
+message VirtualMachineStopResponse {}
 
 message ConsoleRequest {
   oneof request {
