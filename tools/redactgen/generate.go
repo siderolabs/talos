@@ -174,11 +174,11 @@ func hasMarker(doc *ast.CommentGroup) bool {
 	})
 }
 
-// emitMethod generates the RedactSecrets method for a marked type.
+// emitMethod generates the HasSecrets/RedactSecrets methods for a marked type.
 func (g *generator) emitMethod(named *types.Named) error {
 	name := named.Obj().Name()
 
-	g.asserts = append(g.asserts, fmt.Sprintf("_ redactable.Spec[%s] = %s{}", name, name))
+	g.asserts = append(g.asserts, fmt.Sprintf("_ redactable.Spec = &%s{}", name))
 
 	if !g.containsSecrets(named) {
 		fmt.Fprintf(&g.methods, passthroughMethodTemplate, name)
@@ -187,7 +187,8 @@ func (g *generator) emitMethod(named *types.Named) error {
 	}
 
 	if !hasDeepCopy(named) {
-		return fmt.Errorf("type %s carries sensitive fields, but has no DeepCopy method: add it to the deep-copy generator invocation", name)
+		return fmt.Errorf("type %s carries sensitive fields, but has no DeepCopy method: redaction mutates the spec in place, "+
+			"so the resource has to be deep-copied first; add the type to the deep-copy generator invocation", name)
 	}
 
 	helper, err := g.helperFor(named, name)
@@ -200,26 +201,27 @@ func (g *generator) emitMethod(named *types.Named) error {
 	return nil
 }
 
-const passthroughMethodTemplate = `// RedactSecrets implements redactable.Spec interface.
-func (spec %[1]s) RedactSecrets(resource.Metadata) %[1]s {
+const passthroughMethodTemplate = `// HasSecrets implements redactable.Spec interface.
+func (*%[1]s) HasSecrets(resource.Metadata) bool {
 	// no sensitive fields
-	return spec
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*%[1]s) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
 }
 
 `
 
-const redactMethodTemplate = `// RedactSecrets implements redactable.Spec interface.
-func (spec %[1]s) RedactSecrets(resource.Metadata) %[1]s {
-	if !hasSecrets%[2]s(&spec) {
-		return spec
-	}
+const redactMethodTemplate = `// HasSecrets implements redactable.Spec interface.
+func (spec *%[1]s) HasSecrets(resource.Metadata) bool {
+	return hasSecrets%[2]s(spec)
+}
 
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
-
-	redact%[2]s(&spec)
-
-	return spec
+// RedactSecrets implements redactable.Spec interface.
+func (spec *%[1]s) RedactSecrets(resource.Metadata) {
+	redact%[2]s(spec)
 }
 
 `

@@ -14,36 +14,28 @@ import (
 )
 
 var (
-	_ redactable.Spec[CloudInitSpecSpec]      = CloudInitSpecSpec{}
-	_ redactable.Spec[VirtualMachineSpecSpec] = VirtualMachineSpecSpec{}
+	_ redactable.Spec = &CloudInitSpecSpec{}
+	_ redactable.Spec = &VirtualMachineSpecSpec{}
 )
 
-// RedactSecrets implements redactable.Spec interface.
-func (spec CloudInitSpecSpec) RedactSecrets(resource.Metadata) CloudInitSpecSpec {
-	if !hasSecretsCloudInitSpecSpec(&spec) {
-		return spec
-	}
-
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
-
-	redactCloudInitSpecSpec(&spec)
-
-	return spec
+// HasSecrets implements redactable.Spec interface.
+func (spec *CloudInitSpecSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsCloudInitSpecSpec(spec)
 }
 
 // RedactSecrets implements redactable.Spec interface.
-func (spec VirtualMachineSpecSpec) RedactSecrets(resource.Metadata) VirtualMachineSpecSpec {
-	if !hasSecretsVirtualMachineSpecSpec(&spec) {
-		return spec
-	}
+func (spec *CloudInitSpecSpec) RedactSecrets(resource.Metadata) {
+	redactCloudInitSpecSpec(spec)
+}
 
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
+// HasSecrets implements redactable.Spec interface.
+func (spec *VirtualMachineSpecSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsVirtualMachineSpecSpec(spec)
+}
 
-	redactVirtualMachineSpecSpec(&spec)
-
-	return spec
+// RedactSecrets implements redactable.Spec interface.
+func (spec *VirtualMachineSpecSpec) RedactSecrets(resource.Metadata) {
+	redactVirtualMachineSpecSpec(spec)
 }
 
 // hasSecretsCloudInitSpecSpec checks if CloudInitSpecSpec carries any sensitive value.

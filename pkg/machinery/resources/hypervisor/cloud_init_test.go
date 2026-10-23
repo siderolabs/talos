@@ -22,7 +22,11 @@ func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 		NetworkConfig: "version: 2\n",
 	}
 
-	redacted := vm.TypedSpec().RedactSecrets(*vm.Metadata())
+	require.True(t, vm.TypedSpec().HasSecrets(*vm.Metadata()))
+
+	// redaction mutates the spec in place, so it runs on a copy of it
+	redacted := vm.TypedSpec().DeepCopy()
+	redacted.RedactSecrets(*vm.Metadata())
 	require.Equal(t, constants.Redacted, redacted.CloudInit.UserData)
 	require.Equal(t, "secret", vm.TypedSpec().CloudInit.UserData)
 
@@ -32,7 +36,10 @@ func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 	seed.TypedSpec().UserData = "secret"
 	seed.TypedSpec().NetworkConfig = "network-secret"
 
-	redactedSeed := seed.TypedSpec().RedactSecrets(*seed.Metadata())
+	require.True(t, seed.TypedSpec().HasSecrets(*seed.Metadata()))
+
+	redactedSeed := seed.TypedSpec().DeepCopy()
+	redactedSeed.RedactSecrets(*seed.Metadata())
 	require.Equal(t, constants.Redacted, redactedSeed.MetaData)
 	require.Equal(t, constants.Redacted, redactedSeed.UserData)
 	require.Equal(t, constants.Redacted, redactedSeed.NetworkConfig)
