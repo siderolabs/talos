@@ -1123,6 +1123,12 @@ const (
 	// DefaultSecondaryResolver is the default secondary DNS server.
 	DefaultSecondaryResolver = "8.8.8.8"
 
+	// DefaultPrimaryResolverV6 is the IPv6 address of the default primary DNS server.
+	DefaultPrimaryResolverV6 = "2606:4700:4700::1111"
+
+	// DefaultSecondaryResolverV6 is the IPv6 address of the default secondary DNS server.
+	DefaultSecondaryResolverV6 = "2001:4860:4860::8888"
+
 	// DefaultClusterIDSize is the default size in bytes for the cluster ID token.
 	DefaultClusterIDSize = 32
 

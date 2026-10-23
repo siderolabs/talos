@@ -69,7 +69,8 @@ type ResolverConfigV1Alpha1 struct {
 	//     propagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.
 	//
 	//     This overrides any nameservers obtained via DHCP or platform configuration.
-	//     Default configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.
+	//     Default configuration is to use 1.1.1.1, 8.8.8.8 (IPv4), and their IPv6
+	//     counterparts 2606:4700:4700::1111, 2001:4860:4860::8888 as nameservers.
 	ResolverNameservers []NameserverConfig `yaml:"nameservers,omitempty"`
 	//   description: |
 	//     Configuration for search domains (in /etc/resolv.conf).
