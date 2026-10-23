@@ -123,7 +123,7 @@ func (m *Metal) Mode() runtime.Mode {
 func readConfigFromISO(ctx context.Context, r state.State) ([]byte, error) {
 	var b []byte
 
-	err := blockutils.ReadFromVolume(ctx, r, []string{constants.MetalConfigISOLabel}, func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
+	err := blockutils.ReadFromVolume(ctx, r, blockutils.RequesterConfig, []string{constants.MetalConfigISOLabel}, func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
 		var err error
 
 		b, err = xfs.ReadFile(root, constants.ConfigFilename)
