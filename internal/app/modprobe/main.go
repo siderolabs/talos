@@ -216,11 +216,19 @@ func VerifyKernelParent(ppid int, procfsPath string) error {
 	return nil
 }
 
+func cutLast(s, sep []byte) (before, after []byte, found bool) {
+	if i := bytes.LastIndex(s, sep); i >= 0 {
+		return s[:i], s[i+len(sep):], true
+	}
+
+	return s, nil, false
+}
+
 // statFlags parses the task flags (the 9th field) out of /proc/<pid>/stat contents.
 func statFlags(stat []byte) (uint64, error) {
 	// the command name (the 2nd field) is enclosed in parentheses and might contain spaces,
 	// so the fields are parsed starting from the last ')'
-	_, rest, found := bytes.CutLast(stat, []byte(")"))
+	_, rest, found := cutLast(stat, []byte(")"))
 	if !found {
 		return 0, errors.New("malformed stat contents")
 	}
