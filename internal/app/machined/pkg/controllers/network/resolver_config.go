@@ -180,6 +180,8 @@ func (ctrl *ResolverConfigController) getDefault(cfg talosconfig.Config, hostnam
 	spec.NameServers = []network.NameServerSpec{
 		{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolver)},
 		{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolver)},
+		{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolverV6)},
+		{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolverV6)},
 	}
 	spec.ConfigLayer = network.ConfigDefault
 
