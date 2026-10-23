@@ -39,6 +39,7 @@ kernel/drivers/devfreq/governor_simpleondemand.ko
 kernel/drivers/dma/ioat/ioatdma.ko
 kernel/drivers/edac/amd64_edac.ko
 kernel/drivers/edac/e752x_edac.ko
+kernel/drivers/edac/i10nm_edac.ko
 kernel/drivers/edac/i3000_edac.ko
 kernel/drivers/edac/i3200_edac.ko
 kernel/drivers/edac/i5100_edac.ko
