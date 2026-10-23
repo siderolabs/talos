@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // forwardedMetadataKeys is the allowlist of gRPC metadata keys copied from the incoming
@@ -26,6 +27,12 @@ import (
 var forwardedMetadataKeys = xslices.ToSet([]string{
 	"context", // set by the Talos client to the client configuration context name, logged by the backend
 	"runtime", // set by the Talos client, logged by the backend
+
+	// set by the Talos client to state whether it can handle redacted resources; the backend only
+	// ever uses it to serve the caller less than it would otherwise, or to deny it outright, so
+	// handing the caller control over it grants no access it doesn't already have -- what the caller
+	// is allowed to read is still decided by the roles this proxy resolves below.
+	redactable.Header,
 })
 
 // OutgoingMetadata builds the metadata for a request proxied to a backend.

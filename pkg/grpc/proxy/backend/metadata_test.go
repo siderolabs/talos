@@ -12,6 +12,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/grpc/proxy/backend"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
@@ -32,6 +33,8 @@ func TestOutgoingMetadata(t *testing.T) {
 		// allowlisted, purely informational
 		"runtime": "Talos",
 		"context": "cluster-1",
+		// allowlisted: it can only ever make the backend serve the caller less
+		redactable.Header: string(redactable.ModeAccept),
 	})
 
 	for _, test := range []struct {
@@ -65,6 +68,10 @@ func TestOutgoingMetadata(t *testing.T) {
 			// forwarded: informational only
 			assert.Equal(t, []string{"Talos"}, md.Get("runtime"))
 			assert.Equal(t, []string{"cluster-1"}, md.Get("context"))
+
+			// forwarded: the redaction intent has to survive the hop, or the backend serves the
+			// resources in full to a client which asked for the opposite
+			assert.Equal(t, []string{string(redactable.ModeAccept)}, md.Get(redactable.Header))
 
 			// dropped: owned by the proxy, or meaningless to the backend
 			for _, key := range []string{"token", "node", "nodes", "proxyfrom", "peer", "whatever", ":authority"} {
