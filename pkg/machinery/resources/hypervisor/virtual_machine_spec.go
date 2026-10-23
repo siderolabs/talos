@@ -13,6 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // VirtualMachineSpecType is the type of the VirtualMachineSpec resource.
@@ -248,4 +249,7 @@ func init() {
 	if err := protobuf.RegisterDynamic(VirtualMachineSpecType, &VirtualMachineSpec{}); err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[VirtualMachineSpecSpec, VirtualMachineSpecExtension]()
 }

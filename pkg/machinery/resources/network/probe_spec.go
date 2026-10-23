@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // ProbeSpecType is type of ProbeSpec resource.
@@ -110,6 +111,7 @@ func (ProbeSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 
@@ -120,4 +122,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[ProbeSpecSpec, ProbeSpecExtension]()
 }

@@ -156,9 +156,9 @@ func (s *Server) checkSupported(feature runtime.ModeCapability) error {
 func (s *Server) Register(obj *grpc.Server) {
 	s.server = obj
 
-	// wrap resources with access filter
+	// wrap resources with the access filter, and with the redaction the requester asked for
 	rawResourceState := s.Controller.Runtime().State().V1Alpha2().Resources()
-	resourceState := state.WrapCore(state.Filter(rawResourceState, resources.AccessPolicy(rawResourceState)))
+	resourceState := state.WrapCore(state.Filter(resources.Redact(rawResourceState), resources.AccessPolicy(rawResourceState)))
 
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))

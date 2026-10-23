@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 const (
@@ -150,4 +151,7 @@ func init() {
 	if err := protobuf.RegisterDynamic(CloudInitStatusType, &CloudInitStatus{}); err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[CloudInitSpecSpec, CloudInitSpecExtension]()
 }

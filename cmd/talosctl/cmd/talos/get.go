@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
@@ -70,6 +71,11 @@ func getResources(ctx context.Context, args []string, clientFactory *global.Clie
 	if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil { //nolint:staticcheck // to be refactored next
 		return err
 	}
+
+	// tell the node that this client can handle redacted resources, so that a sensitive resource
+	// which knows how to redact itself is listed for a reader or an operator instead of being
+	// refused outright; an admin still gets everything in full
+	ctx = redactable.WithMode(ctx, redactable.ModeAccept)
 
 	out, err := output.NewWriter(getCmdFlags.output, os.Stdout) //nolint:forbidigo // wrapped per format below
 	if err != nil {

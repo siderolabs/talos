@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // OperatorSpecType is type of OperatorSpec resource.
@@ -143,4 +144,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[OperatorSpecSpec, OperatorSpecExtension]()
 }
