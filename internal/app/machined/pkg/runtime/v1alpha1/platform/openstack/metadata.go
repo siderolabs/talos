@@ -109,8 +109,8 @@ func (o *OpenStack) configFromNetwork(ctx context.Context) (metaConfig []byte, n
 }
 
 //nolint:gocyclo
-func (o *OpenStack) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
-	err = blockutils.ReadFromVolume(ctx, r, []string{configISOLabel}, func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
+func (o *OpenStack) configFromCD(ctx context.Context, r state.State, requester string) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+	err = blockutils.ReadFromVolume(ctx, r, requester, []string{configISOLabel}, func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
 		log.Printf("found config disk (config-drive) at %s", volumeStatus.TypedSpec().Location)
 
 		log.Printf("fetching meta config from: config-drive/%s", configMetadataPath)

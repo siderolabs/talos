@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/address"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/blockutils"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -854,7 +855,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 
 // Configuration implements the runtime.Platform interface.
 func (o *OpenNebula) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
-	oneContextPlain, err := o.contextFromCD(ctx, r)
+	oneContextPlain, err := o.contextFromCD(ctx, r, blockutils.RequesterConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -897,7 +898,7 @@ func (o *OpenNebula) KernelArgs(string, quirks.Quirks) procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *OpenNebula) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
-	oneContext, err := o.contextFromCD(ctx, st)
+	oneContext, err := o.contextFromCD(ctx, st, blockutils.RequesterNetwork)
 	if stderrors.Is(err, errors.ErrNoConfigSource) {
 		err = nil
 	}
