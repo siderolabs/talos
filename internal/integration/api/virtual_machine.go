@@ -65,6 +65,13 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 	nodeCtx := client.WithNode(ctx, node)
 	name := "vm-integration-" + uuid.NewString()
 
+	// Virtual machine profiles are only shipped for amd64, so no domain spec is rendered elsewhere.
+	//
+	// TODO(@shanduur): we need to support arm64 in the future, revert this check
+	if arch := suite.ReadMachineArch(nodeCtx); arch != "amd64" {
+		suite.T().Skipf("skipping virtual machine projections on arch %q", arch)
+	}
+
 	suite.T().Logf("testing virtual machine projections %q on node %s", name, node)
 
 	original, err := suite.ReadConfigFromNode(nodeCtx)
@@ -277,6 +284,14 @@ func (suite *VirtualMachineSuite) TestInterfaceProjection() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(ctx, node)
 	name := "vm-integration-" + uuid.NewString()
+
+	// Virtual machine profiles are only shipped for amd64, so no domain spec is rendered elsewhere.
+	//
+	// TODO(@shanduur): we need to support arm64 in the future, revert this check
+	if arch := suite.ReadMachineArch(nodeCtx); arch != "amd64" {
+		suite.T().Skipf("skipping virtual machine projections on arch %q", arch)
+	}
+
 	link := suite.physicalLinkName(nodeCtx)
 
 	suite.T().Logf("testing virtual machine %q interfaces on node %s, attaching to host link %q", name, node, link)
