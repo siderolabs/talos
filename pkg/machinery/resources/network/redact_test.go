@@ -19,15 +19,17 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-type redactTestCase[T redactable.Spec[T]] struct {
+type redactTestCase[T any] struct {
 	name string
-	// spec builds the input spec; it is called twice, so that the test can verify that
-	// RedactSecrets doesn't mutate the spec it was called on (e.g. via a shared slice).
+	// spec builds the input spec; it is called twice, so that the test can verify that redacting
+	// a copy doesn't reach back into the original (e.g. via a shared slice).
 	spec     func() T
 	expected T
 }
 
-func runRedactTests[T redactable.Spec[T]](t *testing.T, md resource.Metadata, testCases []redactTestCase[T]) {
+// runRedactTests exercises the copy-then-redact-in-place sequence the callers of the interface use.
+func runRedactTests[T any, PT redactable.SpecPtr[T]](t *testing.T, md resource.Metadata, testCases []redactTestCase[T],
+) {
 	t.Helper()
 
 	for _, test := range testCases {
@@ -35,9 +37,19 @@ func runRedactTests[T redactable.Spec[T]](t *testing.T, md resource.Metadata, te
 			t.Parallel()
 
 			spec := test.spec()
+			hasSecrets := PT(&spec).HasSecrets(md)
 
-			assert.Equal(t, test.expected, spec.RedactSecrets(md))
-			assert.Equal(t, test.spec(), spec, "RedactSecrets should not mutate the spec it was called on")
+			redacted := PT(&spec).DeepCopy()
+			PT(&redacted).RedactSecrets(md)
+
+			assert.Equal(t, test.expected, redacted)
+			assert.Equal(t, test.spec(), spec, "redacting a copy should not mutate the spec it was copied from")
+
+			// HasSecrets decides whether the copy is made at all, so it has to report true
+			// whenever redaction changes anything.
+			if !assert.ObjectsAreEqual(spec, redacted) {
+				assert.True(t, hasSecrets, "HasSecrets should report true for a spec which redaction changes")
+			}
 		})
 	}
 }

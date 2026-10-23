@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -22,7 +23,9 @@ func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 		NetworkConfig: "version: 2\n",
 	}
 
-	redacted := vm.TypedSpec().RedactSecrets(*vm.Metadata())
+	require.True(t, vm.TypedSpec().HasSecrets(*vm.Metadata()))
+
+	redacted := redactable.Redact(*vm.TypedSpec(), *vm.Metadata())
 	require.Equal(t, constants.Redacted, redacted.CloudInit.UserData)
 	require.Equal(t, "secret", vm.TypedSpec().CloudInit.UserData)
 
@@ -32,7 +35,9 @@ func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 	seed.TypedSpec().UserData = "secret"
 	seed.TypedSpec().NetworkConfig = "network-secret"
 
-	redactedSeed := seed.TypedSpec().RedactSecrets(*seed.Metadata())
+	require.True(t, seed.TypedSpec().HasSecrets(*seed.Metadata()))
+
+	redactedSeed := redactable.Redact(*seed.TypedSpec(), *seed.Metadata())
 	require.Equal(t, constants.Redacted, redactedSeed.MetaData)
 	require.Equal(t, constants.Redacted, redactedSeed.UserData)
 	require.Equal(t, constants.Redacted, redactedSeed.NetworkConfig)
