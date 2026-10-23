@@ -10,15 +10,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 var (
-	_ resources.RedactableSpec[CloudInitSpecSpec]      = CloudInitSpecSpec{}
-	_ resources.RedactableSpec[VirtualMachineSpecSpec] = VirtualMachineSpecSpec{}
+	_ redactable.Spec[CloudInitSpecSpec]      = CloudInitSpecSpec{}
+	_ redactable.Spec[VirtualMachineSpecSpec] = VirtualMachineSpecSpec{}
 )
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec CloudInitSpecSpec) RedactSecrets(resource.Metadata) CloudInitSpecSpec {
 	if !hasSecretsCloudInitSpecSpec(&spec) {
 		return spec
@@ -32,7 +32,7 @@ func (spec CloudInitSpecSpec) RedactSecrets(resource.Metadata) CloudInitSpecSpec
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec VirtualMachineSpecSpec) RedactSecrets(resource.Metadata) VirtualMachineSpecSpec {
 	if !hasSecretsVirtualMachineSpecSpec(&spec) {
 		return spec

@@ -15,11 +15,11 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
-	"github.com/siderolabs/talos/pkg/machinery/resources"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-type redactTestCase[T resources.RedactableSpec[T]] struct {
+type redactTestCase[T redactable.Spec[T]] struct {
 	name string
 	// spec builds the input spec; it is called twice, so that the test can verify that
 	// RedactSecrets doesn't mutate the spec it was called on (e.g. via a shared slice).
@@ -27,7 +27,7 @@ type redactTestCase[T resources.RedactableSpec[T]] struct {
 	expected T
 }
 
-func runRedactTests[T resources.RedactableSpec[T]](t *testing.T, md resource.Metadata, testCases []redactTestCase[T]) {
+func runRedactTests[T redactable.Spec[T]](t *testing.T, md resource.Metadata, testCases []redactTestCase[T]) {
 	t.Helper()
 
 	for _, test := range testCases {

@@ -10,15 +10,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 var (
-	_ resources.RedactableSpec[ConfigSpec] = ConfigSpec{}
-	_ resources.RedactableSpec[PlainSpec]  = PlainSpec{}
+	_ redactable.Spec[ConfigSpec] = ConfigSpec{}
+	_ redactable.Spec[PlainSpec]  = PlainSpec{}
 )
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec ConfigSpec) RedactSecrets(resource.Metadata) ConfigSpec {
 	if !hasSecretsConfigSpec(&spec) {
 		return spec
@@ -32,7 +32,7 @@ func (spec ConfigSpec) RedactSecrets(resource.Metadata) ConfigSpec {
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec PlainSpec) RedactSecrets(resource.Metadata) PlainSpec {
 	// no sensitive fields
 	return spec

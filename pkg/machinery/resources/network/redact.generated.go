@@ -12,34 +12,34 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 var (
-	_ resources.RedactableSpec[AddressSpecSpec]     = AddressSpecSpec{}
-	_ resources.RedactableSpec[HostnameSpecSpec]    = HostnameSpecSpec{}
-	_ resources.RedactableSpec[LinkSpecSpec]        = LinkSpecSpec{}
-	_ resources.RedactableSpec[OperatorSpecSpec]    = OperatorSpecSpec{}
-	_ resources.RedactableSpec[ProbeSpecSpec]       = ProbeSpecSpec{}
-	_ resources.RedactableSpec[ResolverSpecSpec]    = ResolverSpecSpec{}
-	_ resources.RedactableSpec[RouteSpecSpec]       = RouteSpecSpec{}
-	_ resources.RedactableSpec[RoutingRuleSpecSpec] = RoutingRuleSpecSpec{}
-	_ resources.RedactableSpec[TimeServerSpecSpec]  = TimeServerSpecSpec{}
+	_ redactable.Spec[AddressSpecSpec]     = AddressSpecSpec{}
+	_ redactable.Spec[HostnameSpecSpec]    = HostnameSpecSpec{}
+	_ redactable.Spec[LinkSpecSpec]        = LinkSpecSpec{}
+	_ redactable.Spec[OperatorSpecSpec]    = OperatorSpecSpec{}
+	_ redactable.Spec[ProbeSpecSpec]       = ProbeSpecSpec{}
+	_ redactable.Spec[ResolverSpecSpec]    = ResolverSpecSpec{}
+	_ redactable.Spec[RouteSpecSpec]       = RouteSpecSpec{}
+	_ redactable.Spec[RoutingRuleSpecSpec] = RoutingRuleSpecSpec{}
+	_ redactable.Spec[TimeServerSpecSpec]  = TimeServerSpecSpec{}
 )
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec AddressSpecSpec) RedactSecrets(resource.Metadata) AddressSpecSpec {
 	// no sensitive fields
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec HostnameSpecSpec) RedactSecrets(resource.Metadata) HostnameSpecSpec {
 	// no sensitive fields
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec LinkSpecSpec) RedactSecrets(resource.Metadata) LinkSpecSpec {
 	if !hasSecretsLinkSpecSpec(&spec) {
 		return spec
@@ -53,7 +53,7 @@ func (spec LinkSpecSpec) RedactSecrets(resource.Metadata) LinkSpecSpec {
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec OperatorSpecSpec) RedactSecrets(resource.Metadata) OperatorSpecSpec {
 	if !hasSecretsOperatorSpecSpec(&spec) {
 		return spec
@@ -67,7 +67,7 @@ func (spec OperatorSpecSpec) RedactSecrets(resource.Metadata) OperatorSpecSpec {
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec ProbeSpecSpec) RedactSecrets(resource.Metadata) ProbeSpecSpec {
 	if !hasSecretsProbeSpecSpec(&spec) {
 		return spec
@@ -81,25 +81,25 @@ func (spec ProbeSpecSpec) RedactSecrets(resource.Metadata) ProbeSpecSpec {
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec ResolverSpecSpec) RedactSecrets(resource.Metadata) ResolverSpecSpec {
 	// no sensitive fields
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec RouteSpecSpec) RedactSecrets(resource.Metadata) RouteSpecSpec {
 	// no sensitive fields
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec RoutingRuleSpecSpec) RedactSecrets(resource.Metadata) RoutingRuleSpecSpec {
 	// no sensitive fields
 	return spec
 }
 
-// RedactSecrets implements resources.RedactableSpec interface.
+// RedactSecrets implements redactable.Spec interface.
 func (spec TimeServerSpecSpec) RedactSecrets(resource.Metadata) TimeServerSpecSpec {
 	// no sensitive fields
 	return spec

@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/resources"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 type genericMergeFunc[T typed.DeepCopyable[T], E typed.Extension] func(logger *zap.Logger, in safe.List[*typed.Resource[T, E]]) map[resource.ID]*T
@@ -23,7 +23,7 @@ type genericMergeFunc[T typed.DeepCopyable[T], E typed.Extension] func(logger *z
 // DeepCopyRedactable combines the DeepCopyable and Redactable interfaces for generic type T.
 type DeepCopyRedactable[T any] interface {
 	typed.DeepCopyable[T]
-	resources.RedactableSpec[T]
+	redactable.Spec[T]
 }
 
 // GenericMergeController initializes a generic merge controller for network resources.

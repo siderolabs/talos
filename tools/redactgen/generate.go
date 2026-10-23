@@ -31,10 +31,10 @@ const (
 	// strategyZero resets the value to the zero value of its type.
 	strategyZero = "zero"
 
-	resourcePkgPath  = "github.com/cosi-project/runtime/pkg/resource"
-	resourcesPkgPath = "github.com/siderolabs/talos/pkg/machinery/resources"
-	constantsPkgPath = "github.com/siderolabs/talos/pkg/machinery/constants"
-	urlPkgPath       = "net/url"
+	resourcePkgPath   = "github.com/cosi-project/runtime/pkg/resource"
+	redactablePkgPath = "github.com/siderolabs/talos/pkg/machinery/redactable"
+	constantsPkgPath  = "github.com/siderolabs/talos/pkg/machinery/constants"
+	urlPkgPath        = "net/url"
 )
 
 // options control the generated output.
@@ -94,7 +94,7 @@ func (g *generator) run() ([]byte, error) {
 	}
 
 	g.imports[resourcePkgPath] = struct{}{}
-	g.imports[resourcesPkgPath] = struct{}{}
+	g.imports[redactablePkgPath] = struct{}{}
 
 	for _, named := range marked {
 		if err = g.emitMethod(named); err != nil {
@@ -178,7 +178,7 @@ func hasMarker(doc *ast.CommentGroup) bool {
 func (g *generator) emitMethod(named *types.Named) error {
 	name := named.Obj().Name()
 
-	g.asserts = append(g.asserts, fmt.Sprintf("_ resources.RedactableSpec[%s] = %s{}", name, name))
+	g.asserts = append(g.asserts, fmt.Sprintf("_ redactable.Spec[%s] = %s{}", name, name))
 
 	if !g.containsSecrets(named) {
 		fmt.Fprintf(&g.methods, passthroughMethodTemplate, name)
@@ -200,7 +200,7 @@ func (g *generator) emitMethod(named *types.Named) error {
 	return nil
 }
 
-const passthroughMethodTemplate = `// RedactSecrets implements resources.RedactableSpec interface.
+const passthroughMethodTemplate = `// RedactSecrets implements redactable.Spec interface.
 func (spec %[1]s) RedactSecrets(resource.Metadata) %[1]s {
 	// no sensitive fields
 	return spec
@@ -208,7 +208,7 @@ func (spec %[1]s) RedactSecrets(resource.Metadata) %[1]s {
 
 `
 
-const redactMethodTemplate = `// RedactSecrets implements resources.RedactableSpec interface.
+const redactMethodTemplate = `// RedactSecrets implements redactable.Spec interface.
 func (spec %[1]s) RedactSecrets(resource.Metadata) %[1]s {
 	if !hasSecrets%[2]s(&spec) {
 		return spec
