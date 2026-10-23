@@ -115,6 +115,19 @@ Provisioning a disk from a content library image is not implemented yet; `provis
 still only supported on a `cdrom`.
 """
 
+    [notes.vm_power_state]
+        title = "Virtual Machine Power Control"
+        description = """\
+New `talosctl hypervisor start|stop|reboot <vm-name>` commands control the power state of Talos-managed virtual machines.
+
+`start` and `stop` override the virtual machine's power state until the node reboots, without changing the machine configuration.
+After a reboot, the virtual machine follows the `powerState` of its `VirtualMachineConfig` again.
+`reboot` restarts a running guest and leaves the power state unchanged.
+
+`stop` and `reboot` ask the guest to shut down or restart by default. Pass `--graceful=false` to destroy the domain instead.
+The commands require the `os:admin` or `os:operator` role.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\

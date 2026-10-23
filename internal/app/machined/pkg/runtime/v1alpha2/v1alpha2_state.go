@@ -141,6 +141,7 @@ func NewState() (*State, error) {
 		&hypervisor.VirtualMachineDomainSpec{},
 		&hypervisor.VirtualMachineDomainStatus{},
 		&hypervisor.VirtualMachineStatus{},
+		&hypervisor.VirtualMachinePowerOverride{},
 		&hypervisor.VirtualMachineCPUPlacement{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},

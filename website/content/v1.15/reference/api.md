@@ -72,6 +72,12 @@ description: Talos gRPC API reference.
     - [VNCAttach](#machine.VNCAttach)
     - [VNCRequest](#machine.VNCRequest)
     - [VNCResponse](#machine.VNCResponse)
+    - [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest)
+    - [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse)
+    - [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest)
+    - [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse)
+    - [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest)
+    - [VirtualMachineStopResponse](#machine.VirtualMachineStopResponse)
   
     - [HypervisorService](#machine.HypervisorService)
   
@@ -548,6 +554,7 @@ description: Talos gRPC API reference.
     - [VirtualMachineMemoryBallooningSpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryBallooningSpec)
     - [VirtualMachineMemoryNUMASpec](#talos.resource.definitions.hypervisor.VirtualMachineMemoryNUMASpec)
     - [VirtualMachineMemorySpec](#talos.resource.definitions.hypervisor.VirtualMachineMemorySpec)
+    - [VirtualMachinePowerOverrideSpec](#talos.resource.definitions.hypervisor.VirtualMachinePowerOverrideSpec)
     - [VirtualMachineProfileCPUFeatureSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec)
     - [VirtualMachineProfileCPUSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileCPUSpec)
     - [VirtualMachineProfileSpecSpec](#talos.resource.definitions.hypervisor.VirtualMachineProfileSpecSpec)
@@ -1680,6 +1687,83 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+
+<a name="machine.VirtualMachineRebootRequest"></a>
+
+### VirtualMachineRebootRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be running. |
+| force | [bool](#bool) |  | Destroy the domain instead of asking the guest to restart itself.<br><br>Unset asks the guest, so pulling the plug on it is something a caller opts into. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineRebootResponse"></a>
+
+### VirtualMachineRebootResponse
+
+
+
+
+
+
+
+<a name="machine.VirtualMachineStartRequest"></a>
+
+### VirtualMachineStartRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be declared in the machine configuration. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineStartResponse"></a>
+
+### VirtualMachineStartResponse
+
+
+
+
+
+
+
+<a name="machine.VirtualMachineStopRequest"></a>
+
+### VirtualMachineStopRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the virtual machine, which must be declared in the machine configuration. |
+| force | [bool](#bool) |  | Destroy the domain instead of asking the guest to power itself off.<br><br>Unset asks the guest, so pulling the plug on it is something a caller opts into. |
+
+
+
+
+
+
+<a name="machine.VirtualMachineStopResponse"></a>
+
+### VirtualMachineStopResponse
+
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -1696,6 +1780,9 @@ HypervisorService exposes virtual machine APIs.
 | ----------- | ------------ | ------------- | ------------|
 | ConsoleStream | [ConsoleRequest](#machine.ConsoleRequest) stream | [ConsoleResponse](#machine.ConsoleResponse) stream | ConsoleStream attaches exclusively to one managed VM's live serial console. The first request must be an attach with a nonempty name; subsequent requests must contain stdin_data, at most 64 KiB per frame. Bytes pass through unchanged. Client input EOF (half-close), cancellation, or guest EOF detaches the session. Only live output is sent: there is no replay, persistent log, or resize support. |
 | VNCStream | [VNCRequest](#machine.VNCRequest) stream | [VNCResponse](#machine.VNCResponse) stream | VNCStream attaches exclusively to one managed VM's live VNC endpoint. The first request must attach a nonempty name; subsequent requests contain opaque data, at most 64 KiB per frame. RFB negotiation is end-to-end. Input EOF, cancellation, or guest EOF detaches; serial attachment is separate. |
+| Start | [VirtualMachineStartRequest](#machine.VirtualMachineStartRequest) | [VirtualMachineStartResponse](#machine.VirtualMachineStartResponse) | Start drives a virtual machine towards running by setting powerState in the machine configuration. |
+| Stop | [VirtualMachineStopRequest](#machine.VirtualMachineStopRequest) | [VirtualMachineStopResponse](#machine.VirtualMachineStopResponse) | Stop drives a virtual machine towards stopped by setting powerState in the machine configuration. |
+| Reboot | [VirtualMachineRebootRequest](#machine.VirtualMachineRebootRequest) | [VirtualMachineRebootResponse](#machine.VirtualMachineRebootResponse) | Reboot restarts a running virtual machine, leaving the machine configuration alone. |
 
  <!-- end services -->
 
@@ -9487,6 +9574,8 @@ VirtualMachineDomainSpecSpec is the spec for VirtualMachineDomainSpec.
 | disks | [string](#string) | repeated | Disks lists the IDs of the VirtualMachineDiskStatus resources DomainXML attaches.<br><br>It is what the controller which starts the domain holds against, rather than the virtual machine's configuration, which moves ahead of the definition libvirt is running. |
 | cloud_init | [string](#string) |  | CloudInit identifies the seed status this domain has attached and must hold. |
 | observed_generation | [string](#string) |  | ObservedGeneration identifies the VM intent used to render this definition. |
+| stop_mode | [string](#string) |  | StopMode selects whether a stop asks the guest to power off or destroys the domain.<br><br>Carried alongside PowerState rather than read off the virtual machine's configuration, so that the way a domain is taken down is the one which was declared for the definition that is running, and so that the controller which withdraws an unrenderable definition can demand a stop the guest cannot refuse. |
+| stop_request | [string](#string) |  | StopRequest identifies the immutable stop whose shutdown delivery is being tracked. |
 
 
 
@@ -9628,6 +9717,22 @@ VirtualMachineMemorySpec describes the desired guest memory.
 
 
 
+<a name="talos.resource.definitions.hypervisor.VirtualMachinePowerOverrideSpec"></a>
+
+### VirtualMachinePowerOverrideSpec
+VirtualMachinePowerOverrideSpec describes the power state a virtual machine is driven towards.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| power_state | [string](#string) |  | PowerState overrides the configured power state. |
+| stop_request | [string](#string) |  | StopRequest is the stop asked for, encoded as "<mode>/<id>"; empty unless stopped. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.hypervisor.VirtualMachineProfileCPUFeatureSpec"></a>
 
 ### VirtualMachineProfileCPUFeatureSpec
@@ -9698,6 +9803,7 @@ VirtualMachineSpecSpec is the spec for VirtualMachineSpec.
 | guest | [VirtualMachineGuestSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestSpec) |  |  |
 | video | [VirtualMachineVideoSpec](#talos.resource.definitions.hypervisor.VirtualMachineVideoSpec) |  | Video is the graphics device presented when a VNC console is enabled. |
 | profile | [string](#string) |  | Profile names the guest hardware profile; empty selects the builtin host profile. |
+| stop_request | [string](#string) |  | StopRequest is the stop request committed with stopped intent, encoded as "<mode>/<id>". |
 
 
 
@@ -9717,6 +9823,7 @@ VirtualMachineStatusSpec describes observed power state and reconciliation stage
 | error | [string](#string) |  | Error describes an observation failure or obstacle, when known. |
 | addresses | [string](#string) | repeated | Addresses is the flat list of guest IP addresses in CIDR form, as reported by qemu-guest-agent. |
 | interfaces | [VirtualMachineGuestInterfaceSpec](#talos.resource.definitions.hypervisor.VirtualMachineGuestInterfaceSpec) | repeated | Interfaces is the per-interface view returned by qemu-guest-agent. |
+| observed_generation | [string](#string) |  | ObservedGeneration identifies the VM spec incarnation and version this status was composed from. |
 
 
 

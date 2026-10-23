@@ -194,6 +194,12 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 
 		// Keep the attached disks held until the runtime has stopped.
 		domain.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
+
+		// Whatever was asked for, this stop is not one the operator asked for at all: it is one the
+		// controller demands to clear a definition it cannot render off the host, and a guest may
+		// not refuse it.
+		domain.TypedSpec().StopMode = hypervisorhelpers.StopModeForced.String()
+
 		logger.Error("stopping virtual machine: spec cannot be rendered", zap.String("virtual_machine", name), zap.Error(renderErr))
 
 		return nil
@@ -204,7 +210,9 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 		PowerState:         vm.TypedSpec().PowerState,
 		Disks:              attachedDisks,
 		CloudInit:          seedID,
-		ObservedGeneration: vm.Metadata().Version().String(),
+		ObservedGeneration: hypervisor.VirtualMachineSpecGeneration(vm),
+		StopMode:           stopModeOf(vm.TypedSpec().StopRequest),
+		StopRequest:        vm.TypedSpec().StopRequest,
 	}
 
 	return nil
@@ -235,7 +243,7 @@ func retainDomainOnStorageOutage(ctx context.Context, r controller.Reader, vm *h
 func runningDomainMatchesVM(vm *hypervisor.VirtualMachineSpec, domain *hypervisor.VirtualMachineDomainSpec) bool {
 	return vm.Metadata().Phase() == resource.PhaseRunning && vm.TypedSpec().PowerState == "running" &&
 		domain.TypedSpec().PowerState == "running" && domain.TypedSpec().DomainXML != "" &&
-		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == vm.Metadata().Version().String() &&
+		domain.TypedSpec().ObservedGeneration != "" && domain.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineSpecGeneration(vm) &&
 		len(domain.TypedSpec().Disks) == len(vm.TypedSpec().Disks)
 }
 
@@ -528,6 +536,17 @@ func appendCloudInitCDROM(domain *libvirtxml.Domain, asset *hypervisor.CloudInit
 	})
 }
 
+// stopModeOf is the stop mode a committed stop request asked for, and empty, which destroys the
+// domain, for a stop nothing asked anything of.
+func stopModeOf(request string) string {
+	mode := hypervisorhelpers.VirtualMachineStopRequestMode(request)
+	if mode == hypervisorhelpers.StopModeUnknown {
+		return ""
+	}
+
+	return mode.String()
+}
+
 // listResolvedDisks indexes the published disk statuses by their resource ID, the key
 // renderVirtualMachineDisks looks a disk up under.
 func listResolvedDisks(ctx context.Context, reader controller.Reader) (map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec, error) {
@@ -745,6 +764,8 @@ func renderVirtualMachineGuest(domain *libvirtxml.Domain, guest hypervisor.Virtu
 }
 
 func renderVirtualMachineFirmware(domain *libvirtxml.Domain, firmware hypervisor.VirtualMachineFirmwareSpec) {
+	// Every domain declares ACPI: it carries a power button press into the guest, and QEMU rejects
+	// UEFI domains without it on supported architectures.
 	domain.Features = &libvirtxml.DomainFeatureList{
 		ACPI: &libvirtxml.DomainFeature{},
 	}

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
@@ -49,10 +50,14 @@ func (s *VirtualMachineStatusSuite) SetupTest() {
 		domains:         make(map[string]libvirtdomain.Domain),
 		texts:           make(map[string]string),
 		starts:          make(map[string]int),
+		shutdowns:       make(map[string]int),
+		reboots:         make(map[string]int),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
-		listed:          make(chan struct{}, 1),
+
+		attemptedShutdown: make(chan struct{}, 1),
+		listed:            make(chan struct{}, 1),
 	}
 
 	machine := hardware.NewSystemInformation(hardware.SystemInformationID)
@@ -118,6 +123,14 @@ func (c *boundedDomainClient) Start(libvirtdomain.Domain, string, ...libvirtdoma
 
 func (c *boundedDomainClient) Remove(libvirtdomain.Domain) error {
 	panic("bounded client used for remove")
+}
+
+func (c *boundedDomainClient) Shutdown(libvirtdomain.Domain) error {
+	panic("bounded client used for shutdown")
+}
+
+func (c *boundedDomainClient) Reboot(libvirtdomain.Domain) error {
+	panic("bounded client used for reboot")
 }
 
 func (s *VirtualMachineStatusSuite) startObserver() {
@@ -381,6 +394,7 @@ func (s *VirtualMachineStatusSuite) TestClosedLifecycleWatchKeepsObservationUnti
 }
 
 func (s *VirtualMachineStatusSuite) start() {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
 	s.startObserver()
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineStatusController{}))
 }
@@ -489,10 +503,213 @@ func (s *VirtualMachineStatusSuite) TestFailedInventoryKeepsObservationUntilSucc
 	}, 5*time.Second, 10*time.Millisecond)
 }
 
+// A stopped virtual machine with no domain is ready without a domain status: a domain status means
+// libvirt lists the domain, which other consumers such as CPU partitioning rely on.
+func (s *VirtualMachineStatusSuite) TestUnclaimedStoppedVMIsReadyWithoutDomainStatus() {
+	const name = "vm1"
+
+	spec := newRenderableSpec(name, "stopped")
+	s.Create(spec)
+	s.start()
+
+	s.assertStatus(name, "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](s, name)
+
+	// A real, still-defined domain is not a completed stop.
+	s.client.mu.Lock()
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+	s.client.mu.Unlock()
+
+	s.events <- struct{}{}
+
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending, "domain is still defined")
+
+	s.client.mu.Lock()
+	delete(s.client.domains, name)
+	s.client.mu.Unlock()
+
+	s.events <- struct{}{}
+
+	s.assertStatus(name, "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
+}
+
+func (s *VirtualMachineStatusSuite) TestStoppedObservationWaitsForRuntimeClaim() {
+	const name = "stopping"
+
+	s.Create(newRenderableSpec(name, "stopped"))
+	definition := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+	definition.TypedSpec().PowerState = "stopped"
+	owner := (&hypervisorctrl.VirtualMachineController{}).Name()
+	definition.Metadata().Finalizers().Add(owner)
+	s.Create(definition)
+
+	// The claim is released only once VirtualMachineController finds the domain gone, so until
+	// then an absent observation may be a scan which has not caught up.
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineStatusController{}))
+	s.assertStatus(name, "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+
+	s.Require().NoError(s.State().RemoveFinalizer(s.Ctx(), definition.Metadata(), owner))
+	s.assertStatus(name, "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
+}
+
+func (s *VirtualMachineStatusSuite) TestRunningStatusWaitsForAMissingRenderedDefinition() {
+	const name = "missing-definition"
+
+	s.Create(newRenderableSpec(name, "running"))
+	observed := hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, name)
+	observed.TypedSpec().UUID = libvirtdomain.UUID(uuid.MustParse(machineUUID), name).String()
+	observed.TypedSpec().PowerState = hypervisorhelpers.VirtualMachinePowerStateRunning
+	observed.TypedSpec().State = 1
+	s.Create(observed)
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineStatusController{}))
+
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending, "domain definition has not caught up")
+}
+
+func (s *VirtualMachineStatusSuite) TestRunningStatusWaitsForCurrentRenderedDefinition() {
+	const name = "render-lag"
+
+	vm := newRenderableSpec(name, "running")
+	s.Create(vm)
+	s.client.domains[name] = libvirtdomain.Domain{
+		Name: name,
+		UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name),
+	}
+
+	s.start()
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
+
+	old, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(old.TypedSpec().DomainXML)
+
+	ctest.UpdateWithConflicts(s, vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Memory.Size = 2 << 30
+
+		return nil
+	})
+
+	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+	s.Require().Eventually(func() bool {
+		current, getErr := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+
+		return getErr == nil && current.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineSpecGeneration(updated) &&
+			current.TypedSpec().DomainXML != old.TypedSpec().DomainXML
+	}, 5*time.Second, 10*time.Millisecond)
+
+	current, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+	s.Require().NotEqual(old.TypedSpec().ObservedGeneration, current.TypedSpec().ObservedGeneration)
+
+	// Simulate a delayed renderer publication after the desired spec has changed.
+	ctest.UpdateWithConflicts(s, current, func(domain *hypervisor.VirtualMachineDomainSpec) error {
+		*domain.TypedSpec() = *old.TypedSpec()
+
+		return nil
+	}, state.WithUpdateOwner((&hypervisorctrl.VirtualMachineDomainSpecController{}).Name()))
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending, "domain definition has not caught up")
+
+	// Numeric versions can be reused across spec incarnations. Even a matching number
+	// cannot certify a definition whose rendered XML still belongs to the old intent.
+	ctest.UpdateWithConflicts(s, current, func(domain *hypervisor.VirtualMachineDomainSpec) error {
+		domain.TypedSpec().ObservedGeneration = hypervisor.VirtualMachineSpecGeneration(updated)
+
+		return nil
+	}, state.WithUpdateOwner((&hypervisorctrl.VirtualMachineDomainSpecController{}).Name()))
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending, "domain definition has not caught up")
+
+	ctest.UpdateWithConflicts(s, current, func(domain *hypervisor.VirtualMachineDomainSpec) error {
+		*domain.TypedSpec() = *current.TypedSpec()
+
+		return nil
+	}, state.WithUpdateOwner((&hypervisorctrl.VirtualMachineDomainSpecController{}).Name()))
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
+}
+
+func (s *VirtualMachineStatusSuite) TestRunningStatusRejectsAnIdenticalDefinitionFromAPreviousIncarnation() {
+	const name = "same-name-incarnation"
+
+	original := newRenderableSpec(name, "running")
+	s.Create(original)
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+	s.start()
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
+
+	old, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+	s.Require().NoError(s.State().Destroy(s.Ctx(), original.Metadata()))
+	s.Create(newRenderableSpec(name, "running"))
+	current, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+
+	generation := hypervisor.VirtualMachineSpecGeneration(current)
+	s.Require().NotEqual(old.TypedSpec().ObservedGeneration, generation)
+	s.Require().Eventually(func() bool {
+		definition, getErr := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), name)
+
+		return getErr == nil && definition.TypedSpec().ObservedGeneration == generation
+	}, 5*time.Second, 10*time.Millisecond)
+
+	// The VM name, numeric resource version and rendered bytes are identical.
+	// Only the source incarnation distinguishes this stale definition.
+	ctest.UpdateWithConflicts(s, old, func(definition *hypervisor.VirtualMachineDomainSpec) error {
+		*definition.TypedSpec() = *old.TypedSpec()
+
+		return nil
+	}, state.WithUpdateOwner((&hypervisorctrl.VirtualMachineDomainSpecController{}).Name()))
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending, "domain definition has not caught up")
+
+	ctest.UpdateWithConflicts(s, old, func(definition *hypervisor.VirtualMachineDomainSpec) error {
+		definition.TypedSpec().ObservedGeneration = generation
+
+		return nil
+	}, state.WithUpdateOwner((&hypervisorctrl.VirtualMachineDomainSpecController{}).Name()))
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
+}
+
+func (s *VirtualMachineStatusSuite) TestStatusReportsCurrentSpecGeneration() {
+	const name = "generation"
+
+	spec := newRenderableSpec(name, "stopped")
+	s.Create(spec)
+	s.start()
+
+	stored, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+
+	initial := hypervisor.VirtualMachineSpecGeneration(stored)
+
+	s.Require().Eventually(func() bool {
+		status, getErr := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
+
+		return getErr == nil && status.TypedSpec().ObservedGeneration == initial &&
+			status.TypedSpec().Stage == hypervisorhelpers.VirtualMachineStageReady
+	}, 5*time.Second, 10*time.Millisecond)
+
+	ctest.UpdateWithConflicts(s, stored, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().PowerState = "running"
+
+		return nil
+	})
+
+	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), name)
+	s.Require().NoError(err)
+	s.Require().NotEqual(initial, hypervisor.VirtualMachineSpecGeneration(updated))
+
+	s.Require().Eventually(func() bool {
+		status, getErr := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), name)
+
+		return getErr == nil && status.TypedSpec().ObservedGeneration == hypervisor.VirtualMachineSpecGeneration(updated) &&
+			status.TypedSpec().Stage != hypervisorhelpers.VirtualMachineStageReady
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+// A running virtual machine is not taken for one which stopped because the scan fails.
 func (s *VirtualMachineStatusSuite) TestAbsentDomainIsNotReadyDuringFailedScan() {
 	s.openErr.Store(&openFailure{err: errors.New("daemon unavailable")})
 
-	spec := newRenderableSpec("vm1", "stopped")
+	spec := newRenderableSpec("vm1", "running")
 	s.Create(spec)
 	s.start()
 	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
@@ -527,19 +744,13 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](s.Ctx(), s.State(), "vm1")
 	s.Require().NoError(err)
 
 	updated.TypedSpec().PowerState = "running"
 	s.Update(updated)
-	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
-
-	domainSpec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm1")
-	domainSpec.TypedSpec().PowerState = "running"
-	domainSpec.TypedSpec().DomainXML = `<domain><name>vm1</name></domain>`
-	s.Create(domainSpec)
 	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 
 	s.client.mu.Lock()
@@ -552,7 +763,7 @@ func (s *VirtualMachineStatusSuite) TestStoppedAndRunningAreObserved() {
 
 	second := newRenderableSpec("vm2", "stopped")
 	s.Create(second)
-	s.assertStatus("vm2", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm2", "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
 	s.assertStatus("vm1", "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }
 
@@ -667,6 +878,36 @@ func (s *VirtualMachineStatusSuite) assertGuestAddresses(name string, want []str
 
 		return true
 	}, 5*time.Second, 10*time.Millisecond)
+}
+
+// A pending graceful stop is reported from the stop mode the domain spec carries: a stop forced by
+// the domain spec is not one the operator can escape by forcing it.
+func (s *VirtualMachineStatusSuite) TestPendingStopFollowsTheDomainSpec() {
+	s.Create(newRenderableSpec("vm1", "stopped"))
+
+	domainSpec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm1")
+	domainSpec.TypedSpec().PowerState = "stopped"
+	domainSpec.TypedSpec().StopMode = hypervisorhelpers.StopModeForced.String()
+	domainSpec.TypedSpec().DomainXML = `<domain><name>vm1</name></domain>`
+	s.Create(domainSpec)
+
+	s.client.mu.Lock()
+	s.client.domains["vm1"] = libvirtdomain.Domain{Name: "vm1", UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), "vm1")}
+	s.client.mu.Unlock()
+
+	s.start()
+
+	s.events <- struct{}{}
+
+	s.assertStatus("vm1", "running", hypervisorhelpers.VirtualMachineStagePending, "domain is still defined")
+
+	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), "vm1")
+	s.Require().NoError(err)
+
+	updated.TypedSpec().StopMode = hypervisorhelpers.StopModeGraceful.String()
+	s.Update(updated)
+
+	s.assertStatus("vm1", "running", hypervisorhelpers.VirtualMachineStagePending, hypervisor.GracefulStopPendingError)
 }
 
 // A link the host lacks costs the spec its power intent, so the running domain is on its way out:
@@ -822,6 +1063,8 @@ func (s *VirtualMachineStatusSuite) TestDaemonUnavailable() {
 }
 
 func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUntilSuccessfulScan() {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+
 	name := "vm1"
 	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
 
@@ -1018,7 +1261,6 @@ func (s *VirtualMachineStatusSuite) TestCloudInitInvalidationStopsOldDomainWitho
 
 	vm := newRenderableSpec(name, "running")
 	s.Create(vm)
-	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
 	s.start()
 	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
@@ -1050,11 +1292,66 @@ func (s *VirtualMachineStatusSuite) TestStatusRemovedWithSpec() {
 	spec := newRenderableSpec("vm1", "stopped")
 	s.Create(spec)
 	s.start()
-	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+	s.assertStatus("vm1", "stopped", hypervisorhelpers.VirtualMachineStageReady, "")
 	s.Destroy(spec)
 	s.Require().Eventually(func() bool {
 		_, err := safe.StateGetByID[*hypervisor.VirtualMachineStatus](s.Ctx(), s.State(), "vm1")
 
 		return err != nil
 	}, 5*time.Second, 10*time.Millisecond)
+	s.Require().Eventually(func() bool {
+		_, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainStatus](s.Ctx(), s.State(), "vm1")
+
+		return err != nil
+	}, 5*time.Second, 10*time.Millisecond)
+}
+
+func newPlacedSpec(name, cpus, nodes string) *hypervisor.VirtualMachineSpec {
+	spec := newRenderableSpec(name, "running")
+	spec.TypedSpec().CPU.Pins = []hypervisor.VirtualMachineVCPUPinSpec{{VCPU: 0, CPUs: cpus}}
+	spec.TypedSpec().Memory.NUMA = &hypervisor.VirtualMachineMemoryNUMASpec{Mode: "strict", Nodes: nodes}
+
+	return spec
+}
+
+// Placement waiting for the inventory is pending; host IDs the host cannot use are an error naming
+// the ID; the observed power state of a running domain is kept either way.
+func (s *VirtualMachineStatusSuite) TestHostPlacementStatus() {
+	name := "vm1"
+	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
+
+	s.Create(newPlacedSpec(name, "3", "0"))
+	s.Create(newPlacedSpec("vm2", "4", "2"))
+	s.Create(newRenderableSpec("plain", "running"))
+	s.start()
+
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
+		`virtual machine "vm1": explicit host placement: host NUMA topology is not available yet`)
+	s.assertStatus("vm2", "unknown", hypervisorhelpers.VirtualMachineStagePending,
+		`virtual machine "vm2": explicit host placement: host NUMA topology is not available yet`)
+	s.assertStatus("plain", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+
+	s.Create(newNUMATopology())
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageError,
+		`virtual machine "vm1": invalid host placement: vCPU 0 pin names offline host CPU 3`)
+	// Remote memory on a CPUless node is a valid selection.
+	s.assertStatus("vm2", "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
+
+	ctest.UpdateWithConflicts(s, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name),
+		func(spec *hypervisor.VirtualMachineSpec) error {
+			spec.TypedSpec().Memory.NUMA.Nodes = "3"
+			spec.TypedSpec().CPU.Pins[0].CPUs = "6"
+
+			return nil
+		})
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageError,
+		`virtual machine "vm1": invalid host placement: memory nodeset names host NUMA node 3 without memory`)
+
+	ctest.UpdateWithConflicts(s, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, name),
+		func(spec *hypervisor.VirtualMachineSpec) error {
+			spec.TypedSpec().Memory.NUMA.Nodes = "2"
+
+			return nil
+		})
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 }

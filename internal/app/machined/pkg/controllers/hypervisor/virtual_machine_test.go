@@ -15,6 +15,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -33,6 +34,7 @@ import (
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -60,11 +62,20 @@ type domainClient struct {
 	removeErr       error
 	startErr        error
 	listErr         error
+	shutdownErr     error
+	rebootErr       error
 	changed         chan struct{}
 	attempted       chan struct{}
 	attemptedRemove chan struct{}
 	listed          chan struct{}
 	checkStart      func() error
+
+	// shutdowns and reboots count what was asked of each guest. Neither call changes the domain:
+	// the request is delivered rather than obeyed, and a guest which obeys is modeled by the test
+	// deleting the domain itself, the way a libvirt lifecycle event would report it.
+	shutdowns         map[string]int
+	reboots           map[string]int
+	attemptedShutdown chan struct{}
 }
 
 func (c *domainClient) open(context.Context) (libvirtdomain.Client, error) {
@@ -190,6 +201,72 @@ func (c *domainClient) Start(domain libvirtdomain.Domain, text string, opts ...l
 	return c.Define(domain, text)
 }
 
+func (c *domainClient) Shutdown(domain libvirtdomain.Domain) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	select {
+	case c.attemptedShutdown <- struct{}{}:
+	default:
+	}
+
+	if c.shutdownErr != nil {
+		return c.shutdownErr
+	}
+
+	existing, ok := c.domains[domain.Name]
+	if !ok {
+		return nil
+	}
+
+	if existing.UUID != domain.UUID {
+		return fmt.Errorf("domain %q is not owned", domain.Name)
+	}
+
+	c.shutdowns[domain.Name]++
+
+	return nil
+}
+
+func (c *domainClient) Reboot(domain libvirtdomain.Domain) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.rebootErr != nil {
+		return c.rebootErr
+	}
+
+	existing, ok := c.domains[domain.Name]
+	if !ok {
+		return libvirtdomain.ErrDomainNotRunning
+	}
+
+	if existing.UUID != domain.UUID {
+		return fmt.Errorf("domain %q is not owned", domain.Name)
+	}
+
+	c.reboots[domain.Name]++
+
+	return nil
+}
+
+// shutdownCount reports how many times a guest has been asked to power itself off.
+func (c *domainClient) shutdownCount(name string) int {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.shutdowns[name]
+}
+
+// powerOff models a guest which obeys: the transient domain goes away with it.
+func (c *domainClient) powerOff(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	delete(c.domains, name)
+	delete(c.texts, name)
+}
+
 func (c *domainClient) Remove(domain libvirtdomain.Domain) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -230,10 +307,14 @@ func (s *VirtualMachineDomainSuite) SetupTest() {
 		domains:         make(map[string]libvirtdomain.Domain),
 		texts:           make(map[string]string),
 		starts:          make(map[string]int),
+		shutdowns:       make(map[string]int),
+		reboots:         make(map[string]int),
 		changed:         make(chan struct{}, 1),
 		attempted:       make(chan struct{}, 1),
 		attemptedRemove: make(chan struct{}, 1),
-		listed:          make(chan struct{}, 1),
+
+		attemptedShutdown: make(chan struct{}, 1),
+		listed:            make(chan struct{}, 1),
 	}
 
 	system := hardware.NewSystemInformation(hardware.SystemInformationID)
@@ -991,11 +1072,14 @@ func (s *VirtualMachineDomainSuite) TestPostHandshakeVolumeReadOutageRetainsRunn
 	s.Require().Equal("raw", volume.TypedSpec().Format)
 	s.Require().Equal(uint64(1<<20), volume.TypedSpec().Capacity)
 	s.assertStorageOutageGuestRetained(diskID, original, starts)
-	s.Require().Never(func() bool {
-		s.client.mu.Lock()
-		defer s.client.mu.Unlock()
 
-		_, started := s.client.domains["wake"]
+	client := s.client
+
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		_, started := client.domains["wake"]
 
 		return started
 	}, 200*time.Millisecond, 10*time.Millisecond)
@@ -2844,4 +2928,561 @@ func (s *VirtualMachineDomainSuite) TestBlankStartFailsClosedWithoutPoolStatus()
 	pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
 	s.Create(pool)
 	s.assertDomain("vm", domain.TypedSpec().DomainXML, true)
+}
+
+// startGracefully publishes a running domain spec which stops by asking its guest.
+func (s *VirtualMachineDomainSuite) startGracefully(name string) *hypervisor.VirtualMachineDomainSpec {
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+	spec.TypedSpec().DomainXML = `<domain><name>` + name + `</name></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().StopMode = hypervisorhelpers.StopModeGraceful.String()
+	s.Create(spec)
+	s.assertDomain(name, spec.TypedSpec().DomainXML, true)
+	s.assertFinalizer(name, true)
+
+	return spec
+}
+
+// drivePowerState rewrites the power state a published domain spec is driven towards.
+func (s *VirtualMachineDomainSuite) drivePowerState(spec *hypervisor.VirtualMachineDomainSpec, powerState, stopMode string) {
+	ctest.UpdateWithConflicts(s, spec, func(res *hypervisor.VirtualMachineDomainSpec) error {
+		res.TypedSpec().PowerState = powerState
+		res.TypedSpec().StopMode = stopMode
+
+		return nil
+	})
+}
+
+// assertAsked waits for a guest to have been asked exactly count times, and then keeps checking,
+// so that a controller which asks again on a later pass is caught rather than raced past.
+func (s *VirtualMachineDomainSuite) assertAsked(name string, count int) {
+	// Never returns without waiting for its last check, so the checks read a local rather than
+	// s.client, which the next test's SetupTest replaces.
+	client := s.client
+
+	s.Require().Eventually(func() bool {
+		return client.shutdownCount(name) == count
+	}, 5*time.Second, 10*time.Millisecond, "guest was not asked to power off %d times", count)
+
+	// Churn an unrelated resource so the controller reconciles again under the same state.
+	s.churn()
+
+	s.Require().Never(func() bool {
+		return client.shutdownCount(name) != count
+	}, 500*time.Millisecond, 10*time.Millisecond, "guest was asked more than %d times", count)
+}
+
+// churn wakes the controller without changing anything it acts on.
+func (s *VirtualMachineDomainSuite) churn() {
+	status := hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, "churn")
+	s.Create(status)
+	s.Destroy(status)
+}
+
+// awaitReconcile waits for a full reconciliation to have been carried out.
+//
+// Each one opens its own libvirt session, which is the only thing a pass that changes nothing
+// leaves behind to observe.
+func (s *VirtualMachineDomainSuite) awaitReconcile() {
+	s.client.mu.Lock()
+	before := s.client.opens
+	s.client.mu.Unlock()
+
+	s.churn()
+
+	s.Require().Eventually(func() bool {
+		s.client.mu.Lock()
+		defer s.client.mu.Unlock()
+
+		return s.client.opens > before
+	}, 5*time.Second, 10*time.Millisecond, "no reconciliation was carried out")
+}
+
+// powerOffGuest models a guest obeying the power button: the transient domain goes with it, and
+// libvirt reports that as the domain status going away.
+func (s *VirtualMachineDomainSuite) powerOffGuest(name string) {
+	status := hypervisor.NewVirtualMachineDomainStatus(hypervisor.NamespaceName, name)
+	s.Create(status)
+
+	s.client.powerOff(name)
+
+	s.Destroy(status)
+}
+
+// A graceful stop asks the guest once, and asks nothing of the disks or the claim until the guest
+// is actually gone: a guest which is powering itself off is still reading them.
+func (s *VirtualMachineDomainSuite) TestGracefulStopAsksOnceAndKeepsItsHolds() {
+	s.start()
+
+	disk := s.newDiskStatus(diskStatusVM + "/install@aaaaaaaaaaaa")
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, diskStatusVM)
+	spec.TypedSpec().DomainXML = `<domain><name>` + diskStatusVM + `</name></domain>`
+	spec.TypedSpec().PowerState = "running"
+	spec.TypedSpec().StopMode = hypervisorhelpers.StopModeGraceful.String()
+	spec.TypedSpec().Disks = []string{disk.Metadata().ID()}
+	s.Create(spec)
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(disk.Metadata().ID(), true)
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+
+	s.assertAsked(diskStatusVM, 1)
+
+	// The guest is ignoring the power button, so nothing has moved.
+	s.assertDomain(diskStatusVM, spec.TypedSpec().DomainXML, true)
+	s.assertDiskHeld(disk.Metadata().ID(), true)
+	s.assertFinalizer(diskStatusVM, true)
+
+	s.powerOffGuest(diskStatusVM)
+
+	s.assertDiskHeld(disk.Metadata().ID(), false)
+	s.assertFinalizer(diskStatusVM, false)
+	s.Require().Equal(1, s.client.shutdownCount(diskStatusVM))
+}
+
+// A forced stop, and a stop of a spec which names no mode at all, destroy the domain without
+// asking its guest anything.
+func (s *VirtualMachineDomainSuite) TestForcedStopNeverAsksTheGuest() {
+	s.start()
+
+	for _, stopMode := range []string{"", hypervisorhelpers.StopModeForced.String()} {
+		name := "forced" + stopMode
+
+		spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+		spec.TypedSpec().DomainXML = `<domain><name>` + name + `</name></domain>`
+		spec.TypedSpec().PowerState = "running"
+		spec.TypedSpec().StopMode = stopMode
+		s.Create(spec)
+		s.assertDomain(name, spec.TypedSpec().DomainXML, true)
+
+		s.drivePowerState(spec, "stopped", stopMode)
+
+		s.assertDomain(name, "", false)
+		s.assertFinalizer(name, false)
+		s.Require().Zero(s.client.shutdownCount(name))
+	}
+}
+
+// A definition being withdrawn is not a stop the guest may refuse: holding the claim for as long
+// as it liked would hold every disk with it.
+func (s *VirtualMachineDomainSuite) TestTeardownIsAlwaysForced() {
+	s.start()
+
+	spec := s.startGracefully("teardown")
+
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "the finalizer must prevent immediate deletion")
+
+	s.assertDomain("teardown", "", false)
+	s.assertFinalizer("teardown", false)
+	s.Require().Zero(s.client.shutdownCount("teardown"))
+}
+
+// Switching to forced is the way out of a stop the guest is refusing.
+func (s *VirtualMachineDomainSuite) TestForcedStopEscapesAGracefulOne() {
+	s.start()
+
+	spec := s.startGracefully("escape")
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+	s.assertAsked("escape", 1)
+	s.assertDomain("escape", spec.TypedSpec().DomainXML, true)
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeForced.String())
+
+	s.assertDomain("escape", "", false)
+	s.assertFinalizer("escape", false)
+}
+
+// Driving a machine which is being asked to power off back to running leaves the guest alone: the
+// press cannot be recalled, and a guest which refused it is healthy. A later stop asks again.
+func (s *VirtualMachineDomainSuite) TestARunningGuestIsAskedAgainByTheNextStop() {
+	s.start()
+
+	spec := s.startGracefully("again")
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+	s.assertAsked("again", 1)
+
+	s.drivePowerState(spec, "running", hypervisorhelpers.StopModeGraceful.String())
+	s.awaitReconcile()
+
+	// The definition did not change, so the guest which ignored the power button keeps running.
+	s.assertDomain("again", spec.TypedSpec().DomainXML, true)
+
+	s.client.mu.Lock()
+	starts := s.client.starts["again"]
+	s.client.mu.Unlock()
+	s.Require().Equal(1, starts, "a domain which was never gone must not be started again")
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+	s.assertAsked("again", 2)
+}
+
+func (s *VirtualMachineDomainSuite) TestCoalescedStartAndSuccessorStopAskTheGuestAgain() {
+	s.start()
+
+	spec := s.startGracefully("coalesced")
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().PowerState = "stopped"
+		current.TypedSpec().StopRequest = "request-a"
+
+		return nil
+	})
+	s.assertAsked("coalesced", 1)
+
+	// The canonical config has committed start and stop B, but the projector
+	// coalesces those writes. The lifecycle controller only sees the new identity.
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().StopRequest = "request-b"
+
+		return nil
+	})
+	s.assertAsked("coalesced", 2)
+
+	ctest.UpdateWithConflicts(s, spec, func(current *hypervisor.VirtualMachineDomainSpec) error {
+		current.TypedSpec().ObservedGeneration = "unrelated-render-edit"
+
+		return nil
+	})
+	s.assertAsked("coalesced", 2)
+}
+
+// A press the guest was not listening for yet is lost, so a guest which has not powered off is
+// asked again once the retry interval passes, and one libvirt refuses the press for, such as a
+// paused one, does not fail the controller.
+func (s *VirtualMachineDomainSuite) TestGracefulStopIsAskedAgainAfterTheRetryInterval() {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: 200 * time.Millisecond,
+	}))
+
+	spec := s.startGracefully("repress")
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = libvirtdomain.ErrDomainNotRunning
+	s.client.mu.Unlock()
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+
+	select {
+	case <-s.client.attemptedShutdown:
+	case <-time.After(5 * time.Second):
+		s.Require().Fail("no shutdown was attempted")
+	}
+
+	s.assertFinalizer("repress", true)
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = nil
+	s.client.mu.Unlock()
+
+	client := s.client
+
+	s.Require().Eventually(func() bool {
+		return client.shutdownCount("repress") >= 2
+	}, 5*time.Second, 10*time.Millisecond, "guest was not asked again")
+	s.assertDomain("repress", spec.TypedSpec().DomainXML, true)
+}
+
+// A record of an ask does not outlive the spec it was made against, so a machine configured again
+// under a name which was once stopped is still asked.
+func (s *VirtualMachineDomainSuite) TestARecreatedSpecIsAskedAgain() {
+	s.start()
+
+	spec := s.startGracefully("recreated")
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+	s.assertAsked("recreated", 1)
+
+	// Teardown is forced, so the domain goes and the claim with it, and the spec can then go too.
+	ready, err := s.State().Teardown(s.Ctx(), spec.Metadata())
+	s.Require().NoError(err)
+	s.Require().False(ready, "the finalizer must prevent immediate deletion")
+
+	s.assertFinalizer("recreated", false)
+	s.Destroy(spec)
+
+	s.Require().Eventually(func() bool {
+		_, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), "recreated")
+
+		return err != nil
+	}, 5*time.Second, 10*time.Millisecond)
+
+	recreated := s.startGracefully("recreated")
+	s.drivePowerState(recreated, "stopped", hypervisorhelpers.StopModeGraceful.String())
+	s.assertAsked("recreated", 2)
+}
+
+// An ask libvirt refused is one nothing was asked by, so it is asked again.
+func (s *VirtualMachineDomainSuite) TestARefusedAskIsRetried() {
+	s.start()
+
+	spec := s.startGracefully("retry")
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = errors.New("daemon is busy")
+	s.client.mu.Unlock()
+
+	s.drivePowerState(spec, "stopped", hypervisorhelpers.StopModeGraceful.String())
+
+	// The attempt is observed even though it failed, and the claim is kept through it.
+	select {
+	case <-s.client.attemptedShutdown:
+	case <-time.After(5 * time.Second):
+		s.Require().Fail("no shutdown was attempted")
+	}
+
+	s.assertFinalizer("retry", true)
+	s.Require().Zero(s.client.shutdownCount("retry"))
+
+	s.client.mu.Lock()
+	s.client.shutdownErr = nil
+	s.client.mu.Unlock()
+
+	s.assertAsked("retry", 1)
+}
+
+// A Ready volume is published only after its controller commits a pool-status
+// hold. Preserve that invariant in the snapshot while exercising VM admission
+// against a retarget marker published after the volume became Ready.
+func TestVMStartRejectsPoolRetargetExclusion(t *testing.T) {
+	t.Parallel()
+
+	s := &VirtualMachineDomainSuite{}
+	s.Timeout = 5 * time.Second
+	s.SetT(t)
+	s.SetupTest()
+
+	defer s.TearDownTest()
+
+	path := filepath.Join(t.TempDir(), "vm__system.raw")
+	s.Require().NoError(os.WriteFile(path, make([]byte, 1<<20), 0o600))
+
+	pool := storage.NewStoragePoolStatus(storage.NamespaceName, "vms")
+	pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
+	s.Create(pool)
+	s.AddFinalizer(pool.Metadata(), "storage.StoragePoolVolumeController")
+
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, "vms/vm__system.raw")
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool:     "vms",
+		Name:     "vm__system.raw",
+		Path:     path,
+		Format:   "raw",
+		Capacity: 1 << 20,
+		Phase:    storage.StoragePoolVolumePhaseReady,
+	}
+	s.Create(volume)
+
+	disk := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/system")
+	*disk.TypedSpec() = hypervisor.VirtualMachineDiskStatusSpec{
+		VirtualMachine: "vm",
+		Name:           "system",
+		Blank:          true,
+		Pool:           "vms",
+		Volume:         "vm__system.raw",
+		SourcePath:     path,
+		Format:         "raw",
+		Size:           1 << 20,
+		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
+	}
+	s.Create(disk)
+
+	domain := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm")
+	domain.TypedSpec().PowerState = "running"
+	domain.TypedSpec().DomainXML = `<domain><name>vm</name><vcpu>1</vcpu></domain>`
+	domain.TypedSpec().Disks = []string{disk.Metadata().ID()}
+	s.Create(domain)
+
+	s.AddFinalizer(pool.Metadata(), "storage.StoragePoolController/mutating/backing")
+	s.start()
+	ctest.AssertResource(s, volume.Metadata().ID(), func(current *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.True(current.Metadata().Finalizers().Has("hypervisor.VirtualMachineController/" + disk.Metadata().ID()))
+	})
+	client := s.client
+	s.Require().Never(func() bool {
+		client.mu.Lock()
+		defer client.mu.Unlock()
+
+		return client.starts["vm"] > 0
+	}, 200*time.Millisecond, 10*time.Millisecond)
+	s.RemoveFinalizer(pool.Metadata(), "storage.StoragePoolController/mutating/backing")
+	current, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](s.Ctx(), s.State(), "vm")
+	s.Require().NoError(err)
+	s.assertDomain("vm", current.TypedSpec().DomainXML, true)
+}
+
+type placementFixture struct {
+	VirtualMachineDomainSuite
+}
+
+func TestVirtualMachinePlacement(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		run  func(*placementFixture)
+	}{
+		{"waits for topology", (*placementFixture).explicitPlacementWaitsForTopology},
+		{"rejects invalid placement", (*placementFixture).invalidHostPlacementIsRejected},
+		{"preserves running domain", (*placementFixture).runningDomainSurvivesTopologyChange},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				s := &placementFixture{}
+				s.SetT(t)
+				s.SetupTest()
+				t.Cleanup(s.TearDownTest)
+				test.run(s)
+			})
+		})
+	}
+}
+
+func newNUMATopology() *hardware.NUMATopology {
+	topology := hardware.NewNUMATopology()
+	*topology.TypedSpec() = hardware.NUMATopologySpec{
+		Nodes: []hardware.NUMANodeSpec{
+			{ID: 0, CPUs: []uint32{0, 1, 2, 3}, MemoryTotalBytes: 1 << 30},
+			{ID: 1, CPUs: []uint32{4, 5}, MemoryTotalBytes: 1 << 30},
+			{ID: 2, MemoryTotalBytes: 1 << 30},
+			{ID: 3, CPUs: []uint32{6}},
+		},
+		PresentCPUs: []uint32{0, 1, 2, 3, 4, 5, 6},
+		OnlineCPUs:  []uint32{0, 1, 2, 4, 5, 6},
+	}
+
+	return topology
+}
+
+func placedDomainXML(name, cpus, nodes string) string {
+	return `<domain><name>` + name + `</name><vcpu>1</vcpu><cputune><vcpupin vcpu="0" cpuset="` + cpus +
+		`"/></cputune><numatune><memory mode="strict" nodeset="` + nodes + `"/></numatune></domain>`
+}
+
+func (s *placementFixture) newRunningDomainSpec(name, domainXML string) *hypervisor.VirtualMachineDomainSpec {
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, name)
+	spec.TypedSpec().DomainXML = domainXML
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+
+	return spec
+}
+
+func (s *placementFixture) assertNotStarted(name string) {
+	client := s.client
+
+	synctest.Wait()
+	client.mu.Lock()
+	defer client.mu.Unlock()
+
+	_, started := client.domains[name]
+	s.Require().False(started)
+	s.Require().Zero(client.starts[name])
+}
+
+func (s *placementFixture) explicitPlacementWaitsForTopology() {
+	placed := s.newRunningDomainSpec("placed", placedDomainXML("placed", "0", "0"))
+	plain := s.newRunningDomainSpec("plain", `<domain><name>plain</name><vcpu>1</vcpu></domain>`)
+	s.start()
+
+	s.assertDomain("plain", plain.TypedSpec().DomainXML, true)
+	s.assertNotStarted("placed")
+
+	s.Create(newNUMATopology())
+	s.assertDomain("placed", placed.TypedSpec().DomainXML, true)
+}
+
+func (s *placementFixture) invalidHostPlacementIsRejected() {
+	s.Create(newNUMATopology())
+
+	for _, test := range []struct{ name, cpus, nodes string }{
+		{name: "offline-cpu", cpus: "3", nodes: "0"},
+		{name: "absent-cpu", cpus: "7", nodes: "0"},
+		{name: "absent-node", cpus: "0", nodes: "4"},
+		{name: "memoryless-node", cpus: "0", nodes: "3"},
+	} {
+		s.newRunningDomainSpec(test.name, placedDomainXML(test.name, test.cpus, test.nodes))
+	}
+
+	s.start()
+
+	// Intentional remote memory: vCPU on node 1, memory on the CPUless node 2.
+	remote := s.newRunningDomainSpec("remote", placedDomainXML("remote", "4", "2"))
+	s.assertDomain("remote", remote.TypedSpec().DomainXML, true)
+
+	for _, name := range []string{"offline-cpu", "absent-cpu", "absent-node", "memoryless-node"} {
+		s.assertNotStarted(name)
+	}
+
+	// A rejection is not a controller failure: a failed controller is restarted with backoff and
+	// reconciles again with no new event, opening another session.
+	client := s.client
+	client.mu.Lock()
+	opens := client.opens
+	client.mu.Unlock()
+
+	synctest.Sleep(2 * time.Second)
+	synctest.Wait()
+	client.mu.Lock()
+	observedOpens := client.opens
+	client.mu.Unlock()
+	s.Require().Equal(opens, observedOpens)
+
+	fixed := placedDomainXML("offline-cpu", "2", "0")
+
+	ctest.UpdateWithConflicts(s, hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "offline-cpu"),
+		func(spec *hypervisor.VirtualMachineDomainSpec) error {
+			spec.TypedSpec().DomainXML = fixed
+
+			return nil
+		})
+	s.assertDomain("offline-cpu", fixed, true)
+}
+
+// An unchanged running domain is never stopped because the inventory changed under it; a
+// replacement whose placement became invalid keeps the old domain running.
+func (s *placementFixture) runningDomainSurvivesTopologyChange() {
+	topology := newNUMATopology()
+	s.Create(topology)
+
+	original := placedDomainXML("vm", "1", "0")
+	s.newRunningDomainSpec("vm", original)
+	s.start()
+	s.assertDomain("vm", original, true)
+
+	ctest.UpdateWithConflicts(s, topology, func(current *hardware.NUMATopology) error {
+		current.TypedSpec().OnlineCPUs = []uint32{0, 2, 4, 5, 6}
+
+		return nil
+	})
+
+	replacement := placedDomainXML("vm", "1", "1")
+
+	ctest.UpdateWithConflicts(s, hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "vm"),
+		func(spec *hypervisor.VirtualMachineDomainSpec) error {
+			spec.TypedSpec().DomainXML = replacement
+
+			return nil
+		})
+
+	client := s.client
+
+	synctest.Wait()
+	client.mu.Lock()
+	domain, running := client.domains["vm"]
+	text, starts := client.texts["vm"], client.starts["vm"]
+	client.mu.Unlock()
+	s.Require().True(running)
+	s.Require().Equal(libvirtdomain.UUID(uuid.MustParse(machineUUID), "vm"), domain.UUID)
+	s.Require().Equal(original, text)
+	s.Require().Equal(1, starts)
+
+	ctest.UpdateWithConflicts(s, topology, func(current *hardware.NUMATopology) error {
+		current.TypedSpec().OnlineCPUs = []uint32{0, 1, 2, 4, 5, 6}
+
+		return nil
+	})
+	s.assertDomain("vm", replacement, true)
 }

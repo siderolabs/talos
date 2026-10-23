@@ -92,6 +92,11 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineDomainSpecType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -168,6 +173,13 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 
 	machineUUID, machineErr := getMachineUUID(ctx, runtime)
 
+	// The stop mode reported is the one the domain spec carries, not the one recorded: a stop the
+	// controller demands of a definition it cannot render is forced, whatever was asked for.
+	definitions, err := listVirtualMachineDomainSpecs(ctx, runtime)
+	if err != nil {
+		return err
+	}
+
 	var errs error
 
 	for spec := range specs.All() {
@@ -177,7 +189,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		domainXML, _, _, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
+		domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
 
 		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
@@ -186,7 +198,25 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 			renderErr = validateDomainPlacement(name, domainXML, topology)
 		}
 
-		status := composeVirtualMachineStatus(spec.TypedSpec().PowerState, name, machineUUID, machineErr, renderErr, byName[name])
+		definition := definitions[name]
+		stopMode := ""
+		released := false
+
+		if definition != nil {
+			stopMode = definition.TypedSpec().StopMode
+			released = definition.TypedSpec().PowerState == hypervisorhelpers.PowerStateStopped.String() &&
+				!definition.Metadata().Finalizers().Has((&VirtualMachineController{}).Name())
+		}
+
+		status := composeVirtualMachineStatus(spec.TypedSpec(), stopMode, name, released, machineUUID, machineErr, renderErr, byName[name])
+		status.ObservedGeneration = hypervisor.VirtualMachineSpecGeneration(spec)
+
+		if status.Stage == hypervisorhelpers.VirtualMachineStageReady && spec.TypedSpec().PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
+			(definition == nil || definition.TypedSpec().ObservedGeneration != hypervisor.VirtualMachineSpecGeneration(spec) ||
+				!matchesVMStartIntent(definition.TypedSpec(), domainXML, attachedDisks, seedID, spec.TypedSpec().PowerState)) {
+			status.Stage = hypervisorhelpers.VirtualMachineStagePending
+			status.Error = "domain definition has not caught up"
+		}
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, name),
@@ -203,6 +233,21 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 	return errors.Join(errs, safe.CleanupOutputs[*hypervisor.VirtualMachineStatus](ctx, runtime))
 }
 
+func listVirtualMachineDomainSpecs(ctx context.Context, reader controller.Reader) (map[string]*hypervisor.VirtualMachineDomainSpec, error) {
+	domainSpecs, err := safe.ReaderListAll[*hypervisor.VirtualMachineDomainSpec](ctx, reader)
+	if err != nil {
+		return nil, fmt.Errorf("list virtual machine domain specs: %w", err)
+	}
+
+	definitions := make(map[string]*hypervisor.VirtualMachineDomainSpec, domainSpecs.Len())
+
+	for domainSpec := range domainSpecs.All() {
+		definitions[domainSpec.Metadata().ID()] = domainSpec
+	}
+
+	return definitions, nil
+}
+
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
 func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
@@ -213,9 +258,13 @@ func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
 	return hypervisorhelpers.VirtualMachineStageError
 }
 
-func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, machineErr, renderErr error,
-	domain *hypervisor.VirtualMachineDomainStatus,
+// released reports that the domain spec is stopped and VirtualMachineController holds no claim on
+// it: that controller lets go only once its own libvirt lookup finds the domain gone, so an absent
+// observation is then a finished stop rather than a scan which is failing.
+func composeVirtualMachineStatus(spec *hypervisor.VirtualMachineSpecSpec, stopMode, name string, released bool, machineUUID uuid.UUID,
+	machineErr, renderErr error, domain *hypervisor.VirtualMachineDomainStatus,
 ) hypervisor.VirtualMachineStatusSpec {
+	desired := spec.PowerState
 	status := hypervisor.VirtualMachineStatusSpec{PowerState: hypervisorhelpers.VirtualMachinePowerStateUnknown}
 
 	if desired != hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
@@ -232,17 +281,7 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 
 		return status
 	case domain == nil:
-		if renderErr != nil {
-			// The domain was never defined, or it has been withdrawn, and this is why.
-			status.Stage = renderStage(renderErr)
-			status.Error = renderErr.Error()
-
-			return status
-		}
-
-		status.Error = "domain has not been observed"
-
-		return status
+		return composeUnobservedVirtualMachineStatus(desired, released, renderErr)
 	}
 
 	if domain.TypedSpec().UUID != libvirtdomain.UUID(machineUUID, name).String() {
@@ -272,7 +311,30 @@ func composeVirtualMachineStatus(desired, name string, machineUUID uuid.UUID, ma
 		return status
 	}
 
-	return reconcileVirtualMachinePower(desired, status)
+	return reconcileVirtualMachinePower(spec.PowerState, stopMode, status)
+}
+
+func composeUnobservedVirtualMachineStatus(desired string, released bool, renderErr error) hypervisor.VirtualMachineStatusSpec {
+	status := hypervisor.VirtualMachineStatusSpec{PowerState: hypervisorhelpers.VirtualMachinePowerStateUnknown}
+
+	if renderErr != nil {
+		// The domain was never defined, or it has been withdrawn, and this is why.
+		status.Stage = renderStage(renderErr)
+		status.Error = renderErr.Error()
+
+		return status
+	}
+
+	if desired == hypervisorhelpers.VirtualMachinePowerStateStopped.String() && released {
+		status.PowerState = hypervisorhelpers.VirtualMachinePowerStateStopped
+		status.Stage = hypervisorhelpers.VirtualMachineStageReady
+
+		return status
+	}
+
+	status.Error = "domain has not been observed"
+
+	return status
 }
 
 func flattenGuestAddresses(ifaces []hypervisor.VirtualMachineGuestInterfaceSpec) []string {
@@ -281,11 +343,15 @@ func flattenGuestAddresses(ifaces []hypervisor.VirtualMachineGuestInterfaceSpec)
 	})
 }
 
-func reconcileVirtualMachinePower(desired string,
-	status hypervisor.VirtualMachineStatusSpec,
-) hypervisor.VirtualMachineStatusSpec {
+func reconcileVirtualMachinePower(desired, stopMode string, status hypervisor.VirtualMachineStatusSpec) hypervisor.VirtualMachineStatusSpec {
 	switch {
 	case desired == hypervisorhelpers.VirtualMachinePowerStateStopped.String():
+		if stopMode == hypervisorhelpers.StopModeGraceful.String() {
+			status.Error = hypervisor.GracefulStopPendingError
+
+			break
+		}
+
 		status.Error = "domain is still defined"
 	default:
 		if status.PowerState.String() == desired {
