@@ -15,6 +15,20 @@ preface = """
 """
 
 [notes]
+    [notes.kernel_modules_on_demand]
+        title = "On-demand Kernel Module Loading"
+        description = """\
+The kernel can once again ask Talos to load a module on demand (`request_module()`), e.g. when a driver loads a helper module while probing a device,
+or when DRBD loads its transport module.
+Talos handles the kernel's `modprobe` usermode helper call and loads the module (shipped with Talos or a system extension) by the requested name,
+applying the parameters from `KernelModuleConfig` if the module is listed in the machine config.
+Such modules no longer need to be listed in the machine config, and the order of the listed modules is not important.
+
+Requests via subsystem aliases (e.g. `fs-*`, `net-pf-*`, `crypto-*`), which userspace can trigger via mounts, sockets, etc., are refused,
+so on-demand loading can't be used to load arbitrary modules from workloads.
+The outcome of each request is logged to the kernel log (`talosctl dmesg`).
+"""
+
     [notes.updates]
         title = "Component Updates"
         description = """\

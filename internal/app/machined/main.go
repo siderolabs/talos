@@ -36,6 +36,7 @@ import (
 	startuptasks "github.com/siderolabs/talos/internal/app/machined/pkg/startup"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/internal/app/modprobe"
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
 	"github.com/siderolabs/talos/internal/pkg/containermode"
@@ -325,6 +326,7 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) (returnEr
 	return <-errCh
 }
 
+//nolint:gocyclo
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -361,6 +363,19 @@ func main() {
 		return
 	case "dashboard":
 		dashboard.Main()
+
+		return
+	case "modprobe":
+		// The kernel invokes `/sbin/modprobe` via the static usermode helper (machined) to load a module
+		// on demand (request_module()), e.g. when a driver loads a helper module while probing a device.
+		//
+		// The invocation itself is not logged, as userspace triggers requests for subsystem aliases
+		// (e.g. a socket of an unsupported family) which are refused silently, like `modprobe -q` does.
+		if !containermode.InContainer() {
+			kmsg.SetupLogger(nil, "modprobe", nil) //nolint:errcheck // best effort logging to kmsg
+		}
+
+		modprobe.Main(os.Args)
 
 		return
 	case "init", "machined":

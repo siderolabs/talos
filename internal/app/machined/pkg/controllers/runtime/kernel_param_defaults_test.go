@@ -80,6 +80,10 @@ func getParams(mode runtime.Mode) []*kernel.Param {
 				Key:   "proc.sys.kernel.ctrl-alt-del",
 				Value: "0",
 			},
+			{
+				Key:   "proc.sys.kernel.modprobe",
+				Value: "/sbin/modprobe",
+			},
 		}...)
 	}
 

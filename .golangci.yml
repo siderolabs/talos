@@ -95,6 +95,7 @@ linters:
                 - "internal/app/init/**/*.go"
                 - "internal/app/machined/pkg/runtime/v1alpha1/**/*.go"
                 - "internal/app/machined/revert.go"
+                - "internal/app/modprobe/**/*.go"
                 - "internal/app/poweroff/**/*.go"
 
                 # CLI / installer

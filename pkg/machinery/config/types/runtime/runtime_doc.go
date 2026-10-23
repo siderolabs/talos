@@ -444,7 +444,7 @@ func (KernelModuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KernelModuleConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelModuleConfig is a config document to configure a Linux kernel module to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KernelModuleConfig is a config document to configure a Linux kernel module to load.",
+		Description: "KernelModuleConfig is a config document to configure a Linux kernel module to load.\nListed modules are loaded at boot with the given parameters.\n\nModules requested by the kernel on demand (e.g. a driver loading a helper module while probing a device)\nare loaded automatically, whether listed or not, so there is no need to list such modules or to order them;\nthe parameters are applied if the module is listed.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

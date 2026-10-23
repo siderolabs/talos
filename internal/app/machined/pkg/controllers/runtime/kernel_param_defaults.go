@@ -121,6 +121,12 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 				// Make Ctrl-Alt-Del trigger a SIGINT to init process
 				Value: "0",
 			},
+			{
+				Key: "proc.sys.kernel.modprobe",
+				// Route kernel on-demand module requests (request_module()) to the static usermode helper (machined),
+				// the kernel doesn't invoke the helper at all if the path is empty (CONFIG_MODPROBE_PATH="").
+				Value: constants.ModprobePath,
+			},
 		}...)
 	}
 
