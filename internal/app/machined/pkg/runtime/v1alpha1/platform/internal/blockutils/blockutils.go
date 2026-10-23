@@ -92,16 +92,33 @@ func VolumeMatch(labels []string) (*cel.Expression, error) {
 	return boolExpr, nil
 }
 
+// Requester names for ReadFromVolume, one per code path reading platform volumes.
+//
+// Machine configuration and network configuration acquisition run concurrently,
+// so each of them must use its own volume configuration.
+const (
+	RequesterConfig  = "config"
+	RequesterNetwork = "network"
+)
+
 // ReadFromVolume tries to find a volume with the given label, mounts it
 // as read-only, calls the provided function with xfs.Root and unmounts it.
 //
+// The requester name is part of the volume configuration ID, so concurrent invocations
+// must use distinct requester names: otherwise they would share a volume configuration
+// and race on its lifecycle. A conflict on creating the volume configuration is an error.
+//
 // If the volume wasn't found, fs.ErrNotExist is returned.
-func ReadFromVolume(ctx context.Context, r state.State, labels []string, cb func(xfs.Root, *block.VolumeStatus) error) error {
+func ReadFromVolume(ctx context.Context, r state.State, requester string, labels []string, cb func(xfs.Root, *block.VolumeStatus) error) error {
 	if len(labels) == 0 {
 		panic("at least one label must be provided")
 	}
 
-	volumeID := "platform/" + labels[0] + "/config"
+	if requester == "" {
+		panic("requester name must be provided")
+	}
+
+	volumeID := "platform/" + labels[0] + "/" + requester
 
 	matchExr, err := VolumeMatch(labels)
 	if err != nil {
@@ -116,10 +133,13 @@ func ReadFromVolume(ctx context.Context, r state.State, labels []string, cb func
 		Match: *matchExr,
 	}
 
-	if err := r.Create(ctx, vc); err != nil && !state.IsConflictError(err) {
-		return fmt.Errorf("error creating user disk volume configuration: %w", err)
+	// the volume configuration is owned by this invocation: a conflict means another
+	// invocation (or a previous one which is still being torn down) uses the same ID
+	if err := r.Create(ctx, vc); err != nil {
+		return fmt.Errorf("error creating platform volume configuration %s: %w", volumeID, err)
 	}
 
+	// tear down and destroy the volume configuration created above, even if the context is canceled
 	defer func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

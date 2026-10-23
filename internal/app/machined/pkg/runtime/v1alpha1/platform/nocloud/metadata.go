@@ -181,9 +181,9 @@ func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string, r s
 }
 
 //nolint:gocyclo
-func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
+func (n *Nocloud) configFromCD(ctx context.Context, r state.State, requester string) (metaConfig []byte, networkConfig []byte, machineConfig []byte, err error) {
 	err = blockutils.ReadFromVolume(
-		ctx, r,
+		ctx, r, requester,
 		[]string{strings.ToLower(configISOLabel), strings.ToUpper(configISOLabel)},
 		func(root xfs.Root, volumeStatus *block.VolumeStatus) error {
 			log.Printf("found config disk (cidata) at %s", volumeStatus.TypedSpec().Location)
@@ -234,7 +234,7 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 }
 
 //nolint:gocyclo
-func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
+func (n *Nocloud) acquireConfig(ctx context.Context, r state.State, requester string) (metadataNetworkConfigDl, machineConfigDl []byte, metadata *MetadataConfig, err error) {
 	s, err := smbios.GetSMBIOSInfo()
 	if err != nil {
 		return nil, nil, nil, err
@@ -278,7 +278,7 @@ func (n *Nocloud) acquireConfig(ctx context.Context, r state.State) (metadataNet
 	if networkSource && metaBaseURL != "" {
 		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromNetwork(ctx, metaBaseURL, r)
 	} else {
-		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromCD(ctx, r)
+		metadataConfigDl, metadataNetworkConfigDl, machineConfigDl, err = n.configFromCD(ctx, r, requester)
 	}
 
 	metadata = &MetadataConfig{}
