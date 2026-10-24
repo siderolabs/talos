@@ -15,6 +15,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 
 	common "github.com/siderolabs/talos/pkg/machinery/api/common"
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (
@@ -969,9 +970,16 @@ func (x *PCIDriverRebindConfigSpec) GetTargetDriver() string {
 
 // PCIDriverRebindStatusSpec describes status of rebinded drivers.
 type PCIDriverRebindStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Pciid         string                 `protobuf:"bytes,1,opt,name=pciid,proto3" json:"pciid,omitempty"`
-	TargetDriver  string                 `protobuf:"bytes,2,opt,name=target_driver,json=targetDriver,proto3" json:"target_driver,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Pciid        string                 `protobuf:"bytes,1,opt,name=pciid,proto3" json:"pciid,omitempty"`
+	TargetDriver string                 `protobuf:"bytes,2,opt,name=target_driver,json=targetDriver,proto3" json:"target_driver,omitempty"`
+	// Driver is the driver the device was last observed bound to, empty when it has none.
+	Driver string `protobuf:"bytes,3,opt,name=driver,proto3" json:"driver,omitempty"`
+	// Phase is where the device stands in its rebind, including whether the controller took it from
+	// its driver.
+	Phase enums.HardwarePCIDriverRebindPhase `protobuf:"varint,4,opt,name=phase,proto3,enum=talos.resource.definitions.enums.HardwarePCIDriverRebindPhase" json:"phase,omitempty"`
+	// Reason explains why the device is not bound to its target driver, or not handed back yet.
+	Reason        string `protobuf:"bytes,5,opt,name=reason,proto3" json:"reason,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1016,6 +1024,27 @@ func (x *PCIDriverRebindStatusSpec) GetPciid() string {
 func (x *PCIDriverRebindStatusSpec) GetTargetDriver() string {
 	if x != nil {
 		return x.TargetDriver
+	}
+	return ""
+}
+
+func (x *PCIDriverRebindStatusSpec) GetDriver() string {
+	if x != nil {
+		return x.Driver
+	}
+	return ""
+}
+
+func (x *PCIDriverRebindStatusSpec) GetPhase() enums.HardwarePCIDriverRebindPhase {
+	if x != nil {
+		return x.Phase
+	}
+	return enums.HardwarePCIDriverRebindPhase(0)
+}
+
+func (x *PCIDriverRebindStatusSpec) GetReason() string {
+	if x != nil {
+		return x.Reason
 	}
 	return ""
 }
@@ -1260,7 +1289,7 @@ var File_resource_definitions_hardware_hardware_proto protoreflect.FileDescripto
 
 const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\n" +
-	",resource/definitions/hardware/hardware.proto\x12#talos.resource.definitions.hardware\x1a\x13common/common.proto\"\xe0\x02\n" +
+	",resource/definitions/hardware/hardware.proto\x12#talos.resource.definitions.hardware\x1a\x13common/common.proto\x1a&resource/definitions/enums/enums.proto\"\xe0\x02\n" +
 	"\rBMCDeviceSpec\x12'\n" +
 	"\x0fmanufacturer_id\x18\x01 \x01(\rR\x0emanufacturerId\x12\"\n" +
 	"\fmanufacturer\x18\x02 \x01(\tR\fmanufacturer\x12\x1d\n" +
@@ -1348,10 +1377,13 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\x06driver\x18\t \x01(\tR\x06driver\"V\n" +
 	"\x19PCIDriverRebindConfigSpec\x12\x14\n" +
 	"\x05pciid\x18\x01 \x01(\tR\x05pciid\x12#\n" +
-	"\rtarget_driver\x18\x02 \x01(\tR\ftargetDriver\"V\n" +
+	"\rtarget_driver\x18\x02 \x01(\tR\ftargetDriver\"\xdc\x01\n" +
 	"\x19PCIDriverRebindStatusSpec\x12\x14\n" +
 	"\x05pciid\x18\x01 \x01(\tR\x05pciid\x12#\n" +
-	"\rtarget_driver\x18\x02 \x01(\tR\ftargetDriver\"\x8a\x03\n" +
+	"\rtarget_driver\x18\x02 \x01(\tR\ftargetDriver\x12\x16\n" +
+	"\x06driver\x18\x03 \x01(\tR\x06driver\x12T\n" +
+	"\x05phase\x18\x04 \x01(\x0e2>.talos.resource.definitions.enums.HardwarePCIDriverRebindPhaseR\x05phase\x12\x16\n" +
+	"\x06reason\x18\x05 \x01(\tR\x06reason\"\x8a\x03\n" +
 	"\rProcessorSpec\x12\x16\n" +
 	"\x06socket\x18\x01 \x01(\tR\x06socket\x12\"\n" +
 	"\fmanufacturer\x18\x02 \x01(\tR\fmanufacturer\x12!\n" +
@@ -1396,30 +1428,32 @@ func file_resource_definitions_hardware_hardware_proto_rawDescGZIP() []byte {
 
 var file_resource_definitions_hardware_hardware_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_resource_definitions_hardware_hardware_proto_goTypes = []any{
-	(*BMCDeviceSpec)(nil),             // 0: talos.resource.definitions.hardware.BMCDeviceSpec
-	(*CPUCoreSpec)(nil),               // 1: talos.resource.definitions.hardware.CPUCoreSpec
-	(*CPUScalingSpecSpec)(nil),        // 2: talos.resource.definitions.hardware.CPUScalingSpecSpec
-	(*CPUScalingStatusSpec)(nil),      // 3: talos.resource.definitions.hardware.CPUScalingStatusSpec
-	(*MemoryModuleSpec)(nil),          // 4: talos.resource.definitions.hardware.MemoryModuleSpec
-	(*NUMANodeSpec)(nil),              // 5: talos.resource.definitions.hardware.NUMANodeSpec
-	(*NUMATopologySpec)(nil),          // 6: talos.resource.definitions.hardware.NUMATopologySpec
-	(*PCIDeviceSpec)(nil),             // 7: talos.resource.definitions.hardware.PCIDeviceSpec
-	(*PCIDriverRebindConfigSpec)(nil), // 8: talos.resource.definitions.hardware.PCIDriverRebindConfigSpec
-	(*PCIDriverRebindStatusSpec)(nil), // 9: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec
-	(*ProcessorSpec)(nil),             // 10: talos.resource.definitions.hardware.ProcessorSpec
-	(*SystemInformationSpec)(nil),     // 11: talos.resource.definitions.hardware.SystemInformationSpec
-	(*common.NetIPPrefix)(nil),        // 12: common.NetIPPrefix
-	(*common.NetIP)(nil),              // 13: common.NetIP
+	(*BMCDeviceSpec)(nil),                   // 0: talos.resource.definitions.hardware.BMCDeviceSpec
+	(*CPUCoreSpec)(nil),                     // 1: talos.resource.definitions.hardware.CPUCoreSpec
+	(*CPUScalingSpecSpec)(nil),              // 2: talos.resource.definitions.hardware.CPUScalingSpecSpec
+	(*CPUScalingStatusSpec)(nil),            // 3: talos.resource.definitions.hardware.CPUScalingStatusSpec
+	(*MemoryModuleSpec)(nil),                // 4: talos.resource.definitions.hardware.MemoryModuleSpec
+	(*NUMANodeSpec)(nil),                    // 5: talos.resource.definitions.hardware.NUMANodeSpec
+	(*NUMATopologySpec)(nil),                // 6: talos.resource.definitions.hardware.NUMATopologySpec
+	(*PCIDeviceSpec)(nil),                   // 7: talos.resource.definitions.hardware.PCIDeviceSpec
+	(*PCIDriverRebindConfigSpec)(nil),       // 8: talos.resource.definitions.hardware.PCIDriverRebindConfigSpec
+	(*PCIDriverRebindStatusSpec)(nil),       // 9: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec
+	(*ProcessorSpec)(nil),                   // 10: talos.resource.definitions.hardware.ProcessorSpec
+	(*SystemInformationSpec)(nil),           // 11: talos.resource.definitions.hardware.SystemInformationSpec
+	(*common.NetIPPrefix)(nil),              // 12: common.NetIPPrefix
+	(*common.NetIP)(nil),                    // 13: common.NetIP
+	(enums.HardwarePCIDriverRebindPhase)(0), // 14: talos.resource.definitions.enums.HardwarePCIDriverRebindPhase
 }
 var file_resource_definitions_hardware_hardware_proto_depIdxs = []int32{
 	12, // 0: talos.resource.definitions.hardware.BMCDeviceSpec.address:type_name -> common.NetIPPrefix
 	13, // 1: talos.resource.definitions.hardware.BMCDeviceSpec.gateway:type_name -> common.NetIP
 	5,  // 2: talos.resource.definitions.hardware.NUMATopologySpec.nodes:type_name -> talos.resource.definitions.hardware.NUMANodeSpec
-	3,  // [3:3] is the sub-list for method output_type
-	3,  // [3:3] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	14, // 3: talos.resource.definitions.hardware.PCIDriverRebindStatusSpec.phase:type_name -> talos.resource.definitions.enums.HardwarePCIDriverRebindPhase
+	4,  // [4:4] is the sub-list for method output_type
+	4,  // [4:4] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_hardware_hardware_proto_init() }

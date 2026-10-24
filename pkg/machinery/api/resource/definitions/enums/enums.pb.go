@@ -5488,6 +5488,68 @@ func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{80}
 }
 
+// HardwarePCIDriverRebindPhase describes where a device stands in its rebind to a target driver.
+type HardwarePCIDriverRebindPhase int32
+
+const (
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_PENDING   HardwarePCIDriverRebindPhase = 0
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_HELD      HardwarePCIDriverRebindPhase = 1
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_ADOPTED   HardwarePCIDriverRebindPhase = 2
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_BOUND     HardwarePCIDriverRebindPhase = 3
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_UNBOUND   HardwarePCIDriverRebindPhase = 4
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_RELEASING HardwarePCIDriverRebindPhase = 5
+	HardwarePCIDriverRebindPhase_PCI_DRIVER_REBIND_PHASE_FAILED    HardwarePCIDriverRebindPhase = 6
+)
+
+// Enum value maps for HardwarePCIDriverRebindPhase.
+var (
+	HardwarePCIDriverRebindPhase_name = map[int32]string{
+		0: "PCI_DRIVER_REBIND_PHASE_PENDING",
+		1: "PCI_DRIVER_REBIND_PHASE_HELD",
+		2: "PCI_DRIVER_REBIND_PHASE_ADOPTED",
+		3: "PCI_DRIVER_REBIND_PHASE_BOUND",
+		4: "PCI_DRIVER_REBIND_PHASE_UNBOUND",
+		5: "PCI_DRIVER_REBIND_PHASE_RELEASING",
+		6: "PCI_DRIVER_REBIND_PHASE_FAILED",
+	}
+	HardwarePCIDriverRebindPhase_value = map[string]int32{
+		"PCI_DRIVER_REBIND_PHASE_PENDING":   0,
+		"PCI_DRIVER_REBIND_PHASE_HELD":      1,
+		"PCI_DRIVER_REBIND_PHASE_ADOPTED":   2,
+		"PCI_DRIVER_REBIND_PHASE_BOUND":     3,
+		"PCI_DRIVER_REBIND_PHASE_UNBOUND":   4,
+		"PCI_DRIVER_REBIND_PHASE_RELEASING": 5,
+		"PCI_DRIVER_REBIND_PHASE_FAILED":    6,
+	}
+)
+
+func (x HardwarePCIDriverRebindPhase) Enum() *HardwarePCIDriverRebindPhase {
+	p := new(HardwarePCIDriverRebindPhase)
+	*p = x
+	return p
+}
+
+func (x HardwarePCIDriverRebindPhase) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (HardwarePCIDriverRebindPhase) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[81].Descriptor()
+}
+
+func (HardwarePCIDriverRebindPhase) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[81]
+}
+
+func (x HardwarePCIDriverRebindPhase) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use HardwarePCIDriverRebindPhase.Descriptor instead.
+func (HardwarePCIDriverRebindPhase) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{81}
+}
+
 // HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COSI metadata lifecycle.
 type HypervisorVirtualMachineDiskPhase int32
 
@@ -5525,11 +5587,11 @@ func (x HypervisorVirtualMachineDiskPhase) String() string {
 }
 
 func (HypervisorVirtualMachineDiskPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[81].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[82].Descriptor()
 }
 
 func (HypervisorVirtualMachineDiskPhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[81]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[82]
 }
 
 func (x HypervisorVirtualMachineDiskPhase) Number() protoreflect.EnumNumber {
@@ -5538,7 +5600,7 @@ func (x HypervisorVirtualMachineDiskPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HypervisorVirtualMachineDiskPhase.Descriptor instead.
 func (HypervisorVirtualMachineDiskPhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{81}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{82}
 }
 
 // HypervisorContentLibraryPhase describes observed library availability, not COSI metadata lifecycle.
@@ -5575,11 +5637,11 @@ func (x HypervisorContentLibraryPhase) String() string {
 }
 
 func (HypervisorContentLibraryPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[82].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[83].Descriptor()
 }
 
 func (HypervisorContentLibraryPhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[82]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[83]
 }
 
 func (x HypervisorContentLibraryPhase) Number() protoreflect.EnumNumber {
@@ -5588,7 +5650,7 @@ func (x HypervisorContentLibraryPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HypervisorContentLibraryPhase.Descriptor instead.
 func (HypervisorContentLibraryPhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{82}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{83}
 }
 
 // HypervisorCloudInitPhase describes observed seed availability, not COSI metadata lifecycle.
@@ -5625,11 +5687,11 @@ func (x HypervisorCloudInitPhase) String() string {
 }
 
 func (HypervisorCloudInitPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[83].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[84].Descriptor()
 }
 
 func (HypervisorCloudInitPhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[83]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[84]
 }
 
 func (x HypervisorCloudInitPhase) Number() protoreflect.EnumNumber {
@@ -5638,7 +5700,7 @@ func (x HypervisorCloudInitPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use HypervisorCloudInitPhase.Descriptor instead.
 func (HypervisorCloudInitPhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{83}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{84}
 }
 
 // KubespanPeerState is KubeSpan peer current state.
@@ -5675,11 +5737,11 @@ func (x KubespanPeerState) String() string {
 }
 
 func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[84].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[85].Descriptor()
 }
 
 func (KubespanPeerState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[84]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[85]
 }
 
 func (x KubespanPeerState) Number() protoreflect.EnumNumber {
@@ -5688,7 +5750,7 @@ func (x KubespanPeerState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KubespanPeerState.Descriptor instead.
 func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{84}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{85}
 }
 
 var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
@@ -6523,7 +6585,15 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_UNKNOWN\x10\x00\x12#\n" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_SKIPPED\x10\x01\x12#\n" +
 	"\x1fIMAGE_CACHE_COPY_STATUS_PENDING\x10\x02\x12!\n" +
-	"\x1dIMAGE_CACHE_COPY_STATUS_READY\x10\x03*\xd3\x01\n" +
+	"\x1dIMAGE_CACHE_COPY_STATUS_READY\x10\x03*\x9d\x02\n" +
+	"\x1cHardwarePCIDriverRebindPhase\x12#\n" +
+	"\x1fPCI_DRIVER_REBIND_PHASE_PENDING\x10\x00\x12 \n" +
+	"\x1cPCI_DRIVER_REBIND_PHASE_HELD\x10\x01\x12#\n" +
+	"\x1fPCI_DRIVER_REBIND_PHASE_ADOPTED\x10\x02\x12!\n" +
+	"\x1dPCI_DRIVER_REBIND_PHASE_BOUND\x10\x03\x12#\n" +
+	"\x1fPCI_DRIVER_REBIND_PHASE_UNBOUND\x10\x04\x12%\n" +
+	"!PCI_DRIVER_REBIND_PHASE_RELEASING\x10\x05\x12\"\n" +
+	"\x1ePCI_DRIVER_REBIND_PHASE_FAILED\x10\x06*\xd3\x01\n" +
 	"!HypervisorVirtualMachineDiskPhase\x12&\n" +
 	"\"VIRTUAL_MACHINE_DISK_PHASE_UNKNOWN\x10\x00\x12(\n" +
 	"$VIRTUAL_MACHINE_DISK_PHASE_NOT_READY\x10\x01\x12$\n" +
@@ -6555,7 +6625,7 @@ func file_resource_definitions_enums_enums_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_enums_enums_proto_rawDescData
 }
 
-var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 85)
+var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 86)
 var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(RuntimeCPUPartitionPhase)(0),                               // 0: talos.resource.definitions.enums.RuntimeCPUPartitionPhase
 	(RuntimeKernelModuleState)(0),                               // 1: talos.resource.definitions.enums.RuntimeKernelModuleState
@@ -6638,10 +6708,11 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(ContainersContainerInstancePhase)(0),                       // 78: talos.resource.definitions.enums.ContainersContainerInstancePhase
 	(CriImageCacheStatus)(0),                                    // 79: talos.resource.definitions.enums.CriImageCacheStatus
 	(CriImageCacheCopyStatus)(0),                                // 80: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(HypervisorVirtualMachineDiskPhase)(0),                      // 81: talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase
-	(HypervisorContentLibraryPhase)(0),                          // 82: talos.resource.definitions.enums.HypervisorContentLibraryPhase
-	(HypervisorCloudInitPhase)(0),                               // 83: talos.resource.definitions.enums.HypervisorCloudInitPhase
-	(KubespanPeerState)(0),                                      // 84: talos.resource.definitions.enums.KubespanPeerState
+	(HardwarePCIDriverRebindPhase)(0),                           // 81: talos.resource.definitions.enums.HardwarePCIDriverRebindPhase
+	(HypervisorVirtualMachineDiskPhase)(0),                      // 82: talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase
+	(HypervisorContentLibraryPhase)(0),                          // 83: talos.resource.definitions.enums.HypervisorContentLibraryPhase
+	(HypervisorCloudInitPhase)(0),                               // 84: talos.resource.definitions.enums.HypervisorCloudInitPhase
+	(KubespanPeerState)(0),                                      // 85: talos.resource.definitions.enums.KubespanPeerState
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -6661,7 +6732,7 @@ func file_resource_definitions_enums_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_enums_enums_proto_rawDesc), len(file_resource_definitions_enums_enums_proto_rawDesc)),
-			NumEnums:      85,
+			NumEnums:      86,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,
