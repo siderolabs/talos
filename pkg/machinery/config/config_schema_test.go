@@ -77,6 +77,47 @@ video:
 	require.Error(t, schema.Validate(doc))
 }
 
+func TestVirtualMachineHostDevicesSchema(t *testing.T) {
+	t.Parallel()
+
+	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schemaData))
+	require.NoError(t, err)
+
+	compiler := validatejsonschema.NewCompiler()
+	require.NoError(t, compiler.AddResource("test-id", schemaJSON))
+	schema, err := compiler.Compile("test-id#/$defs/hypervisor.VirtualMachineConfigV1Alpha1")
+	require.NoError(t, err)
+
+	var doc map[string]any
+	require.NoError(t, yaml.Unmarshal([]byte(`apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: passthrough
+powerState: running
+cpu:
+  count: 1
+memory:
+  size: 512MiB
+firmware:
+  type: uefi
+hostDevices:
+  pci:
+    - address: 0000:41:00.0
+      bootOrder: 1
+    - address: 0000:AF:1F.7
+`), &doc))
+	require.NoError(t, schema.Validate(doc))
+
+	doc["hostDevices"] = map[string]any{"pci": []any{map[string]any{"address": "41:00.0"}}}
+	require.Error(t, schema.Validate(doc))
+
+	// A PCI slot is 5 bits: 0x00 to 0x1f.
+	doc["hostDevices"] = map[string]any{"pci": []any{map[string]any{"address": "0000:41:20.0"}}}
+	require.Error(t, schema.Validate(doc))
+
+	doc["hostDevices"] = map[string]any{"pci": []any{map[string]any{"bootOrder": 1}}}
+	require.Error(t, schema.Validate(doc))
+}
+
 func TestSchemaValidation(t *testing.T) {
 	t.Parallel()
 

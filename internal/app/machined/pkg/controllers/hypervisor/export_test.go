@@ -11,6 +11,14 @@ var (
 	IsPlacementHeld         = isPlacementHeld
 	ErrPlacementPending     = errPlacementPending
 	ErrPlacementInvalid     = errPlacementInvalid
+
+	CheckDomainHostDevices           = checkDomainHostDevices
+	ErrHostDevicePending             = errHostDevicePending
+	ErrHostDeviceUnavailable         = errHostDeviceUnavailable
+	ErrVFIOBackendPending            = errVFIOBackendPending
+	ErrHostDeviceClaimed             = errHostDeviceClaimed
+	CheckPCIClaims                   = checkPCIClaims
+	ValidateVirtualMachinePCIDevices = validateVirtualMachinePCIDevices
 )
 
 // BlankVolumeNameForTest exposes the volume naming rule, which is the one thing keeping two virtual
@@ -22,4 +30,12 @@ func BlankVolumeNameForTest(virtualMachine string, disk hypervisor.VirtualMachin
 	}
 
 	return name
+}
+
+// PCIClaim is the PCI devices another virtual machine passes through.
+type PCIClaim = pciClaim
+
+// NewPCIClaimForTest builds the claim of another virtual machine on the given devices.
+func NewPCIClaimForTest(name string, running bool, addresses ...string) PCIClaim {
+	return pciClaim{name: name, running: running, addresses: addresses}
 }

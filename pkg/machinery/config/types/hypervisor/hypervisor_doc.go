@@ -161,6 +161,13 @@ func (VirtualMachineConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Video device presented to the guest on amd64 when a VNC console is enabled.\nOther architectures use libvirt's defaults; without VNC this block has no effect.\nOptional; omitting it uses `vga` with libvirt's default VRAM on amd64.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Video device presented to the guest on amd64 when a VNC console is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "hostDevices",
+				Type:        "VirtualMachineHostDevices",
+				Note:        "",
+				Description: "Host devices passed through to the guest.\n\nOptional; omitting it passes no host devices through.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host devices passed through to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -843,6 +850,65 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VirtualMachineHostDevices) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachineHostDevices",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineHostDevices describes the host devices passed through to a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineHostDevices describes the host devices passed through to a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineConfigV1Alpha1",
+				FieldName: "hostDevices",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "pci",
+				Type:        "[]VirtualMachinePCIDevice",
+				Note:        "",
+				Description: "Host PCI devices passed through to the guest.\n\nEach device must be bound to the `vfio-pci` driver on the host before the virtual\nmachine starts, e.g. with a `PCIDriverRebindConfig` document, and the `vfio_pci` and\n`vfio_iommu_type1` kernel modules must be loaded (`KernelModuleConfig`). Until then the\nvirtual machine is held back and its status reports what it is waiting for.\n\nEvery other device in the same IOMMU group must be bound to `vfio-pci`, `pci-stub` or\nno driver for the group to be usable; passing through only some functions of a\nmulti-function device usually still requires the others to be detached from their host\ndrivers. A device, or its IOMMU group, can be passed through to one virtual machine at a\ntime.\n\nEach device gets a guest PCI slot of its own: functions which must share a slot in the\nguest, such as a GPU and its audio function, are not supported yet.\n\nA passed-through device pins all of the guest memory on the host, so memory ballooning\nhas no effect on such a guest.\n\nA configuration patch replaces this list as a whole rather than appending to it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Host PCI devices passed through to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (VirtualMachinePCIDevice) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VirtualMachinePCIDevice",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachinePCIDevice describes a single host PCI device passed through to a virtual machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachinePCIDevice describes a single host PCI device passed through to a virtual machine.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VirtualMachineHostDevices",
+				FieldName: "pci",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "address",
+				Type:        "string",
+				Note:        "",
+				Description: "Address of the device on the host, in the full form `domain:bus:slot.function`.\n\nThis is the device name under `/sys/bus/pci/devices` and the ID reported by\n`talosctl get pcidevices`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Address of the device on the host, in the full form `domain:bus:slot.function`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "bootOrder",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Position of the device in the guest boot order, shared with the disks of the virtual\nmachine; e.g. to boot from a passed-through NVMe drive or a network card's option ROM.\n\nOptional; zero leaves the device out of the boot order.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Position of the device in the guest boot order, shared with the disks of the virtual" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "0000:41:00.0")
+
+	return doc
+}
+
 func (VirtualMachineCPUTopology) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineCPUTopology",
@@ -1130,6 +1196,8 @@ func GetFileDoc() *encoder.FileDoc {
 			VirtualMachineVNC{}.Doc(),
 			VirtualMachineNetworking{}.Doc(),
 			VirtualMachineInterface{}.Doc(),
+			VirtualMachineHostDevices{}.Doc(),
+			VirtualMachinePCIDevice{}.Doc(),
 			VirtualMachineCPUTopology{}.Doc(),
 			VirtualMachineCPUPinning{}.Doc(),
 			VirtualMachineVCPUPin{}.Doc(),

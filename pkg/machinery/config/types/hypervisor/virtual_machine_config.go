@@ -124,6 +124,11 @@ type VirtualMachineConfigV1Alpha1 struct {
 	//     Other architectures use libvirt's defaults; without VNC this block has no effect.
 	//     Optional; omitting it uses `vga` with libvirt's default VRAM on amd64.
 	VideoConfig VirtualMachineVideo `yaml:"video,omitempty"`
+	//   description: |
+	//     Host devices passed through to the guest.
+	//
+	//     Optional; omitting it passes no host devices through.
+	HostDevicesConfig VirtualMachineHostDevices `yaml:"hostDevices,omitempty"`
 }
 
 // VirtualMachineVideo describes the virtual graphics device.
@@ -454,6 +459,11 @@ func (c *VirtualMachineConfigV1Alpha1) Video() config.VirtualMachineVideoConfig 
 	return &c.VideoConfig
 }
 
+// HostDevices implements config.VirtualMachineConfig interface.
+func (c *VirtualMachineConfigV1Alpha1) HostDevices() config.VirtualMachineHostDevicesConfig {
+	return &c.HostDevicesConfig
+}
+
 // Model implements config.VirtualMachineVideoConfig interface.
 func (v *VirtualMachineVideo) Model() string { return v.ModelConfig }
 
@@ -490,6 +500,11 @@ func (c *VirtualMachineConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	validationErrors = errors.Join(validationErrors, c.ValidateVideo())
 	validationErrors = errors.Join(validationErrors, c.ValidateDisks())
 	validationErrors = errors.Join(validationErrors, c.ValidateNetworking())
+
+	hostDeviceWarnings, hostDeviceErrors := c.ValidateHostDevices()
+	validationErrors = errors.Join(validationErrors, hostDeviceErrors)
+
+	warnings = append(warnings, hostDeviceWarnings...)
 
 	guestWarnings, guestErrors := c.ValidateGuest()
 	validationErrors = errors.Join(validationErrors, guestErrors)
@@ -607,6 +622,44 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateNetworking() error {
 	}
 
 	return validationErrors
+}
+
+// ValidateHostDevices checks the host devices passed through to the virtual machine.
+//
+// Whether a device exists, and is bound to vfio-pci, is only known on the host once the virtual
+// machine starts.
+func (c *VirtualMachineConfigV1Alpha1) ValidateHostDevices() ([]string, error) {
+	// Host devices share the guest boot order with the disks; collisions among the disks
+	// themselves are reported by ValidateDisks.
+	bootOrders := map[uint32]struct{}{}
+
+	for i := range c.DisksConfig {
+		if order := c.DisksConfig[i].DiskBootOrder; order != 0 {
+			bootOrders[order] = struct{}{}
+		}
+	}
+
+	validationErrors := c.HostDevicesConfig.validate(bootOrders)
+
+	if len(c.HostDevicesConfig.PCIConfig) == 0 {
+		return nil, validationErrors
+	}
+
+	var warnings []string
+
+	// The builtin legacy profile is the only one known here to use the i440FX chipset, which puts
+	// passed-through devices on a conventional PCI bus.
+	if profile, ok := c.Profile().Get(); ok && profile == "legacy" {
+		warnings = append(warnings,
+			"hostDevices.pci: profile legacy uses the i440FX chipset; a q35 profile, such as the default host, is recommended for passing through PCI Express devices")
+	}
+
+	if c.MemoryConfig.Ballooning().Enabled() {
+		warnings = append(warnings,
+			"memory.ballooning.enabled: a passed-through PCI device pins all guest memory, so ballooning has no effect")
+	}
+
+	return warnings, validationErrors
 }
 
 // ValidateVideo checks the graphics device settings.
