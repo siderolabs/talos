@@ -588,10 +588,12 @@ description: Talos gRPC API reference.
     - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
     - [KubeletCPUReservationSpec](#talos.resource.definitions.k8s.KubeletCPUReservationSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
+    - [KubeletConfigSpec.CredentialProviderFilesEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntry)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
     - [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry)
     - [KubeletKubeconfigSpec](#talos.resource.definitions.k8s.KubeletKubeconfigSpec)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
+    - [KubeletSpecSpec.CredentialProviderFilesEntry](#talos.resource.definitions.k8s.KubeletSpecSpec.CredentialProviderFilesEntry)
     - [KubeletStatusSpec](#talos.resource.definitions.k8s.KubeletStatusSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
@@ -10311,6 +10313,23 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
 | register_with_taints | [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry) | repeated |  |
 | kubepods_memory_limit | [uint64](#uint64) |  | KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset. |
+| credential_provider_files | [KubeletConfigSpec.CredentialProviderFilesEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntry"></a>
+
+### KubeletConfigSpec.CredentialProviderFilesEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
@@ -10378,6 +10397,23 @@ KubeletSpecSpec holds the source of kubelet configuration.
 | expected_nodename | [string](#string) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| credential_provider_files | [KubeletSpecSpec.CredentialProviderFilesEntry](#talos.resource.definitions.k8s.KubeletSpecSpec.CredentialProviderFilesEntry) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletSpecSpec.CredentialProviderFilesEntry"></a>
+
+### KubeletSpecSpec.CredentialProviderFilesEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

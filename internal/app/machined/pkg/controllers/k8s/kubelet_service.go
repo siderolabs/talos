@@ -212,6 +212,10 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error writing kubelet credential provider configuration: %w", err)
 		}
 
+		if err = writeKubeletCredentialProviderFiles(constants.KubeletCredentialProviderConfigFilesDir, cfgSpec.CredentialProviderFiles); err != nil {
+			return fmt.Errorf("error writing kubelet credential provider files: %w", err)
+		}
+
 		_, running, err := ctrl.V1Alpha1Services.IsRunning("kubelet")
 		if err != nil {
 			ctrl.V1Alpha1Services.Load(&services.Kubelet{})
@@ -355,6 +359,41 @@ func (ctrl *KubeletServiceController) writeKubeletCredentialProviderConfig(cfgSp
 	}
 
 	return os.WriteFile(constants.KubeletCredentialProviderConfig, buf.Bytes(), 0o600)
+}
+
+// writeKubeletCredentialProviderFiles writes the credential provider config files into dir
+// and removes any files in dir which are not part of files.
+func writeKubeletCredentialProviderFiles(dir string, files map[string]string) error {
+	if len(files) == 0 {
+		return os.RemoveAll(dir)
+	}
+
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if _, ok := files[entry.Name()]; ok {
+			continue
+		}
+
+		if err = os.RemoveAll(filepath.Join(dir, entry.Name())); err != nil {
+			return err
+		}
+	}
+
+	for name, content := range files {
+		if err = os.WriteFile(filepath.Join(dir, name), []byte(content), 0o600); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.

@@ -102,8 +102,10 @@ func NewKubeletConfigController() *KubeletConfigController {
 
 				if k8sCredentialProviderConfig := cfgProvider.K8sCredentialProviderConfig(); k8sCredentialProviderConfig != nil {
 					kubeletConfig.CredentialProviderConfig = k8sCredentialProviderConfig.Configuration()
+					kubeletConfig.CredentialProviderFiles = k8sCredentialProviderConfig.ConfigFiles()
 				} else {
 					kubeletConfig.CredentialProviderConfig = nil
+					kubeletConfig.CredentialProviderFiles = nil
 				}
 
 				return nil

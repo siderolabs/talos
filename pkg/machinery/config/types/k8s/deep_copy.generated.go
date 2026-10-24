@@ -419,6 +419,10 @@ func (o *KubeCredentialProviderConfigV1Alpha1) DeepCopy() *KubeCredentialProvide
 		retV := o.CredentialProviderConfig.DeepCopy()
 		cp.CredentialProviderConfig = *retV
 	}
+	if o.CredentialProviderConfigFiles != nil {
+		cp.CredentialProviderConfigFiles = make([]KubeCredentialProviderConfigFileV1Alpha1, len(o.CredentialProviderConfigFiles))
+		copy(cp.CredentialProviderConfigFiles, o.CredentialProviderConfigFiles)
+	}
 	return &cp
 }
 

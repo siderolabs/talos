@@ -40,6 +40,12 @@ func kubeCredentialProviderConfig() *k8s.KubeCredentialProviderConfigV1Alpha1 {
 			},
 		},
 	}
+	cfg.CredentialProviderConfigFiles = []k8s.KubeCredentialProviderConfigFileV1Alpha1{
+		{
+			FileName:    "azure.json",
+			FileContent: "{\"cloud\": \"AzurePublicCloud\"}\n",
+		},
+	}
 
 	return cfg
 }
@@ -88,6 +94,75 @@ func TestKubeCredentialProviderConfigAccessors(t *testing.T) {
 			},
 		},
 	}, cfg.Configuration())
+
+	assert.Equal(t, map[string]string{
+		"azure.json": "{\"cloud\": \"AzurePublicCloud\"}\n",
+	}, cfg.ConfigFiles())
+
+	assert.Nil(t, k8s.NewKubeCredentialProviderConfigV1Alpha1().ConfigFiles())
+}
+
+func TestKubeCredentialProviderConfigValidate(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name  string
+		files []k8s.KubeCredentialProviderConfigFileV1Alpha1
+
+		expectedError string
+	}{
+		{
+			name: "empty",
+		},
+		{
+			name: "valid",
+			files: []k8s.KubeCredentialProviderConfigFileV1Alpha1{
+				{FileName: "azure.json", FileContent: "{}"},
+				{FileName: "config.yaml", FileContent: "foo: bar"},
+			},
+		},
+		{
+			name: "invalid",
+			files: []k8s.KubeCredentialProviderConfigFileV1Alpha1{
+				{FileName: ""},
+				{FileName: "foo/bar.json"},
+				{FileName: "../bar.json"},
+				{FileName: ".."},
+				{FileName: ".hidden"},
+				{FileName: "azure.json"},
+				{FileName: "azure.json"},
+			},
+			expectedError: "configFiles[0]: file name is required\n" +
+				"configFiles[1]: file name \"foo/bar.json\" must be a plain file name\n" +
+				"configFiles[2]: file name \"../bar.json\" must be a plain file name\n" +
+				"configFiles[3]: file name \"..\" must be a plain file name\n" +
+				"configFiles[4]: file name \".hidden\" must be a plain file name\n" +
+				"configFiles[6]: duplicate file name \"azure.json\"",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := k8s.NewKubeCredentialProviderConfigV1Alpha1()
+			cfg.CredentialProviderConfigFiles = test.files
+
+			_, err := cfg.Validate(validationMode{})
+			if test.expectedError != "" {
+				assert.EqualError(t, err, test.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestKubeCredentialProviderConfigRedact(t *testing.T) {
+	t.Parallel()
+
+	cfg := kubeCredentialProviderConfig()
+	cfg.Redact("REDACTED")
+
+	assert.Equal(t, map[string]string{"azure.json": "REDACTED"}, cfg.ConfigFiles())
 }
 
 func TestKubeCredentialProviderConfigV1Alpha1ConflictValidate(t *testing.T) {
