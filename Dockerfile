@@ -272,7 +272,7 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/plan
 ARG IMPORTVET_VERSION
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/siderolabs/importvet/cmd/importvet@${IMPORTVET_VERSION} \
     && mv /root/go/bin/importvet /usr/bin/importvet
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/vuln/cmd/govulncheck@latest \
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go install golang.org/x/vuln/cmd/govulncheck@v1.1.2 \
     && mv /root/go/bin/govulncheck /usr/bin/govulncheck
 ARG PROTOTOOL_VERSION
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go install github.com/uber/prototool/cmd/prototool@${PROTOTOOL_VERSION} \

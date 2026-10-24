@@ -33,7 +33,9 @@ KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
-PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
+# Note: manual update of the ca-certificates to the latest version on main
+# This addresses the eMudhra certificate compromise issue.
+PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:v1.15.0-alpha.0-62-g2c33dc1
 PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
 PKG_CONTAINERD ?= $(PKGS_PREFIX)/containerd:$(PKGS)
 PKG_CPIO ?= $(PKGS_PREFIX)/cpio:$(PKGS)
