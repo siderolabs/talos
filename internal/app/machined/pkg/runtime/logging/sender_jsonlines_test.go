@@ -8,8 +8,10 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"io"
 	"net"
 	"net/url"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -325,4 +327,105 @@ func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 	}
 
 	cancel()
+}
+
+func TestSenderJSONLinesReconnect(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	t.Cleanup(cancel)
+
+	lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	endpoint := lis.Addr().String()
+
+	sender := logging.NewJSONLines(&loggingDestination{
+		endpoint: ensure.Value(url.Parse("tcp://" + endpoint)),
+	})
+
+	t.Cleanup(func() {
+		require.NoError(t, sender.Close(context.Background()))
+	})
+
+	// send sends a message and returns the connection it was received on.
+	send := func(lis net.Listener, msg string) (net.Conn, *bufio.Reader) {
+		t.Helper()
+
+		require.NoError(t, sender.Send(ctx, &runtime.LogEvent{Msg: msg}))
+
+		require.NoError(t, lis.(*net.TCPListener).SetDeadline(time.Now().Add(5*time.Second)))
+
+		conn, err := lis.Accept()
+		require.NoError(t, err, "message %q was not sent on a new connection", msg)
+
+		require.NoError(t, conn.SetReadDeadline(time.Now().Add(5*time.Second)))
+
+		r := bufio.NewReader(conn)
+
+		line, err := r.ReadBytes('\n')
+		require.NoError(t, err)
+
+		var m map[string]any
+
+		require.NoError(t, json.Unmarshal(line, &m))
+		require.Equal(t, msg, m["msg"])
+
+		return conn, r
+	}
+
+	conn, r := send(lis, "before restart")
+
+	// The receiver closes the connection; the sender should close its side, too.
+	require.NoError(t, conn.(*net.TCPConn).CloseWrite())
+
+	_, err = r.ReadByte()
+	require.ErrorIs(t, err, io.EOF, "sender did not close the connection after the receiver closed it")
+
+	require.NoError(t, conn.Close())
+	require.NoError(t, lis.Close())
+
+	// A new receiver listens on the same address.
+	lis, err = (&net.ListenConfig{}).Listen(ctx, "tcp", endpoint)
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		require.NoError(t, lis.Close())
+	})
+
+	conn, _ = send(lis, "after restart")
+	require.NoError(t, conn.Close())
+}
+
+func TestSenderJSONLinesSendAfterClose(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	t.Cleanup(cancel)
+
+	lis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		require.NoError(t, lis.Close())
+	})
+
+	sender := logging.NewJSONLines(&loggingDestination{
+		endpoint: ensure.Value(url.Parse("tcp://" + lis.Addr().String())),
+	})
+
+	require.NoError(t, sender.Send(ctx, &runtime.LogEvent{Msg: "before close"}))
+	require.NoError(t, sender.Close(ctx))
+	require.Error(t, sender.Send(ctx, &runtime.LogEvent{Msg: "after close"}))
+
+	require.NoError(t, lis.(*net.TCPListener).SetDeadline(time.Now().Add(5*time.Second)))
+
+	conn, err := lis.Accept()
+	require.NoError(t, err)
+	require.NoError(t, conn.Close())
+
+	require.NoError(t, lis.(*net.TCPListener).SetDeadline(time.Now().Add(100*time.Millisecond)))
+
+	_, err = lis.Accept()
+	require.ErrorIs(t, err, os.ErrDeadlineExceeded, "closed sender connected again")
 }
