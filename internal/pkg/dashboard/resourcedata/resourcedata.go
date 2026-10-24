@@ -20,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -74,7 +75,13 @@ func (source *Source) run(ctx context.Context) {
 
 	for _, node := range source.Nodes {
 		source.eg.Go(func() error {
-			source.runResourceWatchWithRetries(utils.NodeContext(ctx, node), node)
+			// the dashboard runs with a reduced set of roles, so it accepts the resources it watches
+			// in the redacted form: a resource which can be redacted is served with its secrets taken
+			// out instead of being denied outright, and one which carries no secret at all comes
+			// through untouched
+			nodeCtx := redactable.WithMode(utils.NodeContext(ctx, node), redactable.ModeAccept)
+
+			source.runResourceWatchWithRetries(nodeCtx, node)
 
 			return nil
 		})

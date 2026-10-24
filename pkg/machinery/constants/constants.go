@@ -1578,6 +1578,13 @@ const (
 	// Redacted is the replacement for sensitive values.
 	Redacted = "REDACTED"
 
+	// AnnotationRedacted is set on the resources returned via the API with some of their spec values
+	// redacted, as the requester is not allowed to see them in full.
+	AnnotationRedacted = "talos.dev/redacted"
+
+	// AnnotationRedactedValue is the value of the AnnotationRedacted annotation.
+	AnnotationRedactedValue = "true"
+
 	// DefaultFilesystemScrubInterval is the default interval for unspecified, but enabled FS scrub configs.
 	DefaultFilesystemScrubInterval = 7 * 24 * time.Hour
 

@@ -23,6 +23,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 const (
@@ -290,7 +291,7 @@ func (widget *ResourceExplorerGrid) loadResourceTypes() {
 		NotSelectable: true,
 	})
 
-	ctx := utils.NodeContext(widget.ctx, widget.selectedNode)
+	ctx := widget.nodeContext(widget.ctx)
 
 	go func() {
 		list, err := safe.StateListAll[*meta.ResourceDefinition](ctx, widget.dashboard.cli.COSI)
@@ -569,7 +570,7 @@ func (widget *ResourceExplorerGrid) stopResourceWatch() {
 //
 //nolint:gocyclo
 func (widget *ResourceExplorerGrid) runResourceWatch(ctx context.Context, rd *meta.ResourceDefinition) {
-	nodeCtx := utils.NodeContext(ctx, widget.selectedNode)
+	nodeCtx := widget.nodeContext(ctx)
 
 	spec := rd.TypedSpec()
 
@@ -715,6 +716,16 @@ func (widget *ResourceExplorerGrid) goBack() {
 		widget.pages.SwitchToPage(pageResourceTypes)
 		widget.app.SetFocus(widget.typesTable)
 	}
+}
+
+// nodeContext builds the context for a COSI call made by the explorer.
+//
+// Besides targeting the selected node, it tells the node that the explorer can display a redacted
+// resource: a sensitive resource which knows how to redact itself is then browsable without the
+// os:admin role, with its secrets replaced, instead of being refused outright. A sensitive resource
+// which cannot be redacted is still denied, which is what formatError explains.
+func (widget *ResourceExplorerGrid) nodeContext(ctx context.Context) context.Context {
+	return redactable.WithMode(utils.NodeContext(ctx, widget.selectedNode), redactable.ModeAccept)
 }
 
 // formatError returns a user-friendly error message.

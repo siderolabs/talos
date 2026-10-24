@@ -16,93 +16,111 @@ import (
 )
 
 var (
-	_ redactable.Spec[AddressSpecSpec]     = AddressSpecSpec{}
-	_ redactable.Spec[HostnameSpecSpec]    = HostnameSpecSpec{}
-	_ redactable.Spec[LinkSpecSpec]        = LinkSpecSpec{}
-	_ redactable.Spec[OperatorSpecSpec]    = OperatorSpecSpec{}
-	_ redactable.Spec[ProbeSpecSpec]       = ProbeSpecSpec{}
-	_ redactable.Spec[ResolverSpecSpec]    = ResolverSpecSpec{}
-	_ redactable.Spec[RouteSpecSpec]       = RouteSpecSpec{}
-	_ redactable.Spec[RoutingRuleSpecSpec] = RoutingRuleSpecSpec{}
-	_ redactable.Spec[TimeServerSpecSpec]  = TimeServerSpecSpec{}
+	_ redactable.Spec = &AddressSpecSpec{}
+	_ redactable.Spec = &HostnameSpecSpec{}
+	_ redactable.Spec = &LinkSpecSpec{}
+	_ redactable.Spec = &OperatorSpecSpec{}
+	_ redactable.Spec = &ProbeSpecSpec{}
+	_ redactable.Spec = &ResolverSpecSpec{}
+	_ redactable.Spec = &RouteSpecSpec{}
+	_ redactable.Spec = &RoutingRuleSpecSpec{}
+	_ redactable.Spec = &TimeServerSpecSpec{}
 )
 
-// RedactSecrets implements redactable.Spec interface.
-func (spec AddressSpecSpec) RedactSecrets(resource.Metadata) AddressSpecSpec {
+// HasSecrets implements redactable.Spec interface.
+func (*AddressSpecSpec) HasSecrets(resource.Metadata) bool {
 	// no sensitive fields
-	return spec
+	return false
 }
 
 // RedactSecrets implements redactable.Spec interface.
-func (spec HostnameSpecSpec) RedactSecrets(resource.Metadata) HostnameSpecSpec {
+func (*AddressSpecSpec) RedactSecrets(resource.Metadata) {
 	// no sensitive fields
-	return spec
 }
 
-// RedactSecrets implements redactable.Spec interface.
-func (spec LinkSpecSpec) RedactSecrets(resource.Metadata) LinkSpecSpec {
-	if !hasSecretsLinkSpecSpec(&spec) {
-		return spec
-	}
-
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
-
-	redactLinkSpecSpec(&spec)
-
-	return spec
-}
-
-// RedactSecrets implements redactable.Spec interface.
-func (spec OperatorSpecSpec) RedactSecrets(resource.Metadata) OperatorSpecSpec {
-	if !hasSecretsOperatorSpecSpec(&spec) {
-		return spec
-	}
-
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
-
-	redactOperatorSpecSpec(&spec)
-
-	return spec
-}
-
-// RedactSecrets implements redactable.Spec interface.
-func (spec ProbeSpecSpec) RedactSecrets(resource.Metadata) ProbeSpecSpec {
-	if !hasSecretsProbeSpecSpec(&spec) {
-		return spec
-	}
-
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
-
-	redactProbeSpecSpec(&spec)
-
-	return spec
-}
-
-// RedactSecrets implements redactable.Spec interface.
-func (spec ResolverSpecSpec) RedactSecrets(resource.Metadata) ResolverSpecSpec {
+// HasSecrets implements redactable.Spec interface.
+func (*HostnameSpecSpec) HasSecrets(resource.Metadata) bool {
 	// no sensitive fields
-	return spec
+	return false
 }
 
 // RedactSecrets implements redactable.Spec interface.
-func (spec RouteSpecSpec) RedactSecrets(resource.Metadata) RouteSpecSpec {
+func (*HostnameSpecSpec) RedactSecrets(resource.Metadata) {
 	// no sensitive fields
-	return spec
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (spec *LinkSpecSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsLinkSpecSpec(spec)
 }
 
 // RedactSecrets implements redactable.Spec interface.
-func (spec RoutingRuleSpecSpec) RedactSecrets(resource.Metadata) RoutingRuleSpecSpec {
-	// no sensitive fields
-	return spec
+func (spec *LinkSpecSpec) RedactSecrets(resource.Metadata) {
+	redactLinkSpecSpec(spec)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (spec *OperatorSpecSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsOperatorSpecSpec(spec)
 }
 
 // RedactSecrets implements redactable.Spec interface.
-func (spec TimeServerSpecSpec) RedactSecrets(resource.Metadata) TimeServerSpecSpec {
+func (spec *OperatorSpecSpec) RedactSecrets(resource.Metadata) {
+	redactOperatorSpecSpec(spec)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (spec *ProbeSpecSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsProbeSpecSpec(spec)
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (spec *ProbeSpecSpec) RedactSecrets(resource.Metadata) {
+	redactProbeSpecSpec(spec)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (*ResolverSpecSpec) HasSecrets(resource.Metadata) bool {
 	// no sensitive fields
-	return spec
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*ResolverSpecSpec) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (*RouteSpecSpec) HasSecrets(resource.Metadata) bool {
+	// no sensitive fields
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*RouteSpecSpec) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (*RoutingRuleSpecSpec) HasSecrets(resource.Metadata) bool {
+	// no sensitive fields
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*RoutingRuleSpecSpec) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (*TimeServerSpecSpec) HasSecrets(resource.Metadata) bool {
+	// no sensitive fields
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*TimeServerSpecSpec) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
 }
 
 // hasSecretsLinkSpecSpec checks if LinkSpecSpec carries any sensitive value.
