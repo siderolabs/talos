@@ -21,6 +21,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/containerd/errdefs"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -105,6 +106,10 @@ func (c *containerdRunner) Open() error {
 	var oldcontainer containerd.Container
 
 	if oldcontainer, err = c.client.LoadContainer(c.ctx, c.args.ID); err == nil {
+		if err = c.deleteStaleTask(oldcontainer); err != nil {
+			return fmt.Errorf("error deleting old task instance: %w", err)
+		}
+
 		if err = oldcontainer.Delete(c.ctx, containerd.WithSnapshotCleanup); err != nil {
 			return fmt.Errorf("error deleting old container instance: %w", err)
 		}
@@ -316,43 +321,154 @@ taskWaitLoop:
 		c.container.ID(),
 	)
 
-	if err = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll); err != nil {
+	gracefulDeadline := time.Now().Add(c.opts.GracefulShutdownTimeout)
+
+	// not delivering SIGTERM before the deadline is not fatal: the task gets SIGKILL below
+	if err = killTask(c.ctx, task, syscall.SIGTERM, gracefulDeadline); err != nil && !isContainerdUnavailable(err) && !isDeadlineExceeded(err) {
 		return status, fmt.Errorf("error sending SIGTERM: %w", err)
 	}
 
-	statusC, err := task.Wait(c.ctx)
+	exited, err := waitTaskExit(c.ctx, task, gracefulDeadline)
 	if err != nil {
 		return status, fmt.Errorf("failed waiting for task after SIGTERM: %w", err)
 	}
 
-	select {
-	case <-statusC:
-		// stopped process exited
+	if exited {
 		return status, nil
-	case <-time.After(c.opts.GracefulShutdownTimeout):
-		// kill the process
-		eventSink(
-			events.StateStopping,
-			"Sending SIGKILL to task %s (PID %d, container %s)",
-			task.ID(),
-			task.Pid(),
-			c.container.ID(),
-		)
-
-		if err = task.Kill(c.ctx, syscall.SIGKILL, containerd.WithKillAll); err != nil {
-			return status, fmt.Errorf("error sending SIGKILL: %w", err)
-		}
 	}
+
+	eventSink(
+		events.StateStopping,
+		"Sending SIGKILL to task %s (PID %d, container %s)",
+		task.ID(),
+		task.Pid(),
+		c.container.ID(),
+	)
 
 	// Bounded, because SIGKILL is not the end of every story: a task stuck in uninterruptible sleep
 	// never reaps, and waiting for it forever would hold up whatever is driving the stop.
-	select {
-	case <-statusC:
-	case <-time.After(killWaitTimeout):
+	killDeadline := time.Now().Add(killWaitTimeout)
+
+	if err = killTask(c.ctx, task, syscall.SIGKILL, killDeadline); err != nil {
+		return status, fmt.Errorf("error sending SIGKILL: %w", err)
+	}
+
+	exited, err = waitTaskExit(c.ctx, task, killDeadline)
+	if err != nil {
+		return status, fmt.Errorf("failed waiting for task after SIGKILL: %w", err)
+	}
+
+	if !exited {
 		return status, fmt.Errorf("task %q did not exit after SIGKILL", c.args.ID)
 	}
 
 	return status, logW.Close()
+}
+
+// deleteStaleTask kills and deletes the task of a container left behind by a previous instance of the service.
+//
+// The previous instance can lose track of its task, e.g. when containerd restarts while the task is being
+// stopped: the container then can't be deleted while its task runs, and the service could never start again.
+func (c *containerdRunner) deleteStaleTask(container containerd.Container) error {
+	task, err := container.Task(c.ctx, nil)
+	if err != nil {
+		if errdefs.IsNotFound(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	ctx, cancel := context.WithTimeout(c.ctx, killWaitTimeout)
+	defer cancel()
+
+	if _, err = task.Delete(ctx, containerd.WithProcessKill); err != nil && !errdefs.IsNotFound(err) {
+		return err
+	}
+
+	return nil
+}
+
+// killTask signals the task, retrying while containerd is unavailable (e.g. restarting) until the deadline.
+func killTask(ctx context.Context, task containerd.Task, signal syscall.Signal, deadline time.Time) error {
+	ctx, cancel := context.WithDeadline(ctx, deadline)
+	defer cancel()
+
+	retrying := false
+
+	for {
+		err := task.Kill(ctx, signal, containerd.WithKillAll)
+		if err == nil || isTaskNotFound(err) {
+			return nil
+		}
+
+		if !isContainerdUnavailable(err) {
+			return err
+		}
+
+		if !retrying {
+			log.Printf("containerd unavailable while sending %s to task %q, retrying: %v", unix.SignalName(signal), task.ID(), err)
+		}
+
+		retrying = true
+
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(taskWaitRetryInterval):
+		}
+	}
+}
+
+// waitTaskExit waits for the task to exit until the deadline, and reports whether it did.
+//
+// An interrupted wait stream (containerd restarting) is not an exit: the task keeps running under its shim,
+// so the wait is re-established instead of reporting the task as stopped.
+func waitTaskExit(ctx context.Context, task containerd.Task, deadline time.Time) (bool, error) {
+	timeout := time.NewTimer(time.Until(deadline))
+	defer timeout.Stop()
+
+	interrupted := false
+
+	for {
+		statusC, waitErr := task.Wait(ctx)
+		if waitErr == nil {
+			select {
+			case taskStatus, ok := <-statusC:
+				retry, statusErr := retryTaskWait(taskStatus, ok)
+				if statusErr == nil && !retry {
+					return true, nil
+				}
+
+				waitErr = statusErr
+				if retry {
+					waitErr = taskStatus.Error()
+				}
+			case <-timeout.C:
+				return false, nil
+			}
+		}
+
+		if isTaskNotFound(waitErr) {
+			return true, nil
+		}
+
+		if !isContainerdUnavailable(waitErr) {
+			return false, waitErr
+		}
+
+		if !interrupted {
+			log.Printf("task %q wait stream interrupted while stopping, waiting for containerd: %v", task.ID(), waitErr)
+		}
+
+		interrupted = true
+
+		select {
+		case <-timeout.C:
+			return false, nil
+		case <-time.After(taskWaitRetryInterval):
+		}
+	}
 }
 
 func retryTaskWait(status containerd.ExitStatus, ok bool) (bool, error) {
@@ -373,6 +489,14 @@ func retryTaskWait(status containerd.ExitStatus, ok bool) (bool, error) {
 
 func isContainerdUnavailable(err error) bool {
 	return errdefs.IsUnavailable(err) || status.Code(err) == codes.Unavailable
+}
+
+func isDeadlineExceeded(err error) bool {
+	return errors.Is(err, context.DeadlineExceeded) || status.Code(err) == codes.DeadlineExceeded
+}
+
+func isTaskNotFound(err error) bool {
+	return errdefs.IsNotFound(err) || status.Code(err) == codes.NotFound
 }
 
 // createCgroup creates the cgroup for the task, with caller-supplied limits when there are any.
