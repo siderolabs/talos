@@ -258,6 +258,26 @@ If you require IPVS support, you can enable it by loading the following kernel m
 * `xt_ipvs` (nftables/iptables match)
 """
 
+    [notes.NetworkLinkIngressConfig]
+        title = "Allow filtering incoming packets by the destination IP and link"
+        description = """\
+A new `NetworkLinkIngressConfig` allows filtering incoming packets by link and the destination IP.
+If `destinationAddresses` is left empty, it defaults to the node addresses, plus the broadcast, multicast and IPv6 link-local addresses.
+
+```yaml
+apiVersion: v1alpha1
+kind: NetworkLinkIngressConfig
+name: enp0s2.35
+destinationAddresses:
+    - 1.2.3.4/32
+```
+
+`NetworkLinkIngressConfig` should not be used in the following scenarios:
+1. When using the Cilium CNI with the `kube-proxy` replacement
+2. With pod-to-pod network direct routing (without a tunnel like VXLAN)
+3. MetalLB (L2 or BGP), Cilium LB IPAM and kube-vip service mode all deliver packets whose destination is the LB IP so they won't work
+"""
+
     [notes.lockdown]
         title = "Secure Boot images no longer have lockdown=confidentiality enabled by default"
         description = """\
