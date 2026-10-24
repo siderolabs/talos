@@ -271,6 +271,12 @@ message MDArrayStatusSpec {
   string array_state = 10;
   // SyncAction is the current sysfs sync_action value.
   string sync_action = 11;
+  // Unmanaged is true when this array has no backing MDArraySpec.
+  //
+  // Unmanaged arrays are reported for visibility only: they are discovered
+  // on disk (e.g. assembled by the kernel/udev before Talos ever wrote a
+  // RAIDArrayConfig for them), and are never reconciled or self-healed.
+  bool unmanaged = 12;
 }
 
 // MDRefreshRequestSpec is the spec for MDRefreshRequest.

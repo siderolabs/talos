@@ -36,6 +36,8 @@ type fakeMDProvisioner struct {
 	details map[string]md.Detail
 	// syncAction maps md node -> current sync action (default idle).
 	syncAction map[string]md.SyncAction
+	// arrays is returned by ListArrays, simulating every MD device present on the box.
+	arrays []string
 
 	// createNode is the node Create returns; createErr overrides success.
 	createNode string
@@ -142,6 +144,13 @@ func (f *fakeMDProvisioner) ArrayStateForDevice(string) (string, error) {
 	return "clean", nil
 }
 
+func (f *fakeMDProvisioner) ListArrays() ([]string, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return append([]string(nil), f.arrays...), nil
+}
+
 func (f *fakeMDProvisioner) SyncActionForDevice(device string) (md.SyncAction, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -193,6 +202,7 @@ func (f *fakeMDProvisioner) reset() {
 	f.findByMember = map[string]string{}
 	f.details = map[string]md.Detail{}
 	f.syncAction = map[string]md.SyncAction{}
+	f.arrays = nil
 	f.createNode = "/dev/md0"
 	f.createErr = nil
 	f.creates = map[string][]string{}
@@ -398,6 +408,147 @@ func (suite *MDArrayReconcileSuite) TestWaitsForEncryptedMemberToBeOpened() {
 
 	members, _ := suite.md.created("data")
 	suite.Assert().Equal([]string{"/dev/dm-0", "/dev/vdb1"}, members)
+}
+
+func (suite *MDArrayReconcileSuite) TestReportsUnmanagedDiscoveredArray() {
+	suite.md.details["/dev/md127"] = md.Detail{
+		Level:       "raid1",
+		RaidDevices: 2,
+		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1"},
+		UUID:        "1234-uuid",
+		Name:        "talos:boot",
+	}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	// no MDArraySpec exists for this array; creating an unrelated disk just gives the
+	// controller an input event to react to.
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertResource(suite, "md-name-talos:boot", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Unmanaged)
+		asrt.Equal("/dev/disk/by-id/md-name-talos:boot", status.TypedSpec().Device)
+		asrt.Equal([]string{"/dev/nvme0n1", "/dev/nvme1n1"}, status.TypedSpec().Members)
+		asrt.Equal(storageres.MDArrayPhaseReady, status.TypedSpec().Status)
+	})
+
+	_, created := suite.md.created("md127")
+	suite.Assert().False(created, "an unmanaged array must never be provisioned")
+	suite.Assert().Empty(suite.md.added("/dev/md127"), "an unmanaged array must never be reconciled")
+
+	_, grown := suite.md.grown("/dev/md127")
+	suite.Assert().False(grown, "an unmanaged array must never be grown")
+}
+
+func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnsupportedLevel() {
+	suite.md.details["/dev/md127"] = md.Detail{
+		Level:       "raid5",
+		RaidDevices: 3,
+		Members:     []string{"/dev/nvme0n1", "/dev/nvme1n1", "/dev/nvme2n1"},
+	}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md127")
+}
+
+func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayWithUnknownLevel() {
+	suite.md.details["/dev/md127"] = md.Detail{Name: "talos:boot", UUID: "1234-uuid"}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md-name-talos:boot")
+}
+
+func (suite *MDArrayReconcileSuite) TestUnmanagedArrayFallsBackToUUID() {
+	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", UUID: "aaaa:bbbb:cccc:dddd", Members: []string{"/dev/nvme0n1"}}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertResource(suite, "md-uuid-aaaa:bbbb:cccc:dddd", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.Equal("/dev/disk/by-id/md-uuid-aaaa:bbbb:cccc:dddd", status.TypedSpec().Device)
+	})
+}
+
+func (suite *MDArrayReconcileSuite) TestDegradedManagedArrayWaitingForMembersIsNotUnmanaged() {
+	// only one member disk is present: the spec waits, but the kernel already assembled the degraded array.
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "talos:data", UUID: "1234-uuid", Members: []string{"/dev/nvme0n1"}}
+	suite.md.arrays = []string{"/dev/md127"}
+
+	suite.createArraySpec("data", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Unmanaged)
+		asrt.Equal(storageres.MDArrayPhaseWaiting, status.TypedSpec().Status)
+	})
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md-name-talos:data")
+}
+
+func (suite *MDArrayReconcileSuite) TestDegradedForeignNamedArrayWaitingForMembersIsNotUnmanaged() {
+	// the array was stamped by another tool (different homehost), so only its member disk ties it to the spec.
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "installer:boot", UUID: "1234-uuid", Members: []string{"/dev/nvme0n1"}}
+	suite.md.findByMember["/dev/nvme0n1"] = "/dev/md127"
+	suite.md.arrays = []string{"/dev/md127"}
+
+	suite.createArraySpec("data", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.MDArrayPhaseWaiting, status.TypedSpec().Status)
+	})
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md-name-installer:boot")
+}
+
+func (suite *MDArrayReconcileSuite) TestUnmanagedArrayNotSuppressedBySpecNameCollision() {
+	// spec "md127" resolves to /dev/md0; the unrelated pre-existing /dev/md127 must still be reported.
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
+
+	suite.md.details["/dev/md127"] = md.Detail{Level: "raid1", Name: "other:boot", UUID: "1234-uuid"}
+	suite.md.arrays = []string{"/dev/md0", "/dev/md127"}
+
+	suite.createArraySpec("md127", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "md-name-other:boot", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Unmanaged)
+	})
+
+	ctest.AssertResource(suite, "md127", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Unmanaged)
+	})
+}
+
+func (suite *MDArrayReconcileSuite) TestSkipsUnmanagedArrayNotYetQueryable() {
+	// "/dev/md127" is present per ListArrays but has no matching entry in details, so
+	// DetailDevice fails, e.g. an array udev hasn't run yet.
+	suite.md.arrays = []string{"/dev/md127"}
+
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md127")
+}
+
+func (suite *MDArrayReconcileSuite) TestManagedArrayIsNotReportedUnmanaged() {
+	createDisk(&suite.DefaultSuite, "nvme0n1", "/dev/nvme0n1", "nvme")
+	createDisk(&suite.DefaultSuite, "nvme1n1", "/dev/nvme1n1", "nvme")
+
+	suite.md.arrays = []string{suite.md.createNode}
+
+	suite.createArraySpec("data", `disk.transport == "nvme"`)
+
+	ctest.AssertResource(suite, "data", func(status *storageres.MDArrayStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Unmanaged)
+		asrt.Equal(storageres.MDArrayPhaseReady, status.TypedSpec().Status)
+	})
+
+	ctest.AssertNoResource[*storageres.MDArrayStatus](suite, "md0")
 }
 
 func TestMDArrayReconcileSuite(t *testing.T) {
