@@ -14,28 +14,29 @@ import (
 )
 
 var (
-	_ redactable.Spec[ConfigSpec] = ConfigSpec{}
-	_ redactable.Spec[PlainSpec]  = PlainSpec{}
+	_ redactable.Spec = &ConfigSpec{}
+	_ redactable.Spec = &PlainSpec{}
 )
 
-// RedactSecrets implements redactable.Spec interface.
-func (spec ConfigSpec) RedactSecrets(resource.Metadata) ConfigSpec {
-	if !hasSecretsConfigSpec(&spec) {
-		return spec
-	}
-
-	// the spec might share the backing storage with the resource, so copy before mutating
-	spec = spec.DeepCopy()
-
-	redactConfigSpec(&spec)
-
-	return spec
+// HasSecrets implements redactable.Spec interface.
+func (spec *ConfigSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsConfigSpec(spec)
 }
 
 // RedactSecrets implements redactable.Spec interface.
-func (spec PlainSpec) RedactSecrets(resource.Metadata) PlainSpec {
+func (spec *ConfigSpec) RedactSecrets(resource.Metadata) {
+	redactConfigSpec(spec)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (*PlainSpec) HasSecrets(resource.Metadata) bool {
 	// no sensitive fields
-	return spec
+	return false
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (*PlainSpec) RedactSecrets(resource.Metadata) {
+	// no sensitive fields
 }
 
 // hasSecretsConfigSpec checks if ConfigSpec carries any sensitive value.
