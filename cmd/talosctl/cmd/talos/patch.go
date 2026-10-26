@@ -86,13 +86,6 @@ func patchFn(patches []configpatcher.Patch) func(context.Context, *client.Client
 			return err
 		}
 
-		resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
-			Data:           patched,
-			Mode:           patchCmdFlags.Mode.Mode,
-			DryRun:         patchCmdFlags.dryRun,
-			TryModeTimeout: durationpb.New(patchCmdFlags.configTryTimeout),
-		})
-
 		if bytes.Equal(
 			bytes.TrimSpace(yamlstrip.Comments(patched)),
 			bytes.TrimSpace(yamlstrip.Comments(body)),
@@ -101,6 +94,13 @@ func patchFn(patches []configpatcher.Patch) func(context.Context, *client.Client
 
 			return nil
 		}
+
+		resp, err := c.ApplyConfiguration(ctx, &machine.ApplyConfigurationRequest{
+			Data:           patched,
+			Mode:           patchCmdFlags.Mode.Mode,
+			DryRun:         patchCmdFlags.dryRun,
+			TryModeTimeout: durationpb.New(patchCmdFlags.configTryTimeout),
+		})
 
 		fmt.Fprintf(
 			safeout.Stderr(), "patched %s/%s at the node %s\n",
