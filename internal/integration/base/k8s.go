@@ -337,10 +337,25 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 
 	var stdout, stderr strings.Builder
 
-	err = websocketExec.StreamWithContext(ctx, remotecommand.StreamOptions{
-		Stdout: &stdout,
-		Stderr: &stderr,
+	// the context go-retry passes to the callback expires after the retry window
+	// and would cut off long-running commands so use Retry, not RetryWithContext
+	err = retry.Constant(10*time.Second, retry.WithUnits(time.Second)).Retry(func() error {
+		stdout.Reset()
+		stderr.Reset()
+
+		streamErr := websocketExec.StreamWithContext(ctx, remotecommand.StreamOptions{
+			Stdout: &stdout,
+			Stderr: &stderr,
+		})
+		if streamErr != nil && strings.Contains(streamErr.Error(), "error dialing backend") {
+			p.suite.T().Logf("retrying exec in pod %s/%s: %v", p.namespace, p.name, streamErr)
+
+			return retry.ExpectedError(streamErr)
+		}
+
+		return streamErr
 	})
+
 	if err != nil && !p.quiet {
 		p.suite.T().Logf(
 			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",

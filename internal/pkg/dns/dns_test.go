@@ -5,6 +5,7 @@
 package dns_test
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"iter"
@@ -52,6 +53,9 @@ func TestDNS(t *testing.T) {
 		nameservers  []string
 		expectedCode int
 		errCheck     check.Check
+		// timeout overrides the client timeout,
+		// default is 5s.
+		timeout time.Duration
 	}{
 		{
 			name:         "success",
@@ -65,6 +69,8 @@ func TestDNS(t *testing.T) {
 			hostname:    "google-fail.com",
 			nameservers: []string{"242.242.242.242"},
 			errCheck:    check.ErrorContains("i/o timeout"),
+			// Must give up before the server's own upstream request timeout answers SERVFAIL.
+			timeout: time.Second,
 		},
 		{
 			name:         "empty destinations",
@@ -112,8 +118,10 @@ func TestDNS(t *testing.T) {
 
 				time.Sleep(10 * time.Millisecond)
 
+				timeout := cmp.Or(test.timeout, 5*time.Second)
+
 				c := dnssrv.Client{
-					Timeout: time.Second,
+					Timeout: timeout,
 				}
 
 				r, _, err := c.Exchange(createQuery(test.hostname), dnsAddr)

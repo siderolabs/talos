@@ -5,6 +5,7 @@
 package hypervisor_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -247,7 +248,24 @@ func (s *CloudInitISOSuite) TestRetirementWaitsForMutationClaimEnteredBeforeLibr
 
 	asset := filepath.Join(dir, status.TypedSpec().Name)
 	marker := hypervisor.ContentLibraryMutationFinalizer(status.TypedSpec().Name)
-	s.Require().NoError(s.State().AddFinalizer(s.Ctx(), library.Metadata(), marker))
+
+	// The controller publishes Ready while still holding this same marker for
+	// the build, so claim it atomically once released.
+	// A plain AddFinalizer would no-op and the controller would then drop it.
+	s.Require().Eventually(func() bool {
+		_, claimErr := s.State().UpdateWithConflicts(s.Ctx(), library.Metadata(), func(r resource.Resource) error {
+			if r.Metadata().Finalizers().Has(marker) {
+				return errors.New("already claimed")
+			}
+
+			r.Metadata().Finalizers().Add(marker)
+
+			return nil
+		}, state.WithExpectedPhase(resource.PhaseRunning))
+
+		return claimErr == nil
+	}, 3*time.Second, 10*time.Millisecond, "mutation claim was never released by the controller")
+
 	_, err = s.State().Teardown(s.Ctx(), library.Metadata())
 	s.Require().NoError(err)
 
