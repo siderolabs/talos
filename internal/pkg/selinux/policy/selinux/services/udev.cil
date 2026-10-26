@@ -108,6 +108,22 @@
 (allow udev_t udev_run_t (fs_classes (rw)))
 (allow udev_t udev_socket_t (fs_classes (rw)))
 
+; mdmonitor in init_t and mdadm in udev_t can each create /run/mdadm.
+; The named transitions leave unrelated /run entries on their existing types.
+; Map, lock and temporary regular files inherit this directory's type.
+(type mdadm_run_t)
+(call system_f (mdadm_run_t))
+(allow mdadm_run_t tmpfs_t (filesystem (associate)))
+(typetransition init_t run_t dir "mdadm" mdadm_run_t)
+(typetransition udev_t run_t dir "mdadm" mdadm_run_t)
+
+; Permit map replacement/unlink inside this directory, not generic /run.
+; init_t already has system-file access; keep both callers' lifecycle explicit.
+(allow init_t mdadm_run_t (dir (create getattr search open read write add_name remove_name)))
+(allow init_t mdadm_run_t (file (create read write open getattr lock rename unlink)))
+(allow udev_t mdadm_run_t (dir (create getattr search open read write add_name remove_name)))
+(allow udev_t mdadm_run_t (file (create read write open getattr lock rename unlink)))
+
 ; manage properties from rules
 (allow udev_t sysfs_t (fs_classes (rw)))
 
