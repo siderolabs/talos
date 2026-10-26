@@ -1,3 +1,145 @@
+## [Talos 1.14.5](https://github.com/siderolabs/talos/releases/tag/v1.14.5) (2026-10-26)
+
+Welcome to the v1.14.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### On-demand Kernel Module Loading
+
+The kernel can once again ask Talos to load a module on demand (`request_module()`), e.g. when a driver loads a helper module while probing a device,
+or when DRBD loads its transport module.
+Talos handles the kernel's `modprobe` usermode helper call and loads the module (shipped with Talos or a system extension) by the requested name,
+applying the parameters from `KernelModuleConfig` if the module is listed in the machine config.
+Such modules no longer need to be listed in the machine config, and the order of the listed modules is not important.
+
+Requests via subsystem aliases (e.g. `fs-*`, `net-pf-*`, `crypto-*`), which userspace can trigger via mounts, sockets, etc., are refused,
+so on-demand loading can't be used to load arbitrary modules from workloads.
+The outcome of each request is logged to the kernel log (`talosctl dmesg`).
+
+
+### Component Updates
+
+Linux: 6.18.58
+etcd: 3.7.3
+
+Talos is built with Go 1.26.10.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* immanuwell
+* Daniel Chaplin
+* Erwan Leboucher
+* Kyle Tse
+* Michał Małyska
+* Nicolas Brainez
+* Orzelius
+* sasha-sup
+
+### Changes
+<details><summary>24 commits</summary>
+<p>
+
+* [`2f97b6a4b`](https://github.com/siderolabs/talos/commit/2f97b6a4b1cae2de1d814ea26f1c21bef22db3af) test: verify on-demand kernel module loading end-to-end
+* [`c35fd8cef`](https://github.com/siderolabs/talos/commit/c35fd8cef8d1f93ceca4cac4c45d56d9f1bf162b) feat: load kernel modules on demand via the modprobe usermode helper
+* [`bf34a0ebb`](https://github.com/siderolabs/talos/commit/bf34a0ebb8e50fcbd29f54cac01fd348e3e7a5af) feat: add EDAC_10NM kernel module
+* [`25c16761c`](https://github.com/siderolabs/talos/commit/25c16761c60ff0a1a0064300ae7887dd58cf0e19) fix: race with platform accessing metadata volumes
+* [`b88cda936`](https://github.com/siderolabs/talos/commit/b88cda936accea2fc0462ae2f44787376ab5e19d) feat: update etcd to 3.7.3
+* [`34d408094`](https://github.com/siderolabs/talos/commit/34d4080941a1befed1b01280ca54afbff4e698ff) fix: pull images over HTTP/1.1
+* [`2dc3686b1`](https://github.com/siderolabs/talos/commit/2dc3686b1196502150683e888abf485590d16c9a) fix: preserve project quotas on temporary growfs mounts
+* [`bffcf9b48`](https://github.com/siderolabs/talos/commit/bffcf9b48afcf47c5471cec835391ce865f8de7d) fix: correctly pass hostname to the proxy in gRPC dial
+* [`6b3ea905b`](https://github.com/siderolabs/talos/commit/6b3ea905b348edae0100a4eb0f6f53204b83c03f) fix: preserve rejected edits in talosctl edit
+* [`b6e5fa2e2`](https://github.com/siderolabs/talos/commit/b6e5fa2e2413a027484ffc437243bc777784177d) feat: implement RAID1 (md-raid) support in BIOS mode
+* [`fb2b077b5`](https://github.com/siderolabs/talos/commit/fb2b077b5af45aadb31587f1ad4f2ec79a03c09e) fix: ignore netlink recoverable errors in watchers
+* [`2f7efe81b`](https://github.com/siderolabs/talos/commit/2f7efe81bea23dbe9a963ec5af1e288410e305fe) fix: skip kexec when the kernel finds no free memory region
+* [`d6488456b`](https://github.com/siderolabs/talos/commit/d6488456b6f4a0fac636b7b968a98c02bcaa0f31) fix: provide proper concurrency for health checks
+* [`03075319b`](https://github.com/siderolabs/talos/commit/03075319b860f70dcb90fc68d2b30cd9cc2248e5) fix: preserve omitted CEL expressions when patching configs
+* [`aca5abc16`](https://github.com/siderolabs/talos/commit/aca5abc169c4e18e0b51ecb4d441f08bac0180e8) fix: skip EFI boot entries that cannot be decoded
+* [`9c69456c9`](https://github.com/siderolabs/talos/commit/9c69456c998ed263c2ff03f063a7ebea09ada019) fix: read VMware guestinfo with SecureBoot enabled
+* [`6c6fec7d5`](https://github.com/siderolabs/talos/commit/6c6fec7d522bd757151e0cc1a034008df5a88ca6) fix: parse EFI load options with an empty description
+* [`e0002327b`](https://github.com/siderolabs/talos/commit/e0002327b9a46a24bfb617a4cf1f22f12a50d5aa) fix: route pod CIDRs matching the KubeSpan ULA purpose byte
+* [`449f82d46`](https://github.com/siderolabs/talos/commit/449f82d466edbd88bfd659300e61555823db894a) fix: wait for inactive MD arrays before volume discovery
+* [`824b0f976`](https://github.com/siderolabs/talos/commit/824b0f9766212712929ed41cde4c619dda7df64d) test: reproduce degraded md boot array reboot
+* [`ce2fa4132`](https://github.com/siderolabs/talos/commit/ce2fa41325facd0498f20caa4e01e71777a28388) fix: high cpu usage by the bridge keepalive dummy qemu vm
+* [`51eda9a51`](https://github.com/siderolabs/talos/commit/51eda9a51c4df094db750f93950ee11aeabe70e6) chore: add qemu-ip-family integration suite
+* [`e700de0c0`](https://github.com/siderolabs/talos/commit/e700de0c026adc130ed4237e9efca4de0c2762b3) feat: update Linux 6.18.58, Go 1.26.10
+* [`3fb46c378`](https://github.com/siderolabs/talos/commit/3fb46c3789527b32ad3382d096e23084d158df88) release(v1.14.4): prepare release
+</p>
+</details>
+
+### Changes since v1.14.4
+<details><summary>23 commits</summary>
+<p>
+
+* [`2f97b6a4b`](https://github.com/siderolabs/talos/commit/2f97b6a4b1cae2de1d814ea26f1c21bef22db3af) test: verify on-demand kernel module loading end-to-end
+* [`c35fd8cef`](https://github.com/siderolabs/talos/commit/c35fd8cef8d1f93ceca4cac4c45d56d9f1bf162b) feat: load kernel modules on demand via the modprobe usermode helper
+* [`bf34a0ebb`](https://github.com/siderolabs/talos/commit/bf34a0ebb8e50fcbd29f54cac01fd348e3e7a5af) feat: add EDAC_10NM kernel module
+* [`25c16761c`](https://github.com/siderolabs/talos/commit/25c16761c60ff0a1a0064300ae7887dd58cf0e19) fix: race with platform accessing metadata volumes
+* [`b88cda936`](https://github.com/siderolabs/talos/commit/b88cda936accea2fc0462ae2f44787376ab5e19d) feat: update etcd to 3.7.3
+* [`34d408094`](https://github.com/siderolabs/talos/commit/34d4080941a1befed1b01280ca54afbff4e698ff) fix: pull images over HTTP/1.1
+* [`2dc3686b1`](https://github.com/siderolabs/talos/commit/2dc3686b1196502150683e888abf485590d16c9a) fix: preserve project quotas on temporary growfs mounts
+* [`bffcf9b48`](https://github.com/siderolabs/talos/commit/bffcf9b48afcf47c5471cec835391ce865f8de7d) fix: correctly pass hostname to the proxy in gRPC dial
+* [`6b3ea905b`](https://github.com/siderolabs/talos/commit/6b3ea905b348edae0100a4eb0f6f53204b83c03f) fix: preserve rejected edits in talosctl edit
+* [`b6e5fa2e2`](https://github.com/siderolabs/talos/commit/b6e5fa2e2413a027484ffc437243bc777784177d) feat: implement RAID1 (md-raid) support in BIOS mode
+* [`fb2b077b5`](https://github.com/siderolabs/talos/commit/fb2b077b5af45aadb31587f1ad4f2ec79a03c09e) fix: ignore netlink recoverable errors in watchers
+* [`2f7efe81b`](https://github.com/siderolabs/talos/commit/2f7efe81bea23dbe9a963ec5af1e288410e305fe) fix: skip kexec when the kernel finds no free memory region
+* [`d6488456b`](https://github.com/siderolabs/talos/commit/d6488456b6f4a0fac636b7b968a98c02bcaa0f31) fix: provide proper concurrency for health checks
+* [`03075319b`](https://github.com/siderolabs/talos/commit/03075319b860f70dcb90fc68d2b30cd9cc2248e5) fix: preserve omitted CEL expressions when patching configs
+* [`aca5abc16`](https://github.com/siderolabs/talos/commit/aca5abc169c4e18e0b51ecb4d441f08bac0180e8) fix: skip EFI boot entries that cannot be decoded
+* [`9c69456c9`](https://github.com/siderolabs/talos/commit/9c69456c998ed263c2ff03f063a7ebea09ada019) fix: read VMware guestinfo with SecureBoot enabled
+* [`6c6fec7d5`](https://github.com/siderolabs/talos/commit/6c6fec7d522bd757151e0cc1a034008df5a88ca6) fix: parse EFI load options with an empty description
+* [`e0002327b`](https://github.com/siderolabs/talos/commit/e0002327b9a46a24bfb617a4cf1f22f12a50d5aa) fix: route pod CIDRs matching the KubeSpan ULA purpose byte
+* [`449f82d46`](https://github.com/siderolabs/talos/commit/449f82d466edbd88bfd659300e61555823db894a) fix: wait for inactive MD arrays before volume discovery
+* [`824b0f976`](https://github.com/siderolabs/talos/commit/824b0f9766212712929ed41cde4c619dda7df64d) test: reproduce degraded md boot array reboot
+* [`ce2fa4132`](https://github.com/siderolabs/talos/commit/ce2fa41325facd0498f20caa4e01e71777a28388) fix: high cpu usage by the bridge keepalive dummy qemu vm
+* [`51eda9a51`](https://github.com/siderolabs/talos/commit/51eda9a51c4df094db750f93950ee11aeabe70e6) chore: add qemu-ip-family integration suite
+* [`e700de0c0`](https://github.com/siderolabs/talos/commit/e700de0c026adc130ed4237e9efca4de0c2762b3) feat: update Linux 6.18.58, Go 1.26.10
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>6 commits</summary>
+<p>
+
+* [`f4bda77`](https://github.com/siderolabs/pkgs/commit/f4bda77bb9f8202cac8443a7284ce1c7aa129f38) feat: update Linux to 6.18.58
+* [`a068a03`](https://github.com/siderolabs/pkgs/commit/a068a03bc66383b955e8384c96528d213e3c1f77) feat: enable EDAC_10NM kernel option
+* [`ec11950`](https://github.com/siderolabs/pkgs/commit/ec119504d705475ebc7c51c1840ef4fcbca2728b) fix: restore ACPI power button
+* [`42b6fe2`](https://github.com/siderolabs/pkgs/commit/42b6fe258b648e1d59513a23e1f1ef5a5d8e58d4) feat: update tools/toolchain
+* [`2ec10eb`](https://github.com/siderolabs/pkgs/commit/2ec10ebdb2bf210d08ec222d21a453806dfc9d53) chore: update DRBD compat
+* [`643b731`](https://github.com/siderolabs/pkgs/commit/643b731b6193e1593ea2c2b7711a9dd5048c0281) feat: update Linux to 6.18.57
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`8dad45e`](https://github.com/siderolabs/tools/commit/8dad45ecea6483e25a3b680ed710e6cfa98c4534) feat: update ca-certificates to 2026-10-20
+* [`c6b3f5c`](https://github.com/siderolabs/tools/commit/c6b3f5c3c0a06d8ab9cdfa801a718f9d02988f9c) chore: update the toolchain
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**     v1.14.0-42-g5fa47d1 -> v1.14.0-48-gf4bda77
+* **github.com/siderolabs/tools**    v1.14.0-9-g6b71647 -> v1.14.0-11-g8dad45e
+* **go.etcd.io/etcd/api/v3**         v3.7.2 -> v3.7.3
+* **go.etcd.io/etcd/client/pkg/v3**  v3.7.2 -> v3.7.3
+* **go.etcd.io/etcd/client/v3**      v3.7.2 -> v3.7.3
+* **go.etcd.io/etcd/etcdutl/v3**     v3.7.2 -> v3.7.3
+* **golang.org/x/net**               v0.60.0 -> v0.61.0
+* **golang.org/x/sync**              v0.23.0 -> v0.24.0
+* **golang.org/x/sys**               v0.48.0 -> v0.49.0
+* **golang.org/x/term**              v0.46.0 -> v0.47.0
+* **golang.org/x/text**              v0.42.0 -> v0.43.0
+
+Previous release can be found at [v1.14.3](https://github.com/siderolabs/talos/releases/tag/v1.14.3)
+
 ## [Talos 1.14.4](https://github.com/siderolabs/talos/releases/tag/v1.14.4) (2026-10-16)
 
 Welcome to the v1.14.4 release of Talos!
