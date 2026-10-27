@@ -88,6 +88,7 @@ kernel/drivers/hid/usbhid/usbhid.ko
 kernel/drivers/hv/hv_balloon.ko
 kernel/drivers/hv/hv_utils.ko
 kernel/drivers/hwmon/acpi_power_meter.ko
+kernel/drivers/hwmon/applesmc.ko
 kernel/drivers/hwmon/coretemp.ko
 kernel/drivers/hwmon/drivetemp.ko
 kernel/drivers/hwmon/fam15h_power.ko
