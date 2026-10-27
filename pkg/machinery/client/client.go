@@ -187,7 +187,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.ContentLibraryClient = machineapi.NewContentLibraryServiceClient(c.conn)
 
 	c.Inspect = &InspectClient{c.InspectClient}
-	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
+	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn), c.options.stateOptions...))
 
 	return c, nil
 }

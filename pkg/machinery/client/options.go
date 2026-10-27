@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
 	"github.com/siderolabs/crypto/x509"
 	"google.golang.org/grpc"
 
@@ -26,6 +27,7 @@ type Options struct {
 	configContext     *clientconfig.Context
 	tlsConfig         *tls.Config
 	grpcDialOptions   []grpc.DialOption
+	stateOptions      []client.AdapterOption
 
 	contextOverride    string
 	contextOverrideSet bool
@@ -82,6 +84,15 @@ func WithDefaultGRPCDialOptions() OptionFunc {
 func WithGRPCDialOptions(opts ...grpc.DialOption) OptionFunc {
 	return func(o *Options) error {
 		o.grpcDialOptions = append(o.grpcDialOptions, opts...)
+
+		return nil
+	}
+}
+
+// WithStateOptions adds the given options to the COSI state of the Client.
+func WithStateOptions(opts ...client.AdapterOption) OptionFunc {
+	return func(o *Options) error {
+		o.stateOptions = append(o.stateOptions, opts...)
 
 		return nil
 	}
