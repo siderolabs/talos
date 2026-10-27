@@ -55,6 +55,10 @@ func (resolver *NeighborResolver) ResolvePeers(
 			peer.BindInterface = peer.Link
 		}
 
+		if neighbor.Address.IsValid() {
+			peer.LocalAddress = runtimeState.numberedPeerSource(neighbor.Address, config.VRF)
+		}
+
 		resolved = append(resolved, peer)
 	}
 
