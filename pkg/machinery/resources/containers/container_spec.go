@@ -334,13 +334,13 @@ func (dependsOn ContainerDependsOnSpec) Ready(
 ) ([]string, optional.Optional[time.Duration], error) {
 	var waitingFor []string
 
-	// dependsOn.networks
-	unmetNetworks, err := dependsOn.NetworksReady(ctx, r)
+	// dependsOn.network
+	unmetNetwork, err := dependsOn.NetworkReady(ctx, r)
 	if err != nil {
 		return nil, optional.None[time.Duration](), fmt.Errorf("failed to check network ready: %w", err)
 	}
 
-	waitingFor = append(waitingFor, unmetNetworks...)
+	waitingFor = append(waitingFor, unmetNetwork...)
 
 	// dependsOn.time
 	timeReady, err := dependsOn.TimeReady(ctx, r)
@@ -419,10 +419,10 @@ func (dependsOn ContainerDependsOnSpec) TimeReady(ctx context.Context, r control
 	return status.TypedSpec().Synced, nil
 }
 
-// NetworksReady reports the declared dependsOn.networks conditions that are not yet satisfied.
+// NetworkReady reports the declared dependsOn.network conditions that are not yet satisfied.
 //
 // A status resource that doesn't exist yet counts every declared condition as not satisfied.
-func (dependsOn ContainerDependsOnSpec) NetworksReady(ctx context.Context, r controller.Reader) ([]string, error) {
+func (dependsOn ContainerDependsOnSpec) NetworkReady(ctx context.Context, r controller.Reader) ([]string, error) {
 	if dependsOn.Networks == nil {
 		return nil, nil
 	}
@@ -505,7 +505,7 @@ func (dependsOn ContainerDependsOnSpec) ContainersReady(
 	return waitingFor, wakeUpAfter, nil
 }
 
-// NetworkConditionMet reports whether one declared dependsOn.networks condition is satisfied.
+// NetworkConditionMet reports whether one declared dependsOn.network condition is satisfied.
 func (ContainerDependsOnSpec) NetworkConditionMet(status *network.Status, condition string) bool {
 	if status == nil {
 		return false

@@ -143,8 +143,8 @@ type ContainerRunAsConfig interface {
 type ContainerDependsOnConfig interface {
 	// Paths which must exist on the host.
 	Paths() []string
-	// Networks readiness conditions, e.g. addresses, connectivity.
-	Networks() []string
+	// Network readiness conditions, e.g. addresses, connectivity.
+	Network() []string
 	// Time is true if the clock must be synchronized.
 	Time() bool
 	// Containers which must be running first, by document name.

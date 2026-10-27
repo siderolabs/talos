@@ -55,6 +55,38 @@ image: nginx
 	assert.Empty(t, cfg.DependsOn().Paths())
 }
 
+func TestContainerConfigDependsOnDeprecatedNetworks(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		doc      string
+		expected []string
+	}{
+		{
+			name:     "networks only",
+			doc:      "dependsOn:\n  networks: [addresses]",
+			expected: []string{"addresses"},
+		},
+		{
+			name:     "network wins over networks",
+			doc:      "dependsOn:\n  network: [connectivity]\n  networks: [addresses]",
+			expected: []string{"connectivity"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := load(t, "apiVersion: v1alpha1\nkind: ContainerConfig\nname: nginx\nimage: nginx\n"+test.doc+"\n")
+
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, cfg.DependsOn().Network())
+		})
+	}
+}
+
 func TestContainerConfigDigestPinnedDoesNotWarn(t *testing.T) {
 	t.Parallel()
 
@@ -109,7 +141,7 @@ resources:
 dependsOn:
   paths:
     - /var/mnt/director-data
-  networks:
+  network:
     - addresses
   time: true
 `)
@@ -313,8 +345,13 @@ mounts:
 		},
 		{
 			name:        "unknown network condition",
+			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  network: [dns]",
+			expectedErr: `unsupported dependsOn.network condition "dns"`,
+		},
+		{
+			name:        "unknown network condition via deprecated networks",
 			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  networks: [dns]",
-			expectedErr: `unsupported dependsOn.networks condition "dns"`,
+			expectedErr: `unsupported dependsOn.network condition "dns"`,
 		},
 		{
 			name:        "relative dependsOn path",

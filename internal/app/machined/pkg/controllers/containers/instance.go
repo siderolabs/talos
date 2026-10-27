@@ -61,7 +61,7 @@ func (ctrl *InstanceController) Inputs() []controller.Input {
 			Type:      containers.ContainerStatusType,
 			Kind:      controller.InputWeak,
 		},
-		// Gate on dependsOn.networks.
+		// Gate on dependsOn.network.
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.StatusType,

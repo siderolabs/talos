@@ -436,7 +436,7 @@ func (ContainerDependsOn) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Host paths which must exist before the container starts." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
-				Name:        "networks",
+				Name:        "network",
 				Type:        "[]string",
 				Note:        "",
 				Description: "Network readiness conditions which must be satisfied.",
@@ -448,6 +448,7 @@ func (ContainerDependsOn) Doc() *encoder.Doc {
 					"etcfiles",
 				},
 			},
+			{},
 			{
 				Name:        "time",
 				Type:        "bool",

@@ -456,7 +456,7 @@ func (suite *InstanceSuite) TestGatesOnNetworkAndTime() {
 	suite.assertInstance(0)
 }
 
-// assertNetworkConditionStarts pins one dependsOn.networks condition to the network.Status field it
+// assertNetworkConditionStarts pins one dependsOn.network condition to the network.Status field it
 // reads.
 //
 // Only that one field is ever set, so a condition reading the wrong field never becomes ready and

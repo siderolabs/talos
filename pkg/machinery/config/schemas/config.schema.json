@@ -1479,14 +1479,14 @@
           "markdownDescription": "Host paths which must exist before the container starts.\n\nPolled, so a path that never appears leaves the container waiting indefinitely.",
           "x-intellij-html-description": "\u003cp\u003eHost paths which must exist before the container starts.\u003c/p\u003e\n\n\u003cp\u003ePolled, so a path that never appears leaves the container waiting indefinitely.\u003c/p\u003e\n"
         },
-        "networks": {
+        "network": {
           "enum": [
             "addresses",
             "connectivity",
             "hostname",
             "etcfiles"
           ],
-          "title": "networks",
+          "title": "network",
           "description": "Network readiness conditions which must be satisfied.\n",
           "markdownDescription": "Network readiness conditions which must be satisfied.",
           "x-intellij-html-description": "\u003cp\u003eNetwork readiness conditions which must be satisfied.\u003c/p\u003e\n"

@@ -58,7 +58,7 @@ dependsOn:
     paths:
         - /var/mnt/web-content
     # Network readiness conditions which must be satisfied.
-    networks:
+    network:
         - addresses
     time: true # Whether the clock must be synchronized before the container starts.
 {{< /highlight >}}
@@ -293,7 +293,7 @@ ContainerDependsOn gates container startup on external conditions.
 paths:
     - /var/mnt/web-content
 {{< /highlight >}}</details> | |
-|`networks` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
+|`network` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
 |`time` |bool |Whether the clock must be synchronized before the container starts.  | |
 |`containers` |[]string |Other containers, by document name, which must be running first.<br><br>Cycles are rejected when the machine configuration is applied.  | |
 

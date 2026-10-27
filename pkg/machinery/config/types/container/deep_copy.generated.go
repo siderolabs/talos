@@ -98,6 +98,10 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			cp.DependsOnConfig.PathsConfig = make([]string, len(o.DependsOnConfig.PathsConfig))
 			copy(cp.DependsOnConfig.PathsConfig, o.DependsOnConfig.PathsConfig)
 		}
+		if o.DependsOnConfig.NetworkConfig != nil {
+			cp.DependsOnConfig.NetworkConfig = make([]string, len(o.DependsOnConfig.NetworkConfig))
+			copy(cp.DependsOnConfig.NetworkConfig, o.DependsOnConfig.NetworkConfig)
+		}
 		if o.DependsOnConfig.NetworksConfig != nil {
 			cp.DependsOnConfig.NetworksConfig = make([]string, len(o.DependsOnConfig.NetworksConfig))
 			copy(cp.DependsOnConfig.NetworksConfig, o.DependsOnConfig.NetworksConfig)

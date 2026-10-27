@@ -147,9 +147,9 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		Limits: &containercfg.ContainerResourceLimits{CPU: "1500m", Memory: "512MiB", Swap: "0"},
 	}
 	doc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		PathsConfig:    []string{"/var/mnt/data"},
-		NetworksConfig: []string{"addresses"},
-		TimeConfig:     new(true),
+		PathsConfig:   []string{"/var/mnt/data"},
+		NetworkConfig: []string{"addresses"},
+		TimeConfig:    new(true),
 	}
 	doc.RunAsConfig = &containercfg.ContainerRunAs{
 		RunAsUID: new(int32(1000)),

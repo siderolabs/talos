@@ -159,9 +159,9 @@ func exampleContainerConfigV1Alpha1() *ContainerConfigV1Alpha1 {
 		},
 	}
 	cfg.DependsOnConfig = &ContainerDependsOn{
-		PathsConfig:    []string{"/var/mnt/web-content"},
-		NetworksConfig: []string{"addresses"},
-		TimeConfig:     new(true),
+		PathsConfig:   []string{"/var/mnt/web-content"},
+		NetworkConfig: []string{"addresses"},
+		TimeConfig:    new(true),
 	}
 
 	return cfg

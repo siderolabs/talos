@@ -19,7 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 )
 
-// validNetworkConditions are the network readiness conditions accepted in dependsOn.networks.
+// validNetworkConditions are the network readiness conditions accepted in dependsOn.network.
 //
 // These mirror the conditions the network subsystem already reports.
 var validNetworkConditions = []string{"addresses", "connectivity", "hostname", "etcfiles"}
@@ -195,6 +195,10 @@ type ContainerDependsOn struct {
 	//     - connectivity
 	//     - hostname
 	//     - etcfiles
+	NetworkConfig []string `yaml:"network,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `network` instead.
 	NetworksConfig []string `yaml:"networks,omitempty"`
 	//   description: |
 	//     Whether the clock must be synchronized before the container starts.
@@ -209,8 +213,16 @@ type ContainerDependsOn struct {
 // Paths implements config.ContainerDependsOnConfig interface.
 func (d *ContainerDependsOn) Paths() []string { return d.PathsConfig }
 
-// Networks implements config.ContainerDependsOnConfig interface.
-func (d *ContainerDependsOn) Networks() []string { return d.NetworksConfig }
+// Network implements config.ContainerDependsOnConfig interface.
+//
+// The deprecated `networks` key is used only when `network` is empty.
+func (d *ContainerDependsOn) Network() []string {
+	if len(d.NetworkConfig) > 0 {
+		return d.NetworkConfig
+	}
+
+	return d.NetworksConfig
+}
 
 // Time implements config.ContainerDependsOnConfig interface.
 func (d *ContainerDependsOn) Time() bool {
@@ -230,10 +242,10 @@ func (d *ContainerDependsOn) Validate(selfName string) error {
 		validationErrors = errors.Join(validationErrors, ValidateAbsPath("dependsOn.paths entry", path))
 	}
 
-	for _, condition := range d.NetworksConfig {
+	for _, condition := range d.Network() {
 		if !slices.Contains(validNetworkConditions, condition) {
 			validationErrors = errors.Join(validationErrors,
-				fmt.Errorf("unsupported dependsOn.networks condition %q", condition))
+				fmt.Errorf("unsupported dependsOn.network condition %q", condition))
 		}
 	}
 

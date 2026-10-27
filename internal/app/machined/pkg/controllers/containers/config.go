@@ -184,7 +184,7 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 	dependsOn := containerConfig.DependsOn()
 	containerSpecSpec.DependsOn = containers.ContainerDependsOnSpec{
 		Paths:      dependsOn.Paths(),
-		Networks:   dependsOn.Networks(),
+		Networks:   dependsOn.Network(),
 		Time:       dependsOn.Time(),
 		Containers: dependsOn.Containers(),
 	}

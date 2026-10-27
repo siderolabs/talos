@@ -329,6 +329,23 @@ resources:
 The value maps onto cgroup v2 `memory.swap.max`. Zero keeps the container out of swap entirely, so its memory ceiling is enforced by the OOM killer rather than by swapping; unset leaves the node's swap available to it.
 """
 
+    [notes.container_depends_on_network]
+        title = "ContainerConfig `dependsOn.networks` Deprecated"
+        description = """\
+The `dependsOn.networks` field of the `ContainerConfig` document has been renamed to `dependsOn.network`, aligning it with extension services.
+The `networks` key is still accepted but deprecated, and is ignored when `network` is set; migrate ContainerConfigs to `network`.
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: web
+image: docker.io/library/nginx:1.27
+dependsOn:
+  network:
+    - addresses
+```
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\
