@@ -19,6 +19,7 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.18.63
+Flannel CNI: 0.28.10
 
 Talos is built with Go 1.26.11.
 """
