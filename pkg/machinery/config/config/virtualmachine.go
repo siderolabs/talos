@@ -242,10 +242,10 @@ type VirtualMachineAgentConfig interface {
 // VirtualMachineCloudInitConfig defines the NoCloud seed handed to the guest.
 //
 // The three payloads are the three files of a NoCloud seed, passed through verbatim: Talos renders
-// them into the seed and does not interpret them. Library identifies where the generated ISO is stored.
+// them into the seed and does not interpret them. The generated ISO lives in a storage pool.
 type VirtualMachineCloudInitConfig interface {
-	// Library is the target content library for the generated NoCloud ISO.
-	Library() string
+	// Pool holds the generated seed for the guest.
+	Pool() string
 	// MetaData is the `meta-data` file, carrying the guest's identity.
 	MetaData() string
 	// UserData is the `user-data` file, carrying what the operator wants done.

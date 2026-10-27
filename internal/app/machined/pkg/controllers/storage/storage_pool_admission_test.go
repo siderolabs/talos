@@ -208,7 +208,7 @@ func TestPoolUncertainRetargetSurvivesRevertAndLateDaemonCompletion(t *testing.T
 		}
 	})
 	fixture.Require().NoError(fixture.Runtime().RegisterController(&storagectrl.StoragePoolController{
-		Open: func(_ context.Context) (libvirtstorage.Client, error) { return client, nil },
+		Open: func(_ context.Context) (libvirtstorage.PoolClient, error) { return client, nil },
 	}))
 
 	fixture.assertReady("u-vms")
@@ -306,7 +306,7 @@ func TestPoolUncertainRemovalSurvivesRecreationAndLateCompletion(t *testing.T) {
 		}
 	})
 	fixture.Require().NoError(fixture.Runtime().RegisterController(&storagectrl.StoragePoolController{
-		Open: func(_ context.Context) (libvirtstorage.Client, error) { return client, nil },
+		Open: func(_ context.Context) (libvirtstorage.PoolClient, error) { return client, nil },
 	}))
 
 	fixture.assertReady("u-vms")
@@ -472,7 +472,7 @@ func TestPoolFinishedRetargetPublicationFailureRetainsExclusion(t *testing.T) {
 
 	fixture.Require().NoError(fixture.Runtime().RegisterController(&poolPublicationController{
 		Controller: &storagectrl.StoragePoolController{
-			Open: func(context.Context) (libvirtstorage.Client, error) { return client, nil },
+			Open: func(context.Context) (libvirtstorage.PoolClient, error) { return client, nil },
 		},
 		client:  client,
 		entered: entered,
@@ -589,7 +589,7 @@ func TestPoolUnknownNilEnsureCannotPublishReady(t *testing.T) {
 
 	gate := &poolFirstFailure{
 		Controller: &storagectrl.StoragePoolController{
-			Open: func(context.Context) (libvirtstorage.Client, error) { return client, nil },
+			Open: func(context.Context) (libvirtstorage.PoolClient, error) { return client, nil },
 		},
 		failed:  make(chan error, 1),
 		release: make(chan struct{}),
@@ -873,7 +873,7 @@ func TestPoolFinishedRemovalErrorPublishesNonReadyBeforeUnfencing(t *testing.T) 
 		release:    make(chan struct{}),
 	}
 	barrier := &poolReleaseBarrier{
-		Controller: &storagectrl.StoragePoolController{Open: func(context.Context) (libvirtstorage.Client, error) { return client, nil }},
+		Controller: &storagectrl.StoragePoolController{Open: func(context.Context) (libvirtstorage.PoolClient, error) { return client, nil }},
 		entered:    make(chan struct{}),
 		release:    make(chan struct{}),
 	}
@@ -1012,7 +1012,7 @@ func TestPoolStopFailureOutcomeAndPublicationMatrix(t *testing.T) {
 			client := &stopFaultClient{poolClient: fixture.client, outcome: tc.outcome, nilError: tc.nilError}
 			fault := &stopPublicationFault{
 				Controller: &storagectrl.StoragePoolController{
-					Open: func(context.Context) (libvirtstorage.Client, error) { return client, nil },
+					Open: func(context.Context) (libvirtstorage.PoolClient, error) { return client, nil },
 				},
 				client: client,
 			}
@@ -1136,7 +1136,7 @@ func TestPoolFinishedStopErrorPublishesBeforeUnfencingAndRetries(t *testing.T) {
 
 	gate := &poolFirstFailure{
 		Controller: &storagectrl.StoragePoolController{
-			Open: func(context.Context) (libvirtstorage.Client, error) { return client, nil },
+			Open: func(context.Context) (libvirtstorage.PoolClient, error) { return client, nil },
 		},
 		failed:  make(chan error, 1),
 		release: make(chan struct{}),

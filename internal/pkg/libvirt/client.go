@@ -56,7 +56,7 @@ func NewWithConfig(config Config) *Client {
 }
 
 // Storage connects to the modular storage daemon with the caller's context.
-func (c *Client) Storage(ctx context.Context) (storage.Client, error) {
+func (c *Client) Storage(ctx context.Context) (storage.PoolClient, error) {
 	return c.storage.Open(ctx)
 }
 
@@ -64,8 +64,8 @@ func (c *Client) Storage(ctx context.Context) (storage.Client, error) {
 //
 // Creating or growing a volume is real filesystem work behind an RPC, unlike the pool metadata
 // calls Storage is sized for.
-func (c *Client) StorageVolumes(ctx context.Context) (storage.Client, error) {
-	return c.storage.OpenWithTimeout(ctx, storage.VolumeOperationTimeout)
+func (c *Client) StorageVolumes(ctx context.Context) (storage.VolumeClient, error) {
+	return c.storage.OpenVolumes(ctx)
 }
 
 // Domain connects to the modular QEMU daemon with the caller's context.

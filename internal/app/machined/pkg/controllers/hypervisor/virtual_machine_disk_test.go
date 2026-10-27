@@ -15,10 +15,12 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
+	cas "github.com/siderolabs/talos/internal/pkg/contentlibrary"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -55,7 +57,7 @@ func (suite *VirtualMachineDiskSuite) library() string {
 	suite.T().Helper()
 
 	path := suite.T().TempDir()
-	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte(isoContents), 0o600))
+	writeLibraryImage(suite.T(), path, "talos.iso", isoContents)
 
 	status := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName)
 	*status.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
@@ -66,6 +68,25 @@ func (suite *VirtualMachineDiskSuite) library() string {
 	suite.Create(status)
 
 	return path
+}
+
+func writeLibraryImage(t *testing.T, path, name, contents string) {
+	t.Helper()
+
+	root, err := os.OpenRoot(path)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, root.Close()) })
+
+	staged, err := os.CreateTemp(path, ".fixture-*.upload")
+	require.NoError(t, err)
+	_, err = staged.WriteString(contents)
+	require.NoError(t, err)
+	require.NoError(t, staged.Sync())
+	require.NoError(t, staged.Close())
+
+	hash := digest.SHA256.FromString(contents).String()
+	require.NoError(t, cas.Publish(root, filepath.Base(staged.Name()), name, hash))
+	require.NoError(t, os.Remove(staged.Name()))
 }
 
 func (suite *VirtualMachineDiskSuite) createVM(disks ...hypervisor.VirtualMachineDiskSpec) {
@@ -90,9 +111,11 @@ func (suite *VirtualMachineDiskSuite) createVM(disks ...hypervisor.VirtualMachin
 
 func cdromDiskSpec(name, library, file, dgst string) hypervisor.VirtualMachineDiskSpec {
 	return hypervisor.VirtualMachineDiskSpec{
-		Name: name,
-		Bus:  "sata",
-		Type: "cdrom",
+		Name:   name,
+		Pool:   "pool1",
+		Format: "raw",
+		Bus:    "sata",
+		Type:   "cdrom",
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{
 				Library: library,
@@ -125,23 +148,322 @@ func (suite *VirtualMachineDiskSuite) assertDisk(disk string, check func(hypervi
 		})
 }
 
-func (suite *VirtualMachineDiskSuite) TestResolvesCDROMInPlace() {
-	path := suite.library()
-	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", ""))
+func (suite *VirtualMachineDiskSuite) TestCopiesCDROMIntoPoolAndSurvivesLibraryRemoval() {
+	libraryPath := suite.library()
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+	disk.Pool = "pool1"
+	disk.Format = "raw"
+	suite.createVM(disk)
+
+	var name string
 
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
-		asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
+		name = spec.Volume
+		asrt.NotEmpty(name)
+	})
+
+	id := storage.StoragePoolVolumeID("pool1", name)
+	ctest.AssertResource(suite, id, func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		if asrt.NotNil(spec.TypedSpec().Copy) {
+			asrt.Equal(filepath.Join(libraryPath, "objects", "sha256", digest.SHA256.FromString(isoContents).Encoded()), spec.TypedSpec().Copy.Source)
+		}
+
+		asrt.Equal("raw", spec.TypedSpec().Format)
+	})
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+	})
+	suite.assertLibraryHeld(true)
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName)
+	_, err := suite.State().Teardown(suite.Ctx(), library.Metadata())
+	suite.Require().NoError(err)
+
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id)
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool:     "pool1",
+		Name:     name,
+		Path:     "/pool1/" + name,
+		Format:   "raw",
+		Capacity: uint64(len(isoContents)),
+		Phase:    storage.StoragePoolVolumePhaseObservationUnavailable,
+	}
+	suite.Create(volume)
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseObservationUnavailable, spec.Phase)
+	})
+	suite.assertLibraryHeld(true)
+	ctest.UpdateWithConflicts(suite, volume, func(current *storage.StoragePoolVolumeStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolVolumePhaseReady
+
+		return nil
+	})
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.Equal(volume.TypedSpec().Path, spec.SourcePath)
+		asrt.True(spec.ReadOnly)
+	})
+	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, suite.diskStatusID("install"))
+	suite.AddFinalizer(status.Metadata(), "consumer")
+	suite.assertLibraryHeld(false)
+
+	suite.Destroy(library)
+	ctest.AssertNoResource[*hypervisor.ContentLibraryStatus](suite, libraryName)
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.Equal(volume.TypedSpec().Path, spec.SourcePath)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestChangedCDROMIdentityDoesNotAttachOldCopy() {
+	path := suite.library()
+	first := cdromDiskSpec("install", libraryName, "talos.iso", digest.SHA256.FromString(isoContents).String())
+	first.Pool, first.Format = "pool1", "raw"
+	suite.createVM(first)
+
+	var oldName string
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		oldName = spec.Volume
+		asrt.NotEmpty(oldName)
+	})
+
+	oldID := storage.StoragePoolVolumeID(first.Pool, oldName)
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, oldID)
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool: first.Pool, Name: oldName, Path: "/pool1/" + oldName, Format: "raw", Phase: storage.StoragePoolVolumePhaseReady,
+	}
+	suite.Create(volume)
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(volume.TypedSpec().Path, spec.SourcePath)
+	})
+
+	writeLibraryImage(suite.T(), path, "different.iso", "different ISO bytes")
+
+	second := first
+	second.Provision.FromImage = &hypervisor.VirtualMachineDiskFromImageSpec{
+		Library: libraryName, File: "different.iso", Digest: digest.SHA256.FromString("different ISO bytes").String(),
+	}
+
+	ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{second}
+
+		return nil
+	})
+	suite.disks["install"] = second
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.NotEqual(oldName, spec.Volume)
+		asrt.NotEqual(volume.TypedSpec().Path, spec.SourcePath)
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestPublishesCopyAdoptionWithoutLibraryOrEphemeralVolume() {
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+	disk.Pool, disk.Format = "pool1", "raw"
+	suite.createVM(disk)
+
+	var volumeName string
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		volumeName = spec.Volume
+		asrt.NotEmpty(volumeName)
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+	})
+	ctest.AssertResource(suite, storage.StoragePoolVolumeID(disk.Pool, volumeName), func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		if asrt.NotNil(spec.TypedSpec().Copy) {
+			asrt.Empty(spec.TypedSpec().Copy.Source)
+		}
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestAdoptsReadyCopyWithoutSourceLibrary() {
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+	disk.Pool, disk.Format = "pool1", "raw"
+	suite.createVM(disk)
+
+	var name string
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		name = spec.Volume
+		asrt.NotEmpty(name)
+	})
+
+	id := storage.StoragePoolVolumeID(disk.Pool, name)
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id)
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool: disk.Pool, Name: name, Path: "/pool1/" + name, Format: "raw", Phase: storage.StoragePoolVolumePhaseReady,
+	}
+	suite.Create(volume)
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.Equal(volume.TypedSpec().Path, spec.SourcePath)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestRejectsLinkedCDROMWithoutCopying() {
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+	disk.Pool, disk.Format = "pool1", "raw"
+	disk.Provision.FromImage.Mode = "linked"
+	suite.createVM(disk)
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+		asrt.Contains(spec.Error, "unsupported image mode")
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestDoesNotAdoptUnrelatedVolumeRequest() {
+	suite.library()
+	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", ""))
+
+	var volumeName string
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.NotEmpty(spec.Volume)
+		volumeName = spec.Volume
+	})
+
+	request := storage.NewStoragePoolVolumeSpec(storage.NamespaceName, storage.StoragePoolVolumeID("pool1", volumeName))
+	ctest.AssertResource(suite, request.Metadata().ID(), func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.NotNil(spec.TypedSpec().Copy)
+	})
+	ctest.UpdateWithConflicts(suite, request, func(spec *storage.StoragePoolVolumeSpec) error {
+		spec.TypedSpec().Copy = nil
+
+		return nil
+	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	ctest.UpdateWithConflicts(suite, vm, func(spec *hypervisor.VirtualMachineSpec) error {
+		spec.TypedSpec().Memory.Size++
+
+		return nil
+	})
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+		asrt.Contains(spec.Error, "belongs to another request")
+	})
+	ctest.AssertResource(suite, request.Metadata().ID(), func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Nil(spec.TypedSpec().Copy)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestDoesNotAdoptAnotherControllersReadyCopy() {
+	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+	suite.createVM(disk)
+
+	var name string
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		name = spec.Volume
+		asrt.NotEmpty(name)
+	})
+
+	id := storage.StoragePoolVolumeID(disk.Pool, name)
+
+	suite.Destroy(hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName))
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](suite, suite.diskStatusID("install"))
+	ctest.AssertNoResource[*storage.StoragePoolVolumeSpec](suite, id)
+
+	request := storage.NewStoragePoolVolumeSpec(storage.NamespaceName, id)
+	*request.TypedSpec() = storage.StoragePoolVolumeSpecSpec{
+		Pool: disk.Pool, Name: name, Format: "raw", Copy: &storage.StoragePoolVolumeCopySpec{},
+	}
+	suite.Create(request, state.WithCreateOwner("another.Controller"))
+
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id)
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool: disk.Pool, Name: name, Path: "/pool1/" + name, Format: "raw", Phase: storage.StoragePoolVolumePhaseReady,
+	}
+	suite.Create(volume)
+	suite.createVM(disk)
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+		asrt.Empty(spec.SourcePath)
+	})
+	ctest.AssertResource(suite, id, func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal("another.Controller", spec.Metadata().Owner())
+		asrt.Equal(resource.PhaseRunning, spec.Metadata().Phase())
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestDoesNotWithdrawAnotherControllersPoolCopy() {
+	const owner = "hypervisor.CloudInitISOController"
+
+	request := storage.NewStoragePoolVolumeSpec(storage.NamespaceName, storage.StoragePoolVolumeID("pool1", "other.iso"))
+	*request.TypedSpec() = storage.StoragePoolVolumeSpecSpec{
+		Pool:   "pool1",
+		Name:   "other.iso",
+		Format: "raw",
+		Copy:   &storage.StoragePoolVolumeCopySpec{},
+	}
+	suite.Create(request, state.WithCreateOwner(owner))
+	suite.AddFinalizer(request.Metadata(), "consumer")
+
+	suite.createVM(blankDiskSpec("data", "pool1", "raw", 20<<30))
+	suite.volume(vmName+"__data.raw", "raw", true)
+	suite.assertDisk("data", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+	})
+
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	ctest.UpdateWithConflicts(suite, vm, func(spec *hypervisor.VirtualMachineSpec) error {
+		spec.TypedSpec().Disks = nil
+
+		return nil
+	})
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](suite, suite.diskStatusID("data"))
+	ctest.AssertNoResource[*storage.StoragePoolVolumeSpec](suite, storage.StoragePoolVolumeID("pool1", vmName+"__data.raw"))
+	ctest.AssertResource(suite, request.Metadata().ID(), func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal(owner, spec.Metadata().Owner())
+		asrt.Equal(resource.PhaseRunning, spec.Metadata().Phase())
+		asrt.True(spec.Metadata().Finalizers().Has("consumer"))
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestRejectsWritableImageWithoutRequestingACopy() {
+	suite.library()
+
+	disk := blankDiskSpec("data", "pool1", "raw", 20<<30)
+	disk.Provision.Blank = false
+	disk.Provision.FromImage = &hypervisor.VirtualMachineDiskFromImageSpec{
+		Library: libraryName,
+		File:    "talos.iso",
+		Mode:    "copy",
+	}
+	suite.createVM(disk)
+
+	suite.assertDisk("data", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+		asrt.Contains(spec.Error, "a disk is only provisioned from provision.blank today")
+	})
+	ctest.AssertNoResource[*storage.StoragePoolVolumeSpec](suite,
+		storage.StoragePoolVolumeID("pool1", vmName+"__data.raw"))
+	suite.assertLibraryHeld(false)
+}
+
+func (suite *VirtualMachineDiskSuite) TestResolvesCDROMFromPool() {
+	suite.library()
+	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", ""))
+	path := suite.completeImageCopy("install")
+
+	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
 		asrt.Empty(spec.Error)
-		asrt.Equal(filepath.Join(path, "talos.iso"), spec.SourcePath)
+		asrt.Equal(path, spec.SourcePath)
 		asrt.Equal("raw", spec.Format)
 		asrt.True(spec.ReadOnly)
 		asrt.Equal(hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.iso"}, spec.Image)
 	})
+	suite.assertLibraryHeld(false)
 }
 
 func (suite *VirtualMachineDiskSuite) TestVerifiesDigest() {
 	suite.library()
 	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", digest.FromString(isoContents).String()))
+	suite.completeImageCopy("install")
 
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
@@ -149,13 +471,12 @@ func (suite *VirtualMachineDiskSuite) TestVerifiesDigest() {
 	})
 }
 
-// Ready is not terminal: every event must re-observe and rehash the file, even while a
-// domain holds the status. A failed observation must not release the library underneath it.
-func (suite *VirtualMachineDiskSuite) TestRevalidatesReadyImageAfterFileChange() {
+// A completed copy is independent of later source changes, even while a domain holds the disk.
+func (suite *VirtualMachineDiskSuite) TestReadyCopyDoesNotRevalidateChangedSource() {
 	path := suite.library()
 	dgst := digest.FromString(isoContents).String()
 	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", dgst))
-
+	copyPath := suite.completeImageCopy("install")
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
 	})
@@ -167,27 +488,18 @@ func (suite *VirtualMachineDiskSuite) TestRevalidatesReadyImageAfterFileChange()
 
 	for _, contents := range []string{"changed image", isoContents} {
 		suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte(contents), 0o600))
-		// File changes do not emit resource events; changing a library field triggers observation.
 		ctest.UpdateWithConflicts(suite, library, func(res *hypervisor.ContentLibraryStatus) error {
 			res.TypedSpec().Error = contents
 
 			return nil
 		})
-
 		suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
-			if contents == isoContents {
-				asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
-				asrt.Empty(spec.Error)
-				asrt.Equal(filepath.Join(path, "talos.iso"), spec.SourcePath)
-			} else {
-				asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
-				asrt.Equal(`content library "images": file "talos.iso": digest mismatch: expected `+dgst, spec.Error)
-				asrt.Empty(spec.SourcePath)
-			}
-
+			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+			asrt.Empty(spec.Error)
+			asrt.Equal(copyPath, spec.SourcePath)
 			asrt.Equal(dgst, spec.Image.Digest)
 		})
-		suite.assertLibraryHeld(true)
+		suite.assertLibraryHeld(false)
 	}
 }
 
@@ -221,7 +533,7 @@ func (suite *VirtualMachineDiskSuite) TestRejectsDirectory() {
 
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.False(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
-		asrt.Contains(spec.Error, "not a regular file")
+		asrt.Contains(spec.Error, "not a symlink")
 	})
 }
 
@@ -260,7 +572,7 @@ func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 	}, 200*time.Millisecond, 10*time.Millisecond)
 
 	path := suite.T().TempDir()
-	suite.Require().NoError(os.WriteFile(filepath.Join(path, "talos.iso"), []byte(isoContents), 0o600))
+	writeLibraryImage(suite.T(), path, "talos.iso", isoContents)
 
 	ctest.UpdateWithConflicts(suite, status, func(res *hypervisor.ContentLibraryStatus) error {
 		res.TypedSpec().Path = path
@@ -270,9 +582,10 @@ func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 		return nil
 	})
 
+	copyPath := suite.completeImageCopy("install")
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
-		asrt.Equal(filepath.Join(path, "talos.iso"), spec.SourcePath)
+		asrt.Equal(copyPath, spec.SourcePath)
 	})
 }
 
@@ -534,6 +847,7 @@ func (suite *VirtualMachineDiskSuite) TestRemovesStatusesWhenDisksDisappear() {
 	)
 
 	for _, disk := range []string{"install", "rescue"} {
+		suite.completeImageCopy(disk)
 		suite.assertDisk(disk, func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 			asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
 		})
@@ -558,17 +872,17 @@ func (suite *VirtualMachineDiskSuite) TestRemovesStatusesWhenDisksDisappear() {
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](suite, suite.diskStatusID("install"))
 }
 
-// The image is attached where it lies, so the library's mount has to stay put. The hold is taken
-// before the disk is reported ready: a ready disk is one something may start using at any moment.
-func (suite *VirtualMachineDiskSuite) TestHoldsTheLibraryItResolvedAgainst() {
+// Source holds end at publication, before a domain can acquire the independent disk.
+func (suite *VirtualMachineDiskSuite) TestReleasesSourceLibraryAfterCopy() {
 	suite.library()
 	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", ""))
+	suite.completeImageCopy("install")
 
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
 	})
 
-	suite.assertLibraryHeld(true)
+	suite.assertLibraryHeld(false)
 
 	spec, err := ctest.Get[*hypervisor.VirtualMachineSpec](suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName).Metadata())
 	suite.Require().NoError(err)
@@ -578,11 +892,11 @@ func (suite *VirtualMachineDiskSuite) TestHoldsTheLibraryItResolvedAgainst() {
 	suite.assertLibraryHeld(false)
 }
 
-// A disk status something else holds is a disk a domain is reading from. It tears down and waits,
-// and the library it resolved against waits with it.
-func (suite *VirtualMachineDiskSuite) TestKeepsAHeldStatusAndItsLibrary() {
+// A held disk status waits for detach without retaining the source library.
+func (suite *VirtualMachineDiskSuite) TestKeepsHeldStatusWithoutHoldingSourceLibrary() {
 	suite.library()
 	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", ""))
+	suite.completeImageCopy("install")
 
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
@@ -600,7 +914,7 @@ func (suite *VirtualMachineDiskSuite) TestKeepsAHeldStatusAndItsLibrary() {
 		asrt.Equal(resource.PhaseTearingDown, res.Metadata().Phase())
 	})
 
-	suite.assertLibraryHeld(true)
+	suite.assertLibraryHeld(false)
 
 	suite.RemoveFinalizer(diskStatus.Metadata(), "consumer")
 
@@ -628,6 +942,26 @@ func (suite *VirtualMachineDiskSuite) TestRefusesALibraryOnItsWayOut() {
 	suite.assertLibraryHeld(false)
 }
 
+// completeImageCopy publishes the pool observation after the controller has resolved its source.
+func (suite *VirtualMachineDiskSuite) completeImageCopy(disk string) string {
+	suite.T().Helper()
+
+	var name string
+
+	suite.assertDisk(disk, func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.NotEmpty(spec.Volume)
+		name = spec.Volume
+	})
+	ctest.AssertResource(suite, storage.StoragePoolVolumeID("pool1", name), func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		if asrt.NotNil(spec.TypedSpec().Copy) {
+			asrt.NotEmpty(spec.TypedSpec().Copy.Source)
+		}
+	})
+	suite.volume(name, "raw", true)
+
+	return "/var/mnt/u-vms/pool1/" + name
+}
+
 // assertLibraryHeld waits for the content library to carry, or to have given back, the hold the
 // disk controller takes on it.
 func (suite *VirtualMachineDiskSuite) assertLibraryHeld(held bool) {
@@ -646,6 +980,7 @@ func (suite *VirtualMachineDiskSuite) TestWaitsOutATearingDownStatusOfTheSameDis
 
 	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
 	suite.createVM(disk)
+	suite.completeImageCopy("install")
 
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.True(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)

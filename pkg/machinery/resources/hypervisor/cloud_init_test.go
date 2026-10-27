@@ -17,7 +17,7 @@ import (
 func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "guest")
 	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
-		Library:       "images",
+		Pool:          "images",
 		MetaData:      "instance-id: 1\n",
 		UserData:      "secret",
 		NetworkConfig: "version: 2\n",
@@ -30,7 +30,8 @@ func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 	require.Equal(t, "secret", vm.TypedSpec().CloudInit.UserData)
 
 	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
-	seed.TypedSpec().Library = "images"
+	seed.TypedSpec().Pool = "images"
+	seed.TypedSpec().Pool = "images"
 	seed.TypedSpec().MetaData = "metadata-secret"
 	seed.TypedSpec().UserData = "secret"
 	seed.TypedSpec().NetworkConfig = "network-secret"
@@ -41,7 +42,7 @@ func TestCloudInitSecretRedactionAndIdentity(t *testing.T) {
 	require.Equal(t, constants.Redacted, redactedSeed.MetaData)
 	require.Equal(t, constants.Redacted, redactedSeed.UserData)
 	require.Equal(t, constants.Redacted, redactedSeed.NetworkConfig)
-	require.Equal(t, "images", redactedSeed.Library)
+	require.Equal(t, "images", redactedSeed.Pool)
 	require.Equal(t, "metadata-secret", seed.TypedSpec().MetaData)
 	require.Equal(t, "network-secret", seed.TypedSpec().NetworkConfig)
 	require.Equal(t, constants.Redacted, redacted.CloudInit.MetaData)

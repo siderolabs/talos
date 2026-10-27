@@ -158,6 +158,10 @@ func (suite *ContentLibrarySuite) TestLibraryBecomesReady() {
 	suite.Assert().Empty(suite.list(ctx, name))
 }
 
+func contentLibraryObjectPath(path string, identity digest.Digest) string {
+	return filepath.Join(path, "objects", "sha256", identity.Encoded())
+}
+
 // TestUploadListDelete covers the contents of a library over its whole life: uploaded, listed,
 // stored on the volume and deleted again.
 func (suite *ContentLibrarySuite) TestUploadListDelete() {
@@ -165,48 +169,52 @@ func (suite *ContentLibrarySuite) TestUploadListDelete() {
 
 	contents := bytes.Repeat([]byte("talos"), 1024)
 
-	resp, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", false, "", bytes.NewReader(contents))
+	resp, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", "", bytes.NewReader(contents))
 	suite.Require().NoError(err)
 	suite.Assert().Equal("image.raw", resp.GetName())
 	suite.Assert().Equal(uint64(len(contents)), resp.GetSize())
 
 	files := suite.list(ctx, name)
 	suite.Require().Len(files, 1)
-	suite.Assert().Equal("image.raw", files[0].GetName())
+	suite.Assert().Equal([]string{"image.raw"}, files[0].GetNames())
+	suite.Assert().Equal(digest.SHA256.FromBytes(contents).String(), files[0].GetSha256())
 	suite.Assert().Equal(uint64(len(contents)), files[0].GetSize())
 
-	// The file really is on the volume, under the path the status reports.
+	// Both the name and immutable SHA256 object expose the uploaded bytes.
+	suite.Assert().Equal(string(contents), suite.ReadFile(ctx, contentLibraryObjectPath(path, digest.SHA256.FromBytes(contents))))
 	suite.Assert().Equal(string(contents), suite.ReadFile(ctx, filepath.Join(path, "image.raw")))
 
 	suite.Require().NoError(suite.delete(ctx, name, "image.raw"))
 
-	suite.Assert().Empty(suite.list(ctx, name))
+	files = suite.list(ctx, name)
+	suite.Require().Len(files, 1)
+	suite.Assert().Empty(files[0].GetNames())
+	suite.Assert().Equal(digest.SHA256.FromBytes(contents).String(), files[0].GetSha256())
 
 	// Deleting what is no longer there is an error, not a silent success.
 	suite.Assert().Equal(codes.NotFound, status.Code(suite.delete(ctx, name, "image.raw")))
 }
 
-// TestOverwrite covers an upload landing on a name which is already taken: it has to say so, and
-// only replace the file when it was asked to.
-func (suite *ContentLibrarySuite) TestOverwrite() {
+// TestNoOverwrite covers both identical and different bytes landing on an existing name.
+func (suite *ContentLibrarySuite) TestNoOverwrite() {
 	ctx, name, path := suite.provisionLibrary()
 
 	contents := bytes.Repeat([]byte("talos"), 1024)
 
-	_, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", false, "", bytes.NewReader(contents))
+	_, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", "", bytes.NewReader(contents))
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.ContentLibraryUpload(ctx, name, "image.raw", false, "", bytes.NewReader(contents))
+	_, err = suite.Client.ContentLibraryUpload(ctx, name, "image.raw", "", bytes.NewReader(contents))
 	suite.Assert().Equal(codes.AlreadyExists, status.Code(err))
 
 	suite.Assert().Equal(string(contents), suite.ReadFile(ctx, filepath.Join(path, "image.raw")))
 
 	replacement := bytes.Repeat([]byte("sidero"), 512)
 
-	_, err = suite.Client.ContentLibraryUpload(ctx, name, "image.raw", true, "", bytes.NewReader(replacement))
-	suite.Require().NoError(err)
+	_, err = suite.Client.ContentLibraryUpload(ctx, name, "image.raw", "", bytes.NewReader(replacement))
+	suite.Assert().Equal(codes.AlreadyExists, status.Code(err))
 
-	suite.Assert().Equal(string(replacement), suite.ReadFile(ctx, filepath.Join(path, "image.raw")))
+	suite.Assert().Equal(string(contents), suite.ReadFile(ctx, filepath.Join(path, "image.raw")))
 }
 
 // TestUploadDigest covers an upload which declares the digest of what it is carrying: the node
@@ -216,16 +224,15 @@ func (suite *ContentLibrarySuite) TestUploadDigest() {
 
 	contents := bytes.Repeat([]byte("talos"), 1024)
 
-	for _, algorithm := range []digest.Algorithm{digest.SHA256, digest.SHA512} {
+	for _, algorithm := range []digest.Algorithm{digest.SHA256} {
 		fileName := algorithm.String() + ".raw"
 
-		resp, err := suite.Client.ContentLibraryUpload(ctx, name, fileName, false, algorithm.FromBytes(contents).String(), bytes.NewReader(contents))
+		resp, err := suite.Client.ContentLibraryUpload(ctx, name, fileName, algorithm.FromBytes(contents).String(), bytes.NewReader(contents))
 		suite.Require().NoError(err)
 		suite.Assert().Equal(uint64(len(contents)), resp.GetSize())
 
-		// Both digests come back whichever one was asked for, and survive the trip through apid.
+		// The canonical SHA256 identity survives the trip through apid.
 		suite.Assert().Equal(digest.SHA256.FromBytes(contents).String(), resp.GetDigests().GetSha256())
-		suite.Assert().Equal(digest.SHA512.FromBytes(contents).String(), resp.GetDigests().GetSha512())
 
 		suite.Assert().Equal(string(contents), suite.ReadFile(ctx, filepath.Join(path, fileName)))
 	}
@@ -239,11 +246,10 @@ func (suite *ContentLibrarySuite) TestUploadReportsDigests() {
 
 	contents := bytes.Repeat([]byte("talos"), 1024)
 
-	resp, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", false, "", bytes.NewReader(contents))
+	resp, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", "", bytes.NewReader(contents))
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(digest.SHA256.FromBytes(contents).String(), resp.GetDigests().GetSha256())
-	suite.Assert().Equal(digest.SHA512.FromBytes(contents).String(), resp.GetDigests().GetSha512())
 }
 
 // TestUploadDigestMismatch covers contents which are not what the upload declared: none of them may
@@ -253,14 +259,13 @@ func (suite *ContentLibrarySuite) TestUploadDigestMismatch() {
 
 	contents := bytes.Repeat([]byte("talos"), 1024)
 
-	resp, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", false, digest.FromString("something else").String(), bytes.NewReader(contents))
+	resp, err := suite.Client.ContentLibraryUpload(ctx, name, "image.raw", digest.FromString("something else").String(), bytes.NewReader(contents))
 	suite.Assert().Equal(codes.DataLoss, status.Code(err))
 
 	// The refusal is the only thing which can carry them, and it has to survive apid to do so.
 	digests := client.ContentLibraryUploadDigests(resp, err)
 	suite.Require().NotNil(digests)
 	suite.Assert().Equal(digest.SHA256.FromBytes(contents).String(), digests.GetSha256())
-	suite.Assert().Equal(digest.SHA512.FromBytes(contents).String(), digests.GetSha512())
 
 	suite.Assert().Empty(suite.list(ctx, name))
 }
@@ -269,8 +274,8 @@ func (suite *ContentLibrarySuite) TestUploadDigestMismatch() {
 func (suite *ContentLibrarySuite) TestUploadRejectsDigests() {
 	ctx := client.WithNode(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
 
-	for _, dgst := range []string{"not-a-digest", "sha384:" + strings.Repeat("a", 96)} {
-		_, err := suite.Client.ContentLibraryUpload(ctx, "not-a-library", "image.raw", false, dgst, bytes.NewReader(nil))
+	for _, dgst := range []string{"not-a-digest", "sha384:" + strings.Repeat("a", 96), "sha512:" + strings.Repeat("a", 128)} {
+		_, err := suite.Client.ContentLibraryUpload(ctx, "not-a-library", "image.raw", dgst, bytes.NewReader(nil))
 		suite.Assert().Equalf(codes.InvalidArgument, status.Code(err), "uploading with the digest %q should have been rejected", dgst)
 	}
 }
@@ -282,8 +287,8 @@ func (suite *ContentLibrarySuite) TestRejectsNames() {
 
 	contents := bytes.Repeat([]byte("talos"), 1024)
 
-	for _, badName := range []string{"../escape.raw", "/etc/passwd", "sub/dir.raw", ".hidden", ""} {
-		_, err := suite.Client.ContentLibraryUpload(ctx, name, badName, true, "", bytes.NewReader(contents))
+	for _, badName := range []string{"../escape.raw", "/etc/passwd", "sub/dir.raw", ".hidden", "objects", ""} {
+		_, err := suite.Client.ContentLibraryUpload(ctx, name, badName, "", bytes.NewReader(contents))
 		suite.Assert().Equalf(codes.InvalidArgument, status.Code(err), "uploading %q should have been rejected", badName)
 
 		err = suite.delete(ctx, name, badName)
@@ -308,7 +313,7 @@ func (suite *ContentLibrarySuite) TestUnknownLibrary() {
 	_, err = cli.Recv()
 	suite.Assert().Equal(codes.NotFound, status.Code(err))
 
-	_, err = suite.Client.ContentLibraryUpload(ctx, "not-a-library", "image.raw", false, "", bytes.NewReader(nil))
+	_, err = suite.Client.ContentLibraryUpload(ctx, "not-a-library", "image.raw", "", bytes.NewReader(nil))
 	suite.Assert().Equal(codes.NotFound, status.Code(err))
 
 	suite.Assert().Equal(codes.NotFound, status.Code(suite.delete(ctx, "not-a-library", "image.raw")))
@@ -318,7 +323,7 @@ func (suite *ContentLibrarySuite) TestUnknownLibrary() {
 func (suite *ContentLibrarySuite) delete(nodeCtx context.Context, libraryID, name string) error {
 	_, err := suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: libraryID,
-		Name:      name,
+		Target:    &machineapi.ContentLibraryServiceDeleteRequest_Name{Name: name},
 	})
 
 	return err

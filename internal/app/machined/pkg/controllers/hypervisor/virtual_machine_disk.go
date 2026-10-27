@@ -10,7 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"maps"
+	"path/filepath"
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/volumerequest"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -84,6 +85,7 @@ func (ctrl *VirtualMachineDiskController) Inputs() []controller.Input {
 			Type:      hypervisor.VirtualMachineDiskStatusType,
 			Kind:      controller.InputWeak,
 		},
+		// Copy observations and requests whose consumers have detached.
 		{
 			Namespace: storage.NamespaceName,
 			Type:      storage.StoragePoolVolumeStatusType,
@@ -195,7 +197,52 @@ func (ctrl *VirtualMachineDiskController) teardown(
 func (ctrl *VirtualMachineDiskController) releaseVolumeSpecs(
 	ctx context.Context, r controller.ReaderWriter, pass *diskReconciliation,
 ) error {
-	return cleanup.Outputs[*storage.StoragePoolVolumeSpec](ctx, r, "storage pool volume spec", pass.volumes)
+	requests, err := safe.ReaderListAll[*storage.StoragePoolVolumeSpec](ctx, r)
+	if err != nil {
+		return fmt.Errorf("failed to list storage pool volume specs: %w", err)
+	}
+
+	for request := range requests.All() {
+		md := request.Metadata()
+		if !volumerequest.Owned(request, ctrl.Name()) {
+			continue
+		}
+
+		if _, keep := pass.volumes[md.ID()]; keep && md.Phase() == resource.PhaseRunning {
+			continue
+		}
+
+		if err := teardownPoolVolumeRequest(ctx, r, request); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func teardownPoolVolumeRequest(ctx context.Context, r controller.ReaderWriter, request *storage.StoragePoolVolumeSpec) error {
+	if !volumerequest.Owned(request, diskControllerName) {
+		return nil
+	}
+
+	ready, err := r.Teardown(ctx, request.Metadata())
+	if state.IsNotFoundError(err) {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("failed to tear down storage pool volume spec %q: %w", request.Metadata().ID(), err)
+	}
+
+	if !ready {
+		return nil
+	}
+
+	if err := r.Destroy(ctx, request.Metadata()); err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("failed to destroy storage pool volume spec %q: %w", request.Metadata().ID(), err)
+	}
+
+	return nil
 }
 
 // reconcileDisk publishes the status of one disk of one virtual machine.
@@ -217,8 +264,7 @@ func (ctrl *VirtualMachineDiskController) reconcileDisk(
 		return nil
 	}
 
-	// The library is held before the status resolved against it is published: a ready disk is one
-	// something may start using at any moment.
+	// Hold the provisioning source only until storage publishes an independent pool copy.
 	resolved, resolveErr := ctrl.progressDisk(ctx, r, logger, name, disk, pass)
 	if errors.Is(resolveErr, errHoldFailed) {
 		return fmt.Errorf("failed to resolve virtual machine disk %q: %w", id, resolveErr)
@@ -258,11 +304,13 @@ func stampDiskStatus(
 		status.Image = *image
 	}
 
-	if disk.Provision.Blank {
-		status.Blank = true
+	if disk.Provision.Blank || disk.Provision.FromImage != nil {
 		status.Pool = disk.Pool
+		if disk.Provision.Blank {
+			status.Blank = true
+		}
 
-		if volumeName, err := blankVolumeName(name, disk); err == nil {
+		if volumeName, err := diskVolumeName(name, disk); err == nil {
 			status.Volume = volumeName
 		}
 	}
@@ -272,8 +320,8 @@ func stampDiskStatus(
 	}
 }
 
-// holdLibrary keeps a library's mount in place for as long as a disk resolves against it. One which
-// is tearing down is refused rather than held, as holding it now would block that teardown forever.
+// holdLibrary protects the provisioning source while storage copies it. A library already
+// tearing down is refused rather than held, so a new copy cannot prevent its teardown.
 func holdLibrary(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, library *hypervisor.ContentLibraryStatus,
 ) error {
@@ -299,13 +347,8 @@ func (ctrl *VirtualMachineDiskController) releaseLibraries(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
 	pass *diskReconciliation,
 ) error {
-	inUse, err := librariesInUse(ctx, r, pass.held)
-	if err != nil {
-		return err
-	}
-
 	for id, library := range pass.libraries {
-		if _, used := inUse[id]; used || !library.Metadata().Finalizers().Has(diskControllerName) {
+		if _, used := pass.held[id]; used || !library.Metadata().Finalizers().Has(diskControllerName) {
 			continue
 		}
 
@@ -319,32 +362,9 @@ func (ctrl *VirtualMachineDiskController) releaseLibraries(
 	return nil
 }
 
-// librariesInUse names the libraries which must stay held, by ID: the ones held names, plus every
-// library named by a disk status something else holds.
-func librariesInUse(ctx context.Context, reader controller.Reader, held map[string]struct{}) (map[string]struct{}, error) {
-	diskStatuses, err := safe.ReaderListAll[*hypervisor.VirtualMachineDiskStatus](ctx, reader)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list virtual machine disk statuses: %w", err)
-	}
-
-	inUse := maps.Clone(held)
-
-	for diskStatus := range diskStatuses.All() {
-		if diskStatus.Metadata().Finalizers().Empty() {
-			continue
-		}
-
-		if library := diskStatus.TypedSpec().Image.Library; library != "" {
-			inUse[library] = struct{}{}
-		}
-	}
-
-	return inUse, nil
-}
-
-// progressDisk validates the disk, publishes its backing-volume request or acquires its library
-// hold, then observes the host source. It deliberately runs for Ready disks too; readiness is
-// not a cache of a file's digest.
+// progressDisk validates a disk, publishes its backing-volume intent, then observes storage.
+// A Ready pool-owned copy never reopens the library; only an incomplete initial copy needs a
+// held source. Blank disks are also owned by storage and remain create-only.
 func (ctrl *VirtualMachineDiskController) progressDisk(
 	ctx context.Context,
 	r controller.ReaderWriter,
@@ -370,24 +390,124 @@ func (ctrl *VirtualMachineDiskController) progressDisk(
 		return disks.ObserveVolume(ctx, r, request)
 	}
 
+	request, err := ctrl.requestImageVolume(ctx, r, name, disk, pass)
+	if err != nil {
+		return hypervisor.VirtualMachineDiskStatusSpec{Phase: hypervisor.VirtualMachineDiskPhaseNotReady}, err
+	}
+
+	return ctrl.progressImageSource(ctx, r, logger, disk, request, pass)
+}
+
+func (ctrl *VirtualMachineDiskController) requestImageVolume(
+	ctx context.Context, r controller.ReaderWriter, name string,
+	disk hypervisor.VirtualMachineDiskSpec, pass *diskReconciliation,
+) (*storage.StoragePoolVolumeSpec, error) {
+	volumeName, err := diskVolumeName(name, disk)
+	if err != nil {
+		return nil, err
+	}
+
+	request := storage.NewStoragePoolVolumeSpec(storage.NamespaceName, storage.StoragePoolVolumeID(disk.Pool, volumeName))
+	*request.TypedSpec() = storage.StoragePoolVolumeSpecSpec{
+		Pool:   disk.Pool,
+		Name:   volumeName,
+		Format: disk.Format,
+		Copy:   &storage.StoragePoolVolumeCopySpec{},
+	}
+	pass.volumes[request.Metadata().ID()] = struct{}{}
+
+	// Publish intent even after a restart with no ephemeral volume spec and no library. The
+	// storage slice can rediscover an owned copy from the pool without reopening its source.
+	if err = safe.WriterModify(ctx, r, request, func(current *storage.StoragePoolVolumeSpec) error {
+		if err := volumerequest.EnsureAdoption(current, ctrl.Name(), volumerequest.Destination{
+			Pool:   disk.Pool,
+			Name:   volumeName,
+			Format: disk.Format,
+		}); err != nil {
+			return fmt.Errorf("volume %q belongs to another request", request.Metadata().ID())
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return request, nil
+}
+
+func holdImageCopySource(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
+	library *hypervisor.ContentLibraryStatus, request *storage.StoragePoolVolumeSpec,
+) error {
+	if request.TypedSpec().Copy.Source != "" && library.Metadata().Finalizers().Has(diskControllerName) {
+		return nil
+	}
+
+	return holdLibrary(ctx, r, logger, library)
+}
+
+func (ctrl *VirtualMachineDiskController) progressImageSource(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, disk hypervisor.VirtualMachineDiskSpec,
+	request *storage.StoragePoolVolumeSpec, pass *diskReconciliation,
+) (hypervisor.VirtualMachineDiskStatusSpec, error) {
 	image := disk.Provision.FromImage
+	resolved, observeErr := disks.ObserveVolume(ctx, r, request)
+
+	resolved.ReadOnly = disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String()
+	if observeErr == nil {
+		return resolved, nil
+	}
+
+	current, err := safe.ReaderGetByID[*storage.StoragePoolVolumeSpec](ctx, r, request.Metadata().ID())
+	if err != nil {
+		return resolved, err
+	}
 
 	library, found := pass.libraries[image.Library]
 	if !found {
-		return hypervisor.VirtualMachineDiskStatusSpec{
-			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-		}, fmt.Errorf("content library %q is not configured", image.Library)
+		if resolved.Phase == hypervisor.VirtualMachineDiskPhaseObservationUnavailable {
+			return resolved, observeErr
+		}
+
+		return hypervisor.VirtualMachineDiskStatusSpec{Phase: hypervisor.VirtualMachineDiskPhaseNotReady},
+			fmt.Errorf("content library %q is not configured: %w", image.Library, observeErr)
 	}
 
-	if err := holdLibrary(ctx, r, logger, library); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{
-			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-		}, err
+	if err := holdImageCopySource(ctx, r, logger, library, current); err != nil {
+		return hypervisor.VirtualMachineDiskStatusSpec{Phase: hypervisor.VirtualMachineDiskPhaseNotReady}, err
 	}
 
 	pass.held[image.Library] = struct{}{}
 
-	return disks.ObserveImage(disk, *library.TypedSpec())
+	if current.TypedSpec().Copy.Source != "" || resolved.Phase == hypervisor.VirtualMachineDiskPhaseObservationUnavailable {
+		return resolved, observeErr
+	}
+
+	source, err := disks.ObserveImage(disk, *library.TypedSpec())
+	if err != nil {
+		return source, err
+	}
+
+	if err := bindImageCopySource(ctx, r, request, disk, source); err != nil {
+		return hypervisor.VirtualMachineDiskStatusSpec{Phase: hypervisor.VirtualMachineDiskPhaseNotReady}, err
+	}
+
+	return resolved, observeErr
+}
+
+func bindImageCopySource(ctx context.Context, r controller.ReaderWriter,
+	request *storage.StoragePoolVolumeSpec, disk hypervisor.VirtualMachineDiskSpec, source hypervisor.VirtualMachineDiskStatusSpec,
+) error {
+	return safe.WriterModify(ctx, r, request, func(current *storage.StoragePoolVolumeSpec) error {
+		if err := volumerequest.BindImage(current, diskControllerName, volumerequest.Destination{
+			Pool: disk.Pool,
+			Name: request.TypedSpec().Name,
+		}, source.SourcePath, "sha256:"+filepath.Base(source.SourcePath)); err != nil {
+			return fmt.Errorf("volume %q belongs to another request", request.Metadata().ID())
+		}
+
+		return nil
+	})
 }
 
 // checkVirtualMachineDiskSupported reports whether a disk is one this slice provisions at all, as
@@ -403,18 +523,9 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 
 	switch disk.Type {
 	case hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
-		switch {
-		case disk.Provision.Blank:
-			return fmt.Errorf("%w: a cdrom has no contents of its own", errDiskUnsupported)
-		case disk.Provision.FromImage == nil:
-			return fmt.Errorf("%w: a cdrom requires provision.fromImage", errDiskUnsupported)
-		}
-
-		return nil
+		return checkCDROMDiskSupported(disk)
 	case hypervisorhelpers.VirtualMachineDiskTypeDisk.String():
 		if !disk.Provision.Blank {
-			// Copying or backing a disk from a content library image is not implemented yet; see
-			// the follow-up to siderolabs/talos#14511.
 			return fmt.Errorf("%w: a disk is only provisioned from provision.blank today", errDiskUnsupported)
 		}
 
@@ -422,6 +533,26 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 	default:
 		return fmt.Errorf("%w: unsupported type %q", errDiskUnsupported, disk.Type)
 	}
+}
+
+func checkCDROMDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
+	if disk.Provision.FromImage == nil || disk.Provision.Blank {
+		return fmt.Errorf("%w: a cdrom requires provision.fromImage", errDiskUnsupported)
+	}
+
+	if mode := disk.Provision.FromImage.Mode; mode != "" && mode != hypervisorhelpers.VirtualMachineDiskImageModeCopy.String() {
+		return fmt.Errorf("%w: unsupported image mode %q for cdrom", errDiskUnsupported, mode)
+	}
+
+	if err := storagehelpers.ValidateStoragePoolName(disk.Pool); err != nil {
+		return fmt.Errorf("%w: %w", errDiskUnsupported, err)
+	}
+
+	if disk.Format != hypervisorhelpers.VirtualMachineDiskFormatRaw.String() {
+		return fmt.Errorf("%w: cdrom copy requires raw format", errDiskUnsupported)
+	}
+
+	return nil
 }
 
 // checkBlankDiskSupported reports whether a blank disk describes a volume that can be made.
@@ -457,6 +588,21 @@ func blankVolumeName(virtualMachine string, disk hypervisor.VirtualMachineDiskSp
 	}
 
 	return fmt.Sprintf("_vm-%x__%s.%s", sha256.Sum256([]byte(virtualMachine)), disk.Name, disk.Format), nil
+}
+
+// diskVolumeName keeps writable guest disks stable across source edits, but gives read-only media
+// a different destination for each explicit image identity. A CDROM must never attach the copy
+// from a prior File or Digest merely because its device name did not change.
+func diskVolumeName(virtualMachine string, disk hypervisor.VirtualMachineDiskSpec) (string, error) {
+	base, err := blankVolumeName(virtualMachine, disk)
+	if err != nil || disk.Type != hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() || disk.Provision.FromImage == nil {
+		return base, err
+	}
+
+	image := disk.Provision.FromImage
+	sum := sha256.Sum256([]byte(image.Library + "\x00" + image.File + "\x00" + image.Digest))
+
+	return base[:len(base)-len(disk.Format)-1] + fmt.Sprintf("__%x.%s", sum, disk.Format), nil
 }
 
 // requestBlankVolume publishes the desired backing resource before any source observation.

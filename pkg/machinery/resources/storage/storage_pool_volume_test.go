@@ -33,6 +33,10 @@ func TestStoragePoolVolumeSpecRoundTrip(t *testing.T) {
 		Format:        "qcow2",
 		BackingFile:   "/var/mnt/u-vms/images/base.qcow2",
 		BackingFormat: "qcow2",
+		Copy: &storage.StoragePoolVolumeCopySpec{
+			Source: "/library/objects/sha256/abc",
+			Digest: "sha256:abc",
+		},
 	}
 
 	encoded, err := protobuf.FromResource(res)

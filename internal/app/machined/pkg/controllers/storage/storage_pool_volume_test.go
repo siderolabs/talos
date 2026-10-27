@@ -58,7 +58,7 @@ type volumeClient struct {
 	checkHold      func(pool string) error
 }
 
-func (c *volumeClient) open(context.Context) (libvirtstorage.Client, error) {
+func (c *volumeClient) open(context.Context) (libvirtstorage.VolumeClient, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -124,6 +124,43 @@ func (c *volumeClient) CreateVolume(pool libvirtstorage.Pool, name, format strin
 	return volume, nil
 }
 
+func (c *volumeClient) CopyVolume(pool libvirtstorage.Pool, name, source, expected string) (libvirtstorage.Volume, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if err := c.checkHold(pool.Name); err != nil {
+		return libvirtstorage.Volume{}, err
+	}
+
+	if c.readErr != nil {
+		return libvirtstorage.Volume{}, c.readErr
+	}
+
+	if previous, found := c.volumes[c.key(pool, name)]; found {
+		return previous, nil
+	}
+
+	if source == "" {
+		return libvirtstorage.Volume{}, libvirtstorage.ErrCopySourceRequired
+	}
+
+	c.calls = append(c.calls, "copy:"+c.key(pool, name)+":"+source+":"+expected)
+	volume := libvirtstorage.Volume{
+		Name:     name,
+		Path:     "/var/mnt/u-vms/" + pool.Name + "/" + name,
+		Format:   "raw",
+		Capacity: 8,
+	}
+
+	if c.volumes == nil {
+		c.volumes = map[string]libvirtstorage.Volume{}
+	}
+
+	c.volumes[c.key(pool, name)] = volume
+
+	return volume, nil
+}
+
 func (c *volumeClient) ResizeVolume(pool libvirtstorage.Pool, name string, capacity uint64) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -178,22 +215,6 @@ func (c *volumeClient) ResizeVolumeOperation(pool libvirtstorage.Pool, name stri
 	}
 
 	return libvirtstorage.Finished, nil
-}
-
-func (*volumeClient) Pools() ([]libvirtstorage.Pool, error) {
-	panic("StoragePoolVolumeController must not reconcile pool definitions")
-}
-
-func (*volumeClient) Ensure(libvirtstorage.Pool, string, func() error) error {
-	panic("StoragePoolVolumeController must not reconcile pool definitions")
-}
-
-func (*volumeClient) Remove(libvirtstorage.Pool) error {
-	panic("StoragePoolVolumeController must not reconcile pool definitions")
-}
-
-func (*volumeClient) Stop(libvirtstorage.Pool) error {
-	panic("StoragePoolVolumeController must not reconcile pool definitions")
 }
 
 func (*volumeClient) Close() {}
@@ -397,6 +418,56 @@ func (suite *StoragePoolVolumeSuite) withdrawSpec(spec *storageres.StoragePoolVo
 	})
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), spec.Metadata(), state.WithDestroyOwner("hypervisor.VirtualMachineDiskController")))
+}
+
+func (suite *StoragePoolVolumeSuite) TestCopiesImageInsteadOfCreatingOverlay() {
+	suite.pool(true)
+	spec := suite.spec(volumePool, "vm__install.raw", "raw", 0)
+	ctest.UpdateWithConflicts(suite, spec, func(current *storageres.StoragePoolVolumeSpec) error {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{
+			Source: "/library/object",
+			Digest: "sha256:123",
+		}
+
+		return nil
+	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+	suite.start()
+
+	suite.assertReady(spec.Metadata().ID(), nil)
+	suite.Equal([]string{"copy:images/vm__install.raw:/library/object:sha256:123"}, suite.client.recorded())
+}
+
+func (suite *StoragePoolVolumeSuite) TestCopyObservationOutage() {
+	suite.pool(true)
+	suite.client.readErr = libvirtstorage.ErrVolumeObservationUnavailable
+	spec := suite.spec(volumePool, "copy.raw", "raw", 0)
+	ctest.UpdateWithConflicts(suite, spec, func(current *storageres.StoragePoolVolumeSpec) error {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{}
+
+		return nil
+	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+	suite.start()
+
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.StoragePoolVolumePhaseObservationUnavailable, status.TypedSpec().Phase)
+	})
+}
+
+func (suite *StoragePoolVolumeSuite) TestCopyWithoutSourceNeverCreatesBlankVolume() {
+	suite.pool(true)
+	spec := suite.spec(volumePool, "copy.raw", "raw", 0)
+	ctest.UpdateWithConflicts(suite, spec, func(current *storageres.StoragePoolVolumeSpec) error {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{}
+
+		return nil
+	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+	suite.start()
+
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.StoragePoolVolumePhaseNotReady, status.TypedSpec().Phase)
+		asrt.Contains(status.TypedSpec().Error, libvirtstorage.ErrCopySourceRequired.Error())
+	})
+	suite.Empty(suite.client.recorded())
 }
 
 func (suite *StoragePoolVolumeSuite) TestPoolPhasePropagationAndRecovery() {
@@ -752,7 +823,7 @@ func (suite *StoragePoolVolumeSuite) TestNoSubmittedResizePublicationFailureRele
 	})
 }
 
-type volumeInvalidOutcomeClient struct{ libvirtstorage.Client }
+type volumeInvalidOutcomeClient struct{ libvirtstorage.VolumeClient }
 
 func (volumeInvalidOutcomeClient) ResizeVolumeOperation(libvirtstorage.Pool, string, uint64) (libvirtstorage.OperationOutcome, error) {
 	return libvirtstorage.Unknown, nil
@@ -765,7 +836,7 @@ func (suite *StoragePoolVolumeSuite) TestUnknownNilResizeOutcomeNeverPublishesRe
 	})
 	request := suite.spec(volumePool, "unknown-nil.raw", "raw", 128<<20)
 	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{
-		Open: func(ctx context.Context) (libvirtstorage.Client, error) {
+		Open: func(ctx context.Context) (libvirtstorage.VolumeClient, error) {
 			client, err := suite.client.open(ctx)
 			if err != nil {
 				return nil, err
@@ -780,31 +851,6 @@ func (suite *StoragePoolVolumeSuite) TestUnknownNilResizeOutcomeNeverPublishesRe
 	})
 	ctest.AssertResource(suite, pool.Metadata().ID(), func(current *storageres.StoragePoolStatus, asrt *assert.Assertions) {
 		asrt.True(current.Metadata().Finalizers().Has(storageres.StoragePoolVolumeMutationFinalizer("unknown-nil.raw")))
-	})
-}
-
-type volumeLegacyClient struct{ libvirtstorage.Client }
-
-func (suite *StoragePoolVolumeSuite) TestUnsupportedResizeEvidenceFailsClosed() {
-	pool := suite.pool(true)
-	suite.client.setVolume("legacy.raw", libvirtstorage.Volume{
-		Name: "legacy.raw", Path: "/var/mnt/u-vms/images/legacy.raw", Format: "raw", Capacity: 64 << 20,
-	})
-	request := suite.spec(volumePool, "legacy.raw", "raw", 128<<20)
-	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{
-		Open: func(ctx context.Context) (libvirtstorage.Client, error) {
-			client, err := suite.client.open(ctx)
-			if err != nil {
-				return nil, err
-			}
-
-			return volumeLegacyClient{client}, nil
-		},
-	}))
-	suite.assertError(request.Metadata().ID(), "does not provide resize operation outcome evidence")
-	suite.Require().Empty(suite.client.recorded(), "unsupported client must not submit a resize")
-	ctest.AssertResource(suite, pool.Metadata().ID(), func(current *storageres.StoragePoolStatus, asrt *assert.Assertions) {
-		asrt.False(current.Metadata().Finalizers().Has(storageres.StoragePoolVolumeMutationFinalizer("legacy.raw")), "no RPC was invoked")
 	})
 }
 

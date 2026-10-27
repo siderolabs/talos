@@ -23,6 +23,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage/internal/mutationevidence"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
@@ -47,7 +48,7 @@ type StoragePoolController struct {
 	V1Alpha1Mode machineruntime.Mode
 
 	// Open is injectable for deterministic reconciliation tests.
-	Open func(context.Context) (libvirtstorage.Client, error)
+	Open func(context.Context) (libvirtstorage.PoolClient, error)
 }
 
 // Name implements controller.Controller interface.
@@ -99,6 +100,9 @@ func (ctrl *StoragePoolController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
+// Reconciliation wakes on input events and retries operational errors through restart
+// backoff. There is no periodic poll: silent external drift waits for another event.
+//
 //nolint:gocyclo
 func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.V1Alpha1Mode.InContainer() {
@@ -106,7 +110,7 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 	}
 
 	if ctrl.Open == nil {
-		ctrl.Open = func(ctx context.Context) (libvirtstorage.Client, error) {
+		ctrl.Open = func(ctx context.Context) (libvirtstorage.PoolClient, error) {
 			return libvirt.New().Storage(ctx)
 		}
 	}
@@ -134,14 +138,6 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		client, openErr := ctrl.Open(ctx)
-		if openErr == nil {
-			if _, ok := client.(libvirtstorage.EvidenceClient); !ok {
-				client.Close()
-
-				return fmt.Errorf("storage client does not provide mutation outcome evidence")
-			}
-		}
-
 		if openErr != nil {
 			// The daemon stops before volumes are finalized on shutdown, so a tearing-down mount
 			// can be released right away rather than blocking until its deadline -- except under a
@@ -177,7 +173,7 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.Runtime, client libvirtstorage.Client,
+func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.Runtime, client libvirtstorage.PoolClient,
 	machineUUID uuid.UUID, specs safe.List[*storage.StoragePoolSpec], mounts safe.List[*block.VolumeMountStatus],
 ) (reconcileErr error) {
 	desired := map[string]string{}
@@ -221,33 +217,21 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 
 	// Publish exclusion before the fresh hold census. Consumers commit their
 	// hold before rechecking this marker and the pool identity.
-	evidence := client.(libvirtstorage.EvidenceClient)
 	published := false
 	pendingMounts := []*block.VolumeMountStatus{}
 	// Only this pass's markers can be retired, and only after its status/cleanup
 	// publication has succeeded. A returned RPC error alone is not evidence.
 	changing := map[string]*storage.StoragePoolStatus{}
-	failed := map[string]struct{}{}
+	anyUnknown := false
 	outcomes := map[string]libvirtstorage.OperationOutcome{}
 
 	// Evidence only grows more restrictive during this pass. A later no-op
 	// cannot undo partial progress or an unknown reply from an earlier call.
 	recordOutcome := func(name string, outcome libvirtstorage.OperationOutcome) libvirtstorage.OperationOutcome {
-		switch outcome {
-		case libvirtstorage.NoMutationSubmitted, libvirtstorage.Finished, libvirtstorage.Unknown:
-		default:
-			outcome = libvirtstorage.Unknown
-		}
-
-		previous := outcomes[name]
-		if previous == libvirtstorage.Unknown || (previous == libvirtstorage.Finished && outcome == libvirtstorage.NoMutationSubmitted) {
-			outcome = previous
-		}
+		outcome = mutationevidence.Merge(outcomes[name], outcome)
 
 		outcomes[name] = outcome
-		if outcome == libvirtstorage.Unknown {
-			failed[name] = struct{}{}
-		}
+		anyUnknown = anyUnknown || outcome == libvirtstorage.Unknown
 
 		return outcome
 	}
@@ -256,7 +240,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 		markerReleaseFailed := false
 
 		for name, status := range changing {
-			if _, ambiguous := failed[name]; ambiguous || (!published && outcomes[name] != libvirtstorage.NoMutationSubmitted) {
+			if !mutationevidence.CanRelease(outcomes[name], published) {
 				continue
 			}
 
@@ -266,7 +250,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 			}
 		}
 
-		if !published || markerReleaseFailed || len(failed) != 0 {
+		if !published || markerReleaseFailed || anyUnknown {
 			return
 		}
 
@@ -365,7 +349,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 			continue
 		}
 
-		outcome, removeErr := evidence.RemoveOperation(pool)
+		outcome, removeErr := client.RemoveOperation(pool)
 
 		outcome = recordOutcome(pool.Name, outcome)
 		if outcome == libvirtstorage.Unknown {
@@ -467,7 +451,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 				continue
 			}
 
-			outcome, stopErr := evidence.StopOperation(pool)
+			outcome, stopErr := client.StopOperation(pool)
 
 			outcome = recordOutcome(pool.Name, outcome)
 			stopped[pool.Name] = struct{}{}
@@ -603,7 +587,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 			if activateErr == nil {
 				var outcome libvirtstorage.OperationOutcome
 
-				target, outcome, activateErr = ctrl.activate(ctx, r, evidence, pool, volumeID, knownReady)
+				target, outcome, activateErr = ctrl.activate(ctx, r, client, pool, volumeID, knownReady)
 
 				outcome = recordOutcome(name, outcome)
 				if outcome == libvirtstorage.Unknown && activateErr == nil {
@@ -769,7 +753,7 @@ func poolsHeldUnder(pools []libvirtstorage.Pool, held map[string]struct{}, machi
 //
 // A pending mount is reported through the status wrapped in errPoolPending, not
 // retried: the mount status input wakes the controller when it changes.
-func (ctrl *StoragePoolController) activate(ctx context.Context, r controller.Runtime, client libvirtstorage.EvidenceClient,
+func (ctrl *StoragePoolController) activate(ctx context.Context, r controller.Runtime, client libvirtstorage.PoolClient,
 	pool libvirtstorage.Pool, volumeID string, knownReady bool,
 ) (string, libvirtstorage.OperationOutcome, error) {
 	mount, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, volumeID)

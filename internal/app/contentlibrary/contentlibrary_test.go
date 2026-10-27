@@ -35,6 +35,137 @@ import (
 
 const testLibrary = "vm-images"
 
+func TestDeleteObject(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name       string
+		referenced bool
+		force      bool
+		code       codes.Code
+	}{
+		{name: "unreferenced", code: codes.OK},
+		{name: "referenced", referenced: true, code: codes.FailedPrecondition},
+		{name: "forced", referenced: true, force: true, code: codes.OK},
+		{name: "forced unreferenced", force: true, code: codes.OK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc, path := setup(t, true)
+			hash := digest.SHA256.FromString("payload")
+
+			require.NoError(t, upload(t, svc, "first.iso", "payload"))
+			require.NoError(t, upload(t, svc, "second.iso", "payload"))
+			require.NoError(t, upload(t, svc, "other.iso", "unrelated"))
+
+			if !tc.referenced {
+				for _, name := range []string{"first.iso", "second.iso"} {
+					_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{
+						LibraryId: testLibrary,
+						Target:    &machine.ContentLibraryServiceDeleteRequest_Name{Name: name},
+					})
+					require.NoError(t, err)
+				}
+			}
+
+			_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{
+				LibraryId: testLibrary,
+				Target:    &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: hash.String()},
+				Force:     tc.force,
+			})
+			require.Equal(t, tc.code, grpcstatus.Code(err), "%v", err)
+
+			object := filepath.Join(path, "objects", "sha256", hash.Encoded())
+
+			if tc.code == codes.OK {
+				_, err = os.Lstat(object)
+				require.ErrorIs(t, err, os.ErrNotExist)
+
+				for _, name := range []string{"first.iso", "second.iso"} {
+					_, err = os.Lstat(filepath.Join(path, name))
+					require.ErrorIs(t, err, os.ErrNotExist)
+				}
+
+				_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{
+					LibraryId: testLibrary,
+					Target:    &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: hash.String()},
+				})
+				require.Equal(t, codes.NotFound, grpcstatus.Code(err))
+			} else {
+				require.FileExists(t, object)
+				require.FileExists(t, filepath.Join(path, "first.iso"))
+				require.FileExists(t, filepath.Join(path, "second.iso"))
+				require.ErrorContains(t, err, "first.iso")
+				require.ErrorContains(t, err, "second.iso")
+			}
+
+			contents, err := os.ReadFile(filepath.Join(path, "other.iso"))
+			require.NoError(t, err)
+			require.Equal(t, "unrelated", string(contents))
+		})
+	}
+}
+
+func TestDeleteRejectsInvalidTarget(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name    string
+		request *machine.ContentLibraryServiceDeleteRequest
+	}{
+		{name: "missing", request: &machine.ContentLibraryServiceDeleteRequest{}},
+		{name: "empty digest", request: &machine.ContentLibraryServiceDeleteRequest{
+			Target: &machine.ContentLibraryServiceDeleteRequest_Sha256{},
+		}},
+		{name: "invalid digest", request: &machine.ContentLibraryServiceDeleteRequest{
+			Target: &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: "sha256:../escape"},
+		}},
+		{name: "force alias", request: &machine.ContentLibraryServiceDeleteRequest{
+			Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.iso"},
+			Force:  true,
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc, path := setup(t, true)
+			require.NoError(t, upload(t, svc, "image.iso", "payload"))
+
+			tc.request.LibraryId = testLibrary
+			_, err := svc.Delete(t.Context(), tc.request)
+			require.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+			require.FileExists(t, filepath.Join(path, "image.iso"))
+		})
+	}
+}
+
+func TestCASDeduplicatesObjectsAndKeepsDeletedObjects(t *testing.T) {
+	t.Parallel()
+	svc, path := setup(t, true)
+	dgst := digest.SHA256.FromString("same")
+
+	for _, name := range []string{"first.iso", "second.iso"} {
+		require.NoError(t, upload(t, svc, name, "same"))
+		link, err := os.Readlink(filepath.Join(path, name))
+		require.NoError(t, err)
+		assert.Equal(t, filepath.Join("objects", "sha256", dgst.Encoded()), link)
+	}
+
+	objects, err := os.ReadDir(filepath.Join(path, "objects", "sha256"))
+	require.NoError(t, err)
+	require.Len(t, objects, 1)
+	items, err := list(t, svc, testLibrary)
+	require.NoError(t, err)
+	require.Len(t, items, 1)
+	assert.Equal(t, dgst.String(), items[0].GetSha256())
+	assert.Equal(t, []string{"first.iso", "second.iso"}, items[0].GetNames())
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "first.iso"}})
+	require.NoError(t, err)
+	_, err = os.Stat(filepath.Join(path, "objects", "sha256", dgst.Encoded()))
+	require.NoError(t, err)
+}
+
 // setup returns a service backed by a temporary directory standing in for the library, and that
 // directory's path.
 func setup(t *testing.T, ready bool) (*contentlibrary.Service, string) {
@@ -125,19 +256,14 @@ func (s *uploadStream) SendAndClose(resp *machine.ContentLibraryServiceUploadRes
 	return nil
 }
 
-func uploadRequests(libraryID, name string, overwrite bool, chunks ...string) []*machine.ContentLibraryServiceUploadRequest {
-	return uploadRequestsWithDigest(libraryID, name, overwrite, "", chunks...)
-}
-
-func uploadRequestsWithDigest(libraryID, name string, overwrite bool, dgst string, chunks ...string) []*machine.ContentLibraryServiceUploadRequest {
+func uploadRequestsWithDigest(name string, dgst string, chunks ...string) []*machine.ContentLibraryServiceUploadRequest {
 	requests := make([]*machine.ContentLibraryServiceUploadRequest, 0, 1+len(chunks))
 
 	requests = append(requests, &machine.ContentLibraryServiceUploadRequest{
 		Request: &machine.ContentLibraryServiceUploadRequest_Info{
 			Info: &machine.ContentLibraryServiceUploadInfo{
-				LibraryId: libraryID,
+				LibraryId: testLibrary,
 				Name:      name,
-				Overwrite: overwrite,
 				Digest:    dgst,
 			},
 		},
@@ -154,16 +280,16 @@ func uploadRequestsWithDigest(libraryID, name string, overwrite bool, dgst strin
 	return requests
 }
 
-func upload(t *testing.T, svc *contentlibrary.Service, name string, overwrite bool, chunks ...string) error {
+func upload(t *testing.T, svc *contentlibrary.Service, name string, chunks ...string) error {
 	t.Helper()
 
-	return uploadWithDigest(t, svc, name, overwrite, "", chunks...)
+	return uploadWithDigest(t, svc, name, "", chunks...)
 }
 
-func uploadWithDigest(t *testing.T, svc *contentlibrary.Service, name string, overwrite bool, dgst string, chunks ...string) error {
+func uploadWithDigest(t *testing.T, svc *contentlibrary.Service, name string, dgst string, chunks ...string) error {
 	t.Helper()
 
-	return svc.Upload(&uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, name, overwrite, dgst, chunks...)})
+	return svc.Upload(&uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(name, dgst, chunks...)})
 }
 
 func list(t *testing.T, svc *contentlibrary.Service, libraryID string) ([]*machine.ContentLibraryServiceListResponse, error) {
@@ -186,7 +312,7 @@ func TestRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, items)
 
-	srv := &uploadStream{ctx: t.Context(), requests: uploadRequests(testLibrary, "image.raw", false, "talos", "-images")}
+	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest("image.raw", "", "talos", "-images")}
 	require.NoError(t, svc.Upload(srv))
 	assert.Equal(t, "image.raw", srv.response.GetName())
 	assert.Equal(t, uint64(12), srv.response.GetSize())
@@ -198,17 +324,19 @@ func TestRoundTrip(t *testing.T) {
 	items, err = list(t, svc, testLibrary)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
-	assert.Equal(t, "image.raw", items[0].GetName())
+	assert.Equal(t, []string{"image.raw"}, items[0].GetNames())
 	assert.Equal(t, uint64(12), items[0].GetSize())
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
 	require.NoError(t, err)
 
 	items, err = list(t, svc, testLibrary)
 	require.NoError(t, err)
-	assert.Empty(t, items)
+	require.Len(t, items, 1)
+	assert.Empty(t, items[0].GetNames())
+	assert.Equal(t, digest.SHA256.FromString("talos-images").String(), items[0].GetSha256())
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
 	assert.Equal(t, codes.NotFound, grpcstatus.Code(err))
 }
 
@@ -218,29 +346,30 @@ func TestOverwrite(t *testing.T) {
 
 	svc, path := setup(t, true)
 
-	err := upload(t, svc, "image.raw", false, "first")
+	err := upload(t, svc, "image.raw", "first")
 	require.NoError(t, err)
 
-	err = upload(t, svc, "image.raw", false, "second")
+	err = upload(t, svc, "image.raw", "second")
 	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 
 	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
 	require.NoError(t, err)
 	assert.Equal(t, "first", string(contents))
 
-	err = upload(t, svc, "image.raw", true, "second")
-	require.NoError(t, err)
+	err = upload(t, svc, "image.raw", "first")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 
 	contents, err = os.ReadFile(filepath.Join(path, "image.raw"))
 	require.NoError(t, err)
-	assert.Equal(t, "second", string(contents))
+	assert.Equal(t, "first", string(contents))
 
 	// Neither the upload which landed nor the one which was refused staged anything which outlived
 	// it.
 	entries, err := os.ReadDir(path)
 	require.NoError(t, err)
-	require.Len(t, entries, 1)
+	require.Len(t, entries, 2)
 	assert.Equal(t, "image.raw", entries[0].Name())
+	assert.Equal(t, "objects", entries[1].Name())
 }
 
 // TestConcurrentOverwrite covers uploads of the same name racing each other: without overwrite, one
@@ -265,7 +394,7 @@ func TestConcurrentOverwrite(t *testing.T) {
 		wg.Go(func() {
 			<-start
 
-			errs[i] = upload(t, svc, "image.raw", false, chunks[i])
+			errs[i] = upload(t, svc, "image.raw", chunks[i])
 		})
 	}
 
@@ -285,15 +414,16 @@ func TestConcurrentOverwrite(t *testing.T) {
 			continue
 		}
 
-		assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
+		assert.Contains(t, []codes.Code{codes.AlreadyExists, codes.FailedPrecondition}, grpcstatus.Code(err))
 	}
 
 	assert.Equal(t, 1, succeeded)
 
 	entries, err := os.ReadDir(path)
 	require.NoError(t, err)
-	require.Len(t, entries, 1)
+	require.Len(t, entries, 2)
 	assert.Equal(t, "image.raw", entries[0].Name())
+	assert.Equal(t, "objects", entries[1].Name())
 }
 
 // TestRejectsNames covers the names which must never reach the filesystem.
@@ -302,14 +432,14 @@ func TestRejectsNames(t *testing.T) {
 
 	svc, path := setup(t, true)
 
-	for _, name := range []string{"", "../escape.raw", "/etc/passwd", "sub/dir.raw", ".hidden", ".", ".."} {
+	for _, name := range []string{"", "../escape.raw", "/etc/passwd", "sub/dir.raw", ".hidden", ".", "..", "objects", "bad\\name", "bad\x00name"} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			err := upload(t, svc, name, true, "payload")
+			err := upload(t, svc, name, "payload")
 			assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 
-			_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: name})
+			_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: name}})
 			assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 		})
 	}
@@ -333,7 +463,7 @@ func TestStaleStagedUploadDoesNotBlock(t *testing.T) {
 	stale := filepath.Join(path, staging.Prefix+"image.raw.0123456789abcdef"+staging.Suffix)
 	require.NoError(t, os.WriteFile(stale, []byte("partial"), 0o600))
 
-	require.NoError(t, upload(t, svc, "image.raw", false, "talos"))
+	require.NoError(t, upload(t, svc, "image.raw", "talos"))
 
 	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
 	require.NoError(t, err)
@@ -343,7 +473,7 @@ func TestStaleStagedUploadDoesNotBlock(t *testing.T) {
 	items, err := list(t, svc, testLibrary)
 	require.NoError(t, err)
 	require.Len(t, items, 1)
-	assert.Equal(t, "image.raw", items[0].GetName())
+	assert.Equal(t, []string{"image.raw"}, items[0].GetNames())
 }
 
 // TestRejectsLongName covers a name long enough that the name its upload would be staged under no
@@ -353,20 +483,20 @@ func TestRejectsLongName(t *testing.T) {
 
 	svc, _ := setup(t, true)
 
-	err := upload(t, svc, strings.Repeat("a", 231), true, "payload")
+	err := upload(t, svc, strings.Repeat("a", 231), "payload")
 	assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 
-	require.NoError(t, upload(t, svc, strings.Repeat("a", 230), true, "payload"))
+	require.NoError(t, upload(t, svc, strings.Repeat("a", 230), "payload"))
 }
 
 // TestDigestVerified covers an upload which declares what it is carrying: the node hashes what it
-// received and stores it, under every algorithm the API offers.
+// received and stores it under its SHA256 identity.
 func TestDigestVerified(t *testing.T) {
 	t.Parallel()
 
 	const contents = "talos-images"
 
-	for _, algorithm := range []digest.Algorithm{digest.SHA256, digest.SHA512} {
+	for _, algorithm := range []digest.Algorithm{digest.SHA256} {
 		t.Run(algorithm.String(), func(t *testing.T) {
 			t.Parallel()
 
@@ -376,7 +506,7 @@ func TestDigestVerified(t *testing.T) {
 			// below, which are what it has to describe.
 			dgst := algorithm.FromString(contents)
 
-			require.NoError(t, uploadWithDigest(t, svc, "image.raw", false, dgst.String(), "talos", "-images"))
+			require.NoError(t, uploadWithDigest(t, svc, "image.raw", dgst.String(), "talos", "-images"))
 
 			stored, err := os.ReadFile(filepath.Join(path, "image.raw"))
 			require.NoError(t, err)
@@ -393,11 +523,10 @@ func TestDigestsReported(t *testing.T) {
 
 	svc, _ := setup(t, true)
 
-	srv := &uploadStream{ctx: t.Context(), requests: uploadRequests(testLibrary, "image.raw", false, "talos", "-images")}
+	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest("image.raw", "", "talos", "-images")}
 	require.NoError(t, svc.Upload(srv))
 
 	assert.Equal(t, digest.SHA256.FromString("talos-images").String(), srv.response.GetDigests().GetSha256())
-	assert.Equal(t, digest.SHA512.FromString("talos-images").String(), srv.response.GetDigests().GetSha512())
 }
 
 // TestDigestMismatchReportsDigests covers an upload which was refused telling the client what it
@@ -407,7 +536,7 @@ func TestDigestMismatchReportsDigests(t *testing.T) {
 
 	svc, _ := setup(t, true)
 
-	err := uploadWithDigest(t, svc, "image.raw", false, digest.FromString("something else").String(), "talos")
+	err := uploadWithDigest(t, svc, "image.raw", digest.FromString("something else").String(), "talos")
 	require.Equal(t, codes.DataLoss, grpcstatus.Code(err))
 
 	details := grpcstatus.Convert(err).Details()
@@ -417,7 +546,6 @@ func TestDigestMismatchReportsDigests(t *testing.T) {
 	require.True(t, ok, "the error should carry the digests, got %T", details[0])
 
 	assert.Equal(t, digest.SHA256.FromString("talos").String(), digests.GetSha256())
-	assert.Equal(t, digest.SHA512.FromString("talos").String(), digests.GetSha512())
 }
 
 // TestDigestMismatch covers contents which are not what the upload said they would be: the name
@@ -427,7 +555,7 @@ func TestDigestMismatch(t *testing.T) {
 
 	svc, path := setup(t, true)
 
-	err := uploadWithDigest(t, svc, "image.raw", false, digest.FromString("something else").String(), "talos")
+	err := uploadWithDigest(t, svc, "image.raw", digest.FromString("something else").String(), "talos")
 	assert.Equal(t, codes.DataLoss, grpcstatus.Code(err))
 
 	items, err := list(t, svc, testLibrary)
@@ -448,10 +576,10 @@ func TestDigestMismatchDoesNotOverwrite(t *testing.T) {
 
 	svc, path := setup(t, true)
 
-	require.NoError(t, upload(t, svc, "image.raw", false, "first"))
+	require.NoError(t, upload(t, svc, "image.raw", "first"))
 
-	err := uploadWithDigest(t, svc, "image.raw", true, digest.FromString("first").String(), "second")
-	assert.Equal(t, codes.DataLoss, grpcstatus.Code(err))
+	err := uploadWithDigest(t, svc, "image.raw", digest.FromString("first").String(), "second")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 
 	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
 	require.NoError(t, err)
@@ -459,8 +587,9 @@ func TestDigestMismatchDoesNotOverwrite(t *testing.T) {
 
 	entries, err := os.ReadDir(path)
 	require.NoError(t, err)
-	require.Len(t, entries, 1)
+	require.Len(t, entries, 2)
 	assert.Equal(t, "image.raw", entries[0].Name())
+	assert.Equal(t, "objects", entries[1].Name())
 }
 
 // TestRejectsDigests covers the digests which no contents could ever match: they are the caller's
@@ -488,12 +617,13 @@ func TestRejectsDigests(t *testing.T) {
 		"sha1:" + strings.Repeat("a", 40),
 		// Registered by go-digest, deliberately not offered here.
 		"sha384:" + strings.Repeat("a", 96),
+		"sha512:" + strings.Repeat("a", 128),
 		"SHA256:" + strings.Repeat("a", 64),
 	} {
 		t.Run(dgst, func(t *testing.T) {
 			t.Parallel()
 
-			err := uploadWithDigest(t, svc, "image.raw", true, dgst, "talos")
+			err := uploadWithDigest(t, svc, "image.raw", dgst, "talos")
 			assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 		})
 	}
@@ -510,7 +640,7 @@ func TestInterruptedUploadLeavesNothing(t *testing.T) {
 	srv := &uploadStream{
 		ctx: t.Context(),
 		requests: append(
-			uploadRequests(testLibrary, "image.raw", false),
+			uploadRequestsWithDigest("image.raw", ""),
 			&machine.ContentLibraryServiceUploadRequest{
 				Request: &machine.ContentLibraryServiceUploadRequest_Info{
 					Info: &machine.ContentLibraryServiceUploadInfo{LibraryId: testLibrary, Name: "image.raw"},
@@ -548,7 +678,7 @@ func TestNotReady(t *testing.T) {
 	_, err := list(t, svc, testLibrary)
 	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
 
-	err = upload(t, svc, "image.raw", false, "payload")
+	err = upload(t, svc, "image.raw", "payload")
 	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
 }
 
@@ -565,14 +695,58 @@ func TestUnknownLibrary(t *testing.T) {
 	assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 }
 
-// An image is attached where it lies, so taking one away while a domain holds its disk status is
-// taking away a medium a guest is reading from.
-func TestRefusesToTakeAwayAnImageInUse(t *testing.T) {
+func TestDeleteRejectsNonObjectAliases(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name string
+		make func(t *testing.T, path string)
+	}{
+		{
+			name: "regular root file",
+			make: func(t *testing.T, path string) {
+				require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("ordinary"), 0o600))
+			},
+		},
+		{
+			name: "noncanonical symlink",
+			make: func(t *testing.T, path string) {
+				require.NoError(t, os.Symlink("../outside", filepath.Join(path, "image.raw")))
+			},
+		},
+		{
+			name: "symlink to nonregular object",
+			make: func(t *testing.T, path string) {
+				object := filepath.Join(path, "objects", "sha256", digest.SHA256.FromString("talos").Encoded())
+				require.NoError(t, os.MkdirAll(filepath.Dir(object), 0o700))
+				require.NoError(t, os.Symlink("elsewhere", object))
+				require.NoError(t, os.Symlink(filepath.Join("objects", "sha256", filepath.Base(object)), filepath.Join(path, "image.raw")))
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			svc, path := setup(t, true)
+			tc.make(t, path)
+			_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
+			assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+			_, err = os.Lstat(filepath.Join(path, "image.raw"))
+			require.NoError(t, err, "invalid alias must not be removed")
+		})
+	}
+}
+
+// A held disk reads copied immutable bytes; removing a library name cannot change its object.
+func TestDeletesAliasOfHeldImageWithoutRemovingObject(t *testing.T) {
 	t.Parallel()
 
 	svc, path, st := setupWithState(t, true)
 
-	require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+	require.NoError(t, upload(t, svc, "image.raw", "talos"))
+	require.NoError(t, upload(t, svc, "other.raw", "talos"))
+
+	object := filepath.Join(path, "objects", "sha256", digest.SHA256.FromString("talos").Encoded())
 
 	diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
 	diskStatus.TypedSpec().VirtualMachine = "vm"
@@ -581,24 +755,26 @@ func TestRefusesToTakeAwayAnImageInUse(t *testing.T) {
 	require.NoError(t, st.Create(t.Context(), diskStatus))
 	require.NoError(t, st.AddFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
 
-	_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
-	assert.Contains(t, grpcstatus.Convert(err).Message(), `in use by disk "install" of virtual machine "vm"`)
+	_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
+	require.NoError(t, err)
+	require.NoFileExists(t, filepath.Join(path, "image.raw"))
 
-	// Overwriting it in place takes the medium away just as surely.
-	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, "image.raw", true, "", "replacement")}
-	err = svc.Upload(srv)
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
-
-	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
+	contents, err := os.ReadFile(object)
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+	contents, err = os.ReadFile(filepath.Join(path, "other.raw"))
 	require.NoError(t, err)
 	assert.Equal(t, "talos", string(contents))
 
-	// Another file in the same library is nobody's business but the operator's.
-	require.NoError(t, os.WriteFile(filepath.Join(path, "other.raw"), []byte("talos"), 0o600))
+	// A previously held name remains create-only until it is explicitly deleted.
+	require.NoError(t, upload(t, svc, "image.raw", "replacement"))
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "other.raw"})
+	contents, err = os.ReadFile(object)
 	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+	contents, err = os.ReadFile(filepath.Join(path, "other.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
 }
 
 // A disk waiting for an image which is not in its library yet is how that image is meant to arrive:
@@ -615,7 +791,7 @@ func TestUploadsAnImageADiskIsWaitingFor(t *testing.T) {
 	diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
 	require.NoError(t, st.Create(t.Context(), diskStatus))
 
-	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, "image.raw", false, "", "talos")}
+	srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest("image.raw", "", "talos")}
 	require.NoError(t, svc.Upload(srv))
 
 	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
@@ -623,46 +799,35 @@ func TestUploadsAnImageADiskIsWaitingFor(t *testing.T) {
 	assert.Equal(t, "talos", string(contents))
 }
 
-// An upload takes as long as it takes, so a file which was nobody's when it started can be a running
-// guest's medium by the time it would be renamed over. The check before the rename is what catches
-// that, and it is the only one which can.
-func TestRefusesToOverwriteAnImageThatCameIntoUseMidUpload(t *testing.T) {
+// A name taken after streaming starts must still never be replaced at publication.
+func TestRefusesNameClaimedMidUpload(t *testing.T) {
 	t.Parallel()
 
-	svc, path, st := setupWithState(t, true)
-
-	require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
-
+	svc, path := setup(t, true)
 	srv := &uploadStream{
 		ctx:      t.Context(),
-		requests: uploadRequestsWithDigest(testLibrary, "image.raw", true, "", "replacement"),
+		requests: uploadRequestsWithDigest("image.raw", "", "replacement"),
 		beforeEOF: func() {
-			diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
-			diskStatus.TypedSpec().VirtualMachine = "vm"
-			diskStatus.TypedSpec().Name = "install"
-			diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
-			require.NoError(t, st.Create(t.Context(), diskStatus))
-			require.NoError(t, st.AddFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
+			require.NoError(t, upload(t, svc, "image.raw", "first"))
 		},
 	}
 
 	err := svc.Upload(srv)
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 
 	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
 	require.NoError(t, err)
-	assert.Equal(t, "talos", string(contents))
+	assert.Equal(t, "first", string(contents))
 
-	// The refused upload leaves nothing staged behind either.
 	entries, err := os.ReadDir(path)
 	require.NoError(t, err)
-	require.Len(t, entries, 1)
+	require.Len(t, entries, 2)
 	assert.Equal(t, "image.raw", entries[0].Name())
+	assert.Equal(t, "objects", entries[1].Name())
 }
 
-// A disk nothing holds is a disk no guest is reading from: a stopped virtual machine, or one whose
-// disk reports an error. An operator who uploaded the wrong image has to be able to replace it.
-func TestReplacesAnImageNoDomainHolds(t *testing.T) {
+// An unheld name still cannot be overwritten. Removing its alias explicitly permits reuse.
+func TestRefusesToOverwriteAnImageNoDomainHolds(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
@@ -677,7 +842,7 @@ func TestReplacesAnImageNoDomainHolds(t *testing.T) {
 
 			svc, path, st := setupWithState(t, true)
 
-			require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+			require.NoError(t, upload(t, svc, "image.raw", "talos"))
 
 			diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
 			diskStatus.TypedSpec().VirtualMachine = "vm"
@@ -686,45 +851,46 @@ func TestReplacesAnImageNoDomainHolds(t *testing.T) {
 			diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
 			require.NoError(t, st.Create(t.Context(), diskStatus))
 
-			srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest(testLibrary, "image.raw", true, "", "replacement")}
-			require.NoError(t, svc.Upload(srv))
+			srv := &uploadStream{ctx: t.Context(), requests: uploadRequestsWithDigest("image.raw", "", "replacement")}
+			assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(svc.Upload(srv)))
 
 			contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
 			require.NoError(t, err)
-			assert.Equal(t, "replacement", string(contents))
+			assert.Equal(t, "talos", string(contents))
 
-			_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
+			_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
 			require.NoError(t, err)
 		})
 	}
 }
 
-func TestHeldCloudInitSeedCannotBeReplacedOrDeleted(t *testing.T) {
+func TestHeldCloudInitSeedDoesNotKeepLibraryAlias(t *testing.T) {
 	t.Parallel()
 
 	svc, path, st := setupWithState(t, true)
 
 	const name = "cloud-init-guest.iso"
 
-	require.NoError(t, os.WriteFile(filepath.Join(path, name), []byte("original"), 0o600))
+	require.NoError(t, upload(t, svc, name, "original"))
+
+	object := filepath.Join(path, "objects", "sha256", digest.SHA256.FromString("original").Encoded())
 
 	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "guest@seed")
 	seed.TypedSpec().VirtualMachine = "guest"
-	seed.TypedSpec().Library = testLibrary
-	seed.TypedSpec().Name = name
 	require.NoError(t, st.Create(t.Context(), seed))
 	require.NoError(t, st.AddFinalizer(t.Context(), seed.Metadata(), "hypervisor.VirtualMachineController"))
 
-	err := upload(t, svc, name, true, "replacement")
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	err := upload(t, svc, name, "replacement")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: name})
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: name}})
+	require.NoError(t, err)
+	require.NoFileExists(t, filepath.Join(path, name))
 
-	contents, err := os.ReadFile(filepath.Join(path, name))
+	contents, err := os.ReadFile(object)
 	require.NoError(t, err)
 	assert.Equal(t, "original", string(contents))
-	assert.True(t, libraryFinalizers(t, st).Empty(), "failed mutations release their markers")
+	assert.True(t, libraryFinalizers(t, st).Empty(), "successful mutations release their markers")
 }
 
 // libraryMetadata points at the status the mutation markers live on.
@@ -748,14 +914,14 @@ func TestRefusesToReplaceAFileAnotherRequestIsReplacing(t *testing.T) {
 
 	svc, path, st := setupWithState(t, true)
 
-	require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+	require.NoError(t, upload(t, svc, "image.raw", "talos"))
 	require.NoError(t, st.AddFinalizer(t.Context(), libraryMetadata(), hypervisor.ContentLibraryMutationFinalizer("image.raw")))
 
-	err := upload(t, svc, "image.raw", true, "replacement")
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
-	assert.Contains(t, grpcstatus.Convert(err).Message(), "already being changed")
+	err := upload(t, svc, "image.raw", "replacement")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
+	assert.Contains(t, grpcstatus.Convert(err).Message(), "already exists")
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
 	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
 
 	contents, err := os.ReadFile(filepath.Join(path, "image.raw"))
@@ -763,9 +929,9 @@ func TestRefusesToReplaceAFileAnotherRequestIsReplacing(t *testing.T) {
 	assert.Equal(t, "talos", string(contents))
 
 	// Another file of the same library is claimed separately.
-	require.NoError(t, upload(t, svc, "other.raw", false, "talos"))
+	require.NoError(t, upload(t, svc, "other.raw", "talos"))
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "other.raw"})
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "other.raw"}})
 	require.NoError(t, err)
 }
 
@@ -774,12 +940,12 @@ func TestRefusesToReplaceAFileAnotherRequestIsReplacing(t *testing.T) {
 func TestGivesBackWhatItClaimed(t *testing.T) {
 	t.Parallel()
 
-	svc, path, st := setupWithState(t, true)
+	svc, _, st := setupWithState(t, true)
 
-	require.NoError(t, os.WriteFile(filepath.Join(path, "image.raw"), []byte("talos"), 0o600))
+	require.NoError(t, upload(t, svc, "image.raw", "talos"))
 
-	require.NoError(t, upload(t, svc, "image.raw", true, "replacement"))
-	assert.True(t, libraryFinalizers(t, st).Empty(), "a stored upload gives its claim back")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(upload(t, svc, "image.raw", "replacement")))
+	assert.True(t, libraryFinalizers(t, st).Empty(), "a name conflict gives its claim back")
 
 	diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
 	diskStatus.TypedSpec().VirtualMachine = "vm"
@@ -788,11 +954,49 @@ func TestGivesBackWhatItClaimed(t *testing.T) {
 	require.NoError(t, st.Create(t.Context(), diskStatus))
 	require.NoError(t, st.AddFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
 
-	err := upload(t, svc, "image.raw", true, "refused")
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	err := upload(t, svc, "image.raw", "refused")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 	assert.True(t, libraryFinalizers(t, st).Empty(), "a refused upload gives its claim back")
 
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Name: "image.raw"})
-	assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
-	assert.True(t, libraryFinalizers(t, st).Empty(), "a refused delete gives its claim back")
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
+	require.NoError(t, err)
+	assert.True(t, libraryFinalizers(t, st).Empty(), "a successful delete gives its claim back")
+}
+
+func TestCASPublicationRefusesLibraryTeardownDuringUpload(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+	stream := &uploadStream{
+		ctx:      t.Context(),
+		requests: uploadRequestsWithDigest("image.raw", "", "image"),
+		beforeEOF: func() {
+			_, err := st.Teardown(t.Context(), libraryMetadata())
+			require.NoError(t, err)
+		},
+	}
+
+	err := svc.Upload(stream)
+	require.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	require.NoFileExists(t, filepath.Join(path, "image.raw"))
+}
+
+func TestCASPublicationRefusesCanceledUpload(t *testing.T) {
+	t.Parallel()
+
+	svc, path := setup(t, true)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	stream := &uploadStream{
+		ctx:       ctx,
+		requests:  uploadRequestsWithDigest("image.raw", "", "image"),
+		beforeEOF: cancel,
+	}
+
+	err := svc.Upload(stream)
+	require.Equal(t, codes.Canceled, grpcstatus.Code(err))
+	require.NoFileExists(t, filepath.Join(path, "image.raw"))
+	require.NoDirExists(t, filepath.Join(path, "objects"))
 }

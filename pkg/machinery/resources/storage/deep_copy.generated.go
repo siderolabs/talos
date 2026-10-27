@@ -107,6 +107,10 @@ func (o StoragePoolStatusSpec) DeepCopy() StoragePoolStatusSpec {
 // DeepCopy generates a deep copy of StoragePoolVolumeSpecSpec.
 func (o StoragePoolVolumeSpecSpec) DeepCopy() StoragePoolVolumeSpecSpec {
 	var cp StoragePoolVolumeSpecSpec = o
+	if o.Copy != nil {
+		cp.Copy = new(StoragePoolVolumeCopySpec)
+		*cp.Copy = *o.Copy
+	}
 	return cp
 }
 

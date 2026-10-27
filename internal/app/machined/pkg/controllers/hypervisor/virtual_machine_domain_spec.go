@@ -81,8 +81,8 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.ContentLibraryStatusType,
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolVolumeStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -336,13 +336,13 @@ func retainedCloudInitCurrent(ctx context.Context, r controller.Reader, vm *hype
 	// The base renderer exited on a blank disk before checking the seed. Do not keep
 	// a domain running when its separately backed cloud-init media has changed.
 	seed := hypervisor.CloudInitSpecSpec{
-		Library:       vm.TypedSpec().CloudInit.Library,
+		Pool:          vm.TypedSpec().CloudInit.Pool,
 		MetaData:      vm.TypedSpec().CloudInit.MetaData,
 		UserData:      vm.TypedSpec().CloudInit.UserData,
 		NetworkConfig: vm.TypedSpec().CloudInit.NetworkConfig,
 	}
 
-	projected, status, library, id, err := loadCloudInitBacking(ctx, r, vm.Metadata().ID(), seed)
+	status, pool, id, err := loadCloudInitBacking(ctx, r, vm.Metadata().ID(), seed)
 	if err != nil {
 		if errors.Is(err, errDiskNotReady) {
 			return false, nil
@@ -353,9 +353,10 @@ func retainedCloudInitCurrent(ctx context.Context, r controller.Reader, vm *hype
 
 	asset := status.TypedSpec()
 
-	return id == domain.TypedSpec().CloudInit && cloudInitProjectionReady(projected, seed) &&
-		cloudInitAssetCurrent(status, seed, projected.Metadata().Version().String(), vm.Metadata().ID()) &&
-		cloudInitLibraryMatches(library, asset) && cloudInitAssetNameValid(asset) &&
+	return id == domain.TypedSpec().CloudInit && asset.Phase == hypervisor.CloudInitPhaseReady &&
+		pool.Metadata().Phase() == resource.PhaseRunning &&
+		(pool.TypedSpec().Phase == storage.StoragePoolPhaseReady || pool.TypedSpec().Phase == storage.StoragePoolPhaseObservationUnavailable) &&
+		cloudInitPoolIdentityMatches(pool, asset) &&
 		domainAttachesCurrentSeed(domain.TypedSpec().DomainXML, asset), nil
 }
 
@@ -365,7 +366,11 @@ func domainAttachesCurrentSeed(domainXML string, asset *hypervisor.CloudInitStat
 		return false
 	}
 
-	path := filepath.Join(asset.Path, asset.Name)
+	path, err := cloudInitObjectPath(asset)
+	if err != nil {
+		return false
+	}
+
 	for _, disk := range definition.Devices.Disks {
 		if seedDiskIsAttached(disk, path) {
 			return true
@@ -416,28 +421,26 @@ func renderVirtualMachineDomainWithSeed(
 	return domainXML, attachedDisks, seedID, err
 }
 
-// attachCloudInit requires the exact projected seed and its current library backing before rendering.
+// attachCloudInit requires the exact projected seed and its current pool backing before rendering.
 func attachCloudInit(ctx context.Context, r controller.Reader, name string, desired *hypervisor.VirtualMachineCloudInitSpec, domainXML *string) (string, error) {
 	seed := hypervisor.CloudInitSpecSpec{
-		Library:       desired.Library,
+		Pool:          desired.Pool,
 		MetaData:      desired.MetaData,
 		UserData:      desired.UserData,
 		NetworkConfig: desired.NetworkConfig,
 	}
 
-	if seed.Library == "" || strings.ContainsAny(seed.Library, "/\\\x00") {
-		return "", fmt.Errorf("virtual machine %q: invalid cloud-init library", name)
+	if seed.Pool == "" || strings.ContainsAny(seed.Pool, "/\\\x00") {
+		return "", fmt.Errorf("virtual machine %q: invalid cloud-init pool", name)
 	}
 
-	projected, status, library, id, err := loadCloudInitBacking(ctx, r, name, seed)
+	status, pool, id, err := loadCloudInitBacking(ctx, r, name, seed)
 	if err != nil {
 		return "", err
 	}
 
 	asset := status.TypedSpec()
-	if !cloudInitProjectionReady(projected, seed) ||
-		!cloudInitAssetCurrent(status, seed, projected.Metadata().Version().String(), name) ||
-		!cloudInitLibraryMatches(library, asset) || !cloudInitAssetNameValid(asset) {
+	if !cloudInitPoolBackingMatches(pool, asset) {
 		return "", fmt.Errorf("virtual machine %q: cloud-init seed is %w", name, errDiskNotReady)
 	}
 
@@ -451,51 +454,60 @@ func attachCloudInit(ctx context.Context, r controller.Reader, name string, desi
 		return "", fmt.Errorf("virtual machine %q: cloud-init seed: %w: no free SATA target", name, errDiskUnsupported)
 	}
 
-	appendCloudInitCDROM(&domain, asset, dev)
+	path, err := cloudInitObjectPath(asset)
+	if err != nil {
+		return "", fmt.Errorf("virtual machine %q: cloud-init seed: %w: %w", name, errDiskNotReady, err)
+	}
+
+	appendCloudInitCDROM(&domain, path, dev)
 
 	*domainXML, err = domain.Marshal()
 
 	return id, err
 }
 
-// loadCloudInitBacking reads the projection, its seed status, and the library in dependency order.
+// loadCloudInitBacking reads the projection, seed and pool backing in dependency order.
 func loadCloudInitBacking(
 	ctx context.Context, r controller.Reader, name string, seed hypervisor.CloudInitSpecSpec,
-) (*hypervisor.CloudInitSpec, *hypervisor.CloudInitStatus, *hypervisor.ContentLibraryStatus, string, error) {
+) (*hypervisor.CloudInitStatus, *storage.StoragePoolStatus, string, error) {
 	pending := func() error {
 		return fmt.Errorf("virtual machine %q: cloud-init seed is %w", name, errDiskNotReady)
 	}
 
 	projected, err := safe.ReaderGetByID[*hypervisor.CloudInitSpec](ctx, r, name)
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			return nil, nil, nil, "", pending()
-		}
+	if state.IsNotFoundError(err) {
+		return nil, nil, "", pending()
+	}
 
-		return nil, nil, nil, "", err
+	if err != nil {
+		return nil, nil, "", err
 	}
 
 	id := hypervisor.CloudInitStatusID(name, seed)
 
 	status, err := safe.ReaderGetByID[*hypervisor.CloudInitStatus](ctx, r, id)
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			return nil, nil, nil, "", pending()
-		}
-
-		return nil, nil, nil, "", err
+	if state.IsNotFoundError(err) {
+		return nil, nil, "", pending()
 	}
 
-	library, err := safe.ReaderGetByID[*hypervisor.ContentLibraryStatus](ctx, r, seed.Library)
 	if err != nil {
-		if state.IsNotFoundError(err) {
-			return nil, nil, nil, "", pending()
-		}
-
-		return nil, nil, nil, "", err
+		return nil, nil, "", err
 	}
 
-	return projected, status, library, id, nil
+	pool, err := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, seed.Pool)
+	if state.IsNotFoundError(err) {
+		return nil, nil, "", pending()
+	}
+
+	if err != nil {
+		return nil, nil, "", err
+	}
+
+	if !cloudInitProjectionReady(projected, seed) || !cloudInitAssetCurrent(status, seed, projected.Metadata().Version().String(), name) {
+		return nil, nil, "", pending()
+	}
+
+	return status, pool, id, nil
 }
 
 func cloudInitProjectionReady(projected *hypervisor.CloudInitSpec, seed hypervisor.CloudInitSpecSpec) bool {
@@ -507,17 +519,31 @@ func cloudInitAssetCurrent(status *hypervisor.CloudInitStatus, seed hypervisor.C
 
 	return status.Metadata().Phase() == resource.PhaseRunning && asset.Phase == hypervisor.CloudInitPhaseReady &&
 		asset.InputDigest == seed.InputDigest() && asset.ObservedGeneration == generation &&
-		asset.VirtualMachine == name && asset.Library == seed.Library
+		asset.VirtualMachine == name && asset.Pool == seed.Pool && cloudInitAssetNameValid(asset)
 }
 
-func cloudInitLibraryMatches(library *hypervisor.ContentLibraryStatus, asset *hypervisor.CloudInitStatusSpec) bool {
-	return library.Metadata().Phase() == resource.PhaseRunning && library.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady &&
-		asset.Path != "" && asset.VolumeID != "" &&
-		asset.Path == library.TypedSpec().Path && asset.VolumeID == library.TypedSpec().VolumeID
+func cloudInitPoolBackingMatches(pool *storage.StoragePoolStatus, asset *hypervisor.CloudInitStatusSpec) bool {
+	return pool != nil && pool.Metadata().Phase() == resource.PhaseRunning &&
+		pool.TypedSpec().Phase == storage.StoragePoolPhaseReady && cloudInitPoolIdentityMatches(pool, asset)
+}
+
+func cloudInitPoolIdentityMatches(pool *storage.StoragePoolStatus, asset *hypervisor.CloudInitStatusSpec) bool {
+	return pool != nil && pool.TypedSpec().VolumeID != "" && pool.TypedSpec().VolumeID == asset.VolumeID &&
+		pool.TypedSpec().TargetPath != "" && asset.Pool == pool.Metadata().ID() && asset.Path == pool.TypedSpec().TargetPath &&
+		!pool.Metadata().Finalizers().Has("storage.StoragePoolController/mutating/backing") &&
+		!pool.Metadata().Finalizers().Has(storage.StoragePoolVolumeMutationFinalizer(asset.Name))
 }
 
 func cloudInitAssetNameValid(asset *hypervisor.CloudInitStatusSpec) bool {
-	return asset.Name != "" && filepath.Base(asset.Name) == asset.Name && asset.Digest != ""
+	return asset.Name != "" && asset.Name != "." && filepath.Base(asset.Name) == asset.Name && asset.Digest != ""
+}
+
+func cloudInitObjectPath(asset *hypervisor.CloudInitStatusSpec) (string, error) {
+	if asset.Path == "" || !cloudInitAssetNameValid(asset) {
+		return "", fmt.Errorf("invalid pool seed path")
+	}
+
+	return filepath.Join(asset.Path, asset.Name), nil
 }
 
 // SATA shares sd* targets with SCSI; choose a free target without changing user boot order.
@@ -540,16 +566,16 @@ func freeCloudInitSATATarget(domain *libvirtxml.Domain) string {
 	return ""
 }
 
-func appendCloudInitCDROM(domain *libvirtxml.Domain, asset *hypervisor.CloudInitStatusSpec, dev string) {
+func appendCloudInitCDROM(domain *libvirtxml.Domain, path, dev string) {
 	domain.Devices.Disks = append(domain.Devices.Disks, libvirtxml.DomainDisk{
 		Device: "cdrom",
 		Driver: &libvirtxml.DomainDiskDriver{
 			Name: "qemu",
-			Type: "raw",
+			Type: hypervisorhelpers.VirtualMachineDiskFormatRaw.String(),
 		},
 		Source: &libvirtxml.DomainDiskSource{
 			File: &libvirtxml.DomainDiskSourceFile{
-				File: filepath.Join(asset.Path, asset.Name),
+				File: path,
 			},
 		},
 		Target: &libvirtxml.DomainDiskTarget{
