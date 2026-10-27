@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -115,9 +115,6 @@ func (state *operatorRunState) Start(ctx context.Context, notifyCh chan<- struct
 
 func (state *operatorRunState) runWithRestarts(ctx context.Context, notifyCh chan<- struct{}, logger *zap.Logger, id string) {
 	backoff := backoff.NewExponentialBackOff()
-
-	// disable number of retries limit
-	backoff.MaxElapsedTime = 0
 
 	for ctx.Err() == nil {
 		if err := state.runWithPanicHandler(ctx, notifyCh, logger, id); err == nil {

@@ -19,7 +19,7 @@ import (
 	dittoruntime "github.com/marmos91/dittofs/pkg/controlplane/runtime"
 	dittoshares "github.com/marmos91/dittofs/pkg/controlplane/runtime/shares"
 	controlplanestore "github.com/marmos91/dittofs/pkg/controlplane/store"
-	metadatamemory "github.com/marmos91/dittofs/pkg/metadata/store/memory"
+	metadatabadger "github.com/marmos91/dittofs/pkg/metadata/store/badger"
 
 	"github.com/siderolabs/talos/pkg/provision"
 )
@@ -30,9 +30,14 @@ const (
 	NFSExport      = "/export"
 	nfsMemoryStore = "memory"
 	nfsAdapterType = "nfs"
+
+	// Badger is the only metadata store type; it is kept entirely in RAM here.
+	nfsMetadataStoreType = "badger"
 )
 
 // NFSd serves an in-memory NFS export supporting NFSv3 and NFSv4.
+//
+//nolint:gocyclo
 func NFSd(ctx context.Context, bindAddress string, port int) error {
 	// Every share journals its blocks to disk, so the export needs a journal root even though
 	// its metadata store is in-memory. The journal is as ephemeral as that metadata: it is
@@ -61,7 +66,7 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 
 	metadataStoreID, err := store.CreateMetadataStore(ctx, &models.MetadataStoreConfig{
 		Name: nfsMemoryStore,
-		Type: nfsMemoryStore,
+		Type: nfsMetadataStoreType,
 	})
 	if err != nil {
 		return fmt.Errorf("create NFS metadata store: %w", err)
@@ -93,7 +98,13 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 		JournalRoot: journalRoot,
 	})
 
-	if err = runtime.RegisterMetadataStore(nfsMemoryStore, metadatamemory.NewMemoryMetadataStoreWithDefaults()); err != nil {
+	metadataStore, err := metadatabadger.NewInMemoryBadgerMetadataStore(ctx)
+	if err != nil {
+		return fmt.Errorf("open NFS metadata store: %w", err)
+	}
+	defer metadataStore.Close() //nolint:errcheck
+
+	if err = runtime.RegisterMetadataStore(nfsMemoryStore, metadataStore); err != nil {
 		return fmt.Errorf("register NFS metadata store: %w", err)
 	}
 

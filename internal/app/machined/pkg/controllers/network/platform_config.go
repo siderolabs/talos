@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -112,9 +112,6 @@ func (ctrl *PlatformConfigController) Run(ctx context.Context, r controller.Runt
 
 func (ctrl *PlatformConfigController) runWithRestarts(ctx context.Context, logger *zap.Logger, f func() error) {
 	backoff := backoff.NewExponentialBackOff()
-
-	// disable number of retries limit
-	backoff.MaxElapsedTime = 0
 
 	for ctx.Err() == nil {
 		var err error

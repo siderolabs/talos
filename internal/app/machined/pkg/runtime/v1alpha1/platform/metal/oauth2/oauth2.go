@@ -16,7 +16,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/mdp/qrterminal/v3"
+	"github.com/mdp/qrterminal/v4"
 	"github.com/siderolabs/go-procfs/procfs"
 	"golang.org/x/oauth2"
 

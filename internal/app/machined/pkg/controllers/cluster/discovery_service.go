@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff/v7"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -96,9 +96,6 @@ func (sc *discoveryServiceClient) Start(ctx context.Context, notifyCh chan<- str
 
 func (sc *discoveryServiceClient) runWithRestarts(ctx context.Context, notifyCh chan<- struct{}, logger *zap.Logger, name string) {
 	backoff := backoff.NewExponentialBackOff()
-
-	// disable number of retries limit
-	backoff.MaxElapsedTime = 0
 
 	for ctx.Err() == nil {
 		if err := sc.runWithPanicHandler(ctx, notifyCh, logger, name); err == nil {

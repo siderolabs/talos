@@ -26,6 +26,7 @@ import (
 	cdns "codeberg.org/miekg/dns"
 	"codeberg.org/miekg/dns/dnshttp"
 	"github.com/coredns/coredns/plugin/pkg/proxy"
+	"github.com/coredns/coredns/plugin/pkg/up"
 	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 
@@ -41,6 +42,10 @@ const dialTimeout = 4 * time.Second
 
 // requestTimeout caps an individual DoH HTTP request.
 const requestTimeout = 4 * time.Second
+
+// defaultHealthcheckInterval is the interval between health check probes
+// unless overridden via [Proxy.Start].
+const defaultHealthcheckInterval = 500 * time.Millisecond
 
 // Proxy is a DoH upstream resolver.
 //
@@ -58,6 +63,7 @@ type Proxy struct {
 	serverName string
 
 	httpClient *http.Client
+	probe      *up.Probe
 
 	fails  atomic.Uint32
 	closed atomic.Bool
@@ -74,7 +80,10 @@ func NewProxy(addr, serverName string) *Proxy {
 		addr:       addr,
 		serverName: serverName,
 		url:        "https://" + serverName,
+		probe:      up.New(),
 	}
+
+	p.probe.Start(defaultHealthcheckInterval)
 
 	transport := &http.Transport{
 		// Redirect direct dials to the upstream to the pre-resolved IP so DoH
@@ -119,23 +128,41 @@ func NewProxy(addr, serverName string) *Proxy {
 func (p *Proxy) Addr() string { return p.addr }
 
 // Fails returns the number of consecutive failures observed since the last
-// successful query.
+// successful query or health check.
 func (p *Proxy) Fails() uint32 { return p.fails.Load() }
 
-// Healthcheck is a no-op for DoH: HTTP keep-alive plus the request/response
-// cycle itself is sufficient signal, and there is no separate ping primitive
-// for DoH.
-func (p *Proxy) Healthcheck() {}
+// Healthcheck kicks off a round of health checks for this proxy.
+//
+// The health check sends a ". IN NS" query to the upstream every probe interval
+// until it succeeds. If a health check is already in progress, this is a no-op.
+func (p *Proxy) Healthcheck() {
+	p.probe.Do(func() error {
+		ping := new(dns.Msg)
+		ping.SetQuestion(".", dns.TypeNS)
 
-// Start is a no-op for DoH (there is no background health-check loop to
-// schedule).
-func (p *Proxy) Start(time.Duration) {}
+		_, err := p.connect(context.Background(), request.Request{Req: ping})
+		if err != nil {
+			p.fails.Add(1)
+
+			return err
+		}
+
+		p.fails.Store(0)
+
+		return nil
+	})
+}
+
+// Start sets the interval between health check probes.
+func (p *Proxy) Start(duration time.Duration) { p.probe.Start(duration) }
 
 // Close releases any idle connections held by the underlying transport.
 func (p *Proxy) Close() {
 	if p.closed.Swap(true) {
 		return
 	}
+
+	p.probe.Stop()
 
 	if t, ok := p.httpClient.Transport.(*http.Transport); ok {
 		t.CloseIdleConnections()
@@ -146,8 +173,9 @@ func (p *Proxy) Close() {
 // response. It implements the [dns.Upstream] interface.
 //
 // The opts parameter (TCP/UDP preference, etc.) is irrelevant for DoH — DoH
-// always runs over HTTP/2 — and is therefore ignored.
-func (p *Proxy) Connect(ctx context.Context, state request.Request, _ proxy.Options) (*dns.Msg, error) {
+// always runs over HTTP/2 — and is therefore ignored. The local address of the
+// upstream connection is not tracked, and the reported protocol is always "tcp".
+func (p *Proxy) Connect(ctx context.Context, state request.Request, _ proxy.Options) (*dns.Msg, net.Addr, string, error) {
 	resp, err := p.connect(ctx, state)
 	if err != nil {
 		p.fails.Add(1)
@@ -155,7 +183,7 @@ func (p *Proxy) Connect(ctx context.Context, state request.Request, _ proxy.Opti
 		p.fails.Store(0)
 	}
 
-	return resp, err
+	return resp, nil, "tcp", err
 }
 
 func (p *Proxy) connect(ctx context.Context, state request.Request) (*dns.Msg, error) {

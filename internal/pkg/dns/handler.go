@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"iter"
+	"net"
 	"sync"
 
 	"github.com/coredns/coredns/plugin/pkg/proxy"
@@ -25,9 +26,13 @@ import (
 // across all configured upstream protocols.
 type Upstream interface {
 	// Connect sends a DNS query to the upstream and returns the response.
-	Connect(ctx context.Context, state request.Request, opts proxy.Options) (*dns.Msg, error)
+	Connect(ctx context.Context, state request.Request, opts proxy.Options) (*dns.Msg, net.Addr, string, error)
 	// Addr returns the upstream address (used for logging).
 	Addr() string
+	// Fails returns the number of failed health checks since the last successful one.
+	Fails() uint32
+	// Healthcheck kicks off a round of health checks for this upstream.
+	Healthcheck()
 }
 
 // Handler is a dns proxy selector.
@@ -72,14 +77,14 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 		err    error
 	)
 
-	for ups := range h.dests {
+	for _, ups := range orderUpstreams(h.dests) {
 		called = true
 		opts := proxy.Options{}
 
 		logger.Debug("making dns request", zap.String("upstream", ups.Addr()))
 
 		for {
-			resp, err = ups.Connect(ctx, req, opts)
+			resp, _, _, err = ups.Connect(ctx, req, opts)
 
 			switch {
 			case errors.Is(err, proxy.ErrCachedClosed): // Remote side closed conn, can only happen with TCP.
@@ -91,6 +96,12 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 			}
 
 			break
+		}
+
+		if err != nil {
+			// Kick off health check to see if the upstream is broken, so that
+			// further requests try healthy upstreams first.
+			ups.Healthcheck()
 		}
 
 		if resp != nil && (resp.Rcode == dns.RcodeServerFailure || resp.Rcode == dns.RcodeRefused) {
@@ -129,6 +140,24 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 	logger.Debug("dns response", zap.Stringer("data", resp))
 
 	return dns.RcodeSuccess, nil
+}
+
+// orderUpstreams returns healthy upstreams first, preserving the configured order within each group.
+//
+// Unhealthy upstreams are still tried as a last resort, as the health check might fail
+// while the upstream is still able to answer the actual queries.
+func orderUpstreams(dests iter.Seq[Upstream]) []Upstream {
+	var healthy, unhealthy []Upstream
+
+	for ups := range dests {
+		if ups.Fails() > 0 {
+			unhealthy = append(unhealthy, ups)
+		} else {
+			healthy = append(healthy, ups)
+		}
+	}
+
+	return append(healthy, unhealthy...)
 }
 
 // SetProxy sets destination dns proxy servers.
