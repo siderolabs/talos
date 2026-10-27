@@ -1229,9 +1229,11 @@
         </optional>
         <zeroOrMore>
           <element name="cachetune">
-            <attribute name="vcpus">
-              <ref name="cpuset"/>
-            </attribute>
+            <optional>
+              <attribute name="vcpus">
+                <ref name="cpuset"/>
+              </attribute>
+            </optional>
             <optional>
               <attribute name="id">
                 <data type="string"/>
@@ -1266,9 +1268,11 @@
                   <attribute name="level">
                     <ref name="unsignedInt"/>
                   </attribute>
-                  <attribute name="vcpus">
-                    <ref name="cpuset"/>
-                  </attribute>
+                  <optional>
+                    <attribute name="vcpus">
+                      <ref name="cpuset"/>
+                    </attribute>
+                  </optional>
                 </element>
               </choice>
             </oneOrMore>
@@ -1276,9 +1280,11 @@
         </zeroOrMore>
         <zeroOrMore>
           <element name="memorytune">
-            <attribute name="vcpus">
-              <ref name="cpuset"/>
-            </attribute>
+            <optional>
+              <attribute name="vcpus">
+                <ref name="cpuset"/>
+              </attribute>
+            </optional>
             <oneOrMore>
               <choice>
                 <element name="node">
@@ -1290,9 +1296,11 @@
                   </attribute>
                 </element>
                 <element name="monitor">
-                  <attribute name="vcpus">
-                    <ref name="cpuset"/>
-                  </attribute>
+                  <optional>
+                    <attribute name="vcpus">
+                      <ref name="cpuset"/>
+                    </attribute>
+                  </optional>
                 </element>
               </choice>
             </oneOrMore>
@@ -1300,9 +1308,11 @@
         </zeroOrMore>
         <zeroOrMore>
           <element name="energytune">
-            <attribute name="vcpus">
-              <ref name="cpuset"/>
-            </attribute>
+            <optional>
+              <attribute name="vcpus">
+                <ref name="cpuset"/>
+              </attribute>
+            </optional>
             <optional>
               <attribute name="id">
                 <data type="string"/>
@@ -1310,9 +1320,11 @@
             </optional>
             <oneOrMore>
               <element name="monitor">
-                <attribute name="vcpus">
-                  <ref name="cpuset"/>
-                </attribute>
+                <optional>
+                  <attribute name="vcpus">
+                    <ref name="cpuset"/>
+                  </attribute>
+                </optional>
               </element>
             </oneOrMore>
           </element>
@@ -2833,7 +2845,7 @@
                   <oneOrMore>
                     <element name='bin'>
                       <attribute name='start'>
-                        <ref name="unsignedInt"/>
+                        <ref name="unsignedLong"/>
                       </attribute>
                     </element>
                   </oneOrMore>

@@ -33,13 +33,16 @@ func _BootloaderKindNoOp() {
 var _BootloaderKindValues = []BootloaderKind{BootLoaderKindNone, BootLoaderKindDualBoot, BootLoaderKindSDBoot, BootLoaderKindGrub}
 
 var _BootloaderKindNameToValueMap = map[string]BootloaderKind{
-	_BootloaderKindName[0:4]:        BootLoaderKindNone,
+	_BootloaderKindName[0:4]:   BootLoaderKindNone,
+	_BootloaderKindName[4:13]:  BootLoaderKindDualBoot,
+	_BootloaderKindName[13:20]: BootLoaderKindSDBoot,
+	_BootloaderKindName[20:24]: BootLoaderKindGrub,
+}
+
+var _BootloaderKindLowerNameToValueMap = map[string]BootloaderKind{
 	_BootloaderKindLowerName[0:4]:   BootLoaderKindNone,
-	_BootloaderKindName[4:13]:       BootLoaderKindDualBoot,
 	_BootloaderKindLowerName[4:13]:  BootLoaderKindDualBoot,
-	_BootloaderKindName[13:20]:      BootLoaderKindSDBoot,
 	_BootloaderKindLowerName[13:20]: BootLoaderKindSDBoot,
-	_BootloaderKindName[20:24]:      BootLoaderKindGrub,
 	_BootloaderKindLowerName[20:24]: BootLoaderKindGrub,
 }
 
@@ -57,7 +60,7 @@ func BootloaderKindString(s string) (BootloaderKind, error) {
 		return val, nil
 	}
 
-	if val, ok := _BootloaderKindNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _BootloaderKindLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to BootloaderKind values", s)

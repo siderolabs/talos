@@ -33,13 +33,16 @@ func _ImageCacheCopyStatusNoOp() {
 var _ImageCacheCopyStatusValues = []ImageCacheCopyStatus{ImageCacheCopyStatusUnknown, ImageCacheCopyStatusSkipped, ImageCacheCopyStatusPending, ImageCacheCopyStatusReady}
 
 var _ImageCacheCopyStatusNameToValueMap = map[string]ImageCacheCopyStatus{
-	_ImageCacheCopyStatusName[0:7]:        ImageCacheCopyStatusUnknown,
+	_ImageCacheCopyStatusName[0:7]:   ImageCacheCopyStatusUnknown,
+	_ImageCacheCopyStatusName[7:14]:  ImageCacheCopyStatusSkipped,
+	_ImageCacheCopyStatusName[14:21]: ImageCacheCopyStatusPending,
+	_ImageCacheCopyStatusName[21:26]: ImageCacheCopyStatusReady,
+}
+
+var _ImageCacheCopyStatusLowerNameToValueMap = map[string]ImageCacheCopyStatus{
 	_ImageCacheCopyStatusLowerName[0:7]:   ImageCacheCopyStatusUnknown,
-	_ImageCacheCopyStatusName[7:14]:       ImageCacheCopyStatusSkipped,
 	_ImageCacheCopyStatusLowerName[7:14]:  ImageCacheCopyStatusSkipped,
-	_ImageCacheCopyStatusName[14:21]:      ImageCacheCopyStatusPending,
 	_ImageCacheCopyStatusLowerName[14:21]: ImageCacheCopyStatusPending,
-	_ImageCacheCopyStatusName[21:26]:      ImageCacheCopyStatusReady,
 	_ImageCacheCopyStatusLowerName[21:26]: ImageCacheCopyStatusReady,
 }
 
@@ -57,7 +60,7 @@ func ImageCacheCopyStatusString(s string) (ImageCacheCopyStatus, error) {
 		return val, nil
 	}
 
-	if val, ok := _ImageCacheCopyStatusNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ImageCacheCopyStatusLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ImageCacheCopyStatus values", s)

@@ -32,11 +32,14 @@ func _FailOverMACNoOp() {
 var _FailOverMACValues = []FailOverMAC{FailOverMACNone, FailOverMACActive, FailOverMACFollow}
 
 var _FailOverMACNameToValueMap = map[string]FailOverMAC{
-	_FailOverMACName[0:4]:        FailOverMACNone,
+	_FailOverMACName[0:4]:   FailOverMACNone,
+	_FailOverMACName[4:10]:  FailOverMACActive,
+	_FailOverMACName[10:16]: FailOverMACFollow,
+}
+
+var _FailOverMACLowerNameToValueMap = map[string]FailOverMAC{
 	_FailOverMACLowerName[0:4]:   FailOverMACNone,
-	_FailOverMACName[4:10]:       FailOverMACActive,
 	_FailOverMACLowerName[4:10]:  FailOverMACActive,
-	_FailOverMACName[10:16]:      FailOverMACFollow,
 	_FailOverMACLowerName[10:16]: FailOverMACFollow,
 }
 
@@ -53,7 +56,7 @@ func FailOverMACString(s string) (FailOverMAC, error) {
 		return val, nil
 	}
 
-	if val, ok := _FailOverMACNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _FailOverMACLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to FailOverMAC values", s)

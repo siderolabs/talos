@@ -36,19 +36,22 @@ func _VolumeTypeNoOp() {
 var _VolumeTypeValues = []VolumeType{VolumeTypePartition, VolumeTypeDisk, VolumeTypeTmpfs, VolumeTypeDirectory, VolumeTypeSymlink, VolumeTypeOverlay, VolumeTypeExternal}
 
 var _VolumeTypeNameToValueMap = map[string]VolumeType{
-	_VolumeTypeName[0:9]:        VolumeTypePartition,
+	_VolumeTypeName[0:9]:   VolumeTypePartition,
+	_VolumeTypeName[9:13]:  VolumeTypeDisk,
+	_VolumeTypeName[13:18]: VolumeTypeTmpfs,
+	_VolumeTypeName[18:27]: VolumeTypeDirectory,
+	_VolumeTypeName[27:34]: VolumeTypeSymlink,
+	_VolumeTypeName[34:41]: VolumeTypeOverlay,
+	_VolumeTypeName[41:49]: VolumeTypeExternal,
+}
+
+var _VolumeTypeLowerNameToValueMap = map[string]VolumeType{
 	_VolumeTypeLowerName[0:9]:   VolumeTypePartition,
-	_VolumeTypeName[9:13]:       VolumeTypeDisk,
 	_VolumeTypeLowerName[9:13]:  VolumeTypeDisk,
-	_VolumeTypeName[13:18]:      VolumeTypeTmpfs,
 	_VolumeTypeLowerName[13:18]: VolumeTypeTmpfs,
-	_VolumeTypeName[18:27]:      VolumeTypeDirectory,
 	_VolumeTypeLowerName[18:27]: VolumeTypeDirectory,
-	_VolumeTypeName[27:34]:      VolumeTypeSymlink,
 	_VolumeTypeLowerName[27:34]: VolumeTypeSymlink,
-	_VolumeTypeName[34:41]:      VolumeTypeOverlay,
 	_VolumeTypeLowerName[34:41]: VolumeTypeOverlay,
-	_VolumeTypeName[41:49]:      VolumeTypeExternal,
 	_VolumeTypeLowerName[41:49]: VolumeTypeExternal,
 }
 
@@ -69,7 +72,7 @@ func VolumeTypeString(s string) (VolumeType, error) {
 		return val, nil
 	}
 
-	if val, ok := _VolumeTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VolumeTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VolumeType values", s)
@@ -139,21 +142,24 @@ func _VolumePhaseNoOp() {
 var _VolumePhaseValues = []VolumePhase{VolumePhaseWaiting, VolumePhaseFailed, VolumePhaseMissing, VolumePhaseLocated, VolumePhaseProvisioned, VolumePhasePrepared, VolumePhaseReady, VolumePhaseClosed}
 
 var _VolumePhaseNameToValueMap = map[string]VolumePhase{
-	_VolumePhaseName[0:7]:        VolumePhaseWaiting,
+	_VolumePhaseName[0:7]:   VolumePhaseWaiting,
+	_VolumePhaseName[7:13]:  VolumePhaseFailed,
+	_VolumePhaseName[13:20]: VolumePhaseMissing,
+	_VolumePhaseName[20:27]: VolumePhaseLocated,
+	_VolumePhaseName[27:38]: VolumePhaseProvisioned,
+	_VolumePhaseName[38:46]: VolumePhasePrepared,
+	_VolumePhaseName[46:51]: VolumePhaseReady,
+	_VolumePhaseName[51:57]: VolumePhaseClosed,
+}
+
+var _VolumePhaseLowerNameToValueMap = map[string]VolumePhase{
 	_VolumePhaseLowerName[0:7]:   VolumePhaseWaiting,
-	_VolumePhaseName[7:13]:       VolumePhaseFailed,
 	_VolumePhaseLowerName[7:13]:  VolumePhaseFailed,
-	_VolumePhaseName[13:20]:      VolumePhaseMissing,
 	_VolumePhaseLowerName[13:20]: VolumePhaseMissing,
-	_VolumePhaseName[20:27]:      VolumePhaseLocated,
 	_VolumePhaseLowerName[20:27]: VolumePhaseLocated,
-	_VolumePhaseName[27:38]:      VolumePhaseProvisioned,
 	_VolumePhaseLowerName[27:38]: VolumePhaseProvisioned,
-	_VolumePhaseName[38:46]:      VolumePhasePrepared,
 	_VolumePhaseLowerName[38:46]: VolumePhasePrepared,
-	_VolumePhaseName[46:51]:      VolumePhaseReady,
 	_VolumePhaseLowerName[46:51]: VolumePhaseReady,
-	_VolumePhaseName[51:57]:      VolumePhaseClosed,
 	_VolumePhaseLowerName[51:57]: VolumePhaseClosed,
 }
 
@@ -175,7 +181,7 @@ func VolumePhaseString(s string) (VolumePhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _VolumePhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VolumePhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VolumePhase values", s)
@@ -246,23 +252,26 @@ func _FilesystemTypeNoOp() {
 var _FilesystemTypeValues = []FilesystemType{FilesystemTypeNone, FilesystemTypeXFS, FilesystemTypeVFAT, FilesystemTypeEXT4, FilesystemTypeISO9660, FilesystemTypeSwap, FilesystemTypeVirtiofs, FilesystemTypeBtrfs, FilesystemTypeNFS}
 
 var _FilesystemTypeNameToValueMap = map[string]FilesystemType{
-	_FilesystemTypeName[0:4]:        FilesystemTypeNone,
+	_FilesystemTypeName[0:4]:   FilesystemTypeNone,
+	_FilesystemTypeName[4:7]:   FilesystemTypeXFS,
+	_FilesystemTypeName[7:11]:  FilesystemTypeVFAT,
+	_FilesystemTypeName[11:15]: FilesystemTypeEXT4,
+	_FilesystemTypeName[15:22]: FilesystemTypeISO9660,
+	_FilesystemTypeName[22:27]: FilesystemTypeSwap,
+	_FilesystemTypeName[27:35]: FilesystemTypeVirtiofs,
+	_FilesystemTypeName[35:40]: FilesystemTypeBtrfs,
+	_FilesystemTypeName[40:43]: FilesystemTypeNFS,
+}
+
+var _FilesystemTypeLowerNameToValueMap = map[string]FilesystemType{
 	_FilesystemTypeLowerName[0:4]:   FilesystemTypeNone,
-	_FilesystemTypeName[4:7]:        FilesystemTypeXFS,
 	_FilesystemTypeLowerName[4:7]:   FilesystemTypeXFS,
-	_FilesystemTypeName[7:11]:       FilesystemTypeVFAT,
 	_FilesystemTypeLowerName[7:11]:  FilesystemTypeVFAT,
-	_FilesystemTypeName[11:15]:      FilesystemTypeEXT4,
 	_FilesystemTypeLowerName[11:15]: FilesystemTypeEXT4,
-	_FilesystemTypeName[15:22]:      FilesystemTypeISO9660,
 	_FilesystemTypeLowerName[15:22]: FilesystemTypeISO9660,
-	_FilesystemTypeName[22:27]:      FilesystemTypeSwap,
 	_FilesystemTypeLowerName[22:27]: FilesystemTypeSwap,
-	_FilesystemTypeName[27:35]:      FilesystemTypeVirtiofs,
 	_FilesystemTypeLowerName[27:35]: FilesystemTypeVirtiofs,
-	_FilesystemTypeName[35:40]:      FilesystemTypeBtrfs,
 	_FilesystemTypeLowerName[35:40]: FilesystemTypeBtrfs,
-	_FilesystemTypeName[40:43]:      FilesystemTypeNFS,
 	_FilesystemTypeLowerName[40:43]: FilesystemTypeNFS,
 }
 
@@ -285,7 +294,7 @@ func FilesystemTypeString(s string) (FilesystemType, error) {
 		return val, nil
 	}
 
-	if val, ok := _FilesystemTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _FilesystemTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to FilesystemType values", s)
@@ -351,13 +360,16 @@ func _NFSVersionNoOp() {
 var _NFSVersionValues = []NFSVersion{NFSVersion3, NFSVersion4, NFSVersion4Point1, NFSVersion4Point2}
 
 var _NFSVersionNameToValueMap = map[string]NFSVersion{
-	_NFSVersionName[0:1]:      NFSVersion3,
+	_NFSVersionName[0:1]: NFSVersion3,
+	_NFSVersionName[1:2]: NFSVersion4,
+	_NFSVersionName[2:5]: NFSVersion4Point1,
+	_NFSVersionName[5:8]: NFSVersion4Point2,
+}
+
+var _NFSVersionLowerNameToValueMap = map[string]NFSVersion{
 	_NFSVersionLowerName[0:1]: NFSVersion3,
-	_NFSVersionName[1:2]:      NFSVersion4,
 	_NFSVersionLowerName[1:2]: NFSVersion4,
-	_NFSVersionName[2:5]:      NFSVersion4Point1,
 	_NFSVersionLowerName[2:5]: NFSVersion4Point1,
-	_NFSVersionName[5:8]:      NFSVersion4Point2,
 	_NFSVersionLowerName[5:8]: NFSVersion4Point2,
 }
 
@@ -375,7 +387,7 @@ func NFSVersionString(s string) (NFSVersion, error) {
 		return val, nil
 	}
 
-	if val, ok := _NFSVersionNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NFSVersionLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NFSVersion values", s)
@@ -439,9 +451,12 @@ func _NFSLockingNoOp() {
 var _NFSLockingValues = []NFSLocking{NFSLockingLocal, NFSLockingRemote}
 
 var _NFSLockingNameToValueMap = map[string]NFSLocking{
-	_NFSLockingName[0:5]:       NFSLockingLocal,
+	_NFSLockingName[0:5]:  NFSLockingLocal,
+	_NFSLockingName[5:11]: NFSLockingRemote,
+}
+
+var _NFSLockingLowerNameToValueMap = map[string]NFSLocking{
 	_NFSLockingLowerName[0:5]:  NFSLockingLocal,
-	_NFSLockingName[5:11]:      NFSLockingRemote,
 	_NFSLockingLowerName[5:11]: NFSLockingRemote,
 }
 
@@ -457,7 +472,7 @@ func NFSLockingString(s string) (NFSLocking, error) {
 		return val, nil
 	}
 
-	if val, ok := _NFSLockingNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NFSLockingLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NFSLocking values", s)
@@ -522,11 +537,14 @@ func _NFSRecoveryNoOp() {
 var _NFSRecoveryValues = []NFSRecovery{NFSRecoveryHard, NFSRecoverySoft, NFSRecoverySoftError}
 
 var _NFSRecoveryNameToValueMap = map[string]NFSRecovery{
-	_NFSRecoveryName[0:4]:       NFSRecoveryHard,
+	_NFSRecoveryName[0:4]:  NFSRecoveryHard,
+	_NFSRecoveryName[4:8]:  NFSRecoverySoft,
+	_NFSRecoveryName[8:18]: NFSRecoverySoftError,
+}
+
+var _NFSRecoveryLowerNameToValueMap = map[string]NFSRecovery{
 	_NFSRecoveryLowerName[0:4]:  NFSRecoveryHard,
-	_NFSRecoveryName[4:8]:       NFSRecoverySoft,
 	_NFSRecoveryLowerName[4:8]:  NFSRecoverySoft,
-	_NFSRecoveryName[8:18]:      NFSRecoverySoftError,
 	_NFSRecoveryLowerName[8:18]: NFSRecoverySoftError,
 }
 
@@ -543,7 +561,7 @@ func NFSRecoveryString(s string) (NFSRecovery, error) {
 		return val, nil
 	}
 
-	if val, ok := _NFSRecoveryNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NFSRecoveryLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NFSRecovery values", s)
@@ -607,9 +625,12 @@ func _NFSSecurityNoOp() {
 var _NFSSecurityValues = []NFSSecurity{NFSSecurityNone, NFSSecuritySys}
 
 var _NFSSecurityNameToValueMap = map[string]NFSSecurity{
-	_NFSSecurityName[0:4]:      NFSSecurityNone,
+	_NFSSecurityName[0:4]: NFSSecurityNone,
+	_NFSSecurityName[4:7]: NFSSecuritySys,
+}
+
+var _NFSSecurityLowerNameToValueMap = map[string]NFSSecurity{
 	_NFSSecurityLowerName[0:4]: NFSSecurityNone,
-	_NFSSecurityName[4:7]:      NFSSecuritySys,
 	_NFSSecurityLowerName[4:7]: NFSSecuritySys,
 }
 
@@ -625,7 +646,7 @@ func NFSSecurityString(s string) (NFSSecurity, error) {
 		return val, nil
 	}
 
-	if val, ok := _NFSSecurityNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NFSSecurityLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NFSSecurity values", s)
@@ -691,13 +712,16 @@ func _NFSTransportNoOp() {
 var _NFSTransportValues = []NFSTransport{NFSTransportTCP, NFSTransportTCP6, NFSTransportUDP, NFSTransportUDP6}
 
 var _NFSTransportNameToValueMap = map[string]NFSTransport{
-	_NFSTransportName[0:3]:        NFSTransportTCP,
+	_NFSTransportName[0:3]:   NFSTransportTCP,
+	_NFSTransportName[3:7]:   NFSTransportTCP6,
+	_NFSTransportName[7:10]:  NFSTransportUDP,
+	_NFSTransportName[10:14]: NFSTransportUDP6,
+}
+
+var _NFSTransportLowerNameToValueMap = map[string]NFSTransport{
 	_NFSTransportLowerName[0:3]:   NFSTransportTCP,
-	_NFSTransportName[3:7]:        NFSTransportTCP6,
 	_NFSTransportLowerName[3:7]:   NFSTransportTCP6,
-	_NFSTransportName[7:10]:       NFSTransportUDP,
 	_NFSTransportLowerName[7:10]:  NFSTransportUDP,
-	_NFSTransportName[10:14]:      NFSTransportUDP6,
 	_NFSTransportLowerName[10:14]: NFSTransportUDP6,
 }
 
@@ -715,7 +739,7 @@ func NFSTransportString(s string) (NFSTransport, error) {
 		return val, nil
 	}
 
-	if val, ok := _NFSTransportNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NFSTransportLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NFSTransport values", s)
@@ -781,13 +805,16 @@ func _EncryptionKeyTypeNoOp() {
 var _EncryptionKeyTypeValues = []EncryptionKeyType{EncryptionKeyStatic, EncryptionKeyNodeID, EncryptionKeyKMS, EncryptionKeyTPM}
 
 var _EncryptionKeyTypeNameToValueMap = map[string]EncryptionKeyType{
-	_EncryptionKeyTypeName[0:6]:        EncryptionKeyStatic,
+	_EncryptionKeyTypeName[0:6]:   EncryptionKeyStatic,
+	_EncryptionKeyTypeName[6:12]:  EncryptionKeyNodeID,
+	_EncryptionKeyTypeName[12:15]: EncryptionKeyKMS,
+	_EncryptionKeyTypeName[15:18]: EncryptionKeyTPM,
+}
+
+var _EncryptionKeyTypeLowerNameToValueMap = map[string]EncryptionKeyType{
 	_EncryptionKeyTypeLowerName[0:6]:   EncryptionKeyStatic,
-	_EncryptionKeyTypeName[6:12]:       EncryptionKeyNodeID,
 	_EncryptionKeyTypeLowerName[6:12]:  EncryptionKeyNodeID,
-	_EncryptionKeyTypeName[12:15]:      EncryptionKeyKMS,
 	_EncryptionKeyTypeLowerName[12:15]: EncryptionKeyKMS,
-	_EncryptionKeyTypeName[15:18]:      EncryptionKeyTPM,
 	_EncryptionKeyTypeLowerName[15:18]: EncryptionKeyTPM,
 }
 
@@ -805,7 +832,7 @@ func EncryptionKeyTypeString(s string) (EncryptionKeyType, error) {
 		return val, nil
 	}
 
-	if val, ok := _EncryptionKeyTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _EncryptionKeyTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to EncryptionKeyType values", s)
@@ -869,9 +896,12 @@ func _EncryptionProviderTypeNoOp() {
 var _EncryptionProviderTypeValues = []EncryptionProviderType{EncryptionProviderNone, EncryptionProviderLUKS2}
 
 var _EncryptionProviderTypeNameToValueMap = map[string]EncryptionProviderType{
-	_EncryptionProviderTypeName[0:4]:      EncryptionProviderNone,
+	_EncryptionProviderTypeName[0:4]: EncryptionProviderNone,
+	_EncryptionProviderTypeName[4:9]: EncryptionProviderLUKS2,
+}
+
+var _EncryptionProviderTypeLowerNameToValueMap = map[string]EncryptionProviderType{
 	_EncryptionProviderTypeLowerName[0:4]: EncryptionProviderNone,
-	_EncryptionProviderTypeName[4:9]:      EncryptionProviderLUKS2,
 	_EncryptionProviderTypeLowerName[4:9]: EncryptionProviderLUKS2,
 }
 
@@ -887,7 +917,7 @@ func EncryptionProviderTypeString(s string) (EncryptionProviderType, error) {
 		return val, nil
 	}
 
-	if val, ok := _EncryptionProviderTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _EncryptionProviderTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to EncryptionProviderType values", s)
@@ -952,11 +982,14 @@ func _FSParameterTypeNoOp() {
 var _FSParameterTypeValues = []FSParameterType{FSParameterTypeStringValue, FSParameterTypeBooleanValue, FSParameterTypeBinaryValue}
 
 var _FSParameterTypeNameToValueMap = map[string]FSParameterType{
-	_FSParameterTypeName[0:6]:        FSParameterTypeStringValue,
+	_FSParameterTypeName[0:6]:   FSParameterTypeStringValue,
+	_FSParameterTypeName[6:13]:  FSParameterTypeBooleanValue,
+	_FSParameterTypeName[13:19]: FSParameterTypeBinaryValue,
+}
+
+var _FSParameterTypeLowerNameToValueMap = map[string]FSParameterType{
 	_FSParameterTypeLowerName[0:6]:   FSParameterTypeStringValue,
-	_FSParameterTypeName[6:13]:       FSParameterTypeBooleanValue,
 	_FSParameterTypeLowerName[6:13]:  FSParameterTypeBooleanValue,
-	_FSParameterTypeName[13:19]:      FSParameterTypeBinaryValue,
 	_FSParameterTypeLowerName[13:19]: FSParameterTypeBinaryValue,
 }
 
@@ -973,7 +1006,7 @@ func FSParameterTypeString(s string) (FSParameterType, error) {
 		return val, nil
 	}
 
-	if val, ok := _FSParameterTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _FSParameterTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to FSParameterType values", s)

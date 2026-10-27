@@ -33,13 +33,16 @@ func _ContainerImagePhaseNoOp() {
 var _ContainerImagePhaseValues = []ContainerImagePhase{ContainerImagePhasePending, ContainerImagePhasePulling, ContainerImagePhaseReady, ContainerImagePhaseFailed}
 
 var _ContainerImagePhaseNameToValueMap = map[string]ContainerImagePhase{
-	_ContainerImagePhaseName[0:7]:        ContainerImagePhasePending,
+	_ContainerImagePhaseName[0:7]:   ContainerImagePhasePending,
+	_ContainerImagePhaseName[7:14]:  ContainerImagePhasePulling,
+	_ContainerImagePhaseName[14:19]: ContainerImagePhaseReady,
+	_ContainerImagePhaseName[19:25]: ContainerImagePhaseFailed,
+}
+
+var _ContainerImagePhaseLowerNameToValueMap = map[string]ContainerImagePhase{
 	_ContainerImagePhaseLowerName[0:7]:   ContainerImagePhasePending,
-	_ContainerImagePhaseName[7:14]:       ContainerImagePhasePulling,
 	_ContainerImagePhaseLowerName[7:14]:  ContainerImagePhasePulling,
-	_ContainerImagePhaseName[14:19]:      ContainerImagePhaseReady,
 	_ContainerImagePhaseLowerName[14:19]: ContainerImagePhaseReady,
-	_ContainerImagePhaseName[19:25]:      ContainerImagePhaseFailed,
 	_ContainerImagePhaseLowerName[19:25]: ContainerImagePhaseFailed,
 }
 
@@ -57,7 +60,7 @@ func ContainerImagePhaseString(s string) (ContainerImagePhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _ContainerImagePhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ContainerImagePhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ContainerImagePhase values", s)
@@ -123,13 +126,16 @@ func _ContainerInstancePhaseNoOp() {
 var _ContainerInstancePhaseValues = []ContainerInstancePhase{ContainerInstancePhaseCreated, ContainerInstancePhaseRunning, ContainerInstancePhaseTerminated, ContainerInstancePhaseFailed}
 
 var _ContainerInstancePhaseNameToValueMap = map[string]ContainerInstancePhase{
-	_ContainerInstancePhaseName[0:7]:        ContainerInstancePhaseCreated,
+	_ContainerInstancePhaseName[0:7]:   ContainerInstancePhaseCreated,
+	_ContainerInstancePhaseName[7:14]:  ContainerInstancePhaseRunning,
+	_ContainerInstancePhaseName[14:24]: ContainerInstancePhaseTerminated,
+	_ContainerInstancePhaseName[24:30]: ContainerInstancePhaseFailed,
+}
+
+var _ContainerInstancePhaseLowerNameToValueMap = map[string]ContainerInstancePhase{
 	_ContainerInstancePhaseLowerName[0:7]:   ContainerInstancePhaseCreated,
-	_ContainerInstancePhaseName[7:14]:       ContainerInstancePhaseRunning,
 	_ContainerInstancePhaseLowerName[7:14]:  ContainerInstancePhaseRunning,
-	_ContainerInstancePhaseName[14:24]:      ContainerInstancePhaseTerminated,
 	_ContainerInstancePhaseLowerName[14:24]: ContainerInstancePhaseTerminated,
-	_ContainerInstancePhaseName[24:30]:      ContainerInstancePhaseFailed,
 	_ContainerInstancePhaseLowerName[24:30]: ContainerInstancePhaseFailed,
 }
 
@@ -147,7 +153,7 @@ func ContainerInstancePhaseString(s string) (ContainerInstancePhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _ContainerInstancePhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ContainerInstancePhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ContainerInstancePhase values", s)
@@ -216,19 +222,22 @@ func _ContainerStateNoOp() {
 var _ContainerStateValues = []ContainerState{ContainerStatePending, ContainerStatePulling, ContainerStateStarting, ContainerStateRunning, ContainerStateExited, ContainerStateBackoff, ContainerStateStopping}
 
 var _ContainerStateNameToValueMap = map[string]ContainerState{
-	_ContainerStateName[0:7]:        ContainerStatePending,
+	_ContainerStateName[0:7]:   ContainerStatePending,
+	_ContainerStateName[7:14]:  ContainerStatePulling,
+	_ContainerStateName[14:22]: ContainerStateStarting,
+	_ContainerStateName[22:29]: ContainerStateRunning,
+	_ContainerStateName[29:35]: ContainerStateExited,
+	_ContainerStateName[35:42]: ContainerStateBackoff,
+	_ContainerStateName[42:50]: ContainerStateStopping,
+}
+
+var _ContainerStateLowerNameToValueMap = map[string]ContainerState{
 	_ContainerStateLowerName[0:7]:   ContainerStatePending,
-	_ContainerStateName[7:14]:       ContainerStatePulling,
 	_ContainerStateLowerName[7:14]:  ContainerStatePulling,
-	_ContainerStateName[14:22]:      ContainerStateStarting,
 	_ContainerStateLowerName[14:22]: ContainerStateStarting,
-	_ContainerStateName[22:29]:      ContainerStateRunning,
 	_ContainerStateLowerName[22:29]: ContainerStateRunning,
-	_ContainerStateName[29:35]:      ContainerStateExited,
 	_ContainerStateLowerName[29:35]: ContainerStateExited,
-	_ContainerStateName[35:42]:      ContainerStateBackoff,
 	_ContainerStateLowerName[35:42]: ContainerStateBackoff,
-	_ContainerStateName[42:50]:      ContainerStateStopping,
 	_ContainerStateLowerName[42:50]: ContainerStateStopping,
 }
 
@@ -249,7 +258,7 @@ func ContainerStateString(s string) (ContainerState, error) {
 		return val, nil
 	}
 
-	if val, ok := _ContainerStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ContainerStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ContainerState values", s)
@@ -315,13 +324,16 @@ func _ContainerHealthNoOp() {
 var _ContainerHealthValues = []ContainerHealth{ContainerHealthPending, ContainerHealthPulling, ContainerHealthHealthy, ContainerHealthDegraded}
 
 var _ContainerHealthNameToValueMap = map[string]ContainerHealth{
-	_ContainerHealthName[0:7]:        ContainerHealthPending,
+	_ContainerHealthName[0:7]:   ContainerHealthPending,
+	_ContainerHealthName[7:14]:  ContainerHealthPulling,
+	_ContainerHealthName[14:21]: ContainerHealthHealthy,
+	_ContainerHealthName[21:29]: ContainerHealthDegraded,
+}
+
+var _ContainerHealthLowerNameToValueMap = map[string]ContainerHealth{
 	_ContainerHealthLowerName[0:7]:   ContainerHealthPending,
-	_ContainerHealthName[7:14]:       ContainerHealthPulling,
 	_ContainerHealthLowerName[7:14]:  ContainerHealthPulling,
-	_ContainerHealthName[14:21]:      ContainerHealthHealthy,
 	_ContainerHealthLowerName[14:21]: ContainerHealthHealthy,
-	_ContainerHealthName[21:29]:      ContainerHealthDegraded,
 	_ContainerHealthLowerName[21:29]: ContainerHealthDegraded,
 }
 
@@ -339,7 +351,7 @@ func ContainerHealthString(s string) (ContainerHealth, error) {
 		return val, nil
 	}
 
-	if val, ok := _ContainerHealthNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ContainerHealthLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ContainerHealth values", s)

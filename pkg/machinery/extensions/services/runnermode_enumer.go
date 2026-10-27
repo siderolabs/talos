@@ -31,9 +31,12 @@ func _RunnerModeNoOp() {
 var _RunnerModeValues = []RunnerMode{RunnerModeContainer, RunnerModeHost}
 
 var _RunnerModeNameToValueMap = map[string]RunnerMode{
-	_RunnerModeName[0:9]:       RunnerModeContainer,
+	_RunnerModeName[0:9]:  RunnerModeContainer,
+	_RunnerModeName[9:13]: RunnerModeHost,
+}
+
+var _RunnerModeLowerNameToValueMap = map[string]RunnerMode{
 	_RunnerModeLowerName[0:9]:  RunnerModeContainer,
-	_RunnerModeName[9:13]:      RunnerModeHost,
 	_RunnerModeLowerName[9:13]: RunnerModeHost,
 }
 
@@ -49,7 +52,7 @@ func RunnerModeString(s string) (RunnerMode, error) {
 		return val, nil
 	}
 
-	if val, ok := _RunnerModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RunnerModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RunnerMode values", s)

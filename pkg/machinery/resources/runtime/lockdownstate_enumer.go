@@ -32,11 +32,14 @@ func _LockdownStateNoOp() {
 var _LockdownStateValues = []LockdownState{LockdownStateNone, LockdownStateIntegrity, LockdownStateConfidentiality}
 
 var _LockdownStateNameToValueMap = map[string]LockdownState{
-	_LockdownStateName[0:4]:        LockdownStateNone,
+	_LockdownStateName[0:4]:   LockdownStateNone,
+	_LockdownStateName[4:13]:  LockdownStateIntegrity,
+	_LockdownStateName[13:28]: LockdownStateConfidentiality,
+}
+
+var _LockdownStateLowerNameToValueMap = map[string]LockdownState{
 	_LockdownStateLowerName[0:4]:   LockdownStateNone,
-	_LockdownStateName[4:13]:       LockdownStateIntegrity,
 	_LockdownStateLowerName[4:13]:  LockdownStateIntegrity,
-	_LockdownStateName[13:28]:      LockdownStateConfidentiality,
 	_LockdownStateLowerName[13:28]: LockdownStateConfidentiality,
 }
 
@@ -53,7 +56,7 @@ func LockdownStateString(s string) (LockdownState, error) {
 		return val, nil
 	}
 
-	if val, ok := _LockdownStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _LockdownStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to LockdownState values", s)

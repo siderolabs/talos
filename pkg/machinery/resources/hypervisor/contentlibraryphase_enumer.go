@@ -32,11 +32,14 @@ func _ContentLibraryPhaseNoOp() {
 var _ContentLibraryPhaseValues = []ContentLibraryPhase{ContentLibraryPhaseUnknown, ContentLibraryPhaseNotReady, ContentLibraryPhaseReady}
 
 var _ContentLibraryPhaseNameToValueMap = map[string]ContentLibraryPhase{
-	_ContentLibraryPhaseName[0:7]:        ContentLibraryPhaseUnknown,
+	_ContentLibraryPhaseName[0:7]:   ContentLibraryPhaseUnknown,
+	_ContentLibraryPhaseName[7:15]:  ContentLibraryPhaseNotReady,
+	_ContentLibraryPhaseName[15:20]: ContentLibraryPhaseReady,
+}
+
+var _ContentLibraryPhaseLowerNameToValueMap = map[string]ContentLibraryPhase{
 	_ContentLibraryPhaseLowerName[0:7]:   ContentLibraryPhaseUnknown,
-	_ContentLibraryPhaseName[7:15]:       ContentLibraryPhaseNotReady,
 	_ContentLibraryPhaseLowerName[7:15]:  ContentLibraryPhaseNotReady,
-	_ContentLibraryPhaseName[15:20]:      ContentLibraryPhaseReady,
 	_ContentLibraryPhaseLowerName[15:20]: ContentLibraryPhaseReady,
 }
 
@@ -53,7 +56,7 @@ func ContentLibraryPhaseString(s string) (ContentLibraryPhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _ContentLibraryPhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ContentLibraryPhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ContentLibraryPhase values", s)
@@ -118,11 +121,14 @@ func _CloudInitPhaseNoOp() {
 var _CloudInitPhaseValues = []CloudInitPhase{CloudInitPhaseUnknown, CloudInitPhaseNotReady, CloudInitPhaseReady}
 
 var _CloudInitPhaseNameToValueMap = map[string]CloudInitPhase{
-	_CloudInitPhaseName[0:7]:        CloudInitPhaseUnknown,
+	_CloudInitPhaseName[0:7]:   CloudInitPhaseUnknown,
+	_CloudInitPhaseName[7:15]:  CloudInitPhaseNotReady,
+	_CloudInitPhaseName[15:20]: CloudInitPhaseReady,
+}
+
+var _CloudInitPhaseLowerNameToValueMap = map[string]CloudInitPhase{
 	_CloudInitPhaseLowerName[0:7]:   CloudInitPhaseUnknown,
-	_CloudInitPhaseName[7:15]:       CloudInitPhaseNotReady,
 	_CloudInitPhaseLowerName[7:15]:  CloudInitPhaseNotReady,
-	_CloudInitPhaseName[15:20]:      CloudInitPhaseReady,
 	_CloudInitPhaseLowerName[15:20]: CloudInitPhaseReady,
 }
 
@@ -139,7 +145,7 @@ func CloudInitPhaseString(s string) (CloudInitPhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _CloudInitPhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _CloudInitPhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to CloudInitPhase values", s)
@@ -205,13 +211,16 @@ func _VirtualMachineDiskPhaseNoOp() {
 var _VirtualMachineDiskPhaseValues = []VirtualMachineDiskPhase{VirtualMachineDiskPhaseUnknown, VirtualMachineDiskPhaseNotReady, VirtualMachineDiskPhaseReady, VirtualMachineDiskPhaseObservationUnavailable}
 
 var _VirtualMachineDiskPhaseNameToValueMap = map[string]VirtualMachineDiskPhase{
-	_VirtualMachineDiskPhaseName[0:7]:        VirtualMachineDiskPhaseUnknown,
+	_VirtualMachineDiskPhaseName[0:7]:   VirtualMachineDiskPhaseUnknown,
+	_VirtualMachineDiskPhaseName[7:15]:  VirtualMachineDiskPhaseNotReady,
+	_VirtualMachineDiskPhaseName[15:20]: VirtualMachineDiskPhaseReady,
+	_VirtualMachineDiskPhaseName[20:42]: VirtualMachineDiskPhaseObservationUnavailable,
+}
+
+var _VirtualMachineDiskPhaseLowerNameToValueMap = map[string]VirtualMachineDiskPhase{
 	_VirtualMachineDiskPhaseLowerName[0:7]:   VirtualMachineDiskPhaseUnknown,
-	_VirtualMachineDiskPhaseName[7:15]:       VirtualMachineDiskPhaseNotReady,
 	_VirtualMachineDiskPhaseLowerName[7:15]:  VirtualMachineDiskPhaseNotReady,
-	_VirtualMachineDiskPhaseName[15:20]:      VirtualMachineDiskPhaseReady,
 	_VirtualMachineDiskPhaseLowerName[15:20]: VirtualMachineDiskPhaseReady,
-	_VirtualMachineDiskPhaseName[20:42]:      VirtualMachineDiskPhaseObservationUnavailable,
 	_VirtualMachineDiskPhaseLowerName[20:42]: VirtualMachineDiskPhaseObservationUnavailable,
 }
 
@@ -229,7 +238,7 @@ func VirtualMachineDiskPhaseString(s string) (VirtualMachineDiskPhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineDiskPhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineDiskPhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineDiskPhase values", s)

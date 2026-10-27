@@ -37,21 +37,24 @@ func _OutputKindNoOp() {
 var _OutputKindValues = []OutputKind{OutKindUnknown, OutKindISO, OutKindImage, OutKindInstaller, OutKindKernel, OutKindInitramfs, OutKindUKI, OutKindCmdline}
 
 var _OutputKindNameToValueMap = map[string]OutputKind{
-	_OutputKindName[0:7]:        OutKindUnknown,
+	_OutputKindName[0:7]:   OutKindUnknown,
+	_OutputKindName[7:10]:  OutKindISO,
+	_OutputKindName[10:15]: OutKindImage,
+	_OutputKindName[15:24]: OutKindInstaller,
+	_OutputKindName[24:30]: OutKindKernel,
+	_OutputKindName[30:39]: OutKindInitramfs,
+	_OutputKindName[39:42]: OutKindUKI,
+	_OutputKindName[42:49]: OutKindCmdline,
+}
+
+var _OutputKindLowerNameToValueMap = map[string]OutputKind{
 	_OutputKindLowerName[0:7]:   OutKindUnknown,
-	_OutputKindName[7:10]:       OutKindISO,
 	_OutputKindLowerName[7:10]:  OutKindISO,
-	_OutputKindName[10:15]:      OutKindImage,
 	_OutputKindLowerName[10:15]: OutKindImage,
-	_OutputKindName[15:24]:      OutKindInstaller,
 	_OutputKindLowerName[15:24]: OutKindInstaller,
-	_OutputKindName[24:30]:      OutKindKernel,
 	_OutputKindLowerName[24:30]: OutKindKernel,
-	_OutputKindName[30:39]:      OutKindInitramfs,
 	_OutputKindLowerName[30:39]: OutKindInitramfs,
-	_OutputKindName[39:42]:      OutKindUKI,
 	_OutputKindLowerName[39:42]: OutKindUKI,
-	_OutputKindName[42:49]:      OutKindCmdline,
 	_OutputKindLowerName[42:49]: OutKindCmdline,
 }
 
@@ -73,7 +76,7 @@ func OutputKindString(s string) (OutputKind, error) {
 		return val, nil
 	}
 
-	if val, ok := _OutputKindNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _OutputKindLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to OutputKind values", s)
@@ -141,17 +144,20 @@ func _OutFormatNoOp() {
 var _OutFormatValues = []OutFormat{OutFormatUnknown, OutFormatRaw, OutFormatTar, OutFormatXZ, OutFormatGZ, OutFormatZSTD}
 
 var _OutFormatNameToValueMap = map[string]OutFormat{
-	_OutFormatName[0:7]:        OutFormatUnknown,
+	_OutFormatName[0:7]:   OutFormatUnknown,
+	_OutFormatName[7:10]:  OutFormatRaw,
+	_OutFormatName[10:17]: OutFormatTar,
+	_OutFormatName[17:20]: OutFormatXZ,
+	_OutFormatName[20:23]: OutFormatGZ,
+	_OutFormatName[23:27]: OutFormatZSTD,
+}
+
+var _OutFormatLowerNameToValueMap = map[string]OutFormat{
 	_OutFormatLowerName[0:7]:   OutFormatUnknown,
-	_OutFormatName[7:10]:       OutFormatRaw,
 	_OutFormatLowerName[7:10]:  OutFormatRaw,
-	_OutFormatName[10:17]:      OutFormatTar,
 	_OutFormatLowerName[10:17]: OutFormatTar,
-	_OutFormatName[17:20]:      OutFormatXZ,
 	_OutFormatLowerName[17:20]: OutFormatXZ,
-	_OutFormatName[20:23]:      OutFormatGZ,
 	_OutFormatLowerName[20:23]: OutFormatGZ,
-	_OutFormatName[23:27]:      OutFormatZSTD,
 	_OutFormatLowerName[23:27]: OutFormatZSTD,
 }
 
@@ -171,7 +177,7 @@ func OutFormatString(s string) (OutFormat, error) {
 		return val, nil
 	}
 
-	if val, ok := _OutFormatNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _OutFormatLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to OutFormat values", s)
@@ -238,15 +244,18 @@ func _DiskFormatNoOp() {
 var _DiskFormatValues = []DiskFormat{DiskFormatUnknown, DiskFormatRaw, DiskFormatQCOW2, DiskFormatVPC, DiskFormatOVA}
 
 var _DiskFormatNameToValueMap = map[string]DiskFormat{
-	_DiskFormatName[0:7]:        DiskFormatUnknown,
+	_DiskFormatName[0:7]:   DiskFormatUnknown,
+	_DiskFormatName[7:10]:  DiskFormatRaw,
+	_DiskFormatName[10:15]: DiskFormatQCOW2,
+	_DiskFormatName[15:18]: DiskFormatVPC,
+	_DiskFormatName[18:21]: DiskFormatOVA,
+}
+
+var _DiskFormatLowerNameToValueMap = map[string]DiskFormat{
 	_DiskFormatLowerName[0:7]:   DiskFormatUnknown,
-	_DiskFormatName[7:10]:       DiskFormatRaw,
 	_DiskFormatLowerName[7:10]:  DiskFormatRaw,
-	_DiskFormatName[10:15]:      DiskFormatQCOW2,
 	_DiskFormatLowerName[10:15]: DiskFormatQCOW2,
-	_DiskFormatName[15:18]:      DiskFormatVPC,
 	_DiskFormatLowerName[15:18]: DiskFormatVPC,
-	_DiskFormatName[18:21]:      DiskFormatOVA,
 	_DiskFormatLowerName[18:21]: DiskFormatOVA,
 }
 
@@ -265,7 +274,7 @@ func DiskFormatString(s string) (DiskFormat, error) {
 		return val, nil
 	}
 
-	if val, ok := _DiskFormatNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _DiskFormatLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to DiskFormat values", s)
@@ -331,13 +340,16 @@ func _SDBootEnrollKeysNoOp() {
 var _SDBootEnrollKeysValues = []SDBootEnrollKeys{SDBootEnrollKeysIfSafe, SDBootEnrollKeysManual, SDBootEnrollKeysForce, SDBootEnrollKeysOff}
 
 var _SDBootEnrollKeysNameToValueMap = map[string]SDBootEnrollKeys{
-	_SDBootEnrollKeysName[0:7]:        SDBootEnrollKeysIfSafe,
+	_SDBootEnrollKeysName[0:7]:   SDBootEnrollKeysIfSafe,
+	_SDBootEnrollKeysName[7:13]:  SDBootEnrollKeysManual,
+	_SDBootEnrollKeysName[13:18]: SDBootEnrollKeysForce,
+	_SDBootEnrollKeysName[18:21]: SDBootEnrollKeysOff,
+}
+
+var _SDBootEnrollKeysLowerNameToValueMap = map[string]SDBootEnrollKeys{
 	_SDBootEnrollKeysLowerName[0:7]:   SDBootEnrollKeysIfSafe,
-	_SDBootEnrollKeysName[7:13]:       SDBootEnrollKeysManual,
 	_SDBootEnrollKeysLowerName[7:13]:  SDBootEnrollKeysManual,
-	_SDBootEnrollKeysName[13:18]:      SDBootEnrollKeysForce,
 	_SDBootEnrollKeysLowerName[13:18]: SDBootEnrollKeysForce,
-	_SDBootEnrollKeysName[18:21]:      SDBootEnrollKeysOff,
 	_SDBootEnrollKeysLowerName[18:21]: SDBootEnrollKeysOff,
 }
 
@@ -355,7 +367,7 @@ func SDBootEnrollKeysString(s string) (SDBootEnrollKeys, error) {
 		return val, nil
 	}
 
-	if val, ok := _SDBootEnrollKeysNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _SDBootEnrollKeysLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to SDBootEnrollKeys values", s)

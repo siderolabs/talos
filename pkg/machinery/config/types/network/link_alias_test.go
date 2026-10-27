@@ -92,7 +92,7 @@ func TestLinkAliasValidate(t *testing.T) {
 				return c
 			},
 
-			expectedError: "link selector is invalid: ERROR: <input>:1:1: undeclared reference to 'disk' (in container '')\n | disk.size > 120\n | ^",
+			expectedError: "link selector is invalid: ERROR: <input>:1:1: undeclared reference to 'disk'\n | disk.size > 120\n | ^",
 		},
 		{
 			name: "valid",

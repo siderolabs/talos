@@ -33,13 +33,16 @@ func _PowerStateNoOp() {
 var _PowerStateValues = []PowerState{PowerStateUnknown, PowerStateRunning, PowerStateStopped, PowerStateSuspended}
 
 var _PowerStateNameToValueMap = map[string]PowerState{
-	_PowerStateName[0:7]:        PowerStateUnknown,
+	_PowerStateName[0:7]:   PowerStateUnknown,
+	_PowerStateName[7:14]:  PowerStateRunning,
+	_PowerStateName[14:21]: PowerStateStopped,
+	_PowerStateName[21:30]: PowerStateSuspended,
+}
+
+var _PowerStateLowerNameToValueMap = map[string]PowerState{
 	_PowerStateLowerName[0:7]:   PowerStateUnknown,
-	_PowerStateName[7:14]:       PowerStateRunning,
 	_PowerStateLowerName[7:14]:  PowerStateRunning,
-	_PowerStateName[14:21]:      PowerStateStopped,
 	_PowerStateLowerName[14:21]: PowerStateStopped,
-	_PowerStateName[21:30]:      PowerStateSuspended,
 	_PowerStateLowerName[21:30]: PowerStateSuspended,
 }
 
@@ -57,7 +60,7 @@ func PowerStateString(s string) (PowerState, error) {
 		return val, nil
 	}
 
-	if val, ok := _PowerStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _PowerStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to PowerState values", s)
@@ -122,11 +125,14 @@ func _StopModeNoOp() {
 var _StopModeValues = []StopMode{StopModeUnknown, StopModeGraceful, StopModeForced}
 
 var _StopModeNameToValueMap = map[string]StopMode{
-	_StopModeName[0:7]:        StopModeUnknown,
+	_StopModeName[0:7]:   StopModeUnknown,
+	_StopModeName[7:15]:  StopModeGraceful,
+	_StopModeName[15:21]: StopModeForced,
+}
+
+var _StopModeLowerNameToValueMap = map[string]StopMode{
 	_StopModeLowerName[0:7]:   StopModeUnknown,
-	_StopModeName[7:15]:       StopModeGraceful,
 	_StopModeLowerName[7:15]:  StopModeGraceful,
-	_StopModeName[15:21]:      StopModeForced,
 	_StopModeLowerName[15:21]: StopModeForced,
 }
 
@@ -143,7 +149,7 @@ func StopModeString(s string) (StopMode, error) {
 		return val, nil
 	}
 
-	if val, ok := _StopModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _StopModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to StopMode values", s)
@@ -210,15 +216,18 @@ func _VirtualMachineDiskBusNoOp() {
 var _VirtualMachineDiskBusValues = []VirtualMachineDiskBus{VirtualMachineDiskBusUnknown, VirtualMachineDiskBusVirtio, VirtualMachineDiskBusSCSI, VirtualMachineDiskBusSATA, VirtualMachineDiskBusNVMe}
 
 var _VirtualMachineDiskBusNameToValueMap = map[string]VirtualMachineDiskBus{
-	_VirtualMachineDiskBusName[0:7]:        VirtualMachineDiskBusUnknown,
+	_VirtualMachineDiskBusName[0:7]:   VirtualMachineDiskBusUnknown,
+	_VirtualMachineDiskBusName[7:13]:  VirtualMachineDiskBusVirtio,
+	_VirtualMachineDiskBusName[13:17]: VirtualMachineDiskBusSCSI,
+	_VirtualMachineDiskBusName[17:21]: VirtualMachineDiskBusSATA,
+	_VirtualMachineDiskBusName[21:25]: VirtualMachineDiskBusNVMe,
+}
+
+var _VirtualMachineDiskBusLowerNameToValueMap = map[string]VirtualMachineDiskBus{
 	_VirtualMachineDiskBusLowerName[0:7]:   VirtualMachineDiskBusUnknown,
-	_VirtualMachineDiskBusName[7:13]:       VirtualMachineDiskBusVirtio,
 	_VirtualMachineDiskBusLowerName[7:13]:  VirtualMachineDiskBusVirtio,
-	_VirtualMachineDiskBusName[13:17]:      VirtualMachineDiskBusSCSI,
 	_VirtualMachineDiskBusLowerName[13:17]: VirtualMachineDiskBusSCSI,
-	_VirtualMachineDiskBusName[17:21]:      VirtualMachineDiskBusSATA,
 	_VirtualMachineDiskBusLowerName[17:21]: VirtualMachineDiskBusSATA,
-	_VirtualMachineDiskBusName[21:25]:      VirtualMachineDiskBusNVMe,
 	_VirtualMachineDiskBusLowerName[21:25]: VirtualMachineDiskBusNVMe,
 }
 
@@ -237,7 +246,7 @@ func VirtualMachineDiskBusString(s string) (VirtualMachineDiskBus, error) {
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineDiskBusNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineDiskBusLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineDiskBus values", s)
@@ -302,11 +311,14 @@ func _VirtualMachineDiskFormatNoOp() {
 var _VirtualMachineDiskFormatValues = []VirtualMachineDiskFormat{VirtualMachineDiskFormatUnknown, VirtualMachineDiskFormatRaw, VirtualMachineDiskFormatQCOW2}
 
 var _VirtualMachineDiskFormatNameToValueMap = map[string]VirtualMachineDiskFormat{
-	_VirtualMachineDiskFormatName[0:7]:        VirtualMachineDiskFormatUnknown,
+	_VirtualMachineDiskFormatName[0:7]:   VirtualMachineDiskFormatUnknown,
+	_VirtualMachineDiskFormatName[7:10]:  VirtualMachineDiskFormatRaw,
+	_VirtualMachineDiskFormatName[10:15]: VirtualMachineDiskFormatQCOW2,
+}
+
+var _VirtualMachineDiskFormatLowerNameToValueMap = map[string]VirtualMachineDiskFormat{
 	_VirtualMachineDiskFormatLowerName[0:7]:   VirtualMachineDiskFormatUnknown,
-	_VirtualMachineDiskFormatName[7:10]:       VirtualMachineDiskFormatRaw,
 	_VirtualMachineDiskFormatLowerName[7:10]:  VirtualMachineDiskFormatRaw,
-	_VirtualMachineDiskFormatName[10:15]:      VirtualMachineDiskFormatQCOW2,
 	_VirtualMachineDiskFormatLowerName[10:15]: VirtualMachineDiskFormatQCOW2,
 }
 
@@ -323,7 +335,7 @@ func VirtualMachineDiskFormatString(s string) (VirtualMachineDiskFormat, error) 
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineDiskFormatNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineDiskFormatLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineDiskFormat values", s)
@@ -388,11 +400,14 @@ func _VirtualMachineDiskImageModeNoOp() {
 var _VirtualMachineDiskImageModeValues = []VirtualMachineDiskImageMode{VirtualMachineDiskImageModeUnknown, VirtualMachineDiskImageModeCopy, VirtualMachineDiskImageModeLinked}
 
 var _VirtualMachineDiskImageModeNameToValueMap = map[string]VirtualMachineDiskImageMode{
-	_VirtualMachineDiskImageModeName[0:7]:        VirtualMachineDiskImageModeUnknown,
+	_VirtualMachineDiskImageModeName[0:7]:   VirtualMachineDiskImageModeUnknown,
+	_VirtualMachineDiskImageModeName[7:11]:  VirtualMachineDiskImageModeCopy,
+	_VirtualMachineDiskImageModeName[11:17]: VirtualMachineDiskImageModeLinked,
+}
+
+var _VirtualMachineDiskImageModeLowerNameToValueMap = map[string]VirtualMachineDiskImageMode{
 	_VirtualMachineDiskImageModeLowerName[0:7]:   VirtualMachineDiskImageModeUnknown,
-	_VirtualMachineDiskImageModeName[7:11]:       VirtualMachineDiskImageModeCopy,
 	_VirtualMachineDiskImageModeLowerName[7:11]:  VirtualMachineDiskImageModeCopy,
-	_VirtualMachineDiskImageModeName[11:17]:      VirtualMachineDiskImageModeLinked,
 	_VirtualMachineDiskImageModeLowerName[11:17]: VirtualMachineDiskImageModeLinked,
 }
 
@@ -409,7 +424,7 @@ func VirtualMachineDiskImageModeString(s string) (VirtualMachineDiskImageMode, e
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineDiskImageModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineDiskImageModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineDiskImageMode values", s)
@@ -474,11 +489,14 @@ func _VirtualMachineDiskTypeNoOp() {
 var _VirtualMachineDiskTypeValues = []VirtualMachineDiskType{VirtualMachineDiskTypeUnknown, VirtualMachineDiskTypeDisk, VirtualMachineDiskTypeCDROM}
 
 var _VirtualMachineDiskTypeNameToValueMap = map[string]VirtualMachineDiskType{
-	_VirtualMachineDiskTypeName[0:7]:        VirtualMachineDiskTypeUnknown,
+	_VirtualMachineDiskTypeName[0:7]:   VirtualMachineDiskTypeUnknown,
+	_VirtualMachineDiskTypeName[7:11]:  VirtualMachineDiskTypeDisk,
+	_VirtualMachineDiskTypeName[11:16]: VirtualMachineDiskTypeCDROM,
+}
+
+var _VirtualMachineDiskTypeLowerNameToValueMap = map[string]VirtualMachineDiskType{
 	_VirtualMachineDiskTypeLowerName[0:7]:   VirtualMachineDiskTypeUnknown,
-	_VirtualMachineDiskTypeName[7:11]:       VirtualMachineDiskTypeDisk,
 	_VirtualMachineDiskTypeLowerName[7:11]:  VirtualMachineDiskTypeDisk,
-	_VirtualMachineDiskTypeName[11:16]:      VirtualMachineDiskTypeCDROM,
 	_VirtualMachineDiskTypeLowerName[11:16]: VirtualMachineDiskTypeCDROM,
 }
 
@@ -495,7 +513,7 @@ func VirtualMachineDiskTypeString(s string) (VirtualMachineDiskType, error) {
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineDiskTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineDiskTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineDiskType values", s)
@@ -560,11 +578,14 @@ func _VirtualMachineFirmwareTypeNoOp() {
 var _VirtualMachineFirmwareTypeValues = []VirtualMachineFirmwareType{VirtualMachineFirmwareTypeUnknown, VirtualMachineFirmwareTypeUEFI, VirtualMachineFirmwareTypeBIOS}
 
 var _VirtualMachineFirmwareTypeNameToValueMap = map[string]VirtualMachineFirmwareType{
-	_VirtualMachineFirmwareTypeName[0:7]:        VirtualMachineFirmwareTypeUnknown,
+	_VirtualMachineFirmwareTypeName[0:7]:   VirtualMachineFirmwareTypeUnknown,
+	_VirtualMachineFirmwareTypeName[7:11]:  VirtualMachineFirmwareTypeUEFI,
+	_VirtualMachineFirmwareTypeName[11:15]: VirtualMachineFirmwareTypeBIOS,
+}
+
+var _VirtualMachineFirmwareTypeLowerNameToValueMap = map[string]VirtualMachineFirmwareType{
 	_VirtualMachineFirmwareTypeLowerName[0:7]:   VirtualMachineFirmwareTypeUnknown,
-	_VirtualMachineFirmwareTypeName[7:11]:       VirtualMachineFirmwareTypeUEFI,
 	_VirtualMachineFirmwareTypeLowerName[7:11]:  VirtualMachineFirmwareTypeUEFI,
-	_VirtualMachineFirmwareTypeName[11:15]:      VirtualMachineFirmwareTypeBIOS,
 	_VirtualMachineFirmwareTypeLowerName[11:15]: VirtualMachineFirmwareTypeBIOS,
 }
 
@@ -581,7 +602,7 @@ func VirtualMachineFirmwareTypeString(s string) (VirtualMachineFirmwareType, err
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineFirmwareTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineFirmwareTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineFirmwareType values", s)
@@ -647,13 +668,16 @@ func _VirtualMachineNUMAModeNoOp() {
 var _VirtualMachineNUMAModeValues = []VirtualMachineNUMAMode{VirtualMachineNUMAModeUnknown, VirtualMachineNUMAModeStrict, VirtualMachineNUMAModePreferred, VirtualMachineNUMAModeInterleave}
 
 var _VirtualMachineNUMAModeNameToValueMap = map[string]VirtualMachineNUMAMode{
-	_VirtualMachineNUMAModeName[0:7]:        VirtualMachineNUMAModeUnknown,
+	_VirtualMachineNUMAModeName[0:7]:   VirtualMachineNUMAModeUnknown,
+	_VirtualMachineNUMAModeName[7:13]:  VirtualMachineNUMAModeStrict,
+	_VirtualMachineNUMAModeName[13:22]: VirtualMachineNUMAModePreferred,
+	_VirtualMachineNUMAModeName[22:32]: VirtualMachineNUMAModeInterleave,
+}
+
+var _VirtualMachineNUMAModeLowerNameToValueMap = map[string]VirtualMachineNUMAMode{
 	_VirtualMachineNUMAModeLowerName[0:7]:   VirtualMachineNUMAModeUnknown,
-	_VirtualMachineNUMAModeName[7:13]:       VirtualMachineNUMAModeStrict,
 	_VirtualMachineNUMAModeLowerName[7:13]:  VirtualMachineNUMAModeStrict,
-	_VirtualMachineNUMAModeName[13:22]:      VirtualMachineNUMAModePreferred,
 	_VirtualMachineNUMAModeLowerName[13:22]: VirtualMachineNUMAModePreferred,
-	_VirtualMachineNUMAModeName[22:32]:      VirtualMachineNUMAModeInterleave,
 	_VirtualMachineNUMAModeLowerName[22:32]: VirtualMachineNUMAModeInterleave,
 }
 
@@ -671,7 +695,7 @@ func VirtualMachineNUMAModeString(s string) (VirtualMachineNUMAMode, error) {
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineNUMAModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineNUMAModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineNUMAMode values", s)
@@ -737,13 +761,16 @@ func _VirtualMachineProfileCPUModeNoOp() {
 var _VirtualMachineProfileCPUModeValues = []VirtualMachineProfileCPUMode{VirtualMachineProfileCPUModeUnknown, VirtualMachineProfileCPUModeHostModel, VirtualMachineProfileCPUModeHostPassthrough, VirtualMachineProfileCPUModeCustom}
 
 var _VirtualMachineProfileCPUModeNameToValueMap = map[string]VirtualMachineProfileCPUMode{
-	_VirtualMachineProfileCPUModeName[0:7]:        VirtualMachineProfileCPUModeUnknown,
+	_VirtualMachineProfileCPUModeName[0:7]:   VirtualMachineProfileCPUModeUnknown,
+	_VirtualMachineProfileCPUModeName[7:17]:  VirtualMachineProfileCPUModeHostModel,
+	_VirtualMachineProfileCPUModeName[17:33]: VirtualMachineProfileCPUModeHostPassthrough,
+	_VirtualMachineProfileCPUModeName[33:39]: VirtualMachineProfileCPUModeCustom,
+}
+
+var _VirtualMachineProfileCPUModeLowerNameToValueMap = map[string]VirtualMachineProfileCPUMode{
 	_VirtualMachineProfileCPUModeLowerName[0:7]:   VirtualMachineProfileCPUModeUnknown,
-	_VirtualMachineProfileCPUModeName[7:17]:       VirtualMachineProfileCPUModeHostModel,
 	_VirtualMachineProfileCPUModeLowerName[7:17]:  VirtualMachineProfileCPUModeHostModel,
-	_VirtualMachineProfileCPUModeName[17:33]:      VirtualMachineProfileCPUModeHostPassthrough,
 	_VirtualMachineProfileCPUModeLowerName[17:33]: VirtualMachineProfileCPUModeHostPassthrough,
-	_VirtualMachineProfileCPUModeName[33:39]:      VirtualMachineProfileCPUModeCustom,
 	_VirtualMachineProfileCPUModeLowerName[33:39]: VirtualMachineProfileCPUModeCustom,
 }
 
@@ -761,7 +788,7 @@ func VirtualMachineProfileCPUModeString(s string) (VirtualMachineProfileCPUMode,
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineProfileCPUModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineProfileCPUModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineProfileCPUMode values", s)
@@ -829,17 +856,20 @@ func _VirtualMachineProfileCPUFeaturePolicyNoOp() {
 var _VirtualMachineProfileCPUFeaturePolicyValues = []VirtualMachineProfileCPUFeaturePolicy{VirtualMachineProfileCPUFeaturePolicyUnknown, VirtualMachineProfileCPUFeaturePolicyRequire, VirtualMachineProfileCPUFeaturePolicyDisable, VirtualMachineProfileCPUFeaturePolicyOptional, VirtualMachineProfileCPUFeaturePolicyForce, VirtualMachineProfileCPUFeaturePolicyForbid}
 
 var _VirtualMachineProfileCPUFeaturePolicyNameToValueMap = map[string]VirtualMachineProfileCPUFeaturePolicy{
-	_VirtualMachineProfileCPUFeaturePolicyName[0:7]:        VirtualMachineProfileCPUFeaturePolicyUnknown,
+	_VirtualMachineProfileCPUFeaturePolicyName[0:7]:   VirtualMachineProfileCPUFeaturePolicyUnknown,
+	_VirtualMachineProfileCPUFeaturePolicyName[7:14]:  VirtualMachineProfileCPUFeaturePolicyRequire,
+	_VirtualMachineProfileCPUFeaturePolicyName[14:21]: VirtualMachineProfileCPUFeaturePolicyDisable,
+	_VirtualMachineProfileCPUFeaturePolicyName[21:29]: VirtualMachineProfileCPUFeaturePolicyOptional,
+	_VirtualMachineProfileCPUFeaturePolicyName[29:34]: VirtualMachineProfileCPUFeaturePolicyForce,
+	_VirtualMachineProfileCPUFeaturePolicyName[34:40]: VirtualMachineProfileCPUFeaturePolicyForbid,
+}
+
+var _VirtualMachineProfileCPUFeaturePolicyLowerNameToValueMap = map[string]VirtualMachineProfileCPUFeaturePolicy{
 	_VirtualMachineProfileCPUFeaturePolicyLowerName[0:7]:   VirtualMachineProfileCPUFeaturePolicyUnknown,
-	_VirtualMachineProfileCPUFeaturePolicyName[7:14]:       VirtualMachineProfileCPUFeaturePolicyRequire,
 	_VirtualMachineProfileCPUFeaturePolicyLowerName[7:14]:  VirtualMachineProfileCPUFeaturePolicyRequire,
-	_VirtualMachineProfileCPUFeaturePolicyName[14:21]:      VirtualMachineProfileCPUFeaturePolicyDisable,
 	_VirtualMachineProfileCPUFeaturePolicyLowerName[14:21]: VirtualMachineProfileCPUFeaturePolicyDisable,
-	_VirtualMachineProfileCPUFeaturePolicyName[21:29]:      VirtualMachineProfileCPUFeaturePolicyOptional,
 	_VirtualMachineProfileCPUFeaturePolicyLowerName[21:29]: VirtualMachineProfileCPUFeaturePolicyOptional,
-	_VirtualMachineProfileCPUFeaturePolicyName[29:34]:      VirtualMachineProfileCPUFeaturePolicyForce,
 	_VirtualMachineProfileCPUFeaturePolicyLowerName[29:34]: VirtualMachineProfileCPUFeaturePolicyForce,
-	_VirtualMachineProfileCPUFeaturePolicyName[34:40]:      VirtualMachineProfileCPUFeaturePolicyForbid,
 	_VirtualMachineProfileCPUFeaturePolicyLowerName[34:40]: VirtualMachineProfileCPUFeaturePolicyForbid,
 }
 
@@ -859,7 +889,7 @@ func VirtualMachineProfileCPUFeaturePolicyString(s string) (VirtualMachineProfil
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineProfileCPUFeaturePolicyNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineProfileCPUFeaturePolicyLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineProfileCPUFeaturePolicy values", s)
@@ -924,11 +954,14 @@ func _VirtualMachinePowerStateNoOp() {
 var _VirtualMachinePowerStateValues = []VirtualMachinePowerState{VirtualMachinePowerStateUnknown, VirtualMachinePowerStateRunning, VirtualMachinePowerStateStopped}
 
 var _VirtualMachinePowerStateNameToValueMap = map[string]VirtualMachinePowerState{
-	_VirtualMachinePowerStateName[0:7]:        VirtualMachinePowerStateUnknown,
+	_VirtualMachinePowerStateName[0:7]:   VirtualMachinePowerStateUnknown,
+	_VirtualMachinePowerStateName[7:14]:  VirtualMachinePowerStateRunning,
+	_VirtualMachinePowerStateName[14:21]: VirtualMachinePowerStateStopped,
+}
+
+var _VirtualMachinePowerStateLowerNameToValueMap = map[string]VirtualMachinePowerState{
 	_VirtualMachinePowerStateLowerName[0:7]:   VirtualMachinePowerStateUnknown,
-	_VirtualMachinePowerStateName[7:14]:       VirtualMachinePowerStateRunning,
 	_VirtualMachinePowerStateLowerName[7:14]:  VirtualMachinePowerStateRunning,
-	_VirtualMachinePowerStateName[14:21]:      VirtualMachinePowerStateStopped,
 	_VirtualMachinePowerStateLowerName[14:21]: VirtualMachinePowerStateStopped,
 }
 
@@ -945,7 +978,7 @@ func VirtualMachinePowerStateString(s string) (VirtualMachinePowerState, error) 
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachinePowerStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachinePowerStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachinePowerState values", s)
@@ -1011,13 +1044,16 @@ func _VirtualMachineStageNoOp() {
 var _VirtualMachineStageValues = []VirtualMachineStage{VirtualMachineStageUnknown, VirtualMachineStagePending, VirtualMachineStageReady, VirtualMachineStageError}
 
 var _VirtualMachineStageNameToValueMap = map[string]VirtualMachineStage{
-	_VirtualMachineStageName[0:7]:        VirtualMachineStageUnknown,
+	_VirtualMachineStageName[0:7]:   VirtualMachineStageUnknown,
+	_VirtualMachineStageName[7:14]:  VirtualMachineStagePending,
+	_VirtualMachineStageName[14:19]: VirtualMachineStageReady,
+	_VirtualMachineStageName[19:24]: VirtualMachineStageError,
+}
+
+var _VirtualMachineStageLowerNameToValueMap = map[string]VirtualMachineStage{
 	_VirtualMachineStageLowerName[0:7]:   VirtualMachineStageUnknown,
-	_VirtualMachineStageName[7:14]:       VirtualMachineStagePending,
 	_VirtualMachineStageLowerName[7:14]:  VirtualMachineStagePending,
-	_VirtualMachineStageName[14:19]:      VirtualMachineStageReady,
 	_VirtualMachineStageLowerName[14:19]: VirtualMachineStageReady,
-	_VirtualMachineStageName[19:24]:      VirtualMachineStageError,
 	_VirtualMachineStageLowerName[19:24]: VirtualMachineStageError,
 }
 
@@ -1035,7 +1071,7 @@ func VirtualMachineStageString(s string) (VirtualMachineStage, error) {
 		return val, nil
 	}
 
-	if val, ok := _VirtualMachineStageNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VirtualMachineStageLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VirtualMachineStage values", s)

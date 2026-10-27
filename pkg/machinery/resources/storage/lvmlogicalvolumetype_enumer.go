@@ -33,13 +33,16 @@ func _LVMLogicalVolumeTypeNoOp() {
 var _LVMLogicalVolumeTypeValues = []LVMLogicalVolumeType{LVMLogicalVolumeTypeLinear, LVMLogicalVolumeTypeRAID1, LVMLogicalVolumeTypeRAID0, LVMLogicalVolumeTypeRAID10}
 
 var _LVMLogicalVolumeTypeNameToValueMap = map[string]LVMLogicalVolumeType{
-	_LVMLogicalVolumeTypeName[0:6]:        LVMLogicalVolumeTypeLinear,
+	_LVMLogicalVolumeTypeName[0:6]:   LVMLogicalVolumeTypeLinear,
+	_LVMLogicalVolumeTypeName[6:11]:  LVMLogicalVolumeTypeRAID1,
+	_LVMLogicalVolumeTypeName[11:16]: LVMLogicalVolumeTypeRAID0,
+	_LVMLogicalVolumeTypeName[16:22]: LVMLogicalVolumeTypeRAID10,
+}
+
+var _LVMLogicalVolumeTypeLowerNameToValueMap = map[string]LVMLogicalVolumeType{
 	_LVMLogicalVolumeTypeLowerName[0:6]:   LVMLogicalVolumeTypeLinear,
-	_LVMLogicalVolumeTypeName[6:11]:       LVMLogicalVolumeTypeRAID1,
 	_LVMLogicalVolumeTypeLowerName[6:11]:  LVMLogicalVolumeTypeRAID1,
-	_LVMLogicalVolumeTypeName[11:16]:      LVMLogicalVolumeTypeRAID0,
 	_LVMLogicalVolumeTypeLowerName[11:16]: LVMLogicalVolumeTypeRAID0,
-	_LVMLogicalVolumeTypeName[16:22]:      LVMLogicalVolumeTypeRAID10,
 	_LVMLogicalVolumeTypeLowerName[16:22]: LVMLogicalVolumeTypeRAID10,
 }
 
@@ -57,7 +60,7 @@ func LVMLogicalVolumeTypeString(s string) (LVMLogicalVolumeType, error) {
 		return val, nil
 	}
 
-	if val, ok := _LVMLogicalVolumeTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _LVMLogicalVolumeTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to LVMLogicalVolumeType values", s)
@@ -120,7 +123,10 @@ func _MDLevelNoOp() {
 var _MDLevelValues = []MDLevel{MDLevelRAID1}
 
 var _MDLevelNameToValueMap = map[string]MDLevel{
-	_MDLevelName[0:5]:      MDLevelRAID1,
+	_MDLevelName[0:5]: MDLevelRAID1,
+}
+
+var _MDLevelLowerNameToValueMap = map[string]MDLevel{
 	_MDLevelLowerName[0:5]: MDLevelRAID1,
 }
 
@@ -135,7 +141,7 @@ func MDLevelString(s string) (MDLevel, error) {
 		return val, nil
 	}
 
-	if val, ok := _MDLevelNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _MDLevelLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to MDLevel values", s)
@@ -199,9 +205,12 @@ func _MDMetadataNoOp() {
 var _MDMetadataValues = []MDMetadata{MDMetadata10, MDMetadata12}
 
 var _MDMetadataNameToValueMap = map[string]MDMetadata{
-	_MDMetadataName[0:3]:      MDMetadata10,
+	_MDMetadataName[0:3]: MDMetadata10,
+	_MDMetadataName[3:6]: MDMetadata12,
+}
+
+var _MDMetadataLowerNameToValueMap = map[string]MDMetadata{
 	_MDMetadataLowerName[0:3]: MDMetadata10,
-	_MDMetadataName[3:6]:      MDMetadata12,
 	_MDMetadataLowerName[3:6]: MDMetadata12,
 }
 
@@ -217,7 +226,7 @@ func MDMetadataString(s string) (MDMetadata, error) {
 		return val, nil
 	}
 
-	if val, ok := _MDMetadataNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _MDMetadataLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to MDMetadata values", s)
@@ -284,15 +293,18 @@ func _MDArrayPhaseNoOp() {
 var _MDArrayPhaseValues = []MDArrayPhase{MDArrayPhaseUnknown, MDArrayPhaseWaiting, MDArrayPhaseRebuilding, MDArrayPhaseReady, MDArrayPhaseError}
 
 var _MDArrayPhaseNameToValueMap = map[string]MDArrayPhase{
-	_MDArrayPhaseName[0:7]:        MDArrayPhaseUnknown,
+	_MDArrayPhaseName[0:7]:   MDArrayPhaseUnknown,
+	_MDArrayPhaseName[7:14]:  MDArrayPhaseWaiting,
+	_MDArrayPhaseName[14:24]: MDArrayPhaseRebuilding,
+	_MDArrayPhaseName[24:29]: MDArrayPhaseReady,
+	_MDArrayPhaseName[29:34]: MDArrayPhaseError,
+}
+
+var _MDArrayPhaseLowerNameToValueMap = map[string]MDArrayPhase{
 	_MDArrayPhaseLowerName[0:7]:   MDArrayPhaseUnknown,
-	_MDArrayPhaseName[7:14]:       MDArrayPhaseWaiting,
 	_MDArrayPhaseLowerName[7:14]:  MDArrayPhaseWaiting,
-	_MDArrayPhaseName[14:24]:      MDArrayPhaseRebuilding,
 	_MDArrayPhaseLowerName[14:24]: MDArrayPhaseRebuilding,
-	_MDArrayPhaseName[24:29]:      MDArrayPhaseReady,
 	_MDArrayPhaseLowerName[24:29]: MDArrayPhaseReady,
-	_MDArrayPhaseName[29:34]:      MDArrayPhaseError,
 	_MDArrayPhaseLowerName[29:34]: MDArrayPhaseError,
 }
 
@@ -311,7 +323,7 @@ func MDArrayPhaseString(s string) (MDArrayPhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _MDArrayPhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _MDArrayPhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to MDArrayPhase values", s)
@@ -377,13 +389,16 @@ func _StoragePoolPhaseNoOp() {
 var _StoragePoolPhaseValues = []StoragePoolPhase{StoragePoolPhaseUnknown, StoragePoolPhaseNotReady, StoragePoolPhaseReady, StoragePoolPhaseObservationUnavailable}
 
 var _StoragePoolPhaseNameToValueMap = map[string]StoragePoolPhase{
-	_StoragePoolPhaseName[0:7]:        StoragePoolPhaseUnknown,
+	_StoragePoolPhaseName[0:7]:   StoragePoolPhaseUnknown,
+	_StoragePoolPhaseName[7:15]:  StoragePoolPhaseNotReady,
+	_StoragePoolPhaseName[15:20]: StoragePoolPhaseReady,
+	_StoragePoolPhaseName[20:42]: StoragePoolPhaseObservationUnavailable,
+}
+
+var _StoragePoolPhaseLowerNameToValueMap = map[string]StoragePoolPhase{
 	_StoragePoolPhaseLowerName[0:7]:   StoragePoolPhaseUnknown,
-	_StoragePoolPhaseName[7:15]:       StoragePoolPhaseNotReady,
 	_StoragePoolPhaseLowerName[7:15]:  StoragePoolPhaseNotReady,
-	_StoragePoolPhaseName[15:20]:      StoragePoolPhaseReady,
 	_StoragePoolPhaseLowerName[15:20]: StoragePoolPhaseReady,
-	_StoragePoolPhaseName[20:42]:      StoragePoolPhaseObservationUnavailable,
 	_StoragePoolPhaseLowerName[20:42]: StoragePoolPhaseObservationUnavailable,
 }
 
@@ -401,7 +416,7 @@ func StoragePoolPhaseString(s string) (StoragePoolPhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _StoragePoolPhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _StoragePoolPhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to StoragePoolPhase values", s)
@@ -467,13 +482,16 @@ func _StoragePoolVolumePhaseNoOp() {
 var _StoragePoolVolumePhaseValues = []StoragePoolVolumePhase{StoragePoolVolumePhaseUnknown, StoragePoolVolumePhaseNotReady, StoragePoolVolumePhaseReady, StoragePoolVolumePhaseObservationUnavailable}
 
 var _StoragePoolVolumePhaseNameToValueMap = map[string]StoragePoolVolumePhase{
-	_StoragePoolVolumePhaseName[0:7]:        StoragePoolVolumePhaseUnknown,
+	_StoragePoolVolumePhaseName[0:7]:   StoragePoolVolumePhaseUnknown,
+	_StoragePoolVolumePhaseName[7:15]:  StoragePoolVolumePhaseNotReady,
+	_StoragePoolVolumePhaseName[15:20]: StoragePoolVolumePhaseReady,
+	_StoragePoolVolumePhaseName[20:42]: StoragePoolVolumePhaseObservationUnavailable,
+}
+
+var _StoragePoolVolumePhaseLowerNameToValueMap = map[string]StoragePoolVolumePhase{
 	_StoragePoolVolumePhaseLowerName[0:7]:   StoragePoolVolumePhaseUnknown,
-	_StoragePoolVolumePhaseName[7:15]:       StoragePoolVolumePhaseNotReady,
 	_StoragePoolVolumePhaseLowerName[7:15]:  StoragePoolVolumePhaseNotReady,
-	_StoragePoolVolumePhaseName[15:20]:      StoragePoolVolumePhaseReady,
 	_StoragePoolVolumePhaseLowerName[15:20]: StoragePoolVolumePhaseReady,
-	_StoragePoolVolumePhaseName[20:42]:      StoragePoolVolumePhaseObservationUnavailable,
 	_StoragePoolVolumePhaseLowerName[20:42]: StoragePoolVolumePhaseObservationUnavailable,
 }
 
@@ -491,7 +509,7 @@ func StoragePoolVolumePhaseString(s string) (StoragePoolVolumePhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _StoragePoolVolumePhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _StoragePoolVolumePhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to StoragePoolVolumePhase values", s)

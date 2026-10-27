@@ -34,15 +34,18 @@ func _CPUPartitionPhaseNoOp() {
 var _CPUPartitionPhaseValues = []CPUPartitionPhase{CPUPartitionPhaseReady, CPUPartitionPhaseConverging, CPUPartitionPhaseBlocked, CPUPartitionPhaseRestoring, CPUPartitionPhaseApplying}
 
 var _CPUPartitionPhaseNameToValueMap = map[string]CPUPartitionPhase{
-	_CPUPartitionPhaseName[0:5]:        CPUPartitionPhaseReady,
+	_CPUPartitionPhaseName[0:5]:   CPUPartitionPhaseReady,
+	_CPUPartitionPhaseName[5:15]:  CPUPartitionPhaseConverging,
+	_CPUPartitionPhaseName[15:22]: CPUPartitionPhaseBlocked,
+	_CPUPartitionPhaseName[22:31]: CPUPartitionPhaseRestoring,
+	_CPUPartitionPhaseName[31:39]: CPUPartitionPhaseApplying,
+}
+
+var _CPUPartitionPhaseLowerNameToValueMap = map[string]CPUPartitionPhase{
 	_CPUPartitionPhaseLowerName[0:5]:   CPUPartitionPhaseReady,
-	_CPUPartitionPhaseName[5:15]:       CPUPartitionPhaseConverging,
 	_CPUPartitionPhaseLowerName[5:15]:  CPUPartitionPhaseConverging,
-	_CPUPartitionPhaseName[15:22]:      CPUPartitionPhaseBlocked,
 	_CPUPartitionPhaseLowerName[15:22]: CPUPartitionPhaseBlocked,
-	_CPUPartitionPhaseName[22:31]:      CPUPartitionPhaseRestoring,
 	_CPUPartitionPhaseLowerName[22:31]: CPUPartitionPhaseRestoring,
-	_CPUPartitionPhaseName[31:39]:      CPUPartitionPhaseApplying,
 	_CPUPartitionPhaseLowerName[31:39]: CPUPartitionPhaseApplying,
 }
 
@@ -61,7 +64,7 @@ func CPUPartitionPhaseString(s string) (CPUPartitionPhase, error) {
 		return val, nil
 	}
 
-	if val, ok := _CPUPartitionPhaseNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _CPUPartitionPhaseLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to CPUPartitionPhase values", s)

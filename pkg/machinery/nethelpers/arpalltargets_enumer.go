@@ -31,9 +31,12 @@ func _ARPAllTargetsNoOp() {
 var _ARPAllTargetsValues = []ARPAllTargets{ARPAllTargetsAny, ARPAllTargetsAll}
 
 var _ARPAllTargetsNameToValueMap = map[string]ARPAllTargets{
-	_ARPAllTargetsName[0:3]:      ARPAllTargetsAny,
+	_ARPAllTargetsName[0:3]: ARPAllTargetsAny,
+	_ARPAllTargetsName[3:6]: ARPAllTargetsAll,
+}
+
+var _ARPAllTargetsLowerNameToValueMap = map[string]ARPAllTargets{
 	_ARPAllTargetsLowerName[0:3]: ARPAllTargetsAny,
-	_ARPAllTargetsName[3:6]:      ARPAllTargetsAll,
 	_ARPAllTargetsLowerName[3:6]: ARPAllTargetsAll,
 }
 
@@ -49,7 +52,7 @@ func ARPAllTargetsString(s string) (ARPAllTargets, error) {
 		return val, nil
 	}
 
-	if val, ok := _ARPAllTargetsNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ARPAllTargetsLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ARPAllTargets values", s)
@@ -118,19 +121,22 @@ func _ARPValidateNoOp() {
 var _ARPValidateValues = []ARPValidate{ARPValidateNone, ARPValidateActive, ARPValidateBackup, ARPValidateAll, ARPValidateFilter, ARPValidateFilterActive, ARPValidateFilterBackup}
 
 var _ARPValidateNameToValueMap = map[string]ARPValidate{
-	_ARPValidateName[0:4]:        ARPValidateNone,
+	_ARPValidateName[0:4]:   ARPValidateNone,
+	_ARPValidateName[4:10]:  ARPValidateActive,
+	_ARPValidateName[10:16]: ARPValidateBackup,
+	_ARPValidateName[16:19]: ARPValidateAll,
+	_ARPValidateName[19:25]: ARPValidateFilter,
+	_ARPValidateName[25:38]: ARPValidateFilterActive,
+	_ARPValidateName[38:51]: ARPValidateFilterBackup,
+}
+
+var _ARPValidateLowerNameToValueMap = map[string]ARPValidate{
 	_ARPValidateLowerName[0:4]:   ARPValidateNone,
-	_ARPValidateName[4:10]:       ARPValidateActive,
 	_ARPValidateLowerName[4:10]:  ARPValidateActive,
-	_ARPValidateName[10:16]:      ARPValidateBackup,
 	_ARPValidateLowerName[10:16]: ARPValidateBackup,
-	_ARPValidateName[16:19]:      ARPValidateAll,
 	_ARPValidateLowerName[16:19]: ARPValidateAll,
-	_ARPValidateName[19:25]:      ARPValidateFilter,
 	_ARPValidateLowerName[19:25]: ARPValidateFilter,
-	_ARPValidateName[25:38]:      ARPValidateFilterActive,
 	_ARPValidateLowerName[25:38]: ARPValidateFilterActive,
-	_ARPValidateName[38:51]:      ARPValidateFilterBackup,
 	_ARPValidateLowerName[38:51]: ARPValidateFilterBackup,
 }
 
@@ -151,7 +157,7 @@ func ARPValidateString(s string) (ARPValidate, error) {
 		return val, nil
 	}
 
-	if val, ok := _ARPValidateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ARPValidateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ARPValidate values", s)
@@ -237,29 +243,32 @@ func _AddressFlagNoOp() {
 var _AddressFlagValues = []AddressFlag{AddressTemporary, AddressNoDAD, AddressOptimistic, AddressDADFailed, AddressHome, AddressDeprecated, AddressTentative, AddressPermanent, AddressManagementTemp, AddressNoPrefixRoute, AddressMCAutoJoin, AddressStablePrivacy}
 
 var _AddressFlagNameToValueMap = map[string]AddressFlag{
-	_AddressFlagName[0:9]:          AddressTemporary,
+	_AddressFlagName[0:9]:     AddressTemporary,
+	_AddressFlagName[9:14]:    AddressNoDAD,
+	_AddressFlagName[14:24]:   AddressOptimistic,
+	_AddressFlagName[24:33]:   AddressDADFailed,
+	_AddressFlagName[33:44]:   AddressHome,
+	_AddressFlagName[44:54]:   AddressDeprecated,
+	_AddressFlagName[54:63]:   AddressTentative,
+	_AddressFlagName[63:72]:   AddressPermanent,
+	_AddressFlagName[72:83]:   AddressManagementTemp,
+	_AddressFlagName[83:96]:   AddressNoPrefixRoute,
+	_AddressFlagName[96:106]:  AddressMCAutoJoin,
+	_AddressFlagName[106:119]: AddressStablePrivacy,
+}
+
+var _AddressFlagLowerNameToValueMap = map[string]AddressFlag{
 	_AddressFlagLowerName[0:9]:     AddressTemporary,
-	_AddressFlagName[9:14]:         AddressNoDAD,
 	_AddressFlagLowerName[9:14]:    AddressNoDAD,
-	_AddressFlagName[14:24]:        AddressOptimistic,
 	_AddressFlagLowerName[14:24]:   AddressOptimistic,
-	_AddressFlagName[24:33]:        AddressDADFailed,
 	_AddressFlagLowerName[24:33]:   AddressDADFailed,
-	_AddressFlagName[33:44]:        AddressHome,
 	_AddressFlagLowerName[33:44]:   AddressHome,
-	_AddressFlagName[44:54]:        AddressDeprecated,
 	_AddressFlagLowerName[44:54]:   AddressDeprecated,
-	_AddressFlagName[54:63]:        AddressTentative,
 	_AddressFlagLowerName[54:63]:   AddressTentative,
-	_AddressFlagName[63:72]:        AddressPermanent,
 	_AddressFlagLowerName[63:72]:   AddressPermanent,
-	_AddressFlagName[72:83]:        AddressManagementTemp,
 	_AddressFlagLowerName[72:83]:   AddressManagementTemp,
-	_AddressFlagName[83:96]:        AddressNoPrefixRoute,
 	_AddressFlagLowerName[83:96]:   AddressNoPrefixRoute,
-	_AddressFlagName[96:106]:       AddressMCAutoJoin,
 	_AddressFlagLowerName[96:106]:  AddressMCAutoJoin,
-	_AddressFlagName[106:119]:      AddressStablePrivacy,
 	_AddressFlagLowerName[106:119]: AddressStablePrivacy,
 }
 
@@ -285,7 +294,7 @@ func AddressFlagString(s string) (AddressFlag, error) {
 		return val, nil
 	}
 
-	if val, ok := _AddressFlagNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _AddressFlagLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to AddressFlag values", s)
@@ -345,9 +354,12 @@ func _AddressSortAlgorithmNoOp() {
 var _AddressSortAlgorithmValues = []AddressSortAlgorithm{AddressSortAlgorithmV1, AddressSortAlgorithmV2}
 
 var _AddressSortAlgorithmNameToValueMap = map[string]AddressSortAlgorithm{
-	_AddressSortAlgorithmName[0:2]:      AddressSortAlgorithmV1,
+	_AddressSortAlgorithmName[0:2]: AddressSortAlgorithmV1,
+	_AddressSortAlgorithmName[2:4]: AddressSortAlgorithmV2,
+}
+
+var _AddressSortAlgorithmLowerNameToValueMap = map[string]AddressSortAlgorithm{
 	_AddressSortAlgorithmLowerName[0:2]: AddressSortAlgorithmV1,
-	_AddressSortAlgorithmName[2:4]:      AddressSortAlgorithmV2,
 	_AddressSortAlgorithmLowerName[2:4]: AddressSortAlgorithmV2,
 }
 
@@ -363,7 +375,7 @@ func AddressSortAlgorithmString(s string) (AddressSortAlgorithm, error) {
 		return val, nil
 	}
 
-	if val, ok := _AddressSortAlgorithmNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _AddressSortAlgorithmLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to AddressSortAlgorithm values", s)
@@ -428,11 +440,14 @@ func _ADSelectNoOp() {
 var _ADSelectValues = []ADSelect{ADSelectStable, ADSelectBandwidth, ADSelectCount}
 
 var _ADSelectNameToValueMap = map[string]ADSelect{
-	_ADSelectName[0:6]:        ADSelectStable,
+	_ADSelectName[0:6]:   ADSelectStable,
+	_ADSelectName[6:15]:  ADSelectBandwidth,
+	_ADSelectName[15:20]: ADSelectCount,
+}
+
+var _ADSelectLowerNameToValueMap = map[string]ADSelect{
 	_ADSelectLowerName[0:6]:   ADSelectStable,
-	_ADSelectName[6:15]:       ADSelectBandwidth,
 	_ADSelectLowerName[6:15]:  ADSelectBandwidth,
-	_ADSelectName[15:20]:      ADSelectCount,
 	_ADSelectLowerName[15:20]: ADSelectCount,
 }
 
@@ -449,7 +464,7 @@ func ADSelectString(s string) (ADSelect, error) {
 		return val, nil
 	}
 
-	if val, ok := _ADSelectNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ADSelectLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ADSelect values", s)
@@ -513,9 +528,12 @@ func _ADLACPActiveNoOp() {
 var _ADLACPActiveValues = []ADLACPActive{ADLACPActiveOff, ADLACPActiveOn}
 
 var _ADLACPActiveNameToValueMap = map[string]ADLACPActive{
-	_ADLACPActiveName[0:3]:      ADLACPActiveOff,
+	_ADLACPActiveName[0:3]: ADLACPActiveOff,
+	_ADLACPActiveName[3:5]: ADLACPActiveOn,
+}
+
+var _ADLACPActiveLowerNameToValueMap = map[string]ADLACPActive{
 	_ADLACPActiveLowerName[0:3]: ADLACPActiveOff,
-	_ADLACPActiveName[3:5]:      ADLACPActiveOn,
 	_ADLACPActiveLowerName[3:5]: ADLACPActiveOn,
 }
 
@@ -531,7 +549,7 @@ func ADLACPActiveString(s string) (ADLACPActive, error) {
 		return val, nil
 	}
 
-	if val, ok := _ADLACPActiveNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ADLACPActiveLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ADLACPActive values", s)
@@ -596,11 +614,14 @@ func _AutoHostnameKindNoOp() {
 var _AutoHostnameKindValues = []AutoHostnameKind{AutoHostnameKindOff, AutoHostnameKindAddr, AutoHostnameKindStable}
 
 var _AutoHostnameKindNameToValueMap = map[string]AutoHostnameKind{
-	_AutoHostnameKindName[0:3]:        AutoHostnameKindOff,
+	_AutoHostnameKindName[0:3]:   AutoHostnameKindOff,
+	_AutoHostnameKindName[3:13]:  AutoHostnameKindAddr,
+	_AutoHostnameKindName[13:19]: AutoHostnameKindStable,
+}
+
+var _AutoHostnameKindLowerNameToValueMap = map[string]AutoHostnameKind{
 	_AutoHostnameKindLowerName[0:3]:   AutoHostnameKindOff,
-	_AutoHostnameKindName[3:13]:       AutoHostnameKindAddr,
 	_AutoHostnameKindLowerName[3:13]:  AutoHostnameKindAddr,
-	_AutoHostnameKindName[13:19]:      AutoHostnameKindStable,
 	_AutoHostnameKindLowerName[13:19]: AutoHostnameKindStable,
 }
 
@@ -617,7 +638,7 @@ func AutoHostnameKindString(s string) (AutoHostnameKind, error) {
 		return val, nil
 	}
 
-	if val, ok := _AutoHostnameKindNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _AutoHostnameKindLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to AutoHostnameKind values", s)
@@ -686,19 +707,22 @@ func _BGPSessionStateNoOp() {
 var _BGPSessionStateValues = []BGPSessionState{BGPSessionStateUnknown, BGPSessionStateIdle, BGPSessionStateConnect, BGPSessionStateActive, BGPSessionStateOpenSent, BGPSessionStateOpenConfirm, BGPSessionStateEstablished}
 
 var _BGPSessionStateNameToValueMap = map[string]BGPSessionState{
-	_BGPSessionStateName[0:7]:        BGPSessionStateUnknown,
+	_BGPSessionStateName[0:7]:   BGPSessionStateUnknown,
+	_BGPSessionStateName[7:11]:  BGPSessionStateIdle,
+	_BGPSessionStateName[11:18]: BGPSessionStateConnect,
+	_BGPSessionStateName[18:24]: BGPSessionStateActive,
+	_BGPSessionStateName[24:33]: BGPSessionStateOpenSent,
+	_BGPSessionStateName[33:45]: BGPSessionStateOpenConfirm,
+	_BGPSessionStateName[45:56]: BGPSessionStateEstablished,
+}
+
+var _BGPSessionStateLowerNameToValueMap = map[string]BGPSessionState{
 	_BGPSessionStateLowerName[0:7]:   BGPSessionStateUnknown,
-	_BGPSessionStateName[7:11]:       BGPSessionStateIdle,
 	_BGPSessionStateLowerName[7:11]:  BGPSessionStateIdle,
-	_BGPSessionStateName[11:18]:      BGPSessionStateConnect,
 	_BGPSessionStateLowerName[11:18]: BGPSessionStateConnect,
-	_BGPSessionStateName[18:24]:      BGPSessionStateActive,
 	_BGPSessionStateLowerName[18:24]: BGPSessionStateActive,
-	_BGPSessionStateName[24:33]:      BGPSessionStateOpenSent,
 	_BGPSessionStateLowerName[24:33]: BGPSessionStateOpenSent,
-	_BGPSessionStateName[33:45]:      BGPSessionStateOpenConfirm,
 	_BGPSessionStateLowerName[33:45]: BGPSessionStateOpenConfirm,
-	_BGPSessionStateName[45:56]:      BGPSessionStateEstablished,
 	_BGPSessionStateLowerName[45:56]: BGPSessionStateEstablished,
 }
 
@@ -719,7 +743,7 @@ func BGPSessionStateString(s string) (BGPSessionState, error) {
 		return val, nil
 	}
 
-	if val, ok := _BGPSessionStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _BGPSessionStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to BGPSessionState values", s)
@@ -788,19 +812,22 @@ func _BondModeNoOp() {
 var _BondModeValues = []BondMode{BondModeRoundrobin, BondModeActiveBackup, BondModeXOR, BondModeBroadcast, BondMode8023AD, BondModeTLB, BondModeALB}
 
 var _BondModeNameToValueMap = map[string]BondMode{
-	_BondModeName[0:10]:       BondModeRoundrobin,
+	_BondModeName[0:10]:  BondModeRoundrobin,
+	_BondModeName[10:23]: BondModeActiveBackup,
+	_BondModeName[23:34]: BondModeXOR,
+	_BondModeName[34:43]: BondModeBroadcast,
+	_BondModeName[43:50]: BondMode8023AD,
+	_BondModeName[50:61]: BondModeTLB,
+	_BondModeName[61:72]: BondModeALB,
+}
+
+var _BondModeLowerNameToValueMap = map[string]BondMode{
 	_BondModeLowerName[0:10]:  BondModeRoundrobin,
-	_BondModeName[10:23]:      BondModeActiveBackup,
 	_BondModeLowerName[10:23]: BondModeActiveBackup,
-	_BondModeName[23:34]:      BondModeXOR,
 	_BondModeLowerName[23:34]: BondModeXOR,
-	_BondModeName[34:43]:      BondModeBroadcast,
 	_BondModeLowerName[34:43]: BondModeBroadcast,
-	_BondModeName[43:50]:      BondMode8023AD,
 	_BondModeLowerName[43:50]: BondMode8023AD,
-	_BondModeName[50:61]:      BondModeTLB,
 	_BondModeLowerName[50:61]: BondModeTLB,
-	_BondModeName[61:72]:      BondModeALB,
 	_BondModeLowerName[61:72]: BondModeALB,
 }
 
@@ -821,7 +848,7 @@ func BondModeString(s string) (BondMode, error) {
 		return val, nil
 	}
 
-	if val, ok := _BondModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _BondModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to BondMode values", s)
@@ -888,15 +915,18 @@ func _BondXmitHashPolicyNoOp() {
 var _BondXmitHashPolicyValues = []BondXmitHashPolicy{BondXmitPolicyLayer2, BondXmitPolicyLayer34, BondXmitPolicyLayer23, BondXmitPolicyEncap23, BondXmitPolicyEncap34}
 
 var _BondXmitHashPolicyNameToValueMap = map[string]BondXmitHashPolicy{
-	_BondXmitHashPolicyName[0:6]:        BondXmitPolicyLayer2,
+	_BondXmitHashPolicyName[0:6]:   BondXmitPolicyLayer2,
+	_BondXmitHashPolicyName[6:14]:  BondXmitPolicyLayer34,
+	_BondXmitHashPolicyName[14:22]: BondXmitPolicyLayer23,
+	_BondXmitHashPolicyName[22:30]: BondXmitPolicyEncap23,
+	_BondXmitHashPolicyName[30:38]: BondXmitPolicyEncap34,
+}
+
+var _BondXmitHashPolicyLowerNameToValueMap = map[string]BondXmitHashPolicy{
 	_BondXmitHashPolicyLowerName[0:6]:   BondXmitPolicyLayer2,
-	_BondXmitHashPolicyName[6:14]:       BondXmitPolicyLayer34,
 	_BondXmitHashPolicyLowerName[6:14]:  BondXmitPolicyLayer34,
-	_BondXmitHashPolicyName[14:22]:      BondXmitPolicyLayer23,
 	_BondXmitHashPolicyLowerName[14:22]: BondXmitPolicyLayer23,
-	_BondXmitHashPolicyName[22:30]:      BondXmitPolicyEncap23,
 	_BondXmitHashPolicyLowerName[22:30]: BondXmitPolicyEncap23,
-	_BondXmitHashPolicyName[30:38]:      BondXmitPolicyEncap34,
 	_BondXmitHashPolicyLowerName[30:38]: BondXmitPolicyEncap34,
 }
 
@@ -915,7 +945,7 @@ func BondXmitHashPolicyString(s string) (BondXmitHashPolicy, error) {
 		return val, nil
 	}
 
-	if val, ok := _BondXmitHashPolicyNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _BondXmitHashPolicyLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to BondXmitHashPolicy values", s)
@@ -980,11 +1010,14 @@ func _ClientIdentifierNoOp() {
 var _ClientIdentifierValues = []ClientIdentifier{ClientIdentifierNone, ClientIdentifierMAC, ClientIdentifierDUID}
 
 var _ClientIdentifierNameToValueMap = map[string]ClientIdentifier{
-	_ClientIdentifierName[0:4]:       ClientIdentifierNone,
+	_ClientIdentifierName[0:4]:  ClientIdentifierNone,
+	_ClientIdentifierName[4:7]:  ClientIdentifierMAC,
+	_ClientIdentifierName[7:11]: ClientIdentifierDUID,
+}
+
+var _ClientIdentifierLowerNameToValueMap = map[string]ClientIdentifier{
 	_ClientIdentifierLowerName[0:4]:  ClientIdentifierNone,
-	_ClientIdentifierName[4:7]:       ClientIdentifierMAC,
 	_ClientIdentifierLowerName[4:7]:  ClientIdentifierMAC,
-	_ClientIdentifierName[7:11]:      ClientIdentifierDUID,
 	_ClientIdentifierLowerName[7:11]: ClientIdentifierDUID,
 }
 
@@ -1001,7 +1034,7 @@ func ClientIdentifierString(s string) (ClientIdentifier, error) {
 		return val, nil
 	}
 
-	if val, ok := _ClientIdentifierNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ClientIdentifierLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ClientIdentifier values", s)
@@ -1083,13 +1116,16 @@ func _ConntrackStateNoOp() {
 var _ConntrackStateValues = []ConntrackState{ConntrackStateInvalid, ConntrackStateEstablished, ConntrackStateRelated, ConntrackStateNew}
 
 var _ConntrackStateNameToValueMap = map[string]ConntrackState{
-	_ConntrackStateName_0[0:7]:       ConntrackStateInvalid,
+	_ConntrackStateName_0[0:7]:  ConntrackStateInvalid,
+	_ConntrackStateName_0[7:18]: ConntrackStateEstablished,
+	_ConntrackStateName_1[0:7]:  ConntrackStateRelated,
+	_ConntrackStateName_2[0:3]:  ConntrackStateNew,
+}
+
+var _ConntrackStateLowerNameToValueMap = map[string]ConntrackState{
 	_ConntrackStateLowerName_0[0:7]:  ConntrackStateInvalid,
-	_ConntrackStateName_0[7:18]:      ConntrackStateEstablished,
 	_ConntrackStateLowerName_0[7:18]: ConntrackStateEstablished,
-	_ConntrackStateName_1[0:7]:       ConntrackStateRelated,
 	_ConntrackStateLowerName_1[0:7]:  ConntrackStateRelated,
-	_ConntrackStateName_2[0:3]:       ConntrackStateNew,
 	_ConntrackStateLowerName_2[0:3]:  ConntrackStateNew,
 }
 
@@ -1107,7 +1143,7 @@ func ConntrackStateString(s string) (ConntrackState, error) {
 		return val, nil
 	}
 
-	if val, ok := _ConntrackStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ConntrackStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to ConntrackState values", s)
@@ -1171,9 +1207,12 @@ func _DefaultActionNoOp() {
 var _DefaultActionValues = []DefaultAction{DefaultActionAccept, DefaultActionBlock}
 
 var _DefaultActionNameToValueMap = map[string]DefaultAction{
-	_DefaultActionName[0:6]:       DefaultActionAccept,
+	_DefaultActionName[0:6]:  DefaultActionAccept,
+	_DefaultActionName[6:11]: DefaultActionBlock,
+}
+
+var _DefaultActionLowerNameToValueMap = map[string]DefaultAction{
 	_DefaultActionLowerName[0:6]:  DefaultActionAccept,
-	_DefaultActionName[6:11]:      DefaultActionBlock,
 	_DefaultActionLowerName[6:11]: DefaultActionBlock,
 }
 
@@ -1189,7 +1228,7 @@ func DefaultActionString(s string) (DefaultAction, error) {
 		return val, nil
 	}
 
-	if val, ok := _DefaultActionNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _DefaultActionLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to DefaultAction values", s)
@@ -1254,11 +1293,14 @@ func _DNSProtocolNoOp() {
 var _DNSProtocolValues = []DNSProtocol{DNSProtocolDefault, DNSProtocolDNSOverTLS, DNSProtocolDNSOverHTTP}
 
 var _DNSProtocolNameToValueMap = map[string]DNSProtocol{
-	_DNSProtocolName[0:4]:       DNSProtocolDefault,
+	_DNSProtocolName[0:4]:  DNSProtocolDefault,
+	_DNSProtocolName[4:7]:  DNSProtocolDNSOverTLS,
+	_DNSProtocolName[7:10]: DNSProtocolDNSOverHTTP,
+}
+
+var _DNSProtocolLowerNameToValueMap = map[string]DNSProtocol{
 	_DNSProtocolLowerName[0:4]:  DNSProtocolDefault,
-	_DNSProtocolName[4:7]:       DNSProtocolDNSOverTLS,
 	_DNSProtocolLowerName[4:7]:  DNSProtocolDNSOverTLS,
-	_DNSProtocolName[7:10]:      DNSProtocolDNSOverHTTP,
 	_DNSProtocolLowerName[7:10]: DNSProtocolDNSOverHTTP,
 }
 
@@ -1275,7 +1317,7 @@ func DNSProtocolString(s string) (DNSProtocol, error) {
 		return val, nil
 	}
 
-	if val, ok := _DNSProtocolNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _DNSProtocolLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to DNSProtocol values", s)
@@ -1350,11 +1392,14 @@ func _DuplexNoOp() {
 var _DuplexValues = []Duplex{Half, Full, Unknown}
 
 var _DuplexNameToValueMap = map[string]Duplex{
-	_DuplexName_0[0:4]:      Half,
+	_DuplexName_0[0:4]: Half,
+	_DuplexName_0[4:8]: Full,
+	_DuplexName_1[0:7]: Unknown,
+}
+
+var _DuplexLowerNameToValueMap = map[string]Duplex{
 	_DuplexLowerName_0[0:4]: Half,
-	_DuplexName_0[4:8]:      Full,
 	_DuplexLowerName_0[4:8]: Full,
-	_DuplexName_1[0:7]:      Unknown,
 	_DuplexLowerName_1[0:7]: Unknown,
 }
 
@@ -1371,7 +1416,7 @@ func DuplexString(s string) (Duplex, error) {
 		return val, nil
 	}
 
-	if val, ok := _DuplexNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _DuplexLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to Duplex values", s)
@@ -1445,9 +1490,12 @@ func _FamilyNoOp() {
 var _FamilyValues = []Family{FamilyInet4, FamilyInet6}
 
 var _FamilyNameToValueMap = map[string]Family{
-	_FamilyName_0[0:5]:      FamilyInet4,
+	_FamilyName_0[0:5]: FamilyInet4,
+	_FamilyName_1[0:5]: FamilyInet6,
+}
+
+var _FamilyLowerNameToValueMap = map[string]Family{
 	_FamilyLowerName_0[0:5]: FamilyInet4,
-	_FamilyName_1[0:5]:      FamilyInet6,
 	_FamilyLowerName_1[0:5]: FamilyInet6,
 }
 
@@ -1463,7 +1511,7 @@ func FamilyString(s string) (Family, error) {
 		return val, nil
 	}
 
-	if val, ok := _FamilyNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _FamilyLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to Family values", s)
@@ -1527,9 +1575,12 @@ func _LACPRateNoOp() {
 var _LACPRateValues = []LACPRate{LACPRateSlow, LACPRateFast}
 
 var _LACPRateNameToValueMap = map[string]LACPRate{
-	_LACPRateName[0:4]:      LACPRateSlow,
+	_LACPRateName[0:4]: LACPRateSlow,
+	_LACPRateName[4:8]: LACPRateFast,
+}
+
+var _LACPRateLowerNameToValueMap = map[string]LACPRate{
 	_LACPRateLowerName[0:4]: LACPRateSlow,
-	_LACPRateName[4:8]:      LACPRateFast,
 	_LACPRateLowerName[4:8]: LACPRateFast,
 }
 
@@ -1545,7 +1596,7 @@ func LACPRateString(s string) (LACPRate, error) {
 		return val, nil
 	}
 
-	if val, ok := _LACPRateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _LACPRateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to LACPRate values", s)
@@ -1645,43 +1696,46 @@ func _LinkFlagNoOp() {
 var _LinkFlagValues = []LinkFlag{LinkUp, LinkBroadcast, LinkDebug, LinkLoopback, LinkPointToPoint, LinkNoTrailers, LinkRunning, LinkNoArp, LinkPromisc, LinkAllMulti, LinkMaster, LinkSlave, LinkMulticast, LinkPortsel, LinKAutoMedia, LinkDynamic, LinkLowerUp, LinkDormant, LinkEcho}
 
 var _LinkFlagNameToValueMap = map[string]LinkFlag{
-	_LinkFlagName[0:2]:          LinkUp,
+	_LinkFlagName[0:2]:     LinkUp,
+	_LinkFlagName[2:11]:    LinkBroadcast,
+	_LinkFlagName[11:16]:   LinkDebug,
+	_LinkFlagName[16:24]:   LinkLoopback,
+	_LinkFlagName[24:36]:   LinkPointToPoint,
+	_LinkFlagName[36:46]:   LinkNoTrailers,
+	_LinkFlagName[46:53]:   LinkRunning,
+	_LinkFlagName[53:58]:   LinkNoArp,
+	_LinkFlagName[58:65]:   LinkPromisc,
+	_LinkFlagName[65:73]:   LinkAllMulti,
+	_LinkFlagName[73:79]:   LinkMaster,
+	_LinkFlagName[79:84]:   LinkSlave,
+	_LinkFlagName[84:93]:   LinkMulticast,
+	_LinkFlagName[93:100]:  LinkPortsel,
+	_LinkFlagName[100:109]: LinKAutoMedia,
+	_LinkFlagName[109:116]: LinkDynamic,
+	_LinkFlagName[116:124]: LinkLowerUp,
+	_LinkFlagName[124:131]: LinkDormant,
+	_LinkFlagName[131:135]: LinkEcho,
+}
+
+var _LinkFlagLowerNameToValueMap = map[string]LinkFlag{
 	_LinkFlagLowerName[0:2]:     LinkUp,
-	_LinkFlagName[2:11]:         LinkBroadcast,
 	_LinkFlagLowerName[2:11]:    LinkBroadcast,
-	_LinkFlagName[11:16]:        LinkDebug,
 	_LinkFlagLowerName[11:16]:   LinkDebug,
-	_LinkFlagName[16:24]:        LinkLoopback,
 	_LinkFlagLowerName[16:24]:   LinkLoopback,
-	_LinkFlagName[24:36]:        LinkPointToPoint,
 	_LinkFlagLowerName[24:36]:   LinkPointToPoint,
-	_LinkFlagName[36:46]:        LinkNoTrailers,
 	_LinkFlagLowerName[36:46]:   LinkNoTrailers,
-	_LinkFlagName[46:53]:        LinkRunning,
 	_LinkFlagLowerName[46:53]:   LinkRunning,
-	_LinkFlagName[53:58]:        LinkNoArp,
 	_LinkFlagLowerName[53:58]:   LinkNoArp,
-	_LinkFlagName[58:65]:        LinkPromisc,
 	_LinkFlagLowerName[58:65]:   LinkPromisc,
-	_LinkFlagName[65:73]:        LinkAllMulti,
 	_LinkFlagLowerName[65:73]:   LinkAllMulti,
-	_LinkFlagName[73:79]:        LinkMaster,
 	_LinkFlagLowerName[73:79]:   LinkMaster,
-	_LinkFlagName[79:84]:        LinkSlave,
 	_LinkFlagLowerName[79:84]:   LinkSlave,
-	_LinkFlagName[84:93]:        LinkMulticast,
 	_LinkFlagLowerName[84:93]:   LinkMulticast,
-	_LinkFlagName[93:100]:       LinkPortsel,
 	_LinkFlagLowerName[93:100]:  LinkPortsel,
-	_LinkFlagName[100:109]:      LinKAutoMedia,
 	_LinkFlagLowerName[100:109]: LinKAutoMedia,
-	_LinkFlagName[109:116]:      LinkDynamic,
 	_LinkFlagLowerName[109:116]: LinkDynamic,
-	_LinkFlagName[116:124]:      LinkLowerUp,
 	_LinkFlagLowerName[116:124]: LinkLowerUp,
-	_LinkFlagName[124:131]:      LinkDormant,
 	_LinkFlagLowerName[124:131]: LinkDormant,
-	_LinkFlagName[131:135]:      LinkEcho,
 	_LinkFlagLowerName[131:135]: LinkEcho,
 }
 
@@ -1714,7 +1768,7 @@ func LinkFlagString(s string) (LinkFlag, error) {
 		return val, nil
 	}
 
-	if val, ok := _LinkFlagNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _LinkFlagLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to LinkFlag values", s)
@@ -1924,157 +1978,160 @@ func _LinkTypeNoOp() {
 var _LinkTypeValues = []LinkType{LinkNetrom, LinkEther, LinkEether, LinkAx25, LinkPronet, LinkChaos, LinkIee802, LinkArcnet, LinkAtalk, LinkDlci, LinkAtm, LinkMetricom, LinkIeee1394, LinkEui64, LinkInfiniband, LinkSlip, LinkCslip, LinkSlip6, LinkCslip6, LinkRsrvd, LinkAdapt, LinkRose, LinkX25, LinkHwx25, LinkCan, LinkPpp, LinkCisco, LinkLapb, LinkDdcmp, LinkRawhdlc, LinkTunnel, LinkTunnel6, LinkFrad, LinkSkip, LinkLoopbck, LinkLocaltlk, LinkFddi, LinkBif, LinkSit, LinkIpddp, LinkIpgre, LinkPimreg, LinkHippi, LinkAsh, LinkEconet, LinkIrda, LinkFcpp, LinkFcal, LinkFcpl, LinkFcfabric, LinkFcfabric1, LinkFcfabric2, LinkFcfabric3, LinkFcfabric4, LinkFcfabric5, LinkFcfabric6, LinkFcfabric7, LinkFcfabric8, LinkFcfabric9, LinkFcfabric10, LinkFcfabric11, LinkFcfabric12, LinkIee802tr, LinkIee80211, LinkIee80211prism, LinkIee80211Radiotap, LinkIee8021154, LinkIee8021154monitor, LinkPhonet, LinkPhonetpipe, LinkCaif, LinkIP6gre, LinkNetlink, Link6Lowpan, LinkNone, LinkVoid}
 
 var _LinkTypeNameToValueMap = map[string]LinkType{
-	_LinkTypeName[0:6]:          LinkNetrom,
+	_LinkTypeName[0:6]:     LinkNetrom,
+	_LinkTypeName[6:11]:    LinkEther,
+	_LinkTypeName[11:17]:   LinkEether,
+	_LinkTypeName[17:21]:   LinkAx25,
+	_LinkTypeName[21:27]:   LinkPronet,
+	_LinkTypeName[27:32]:   LinkChaos,
+	_LinkTypeName[32:39]:   LinkIee802,
+	_LinkTypeName[39:45]:   LinkArcnet,
+	_LinkTypeName[45:50]:   LinkAtalk,
+	_LinkTypeName[50:54]:   LinkDlci,
+	_LinkTypeName[54:57]:   LinkAtm,
+	_LinkTypeName[57:65]:   LinkMetricom,
+	_LinkTypeName[65:73]:   LinkIeee1394,
+	_LinkTypeName[73:78]:   LinkEui64,
+	_LinkTypeName[78:88]:   LinkInfiniband,
+	_LinkTypeName[88:92]:   LinkSlip,
+	_LinkTypeName[92:97]:   LinkCslip,
+	_LinkTypeName[97:102]:  LinkSlip6,
+	_LinkTypeName[102:108]: LinkCslip6,
+	_LinkTypeName[108:113]: LinkRsrvd,
+	_LinkTypeName[113:118]: LinkAdapt,
+	_LinkTypeName[118:122]: LinkRose,
+	_LinkTypeName[122:125]: LinkX25,
+	_LinkTypeName[125:130]: LinkHwx25,
+	_LinkTypeName[130:133]: LinkCan,
+	_LinkTypeName[133:136]: LinkPpp,
+	_LinkTypeName[136:141]: LinkCisco,
+	_LinkTypeName[141:145]: LinkLapb,
+	_LinkTypeName[145:150]: LinkDdcmp,
+	_LinkTypeName[150:157]: LinkRawhdlc,
+	_LinkTypeName[157:161]: LinkTunnel,
+	_LinkTypeName[161:168]: LinkTunnel6,
+	_LinkTypeName[168:172]: LinkFrad,
+	_LinkTypeName[172:176]: LinkSkip,
+	_LinkTypeName[176:184]: LinkLoopbck,
+	_LinkTypeName[184:192]: LinkLocaltlk,
+	_LinkTypeName[192:196]: LinkFddi,
+	_LinkTypeName[196:199]: LinkBif,
+	_LinkTypeName[199:202]: LinkSit,
+	_LinkTypeName[202:208]: LinkIpddp,
+	_LinkTypeName[208:211]: LinkIpgre,
+	_LinkTypeName[211:217]: LinkPimreg,
+	_LinkTypeName[217:222]: LinkHippi,
+	_LinkTypeName[222:225]: LinkAsh,
+	_LinkTypeName[225:231]: LinkEconet,
+	_LinkTypeName[231:235]: LinkIrda,
+	_LinkTypeName[235:239]: LinkFcpp,
+	_LinkTypeName[239:243]: LinkFcal,
+	_LinkTypeName[243:247]: LinkFcpl,
+	_LinkTypeName[247:253]: LinkFcfabric,
+	_LinkTypeName[253:259]: LinkFcfabric1,
+	_LinkTypeName[259:265]: LinkFcfabric2,
+	_LinkTypeName[265:271]: LinkFcfabric3,
+	_LinkTypeName[271:277]: LinkFcfabric4,
+	_LinkTypeName[277:283]: LinkFcfabric5,
+	_LinkTypeName[283:289]: LinkFcfabric6,
+	_LinkTypeName[289:295]: LinkFcfabric7,
+	_LinkTypeName[295:301]: LinkFcfabric8,
+	_LinkTypeName[301:307]: LinkFcfabric9,
+	_LinkTypeName[307:314]: LinkFcfabric10,
+	_LinkTypeName[314:321]: LinkFcfabric11,
+	_LinkTypeName[321:328]: LinkFcfabric12,
+	_LinkTypeName[328:330]: LinkIee802tr,
+	_LinkTypeName[330:340]: LinkIee80211,
+	_LinkTypeName[340:356]: LinkIee80211prism,
+	_LinkTypeName[356:375]: LinkIee80211Radiotap,
+	_LinkTypeName[375:387]: LinkIee8021154,
+	_LinkTypeName[387:407]: LinkIee8021154monitor,
+	_LinkTypeName[407:413]: LinkPhonet,
+	_LinkTypeName[413:424]: LinkPhonetpipe,
+	_LinkTypeName[424:428]: LinkCaif,
+	_LinkTypeName[428:434]: LinkIP6gre,
+	_LinkTypeName[434:441]: LinkNetlink,
+	_LinkTypeName[441:448]: Link6Lowpan,
+	_LinkTypeName[448:453]: LinkNone,
+	_LinkTypeName[453:457]: LinkVoid,
+}
+
+var _LinkTypeLowerNameToValueMap = map[string]LinkType{
 	_LinkTypeLowerName[0:6]:     LinkNetrom,
-	_LinkTypeName[6:11]:         LinkEther,
 	_LinkTypeLowerName[6:11]:    LinkEther,
-	_LinkTypeName[11:17]:        LinkEether,
 	_LinkTypeLowerName[11:17]:   LinkEether,
-	_LinkTypeName[17:21]:        LinkAx25,
 	_LinkTypeLowerName[17:21]:   LinkAx25,
-	_LinkTypeName[21:27]:        LinkPronet,
 	_LinkTypeLowerName[21:27]:   LinkPronet,
-	_LinkTypeName[27:32]:        LinkChaos,
 	_LinkTypeLowerName[27:32]:   LinkChaos,
-	_LinkTypeName[32:39]:        LinkIee802,
 	_LinkTypeLowerName[32:39]:   LinkIee802,
-	_LinkTypeName[39:45]:        LinkArcnet,
 	_LinkTypeLowerName[39:45]:   LinkArcnet,
-	_LinkTypeName[45:50]:        LinkAtalk,
 	_LinkTypeLowerName[45:50]:   LinkAtalk,
-	_LinkTypeName[50:54]:        LinkDlci,
 	_LinkTypeLowerName[50:54]:   LinkDlci,
-	_LinkTypeName[54:57]:        LinkAtm,
 	_LinkTypeLowerName[54:57]:   LinkAtm,
-	_LinkTypeName[57:65]:        LinkMetricom,
 	_LinkTypeLowerName[57:65]:   LinkMetricom,
-	_LinkTypeName[65:73]:        LinkIeee1394,
 	_LinkTypeLowerName[65:73]:   LinkIeee1394,
-	_LinkTypeName[73:78]:        LinkEui64,
 	_LinkTypeLowerName[73:78]:   LinkEui64,
-	_LinkTypeName[78:88]:        LinkInfiniband,
 	_LinkTypeLowerName[78:88]:   LinkInfiniband,
-	_LinkTypeName[88:92]:        LinkSlip,
 	_LinkTypeLowerName[88:92]:   LinkSlip,
-	_LinkTypeName[92:97]:        LinkCslip,
 	_LinkTypeLowerName[92:97]:   LinkCslip,
-	_LinkTypeName[97:102]:       LinkSlip6,
 	_LinkTypeLowerName[97:102]:  LinkSlip6,
-	_LinkTypeName[102:108]:      LinkCslip6,
 	_LinkTypeLowerName[102:108]: LinkCslip6,
-	_LinkTypeName[108:113]:      LinkRsrvd,
 	_LinkTypeLowerName[108:113]: LinkRsrvd,
-	_LinkTypeName[113:118]:      LinkAdapt,
 	_LinkTypeLowerName[113:118]: LinkAdapt,
-	_LinkTypeName[118:122]:      LinkRose,
 	_LinkTypeLowerName[118:122]: LinkRose,
-	_LinkTypeName[122:125]:      LinkX25,
 	_LinkTypeLowerName[122:125]: LinkX25,
-	_LinkTypeName[125:130]:      LinkHwx25,
 	_LinkTypeLowerName[125:130]: LinkHwx25,
-	_LinkTypeName[130:133]:      LinkCan,
 	_LinkTypeLowerName[130:133]: LinkCan,
-	_LinkTypeName[133:136]:      LinkPpp,
 	_LinkTypeLowerName[133:136]: LinkPpp,
-	_LinkTypeName[136:141]:      LinkCisco,
 	_LinkTypeLowerName[136:141]: LinkCisco,
-	_LinkTypeName[141:145]:      LinkLapb,
 	_LinkTypeLowerName[141:145]: LinkLapb,
-	_LinkTypeName[145:150]:      LinkDdcmp,
 	_LinkTypeLowerName[145:150]: LinkDdcmp,
-	_LinkTypeName[150:157]:      LinkRawhdlc,
 	_LinkTypeLowerName[150:157]: LinkRawhdlc,
-	_LinkTypeName[157:161]:      LinkTunnel,
 	_LinkTypeLowerName[157:161]: LinkTunnel,
-	_LinkTypeName[161:168]:      LinkTunnel6,
 	_LinkTypeLowerName[161:168]: LinkTunnel6,
-	_LinkTypeName[168:172]:      LinkFrad,
 	_LinkTypeLowerName[168:172]: LinkFrad,
-	_LinkTypeName[172:176]:      LinkSkip,
 	_LinkTypeLowerName[172:176]: LinkSkip,
-	_LinkTypeName[176:184]:      LinkLoopbck,
 	_LinkTypeLowerName[176:184]: LinkLoopbck,
-	_LinkTypeName[184:192]:      LinkLocaltlk,
 	_LinkTypeLowerName[184:192]: LinkLocaltlk,
-	_LinkTypeName[192:196]:      LinkFddi,
 	_LinkTypeLowerName[192:196]: LinkFddi,
-	_LinkTypeName[196:199]:      LinkBif,
 	_LinkTypeLowerName[196:199]: LinkBif,
-	_LinkTypeName[199:202]:      LinkSit,
 	_LinkTypeLowerName[199:202]: LinkSit,
-	_LinkTypeName[202:208]:      LinkIpddp,
 	_LinkTypeLowerName[202:208]: LinkIpddp,
-	_LinkTypeName[208:211]:      LinkIpgre,
 	_LinkTypeLowerName[208:211]: LinkIpgre,
-	_LinkTypeName[211:217]:      LinkPimreg,
 	_LinkTypeLowerName[211:217]: LinkPimreg,
-	_LinkTypeName[217:222]:      LinkHippi,
 	_LinkTypeLowerName[217:222]: LinkHippi,
-	_LinkTypeName[222:225]:      LinkAsh,
 	_LinkTypeLowerName[222:225]: LinkAsh,
-	_LinkTypeName[225:231]:      LinkEconet,
 	_LinkTypeLowerName[225:231]: LinkEconet,
-	_LinkTypeName[231:235]:      LinkIrda,
 	_LinkTypeLowerName[231:235]: LinkIrda,
-	_LinkTypeName[235:239]:      LinkFcpp,
 	_LinkTypeLowerName[235:239]: LinkFcpp,
-	_LinkTypeName[239:243]:      LinkFcal,
 	_LinkTypeLowerName[239:243]: LinkFcal,
-	_LinkTypeName[243:247]:      LinkFcpl,
 	_LinkTypeLowerName[243:247]: LinkFcpl,
-	_LinkTypeName[247:253]:      LinkFcfabric,
 	_LinkTypeLowerName[247:253]: LinkFcfabric,
-	_LinkTypeName[253:259]:      LinkFcfabric1,
 	_LinkTypeLowerName[253:259]: LinkFcfabric1,
-	_LinkTypeName[259:265]:      LinkFcfabric2,
 	_LinkTypeLowerName[259:265]: LinkFcfabric2,
-	_LinkTypeName[265:271]:      LinkFcfabric3,
 	_LinkTypeLowerName[265:271]: LinkFcfabric3,
-	_LinkTypeName[271:277]:      LinkFcfabric4,
 	_LinkTypeLowerName[271:277]: LinkFcfabric4,
-	_LinkTypeName[277:283]:      LinkFcfabric5,
 	_LinkTypeLowerName[277:283]: LinkFcfabric5,
-	_LinkTypeName[283:289]:      LinkFcfabric6,
 	_LinkTypeLowerName[283:289]: LinkFcfabric6,
-	_LinkTypeName[289:295]:      LinkFcfabric7,
 	_LinkTypeLowerName[289:295]: LinkFcfabric7,
-	_LinkTypeName[295:301]:      LinkFcfabric8,
 	_LinkTypeLowerName[295:301]: LinkFcfabric8,
-	_LinkTypeName[301:307]:      LinkFcfabric9,
 	_LinkTypeLowerName[301:307]: LinkFcfabric9,
-	_LinkTypeName[307:314]:      LinkFcfabric10,
 	_LinkTypeLowerName[307:314]: LinkFcfabric10,
-	_LinkTypeName[314:321]:      LinkFcfabric11,
 	_LinkTypeLowerName[314:321]: LinkFcfabric11,
-	_LinkTypeName[321:328]:      LinkFcfabric12,
 	_LinkTypeLowerName[321:328]: LinkFcfabric12,
-	_LinkTypeName[328:330]:      LinkIee802tr,
 	_LinkTypeLowerName[328:330]: LinkIee802tr,
-	_LinkTypeName[330:340]:      LinkIee80211,
 	_LinkTypeLowerName[330:340]: LinkIee80211,
-	_LinkTypeName[340:356]:      LinkIee80211prism,
 	_LinkTypeLowerName[340:356]: LinkIee80211prism,
-	_LinkTypeName[356:375]:      LinkIee80211Radiotap,
 	_LinkTypeLowerName[356:375]: LinkIee80211Radiotap,
-	_LinkTypeName[375:387]:      LinkIee8021154,
 	_LinkTypeLowerName[375:387]: LinkIee8021154,
-	_LinkTypeName[387:407]:      LinkIee8021154monitor,
 	_LinkTypeLowerName[387:407]: LinkIee8021154monitor,
-	_LinkTypeName[407:413]:      LinkPhonet,
 	_LinkTypeLowerName[407:413]: LinkPhonet,
-	_LinkTypeName[413:424]:      LinkPhonetpipe,
 	_LinkTypeLowerName[413:424]: LinkPhonetpipe,
-	_LinkTypeName[424:428]:      LinkCaif,
 	_LinkTypeLowerName[424:428]: LinkCaif,
-	_LinkTypeName[428:434]:      LinkIP6gre,
 	_LinkTypeLowerName[428:434]: LinkIP6gre,
-	_LinkTypeName[434:441]:      LinkNetlink,
 	_LinkTypeLowerName[434:441]: LinkNetlink,
-	_LinkTypeName[441:448]:      Link6Lowpan,
 	_LinkTypeLowerName[441:448]: Link6Lowpan,
-	_LinkTypeName[448:453]:      LinkNone,
 	_LinkTypeLowerName[448:453]: LinkNone,
-	_LinkTypeName[453:457]:      LinkVoid,
 	_LinkTypeLowerName[453:457]: LinkVoid,
 }
 
@@ -2164,7 +2221,7 @@ func LinkTypeString(s string) (LinkType, error) {
 		return val, nil
 	}
 
-	if val, ok := _LinkTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _LinkTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to LinkType values", s)
@@ -2248,15 +2305,18 @@ func _MacvlanModeNoOp() {
 var _MacvlanModeValues = []MacvlanMode{MacvlanModePrivate, MacvlanModeVEPA, MacvlanModeBridge, MacvlanModePassthru, MacvlanModeSource}
 
 var _MacvlanModeNameToValueMap = map[string]MacvlanMode{
-	_MacvlanModeName_0[0:7]:       MacvlanModePrivate,
+	_MacvlanModeName_0[0:7]:  MacvlanModePrivate,
+	_MacvlanModeName_0[7:11]: MacvlanModeVEPA,
+	_MacvlanModeName_1[0:6]:  MacvlanModeBridge,
+	_MacvlanModeName_2[0:8]:  MacvlanModePassthru,
+	_MacvlanModeName_3[0:6]:  MacvlanModeSource,
+}
+
+var _MacvlanModeLowerNameToValueMap = map[string]MacvlanMode{
 	_MacvlanModeLowerName_0[0:7]:  MacvlanModePrivate,
-	_MacvlanModeName_0[7:11]:      MacvlanModeVEPA,
 	_MacvlanModeLowerName_0[7:11]: MacvlanModeVEPA,
-	_MacvlanModeName_1[0:6]:       MacvlanModeBridge,
 	_MacvlanModeLowerName_1[0:6]:  MacvlanModeBridge,
-	_MacvlanModeName_2[0:8]:       MacvlanModePassthru,
 	_MacvlanModeLowerName_2[0:8]:  MacvlanModePassthru,
-	_MacvlanModeName_3[0:6]:       MacvlanModeSource,
 	_MacvlanModeLowerName_3[0:6]:  MacvlanModeSource,
 }
 
@@ -2275,7 +2335,7 @@ func MacvlanModeString(s string) (MacvlanMode, error) {
 		return val, nil
 	}
 
-	if val, ok := _MacvlanModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _MacvlanModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to MacvlanMode values", s)
@@ -2339,9 +2399,12 @@ func _MatchOperatorNoOp() {
 var _MatchOperatorValues = []MatchOperator{OperatorEqual, OperatorNotEqual}
 
 var _MatchOperatorNameToValueMap = map[string]MatchOperator{
-	_MatchOperatorName[0:2]:      OperatorEqual,
+	_MatchOperatorName[0:2]: OperatorEqual,
+	_MatchOperatorName[2:4]: OperatorNotEqual,
+}
+
+var _MatchOperatorLowerNameToValueMap = map[string]MatchOperator{
 	_MatchOperatorLowerName[0:2]: OperatorEqual,
-	_MatchOperatorName[2:4]:      OperatorNotEqual,
 	_MatchOperatorLowerName[2:4]: OperatorNotEqual,
 }
 
@@ -2357,7 +2420,7 @@ func MatchOperatorString(s string) (MatchOperator, error) {
 		return val, nil
 	}
 
-	if val, ok := _MatchOperatorNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _MatchOperatorLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to MatchOperator values", s)
@@ -2424,15 +2487,18 @@ func _NfTablesChainHookNoOp() {
 var _NfTablesChainHookValues = []NfTablesChainHook{ChainHookPrerouting, ChainHookInput, ChainHookForward, ChainHookOutput, ChainHookPostrouting}
 
 var _NfTablesChainHookNameToValueMap = map[string]NfTablesChainHook{
-	_NfTablesChainHookName[0:10]:       ChainHookPrerouting,
+	_NfTablesChainHookName[0:10]:  ChainHookPrerouting,
+	_NfTablesChainHookName[10:15]: ChainHookInput,
+	_NfTablesChainHookName[15:22]: ChainHookForward,
+	_NfTablesChainHookName[22:28]: ChainHookOutput,
+	_NfTablesChainHookName[28:39]: ChainHookPostrouting,
+}
+
+var _NfTablesChainHookLowerNameToValueMap = map[string]NfTablesChainHook{
 	_NfTablesChainHookLowerName[0:10]:  ChainHookPrerouting,
-	_NfTablesChainHookName[10:15]:      ChainHookInput,
 	_NfTablesChainHookLowerName[10:15]: ChainHookInput,
-	_NfTablesChainHookName[15:22]:      ChainHookForward,
 	_NfTablesChainHookLowerName[15:22]: ChainHookForward,
-	_NfTablesChainHookName[22:28]:      ChainHookOutput,
 	_NfTablesChainHookLowerName[22:28]: ChainHookOutput,
-	_NfTablesChainHookName[28:39]:      ChainHookPostrouting,
 	_NfTablesChainHookLowerName[28:39]: ChainHookPostrouting,
 }
 
@@ -2451,7 +2517,7 @@ func NfTablesChainHookString(s string) (NfTablesChainHook, error) {
 		return val, nil
 	}
 
-	if val, ok := _NfTablesChainHookNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NfTablesChainHookLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NfTablesChainHook values", s)
@@ -2539,31 +2605,34 @@ func _NfTablesChainPriorityNoOp() {
 var _NfTablesChainPriorityValues = []NfTablesChainPriority{ChainPriorityFirst, ChainPriorityConntrackDefrag, ChainPriorityRaw, ChainPrioritySELinuxFirst, ChainPriorityConntrack, ChainPriorityMangle, ChainPriorityNATDest, ChainPriorityFilter, ChainPrioritySecurity, ChainPriorityNATSource, ChainPrioritySELinuxLast, ChainPriorityConntrackHelper, ChainPriorityLast}
 
 var _NfTablesChainPriorityNameToValueMap = map[string]NfTablesChainPriority{
-	_NfTablesChainPriorityName[0:5]:          ChainPriorityFirst,
+	_NfTablesChainPriorityName[0:5]:     ChainPriorityFirst,
+	_NfTablesChainPriorityName[5:21]:    ChainPriorityConntrackDefrag,
+	_NfTablesChainPriorityName[21:24]:   ChainPriorityRaw,
+	_NfTablesChainPriorityName[24:37]:   ChainPrioritySELinuxFirst,
+	_NfTablesChainPriorityName[37:46]:   ChainPriorityConntrack,
+	_NfTablesChainPriorityName[46:52]:   ChainPriorityMangle,
+	_NfTablesChainPriorityName[52:60]:   ChainPriorityNATDest,
+	_NfTablesChainPriorityName[60:66]:   ChainPriorityFilter,
+	_NfTablesChainPriorityName[66:74]:   ChainPrioritySecurity,
+	_NfTablesChainPriorityName[74:84]:   ChainPriorityNATSource,
+	_NfTablesChainPriorityName[84:96]:   ChainPrioritySELinuxLast,
+	_NfTablesChainPriorityName[96:112]:  ChainPriorityConntrackHelper,
+	_NfTablesChainPriorityName[112:116]: ChainPriorityLast,
+}
+
+var _NfTablesChainPriorityLowerNameToValueMap = map[string]NfTablesChainPriority{
 	_NfTablesChainPriorityLowerName[0:5]:     ChainPriorityFirst,
-	_NfTablesChainPriorityName[5:21]:         ChainPriorityConntrackDefrag,
 	_NfTablesChainPriorityLowerName[5:21]:    ChainPriorityConntrackDefrag,
-	_NfTablesChainPriorityName[21:24]:        ChainPriorityRaw,
 	_NfTablesChainPriorityLowerName[21:24]:   ChainPriorityRaw,
-	_NfTablesChainPriorityName[24:37]:        ChainPrioritySELinuxFirst,
 	_NfTablesChainPriorityLowerName[24:37]:   ChainPrioritySELinuxFirst,
-	_NfTablesChainPriorityName[37:46]:        ChainPriorityConntrack,
 	_NfTablesChainPriorityLowerName[37:46]:   ChainPriorityConntrack,
-	_NfTablesChainPriorityName[46:52]:        ChainPriorityMangle,
 	_NfTablesChainPriorityLowerName[46:52]:   ChainPriorityMangle,
-	_NfTablesChainPriorityName[52:60]:        ChainPriorityNATDest,
 	_NfTablesChainPriorityLowerName[52:60]:   ChainPriorityNATDest,
-	_NfTablesChainPriorityName[60:66]:        ChainPriorityFilter,
 	_NfTablesChainPriorityLowerName[60:66]:   ChainPriorityFilter,
-	_NfTablesChainPriorityName[66:74]:        ChainPrioritySecurity,
 	_NfTablesChainPriorityLowerName[66:74]:   ChainPrioritySecurity,
-	_NfTablesChainPriorityName[74:84]:        ChainPriorityNATSource,
 	_NfTablesChainPriorityLowerName[74:84]:   ChainPriorityNATSource,
-	_NfTablesChainPriorityName[84:96]:        ChainPrioritySELinuxLast,
 	_NfTablesChainPriorityLowerName[84:96]:   ChainPrioritySELinuxLast,
-	_NfTablesChainPriorityName[96:112]:       ChainPriorityConntrackHelper,
 	_NfTablesChainPriorityLowerName[96:112]:  ChainPriorityConntrackHelper,
-	_NfTablesChainPriorityName[112:116]:      ChainPriorityLast,
 	_NfTablesChainPriorityLowerName[112:116]: ChainPriorityLast,
 }
 
@@ -2590,7 +2659,7 @@ func NfTablesChainPriorityString(s string) (NfTablesChainPriority, error) {
 		return val, nil
 	}
 
-	if val, ok := _NfTablesChainPriorityNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NfTablesChainPriorityLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NfTablesChainPriority values", s)
@@ -2650,9 +2719,12 @@ func _NfTablesVerdictNoOp() {
 var _NfTablesVerdictValues = []NfTablesVerdict{VerdictDrop, VerdictAccept}
 
 var _NfTablesVerdictNameToValueMap = map[string]NfTablesVerdict{
-	_NfTablesVerdictName[0:4]:       VerdictDrop,
+	_NfTablesVerdictName[0:4]:  VerdictDrop,
+	_NfTablesVerdictName[4:10]: VerdictAccept,
+}
+
+var _NfTablesVerdictLowerNameToValueMap = map[string]NfTablesVerdict{
 	_NfTablesVerdictLowerName[0:4]:  VerdictDrop,
-	_NfTablesVerdictName[4:10]:      VerdictAccept,
 	_NfTablesVerdictLowerName[4:10]: VerdictAccept,
 }
 
@@ -2668,7 +2740,7 @@ func NfTablesVerdictString(s string) (NfTablesVerdict, error) {
 		return val, nil
 	}
 
-	if val, ok := _NfTablesVerdictNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _NfTablesVerdictLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to NfTablesVerdict values", s)
@@ -2737,19 +2809,22 @@ func _OperationalStateNoOp() {
 var _OperationalStateValues = []OperationalState{OperStateUnknown, OperStateNotPresent, OperStateDown, OperStateLowerLayerDown, OperStateTesting, OperStateDormant, OperStateUp}
 
 var _OperationalStateNameToValueMap = map[string]OperationalState{
-	_OperationalStateName[0:7]:        OperStateUnknown,
+	_OperationalStateName[0:7]:   OperStateUnknown,
+	_OperationalStateName[7:17]:  OperStateNotPresent,
+	_OperationalStateName[17:21]: OperStateDown,
+	_OperationalStateName[21:35]: OperStateLowerLayerDown,
+	_OperationalStateName[35:42]: OperStateTesting,
+	_OperationalStateName[42:49]: OperStateDormant,
+	_OperationalStateName[49:51]: OperStateUp,
+}
+
+var _OperationalStateLowerNameToValueMap = map[string]OperationalState{
 	_OperationalStateLowerName[0:7]:   OperStateUnknown,
-	_OperationalStateName[7:17]:       OperStateNotPresent,
 	_OperationalStateLowerName[7:17]:  OperStateNotPresent,
-	_OperationalStateName[17:21]:      OperStateDown,
 	_OperationalStateLowerName[17:21]: OperStateDown,
-	_OperationalStateName[21:35]:      OperStateLowerLayerDown,
 	_OperationalStateLowerName[21:35]: OperStateLowerLayerDown,
-	_OperationalStateName[35:42]:      OperStateTesting,
 	_OperationalStateLowerName[35:42]: OperStateTesting,
-	_OperationalStateName[42:49]:      OperStateDormant,
 	_OperationalStateLowerName[42:49]: OperStateDormant,
-	_OperationalStateName[49:51]:      OperStateUp,
 	_OperationalStateLowerName[49:51]: OperStateUp,
 }
 
@@ -2770,7 +2845,7 @@ func OperationalStateString(s string) (OperationalState, error) {
 		return val, nil
 	}
 
-	if val, ok := _OperationalStateNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _OperationalStateLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to OperationalState values", s)
@@ -2855,21 +2930,24 @@ func _PortNoOp() {
 var _PortValues = []Port{TwistedPair, AUI, MII, Fibre, BNC, DirectAttach, None, Other}
 
 var _PortNameToValueMap = map[string]Port{
-	_PortName_0[0:11]:       TwistedPair,
+	_PortName_0[0:11]:  TwistedPair,
+	_PortName_0[11:14]: AUI,
+	_PortName_0[14:17]: MII,
+	_PortName_0[17:17]: Fibre,
+	_PortName_0[17:20]: BNC,
+	_PortName_0[20:32]: DirectAttach,
+	_PortName_1[0:4]:   None,
+	_PortName_2[0:5]:   Other,
+}
+
+var _PortLowerNameToValueMap = map[string]Port{
 	_PortLowerName_0[0:11]:  TwistedPair,
-	_PortName_0[11:14]:      AUI,
 	_PortLowerName_0[11:14]: AUI,
-	_PortName_0[14:17]:      MII,
 	_PortLowerName_0[14:17]: MII,
-	_PortName_0[17:17]:      Fibre,
 	_PortLowerName_0[17:17]: Fibre,
-	_PortName_0[17:20]:      BNC,
 	_PortLowerName_0[17:20]: BNC,
-	_PortName_0[20:32]:      DirectAttach,
 	_PortLowerName_0[20:32]: DirectAttach,
-	_PortName_1[0:4]:        None,
 	_PortLowerName_1[0:4]:   None,
-	_PortName_2[0:5]:        Other,
 	_PortLowerName_2[0:5]:   Other,
 }
 
@@ -2891,7 +2969,7 @@ func PortString(s string) (Port, error) {
 		return val, nil
 	}
 
-	if val, ok := _PortNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _PortLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to Port values", s)
@@ -2956,11 +3034,14 @@ func _PrimaryReselectNoOp() {
 var _PrimaryReselectValues = []PrimaryReselect{PrimaryReselectAlways, PrimaryReselectBetter, PrimaryReselectFailure}
 
 var _PrimaryReselectNameToValueMap = map[string]PrimaryReselect{
-	_PrimaryReselectName[0:6]:        PrimaryReselectAlways,
+	_PrimaryReselectName[0:6]:   PrimaryReselectAlways,
+	_PrimaryReselectName[6:12]:  PrimaryReselectBetter,
+	_PrimaryReselectName[12:19]: PrimaryReselectFailure,
+}
+
+var _PrimaryReselectLowerNameToValueMap = map[string]PrimaryReselect{
 	_PrimaryReselectLowerName[0:6]:   PrimaryReselectAlways,
-	_PrimaryReselectName[6:12]:       PrimaryReselectBetter,
 	_PrimaryReselectLowerName[6:12]:  PrimaryReselectBetter,
-	_PrimaryReselectName[12:19]:      PrimaryReselectFailure,
 	_PrimaryReselectLowerName[12:19]: PrimaryReselectFailure,
 }
 
@@ -2977,7 +3058,7 @@ func PrimaryReselectString(s string) (PrimaryReselect, error) {
 		return val, nil
 	}
 
-	if val, ok := _PrimaryReselectNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _PrimaryReselectLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to PrimaryReselect values", s)
@@ -3063,13 +3144,16 @@ func _ProtocolNoOp() {
 var _ProtocolValues = []Protocol{ProtocolICMP, ProtocolTCP, ProtocolUDP, ProtocolICMPv6}
 
 var _ProtocolNameToValueMap = map[string]Protocol{
-	_ProtocolName_0[0:4]:      ProtocolICMP,
+	_ProtocolName_0[0:4]: ProtocolICMP,
+	_ProtocolName_1[0:3]: ProtocolTCP,
+	_ProtocolName_2[0:3]: ProtocolUDP,
+	_ProtocolName_3[0:6]: ProtocolICMPv6,
+}
+
+var _ProtocolLowerNameToValueMap = map[string]Protocol{
 	_ProtocolLowerName_0[0:4]: ProtocolICMP,
-	_ProtocolName_1[0:3]:      ProtocolTCP,
 	_ProtocolLowerName_1[0:3]: ProtocolTCP,
-	_ProtocolName_2[0:3]:      ProtocolUDP,
 	_ProtocolLowerName_2[0:3]: ProtocolUDP,
-	_ProtocolName_3[0:6]:      ProtocolICMPv6,
 	_ProtocolLowerName_3[0:6]: ProtocolICMPv6,
 }
 
@@ -3087,7 +3171,7 @@ func ProtocolString(s string) (Protocol, error) {
 		return val, nil
 	}
 
-	if val, ok := _ProtocolNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ProtocolLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to Protocol values", s)
@@ -3197,21 +3281,24 @@ func _RouteFlagNoOp() {
 var _RouteFlagValues = []RouteFlag{RouteNotify, RouteCloned, RouteEqualize, RoutePrefix, RouteLookupTable, RouteFIBMatch, RouteOffload, RouteTrap}
 
 var _RouteFlagNameToValueMap = map[string]RouteFlag{
-	_RouteFlagName_0[0:6]:       RouteNotify,
+	_RouteFlagName_0[0:6]:  RouteNotify,
+	_RouteFlagName_1[0:6]:  RouteCloned,
+	_RouteFlagName_2[0:8]:  RouteEqualize,
+	_RouteFlagName_3[0:6]:  RoutePrefix,
+	_RouteFlagName_4[0:12]: RouteLookupTable,
+	_RouteFlagName_5[0:9]:  RouteFIBMatch,
+	_RouteFlagName_6[0:7]:  RouteOffload,
+	_RouteFlagName_7[0:4]:  RouteTrap,
+}
+
+var _RouteFlagLowerNameToValueMap = map[string]RouteFlag{
 	_RouteFlagLowerName_0[0:6]:  RouteNotify,
-	_RouteFlagName_1[0:6]:       RouteCloned,
 	_RouteFlagLowerName_1[0:6]:  RouteCloned,
-	_RouteFlagName_2[0:8]:       RouteEqualize,
 	_RouteFlagLowerName_2[0:8]:  RouteEqualize,
-	_RouteFlagName_3[0:6]:       RoutePrefix,
 	_RouteFlagLowerName_3[0:6]:  RoutePrefix,
-	_RouteFlagName_4[0:12]:      RouteLookupTable,
 	_RouteFlagLowerName_4[0:12]: RouteLookupTable,
-	_RouteFlagName_5[0:9]:       RouteFIBMatch,
 	_RouteFlagLowerName_5[0:9]:  RouteFIBMatch,
-	_RouteFlagName_6[0:7]:       RouteOffload,
 	_RouteFlagLowerName_6[0:7]:  RouteOffload,
-	_RouteFlagName_7[0:4]:       RouteTrap,
 	_RouteFlagLowerName_7[0:4]:  RouteTrap,
 }
 
@@ -3233,7 +3320,7 @@ func RouteFlagString(s string) (RouteFlag, error) {
 		return val, nil
 	}
 
-	if val, ok := _RouteFlagNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RouteFlagLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RouteFlag values", s)
@@ -3349,49 +3436,52 @@ func _RouteProtocolNoOp() {
 var _RouteProtocolValues = []RouteProtocol{ProtocolUnspec, ProtocolRedirect, ProtocolKernel, ProtocolBoot, ProtocolStatic, ProtocolRA, ProtocolMRT, ProtocolZebra, ProtocolBird, ProtocolDnrouted, ProtocolXorp, ProtocolNTK, ProtocolDHCP, ProtocolMRTD, ProtocolKeepalived, ProtocolBabel, ProtocolOpenr, ProtocolBGP, ProtocolISIS, ProtocolOSPF, ProtocolRIP, ProtocolEIGRP}
 
 var _RouteProtocolNameToValueMap = map[string]RouteProtocol{
-	_RouteProtocolName_0[0:6]:        ProtocolUnspec,
+	_RouteProtocolName_0[0:6]:   ProtocolUnspec,
+	_RouteProtocolName_0[6:14]:  ProtocolRedirect,
+	_RouteProtocolName_0[14:20]: ProtocolKernel,
+	_RouteProtocolName_0[20:24]: ProtocolBoot,
+	_RouteProtocolName_0[24:30]: ProtocolStatic,
+	_RouteProtocolName_1[0:2]:   ProtocolRA,
+	_RouteProtocolName_1[2:5]:   ProtocolMRT,
+	_RouteProtocolName_1[5:10]:  ProtocolZebra,
+	_RouteProtocolName_1[10:14]: ProtocolBird,
+	_RouteProtocolName_1[14:22]: ProtocolDnrouted,
+	_RouteProtocolName_1[22:26]: ProtocolXorp,
+	_RouteProtocolName_1[26:29]: ProtocolNTK,
+	_RouteProtocolName_1[29:33]: ProtocolDHCP,
+	_RouteProtocolName_1[33:37]: ProtocolMRTD,
+	_RouteProtocolName_1[37:47]: ProtocolKeepalived,
+	_RouteProtocolName_2[0:5]:   ProtocolBabel,
+	_RouteProtocolName_3[0:5]:   ProtocolOpenr,
+	_RouteProtocolName_4[0:3]:   ProtocolBGP,
+	_RouteProtocolName_4[3:7]:   ProtocolISIS,
+	_RouteProtocolName_4[7:11]:  ProtocolOSPF,
+	_RouteProtocolName_4[11:14]: ProtocolRIP,
+	_RouteProtocolName_5[0:5]:   ProtocolEIGRP,
+}
+
+var _RouteProtocolLowerNameToValueMap = map[string]RouteProtocol{
 	_RouteProtocolLowerName_0[0:6]:   ProtocolUnspec,
-	_RouteProtocolName_0[6:14]:       ProtocolRedirect,
 	_RouteProtocolLowerName_0[6:14]:  ProtocolRedirect,
-	_RouteProtocolName_0[14:20]:      ProtocolKernel,
 	_RouteProtocolLowerName_0[14:20]: ProtocolKernel,
-	_RouteProtocolName_0[20:24]:      ProtocolBoot,
 	_RouteProtocolLowerName_0[20:24]: ProtocolBoot,
-	_RouteProtocolName_0[24:30]:      ProtocolStatic,
 	_RouteProtocolLowerName_0[24:30]: ProtocolStatic,
-	_RouteProtocolName_1[0:2]:        ProtocolRA,
 	_RouteProtocolLowerName_1[0:2]:   ProtocolRA,
-	_RouteProtocolName_1[2:5]:        ProtocolMRT,
 	_RouteProtocolLowerName_1[2:5]:   ProtocolMRT,
-	_RouteProtocolName_1[5:10]:       ProtocolZebra,
 	_RouteProtocolLowerName_1[5:10]:  ProtocolZebra,
-	_RouteProtocolName_1[10:14]:      ProtocolBird,
 	_RouteProtocolLowerName_1[10:14]: ProtocolBird,
-	_RouteProtocolName_1[14:22]:      ProtocolDnrouted,
 	_RouteProtocolLowerName_1[14:22]: ProtocolDnrouted,
-	_RouteProtocolName_1[22:26]:      ProtocolXorp,
 	_RouteProtocolLowerName_1[22:26]: ProtocolXorp,
-	_RouteProtocolName_1[26:29]:      ProtocolNTK,
 	_RouteProtocolLowerName_1[26:29]: ProtocolNTK,
-	_RouteProtocolName_1[29:33]:      ProtocolDHCP,
 	_RouteProtocolLowerName_1[29:33]: ProtocolDHCP,
-	_RouteProtocolName_1[33:37]:      ProtocolMRTD,
 	_RouteProtocolLowerName_1[33:37]: ProtocolMRTD,
-	_RouteProtocolName_1[37:47]:      ProtocolKeepalived,
 	_RouteProtocolLowerName_1[37:47]: ProtocolKeepalived,
-	_RouteProtocolName_2[0:5]:        ProtocolBabel,
 	_RouteProtocolLowerName_2[0:5]:   ProtocolBabel,
-	_RouteProtocolName_3[0:5]:        ProtocolOpenr,
 	_RouteProtocolLowerName_3[0:5]:   ProtocolOpenr,
-	_RouteProtocolName_4[0:3]:        ProtocolBGP,
 	_RouteProtocolLowerName_4[0:3]:   ProtocolBGP,
-	_RouteProtocolName_4[3:7]:        ProtocolISIS,
 	_RouteProtocolLowerName_4[3:7]:   ProtocolISIS,
-	_RouteProtocolName_4[7:11]:       ProtocolOSPF,
 	_RouteProtocolLowerName_4[7:11]:  ProtocolOSPF,
-	_RouteProtocolName_4[11:14]:      ProtocolRIP,
 	_RouteProtocolLowerName_4[11:14]: ProtocolRIP,
-	_RouteProtocolName_5[0:5]:        ProtocolEIGRP,
 	_RouteProtocolLowerName_5[0:5]:   ProtocolEIGRP,
 }
 
@@ -3427,7 +3517,7 @@ func RouteProtocolString(s string) (RouteProtocol, error) {
 		return val, nil
 	}
 
-	if val, ok := _RouteProtocolNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RouteProtocolLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RouteProtocol values", s)
@@ -3501,29 +3591,32 @@ func _RouteTypeNoOp() {
 var _RouteTypeValues = []RouteType{TypeUnspec, TypeUnicast, TypeLocal, TypeBroadcast, TypeAnycast, TypeMulticast, TypeBlackhole, TypeUnreachable, TypeProhibit, TypeThrow, TypeNAT, TypeXResolve}
 
 var _RouteTypeNameToValueMap = map[string]RouteType{
-	_RouteTypeName[0:6]:        TypeUnspec,
+	_RouteTypeName[0:6]:   TypeUnspec,
+	_RouteTypeName[6:13]:  TypeUnicast,
+	_RouteTypeName[13:18]: TypeLocal,
+	_RouteTypeName[18:27]: TypeBroadcast,
+	_RouteTypeName[27:34]: TypeAnycast,
+	_RouteTypeName[34:43]: TypeMulticast,
+	_RouteTypeName[43:52]: TypeBlackhole,
+	_RouteTypeName[52:63]: TypeUnreachable,
+	_RouteTypeName[63:71]: TypeProhibit,
+	_RouteTypeName[71:76]: TypeThrow,
+	_RouteTypeName[76:79]: TypeNAT,
+	_RouteTypeName[79:87]: TypeXResolve,
+}
+
+var _RouteTypeLowerNameToValueMap = map[string]RouteType{
 	_RouteTypeLowerName[0:6]:   TypeUnspec,
-	_RouteTypeName[6:13]:       TypeUnicast,
 	_RouteTypeLowerName[6:13]:  TypeUnicast,
-	_RouteTypeName[13:18]:      TypeLocal,
 	_RouteTypeLowerName[13:18]: TypeLocal,
-	_RouteTypeName[18:27]:      TypeBroadcast,
 	_RouteTypeLowerName[18:27]: TypeBroadcast,
-	_RouteTypeName[27:34]:      TypeAnycast,
 	_RouteTypeLowerName[27:34]: TypeAnycast,
-	_RouteTypeName[34:43]:      TypeMulticast,
 	_RouteTypeLowerName[34:43]: TypeMulticast,
-	_RouteTypeName[43:52]:      TypeBlackhole,
 	_RouteTypeLowerName[43:52]: TypeBlackhole,
-	_RouteTypeName[52:63]:      TypeUnreachable,
 	_RouteTypeLowerName[52:63]: TypeUnreachable,
-	_RouteTypeName[63:71]:      TypeProhibit,
 	_RouteTypeLowerName[63:71]: TypeProhibit,
-	_RouteTypeName[71:76]:      TypeThrow,
 	_RouteTypeLowerName[71:76]: TypeThrow,
-	_RouteTypeName[76:79]:      TypeNAT,
 	_RouteTypeLowerName[76:79]: TypeNAT,
-	_RouteTypeName[79:87]:      TypeXResolve,
 	_RouteTypeLowerName[79:87]: TypeXResolve,
 }
 
@@ -3549,7 +3642,7 @@ func RouteTypeString(s string) (RouteType, error) {
 		return val, nil
 	}
 
-	if val, ok := _RouteTypeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RouteTypeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RouteType values", s)
@@ -3627,15 +3720,18 @@ func _RoutingRuleActionNoOp() {
 var _RoutingRuleActionValues = []RoutingRuleAction{RoutingRuleActionUnspec, RoutingRuleActionUnicast, RoutingRuleActionBlackhole, RoutingRuleActionUnreachable, RoutingRuleActionProhibit}
 
 var _RoutingRuleActionNameToValueMap = map[string]RoutingRuleAction{
-	_RoutingRuleActionName_0[0:6]:        RoutingRuleActionUnspec,
+	_RoutingRuleActionName_0[0:6]:   RoutingRuleActionUnspec,
+	_RoutingRuleActionName_0[6:13]:  RoutingRuleActionUnicast,
+	_RoutingRuleActionName_1[0:9]:   RoutingRuleActionBlackhole,
+	_RoutingRuleActionName_1[9:20]:  RoutingRuleActionUnreachable,
+	_RoutingRuleActionName_1[20:28]: RoutingRuleActionProhibit,
+}
+
+var _RoutingRuleActionLowerNameToValueMap = map[string]RoutingRuleAction{
 	_RoutingRuleActionLowerName_0[0:6]:   RoutingRuleActionUnspec,
-	_RoutingRuleActionName_0[6:13]:       RoutingRuleActionUnicast,
 	_RoutingRuleActionLowerName_0[6:13]:  RoutingRuleActionUnicast,
-	_RoutingRuleActionName_1[0:9]:        RoutingRuleActionBlackhole,
 	_RoutingRuleActionLowerName_1[0:9]:   RoutingRuleActionBlackhole,
-	_RoutingRuleActionName_1[9:20]:       RoutingRuleActionUnreachable,
 	_RoutingRuleActionLowerName_1[9:20]:  RoutingRuleActionUnreachable,
-	_RoutingRuleActionName_1[20:28]:      RoutingRuleActionProhibit,
 	_RoutingRuleActionLowerName_1[20:28]: RoutingRuleActionProhibit,
 }
 
@@ -3654,7 +3750,7 @@ func RoutingRuleActionString(s string) (RoutingRuleAction, error) {
 		return val, nil
 	}
 
-	if val, ok := _RoutingRuleActionNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RoutingRuleActionLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RoutingRuleAction values", s)
@@ -3972,517 +4068,520 @@ func _RoutingTableNoOp() {
 var _RoutingTableValues = []RoutingTable{TableUnspec, Table1, Table2, Table3, Table4, Table5, Table6, Table7, Table8, Table9, Table10, Table11, Table12, Table13, Table14, Table15, Table16, Table17, Table18, Table19, Table20, Table21, Table22, Table23, Table24, Table25, Table26, Table27, Table28, Table29, Table30, Table31, Table32, Table33, Table34, Table35, Table36, Table37, Table38, Table39, Table40, Table41, Table42, Table43, Table44, Table45, Table46, Table47, Table48, Table49, Table50, Table51, Table52, Table53, Table54, Table55, Table56, Table57, Table58, Table59, Table60, Table61, Table62, Table63, Table64, Table65, Table66, Table67, Table68, Table69, Table70, Table71, Table72, Table73, Table74, Table75, Table76, Table77, Table78, Table79, Table80, Table81, Table82, Table83, Table84, Table85, Table86, Table87, Table88, Table89, Table90, Table91, Table92, Table93, Table94, Table95, Table96, Table97, Table98, Table99, Table100, Table101, Table102, Table103, Table104, Table105, Table106, Table107, Table108, Table109, Table110, Table111, Table112, Table113, Table114, Table115, Table116, Table117, Table118, Table119, Table120, Table121, Table122, Table123, Table124, Table125, Table126, Table127, Table128, Table129, Table130, Table131, Table132, Table133, Table134, Table135, Table136, Table137, Table138, Table139, Table140, Table141, Table142, Table143, Table144, Table145, Table146, Table147, Table148, Table149, Table150, Table151, Table152, Table153, Table154, Table155, Table156, Table157, Table158, Table159, Table160, Table161, Table162, Table163, Table164, Table165, Table166, Table167, Table168, Table169, Table170, Table171, Table172, Table173, Table174, Table175, Table176, Table177, Table178, Table179, Table180, Table181, Table182, Table183, Table184, Table185, Table186, Table187, Table188, Table189, Table190, Table191, Table192, Table193, Table194, Table195, Table196, Table197, Table198, Table199, Table200, Table201, Table202, Table203, Table204, Table205, Table206, Table207, Table208, Table209, Table210, Table211, Table212, Table213, Table214, Table215, Table216, Table217, Table218, Table219, Table220, Table221, Table222, Table223, Table224, Table225, Table226, Table227, Table228, Table229, Table230, Table231, Table232, Table233, Table234, Table235, Table236, Table237, Table238, Table239, Table240, Table241, Table242, Table243, Table244, Table245, Table246, Table247, Table248, Table249, Table250, Table251, Table252, TableDefault, TableMain, TableLocal}
 
 var _RoutingTableNameToValueMap = map[string]RoutingTable{
-	_RoutingTableName[0:6]:          TableUnspec,
+	_RoutingTableName[0:6]:     TableUnspec,
+	_RoutingTableName[6:7]:     Table1,
+	_RoutingTableName[7:8]:     Table2,
+	_RoutingTableName[8:9]:     Table3,
+	_RoutingTableName[9:10]:    Table4,
+	_RoutingTableName[10:11]:   Table5,
+	_RoutingTableName[11:12]:   Table6,
+	_RoutingTableName[12:13]:   Table7,
+	_RoutingTableName[13:14]:   Table8,
+	_RoutingTableName[14:15]:   Table9,
+	_RoutingTableName[15:17]:   Table10,
+	_RoutingTableName[17:19]:   Table11,
+	_RoutingTableName[19:21]:   Table12,
+	_RoutingTableName[21:23]:   Table13,
+	_RoutingTableName[23:25]:   Table14,
+	_RoutingTableName[25:27]:   Table15,
+	_RoutingTableName[27:29]:   Table16,
+	_RoutingTableName[29:31]:   Table17,
+	_RoutingTableName[31:33]:   Table18,
+	_RoutingTableName[33:35]:   Table19,
+	_RoutingTableName[35:37]:   Table20,
+	_RoutingTableName[37:39]:   Table21,
+	_RoutingTableName[39:41]:   Table22,
+	_RoutingTableName[41:43]:   Table23,
+	_RoutingTableName[43:45]:   Table24,
+	_RoutingTableName[45:47]:   Table25,
+	_RoutingTableName[47:49]:   Table26,
+	_RoutingTableName[49:51]:   Table27,
+	_RoutingTableName[51:53]:   Table28,
+	_RoutingTableName[53:55]:   Table29,
+	_RoutingTableName[55:57]:   Table30,
+	_RoutingTableName[57:59]:   Table31,
+	_RoutingTableName[59:61]:   Table32,
+	_RoutingTableName[61:63]:   Table33,
+	_RoutingTableName[63:65]:   Table34,
+	_RoutingTableName[65:67]:   Table35,
+	_RoutingTableName[67:69]:   Table36,
+	_RoutingTableName[69:71]:   Table37,
+	_RoutingTableName[71:73]:   Table38,
+	_RoutingTableName[73:75]:   Table39,
+	_RoutingTableName[75:77]:   Table40,
+	_RoutingTableName[77:79]:   Table41,
+	_RoutingTableName[79:81]:   Table42,
+	_RoutingTableName[81:83]:   Table43,
+	_RoutingTableName[83:85]:   Table44,
+	_RoutingTableName[85:87]:   Table45,
+	_RoutingTableName[87:89]:   Table46,
+	_RoutingTableName[89:91]:   Table47,
+	_RoutingTableName[91:93]:   Table48,
+	_RoutingTableName[93:95]:   Table49,
+	_RoutingTableName[95:97]:   Table50,
+	_RoutingTableName[97:99]:   Table51,
+	_RoutingTableName[99:101]:  Table52,
+	_RoutingTableName[101:103]: Table53,
+	_RoutingTableName[103:105]: Table54,
+	_RoutingTableName[105:107]: Table55,
+	_RoutingTableName[107:109]: Table56,
+	_RoutingTableName[109:111]: Table57,
+	_RoutingTableName[111:113]: Table58,
+	_RoutingTableName[113:115]: Table59,
+	_RoutingTableName[115:117]: Table60,
+	_RoutingTableName[117:119]: Table61,
+	_RoutingTableName[119:121]: Table62,
+	_RoutingTableName[121:123]: Table63,
+	_RoutingTableName[123:125]: Table64,
+	_RoutingTableName[125:127]: Table65,
+	_RoutingTableName[127:129]: Table66,
+	_RoutingTableName[129:131]: Table67,
+	_RoutingTableName[131:133]: Table68,
+	_RoutingTableName[133:135]: Table69,
+	_RoutingTableName[135:137]: Table70,
+	_RoutingTableName[137:139]: Table71,
+	_RoutingTableName[139:141]: Table72,
+	_RoutingTableName[141:143]: Table73,
+	_RoutingTableName[143:145]: Table74,
+	_RoutingTableName[145:147]: Table75,
+	_RoutingTableName[147:149]: Table76,
+	_RoutingTableName[149:151]: Table77,
+	_RoutingTableName[151:153]: Table78,
+	_RoutingTableName[153:155]: Table79,
+	_RoutingTableName[155:157]: Table80,
+	_RoutingTableName[157:159]: Table81,
+	_RoutingTableName[159:161]: Table82,
+	_RoutingTableName[161:163]: Table83,
+	_RoutingTableName[163:165]: Table84,
+	_RoutingTableName[165:167]: Table85,
+	_RoutingTableName[167:169]: Table86,
+	_RoutingTableName[169:171]: Table87,
+	_RoutingTableName[171:173]: Table88,
+	_RoutingTableName[173:175]: Table89,
+	_RoutingTableName[175:177]: Table90,
+	_RoutingTableName[177:179]: Table91,
+	_RoutingTableName[179:181]: Table92,
+	_RoutingTableName[181:183]: Table93,
+	_RoutingTableName[183:185]: Table94,
+	_RoutingTableName[185:187]: Table95,
+	_RoutingTableName[187:189]: Table96,
+	_RoutingTableName[189:191]: Table97,
+	_RoutingTableName[191:193]: Table98,
+	_RoutingTableName[193:195]: Table99,
+	_RoutingTableName[195:198]: Table100,
+	_RoutingTableName[198:201]: Table101,
+	_RoutingTableName[201:204]: Table102,
+	_RoutingTableName[204:207]: Table103,
+	_RoutingTableName[207:210]: Table104,
+	_RoutingTableName[210:213]: Table105,
+	_RoutingTableName[213:216]: Table106,
+	_RoutingTableName[216:219]: Table107,
+	_RoutingTableName[219:222]: Table108,
+	_RoutingTableName[222:225]: Table109,
+	_RoutingTableName[225:228]: Table110,
+	_RoutingTableName[228:231]: Table111,
+	_RoutingTableName[231:234]: Table112,
+	_RoutingTableName[234:237]: Table113,
+	_RoutingTableName[237:240]: Table114,
+	_RoutingTableName[240:243]: Table115,
+	_RoutingTableName[243:246]: Table116,
+	_RoutingTableName[246:249]: Table117,
+	_RoutingTableName[249:252]: Table118,
+	_RoutingTableName[252:255]: Table119,
+	_RoutingTableName[255:258]: Table120,
+	_RoutingTableName[258:261]: Table121,
+	_RoutingTableName[261:264]: Table122,
+	_RoutingTableName[264:267]: Table123,
+	_RoutingTableName[267:270]: Table124,
+	_RoutingTableName[270:273]: Table125,
+	_RoutingTableName[273:276]: Table126,
+	_RoutingTableName[276:279]: Table127,
+	_RoutingTableName[279:282]: Table128,
+	_RoutingTableName[282:285]: Table129,
+	_RoutingTableName[285:288]: Table130,
+	_RoutingTableName[288:291]: Table131,
+	_RoutingTableName[291:294]: Table132,
+	_RoutingTableName[294:297]: Table133,
+	_RoutingTableName[297:300]: Table134,
+	_RoutingTableName[300:303]: Table135,
+	_RoutingTableName[303:306]: Table136,
+	_RoutingTableName[306:309]: Table137,
+	_RoutingTableName[309:312]: Table138,
+	_RoutingTableName[312:315]: Table139,
+	_RoutingTableName[315:318]: Table140,
+	_RoutingTableName[318:321]: Table141,
+	_RoutingTableName[321:324]: Table142,
+	_RoutingTableName[324:327]: Table143,
+	_RoutingTableName[327:330]: Table144,
+	_RoutingTableName[330:333]: Table145,
+	_RoutingTableName[333:336]: Table146,
+	_RoutingTableName[336:339]: Table147,
+	_RoutingTableName[339:342]: Table148,
+	_RoutingTableName[342:345]: Table149,
+	_RoutingTableName[345:348]: Table150,
+	_RoutingTableName[348:351]: Table151,
+	_RoutingTableName[351:354]: Table152,
+	_RoutingTableName[354:357]: Table153,
+	_RoutingTableName[357:360]: Table154,
+	_RoutingTableName[360:363]: Table155,
+	_RoutingTableName[363:366]: Table156,
+	_RoutingTableName[366:369]: Table157,
+	_RoutingTableName[369:372]: Table158,
+	_RoutingTableName[372:375]: Table159,
+	_RoutingTableName[375:378]: Table160,
+	_RoutingTableName[378:381]: Table161,
+	_RoutingTableName[381:384]: Table162,
+	_RoutingTableName[384:387]: Table163,
+	_RoutingTableName[387:390]: Table164,
+	_RoutingTableName[390:393]: Table165,
+	_RoutingTableName[393:396]: Table166,
+	_RoutingTableName[396:399]: Table167,
+	_RoutingTableName[399:402]: Table168,
+	_RoutingTableName[402:405]: Table169,
+	_RoutingTableName[405:408]: Table170,
+	_RoutingTableName[408:411]: Table171,
+	_RoutingTableName[411:414]: Table172,
+	_RoutingTableName[414:417]: Table173,
+	_RoutingTableName[417:420]: Table174,
+	_RoutingTableName[420:423]: Table175,
+	_RoutingTableName[423:426]: Table176,
+	_RoutingTableName[426:429]: Table177,
+	_RoutingTableName[429:432]: Table178,
+	_RoutingTableName[432:435]: Table179,
+	_RoutingTableName[435:438]: Table180,
+	_RoutingTableName[438:441]: Table181,
+	_RoutingTableName[441:444]: Table182,
+	_RoutingTableName[444:447]: Table183,
+	_RoutingTableName[447:450]: Table184,
+	_RoutingTableName[450:453]: Table185,
+	_RoutingTableName[453:456]: Table186,
+	_RoutingTableName[456:459]: Table187,
+	_RoutingTableName[459:462]: Table188,
+	_RoutingTableName[462:465]: Table189,
+	_RoutingTableName[465:468]: Table190,
+	_RoutingTableName[468:471]: Table191,
+	_RoutingTableName[471:474]: Table192,
+	_RoutingTableName[474:477]: Table193,
+	_RoutingTableName[477:480]: Table194,
+	_RoutingTableName[480:483]: Table195,
+	_RoutingTableName[483:486]: Table196,
+	_RoutingTableName[486:489]: Table197,
+	_RoutingTableName[489:492]: Table198,
+	_RoutingTableName[492:495]: Table199,
+	_RoutingTableName[495:498]: Table200,
+	_RoutingTableName[498:501]: Table201,
+	_RoutingTableName[501:504]: Table202,
+	_RoutingTableName[504:507]: Table203,
+	_RoutingTableName[507:510]: Table204,
+	_RoutingTableName[510:513]: Table205,
+	_RoutingTableName[513:516]: Table206,
+	_RoutingTableName[516:519]: Table207,
+	_RoutingTableName[519:522]: Table208,
+	_RoutingTableName[522:525]: Table209,
+	_RoutingTableName[525:528]: Table210,
+	_RoutingTableName[528:531]: Table211,
+	_RoutingTableName[531:534]: Table212,
+	_RoutingTableName[534:537]: Table213,
+	_RoutingTableName[537:540]: Table214,
+	_RoutingTableName[540:543]: Table215,
+	_RoutingTableName[543:546]: Table216,
+	_RoutingTableName[546:549]: Table217,
+	_RoutingTableName[549:552]: Table218,
+	_RoutingTableName[552:555]: Table219,
+	_RoutingTableName[555:558]: Table220,
+	_RoutingTableName[558:561]: Table221,
+	_RoutingTableName[561:564]: Table222,
+	_RoutingTableName[564:567]: Table223,
+	_RoutingTableName[567:570]: Table224,
+	_RoutingTableName[570:573]: Table225,
+	_RoutingTableName[573:576]: Table226,
+	_RoutingTableName[576:579]: Table227,
+	_RoutingTableName[579:582]: Table228,
+	_RoutingTableName[582:585]: Table229,
+	_RoutingTableName[585:588]: Table230,
+	_RoutingTableName[588:591]: Table231,
+	_RoutingTableName[591:594]: Table232,
+	_RoutingTableName[594:597]: Table233,
+	_RoutingTableName[597:600]: Table234,
+	_RoutingTableName[600:603]: Table235,
+	_RoutingTableName[603:606]: Table236,
+	_RoutingTableName[606:609]: Table237,
+	_RoutingTableName[609:612]: Table238,
+	_RoutingTableName[612:615]: Table239,
+	_RoutingTableName[615:618]: Table240,
+	_RoutingTableName[618:621]: Table241,
+	_RoutingTableName[621:624]: Table242,
+	_RoutingTableName[624:627]: Table243,
+	_RoutingTableName[627:630]: Table244,
+	_RoutingTableName[630:633]: Table245,
+	_RoutingTableName[633:636]: Table246,
+	_RoutingTableName[636:639]: Table247,
+	_RoutingTableName[639:642]: Table248,
+	_RoutingTableName[642:645]: Table249,
+	_RoutingTableName[645:648]: Table250,
+	_RoutingTableName[648:651]: Table251,
+	_RoutingTableName[651:654]: Table252,
+	_RoutingTableName[654:661]: TableDefault,
+	_RoutingTableName[661:665]: TableMain,
+	_RoutingTableName[665:670]: TableLocal,
+}
+
+var _RoutingTableLowerNameToValueMap = map[string]RoutingTable{
 	_RoutingTableLowerName[0:6]:     TableUnspec,
-	_RoutingTableName[6:7]:          Table1,
 	_RoutingTableLowerName[6:7]:     Table1,
-	_RoutingTableName[7:8]:          Table2,
 	_RoutingTableLowerName[7:8]:     Table2,
-	_RoutingTableName[8:9]:          Table3,
 	_RoutingTableLowerName[8:9]:     Table3,
-	_RoutingTableName[9:10]:         Table4,
 	_RoutingTableLowerName[9:10]:    Table4,
-	_RoutingTableName[10:11]:        Table5,
 	_RoutingTableLowerName[10:11]:   Table5,
-	_RoutingTableName[11:12]:        Table6,
 	_RoutingTableLowerName[11:12]:   Table6,
-	_RoutingTableName[12:13]:        Table7,
 	_RoutingTableLowerName[12:13]:   Table7,
-	_RoutingTableName[13:14]:        Table8,
 	_RoutingTableLowerName[13:14]:   Table8,
-	_RoutingTableName[14:15]:        Table9,
 	_RoutingTableLowerName[14:15]:   Table9,
-	_RoutingTableName[15:17]:        Table10,
 	_RoutingTableLowerName[15:17]:   Table10,
-	_RoutingTableName[17:19]:        Table11,
 	_RoutingTableLowerName[17:19]:   Table11,
-	_RoutingTableName[19:21]:        Table12,
 	_RoutingTableLowerName[19:21]:   Table12,
-	_RoutingTableName[21:23]:        Table13,
 	_RoutingTableLowerName[21:23]:   Table13,
-	_RoutingTableName[23:25]:        Table14,
 	_RoutingTableLowerName[23:25]:   Table14,
-	_RoutingTableName[25:27]:        Table15,
 	_RoutingTableLowerName[25:27]:   Table15,
-	_RoutingTableName[27:29]:        Table16,
 	_RoutingTableLowerName[27:29]:   Table16,
-	_RoutingTableName[29:31]:        Table17,
 	_RoutingTableLowerName[29:31]:   Table17,
-	_RoutingTableName[31:33]:        Table18,
 	_RoutingTableLowerName[31:33]:   Table18,
-	_RoutingTableName[33:35]:        Table19,
 	_RoutingTableLowerName[33:35]:   Table19,
-	_RoutingTableName[35:37]:        Table20,
 	_RoutingTableLowerName[35:37]:   Table20,
-	_RoutingTableName[37:39]:        Table21,
 	_RoutingTableLowerName[37:39]:   Table21,
-	_RoutingTableName[39:41]:        Table22,
 	_RoutingTableLowerName[39:41]:   Table22,
-	_RoutingTableName[41:43]:        Table23,
 	_RoutingTableLowerName[41:43]:   Table23,
-	_RoutingTableName[43:45]:        Table24,
 	_RoutingTableLowerName[43:45]:   Table24,
-	_RoutingTableName[45:47]:        Table25,
 	_RoutingTableLowerName[45:47]:   Table25,
-	_RoutingTableName[47:49]:        Table26,
 	_RoutingTableLowerName[47:49]:   Table26,
-	_RoutingTableName[49:51]:        Table27,
 	_RoutingTableLowerName[49:51]:   Table27,
-	_RoutingTableName[51:53]:        Table28,
 	_RoutingTableLowerName[51:53]:   Table28,
-	_RoutingTableName[53:55]:        Table29,
 	_RoutingTableLowerName[53:55]:   Table29,
-	_RoutingTableName[55:57]:        Table30,
 	_RoutingTableLowerName[55:57]:   Table30,
-	_RoutingTableName[57:59]:        Table31,
 	_RoutingTableLowerName[57:59]:   Table31,
-	_RoutingTableName[59:61]:        Table32,
 	_RoutingTableLowerName[59:61]:   Table32,
-	_RoutingTableName[61:63]:        Table33,
 	_RoutingTableLowerName[61:63]:   Table33,
-	_RoutingTableName[63:65]:        Table34,
 	_RoutingTableLowerName[63:65]:   Table34,
-	_RoutingTableName[65:67]:        Table35,
 	_RoutingTableLowerName[65:67]:   Table35,
-	_RoutingTableName[67:69]:        Table36,
 	_RoutingTableLowerName[67:69]:   Table36,
-	_RoutingTableName[69:71]:        Table37,
 	_RoutingTableLowerName[69:71]:   Table37,
-	_RoutingTableName[71:73]:        Table38,
 	_RoutingTableLowerName[71:73]:   Table38,
-	_RoutingTableName[73:75]:        Table39,
 	_RoutingTableLowerName[73:75]:   Table39,
-	_RoutingTableName[75:77]:        Table40,
 	_RoutingTableLowerName[75:77]:   Table40,
-	_RoutingTableName[77:79]:        Table41,
 	_RoutingTableLowerName[77:79]:   Table41,
-	_RoutingTableName[79:81]:        Table42,
 	_RoutingTableLowerName[79:81]:   Table42,
-	_RoutingTableName[81:83]:        Table43,
 	_RoutingTableLowerName[81:83]:   Table43,
-	_RoutingTableName[83:85]:        Table44,
 	_RoutingTableLowerName[83:85]:   Table44,
-	_RoutingTableName[85:87]:        Table45,
 	_RoutingTableLowerName[85:87]:   Table45,
-	_RoutingTableName[87:89]:        Table46,
 	_RoutingTableLowerName[87:89]:   Table46,
-	_RoutingTableName[89:91]:        Table47,
 	_RoutingTableLowerName[89:91]:   Table47,
-	_RoutingTableName[91:93]:        Table48,
 	_RoutingTableLowerName[91:93]:   Table48,
-	_RoutingTableName[93:95]:        Table49,
 	_RoutingTableLowerName[93:95]:   Table49,
-	_RoutingTableName[95:97]:        Table50,
 	_RoutingTableLowerName[95:97]:   Table50,
-	_RoutingTableName[97:99]:        Table51,
 	_RoutingTableLowerName[97:99]:   Table51,
-	_RoutingTableName[99:101]:       Table52,
 	_RoutingTableLowerName[99:101]:  Table52,
-	_RoutingTableName[101:103]:      Table53,
 	_RoutingTableLowerName[101:103]: Table53,
-	_RoutingTableName[103:105]:      Table54,
 	_RoutingTableLowerName[103:105]: Table54,
-	_RoutingTableName[105:107]:      Table55,
 	_RoutingTableLowerName[105:107]: Table55,
-	_RoutingTableName[107:109]:      Table56,
 	_RoutingTableLowerName[107:109]: Table56,
-	_RoutingTableName[109:111]:      Table57,
 	_RoutingTableLowerName[109:111]: Table57,
-	_RoutingTableName[111:113]:      Table58,
 	_RoutingTableLowerName[111:113]: Table58,
-	_RoutingTableName[113:115]:      Table59,
 	_RoutingTableLowerName[113:115]: Table59,
-	_RoutingTableName[115:117]:      Table60,
 	_RoutingTableLowerName[115:117]: Table60,
-	_RoutingTableName[117:119]:      Table61,
 	_RoutingTableLowerName[117:119]: Table61,
-	_RoutingTableName[119:121]:      Table62,
 	_RoutingTableLowerName[119:121]: Table62,
-	_RoutingTableName[121:123]:      Table63,
 	_RoutingTableLowerName[121:123]: Table63,
-	_RoutingTableName[123:125]:      Table64,
 	_RoutingTableLowerName[123:125]: Table64,
-	_RoutingTableName[125:127]:      Table65,
 	_RoutingTableLowerName[125:127]: Table65,
-	_RoutingTableName[127:129]:      Table66,
 	_RoutingTableLowerName[127:129]: Table66,
-	_RoutingTableName[129:131]:      Table67,
 	_RoutingTableLowerName[129:131]: Table67,
-	_RoutingTableName[131:133]:      Table68,
 	_RoutingTableLowerName[131:133]: Table68,
-	_RoutingTableName[133:135]:      Table69,
 	_RoutingTableLowerName[133:135]: Table69,
-	_RoutingTableName[135:137]:      Table70,
 	_RoutingTableLowerName[135:137]: Table70,
-	_RoutingTableName[137:139]:      Table71,
 	_RoutingTableLowerName[137:139]: Table71,
-	_RoutingTableName[139:141]:      Table72,
 	_RoutingTableLowerName[139:141]: Table72,
-	_RoutingTableName[141:143]:      Table73,
 	_RoutingTableLowerName[141:143]: Table73,
-	_RoutingTableName[143:145]:      Table74,
 	_RoutingTableLowerName[143:145]: Table74,
-	_RoutingTableName[145:147]:      Table75,
 	_RoutingTableLowerName[145:147]: Table75,
-	_RoutingTableName[147:149]:      Table76,
 	_RoutingTableLowerName[147:149]: Table76,
-	_RoutingTableName[149:151]:      Table77,
 	_RoutingTableLowerName[149:151]: Table77,
-	_RoutingTableName[151:153]:      Table78,
 	_RoutingTableLowerName[151:153]: Table78,
-	_RoutingTableName[153:155]:      Table79,
 	_RoutingTableLowerName[153:155]: Table79,
-	_RoutingTableName[155:157]:      Table80,
 	_RoutingTableLowerName[155:157]: Table80,
-	_RoutingTableName[157:159]:      Table81,
 	_RoutingTableLowerName[157:159]: Table81,
-	_RoutingTableName[159:161]:      Table82,
 	_RoutingTableLowerName[159:161]: Table82,
-	_RoutingTableName[161:163]:      Table83,
 	_RoutingTableLowerName[161:163]: Table83,
-	_RoutingTableName[163:165]:      Table84,
 	_RoutingTableLowerName[163:165]: Table84,
-	_RoutingTableName[165:167]:      Table85,
 	_RoutingTableLowerName[165:167]: Table85,
-	_RoutingTableName[167:169]:      Table86,
 	_RoutingTableLowerName[167:169]: Table86,
-	_RoutingTableName[169:171]:      Table87,
 	_RoutingTableLowerName[169:171]: Table87,
-	_RoutingTableName[171:173]:      Table88,
 	_RoutingTableLowerName[171:173]: Table88,
-	_RoutingTableName[173:175]:      Table89,
 	_RoutingTableLowerName[173:175]: Table89,
-	_RoutingTableName[175:177]:      Table90,
 	_RoutingTableLowerName[175:177]: Table90,
-	_RoutingTableName[177:179]:      Table91,
 	_RoutingTableLowerName[177:179]: Table91,
-	_RoutingTableName[179:181]:      Table92,
 	_RoutingTableLowerName[179:181]: Table92,
-	_RoutingTableName[181:183]:      Table93,
 	_RoutingTableLowerName[181:183]: Table93,
-	_RoutingTableName[183:185]:      Table94,
 	_RoutingTableLowerName[183:185]: Table94,
-	_RoutingTableName[185:187]:      Table95,
 	_RoutingTableLowerName[185:187]: Table95,
-	_RoutingTableName[187:189]:      Table96,
 	_RoutingTableLowerName[187:189]: Table96,
-	_RoutingTableName[189:191]:      Table97,
 	_RoutingTableLowerName[189:191]: Table97,
-	_RoutingTableName[191:193]:      Table98,
 	_RoutingTableLowerName[191:193]: Table98,
-	_RoutingTableName[193:195]:      Table99,
 	_RoutingTableLowerName[193:195]: Table99,
-	_RoutingTableName[195:198]:      Table100,
 	_RoutingTableLowerName[195:198]: Table100,
-	_RoutingTableName[198:201]:      Table101,
 	_RoutingTableLowerName[198:201]: Table101,
-	_RoutingTableName[201:204]:      Table102,
 	_RoutingTableLowerName[201:204]: Table102,
-	_RoutingTableName[204:207]:      Table103,
 	_RoutingTableLowerName[204:207]: Table103,
-	_RoutingTableName[207:210]:      Table104,
 	_RoutingTableLowerName[207:210]: Table104,
-	_RoutingTableName[210:213]:      Table105,
 	_RoutingTableLowerName[210:213]: Table105,
-	_RoutingTableName[213:216]:      Table106,
 	_RoutingTableLowerName[213:216]: Table106,
-	_RoutingTableName[216:219]:      Table107,
 	_RoutingTableLowerName[216:219]: Table107,
-	_RoutingTableName[219:222]:      Table108,
 	_RoutingTableLowerName[219:222]: Table108,
-	_RoutingTableName[222:225]:      Table109,
 	_RoutingTableLowerName[222:225]: Table109,
-	_RoutingTableName[225:228]:      Table110,
 	_RoutingTableLowerName[225:228]: Table110,
-	_RoutingTableName[228:231]:      Table111,
 	_RoutingTableLowerName[228:231]: Table111,
-	_RoutingTableName[231:234]:      Table112,
 	_RoutingTableLowerName[231:234]: Table112,
-	_RoutingTableName[234:237]:      Table113,
 	_RoutingTableLowerName[234:237]: Table113,
-	_RoutingTableName[237:240]:      Table114,
 	_RoutingTableLowerName[237:240]: Table114,
-	_RoutingTableName[240:243]:      Table115,
 	_RoutingTableLowerName[240:243]: Table115,
-	_RoutingTableName[243:246]:      Table116,
 	_RoutingTableLowerName[243:246]: Table116,
-	_RoutingTableName[246:249]:      Table117,
 	_RoutingTableLowerName[246:249]: Table117,
-	_RoutingTableName[249:252]:      Table118,
 	_RoutingTableLowerName[249:252]: Table118,
-	_RoutingTableName[252:255]:      Table119,
 	_RoutingTableLowerName[252:255]: Table119,
-	_RoutingTableName[255:258]:      Table120,
 	_RoutingTableLowerName[255:258]: Table120,
-	_RoutingTableName[258:261]:      Table121,
 	_RoutingTableLowerName[258:261]: Table121,
-	_RoutingTableName[261:264]:      Table122,
 	_RoutingTableLowerName[261:264]: Table122,
-	_RoutingTableName[264:267]:      Table123,
 	_RoutingTableLowerName[264:267]: Table123,
-	_RoutingTableName[267:270]:      Table124,
 	_RoutingTableLowerName[267:270]: Table124,
-	_RoutingTableName[270:273]:      Table125,
 	_RoutingTableLowerName[270:273]: Table125,
-	_RoutingTableName[273:276]:      Table126,
 	_RoutingTableLowerName[273:276]: Table126,
-	_RoutingTableName[276:279]:      Table127,
 	_RoutingTableLowerName[276:279]: Table127,
-	_RoutingTableName[279:282]:      Table128,
 	_RoutingTableLowerName[279:282]: Table128,
-	_RoutingTableName[282:285]:      Table129,
 	_RoutingTableLowerName[282:285]: Table129,
-	_RoutingTableName[285:288]:      Table130,
 	_RoutingTableLowerName[285:288]: Table130,
-	_RoutingTableName[288:291]:      Table131,
 	_RoutingTableLowerName[288:291]: Table131,
-	_RoutingTableName[291:294]:      Table132,
 	_RoutingTableLowerName[291:294]: Table132,
-	_RoutingTableName[294:297]:      Table133,
 	_RoutingTableLowerName[294:297]: Table133,
-	_RoutingTableName[297:300]:      Table134,
 	_RoutingTableLowerName[297:300]: Table134,
-	_RoutingTableName[300:303]:      Table135,
 	_RoutingTableLowerName[300:303]: Table135,
-	_RoutingTableName[303:306]:      Table136,
 	_RoutingTableLowerName[303:306]: Table136,
-	_RoutingTableName[306:309]:      Table137,
 	_RoutingTableLowerName[306:309]: Table137,
-	_RoutingTableName[309:312]:      Table138,
 	_RoutingTableLowerName[309:312]: Table138,
-	_RoutingTableName[312:315]:      Table139,
 	_RoutingTableLowerName[312:315]: Table139,
-	_RoutingTableName[315:318]:      Table140,
 	_RoutingTableLowerName[315:318]: Table140,
-	_RoutingTableName[318:321]:      Table141,
 	_RoutingTableLowerName[318:321]: Table141,
-	_RoutingTableName[321:324]:      Table142,
 	_RoutingTableLowerName[321:324]: Table142,
-	_RoutingTableName[324:327]:      Table143,
 	_RoutingTableLowerName[324:327]: Table143,
-	_RoutingTableName[327:330]:      Table144,
 	_RoutingTableLowerName[327:330]: Table144,
-	_RoutingTableName[330:333]:      Table145,
 	_RoutingTableLowerName[330:333]: Table145,
-	_RoutingTableName[333:336]:      Table146,
 	_RoutingTableLowerName[333:336]: Table146,
-	_RoutingTableName[336:339]:      Table147,
 	_RoutingTableLowerName[336:339]: Table147,
-	_RoutingTableName[339:342]:      Table148,
 	_RoutingTableLowerName[339:342]: Table148,
-	_RoutingTableName[342:345]:      Table149,
 	_RoutingTableLowerName[342:345]: Table149,
-	_RoutingTableName[345:348]:      Table150,
 	_RoutingTableLowerName[345:348]: Table150,
-	_RoutingTableName[348:351]:      Table151,
 	_RoutingTableLowerName[348:351]: Table151,
-	_RoutingTableName[351:354]:      Table152,
 	_RoutingTableLowerName[351:354]: Table152,
-	_RoutingTableName[354:357]:      Table153,
 	_RoutingTableLowerName[354:357]: Table153,
-	_RoutingTableName[357:360]:      Table154,
 	_RoutingTableLowerName[357:360]: Table154,
-	_RoutingTableName[360:363]:      Table155,
 	_RoutingTableLowerName[360:363]: Table155,
-	_RoutingTableName[363:366]:      Table156,
 	_RoutingTableLowerName[363:366]: Table156,
-	_RoutingTableName[366:369]:      Table157,
 	_RoutingTableLowerName[366:369]: Table157,
-	_RoutingTableName[369:372]:      Table158,
 	_RoutingTableLowerName[369:372]: Table158,
-	_RoutingTableName[372:375]:      Table159,
 	_RoutingTableLowerName[372:375]: Table159,
-	_RoutingTableName[375:378]:      Table160,
 	_RoutingTableLowerName[375:378]: Table160,
-	_RoutingTableName[378:381]:      Table161,
 	_RoutingTableLowerName[378:381]: Table161,
-	_RoutingTableName[381:384]:      Table162,
 	_RoutingTableLowerName[381:384]: Table162,
-	_RoutingTableName[384:387]:      Table163,
 	_RoutingTableLowerName[384:387]: Table163,
-	_RoutingTableName[387:390]:      Table164,
 	_RoutingTableLowerName[387:390]: Table164,
-	_RoutingTableName[390:393]:      Table165,
 	_RoutingTableLowerName[390:393]: Table165,
-	_RoutingTableName[393:396]:      Table166,
 	_RoutingTableLowerName[393:396]: Table166,
-	_RoutingTableName[396:399]:      Table167,
 	_RoutingTableLowerName[396:399]: Table167,
-	_RoutingTableName[399:402]:      Table168,
 	_RoutingTableLowerName[399:402]: Table168,
-	_RoutingTableName[402:405]:      Table169,
 	_RoutingTableLowerName[402:405]: Table169,
-	_RoutingTableName[405:408]:      Table170,
 	_RoutingTableLowerName[405:408]: Table170,
-	_RoutingTableName[408:411]:      Table171,
 	_RoutingTableLowerName[408:411]: Table171,
-	_RoutingTableName[411:414]:      Table172,
 	_RoutingTableLowerName[411:414]: Table172,
-	_RoutingTableName[414:417]:      Table173,
 	_RoutingTableLowerName[414:417]: Table173,
-	_RoutingTableName[417:420]:      Table174,
 	_RoutingTableLowerName[417:420]: Table174,
-	_RoutingTableName[420:423]:      Table175,
 	_RoutingTableLowerName[420:423]: Table175,
-	_RoutingTableName[423:426]:      Table176,
 	_RoutingTableLowerName[423:426]: Table176,
-	_RoutingTableName[426:429]:      Table177,
 	_RoutingTableLowerName[426:429]: Table177,
-	_RoutingTableName[429:432]:      Table178,
 	_RoutingTableLowerName[429:432]: Table178,
-	_RoutingTableName[432:435]:      Table179,
 	_RoutingTableLowerName[432:435]: Table179,
-	_RoutingTableName[435:438]:      Table180,
 	_RoutingTableLowerName[435:438]: Table180,
-	_RoutingTableName[438:441]:      Table181,
 	_RoutingTableLowerName[438:441]: Table181,
-	_RoutingTableName[441:444]:      Table182,
 	_RoutingTableLowerName[441:444]: Table182,
-	_RoutingTableName[444:447]:      Table183,
 	_RoutingTableLowerName[444:447]: Table183,
-	_RoutingTableName[447:450]:      Table184,
 	_RoutingTableLowerName[447:450]: Table184,
-	_RoutingTableName[450:453]:      Table185,
 	_RoutingTableLowerName[450:453]: Table185,
-	_RoutingTableName[453:456]:      Table186,
 	_RoutingTableLowerName[453:456]: Table186,
-	_RoutingTableName[456:459]:      Table187,
 	_RoutingTableLowerName[456:459]: Table187,
-	_RoutingTableName[459:462]:      Table188,
 	_RoutingTableLowerName[459:462]: Table188,
-	_RoutingTableName[462:465]:      Table189,
 	_RoutingTableLowerName[462:465]: Table189,
-	_RoutingTableName[465:468]:      Table190,
 	_RoutingTableLowerName[465:468]: Table190,
-	_RoutingTableName[468:471]:      Table191,
 	_RoutingTableLowerName[468:471]: Table191,
-	_RoutingTableName[471:474]:      Table192,
 	_RoutingTableLowerName[471:474]: Table192,
-	_RoutingTableName[474:477]:      Table193,
 	_RoutingTableLowerName[474:477]: Table193,
-	_RoutingTableName[477:480]:      Table194,
 	_RoutingTableLowerName[477:480]: Table194,
-	_RoutingTableName[480:483]:      Table195,
 	_RoutingTableLowerName[480:483]: Table195,
-	_RoutingTableName[483:486]:      Table196,
 	_RoutingTableLowerName[483:486]: Table196,
-	_RoutingTableName[486:489]:      Table197,
 	_RoutingTableLowerName[486:489]: Table197,
-	_RoutingTableName[489:492]:      Table198,
 	_RoutingTableLowerName[489:492]: Table198,
-	_RoutingTableName[492:495]:      Table199,
 	_RoutingTableLowerName[492:495]: Table199,
-	_RoutingTableName[495:498]:      Table200,
 	_RoutingTableLowerName[495:498]: Table200,
-	_RoutingTableName[498:501]:      Table201,
 	_RoutingTableLowerName[498:501]: Table201,
-	_RoutingTableName[501:504]:      Table202,
 	_RoutingTableLowerName[501:504]: Table202,
-	_RoutingTableName[504:507]:      Table203,
 	_RoutingTableLowerName[504:507]: Table203,
-	_RoutingTableName[507:510]:      Table204,
 	_RoutingTableLowerName[507:510]: Table204,
-	_RoutingTableName[510:513]:      Table205,
 	_RoutingTableLowerName[510:513]: Table205,
-	_RoutingTableName[513:516]:      Table206,
 	_RoutingTableLowerName[513:516]: Table206,
-	_RoutingTableName[516:519]:      Table207,
 	_RoutingTableLowerName[516:519]: Table207,
-	_RoutingTableName[519:522]:      Table208,
 	_RoutingTableLowerName[519:522]: Table208,
-	_RoutingTableName[522:525]:      Table209,
 	_RoutingTableLowerName[522:525]: Table209,
-	_RoutingTableName[525:528]:      Table210,
 	_RoutingTableLowerName[525:528]: Table210,
-	_RoutingTableName[528:531]:      Table211,
 	_RoutingTableLowerName[528:531]: Table211,
-	_RoutingTableName[531:534]:      Table212,
 	_RoutingTableLowerName[531:534]: Table212,
-	_RoutingTableName[534:537]:      Table213,
 	_RoutingTableLowerName[534:537]: Table213,
-	_RoutingTableName[537:540]:      Table214,
 	_RoutingTableLowerName[537:540]: Table214,
-	_RoutingTableName[540:543]:      Table215,
 	_RoutingTableLowerName[540:543]: Table215,
-	_RoutingTableName[543:546]:      Table216,
 	_RoutingTableLowerName[543:546]: Table216,
-	_RoutingTableName[546:549]:      Table217,
 	_RoutingTableLowerName[546:549]: Table217,
-	_RoutingTableName[549:552]:      Table218,
 	_RoutingTableLowerName[549:552]: Table218,
-	_RoutingTableName[552:555]:      Table219,
 	_RoutingTableLowerName[552:555]: Table219,
-	_RoutingTableName[555:558]:      Table220,
 	_RoutingTableLowerName[555:558]: Table220,
-	_RoutingTableName[558:561]:      Table221,
 	_RoutingTableLowerName[558:561]: Table221,
-	_RoutingTableName[561:564]:      Table222,
 	_RoutingTableLowerName[561:564]: Table222,
-	_RoutingTableName[564:567]:      Table223,
 	_RoutingTableLowerName[564:567]: Table223,
-	_RoutingTableName[567:570]:      Table224,
 	_RoutingTableLowerName[567:570]: Table224,
-	_RoutingTableName[570:573]:      Table225,
 	_RoutingTableLowerName[570:573]: Table225,
-	_RoutingTableName[573:576]:      Table226,
 	_RoutingTableLowerName[573:576]: Table226,
-	_RoutingTableName[576:579]:      Table227,
 	_RoutingTableLowerName[576:579]: Table227,
-	_RoutingTableName[579:582]:      Table228,
 	_RoutingTableLowerName[579:582]: Table228,
-	_RoutingTableName[582:585]:      Table229,
 	_RoutingTableLowerName[582:585]: Table229,
-	_RoutingTableName[585:588]:      Table230,
 	_RoutingTableLowerName[585:588]: Table230,
-	_RoutingTableName[588:591]:      Table231,
 	_RoutingTableLowerName[588:591]: Table231,
-	_RoutingTableName[591:594]:      Table232,
 	_RoutingTableLowerName[591:594]: Table232,
-	_RoutingTableName[594:597]:      Table233,
 	_RoutingTableLowerName[594:597]: Table233,
-	_RoutingTableName[597:600]:      Table234,
 	_RoutingTableLowerName[597:600]: Table234,
-	_RoutingTableName[600:603]:      Table235,
 	_RoutingTableLowerName[600:603]: Table235,
-	_RoutingTableName[603:606]:      Table236,
 	_RoutingTableLowerName[603:606]: Table236,
-	_RoutingTableName[606:609]:      Table237,
 	_RoutingTableLowerName[606:609]: Table237,
-	_RoutingTableName[609:612]:      Table238,
 	_RoutingTableLowerName[609:612]: Table238,
-	_RoutingTableName[612:615]:      Table239,
 	_RoutingTableLowerName[612:615]: Table239,
-	_RoutingTableName[615:618]:      Table240,
 	_RoutingTableLowerName[615:618]: Table240,
-	_RoutingTableName[618:621]:      Table241,
 	_RoutingTableLowerName[618:621]: Table241,
-	_RoutingTableName[621:624]:      Table242,
 	_RoutingTableLowerName[621:624]: Table242,
-	_RoutingTableName[624:627]:      Table243,
 	_RoutingTableLowerName[624:627]: Table243,
-	_RoutingTableName[627:630]:      Table244,
 	_RoutingTableLowerName[627:630]: Table244,
-	_RoutingTableName[630:633]:      Table245,
 	_RoutingTableLowerName[630:633]: Table245,
-	_RoutingTableName[633:636]:      Table246,
 	_RoutingTableLowerName[633:636]: Table246,
-	_RoutingTableName[636:639]:      Table247,
 	_RoutingTableLowerName[636:639]: Table247,
-	_RoutingTableName[639:642]:      Table248,
 	_RoutingTableLowerName[639:642]: Table248,
-	_RoutingTableName[642:645]:      Table249,
 	_RoutingTableLowerName[642:645]: Table249,
-	_RoutingTableName[645:648]:      Table250,
 	_RoutingTableLowerName[645:648]: Table250,
-	_RoutingTableName[648:651]:      Table251,
 	_RoutingTableLowerName[648:651]: Table251,
-	_RoutingTableName[651:654]:      Table252,
 	_RoutingTableLowerName[651:654]: Table252,
-	_RoutingTableName[654:661]:      TableDefault,
 	_RoutingTableLowerName[654:661]: TableDefault,
-	_RoutingTableName[661:665]:      TableMain,
 	_RoutingTableLowerName[661:665]: TableMain,
-	_RoutingTableName[665:670]:      TableLocal,
 	_RoutingTableLowerName[665:670]: TableLocal,
 }
 
@@ -4752,7 +4851,7 @@ func RoutingTableString(s string) (RoutingTable, error) {
 		return val, nil
 	}
 
-	if val, ok := _RoutingTableNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RoutingTableLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RoutingTable values", s)
@@ -4835,15 +4934,18 @@ func _ScopeNoOp() {
 var _ScopeValues = []Scope{ScopeGlobal, ScopeSite, ScopeLink, ScopeHost, ScopeNowhere}
 
 var _ScopeNameToValueMap = map[string]Scope{
-	_ScopeName_0[0:6]:       ScopeGlobal,
+	_ScopeName_0[0:6]:  ScopeGlobal,
+	_ScopeName_1[0:4]:  ScopeSite,
+	_ScopeName_2[0:4]:  ScopeLink,
+	_ScopeName_2[4:8]:  ScopeHost,
+	_ScopeName_2[8:15]: ScopeNowhere,
+}
+
+var _ScopeLowerNameToValueMap = map[string]Scope{
 	_ScopeLowerName_0[0:6]:  ScopeGlobal,
-	_ScopeName_1[0:4]:       ScopeSite,
 	_ScopeLowerName_1[0:4]:  ScopeSite,
-	_ScopeName_2[0:4]:       ScopeLink,
 	_ScopeLowerName_2[0:4]:  ScopeLink,
-	_ScopeName_2[4:8]:       ScopeHost,
 	_ScopeLowerName_2[4:8]:  ScopeHost,
-	_ScopeName_2[8:15]:      ScopeNowhere,
 	_ScopeLowerName_2[8:15]: ScopeNowhere,
 }
 
@@ -4862,7 +4964,7 @@ func ScopeString(s string) (Scope, error) {
 		return val, nil
 	}
 
-	if val, ok := _ScopeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _ScopeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to Scope values", s)
@@ -4929,13 +5031,16 @@ func _StatusNoOp() {
 var _StatusValues = []Status{StatusAddresses, StatusConnectivity, StatusHostname, StatusEtcFiles}
 
 var _StatusNameToValueMap = map[string]Status{
-	_StatusName[0:9]:        StatusAddresses,
+	_StatusName[0:9]:   StatusAddresses,
+	_StatusName[9:21]:  StatusConnectivity,
+	_StatusName[21:29]: StatusHostname,
+	_StatusName[29:37]: StatusEtcFiles,
+}
+
+var _StatusLowerNameToValueMap = map[string]Status{
 	_StatusLowerName[0:9]:   StatusAddresses,
-	_StatusName[9:21]:       StatusConnectivity,
 	_StatusLowerName[9:21]:  StatusConnectivity,
-	_StatusName[21:29]:      StatusHostname,
 	_StatusLowerName[21:29]: StatusHostname,
-	_StatusName[29:37]:      StatusEtcFiles,
 	_StatusLowerName[29:37]: StatusEtcFiles,
 }
 
@@ -4953,7 +5058,7 @@ func StatusString(s string) (Status, error) {
 		return val, nil
 	}
 
-	if val, ok := _StatusNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _StatusLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to Status values", s)
@@ -5027,9 +5132,12 @@ func _VLANProtocolNoOp() {
 var _VLANProtocolValues = []VLANProtocol{VLANProtocol8021Q, VLANProtocol8021AD}
 
 var _VLANProtocolNameToValueMap = map[string]VLANProtocol{
-	_VLANProtocolName_0[0:6]:      VLANProtocol8021Q,
+	_VLANProtocolName_0[0:6]: VLANProtocol8021Q,
+	_VLANProtocolName_1[0:7]: VLANProtocol8021AD,
+}
+
+var _VLANProtocolLowerNameToValueMap = map[string]VLANProtocol{
 	_VLANProtocolLowerName_0[0:6]: VLANProtocol8021Q,
-	_VLANProtocolName_1[0:7]:      VLANProtocol8021AD,
 	_VLANProtocolLowerName_1[0:7]: VLANProtocol8021AD,
 }
 
@@ -5045,7 +5153,7 @@ func VLANProtocolString(s string) (VLANProtocol, error) {
 		return val, nil
 	}
 
-	if val, ok := _VLANProtocolNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _VLANProtocolLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to VLANProtocol values", s)
@@ -5145,19 +5253,22 @@ func _WOLModeNoOp() {
 var _WOLModeValues = []WOLMode{WOLModePhy, WOLModeUnicast, WOLModeMulticast, WOLModeBroadcast, WOLModeMagic, WOLModeMagicSecure, WOLModeFilter}
 
 var _WOLModeNameToValueMap = map[string]WOLMode{
-	_WOLModeName_0[0:3]:       WOLModePhy,
+	_WOLModeName_0[0:3]:  WOLModePhy,
+	_WOLModeName_0[3:10]: WOLModeUnicast,
+	_WOLModeName_1[0:9]:  WOLModeMulticast,
+	_WOLModeName_2[0:9]:  WOLModeBroadcast,
+	_WOLModeName_3[0:5]:  WOLModeMagic,
+	_WOLModeName_4[0:11]: WOLModeMagicSecure,
+	_WOLModeName_5[0:6]:  WOLModeFilter,
+}
+
+var _WOLModeLowerNameToValueMap = map[string]WOLMode{
 	_WOLModeLowerName_0[0:3]:  WOLModePhy,
-	_WOLModeName_0[3:10]:      WOLModeUnicast,
 	_WOLModeLowerName_0[3:10]: WOLModeUnicast,
-	_WOLModeName_1[0:9]:       WOLModeMulticast,
 	_WOLModeLowerName_1[0:9]:  WOLModeMulticast,
-	_WOLModeName_2[0:9]:       WOLModeBroadcast,
 	_WOLModeLowerName_2[0:9]:  WOLModeBroadcast,
-	_WOLModeName_3[0:5]:       WOLModeMagic,
 	_WOLModeLowerName_3[0:5]:  WOLModeMagic,
-	_WOLModeName_4[0:11]:      WOLModeMagicSecure,
 	_WOLModeLowerName_4[0:11]: WOLModeMagicSecure,
-	_WOLModeName_5[0:6]:       WOLModeFilter,
 	_WOLModeLowerName_5[0:6]:  WOLModeFilter,
 }
 
@@ -5178,7 +5289,7 @@ func WOLModeString(s string) (WOLMode, error) {
 		return val, nil
 	}
 
-	if val, ok := _WOLModeNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _WOLModeLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to WOLMode values", s)

@@ -33,11 +33,14 @@ func _RestartKindNoOp() {
 var _RestartKindValues = []RestartKind{RestartAlways, RestartNever, RestartUntilSuccess}
 
 var _RestartKindNameToValueMap = map[string]RestartKind{
-	_RestartKindName[0:6]:        RestartAlways,
+	_RestartKindName[0:6]:   RestartAlways,
+	_RestartKindName[6:11]:  RestartNever,
+	_RestartKindName[11:23]: RestartUntilSuccess,
+}
+
+var _RestartKindLowerNameToValueMap = map[string]RestartKind{
 	_RestartKindLowerName[0:6]:   RestartAlways,
-	_RestartKindName[6:11]:       RestartNever,
 	_RestartKindLowerName[6:11]:  RestartNever,
-	_RestartKindName[11:23]:      RestartUntilSuccess,
 	_RestartKindLowerName[11:23]: RestartUntilSuccess,
 }
 
@@ -54,7 +57,7 @@ func RestartKindString(s string) (RestartKind, error) {
 		return val, nil
 	}
 
-	if val, ok := _RestartKindNameToValueMap[strings.ToLower(s)]; ok {
+	if val, ok := _RestartKindLowerNameToValueMap[strings.ToLower(s)]; ok {
 		return val, nil
 	}
 	return 0, fmt.Errorf("%s does not belong to RestartKind values", s)

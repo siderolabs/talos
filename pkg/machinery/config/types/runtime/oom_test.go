@@ -66,7 +66,7 @@ func TestOOMValidate(t *testing.T) {
 				return cfg
 			},
 
-			expectedError: "OOM cgroup scoring expression is invalid: ERROR: <input>:1:1: undeclared reference to 'disk' (in container '')\n | disk.transport\n | ^",
+			expectedError: "OOM cgroup scoring expression is invalid: ERROR: <input>:1:1: undeclared reference to 'disk'\n | disk.transport\n | ^",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
