@@ -78,6 +78,18 @@ func newVGDoc(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	return doc
 }
 
+// newParentsVGDoc builds a minimal v1alpha1 LVMVolumeGroupConfig doc backed by the given raw volumes.
+func newParentsVGDoc(name string, rawVolumes ...string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
+	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
+	doc.MetaName = name
+
+	for _, rawVolume := range rawVolumes {
+		doc.ProvisioningSpec.Parents = append(doc.ProvisioningSpec.Parents, storagecfg.LVMVolumeGroupParent{RawVolume: rawVolume})
+	}
+
+	return doc
+}
+
 // applyMachineConfig creates a MachineConfig resource carrying the given
 // v1alpha1 LVMVolumeGroupConfig docs and returns it so tests can later
 // destroy it.
