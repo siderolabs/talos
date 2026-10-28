@@ -6,142 +6,248 @@ package debug
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"sync"
 	"syscall"
+	"time"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/cio"
+	"github.com/containerd/errdefs"
 	"github.com/siderolabs/gen/panicsafe"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
-func newGrpcStreamWriter(srv grpc.BidiStreamingServer[machine.DebugContainerRunRequest, machine.DebugContainerRunResponse]) (
-	*grpcStdioStreamer,
-	io.Reader,
-	io.Writer,
-) {
-	stdinR, stdinW := io.Pipe()
-	stdoutR, stdoutW := io.Pipe()
+// outputStream is the stream a chunk of process output was written to.
+type outputStream int
 
-	return &grpcStdioStreamer{
-		srv:     srv,
-		stdinW:  stdinW,
-		stdoutR: stdoutR,
-		stdoutW: stdoutW,
-	}, stdinR, stdoutW
+const (
+	outputStdout outputStream = iota
+	outputStderr
+)
+
+// controlMessage is a request from the client, translated from the message type of the RPC.
+type controlMessage struct {
+	stdinData []byte
+	stdinEOF  bool
+	signal    int32
+	resize    *machine.DebugContainerTerminalResize
 }
 
-type grpcStdioStreamer struct {
-	srv grpc.BidiStreamingServer[machine.DebugContainerRunRequest, machine.DebugContainerRunResponse]
+// streamAdapter translates between the messages of a debug RPC and a session.
+type streamAdapter interface {
+	recv() (controlMessage, error)
+	sendOutput(stream outputStream, data []byte) error
+	sendExitCode(code int32) error
+}
 
+// processControl delivers signals and terminal resizes to the process of a session.
+type processControl interface {
+	signal(ctx context.Context, signal int32) error
+	resize(ctx context.Context, width, height uint32) error
+}
+
+// exitResult is how the process of a session ended.
+type exitResult struct {
+	code int32
+	err  error
+}
+
+// session streams the stdio of a single process over a debug RPC.
+//
+// A single goroutine sends on the stream, as sending from several goroutines is not safe. The
+// exit code is sent last, once all the output of the process has been sent.
+type session struct {
+	adapter streamAdapter
+
+	// pending counts output read from the process but not sent yet, and lastActivity is the time of
+	// the last progress with the output.
+	outputMu     sync.Mutex
+	pending      int
+	lastActivity time.Time
+
+	stdinR  *io.PipeReader
 	stdinW  *io.PipeWriter
 	stdoutR *io.PipeReader
 	stdoutW *io.PipeWriter
+	stderrR *io.PipeReader
+	stderrW *io.PipeWriter
 }
 
-//nolint:gocyclo
-func (g *grpcStdioStreamer) stream(ctx context.Context, statusC <-chan containerdapi.ExitStatus, task containerdapi.Task) error {
+// newSession creates a session; without separateStderr, stderr is written to stdout.
+func newSession(adapter streamAdapter, separateStderr bool) *session {
+	s := &session{adapter: adapter}
+
+	s.stdinR, s.stdinW = io.Pipe()
+	s.stdoutR, s.stdoutW = io.Pipe()
+
+	if separateStderr {
+		s.stderrR, s.stderrW = io.Pipe()
+	}
+
+	return s
+}
+
+// stdin is what the process reads its stdin from.
+func (s *session) stdin() io.Reader { return s.stdinR }
+
+// stdout is where the process writes its stdout to.
+func (s *session) stdout() io.Writer { return s.stdoutW }
+
+// stderr is where the process writes its stderr to.
+func (s *session) stderr() io.Writer {
+	if s.stderrW == nil {
+		return s.stdoutW
+	}
+
+	return s.stderrW
+}
+
+func (s *session) closeOutput() {
+	s.stdoutW.Close() //nolint:errcheck
+
+	if s.stderrW != nil {
+		s.stderrW.Close() //nolint:errcheck
+	}
+}
+
+// close releases the stdio of a process the session did not run, or did not run to the end.
+func (s *session) close() {
+	s.closeOutput()
+	s.closeStdin()
+}
+
+func (s *session) closeStdin() {
+	s.stdinW.Close() //nolint:errcheck
+	s.stdinR.Close() //nolint:errcheck
+}
+
+// run streams the process stdio until the process exits, the client goes away or the stream fails.
+//
+// drainOutput returns once the process output has been written to the session, or when its context
+// is canceled.
+//
+//nolint:gocyclo,cyclop
+func (s *session) run(ctx context.Context, control processControl, exitC <-chan exitResult, drainOutput func(context.Context)) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	sendLoopCh, recvLoopCh := make(chan error), make(chan error)
+	sendC := make(chan func() error)
+	sendErrC := make(chan error, 1)
 
-	go func(errCh chan<- error) {
-		errCh <- panicsafe.RunErr(g.sendLoop)
-	}(sendLoopCh)
+	go func() {
+		sendErrC <- panicsafe.RunErr(func() error {
+			for {
+				select {
+				case send, ok := <-sendC:
+					if !ok {
+						return nil
+					}
 
-	go func(errCh chan<- error) {
-		errCh <- panicsafe.RunErr(func() error {
-			return g.recvLoop(ctx, task)
+					if err := send(); err != nil {
+						cancel()
+
+						return err
+					}
+				case <-ctx.Done():
+					return nil
+				}
+			}
 		})
-	}(recvLoopCh)
+	}()
+
+	var pumps sync.WaitGroup
+
+	for stream, r := range map[outputStream]*io.PipeReader{outputStdout: s.stdoutR, outputStderr: s.stderrR} {
+		if r == nil {
+			continue
+		}
+
+		pumps.Go(func() {
+			s.pump(ctx, stream, r, sendC)
+		})
+	}
+
+	recvErrC := make(chan error, 1)
+
+	go func() {
+		recvErrC <- panicsafe.RunErr(func() error {
+			return s.recvLoop(ctx, control)
+		})
+	}()
+
+	finish := func(exitCode *int32) error {
+		s.closeOutput()
+		pumps.Wait()
+
+		if exitCode != nil {
+			code := *exitCode
+
+			select {
+			case sendC <- func() error { return s.adapter.sendExitCode(code) }:
+			case <-ctx.Done():
+			}
+		}
+
+		close(sendC)
+
+		s.closeStdin()
+
+		return sendError(<-sendErrC)
+	}
+
+	// The sender may be blocked on a client which stopped reading, and is only released once the
+	// RPC returns, so an aborted session does not wait for it.
+	abort := func(err error) error {
+		cancel()
+		s.closeOutput()
+		s.closeStdin()
+
+		return err
+	}
+
+	var finishC chan error
 
 	for {
 		select {
-		// task terminated
-		case ec := <-statusC:
-			// closing r.stdoutW causes the sendLoop, which s
-			// blocking on r.stdoutR.Read(), to get an EOF and exit
-			g.stdoutW.Close() //nolint:errcheck
+		case result := <-exitC:
+			exitC = nil
+			finishC = make(chan error, 1)
 
-			// close r.stdinW to ensure the container exits if it's still running
-			g.stdinW.Close() //nolint:errcheck
+			go func() {
+				s.waitOutput(ctx, drainOutput)
 
-			// cancel the context to stop loops
-			cancel()
+				if result.err != nil {
+					finishC <- errors.Join(result.err, finish(nil))
 
-			if ec.Error() != nil {
-				return ec.Error()
-			}
+					return
+				}
 
-			// wait for send loop to exit
-			//
-			// calling srv.Send from multiple goroutines is not safe,
-			// so we need to wait for sendLoop to exit
-			if sendLoopCh != nil {
-				<-sendLoopCh
-			}
-
-			// then, sending the exit code back to the client makes
-			// the client disconnect
-			if err := g.srv.Send(&machine.DebugContainerRunResponse{
-				Resp: &machine.DebugContainerRunResponse_ExitCode{
-					ExitCode: int32(ec.ExitCode()),
-				},
-			}); err != nil {
-				return fmt.Errorf("debug container: failed to send exit code: %w", err)
-			}
-
-			// wait for recv loop to exit after client disconnects
-			if recvLoopCh != nil {
-				<-recvLoopCh
-			}
-
-			return nil
-		// our send loop terminated
-		case sendErr := <-sendLoopCh:
-			if sendErr == nil { // keep waiting for task to exit
-				sendLoopCh = nil
+				finishC <- finish(&result.code)
+			}()
+		case err := <-finishC:
+			return err
+		case err := <-recvErrC:
+			if err == nil {
+				recvErrC = nil
 
 				continue
 			}
 
-			// close r.stdinW to ensure the container exits if it's still running
-			g.stdinW.Close() //nolint:errcheck
-
-			return fmt.Errorf("debug container: send loop error: %w", sendErr)
-		case recvErr := <-recvLoopCh:
-			if recvErr == nil { // keep waiting for task to exit
-				recvLoopCh = nil
-
-				continue
-			}
-
-			// close r.stdoutW to stop the send loop
-			g.stdoutW.Close() //nolint:errcheck
-
-			return fmt.Errorf("debug container: receive loop error: %w", recvErr)
-		// client walked away
+			return abort(err)
 		case <-ctx.Done():
-			// closing r.stdoutW causes the sendLoop, which s
-			// blocking on r.stdoutR.Read(), to get an EOF and exit
-			g.stdoutW.Close() //nolint:errcheck
-
-			// close r.stdinW to ensure the container exits if it's still running
-			g.stdinW.Close() //nolint:errcheck
-
-			// wait for loops to exit
-			if recvLoopCh != nil {
-				<-recvLoopCh
+			if finishC != nil {
+				return <-finishC
 			}
 
-			if sendLoopCh != nil {
-				<-sendLoopCh
+			if err := finish(nil); err != nil {
+				return err
 			}
 
 			return ctx.Err()
@@ -149,219 +255,226 @@ func (g *grpcStdioStreamer) stream(ctx context.Context, statusC <-chan container
 	}
 }
 
-func (g *grpcStdioStreamer) recvLoop(ctx context.Context, task containerdapi.Task) error {
-	defer g.stdinW.Close() //nolint:errcheck
+// outputIdleTimeout ends the wait for more output of an exited process once none has come for that
+// long.
+const outputIdleTimeout = time.Second
+
+// waitOutput waits for the output of the exited process to be drained.
+//
+// A process it left behind, e.g. in the background, can keep its output open, so once no output is
+// pending any more the wait ends after outputIdleTimeout without more of it.
+func (s *session) waitOutput(ctx context.Context, drainOutput func(context.Context)) {
+	drainCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	drained := make(chan struct{})
+
+	go func() {
+		drainOutput(drainCtx)
+		close(drained)
+	}()
+
+	idle := time.NewTimer(outputIdleTimeout)
+	defer idle.Stop()
 
 	for {
-		msg, err := g.srv.Recv()
-		if err != nil {
-			if status.Code(err) != codes.Canceled && err != io.EOF {
-				return fmt.Errorf("error receiving input message: %w", err)
+		select {
+		case <-drained:
+			return
+		case <-ctx.Done():
+			return
+		case <-idle.C:
+			s.outputMu.Lock()
+			pending, idleFor := s.pending, time.Since(s.lastActivity)
+			s.outputMu.Unlock()
+
+			if pending == 0 && idleFor >= outputIdleTimeout {
+				return
 			}
 
-			return nil
-		}
-
-		if err = g.processMessage(ctx, task, msg); err != nil {
-			return fmt.Errorf("error processing input message: %w", err)
+			idle.Reset(max(outputIdleTimeout-idleFor, outputIdleTimeout/10))
 		}
 	}
 }
 
-func (g *grpcStdioStreamer) processMessage(ctx context.Context, task containerdapi.Task, msg *machine.DebugContainerRunRequest) error {
-	switch msg.Request.(type) {
-	case *machine.DebugContainerRunRequest_StdinData:
-		if stdinData := msg.GetStdinData(); stdinData != nil {
-			_, err := g.stdinW.Write(stdinData)
-			if err != nil {
-				return fmt.Errorf("failed to write to stdin: %w", err)
+func (s *session) outputProgress(pendingDelta int) {
+	s.outputMu.Lock()
+	defer s.outputMu.Unlock()
+
+	s.pending += pendingDelta
+	s.lastActivity = time.Now()
+}
+
+// pump reads one output stream of the process and queues it for sending.
+func (s *session) pump(ctx context.Context, stream outputStream, r *io.PipeReader, sendC chan<- func() error) {
+	for {
+		buf := make([]byte, 4096)
+
+		n, err := r.Read(buf)
+		if n > 0 {
+			data := buf[:n]
+
+			s.outputProgress(1)
+
+			send := func() error {
+				defer func() {
+					s.outputProgress(-1)
+				}()
+
+				return s.adapter.sendOutput(stream, data)
+			}
+
+			select {
+			case sendC <- send:
+			case <-ctx.Done():
+				r.CloseWithError(ctx.Err()) //nolint:errcheck
+
+				return
 			}
 		}
 
-	case *machine.DebugContainerRunRequest_TermResize:
-		if err := task.Resize(
-			ctx,
-			uint32(msg.GetTermResize().Width),
-			uint32(msg.GetTermResize().Height),
-		); err != nil {
+		if err != nil {
+			return
+		}
+	}
+}
+
+// recvLoop applies the client's requests until the client stops sending.
+//
+// A client which stops sending also ends the process stdin.
+func (s *session) recvLoop(ctx context.Context, control processControl) error {
+	defer s.stdinW.Close() //nolint:errcheck
+
+	for {
+		msg, err := s.adapter.recv()
+		if err != nil {
+			if err == io.EOF || status.Code(err) == codes.Canceled {
+				return nil
+			}
+
+			return fmt.Errorf("error receiving input message: %w", err)
+		}
+
+		if err = s.apply(ctx, control, msg); err != nil {
+			return err
+		}
+	}
+}
+
+// apply applies a single request of the client.
+func (s *session) apply(ctx context.Context, control processControl, msg controlMessage) error {
+	switch {
+	case msg.stdinData != nil:
+		if _, err := s.stdinW.Write(msg.stdinData); err != nil && !errors.Is(err, io.ErrClosedPipe) {
+			return fmt.Errorf("failed to write to stdin: %w", err)
+		}
+	case msg.stdinEOF:
+		s.stdinW.Close() //nolint:errcheck
+	case msg.signal != 0:
+		if err := control.signal(ctx, msg.signal); err != nil {
+			return fmt.Errorf("failed to forward signal: %w", err)
+		}
+	case msg.resize != nil:
+		if err := control.resize(ctx, uint32(msg.resize.Width), uint32(msg.resize.Height)); err != nil { //nolint:gosec
 			return fmt.Errorf("failed to resize terminal: %w", err)
 		}
-
-	case *machine.DebugContainerRunRequest_Signal:
-		signalNum := msg.GetSignal()
-		log.Printf("debug container: received signal %d, forwarding to task", signalNum)
-
-		if err := task.Kill(ctx, syscall.Signal(signalNum)); err != nil {
-			return fmt.Errorf("debug container: failed to forward signal to task: %w", err)
-		}
-
-	default:
-		return fmt.Errorf("unknown request type: %T", msg.Request)
 	}
 
 	return nil
 }
 
-// hostNsControl carries out-of-band control messages from the gRPC recv loop
-// to the locked goroutine that owns the child process and pty master.
-type hostNsControl struct {
-	signal int32
-	resize *machine.DebugContainerTerminalResize
+// sendError reports a failure to send, unless the client has gone away.
+func sendError(err error) error {
+	if err == nil || status.Code(err) == codes.Canceled {
+		return nil
+	}
+
+	return fmt.Errorf("failed to send: %w", err)
 }
 
-// streamHostNs is the streaming coordinator for PROFILE_HOST_NS sessions.
-// Unlike stream(), it does not need a containerd Task. Signals and resize events
-// are forwarded to the child via controlC; stdin/stdout travel through pipes as usual.
-func (g *grpcStdioStreamer) streamHostNs(ctx context.Context, exitC <-chan int, controlC chan<- hostNsControl) error { //nolint:gocyclo,cyclop
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+// containerdProcess controls the containerd process of a session.
+type containerdProcess struct {
+	process containerdapi.Process
+}
 
-	sendLoopCh, recvLoopCh := make(chan error, 1), make(chan error, 1)
+// signal forwards a signal to the process; one which has exited already is no longer there to get it.
+func (p containerdProcess) signal(ctx context.Context, signal int32) error {
+	log.Printf("debug: forwarding signal %d to process %s", signal, p.process.ID())
 
-	go func(errCh chan<- error) {
-		errCh <- panicsafe.RunErr(g.sendLoop)
-	}(sendLoopCh)
+	if err := p.process.Kill(ctx, syscall.Signal(signal)); err != nil && !errdefs.IsNotFound(err) {
+		return err
+	}
 
-	go func(errCh chan<- error) {
-		errCh <- panicsafe.RunErr(func() error {
-			return g.recvLoopHostNs(controlC)
-		})
-	}(recvLoopCh)
+	return nil
+}
 
-	for {
+func (p containerdProcess) resize(ctx context.Context, width, height uint32) error {
+	if err := p.process.Resize(ctx, width, height); err != nil && !errdefs.IsNotFound(err) {
+		return err
+	}
+
+	return nil
+}
+
+// processExit reports the exit of a containerd process.
+func processExit(statusC <-chan containerdapi.ExitStatus) <-chan exitResult {
+	exitC := make(chan exitResult, 1)
+
+	go func() {
+		status := <-statusC
+
+		exitC <- exitResult{
+			code: int32(status.ExitCode()), //nolint:gosec
+			err:  status.Error(),
+		}
+	}()
+
+	return exitC
+}
+
+// ioCreator creates the stdio of a containerd process connected to the session.
+//
+// Canceling it also releases the session's side: containerd waits for the stdio to be copied once
+// it cancels it, e.g. when starting the process fails, which a write blocked on the session would
+// never let happen.
+func (s *session) ioCreator(opts ...cio.Opt) cio.Creator {
+	creator := cio.NewCreator(opts...)
+
+	return func(id string) (cio.IO, error) {
+		processIO, err := creator(id)
+		if err != nil {
+			return nil, err
+		}
+
+		return sessionIO{IO: processIO, session: s}, nil
+	}
+}
+
+// sessionIO is the stdio of a containerd process connected to a session.
+type sessionIO struct {
+	cio.IO
+
+	session *session
+}
+
+func (i sessionIO) Cancel() {
+	i.session.close()
+	i.IO.Cancel()
+}
+
+// processOutputDrained returns once containerd has copied all output of the process.
+func processOutputDrained(process containerdapi.Process) func(context.Context) {
+	return func(ctx context.Context) {
+		done := make(chan struct{})
+
+		go func() {
+			process.IO().Wait()
+			close(done)
+		}()
+
 		select {
-		case code := <-exitC:
-			g.stdoutW.Close() //nolint:errcheck
-			g.stdinW.Close()  //nolint:errcheck
-
-			cancel()
-
-			if sendLoopCh != nil {
-				<-sendLoopCh
-			}
-
-			if err := g.srv.Send(&machine.DebugContainerRunResponse{
-				Resp: &machine.DebugContainerRunResponse_ExitCode{
-					ExitCode: int32(code),
-				},
-			}); err != nil {
-				return fmt.Errorf("host-ns: send exit code: %w", err)
-			}
-
-			if recvLoopCh != nil {
-				<-recvLoopCh
-			}
-
-			return nil
-
-		case sendErr := <-sendLoopCh:
-			if sendErr == nil {
-				sendLoopCh = nil
-
-				continue
-			}
-
-			g.stdinW.Close() //nolint:errcheck
-
-			return fmt.Errorf("host-ns: send loop: %w", sendErr)
-
-		case recvErr := <-recvLoopCh:
-			if recvErr == nil {
-				recvLoopCh = nil
-
-				continue
-			}
-
-			g.stdoutW.Close() //nolint:errcheck
-
-			return fmt.Errorf("host-ns: recv loop: %w", recvErr)
-
+		case <-done:
 		case <-ctx.Done():
-			g.stdoutW.Close() //nolint:errcheck
-			g.stdinW.Close()  //nolint:errcheck
-
-			if recvLoopCh != nil {
-				<-recvLoopCh
-			}
-
-			if sendLoopCh != nil {
-				<-sendLoopCh
-			}
-
-			return ctx.Err()
-		}
-	}
-}
-
-// recvLoopHostNs reads gRPC messages, forwarding stdin bytes to the child pipe
-// and routing signals/resize events to the control loop via controlC.
-// Sends to controlC are non-blocking: if the child has already exited the
-// control loop goroutine will have stopped reading, and we drop rather than hang.
-func (g *grpcStdioStreamer) recvLoopHostNs(controlC chan<- hostNsControl) error { //nolint:gocyclo
-	defer g.stdinW.Close() //nolint:errcheck
-
-	for {
-		msg, err := g.srv.Recv()
-		if err != nil {
-			if status.Code(err) != codes.Canceled && err != io.EOF {
-				return fmt.Errorf("host-ns recv: %w", err)
-			}
-
-			return nil
-		}
-
-		switch msg.Request.(type) {
-		case *machine.DebugContainerRunRequest_StdinData:
-			if data := msg.GetStdinData(); len(data) > 0 {
-				if _, writeErr := g.stdinW.Write(data); writeErr != nil {
-					return fmt.Errorf("host-ns stdin write: %w", writeErr)
-				}
-			}
-
-		case *machine.DebugContainerRunRequest_Signal:
-			select {
-			case controlC <- hostNsControl{signal: msg.GetSignal()}:
-			default:
-			}
-
-		case *machine.DebugContainerRunRequest_TermResize:
-			select {
-			case controlC <- hostNsControl{resize: msg.GetTermResize()}:
-			default:
-			}
-
-		default:
-			log.Printf("host-ns: unknown request type %T", msg.Request)
-		}
-	}
-}
-
-func (g *grpcStdioStreamer) sendLoop() error {
-	defer g.stdoutW.Close() //nolint:errcheck
-
-	b := make([]byte, 512)
-
-	for {
-		n, err := g.stdoutR.Read(b)
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-
-			return fmt.Errorf("failed to read from stdout: %w", err)
-		}
-
-		err = g.srv.Send(&machine.DebugContainerRunResponse{
-			Resp: &machine.DebugContainerRunResponse_StdoutData{
-				StdoutData: b[:n],
-			},
-		})
-		if err != nil {
-			if status.Code(err) != codes.Canceled {
-				return fmt.Errorf("debug container: failed to send stdout data: %w", err)
-			}
-
-			return nil
 		}
 	}
 }
