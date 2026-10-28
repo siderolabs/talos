@@ -29,6 +29,7 @@ const (
 	nfsLogFile     = "nfs.log"
 	NFSExport      = "/export"
 	nfsMemoryStore = "memory"
+	nfsAdapterType = "nfs"
 )
 
 // NFSd serves an in-memory NFS export supporting NFSv3 and NFSv4.
@@ -53,6 +54,10 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 		return fmt.Errorf("create NFS control plane store: %w", err)
 	}
 	defer store.Close() //nolint:errcheck
+
+	if err = disableNFSDelegations(ctx, store, port); err != nil {
+		return err
+	}
 
 	metadataStoreID, err := store.CreateMetadataStore(ctx, &models.MetadataStoreConfig{
 		Name: nfsMemoryStore,
@@ -119,6 +124,40 @@ func NFSd(ctx context.Context, bindAddress string, port int) error {
 
 	if err := server.Serve(ctx); err != nil {
 		return fmt.Errorf("serve NFS: %w", err)
+	}
+
+	return nil
+}
+
+// disableNFSDelegations stores NFS adapter settings with delegations disabled.
+//
+// The server only recalls NFSv4 delegations on SMB access, never on NFSv3 access, so with
+// delegations enabled an NFSv3 client reads stale data for a file an NFSv4 client holds a write
+// delegation on: the NFSv4 client doesn't flush its writes on close under such a delegation.
+// The settings are picked up when the server is attached to the runtime.
+func disableNFSDelegations(ctx context.Context, store controlplanestore.Store, port int) error {
+	adapterID, err := store.CreateAdapter(ctx, &models.AdapterConfig{
+		Type:    nfsAdapterType,
+		Enabled: true,
+		Port:    port,
+	})
+	if err != nil {
+		return fmt.Errorf("create NFS adapter: %w", err)
+	}
+
+	if err = store.EnsureAdapterSettings(ctx); err != nil {
+		return fmt.Errorf("create NFS adapter settings: %w", err)
+	}
+
+	settings, err := store.GetNFSAdapterSettings(ctx, adapterID)
+	if err != nil {
+		return fmt.Errorf("get NFS adapter settings: %w", err)
+	}
+
+	settings.DelegationsEnabled = false
+
+	if err = store.UpdateNFSAdapterSettings(ctx, settings); err != nil {
+		return fmt.Errorf("update NFS adapter settings: %w", err)
 	}
 
 	return nil
