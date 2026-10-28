@@ -1430,6 +1430,16 @@
           "markdownDescription": "Filesystems to mount into the container.",
           "x-intellij-html-description": "\u003cp\u003eFilesystems to mount into the container.\u003c/p\u003e\n"
         },
+        "devices": {
+          "items": {
+            "$ref": "#/$defs/container.ContainerDevice"
+          },
+          "type": "array",
+          "title": "devices",
+          "description": "Devices to hand to the container.\n",
+          "markdownDescription": "Devices to hand to the container.",
+          "x-intellij-html-description": "\u003cp\u003eDevices to hand to the container.\u003c/p\u003e\n"
+        },
         "security": {
           "$ref": "#/$defs/container.ContainerSecurity",
           "title": "security",
@@ -1512,6 +1522,20 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ContainerDependsOn gates container startup on external conditions."
+    },
+    "container.ContainerDevice": {
+      "properties": {
+        "rawVolume": {
+          "$ref": "#/$defs/container.RawVolumeDevice",
+          "title": "rawVolume",
+          "description": "Hand a raw volume to the container as a block device.\n\nThe raw volume is referenced by the name of its RawVolumeConfig document.\nThe container gets a device node at the destination and is allowed to read and write\nthat device, and no other block device. This works with the restricted profile,\nno capabilities are added. For an encrypted raw volume the node is the unlocked device.\n\nDeclaring this device makes the container wait for the raw volume to be ready, and the\nraw volume is not closed while the container is running. A raw volume can be handed to\na single container only.\n",
+          "markdownDescription": "Hand a raw volume to the container as a block device.\n\nThe raw volume is referenced by the name of its `RawVolumeConfig` document.\nThe container gets a device node at the destination and is allowed to read and write\nthat device, and no other block device. This works with the `restricted` profile,\nno capabilities are added. For an encrypted raw volume the node is the unlocked device.\n\nDeclaring this device makes the container wait for the raw volume to be ready, and the\nraw volume is not closed while the container is running. A raw volume can be handed to\na single container only.",
+          "x-intellij-html-description": "\u003cp\u003eHand a raw volume to the container as a block device.\u003c/p\u003e\n\n\u003cp\u003eThe raw volume is referenced by the name of its \u003ccode\u003eRawVolumeConfig\u003c/code\u003e document.\nThe container gets a device node at the destination and is allowed to read and write\nthat device, and no other block device. This works with the \u003ccode\u003erestricted\u003c/code\u003e profile,\nno capabilities are added. For an encrypted raw volume the node is the unlocked device.\u003c/p\u003e\n\n\u003cp\u003eDeclaring this device makes the container wait for the raw volume to be ready, and the\nraw volume is not closed while the container is running. A raw volume can be handed to\na single container only.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerDevice describes a single device to hand to the container.\\n\\nExactly one source must be set.\\n"
     },
     "container.ContainerMount": {
       "properties": {
@@ -1676,6 +1700,27 @@
       "additionalProperties": false,
       "type": "object",
       "description": "HostPathMount bind-mounts a host path."
+    },
+    "container.RawVolumeDevice": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the RawVolumeConfig document.\n",
+          "markdownDescription": "Name of the `RawVolumeConfig` document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eRawVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n"
+        },
+        "destination": {
+          "type": "string",
+          "title": "destination",
+          "description": "Path of the device node inside the container.\n\nMust be under /dev/, and not one of the entries the container runtime creates there\nitself (e.g. /dev/null, /dev/pts). The node keeps the owner and mode of the device\non the host.\n",
+          "markdownDescription": "Path of the device node inside the container.\n\nMust be under `/dev/`, and not one of the entries the container runtime creates there\nitself (e.g. `/dev/null`, `/dev/pts`). The node keeps the owner and mode of the device\non the host.",
+          "x-intellij-html-description": "\u003cp\u003ePath of the device node inside the container.\u003c/p\u003e\n\n\u003cp\u003eMust be under \u003ccode\u003e/dev/\u003c/code\u003e, and not one of the entries the container runtime creates there\nitself (e.g. \u003ccode\u003e/dev/null\u003c/code\u003e, \u003ccode\u003e/dev/pts\u003c/code\u003e). The node keeps the owner and mode of the device\non the host.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "RawVolumeDevice hands a raw volume to the container by name."
     },
     "container.TmpfsMount": {
       "properties": {

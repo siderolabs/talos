@@ -85,6 +85,13 @@ func TestProtobufRoundTrip(t *testing.T) {
 			Time:       true,
 			Containers: []string{"other"},
 		},
+		Devices: []containers.ContainerDeviceSpec{
+			{
+				Kind:        containers.DeviceKindRawVolume,
+				VolumeName:  "data",
+				Destination: "/dev/data",
+			},
+		},
 	}
 
 	assertRoundTrip(t, spec)
@@ -144,6 +151,15 @@ func TestInstanceProtobufRoundTrip(t *testing.T) {
 		Network: containers.ContainerNetworkSpec{HostNetwork: true},
 		// A zero swap limit is the interesting case: it must come back as a pointer to zero, not nil.
 		Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500, SwapLimit: new(uint64(0))},
+		Devices: []containers.ResolvedDeviceSpec{
+			{
+				Kind:        containers.DeviceKindRawVolume,
+				Source:      "/dev/dm-0",
+				Destination: "/dev/data",
+				VolumeID:    "r-data",
+				VolumeName:  "data",
+			},
+		},
 	}
 
 	assertRoundTrip(t, spec)
@@ -192,6 +208,15 @@ func TestMountStatusProtobufRoundTrip(t *testing.T) {
 			},
 		},
 		Error: "volume \"u-other\" is not mounted",
+		Devices: []containers.ResolvedDeviceSpec{
+			{
+				Kind:        containers.DeviceKindRawVolume,
+				Source:      "/dev/dm-0",
+				Destination: "/dev/data",
+				VolumeID:    "r-data",
+				VolumeName:  "data",
+			},
+		},
 	}
 
 	assertRoundTrip(t, status)

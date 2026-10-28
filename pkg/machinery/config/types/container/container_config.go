@@ -109,6 +109,11 @@ type ContainerConfigV1Alpha1 struct {
 	//     Filesystems to mount into the container.
 	MountsConfig []ContainerMount `yaml:"mounts,omitempty"`
 	//   description: |
+	//     Devices to hand to the container.
+	//   examples:
+	//     - value: exampleContainerDevices()
+	DevicesConfig []ContainerDevice `yaml:"devices,omitempty"`
+	//   description: |
 	//     Security settings for the container.
 	SecurityConfig *ContainerSecurity `yaml:"security,omitempty"`
 	//   description: |
@@ -165,6 +170,17 @@ func exampleContainerConfigV1Alpha1() *ContainerConfigV1Alpha1 {
 	}
 
 	return cfg
+}
+
+func exampleContainerDevices() []ContainerDevice {
+	return []ContainerDevice{
+		{
+			RawVolumeDevice: &RawVolumeDevice{
+				VolumeName:        "data",
+				DeviceDestination: "/dev/data",
+			},
+		},
+	}
 }
 
 // Name implements config.NamedDocument interface.
@@ -260,7 +276,7 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 		}
 	}
 
-	validationErrors = errors.Join(validationErrors, c.ValidateMounts())
+	validationErrors = errors.Join(validationErrors, c.ValidateMounts(), c.ValidateDevices())
 
 	if c.SecurityConfig != nil {
 		validationErrors = errors.Join(validationErrors, c.SecurityConfig.Validate())
@@ -309,12 +325,81 @@ func (c *ContainerConfigV1Alpha1) ValidateMounts() error {
 	return validationErrors
 }
 
+// ValidateDevices checks the devices, and that their destinations overlap neither each other nor the
+// mounts: the runtime does not create a device node where a path already exists.
+//
+//nolint:gocyclo
+func (c *ContainerConfigV1Alpha1) ValidateDevices() error {
+	var (
+		validationErrors error
+		destinations     = make([]string, len(c.DevicesConfig))
+		rawVolumes       = map[string]int{}
+	)
+
+	for i, device := range c.DevicesConfig {
+		destination, err := device.Validate()
+		if err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("devices[%d]: %w", i, err))
+
+			continue
+		}
+
+		destinations[i] = destination
+
+		for j := range i {
+			if destinations[j] != "" && pathsOverlap(destinations[j], destination) {
+				validationErrors = errors.Join(validationErrors,
+					fmt.Errorf("devices[%d]: destination %q overlaps devices[%d] destination %q", i, destination, j, destinations[j]))
+			}
+		}
+
+		if rawVolume, ok := device.RawVolume().Get(); ok {
+			if j, exists := rawVolumes[rawVolume.Name()]; exists {
+				validationErrors = errors.Join(validationErrors,
+					fmt.Errorf("devices[%d]: raw volume %q is already handed to the container by devices[%d]", i, rawVolume.Name(), j))
+			} else {
+				rawVolumes[rawVolume.Name()] = i
+			}
+		}
+	}
+
+	for j, mount := range c.MountsConfig {
+		mountDestination, err := mount.Validate()
+		if err != nil {
+			// Reported by ValidateMounts.
+			continue
+		}
+
+		mountDestination = filepath.Clean(mountDestination)
+
+		for i, destination := range destinations {
+			if destination != "" && pathsOverlap(mountDestination, destination) {
+				validationErrors = errors.Join(validationErrors,
+					fmt.Errorf("devices[%d]: destination %q overlaps mounts[%d] destination %q", i, destination, j, mountDestination))
+			}
+		}
+	}
+
+	return validationErrors
+}
+
 // Mounts implements config.ContainerConfig interface.
 func (c *ContainerConfigV1Alpha1) Mounts() []config.ContainerMountConfig {
 	out := make([]config.ContainerMountConfig, 0, len(c.MountsConfig))
 
 	for i := range c.MountsConfig {
 		out = append(out, &c.MountsConfig[i])
+	}
+
+	return out
+}
+
+// Devices implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) Devices() []config.ContainerDeviceConfig {
+	out := make([]config.ContainerDeviceConfig, 0, len(c.DevicesConfig))
+
+	for i := range c.DevicesConfig {
+		out = append(out, &c.DevicesConfig[i])
 	}
 
 	return out

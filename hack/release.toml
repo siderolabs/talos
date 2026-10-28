@@ -419,6 +419,21 @@ runAs:
 ```
 """
 
+    [notes.container_raw_volume_devices]
+        title = "ContainerConfig Raw Volume Devices"
+        description = """\
+A `RawVolumeConfig` can be handed to a container as a block device with the new `devices` field of `ContainerConfig`:
+
+```yaml
+devices:
+  - rawVolume:
+      name: data
+      destination: /dev/data
+```
+
+The container gets a device node at the destination and is allowed to read and write that device only, so it does not need the `privileged` profile. The container waits for the raw volume to be ready, gets the unlocked device for an encrypted raw volume, and the raw volume is not closed while the container runs. A raw volume can be handed to a single container.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

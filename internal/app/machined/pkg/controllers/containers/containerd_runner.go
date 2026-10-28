@@ -209,6 +209,10 @@ func (r *containerdRunner) ociSpecOpts(spec containersres.ContainerInstanceSpecS
 		opts = append(opts, oci.WithMounts(mounts))
 	}
 
+	if len(spec.Devices) > 0 {
+		opts = append(opts, WithResolvedDevices(spec.Devices))
+	}
+
 	// An rshared bind can only join the host peer group when the container's
 	// rootfs propagation is shared: with the runc default (recursive slave),
 	// the bind lands in a new peer group slaved to the host, and mounts created
@@ -437,6 +441,19 @@ func MountsResolvedToOCI(mounts []containersres.ResolvedMountSpec) []specs.Mount
 	}
 
 	return out
+}
+
+// WithResolvedDevices adds a device node and a device cgroup rule allowing it for each resolved device.
+func WithResolvedDevices(devices []containersres.ResolvedDeviceSpec) oci.SpecOpts {
+	return func(ctx context.Context, client oci.Client, c *ctrdcontainers.Container, s *specs.Spec) error {
+		for _, device := range devices {
+			if err := oci.WithDevices(device.Source, device.Destination, "rw")(ctx, client, c, s); err != nil {
+				return fmt.Errorf("failed to add device %q: %w", device.Destination, err)
+			}
+		}
+
+		return nil
+	}
 }
 
 // MountsRequestSharedPropagation reports whether any declared mount asks for

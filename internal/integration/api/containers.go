@@ -30,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -37,6 +38,7 @@ import (
 	configcontainer "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	cfgcontainer "github.com/siderolabs/talos/pkg/machinery/config/container"
+	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
 	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
@@ -1188,6 +1190,145 @@ func (suite *ContainersSuite) TestUserVolumeMountWritableByDefault() {
 		})
 }
 
+// TestRawVolumeDevice verifies that a restricted container can do direct IO on an encrypted raw volume
+// handed to it as a device, and can't open another block device, and that the raw volume is held while
+// the container runs.
+func (suite *ContainersSuite) TestRawVolumeDevice() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machinetype.TypeWorker)
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+	if len(userDisks) < 1 {
+		suite.T().Skipf("not enough user disks on %s: %q", node, userDisks)
+	}
+
+	var (
+		rawVolumeName string
+		partition     string
+	)
+
+	// Registered before setupContainerOn, so it runs after the container is removed: a raw volume
+	// handed to a container can't be removed on its own.
+	suite.T().Cleanup(func() {
+		if rawVolumeName == "" {
+			return
+		}
+
+		cleanupCtx := client.WithNode(context.Background(), node)
+
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, blockcfg.RawVolumeConfigKind, rawVolumeName)
+
+		if partition == "" {
+			return
+		}
+
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			assert.NoError(collect, suite.Client.BlockDeviceWipe(cleanupCtx, &storage.BlockDeviceWipeRequest{
+				Devices: []*storage.BlockDeviceWipeDescriptor{
+					{
+						Device:        filepath.Base(partition),
+						Method:        storage.BlockDeviceWipeDescriptor_FAST,
+						DropPartition: true,
+					},
+				},
+			}))
+		}, time.Minute, time.Second)
+	})
+
+	ctx, name := suite.setupContainerOn("rawdevice", node)
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(disk.TypedSpec().Symlinks)
+
+	rawVolumeName = fmt.Sprintf("itv-raw-%04x", rand.Int31())
+	rawVolumeID := constants.RawVolumePrefix + rawVolumeName
+
+	rawVolume := blockcfg.NewRawVolumeConfigV1Alpha1()
+	rawVolume.MetaName = rawVolumeName
+	rawVolume.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+	)
+	rawVolume.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	rawVolume.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
+	rawVolume.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeySlot:   0,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{KeyData: "topsecretpassphrase"},
+			},
+		},
+	}
+
+	// The disk holding the raw volume is mounted in as well: its node is there, but the device cgroup
+	// must refuse to open it.
+	doc := suite.shellContainer(name, strings.Join([]string{
+		"dd if=/dev/zero of=/dev/data bs=4096 count=1 oflag=direct",
+		"dd if=/dev/data of=/dev/null bs=4096 count=1 iflag=direct",
+		"echo device-ok",
+		"dd if=/dev/other of=/dev/null bs=4096 count=1 || echo other-refused",
+		"sleep 3600",
+	}, " && "))
+	doc.DevicesConfig = []containercfg.ContainerDevice{
+		{
+			RawVolumeDevice: &containercfg.RawVolumeDevice{
+				VolumeName:        rawVolumeName,
+				DeviceDestination: "/dev/data",
+			},
+		},
+	}
+	doc.MountsConfig = []containercfg.ContainerMount{
+		{
+			HostPathMount: &containercfg.HostPathMount{
+				MountSource:      userDisks[0],
+				MountDestination: "/dev/other",
+			},
+		},
+	}
+
+	suite.PatchMachineConfig(ctx, rawVolume, doc)
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), rawVolumeID,
+		func(status *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
+		}, rtestutils.WithReportInterval(30*time.Second))
+
+	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.State(), rawVolumeID)
+	suite.Require().NoError(err)
+
+	partition = volumeStatus.TypedSpec().Location
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
+		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+
+			if !asrt.Len(status.TypedSpec().Devices, 1) {
+				return
+			}
+
+			// The unlocked device, not the encrypted partition.
+			asrt.Equal(volumeStatus.TypedSpec().MountLocation, status.TypedSpec().Devices[0].Source)
+			asrt.NotEqual(partition, status.TypedSpec().Devices[0].Source)
+		})
+
+	suite.assertContainerLogged(ctx, name, "device-ok", "Operation not permitted", "other-refused")
+	suite.assertContainerRunning(ctx, name, "with the raw volume device")
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), rawVolumeID,
+		func(status *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.True(status.Metadata().Finalizers().Has(containerMountControllerName+"/"+name),
+				"the raw volume is not held for the container, finalizers: %v", status.Metadata().Finalizers())
+		})
+}
+
 // TestVolumeMountGate verifies that a container mounting a volume nothing declares is rejected when
 // the configuration is applied, that a container whose volume is declared but not mounted is
 // withheld, and that it starts once the name resolves to a volume which mounts.
@@ -1497,6 +1638,13 @@ sleep 3600`,
 // volume which is not declared, so neither can be removed on its own while the other is still there.
 func (suite *ContainersSuite) setupContainer(purpose string) (context.Context, string, string) {
 	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx, name := suite.setupContainerOn(purpose, node)
+
+	return ctx, name, node
+}
+
+// setupContainerOn is setupContainer on the given node.
+func (suite *ContainersSuite) setupContainerOn(purpose, node string) (context.Context, string) {
 	ctx := client.WithNode(suite.ctx, node)
 
 	name := fmt.Sprintf("test-%s-%d", purpose, time.Now().UnixNano())
@@ -1532,7 +1680,7 @@ func (suite *ContainersSuite) setupContainer(purpose string) (context.Context, s
 			})
 	})
 
-	return ctx, name, node
+	return ctx, name
 }
 
 // ownVolume records that the volume is removed together with the owning container.

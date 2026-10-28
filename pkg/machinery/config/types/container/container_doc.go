@@ -79,6 +79,13 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Filesystems to mount into the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "devices",
+				Type:        "[]ContainerDevice",
+				Note:        "",
+				Description: "Devices to hand to the container.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Devices to hand to the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "security",
 				Type:        "ContainerSecurity",
 				Note:        "",
@@ -112,6 +119,68 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleContainerConfigV1Alpha1())
 
 	doc.Fields[2].AddExample("", "docker.io/library/nginx:1.27")
+	doc.Fields[9].AddExample("", exampleContainerDevices())
+
+	return doc
+}
+
+func (ContainerDevice) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerDevice",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerDevice describes a single device to hand to the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerDevice describes a single device to hand to the container.\n\nExactly one source must be set.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerConfigV1Alpha1",
+				FieldName: "devices",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "rawVolume",
+				Type:        "RawVolumeDevice",
+				Note:        "",
+				Description: "Hand a raw volume to the container as a block device.\n\nThe raw volume is referenced by the name of its `RawVolumeConfig` document.\nThe container gets a device node at the destination and is allowed to read and write\nthat device, and no other block device. This works with the `restricted` profile,\nno capabilities are added. For an encrypted raw volume the node is the unlocked device.\n\nDeclaring this device makes the container wait for the raw volume to be ready, and the\nraw volume is not closed while the container is running. A raw volume can be handed to\na single container only.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Hand a raw volume to the container as a block device." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleContainerDevices())
+
+	return doc
+}
+
+func (RawVolumeDevice) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RawVolumeDevice",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RawVolumeDevice hands a raw volume to the container by name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RawVolumeDevice hands a raw volume to the container by name.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerDevice",
+				FieldName: "rawVolume",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the `RawVolumeConfig` document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `RawVolumeConfig` document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "destination",
+				Type:        "string",
+				Note:        "",
+				Description: "Path of the device node inside the container.\n\nMust be under `/dev/`, and not one of the entries the container runtime creates there\nitself (e.g. `/dev/null`, `/dev/pts`). The node keeps the owner and mode of the device\non the host.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Path of the device node inside the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[1].AddExample("", "/dev/data")
 
 	return doc
 }
@@ -557,6 +626,8 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package container provides container configuration documents.\n",
 		Structs: []*encoder.Doc{
 			ContainerConfigV1Alpha1{}.Doc(),
+			ContainerDevice{}.Doc(),
+			RawVolumeDevice{}.Doc(),
 			ContainerMount{}.Doc(),
 			VolumeMount{}.Doc(),
 			TmpfsMount{}.Doc(),

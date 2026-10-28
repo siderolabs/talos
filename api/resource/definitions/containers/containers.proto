@@ -22,6 +22,16 @@ message ContainerDependsOnSpec {
   repeated string containers = 4;
 }
 
+// ContainerDeviceSpec is a device handed to the container.
+message ContainerDeviceSpec {
+  // Kind is "rawVolume".
+  string kind = 1;
+  // VolumeName is the name of the RawVolumeConfig a rawVolume device refers to, e.g. "data".
+  string volume_name = 2;
+  // Destination of the device node inside the container.
+  string destination = 3;
+}
+
 // ContainerImageSpec is a resolved container image reference.
 message ContainerImageSpec {
   string ref = 1;
@@ -60,6 +70,8 @@ message ContainerInstanceSpecSpec {
   ContainerSecuritySpec security = 10;
   ContainerNetworkSpec network = 11;
   ContainerResourcesSpec resources = 12;
+  // Devices are fully resolved, with host device nodes filled in.
+  repeated ResolvedDeviceSpec devices = 13;
 }
 
 // ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
@@ -109,6 +121,8 @@ message ContainerMountStatusSpec {
   repeated ResolvedMountSpec mounts = 2;
   // Error describes why the mounts are not ready.
   string error = 3;
+  // Devices are the resolved devices, with host device nodes filled in. Only meaningful when Ready.
+  repeated ResolvedDeviceSpec devices = 4;
 }
 
 // ContainerNetworkSpec is the resolved network configuration.
@@ -160,6 +174,7 @@ message ContainerSpecSpec {
   ContainerNetworkSpec network = 9;
   ContainerResourcesSpec resources = 10;
   ContainerDependsOnSpec depends_on = 11;
+  repeated ContainerDeviceSpec devices = 12;
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.
@@ -180,6 +195,18 @@ message ContainerStatusSpec {
   string error = 7;
   // WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
   repeated string waiting_for = 8;
+}
+
+// ResolvedDeviceSpec is a device with its host-side device node resolved.
+message ResolvedDeviceSpec {
+  string kind = 1;
+  // Source is the device node on the host, e.g. "/dev/sdb1", or "/dev/dm-0" for an encrypted volume.
+  string source = 2;
+  string destination = 3;
+  // VolumeID is the block volume ID of a rawVolume device, e.g. "r-data".
+  string volume_id = 4;
+  // VolumeName is the name of the RawVolumeConfig a rawVolume device refers to.
+  string volume_name = 5;
 }
 
 // ResolvedMountSpec is a mount with its host-side source resolved.

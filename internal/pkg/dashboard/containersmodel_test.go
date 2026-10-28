@@ -210,6 +210,9 @@ func TestFormatContainerDetail(t *testing.T) {
 			{Kind: containers.MountKindVolume, VolumeName: "web-content", Destination: "/var/www"},
 			{Kind: containers.MountKindTmpfs, Size: 64 << 20, Destination: "/var/cache", Options: []string{"rw"}},
 		},
+		Devices: []containers.ContainerDeviceSpec{
+			{Kind: containers.DeviceKindRawVolume, VolumeName: "data", Destination: "/dev/data"},
+		},
 		DependsOn: containers.ContainerDependsOnSpec{
 			Networks:   []string{"addresses"},
 			Time:       true,
@@ -239,6 +242,7 @@ func TestFormatContainerDetail(t *testing.T) {
 	assert.Contains(t, detail, "no swap")
 	assert.Contains(t, detail, "volume web-content to /var/www")
 	assert.Contains(t, detail, "tmpfs 64 MiB to /var/cache (rw)")
+	assert.Contains(t, detail, "raw volume data to /dev/data")
 	assert.Contains(t, detail, "network addresses · time · containers collector")
 }
 

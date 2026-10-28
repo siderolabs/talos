@@ -362,7 +362,7 @@ func formatContainerDetail(
 
 		fields = append(fields,
 			[2]string{"Runs as", formatRuntimeConfig(containerSpec)},
-			[2]string{"Mounts", tview.Escape(formatMounts(containerSpec.Mounts))},
+			[2]string{"Mounts", tview.Escape(formatMounts(containerSpec.Mounts, containerSpec.Devices))},
 			[2]string{"Depends on", tview.Escape(formatDependsOn(containerSpec.DependsOn))},
 		)
 	}
@@ -463,14 +463,14 @@ func networkMode(network containers.ContainerNetworkSpec) string {
 	return "none"
 }
 
-// formatMounts renders the resolved mounts, source first so that the destination lines up with
-// what the container sees.
-func formatMounts(mounts []containers.ContainerMountSpec) string {
-	if len(mounts) == 0 {
+// formatMounts renders the resolved mounts and devices, source first so that the destination lines up
+// with what the container sees.
+func formatMounts(mounts []containers.ContainerMountSpec, devices []containers.ContainerDeviceSpec) string {
+	if len(mounts) == 0 && len(devices) == 0 {
 		return none
 	}
 
-	rendered := make([]string, 0, len(mounts))
+	rendered := make([]string, 0, len(mounts)+len(devices))
 
 	for _, mount := range mounts {
 		source := mount.Kind
@@ -497,6 +497,10 @@ func formatMounts(mounts []containers.ContainerMountSpec) string {
 		}
 
 		rendered = append(rendered, entry)
+	}
+
+	for _, device := range devices {
+		rendered = append(rendered, fmt.Sprintf("raw volume %s to %s", device.VolumeName, device.Destination))
 	}
 
 	return strings.Join(rendered, " · ")

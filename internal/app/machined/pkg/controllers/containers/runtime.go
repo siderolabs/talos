@@ -101,6 +101,11 @@ func (ctrl *RuntimeController) Inputs() []controller.Input {
 			ID:        optional.Some(criServiceID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerMountStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -484,6 +489,11 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 				return nil
 			}
 
+			refused, err := ctrl.refuseStale(ctx, runtime, logger, containerInstanceSpec)
+			if err != nil || refused {
+				return err
+			}
+
 			instanceRun = ctrl.start(logger, containerInstanceSpec)
 			ctrl.instances[instanceSpecID] = instanceRun
 		}
@@ -541,6 +551,53 @@ func (ctrl *RuntimeController) stopAll(logger *zap.Logger) {
 
 		logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
 	}
+}
+
+// refuseStale marks an instance failed instead of starting it if MountController no longer holds its
+// mounts and devices.
+func (ctrl *RuntimeController) refuseStale(
+	ctx context.Context,
+	runtime controller.Runtime,
+	logger *zap.Logger,
+	containerInstanceSpec *containers.ContainerInstanceSpec,
+) (bool, error) {
+	instanceSpec := containerInstanceSpec.TypedSpec()
+
+	resolved, err := containers.GetResolvedMountStatus(ctx, runtime, instanceSpec.ContainerID)
+	if err != nil {
+		return false, err
+	}
+
+	if instanceSpec.ResolvedEqual(resolved) {
+		return false, nil
+	}
+
+	logger.Info("mounts or devices changed before the container was started, not starting it",
+		zap.String("instance", containerInstanceSpec.Metadata().ID()),
+	)
+
+	now := time.Now()
+
+	if err := safe.WriterModify(ctx, runtime,
+		containers.NewContainerInstanceStatus(containers.NamespaceName, containerInstanceSpec.Metadata().ID()),
+		func(res *containers.ContainerInstanceStatus) error {
+			res.Metadata().Labels().Set(containers.ContainerSpecIdLabel, instanceSpec.ContainerID)
+
+			*res.TypedSpec() = containers.ContainerInstanceStatusSpec{
+				ContainerID: instanceSpec.ContainerID,
+				Generation:  instanceSpec.Generation,
+				Phase:       containers.ContainerInstancePhaseFailed,
+				Error:       "mounts or devices changed before the container was started",
+				FinishedAt:  now,
+			}
+
+			return nil
+		},
+	); err != nil {
+		return false, fmt.Errorf("failed to write instance status %q: %w", containerInstanceSpec.Metadata().ID(), err)
+	}
+
+	return true, nil
 }
 
 // retainFinished reports whether the instance already ran to completion, keeping its status if so.

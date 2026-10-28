@@ -29,6 +29,8 @@ type ContainerConfig interface {
 	Environment() []string
 	// Mounts to set up in the container's mount namespace.
 	Mounts() []ContainerMountConfig
+	// Devices to hand to the container.
+	Devices() []ContainerDeviceConfig
 	// Security settings; never nil.
 	Security() ContainerSecurityConfig
 	// Network settings; never nil.
@@ -78,6 +80,21 @@ type ContainerHostPathMountConfig interface {
 	Destination() string
 	// MountOptions with the writable default already applied.
 	MountOptions() []string
+}
+
+// ContainerDeviceConfig defines a single device handed to a container.
+//
+// Exactly one source is present.
+type ContainerDeviceConfig interface {
+	RawVolume() optional.Optional[ContainerRawVolumeDeviceConfig]
+}
+
+// ContainerRawVolumeDeviceConfig hands a raw volume to a container as a block device.
+type ContainerRawVolumeDeviceConfig interface {
+	// Name of the RawVolumeConfig document.
+	Name() string
+	// Destination of the device node inside the container.
+	Destination() string
 }
 
 // ContainerSecurityProfile selects the security posture for a container.

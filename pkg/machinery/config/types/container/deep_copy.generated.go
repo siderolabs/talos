@@ -71,6 +71,16 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			}
 		}
 	}
+	if o.DevicesConfig != nil {
+		cp.DevicesConfig = make([]ContainerDevice, len(o.DevicesConfig))
+		copy(cp.DevicesConfig, o.DevicesConfig)
+		for i2 := range o.DevicesConfig {
+			if o.DevicesConfig[i2].RawVolumeDevice != nil {
+				cp.DevicesConfig[i2].RawVolumeDevice = new(RawVolumeDevice)
+				*cp.DevicesConfig[i2].RawVolumeDevice = *o.DevicesConfig[i2].RawVolumeDevice
+			}
+		}
+	}
 	if o.SecurityConfig != nil {
 		cp.SecurityConfig = new(ContainerSecurity)
 		*cp.SecurityConfig = *o.SecurityConfig

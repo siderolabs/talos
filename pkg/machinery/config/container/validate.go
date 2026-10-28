@@ -300,6 +300,12 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	// Container raw volume devices must name a declared raw volume, handed to a single container.
+	// A per-document Validate() cannot see the other documents, so this is a container-level check.
+	if err := validateContainerRawVolumeDevices(container); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// A volume backs a single content library, and must not be read-only. A per-document Validate()
 	// cannot see the other documents, so this is a container-level check.
 	if err := validateContentLibraryBackingVolumes(container); err != nil {

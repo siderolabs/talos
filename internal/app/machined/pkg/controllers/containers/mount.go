@@ -76,6 +76,11 @@ func (ctrl *MountController) Inputs() []controller.Input {
 			Kind:      controller.InputStrong,
 		},
 		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			Kind:      controller.InputStrong,
+		},
+		{
 			// InputDestroyReady is what lets this controller tear down its own mount requests: it
 			// wakes us when one is tearing down with no finalizers left.
 			Namespace: block.NamespaceName,
@@ -146,7 +151,12 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 			return err
 		}
 
-		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), held == 0)
+		heldDevices, err := ctrl.releaseAllDevices(ctx, runtime, logger, containerLifecycle)
+		if err != nil {
+			return err
+		}
+
+		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), held+heldDevices == 0)
 	}
 
 	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, runtime)
@@ -170,25 +180,39 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 		cfg = machineConfig.Config()
 	}
 
+	users, err := ctrl.deviceUsers(ctx, runtime)
+	if err != nil {
+		return err
+	}
+
 	runtime.StartTrackingOutputs()
 
 	wanted := map[string]struct{}{}
+	wantedHolds := map[string]map[string]struct{}{}
 
 	for containerSpec := range containerSpecs.All() {
 		containerSpecID := containerSpec.Metadata().ID()
 
 		_, isLive := live[containerSpecID]
 
-		resolvedMounts, ready, reason, err := ctrl.reconcileContainer(ctx, runtime, logger, cfg, containerSpec, isLive, wanted)
+		resolvedMounts, mountsReady, reason, err := ctrl.reconcileContainer(ctx, runtime, logger, cfg, containerSpec, isLive, wanted)
 		if err != nil {
 			return err
 		}
 
+		resolvedDevices, devicesReady, deviceReasons, err := ctrl.reconcileContainerDevices(ctx, runtime, logger, containerSpec, users, wantedHolds)
+		if err != nil {
+			return err
+		}
+
+		reason = joinReasons(reason, deviceReasons)
+
 		if err := safe.WriterModify(ctx, runtime,
 			containers.NewContainerMountStatus(containers.NamespaceName, containerSpecID),
 			func(res *containers.ContainerMountStatus) error {
-				res.TypedSpec().Ready = ready
+				res.TypedSpec().Ready = mountsReady && devicesReady
 				res.TypedSpec().Mounts = resolvedMounts
+				res.TypedSpec().Devices = resolvedDevices
 				res.TypedSpec().Error = reason
 
 				return nil
@@ -202,11 +226,26 @@ func (ctrl *MountController) reconcile(ctx context.Context, runtime controller.R
 		return err
 	}
 
+	// Before the devices are released, so that a container which is gone no longer has a status
+	// reporting its devices as resolved.
 	if err := safe.CleanupOutputs[*containers.ContainerMountStatus](ctx, runtime); err != nil {
 		return fmt.Errorf("failed to clean up outputs: %w", err)
 	}
 
+	if err := ctrl.releaseUnwantedDevices(ctx, runtime, logger, wantedHolds); err != nil {
+		return err
+	}
+
 	return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(wanted) == 0)
+}
+
+// joinReasons appends the device reasons to the mount reason.
+func joinReasons(reason string, deviceReasons []string) string {
+	if reason != "" {
+		deviceReasons = append([]string{reason}, deviceReasons...)
+	}
+
+	return strings.Join(deviceReasons, "; ")
 }
 
 // liveContainers returns the containers which may still be using their mounts.

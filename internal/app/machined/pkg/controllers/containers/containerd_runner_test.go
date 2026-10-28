@@ -9,6 +9,8 @@ import (
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -267,4 +269,59 @@ func TestWithRunAs(t *testing.T) {
 		fn := containersctrl.WithRunAs(spec)
 		assert.NotNil(t, fn)
 	})
+}
+
+func TestWithResolvedDevices(t *testing.T) {
+	t.Parallel()
+
+	var hostDevice unix.Stat_t
+
+	require.NoError(t, unix.Stat("/dev/null", &hostDevice))
+
+	spec := &specs.Spec{
+		Linux: &specs.Linux{
+			Resources: &specs.LinuxResources{
+				Devices: []specs.LinuxDeviceCgroup{{Allow: false, Access: "rwm"}},
+			},
+		},
+	}
+
+	err := containersctrl.WithResolvedDevices([]containers.ResolvedDeviceSpec{
+		{
+			Kind:        containers.DeviceKindRawVolume,
+			Source:      "/dev/null",
+			Destination: "/dev/data",
+			VolumeID:    "r-data",
+			VolumeName:  "data",
+		},
+	})(t.Context(), nil, nil, spec)
+	require.NoError(t, err)
+
+	major, minor := int64(unix.Major(hostDevice.Rdev)), int64(unix.Minor(hostDevice.Rdev)) //nolint:gosec
+
+	require.Len(t, spec.Linux.Devices, 1)
+	assert.Equal(t, "/dev/data", spec.Linux.Devices[0].Path)
+	assert.Equal(t, major, spec.Linux.Devices[0].Major)
+	assert.Equal(t, minor, spec.Linux.Devices[0].Minor)
+
+	// Appended after the default deny-all rule, so only this device is allowed.
+	require.Len(t, spec.Linux.Resources.Devices, 2)
+	assert.Equal(t, specs.LinuxDeviceCgroup{
+		Allow:  true,
+		Type:   spec.Linux.Devices[0].Type,
+		Major:  &major,
+		Minor:  &minor,
+		Access: "rw",
+	}, spec.Linux.Resources.Devices[1])
+}
+
+func TestWithResolvedDevicesMissingSource(t *testing.T) {
+	t.Parallel()
+
+	spec := &specs.Spec{Linux: &specs.Linux{Resources: &specs.LinuxResources{}}}
+
+	err := containersctrl.WithResolvedDevices([]containers.ResolvedDeviceSpec{
+		{Kind: containers.DeviceKindRawVolume, Source: "/dev/does-not-exist", Destination: "/dev/data"},
+	})(t.Context(), nil, nil, spec)
+	require.ErrorContains(t, err, `failed to add device "/dev/data"`)
 }

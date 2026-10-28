@@ -66,6 +66,9 @@ type ContainerInstanceSpecSpec struct {
 	Security  ContainerSecuritySpec  `yaml:"security,omitempty" protobuf:"10"`
 	Network   ContainerNetworkSpec   `yaml:"network,omitempty" protobuf:"11"`
 	Resources ContainerResourcesSpec `yaml:"resources,omitempty" protobuf:"12"`
+
+	// Devices are fully resolved, with host device nodes filled in.
+	Devices []ResolvedDeviceSpec `yaml:"devices,omitempty" protobuf:"13"`
 }
 
 // ResolvedMountSpec is a mount with its host-side source resolved.
@@ -83,6 +86,20 @@ type ResolvedMountSpec struct {
 	// VolumeName is the name of the user, existing or external volume a volume mount refers to;
 	// empty for tmpfs and hostPath.
 	VolumeName string `yaml:"volumeName,omitempty" protobuf:"7"`
+}
+
+// ResolvedDeviceSpec is a device with its host-side device node resolved.
+//
+//gotagsrewrite:gen
+type ResolvedDeviceSpec struct {
+	Kind string `yaml:"kind" protobuf:"1"`
+	// Source is the device node on the host, e.g. "/dev/sdb1", or "/dev/dm-0" for an encrypted volume.
+	Source      string `yaml:"source" protobuf:"2"`
+	Destination string `yaml:"destination" protobuf:"3"`
+	// VolumeID is the block volume ID of a rawVolume device, e.g. "r-data".
+	VolumeID string `yaml:"volumeID,omitempty" protobuf:"4"`
+	// VolumeName is the name of the RawVolumeConfig a rawVolume device refers to.
+	VolumeName string `yaml:"volumeName,omitempty" protobuf:"5"`
 }
 
 // NewContainerInstanceSpec initializes a ContainerInstanceSpec resource.
@@ -226,20 +243,20 @@ func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx contex
 		return false, nil
 	}
 
-	expectedResolvedMounts, err := containerSpec.GetResolvedMounts(ctx, r, instanceSpec.ContainerID)
+	expectedResolved, err := GetResolvedMountStatus(ctx, r, instanceSpec.ContainerID)
 	if err != nil {
 		return false, err
 	}
 
-	if !MountsResolvedMatchDeclared(expectedResolvedMounts, containerSpec.Mounts) {
-		// Nothing to compare against. A mount that is not ready is not drift to be fixed by replacing
-		// the instance: a running container keeps its volumes held until it stops on its own, and only
-		// then is a replacement created, once the mounts are ready again.
+	if !containerSpec.ResolvedMatchDeclared(expectedResolved) {
+		// Nothing to compare against. A mount or device that is not ready is not drift to be fixed by
+		// replacing the instance: a running container keeps its volumes held until it stops on its own,
+		// and only then is a replacement created, once they are ready again.
 		return false, nil
 	}
 
 	inSync := containerSpec.InstanceProcessEqual(instanceSpec) &&
-		ResolvedMountsEqual(expectedResolvedMounts, instanceSpec.Mounts) &&
+		instanceSpec.ResolvedEqual(expectedResolved) &&
 		containerSpec.Security.Equal(instanceSpec.Security) &&
 		containerSpec.Network == instanceSpec.Network &&
 		containerSpec.Resources.Equal(instanceSpec.Resources)
@@ -376,4 +393,15 @@ func ResolvedMountsEqual(a, b []ResolvedMountSpec) bool {
 			x.VolumeName == y.VolumeName &&
 			slices.Equal(x.Options, y.Options)
 	})
+}
+
+// ResolvedEqual reports whether the instance runs with the mounts and devices of resolved.
+func (instanceSpec ContainerInstanceSpecSpec) ResolvedEqual(resolved ContainerMountStatusSpec) bool {
+	return ResolvedMountsEqual(resolved.Mounts, instanceSpec.Mounts) &&
+		ResolvedDevicesEqual(resolved.Devices, instanceSpec.Devices)
+}
+
+// ResolvedDevicesEqual compares two resolved device lists.
+func ResolvedDevicesEqual(a, b []ResolvedDeviceSpec) bool {
+	return slices.Equal(a, b)
 }

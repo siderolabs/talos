@@ -1052,3 +1052,60 @@ func (suite *RuntimeSuite) TestHoldsLifecycleFinalizerWhileRunningReleasesWhenId
 	_, err = suite.State().WatchFor(suite.Ctx(), lifecycleMD, state.WithFinalizerEmpty())
 	suite.Require().NoError(err)
 }
+
+// TestRefusesInstanceWithStaleDevices covers an instance created from a resolution MountController has
+// withdrawn since: it must not be started on a raw volume which is no longer held for it.
+func (suite *RuntimeSuite) TestRefusesInstanceWithStaleDevices() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const (
+		staleID = "osd-0"
+		freshID = "osd-1"
+	)
+
+	device := containers.ResolvedDeviceSpec{
+		Kind:        containers.DeviceKindRawVolume,
+		Source:      "/dev/sdb1",
+		Destination: "/dev/data",
+		VolumeID:    "r-data",
+		VolumeName:  "data",
+	}
+
+	mountStatus := containers.NewContainerMountStatus(containers.NamespaceName, staleID)
+	mountStatus.TypedSpec().Ready = true
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), mountStatus))
+
+	spec := containers.NewContainerInstanceSpec(containers.NamespaceName, staleID)
+	spec.TypedSpec().ContainerID = staleID
+	spec.TypedSpec().Image = "sha256:abc123"
+	spec.TypedSpec().Devices = []containers.ResolvedDeviceSpec{device}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
+
+	ctest.AssertResource(suite, staleID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseFailed, status.TypedSpec().Phase)
+		asrt.Equal("mounts or devices changed before the container was started", status.TypedSpec().Error)
+	})
+
+	suite.Assert().False(suite.runner.wasStarted(staleID))
+
+	// The same device, still resolved: started.
+	mountStatus = containers.NewContainerMountStatus(containers.NamespaceName, freshID)
+	mountStatus.TypedSpec().Ready = true
+	mountStatus.TypedSpec().Devices = []containers.ResolvedDeviceSpec{device}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), mountStatus))
+
+	spec = containers.NewContainerInstanceSpec(containers.NamespaceName, freshID)
+	spec.TypedSpec().ContainerID = freshID
+	spec.TypedSpec().Image = "sha256:abc123"
+	spec.TypedSpec().Devices = []containers.ResolvedDeviceSpec{device}
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
+
+	ctest.AssertResource(suite, freshID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+}

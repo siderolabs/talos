@@ -16,7 +16,7 @@ import (
 // ContainerMountStatusType is type of ContainerMountStatus resource.
 const ContainerMountStatusType = resource.Type("ContainerMountStatuses.containers.talos.dev")
 
-// ContainerMountStatus resource holds a container's mounts with their host paths resolved.
+// ContainerMountStatus resource holds a container's mounts and devices with their host paths resolved.
 //
 // The ID is the container name.
 type ContainerMountStatus = typed.Resource[ContainerMountStatusSpec, ContainerMountStatusExtension]
@@ -31,6 +31,8 @@ type ContainerMountStatusSpec struct {
 	Mounts []ResolvedMountSpec `yaml:"mounts,omitempty" protobuf:"2"`
 	// Error describes why the mounts are not ready.
 	Error string `yaml:"error,omitempty" protobuf:"3"`
+	// Devices are the resolved devices, with host device nodes filled in. Only meaningful when Ready.
+	Devices []ResolvedDeviceSpec `yaml:"devices,omitempty" protobuf:"4"`
 }
 
 // NewContainerMountStatus initializes a ContainerMountStatus resource.

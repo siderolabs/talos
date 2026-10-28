@@ -63,9 +63,11 @@ type ContainerSpecSpec struct {
 	Network   ContainerNetworkSpec   `yaml:"network,omitempty" protobuf:"9"`
 	Resources ContainerResourcesSpec `yaml:"resources,omitempty" protobuf:"10"`
 	DependsOn ContainerDependsOnSpec `yaml:"dependsOn,omitempty" protobuf:"11"`
+
+	Devices []ContainerDeviceSpec `yaml:"devices,omitempty" protobuf:"12"`
 }
 
-// Ready reports the container's unmet dependencies (image, mounts, dependsOn gates),
+// Ready reports the container's unmet dependencies (image, mounts, devices, dependsOn gates),
 // and how soon to recheck them.
 //
 // containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
@@ -81,14 +83,12 @@ func (containerSpec ContainerSpecSpec) Ready(ctx context.Context, r controller.R
 		waitingFor = append(waitingFor, "image")
 	}
 
-	resolvedMounts, err := containerSpec.GetResolvedMounts(ctx, r, containerID)
+	resolved, err := GetResolvedMountStatus(ctx, r, containerID)
 	if err != nil {
 		return nil, optional.None[time.Duration](), err
 	}
 
-	if !MountsResolvedMatchDeclared(resolvedMounts, containerSpec.Mounts) {
-		waitingFor = append(waitingFor, "mounts")
-	}
+	waitingFor = append(waitingFor, containerSpec.ResolvedWaitingFor(resolved)...)
 
 	unmet, wakeUpAfter, err := containerSpec.DependsOn.Ready(ctx, r)
 	if err != nil {
@@ -129,34 +129,54 @@ func (containerSpec ContainerSpecSpec) CurrentImageStatus(
 	return containerImageStatus, nil
 }
 
-// GetResolvedMounts returns the mounts MountController has most recently resolved for this
-// container, or nil if it has not written a status yet, or has not marked one ready.
+// GetResolvedMountStatus returns the mounts and devices MountController has most recently resolved
+// for this container, or an empty status if it has not written one yet, or has not marked one ready.
 //
-// This does not check the result against the spec's own declared mounts: the status is written by
-// another controller, so a spec edit is visible here before the resolution catches up, and a caller
-// that cares whether the result is stale must check it separately, e.g. with
-// MountsResolvedMatchDeclared.
+// This does not check the result against the spec's own declared mounts and devices: the status is
+// written by another controller, so a spec edit is visible here before the resolution catches up,
+// and a caller that cares whether the result is stale must check it separately, e.g. with
+// ResolvedMatchDeclared.
 //
-// containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
-func (containerSpec ContainerSpecSpec) GetResolvedMounts(
+// containerID is the owning ContainerSpec resource's ID.
+func GetResolvedMountStatus(
 	ctx context.Context,
 	r controller.Reader,
 	containerID string,
-) ([]ResolvedMountSpec, error) {
+) (ContainerMountStatusSpec, error) {
 	status, err := safe.ReaderGetByID[*ContainerMountStatus](ctx, r, containerID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return nil, nil
+			return ContainerMountStatusSpec{}, nil
 		}
 
-		return nil, fmt.Errorf("failed to get mount status %q: %w", containerID, err)
+		return ContainerMountStatusSpec{}, fmt.Errorf("failed to get mount status %q: %w", containerID, err)
 	}
 
 	if !status.TypedSpec().Ready {
-		return nil, nil
+		return ContainerMountStatusSpec{}, nil
 	}
 
-	return status.TypedSpec().Mounts, nil
+	return *status.TypedSpec(), nil
+}
+
+// ResolvedMatchDeclared reports whether resolved describes the mounts and devices the spec declares.
+func (containerSpec ContainerSpecSpec) ResolvedMatchDeclared(resolved ContainerMountStatusSpec) bool {
+	return len(containerSpec.ResolvedWaitingFor(resolved)) == 0
+}
+
+// ResolvedWaitingFor reports the gates ("mounts", "devices") resolved does not satisfy yet.
+func (containerSpec ContainerSpecSpec) ResolvedWaitingFor(resolved ContainerMountStatusSpec) []string {
+	var waitingFor []string
+
+	if !MountsResolvedMatchDeclared(resolved.Mounts, containerSpec.Mounts) {
+		waitingFor = append(waitingFor, "mounts")
+	}
+
+	if !DevicesResolvedMatchDeclared(resolved.Devices, containerSpec.Devices) {
+		waitingFor = append(waitingFor, "devices")
+	}
+
+	return waitingFor
 }
 
 // InstanceProcessEqual compares the parts of the spec that describe the process itself.
@@ -199,6 +219,15 @@ func MountsResolvedMatchDeclared(resolved []ResolvedMountSpec, declared []Contai
 	return true
 }
 
+// DevicesResolvedMatchDeclared reports whether resolved describes the same devices as declared.
+func DevicesResolvedMatchDeclared(resolved []ResolvedDeviceSpec, declared []ContainerDeviceSpec) bool {
+	return slices.EqualFunc(resolved, declared, func(r ResolvedDeviceSpec, device ContainerDeviceSpec) bool {
+		return r.Kind == device.Kind &&
+			r.Destination == device.Destination &&
+			r.VolumeName == device.VolumeName
+	})
+}
+
 // ContainerMountSpec is a resolved mount.
 //
 // Exactly one of VolumeName, Tmpfs or HostPath describes the source; Kind says which.
@@ -230,6 +259,23 @@ const (
 	MountKindVolume   = "volume"
 	MountKindTmpfs    = "tmpfs"
 	MountKindHostPath = "hostPath"
+)
+
+// ContainerDeviceSpec is a device handed to the container.
+//
+//gotagsrewrite:gen
+type ContainerDeviceSpec struct {
+	// Kind is "rawVolume".
+	Kind string `yaml:"kind" protobuf:"1"`
+	// VolumeName is the name of the RawVolumeConfig a rawVolume device refers to, e.g. "data".
+	VolumeName string `yaml:"volumeName,omitempty" protobuf:"2"`
+	// Destination of the device node inside the container.
+	Destination string `yaml:"destination" protobuf:"3"`
+}
+
+// Device kinds.
+const (
+	DeviceKindRawVolume = "rawVolume"
 )
 
 // ContainerSecuritySpec is the resolved security posture.

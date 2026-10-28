@@ -61,6 +61,13 @@ dependsOn:
     network:
         - addresses
     time: true # Whether the clock must be synchronized before the container starts.
+
+# # Devices to hand to the container.
+# devices:
+#     - # Hand a raw volume to the container as a block device.
+#       rawVolume:
+#         name: data # Name of the `RawVolumeConfig` document.
+#         destination: /dev/data # Path of the device node inside the container.
 {{< /highlight >}}
 
 
@@ -76,6 +83,13 @@ image: docker.io/library/nginx:1.27
 |`runAs` |<a href="#ContainerConfig.runAs">ContainerRunAs</a> |Overrides the image's USER uid and/or gid.<br><br>There are no user namespaces, so a container running as uid 0 is root on the host.  | |
 |`environment` |[]string |Environment variables, in `KEY=value` form, merged over the image's own ENV.<br><br>Values are stored in the machine configuration verbatim, so treat anything put here<br>as being as sensitive as the machine configuration itself.  | |
 |`mounts` |<a href="#ContainerConfig.mounts.">[]ContainerMount</a> |Filesystems to mount into the container.  | |
+|`devices` |<a href="#ContainerConfig.devices.">[]ContainerDevice</a> |Devices to hand to the container. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+devices:
+    - # Hand a raw volume to the container as a block device.
+      rawVolume:
+        name: data # Name of the `RawVolumeConfig` document.
+        destination: /dev/data # Path of the device node inside the container.
+{{< /highlight >}}</details> | |
 |`security` |<a href="#ContainerConfig.security">ContainerSecurity</a> |Security settings for the container.  | |
 |`network` |<a href="#ContainerConfig.network">ContainerNetwork</a> |Network settings for the container.  | |
 |`resources` |<a href="#ContainerConfig.resources">ContainerResources</a> |Resource limits, applied as cgroup v2 settings.  | |
@@ -175,6 +189,52 @@ HostPathMount bind-mounts a host path.
 |`source` |string |Absolute path on the host. Must already exist.  | |
 |`destination` |string |Absolute path inside the container's mount namespace.  | |
 |`options` |[]string |Mount options. Host path mounts are writable by default (`rw`).  | |
+
+
+
+
+
+
+
+
+## devices[] {#ContainerConfig.devices.}
+
+ContainerDevice describes a single device to hand to the container.
+
+Exactly one source must be set.
+
+
+
+
+{{< highlight yaml >}}
+devices:
+    - # Hand a raw volume to the container as a block device.
+      rawVolume:
+        name: data # Name of the `RawVolumeConfig` document.
+        destination: /dev/data # Path of the device node inside the container.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`rawVolume` |<a href="#ContainerConfig.devices..rawVolume">RawVolumeDevice</a> |Hand a raw volume to the container as a block device.<br><br>The raw volume is referenced by the name of its `RawVolumeConfig` document.<br>The container gets a device node at the destination and is allowed to read and write<br>that device, and no other block device. This works with the `restricted` profile,<br>no capabilities are added. For an encrypted raw volume the node is the unlocked device.<br><br>Declaring this device makes the container wait for the raw volume to be ready, and the<br>raw volume is not closed while the container is running. A raw volume can be handed to<br>a single container only.  | |
+
+
+
+
+### rawVolume {#ContainerConfig.devices..rawVolume}
+
+RawVolumeDevice hands a raw volume to the container by name.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Name of the `RawVolumeConfig` document.  | |
+|`destination` |string |Path of the device node inside the container.<br><br>Must be under `/dev/`, and not one of the entries the container runtime creates there<br>itself (e.g. `/dev/null`, `/dev/pts`). The node keeps the owner and mode of the device<br>on the host. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+destination: /dev/data
+{{< /highlight >}}</details> | |
 
 
 

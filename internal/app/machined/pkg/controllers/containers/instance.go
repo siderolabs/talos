@@ -256,12 +256,17 @@ func (ctrl *InstanceController) reconcileInstance(
 		return nil, optional.None[time.Duration](), err
 	}
 
-	resolvedMounts, err := containerSpec.TypedSpec().GetResolvedMounts(ctx, runtime, containerSpecID)
+	// Checked again: the instance must carry exactly the resolution it was checked against.
+	resolved, err := containers.GetResolvedMountStatus(ctx, runtime, containerSpecID)
 	if err != nil {
 		return nil, optional.None[time.Duration](), err
 	}
 
-	if err := ctrl.createInstanceSpec(ctx, runtime, containerSpec, nextGeneration, imageDigest, resolvedMounts); err != nil {
+	if waitingFor = containerSpec.TypedSpec().ResolvedWaitingFor(resolved); len(waitingFor) > 0 {
+		return waitingFor, optional.None[time.Duration](), nil
+	}
+
+	if err := ctrl.createInstanceSpec(ctx, runtime, containerSpec, nextGeneration, imageDigest, resolved); err != nil {
 		return nil, optional.None[time.Duration](), err
 	}
 
@@ -347,6 +352,8 @@ func (ctrl *InstanceController) destroyInstance(
 // waitingFor is populated only on the one path that evaluates the gates, i.e. a spec change whose
 // replacement is blocked. Every other path leaves the running instance alone and so is not waiting
 // on anything.
+//
+//nolint:gocyclo
 func (ctrl *InstanceController) reconcileExistingInstance(
 	ctx context.Context,
 	runtime controller.Runtime,
@@ -384,13 +391,26 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 				return false, nil, optional.None[time.Duration](), err
 			}
 
-			if len(waitingFor) > 0 {
+			// A raw volume the spec no longer hands to the container is given up right away, rather than
+			// once the replacement is ready: the replacement may be waiting for a raw volume which this
+			// instance's hold is keeping from another container.
+			revoked := revokedDevices(containerSpec.TypedSpec(), newestContainerInstanceSpec.TypedSpec())
+
+			if len(waitingFor) > 0 && len(revoked) == 0 {
 				logger.Debug("container spec changed, but its replacement is waiting on dependencies",
 					zap.String("container", containerSpecID),
 					zap.Strings("waitingFor", waitingFor),
 				)
 
 				return false, waitingFor, wakeUpAfter, nil
+			}
+
+			if len(revoked) > 0 {
+				logger.Info("raw volumes are no longer handed to the container, stopping the instance",
+					zap.String("container", containerSpecID),
+					zap.Uint64("generation", newestContainerInstanceSpec.TypedSpec().Generation),
+					zap.Strings("volumes", revoked),
+				)
 			}
 
 			logger.Info("container spec changed, replacing the instance",
@@ -451,7 +471,7 @@ func (ctrl *InstanceController) createInstanceSpec(
 	containerSpec *containers.ContainerSpec,
 	generation uint64,
 	imageDigest string,
-	resolvedMounts []containers.ResolvedMountSpec,
+	resolved containers.ContainerMountStatusSpec,
 ) error {
 	containerSpecID := containerSpec.Metadata().ID()
 	instanceID := containers.InstanceID(containerSpecID, generation)
@@ -470,7 +490,8 @@ func (ctrl *InstanceController) createInstanceSpec(
 			instanceSpec.WorkingDir = containerSpec.TypedSpec().WorkingDir
 			instanceSpec.RunAs = containerSpec.TypedSpec().RunAs
 			instanceSpec.Environment = containerSpec.TypedSpec().Environment
-			instanceSpec.Mounts = resolvedMounts
+			instanceSpec.Mounts = resolved.Mounts
+			instanceSpec.Devices = resolved.Devices
 			instanceSpec.Security = containerSpec.TypedSpec().Security
 			instanceSpec.Network = containerSpec.TypedSpec().Network
 			instanceSpec.Resources = containerSpec.TypedSpec().Resources
@@ -478,4 +499,19 @@ func (ctrl *InstanceController) createInstanceSpec(
 			return nil
 		},
 	)
+}
+
+// revokedDevices returns the raw volumes the instance uses which the spec no longer hands to the container.
+func revokedDevices(containerSpec *containers.ContainerSpecSpec, instanceSpec *containers.ContainerInstanceSpecSpec) []string {
+	var revoked []string
+
+	for _, device := range instanceSpec.Devices {
+		if !slices.ContainsFunc(containerSpec.Devices, func(declared containers.ContainerDeviceSpec) bool {
+			return declared.Kind == device.Kind && declared.VolumeName == device.VolumeName
+		}) {
+			revoked = append(revoked, device.VolumeName)
+		}
+	}
+
+	return revoked
 }

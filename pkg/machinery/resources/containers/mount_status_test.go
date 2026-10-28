@@ -17,7 +17,7 @@ import (
 )
 
 // TestMountsResolvedMatchDeclared covers the freshness check callers run against
-// GetResolvedMounts' result: every field a resolution must not change has to match, or a stale
+// GetResolvedMountStatus' result: every field a resolution must not change has to match, or a stale
 // status must be rejected.
 func TestMountsResolvedMatchDeclared(t *testing.T) {
 	t.Parallel()
@@ -186,7 +186,7 @@ func TestMountsResolvedMatchDeclared(t *testing.T) {
 	}
 }
 
-func TestGetResolvedMounts(t *testing.T) {
+func TestGetResolvedMountStatus(t *testing.T) {
 	t.Parallel()
 
 	const containerID = "nginx"
@@ -196,6 +196,16 @@ func TestGetResolvedMounts(t *testing.T) {
 			Kind:        containers.MountKindHostPath,
 			Source:      "/var/log",
 			Destination: "/host-log",
+		},
+	}
+
+	deviceSpecs := []containers.ResolvedDeviceSpec{
+		{
+			Kind:        containers.DeviceKindRawVolume,
+			Source:      "/dev/sdb1",
+			Destination: "/dev/data",
+			VolumeID:    "r-data",
+			VolumeName:  "data",
 		},
 	}
 
@@ -227,23 +237,130 @@ func TestGetResolvedMounts(t *testing.T) {
 			if test.create {
 				status := containers.NewContainerMountStatus(containers.NamespaceName, containerID)
 				*status.TypedSpec() = containers.ContainerMountStatusSpec{
-					Ready:  test.ready,
-					Mounts: mountSpecs,
+					Ready:   test.ready,
+					Mounts:  mountSpecs,
+					Devices: deviceSpecs,
 				}
 
 				require.NoError(t, resources.Create(t.Context(), status))
 			}
 
-			var spec containers.ContainerSpecSpec
-
-			mounts, err := spec.GetResolvedMounts(t.Context(), resources, containerID)
+			resolved, err := containers.GetResolvedMountStatus(t.Context(), resources, containerID)
 			require.NoError(t, err)
 
 			if test.create && test.ready {
-				assert.Equal(t, mountSpecs, mounts)
+				assert.Equal(t, mountSpecs, resolved.Mounts)
+				assert.Equal(t, deviceSpecs, resolved.Devices)
 			} else {
-				assert.Nil(t, mounts)
+				assert.Nil(t, resolved.Mounts)
+				assert.Nil(t, resolved.Devices)
 			}
 		})
 	}
+}
+
+func TestDevicesResolvedMatchDeclared(t *testing.T) {
+	t.Parallel()
+
+	declared := []containers.ContainerDeviceSpec{
+		{Kind: containers.DeviceKindRawVolume, VolumeName: "data", Destination: "/dev/data"},
+	}
+
+	resolved := containers.ResolvedDeviceSpec{
+		Kind:        containers.DeviceKindRawVolume,
+		Source:      "/dev/dm-0",
+		Destination: "/dev/data",
+		VolumeID:    "r-data",
+		VolumeName:  "data",
+	}
+
+	for _, test := range []struct {
+		name     string
+		resolved []containers.ResolvedDeviceSpec
+		declared []containers.ContainerDeviceSpec
+		resolves bool
+	}{
+		{
+			name:     "none",
+			resolves: true,
+		},
+		{
+			name:     "same device",
+			resolved: []containers.ResolvedDeviceSpec{resolved},
+			declared: declared,
+			resolves: true,
+		},
+		{
+			name:     "not resolved yet",
+			declared: declared,
+		},
+		{
+			name:     "removed from the spec",
+			resolved: []containers.ResolvedDeviceSpec{resolved},
+		},
+		{
+			name: "other destination",
+			resolved: []containers.ResolvedDeviceSpec{
+				{Kind: containers.DeviceKindRawVolume, Source: "/dev/dm-0", Destination: "/dev/other", VolumeID: "r-data", VolumeName: "data"},
+			},
+			declared: declared,
+		},
+		{
+			name: "other raw volume",
+			resolved: []containers.ResolvedDeviceSpec{
+				{Kind: containers.DeviceKindRawVolume, Source: "/dev/dm-1", Destination: "/dev/data", VolumeID: "r-other", VolumeName: "other"},
+			},
+			declared: declared,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.resolves, containers.DevicesResolvedMatchDeclared(test.resolved, test.declared))
+		})
+	}
+}
+
+func TestResolvedWaitingFor(t *testing.T) {
+	t.Parallel()
+
+	spec := containers.ContainerSpecSpec{
+		Mounts: []containers.ContainerMountSpec{
+			{Kind: containers.MountKindTmpfs, Destination: "/tmp"},
+		},
+		Devices: []containers.ContainerDeviceSpec{
+			{Kind: containers.DeviceKindRawVolume, VolumeName: "data", Destination: "/dev/data"},
+		},
+	}
+
+	mounts := []containers.ResolvedMountSpec{{Kind: containers.MountKindTmpfs, Destination: "/tmp"}}
+	devices := []containers.ResolvedDeviceSpec{
+		{Kind: containers.DeviceKindRawVolume, Source: "/dev/sdb1", Destination: "/dev/data", VolumeID: "r-data", VolumeName: "data"},
+	}
+
+	assert.Equal(t, []string{"mounts", "devices"}, spec.ResolvedWaitingFor(containers.ContainerMountStatusSpec{}))
+	assert.Equal(t, []string{"devices"}, spec.ResolvedWaitingFor(containers.ContainerMountStatusSpec{Ready: true, Mounts: mounts}))
+	assert.Empty(t, spec.ResolvedWaitingFor(containers.ContainerMountStatusSpec{Ready: true, Mounts: mounts, Devices: devices}))
+	assert.True(t, spec.ResolvedMatchDeclared(containers.ContainerMountStatusSpec{Ready: true, Mounts: mounts, Devices: devices}))
+}
+
+func TestResolvedDevicesEqual(t *testing.T) {
+	t.Parallel()
+
+	device := containers.ResolvedDeviceSpec{
+		Kind:        containers.DeviceKindRawVolume,
+		Source:      "/dev/dm-0",
+		Destination: "/dev/data",
+		VolumeID:    "r-data",
+		VolumeName:  "data",
+	}
+
+	reopened := device
+	reopened.Source = "/dev/dm-1"
+
+	assert.True(t, containers.ResolvedDevicesEqual(nil, []containers.ResolvedDeviceSpec{}))
+	assert.True(t, containers.ResolvedDevicesEqual([]containers.ResolvedDeviceSpec{device}, []containers.ResolvedDeviceSpec{device}))
+	// Opened again as another device: the instance has to be replaced.
+	assert.False(t, containers.ResolvedDevicesEqual([]containers.ResolvedDeviceSpec{device}, []containers.ResolvedDeviceSpec{reopened}))
+	assert.False(t, containers.ResolvedDevicesEqual([]containers.ResolvedDeviceSpec{device}, nil))
 }

@@ -63,6 +63,10 @@ func (o ContainerSpecSpec) DeepCopy() ContainerSpecSpec {
 		cp.DependsOn.Containers = make([]string, len(o.DependsOn.Containers))
 		copy(cp.DependsOn.Containers, o.DependsOn.Containers)
 	}
+	if o.Devices != nil {
+		cp.Devices = make([]ContainerDeviceSpec, len(o.Devices))
+		copy(cp.Devices, o.Devices)
+	}
 	return cp
 }
 
@@ -84,6 +88,10 @@ func (o ContainerMountStatusSpec) DeepCopy() ContainerMountStatusSpec {
 				copy(cp.Mounts[i2].Options, o.Mounts[i2].Options)
 			}
 		}
+	}
+	if o.Devices != nil {
+		cp.Devices = make([]ResolvedDeviceSpec, len(o.Devices))
+		copy(cp.Devices, o.Devices)
 	}
 	return cp
 }
@@ -142,6 +150,10 @@ func (o ContainerInstanceSpecSpec) DeepCopy() ContainerInstanceSpecSpec {
 	if o.Resources.SwapLimit != nil {
 		cp.Resources.SwapLimit = new(uint64)
 		*cp.Resources.SwapLimit = *o.Resources.SwapLimit
+	}
+	if o.Devices != nil {
+		cp.Devices = make([]ResolvedDeviceSpec, len(o.Devices))
+		copy(cp.Devices, o.Devices)
 	}
 	return cp
 }
