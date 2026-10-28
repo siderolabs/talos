@@ -19,4 +19,7 @@ const (
 	// NvidiaCUDATestImageVersion is the version of the NVIDIA CUDA test image to use
 	// renovate: datasource=docker versioning=docker depName=nvcr.io/nvidia/k8s/cuda-sample
 	NvidiaCUDATestImageVersion = "vectoradd-cuda12.5.0"
+	// NvidiaCUDANBodyImageVersion is the CUDA n-body sample image used as a long-running MPS client.
+	// renovate: datasource=docker versioning=docker depName=nvcr.io/nvidia/k8s/cuda-sample
+	NvidiaCUDANBodyImageVersion = "nbody-cuda11.7.1-ubuntu18.04"
 )

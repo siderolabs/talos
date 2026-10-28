@@ -7,3 +7,9 @@
 package api
 
 var KubeletExtraConfigPatch = kubeletExtraConfigPatch
+
+var ParseMPSPIDList = parseMPSPIDList
+
+var ParsePodUIDFromCgroup = parsePodUIDFromCgroup
+
+var ParseMIGModeEnabled = parseMIGModeEnabled

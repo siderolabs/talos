@@ -242,6 +242,8 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 			suite.Require().Contains(logData, "Test PASSED")
 		}
 	})
+
+	suite.Run("CUDA MPS", suite.testCUDAMPS)
 }
 
 func (suite *ExtensionsSuiteNVIDIA) getPodLogs(namespace, name string) string { //nolint:unparam

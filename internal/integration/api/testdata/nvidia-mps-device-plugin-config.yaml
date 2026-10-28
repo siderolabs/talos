@@ -1,0 +1,10 @@
+version: v1
+flags:
+  plugin:
+    # replicas from one GPU are handed out before another GPU, so both clients share a GPU on multi-GPU nodes
+    sharedDevicesAllocationPolicy: packed
+sharing:
+  mps:
+    resources:
+      - name: nvidia.com/gpu
+        replicas: 2

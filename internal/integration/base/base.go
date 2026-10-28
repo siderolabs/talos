@@ -52,6 +52,8 @@ type TalosSuite struct {
 	ExtensionsLibvirt bool
 	// ExtensionsNvidia runs tests with nvidia extensions enabled
 	ExtensionsNvidia bool
+	// ExtensionsNvidiaMPS additionally runs the NVIDIA CUDA MPS sharing test (requires ExtensionsNvidia)
+	ExtensionsNvidiaMPS bool
 	// HypervisorTalosISOPath is a path on the machine running the tests to a Talos ISO the hypervisor
 	// tests upload into a content library. Empty skips the tests needing a real image.
 	HypervisorTalosISOPath string
