@@ -20,6 +20,7 @@ var (
 	_ redactable.Spec = &HostnameSpecSpec{}
 	_ redactable.Spec = &LinkSpecSpec{}
 	_ redactable.Spec = &OperatorSpecSpec{}
+	_ redactable.Spec = &PlatformConfigSpec{}
 	_ redactable.Spec = &ProbeSpecSpec{}
 	_ redactable.Spec = &ResolverSpecSpec{}
 	_ redactable.Spec = &RouteSpecSpec{}
@@ -67,6 +68,16 @@ func (spec *OperatorSpecSpec) HasSecrets(resource.Metadata) bool {
 // RedactSecrets implements redactable.Spec interface.
 func (spec *OperatorSpecSpec) RedactSecrets(resource.Metadata) {
 	redactOperatorSpecSpec(spec)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (spec *PlatformConfigSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsPlatformConfigSpec(spec)
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (spec *PlatformConfigSpec) RedactSecrets(resource.Metadata) {
+	redactPlatformConfigSpec(spec)
 }
 
 // HasSecrets implements redactable.Spec interface.
@@ -149,6 +160,44 @@ func hasSecretsOperatorSpecSpec(spec *OperatorSpecSpec) bool {
 // redactOperatorSpecSpec redacts sensitive values in OperatorSpecSpec in place.
 func redactOperatorSpecSpec(spec *OperatorSpecSpec) {
 	redactVIPOperatorSpec(&spec.VIP)
+}
+
+// hasSecretsPlatformConfigSpec checks if PlatformConfigSpec carries any sensitive value.
+func hasSecretsPlatformConfigSpec(spec *PlatformConfigSpec) bool {
+	for idx := range spec.Links {
+		if hasSecretsLinkSpecSpec(&spec.Links[idx]) {
+			return true
+		}
+	}
+
+	for idx := range spec.Operators {
+		if hasSecretsOperatorSpecSpec(&spec.Operators[idx]) {
+			return true
+		}
+	}
+
+	for idx := range spec.Probes {
+		if hasSecretsProbeSpecSpec(&spec.Probes[idx]) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// redactPlatformConfigSpec redacts sensitive values in PlatformConfigSpec in place.
+func redactPlatformConfigSpec(spec *PlatformConfigSpec) {
+	for idx := range spec.Links {
+		redactLinkSpecSpec(&spec.Links[idx])
+	}
+
+	for idx := range spec.Operators {
+		redactOperatorSpecSpec(&spec.Operators[idx])
+	}
+
+	for idx := range spec.Probes {
+		redactProbeSpecSpec(&spec.Probes[idx])
+	}
 }
 
 // hasSecretsProbeSpecSpec checks if ProbeSpecSpec carries any sensitive value.

@@ -14,7 +14,10 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"go.yaml.in/yaml/v4"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -36,6 +39,7 @@ const PlatformConfigCachedID resource.ID = "cached"
 // reboots.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type PlatformConfigSpec struct {
 	Addresses []AddressSpecSpec `yaml:"addresses" protobuf:"1"`
 	Links     []LinkSpecSpec    `yaml:"links" protobuf:"2"`
@@ -87,7 +91,42 @@ func (PlatformConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec 
 		Type:             PlatformConfigType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+		// carries the link, operator and probe specs of the platform, secrets included
+		Sensitivity: meta.Sensitive,
 	}
+}
+
+// redactPlatformConfigValue redacts the secrets of a marshaled [PlatformConfigSpec].
+//
+// This is the shape of the value of the MetalNetworkPlatformConfig META key, which is why the
+// redactor is registered here: the runtime resource package which holds MetaKey can't see the shape
+// of the config, as it is the network resource package which depends on it and not the other way
+// around.
+//
+// Most of what the config carries -- addresses, links, routes, hostnames -- is not a secret, and a
+// config written by hand or by the dashboard holds nothing sensitive at all; only the embedded
+// Wireguard, VIP and probe specs might. Such a value is handed back untouched, byte for byte, rather
+// than re-marshaled, so that what the caller sees is exactly what was written.
+func redactPlatformConfigValue(value string) (string, bool) {
+	var spec PlatformConfigSpec
+
+	if err := yaml.Unmarshal([]byte(value), &spec); err != nil {
+		// the value is not a config we can look into, so assume the worst about it
+		return constants.Redacted, true
+	}
+
+	if !hasSecretsPlatformConfigSpec(&spec) {
+		return value, false
+	}
+
+	redactPlatformConfigSpec(&spec)
+
+	redacted, err := yaml.Marshal(&spec)
+	if err != nil {
+		return constants.Redacted, true
+	}
+
+	return string(redacted), true
 }
 
 func init() {
@@ -97,4 +136,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[PlatformConfigSpec, PlatformConfigExtension]()
+
+	runtime.RegisterMetaKeyValueRedactor(runtime.MetaKeyTagToID(metaconsts.MetalNetworkPlatformConfig), redactPlatformConfigValue)
 }

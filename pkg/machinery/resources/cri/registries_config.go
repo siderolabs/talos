@@ -19,6 +19,7 @@ import (
 	config2 "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // RegistriesConfigType is type of RegistriesConfig resource.
@@ -33,6 +34,7 @@ type RegistriesConfig = typed.Resource[RegistriesConfigSpec, RegistriesConfigExt
 // RegistriesConfigSpec describes status of rendered secrets.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type RegistriesConfigSpec struct {
 	RegistryMirrors map[string]*RegistryMirrorConfig `yaml:"mirrors,omitempty" protobuf:"1"`
 	RegistryAuths   map[string]*RegistryAuthConfig   `yaml:"auths,omitempty" protobuf:"2"`
@@ -115,9 +117,9 @@ func (r RegistryEndpointConfig) OverridePath() bool {
 //gotagsrewrite:gen
 type RegistryAuthConfig struct {
 	RegistryUsername      string `yaml:"username,omitempty" protobuf:"1"`
-	RegistryPassword      string `yaml:"password,omitempty" protobuf:"2"`
-	RegistryAuth          string `yaml:"auth,omitempty" protobuf:"3"`
-	RegistryIdentityToken string `yaml:"identityToken,omitempty" protobuf:"4"`
+	RegistryPassword      string `yaml:"password,omitempty" protobuf:"2" redact:"replace"`
+	RegistryAuth          string `yaml:"auth,omitempty" protobuf:"3" redact:"replace"`
+	RegistryIdentityToken string `yaml:"identityToken,omitempty" protobuf:"4" redact:"replace"`
 }
 
 // Username implements the Registries interface.
@@ -218,4 +220,9 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form: the credentials are
+	// taken out of RegistryAuthConfig, while the username is left in place, as on its own it
+	// authenticates nothing and it tells the reader which credential is configured
+	redactable.Register[RegistriesConfigSpec, RegistriesConfigExtension]()
 }

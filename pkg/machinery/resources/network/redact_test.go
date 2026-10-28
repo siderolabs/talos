@@ -7,16 +7,21 @@ package network_test
 import (
 	"net/netip"
 	"net/url"
+	"slices"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type redactTestCase[T any] struct {
@@ -513,4 +518,115 @@ func mustParseURL(rawURL string) *url.URL {
 	}
 
 	return u
+}
+
+// TestMetalNetworkPlatformConfigRedaction covers the redaction of the MetalNetworkPlatformConfig META
+// key, whose value is a marshaled PlatformConfigSpec.
+//
+// The network package registers a redactor for that key, so that a config which carries no secret at
+// all -- which is all the dashboard ever writes: static or DHCP links, addresses and routes -- is
+// served untouched instead of being blanked out wholesale.
+func TestMetalNetworkPlatformConfigRedaction(t *testing.T) {
+	t.Parallel()
+
+	marshal := func(spec *network.PlatformConfigSpec) string {
+		out, err := yaml.Marshal(spec)
+		require.NoError(t, err)
+
+		return string(out)
+	}
+
+	plain := &network.PlatformConfigSpec{
+		Addresses: []network.AddressSpecSpec{
+			{
+				Address:  netip.MustParsePrefix("192.168.1.10/24"),
+				LinkName: "eth0",
+				Family:   nethelpers.FamilyInet4,
+				Scope:    nethelpers.ScopeGlobal,
+				// the flags the dashboard sets on a static address; a zero value doesn't survive the
+				// YAML round trip, see nethelpers.AddressFlagsString
+				Flags: nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			},
+		},
+		Links: []network.LinkSpecSpec{
+			{
+				Name: "eth0",
+				Up:   true,
+			},
+		},
+		Hostnames: []network.HostnameSpecSpec{
+			{
+				Hostname: "node-1",
+			},
+		},
+	}
+
+	withWireguard := &network.PlatformConfigSpec{
+		Addresses: plain.Addresses,
+		Links: append(slices.Clone(plain.Links), network.LinkSpecSpec{
+			Name:    "kubespan",
+			Logical: true,
+			Up:      true,
+			Kind:    network.LinkKindWireguard,
+			Wireguard: network.WireguardSpec{
+				PrivateKey: "5bPRvlMKtOwjnjVBcvIrhEJiTA6hHDYRTG4bXAMWKYA=",
+			},
+		}),
+		Hostnames: plain.Hostnames,
+	}
+
+	for _, test := range []struct {
+		name  string
+		value string
+		// assert checks the redacted value.
+		assert     func(t *testing.T, redacted string)
+		hasSecrets bool
+	}{
+		{
+			name:  "no secrets",
+			value: marshal(plain),
+			assert: func(t *testing.T, redacted string) {
+				assert.Equal(t, marshal(plain), redacted, "a config with nothing to redact should be served byte for byte")
+			},
+		},
+		{
+			name:       "wireguard key",
+			value:      marshal(withWireguard),
+			hasSecrets: true,
+			assert: func(t *testing.T, redacted string) {
+				var spec network.PlatformConfigSpec
+
+				require.NoError(t, yaml.Unmarshal([]byte(redacted), &spec))
+
+				assert.Equal(t, constants.Redacted, spec.Links[1].Wireguard.PrivateKey)
+				// the rest of the config survives, which is the point of redacting it rather than denying it
+				assert.Equal(t, plain.Addresses, spec.Addresses)
+				assert.Equal(t, plain.Hostnames, spec.Hostnames)
+				assert.Equal(t, "kubespan", spec.Links[1].Name)
+			},
+		},
+		{
+			name:       "not a config",
+			value:      "whatever was written into the key",
+			hasSecrets: true,
+			assert: func(t *testing.T, redacted string) {
+				assert.Equal(t, constants.Redacted, redacted, "a value which can't be parsed should be assumed to hold secrets")
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			key := runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(metaconsts.MetalNetworkPlatformConfig))
+			key.TypedSpec().Value = test.value
+
+			md := *key.Metadata()
+
+			assert.Equal(t, test.hasSecrets, key.TypedSpec().HasSecrets(md))
+
+			key.TypedSpec().RedactSecrets(md)
+
+			test.assert(t, key.TypedSpec().Value)
+		})
+	}
 }

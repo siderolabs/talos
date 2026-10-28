@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // ControllerManagerConfigType is type of ControllerManagerConfig resource.
@@ -60,6 +61,8 @@ func (ControllerManagerConfigExtension) ResourceDefinition() meta.ResourceDefini
 	return meta.ResourceDefinitionSpec{
 		Type:             ControllerManagerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+		// the extra arguments and the environment variables come from the machine configuration
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -70,4 +73,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[ControllerManagerConfigSpec, ControllerManagerConfigExtension]()
 }

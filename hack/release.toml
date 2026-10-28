@@ -703,6 +703,44 @@ The partition should be the last one on the disk to be grown, and the filesystem
 The `UserVolumeConfig` of `type: disk` now supports a `grow` field, which can be set to `true` to allow the volume to grow when the underlying disk is resized.
 """
 
+    [notes.resource_redaction]
+        title = "Redacted Resources"
+        description = """\
+Resources which might carry secrets are marked sensitive, and reading them used to require the `os:admin` role.
+Such a resource can now be read with the `os:reader` and `os:operator` roles as well, with the sensitive values
+of the spec replaced by `REDACTED`; the resource carries the `talos.dev/redacted` annotation to say so.
+
+`talosctl get` asks for this automatically, so with a reduced-role `talosconfig` it now prints resources
+which previously came back as `PermissionDenied`:
+
+```bash
+$ talosctl -n 172.20.0.2 get linkspecs kubespan -o yaml
+node: 172.20.0.2
+metadata:
+    namespace: network
+    type: LinkSpecs.net.talos.dev
+    id: kubespan
+    annotations:
+        talos.dev/redacted: "true"
+spec:
+    name: kubespan
+    wireguard:
+        privateKey: REDACTED
+```
+
+With the `os:admin` role nothing is redacted, and the `talosctl get` output is unchanged.
+
+A resource which has nothing left to read once redacted - the Kubernetes secrets, for one - is not served in a
+redacted form at all, and still requires the `os:admin` role.
+
+More resource types are now marked sensitive, as they carry the extra arguments, the environment variables and
+the manifests of the machine configuration verbatim: `StaticPod`, `Manifest`, `ExtraManifestsConfig`,
+`ControllerManagerConfig`, `SchedulerConfig`, `AdmissionControlConfig`, `ContainerSpec`,
+`ContainerInstanceSpec`, `Environment`, `MetaKey`, `UniqueMachineToken` and `PlatformConfig`. All of them
+support redaction, so they stay readable with any role, but a client which doesn't ask for redaction
+(including a `talosctl` older than this release) needs the `os:admin` role to read them.
+"""
+
 [make_deps]
 
     [make_deps.tools]

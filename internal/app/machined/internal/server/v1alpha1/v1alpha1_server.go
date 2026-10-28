@@ -1256,13 +1256,15 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (reply *machine
 		}
 	}
 
-	var features *machine.FeaturesInfo
+	features := &machine.FeaturesInfo{
+		// the resource read API of this node always understands the redaction header, see
+		// the redactable package
+		ResourceRedaction: true,
+	}
 
 	config := s.Controller.Runtime().Config()
 	if config != nil && config.Machine() != nil {
-		features = &machine.FeaturesInfo{
-			Rbac: true,
-		}
+		features.Rbac = true
 	}
 
 	return &machine.VersionResponse{

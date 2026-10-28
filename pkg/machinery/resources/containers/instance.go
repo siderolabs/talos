@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // InstanceID builds the ID of a ContainerInstanceSpec from a container name and generation.
@@ -124,6 +125,8 @@ func (ContainerInstanceSpecExtension) ResourceDefinition() meta.ResourceDefiniti
 				JSONPath: `{.image}`,
 			},
 		},
+		// the environment, the entrypoint and the arguments come from the machine configuration
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -133,6 +136,9 @@ func init() {
 	if err := protobuf.RegisterDynamic(ContainerInstanceSpecType, &ContainerInstanceSpec{}); err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[ContainerInstanceSpecSpec, ContainerInstanceSpecExtension]()
 }
 
 // ContainerInstanceStatusType is type of ContainerInstanceStatus resource.

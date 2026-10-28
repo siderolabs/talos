@@ -3527,6 +3527,7 @@ FeaturesInfo describes individual Talos features that can be switched on or off.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | rbac | [bool](#bool) |  | RBAC is true if role-based access control is enabled. |
+| resource_redaction | [bool](#bool) |  | ResourceRedaction is true if the node supports redaction of the sensitive resource specs, i.e. if it understands the x-talos-dev-redact gRPC metadata header. |
 
 
 

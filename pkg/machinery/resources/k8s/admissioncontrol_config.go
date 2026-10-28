@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // AdmissionControlConfigType is type of AdmissionControlConfig resource.
@@ -54,6 +55,8 @@ func (AdmissionControlConfigExtension) ResourceDefinition() meta.ResourceDefinit
 	return meta.ResourceDefinitionSpec{
 		Type:             AdmissionControlConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+		// the configuration of each plugin is copied out of the machine configuration as it stands
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -64,4 +67,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[AdmissionControlConfigSpec, AdmissionControlConfigExtension]()
 }

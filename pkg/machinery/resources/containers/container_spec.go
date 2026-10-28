@@ -23,6 +23,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
@@ -572,6 +573,8 @@ func (ContainerSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 				JSONPath: `{.image.ref}`,
 			},
 		},
+		// the environment, the entrypoint and the arguments come from the machine configuration
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -582,4 +585,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[ContainerSpecSpec, ContainerSpecExtension]()
 }

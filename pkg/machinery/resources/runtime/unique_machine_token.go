@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 const (
@@ -27,8 +28,9 @@ type UniqueMachineToken = typed.Resource[UniqueMachineTokenSpec, UniqueMachineTo
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type UniqueMachineTokenSpec struct {
-	Token string `yaml:"token" protobuf:"1"`
+	Token string `yaml:"token" protobuf:"1" redact:"replace"`
 }
 
 // NewUniqueMachineToken initializes a [UniqueMachineToken] resource.
@@ -54,6 +56,8 @@ func (UniqueMachineTokenExtension) ResourceDefinition() meta.ResourceDefinitionS
 				JSONPath: `{.token}`,
 			},
 		},
+		// the token authenticates this machine to Omni
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -64,4 +68,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[UniqueMachineTokenSpec, UniqueMachineTokenExtension]()
 }

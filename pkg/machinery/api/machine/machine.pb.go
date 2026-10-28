@@ -4196,9 +4196,12 @@ func (x *PlatformInfo) GetMode() string {
 type FeaturesInfo struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// RBAC is true if role-based access control is enabled.
-	Rbac          bool `protobuf:"varint,1,opt,name=rbac,proto3" json:"rbac,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Rbac bool `protobuf:"varint,1,opt,name=rbac,proto3" json:"rbac,omitempty"`
+	// ResourceRedaction is true if the node supports redaction of the sensitive resource specs,
+	// i.e. if it understands the x-talos-dev-redact gRPC metadata header.
+	ResourceRedaction bool `protobuf:"varint,2,opt,name=resource_redaction,json=resourceRedaction,proto3" json:"resource_redaction,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *FeaturesInfo) Reset() {
@@ -4234,6 +4237,13 @@ func (*FeaturesInfo) Descriptor() ([]byte, []int) {
 func (x *FeaturesInfo) GetRbac() bool {
 	if x != nil {
 		return x.Rbac
+	}
+	return false
+}
+
+func (x *FeaturesInfo) GetResourceRedaction() bool {
+	if x != nil {
+		return x.ResourceRedaction
 	}
 	return false
 }
@@ -11969,9 +11979,10 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x04arch\x18\x06 \x01(\tR\x04arch\"6\n" +
 	"\fPlatformInfo\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04mode\x18\x02 \x01(\tR\x04mode\"\"\n" +
+	"\x04mode\x18\x02 \x01(\tR\x04mode\"Q\n" +
 	"\fFeaturesInfo\x12\x12\n" +
-	"\x04rbac\x18\x01 \x01(\bR\x04rbac\"\xc9\x01\n" +
+	"\x04rbac\x18\x01 \x01(\bR\x04rbac\x12-\n" +
+	"\x12resource_redaction\x18\x02 \x01(\bR\x11resourceRedaction\"\xc9\x01\n" +
 	"\vLogsRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12/\n" +

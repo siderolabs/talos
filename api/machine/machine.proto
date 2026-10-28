@@ -591,6 +591,9 @@ message PlatformInfo {
 message FeaturesInfo {
   // RBAC is true if role-based access control is enabled.
   bool rbac = 1;
+  // ResourceRedaction is true if the node supports redaction of the sensitive resource specs,
+  // i.e. if it understands the x-talos-dev-redact gRPC metadata header.
+  bool resource_redaction = 2;
 }
 
 // LogKind selects the log source independently of the container namespace.

@@ -12,6 +12,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // ExtraManifestsConfigType is type of ExtraManifestsConfig resource.
@@ -57,6 +58,8 @@ func (ExtraManifestsConfigExtension) ResourceDefinition() meta.ResourceDefinitio
 	return meta.ResourceDefinitionSpec{
 		Type:             ExtraManifestsConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+		// the manifest headers authenticate the download, and an inline manifest may be a Secret
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -67,4 +70,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[ExtraManifestsConfigSpec, ExtraManifestsConfigExtension]()
 }

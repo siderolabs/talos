@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -31,6 +32,7 @@ import (
 	confignetwork "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/redactable"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/role"
@@ -266,6 +268,34 @@ func (suite *RedactionSuite) TestRedactionMatrix() {
 				admin && mode != redactable.ModeEnforce,
 				what+", sensitive opaque")
 		}
+	}
+}
+
+// TestRedactionRegistry walks every sensitive resource type Talos registers and checks that the node
+// serves it exactly as its registration says it should.
+//
+// The unit tests cover the decision table itself; what this adds is that the registry the node runs
+// with is the one the client sees, so a type which was marked sensitive without being reviewed for
+// redaction shows up here as an os:reader being turned away.
+func (suite *RedactionSuite) TestRedactionRegistry() {
+	cli := suite.clientForRole(role.Reader)
+
+	for _, r := range resources.All() {
+		rd := r.ResourceDefinition()
+
+		if rd.Sensitivity != meta.Sensitive {
+			continue
+		}
+
+		kind := resource.NewMetadata(rd.DefaultNamespace, rd.Type, "", resource.VersionUndefined)
+		canRedact := redactable.IsRedactable(rd.Type)
+
+		// a reviewed type is readable by a reader which can take it redacted; the rest stays
+		// admin-only whatever the reader asks for
+		suite.assertReadable(cli, redactable.ModeAccept, kind, canRedact, fmt.Sprintf("%s, mode %q", rd.Type, redactable.ModeAccept))
+
+		// under enforce the reader only gets what the node can redact
+		suite.assertReadable(cli, redactable.ModeEnforce, kind, canRedact, fmt.Sprintf("%s, mode %q", rd.Type, redactable.ModeEnforce))
 	}
 }
 

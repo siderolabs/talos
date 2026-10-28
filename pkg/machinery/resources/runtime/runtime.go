@@ -12,6 +12,8 @@ import (
 
 //go:generate go tool github.com/siderolabs/deep-copy -type APIServiceConfigSpec -type BootIDSpec -type BootPartitionStatusSpec -type BootedEntrySpec -type CPUPartitionSpecSpec -type CPUPartitionStatusSpec -type DevicesStatusSpec -type DiagnosticSpec -type EnvironmentSpec -type EventSinkConfigSpec -type ExtensionServiceConfigSpec -type ExtensionServiceConfigStatusSpec -type ImageFactorySchematicSpec -type KernelCmdlineSpec -type KernelModuleStatusSpec -type KernelModuleSpecSpec -type KernelParamSpecSpec -type KernelParamStatusSpec -type KmsgLogConfigSpec -type LoadedKernelModuleSpec -type MaintenanceServiceConfigSpec -type MaintenanceServiceRequestSpec -type MachineResetSignalSpec -type MachineStatusSpec -type MetaKeySpec -type MountStatusSpec -type OOMActionSpec -type PlatformMetadataSpec -type RebootRequestSpec -type SecurityStateSpec -type MetaLoadedSpec -type SBOMItemSpec -type ServicePIDSpec -type UnattendedInstallStatusSpec -type UniqueMachineTokenSpec -type VersionSpec -type WatchdogTimerConfigSpec -type WatchdogTimerStatusSpec -type WorkloadMemorySpecSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
+//go:generate go tool github.com/siderolabs/talos/tools/redactgen -header-file ../../../../hack/boilerplate.txt -o redact.generated.go .
+
 //go:generate go tool github.com/dmarkham/enumer -type=MachineStage -type=KernelModuleState -type=KernelModuleType -type=FIPSState -type=SELinuxState -type=UnattendedInstallPhase -type=LockdownState -linecomment -text
 
 //go:generate go tool github.com/dmarkham/enumer -type=CPUPartitionPhase -linecomment -text
