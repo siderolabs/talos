@@ -6,14 +6,20 @@
 package main
 
 import (
+	"errors"
 	"os"
 
 	_ "github.com/siderolabs/talos/cmd/talosctl/acompat"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
 )
 
 func main() {
 	if err := cmd.Execute(); err != nil {
+		if exitErr, ok := errors.AsType[*common.ExitError](err); ok {
+			os.Exit(exitErr.Code)
+		}
+
 		os.Exit(1)
 	}
 }

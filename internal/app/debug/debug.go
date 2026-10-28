@@ -18,7 +18,9 @@ import (
 	"github.com/containerd/containerd/v2/pkg/cio"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/containerd/errdefs"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,6 +36,11 @@ import (
 // Service implements machine.DebugService.
 type Service struct {
 	machine.UnimplementedDebugServiceServer
+
+	// Resources is the state the containers to exec into are looked up in.
+	Resources state.State
+	// Logger logs the commands run in containers.
+	Logger *zap.Logger
 }
 
 // ContainerRun implements machine.DebugService.ContainerRun.

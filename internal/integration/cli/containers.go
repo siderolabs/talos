@@ -7,7 +7,10 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
+	"os/exec"
 	"regexp"
 	"testing"
 	"time"
@@ -170,6 +173,46 @@ func (suite *ContainersSuite) TestGetContainerStatus() {
 		regexp.MustCompile(`running\s+healthy`),
 		talosContainerStartTimeout,
 	)
+}
+
+// TestExec covers talosctl container exec end to end: the exit code of the command becomes the exit code of
+// talosctl, and stdout and stderr stay apart without anything added to them.
+func (suite *ContainersSuite) TestExec() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if suite.Airgapped {
+		suite.T().Skip("skipping test in airgapped mode, the test pulls an image")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	name := "talosctl-it-exec"
+
+	cleanup := applyTalosContainer(&suite.CLISuite, node, name, "docker.io/library/alpine:3.23", []string{"/bin/sleep"}, []string{"3600"})
+	defer cleanup()
+
+	suite.RunAndWaitForMatch(
+		[]string{"get", "containerstatus", name, "--nodes", node},
+		regexp.MustCompile(`running\s+healthy`),
+		talosContainerStartTimeout,
+	)
+
+	cmd := suite.MakeCMDFn([]string{"container", "exec", "--nodes", node, name, "--", "/bin/sh", "-c", "echo out; echo err >&2; exit 7"})()
+
+	var stdout, stderr bytes.Buffer
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	err := cmd.Run()
+
+	exitErr, ok := errors.AsType[*exec.ExitError](err)
+	suite.Require().True(ok, "unexpected error: %v, stderr: %s", err, stderr.String())
+
+	suite.Assert().Equal(7, exitErr.ExitCode())
+	suite.Assert().Equal("out\n", stdout.String())
+	suite.Assert().Equal("err\n", stderr.String())
 }
 
 // TestNamespaceFlagsMutuallyExclusive verifies that --kubernetes and --namespace are refused together
