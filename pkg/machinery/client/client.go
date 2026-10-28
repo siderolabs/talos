@@ -58,6 +58,76 @@ type Client struct {
 	Inspect *InspectClient
 }
 
+// State returns the COSI state of the Talos API.
+func (c *Client) State() state.State {
+	return c.COSI
+}
+
+// MachineService returns the client of the machine service.
+func (c *Client) MachineService() machineapi.MachineServiceClient {
+	return c.MachineClient
+}
+
+// TimeService returns the client of the time service.
+func (c *Client) TimeService() timeapi.TimeServiceClient {
+	return c.TimeClient
+}
+
+// ClusterService returns the client of the cluster service.
+func (c *Client) ClusterService() clusterapi.ClusterServiceClient {
+	return c.ClusterClient
+}
+
+// StorageService returns the client of the storage service.
+func (c *Client) StorageService() storageapi.StorageServiceClient {
+	return c.StorageClient
+}
+
+// MachineStorageService returns the client of the storage service of the machine API.
+func (c *Client) MachineStorageService() machineapi.StorageServiceClient {
+	return c.MachineStorageClient
+}
+
+// LVMService returns the client of the LVM service.
+func (c *Client) LVMService() machineapi.LVMServiceClient {
+	return c.LVMClient
+}
+
+// MDService returns the client of the MD service.
+func (c *Client) MDService() machineapi.MDServiceClient {
+	return c.MDClient
+}
+
+// InspectService returns the client of the inspect service.
+func (c *Client) InspectService() inspectapi.InspectServiceClient {
+	return c.InspectClient
+}
+
+// ImageService returns the client of the image service.
+func (c *Client) ImageService() machineapi.ImageServiceClient {
+	return c.ImageClient
+}
+
+// DebugService returns the client of the debug service.
+func (c *Client) DebugService() machineapi.DebugServiceClient {
+	return c.DebugClient
+}
+
+// HypervisorService returns the client of the hypervisor service.
+func (c *Client) HypervisorService() machineapi.HypervisorServiceClient {
+	return c.HypervisorClient
+}
+
+// LifecycleService returns the client of the lifecycle service.
+func (c *Client) LifecycleService() machineapi.LifecycleServiceClient {
+	return c.LifecycleClient
+}
+
+// ContentLibraryService returns the client of the content library service.
+func (c *Client) ContentLibraryService() machineapi.ContentLibraryServiceClient {
+	return c.ContentLibraryClient
+}
+
 func (c *Client) resolveConfigContext() error {
 	var ok bool
 
