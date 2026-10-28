@@ -509,31 +509,56 @@ func (suite *ContainersSuite) TestCapabilities() {
 // TestSecurityProfileRootfs verifies that the restricted profile mounts the rootfs read-only and that
 // privileged does not.
 func (suite *ContainersSuite) TestSecurityProfileRootfs() {
-	const probeRootfs = "touch /rootfs-probe && echo WRITABLE || echo READONLY"
+	suite.assertSecurityProfileProbe("rootfs",
+		"touch /rootfs-probe && echo WRITABLE || echo READONLY",
+		"READONLY", "WRITABLE",
+		"the restricted profile should mount the rootfs read-only",
+		"the privileged profile should not mount the rootfs read-only",
+	)
+}
 
+// TestSecurityProfileSysfs verifies that the restricted profile mounts sysfs read-only and that
+// privileged mounts it read-write.
+//
+// Reading the mount options rather than writing a sysfs attribute: a successful write would change
+// the host, since sysfs is not namespaced.
+func (suite *ContainersSuite) TestSecurityProfileSysfs() {
+	suite.assertSecurityProfileProbe("sysfs",
+		`awk '$2 == "/sys" { split($4, o, ","); print "SYSFS_" toupper(o[1]) }' /proc/mounts`,
+		"SYSFS_RO", "SYSFS_RW",
+		"the restricted profile should mount sysfs read-only",
+		"the privileged profile should mount sysfs read-write",
+	)
+}
+
+// assertSecurityProfileProbe runs probe in a restricted and in a privileged container, and asserts
+// that each logs its expected marker. The probe must print exactly one of the two markers.
+func (suite *ContainersSuite) assertSecurityProfileProbe(
+	prefix, probe, restrictedWant, privilegedWant, restrictedMsg, privilegedMsg string,
+) {
 	suite.Run("restricted", func() {
-		ctx, name, _ := suite.setupContainer("rootfs-restricted")
+		ctx, name, _ := suite.setupContainer(prefix + "-restricted")
 
-		suite.applyContainers(ctx, suite.shellContainer(name, probeRootfs))
+		suite.applyContainers(ctx, suite.shellContainer(name, probe))
 
-		logs := suite.assertContainerLogged(ctx, name, "READONLY", "WRITABLE")
+		logs := suite.assertContainerLogged(ctx, name, restrictedWant, privilegedWant)
 
-		suite.Assert().Contains(logs, "READONLY", "the restricted profile should mount the rootfs read-only")
+		suite.Assert().Contains(logs, restrictedWant, restrictedMsg)
 	})
 
 	suite.Run("privileged", func() {
-		ctx, name, _ := suite.setupContainer("rootfs-privileged")
+		ctx, name, _ := suite.setupContainer(prefix + "-privileged")
 
-		doc := suite.shellContainer(name, probeRootfs)
+		doc := suite.shellContainer(name, probe)
 		doc.SecurityConfig = &containercfg.ContainerSecurity{
 			SecurityProfile: configcontainer.ContainerSecurityProfilePrivileged,
 		}
 
 		suite.applyContainers(ctx, doc)
 
-		logs := suite.assertContainerLogged(ctx, name, "READONLY", "WRITABLE")
+		logs := suite.assertContainerLogged(ctx, name, restrictedWant, privilegedWant)
 
-		suite.Assert().Contains(logs, "WRITABLE", "the privileged profile should not mount the rootfs read-only")
+		suite.Assert().Contains(logs, privilegedWant, privilegedMsg)
 	})
 }
 

@@ -346,6 +346,23 @@ dependsOn:
 ```
 """
 
+    [notes.container_privileged_sysfs]
+        title = "Writable sysfs for privileged Talos Containers"
+        description = """\
+`ContainerConfig` containers using the `privileged` security profile now get `/sys` mounted read-write:
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: tuner
+image: ghcr.io/example/tuner:v1.0.0
+security:
+  profile: privileged
+```
+
+The `restricted` profile (the default) still mounts `/sys` read-only.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

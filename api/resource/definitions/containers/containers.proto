@@ -140,8 +140,7 @@ message ContainerRunAsSpec {
 
 // ContainerSecuritySpec is the resolved security posture.
 message ContainerSecuritySpec {
-  // Privileged grants all grantable capabilities and all devices, matching what extension
-  // services get implicitly.
+  // Privileged grants all grantable capabilities and all devices, and mounts sysfs read-write.
   bool privileged = 1;
   repeated string capabilities_add = 2;
   repeated string capabilities_drop = 3;

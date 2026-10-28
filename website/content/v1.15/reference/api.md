@@ -8461,7 +8461,7 @@ ContainerSecuritySpec is the resolved security posture.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| privileged | [bool](#bool) |  | Privileged grants all grantable capabilities and all devices, matching what extension services get implicitly. |
+| privileged | [bool](#bool) |  | Privileged grants all grantable capabilities and all devices, and mounts sysfs read-write. |
 | capabilities_add | [string](#string) | repeated |  |
 | capabilities_drop | [string](#string) | repeated |  |
 | machined_access | [bool](#bool) |  | MachinedAccess publishes the container's PID as a ServicePID resource and mounts the machined API socket into the container. |

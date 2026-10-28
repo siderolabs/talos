@@ -1623,9 +1623,9 @@
         "profile": {
           "type": "string",
           "title": "profile",
-          "description": "Security profile.\n\nrestricted drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. privileged grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.\n",
-          "markdownDescription": "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.",
-          "x-intellij-html-description": "\u003cp\u003eSecurity profile.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003erestricted\u003c/code\u003e drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. \u003ccode\u003eprivileged\u003c/code\u003e grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.\u003c/p\u003e\n"
+          "description": "Security profile.\n\nrestricted drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. privileged grants all grantable capabilities and all devices,\nand mounts sysfs read-write.\n",
+          "markdownDescription": "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nand mounts sysfs read-write.",
+          "x-intellij-html-description": "\u003cp\u003eSecurity profile.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003erestricted\u003c/code\u003e drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. \u003ccode\u003eprivileged\u003c/code\u003e grants all grantable capabilities and all devices,\nand mounts sysfs read-write.\u003c/p\u003e\n"
         },
         "capabilities": {
           "$ref": "#/$defs/container.ContainerCapabilities",

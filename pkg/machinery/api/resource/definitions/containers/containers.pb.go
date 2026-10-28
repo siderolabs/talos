@@ -843,8 +843,7 @@ func (x *ContainerRunAsSpec) GetGid() int32 {
 // ContainerSecuritySpec is the resolved security posture.
 type ContainerSecuritySpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Privileged grants all grantable capabilities and all devices, matching what extension
-	// services get implicitly.
+	// Privileged grants all grantable capabilities and all devices, and mounts sysfs read-write.
 	Privileged       bool     `protobuf:"varint,1,opt,name=privileged,proto3" json:"privileged,omitempty"`
 	CapabilitiesAdd  []string `protobuf:"bytes,2,rep,name=capabilities_add,json=capabilitiesAdd,proto3" json:"capabilities_add,omitempty"`
 	CapabilitiesDrop []string `protobuf:"bytes,3,rep,name=capabilities_drop,json=capabilitiesDrop,proto3" json:"capabilities_drop,omitempty"`

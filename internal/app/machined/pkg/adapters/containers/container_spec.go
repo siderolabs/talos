@@ -36,10 +36,11 @@ func (a containerSecuritySpec) OCISpecOpts(grantableCapabilities []string) []oci
 	var opts []oci.SpecOpts
 
 	if spec.Privileged {
-		// Extension-service-level permissions: all grantable capabilities and all devices.
+		// All grantable capabilities, all devices and a writable sysfs.
 		opts = append(opts,
 			oci.WithCapabilities(grantableCapabilities),
 			oci.WithAllDevicesAllowed,
+			oci.WithWriteableSysfs,
 		)
 	} else {
 		// Restricted default: no capabilities, read-only rootfs.

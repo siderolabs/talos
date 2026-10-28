@@ -25,7 +25,7 @@ type ContainerSecurity struct {
 	//
 	//     `restricted` drops all capabilities, allows no device access, and mounts the rootfs
 	//     and sysfs read-only. `privileged` grants all grantable capabilities and all devices,
-	//     which is what extension services get implicitly.
+	//     and mounts sysfs read-write.
 	//   values:
 	//     - restricted
 	//     - privileged

@@ -487,7 +487,7 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Name:        "profile",
 				Type:        "ContainerSecurityProfile",
 				Note:        "",
-				Description: "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.",
+				Description: "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nand mounts sysfs read-write.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Security profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"restricted",

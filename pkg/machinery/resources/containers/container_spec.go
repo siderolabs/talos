@@ -257,8 +257,7 @@ const (
 //
 //gotagsrewrite:gen
 type ContainerSecuritySpec struct {
-	// Privileged grants all grantable capabilities and all devices, matching what extension
-	// services get implicitly.
+	// Privileged grants all grantable capabilities and all devices, and mounts sysfs read-write.
 	Privileged bool `yaml:"privileged,omitempty" protobuf:"1"`
 
 	CapabilitiesAdd  []string `yaml:"capabilitiesAdd,omitempty" protobuf:"2"`

@@ -5,13 +5,48 @@
 package containers_test
 
 import (
+	"slices"
 	"testing"
 
+	ctrdcontainers "github.com/containerd/containerd/v2/core/containers"
+	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/containerd/v2/pkg/oci"
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	containersadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
+
+func TestOCISpecOptsSysfs(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name       string
+		privileged bool
+		expect     string
+	}{
+		{name: "privileged mounts sysfs read-write", privileged: true, expect: "rw"},
+		{name: "restricted mounts sysfs read-only", privileged: false, expect: "ro"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			opts := containersadapter.ContainerSecuritySpec(&containers.ContainerSecuritySpec{
+				Privileged: tt.privileged,
+			}).OCISpecOpts([]string{"CAP_CHOWN"})
+
+			spec, err := oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "test"), nil, &ctrdcontainers.Container{ID: "test"}, opts...)
+			require.NoError(t, err)
+
+			idx := slices.IndexFunc(spec.Mounts, func(m specs.Mount) bool { return m.Destination == "/sys" })
+			require.NotEqual(t, -1, idx, "no /sys mount in the generated spec")
+
+			assert.Contains(t, spec.Mounts[idx].Options, tt.expect)
+		})
+	}
+}
 
 func TestOCISpecOpts(t *testing.T) {
 	t.Parallel()
@@ -28,7 +63,7 @@ func TestOCISpecOpts(t *testing.T) {
 			spec: containers.ContainerSecuritySpec{
 				Privileged: true,
 			},
-			expectOpts: 2,
+			expectOpts: 3,
 		},
 		{
 			name: "restricted mode",

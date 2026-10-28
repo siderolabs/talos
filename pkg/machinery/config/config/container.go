@@ -86,8 +86,8 @@ const (
 	// ContainerSecurityProfileRestricted drops all capabilities, allows no devices and mounts
 	// the rootfs and sysfs read-only. This is the default.
 	ContainerSecurityProfileRestricted ContainerSecurityProfile = "restricted"
-	// ContainerSecurityProfilePrivileged grants all grantable capabilities and all devices,
-	// matching what extension services get implicitly.
+	// ContainerSecurityProfilePrivileged grants all grantable capabilities and all devices, and
+	// mounts sysfs read-write.
 	ContainerSecurityProfilePrivileged ContainerSecurityProfile = "privileged"
 )
 
