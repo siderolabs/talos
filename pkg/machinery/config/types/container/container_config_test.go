@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/container"
 )
 
@@ -651,3 +652,43 @@ type validationMode struct{}
 func (validationMode) String() string        { return "test" }
 func (validationMode) RequiresInstall() bool { return false }
 func (validationMode) InContainer() bool     { return false }
+
+func TestContainerConfigMergeReplacesEntrypointAndArgs(t *testing.T) {
+	t.Parallel()
+
+	base := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: list-test
+image: docker.io/library/python:3.13-alpine
+entrypoint: ["python3", "-c"]
+args: ["print('one')"]
+`)
+
+	patch := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: list-test
+image: docker.io/library/python:3.13-alpine
+entrypoint: ["python3", "-u", "-c"]
+args: ["print('two')"]
+`)
+
+	require.NoError(t, merge.Merge(base, patch))
+	assert.Equal(t, []string{"python3", "-u", "-c"}, base.Entrypoint())
+	assert.Equal(t, []string{"print('two')"}, base.Args())
+
+	// Re-applying the same document must be idempotent.
+	require.NoError(t, merge.Merge(base, patch))
+	assert.Equal(t, []string{"python3", "-u", "-c"}, base.Entrypoint())
+	assert.Equal(t, []string{"print('two')"}, base.Args())
+
+	// Omitting the lists in the patch keeps the existing values.
+	omitted := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: list-test
+image: docker.io/library/python:3.13-alpine
+`)
+
+	require.NoError(t, merge.Merge(base, omitted))
+	assert.Equal(t, []string{"python3", "-u", "-c"}, base.Entrypoint())
+	assert.Equal(t, []string{"print('two')"}, base.Args())
+}

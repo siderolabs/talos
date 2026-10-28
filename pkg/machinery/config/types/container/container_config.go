@@ -87,10 +87,10 @@ type ContainerConfigV1Alpha1 struct {
 	//     Overrides the image's ENTRYPOINT.
 	//
 	//     Unset means the image's own entrypoint is used.
-	ContainerEntrypoint []string `yaml:"entrypoint,omitempty"`
+	ContainerEntrypoint []string `yaml:"entrypoint,omitempty" merge:"replace"`
 	//   description: |
 	//     Overrides the image's CMD.
-	ContainerArgs []string `yaml:"args,omitempty"`
+	ContainerArgs []string `yaml:"args,omitempty" merge:"replace"`
 	//   description: |
 	//     Overrides the image's WORKDIR.
 	ContainerWorkingDir string `yaml:"workingDir,omitempty"`
