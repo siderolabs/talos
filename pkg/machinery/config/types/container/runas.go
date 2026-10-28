@@ -22,6 +22,10 @@ type ContainerRunAs struct {
 	//
 	//     Unset means use the image's own USER. There are no user namespaces, so uid 0 is host
 	//     root.
+	//
+	//     Required when the image's USER names its user rather than giving a numeric uid
+	//     (e.g. `app` or `app:app`): Talos does not read the image's /etc/passwd, and rejects
+	//     such a container instead of running it as root.
 	//   examples:
 	//     - value: pointer.To[int32](65534)
 	RunAsUID *int32 `yaml:"uid,omitempty"`
@@ -29,6 +33,10 @@ type ContainerRunAs struct {
 	//     GID to run the container's entrypoint as.
 	//
 	//     Unset means use the image's own USER.
+	//
+	//     Required when the image's USER names its group (e.g. `app:app`), or names only a user
+	//     (e.g. `app`), whose primary group would come from the image's /etc/passwd: Talos does
+	//     not read it, and rejects such a container instead of running it as root.
 	//   examples:
 	//     - value: pointer.To[int32](65534)
 	RunAsGID *int32 `yaml:"gid,omitempty"`

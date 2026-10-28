@@ -93,10 +93,10 @@ ContainerRunAs overrides the image's user and group.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`uid` |int32 |UID to run the container's entrypoint as.<br><br>Unset means use the image's own USER. There are no user namespaces, so uid 0 is host<br>root. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`uid` |int32 |UID to run the container's entrypoint as.<br><br>Unset means use the image's own USER. There are no user namespaces, so uid 0 is host<br>root.<br><br>Required when the image's USER names its user rather than giving a numeric uid<br>(e.g. `app` or `app:app`): Talos does not read the image's /etc/passwd, and rejects<br>such a container instead of running it as root. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 uid: 65534
 {{< /highlight >}}</details> | |
-|`gid` |int32 |GID to run the container's entrypoint as.<br><br>Unset means use the image's own USER. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`gid` |int32 |GID to run the container's entrypoint as.<br><br>Unset means use the image's own USER.<br><br>Required when the image's USER names its group (e.g. `app:app`), or names only a user<br>(e.g. `app`), whose primary group would come from the image's /etc/passwd: Talos does<br>not read it, and rejects such a container instead of running it as root. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 gid: 65534
 {{< /highlight >}}</details> | |
 

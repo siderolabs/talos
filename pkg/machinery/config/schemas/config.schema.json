@@ -1602,16 +1602,16 @@
         "uid": {
           "type": "integer",
           "title": "uid",
-          "description": "UID to run the container’s entrypoint as.\n\nUnset means use the image’s own USER. There are no user namespaces, so uid 0 is host\nroot.\n",
-          "markdownDescription": "UID to run the container's entrypoint as.\n\nUnset means use the image's own USER. There are no user namespaces, so uid 0 is host\nroot.",
-          "x-intellij-html-description": "\u003cp\u003eUID to run the container\u0026rsquo;s entrypoint as.\u003c/p\u003e\n\n\u003cp\u003eUnset means use the image\u0026rsquo;s own USER. There are no user namespaces, so uid 0 is host\nroot.\u003c/p\u003e\n"
+          "description": "UID to run the container’s entrypoint as.\n\nUnset means use the image’s own USER. There are no user namespaces, so uid 0 is host\nroot.\n\nRequired when the image’s USER names its user rather than giving a numeric uid\n(e.g. app or app:app): Talos does not read the image’s /etc/passwd, and rejects\nsuch a container instead of running it as root.\n",
+          "markdownDescription": "UID to run the container's entrypoint as.\n\nUnset means use the image's own USER. There are no user namespaces, so uid 0 is host\nroot.\n\nRequired when the image's USER names its user rather than giving a numeric uid\n(e.g. `app` or `app:app`): Talos does not read the image's /etc/passwd, and rejects\nsuch a container instead of running it as root.",
+          "x-intellij-html-description": "\u003cp\u003eUID to run the container\u0026rsquo;s entrypoint as.\u003c/p\u003e\n\n\u003cp\u003eUnset means use the image\u0026rsquo;s own USER. There are no user namespaces, so uid 0 is host\nroot.\u003c/p\u003e\n\n\u003cp\u003eRequired when the image\u0026rsquo;s USER names its user rather than giving a numeric uid\n(e.g. \u003ccode\u003eapp\u003c/code\u003e or \u003ccode\u003eapp:app\u003c/code\u003e): Talos does not read the image\u0026rsquo;s /etc/passwd, and rejects\nsuch a container instead of running it as root.\u003c/p\u003e\n"
         },
         "gid": {
           "type": "integer",
           "title": "gid",
-          "description": "GID to run the container’s entrypoint as.\n\nUnset means use the image’s own USER.\n",
-          "markdownDescription": "GID to run the container's entrypoint as.\n\nUnset means use the image's own USER.",
-          "x-intellij-html-description": "\u003cp\u003eGID to run the container\u0026rsquo;s entrypoint as.\u003c/p\u003e\n\n\u003cp\u003eUnset means use the image\u0026rsquo;s own USER.\u003c/p\u003e\n"
+          "description": "GID to run the container’s entrypoint as.\n\nUnset means use the image’s own USER.\n\nRequired when the image’s USER names its group (e.g. app:app), or names only a user\n(e.g. app), whose primary group would come from the image’s /etc/passwd: Talos does\nnot read it, and rejects such a container instead of running it as root.\n",
+          "markdownDescription": "GID to run the container's entrypoint as.\n\nUnset means use the image's own USER.\n\nRequired when the image's USER names its group (e.g. `app:app`), or names only a user\n(e.g. `app`), whose primary group would come from the image's /etc/passwd: Talos does\nnot read it, and rejects such a container instead of running it as root.",
+          "x-intellij-html-description": "\u003cp\u003eGID to run the container\u0026rsquo;s entrypoint as.\u003c/p\u003e\n\n\u003cp\u003eUnset means use the image\u0026rsquo;s own USER.\u003c/p\u003e\n\n\u003cp\u003eRequired when the image\u0026rsquo;s USER names its group (e.g. \u003ccode\u003eapp:app\u003c/code\u003e), or names only a user\n(e.g. \u003ccode\u003eapp\u003c/code\u003e), whose primary group would come from the image\u0026rsquo;s /etc/passwd: Talos does\nnot read it, and rejects such a container instead of running it as root.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

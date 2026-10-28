@@ -34,6 +34,7 @@ type fakePuller struct {
 
 type fakePullResult struct {
 	digest string
+	user   string
 	err    error
 }
 
@@ -50,6 +51,16 @@ func (p *fakePuller) setResult(ref, digest string, err error) {
 	defer p.mu.Unlock()
 
 	p.results[ref] = fakePullResult{digest: digest, err: err}
+}
+
+// setUser sets the image USER reported for ref, on top of an earlier setResult.
+func (p *fakePuller) setUser(ref, user string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	result := p.results[ref]
+	result.user = user
+	p.results[ref] = result
 }
 
 // block makes pulls of ref hang until release is called.
@@ -78,7 +89,7 @@ func (p *fakePuller) attemptCount(ref string) int {
 	return p.attempts[ref]
 }
 
-func (p *fakePuller) Pull(ctx context.Context, logger *zap.Logger, ref string) (string, error) {
+func (p *fakePuller) Pull(ctx context.Context, logger *zap.Logger, ref string) (containersctrl.PullResult, error) {
 	p.mu.Lock()
 	p.attempts[ref]++
 	blocked := p.blocked[ref]
@@ -88,12 +99,16 @@ func (p *fakePuller) Pull(ctx context.Context, logger *zap.Logger, ref string) (
 	if blocked != nil {
 		select {
 		case <-ctx.Done():
-			return "", ctx.Err()
+			return containersctrl.PullResult{}, ctx.Err()
 		case <-blocked:
 		}
 	}
 
-	return result.digest, result.err
+	if result.err != nil {
+		return containersctrl.PullResult{}, result.err
+	}
+
+	return containersctrl.PullResult{Digest: result.digest, User: result.user}, nil
 }
 
 func (p *fakePuller) Close() error {
@@ -281,4 +296,69 @@ func (suite *ImageSuite) TestRemovesStatusWhenSpecGoesAway() {
 		containers.NewContainerSpec(containers.NamespaceName, "gone").Metadata()))
 
 	ctest.AssertNoResource[*containers.ContainerImageStatus](suite, "gone")
+}
+
+func (suite *ImageSuite) TestRejectsNamedUser() {
+	const ref = "docker.io/library/named-user:1.0"
+
+	suite.puller.setResult(ref, "sha256:named", nil)
+	suite.puller.setUser(ref, "app")
+	suite.criUp()
+	suite.createSpecWithImage("named-user", ref)
+
+	ctest.AssertResource(suite, "named-user", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerImagePhaseFailed, status.TypedSpec().Phase)
+		asrt.Contains(status.TypedSpec().Error, `image USER "app" is not numeric`)
+		asrt.Contains(status.TypedSpec().Error, "runAs.uid and runAs.gid")
+		// The pull succeeded, but the digest is withheld so the instance gate stays shut.
+		asrt.Empty(status.TypedSpec().Digest)
+	})
+}
+
+func (suite *ImageSuite) TestAllowsNamedUserCoveredByRunAs() {
+	const ref = "docker.io/library/named-user-covered:1.0"
+
+	suite.puller.setResult(ref, "sha256:covered", nil)
+	suite.puller.setUser(ref, "app:1000")
+	suite.criUp()
+
+	spec := containers.NewContainerSpec(containers.NamespaceName, "named-user-covered")
+	spec.TypedSpec().Image = containers.ContainerImageSpec{Ref: ref}
+	spec.TypedSpec().RunAs = containers.ContainerRunAsSpec{UID: new(int32(1000))}
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
+
+	ctest.AssertResource(suite, "named-user-covered", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerImagePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal("sha256:covered", status.TypedSpec().Digest)
+		asrt.Empty(status.TypedSpec().Error)
+	})
+}
+
+func (suite *ImageSuite) TestNamedUserRecoversOnceRunAsIsSet() {
+	const ref = "docker.io/library/named-user-fixed:1.0"
+
+	suite.puller.setResult(ref, "sha256:fixed", nil)
+	suite.puller.setUser(ref, "app:app")
+	suite.criUp()
+	suite.createSpecWithImage("named-user-fixed", ref)
+
+	ctest.AssertResource(suite, "named-user-fixed", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerImagePhaseFailed, status.TypedSpec().Phase)
+	})
+
+	ctest.UpdateWithConflicts(suite, containers.NewContainerSpec(containers.NamespaceName, "named-user-fixed"),
+		func(spec *containers.ContainerSpec) error {
+			spec.TypedSpec().RunAs = containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1000))}
+
+			return nil
+		})
+
+	ctest.AssertResource(suite, "named-user-fixed", func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerImagePhaseReady, status.TypedSpec().Phase)
+		asrt.Equal("sha256:fixed", status.TypedSpec().Digest)
+		asrt.Empty(status.TypedSpec().Error)
+	})
+
+	// The fix is a config change, not an image change: the image already on the node is reused.
+	suite.Assert().Equal(1, suite.puller.attemptCount(ref))
 }

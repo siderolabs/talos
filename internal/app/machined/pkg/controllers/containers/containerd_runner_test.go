@@ -14,74 +14,60 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
-func TestParseNumericUser(t *testing.T) {
-	tests := []struct {
-		name      string
-		input     string
-		wantUID   uint32
-		wantGID   uint32
-		wantValid bool
+// TestCheckImageUser covers which image USER values need a runAs override.
+//
+// Each half of USER given as a name must be overridden; a bare name also needs the gid, since that
+// would be the user's primary group from /etc/passwd.
+func TestCheckImageUser(t *testing.T) {
+	t.Parallel()
+
+	uid := containers.ContainerRunAsSpec{UID: new(int32(1000))}
+	gid := containers.ContainerRunAsSpec{GID: new(int32(1000))}
+	both := containers.ContainerRunAsSpec{UID: new(int32(1000)), GID: new(int32(1000))}
+
+	for _, test := range []struct {
+		name        string
+		user        string
+		runAs       containers.ContainerRunAsSpec
+		wantMissing string // empty means accepted
 	}{
-		{
-			name:      "uid only",
-			input:     "1000",
-			wantUID:   1000,
-			wantGID:   0,
-			wantValid: true,
-		},
-		{
-			name:      "uid and gid",
-			input:     "1000:1001",
-			wantUID:   1000,
-			wantGID:   1001,
-			wantValid: true,
-		},
-		{
-			name:      "zero uid",
-			input:     "0",
-			wantUID:   0,
-			wantGID:   0,
-			wantValid: true,
-		},
-		{
-			name:      "zero uid and gid",
-			input:     "0:0",
-			wantUID:   0,
-			wantGID:   0,
-			wantValid: true,
-		},
-		{
-			name:      "invalid uid",
-			input:     "abc",
-			wantValid: false,
-		},
-		{
-			name:      "invalid gid",
-			input:     "1000:abc",
-			wantValid: false,
-		},
-		{
-			name:      "empty string",
-			input:     "",
-			wantValid: false,
-		},
-		{
-			name:      "max uint32",
-			input:     "4294967295",
-			wantUID:   4294967295,
-			wantGID:   0,
-			wantValid: true,
-		},
-	}
+		{name: "unset", user: ""},
+		{name: "numeric uid", user: "1000"},
+		{name: "numeric uid and gid", user: "1000:1001"},
+		{name: "zero", user: "0:0"},
+		{name: "max uint32", user: "4294967295"},
+		{name: "uid out of range", user: "4294967296", wantMissing: "runAs.uid and runAs.gid"},
+		{name: "negative uid", user: "-1", wantMissing: "runAs.uid and runAs.gid"},
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			uid, gid, valid := containersctrl.ParseNumericUser(tt.input)
-			assert.Equal(t, tt.wantValid, valid)
+		{name: "name", user: "app", wantMissing: "runAs.uid and runAs.gid"},
+		{name: "name with uid", user: "app", runAs: uid, wantMissing: "runAs.gid"},
+		{name: "name with gid", user: "app", runAs: gid, wantMissing: "runAs.uid"},
+		{name: "name with both", user: "app", runAs: both},
 
-			if valid {
-				assert.Equal(t, tt.wantUID, uid)
-				assert.Equal(t, tt.wantGID, gid)
+		{name: "name and group", user: "app:app", wantMissing: "runAs.uid and runAs.gid"},
+		{name: "name and group with both", user: "app:app", runAs: both},
+
+		{name: "name and numeric gid", user: "app:1000", wantMissing: "runAs.uid"},
+		{name: "name and numeric gid with uid", user: "app:1000", runAs: uid},
+
+		{name: "numeric uid and group", user: "1000:app", wantMissing: "runAs.gid"},
+		{name: "numeric uid and group with gid", user: "1000:app", runAs: gid},
+
+		{name: "empty gid half", user: "1000:", wantMissing: "runAs.gid"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := containersctrl.CheckImageUser(test.user, test.runAs)
+
+			if test.wantMissing == "" {
+				assert.NoError(t, err)
+
+				return
+			}
+
+			if assert.Error(t, err) {
+				assert.Contains(t, err.Error(), "set "+test.wantMissing+" in the ContainerConfig document")
 			}
 		})
 	}

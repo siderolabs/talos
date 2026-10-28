@@ -203,7 +203,7 @@ func (s *instanceRunState) requestStop() bool {
 func (ctrl *RuntimeController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
 	if ctrl.RunnerProvider == nil {
 		ctrl.RunnerProvider = func() (TaskRunner, error) {
-			return newContainerdRunner(ctrl.Runtime.Logging(), logger)
+			return newContainerdRunner(ctrl.Runtime.Logging())
 		}
 	}
 

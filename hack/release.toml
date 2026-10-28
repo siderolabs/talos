@@ -380,6 +380,25 @@ The `userVolume` key is still accepted but deprecated, and is ignored when `volu
 The mounts of the `ContainerSpec` resource no longer carry `volumeID`, as the volume is resolved by name; the resolved volume ID is reported on `ContainerMountStatus`.
 """
 
+    [notes.container_named_user]
+        title = "ContainerConfig Rejects Non-Numeric Image USER"
+        description = """\
+A `ContainerConfig` container whose image declares `USER` by name (e.g. `app`, `app:app`) is now rejected after the image pull, instead of silently running as root (uid 0, gid 0).
+Talos does not read the image's `/etc/passwd` or `/etc/group`, so every named part of `USER` has to be overridden with `runAs.uid` and/or `runAs.gid`.
+A bare name such as `app` needs both, since its group would come from `/etc/passwd`.
+The container's image status reports the failure, and setting `runAs` resolves it without a re-pull.
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: web
+image: docker.io/library/example:1.0 # USER app
+runAs:
+  uid: 1000
+  gid: 1000
+```
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

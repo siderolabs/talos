@@ -25,7 +25,6 @@ import (
 	"github.com/containerd/errdefs"
 	v1 "github.com/opencontainers/image-spec/specs-go/v1"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"go.uber.org/zap"
 
 	containersadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -52,10 +51,9 @@ const (
 type containerdRunner struct {
 	client  *containerdapi.Client
 	logging runtime.LoggingManager
-	logger  *zap.Logger
 }
 
-func newContainerdRunner(logging runtime.LoggingManager, logger *zap.Logger) (TaskRunner, error) {
+func newContainerdRunner(logging runtime.LoggingManager) (TaskRunner, error) {
 	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to containerd: %w", err)
@@ -64,7 +62,6 @@ func newContainerdRunner(logging runtime.LoggingManager, logger *zap.Logger) (Ta
 	return &containerdRunner{
 		client:  client,
 		logging: logging,
-		logger:  logger,
 	}, nil
 }
 
@@ -190,7 +187,7 @@ func (r *containerdRunner) ociSpecOpts(spec containersres.ContainerInstanceSpecS
 	// declared spec.
 	opts := []oci.SpecOpts{
 		containerdrunner.WithImageConfigStripped(image),
-		r.withImageUser(image),
+		WithImageUser(image, spec.RunAs),
 		// Always applied: it is what resolves each half of the argv against the image, so leaving it
 		// out when neither is overridden would run a container with no argv at all.
 		WithProcessArgs(spec, image),
@@ -242,27 +239,24 @@ func (r *containerdRunner) ociSpecOpts(spec containersres.ContainerInstanceSpecS
 	return opts
 }
 
-// withImageUser applies the image's USER, as long as it is expressed numerically.
-func (r *containerdRunner) withImageUser(image containerdapi.Image) oci.SpecOpts {
+// WithImageUser applies the numeric halves of the image's USER.
+//
+// A half expressed as a name cannot be resolved without the image's /etc/passwd, so it has to be
+// covered by runAs (applied later by WithRunAs); otherwise the container is rejected rather than
+// silently run as root. The image controller rejects the same images right after the pull; this is
+// the backstop for the runner.
+func WithImageUser(image containerdapi.Image, runAs containersres.ContainerRunAsSpec) oci.SpecOpts {
 	return func(ctx context.Context, _ oci.Client, _ *ctrdcontainers.Container, s *specs.Spec) error {
 		config, err := ImageConfig(ctx, image)
 		if err != nil {
 			return err
 		}
 
-		user := config.User
-		if user == "" {
-			return nil
+		if err := CheckImageUser(config.User, runAs); err != nil {
+			return err
 		}
 
-		uid, gid, numeric := ParseNumericUser(user)
-		if !numeric {
-			r.logger.Warn(
-				"image USER is not numeric and cannot be resolved without the image's /etc/passwd, running as root",
-				zap.String("image", image.Name()),
-				zap.String("user", user),
-			)
-
+		if config.User == "" {
 			return nil
 		}
 
@@ -270,11 +264,62 @@ func (r *containerdRunner) withImageUser(image containerdapi.Image) oci.SpecOpts
 			s.Process = &specs.Process{}
 		}
 
-		s.Process.User.UID = uid
-		s.Process.User.GID = gid
+		uidPart, gidPart, _ := strings.Cut(config.User, ":")
+
+		if uid, ok := parseID(uidPart); ok {
+			s.Process.User.UID = uid
+		}
+
+		if gid, ok := parseID(gidPart); ok {
+			s.Process.User.GID = gid
+		}
 
 		return nil
 	}
+}
+
+// CheckImageUser rejects an image USER whose non-numeric halves are not overridden by runAs.
+//
+// A name can only be resolved through the image's /etc/passwd and /etc/group, which Talos does not
+// read. A bare name ("app") also leaves the gid unknown, since it would be the user's primary group.
+func CheckImageUser(user string, runAs containersres.ContainerRunAsSpec) error {
+	if user == "" {
+		return nil
+	}
+
+	uidPart, gidPart, hasGID := strings.Cut(user, ":")
+	_, uidNumeric := parseID(uidPart)
+	_, gidNumeric := parseID(gidPart)
+
+	var missing []string
+
+	if !uidNumeric && runAs.UID == nil {
+		missing = append(missing, "runAs.uid")
+	}
+
+	gidUnresolved := (hasGID && !gidNumeric) || (!hasGID && !uidNumeric)
+	if gidUnresolved && runAs.GID == nil {
+		missing = append(missing, "runAs.gid")
+	}
+
+	if len(missing) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf(
+		"image USER %q is not numeric and cannot be resolved without the image's /etc/passwd; set %s in the ContainerConfig document",
+		user, strings.Join(missing, " and "),
+	)
+}
+
+// parseID parses a single numeric uid or gid.
+func parseID(s string) (uint32, bool) {
+	id, err := strconv.ParseUint(s, 10, 32)
+	if err != nil {
+		return 0, false
+	}
+
+	return uint32(id), true
 }
 
 // ImageConfig reads and decodes the image's OCI config.
@@ -353,29 +398,6 @@ func WithRunAs(runAs containersres.ContainerRunAsSpec) oci.SpecOpts {
 
 		return nil
 	}
-}
-
-// ParseNumericUser parses an image USER of the form "uid" or "uid:gid".
-//
-// A bare uid leaves the gid at 0.
-func ParseNumericUser(user string) (uid, gid uint32, numeric bool) {
-	uidPart, gidPart, hasGID := strings.Cut(user, ":")
-
-	parsedUID, err := strconv.ParseUint(uidPart, 10, 32)
-	if err != nil {
-		return 0, 0, false
-	}
-
-	if !hasGID {
-		return uint32(parsedUID), 0, true
-	}
-
-	parsedGID, err := strconv.ParseUint(gidPart, 10, 32)
-	if err != nil {
-		return 0, 0, false
-	}
-
-	return uint32(parsedUID), uint32(parsedGID), true
 }
 
 // MountsResolvedToOCI converts resolved mounts into OCI mounts.

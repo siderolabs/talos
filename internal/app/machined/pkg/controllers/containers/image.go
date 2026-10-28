@@ -36,10 +36,18 @@ const criServiceID = "cri"
 // This is the seam that keeps the controller testable: the default implementation talks to
 // containerd, tests substitute a fake.
 type Puller interface {
-	// Pull fetches the reference and returns the resolved digest reference.
-	Pull(ctx context.Context, logger *zap.Logger, imageRef string) (string, error)
+	// Pull fetches the reference and returns what the controller needs to know about the image.
+	Pull(ctx context.Context, logger *zap.Logger, imageRef string) (PullResult, error)
 	// Close releases the underlying client.
 	Close() error
+}
+
+// PullResult describes a pulled image.
+type PullResult struct {
+	// Digest is the resolved digest reference.
+	Digest string
+	// User is the image config's USER, verbatim.
+	User string
 }
 
 // ImageController owns pulling images for declared containers.
@@ -110,24 +118,24 @@ type pullState struct {
 	cancel context.CancelFunc
 	wg     sync.WaitGroup
 
-	mu          sync.Mutex
-	imageDigest string
-	err         error
-	done        bool
+	mu     sync.Mutex
+	result PullResult
+	err    error
+	done   bool
 }
 
-func (state *pullState) snapshot() (imageDigest string, err error, done bool) {
+func (state *pullState) snapshot() (result PullResult, err error, done bool) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	return state.imageDigest, state.err, state.done
+	return state.result, state.err, state.done
 }
 
-func (state *pullState) finish(imageDigest string, err error) {
+func (state *pullState) finish(result PullResult, err error) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	state.imageDigest, state.err, state.done = imageDigest, err, true
+	state.result, state.err, state.done = result, err, true
 }
 
 func (state *pullState) stop() {
@@ -230,7 +238,9 @@ func (ctrl *ImageController) reconcile(
 		containerSpecID := containerSpec.Metadata().ID()
 		wanted[containerSpecID] = struct{}{}
 
-		if err := ctrl.reconcileContainer(ctx, runtime, logger, puller, notifyCh, containerSpecID, containerSpec.TypedSpec().Image.Ref); err != nil {
+		if err := ctrl.reconcileContainer(
+			ctx, runtime, logger, puller, notifyCh, containerSpecID, containerSpec.TypedSpec().Image.Ref, containerSpec.TypedSpec().RunAs,
+		); err != nil {
 			return err
 		}
 	}
@@ -248,6 +258,7 @@ func (ctrl *ImageController) reconcileContainer(
 	puller Puller,
 	notifyCh chan struct{},
 	containerSpecID, imageRef string,
+	runAs containers.ContainerRunAsSpec,
 ) error {
 	pull := ctrl.currentPull(logger, containerSpecID, imageRef)
 
@@ -267,7 +278,7 @@ func (ctrl *ImageController) reconcileContainer(
 		ctrl.pulls[containerSpecID] = pull
 	}
 
-	imageDigest, pullErr, done := pull.snapshot()
+	result, pullErr, done := pull.snapshot()
 
 	switch {
 	case !done:
@@ -281,7 +292,15 @@ func (ctrl *ImageController) reconcileContainer(
 	case pullErr != nil:
 		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseFailed, "", pullErr.Error())
 	default:
-		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseReady, imageDigest, "")
+		// The image is on the node, but a USER it names rather than numbers would otherwise run as
+		// root. It is rejected here, before an instance exists, and re-checked on every reconcile so
+		// that setting runAs takes effect without a re-pull. The digest stays empty to keep the
+		// instance gate shut.
+		if err := CheckImageUser(result.User, runAs); err != nil {
+			return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseFailed, "", err.Error())
+		}
+
+		return ctrl.writeStatus(ctx, runtime, containerSpecID, imageRef, containers.ContainerImagePhaseReady, result.Digest, "")
 	}
 }
 
@@ -376,18 +395,18 @@ func (ctrl *ImageController) startPull(
 
 		logger.Info("pulling container image", zap.String("container", containerSpecID), zap.String("image", imageRef))
 
-		var imageDigest string
+		var result PullResult
 
 		// A panic in a pull must not take down machined.
 		err := panicsafe.RunErr(func() error {
 			var pullErr error
 
-			imageDigest, pullErr = puller.Pull(pullCtx, logger, imageRef)
+			result, pullErr = puller.Pull(pullCtx, logger, imageRef)
 
 			return pullErr
 		})
 
-		pull.finish(imageDigest, err)
+		pull.finish(result, err)
 
 		switch {
 		case panicsafe.IsPanic(err):
@@ -403,7 +422,8 @@ func (ctrl *ImageController) startPull(
 			logger.Info(
 				"image pulled",
 				zap.String("container", containerSpecID),
-				zap.String("digest", imageDigest),
+				zap.String("digest", result.Digest),
+				zap.String("user", result.User),
 			)
 		}
 	})
@@ -431,7 +451,7 @@ type containerdPuller struct {
 	registryBuilder image.RegistriesBuilder
 }
 
-func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, imageRef string) (string, error) {
+func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, imageRef string) (PullResult, error) {
 	// The taloscontainers namespace keeps these images away from both Kubernetes pods and Talos'
 	// own system images.
 	ctx = namespaces.WithNamespace(ctx, constants.TalosContainersContainerdNamespace)
@@ -452,10 +472,18 @@ func (p *containerdPuller) Pull(ctx context.Context, logger *zap.Logger, imageRe
 		image.WithLogWriter(logWriter),
 	)
 	if err != nil {
-		return "", err
+		return PullResult{}, err
 	}
 
-	return img.Target().Digest.String(), nil
+	config, err := ImageConfig(ctx, img)
+	if err != nil {
+		return PullResult{}, fmt.Errorf("failed to read the image config: %w", err)
+	}
+
+	return PullResult{
+		Digest: img.Target().Digest.String(),
+		User:   config.User,
+	}, nil
 }
 
 func (p *containerdPuller) Close() error {
