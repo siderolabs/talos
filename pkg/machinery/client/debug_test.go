@@ -17,6 +17,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
 // fakeContainerStream records what the session sends, and replays events to it.
@@ -413,4 +416,58 @@ func TestContainerStreamSignalAfterHalfClose(t *testing.T) {
 	stream.errC <- context.Canceled
 
 	require.ErrorIs(t, <-errC, context.Canceled)
+}
+
+// fakeExecClientStream stands in for the client side of a ContainerExec stream.
+type fakeExecClientStream struct {
+	grpc.ClientStream
+
+	sent      []*machineapi.DebugContainerExecRequest
+	responses []*machineapi.DebugContainerExecResponse
+}
+
+func (f *fakeExecClientStream) Send(req *machineapi.DebugContainerExecRequest) error {
+	f.sent = append(f.sent, req)
+
+	return nil
+}
+
+func (f *fakeExecClientStream) Recv() (*machineapi.DebugContainerExecResponse, error) {
+	if len(f.responses) == 0 {
+		return nil, io.EOF
+	}
+
+	resp := f.responses[0]
+	f.responses = f.responses[1:]
+
+	return resp, nil
+}
+
+// TestContainerExecStream covers the translation between ContainerExec messages and the session.
+func TestContainerExecStream(t *testing.T) {
+	t.Parallel()
+
+	fake := &fakeExecClientStream{
+		responses: []*machineapi.DebugContainerExecResponse{
+			{Resp: &machineapi.DebugContainerExecResponse_InstanceId{InstanceId: "app-3"}},
+			{Resp: &machineapi.DebugContainerExecResponse_StdoutData{StdoutData: []byte("out")}},
+			{Resp: &machineapi.DebugContainerExecResponse_StderrData{StderrData: []byte("err")}},
+			{Resp: &machineapi.DebugContainerExecResponse_ExitCode{ExitCode: 3}},
+		},
+	}
+
+	var stdout, stderr bytes.Buffer
+
+	result, err := runContainerStream(func() {}, containerExecStream{fake}, ContainerStreamOptions{Stdout: &stdout, Stderr: &stderr})
+	require.NoError(t, err)
+
+	assert.Equal(t, containerStreamResult{instanceID: "app-3", exitCode: 3}, result)
+	assert.Equal(t, "out", stdout.String())
+	assert.Equal(t, "err", stderr.String())
+
+	// stdin ends with a message of its own, so the request stream stays open for signals.
+	closed, err := containerExecStream{fake}.sendStdinEOF()
+	require.NoError(t, err)
+	assert.False(t, closed)
+	assert.True(t, fake.sent[len(fake.sent)-1].GetStdinEof())
 }

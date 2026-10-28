@@ -120,6 +120,98 @@ func (d debugRunStream) recv() (containerStreamEvent, error) {
 	}
 }
 
+// ContainerExecResult is how a command run in a container ended.
+type ContainerExecResult struct {
+	// InstanceID is the container instance the command ran in.
+	InstanceID string
+	// ExitCode is the exit code of the command.
+	ExitCode int
+}
+
+// ContainerExec runs a command in a running container on the node and streams its stdio.
+//
+// A command exiting with a nonzero code is a result, not an error. Canceling ctx ends the command.
+// With a terminal, the end of stdin doesn't close the command's stdin, as that would hang up the terminal.
+func (c *Client) ContainerExec(ctx context.Context, spec *machineapi.DebugContainerExecRequestSpec, opts ContainerStreamOptions) (ContainerExecResult, error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	stream, err := c.DebugService().ContainerExec(
+		ctx,
+		grpc.MaxCallRecvMsgSize(containerStreamMaxMessageSize),
+		grpc.MaxCallSendMsgSize(containerStreamMaxMessageSize),
+	)
+	if err != nil {
+		return ContainerExecResult{}, fmt.Errorf("failed to create container exec stream: %w", err)
+	}
+
+	if err = stream.Send(&machineapi.DebugContainerExecRequest{
+		Request: &machineapi.DebugContainerExecRequest_Spec{
+			Spec: spec,
+		},
+	}); err != nil {
+		return ContainerExecResult{}, fmt.Errorf("failed to send container exec spec: %w", err)
+	}
+
+	result, err := runContainerStream(cancel, containerExecStream{stream}, opts)
+
+	return ContainerExecResult{InstanceID: result.instanceID, ExitCode: result.exitCode}, err
+}
+
+// containerExecStream adapts ContainerExec to a container stream.
+type containerExecStream struct {
+	stream grpc.BidiStreamingClient[machineapi.DebugContainerExecRequest, machineapi.DebugContainerExecResponse]
+}
+
+func (e containerExecStream) sendStdin(data []byte) error {
+	return e.stream.Send(&machineapi.DebugContainerExecRequest{
+		Request: &machineapi.DebugContainerExecRequest_StdinData{StdinData: data},
+	})
+}
+
+func (e containerExecStream) sendStdinEOF() (bool, error) {
+	return false, e.stream.Send(&machineapi.DebugContainerExecRequest{
+		Request: &machineapi.DebugContainerExecRequest_StdinEof{StdinEof: true},
+	})
+}
+
+func (e containerExecStream) sendSignal(signal syscall.Signal) error {
+	return e.stream.Send(&machineapi.DebugContainerExecRequest{
+		Request: &machineapi.DebugContainerExecRequest_Signal{Signal: int32(signal)},
+	})
+}
+
+func (e containerExecStream) sendResize(size TerminalSize) error {
+	return e.stream.Send(&machineapi.DebugContainerExecRequest{
+		Request: &machineapi.DebugContainerExecRequest_TermResize{
+			TermResize: &machineapi.DebugContainerTerminalResize{
+				Width:  int32(size.Width),  //nolint:gosec
+				Height: int32(size.Height), //nolint:gosec
+			},
+		},
+	})
+}
+
+func (e containerExecStream) recv() (containerStreamEvent, error) {
+	msg, err := e.stream.Recv()
+	if err != nil {
+		return containerStreamEvent{}, err
+	}
+
+	switch msg.Resp.(type) {
+	case *machineapi.DebugContainerExecResponse_InstanceId:
+		return containerStreamEvent{instanceID: msg.GetInstanceId()}, nil
+	case *machineapi.DebugContainerExecResponse_StdoutData:
+		return containerStreamEvent{stdout: msg.GetStdoutData()}, nil
+	case *machineapi.DebugContainerExecResponse_StderrData:
+		return containerStreamEvent{stderr: msg.GetStderrData()}, nil
+	case *machineapi.DebugContainerExecResponse_ExitCode:
+		return containerStreamEvent{exited: true, exitCode: int(msg.GetExitCode())}, nil
+	default:
+		return containerStreamEvent{}, nil
+	}
+}
+
 // containerStreamEvent is a message from the node, translated from the message type of the RPC.
 type containerStreamEvent struct {
 	stdout     []byte

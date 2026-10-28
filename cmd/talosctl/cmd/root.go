@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -39,6 +40,10 @@ func Execute() error {
 	defer safeout.Flush() //nolint:errcheck
 
 	cmd, err := cli.WithContextC(context.Background(), rootCmd.ExecuteContextC)
+	if exitErr, ok := errors.AsType[*common.ExitError](err); ok {
+		return exitErr
+	}
+
 	if err != nil && !common.SuppressErrors {
 		errorString := err.Error()
 

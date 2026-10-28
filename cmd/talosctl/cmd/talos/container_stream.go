@@ -21,14 +21,17 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-// containerStreamTerminal connects the local terminal to a command streamed from the node: stdin,
-// stdout and stderr, the forwarded signals and, with tty, raw mode and terminal size changes.
+// containerStreamTerminal connects the local terminal to a command streamed from the node: stdout
+// and stderr, the forwarded signals and, with stdin, stdin and, with tty, raw mode and terminal size
+// changes.
 //
 // The returned function restores the terminal and must be called once the command has ended.
-func containerStreamTerminal(ctx context.Context, tty bool) (client.ContainerStreamOptions, func(), error) {
+func containerStreamTerminal(ctx context.Context, stdin, tty bool) (client.ContainerStreamOptions, func(), error) {
 	var restoreTerminal func()
 
-	if tty {
+	// Raw mode only when the keystrokes are passed on: otherwise the local terminal has to keep
+	// turning Ctrl-C into a signal, which is then forwarded.
+	if stdin && tty {
 		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 		if err != nil {
 			return client.ContainerStreamOptions{}, nil, fmt.Errorf("failed to set terminal to raw mode: %w", err)
@@ -39,13 +42,19 @@ func containerStreamTerminal(ctx context.Context, tty bool) (client.ContainerStr
 		}
 	}
 
-	// os.Stdin itself is never closed, so that the terminal can still be restored.
-	stdinR, stdinW := io.Pipe()
+	var stdinR io.Reader
 
-	go func() {
-		io.Copy(stdinW, os.Stdin) //nolint:errcheck
-		stdinW.Close()            //nolint:errcheck
-	}()
+	if stdin {
+		// os.Stdin itself is never closed, so that the terminal can still be restored.
+		pipeR, pipeW := io.Pipe()
+
+		go func() {
+			io.Copy(pipeW, os.Stdin) //nolint:errcheck
+			pipeW.Close()            //nolint:errcheck
+		}()
+
+		stdinR = pipeR
+	}
 
 	stop := make(chan struct{})
 

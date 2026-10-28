@@ -117,7 +117,7 @@ var debugCmd = &cobra.Command{
 
 		tty := term.IsTerminal(int(os.Stdin.Fd()))
 
-		opts, restoreTerminal, err := containerStreamTerminal(ctx, tty)
+		opts, restoreTerminal, err := containerStreamTerminal(ctx, true, tty)
 		if err != nil {
 			return err
 		}
