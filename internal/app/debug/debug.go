@@ -220,21 +220,21 @@ func runAndAttachContainer(
 	srv grpc.BidiStreamingServer[machine.DebugContainerRunRequest, machine.DebugContainerRunResponse],
 	ctr client.Container,
 ) error {
-	grpcStreamer, stdinR, stdoutW := newGrpcStreamWriter(srv)
+	sess := newSession(runStream{srv}, false)
 	stdin := &containerd.StdinCloser{
-		Stdin:  stdinR,
+		Stdin:  sess.stdin(),
 		Closer: make(chan struct{}),
 	}
 
 	cIoOpts := []cio.Opt{
-		cio.WithStreams(stdin, stdoutW, stdoutW),
+		cio.WithStreams(stdin, sess.stdout(), sess.stderr()),
 	}
 
 	if spec.GetTty() {
 		cIoOpts = append(cIoOpts, cio.WithTerminal)
 	}
 
-	cIo := cio.NewCreator(cIoOpts...)
+	cIo := sess.ioCreator(cIoOpts...)
 
 	task, err := ctr.NewTask(ctx, cIo)
 	if err != nil {
@@ -259,7 +259,51 @@ func runAndAttachContainer(
 		return fmt.Errorf("failed to wait for task: %v", err)
 	}
 
-	return grpcStreamer.stream(ctx, statusC, task)
+	if err = sess.run(ctx, containerdProcess{task}, processExit(statusC), processOutputDrained(task)); err != nil {
+		return fmt.Errorf("debug container: %w", err)
+	}
+
+	return nil
+}
+
+// runStream adapts ContainerRun to a session: stderr is merged into stdout, and the client's
+// half-close ends stdin.
+type runStream struct {
+	srv grpc.BidiStreamingServer[machine.DebugContainerRunRequest, machine.DebugContainerRunResponse]
+}
+
+func (r runStream) recv() (controlMessage, error) {
+	msg, err := r.srv.Recv()
+	if err != nil {
+		return controlMessage{}, err
+	}
+
+	switch msg.Request.(type) {
+	case *machine.DebugContainerRunRequest_StdinData:
+		return controlMessage{stdinData: msg.GetStdinData()}, nil
+	case *machine.DebugContainerRunRequest_Signal:
+		return controlMessage{signal: msg.GetSignal()}, nil
+	case *machine.DebugContainerRunRequest_TermResize:
+		return controlMessage{resize: msg.GetTermResize()}, nil
+	default:
+		return controlMessage{}, fmt.Errorf("unknown request type: %T", msg.Request)
+	}
+}
+
+func (r runStream) sendOutput(_ outputStream, data []byte) error {
+	return r.srv.Send(&machine.DebugContainerRunResponse{
+		Resp: &machine.DebugContainerRunResponse_StdoutData{
+			StdoutData: data,
+		},
+	})
+}
+
+func (r runStream) sendExitCode(code int32) error {
+	return r.srv.Send(&machine.DebugContainerRunResponse{
+		Resp: &machine.DebugContainerRunResponse_ExitCode{
+			ExitCode: code,
+		},
+	})
 }
 
 func generateContainerID() (string, error) {

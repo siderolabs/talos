@@ -13,7 +13,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync/atomic"
 	"syscall"
+	"time"
 
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/errdefs"
@@ -95,7 +97,8 @@ func runHostNsContainer( //nolint:gocyclo
 	defer teardown() //nolint:errcheck
 
 	// 4. gRPC I/O streams.
-	grpcStreamer, stdinR, stdoutW := newGrpcStreamWriter(srv)
+	sess := newSession(runStream{srv}, false)
+	stdinR, stdoutW := sess.stdin(), sess.stdout()
 
 	// 5. Command + args: with explicit args, args[0] is the executable (resolved
 	// against PATH in launchInHostNs); otherwise default to the Nix bash.
@@ -140,7 +143,7 @@ func runHostNsContainer( //nolint:gocyclo
 	// loop into the goroutine that owns the child. Buffered so recv never blocks.
 	controlC := make(chan hostNsControl, 16)
 
-	exitC := make(chan int, 1)
+	exitC := make(chan exitResult, 1)
 	launchDone := make(chan struct{})
 
 	go func() {
@@ -157,14 +160,16 @@ func runHostNsContainer( //nolint:gocyclo
 			fmt.Fprintf(stdoutW, "host-ns: launch failed: %v\r\n", launchErr) //nolint:errcheck
 		}
 
-		// Close the stdout pipe so the send loop drains and the streaming coordinator
-		// receives EOF before we send the exit code.
-		grpcStreamer.stdoutW.Close() //nolint:errcheck
+		// Close the stdout pipe so the session drains it before sending the exit code.
+		sess.closeOutput()
 
-		exitC <- code
+		exitC <- exitResult{code: int32(code)} //nolint:gosec
 	}()
 
-	streamErr := grpcStreamer.streamHostNs(ctx, exitC, controlC)
+	streamErr := sess.run(ctx, hostNsProcess{controlC: controlC}, exitC, func(context.Context) {})
+	if streamErr != nil {
+		streamErr = fmt.Errorf("host-ns: %w", streamErr)
+	}
 
 	// Kill the child process group (no-op if already exited), then wait for the launch
 	// goroutine before the deferred teardown/cleanup runs.
@@ -172,6 +177,38 @@ func runHostNsContainer( //nolint:gocyclo
 	<-launchDone
 
 	return streamErr
+}
+
+// hostNsControl carries out-of-band control messages from the gRPC recv loop
+// to the locked goroutine that owns the child process and pty master.
+type hostNsControl struct {
+	signal int32
+	resize *machine.DebugContainerTerminalResize
+}
+
+// hostNsProcess routes signals and resize events to the control loop which owns the child.
+// Sends are non-blocking: if the child has already exited the control loop will have stopped
+// reading, and we drop rather than hang.
+type hostNsProcess struct {
+	controlC chan<- hostNsControl
+}
+
+func (p hostNsProcess) signal(_ context.Context, signal int32) error {
+	select {
+	case p.controlC <- hostNsControl{signal: signal}:
+	default:
+	}
+
+	return nil
+}
+
+func (p hostNsProcess) resize(_ context.Context, width, height uint32) error {
+	select {
+	case p.controlC <- hostNsControl{resize: &machine.DebugContainerTerminalResize{Width: int32(width), Height: int32(height)}}: //nolint:gosec
+	default:
+	}
+
+	return nil
 }
 
 // launchInHostNs execs the requested command chrooted into the prepared root (merged),
@@ -302,9 +339,11 @@ func runControlLoop(ctx context.Context, done <-chan struct{}, controlC <-chan h
 			}
 
 			if ctrl.resize != nil && ptyMaster != nil {
-				unix.IoctlSetWinsize(int(ptyMaster.Fd()), unix.TIOCSWINSZ, &unix.Winsize{ //nolint:errcheck
-					Row: uint16(ctrl.resize.Height),
-					Col: uint16(ctrl.resize.Width),
+				ptyControl(ptyMaster, func(fd int) error { //nolint:errcheck
+					return unix.IoctlSetWinsize(fd, unix.TIOCSWINSZ, &unix.Winsize{
+						Row: uint16(ctrl.resize.Height),
+						Col: uint16(ctrl.resize.Width),
+					})
 				})
 			}
 		}
@@ -366,18 +405,14 @@ func runWithOpenPty(
 	go runControlLoop(ctx, done, controlC, cmd.Process.Pid, ptyMaster)
 
 	// Relay pty master → gRPC stdout.
-	go func() {
-		buf := make([]byte, 4096)
-		for {
-			n, readErr := ptyMaster.Read(buf)
-			if n > 0 {
-				stdout.Write(buf[:n]) //nolint:errcheck
-			}
+	var childExited atomic.Bool
 
-			if readErr != nil {
-				return
-			}
-		}
+	relayDone := make(chan struct{})
+
+	go func() {
+		defer close(relayDone)
+
+		relayPty(ptyMaster, stdout, &childExited)
 	}()
 
 	// Relay gRPC stdin → pty master.
@@ -395,8 +430,97 @@ func runWithOpenPty(
 		}
 	}()
 
-	return waitHostNsCommand(cmd, usingReaper, notifyCh)
+	exitCode, err := waitHostNsCommand(cmd, usingReaper, notifyCh)
+
+	waitPtyDrained(ctx, ptyMaster, &childExited, relayDone)
+
+	return exitCode, err
 }
+
+// relayPty copies the output of the child from the pty master. Once the child has exited, the
+// relay ends after ptyDrainTimeout, not counting the time spent writing output already read, or after
+// ptyDrainLimit bytes: a background process keeping the pty open would otherwise keep it going.
+func relayPty(ptyMaster *os.File, stdout io.Writer, childExited *atomic.Bool) {
+	buf := make([]byte, 4096)
+
+	var (
+		drainStart time.Time
+		writing    time.Duration
+		drained    int
+	)
+
+	for {
+		if childExited.Load() {
+			if drainStart.IsZero() {
+				drainStart = time.Now()
+			}
+
+			if drained >= ptyDrainLimit {
+				return
+			}
+
+			ptyMaster.SetReadDeadline(drainStart.Add(ptyDrainTimeout + writing)) //nolint:errcheck
+		}
+
+		n, readErr := ptyMaster.Read(buf)
+		if n > 0 {
+			writeStart := time.Now()
+
+			stdout.Write(buf[:n]) //nolint:errcheck
+
+			if !drainStart.IsZero() {
+				writing += time.Since(writeStart)
+				drained += n
+			}
+		}
+
+		if readErr != nil {
+			return
+		}
+	}
+}
+
+// waitPtyDrained waits for the relay to copy the last output of the exited child. Writing output
+// which was already read is not bounded, only waiting for more of it.
+func waitPtyDrained(ctx context.Context, ptyMaster *os.File, childExited *atomic.Bool, relayDone <-chan struct{}) {
+	var timeoutC <-chan time.Time
+
+	// Set before the relay sees the exit, so the deadlines it sets from then on aren't overwritten.
+	if ptyMaster.SetReadDeadline(time.Now().Add(ptyDrainTimeout)) != nil {
+		timeoutC = time.After(ptyDrainTimeout)
+	}
+
+	childExited.Store(true)
+
+	select {
+	case <-relayDone:
+	case <-ctx.Done():
+	case <-timeoutC:
+	}
+}
+
+// ptyControl runs an ioctl on the pty master. Unlike Fd, it keeps the master non-blocking, which
+// its read deadlines depend on.
+func ptyControl(ptyMaster *os.File, f func(fd int) error) error {
+	conn, err := ptyMaster.SyscallConn()
+	if err != nil {
+		return err
+	}
+
+	var ioctlErr error
+
+	if err = conn.Control(func(fd uintptr) { ioctlErr = f(int(fd)) }); err != nil {
+		return err
+	}
+
+	return ioctlErr
+}
+
+// ptyDrainTimeout bounds the wait for the last output of a host-ns child on its pty.
+const ptyDrainTimeout = time.Second
+
+// ptyDrainLimit bounds the output relayed once a host-ns child has exited, far more than a pty holds.
+const ptyDrainLimit = 1 << 20
 
 // openPty opens a new pseudo-terminal pair using Linux's /dev/ptmx.
 // Returns (master, slave) file handles.
@@ -407,14 +531,22 @@ func openPty() (*os.File, *os.File, error) {
 	}
 
 	// Unlock the slave pty. TIOCSPTLCK expects a pointer to int, not an inline value.
-	if err = unix.IoctlSetPointerInt(int(master.Fd()), unix.TIOCSPTLCK, 0); err != nil {
+	if err = ptyControl(master, func(fd int) error { return unix.IoctlSetPointerInt(fd, unix.TIOCSPTLCK, 0) }); err != nil {
 		master.Close() //nolint:errcheck
 
 		return nil, nil, fmt.Errorf("unlock pty slave: %w", err)
 	}
 
 	// Get the slave pty index (TIOCGPTN) and construct its path.
-	n, err := unix.IoctlGetInt(int(master.Fd()), unix.TIOCGPTN)
+	var n int
+
+	err = ptyControl(master, func(fd int) error {
+		var ioctlErr error
+
+		n, ioctlErr = unix.IoctlGetInt(fd, unix.TIOCGPTN)
+
+		return ioctlErr
+	})
 	if err != nil {
 		master.Close() //nolint:errcheck
 

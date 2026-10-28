@@ -140,7 +140,7 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 
 	var stdinReader interface {
 		io.Reader
-		WaitAndClose(context.Context, client.Task)
+		WaitAndClose(context.Context, client.Process)
 	}
 
 	if rc.cfgContainer != nil {
