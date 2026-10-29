@@ -314,6 +314,9 @@ func (ctrl *LVMScanController) applyLVs(ctx context.Context, r controller.Runtim
 				spec.ConvertLV = lv.ConvertLV
 				spec.WhenFull = lv.WhenFull
 				spec.Tags = []string(lv.Tags)
+				spec.CopyPercent = lv.CopyPercent
+				spec.HealthStatus = lv.HealthStatus
+				spec.Attr = lv.Attr
 
 				return nil
 			},

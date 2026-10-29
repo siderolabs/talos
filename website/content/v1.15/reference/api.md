@@ -14062,6 +14062,9 @@ LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 | when_full | [string](#string) |  | WhenFull reflects lv_when_full ("error" / "queue" / ""). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the LV (lv_tags). |
 | pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size; empty when Size is not a byte count. |
+| copy_percent | [string](#string) |  | CopyPercent is the raw copy_percent column: the sync progress of a raid or mirror LV ("0.00" to "100.00"); empty for other layouts. |
+| health_status | [string](#string) |  | HealthStatus is the raw lv_health_status column ("partial" / "refresh needed" / "mismatches exist" / ""). |
+| attr | [string](#string) |  | Attr is the raw lv_attr column. |
 
 
 

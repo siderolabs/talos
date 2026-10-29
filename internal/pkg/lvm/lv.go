@@ -51,6 +51,9 @@ type LV struct {
 	ConvertLV         string `json:"convert_lv"`
 	WhenFull          string `json:"lv_when_full"`
 	Tags              Tags   `json:"lv_tags"`
+	CopyPercent       string `json:"copy_percent"`
+	HealthStatus      string `json:"lv_health_status"`
+	Attr              string `json:"lv_attr"`
 }
 
 // LVS runs `lvm lvs -a -o +all --reportformat json --units b --nosuffix`

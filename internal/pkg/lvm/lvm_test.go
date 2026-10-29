@@ -20,6 +20,9 @@ var lvsOut string
 //go:embed testdata/lvs.empty.json
 var lvsEmptyOut string
 
+//go:embed testdata/lvs.raid.json
+var lvsRaidOut string
+
 func TestParseLVS(t *testing.T) {
 	t.Parallel()
 
@@ -65,6 +68,39 @@ func TestParseLVS(t *testing.T) {
 		assert.Empty(t, lv.WhenFull)
 		assert.Empty(t, lv.MetadataSize)
 		assert.Nil(t, lv.Tags)
+		assert.Empty(t, lv.CopyPercent)
+		assert.Empty(t, lv.HealthStatus)
+		assert.Equal(t, "-wi-XX----", lv.Attr)
+	})
+
+	t.Run("raid sync and health", func(t *testing.T) {
+		t.Parallel()
+
+		lvs, err := parseLVS(lvsRaidOut)
+		require.NoError(t, err)
+
+		type syncHealth struct {
+			CopyPercent  string
+			HealthStatus string
+			Attr         string
+		}
+
+		actual := map[string]syncHealth{}
+
+		for _, lv := range lvs {
+			actual[lv.Name] = syncHealth{lv.CopyPercent, lv.HealthStatus, lv.Attr}
+		}
+
+		// Values stay raw: non-raid LVs and raid sub-LVs report empty
+		// copy_percent, and an in-sync healthy raid LV reports empty health.
+		assert.Equal(t, map[string]syncHealth{
+			"mirror":            {"42.18", "", "rwi-a-r---"},
+			"[mirror_rimage_0]": {"", "", "iwi-aor---"},
+			"storage":           {"100.00", "partial", "rwi-a-r-p-"},
+			"stale":             {"100.00", "refresh needed", "rwi-a-r-r-"},
+			"scrubbed":          {"100.00", "mismatches exist", "rwi-a-r-m-"},
+			"plain":             {"", "", "-wi-a-----"},
+		}, actual)
 	})
 
 	t.Run("empty data", func(t *testing.T) {
