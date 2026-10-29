@@ -14,11 +14,15 @@ import (
 )
 
 // InspectClient provides access to inspect API.
+//
+// Deprecated: use Client.InspectService with FilterMessages instead.
 type InspectClient struct {
 	client inspectapi.InspectServiceClient
 }
 
 // ControllerRuntimeDependencies returns graph describing dependencies between controllers.
+//
+// Deprecated: use Client.InspectService with FilterMessages instead.
 func (c *InspectClient) ControllerRuntimeDependencies(ctx context.Context, callOptions ...grpc.CallOption) (*inspectapi.ControllerRuntimeDependenciesResponse, error) {
 	resp, err := c.client.ControllerRuntimeDependencies(ctx, &emptypb.Empty{}, callOptions...)
 

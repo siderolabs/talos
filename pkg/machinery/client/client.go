@@ -39,22 +39,37 @@ type Client struct {
 	options *Options
 	conn    *grpcConnectionWrapper
 
-	MachineClient        machineapi.MachineServiceClient
-	TimeClient           timeapi.TimeServiceClient
-	ClusterClient        clusterapi.ClusterServiceClient
-	StorageClient        storageapi.StorageServiceClient
+	// Deprecated: use MachineService instead.
+	MachineClient machineapi.MachineServiceClient
+	// Deprecated: use TimeService instead.
+	TimeClient timeapi.TimeServiceClient
+	// Deprecated: use ClusterService instead.
+	ClusterClient clusterapi.ClusterServiceClient
+	// Deprecated: use StorageService instead.
+	StorageClient storageapi.StorageServiceClient
+	// Deprecated: use MachineStorageService instead.
 	MachineStorageClient machineapi.StorageServiceClient
-	LVMClient            machineapi.LVMServiceClient
-	MDClient             machineapi.MDServiceClient
-	InspectClient        inspectapi.InspectServiceClient
-	ImageClient          machineapi.ImageServiceClient
-	DebugClient          machineapi.DebugServiceClient
-	HypervisorClient     machineapi.HypervisorServiceClient
-	LifecycleClient      machineapi.LifecycleServiceClient
+	// Deprecated: use LVMService instead.
+	LVMClient machineapi.LVMServiceClient
+	// Deprecated: use MDService instead.
+	MDClient machineapi.MDServiceClient
+	// Deprecated: use InspectService instead.
+	InspectClient inspectapi.InspectServiceClient
+	// Deprecated: use ImageService instead.
+	ImageClient machineapi.ImageServiceClient
+	// Deprecated: use DebugService instead.
+	DebugClient machineapi.DebugServiceClient
+	// Deprecated: use HypervisorService instead.
+	HypervisorClient machineapi.HypervisorServiceClient
+	// Deprecated: use LifecycleService instead.
+	LifecycleClient machineapi.LifecycleServiceClient
+	// Deprecated: use ContentLibraryService instead.
 	ContentLibraryClient machineapi.ContentLibraryServiceClient
 
+	// Deprecated: use State instead.
 	COSI state.State
 
+	// Deprecated: use InspectService with FilterMessages instead.
 	Inspect *InspectClient
 }
 
@@ -665,7 +680,7 @@ func WithUpgradeGRPCCallOptions(opts ...grpc.CallOption) UpgradeOption {
 
 // Upgrade initiates a Talos upgrade and implements the proto.MachineServiceClient interface.
 //
-// Deprecated: use LifecycleClient instead.
+// Deprecated: use LifecycleService instead.
 func (c *Client) Upgrade(ctx context.Context, image string, stage, force bool, callOptions ...grpc.CallOption) (*machineapi.UpgradeResponse, error) {
 	return c.UpgradeWithOptions(
 		ctx,
@@ -679,7 +694,7 @@ func (c *Client) Upgrade(ctx context.Context, image string, stage, force bool, c
 
 // UpgradeWithOptions initiates a Talos upgrade with the given options.
 //
-// Deprecated: use LifecycleClient instead.
+// Deprecated: use LifecycleService instead.
 func (c *Client) UpgradeWithOptions(ctx context.Context, opts ...UpgradeOption) (*machineapi.UpgradeResponse, error) {
 	var options UpgradeOptions
 
@@ -1101,7 +1116,7 @@ func (c *Client) MetaDelete(ctx context.Context, key uint8, callOptions ...grpc.
 
 // ImageList lists images in the CRI.
 //
-// Deprecated: use ImageServiceClient instead.
+// Deprecated: use ImageService instead.
 func (c *Client) ImageList(ctx context.Context, namespace common.ContainerdNamespace, callOptions ...grpc.CallOption) (machineapi.MachineService_ImageListClient, error) {
 	return c.MachineClient.ImageList(
 		ctx,
@@ -1114,7 +1129,7 @@ func (c *Client) ImageList(ctx context.Context, namespace common.ContainerdNames
 
 // ImagePull pre-pulls an image to the CRI.
 //
-// Deprecated: use ImageServiceClient instead.
+// Deprecated: use ImageService instead.
 func (c *Client) ImagePull(ctx context.Context, namespace common.ContainerdNamespace, imageRef string, callOptions ...grpc.CallOption) error {
 	resp, err := c.MachineClient.ImagePull(
 		ctx,

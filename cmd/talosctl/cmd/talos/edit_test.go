@@ -41,6 +41,10 @@ func (editMachineClient) ApplyConfiguration(_ context.Context, req *machine.Appl
 	return &machine.ApplyConfigurationResponse{}, nil
 }
 
+func editTestClient() *client.Client {
+	return &client.Client{MachineClient: editMachineClient{}} //nolint:staticcheck // the deprecated field is the only way to inject a fake machine service
+}
+
 // installEditor sets up a shell script as the editor for the test.
 //
 // The script runs the given shell snippet with $1 set to the file being edited and $N set to the
@@ -82,7 +86,7 @@ func editTestResource(t *testing.T) *configres.MachineConfig {
 func TestEditPreservesRejectedChanges(t *testing.T) {
 	editedPaths := installEditor(t, `if [ "$N" -eq 1 ]; then printf '`+editTestInvalidConfig+`' > "$1"; fi`)
 
-	err := editFn()(context.Background(), &client.Client{MachineClient: editMachineClient{}}, "127.0.0.1", editTestResource(t))
+	err := editFn()(context.Background(), editTestClient(), "127.0.0.1", editTestResource(t))
 	require.ErrorContains(t, err, "Edit canceled, no valid changes were saved.")
 
 	files := editedPaths()
@@ -98,7 +102,7 @@ func TestEditPreservesRejectedChanges(t *testing.T) {
 func TestEditRetriesRejectedChanges(t *testing.T) {
 	editedPaths := installEditor(t, `if [ "$N" -eq 1 ]; then printf '`+editTestInvalidConfig+`' > "$1"; else printf '`+editTestValidConfig+`' > "$1"; fi`)
 
-	require.NoError(t, editFn()(context.Background(), &client.Client{MachineClient: editMachineClient{}}, "127.0.0.1", editTestResource(t)))
+	require.NoError(t, editFn()(context.Background(), editTestClient(), "127.0.0.1", editTestResource(t)))
 
 	files := editedPaths()
 	require.Len(t, files, 2)
@@ -112,7 +116,7 @@ func TestEditResetsErrorBetweenNodes(t *testing.T) {
 	editedPaths := installEditor(t, `if [ "$N" -le 2 ]; then printf '`+editTestInvalidConfig+`' > "$1"; fi`)
 
 	fn := editFn()
-	c := &client.Client{MachineClient: editMachineClient{}}
+	c := editTestClient()
 
 	err := fn(context.Background(), c, "127.0.0.1", editTestResource(t))
 	require.ErrorContains(t, err, "Edit canceled, no valid changes were saved.")
@@ -139,7 +143,7 @@ func TestEditRemovesTemporaryFiles(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			editedPaths := installEditor(t, test.edit)
 
-			err := editFn()(context.Background(), &client.Client{MachineClient: editMachineClient{}}, "127.0.0.1", editTestResource(t))
+			err := editFn()(context.Background(), editTestClient(), "127.0.0.1", editTestResource(t))
 			if test.expectedErr != "" {
 				require.ErrorContains(t, err, test.expectedErr)
 			} else {
