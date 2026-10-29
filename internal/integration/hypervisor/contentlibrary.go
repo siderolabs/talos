@@ -299,7 +299,7 @@ func (suite *ContentLibrarySuite) TestRejectsNames() {
 func (suite *ContentLibrarySuite) TestUnknownLibrary() {
 	ctx := client.WithNode(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
 
-	cli, err := suite.Client.ContentLibraryClient.List(ctx, &machineapi.ContentLibraryServiceListRequest{
+	cli, err := suite.Client.ContentLibraryService().List(ctx, &machineapi.ContentLibraryServiceListRequest{
 		LibraryId: "not-a-library",
 	})
 	suite.Require().NoError(err)
@@ -316,7 +316,7 @@ func (suite *ContentLibrarySuite) TestUnknownLibrary() {
 
 // delete removes a file from a content library on a single node.
 func (suite *ContentLibrarySuite) delete(nodeCtx context.Context, libraryID, name string) error {
-	_, err := suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+	_, err := suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: libraryID,
 		Name:      name,
 	})
@@ -326,7 +326,7 @@ func (suite *ContentLibrarySuite) delete(nodeCtx context.Context, libraryID, nam
 
 // list returns the contents of a content library on a single node.
 func (suite *ContentLibrarySuite) list(nodeCtx context.Context, libraryID string) []*machineapi.ContentLibraryServiceListResponse {
-	cli, err := suite.Client.ContentLibraryClient.List(nodeCtx, &machineapi.ContentLibraryServiceListRequest{
+	cli, err := suite.Client.ContentLibraryService().List(nodeCtx, &machineapi.ContentLibraryServiceListRequest{
 		LibraryId: libraryID,
 	})
 	suite.Require().NoError(err)

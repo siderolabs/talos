@@ -392,7 +392,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	// The guest is reading from this file, so the content library refuses to take it away, by
 	// deleting it or by overwriting it in place.
-	_, err = suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
 		Name:      isoName,
 	})
@@ -432,7 +432,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	)
 
 	// Nothing reads the first image any more, so it may go.
-	_, err = suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
 		Name:      isoName,
 	})
@@ -475,7 +475,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	_, err = suite.Client.ContentLibraryClient.Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
 		Name:      replacementISO,
 	})

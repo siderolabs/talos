@@ -77,7 +77,7 @@ func contentLibraryList(ctx context.Context, libraryID string) error {
 	responseChan := multiplex.StreamingViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ContentLibraryServiceListResponse], error) {
-			return c.ContentLibraryClient.List(ctx, &machine.ContentLibraryServiceListRequest{
+			return c.ContentLibraryService().List(ctx, &machine.ContentLibraryServiceListRequest{
 				LibraryId: libraryID,
 			})
 		},
@@ -240,7 +240,7 @@ func contentLibraryDelete(ctx context.Context, libraryID, name string) error {
 	respCh := multiplex.UnaryViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) (*machine.ContentLibraryServiceDeleteResponse, error) {
-			return c.ContentLibraryClient.Delete(ctx, &machine.ContentLibraryServiceDeleteRequest{
+			return c.ContentLibraryService().Delete(ctx, &machine.ContentLibraryServiceDeleteRequest{
 				LibraryId: libraryID,
 				Name:      name,
 			})
