@@ -232,7 +232,7 @@ the name should start with `ptp` (e.g. `/dev/ptp0`, `/dev/ptp_kvm`), and the dev
         title = "Component Updates"
         description = """\
 Linux: 7.3
-Kubernetes: 1.38.0-alpha.2
+Kubernetes: 1.38.0-alpha.3
 containerd: 2.3.7
 runc: 1.5.2
 CoreDNS: 1.14.7
