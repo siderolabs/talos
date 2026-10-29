@@ -137,7 +137,7 @@ The argument is the qualified logical-volume name, e.g. vg0/lv0.`,
 		responseChan := multiplex.UnaryViaFactory(
 			ctx, clientFactory,
 			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
-				return c.LVMClient.LogicalVolumeRemove(ctx, &machine.LVMServiceLogicalVolumeRemoveRequest{
+				return c.LVMService().LogicalVolumeRemove(ctx, &machine.LVMServiceLogicalVolumeRemoveRequest{
 					VolumeGroup:   vg,
 					LogicalVolume: lv,
 				})
@@ -182,7 +182,7 @@ labels and remain claimable until you run "talosctl wipe pv".`,
 		responseChan := multiplex.UnaryViaFactory(
 			ctx, clientFactory,
 			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
-				return c.LVMClient.VolumeGroupRemove(ctx, &machine.LVMServiceVolumeGroupRemoveRequest{
+				return c.LVMService().VolumeGroupRemove(ctx, &machine.LVMServiceVolumeGroupRemoveRequest{
 					VolumeGroup: vg,
 				})
 			},
@@ -225,7 +225,7 @@ The argument is a full device path, e.g. /dev/sda1.`,
 		responseChan := multiplex.UnaryViaFactory(
 			ctx, clientFactory,
 			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
-				return c.LVMClient.PhysicalVolumeRemove(ctx, &machine.LVMServicePhysicalVolumeRemoveRequest{
+				return c.LVMService().PhysicalVolumeRemove(ctx, &machine.LVMServicePhysicalVolumeRemoveRequest{
 					Device: device,
 				})
 			},
