@@ -309,28 +309,41 @@ func (p *pod) Create(ctx context.Context, waitTimeout time.Duration) error {
 }
 
 func (p *pod) Exec(ctx context.Context, command string) (string, string, error) {
-	cmd := []string{
-		"/bin/sh",
-		"-c",
-		command,
+	stdout, stderr, err := p.suite.ExecInPod(ctx, p.namespace, p.name, "", command)
+	if err != nil && !p.quiet {
+		p.suite.T().Logf(
+			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
+			p.namespace,
+			p.name,
+			err,
+			command,
+			stdout,
+			command,
+			stderr,
+		)
 	}
-	req := p.suite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(p.name).
-		Namespace(p.namespace).SubResource("exec")
 
-	option := &corev1.PodExecOptions{
-		Command: cmd,
-		Stdin:   false,
-		Stdout:  true,
-		Stderr:  true,
-		TTY:     false,
-	}
+	return stdout, stderr, err
+}
+
+// ExecInPod runs a shell command in a pod container and returns its stdout and stderr.
+//
+// An empty container name selects the pod's only container.
+func (k8sSuite *K8sSuite) ExecInPod(ctx context.Context, namespace, podName, container, command string) (string, string, error) {
+	req := k8sSuite.Clientset.CoreV1().RESTClient().Post().Resource("pods").Name(podName).
+		Namespace(namespace).SubResource("exec")
 
 	req.VersionedParams(
-		option,
+		&corev1.PodExecOptions{
+			Container: container,
+			Command:   []string{"/bin/sh", "-c", command},
+			Stdout:    true,
+			Stderr:    true,
+		},
 		scheme.ParameterCodec,
 	)
 
-	websocketExec, err := remotecommand.NewWebSocketExecutor(p.suite.RestConfig, "GET", req.URL().String())
+	websocketExec, err := remotecommand.NewWebSocketExecutor(k8sSuite.RestConfig, "GET", req.URL().String())
 	if err != nil {
 		return "", "", err
 	}
@@ -341,18 +354,6 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 		Stdout: &stdout,
 		Stderr: &stderr,
 	})
-	if err != nil && !p.quiet {
-		p.suite.T().Logf(
-			"error executing command in pod %s/%s: %v\n\ncommand %q stdout:\n%s\n\ncommand %q stderr:\n%s",
-			p.namespace,
-			p.name,
-			err,
-			command,
-			stdout.String(),
-			command,
-			stderr.String(),
-		)
-	}
 
 	return stdout.String(), stderr.String(), err
 }

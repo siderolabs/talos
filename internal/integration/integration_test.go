@@ -41,6 +41,7 @@ var (
 	extensionsQEMU      bool
 	extensionsLibvirt   bool
 	extensionsNvidia    bool
+	extensionsNvidiaMPS bool
 	lldpEnabled         bool
 	ipv6Enabled         bool
 	bgpEnabled          bool
@@ -145,6 +146,7 @@ func TestIntegration(t *testing.T) {
 				ExtensionsQEMU:          extensionsQEMU,
 				ExtensionsLibvirt:       extensionsLibvirt,
 				ExtensionsNvidia:        extensionsNvidia,
+				ExtensionsNvidiaMPS:     extensionsNvidiaMPS,
 				HypervisorTalosISOPath:  hypervisorTalosISOPath,
 				HypervisorAlpineISOPath: hypervisorAlpineISOPath,
 				LLDPEnabled:             lldpEnabled,
@@ -200,6 +202,8 @@ func init() {
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsLibvirt, "talos.extensions.libvirt", false, "enable tests for libvirt extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.BoolVar(&extensionsNvidiaMPS, "talos.extensions.nvidia.mps", false,
+		"enable the NVIDIA CUDA MPS sharing test (requires -talos.extensions.nvidia and a GPU node without MIG enabled)")
 	flag.StringVar(&hypervisorTalosISOPath, "talos.hypervisor.talos-iso", "",
 		"path to a Talos ISO the hypervisor tests upload into a content library; unset skips the tests needing a real image")
 	flag.StringVar(&hypervisorAlpineISOPath, "talos.hypervisor.alpine-iso", "",

@@ -71,6 +71,9 @@ spec:
     integration/aws-amd64: "Run AWS integration tests on AMD64"
     integration/aws-arm64: "Run AWS integration tests on ARM64"
     integration/aws-nvidia: "Run AWS NVIDIA integration tests (all drivers, variants, architectures)"
+    integration/aws-nvidia-mps: "Run AWS NVIDIA MPS tests (all architectures)"
+    integration/aws-nvidia-mps-amd64: "Run AWS NVIDIA MPS tests on AMD64"
+    integration/aws-nvidia-mps-arm64: "Run AWS NVIDIA MPS tests on ARM64"
     integration/aws-nvidia-nonfree: "Run AWS NVIDIA integration tests with non-free drivers"
     integration/aws-nvidia-nonfree-lts: "Run AWS NVIDIA non-free LTS driver tests (all architectures)"
     integration/aws-nvidia-nonfree-lts-amd64: "Run AWS NVIDIA non-free LTS driver tests on AMD64"
@@ -2274,6 +2277,9 @@ spec:
         - integration/aws-amd64
         - integration/aws-arm64
         - integration/aws-nvidia
+        - integration/aws-nvidia-mps
+        - integration/aws-nvidia-mps-amd64
+        - integration/aws-nvidia-mps-arm64
         - integration/aws-nvidia-oss
         - integration/aws-nvidia-oss-lts
         - integration/aws-nvidia-oss-lts-amd64
@@ -2570,6 +2576,82 @@ spec:
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-mps
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+        - integration-build-aws-image
+      runnerGroup: generic
+      onWorkflowRun:
+        workflows: [integration-build-aws-image-triggered]
+        types: [completed]
+      triggerLabels:
+        - integration/aws-nvidia
+        - integration/aws-nvidia-mps
+      matrix:
+        labelKeys: [arch]
+        include:
+          - arch: amd64
+          - arch: arm64
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-aws-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/${{ matrix.arch }}
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-nonfree-production
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: ${{ matrix.arch }}
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-mps
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.extensions.nvidia.mps -talos.verifyukibooted=false"
             INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
