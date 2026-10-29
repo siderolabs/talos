@@ -14065,6 +14065,8 @@ LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 | copy_percent | [string](#string) |  | CopyPercent is the raw copy_percent column: the sync progress of a raid or mirror LV ("0.00" to "100.00"); empty for other layouts. |
 | health_status | [string](#string) |  | HealthStatus is the raw lv_health_status column ("partial" / "refresh needed" / "mismatches exist" / ""). |
 | attr | [string](#string) |  | Attr is the raw lv_attr column. |
+| raid_sync_action | [string](#string) |  | RaidSyncAction is the raw raid_sync_action column ("idle" / "frozen" / "resync" / "recover" / "check" / "repair" / ""); empty for non-raid LVs. |
+| raid_mismatch_count | [string](#string) |  | RaidMismatchCount is the raw raid_mismatch_count column: mismatches found by the last check or repair; empty for non-raid LVs. |
 
 
 

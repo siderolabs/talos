@@ -106,6 +106,12 @@ type LVMLogicalVolumeStatusSpec struct {
 	HealthStatus string `yaml:"healthStatus" protobuf:"38"`
 	// Attr is the raw lv_attr column.
 	Attr string `yaml:"attr" protobuf:"39"`
+	// RaidSyncAction is the raw raid_sync_action column ("idle" / "frozen" /
+	// "resync" / "recover" / "check" / "repair" / ""); empty for non-raid LVs.
+	RaidSyncAction string `yaml:"raidSyncAction" protobuf:"40"`
+	// RaidMismatchCount is the raw raid_mismatch_count column: mismatches
+	// found by the last check or repair; empty for non-raid LVs.
+	RaidMismatchCount string `yaml:"raidMismatchCount" protobuf:"41"`
 }
 
 // NewLVMLogicalVolumeStatus initializes a LVMLogicalVolumeStatus resource.

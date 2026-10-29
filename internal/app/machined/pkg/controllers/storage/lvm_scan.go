@@ -317,6 +317,8 @@ func (ctrl *LVMScanController) applyLVs(ctx context.Context, r controller.Runtim
 				spec.CopyPercent = lv.CopyPercent
 				spec.HealthStatus = lv.HealthStatus
 				spec.Attr = lv.Attr
+				spec.RaidSyncAction = lv.RaidSyncAction
+				spec.RaidMismatchCount = lv.RaidMismatchCount
 
 				return nil
 			},

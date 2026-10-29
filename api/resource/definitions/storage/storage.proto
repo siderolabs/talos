@@ -110,6 +110,12 @@ message LVMLogicalVolumeStatusSpec {
   string health_status = 38;
   // Attr is the raw lv_attr column.
   string attr = 39;
+  // RaidSyncAction is the raw raid_sync_action column ("idle" / "frozen" /
+  // "resync" / "recover" / "check" / "repair" / ""); empty for non-raid LVs.
+  string raid_sync_action = 40;
+  // RaidMismatchCount is the raw raid_mismatch_count column: mismatches
+  // found by the last check or repair; empty for non-raid LVs.
+  string raid_mismatch_count = 41;
 }
 
 // LVMPhysicalVolumeSpecSpec is the spec for LVMPhysicalVolumeSpec resource.
