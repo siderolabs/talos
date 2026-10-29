@@ -69,6 +69,9 @@ type ContainerInstanceSpecSpec struct {
 
 	// Devices are fully resolved, with host device nodes filled in.
 	Devices []ResolvedDeviceSpec `yaml:"devices,omitempty" protobuf:"13"`
+
+	// ExecutionHash is the ContainerSpec execution hash the instance was created for.
+	ExecutionHash string `yaml:"executionHash,omitempty" protobuf:"14"`
 }
 
 // ResolvedMountSpec is a mount with its host-side source resolved.

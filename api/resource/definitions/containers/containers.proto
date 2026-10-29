@@ -5,6 +5,7 @@ package talos.resource.definitions.containers;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/containers";
 option java_package = "dev.talos.api.resource.definitions.containers";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
@@ -72,6 +73,8 @@ message ContainerInstanceSpecSpec {
   ContainerResourcesSpec resources = 12;
   // Devices are fully resolved, with host device nodes filled in.
   repeated ResolvedDeviceSpec devices = 13;
+  // ExecutionHash is the ContainerSpec execution hash the instance was created for.
+  string execution_hash = 14;
 }
 
 // ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
@@ -141,12 +144,36 @@ message ContainerResourcesSpec {
   uint64 swap_limit = 3;
 }
 
+// ContainerRestartSpec describes how a container is restarted after it exits.
+message ContainerRestartSpec {
+  talos.resource.definitions.enums.ContainersContainerRestartPolicy policy = 1;
+  // MaxRetries is how many times a failed container is restarted at most; nil is unlimited.
+  uint32 max_retries = 2;
+  google.protobuf.Duration delay = 3;
+  google.protobuf.Duration max_delay = 4;
+}
+
 // ContainerRunAsSpec is the resolved uid/gid override.
 //
 // Nil means use the image's own USER for that half.
 message ContainerRunAsSpec {
   int32 uid = 1;
   int32 gid = 2;
+}
+
+// ContainerRunStatusSpec is the spec for ContainerRunStatus.
+message ContainerRunStatusSpec {
+  // ExecutionHash is the ContainerSpec execution hash the counters are for.
+  string execution_hash = 1;
+  // NextGeneration is the generation of the next instance.
+  uint64 next_generation = 2;
+  // Restarts is the number of restarts since the execution hash last changed.
+  uint32 restarts = 3;
+  // BackoffStep is how many times the restart delay has doubled.
+  uint32 backoff_step = 4;
+  // RestartedGeneration is the generation whose restart has been charged, if Restarted.
+  uint64 restarted_generation = 5;
+  bool restarted = 6;
 }
 
 // ContainerSecuritySpec is the resolved security posture.
@@ -175,6 +202,7 @@ message ContainerSpecSpec {
   ContainerResourcesSpec resources = 10;
   ContainerDependsOnSpec depends_on = 11;
   repeated ContainerDeviceSpec devices = 12;
+  ContainerRestartSpec restart = 13;
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.
@@ -189,12 +217,14 @@ message ContainerStatusSpec {
   uint32 pid = 4;
   // ExitCode of the last task exit.
   int32 exit_code = 5;
-  // RestartCount is the current instance generation, i.e. restarts beyond the first start.
+  // RestartCount is the number of restarts since the configuration of the container last changed.
   uint64 restart_count = 6;
   // Error is the last failure, verbatim, from whichever stage produced it.
   string error = 7;
   // WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
   repeated string waiting_for = 8;
+  // Generation is the generation of the newest instance.
+  uint64 generation = 9;
 }
 
 // ResolvedDeviceSpec is a device with its host-side device node resolved.

@@ -23,9 +23,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// RestartInterval is how long to wait after an instance terminates before starting the next one.
-const RestartInterval = 5 * time.Second
-
 // InstanceController creates and replaces the ContainerInstanceSpec for each container, one
 // generation per execution.
 type InstanceController struct{}
@@ -102,6 +99,10 @@ func (ctrl *InstanceController) Outputs() []controller.Output {
 			Type: containers.ContainerDependencyStatusType,
 			Kind: controller.OutputExclusive,
 		},
+		{
+			Type: containers.ContainerRunStatusType,
+			Kind: controller.OutputExclusive,
+		},
 	}
 }
 
@@ -171,7 +172,10 @@ func (ctrl *InstanceController) reconcile(ctx context.Context, runtime controlle
 		return optional.None[time.Duration](), err
 	}
 
-	if err := safe.CleanupOutputs[*containers.ContainerDependencyStatus](ctx, runtime); err != nil {
+	if err := runtime.CleanupOutputs(ctx,
+		resource.NewMetadata(containers.NamespaceName, containers.ContainerDependencyStatusType, "", resource.VersionUndefined),
+		resource.NewMetadata(containers.NamespaceName, containers.ContainerRunStatusType, "", resource.VersionUndefined),
+	); err != nil {
 		return optional.None[time.Duration](), fmt.Errorf("failed to clean up outputs: %w", err)
 	}
 
@@ -219,20 +223,31 @@ func (ctrl *InstanceController) reconcileInstance(
 
 	containerSpecID := containerSpec.Metadata().ID()
 
-	nextGeneration := uint64(0)
+	runStatus, err := ctrl.runStatus(ctx, runtime, containerSpecID)
+	if err != nil {
+		return nil, optional.None[time.Duration](), err
+	}
+
+	// a different execution configuration starts over with the restarts and the backoff
+	if executionHash := containerSpec.TypedSpec().ExecutionHash(); runStatus.ExecutionHash != executionHash {
+		runStatus = containers.ContainerRunStatusSpec{
+			ExecutionHash:  executionHash,
+			NextGeneration: runStatus.NextGeneration,
+		}
+	}
 
 	// Babysit the existing instance until the spec changes.
 	if currentContainerInstanceSpec != nil {
-		wasDestroyed, waitingFor, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, runtime, logger, containerSpec, currentContainerInstanceSpec)
+		runStatus.NextGeneration = max(runStatus.NextGeneration, currentContainerInstanceSpec.TypedSpec().Generation+1)
+
+		wasDestroyed, waitingFor, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, runtime, logger, containerSpec, currentContainerInstanceSpec, &runStatus)
 		if err != nil {
 			return nil, optional.None[time.Duration](), err
 		}
 
 		if !wasDestroyed {
-			return waitingFor, wakeUpAfter, nil
+			return waitingFor, wakeUpAfter, ctrl.writeRunStatus(ctx, runtime, containerSpecID, runStatus)
 		}
-
-		nextGeneration = currentContainerInstanceSpec.TypedSpec().Generation + 1
 	}
 
 	// No container exists now, but dependencies may be unmet.
@@ -247,7 +262,7 @@ func (ctrl *InstanceController) reconcileInstance(
 			zap.Strings("waitingFor", waitingFor),
 		)
 
-		return waitingFor, wakeUpAfter, nil
+		return waitingFor, wakeUpAfter, ctrl.writeRunStatus(ctx, runtime, containerSpecID, runStatus)
 	}
 
 	// We're good to create a new instance.
@@ -263,16 +278,49 @@ func (ctrl *InstanceController) reconcileInstance(
 	}
 
 	if waitingFor = containerSpec.TypedSpec().ResolvedWaitingFor(resolved); len(waitingFor) > 0 {
-		return waitingFor, optional.None[time.Duration](), nil
+		return waitingFor, optional.None[time.Duration](), ctrl.writeRunStatus(ctx, runtime, containerSpecID, runStatus)
 	}
 
-	if err := ctrl.createInstanceSpec(ctx, runtime, containerSpec, nextGeneration, imageDigest, resolved); err != nil {
+	generation := runStatus.NextGeneration
+
+	if err := ctrl.createInstanceSpec(ctx, runtime, containerSpec, generation, runStatus.ExecutionHash, imageDigest, resolved); err != nil {
 		return nil, optional.None[time.Duration](), err
 	}
 
-	logger.Info("container instance created", zap.String("container", containerSpecID), zap.Uint64("generation", nextGeneration), zap.String("image", imageDigest))
+	logger.Info("container instance created", zap.String("container", containerSpecID), zap.Uint64("generation", generation), zap.String("image", imageDigest))
 
-	return nil, optional.None[time.Duration](), nil
+	runStatus.NextGeneration = generation + 1
+
+	return nil, optional.None[time.Duration](), ctrl.writeRunStatus(ctx, runtime, containerSpecID, runStatus)
+}
+
+// runStatus returns the restart accounting of a container, empty if there is none yet.
+func (ctrl *InstanceController) runStatus(ctx context.Context, reader controller.Reader, containerSpecID string) (containers.ContainerRunStatusSpec, error) {
+	runStatus, err := safe.ReaderGetByID[*containers.ContainerRunStatus](ctx, reader, containerSpecID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return containers.ContainerRunStatusSpec{}, nil
+		}
+
+		return containers.ContainerRunStatusSpec{}, fmt.Errorf("failed to get run status %q: %w", containerSpecID, err)
+	}
+
+	return *runStatus.TypedSpec(), nil
+}
+
+func (ctrl *InstanceController) writeRunStatus(ctx context.Context, runtime controller.Runtime, containerSpecID string, runStatus containers.ContainerRunStatusSpec) error {
+	if err := safe.WriterModify(ctx, runtime,
+		containers.NewContainerRunStatus(containers.NamespaceName, containerSpecID),
+		func(res *containers.ContainerRunStatus) error {
+			*res.TypedSpec() = runStatus
+
+			return nil
+		},
+	); err != nil {
+		return fmt.Errorf("failed to write run status %q: %w", containerSpecID, err)
+	}
+
+	return nil
 }
 
 // destroyOrphanedInstances removes instances for containers whose spec no longer exists.
@@ -288,13 +336,31 @@ func (ctrl *InstanceController) destroyOrphanedInstances(
 			continue
 		}
 
+		allDestroyed := true
+
 		for _, containerInstanceSpec := range containerInstanceSpecs {
 			logger.Debug("removing instance of a deleted container",
 				zap.String("container", containerSpecID),
 				zap.String("instance", containerInstanceSpec.Metadata().ID()),
 			)
 
-			if _, err := ctrl.destroyInstance(ctx, runtime, logger, containerInstanceSpec); err != nil {
+			destroyed, err := ctrl.destroyInstance(ctx, runtime, logger, containerInstanceSpec)
+			if err != nil {
+				return err
+			}
+
+			allDestroyed = allDestroyed && destroyed
+		}
+
+		// the generations are kept until the last instance is gone, so a container declared again
+		// meanwhile doesn't reuse one
+		if !allDestroyed {
+			runStatus, err := ctrl.runStatus(ctx, runtime, containerSpecID)
+			if err != nil {
+				return err
+			}
+
+			if err := ctrl.writeRunStatus(ctx, runtime, containerSpecID, runStatus); err != nil {
 				return err
 			}
 		}
@@ -343,11 +409,10 @@ func (ctrl *InstanceController) destroyInstance(
 // reconcileExistingInstance checks whether the next generation should be created now.
 //
 // Returns (proceed, waitingFor, wakeUpAfter, error). A false proceed means the instance is to be
-// left where it is for now, either because it matches the spec, because it terminated but the
-// restart interval has not elapsed, or because its replacement cannot start yet. A true proceed
-// means it is gone: a replacement is only ever created once the instance it replaces has been
-// destroyed, so a container has at most one instance at a time and no terminated ones are kept
-// around.
+// left where it is for now: it matches the spec, it finished and isn't restarted (yet), or its
+// replacement cannot start yet. A true proceed means it is gone: a replacement is only ever created
+// once the instance it replaces has been destroyed, so a container has at most one instance at a
+// time.
 //
 // waitingFor is populated only on the one path that evaluates the gates, i.e. a spec change whose
 // replacement is blocked. Every other path leaves the running instance alone and so is not waiting
@@ -360,6 +425,7 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 	logger *zap.Logger,
 	containerSpec *containers.ContainerSpec,
 	newestContainerInstanceSpec *containers.ContainerInstanceSpec,
+	runStatus *containers.ContainerRunStatusSpec,
 ) (bool, []string, optional.Optional[time.Duration], error) {
 	containerSpecID := containerSpec.Metadata().ID()
 
@@ -370,8 +436,22 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 			return false, nil, optional.None[time.Duration](), err
 		}
 
-		if inSync {
-			restartDue, wakeUpAfter, err := ctrl.checkRestartDue(ctx, runtime, newestContainerInstanceSpec)
+		// only a change of the declared configuration replaces a finished instance, drift of what it
+		// resolves to waits for the restart policy
+		declaredChange := newestContainerInstanceSpec.TypedSpec().ExecutionHash != runStatus.ExecutionHash
+
+		var finished *containers.ContainerInstanceStatus
+
+		if !declaredChange {
+			finished, err = finishedInstanceStatus(ctx, runtime, newestContainerInstanceSpec)
+			if err != nil {
+				return false, nil, optional.None[time.Duration](), err
+			}
+		}
+
+		switch {
+		case finished != nil:
+			restartDue, wakeUpAfter, err := ctrl.checkRestartDue(ctx, runtime, containerSpec, finished, runStatus)
 			if err != nil {
 				return false, nil, optional.None[time.Duration](), err
 			}
@@ -380,11 +460,14 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 				return false, nil, wakeUpAfter, nil
 			}
 
-			logger.Info("container terminated, restart interval elapsed, replacing the instance",
+			logger.Info("container finished, restarting it",
 				zap.String("container", containerSpecID),
 				zap.Uint64("generation", newestContainerInstanceSpec.TypedSpec().Generation),
+				zap.Uint32("restarts", runStatus.Restarts),
 			)
-		} else {
+		case inSync && !declaredChange:
+			return false, nil, optional.None[time.Duration](), nil
+		default:
 			// A spec change invalidates the existing instance.
 			waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, runtime, containerSpecID)
 			if err != nil {
@@ -434,34 +517,64 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 	return true, nil, optional.None[time.Duration](), nil
 }
 
-// checkRestartDue reports whether a terminated instance should be replaced now.
-//
-// A false result with no wake time means the instance has no status yet, or has one that is not
-// done, i.e. it is still starting or running. A false result with a wake time means it terminated,
-// but RestartInterval has not yet elapsed since it did.
-func (ctrl *InstanceController) checkRestartDue(
+// finishedInstanceStatus returns the status of an instance which has finished, nil while it hasn't.
+func finishedInstanceStatus(
 	ctx context.Context,
 	reader controller.Reader,
 	containerInstanceSpec *containers.ContainerInstanceSpec,
-) (bool, optional.Optional[time.Duration], error) {
+) (*containers.ContainerInstanceStatus, error) {
 	containerInstanceStatus, err := safe.ReaderGetByID[*containers.ContainerInstanceStatus](ctx, reader, containerInstanceSpec.Metadata().ID())
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return false, optional.None[time.Duration](), nil
+			return nil, nil
 		}
 
-		return false, optional.None[time.Duration](), fmt.Errorf("failed to get instance status %q: %w", containerInstanceSpec.Metadata().ID(), err)
+		return nil, fmt.Errorf("failed to get instance status %q: %w", containerInstanceSpec.Metadata().ID(), err)
 	}
 
 	if !containerInstanceStatus.TypedSpec().Phase.Done() {
+		return nil, nil
+	}
+
+	return containerInstanceStatus, nil
+}
+
+// checkRestartDue reports whether a finished instance is to be replaced now, charging the restart.
+//
+// The restart is charged once, and recorded before the instance is destroyed: a pass which fails or
+// waits on gates after that doesn't charge it again. A false result with a wake time means the
+// restart is waiting out its delay, one without means the restart policy doesn't restart it.
+func (ctrl *InstanceController) checkRestartDue(
+	ctx context.Context,
+	runtime controller.Runtime,
+	containerSpec *containers.ContainerSpec,
+	containerInstanceStatus *containers.ContainerInstanceStatus,
+	runStatus *containers.ContainerRunStatusSpec,
+) (bool, optional.Optional[time.Duration], error) {
+	instanceStatus := *containerInstanceStatus.TypedSpec()
+
+	if runStatus.RestartCharged(instanceStatus.Generation) {
+		return true, optional.None[time.Duration](), nil
+	}
+
+	restart := containerSpec.TypedSpec().Restart
+
+	if !restart.RestartPermitted(*runStatus, instanceStatus) {
 		return false, optional.None[time.Duration](), nil
 	}
 
-	if wakeAfter, ok := containerInstanceStatus.TypedSpec().RestartWindowWakeAfter(RestartInterval).Get(); ok {
-		return false, optional.Some(wakeAfter), nil
+	step, delay := restart.RestartBackoff(*runStatus, instanceStatus)
+
+	if remaining := delay - time.Since(instanceStatus.FinishedAt); remaining > 0 {
+		return false, optional.Some(remaining), nil
 	}
 
-	return true, optional.None[time.Duration](), nil
+	runStatus.Restarts++
+	runStatus.BackoffStep = step + 1
+	runStatus.Restarted = true
+	runStatus.RestartedGeneration = instanceStatus.Generation
+
+	return true, optional.None[time.Duration](), ctrl.writeRunStatus(ctx, runtime, containerSpec.Metadata().ID(), *runStatus)
 }
 
 // createInstanceSpec creates a new ContainerInstanceSpec with all fields populated from the spec and resolved values.
@@ -470,6 +583,7 @@ func (ctrl *InstanceController) createInstanceSpec(
 	runtime controller.Runtime,
 	containerSpec *containers.ContainerSpec,
 	generation uint64,
+	executionHash string,
 	imageDigest string,
 	resolved containers.ContainerMountStatusSpec,
 ) error {
@@ -495,6 +609,7 @@ func (ctrl *InstanceController) createInstanceSpec(
 			instanceSpec.Security = containerSpec.TypedSpec().Security
 			instanceSpec.Network = containerSpec.TypedSpec().Network
 			instanceSpec.Resources = containerSpec.TypedSpec().Resources
+			instanceSpec.ExecutionHash = executionHash
 
 			return nil
 		},

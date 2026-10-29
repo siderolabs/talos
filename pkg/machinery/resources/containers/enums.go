@@ -11,13 +11,15 @@ type ContainerState int
 //
 //structprotogen:gen_enum
 const (
-	ContainerStatePending  ContainerState = iota // pending
-	ContainerStatePulling                        // pulling
-	ContainerStateStarting                       // starting
-	ContainerStateRunning                        // running
-	ContainerStateExited                         // exited
-	ContainerStateBackoff                        // backoff
-	ContainerStateStopping                       // stopping
+	ContainerStatePending   ContainerState = iota // pending
+	ContainerStatePulling                         // pulling
+	ContainerStateStarting                        // starting
+	ContainerStateRunning                         // running
+	ContainerStateExited                          // exited
+	ContainerStateBackoff                         // backoff
+	ContainerStateStopping                        // stopping
+	ContainerStateCompleted                       // completed
+	ContainerStateFailed                          // failed
 )
 
 // Health returns the coarse health summary for a state, given the health reported before it.
@@ -31,9 +33,9 @@ func (state ContainerState) Health(prev ContainerHealth) ContainerHealth {
 		return ContainerHealthPending
 	case ContainerStatePulling, ContainerStateStarting:
 		return ContainerHealthPulling
-	case ContainerStateRunning:
+	case ContainerStateRunning, ContainerStateCompleted:
 		return ContainerHealthHealthy
-	case ContainerStateExited, ContainerStateBackoff:
+	case ContainerStateExited, ContainerStateBackoff, ContainerStateFailed:
 		return ContainerHealthDegraded
 	case ContainerStateStopping:
 		return prev
@@ -85,3 +87,15 @@ const (
 func (phase ContainerInstancePhase) Done() bool {
 	return phase == ContainerInstancePhaseTerminated || phase == ContainerInstancePhaseFailed
 }
+
+// ContainerRestartPolicy describes when a container is restarted after it exits.
+type ContainerRestartPolicy int
+
+// Container restart policies.
+//
+//structprotogen:gen_enum
+const (
+	ContainerRestartPolicyAlways    ContainerRestartPolicy = iota // always
+	ContainerRestartPolicyOnFailure                               // on-failure
+	ContainerRestartPolicyNever                                   // never
+)

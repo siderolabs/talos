@@ -36,6 +36,7 @@ func TestRegisterResource(t *testing.T) {
 		&containers.ContainerLifecycle{},
 		&containers.ContainerStatus{},
 		&containers.ContainerDependencyStatus{},
+		&containers.ContainerRunStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -91,6 +92,12 @@ func TestProtobufRoundTrip(t *testing.T) {
 				VolumeName:  "data",
 				Destination: "/dev/data",
 			},
+		},
+		Restart: containers.ContainerRestartSpec{
+			Policy:     containers.ContainerRestartPolicyOnFailure,
+			MaxRetries: new(uint32(3)),
+			Delay:      time.Second,
+			MaxDelay:   time.Minute,
 		},
 	}
 
@@ -160,6 +167,7 @@ func TestInstanceProtobufRoundTrip(t *testing.T) {
 				VolumeName:  "data",
 			},
 		},
+		ExecutionHash: "3dc19cf5",
 	}
 
 	assertRoundTrip(t, spec)
@@ -237,6 +245,24 @@ func TestStatusProtobufRoundTrip(t *testing.T) {
 		RestartCount: 3,
 		Error:        "signal: killed",
 		WaitingFor:   []string{"container: other"},
+		Generation:   2,
+	}
+
+	assertRoundTrip(t, status)
+}
+
+// TestRunStatusProtobufRoundTrip guards the protobuf tags on ContainerRunStatusSpec.
+func TestRunStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerRunStatus(containers.NamespaceName, "nginx")
+	*status.TypedSpec() = containers.ContainerRunStatusSpec{
+		ExecutionHash:       "3dc19cf5",
+		NextGeneration:      4,
+		Restarts:            2,
+		BackoffStep:         1,
+		RestartedGeneration: 3,
+		Restarted:           true,
 	}
 
 	assertRoundTrip(t, status)

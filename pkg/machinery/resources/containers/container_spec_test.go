@@ -412,3 +412,35 @@ func TestReadyMissingStatuses(t *testing.T) {
 	_, wakeUpAfterSet := wakeUpAfter.Get()
 	assert.False(t, wakeUpAfterSet)
 }
+
+func TestExecutionHash(t *testing.T) {
+	t.Parallel()
+
+	base := containers.ContainerSpecSpec{
+		Image:       containers.ContainerImageSpec{Ref: "docker.io/library/nginx:latest"},
+		Environment: []string{"A=1"},
+	}
+
+	hash := base.ExecutionHash()
+
+	same := base
+	same.Restart = containers.ContainerRestartSpec{Policy: containers.ContainerRestartPolicyNever, Delay: time.Minute}
+	same.DependsOn = containers.ContainerDependsOnSpec{Containers: []string{"db"}}
+
+	assert.Equal(t, hash, same.ExecutionHash())
+
+	for _, mutate := range []func(*containers.ContainerSpecSpec){
+		func(spec *containers.ContainerSpecSpec) { spec.Image.Ref = "docker.io/library/nginx:1.27" },
+		func(spec *containers.ContainerSpecSpec) { spec.Environment = []string{"A=2"} },
+		func(spec *containers.ContainerSpecSpec) { spec.Args = []string{"-v"} },
+		func(spec *containers.ContainerSpecSpec) { spec.Network.HostNetwork = true },
+		func(spec *containers.ContainerSpecSpec) {
+			spec.Mounts = []containers.ContainerMountSpec{{Kind: containers.MountKindTmpfs, Destination: "/tmp"}}
+		},
+	} {
+		changed := base
+		mutate(&changed)
+
+		assert.NotEqual(t, hash, changed.ExecutionHash())
+	}
+}

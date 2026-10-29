@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -129,6 +130,11 @@ func (suite *StatusSuite) instanceSpec(generation uint64) *containers.ContainerI
 	instanceSpec := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(statusTestContainer, generation))
 	instanceSpec.TypedSpec().ContainerID = statusTestContainer
 	instanceSpec.TypedSpec().Generation = generation
+
+	if containerSpec, err := safe.StateGetByID[*containers.ContainerSpec](suite.Ctx(), suite.State(), statusTestContainer); err == nil {
+		instanceSpec.TypedSpec().ExecutionHash = containerSpec.TypedSpec().ExecutionHash()
+	}
+
 	instanceSpec.Metadata().Labels().Set(containers.ContainerSpecIdLabel, statusTestContainer)
 
 	return instanceSpec
@@ -284,7 +290,7 @@ func (suite *StatusSuite) TestExitedReflectsTerminatedInstance() {
 		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
 		asrt.Equal(uint32(0), status.TypedSpec().PID)
 		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
-		asrt.Equal(uint64(3), status.TypedSpec().RestartCount)
+		asrt.Equal(uint64(3), status.TypedSpec().Generation)
 		asrt.Equal("signal: killed", status.TypedSpec().Error)
 	})
 }
@@ -304,7 +310,7 @@ func (suite *StatusSuite) TestLastExitSurvivesInstanceGap() {
 	})
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
-		asrt.Equal(uint64(3), status.TypedSpec().RestartCount)
+		asrt.Equal(uint64(3), status.TypedSpec().Generation)
 		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
 		asrt.Equal("signal: killed", status.TypedSpec().Error)
 	})
@@ -313,7 +319,7 @@ func (suite *StatusSuite) TestLastExitSurvivesInstanceGap() {
 
 	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerStateStarting, status.TypedSpec().State)
-		asrt.Equal(uint64(3), status.TypedSpec().RestartCount)
+		asrt.Equal(uint64(3), status.TypedSpec().Generation)
 		asrt.Equal(int32(137), status.TypedSpec().ExitCode)
 		asrt.Equal("signal: killed", status.TypedSpec().Error)
 	})
@@ -545,4 +551,69 @@ func (suite *StatusSuite) TestRemovedOnSpecRemoval() {
 	suite.Destroy(containers.NewContainerSpec(containers.NamespaceName, statusTestContainer))
 
 	ctest.AssertNoResource[*containers.ContainerStatus](suite, statusTestContainer)
+}
+
+// TestCompletedWhenNotRestarted covers a container which ran successfully and isn't restarted.
+func (suite *StatusSuite) TestCompletedWhenNotRestarted() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.Restart.Policy = containers.ContainerRestartPolicyNever
+	})
+	suite.markImageReady()
+
+	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Generation = 2
+		spec.Phase = containers.ContainerInstancePhaseTerminated
+		spec.FinishedAt = time.Now()
+	})
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateCompleted, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerHealthHealthy, status.TypedSpec().Health)
+		asrt.Equal(uint64(2), status.TypedSpec().Generation)
+	})
+}
+
+// TestFailedWhenOutOfRetries covers a container which failed and has no restarts left.
+func (suite *StatusSuite) TestFailedWhenOutOfRetries() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.Restart.Policy = containers.ContainerRestartPolicyOnFailure
+		spec.Restart.MaxRetries = new(uint32(1))
+	})
+	suite.markImageReady()
+
+	runStatus := containers.NewContainerRunStatus(containers.NamespaceName, statusTestContainer)
+	runStatus.TypedSpec().Restarts = 1
+	suite.Create(runStatus)
+
+	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Generation = 1
+		spec.Phase = containers.ContainerInstancePhaseTerminated
+		spec.ExitCode = 3
+		spec.FinishedAt = time.Now()
+	})
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateFailed, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
+		asrt.Equal(int32(3), status.TypedSpec().ExitCode)
+	})
+}
+
+// TestFailedStartIsNotCompleted covers a container which couldn't be started: its zero exit code
+// doesn't make it completed.
+func (suite *StatusSuite) TestFailedStartIsNotCompleted() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.Restart.Policy = containers.ContainerRestartPolicyNever
+	})
+	suite.markImageReady()
+
+	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Phase = containers.ContainerInstancePhaseFailed
+		spec.Error = "exec: no such file"
+		spec.FinishedAt = time.Now()
+	})
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateFailed, status.TypedSpec().State)
+	})
 }

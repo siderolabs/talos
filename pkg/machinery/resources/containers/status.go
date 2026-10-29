@@ -37,12 +37,14 @@ type ContainerStatusSpec struct {
 	PID uint32 `yaml:"pid,omitempty" protobuf:"4"`
 	// ExitCode of the last task exit.
 	ExitCode int32 `yaml:"exitCode,omitempty" protobuf:"5"`
-	// RestartCount is the current instance generation, i.e. restarts beyond the first start.
+	// RestartCount is the number of restarts since the configuration of the container last changed.
 	RestartCount uint64 `yaml:"restartCount" protobuf:"6"`
 	// Error is the last failure, verbatim, from whichever stage produced it.
 	Error string `yaml:"error,omitempty" protobuf:"7"`
 	// WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
 	WaitingFor []string `yaml:"waitingFor,omitempty" protobuf:"8"`
+	// Generation is the generation of the newest instance.
+	Generation uint64 `yaml:"generation" protobuf:"9"`
 }
 
 // NewContainerStatus initializes a ContainerStatus resource.
@@ -101,6 +103,7 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 	containerInstanceSpec *ContainerInstanceSpec,
 	imageDigest string,
 	containerDependencyStatus *ContainerDependencyStatus,
+	containerRunStatus *ContainerRunStatus,
 ) {
 	prev := *containerStatusSpec
 
@@ -121,10 +124,15 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 	// The last execution's outcome is what an operator is looking at in exactly those windows, so it
 	// survives the gap rather than reading back as a container that never crashed.
 	containerStatusSpec.RestartCount = prev.RestartCount
+	containerStatusSpec.Generation = prev.Generation
 	containerStatusSpec.ExitCode = prev.ExitCode
 
+	if containerRunStatus != nil {
+		containerStatusSpec.RestartCount = uint64(containerRunStatus.TypedSpec().Restarts)
+	}
+
 	if containerInstanceStatus != nil {
-		containerStatusSpec.RestartCount = containerInstanceStatus.TypedSpec().Generation
+		containerStatusSpec.Generation = containerInstanceStatus.TypedSpec().Generation
 
 		containerStatusSpec.ExitCode = containerInstanceStatus.TypedSpec().ExitCode
 		// The finalizer is only released once the task has been removed, so a PID reported by an
@@ -137,7 +145,27 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 	// At this point we can't say the dependencies are met, until InstanceController has published ContainerDependencyStatus. Stay in "pending" until we get more info.
 	gatesReady := containerDependencyStatus != nil && len(containerDependencyStatus.TypedSpec().WaitingFor) == 0
 
-	containerStatusSpec.State = ResolveContainerState(containerInstanceStatus, containerImageStatus, gatesReady, isStopping)
+	finishedState := ContainerStateExited
+
+	// the outcome of a run of a configuration which has changed since doesn't count: its replacement
+	// is what the container is waiting for
+	stateInstanceStatus := containerInstanceStatus
+
+	if containerInstanceStatus != nil && containerInstanceStatus.TypedSpec().Phase.Done() {
+		if !isStopping && containerInstanceSpec != nil && containerInstanceSpec.TypedSpec().ExecutionHash != containerSpec.TypedSpec().ExecutionHash() {
+			stateInstanceStatus = nil
+		} else {
+			var runStatus ContainerRunStatusSpec
+
+			if containerRunStatus != nil {
+				runStatus = *containerRunStatus.TypedSpec()
+			}
+
+			finishedState = containerSpec.TypedSpec().Restart.FinishedState(runStatus, *containerInstanceStatus.TypedSpec())
+		}
+	}
+
+	containerStatusSpec.State = ResolveContainerState(stateInstanceStatus, containerImageStatus, gatesReady, isStopping, finishedState)
 
 	containerStatusSpec.Health = containerStatusSpec.State.Health(prev.Health)
 
@@ -169,20 +197,21 @@ func ResolveReportedImage(containerSpec *ContainerSpec, containerInstanceSpec *C
 
 // ResolveContainerState maps the observable resources onto a container state.
 //
-// There is no terminal state: a finished instance means a restart is pending, so it reports exited
-// until InstanceController replaces it, at which point the new instance speaks for itself.
+// finishedState is the state of a finished instance: exited while a restart is pending, completed or
+// failed when the restart policy doesn't restart it.
 func ResolveContainerState(
 	containerInstanceStatus *ContainerInstanceStatus,
 	containerImageStatus *ContainerImageStatus,
 	gatesReady bool,
 	isStopping bool,
+	finishedState ContainerState,
 ) ContainerState {
 	if containerInstanceStatus != nil {
 		if isStopping {
 			return ContainerStateStopping
 		}
 
-		return resolveInstanceState(containerInstanceStatus)
+		return resolveInstanceState(containerInstanceStatus, finishedState)
 	}
 
 	// Only the phases that say something the gate check cannot: an image still coming down, or one
@@ -205,14 +234,14 @@ func ResolveContainerState(
 	return ContainerStateStarting
 }
 
-func resolveInstanceState(containerInstanceStatus *ContainerInstanceStatus) ContainerState {
+func resolveInstanceState(containerInstanceStatus *ContainerInstanceStatus, finishedState ContainerState) ContainerState {
 	switch containerInstanceStatus.TypedSpec().Phase {
 	case ContainerInstancePhaseCreated:
 		return ContainerStateStarting
 	case ContainerInstancePhaseRunning:
 		return ContainerStateRunning
 	case ContainerInstancePhaseTerminated, ContainerInstancePhaseFailed:
-		return ContainerStateExited
+		return finishedState
 	}
 
 	return ContainerStateStarting

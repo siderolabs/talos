@@ -55,7 +55,7 @@ var (
 //
 //	  The container is started as soon as the configuration is applied, with no image rebuild
 //	  and no reboot. It runs against the CRI containerd instance in the dedicated
-//	  `taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.
+//	  `taloscontainers` namespace, and by default is restarted 5 seconds after it stops.
 //
 //	  Containers are not Talos services: they do not appear in `talosctl services`, and
 //	  `talosctl service` does not apply to them. Status is reported via `ContainerStatus`.
@@ -125,6 +125,9 @@ type ContainerConfigV1Alpha1 struct {
 	//   description: |
 	//     Conditions which must be satisfied before the container is started.
 	DependsOnConfig *ContainerDependsOn `yaml:"dependsOn,omitempty"`
+	//   description: |
+	//     How the container is restarted after it exits.
+	RestartConfig *ContainerRestart `yaml:"restart,omitempty"`
 }
 
 // NewContainerConfigV1Alpha1 creates a new container config document.
@@ -298,6 +301,10 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 		validationErrors = errors.Join(validationErrors, c.RunAsConfig.Validate())
 	}
 
+	if c.RestartConfig != nil {
+		validationErrors = errors.Join(validationErrors, c.RestartConfig.Validate())
+	}
+
 	return warnings, validationErrors
 }
 
@@ -439,6 +446,15 @@ func (c *ContainerConfigV1Alpha1) DependsOn() config.ContainerDependsOnConfig {
 	}
 
 	return c.DependsOnConfig
+}
+
+// Restart implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) Restart() config.ContainerRestartConfig {
+	if c.RestartConfig == nil {
+		return &ContainerRestart{}
+	}
+
+	return c.RestartConfig
 }
 
 // mustParse re-parses an already-normalized reference. Normalization has succeeded by the time

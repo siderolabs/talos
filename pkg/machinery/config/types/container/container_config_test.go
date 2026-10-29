@@ -7,10 +7,13 @@ package container_test
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/container"
@@ -54,6 +57,10 @@ image: nginx
 	assert.Equal(t, "none", string(cfg.Network().Mode()))
 	assert.False(t, cfg.Resources().MemoryLimit().IsPresent())
 	assert.Empty(t, cfg.DependsOn().Paths())
+	assert.Equal(t, config.ContainerRestartPolicyAlways, cfg.Restart().Policy())
+	assert.False(t, cfg.Restart().MaxRetries().IsPresent())
+	assert.Equal(t, 5*time.Second, cfg.Restart().Delay())
+	assert.Equal(t, 5*time.Second, cfg.Restart().MaxDelay())
 }
 
 func TestContainerConfigDependsOnDeprecatedNetworks(t *testing.T) {
@@ -406,6 +413,46 @@ mounts:
 			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  containers: [nginx]",
 			expectedErr: "cannot depend on itself",
 		},
+		{
+			name:        "unknown restart policy",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  policy: sometimes",
+			expectedErr: `unsupported restart policy "sometimes"`,
+		},
+		{
+			name:        "maxRetries without on-failure",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  maxRetries: 3",
+			expectedErr: "restart.maxRetries is only supported with the on-failure policy",
+		},
+		{
+			name:        "negative maxRetries",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  policy: on-failure\n  maxRetries: -1",
+			expectedErr: "restart.maxRetries must be between 0 and 4294967295, got -1",
+		},
+		{
+			name:        "maxRetries beyond uint32",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  policy: on-failure\n  maxRetries: 4294967296",
+			expectedErr: "restart.maxRetries must be between 0 and 4294967295, got 4294967296",
+		},
+		{
+			name:        "negative restart delay",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  delay: -1s",
+			expectedErr: "restart.delay must be positive, got -1s",
+		},
+		{
+			name:        "zero restart delay",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  delay: 0s",
+			expectedErr: "restart.delay must be positive, got 0s",
+		},
+		{
+			name:        "zero restart maxDelay",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  maxDelay: 0s",
+			expectedErr: "restart.maxDelay must be positive, got 0s",
+		},
+		{
+			name:        "maxDelay shorter than delay",
+			doc:         "name: nginx\nimage: nginx\nrestart:\n  delay: 10s\n  maxDelay: 5s",
+			expectedErr: "restart.maxDelay 5s must not be shorter than restart.delay 10s",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -691,4 +738,27 @@ image: docker.io/library/python:3.13-alpine
 	require.NoError(t, merge.Merge(base, omitted))
 	assert.Equal(t, []string{"python3", "-u", "-c"}, base.Entrypoint())
 	assert.Equal(t, []string{"print('two')"}, base.Args())
+}
+
+func TestContainerConfigRestart(t *testing.T) {
+	t.Parallel()
+
+	cfg := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: migrate
+image: ghcr.io/example/migrate:v1.0.0
+restart:
+  policy: on-failure
+  maxRetries: 3
+  delay: 1s
+  maxDelay: 1m
+`)
+
+	_, err := cfg.Validate(validationMode{})
+	require.NoError(t, err)
+
+	assert.Equal(t, config.ContainerRestartPolicyOnFailure, cfg.Restart().Policy())
+	assert.Equal(t, optional.Some(3), cfg.Restart().MaxRetries())
+	assert.Equal(t, time.Second, cfg.Restart().Delay())
+	assert.Equal(t, time.Minute, cfg.Restart().MaxDelay())
 }
