@@ -172,7 +172,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 			Namespace: common.ContainerdNamespace_NS_SYSTEM,
 		}
 
-		pullClient, err := c.ImageClient.Pull(
+		pullClient, err := c.ImageService().Pull(
 			nodeCtx,
 			&machine.ImageServicePullRequest{
 				Containerd: ctrd,

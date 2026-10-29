@@ -182,7 +182,7 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 		suite.Require().Error(err)
 		suite.Require().Equal(codes.PermissionDenied, client.StatusCode(err))
 
-		listClient, err := maintenanceClient.ImageClient.List(suite.ctx, &machine.ImageServiceListRequest{
+		listClient, err := maintenanceClient.ImageService().List(suite.ctx, &machine.ImageServiceListRequest{
 			Containerd: &common.ContainerdInstance{
 				Driver:    common.ContainerDriver_CONTAINERD,
 				Namespace: common.ContainerdNamespace_NS_SYSTEM,

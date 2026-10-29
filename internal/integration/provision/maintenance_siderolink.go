@@ -256,7 +256,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 	suite.Run("pull the installer image and install", func() {
 		// we can pull the installer image, as SideroLink client has admin permissions
 		for _, maintenanceClient := range sideroLinkMaintenanceClients {
-			pullClient, err := maintenanceClient.ImageClient.Pull(suite.ctx, &machine.ImageServicePullRequest{
+			pullClient, err := maintenanceClient.ImageService().Pull(suite.ctx, &machine.ImageServicePullRequest{
 				Containerd: &common.ContainerdInstance{
 					Driver:    common.ContainerDriver_CONTAINERD,
 					Namespace: common.ContainerdNamespace_NS_SYSTEM,

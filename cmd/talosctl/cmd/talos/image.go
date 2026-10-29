@@ -160,7 +160,7 @@ func imageList(ctx context.Context) error {
 	responseChan := multiplex.StreamingViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ImageServiceListResponse], error) {
-			return c.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+			return c.ImageService().List(ctx, &machine.ImageServiceListRequest{
 				Containerd: containerdInstance,
 			})
 		},
@@ -290,7 +290,7 @@ func imagePullInternal(
 	responseChan := multiplex.StreamingViaFactory(
 		streamCtx, clientFactory,
 		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
-			return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
+			return c.ImageService().Pull(ctx, &machine.ImageServicePullRequest{
 				Containerd: containerdInstance,
 				ImageRef:   imageRef,
 			})
@@ -406,7 +406,7 @@ func imageImportInternal(
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	rcv, err := c.ImageClient.Import(ctx)
+	rcv, err := c.ImageService().Import(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -502,7 +502,7 @@ func imageRemove(ctx context.Context, imageRef string) error {
 	responseChan := multiplex.UnaryViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
-			return c.ImageClient.Remove(ctx, &machine.ImageServiceRemoveRequest{
+			return c.ImageService().Remove(ctx, &machine.ImageServiceRemoveRequest{
 				Containerd: containerdInstance,
 				ImageRef:   imageRef,
 			})

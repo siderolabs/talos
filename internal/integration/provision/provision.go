@@ -493,7 +493,7 @@ func (suite *BaseSuite) pullInstallerImageViaLifecycleService(
 	responseChan := streamPerNode(
 		ctx, nodes,
 		func(ctx context.Context) (grpc.ServerStreamingClient[machineapi.ImageServicePullResponse], error) {
-			return c.ImageClient.Pull(ctx, &machineapi.ImageServicePullRequest{
+			return c.ImageService().Pull(ctx, &machineapi.ImageServicePullRequest{
 				Containerd: containerdInstance,
 				ImageRef:   imageRef,
 			})

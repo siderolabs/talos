@@ -82,7 +82,7 @@ func (apiSuite *APISuite) startDebugContainer(nodeCtx context.Context, args ...s
 	}
 
 	// pull the image into the system namespace first
-	rcv, err := apiSuite.Client.ImageClient.Pull(nodeCtx, &machineapi.ImageServicePullRequest{
+	rcv, err := apiSuite.Client.ImageService().Pull(nodeCtx, &machineapi.ImageServicePullRequest{
 		Containerd: containerd,
 		ImageRef:   constants.DebugNixyBoxImage,
 	})

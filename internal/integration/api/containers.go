@@ -1724,7 +1724,7 @@ func (suite *ContainersSuite) containerdImages(ctx context.Context, namespace co
 		driver = common.ContainerDriver_CRI
 	}
 
-	rcv, err := suite.Client.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+	rcv, err := suite.Client.ImageService().List(ctx, &machine.ImageServiceListRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    driver,
 			Namespace: namespace,

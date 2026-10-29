@@ -66,7 +66,7 @@ func (suite *ImagesSuite) TestList() {
 	// so pull an image first rather than rely on one being there.
 	pulledImage := suite.pullImage(ctx, pullTestImage)
 
-	rcv, err := suite.Client.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+	rcv, err := suite.Client.ImageService().List(ctx, &machine.ImageServiceListRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_CRI,
@@ -113,7 +113,7 @@ const (
 // pullImage pulls an image into the CRI namespace and returns the name Pull reports it stored the
 // image under.
 func (suite *ImagesSuite) pullImage(ctx context.Context, ref string) string {
-	rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
+	rcv, err := suite.Client.ImageService().Pull(ctx, &machine.ImageServicePullRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_CRI,
@@ -158,7 +158,7 @@ func (suite *ImagesSuite) TestImportRemove() {
 		suite.T().Skipf("skipping import test on unsupported architecture %q", arch)
 	}
 
-	rcv, err := suite.Client.ImageClient.Import(ctx)
+	rcv, err := suite.Client.ImageService().Import(ctx)
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(rcv.Send(&machine.ImageServiceImportRequest{
@@ -192,7 +192,7 @@ func (suite *ImagesSuite) TestImportRemove() {
 	suite.Assert().Equal("registry.k8s.io/pause:i-was-a-digest", resp.GetName(), "imported image name should match expected")
 
 	// now remove the imported image
-	_, err = suite.Client.ImageClient.Remove(ctx, &machine.ImageServiceRemoveRequest{
+	_, err = suite.Client.ImageService().Remove(ctx, &machine.ImageServiceRemoveRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_CRI,
@@ -202,7 +202,7 @@ func (suite *ImagesSuite) TestImportRemove() {
 	suite.Require().NoError(err)
 
 	// try once again
-	_, err = suite.Client.ImageClient.Remove(ctx, &machine.ImageServiceRemoveRequest{
+	_, err = suite.Client.ImageService().Remove(ctx, &machine.ImageServiceRemoveRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_CRI,
@@ -288,7 +288,7 @@ func (suite *ImagesSuite) TestVerify() {
 
 	// run the tests, first with an etcd image, which should be in the image cache anyways
 	// Check verification, not the message: the registry may serve legacy signatures or OCI referrer bundles.
-	resp, err := suite.Client.ImageClient.Verify(ctx, &machine.ImageServiceVerifyRequest{
+	resp, err := suite.Client.ImageService().Verify(ctx, &machine.ImageServiceVerifyRequest{
 		ImageRef: etcdImage, // this image is under registry.k8s.io
 	})
 	suite.Require().NoError(err)
@@ -297,7 +297,7 @@ func (suite *ImagesSuite) TestVerify() {
 	suite.Assert().Contains(resp.GetDigestedImageRef(), "@sha256:")
 
 	// now test with an image that should be skipped
-	resp, err = suite.Client.ImageClient.Verify(ctx, &machine.ImageServiceVerifyRequest{
+	resp, err = suite.Client.ImageService().Verify(ctx, &machine.ImageServiceVerifyRequest{
 		ImageRef: "do.not.verify/myimage:latest",
 	})
 	suite.Require().NoError(err)
@@ -305,7 +305,7 @@ func (suite *ImagesSuite) TestVerify() {
 	suite.Assert().Equal("verification skipped by matched rule (0000)", resp.GetMessage())
 
 	// finally test with an image that should be denied
-	_, err = suite.Client.ImageClient.Verify(ctx, &machine.ImageServiceVerifyRequest{
+	_, err = suite.Client.ImageService().Verify(ctx, &machine.ImageServiceVerifyRequest{
 		ImageRef: "localhost:4444/myimage:latest",
 	})
 	suite.Require().Error(err)
@@ -320,7 +320,7 @@ func (suite *ImagesSuite) TestVerify() {
 		"index.docker.io/library/busybox:1.36",
 		"busybox:1.36",
 	} {
-		_, err = suite.Client.ImageClient.Verify(ctx, &machine.ImageServiceVerifyRequest{
+		_, err = suite.Client.ImageService().Verify(ctx, &machine.ImageServiceVerifyRequest{
 			ImageRef: deniedRef,
 		})
 		suite.Require().Error(err, "expected %q to be denied", deniedRef)
@@ -328,7 +328,7 @@ func (suite *ImagesSuite) TestVerify() {
 	}
 
 	// now test via the image pull flow
-	rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
+	rcv, err := suite.Client.ImageService().Pull(ctx, &machine.ImageServicePullRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_SYSTEM,
@@ -348,7 +348,7 @@ func (suite *ImagesSuite) TestVerify() {
 		}
 	}
 
-	listResp, err := suite.Client.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+	listResp, err := suite.Client.ImageService().List(ctx, &machine.ImageServiceListRequest{
 		Containerd: &common.ContainerdInstance{
 			Driver:    common.ContainerDriver_CRI,
 			Namespace: common.ContainerdNamespace_NS_SYSTEM,
