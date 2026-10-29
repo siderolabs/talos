@@ -1,0 +1,14 @@
+  {
+      "report": [
+          {
+              "lv": [
+                  {"lv_name":"mirror", "vg_name":"vgraid", "lv_attr":"rwi-a-r---", "copy_percent":"42.18", "lv_full_name":"vgraid/mirror", "lv_layout":"raid,raid1", "lv_role":"public", "sync_percent":"42.18", "raid_sync_action":"recover", "lv_health_status":""},
+                  {"lv_name":"[mirror_rimage_0]", "vg_name":"vgraid", "lv_attr":"iwi-aor---", "copy_percent":"", "lv_full_name":"vgraid/[mirror_rimage_0]", "lv_layout":"linear", "lv_role":"private,raid,image", "sync_percent":"", "raid_sync_action":"", "lv_health_status":""},
+                  {"lv_name":"storage", "vg_name":"vgraid", "lv_attr":"rwi-a-r-p-", "copy_percent":"100.00", "lv_full_name":"vgraid/storage", "lv_layout":"raid,raid10", "lv_role":"public", "sync_percent":"100.00", "raid_sync_action":"idle", "lv_health_status":"partial"},
+                  {"lv_name":"stale", "vg_name":"vgraid", "lv_attr":"rwi-a-r-r-", "copy_percent":"100.00", "lv_full_name":"vgraid/stale", "lv_layout":"raid,raid1", "lv_role":"public", "sync_percent":"100.00", "raid_sync_action":"idle", "lv_health_status":"refresh needed"},
+                  {"lv_name":"scrubbed", "vg_name":"vgraid", "lv_attr":"rwi-a-r-m-", "copy_percent":"100.00", "lv_full_name":"vgraid/scrubbed", "lv_layout":"raid,raid1", "lv_role":"public", "sync_percent":"100.00", "raid_sync_action":"idle", "lv_health_status":"mismatches exist"},
+                  {"lv_name":"plain", "vg_name":"vgraid", "lv_attr":"-wi-a-----", "copy_percent":"", "lv_full_name":"vgraid/plain", "lv_layout":"linear", "lv_role":"public", "sync_percent":"", "raid_sync_action":"", "lv_health_status":""}
+              ]
+          }
+      ]
+  }

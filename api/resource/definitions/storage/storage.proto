@@ -102,6 +102,14 @@ message LVMLogicalVolumeStatusSpec {
   // PrettySize is the human-readable rendering of Size; empty when Size is
   // not a byte count.
   string pretty_size = 36;
+  // CopyPercent is the raw copy_percent column: the sync progress of a raid
+  // or mirror LV ("0.00" to "100.00"); empty for other layouts.
+  string copy_percent = 37;
+  // HealthStatus is the raw lv_health_status column ("partial" /
+  // "refresh needed" / "mismatches exist" / "").
+  string health_status = 38;
+  // Attr is the raw lv_attr column.
+  string attr = 39;
 }
 
 // LVMPhysicalVolumeSpecSpec is the spec for LVMPhysicalVolumeSpec resource.
