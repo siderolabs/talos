@@ -233,7 +233,7 @@ func (suite *LibvirtSuite) attachAlpineConsole(ctx context.Context, name string)
 	suite.T().Helper()
 
 	streamCtx, cancel := context.WithTimeout(ctx, 5*time.Minute)
-	stream, err := suite.Client.HypervisorClient.ConsoleStream(streamCtx)
+	stream, err := suite.Client.HypervisorService().ConsoleStream(streamCtx)
 	suite.Require().NoError(err)
 	suite.T().Cleanup(cancel)
 	suite.Require().NoError(stream.Send(&machine.ConsoleRequest{

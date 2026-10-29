@@ -40,7 +40,7 @@ var hypervisorConsoleCmd = &cobra.Command{
 		}
 
 		// Console output is an interactive raw stream, not escaped tabular output.
-		return vmconsole.Run(ctx, c.HypervisorClient, args[0], os.Stdin, os.Stdout) //nolint:forbidigo
+		return vmconsole.Run(ctx, c.HypervisorService(), args[0], os.Stdin, os.Stdout) //nolint:forbidigo
 	},
 }
 

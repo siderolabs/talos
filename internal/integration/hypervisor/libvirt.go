@@ -158,7 +158,7 @@ func (suite *LibvirtSuite) TestConsoleAttach() {
 	streamCtx, cancelStream := context.WithCancel(nodeCtx)
 	defer cancelStream()
 
-	stream, err := suite.Client.HypervisorClient.ConsoleStream(streamCtx)
+	stream, err := suite.Client.HypervisorService().ConsoleStream(streamCtx)
 	suite.Require().NoError(err)
 	suite.Require().NoError(stream.Send(&machine.ConsoleRequest{
 		Request: &machine.ConsoleRequest_Attach{
@@ -219,7 +219,7 @@ func (suite *LibvirtSuite) TestVNCAttach() {
 	ctx, cancel := context.WithTimeout(nodeCtx, 10*time.Second)
 	defer cancel()
 
-	stream, err := suite.Client.HypervisorClient.VNCStream(ctx)
+	stream, err := suite.Client.HypervisorService().VNCStream(ctx)
 	suite.Require().NoError(err)
 	suite.Require().NoError(stream.Send(&machine.VNCRequest{
 		Request: &machine.VNCRequest_Attach{
@@ -539,7 +539,7 @@ func (suite *LibvirtSuite) assertConsoleRejected(ctx context.Context, name strin
 	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	stream, err := suite.Client.HypervisorClient.ConsoleStream(streamCtx)
+	stream, err := suite.Client.HypervisorService().ConsoleStream(streamCtx)
 	suite.Require().NoError(err)
 	suite.Require().NoError(stream.Send(&machine.ConsoleRequest{
 		Request: &machine.ConsoleRequest_Attach{

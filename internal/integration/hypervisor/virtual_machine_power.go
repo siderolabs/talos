@@ -68,7 +68,7 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 
 	// A graceful stop asks the guest. Whether this guest obeys is the guest's business; what Talos
 	// owes is the request, the configuration it wrote, and a legible status either way.
-	_, err := suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
+	_, err := suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
 	suite.Require().NoError(err)
 
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
@@ -81,7 +81,7 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 
 	// Forced is the escape from a graceful stop a guest refuses, and the only stop a guest cannot
 	// refuse, so after it the domain is gone whichever way the branch above went.
-	_, err = suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name, Force: true})
+	_, err = suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name, Force: true})
 	suite.Require().NoError(err)
 
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
@@ -91,10 +91,10 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 	suite.assertStopMode(nodeCtx, name, hypervisorhelpers.StopModeForced)
 
 	// Rebooting something which is not running has nothing to ask.
-	_, err = suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
+	_, err = suite.Client.HypervisorService().Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
 	suite.Require().Error(err, "a stopped virtual machine cannot be rebooted")
 
-	_, err = suite.Client.HypervisorClient.Start(nodeCtx, &machine.VirtualMachineStartRequest{Name: name})
+	_, err = suite.Client.HypervisorService().Start(nodeCtx, &machine.VirtualMachineStartRequest{Name: name})
 	suite.Require().NoError(err)
 
 	suite.assertPowerOverride(nodeCtx, name, "")
@@ -104,7 +104,7 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 	before := suite.qemuPID(nodeCtx, name)
 	suite.Require().NotZero(before)
 
-	_, err = suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
+	_, err = suite.Client.HypervisorService().Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
 	suite.Require().NoError(err)
 
 	suite.Require().Never(func() bool {
@@ -112,7 +112,7 @@ func (suite *LibvirtSuite) TestPowerAPI() {
 	}, 15*time.Second, time.Second, "a graceful reboot must keep the domain it was started from")
 
 	// A forced one destroys the domain, and the definition which is live brings it back.
-	_, err = suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name, Force: true})
+	_, err = suite.Client.HypervisorService().Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name, Force: true})
 	suite.Require().NoError(err)
 
 	suite.Require().Eventually(func() bool {
@@ -136,7 +136,7 @@ func (suite *LibvirtSuite) TestAlpineGracefulPower() {
 	beforePID := suite.qemuPID(nodeCtx, name)
 	suite.Require().Positive(beforePID, "the booted guest must have a live QEMU process")
 
-	_, err := suite.Client.HypervisorClient.Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
+	_, err := suite.Client.HypervisorService().Reboot(nodeCtx, &machine.VirtualMachineRebootRequest{Name: name})
 	suite.Require().NoError(err)
 
 	console = suite.loginAlpineConsole(nodeCtx, name)
@@ -145,7 +145,7 @@ func (suite *LibvirtSuite) TestAlpineGracefulPower() {
 	suite.Require().NotEqual(beforeBootID, afterBootID, "the guest must actually reboot")
 	suite.Require().Equal(beforePID, suite.qemuPID(nodeCtx, name), "graceful reboot must retain QEMU")
 
-	_, err = suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
+	_, err = suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
 	suite.Require().NoError(err)
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
 	suite.assertStoppedDomain(nodeCtx, node, name)
@@ -186,7 +186,7 @@ func (suite *LibvirtSuite) TestPowerOverrideEndsWithHostReboot() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 20*time.Minute)
 
 	node, nodeCtx, name := suite.preparePowerVM()
-	_, err := suite.Client.HypervisorClient.Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name, Force: true})
+	_, err := suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name, Force: true})
 	suite.Require().NoError(err)
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
 	suite.assertStoppedDomain(nodeCtx, node, name)

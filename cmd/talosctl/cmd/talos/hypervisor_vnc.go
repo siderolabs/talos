@@ -47,7 +47,7 @@ var hypervisorVNCCmd = &cobra.Command{
 		safeout.Fprintf(safeout.Stderr(), "VNC listener ready at TCP %s (VM not yet attached). Connect a viewer; press Ctrl-C to stop.\n", listener.Addr()) //nolint:errcheck
 		safeout.Flush()                                                                                                                                     //nolint:errcheck
 
-		return vmvnc.Serve(ctx, c.HypervisorClient, args[0], listener, func(err error) {
+		return vmvnc.Serve(ctx, c.HypervisorService(), args[0], listener, func(err error) {
 			safeout.Fprintf(safeout.Stderr(), "%s\n", err) //nolint:errcheck
 			safeout.Flush()                                //nolint:errcheck
 		})

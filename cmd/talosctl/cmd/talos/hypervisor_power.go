@@ -23,7 +23,7 @@ var hypervisorStartCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return withHypervisorNode(cmd.Context(), "talosctl hypervisor start", func(ctx context.Context, c *client.Client) error {
-			_, err := c.HypervisorClient.Start(ctx, &machine.VirtualMachineStartRequest{Name: args[0]})
+			_, err := c.HypervisorService().Start(ctx, &machine.VirtualMachineStartRequest{Name: args[0]})
 
 			return err
 		})
@@ -42,7 +42,7 @@ var hypervisorStopCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return withHypervisorNode(cmd.Context(), "talosctl hypervisor stop", func(ctx context.Context, c *client.Client) error {
-			_, err := c.HypervisorClient.Stop(ctx, &machine.VirtualMachineStopRequest{
+			_, err := c.HypervisorService().Stop(ctx, &machine.VirtualMachineStopRequest{
 				Name:  args[0],
 				Force: !hypervisorStopCmdFlags.graceful,
 			})
@@ -64,7 +64,7 @@ var hypervisorRebootCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return withHypervisorNode(cmd.Context(), "talosctl hypervisor reboot", func(ctx context.Context, c *client.Client) error {
-			_, err := c.HypervisorClient.Reboot(ctx, &machine.VirtualMachineRebootRequest{
+			_, err := c.HypervisorService().Reboot(ctx, &machine.VirtualMachineRebootRequest{
 				Name:  args[0],
 				Force: !hypervisorRebootCmdFlags.graceful,
 			})

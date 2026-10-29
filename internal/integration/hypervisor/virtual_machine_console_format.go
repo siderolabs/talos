@@ -54,7 +54,7 @@ func (suite *LibvirtSuite) TestAlpineConsoleBlankDiskFormat() {
 	streamCtx, cancel := context.WithTimeout(nodeCtx, 3*time.Minute)
 	defer cancel()
 
-	stream, err := suite.Client.HypervisorClient.ConsoleStream(streamCtx)
+	stream, err := suite.Client.HypervisorService().ConsoleStream(streamCtx)
 	suite.Require().NoError(err)
 	suite.Require().NoError(stream.Send(&machine.ConsoleRequest{Request: &machine.ConsoleRequest_Attach{
 		Attach: &machine.ConsoleAttach{Name: disk.vmName},
