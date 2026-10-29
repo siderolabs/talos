@@ -838,6 +838,16 @@ func (m *ContainerSecuritySpec) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SeccompUnconfined {
+		i--
+		if m.SeccompUnconfined {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
+	}
 	if m.MachinedAccess {
 		i--
 		if m.MachinedAccess {
@@ -1612,6 +1622,9 @@ func (m *ContainerSecuritySpec) SizeVT() (n int) {
 		}
 	}
 	if m.MachinedAccess {
+		n += 2
+	}
+	if m.SeccompUnconfined {
 		n += 2
 	}
 	n += len(m.unknownFields)
@@ -3979,6 +3992,26 @@ func (m *ContainerSecuritySpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.MachinedAccess = bool(v != 0)
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SeccompUnconfined", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.SeccompUnconfined = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

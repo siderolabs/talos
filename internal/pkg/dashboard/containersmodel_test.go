@@ -200,7 +200,7 @@ func TestFormatContainerDetail(t *testing.T) {
 	spec := containers.NewContainerSpec(containers.NamespaceName, "director")
 	*spec.TypedSpec() = containers.ContainerSpecSpec{
 		Network:  containers.ContainerNetworkSpec{HostNetwork: true},
-		Security: containers.ContainerSecuritySpec{Privileged: true},
+		Security: containers.ContainerSecuritySpec{Privileged: true, SeccompUnconfined: true},
 		Resources: containers.ContainerResourcesSpec{
 			CPULimit:    1500,
 			MemoryLimit: 512 << 20,
@@ -237,6 +237,7 @@ func TestFormatContainerDetail(t *testing.T) {
 	assert.Contains(t, detail, "up 3m0s")
 	assert.Contains(t, detail, "network host")
 	assert.Contains(t, detail, "privileged")
+	assert.Contains(t, detail, "seccomp unconfined")
 	assert.Contains(t, detail, "cpu 1500m")
 	assert.Contains(t, detail, "memory 512 MiB")
 	assert.Contains(t, detail, "no swap")

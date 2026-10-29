@@ -255,6 +255,7 @@ ContainerSecurity configures the container's security posture.
 |`profile` |ContainerSecurityProfile |Security profile.<br><br>`restricted` drops all capabilities, allows no device access, and mounts the rootfs<br>and sysfs read-only. `privileged` grants all grantable capabilities and all devices,<br>and mounts sysfs read-write.  |`restricted`<br />`privileged`<br /> |
 |`capabilities` |<a href="#ContainerConfig.security.capabilities">ContainerCapabilities</a> |Linux capabilities to add or drop on top of the profile.  | |
 |`machinedAccess` |bool |Publishes the container's PID so machined's API can recognize it, and bind-mounts the<br>machined API socket into the container.<br><br>This alone does not grant DAC access to the socket, which is owned by the `apid` user:<br>reaching it in practice still requires `profile: privileged` or an equivalent capability/<br>`runAs` grant. Once connected, the container may request any role, same as extension<br>services; the RPC's own role requirements are what actually gate access.  | |
+|`seccompProfile` |ContainerSeccompProfile |Seccomp profile.<br><br>`default` applies the containerd default seccomp profile, independently of the security<br>profile: even a `privileged` container is filtered by it. `unconfined` applies no<br>seccomp filter at all, which some workloads need, e.g. a nested container runtime<br>creating session keyrings.  |`default`<br />`unconfined`<br /> |
 
 
 

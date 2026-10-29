@@ -51,6 +51,7 @@ image: nginx
 
 	// Defaults must be non-nil so callers never have to nil-check.
 	assert.Equal(t, "restricted", string(cfg.Security().Profile()))
+	assert.Equal(t, "default", string(cfg.Security().SeccompProfile()))
 	assert.Equal(t, "none", string(cfg.Network().Mode()))
 	assert.False(t, cfg.Resources().MemoryLimit().IsPresent())
 	assert.Empty(t, cfg.DependsOn().Paths())
@@ -174,6 +175,7 @@ security:
   capabilities:
     add: [NET_ADMIN]
     drop: [ALL]
+  seccompProfile: unconfined
 network:
   mode: host
 resources:
@@ -196,6 +198,7 @@ dependsOn:
 	assert.Equal(t, []string{"/director"}, cfg.Entrypoint())
 	assert.Equal(t, "/srv", cfg.WorkingDir())
 	assert.Equal(t, "privileged", string(cfg.Security().Profile()))
+	assert.Equal(t, "unconfined", string(cfg.Security().SeccompProfile()))
 	assert.Equal(t, "host", string(cfg.Network().Mode()))
 	assert.True(t, cfg.DependsOn().Time())
 
@@ -345,6 +348,11 @@ mounts:
 			name:        "unknown security profile",
 			doc:         "name: nginx\nimage: nginx\nsecurity:\n  profile: yolo",
 			expectedErr: "unsupported security profile",
+		},
+		{
+			name:        "unknown seccomp profile",
+			doc:         "name: nginx\nimage: nginx\nsecurity:\n  seccompProfile: runtime/default",
+			expectedErr: "unsupported seccomp profile",
 		},
 		{
 			name:        "capability with CAP_ prefix",

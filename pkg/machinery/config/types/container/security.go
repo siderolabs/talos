@@ -44,6 +44,19 @@ type ContainerSecurity struct {
 	//     `runAs` grant. Once connected, the container may request any role, same as extension
 	//     services; the RPC's own role requirements are what actually gate access.
 	SecurityMachinedAccess bool `yaml:"machinedAccess,omitempty"`
+	//   description: |
+	//     Seccomp profile.
+	//
+	//     `default` applies the containerd default seccomp profile, independently of the security
+	//     profile: even a `privileged` container is filtered by it. `unconfined` applies no
+	//     seccomp filter at all, which some workloads need, e.g. a nested container runtime
+	//     creating session keyrings.
+	//   values:
+	//     - default
+	//     - unconfined
+	//   schema:
+	//     type: string
+	SecuritySeccompProfile config.ContainerSeccompProfile `yaml:"seccompProfile,omitempty"`
 }
 
 // ContainerCapabilities adjusts the container's Linux capabilities.
@@ -95,6 +108,15 @@ func (s *ContainerSecurity) MachinedAccess() bool {
 	return s.SecurityMachinedAccess
 }
 
+// SeccompProfile implements config.ContainerSecurityConfig interface.
+func (s *ContainerSecurity) SeccompProfile() config.ContainerSeccompProfile {
+	if s.SecuritySeccompProfile == "" {
+		return config.ContainerSeccompProfileDefault
+	}
+
+	return s.SecuritySeccompProfile
+}
+
 // Validate checks the security settings.
 func (s *ContainerSecurity) Validate() error {
 	var validationErrors error
@@ -104,6 +126,13 @@ func (s *ContainerSecurity) Validate() error {
 	default:
 		validationErrors = errors.Join(validationErrors,
 			fmt.Errorf("unsupported security profile %q, expected restricted or privileged", s.SecurityProfile))
+	}
+
+	switch s.SeccompProfile() {
+	case config.ContainerSeccompProfileDefault, config.ContainerSeccompProfileUnconfined:
+	default:
+		validationErrors = errors.Join(validationErrors,
+			fmt.Errorf("unsupported seccomp profile %q, expected default or unconfined", s.SecuritySeccompProfile))
 	}
 
 	if s.SecurityCapabilities == nil {

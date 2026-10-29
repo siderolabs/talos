@@ -331,6 +331,24 @@ The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
 `talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
 """
 
+    [notes.container_seccomp_profile]
+        title = "Container Seccomp Profile"
+        description = """\
+`ContainerConfig` documents can now opt a container out of the default seccomp profile:
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: buildkit
+image: docker.io/moby/buildkit:v0.34.1
+security:
+  profile: privileged
+  seccompProfile: unconfined
+```
+
+The default seccomp profile still applies to every container unless it sets `seccompProfile: unconfined`, `privileged` ones included.
+"""
+
     [notes.container_swap_limit]
         title = "Container Swap Limit"
         description = """\

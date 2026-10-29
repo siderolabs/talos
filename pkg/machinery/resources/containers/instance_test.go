@@ -168,6 +168,17 @@ func TestSecurityEqual(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "seccompUnconfined differs",
+			securitySpecA: containers.ContainerSecuritySpec{
+				Privileged:        true,
+				SeccompUnconfined: true,
+			},
+			securitySpecB: containers.ContainerSecuritySpec{
+				Privileged: true,
+			},
+			want: false,
+		},
+		{
 			name: "capabilitiesAdd differs",
 			securitySpecA: containers.ContainerSecuritySpec{
 				CapabilitiesAdd: []string{"NET_ADMIN"},

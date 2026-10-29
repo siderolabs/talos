@@ -8487,6 +8487,7 @@ ContainerSecuritySpec is the resolved security posture.
 | capabilities_add | [string](#string) | repeated |  |
 | capabilities_drop | [string](#string) | repeated |  |
 | machined_access | [bool](#bool) |  | MachinedAccess publishes the container's PID as a ServicePID resource and mounts the machined API socket into the container. |
+| seccomp_unconfined | [bool](#bool) |  | SeccompUnconfined applies no seccomp filter instead of the default profile. |
 
 
 

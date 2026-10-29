@@ -170,10 +170,11 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 
 	security := containerConfig.Security()
 	containerSpecSpec.Security = containers.ContainerSecuritySpec{
-		Privileged:       security.Profile() == configcfg.ContainerSecurityProfilePrivileged,
-		CapabilitiesAdd:  security.CapabilitiesAdd(),
-		CapabilitiesDrop: security.CapabilitiesDrop(),
-		MachinedAccess:   security.MachinedAccess(),
+		Privileged:        security.Profile() == configcfg.ContainerSecurityProfilePrivileged,
+		CapabilitiesAdd:   security.CapabilitiesAdd(),
+		CapabilitiesDrop:  security.CapabilitiesDrop(),
+		MachinedAccess:    security.MachinedAccess(),
+		SeccompUnconfined: security.SeccompProfile() == configcfg.ContainerSeccompProfileUnconfined,
 	}
 
 	containerSpecSpec.Network = containers.ContainerNetworkSpec{

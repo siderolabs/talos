@@ -454,12 +454,18 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		c.opts.OCISpecOpts...,
 	)
 
-	if c.opts.OverrideSeccompProfile != nil {
+	switch {
+	case c.opts.SeccompUnconfined:
+		specOpts = append(
+			specOpts,
+			oci.WithSeccompUnconfined, // applied last, so that nothing above can put a profile back
+		)
+	case c.opts.OverrideSeccompProfile != nil:
 		specOpts = append(
 			specOpts,
 			WithCustomSeccompProfile(c.opts.OverrideSeccompProfile),
 		)
-	} else {
+	default:
 		specOpts = append(
 			specOpts,
 			seccomp.WithDefaultProfile(), // add seccomp profile last, as it depends on process capabilities

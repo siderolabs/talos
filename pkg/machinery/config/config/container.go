@@ -121,7 +121,21 @@ type ContainerSecurityConfig interface {
 	// MachinedAccess publishes the container's PID for machined's API to recognize, and mounts
 	// the machined API socket into the container.
 	MachinedAccess() bool
+	// SeccompProfile is the seccomp filter applied to the container; defaults to default.
+	SeccompProfile() ContainerSeccompProfile
 }
+
+// ContainerSeccompProfile selects the seccomp filter applied to a container.
+type ContainerSeccompProfile string
+
+// Container seccomp profiles.
+const (
+	// ContainerSeccompProfileDefault applies the containerd default seccomp profile. This is the
+	// default.
+	ContainerSeccompProfileDefault ContainerSeccompProfile = "default"
+	// ContainerSeccompProfileUnconfined applies no seccomp filter at all.
+	ContainerSeccompProfileUnconfined ContainerSeccompProfile = "unconfined"
+)
 
 // ContainerNetworkMode selects the container's network namespace.
 type ContainerNetworkMode string

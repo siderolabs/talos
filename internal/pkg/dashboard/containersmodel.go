@@ -436,6 +436,10 @@ func formatRuntimeConfig(spec *containers.ContainerSpecSpec) string {
 		parts = append(parts, "machined access")
 	}
 
+	if spec.Security.SeccompUnconfined {
+		parts = append(parts, colored("yellow", "seccomp unconfined"))
+	}
+
 	if spec.Resources.CPULimit > 0 {
 		parts = append(parts, fmt.Sprintf("cpu %dm", spec.Resources.CPULimit))
 	}

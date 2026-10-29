@@ -518,6 +518,45 @@ func (suite *ContainersSuite) TestCapabilities() {
 	})
 }
 
+// TestSeccompProfile verifies that every container is filtered by the default seccomp profile, the
+// privileged ones included, unless it explicitly asks to run unconfined.
+func (suite *ContainersSuite) TestSeccompProfile() {
+	// Reading the Seccomp mode rather than probing a filtered syscall: 2 is filter mode, 0 is none, so
+	// the assertion cannot pass for an unrelated reason.
+	const readSeccomp = "grep '^Seccomp:' /proc/self/status"
+
+	suite.Run("privileged-is-filtered", func() {
+		ctx, name, _ := suite.setupContainer("seccomp-privileged")
+
+		doc := suite.shellContainer(name, readSeccomp)
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityProfile: configcontainer.ContainerSecurityProfilePrivileged,
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "Seccomp:")
+
+		suite.Assert().Contains(logs, "Seccomp:\t2", "a privileged container should still be filtered by the default seccomp profile")
+	})
+
+	suite.Run("privileged-unconfined", func() {
+		ctx, name, _ := suite.setupContainer("seccomp-unconfined")
+
+		doc := suite.shellContainer(name, readSeccomp)
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityProfile:        configcontainer.ContainerSecurityProfilePrivileged,
+			SecuritySeccompProfile: configcontainer.ContainerSeccompProfileUnconfined,
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "Seccomp:")
+
+		suite.Assert().Contains(logs, "Seccomp:\t0", "seccompProfile: unconfined should leave the container unfiltered")
+	})
+}
+
 // TestSecurityProfileRootfs verifies that the restricted profile mounts the rootfs read-only and that
 // privileged does not.
 func (suite *ContainersSuite) TestSecurityProfileRootfs() {

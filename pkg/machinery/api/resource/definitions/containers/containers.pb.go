@@ -922,8 +922,10 @@ type ContainerSecuritySpec struct {
 	// MachinedAccess publishes the container's PID as a ServicePID resource and mounts the
 	// machined API socket into the container.
 	MachinedAccess bool `protobuf:"varint,4,opt,name=machined_access,json=machinedAccess,proto3" json:"machined_access,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// SeccompUnconfined applies no seccomp filter instead of the default profile.
+	SeccompUnconfined bool `protobuf:"varint,5,opt,name=seccomp_unconfined,json=seccompUnconfined,proto3" json:"seccomp_unconfined,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ContainerSecuritySpec) Reset() {
@@ -980,6 +982,13 @@ func (x *ContainerSecuritySpec) GetCapabilitiesDrop() []string {
 func (x *ContainerSecuritySpec) GetMachinedAccess() bool {
 	if x != nil {
 		return x.MachinedAccess
+	}
+	return false
+}
+
+func (x *ContainerSecuritySpec) GetSeccompUnconfined() bool {
+	if x != nil {
+		return x.SeccompUnconfined
 	}
 	return false
 }
@@ -1486,14 +1495,15 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"swap_limit\x18\x03 \x01(\x04R\tswapLimit\"8\n" +
 	"\x12ContainerRunAsSpec\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x05R\x03uid\x12\x10\n" +
-	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\xb8\x01\n" +
+	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\xe7\x01\n" +
 	"\x15ContainerSecuritySpec\x12\x1e\n" +
 	"\n" +
 	"privileged\x18\x01 \x01(\bR\n" +
 	"privileged\x12)\n" +
 	"\x10capabilities_add\x18\x02 \x03(\tR\x0fcapabilitiesAdd\x12+\n" +
 	"\x11capabilities_drop\x18\x03 \x03(\tR\x10capabilitiesDrop\x12'\n" +
-	"\x0fmachined_access\x18\x04 \x01(\bR\x0emachinedAccess\"\xc2\x06\n" +
+	"\x0fmachined_access\x18\x04 \x01(\bR\x0emachinedAccess\x12-\n" +
+	"\x12seccomp_unconfined\x18\x05 \x01(\bR\x11seccompUnconfined\"\xc2\x06\n" +
 	"\x11ContainerSpecSpec\x12O\n" +
 	"\x05image\x18\x01 \x01(\v29.talos.resource.definitions.containers.ContainerImageSpecR\x05image\x12\x1e\n" +
 	"\n" +

@@ -158,6 +158,8 @@ message ContainerSecuritySpec {
   // MachinedAccess publishes the container's PID as a ServicePID resource and mounts the
   // machined API socket into the container.
   bool machined_access = 4;
+  // SeccompUnconfined applies no seccomp filter instead of the default profile.
+  bool seccomp_unconfined = 5;
 }
 
 // ContainerSpecSpec is the spec for ContainerSpec.

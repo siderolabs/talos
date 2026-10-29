@@ -150,6 +150,7 @@ func (r *containerdRunner) Run(
 		runner.WithGracefulShutdownTimeout(gracefulShutdownTimeout),
 		runner.WithHostNetworkFiles(spec.Network.HostNetwork),
 		runner.WithSelinuxLabel(selinuxLabel),
+		runner.WithSeccompUnconfined(spec.Security.SeccompUnconfined),
 		runner.WithOCISpecOpts(r.ociSpecOpts(spec, image)...),
 	)
 

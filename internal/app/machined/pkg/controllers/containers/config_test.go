@@ -60,8 +60,9 @@ func (suite *ConfigSuite) TestNormalizesImageAndResolvesDefaults() {
 		// canonical string.
 		asrt.Equal("index.docker.io/library/nginx:latest", spec.TypedSpec().Image.Ref)
 
-		// Defaults: restricted, no host network, no limits.
+		// Defaults: restricted, default seccomp profile, no host network, no limits.
 		asrt.False(spec.TypedSpec().Security.Privileged)
+		asrt.False(spec.TypedSpec().Security.SeccompUnconfined)
 		asrt.False(spec.TypedSpec().Network.HostNetwork)
 		asrt.Zero(spec.TypedSpec().Resources.MemoryLimit)
 		asrt.Nil(spec.TypedSpec().Resources.SwapLimit)
@@ -138,6 +139,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 			CapabilitiesAddConfig:  []string{"NET_ADMIN"},
 			CapabilitiesDropConfig: []string{"ALL"},
 		},
+		SecuritySeccompProfile: "unconfined",
 	}
 	doc.NetworkConfig = &containercfg.ContainerNetwork{NetworkMode: "host"}
 	doc.ResourcesConfig = &containercfg.ContainerResources{
@@ -158,6 +160,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 	ctest.AssertResource(suite, "director", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
 		asrt.True(spec.TypedSpec().Security.Privileged)
 		asrt.Equal([]string{"NET_ADMIN"}, spec.TypedSpec().Security.CapabilitiesAdd)
+		asrt.True(spec.TypedSpec().Security.SeccompUnconfined)
 		asrt.True(spec.TypedSpec().Network.HostNetwork)
 
 		asrt.Equal(uint64(512<<20), spec.TypedSpec().Resources.MemoryLimit)

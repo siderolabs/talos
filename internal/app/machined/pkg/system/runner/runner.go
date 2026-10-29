@@ -99,6 +99,8 @@ type Options struct {
 	HostNetworkFiles bool
 	// OverrideSeccompProfile default Linux seccomp profile.
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
+	// SeccompUnconfined applies no seccomp profile at all, instead of the default one.
+	SeccompUnconfined bool
 	// DroppedCapabilities is the list of capabilities to drop.
 	DroppedCapabilities []string
 	// SelinuxLabel is the SELinux label to be assigned
@@ -262,6 +264,15 @@ func WithSelinuxLabel(label string) Option {
 func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 	return func(args *Options) {
 		args.OverrideSeccompProfile = override
+	}
+}
+
+// WithSeccompUnconfined controls whether the container runs without any seccomp profile.
+//
+// Off by default: the default seccomp profile is applied to every container, privileged or not.
+func WithSeccompUnconfined(enabled bool) Option {
+	return func(args *Options) {
+		args.SeccompUnconfined = enabled
 	}
 }
 

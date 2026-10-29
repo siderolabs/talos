@@ -578,6 +578,17 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Description: "Publishes the container's PID so machined's API can recognize it, and bind-mounts the\nmachined API socket into the container.\n\nThis alone does not grant DAC access to the socket, which is owned by the `apid` user:\nreaching it in practice still requires `profile: privileged` or an equivalent capability/\n`runAs` grant. Once connected, the container may request any role, same as extension\nservices; the RPC's own role requirements are what actually gate access.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Publishes the container's PID so machined's API can recognize it, and bind-mounts the" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "seccompProfile",
+				Type:        "ContainerSeccompProfile",
+				Note:        "",
+				Description: "Seccomp profile.\n\n`default` applies the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it. `unconfined` applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"default",
+					"unconfined",
+				},
+			},
 		},
 	}
 
