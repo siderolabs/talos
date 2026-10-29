@@ -139,6 +139,7 @@ func TestLicenseClosureMatchesManifestSemantics(t *testing.T) {
 			nil,
 		},
 		{"unmatched replacement", "replace example.com/a v0.9.0 => example.com/Unused v1.1.0", []licenseModule{{module.Version{Path: "example.com/Unused", Version: "v1.1.0"}, hash}}, nil},
+		{"replacement without full checksum", "require example.com/a v1.0.0\nreplace example.com/s v0.9.0 => example.com/Stale v1.0.0", []licenseModule{{module.Version{Path: "example.com/a", Version: "v1.0.0"}, hash}}, nil},
 		{"exclude by path", "require example.com/a v1.0.0\nexclude example.com/a v0.9.0", nil, nil},
 		{"exclude replacement", "replace example.com/a => example.com/b v2.0.0+incompatible\nexclude example.com/b v2.0.0+incompatible", nil, nil},
 		{"local replacement", "require example.com/a v1.0.0\nreplace example.com/a => ./local", nil, []localReplacement{{Path: "example.com/a", Directory: "./local"}}},
@@ -154,8 +155,6 @@ func TestLicenseClosureMatchesManifestSemantics(t *testing.T) {
 
 func TestLicenseInputsRejectUnpinnedBeforeFetch(t *testing.T) {
 	for _, test := range []struct{ name, sum string }{
-		{"missing", ""},
-		{"mod hash only", "example.com/Module v1.2.3/go.mod h1:" + strings.Repeat("A", 43) + "=\n"},
 		{"malformed", "invalid\n"},
 		{"bad base64", "example.com/Module v1.2.3 h1:invalid\n"},
 		{"wrong hash algorithm", "example.com/Module v1.2.3 h2:" + strings.Repeat("A", 43) + "=\n"},
@@ -178,6 +177,43 @@ func TestLicenseInputsRejectUnpinnedBeforeFetch(t *testing.T) {
 
 			if _, err = os.Lstat(output); !os.IsNotExist(err) {
 				t.Fatal("failed preflight created output")
+			}
+		})
+	}
+}
+
+func TestLicenseInputsSkipModulesWithoutFullChecksum(t *testing.T) {
+	for _, test := range []struct{ name, sum string }{
+		{"missing", ""},
+		{"mod hash only", "example.com/Module v1.2.3/go.mod h1:" + strings.Repeat("A", 43) + "=\n"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			source, _, _, _ := singleModuleFixture(t)
+			writeFixture(t, filepath.Join(source, "go.sum"), []byte(test.sum))
+			output := filepath.Join(t.TempDir(), "inputs")
+			called := false
+
+			err := prepareLicenseInputs(t.Context(), source, output, func(context.Context, module.Version, io.Writer) error {
+				called = true
+
+				return nil
+			})
+			if err != nil || called {
+				t.Fatalf("module without a full checksum failed or was fetched: err=%v called=%v", err, called)
+			}
+
+			entries, err := os.ReadDir(output)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			names := make([]string, 0, len(entries))
+			for _, entry := range entries {
+				names = append(names, entry.Name())
+			}
+
+			if !reflect.DeepEqual(names, []string{"go.mod", "go.sum"}) {
+				t.Fatalf("unexpected license inputs: %v", names)
 			}
 		})
 	}

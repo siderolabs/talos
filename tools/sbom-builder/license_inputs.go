@@ -116,7 +116,11 @@ func licenseClosure(modBytes, sumBytes []byte) ([]licenseModule, []localReplacem
 
 		sum, ok := sums[m]
 		if !ok {
-			return nil, nil, fmt.Errorf("missing full module checksum for %s", m)
+			// Without a full go.sum checksum the build never downloads this
+			// module, for example the target of a stale version-specific
+			// replacement. It gets no license input, so every build reports
+			// it the same way.
+			continue
 		}
 
 		modules = append(modules, licenseModule{Version: m, Sum: sum})
