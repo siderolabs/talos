@@ -250,7 +250,7 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 			}
 		}()
 
-		kernelFd, err = unix.MemfdCreate("vmlinux", 0)
+		kernelFd, err = unix.MemfdCreate("vmlinux", unix.MFD_CLOEXEC)
 		if err != nil {
 			return fmt.Errorf("memfdCreate: %v", err)
 		}
@@ -267,7 +267,7 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 			return fmt.Errorf("failed to seek kernel: %w", err)
 		}
 
-		initrdFd, err := unix.MemfdCreate("initrd", 0)
+		initrdFd, err := unix.MemfdCreate("initrd", unix.MFD_CLOEXEC)
 		if err != nil {
 			return fmt.Errorf("memfdCreate: %v", err)
 		}

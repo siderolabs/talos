@@ -51,7 +51,7 @@ func Extract(kernel *os.File) (int, io.Closer, error) {
 
 	defer z.Close()
 
-	fd, err := unix.MemfdCreate("vmlinux", 0)
+	fd, err := unix.MemfdCreate("vmlinux", unix.MFD_CLOEXEC)
 	if err != nil {
 		return 0, nil, fmt.Errorf("memfdCreate: %v", err)
 	}
