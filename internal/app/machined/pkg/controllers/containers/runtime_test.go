@@ -36,6 +36,8 @@ type fakeTaskRunner struct {
 	removeFails  map[string]struct{}
 	removeFailed map[string]int
 	selfExit     map[string]chan int32
+	heldStops    map[string]chan struct{}
+	stopping     map[string]struct{}
 	closed       bool
 
 	// stopsWanted, when non-zero, holds every stop until that many of them are in flight at once.
@@ -52,7 +54,21 @@ func newFakeTaskRunner() *fakeTaskRunner {
 		removeFails:  map[string]struct{}{},
 		removeFailed: map[string]int{},
 		selfExit:     map[string]chan int32{},
+		heldStops:    map[string]chan struct{}{},
+		stopping:     map[string]struct{}{},
 	}
+}
+
+// holdStop keeps a stop of id from completing until release is called, standing in for a container
+// sitting out its graceful shutdown timeout.
+func (f *fakeTaskRunner) holdStop(id string) (release func()) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	held := make(chan struct{})
+	f.heldStops[id] = held
+
+	return sync.OnceFunc(func() { close(held) })
 }
 
 // failRemove makes Remove fail for id until clearRemoveFailure is called, standing in for a
@@ -147,6 +163,15 @@ func (f *fakeTaskRunner) Run(ctx context.Context, id string, _ containers.Contai
 		// process is simply gone once asked.
 		f.awaitConcurrentStops()
 
+		f.mu.Lock()
+		f.stopping[id] = struct{}{}
+		held := f.heldStops[id]
+		f.mu.Unlock()
+
+		if held != nil {
+			<-held
+		}
+
 		return 0, nil
 	case exitCode := <-exitCh:
 		return exitCode, nil
@@ -233,6 +258,16 @@ func (f *fakeTaskRunner) startCount(id string) int {
 	defer f.mu.Unlock()
 
 	return f.starts[id]
+}
+
+// isStopping reports whether a stop of id has been requested.
+func (f *fakeTaskRunner) isStopping(id string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	_, ok := f.stopping[id]
+
+	return ok
 }
 
 // hasFinished reports whether Run has returned for id, i.e. the task is no longer running.
@@ -418,6 +453,122 @@ func (suite *RuntimeSuite) TestTeardownStopsRemovesAndReleasesFinalizer() {
 	suite.Assert().True(suite.runner.wasRemoved(id))
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), md))
+}
+
+// TestSlowStopDoesNotHoldBackOtherInstances covers an instance taking its time to stop: other
+// instances are still stopped and released meanwhile.
+func (suite *RuntimeSuite) TestSlowStopDoesNotHoldBackOtherInstances() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const slowID, otherID = "a-slow-1", "b-other-1"
+
+	suite.createInstanceSpec(slowID)
+	suite.createInstanceSpec(otherID)
+
+	release := suite.runner.holdStop(slowID)
+	defer release()
+
+	ctest.AssertResources(suite, []string{slowID, otherID}, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	slowMD := containers.NewContainerInstanceSpec(containers.NamespaceName, slowID).Metadata()
+	otherMD := containers.NewContainerInstanceSpec(containers.NamespaceName, otherID).Metadata()
+
+	_, err := suite.State().Teardown(suite.Ctx(), slowMD)
+	suite.Require().NoError(err)
+
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.isStopping(slowID) {
+			return retry.ExpectedErrorf("%q is not stopping yet", slowID)
+		}
+
+		return nil
+	})
+
+	_, err = suite.State().Teardown(suite.Ctx(), otherMD)
+	suite.Require().NoError(err)
+
+	watchCtx, watchCancel := context.WithTimeout(suite.Ctx(), 3*time.Second)
+	defer watchCancel()
+
+	_, err = suite.State().WatchFor(watchCtx, otherMD, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Assert().True(suite.runner.wasRemoved(otherID))
+	suite.Assert().False(suite.runner.wasRemoved(slowID))
+
+	slowSpec, err := suite.State().Get(suite.Ctx(), slowMD)
+	suite.Require().NoError(err)
+	suite.Assert().False(slowSpec.Metadata().Finalizers().Empty())
+
+	// the status of the container is kept while it is stopping
+	ctest.AssertResource(suite, slowID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	// nothing else changes from here on, the end of the run alone has to bring the controller back
+	release()
+
+	_, err = suite.State().WatchFor(suite.Ctx(), slowMD, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Assert().True(suite.runner.wasRemoved(slowID))
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), slowMD))
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), otherMD))
+}
+
+// TestSlowStopDoesNotDelayShutdown covers the shutdown barrier being torn down while an instance is
+// still stopping: the other instances are stopped right away.
+func (suite *RuntimeSuite) TestSlowStopDoesNotDelayShutdown() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const slowID, otherID = "a-slow-2", "b-other-2"
+
+	suite.createInstanceSpec(slowID)
+	suite.createInstanceSpec(otherID)
+
+	release := suite.runner.holdStop(slowID)
+	defer release()
+
+	ctest.AssertResources(suite, []string{slowID, otherID}, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	_, err := suite.State().Teardown(suite.Ctx(), containers.NewContainerInstanceSpec(containers.NamespaceName, slowID).Metadata())
+	suite.Require().NoError(err)
+
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.isStopping(slowID) {
+			return retry.ExpectedErrorf("%q is not stopping yet", slowID)
+		}
+
+		return nil
+	})
+
+	_, err = suite.State().Teardown(suite.Ctx(), containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata())
+	suite.Require().NoError(err)
+
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.hasFinished(otherID) {
+			return retry.ExpectedErrorf("%q is still running", otherID)
+		}
+
+		return nil
+	})
+
+	suite.Assert().False(suite.runner.hasFinished(slowID))
+
+	release()
+
+	_, err = suite.State().WatchFor(suite.Ctx(),
+		containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata(),
+		state.WithFinalizerEmpty(),
+	)
+	suite.Require().NoError(err)
 }
 
 // TestAllowMachinedAccessRecordsAndClearsServicePID covers the ServicePID half of

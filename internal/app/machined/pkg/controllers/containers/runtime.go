@@ -122,7 +122,8 @@ func (ctrl *RuntimeController) Outputs() []controller.Output {
 // instanceRunState tracks one running execution.
 type instanceRunState struct {
 	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	// done is closed once the run has finished, before the controller is woken up for it.
+	done chan struct{}
 
 	mu            sync.Mutex
 	phase         containers.ContainerInstancePhase
@@ -182,7 +183,16 @@ func (s *instanceRunState) setFinished(exitCode int32, err error, everStarted bo
 
 func (s *instanceRunState) stop() {
 	s.cancel()
-	s.wg.Wait()
+	<-s.done
+}
+
+func (s *instanceRunState) finished() bool {
+	select {
+	case <-s.done:
+		return true
+	default:
+		return false
+	}
 }
 
 // requestStop asks the task to stop, reporting whether this is the first time it has been asked.
@@ -368,19 +378,6 @@ func (ctrl *RuntimeController) reconcile(
 		ctrl.swept = true
 	}
 
-	// Ask every instance whose spec is tearing down to stop before waiting for any of them: one stop is
-	// bounded by the graceful shutdown timeout plus the wait for the kill, and stopping them one after
-	// another would multiply that bound by the number of containers going away at once.
-	for containerInstanceSpec := range containerInstanceSpecs.All() {
-		if containerInstanceSpec.Metadata().Phase() != resource.PhaseTearingDown {
-			continue
-		}
-
-		if instanceRun, exists := ctrl.instances[containerInstanceSpec.Metadata().ID()]; exists {
-			instanceRun.cancel()
-		}
-	}
-
 	runtime.StartTrackingOutputs()
 
 	live := map[string]struct{}{}
@@ -396,8 +393,7 @@ func (ctrl *RuntimeController) reconcile(
 		}
 	}
 
-	// Any goroutine whose spec vanished outright. Asked to stop first, joined second, for the same
-	// reason as the tearing-down pass above.
+	// Any goroutine whose spec vanished outright.
 	for instanceSpecID, instanceRun := range ctrl.instances {
 		if _, exists := live[instanceSpecID]; exists {
 			continue
@@ -406,21 +402,17 @@ func (ctrl *RuntimeController) reconcile(
 		if instanceRun.requestStop() {
 			logger.Info("instance spec is gone, stopping the container", zap.String("instance", instanceSpecID))
 		}
-	}
 
-	for instanceSpecID, instanceRun := range ctrl.instances {
-		if _, exists := live[instanceSpecID]; exists {
+		if !instanceRun.finished() {
 			continue
 		}
-
-		instanceRun.stop()
 
 		// The tearing-down path can afford to fail here because the finalizer stays on the spec and
 		// brings the next pass back to it. A vanished spec leaves nothing to hold a finalizer on, so
 		// this map entry is the only remaining record that the container exists: dropping it on a
 		// failure would leave the container behind with nothing left that knows about it, and no second
-		// orphan sweep coming to find it either. Keeping it costs a repeated stop on the retry, which
-		// is free: the cancel is idempotent and the join returns at once.
+		// orphan sweep coming to find it either. Keeping it costs a repeated stop request on the retry,
+		// which is free: the cancel is idempotent.
 		if err := ctrl.taskRunner.Remove(ctx, instanceSpecID); err != nil {
 			instanceErrs = errors.Join(instanceErrs, fmt.Errorf("failed to remove vanished container %q: %w", instanceSpecID, err))
 
@@ -502,11 +494,16 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 	case resource.PhaseTearingDown:
 		instanceRun, exists := ctrl.instances[instanceSpecID]
 		if exists {
-			logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
+			if instanceRun.requestStop() {
+				logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
+			}
 
-			// Stopping is synchronous: the task must be gone, and its runtime state cleaned up,
-			// before the instance controller is allowed to destroy the resource.
-			instanceRun.stop()
+			// the task must be gone before the instance controller is allowed to destroy the resource,
+			// the end of the run wakes the controller up again
+			if !instanceRun.finished() {
+				return ctrl.writeStatus(ctx, runtime, containerInstanceSpec, instanceRun)
+			}
+
 			delete(ctrl.instances, instanceSpecID)
 
 			logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
@@ -680,6 +677,7 @@ func (ctrl *RuntimeController) start(
 	instanceSpecID := containerInstanceSpec.Metadata().ID()
 
 	instanceRun := &instanceRunState{
+		done:  make(chan struct{}),
 		phase: containers.ContainerInstancePhaseCreated,
 	}
 
@@ -711,7 +709,7 @@ func (ctrl *RuntimeController) start(
 		}
 	}
 
-	instanceRun.wg.Go(func() {
+	go func() {
 		var everStarted bool
 
 		defer func() {
@@ -730,6 +728,8 @@ func (ctrl *RuntimeController) start(
 					logger.Error("failed to clear container PID", zap.String("instance", instanceSpecID), zap.Error(err))
 				}
 			}
+
+			close(instanceRun.done)
 
 			// Wake the controller so the terminal status is published even if nothing else changes.
 			notify()
@@ -766,7 +766,7 @@ func (ctrl *RuntimeController) start(
 		default:
 			logger.Info("container exited", zap.String("instance", instanceSpecID))
 		}
-	})
+	}()
 
 	return instanceRun
 }
