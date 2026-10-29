@@ -8,8 +8,10 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/safeout"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
@@ -51,7 +53,7 @@ to render the graph:
 			return err
 		}
 
-		resp, err := c.Inspect.ControllerRuntimeDependencies(ctx)
+		resp, err := client.FilterMessages(c.InspectService().ControllerRuntimeDependencies(ctx, &emptypb.Empty{}))
 		if err != nil {
 			if resp == nil {
 				return fmt.Errorf("error getting controller runtime dependencies: %s", err)
