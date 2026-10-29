@@ -928,7 +928,7 @@ func generateMirrorsConfigPatch(addr string, mirrors []string, secure bool) erro
 		return err
 	}
 
-	if host == "" || host == "0.0.0.0" || host == "[::]" {
+	if host == "" || host == "0.0.0.0" || host == "::" {
 		// list all IPs for the host
 		ips, err := net.InterfaceAddrs()
 		if err != nil {
