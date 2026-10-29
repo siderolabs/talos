@@ -271,7 +271,7 @@ by another device). The argument is the full array device path, e.g.
 		responseChan := multiplex.UnaryViaFactory(
 			ctx, clientFactory,
 			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
-				return c.MDClient.Destroy(ctx, &machine.MDDestroyRequest{
+				return c.MDService().Destroy(ctx, &machine.MDDestroyRequest{
 					Device: device,
 				})
 			},
