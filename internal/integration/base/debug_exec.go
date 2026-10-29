@@ -105,7 +105,7 @@ func (apiSuite *APISuite) startDebugContainer(nodeCtx context.Context, args ...s
 
 	apiSuite.Require().NotEmpty(pulledImage, "expected pulled image name in the response")
 
-	cli, err := apiSuite.Client.DebugClient.ContainerRun(nodeCtx)
+	cli, err := apiSuite.Client.DebugService().ContainerRun(nodeCtx)
 	apiSuite.Require().NoError(err, "failed to start debug container stream")
 
 	err = cli.Send(&machineapi.DebugContainerRunRequest{

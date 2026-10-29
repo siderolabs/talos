@@ -129,7 +129,7 @@ var debugCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 
-		runStream, err := c.DebugClient.ContainerRun(
+		runStream, err := c.DebugService().ContainerRun(
 			ctx,
 			grpc.MaxCallRecvMsgSize(4*1024*1024), // 4 MiB
 			grpc.MaxCallSendMsgSize(4*1024*1024),

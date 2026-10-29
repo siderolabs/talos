@@ -79,7 +79,7 @@ func (suite *DebugSuite) TestRunAlpine() {
 			pulledImage = msg.GetName()
 		}
 
-		cli, err := suite.Client.DebugClient.ContainerRun(ctx)
+		cli, err := suite.Client.DebugService().ContainerRun(ctx)
 		suite.Require().NoError(err)
 
 		suite.Require().NoError(cli.Send(&machine.DebugContainerRunRequest{
