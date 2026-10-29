@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/netip"
 
+	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
@@ -65,4 +66,9 @@ func ListImportCandidatesForTest(instance *Instance, selectors []netip.Prefix) (
 // SetInstancePeerIfacesForTest replaces the learned link-local peer interface mapping.
 func SetInstancePeerIfacesForTest(instance *Instance, peerIfaces map[netip.Addr]string) {
 	instance.peerIfaces = peerIfaces
+}
+
+// NewNeighborResolverForTest creates a neighbor resolver backed by a static neighbor snapshot.
+func NewNeighborResolverForTest(neighbors []rtnetlink.NeighMessage) *NeighborResolver {
+	return &NeighborResolver{load: func() []rtnetlink.NeighMessage { return neighbors }}
 }

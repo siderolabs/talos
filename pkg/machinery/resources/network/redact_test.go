@@ -379,6 +379,63 @@ func TestProbeSpecRedactSecrets(t *testing.T) {
 	})
 }
 
+func TestBGPInstanceConfigRedactSecrets(t *testing.T) {
+	t.Parallel()
+
+	md := resource.NewMetadata(network.NamespaceName, network.BGPInstanceConfigType, "fabric", resource.VersionUndefined)
+
+	runRedactTests(t, md, []redactTestCase[network.BGPInstanceConfigSpec]{
+		{
+			name: "no neighbors",
+			spec: func() network.BGPInstanceConfigSpec {
+				return network.BGPInstanceConfigSpec{
+					LocalASN: 65001,
+					RouterID: netip.MustParseAddr("10.0.0.1"),
+				}
+			},
+			expected: network.BGPInstanceConfigSpec{
+				LocalASN: 65001,
+				RouterID: netip.MustParseAddr("10.0.0.1"),
+			},
+		},
+		{
+			name: "neighbors with and without auth password",
+			spec: func() network.BGPInstanceConfigSpec {
+				return network.BGPInstanceConfigSpec{
+					LocalASN: 65001,
+					RouterID: netip.MustParseAddr("10.0.0.1"),
+					Neighbors: []network.BGPNeighborConfigSpec{
+						{
+							Address:      netip.MustParseAddr("192.0.2.1"),
+							PeerASN:      65000,
+							AuthPassword: "s3cr3t",
+						},
+						{
+							Link:    "eth1",
+							PeerASN: 65002,
+						},
+					},
+				}
+			},
+			expected: network.BGPInstanceConfigSpec{
+				LocalASN: 65001,
+				RouterID: netip.MustParseAddr("10.0.0.1"),
+				Neighbors: []network.BGPNeighborConfigSpec{
+					{
+						Address:      netip.MustParseAddr("192.0.2.1"),
+						PeerASN:      65000,
+						AuthPassword: constants.Redacted,
+					},
+					{
+						Link:    "eth1",
+						PeerASN: 65002,
+					},
+				},
+			},
+		},
+	})
+}
+
 // TestRedactSecretsNoSecrets covers the specs which carry no sensitive data: RedactSecrets
 // is expected to pass them through unchanged.
 func TestRedactSecretsNoSecrets(t *testing.T) {

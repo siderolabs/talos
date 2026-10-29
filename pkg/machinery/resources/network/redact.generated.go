@@ -17,6 +17,7 @@ import (
 
 var (
 	_ redactable.Spec = &AddressSpecSpec{}
+	_ redactable.Spec = &BGPInstanceConfigSpec{}
 	_ redactable.Spec = &HostnameSpecSpec{}
 	_ redactable.Spec = &LinkSpecSpec{}
 	_ redactable.Spec = &OperatorSpecSpec{}
@@ -37,6 +38,16 @@ func (*AddressSpecSpec) HasSecrets(resource.Metadata) bool {
 // RedactSecrets implements redactable.Spec interface.
 func (*AddressSpecSpec) RedactSecrets(resource.Metadata) {
 	// no sensitive fields
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (spec *BGPInstanceConfigSpec) HasSecrets(resource.Metadata) bool {
+	return hasSecretsBGPInstanceConfigSpec(spec)
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (spec *BGPInstanceConfigSpec) RedactSecrets(resource.Metadata) {
+	redactBGPInstanceConfigSpec(spec)
 }
 
 // HasSecrets implements redactable.Spec interface.
@@ -134,6 +145,24 @@ func (*TimeServerSpecSpec) RedactSecrets(resource.Metadata) {
 	// no sensitive fields
 }
 
+// hasSecretsBGPInstanceConfigSpec checks if BGPInstanceConfigSpec carries any sensitive value.
+func hasSecretsBGPInstanceConfigSpec(spec *BGPInstanceConfigSpec) bool {
+	for idx := range spec.Neighbors {
+		if hasSecretsBGPNeighborConfigSpec(&spec.Neighbors[idx]) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// redactBGPInstanceConfigSpec redacts sensitive values in BGPInstanceConfigSpec in place.
+func redactBGPInstanceConfigSpec(spec *BGPInstanceConfigSpec) {
+	for idx := range spec.Neighbors {
+		redactBGPNeighborConfigSpec(&spec.Neighbors[idx])
+	}
+}
+
 // hasSecretsLinkSpecSpec checks if LinkSpecSpec carries any sensitive value.
 func hasSecretsLinkSpecSpec(spec *LinkSpecSpec) bool {
 	if hasSecretsWireguardSpec(&spec.Wireguard) {
@@ -212,6 +241,22 @@ func hasSecretsProbeSpecSpec(spec *ProbeSpecSpec) bool {
 // redactProbeSpecSpec redacts sensitive values in ProbeSpecSpec in place.
 func redactProbeSpecSpec(spec *ProbeSpecSpec) {
 	redactHTTPProbeSpec(&spec.HTTP)
+}
+
+// hasSecretsBGPNeighborConfigSpec checks if BGPNeighborConfigSpec carries any sensitive value.
+func hasSecretsBGPNeighborConfigSpec(spec *BGPNeighborConfigSpec) bool {
+	if spec.AuthPassword != "" {
+		return true
+	}
+
+	return false
+}
+
+// redactBGPNeighborConfigSpec redacts sensitive values in BGPNeighborConfigSpec in place.
+func redactBGPNeighborConfigSpec(spec *BGPNeighborConfigSpec) {
+	if spec.AuthPassword != "" {
+		spec.AuthPassword = constants.Redacted
+	}
 }
 
 // hasSecretsWireguardSpec checks if WireguardSpec carries any sensitive value.

@@ -15,6 +15,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // BGPInstanceConfigType is the type of the BGPInstanceConfig resource.
@@ -36,13 +37,14 @@ type BGPBFDConfigSpec struct {
 //
 //gotagsrewrite:gen
 type BGPNeighborConfigSpec struct {
-	Address  netip.Addr        `yaml:"address,omitempty" protobuf:"1"`
-	Link     string            `yaml:"link,omitempty" protobuf:"2"`
-	PeerASN  uint32            `yaml:"peerASN,omitempty" protobuf:"3"`
-	HoldTime time.Duration     `yaml:"holdTime,omitempty" protobuf:"4"`
-	BFD      *BGPBFDConfigSpec `yaml:"bfd,omitempty" protobuf:"5"`
-	LocalASN uint32            `yaml:"localASN,omitempty" protobuf:"6"`
-	Passive  bool              `yaml:"passive,omitempty" protobuf:"7"`
+	Address      netip.Addr        `yaml:"address,omitempty" protobuf:"1"`
+	Link         string            `yaml:"link,omitempty" protobuf:"2"`
+	PeerASN      uint32            `yaml:"peerASN,omitempty" protobuf:"3"`
+	HoldTime     time.Duration     `yaml:"holdTime,omitempty" protobuf:"4"`
+	BFD          *BGPBFDConfigSpec `yaml:"bfd,omitempty" protobuf:"5"`
+	LocalASN     uint32            `yaml:"localASN,omitempty" protobuf:"6"`
+	Passive      bool              `yaml:"passive,omitempty" protobuf:"7"`
+	AuthPassword string            `yaml:"authPassword,omitempty" protobuf:"8" redact:"replace"`
 }
 
 // BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
@@ -56,6 +58,7 @@ type BGPImportRouteSpec struct {
 // BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP routing instance.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type BGPInstanceConfigSpec struct {
 	LocalASN       uint32                  `yaml:"localASN" protobuf:"1"`
 	RouterID       netip.Addr              `yaml:"routerID,omitempty" protobuf:"2"`
@@ -91,8 +94,9 @@ func (BGPInstanceConfigExtension) ResourceDefinition() meta.ResourceDefinitionSp
 			{Name: "Local ASN", JSONPath: "{.localASN}"},
 			{Name: "Router ID", JSONPath: "{.routerID}"},
 			{Name: "VRF", JSONPath: "{.vrf}"},
-			{Name: "Neighbors", JSONPath: "{.neighbors}"},
+			{Name: "Neighbors", JSONPath: "{range .neighbors[*]}{.address}{.link} {end}"},
 		},
+		Sensitivity: meta.Sensitive,
 	}
 }
 
@@ -102,4 +106,7 @@ func init() {
 	if err := protobuf.RegisterDynamic[BGPInstanceConfigSpec](BGPInstanceConfigType, &BGPInstanceConfig{}); err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[BGPInstanceConfigSpec, BGPInstanceConfigExtension]()
 }

@@ -927,6 +927,26 @@ as well as `authentication-token-webhook-*` flags in `KubeAPIServerConfig` `extr
 The authorizer name should be a valid DNS-1123 subdomain, as required by kube-apiserver.
 """
 
+    [notes.bgp_md5_auth]
+        title = "BGP MD5 Authentication"
+        description = """\
+`BGPInstanceConfig` neighbors now accept an `authPassword` to enable TCP MD5 signature authentication (RFC 2385) of the BGP session,
+including for VRF-bound BGP instances:
+
+```yaml
+apiVersion: v1alpha1
+kind: BGPInstanceConfig
+name: fabric
+localASN: 65001
+neighbors:
+  - address: 192.0.2.1
+    peerASN: 65000
+    authPassword: s3cr3t
+```
+
+The password is redacted from the machine configuration output. The `BGPInstanceConfigs` resource is now sensitive: the `os:admin` role reads it in full, while the other roles get it with the password replaced by `REDACTED`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

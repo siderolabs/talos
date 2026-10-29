@@ -9,9 +9,12 @@ import (
 	"testing"
 
 	"github.com/jsimonetti/rtnetlink/v2"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sys/unix"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
@@ -83,6 +86,72 @@ func TestNeighborResolver(t *testing.T) {
 	}, runtimeState, zap.NewNop())
 	require.Len(t, peers, 1)
 	assert.Equal(t, "vrf-blue", peers[0].BindInterface)
+}
+
+func TestNeighborResolverAuthPasswordConflict(t *testing.T) {
+	t.Parallel()
+
+	runtimeState := internalbgp.NewRuntimeState(
+		map[string]network.LinkStatusSpec{
+			"eth0": {Index: 10},
+			"eth1": {Index: 11},
+			"eth2": {Index: 12},
+		},
+		nil,
+	)
+
+	// All three links see the same link-local router address, as is common with a shared ToR configuration.
+	neighbors := []rtnetlink.NeighMessage{
+		neighborMessage(10, 0, unix.NTF_ROUTER, "fe80::1"),
+		neighborMessage(11, 0, unix.NTF_ROUTER, "fe80::1"),
+		neighborMessage(12, 0, unix.NTF_ROUTER, "fe80::1"),
+	}
+
+	for _, test := range []struct {
+		name      string
+		passwords []string
+		expected  []string
+	}{
+		{
+			name:      "same password",
+			passwords: []string{"secret", "secret", "secret"},
+		},
+		{
+			name:      "different passwords",
+			passwords: []string{"secret-a", "secret-b", "secret-a"},
+			expected:  []string{"eth1", "eth2"},
+		},
+		{
+			name:      "password on some links only",
+			passwords: []string{"", "secret", ""},
+			expected:  []string{"eth1", "eth2"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			core, logs := observer.New(zapcore.WarnLevel)
+
+			peers, peerIfaces := internalbgp.NewNeighborResolverForTest(neighbors).ResolvePeers(network.BGPInstanceConfigSpec{
+				Neighbors: []network.BGPNeighborConfigSpec{
+					{Link: "eth0", PeerASN: 65002, AuthPassword: test.passwords[0]},
+					{Link: "eth1", PeerASN: 65002, AuthPassword: test.passwords[1]},
+					{Link: "eth2", PeerASN: 65002, AuthPassword: test.passwords[2]},
+				},
+			}, runtimeState, zap.New(core))
+
+			require.Len(t, peers, 3)
+			assert.Equal(t, map[netip.Addr]string{netip.MustParseAddr("fe80::1"): "eth2"}, peerIfaces)
+
+			links := xslices.Map(logs.All(), func(entry observer.LoggedEntry) string {
+				assert.Contains(t, entry.Message, "different authPassword values")
+
+				return entry.ContextMap()["link"].(string) //nolint:forcetypeassert
+			})
+
+			assert.Equal(t, test.expected, links)
+		})
+	}
 }
 
 func TestNeighborResolverNumberedPeerSkipsRtnetlink(t *testing.T) {

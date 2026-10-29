@@ -12024,6 +12024,7 @@ BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
 | bfd | [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec) |  |  |
 | local_asn | [uint32](#uint32) |  |  |
 | passive | [bool](#bool) |  |  |
+| auth_password | [string](#string) |  |  |
 
 
 

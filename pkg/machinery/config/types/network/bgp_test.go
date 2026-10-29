@@ -168,6 +168,9 @@ func TestBGPInstanceConfigMerge(t *testing.T) {
 	assert.False(t, base.InstallRoutes())
 }
 
+const bgpAuthPasswordWarning = "unnumbered neighbors use different authPassword values: " +
+	"the kernel matches TCP MD5 keys by peer address only, so neighbors sharing a link-local address must use the same password (or none)"
+
 func TestBGPInstanceConfigValidate(t *testing.T) {
 	t.Parallel()
 
@@ -336,6 +339,89 @@ func TestBGPInstanceConfigValidate(t *testing.T) {
 			expectedError:    "importRoutes[1]: prefix 198.51.100.128/25 overlaps importRoutes[0] prefix 198.51.100.0/24",
 			expectedWarnings: []string{"BGPInstanceConfig has no neighbors configured"},
 		},
+		{
+			name: "authPassword too long",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborLinkConfig:   "enp0s1",
+					NeighborAuthPassword: strings.Repeat("x", 81),
+				}}
+
+				return cfg
+			},
+			expectedError: "neighbor[0]: authPassword must not exceed 80 bytes",
+		},
+		{
+			name: "authPassword at max length",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+					NeighborAddressConfig: meta.Addr{Addr: netip.MustParseAddr("192.0.2.1")},
+					NeighborAuthPassword:  strings.Repeat("x", 80),
+				}}
+
+				return cfg
+			},
+		},
+		{
+			name: "different unnumbered authPassword values",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborLinkConfig: "enp0s1", NeighborAuthPassword: "secret-a"},
+					{NeighborLinkConfig: "enp0s2", NeighborAuthPassword: "secret-b"},
+				}
+
+				return cfg
+			},
+			expectedWarnings: []string{bgpAuthPasswordWarning},
+		},
+		{
+			name: "unnumbered authPassword set on some neighbors only",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborLinkConfig: "enp0s1", NeighborAuthPassword: "secret"},
+					{NeighborLinkConfig: "enp0s2"},
+				}
+
+				return cfg
+			},
+			expectedWarnings: []string{bgpAuthPasswordWarning},
+		},
+		{
+			name: "different unnumbered authPassword values in VRF",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("workload")
+				cfg.BGPVRF = "vrf-workload"
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborLinkConfig: "enp0s1", NeighborAuthPassword: "secret-a"},
+					{NeighborLinkConfig: "enp0s2", NeighborAuthPassword: "secret-b"},
+				}
+
+				return cfg
+			},
+			expectedWarnings: []string{bgpAuthPasswordWarning},
+		},
+		{
+			name: "same unnumbered authPassword values",
+			cfg: func() *network.BGPInstanceConfigV1Alpha1 {
+				cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+				cfg.BGPLocalASN = 65001
+				cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+					{NeighborLinkConfig: "enp0s1", NeighborAuthPassword: "secret"},
+					{NeighborLinkConfig: "enp0s2", NeighborAuthPassword: "secret"},
+				}
+
+				return cfg
+			},
+		},
 		{name: "valid numbered and unnumbered", cfg: bgpInstanceTestConfig},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -351,4 +437,20 @@ func TestBGPInstanceConfigValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestBGPInstanceConfigRedact(t *testing.T) {
+	t.Parallel()
+
+	cfg := network.NewBGPInstanceConfigV1Alpha1("fabric")
+	cfg.BGPLocalASN = 65001
+	cfg.BGPNeighborConfigs = []network.BGPNeighborConfig{
+		{NeighborLinkConfig: "enp0s1", NeighborAuthPassword: "secret"},
+		{NeighborLinkConfig: "enp0s2"},
+	}
+
+	cfg.Redact("REDACTED")
+
+	assert.Equal(t, "REDACTED", cfg.BGPNeighborConfigs[0].NeighborAuthPassword)
+	assert.Empty(t, cfg.BGPNeighborConfigs[1].NeighborAuthPassword)
 }

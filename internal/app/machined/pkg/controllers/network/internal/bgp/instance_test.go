@@ -5,7 +5,10 @@
 package bgp_test
 
 import (
+	"net"
 	"net/netip"
+	"strconv"
+	"syscall"
 	"testing"
 	"time"
 
@@ -13,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -68,6 +72,134 @@ func TestNewInstance(t *testing.T) {
 
 	assert.False(t, instance.Running())
 	assert.True(t, internalbgp.InstanceMapsInitializedForTest(instance))
+}
+
+func TestInstanceAuthPasswordListenerKey(t *testing.T) {
+	t.Parallel()
+
+	skipWithoutTCPMD5(t)
+
+	instance := internalbgp.NewInstance()
+	t.Cleanup(instance.Stop)
+
+	port := freeBGPImportTestPort(t)
+	config := network.BGPInstanceConfigSpec{LocalASN: 65001}
+	peer := internalbgp.Peer{
+		Address: "127.0.0.2",
+		Config: network.BGPNeighborConfigSpec{
+			Address:      netip.MustParseAddr("127.0.0.2"),
+			PeerASN:      65002,
+			Passive:      true,
+			AuthPassword: "secret",
+		},
+	}
+
+	ensure := func() {
+		require.NoError(t, instance.EnsureServer(
+			t.Context(),
+			zap.NewNop(),
+			config,
+			netip.MustParseAddr("10.0.0.1"),
+			0,
+			[]internalbgp.Peer{peer},
+			nil,
+			port,
+			func() {},
+		))
+	}
+
+	// connect dials the listener from the peer address, signing the connection with the password if set.
+	connect := func(password string) error {
+		dialer := net.Dialer{
+			LocalAddr: &net.TCPAddr{IP: net.ParseIP(peer.Address)},
+			Timeout:   time.Second,
+		}
+
+		if password != "" {
+			dialer.Control = func(_, _ string, conn syscall.RawConn) error {
+				var sockoptErr error
+
+				if err := conn.Control(func(fd uintptr) {
+					sockoptErr = unix.SetsockoptTCPMD5Sig(int(fd), unix.IPPROTO_TCP, unix.TCP_MD5SIG, tcpMD5Sig(net.IPv4(127, 0, 0, 1), password))
+				}); err != nil {
+					return err
+				}
+
+				return sockoptErr
+			}
+		}
+
+		conn, err := dialer.DialContext(t.Context(), "tcp4", net.JoinHostPort("127.0.0.1", strconv.Itoa(int(port))))
+		if err != nil {
+			return err
+		}
+
+		return conn.Close()
+	}
+
+	// The kernel silently drops a SYN with a missing or mismatched MD5 signature for a peer with a key, so the
+	// dial has to time out rather than fail for any other reason (connection refused, bind error).
+	requireDropped := func(password string) {
+		var netErr net.Error
+
+		err := connect(password)
+		require.ErrorAs(t, err, &netErr)
+		require.True(t, netErr.Timeout(), "SYN with password %q must be dropped, got %v", password, err)
+	}
+
+	ensure()
+
+	server := internalbgp.InstanceServerForTest(instance)
+
+	requireDropped("")
+	require.NoError(t, connect("secret"))
+
+	// Rotating the password must replace the listener key in place.
+	peer.Config.AuthPassword = "rotated"
+
+	ensure()
+	require.Same(t, server, internalbgp.InstanceServerForTest(instance), "rotating the password must not restart GoBGP")
+	require.Eventually(t, func() bool {
+		return connect("rotated") == nil
+	}, 5*time.Second, 100*time.Millisecond, "the listener key must be replaced together with the password")
+	requireDropped("secret")
+	requireDropped("")
+
+	peer.Config.AuthPassword = ""
+
+	ensure()
+	require.Same(t, server, internalbgp.InstanceServerForTest(instance), "removing the password must not restart GoBGP")
+	require.Eventually(t, func() bool {
+		return connect("") == nil
+	}, 5*time.Second, 100*time.Millisecond, "the listener key must be removed together with the password")
+}
+
+// tcpMD5Sig builds the TCP_MD5SIG option for an IPv4 peer.
+func tcpMD5Sig(addr net.IP, password string) *unix.TCPMD5Sig {
+	sig := &unix.TCPMD5Sig{Keylen: uint16(len(password))}
+	sig.Addr.Family = unix.AF_INET
+	copy(sig.Addr.Data[2:6], addr.To4())
+	copy(sig.Key[:], password)
+
+	return sig
+}
+
+// skipWithoutTCPMD5 skips the test when the kernel is built without CONFIG_TCP_MD5SIG.
+func skipWithoutTCPMD5(t *testing.T) {
+	t.Helper()
+
+	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_STREAM|unix.SOCK_CLOEXEC, 0)
+	require.NoError(t, err)
+
+	defer unix.Close(fd) //nolint:errcheck
+
+	sig := unix.TCPMD5Sig{Keylen: 1}
+	sig.Addr.Family = unix.AF_INET
+	sig.Key[0] = 'x'
+
+	if err = unix.SetsockoptTCPMD5Sig(fd, unix.IPPROTO_TCP, unix.TCP_MD5SIG, &sig); err != nil {
+		t.Skipf("kernel does not support TCP MD5 signatures: %v", err)
+	}
 }
 
 func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {

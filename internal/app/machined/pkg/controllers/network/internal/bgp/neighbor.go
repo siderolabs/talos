@@ -46,6 +46,8 @@ func (resolver *NeighborResolver) ResolvePeers(
 		}
 
 		if peer.LinkLocal.IsValid() {
+			warnAuthPasswordConflict(resolved, peer, logger)
+
 			peerIfaces[peer.LinkLocal] = peer.Link
 		}
 
@@ -59,6 +61,32 @@ func (resolver *NeighborResolver) ResolvePeers(
 	}
 
 	return resolved, peerIfaces
+}
+
+// warnAuthPasswordConflict reports an unnumbered peer whose link-local address is shared with an already
+// resolved peer on another link, but with a different authPassword.
+//
+// The kernel matches TCP MD5 keys by peer address (scoped to the VRF, if any, but not to the link), so GoBGP
+// installs a single key for the address on the listener, and only one of the two sessions can authenticate.
+func warnAuthPasswordConflict(resolved []Peer, peer Peer, logger *zap.Logger) {
+	for _, other := range resolved {
+		if other.LinkLocal != peer.LinkLocal || other.Link == peer.Link {
+			continue
+		}
+
+		if other.Config.AuthPassword == peer.Config.AuthPassword {
+			continue
+		}
+
+		logger.Warn(
+			"unnumbered BGP peers share a link-local address but use different authPassword values, only one session can authenticate",
+			zap.Stringer("peer", peer.LinkLocal),
+			zap.String("link", peer.Link),
+			zap.String("other_link", other.Link),
+		)
+
+		return
+	}
 }
 
 func (resolver *NeighborResolver) resolvePeer(

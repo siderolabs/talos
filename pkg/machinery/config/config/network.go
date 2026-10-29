@@ -517,6 +517,8 @@ type NetworkBGPNeighbor interface {
 	HoldTime() time.Duration
 	// BFD returns this neighbor's BFD configuration, or nil when BFD is disabled.
 	BFD() NetworkBGPBFD
+	// AuthPassword is the TCP MD5 signature password; empty disables authentication.
+	AuthPassword() string
 }
 
 // NetworkBGPBFD defines BFD parameters for a BGP neighbor.

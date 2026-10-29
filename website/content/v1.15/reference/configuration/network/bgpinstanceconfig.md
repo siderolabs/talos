@@ -116,6 +116,7 @@ BGPNeighborConfig configures a concrete BGP neighbor.
 |`passive` |bool |Wait for the neighbor to establish the connection instead of initiating it.  | |
 |`holdTime` |Duration |BGP hold time for this neighbor. Zero uses the implementation default.  | |
 |`bfd` |<a href="#BGPInstanceConfig.neighbors..bfd">BGPBFDConfig</a> |BFD (Bidirectional Forwarding Detection) settings for this neighbor.<br>The presence of this block enables BFD; an empty block uses the implementation defaults.<br>BFD is supported only when the BGP instance uses the default routing domain, not a VRF.  | |
+|`authPassword` |string |Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.<br>The same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.<br>The password must not exceed 80 bytes. If unset, the session is not authenticated.<br>The kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors<br>sharing the same link-local address on different links must all use the same password (or none).  | |
 
 
 
