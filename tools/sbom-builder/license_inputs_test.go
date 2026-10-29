@@ -139,7 +139,12 @@ func TestLicenseClosureMatchesManifestSemantics(t *testing.T) {
 			nil,
 		},
 		{"unmatched replacement", "replace example.com/a v0.9.0 => example.com/Unused v1.1.0", []licenseModule{{module.Version{Path: "example.com/Unused", Version: "v1.1.0"}, hash}}, nil},
-		{"replacement without full checksum", "require example.com/a v1.0.0\nreplace example.com/s v0.9.0 => example.com/Stale v1.0.0", []licenseModule{{module.Version{Path: "example.com/a", Version: "v1.0.0"}, hash}}, nil},
+		{
+			"replacement without full checksum",
+			"require example.com/a v1.0.0\nreplace example.com/s v0.9.0 => example.com/Stale v1.0.0",
+			[]licenseModule{{module.Version{Path: "example.com/a", Version: "v1.0.0"}, hash}},
+			nil,
+		},
 		{"exclude by path", "require example.com/a v1.0.0\nexclude example.com/a v0.9.0", nil, nil},
 		{"exclude replacement", "replace example.com/a => example.com/b v2.0.0+incompatible\nexclude example.com/b v2.0.0+incompatible", nil, nil},
 		{"local replacement", "require example.com/a v1.0.0\nreplace example.com/a => ./local", nil, []localReplacement{{Path: "example.com/a", Directory: "./local"}}},
