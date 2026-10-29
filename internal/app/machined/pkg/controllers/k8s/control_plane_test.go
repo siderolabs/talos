@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -952,6 +953,97 @@ func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyDisabled() {
 	)
 }
 
+func (suite *K8sControlPlaneSuite) TestReconcileWebhookKubeconfigs() {
+	const kubeconfig = `apiVersion: v1
+kind: Config
+clusters:
+  - name: webhook
+    cluster:
+      server: http://127.0.0.1:9051/
+contexts:
+  - name: webhook
+    context:
+      cluster: webhook
+current-context: webhook
+`
+
+	authorizerCfg := k8scfg.NewKubeAuthorizerConfigV1Alpha1()
+	authorizerCfg.MetaName = "webhook"
+	authorizerCfg.AuthorizerType = "Webhook"
+	authorizerCfg.AuthorizerWebhook.Object = map[string]any{
+		"timeout": "3s",
+	}
+	authorizerCfg.AuthorizerWebhookKubeconfig = kubeconfig
+
+	authnWebhookCfg := k8scfg.NewKubeAuthenticationWebhookConfigV1Alpha1()
+	authnWebhookCfg.WebhookKubeconfig = kubeconfig
+	authnWebhookCfg.WebhookVersion = "v1"
+	authnWebhookCfg.WebhookCacheTTL = pointer.To(time.Minute)
+
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cn := k8scfg.NewKubeNetworkConfigV1Alpha1()
+	cn.NetworkPodSubnets = []meta.Prefix{
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+	}
+	cn.NetworkServiceSubnets = []meta.Prefix{
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+	}
+
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineType: "controlplane",
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing deprecated field
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+			},
+		},
+		cn,
+		authorizerCfg,
+		authnWebhookCfg,
+	)
+	suite.Require().NoError(err)
+
+	suite.setupMachine(config.NewMachineConfig(ctr))
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AuthorizationConfigID},
+		func(authorizationConfig *k8s.AuthorizationConfig, assert *assert.Assertions) {
+			// legacy kube-apiserver configuration injects the default authorizers
+			assert.Equal(slices.Concat(v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers, []k8s.AuthorizationAuthorizersSpec{
+				{
+					Type: "Webhook",
+					Name: "webhook",
+					Webhook: map[string]any{
+						"timeout": "3s",
+					},
+					Kubeconfig: kubeconfig,
+				},
+			}), authorizationConfig.TypedSpec().Config)
+		},
+	)
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.AuthenticationConfigID},
+		func(authenticationConfig *k8s.AuthenticationConfig, assert *assert.Assertions) {
+			// no KubeAuthenticationConfig document, so the structured authentication config is not set
+			assert.Nil(authenticationConfig.TypedSpec().Config)
+			assert.Equal(&k8s.AuthenticationTokenWebhookSpec{
+				Kubeconfig: kubeconfig,
+				Version:    "v1",
+				CacheTTL:   pointer.To(time.Minute),
+			}, authenticationConfig.TypedSpec().TokenWebhook)
+		},
+	)
+}
+
 func TestK8sControlPlaneSuite(t *testing.T) {
 	t.Parallel()
 
@@ -961,6 +1053,7 @@ func TestK8sControlPlaneSuite(t *testing.T) {
 			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAPIServerController()))
 			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAdmissionControlController()))
 			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuditPolicyController()))
+			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuthenticationController()))
 			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneAuthorizationController()))
 			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneBootstrapManifestsController()))
 			suite.Require().NoError(suite.Runtime().RegisterController(k8sctrl.NewControlPlaneControllerManagerController()))

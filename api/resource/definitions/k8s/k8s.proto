@@ -6,6 +6,7 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.k8s";
 
 import "common/common.proto";
+import "google/protobuf/duration.proto";
 import "google/protobuf/struct.proto";
 import "resource/definitions/proto/proto.proto";
 
@@ -51,6 +52,14 @@ message AuditPolicyConfigSpec {
 // AuthenticationConfigSpec is authentication configuration for kube-apiserver.
 message AuthenticationConfigSpec {
   google.protobuf.Struct config = 1;
+  AuthenticationTokenWebhookSpec token_webhook = 2;
+}
+
+// AuthenticationTokenWebhookSpec is webhook token authentication configuration for kube-apiserver.
+message AuthenticationTokenWebhookSpec {
+  string kubeconfig = 1;
+  string version = 2;
+  google.protobuf.Duration cache_ttl = 3;
 }
 
 // AuthorizationAuthorizersSpec is a configuration of authorization authorizers.
@@ -58,6 +67,8 @@ message AuthorizationAuthorizersSpec {
   string type = 1;
   string name = 2;
   google.protobuf.Struct webhook = 3;
+  // Kubeconfig is rendered into the kube-apiserver static pod and set as the webhook connection info.
+  string kubeconfig = 4;
 }
 
 // AuthorizationConfigSpec is authorization configuration for kube-apiserver.

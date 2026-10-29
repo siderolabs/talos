@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -1162,6 +1163,92 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestRejectsDeniedExtraArgs() {
 			ctest.AssertNoResource[*k8s.APIServerConfig](suite, k8s.FinalAPIServerConfigID)
 		})
 	}
+}
+
+func (suite *ControlPlaneAPIServerFinalSuite) TestAuthenticationTokenWebhook() {
+	setK8sRoot(suite, secrets.KubernetesRootSpec{
+		APIAudiences: []string{"https://localhost:6443"},
+		IssuerURL:    "https://localhost:6443",
+	})
+
+	authenticationConfig := k8s.NewAuthenticationConfig()
+	authenticationConfig.TypedSpec().TokenWebhook = &k8s.AuthenticationTokenWebhookSpec{
+		Kubeconfig: "kubeconfig",
+		Version:    "v1",
+		CacheTTL:   pointer.To(5 * time.Minute),
+	}
+	suite.Create(authenticationConfig)
+
+	in := k8s.NewAPIServerConfig(k8s.APIServerConfigID)
+	*in.TypedSpec() = k8s.APIServerConfigSpec{
+		Image:                   "registry.k8s.io/kube-apiserver:v1.32.0",
+		ControlPlaneEndpoint:    "https://localhost:6443",
+		EtcdServers:             []string{"https://127.0.0.1:2379"},
+		LocalPort:               6443,
+		ServiceCIDRs:            []string{"10.96.0.0/12"},
+		UseAuthenticationConfig: true,
+		// the flags are owned by Talos, so they can't be overridden via extra args
+		ExtraArgs: map[string]k8s.ArgValues{
+			"authentication-token-webhook-config-file": {Values: []string{"/var/lib/webhook.kubeconfig"}},
+		},
+	}
+	suite.Create(in)
+
+	ctest.AssertNoResource[*k8s.APIServerConfig](suite, k8s.FinalAPIServerConfigID)
+
+	ctest.UpdateWithConflicts(suite, in, func(r *k8s.APIServerConfig) error {
+		r.TypedSpec().ExtraArgs = nil
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, k8s.FinalAPIServerConfigID, func(r *k8s.APIServerConfig, asrt *assert.Assertions) {
+		asrt.Contains(r.TypedSpec().Args, "--authentication-config="+filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-config.yaml"))
+		asrt.Contains(r.TypedSpec().Args, "--authentication-token-webhook-config-file="+filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-token-webhook.kubeconfig"))
+		asrt.Contains(r.TypedSpec().Args, "--authentication-token-webhook-version=v1")
+		asrt.Contains(r.TypedSpec().Args, "--authentication-token-webhook-cache-ttl=5m0s")
+	})
+
+	// zero cache TTL disables caching in kube-apiserver, so it should be passed through
+	ctest.UpdateWithConflicts(suite, authenticationConfig, func(r *k8s.AuthenticationConfig) error {
+		r.TypedSpec().TokenWebhook.CacheTTL = pointer.To(time.Duration(0))
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, k8s.FinalAPIServerConfigID, func(r *k8s.APIServerConfig, asrt *assert.Assertions) {
+		asrt.Contains(r.TypedSpec().Args, "--authentication-token-webhook-cache-ttl=0s")
+	})
+
+	// unset cache TTL and version leave the kube-apiserver defaults
+	ctest.UpdateWithConflicts(suite, authenticationConfig, func(r *k8s.AuthenticationConfig) error {
+		r.TypedSpec().TokenWebhook.CacheTTL = nil
+		r.TypedSpec().TokenWebhook.Version = ""
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, k8s.FinalAPIServerConfigID, func(r *k8s.APIServerConfig, asrt *assert.Assertions) {
+		asrt.Contains(r.TypedSpec().Args, "--authentication-token-webhook-config-file="+filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-token-webhook.kubeconfig"))
+
+		for _, arg := range r.TypedSpec().Args {
+			asrt.NotContains(arg, "authentication-token-webhook-cache-ttl")
+			asrt.NotContains(arg, "authentication-token-webhook-version")
+		}
+	})
+
+	// without the token webhook, the flags are not set
+	ctest.UpdateWithConflicts(suite, authenticationConfig, func(r *k8s.AuthenticationConfig) error {
+		r.TypedSpec().TokenWebhook = nil
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, k8s.FinalAPIServerConfigID, func(r *k8s.APIServerConfig, asrt *assert.Assertions) {
+		for _, arg := range r.TypedSpec().Args {
+			asrt.NotContains(arg, "authentication-token-webhook")
+		}
+	})
 }
 
 func TestControlPlaneAPIServerFinalSuite(t *testing.T) {

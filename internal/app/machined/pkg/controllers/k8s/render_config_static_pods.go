@@ -9,8 +9,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
+	"slices"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -23,11 +26,23 @@ import (
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
+
+// kubeconfigExtension is the extension of the webhook kubeconfig files rendered for kube-apiserver.
+const kubeconfigExtension = ".kubeconfig"
+
+// authenticationTokenWebhookKubeconfigFilename is the name of the authentication token webhook kubeconfig file.
+const authenticationTokenWebhookKubeconfigFilename = "authentication-token-webhook" + kubeconfigExtension
+
+// authorizationWebhookKubeconfigFilename returns the name of the kubeconfig file for the authorization webhook.
+func authorizationWebhookKubeconfigFilename(authorizerName string) string {
+	return "authorization-webhook-" + authorizerName + kubeconfigExtension
+}
 
 // RenderConfigsStaticPodController manages k8s.ConfigsReady and renders configs for the control plane.
 type RenderConfigsStaticPodController struct{}
@@ -147,6 +162,11 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			f        func() (runtime.Object, error)
 		}
 
+		apiServerKubeconfigs, err := apiServerWebhookKubeconfigs(authorizerConfig, authenticationConfigRes)
+		if err != nil {
+			return err
+		}
+
 		apiServerConfigFiles := []configFile{
 			{
 				filename: "admission-control-config.yaml",
@@ -182,6 +202,9 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			uid          int
 			gid          int
 			configs      []configFile
+			// kubeconfigs are webhook kubeconfigs (filename -> contents) to be rendered, if not nil,
+			// stale kubeconfigs not in the map are removed.
+			kubeconfigs map[string]string
 		}{
 			{
 				name:         "kube-apiserver",
@@ -190,6 +213,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				uid:          constants.KubernetesAPIServerRunUser,
 				gid:          constants.KubernetesAPIServerRunGroup,
 				configs:      apiServerConfigFiles,
+				kubeconfigs:  apiServerKubeconfigs,
 			},
 			{
 				name:         "kube-scheduler",
@@ -213,6 +237,13 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				return err
 			}
 
+			// kubeconfigs are written first, as kube-apiserver checks that files referenced in the configuration exist
+			for _, filename := range slices.Sorted(maps.Keys(pod.kubeconfigs)) {
+				if err = writeStaticPodConfigFile(filepath.Join(pod.directory, filename), []byte(pod.kubeconfigs[filename]), pod.uid, pod.gid); err != nil {
+					return fmt.Errorf("error writing kubeconfig %q for %q: %w", filename, pod.name, err)
+				}
+			}
+
 			for _, configFile := range pod.configs {
 				var obj runtime.Object
 
@@ -227,12 +258,14 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 					return fmt.Errorf("error marshaling configuration %q for %q: %w", configFile.filename, pod.name, err)
 				}
 
-				if err = os.WriteFile(filepath.Join(pod.directory, configFile.filename), buf.Bytes(), 0o400); err != nil {
+				if err = writeStaticPodConfigFile(filepath.Join(pod.directory, configFile.filename), buf.Bytes(), pod.uid, pod.gid); err != nil {
 					return fmt.Errorf("error writing configuration %q for %q: %w", configFile.filename, pod.name, err)
 				}
+			}
 
-				if err = os.Chown(filepath.Join(pod.directory, configFile.filename), pod.uid, pod.gid); err != nil {
-					return fmt.Errorf("error chowning %q for %q: %w", configFile.filename, pod.name, err)
+			if pod.kubeconfigs != nil {
+				if err = removeStaleKubeconfigs(pod.directory, pod.kubeconfigs); err != nil {
+					return fmt.Errorf("error removing stale kubeconfigs for %q: %w", pod.name, err)
 				}
 			}
 		}
@@ -254,6 +287,78 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		r.ResetRestartBackoff()
 	}
+}
+
+func writeStaticPodConfigFile(path string, contents []byte, uid, gid int) error {
+	if err := os.WriteFile(path, contents, 0o400); err != nil {
+		return err
+	}
+
+	return os.Chown(path, uid, gid)
+}
+
+func removeStaleKubeconfigs(directory string, kubeconfigs map[string]string) error {
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		if !entry.Type().IsRegular() || !strings.HasSuffix(entry.Name(), kubeconfigExtension) {
+			continue
+		}
+
+		if _, ok := kubeconfigs[entry.Name()]; ok {
+			continue
+		}
+
+		if err = os.Remove(filepath.Join(directory, entry.Name())); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// apiServerWebhookKubeconfigs returns the webhook kubeconfigs to be rendered for kube-apiserver.
+func apiServerWebhookKubeconfigs(authorizerConfig *k8s.AuthorizationConfigSpec, authenticationConfigRes *k8s.AuthenticationConfig) (map[string]string, error) {
+	kubeconfigs := map[string]string{}
+
+	for _, authorizer := range authorizerConfig.Config {
+		if authorizer.Kubeconfig == "" {
+			continue
+		}
+
+		if err := validateWebhookKubeconfig(authorizer.Kubeconfig); err != nil {
+			return nil, fmt.Errorf("error validating kubeconfig for authorizer %q: %w", authorizer.Name, err)
+		}
+
+		kubeconfigs[authorizationWebhookKubeconfigFilename(authorizer.Name)] = authorizer.Kubeconfig
+	}
+
+	if authenticationConfigRes != nil && authenticationConfigRes.TypedSpec().TokenWebhook != nil {
+		kubeconfig := authenticationConfigRes.TypedSpec().TokenWebhook.Kubeconfig
+
+		if err := validateWebhookKubeconfig(kubeconfig); err != nil {
+			return nil, fmt.Errorf("error validating authentication token webhook kubeconfig: %w", err)
+		}
+
+		kubeconfigs[authenticationTokenWebhookKubeconfigFilename] = kubeconfig
+	}
+
+	return kubeconfigs, nil
+}
+
+// validateWebhookKubeconfig checks that kube-apiserver is able to build a client from the kubeconfig.
+func validateWebhookKubeconfig(kubeconfig string) error {
+	cfg, err := clientcmd.Load([]byte(kubeconfig))
+	if err != nil {
+		return err
+	}
+
+	_, err = clientcmd.NewDefaultClientConfig(*cfg, &clientcmd.ConfigOverrides{}).ClientConfig()
+
+	return err
 }
 
 func admissionControlConfig(spec *k8s.AdmissionControlConfigSpec) func() (runtime.Object, error) {
@@ -324,6 +429,13 @@ func authorizationConfig(spec *k8s.AuthorizationConfigSpec, kubeAPIServerVersion
 					return nil, fmt.Errorf("error unmarshaling authorizer webhook configuration: %w", err)
 				}
 
+				if authorizer.Kubeconfig != "" {
+					webhookCfg.ConnectionInfo = apiserverv1.WebhookConnectionInfo{
+						Type:           apiserverv1.AuthorizationWebhookConnectionInfoTypeKubeConfigFile,
+						KubeConfigFile: new(filepath.Join(constants.KubernetesAPIServerConfigDir, authorizationWebhookKubeconfigFilename(authorizer.Name))),
+					}
+				}
+
 				authorizerConfig.Webhook = &webhookCfg
 			}
 
@@ -340,7 +452,8 @@ func authorizationConfig(spec *k8s.AuthorizationConfigSpec, kubeAPIServerVersion
 // while every other endpoint keeps rejecting anonymous requests.
 func authenticationConfig(authenticationConfigRes *k8s.AuthenticationConfig) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
-		if authenticationConfigRes == nil {
+		// the resource might exist only to carry the token webhook configuration
+		if authenticationConfigRes == nil || len(authenticationConfigRes.TypedSpec().Config) == 0 {
 			return &unstructured.Unstructured{Object: map[string]any{}}, nil
 		}
 

@@ -97,7 +97,7 @@ func (KubeAPIServerConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "extraArgs",
 				Type:        "Args",
 				Note:        "",
-				Description: "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\n`anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`, while\n`authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.\n\nThe single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.",
+				Description: "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\n`anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`,\n`authentication-token-webhook-*` are set via `KubeAuthenticationWebhookConfig`, while\n`authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.\n\nThe single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -225,6 +225,49 @@ func (KubeAuthenticationConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeAuthenticationWebhookConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAuthenticationWebhookConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAuthenticationWebhookConfig configures kube-apiserver webhook token authentication." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAuthenticationWebhookConfig configures kube-apiserver webhook token authentication.\nBearer tokens which are not recognized by other authenticators are sent to the webhook\n(a `TokenReview` request) to be authenticated, e.g. for\n[aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator).\n\nTalos writes the kubeconfig to a file inside the kube-apiserver static pod and sets the\n`--authentication-token-webhook-*` flags of kube-apiserver accordingly,\nso these flags are not allowed in `KubeAPIServerConfig` `extraArgs`.\n\nSee [webhook token authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#webhook-token-authentication).\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "kubeconfig",
+				Type:        "string",
+				Note:        "",
+				Description: "Kubeconfig kube-apiserver uses to connect to the authentication webhook.\n\nThe kubeconfig should be self-contained: kube-apiserver can't access any files on the host,\nso certificates and keys should be specified inline (`certificate-authority-data`, `client-certificate-data`,\n`client-key-data`), and `tokenFile`, `exec` and `auth-provider` are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubeconfig kube-apiserver uses to connect to the authentication webhook." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "version",
+				Type:        "string",
+				Note:        "",
+				Description: "The API version of the `authentication.k8s.io` `TokenReview` to send to and expect from the webhook.\n\nDefaults to the kube-apiserver default (`v1beta1`).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The API version of the `authentication.k8s.io` `TokenReview` to send to and expect from the webhook." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"v1",
+					"v1beta1",
+				},
+			},
+			{
+				Name:        "cacheTTL",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The duration to cache responses from the webhook token authenticator.\n\nDefaults to the kube-apiserver default (2 minutes), set to `0s` to disable caching.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The duration to cache responses from the webhook token authenticator." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAuthenticationWebhookConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeAuthorizerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeAuthorizerConfig",
@@ -258,8 +301,15 @@ func (KubeAuthorizerConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "webhook",
 				Type:        "Unstructured",
 				Note:        "",
-				Description: "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.",
+				Description: "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\n\nWhen `kubeconfig` is set, `connectionInfo` should be omitted, as Talos fills it in.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Webhook is the configuration for the webhook authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "kubeconfig",
+				Type:        "string",
+				Note:        "",
+				Description: "Kubeconfig kube-apiserver uses to connect to the webhook authorizer.\n\nTalos writes the kubeconfig to a file inside the kube-apiserver static pod and sets\n`webhook.connectionInfo` to `type: KubeConfigFile` pointing to that file.\nThis field can only be set for the Webhook authorizer type.\n\nThe kubeconfig should be self-contained: kube-apiserver can't access any files on the host,\nso certificates and keys should be specified inline (`certificate-authority-data`, `client-certificate-data`,\n`client-key-data`), and `tokenFile`, `exec` and `auth-provider` are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubeconfig kube-apiserver uses to connect to the webhook authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -1177,6 +1227,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeAPIServerCAConfigV1Alpha1{}.Doc(),
 			KubeAuditPolicyConfigV1Alpha1{}.Doc(),
 			KubeAuthenticationConfigV1Alpha1{}.Doc(),
+			KubeAuthenticationWebhookConfigV1Alpha1{}.Doc(),
 			KubeAuthorizerConfigV1Alpha1{}.Doc(),
 			KubeClusterConfigV1Alpha1{}.Doc(),
 			ResourcesConfig{}.Doc(),

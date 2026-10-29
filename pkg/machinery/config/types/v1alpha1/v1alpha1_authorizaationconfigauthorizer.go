@@ -26,6 +26,13 @@ func (a *AuthorizationConfigAuthorizerConfig) Webhook() map[string]any {
 	return a.AuthorizerWebhook.Object
 }
 
+// Kubeconfig implements the config.AuthorizationConfig interface.
+//
+// Legacy configuration doesn't support inline kubeconfig, the file should be mounted via extra volumes.
+func (a *AuthorizationConfigAuthorizerConfig) Kubeconfig() string {
+	return ""
+}
+
 // K8sAuthorizerConfigSignal implements the config.K8sAuthorizerConfig interface.
 func (a *AuthorizationConfigAuthorizerConfig) K8sAuthorizerConfigSignal() {}
 

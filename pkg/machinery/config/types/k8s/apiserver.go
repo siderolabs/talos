@@ -66,7 +66,8 @@ type KubeAPIServerConfigV1Alpha1 struct {
 	//     Extra command line arguments to supply to the kube-apiserver.
 	//
 	//     Arguments owned by other configuration documents are rejected:
-	//     `anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`, while
+	//     `anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`,
+	//     `authentication-token-webhook-*` are set via `KubeAuthenticationWebhookConfig`, while
 	//     `authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.
 	//
 	//     The single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.
@@ -175,12 +176,13 @@ func (s *KubeAPIServerConfigV1Alpha1) Validate(_ validation.RuntimeMode, opts ..
 //
 // The longest matching prefix wins, so a more specific entry overrides the reason of a broader one.
 var deniedArgPrefixes = map[string]string{
-	"anonymous-auth":         "use KubeAuthenticationConfig",
-	"oidc-":                  "use KubeAuthenticationConfig",
-	"authentication-config":  "use KubeAuthenticationConfig",
-	"authorization-config":   "use KubeAuthorizerConfig",
-	"authorization-mode":     "use KubeAuthorizerConfig",
-	"authorization-webhook-": "use KubeAuthorizerConfig",
+	"anonymous-auth":                "use KubeAuthenticationConfig",
+	"oidc-":                         "use KubeAuthenticationConfig",
+	"authentication-config":         "use KubeAuthenticationConfig",
+	"authentication-token-webhook-": "use KubeAuthenticationWebhookConfig",
+	"authorization-config":          "use KubeAuthorizerConfig",
+	"authorization-mode":            "use KubeAuthorizerConfig",
+	"authorization-webhook-":        "use KubeAuthorizerConfig",
 
 	// `--oidc-signing-algs` has no counterpart in the structured authentication configuration:
 	// kube-apiserver rejects any `--oidc-*` flag when `--authentication-config` is set, and it always

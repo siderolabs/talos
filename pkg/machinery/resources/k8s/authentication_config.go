@@ -6,6 +6,8 @@
 package k8s
 
 import (
+	"time"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -27,7 +29,17 @@ type AuthenticationConfig = typed.Resource[AuthenticationConfigSpec, Authenticat
 //
 //gotagsrewrite:gen
 type AuthenticationConfigSpec struct {
-	Config map[string]any `yaml:"config" protobuf:"1"`
+	Config       map[string]any                  `yaml:"config" protobuf:"1"`
+	TokenWebhook *AuthenticationTokenWebhookSpec `yaml:"tokenWebhook,omitempty" protobuf:"2"`
+}
+
+// AuthenticationTokenWebhookSpec is webhook token authentication configuration for kube-apiserver.
+//
+//gotagsrewrite:gen
+type AuthenticationTokenWebhookSpec struct {
+	Kubeconfig string         `yaml:"kubeconfig" protobuf:"1"`
+	Version    string         `yaml:"version,omitempty" protobuf:"2"`
+	CacheTTL   *time.Duration `yaml:"cacheTTL,omitempty" protobuf:"3"`
 }
 
 // NewAuthenticationConfig returns new AuthenticationConfig resource.

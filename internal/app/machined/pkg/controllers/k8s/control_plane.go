@@ -131,11 +131,27 @@ func NewControlPlaneAuthenticationController() *ControlPlaneAuthenticationContro
 			MapMetadataOptionalFunc: controlplaneMapFunc(
 				k8s.NewAuthenticationConfig(),
 				func(machineConfig *config.MachineConfig) bool {
-					return machineConfig.Config().K8sAuthenticationConfig() != nil
+					return machineConfig.Config().K8sAuthenticationConfig() != nil || machineConfig.Config().K8sAuthenticationWebhookConfig() != nil
 				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.AuthenticationConfig) error {
-				inCfg := machineConfig.Config().K8sAuthenticationConfig().Configuration()
+				res.TypedSpec().Config = nil
+				res.TypedSpec().TokenWebhook = nil
+
+				if webhookCfg := machineConfig.Config().K8sAuthenticationWebhookConfig(); webhookCfg != nil {
+					res.TypedSpec().TokenWebhook = &k8s.AuthenticationTokenWebhookSpec{
+						Kubeconfig: webhookCfg.Kubeconfig(),
+						Version:    webhookCfg.Version(),
+						CacheTTL:   webhookCfg.CacheTTL().Ptr(),
+					}
+				}
+
+				authCfg := machineConfig.Config().K8sAuthenticationConfig()
+				if authCfg == nil {
+					return nil
+				}
+
+				inCfg := authCfg.Configuration()
 
 				// Validate against the typed schema, but emit the user-provided map so
 				// fields the user didn't set don't leak into the YAML as zero values —
@@ -185,9 +201,10 @@ func NewControlPlaneAuthorizationController() *ControlPlaneAuthorizationControll
 					cfgProvider.K8sAuthorizerConfigs(),
 					func(authorizer talosconfig.K8sAuthorizerConfig) k8s.AuthorizationAuthorizersSpec {
 						return k8s.AuthorizationAuthorizersSpec{
-							Type:    authorizer.Type(),
-							Name:    authorizer.Name(),
-							Webhook: authorizer.Webhook(),
+							Type:       authorizer.Type(),
+							Name:       authorizer.Name(),
+							Webhook:    authorizer.Webhook(),
+							Kubeconfig: authorizer.Kubeconfig(),
 						}
 					},
 				)

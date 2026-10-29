@@ -182,6 +182,22 @@ func TestKubeAPIServerConfigValidate(t *testing.T) {
 				"and the configuration has no equivalent setting (all RFC 7518 asymmetric algorithms are accepted)",
 		},
 		{
+			name: "authentication token webhook args",
+			cfg: func() *k8s.KubeAPIServerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAPIServerConfigV1Alpha1()
+				cfg.PodImage = constants.KubernetesAPIServerImage + ":v1.35.3"
+				cfg.PodArgs = meta.Args{
+					"authentication-token-webhook-config-file": meta.NewArgValue("/var/lib/webhook.kubeconfig", nil),
+					"authentication-token-webhook-cache-ttl":   meta.NewArgValue("5m", nil),
+				}
+
+				return cfg
+			},
+
+			expectedError: "kube-apiserver extra argument \"authentication-token-webhook-cache-ttl\" is not allowed: use KubeAuthenticationWebhookConfig\n" +
+				"kube-apiserver extra argument \"authentication-token-webhook-config-file\" is not allowed: use KubeAuthenticationWebhookConfig",
+		},
+		{
 			name: "valid image, local",
 			cfg: func() *k8s.KubeAPIServerConfigV1Alpha1 {
 				cfg := k8s.NewKubeAPIServerConfigV1Alpha1()

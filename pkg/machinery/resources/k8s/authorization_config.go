@@ -36,6 +36,8 @@ type AuthorizationAuthorizersSpec struct {
 	Type    string         `yaml:"type" protobuf:"1"`
 	Name    string         `yaml:"name" protobuf:"2"`
 	Webhook map[string]any `yaml:"webhook" protobuf:"3"`
+	// Kubeconfig is rendered into the kube-apiserver static pod and set as the webhook connection info.
+	Kubeconfig string `yaml:"kubeconfig,omitempty" protobuf:"4"`
 }
 
 // NewAuthorizationConfig returns new AuthorizationConfig resource.

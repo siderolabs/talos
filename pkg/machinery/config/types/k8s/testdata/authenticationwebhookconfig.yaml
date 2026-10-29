@@ -1,0 +1,22 @@
+apiVersion: v1alpha1
+kind: KubeAuthenticationWebhookConfig
+kubeconfig: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+      - name: webhook
+        cluster:
+          server: https://127.0.0.1:21362/authenticate
+          certificate-authority-data: Y2EK
+    users:
+      - name: apiserver
+        user:
+          token: secret
+    contexts:
+      - name: webhook
+        context:
+          cluster: webhook
+          user: apiserver
+    current-context: webhook
+version: v1
+cacheTTL: 5m0s

@@ -3381,9 +3381,9 @@
           },
           "type": "object",
           "title": "extraArgs",
-          "description": "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\nanonymous-auth, authentication-config and oidc-* are set via KubeAuthenticationConfig, while\nauthorization-config, authorization-mode and authorization-webhook-* are set via KubeAuthorizerConfig.\n\nThe single exception is oidc-signing-algs, which cannot be set at all: see KubeAuthenticationConfig.\n",
-          "markdownDescription": "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\n`anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`, while\n`authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.\n\nThe single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.",
-          "x-intellij-html-description": "\u003cp\u003eExtra command line arguments to supply to the kube-apiserver.\u003c/p\u003e\n\n\u003cp\u003eArguments owned by other configuration documents are rejected:\n\u003ccode\u003eanonymous-auth\u003c/code\u003e, \u003ccode\u003eauthentication-config\u003c/code\u003e and \u003ccode\u003eoidc-*\u003c/code\u003e are set via \u003ccode\u003eKubeAuthenticationConfig\u003c/code\u003e, while\n\u003ccode\u003eauthorization-config\u003c/code\u003e, \u003ccode\u003eauthorization-mode\u003c/code\u003e and \u003ccode\u003eauthorization-webhook-*\u003c/code\u003e are set via \u003ccode\u003eKubeAuthorizerConfig\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eThe single exception is \u003ccode\u003eoidc-signing-algs\u003c/code\u003e, which cannot be set at all: see \u003ccode\u003eKubeAuthenticationConfig\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\nanonymous-auth, authentication-config and oidc-* are set via KubeAuthenticationConfig,\nauthentication-token-webhook-* are set via KubeAuthenticationWebhookConfig, while\nauthorization-config, authorization-mode and authorization-webhook-* are set via KubeAuthorizerConfig.\n\nThe single exception is oidc-signing-algs, which cannot be set at all: see KubeAuthenticationConfig.\n",
+          "markdownDescription": "Extra command line arguments to supply to the kube-apiserver.\n\nArguments owned by other configuration documents are rejected:\n`anonymous-auth`, `authentication-config` and `oidc-*` are set via `KubeAuthenticationConfig`,\n`authentication-token-webhook-*` are set via `KubeAuthenticationWebhookConfig`, while\n`authorization-config`, `authorization-mode` and `authorization-webhook-*` are set via `KubeAuthorizerConfig`.\n\nThe single exception is `oidc-signing-algs`, which cannot be set at all: see `KubeAuthenticationConfig`.",
+          "x-intellij-html-description": "\u003cp\u003eExtra command line arguments to supply to the kube-apiserver.\u003c/p\u003e\n\n\u003cp\u003eArguments owned by other configuration documents are rejected:\n\u003ccode\u003eanonymous-auth\u003c/code\u003e, \u003ccode\u003eauthentication-config\u003c/code\u003e and \u003ccode\u003eoidc-*\u003c/code\u003e are set via \u003ccode\u003eKubeAuthenticationConfig\u003c/code\u003e,\n\u003ccode\u003eauthentication-token-webhook-*\u003c/code\u003e are set via \u003ccode\u003eKubeAuthenticationWebhookConfig\u003c/code\u003e, while\n\u003ccode\u003eauthorization-config\u003c/code\u003e, \u003ccode\u003eauthorization-mode\u003c/code\u003e and \u003ccode\u003eauthorization-webhook-*\u003c/code\u003e are set via \u003ccode\u003eKubeAuthorizerConfig\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eThe single exception is \u003ccode\u003eoidc-signing-algs\u003c/code\u003e, which cannot be set at all: see \u003ccode\u003eKubeAuthenticationConfig\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "env": {
           "patternProperties": {
@@ -3608,6 +3608,61 @@
       ],
       "description": "KubeAuthenticationConfig configures kube-apiserver authentication."
     },
+    "k8s.KubeAuthenticationWebhookConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAuthenticationWebhookConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "kubeconfig": {
+          "type": "string",
+          "title": "kubeconfig",
+          "description": "Kubeconfig kube-apiserver uses to connect to the authentication webhook.\n\nThe kubeconfig should be self-contained: kube-apiserver can’t access any files on the host,\nso certificates and keys should be specified inline (certificate-authority-data, client-certificate-data,\nclient-key-data), and tokenFile, exec and auth-provider are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.\n",
+          "markdownDescription": "Kubeconfig kube-apiserver uses to connect to the authentication webhook.\n\nThe kubeconfig should be self-contained: kube-apiserver can't access any files on the host,\nso certificates and keys should be specified inline (`certificate-authority-data`, `client-certificate-data`,\n`client-key-data`), and `tokenFile`, `exec` and `auth-provider` are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.",
+          "x-intellij-html-description": "\u003cp\u003eKubeconfig kube-apiserver uses to connect to the authentication webhook.\u003c/p\u003e\n\n\u003cp\u003eThe kubeconfig should be self-contained: kube-apiserver can\u0026rsquo;t access any files on the host,\nso certificates and keys should be specified inline (\u003ccode\u003ecertificate-authority-data\u003c/code\u003e, \u003ccode\u003eclient-certificate-data\u003c/code\u003e,\n\u003ccode\u003eclient-key-data\u003c/code\u003e), and \u003ccode\u003etokenFile\u003c/code\u003e, \u003ccode\u003eexec\u003c/code\u003e and \u003ccode\u003eauth-provider\u003c/code\u003e are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.\u003c/p\u003e\n"
+        },
+        "version": {
+          "enum": [
+            "v1",
+            "v1beta1"
+          ],
+          "title": "version",
+          "description": "The API version of the authentication.k8s.io TokenReview to send to and expect from the webhook.\n\nDefaults to the kube-apiserver default (v1beta1).\n",
+          "markdownDescription": "The API version of the `authentication.k8s.io` `TokenReview` to send to and expect from the webhook.\n\nDefaults to the kube-apiserver default (`v1beta1`).",
+          "x-intellij-html-description": "\u003cp\u003eThe API version of the \u003ccode\u003eauthentication.k8s.io\u003c/code\u003e \u003ccode\u003eTokenReview\u003c/code\u003e to send to and expect from the webhook.\u003c/p\u003e\n\n\u003cp\u003eDefaults to the kube-apiserver default (\u003ccode\u003ev1beta1\u003c/code\u003e).\u003c/p\u003e\n"
+        },
+        "cacheTTL": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\.\\d+|\\d+)([nuµm]?s|m|h))|0)+$",
+          "title": "cacheTTL",
+          "description": "The duration to cache responses from the webhook token authenticator.\n\nDefaults to the kube-apiserver default (2 minutes), set to 0s to disable caching.\n",
+          "markdownDescription": "The duration to cache responses from the webhook token authenticator.\n\nDefaults to the kube-apiserver default (2 minutes), set to `0s` to disable caching.",
+          "x-intellij-html-description": "\u003cp\u003eThe duration to cache responses from the webhook token authenticator.\u003c/p\u003e\n\n\u003cp\u003eDefaults to the kube-apiserver default (2 minutes), set to \u003ccode\u003e0s\u003c/code\u003e to disable caching.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "kubeconfig"
+      ],
+      "description": "KubeAuthenticationWebhookConfig configures kube-apiserver webhook token authentication.\\nBearer tokens which are not recognized by other authenticators are sent to the webhook\\n(a `TokenReview` request) to be authenticated, e.g. for\\n[aws-iam-authenticator](https://github.com/kubernetes-sigs/aws-iam-authenticator).\\n\\nTalos writes the kubeconfig to a file inside the kube-apiserver static pod and sets the\\n`--authentication-token-webhook-*` flags of kube-apiserver accordingly,\\nso these flags are not allowed in `KubeAPIServerConfig` `extraArgs`.\\n\\nSee [webhook token authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#webhook-token-authentication).\\n"
+    },
     "k8s.KubeAuthorizerConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -3649,9 +3704,16 @@
         "webhook": {
           "type": "object",
           "title": "webhook",
-          "description": "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\n",
-          "markdownDescription": "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.",
-          "x-intellij-html-description": "\u003cp\u003eWebhook is the configuration for the webhook authorizer.\u003c/p\u003e\n\n\u003cp\u003eThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\u003c/p\u003e\n"
+          "description": "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\n\nWhen kubeconfig is set, connectionInfo should be omitted, as Talos fills it in.\n",
+          "markdownDescription": "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\n\nWhen `kubeconfig` is set, `connectionInfo` should be omitted, as Talos fills it in.",
+          "x-intellij-html-description": "\u003cp\u003eWebhook is the configuration for the webhook authorizer.\u003c/p\u003e\n\n\u003cp\u003eThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\u003c/p\u003e\n\n\u003cp\u003eWhen \u003ccode\u003ekubeconfig\u003c/code\u003e is set, \u003ccode\u003econnectionInfo\u003c/code\u003e should be omitted, as Talos fills it in.\u003c/p\u003e\n"
+        },
+        "kubeconfig": {
+          "type": "string",
+          "title": "kubeconfig",
+          "description": "Kubeconfig kube-apiserver uses to connect to the webhook authorizer.\n\nTalos writes the kubeconfig to a file inside the kube-apiserver static pod and sets\nwebhook.connectionInfo to type: KubeConfigFile pointing to that file.\nThis field can only be set for the Webhook authorizer type.\n\nThe kubeconfig should be self-contained: kube-apiserver can’t access any files on the host,\nso certificates and keys should be specified inline (certificate-authority-data, client-certificate-data,\nclient-key-data), and tokenFile, exec and auth-provider are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.\n",
+          "markdownDescription": "Kubeconfig kube-apiserver uses to connect to the webhook authorizer.\n\nTalos writes the kubeconfig to a file inside the kube-apiserver static pod and sets\n`webhook.connectionInfo` to `type: KubeConfigFile` pointing to that file.\nThis field can only be set for the Webhook authorizer type.\n\nThe kubeconfig should be self-contained: kube-apiserver can't access any files on the host,\nso certificates and keys should be specified inline (`certificate-authority-data`, `client-certificate-data`,\n`client-key-data`), and `tokenFile`, `exec` and `auth-provider` are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.",
+          "x-intellij-html-description": "\u003cp\u003eKubeconfig kube-apiserver uses to connect to the webhook authorizer.\u003c/p\u003e\n\n\u003cp\u003eTalos writes the kubeconfig to a file inside the kube-apiserver static pod and sets\n\u003ccode\u003ewebhook.connectionInfo\u003c/code\u003e to \u003ccode\u003etype: KubeConfigFile\u003c/code\u003e pointing to that file.\nThis field can only be set for the Webhook authorizer type.\u003c/p\u003e\n\n\u003cp\u003eThe kubeconfig should be self-contained: kube-apiserver can\u0026rsquo;t access any files on the host,\nso certificates and keys should be specified inline (\u003ccode\u003ecertificate-authority-data\u003c/code\u003e, \u003ccode\u003eclient-certificate-data\u003c/code\u003e,\n\u003ccode\u003eclient-key-data\u003c/code\u003e), and \u003ccode\u003etokenFile\u003c/code\u003e, \u003ccode\u003eexec\u003c/code\u003e and \u003ccode\u003eauth-provider\u003c/code\u003e are not supported.\nIf the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -9651,6 +9713,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeAuthenticationConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAuthenticationWebhookConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeAuthorizerConfigV1Alpha1"

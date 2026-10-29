@@ -578,6 +578,7 @@ description: Talos gRPC API reference.
     - [ArgValues](#talos.resource.definitions.k8s.ArgValues)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
     - [AuthenticationConfigSpec](#talos.resource.definitions.k8s.AuthenticationConfigSpec)
+    - [AuthenticationTokenWebhookSpec](#talos.resource.definitions.k8s.AuthenticationTokenWebhookSpec)
     - [AuthorizationAuthorizersSpec](#talos.resource.definitions.k8s.AuthorizationAuthorizersSpec)
     - [AuthorizationConfigSpec](#talos.resource.definitions.k8s.AuthorizationConfigSpec)
     - [BootstrapManifestsConfigSpec](#talos.resource.definitions.k8s.BootstrapManifestsConfigSpec)
@@ -10104,6 +10105,24 @@ AuthenticationConfigSpec is authentication configuration for kube-apiserver.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| token_webhook | [AuthenticationTokenWebhookSpec](#talos.resource.definitions.k8s.AuthenticationTokenWebhookSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.AuthenticationTokenWebhookSpec"></a>
+
+### AuthenticationTokenWebhookSpec
+AuthenticationTokenWebhookSpec is webhook token authentication configuration for kube-apiserver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kubeconfig | [string](#string) |  |  |
+| version | [string](#string) |  |  |
+| cache_ttl | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 
@@ -10121,6 +10140,7 @@ AuthorizationAuthorizersSpec is a configuration of authorization authorizers.
 | type | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | webhook | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| kubeconfig | [string](#string) |  | Kubeconfig is rendered into the kube-apiserver static pod and set as the webhook connection info. |
 
 
 

@@ -8,6 +8,7 @@ package k8s
 
 import (
 	"net/netip"
+	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 )
@@ -100,6 +101,14 @@ func (o AuthenticationConfigSpec) DeepCopy() AuthenticationConfigSpec {
 		cp.Config = make(map[string]any, len(o.Config))
 		for k2, v2 := range o.Config {
 			cp.Config[k2] = v2
+		}
+	}
+	if o.TokenWebhook != nil {
+		cp.TokenWebhook = new(AuthenticationTokenWebhookSpec)
+		*cp.TokenWebhook = *o.TokenWebhook
+		if o.TokenWebhook.CacheTTL != nil {
+			cp.TokenWebhook.CacheTTL = new(time.Duration)
+			*cp.TokenWebhook.CacheTTL = *o.TokenWebhook.CacheTTL
 		}
 	}
 	return cp

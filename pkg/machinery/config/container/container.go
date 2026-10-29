@@ -794,6 +794,16 @@ func (container *Container) K8sAuthenticationConfig() config.K8sAuthenticationCo
 	return nil
 }
 
+// K8sAuthenticationWebhookConfig implements config.Config interface.
+func (container *Container) K8sAuthenticationWebhookConfig() config.K8sAuthenticationWebhookConfig {
+	matching := findMatchingDocs[config.K8sAuthenticationWebhookConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	return nil
+}
+
 // K8sAuthorizerConfigs implements config.Config interface.
 func (container *Container) K8sAuthorizerConfigs() []config.K8sAuthorizerConfig {
 	docs := findMatchingDocs[config.K8sAuthorizerConfig](container.documents)

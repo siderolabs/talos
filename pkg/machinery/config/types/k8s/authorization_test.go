@@ -33,6 +33,7 @@ func TestKubeAuthorizerConfigMarshalStability(t *testing.T) {
 		"subjectAccessReviewVersion": "v1",
 		"failurePolicy":              "NoOpinion",
 	}
+	cfg.AuthorizerWebhookKubeconfig = testWebhookKubeconfig
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -65,7 +66,26 @@ func TestKubeAuthorizerConfigUnmarshal(t *testing.T) {
 				"failurePolicy":              "NoOpinion",
 			},
 		},
+		AuthorizerWebhookKubeconfig: testWebhookKubeconfig,
 	}, docs[0])
+}
+
+func TestKubeAuthorizerConfigRedact(t *testing.T) {
+	t.Parallel()
+
+	cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+	cfg.MetaName = "webhook"
+	cfg.AuthorizerType = "Webhook"
+	cfg.AuthorizerWebhookKubeconfig = testWebhookKubeconfig
+
+	cfg.Redact("REDACTED")
+
+	assert.Equal(t, "REDACTED", cfg.AuthorizerWebhookKubeconfig)
+
+	cfg = k8s.NewKubeAuthorizerConfigV1Alpha1()
+	cfg.Redact("REDACTED")
+
+	assert.Empty(t, cfg.AuthorizerWebhookKubeconfig)
 }
 
 func TestKubeAuthorizerConfigValidate(t *testing.T) {
@@ -109,6 +129,98 @@ func TestKubeAuthorizerConfigValidate(t *testing.T) {
 			expectedError: "authorizer webhook configuration is required for Webhook authorizer type",
 		},
 		{
+			name: "invalid name",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "My_Authorizer"
+				cfg.AuthorizerType = "Node"
+
+				return cfg
+			},
+
+			expectedError: "authorizer name is invalid: domain doesn't match required format: \"My_Authorizer\"",
+		},
+		{
+			name: "webhook without connection info",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "webhook"
+				cfg.AuthorizerType = "Webhook"
+				cfg.AuthorizerWebhook.Object = map[string]any{
+					"timeout": "3s",
+				}
+
+				return cfg
+			},
+
+			expectedError: "authorizer kubeconfig is required for Webhook authorizer type",
+		},
+		{
+			name: "webhook with kubeconfig file",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "webhook"
+				cfg.AuthorizerType = "Webhook"
+				cfg.AuthorizerWebhook.Object = map[string]any{
+					"connectionInfo": map[string]any{
+						"type":           "KubeConfigFile",
+						"kubeConfigFile": "/etc/kubernetes/webhook.kubeconfig",
+					},
+				}
+
+				return cfg
+			},
+
+			expectedError: "authorizer webhook connectionInfo type KubeConfigFile is not supported, as kube-apiserver can't access host files: use kubeconfig instead",
+		},
+		{
+			name: "webhook with kubeconfig and connection info",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "webhook"
+				cfg.AuthorizerType = "Webhook"
+				cfg.AuthorizerWebhook.Object = map[string]any{
+					"connectionInfo": map[string]any{
+						"type": "InClusterConfig",
+					},
+				}
+				cfg.AuthorizerWebhookKubeconfig = testWebhookKubeconfig
+
+				return cfg
+			},
+
+			expectedError: "authorizer webhook connectionInfo should not be set when kubeconfig is set, Talos fills it in",
+		},
+		{
+			name: "webhook with invalid kubeconfig",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "webhook"
+				cfg.AuthorizerType = "Webhook"
+				cfg.AuthorizerWebhook.Object = map[string]any{
+					"timeout": "3s",
+				}
+				cfg.AuthorizerWebhookKubeconfig = "apiVersion: v1\nkind: Config\n"
+
+				return cfg
+			},
+
+			expectedError: "authorizer kubeconfig: kubeconfig current-context is required",
+		},
+		{
+			name: "kubeconfig on non-webhook type",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "rbac"
+				cfg.AuthorizerType = "RBAC"
+				cfg.AuthorizerWebhookKubeconfig = testWebhookKubeconfig
+
+				return cfg
+			},
+
+			expectedError: "authorizer kubeconfig is only allowed for Webhook authorizer type",
+		},
+		{
 			name: "webhook configuration on non-webhook type",
 			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
 				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
@@ -141,6 +253,22 @@ func TestKubeAuthorizerConfigValidate(t *testing.T) {
 				cfg.AuthorizerType = "Webhook"
 				cfg.AuthorizerWebhook.Object = map[string]any{
 					"timeout": "3s",
+				}
+				cfg.AuthorizerWebhookKubeconfig = testWebhookKubeconfig
+
+				return cfg
+			},
+		},
+		{
+			name: "valid in-cluster webhook",
+			cfg: func() *k8s.KubeAuthorizerConfigV1Alpha1 {
+				cfg := k8s.NewKubeAuthorizerConfigV1Alpha1()
+				cfg.MetaName = "webhook.example.com"
+				cfg.AuthorizerType = "Webhook"
+				cfg.AuthorizerWebhook.Object = map[string]any{
+					"connectionInfo": map[string]any{
+						"type": "InClusterConfig",
+					},
 				}
 
 				return cfg

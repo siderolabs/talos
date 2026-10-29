@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/labels"
 )
 
 //docgen:jsonschema
@@ -38,6 +39,7 @@ var (
 	_ config.K8sAuthorizerConfig          = &KubeAuthorizerConfigV1Alpha1{}
 	_ config.NamedDocument                = &KubeAuthorizerConfigV1Alpha1{}
 	_ config.Validator                    = &KubeAuthorizerConfigV1Alpha1{}
+	_ config.SecretDocument               = &KubeAuthorizerConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeAuthorizerConfigV1Alpha1{}
 	_ container.ControlplaneOnlyConfig    = &KubeAuthorizerConfigV1Alpha1{}
 )
@@ -70,9 +72,23 @@ type KubeAuthorizerConfigV1Alpha1 struct {
 	//
 	//     This field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.
 	//     The value is the literal Kubernetes webhook authorizer configuration.
+	//
+	//     When `kubeconfig` is set, `connectionInfo` should be omitted, as Talos fills it in.
 	//   schema:
 	//     type: object
 	AuthorizerWebhook meta.Unstructured `yaml:"webhook,omitempty"`
+	//   description: |
+	//     Kubeconfig kube-apiserver uses to connect to the webhook authorizer.
+	//
+	//     Talos writes the kubeconfig to a file inside the kube-apiserver static pod and sets
+	//     `webhook.connectionInfo` to `type: KubeConfigFile` pointing to that file.
+	//     This field can only be set for the Webhook authorizer type.
+	//
+	//     The kubeconfig should be self-contained: kube-apiserver can't access any files on the host,
+	//     so certificates and keys should be specified inline (`certificate-authority-data`, `client-certificate-data`,
+	//     `client-key-data`), and `tokenFile`, `exec` and `auth-provider` are not supported.
+	//     If the certificate authority is not specified, kube-apiserver uses the trusted root CAs of the machine.
+	AuthorizerWebhookKubeconfig string `yaml:"kubeconfig,omitempty"`
 }
 
 // NewKubeAuthorizerConfigV1Alpha1 creates a new KubeAuthorizerConfig config document.
@@ -117,9 +133,6 @@ func exampleKubeAuthorizerConfigV1Alpha3() *KubeAuthorizerConfigV1Alpha1 {
 			"subjectAccessReviewVersion": "v1",
 			"matchConditionSubjectAccessReviewVersion": "v1",
 			"failurePolicy": "Deny",
-			"connectionInfo": map[string]any{
-				"type": "InClusterConfig",
-			},
 			"matchConditions": []map[string]any{
 				{
 					"expression": "has(request.resourceAttributes)",
@@ -130,6 +143,24 @@ func exampleKubeAuthorizerConfigV1Alpha3() *KubeAuthorizerConfigV1Alpha1 {
 			},
 		},
 	}
+	cfg.AuthorizerWebhookKubeconfig = `apiVersion: v1
+kind: Config
+clusters:
+  - name: webhook
+    cluster:
+      server: https://authz.example.com/authorize
+      certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCi4uLgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+users:
+  - name: kube-apiserver
+    user:
+      token: webhook-token
+contexts:
+  - name: webhook
+    context:
+      cluster: webhook
+      user: kube-apiserver
+current-context: webhook
+`
 
 	return cfg
 }
@@ -137,7 +168,7 @@ func exampleKubeAuthorizerConfigV1Alpha3() *KubeAuthorizerConfigV1Alpha1 {
 func exampleKubeAuthorizerConfigV1Alpha4() *KubeAuthorizerConfigV1Alpha1 {
 	cfg := NewKubeAuthorizerConfigV1Alpha1()
 
-	cfg.MetaName = "in-cluster-authorizer"
+	cfg.MetaName = "local-authorizer"
 	cfg.AuthorizerType = "Webhook"
 	cfg.AuthorizerWebhook = meta.Unstructured{
 		Object: map[string]any{
@@ -145,11 +176,23 @@ func exampleKubeAuthorizerConfigV1Alpha4() *KubeAuthorizerConfigV1Alpha1 {
 			"subjectAccessReviewVersion": "v1",
 			"matchConditionSubjectAccessReviewVersion": "v1",
 			"failurePolicy": "NoOpinion",
-			"connectionInfo": map[string]any{
-				"type": "InClusterConfig",
-			},
 		},
 	}
+	cfg.AuthorizerWebhookKubeconfig = `apiVersion: v1
+kind: Config
+clusters:
+  - name: local-authorizer
+    cluster:
+      server: http://127.0.0.1:9051/authorize
+users:
+  - name: local-authorizer
+contexts:
+  - name: local-authorizer
+    context:
+      cluster: local-authorizer
+      user: local-authorizer
+current-context: local-authorizer
+`
 
 	return cfg
 }
@@ -170,6 +213,8 @@ func (s *KubeAuthorizerConfigV1Alpha1) Validate(_ validation.RuntimeMode, opts .
 
 	if s.MetaName == "" {
 		errs = errors.Join(errs, errors.New("authorizer name is required"))
+	} else if err := labels.ValidateDNS1123Subdomain(s.MetaName); err != nil {
+		errs = errors.Join(errs, fmt.Errorf("authorizer name is invalid: %w", err))
 	}
 
 	if s.AuthorizerType == "" {
@@ -180,15 +225,56 @@ func (s *KubeAuthorizerConfigV1Alpha1) Validate(_ validation.RuntimeMode, opts .
 		errs = errors.Join(errs, fmt.Errorf("authorizer type %s is not allowed, allowed types are %v", s.AuthorizerType, allowedAuthorizationAuthorizerTypes))
 	}
 
-	if s.AuthorizerType == "Webhook" && len(s.AuthorizerWebhook.Object) == 0 {
-		errs = errors.Join(errs, errors.New("authorizer webhook configuration is required for Webhook authorizer type"))
+	if s.AuthorizerType == "Webhook" {
+		errs = errors.Join(errs, s.validateWebhook())
 	}
 
 	if s.AuthorizerType != "Webhook" && len(s.AuthorizerWebhook.Object) > 0 {
 		warnings = append(warnings, "authorizer webhook configuration is not allowed non-Webhook authorizer types")
 	}
 
+	if s.AuthorizerType != "Webhook" && s.AuthorizerWebhookKubeconfig != "" {
+		errs = errors.Join(errs, errors.New("authorizer kubeconfig is only allowed for Webhook authorizer type"))
+	}
+
 	return warnings, errs
+}
+
+func (s *KubeAuthorizerConfigV1Alpha1) validateWebhook() error {
+	if len(s.AuthorizerWebhook.Object) == 0 {
+		return errors.New("authorizer webhook configuration is required for Webhook authorizer type")
+	}
+
+	connectionInfo, hasConnectionInfo := s.AuthorizerWebhook.Object["connectionInfo"]
+
+	if s.AuthorizerWebhookKubeconfig != "" {
+		if hasConnectionInfo {
+			return errors.New("authorizer webhook connectionInfo should not be set when kubeconfig is set, Talos fills it in")
+		}
+
+		if err := validateWebhookKubeconfig(s.AuthorizerWebhookKubeconfig); err != nil {
+			return fmt.Errorf("authorizer kubeconfig: %w", err)
+		}
+
+		return nil
+	}
+
+	if !hasConnectionInfo {
+		return errors.New("authorizer kubeconfig is required for Webhook authorizer type")
+	}
+
+	if connectionInfoMap, ok := connectionInfo.(map[string]any); ok && connectionInfoMap["type"] == "KubeConfigFile" {
+		return errors.New("authorizer webhook connectionInfo type KubeConfigFile is not supported, as kube-apiserver can't access host files: use kubeconfig instead")
+	}
+
+	return nil
+}
+
+// Redact implements config.SecretDocument interface.
+func (s *KubeAuthorizerConfigV1Alpha1) Redact(replacement string) {
+	if s.AuthorizerWebhookKubeconfig != "" {
+		s.AuthorizerWebhookKubeconfig = replacement
+	}
 }
 
 // V1Alpha1ConflictValidate implements container.V1Alpha1ConflictValidator interface.
@@ -216,6 +302,11 @@ func (s *KubeAuthorizerConfigV1Alpha1) Type() string {
 // Webhook implements config.K8sAuthorizerConfig interface.
 func (s *KubeAuthorizerConfigV1Alpha1) Webhook() map[string]any {
 	return s.AuthorizerWebhook.Object
+}
+
+// Kubeconfig implements config.K8sAuthorizerConfig interface.
+func (s *KubeAuthorizerConfigV1Alpha1) Kubeconfig() string {
+	return s.AuthorizerWebhookKubeconfig
 }
 
 // ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.

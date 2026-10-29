@@ -7,6 +7,7 @@ package config
 import (
 	"net/netip"
 	"net/url"
+	"time"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
@@ -136,12 +137,24 @@ type K8sAuthenticationConfig interface {
 	Configuration() map[string]any
 }
 
+// K8sAuthenticationWebhookConfig defines the configuration options for kube-apiserver webhook token authentication.
+type K8sAuthenticationWebhookConfig interface {
+	K8sAuthenticationWebhookConfigSignal()
+	Kubeconfig() string
+	Version() string
+	CacheTTL() optional.Optional[time.Duration]
+}
+
 // K8sAuthorizerConfig defines the API server authorization Authorizer configuration.
 type K8sAuthorizerConfig interface {
 	K8sAuthorizerConfigSignal()
 	Type() string
 	Name() string
 	Webhook() map[string]any
+	// Kubeconfig returns the kubeconfig used to connect to the webhook authorizer.
+	//
+	// If not empty, Talos renders it into the kube-apiserver static pod and sets the webhook connection info.
+	Kubeconfig() string
 }
 
 // K8sCoreDNSConfig defines the configuration options for CoreDNS.

@@ -812,6 +812,72 @@ support redaction, so they stay readable with any role, but a client which doesn
 (including a `talosctl` older than this release) needs the `os:admin` role to read them.
 """
 
+    [notes.kube_apiserver_webhook_kubeconfig]
+        title = "kube-apiserver Webhook Kubeconfigs"
+        description = """\
+Webhook authorization and webhook token authentication can now be configured with the Kubernetes configuration documents,
+without the `.cluster.apiServer.extraVolumes` of the legacy `v1alpha1` configuration.
+Talos renders the webhook kubeconfig into the kube-apiserver static pod, and sets the kube-apiserver configuration to point to it.
+
+`KubeAuthorizerConfig` has a new `kubeconfig` field for the `Webhook` authorizer type, and Talos sets the `webhook.connectionInfo` for it:
+
+```yaml
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: my-authorizer
+type: Webhook
+webhook:
+  timeout: 3s
+  subjectAccessReviewVersion: v1
+  matchConditionSubjectAccessReviewVersion: v1
+  failurePolicy: Deny
+kubeconfig: |
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: my-authorizer
+      cluster:
+        server: http://127.0.0.1:9051/authorize
+  contexts:
+    - name: my-authorizer
+      context:
+        cluster: my-authorizer
+  current-context: my-authorizer
+```
+
+The new `KubeAuthenticationWebhookConfig` document configures webhook token authentication (e.g. for `aws-iam-authenticator`),
+and Talos sets the `--authentication-token-webhook-*` flags of kube-apiserver accordingly:
+
+```yaml
+apiVersion: v1alpha1
+kind: KubeAuthenticationWebhookConfig
+version: v1beta1
+cacheTTL: 5m
+kubeconfig: |
+  apiVersion: v1
+  kind: Config
+  clusters:
+    - name: aws-iam-authenticator
+      cluster:
+        server: https://127.0.0.1:21362/authenticate
+        certificate-authority-data: <base64 CA certificate>
+  contexts:
+    - name: webhook
+      context:
+        cluster: aws-iam-authenticator
+  current-context: webhook
+```
+
+The kubeconfig should be self-contained, as kube-apiserver can't access files on the host: certificates and keys should be specified inline
+(`*-data` fields), and `tokenFile`, `exec` and `auth-provider` are not supported.
+If no certificate authority is specified, kube-apiserver trusts the root CAs of the machine (including `TrustedRootsConfig`).
+Kubeconfigs are redacted from the machine configuration the same way as other secrets.
+
+As kube-apiserver can't read files from the host, a `KubeAuthorizerConfig` with `webhook.connectionInfo.type: KubeConfigFile` is now rejected,
+as well as `authentication-token-webhook-*` flags in `KubeAPIServerConfig` `extraArgs`.
+The authorizer name should be a valid DNS-1123 subdomain, as required by kube-apiserver.
+"""
+
 [make_deps]
 
     [make_deps.tools]
