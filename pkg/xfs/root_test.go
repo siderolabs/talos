@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/xfs"
 )
@@ -46,6 +47,7 @@ func testFilesystem(t *testing.T, rwRoot xfs.Root, roRoot xfs.Root) {
 
 		actual, err := xfs.OpenFile(rwRoot, name, flags, 0o644)
 		require.NoError(t, err)
+		assertCloseOnExec(t, actual.Fd())
 		assert.NoError(t, actual.Close())
 	})
 
@@ -228,6 +230,15 @@ func testFilesystem(t *testing.T, rwRoot xfs.Root, roRoot xfs.Root) {
 			require.ErrorIs(t, err, os.ErrNotExist, "stat file %q failed", oldName)
 		})
 	})
+}
+
+// assertCloseOnExec checks that a descriptor does not leak into the processes started while it is open.
+func assertCloseOnExec(tb testing.TB, fd uintptr) {
+	tb.Helper()
+
+	flags, err := unix.FcntlInt(fd, unix.F_GETFD, 0)
+	require.NoError(tb, err)
+	assert.NotZero(tb, flags&unix.FD_CLOEXEC, "descriptor is not close-on-exec")
 }
 
 func writeFile(tb testing.TB, root xfs.Root, name string, content []byte) {

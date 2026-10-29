@@ -11,7 +11,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"syscall"
+
+	"golang.org/x/sys/unix"
 )
 
 // AsOSFile attempts to convert fs.File to *os.File.
@@ -21,7 +22,7 @@ func AsOSFile(f fs.File, name string) (*os.File, error) {
 		return nil, errors.ErrUnsupported
 	}
 
-	newFd, err := syscall.Dup(int(ff.Fd()))
+	newFd, err := unix.FcntlInt(ff.Fd(), unix.F_DUPFD_CLOEXEC, 0)
 	if err != nil {
 		return nil, fmt.Errorf("failed to duplicate file descriptor: %w", err)
 	}
