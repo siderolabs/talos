@@ -90,11 +90,11 @@ func (suite *MetaSuite) TestMetaWriteDelete() {
 		const invalidKey = 0x100 // above uint8
 
 		// using direct client here as the wrapper limits to uint8
-		_, err := suite.Client.MachineClient.MetaWrite(ctx, &machine.MetaWriteRequest{Key: invalidKey, Value: []byte(metaValue)})
+		_, err := suite.Client.MachineService().MetaWrite(ctx, &machine.MetaWriteRequest{Key: invalidKey, Value: []byte(metaValue)})
 		suite.Require().Error(err)
 		suite.Assert().Equal(codes.InvalidArgument, status.Code(err))
 
-		_, err = suite.Client.MachineClient.MetaDelete(ctx, &machine.MetaDeleteRequest{Key: invalidKey})
+		_, err = suite.Client.MachineService().MetaDelete(ctx, &machine.MetaDeleteRequest{Key: invalidKey})
 		suite.Require().Error(err)
 		suite.Assert().Equal(codes.InvalidArgument, status.Code(err))
 	})

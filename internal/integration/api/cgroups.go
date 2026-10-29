@@ -98,7 +98,7 @@ func (suite *CGroupsSuite) listRootCgroup() map[string]struct{} {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	stream, err := suite.Client.MachineClient.List(ctx, &machineapi.ListRequest{Root: constants.CgroupMountPath})
+	stream, err := suite.Client.MachineService().List(ctx, &machineapi.ListRequest{Root: constants.CgroupMountPath})
 	suite.Require().NoError(err)
 
 	names := map[string]struct{}{}

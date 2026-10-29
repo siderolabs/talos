@@ -342,7 +342,7 @@ func (suite *LogsSuite) listPersistentLogs() map[string]int64 {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	stream, err := suite.Client.MachineClient.List(ctx, &machineapi.ListRequest{Root: constants.LogMountPoint})
+	stream, err := suite.Client.MachineService().List(ctx, &machineapi.ListRequest{Root: constants.LogMountPoint})
 	suite.Require().NoError(err)
 
 	sizes := map[string]int64{}

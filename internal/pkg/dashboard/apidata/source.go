@@ -166,7 +166,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.LoadAvg], error) {
-					return source.MachineClient.LoadAvg(ctx, &emptypb.Empty{})
+					return source.MachineService().LoadAvg(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.LoadAvg) {
 					node.LoadAvg = value
@@ -177,7 +177,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.Memory], error) {
-					return source.MachineClient.Memory(ctx, &emptypb.Empty{})
+					return source.MachineService().Memory(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.Memory) {
 					node.Memory = value
@@ -188,7 +188,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.SystemStat], error) {
-					return source.MachineClient.SystemStat(ctx, &emptypb.Empty{})
+					return source.MachineService().SystemStat(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.SystemStat) {
 					node.SystemStat = value
@@ -199,7 +199,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.CPUsFreqStats], error) {
-					return source.MachineClient.CPUFreqStats(ctx, &emptypb.Empty{})
+					return source.MachineService().CPUFreqStats(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.CPUsFreqStats) {
 					node.CPUsFreqStats = value
@@ -210,7 +210,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.CPUsInfo], error) {
-					return source.MachineClient.CPUInfo(ctx, &emptypb.Empty{})
+					return source.MachineService().CPUInfo(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.CPUsInfo) {
 					node.CPUsInfo = value
@@ -221,7 +221,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.NetworkDeviceStats], error) {
-					return source.MachineClient.NetworkDeviceStats(ctx, &emptypb.Empty{})
+					return source.MachineService().NetworkDeviceStats(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.NetworkDeviceStats) {
 					node.NetDevStats = value
@@ -232,7 +232,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.DiskStats], error) {
-					return source.MachineClient.DiskStats(ctx, &emptypb.Empty{})
+					return source.MachineService().DiskStats(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.DiskStats) {
 					node.DiskStats = value
@@ -243,7 +243,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.Process], error) {
-					return source.MachineClient.Processes(ctx, &emptypb.Empty{})
+					return source.MachineService().Processes(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.Process) {
 					node.Processes = value
@@ -254,7 +254,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.ServiceList], error) {
-					return source.MachineClient.ServiceList(ctx, &emptypb.Empty{})
+					return source.MachineService().ServiceList(ctx, &emptypb.Empty{})
 				},
 				func(node *Node, value *machine.ServiceList) {
 					node.ServiceList = value
@@ -268,7 +268,7 @@ func (source *Source) gather() *Data {
 			return runGather(
 				source, result.Nodes, &resultLock,
 				func(ctx context.Context) (protoMsg[*machine.Stats], error) {
-					return source.MachineClient.Stats(ctx, &machine.StatsRequest{
+					return source.MachineService().Stats(ctx, &machine.StatsRequest{
 						Namespace: constants.TalosContainersContainerdNamespace,
 						Driver:    common.ContainerDriver_CONTAINERD,
 					})

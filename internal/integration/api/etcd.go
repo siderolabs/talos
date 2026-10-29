@@ -130,7 +130,7 @@ func (suite *EtcdSuite) TestLeaveCluster() {
 	// LeaveCluster nukes the etcd data in place; /var/lib/etcd itself remains (it may be a
 	// dedicated volume mount point), so assert the data (member directory) is gone rather than
 	// the whole path.
-	stream, err := suite.Client.MachineClient.List(nodeCtx, &machineapi.ListRequest{Root: filepath.Join(constants.EtcdDataPath, "member")})
+	stream, err := suite.Client.MachineService().List(nodeCtx, &machineapi.ListRequest{Root: filepath.Join(constants.EtcdDataPath, "member")})
 	suite.Require().NoError(err)
 
 	_, err = stream.Recv()
@@ -142,7 +142,7 @@ func (suite *EtcdSuite) TestLeaveCluster() {
 	// to check the cluster health and catch any issues in rejoining.
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
-			_, err = suite.Client.MachineClient.Reboot(nodeCtx, &machineapi.RebootRequest{})
+			_, err = suite.Client.MachineService().Reboot(nodeCtx, &machineapi.RebootRequest{})
 
 			return err
 		}, 10*time.Minute,
@@ -272,7 +272,7 @@ func (suite *EtcdSuite) TestRemoveMember() {
 	// to check the cluster health and catch any issues in rejoining.
 	suite.AssertRebooted(
 		suite.ctx, nodeToRemove, func(nodeCtx context.Context) error {
-			_, err = suite.Client.MachineClient.Reset(nodeCtx, &machineapi.ResetRequest{
+			_, err = suite.Client.MachineService().Reset(nodeCtx, &machineapi.ResetRequest{
 				Reboot:                 true,
 				SystemPartitionsToWipe: partitionsToWipe,
 			})

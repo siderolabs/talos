@@ -46,25 +46,25 @@ func (suite *MonitoringSuite) TestMonitoringAPIs() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	_, err := suite.Client.MachineClient.CPUFreqStats(nodeCtx, &emptypb.Empty{})
+	_, err := suite.Client.MachineService().CPUFreqStats(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.CPUInfo(nodeCtx, &emptypb.Empty{})
+	_, err = suite.Client.MachineService().CPUInfo(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.DiskStats(nodeCtx, &emptypb.Empty{})
+	_, err = suite.Client.MachineService().DiskStats(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.LoadAvg(nodeCtx, &emptypb.Empty{})
+	_, err = suite.Client.MachineService().LoadAvg(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.Memory(nodeCtx, &emptypb.Empty{})
+	_, err = suite.Client.MachineService().Memory(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.NetworkDeviceStats(nodeCtx, &emptypb.Empty{})
+	_, err = suite.Client.MachineService().NetworkDeviceStats(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.MachineClient.SystemStat(nodeCtx, &emptypb.Empty{})
+	_, err = suite.Client.MachineService().SystemStat(nodeCtx, &emptypb.Empty{})
 	suite.Require().NoError(err)
 }
 

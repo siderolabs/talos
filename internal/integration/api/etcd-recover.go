@@ -135,7 +135,7 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 
 	// verify that etcd data directory doesn't exist on the nodes
 	for _, node := range controlPlaneNodes {
-		stream, err := suite.Client.MachineClient.List(client.WithNode(suite.ctx, node), &machineapi.ListRequest{Root: filepath.Join(constants.EtcdDataPath, "member")})
+		stream, err := suite.Client.MachineService().List(client.WithNode(suite.ctx, node), &machineapi.ListRequest{Root: filepath.Join(constants.EtcdDataPath, "member")})
 		suite.Require().NoError(err)
 
 		_, err = stream.Recv()
