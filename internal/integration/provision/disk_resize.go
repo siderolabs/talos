@@ -255,7 +255,7 @@ func (suite *DiskResizeSuite) growQEMUDisk(ctx context.Context, nodeName string,
 }
 
 func (suite *DiskResizeSuite) mountSize(ctx context.Context, cli *client.Client, mountPoint string) uint64 {
-	resp, err := cli.MachineStorageClient.Statfs(ctx, &machine.StorageServiceStatfsRequest{
+	resp, err := cli.MachineStorageService().Statfs(ctx, &machine.StorageServiceStatfsRequest{
 		Path: mountPoint,
 	})
 	suite.Require().NoError(err)

@@ -176,7 +176,7 @@ func collectDiskFree(ctx context.Context, c *client.Client, volumeID string) ([]
 	}
 
 	for i, row := range rows {
-		statfs, err := c.MachineStorageClient.Statfs(ctx, &machine.StorageServiceStatfsRequest{
+		statfs, err := c.MachineStorageService().Statfs(ctx, &machine.StorageServiceStatfsRequest{
 			Path: row.target,
 		})
 		if err != nil {

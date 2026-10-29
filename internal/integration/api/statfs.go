@@ -47,7 +47,7 @@ func (suite *StatfsSuite) TearDownTest() {
 }
 
 func (suite *StatfsSuite) statfs(nodeCtx context.Context, path string) (*machineapi.StorageServiceStatfsResponse, error) {
-	return suite.Client.MachineStorageClient.Statfs(nodeCtx, &machineapi.StorageServiceStatfsRequest{
+	return suite.Client.MachineStorageService().Statfs(nodeCtx, &machineapi.StorageServiceStatfsRequest{
 		Path: path,
 	})
 }
