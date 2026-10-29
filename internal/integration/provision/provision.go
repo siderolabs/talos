@@ -550,7 +550,7 @@ func (suite *BaseSuite) upgradeViaLifecycleService(
 	responseChan := streamPerNode(
 		ctx, nodes,
 		func(ctx context.Context) (grpc.ServerStreamingClient[machineapi.LifecycleServiceUpgradeResponse], error) {
-			return c.LifecycleClient.Upgrade(ctx, &machineapi.LifecycleServiceUpgradeRequest{
+			return c.LifecycleService().Upgrade(ctx, &machineapi.LifecycleServiceUpgradeRequest{
 				Containerd: containerdInstance,
 				Source: &machineapi.InstallArtifactsSource{
 					ImageName: imageRef,

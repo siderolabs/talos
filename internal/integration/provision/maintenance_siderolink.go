@@ -286,7 +286,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 			suite.Require().NotEmpty(installImageName, "installer image name should be returned")
 
 			// try upgrade first, it should fail, as the machine hasn't been installed yet
-			upgradeCli, err := maintenanceClient.LifecycleClient.Upgrade(suite.ctx, &machine.LifecycleServiceUpgradeRequest{
+			upgradeCli, err := maintenanceClient.LifecycleService().Upgrade(suite.ctx, &machine.LifecycleServiceUpgradeRequest{
 				Containerd: &common.ContainerdInstance{
 					Driver:    common.ContainerDriver_CONTAINERD,
 					Namespace: common.ContainerdNamespace_NS_SYSTEM,
@@ -303,7 +303,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 			suite.Assert().Equal(codes.FailedPrecondition, client.StatusCode(err))
 
 			// now install the machine
-			installCli, err := maintenanceClient.LifecycleClient.Install(suite.ctx, &machine.LifecycleServiceInstallRequest{
+			installCli, err := maintenanceClient.LifecycleService().Install(suite.ctx, &machine.LifecycleServiceInstallRequest{
 				Containerd: &common.ContainerdInstance{
 					Driver:    common.ContainerDriver_CONTAINERD,
 					Namespace: common.ContainerdNamespace_NS_SYSTEM,

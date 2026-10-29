@@ -187,7 +187,7 @@ func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, c
 	responseChan := multiplex.StreamingViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.LifecycleServiceUpgradeResponse], error) {
-			return c.LifecycleClient.Upgrade(ctx, &machine.LifecycleServiceUpgradeRequest{
+			return c.LifecycleService().Upgrade(ctx, &machine.LifecycleServiceUpgradeRequest{
 				Containerd: containerdInstance,
 				Source: &machine.InstallArtifactsSource{
 					ImageName: imageRef,

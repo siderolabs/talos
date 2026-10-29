@@ -201,7 +201,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 
 		suite.Require().NotEmpty(imgRef)
 
-		upgradeClient, err := c.LifecycleClient.Upgrade(
+		upgradeClient, err := c.LifecycleService().Upgrade(
 			nodeCtx,
 			&machine.LifecycleServiceUpgradeRequest{
 				Containerd: ctrd,

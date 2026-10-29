@@ -170,7 +170,7 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 		suite.Require().Equal(codes.PermissionDenied, client.StatusCode(err))
 
 		// install API should not be allowed in maintenance mode
-		installClient, err := maintenanceClient.LifecycleClient.Install(suite.ctx, &machine.LifecycleServiceInstallRequest{})
+		installClient, err := maintenanceClient.LifecycleService().Install(suite.ctx, &machine.LifecycleServiceInstallRequest{})
 		suite.Require().NoError(err)
 
 		_, err = installClient.Recv()
