@@ -54,6 +54,8 @@ type LV struct {
 	CopyPercent       string `json:"copy_percent"`
 	HealthStatus      string `json:"lv_health_status"`
 	Attr              string `json:"lv_attr"`
+	RaidSyncAction    string `json:"raid_sync_action"`
+	RaidMismatchCount string `json:"raid_mismatch_count"`
 }
 
 // LVS runs `lvm lvs -a -o +all --reportformat json --units b --nosuffix`
