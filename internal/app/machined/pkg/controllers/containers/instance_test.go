@@ -1443,3 +1443,117 @@ func (suite *InstanceSuite) TestRunStatusKeptWhileInstanceStops() {
 
 	ctest.AssertNoResource[*containers.ContainerRunStatus](suite, testContainer)
 }
+
+const initContainer = "init"
+
+// finishInitInstance fakes a generation of the init container's instance exiting with exitCode.
+func (suite *InstanceSuite) finishInitInstance(generation uint64, exitCode int32) {
+	name := initContainer
+	finishedAt := time.Now().Add(-time.Hour)
+
+	status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(name, generation))
+	status.TypedSpec().ContainerID = name
+	status.TypedSpec().Generation = generation
+	status.TypedSpec().Phase = containers.ContainerInstancePhaseTerminated
+	status.TypedSpec().ExitCode = exitCode
+	status.TypedSpec().StartedAt = finishedAt.Add(-time.Second)
+	status.TypedSpec().FinishedAt = finishedAt
+	status.Metadata().Labels().Set(containers.ContainerSpecIdLabel, name)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), status))
+}
+
+// createInitAndDependent declares an init container run once, and testContainer depending on it
+// having succeeded.
+func (suite *InstanceSuite) createInitAndDependent() {
+	suite.createNamedSpec(initContainer, withRestart(containers.ContainerRestartSpec{Policy: containers.ContainerRestartPolicyNever}))
+	suite.markNamedImageReady(initContainer, testDigest)
+
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.DependsOn.Containers = []containers.ContainerDependencySpec{
+			{Name: initContainer, Condition: containers.ContainerDependencyConditionSucceeded},
+		}
+	})
+
+	ctest.AssertResource(suite, containers.InstanceID(initContainer, 0), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+}
+
+// TestDependsOnSucceeded covers a container started only once the container it depends on succeeded.
+func (suite *InstanceSuite) TestDependsOnSucceeded() {
+	suite.createInitAndDependent()
+	suite.markImageReady()
+
+	suite.assertWaitingFor("container: init to succeed")
+	suite.assertNoInstance(0)
+
+	suite.finishInitInstance(0, 0)
+
+	suite.assertInstance(0)
+	suite.assertWaitingFor()
+}
+
+// TestDependsOnFailed covers a container whose dependency failed: it keeps waiting.
+func (suite *InstanceSuite) TestDependsOnFailed() {
+	suite.createInitAndDependent()
+	suite.markImageReady()
+
+	suite.finishInitInstance(0, 3)
+
+	suite.tick()
+
+	suite.assertWaitingFor("container: init to succeed")
+	suite.assertNoInstance(0)
+}
+
+// TestDependencyRunAgainKeepsDependent covers the dependency running again after a change of its
+// configuration: the running dependent is left alone.
+func (suite *InstanceSuite) TestDependencyRunAgainKeepsDependent() {
+	suite.createInitAndDependent()
+	suite.markImageReady()
+
+	suite.finishInitInstance(0, 0)
+
+	suite.assertInstance(0)
+
+	ctest.UpdateWithConflicts(suite, containers.NewContainerSpec(containers.NamespaceName, initContainer),
+		func(spec *containers.ContainerSpec) error {
+			spec.TypedSpec().Args = []string{"--again"}
+
+			return nil
+		})
+
+	ctest.AssertResource(suite, containers.InstanceID(initContainer, 1), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+
+	suite.tick()
+
+	suite.assertNoInstance(1)
+	suite.assertInstance(0)
+}
+
+// TestDependsOnStaleSuccess covers a dependency which succeeded, but whose configuration changed
+// before the dependent could start: it waits for the new run to succeed.
+func (suite *InstanceSuite) TestDependsOnStaleSuccess() {
+	suite.createInitAndDependent()
+
+	suite.finishInitInstance(0, 0)
+
+	ctest.UpdateWithConflicts(suite, containers.NewContainerSpec(containers.NamespaceName, initContainer),
+		func(spec *containers.ContainerSpec) error {
+			spec.TypedSpec().Args = []string{"--again"}
+
+			return nil
+		})
+
+	ctest.AssertResource(suite, containers.InstanceID(initContainer, 1), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+
+	suite.markImageReady()
+
+	suite.tick()
+
+	suite.assertWaitingFor("container: init to succeed")
+	suite.assertNoInstance(0)
+
+	suite.finishInitInstance(1, 0)
+
+	suite.assertInstance(0)
+}

@@ -457,6 +457,23 @@ A container which is not restarted reports `completed` or `failed` in `Container
 It runs again after a reboot or a restart of machined, and `talosctl restart` only signals it, so it does not run it again.
 """
 
+    [notes.container_depends_on_succeeded]
+        title = "Container Dependencies on Succeeded Containers"
+        description = """\
+A `ContainerConfig` container can now wait for another container to have run successfully, e.g. one preparing a directory or a database schema it needs:
+
+```yaml
+dependsOn:
+  containers:
+    - name: migrate
+      condition: succeeded
+    - db
+```
+
+`succeeded` waits for the container to have exited with code 0 and not to be restarted, so it has to use the `never` or `on-failure` restart policy; a plain name still waits for the container to be running and healthy.
+As the containers run again on every boot, so does this order.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

@@ -172,8 +172,27 @@ type ContainerDependsOnConfig interface {
 	Network() []string
 	// Time is true if the clock must be synchronized.
 	Time() bool
-	// Containers which must be running first, by document name.
-	Containers() []string
+	// Containers which must be running, or have succeeded, first.
+	Containers() []ContainerDependencyConfig
+}
+
+// ContainerDependencyCondition is what a container waits for in a container it depends on.
+type ContainerDependencyCondition string
+
+// Container dependency conditions.
+const (
+	// ContainerDependencyConditionRunning waits for the container to be running and healthy. This is the default.
+	ContainerDependencyConditionRunning ContainerDependencyCondition = "running"
+	// ContainerDependencyConditionSucceeded waits for the container to have exited with code 0, not to be restarted.
+	ContainerDependencyConditionSucceeded ContainerDependencyCondition = "succeeded"
+)
+
+// ContainerDependencyConfig is a container another one depends on.
+type ContainerDependencyConfig interface {
+	// Name of the ContainerConfig document.
+	Name() string
+	// Condition to wait for; defaults to running.
+	Condition() ContainerDependencyCondition
 }
 
 // ContainerRestartPolicy selects when a container is restarted after it exits.

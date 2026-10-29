@@ -1484,6 +1484,27 @@
       ],
       "description": "ContainerConfig is a container configuration document.\\nContainerConfig declares a container to be run by Talos directly, without Kubernetes.\\n\\nThe container is started as soon as the configuration is applied, with no image rebuild\\nand no reboot. It runs against the CRI containerd instance in the dedicated\\n`taloscontainers` namespace, and by default is restarted 5 seconds after it stops.\\n\\nContainers are not Talos services: they do not appear in `talosctl services`, and\\n`talosctl service` does not apply to them. Status is reported via `ContainerStatus`.\\n"
     },
+    "container.ContainerDependency": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the ContainerConfig document.\n",
+          "markdownDescription": "Name of the ContainerConfig document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the ContainerConfig document.\u003c/p\u003e\n"
+        },
+        "condition": {
+          "type": "string",
+          "title": "condition",
+          "description": "running (the default) waits for the container to be running and healthy, succeeded for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.\n",
+          "markdownDescription": "`running` (the default) waits for the container to be running and healthy, `succeeded` for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.",
+          "x-intellij-html-description": "\u003cp\u003e\u003ccode\u003erunning\u003c/code\u003e (the default) waits for the container to be running and healthy, \u003ccode\u003esucceeded\u003c/code\u003e for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerDependency is a container which must be running, or have succeeded, first."
+    },
     "container.ContainerDependsOn": {
       "properties": {
         "paths": {
@@ -1517,13 +1538,20 @@
         },
         "containers": {
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/container.ContainerDependency"
+              }
+            ]
           },
           "type": "array",
           "title": "containers",
-          "description": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.\n",
-          "markdownDescription": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
-          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
+          "description": "Other containers, by document name, which must be running first, or have succeeded.\n\nAn entry is either the name of a container which must be running and healthy, or a name with\na condition. Cycles are rejected when the machine configuration is applied.\n",
+          "markdownDescription": "Other containers, by document name, which must be running first, or have succeeded.\n\nAn entry is either the name of a container which must be running and healthy, or a name with\na condition. Cycles are rejected when the machine configuration is applied.",
+          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first, or have succeeded.\u003c/p\u003e\n\n\u003cp\u003eAn entry is either the name of a container which must be running and healthy, or a name with\na condition. Cycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -9,6 +9,12 @@ import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
+// ContainerDependencySpec is a container another one depends on.
+message ContainerDependencySpec {
+  string name = 1;
+  talos.resource.definitions.enums.ContainersContainerDependencyCondition condition = 2;
+}
+
 // ContainerDependencyStatusSpec is the spec for ContainerDependencyStatus.
 message ContainerDependencyStatusSpec {
   // WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries).
@@ -20,7 +26,7 @@ message ContainerDependsOnSpec {
   repeated string paths = 1;
   repeated string networks = 2;
   bool time = 3;
-  repeated string containers = 4;
+  repeated ContainerDependencySpec containers = 5;
 }
 
 // ContainerDeviceSpec is a device handed to the container.

@@ -356,6 +356,61 @@ func loggedTimes(log, prefix string) []int64 {
 	return times
 }
 
+// TestDependsOnSucceeded verifies that a container depending on another one having succeeded starts
+// after it, and sees what it prepared.
+func (suite *ContainersSuite) TestDependsOnSucceeded() {
+	ctx, name, node := suite.setupContainer("dependson-succeeded")
+
+	initName := name + "-init"
+
+	volumeName := suite.setupUserVolume(ctx, node, name, "init")
+
+	// after the volume's, so it runs before it: the volume can't go while a container uses it, and
+	// init can't go while the other container depends on it
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(context.Background(), node), containercfg.ContainerConfigKind, name, initName)
+	})
+
+	const destination = "/mnt/data"
+
+	mounts := []containercfg.ContainerMount{
+		{
+			VolumeMount: &containercfg.VolumeMount{
+				VolumeName:       volumeName,
+				MountDestination: destination,
+			},
+		},
+	}
+
+	initDoc := suite.shellContainer(initName, "sleep 5 && echo prepared > "+destination+"/state")
+	initDoc.MountsConfig = mounts
+	initDoc.RestartConfig = &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyNever}
+
+	doc := suite.shellContainer(name, "cat "+destination+"/state && sleep 3600")
+	doc.MountsConfig = mounts
+	doc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		ContainersConfig: []containercfg.ContainerDependency{
+			{DependencyName: initName, DependencyCondition: configcontainer.ContainerDependencyConditionSucceeded},
+		},
+	}
+
+	suite.applyContainers(ctx, initDoc, doc)
+
+	suite.assertContainerStatus(ctx, name, "waiting for "+initName,
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State)
+			asrt.Contains(status.WaitingFor, "container: "+initName+" to succeed")
+		})
+
+	suite.assertContainerStatus(ctx, initName, "completed",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateCompleted, status.State, "error %q", status.Error)
+		})
+
+	suite.assertContainerRunning(ctx, name, "after "+initName+" succeeded")
+	suite.assertContainerLogged(ctx, name, "prepared")
+}
+
 // TestContainerStatus verifies the aggregated, user-facing ContainerStatus.
 func (suite *ContainersSuite) TestContainerStatus() {
 	if testing.Short() {
@@ -1040,7 +1095,7 @@ func (suite *ContainersSuite) TestDependsOnContainers() {
 
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
 	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		ContainersConfig: []string{dependency},
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
 	}
 
 	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
@@ -1099,7 +1154,7 @@ func (suite *ContainersSuite) TestDependsOnFailingContainer() {
 
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
 	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		ContainersConfig: []string{dependency},
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
 	}
 
 	suite.applyContainers(ctx, dependencyDoc, waiterDoc)

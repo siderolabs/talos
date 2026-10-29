@@ -1038,6 +1038,12 @@ enum ContainersContainerInstancePhase {
   CONTAINER_INSTANCE_PHASE_FAILED = 3;
 }
 
+// ContainersContainerDependencyCondition describes what a container waits for in a container it depends on.
+enum ContainersContainerDependencyCondition {
+  CONTAINER_DEPENDENCY_CONDITION_RUNNING = 0;
+  CONTAINER_DEPENDENCY_CONDITION_SUCCEEDED = 1;
+}
+
 // ContainersContainerRestartPolicy describes when a container is restarted after it exits.
 enum ContainersContainerRestartPolicy {
   CONTAINER_RESTART_POLICY_ALWAYS = 0;

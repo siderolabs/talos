@@ -15,6 +15,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/rivo/tview"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -523,7 +524,13 @@ func formatDependsOn(dependsOn containers.ContainerDependsOnSpec) string {
 	}
 
 	if len(dependsOn.Containers) > 0 {
-		parts = append(parts, "containers "+strings.Join(dependsOn.Containers, ","))
+		parts = append(parts, "containers "+strings.Join(xslices.Map(dependsOn.Containers, func(dependency containers.ContainerDependencySpec) string {
+			if dependency.Condition == containers.ContainerDependencyConditionSucceeded {
+				return dependency.Name + " (succeeded)"
+			}
+
+			return dependency.Name
+		}), ","))
 	}
 
 	if len(parts) == 0 {

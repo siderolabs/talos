@@ -6,7 +6,14 @@ package containers
 
 import (
 	"cmp"
+	"context"
+	"fmt"
 	"time"
+
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -59,6 +66,66 @@ func (restart ContainerRestartSpec) RestartBackoff(runStatus ContainerRunStatusS
 	}
 
 	return step, min(delay, maxDelay)
+}
+
+// ContainerSucceeded reports whether a container ran successfully and is not run again: its latest
+// instance succeeded with the current configuration, no restart is pending and the restart policy
+// doesn't restart it.
+func ContainerSucceeded(ctx context.Context, r controller.Reader, containerID string) (bool, error) {
+	containerSpec, err := safe.ReaderGetByID[*ContainerSpec](ctx, r, containerID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get container spec %q: %w", containerID, err)
+	}
+
+	instanceStatus, err := LatestInstanceStatus(ctx, r, containerID)
+	if err != nil {
+		return false, err
+	}
+
+	if instanceStatus == nil || !instanceStatus.TypedSpec().Succeeded() {
+		return false, nil
+	}
+
+	instanceSpec, err := CurrentInstanceSpec(ctx, r, containerID, instanceStatus)
+	if err != nil {
+		return false, err
+	}
+
+	if !runsConfiguration(instanceSpec, containerSpec.TypedSpec().ExecutionHash()) {
+		return false, nil
+	}
+
+	runStatus, err := currentRunStatus(ctx, r, containerID)
+	if err != nil {
+		return false, err
+	}
+
+	return containerSpec.TypedSpec().Restart.FinishedState(runStatus, *instanceStatus.TypedSpec()) == ContainerStateCompleted, nil
+}
+
+// runsConfiguration reports whether an instance runs the configuration with the execution hash, and
+// isn't being replaced.
+func runsConfiguration(instanceSpec *ContainerInstanceSpec, executionHash string) bool {
+	return instanceSpec != nil && instanceSpec.Metadata().Phase() == resource.PhaseRunning &&
+		instanceSpec.TypedSpec().ExecutionHash == executionHash
+}
+
+// currentRunStatus returns the restart accounting of a container, empty if there is none yet.
+func currentRunStatus(ctx context.Context, r controller.Reader, containerID string) (ContainerRunStatusSpec, error) {
+	containerRunStatus, err := safe.ReaderGetByID[*ContainerRunStatus](ctx, r, containerID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return ContainerRunStatusSpec{}, nil
+		}
+
+		return ContainerRunStatusSpec{}, fmt.Errorf("failed to get run status %q: %w", containerID, err)
+	}
+
+	return *containerRunStatus.TypedSpec(), nil
 }
 
 // FinishedState returns the state of a container whose newest instance has finished.

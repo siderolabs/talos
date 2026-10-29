@@ -133,7 +133,7 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			*cp.DependsOnConfig.TimeConfig = *o.DependsOnConfig.TimeConfig
 		}
 		if o.DependsOnConfig.ContainersConfig != nil {
-			cp.DependsOnConfig.ContainersConfig = make([]string, len(o.DependsOnConfig.ContainersConfig))
+			cp.DependsOnConfig.ContainersConfig = make([]ContainerDependency, len(o.DependsOnConfig.ContainersConfig))
 			copy(cp.DependsOnConfig.ContainersConfig, o.DependsOnConfig.ContainersConfig)
 		}
 	}

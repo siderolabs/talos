@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -189,10 +190,18 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 
 	dependsOn := containerConfig.DependsOn()
 	containerSpecSpec.DependsOn = containers.ContainerDependsOnSpec{
-		Paths:      dependsOn.Paths(),
-		Networks:   dependsOn.Network(),
-		Time:       dependsOn.Time(),
-		Containers: dependsOn.Containers(),
+		Paths:    dependsOn.Paths(),
+		Networks: dependsOn.Network(),
+		Time:     dependsOn.Time(),
+		Containers: xslices.Map(dependsOn.Containers(), func(dependency configcfg.ContainerDependencyConfig) containers.ContainerDependencySpec {
+			condition := containers.ContainerDependencyConditionRunning
+
+			if dependency.Condition() == configcfg.ContainerDependencyConditionSucceeded {
+				condition = containers.ContainerDependencyConditionSucceeded
+			}
+
+			return containers.ContainerDependencySpec{Name: dependency.Name(), Condition: condition}
+		}),
 	}
 
 	restart := containerConfig.Restart()

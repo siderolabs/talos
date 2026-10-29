@@ -88,6 +88,17 @@ func (phase ContainerInstancePhase) Done() bool {
 	return phase == ContainerInstancePhaseTerminated || phase == ContainerInstancePhaseFailed
 }
 
+// ContainerDependencyCondition describes what a container waits for in a container it depends on.
+type ContainerDependencyCondition int
+
+// Container dependency conditions.
+//
+//structprotogen:gen_enum
+const (
+	ContainerDependencyConditionRunning   ContainerDependencyCondition = iota // running
+	ContainerDependencyConditionSucceeded                                     // succeeded
+)
+
 // ContainerRestartPolicy describes when a container is restarted after it exits.
 type ContainerRestartPolicy int
 

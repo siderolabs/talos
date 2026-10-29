@@ -62,6 +62,12 @@ dependsOn:
         - addresses
     time: true # Whether the clock must be synchronized before the container starts.
 
+    # # Other containers, by document name, which must be running first, or have succeeded.
+    # containers:
+    #     - name: migrate
+    #       condition: succeeded
+    #     - db
+
 # # Devices to hand to the container.
 # devices:
 #     - # Hand a raw volume to the container as a block device.
@@ -356,7 +362,37 @@ paths:
 {{< /highlight >}}</details> | |
 |`network` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
 |`time` |bool |Whether the clock must be synchronized before the container starts.  | |
-|`containers` |[]string |Other containers, by document name, which must be running first.<br><br>Cycles are rejected when the machine configuration is applied.  | |
+|`containers` |<a href="#ContainerConfig.dependsOn.containers.">[]ContainerDependency</a> |Other containers, by document name, which must be running first, or have succeeded.<br><br>An entry is either the name of a container which must be running and healthy, or a name with<br>a condition. Cycles are rejected when the machine configuration is applied. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+containers:
+    - name: migrate
+      condition: succeeded
+    - db
+{{< /highlight >}}</details> | |
+
+
+
+
+### containers[] {#ContainerConfig.dependsOn.containers.}
+
+ContainerDependency is a container which must be running, or have succeeded, first.
+
+
+
+{{< highlight yaml >}}
+dependsOn:
+    containers:
+        - name: migrate
+          condition: succeeded
+        - db
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Name of the ContainerConfig document.  | |
+|`condition` |ContainerDependencyCondition |`running` (the default) waits for the container to be running and healthy, `succeeded` for<br>it to have exited with code 0 and not to be restarted, e.g. a container preparing what this one<br>needs. It is checked again on every boot, as the containers run again.  |`running`<br />`succeeded`<br /> |
+
+
 
 
 

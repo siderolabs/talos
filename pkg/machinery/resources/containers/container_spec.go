@@ -387,10 +387,18 @@ func pointerValuesEqual[T comparable](a, b *T) bool {
 //
 //gotagsrewrite:gen
 type ContainerDependsOnSpec struct {
-	Paths      []string `yaml:"paths,omitempty" protobuf:"1"`
-	Networks   []string `yaml:"networks,omitempty" protobuf:"2"`
-	Time       bool     `yaml:"time,omitempty" protobuf:"3"`
-	Containers []string `yaml:"containers,omitempty" protobuf:"4"`
+	Paths      []string                  `yaml:"paths,omitempty" protobuf:"1"`
+	Networks   []string                  `yaml:"networks,omitempty" protobuf:"2"`
+	Time       bool                      `yaml:"time,omitempty" protobuf:"3"`
+	Containers []ContainerDependencySpec `yaml:"containers,omitempty" protobuf:"5"`
+}
+
+// ContainerDependencySpec is a container another one depends on.
+//
+//gotagsrewrite:gen
+type ContainerDependencySpec struct {
+	Name      string                       `yaml:"name" protobuf:"1"`
+	Condition ContainerDependencyCondition `yaml:"condition" protobuf:"2"`
 }
 
 // Ready reports the declared dependsOn gates that are not yet satisfied, and how soon the caller
@@ -532,47 +540,71 @@ func (dependsOn ContainerDependsOnSpec) ContainersReady(
 		wakeUpAfter optional.Optional[time.Duration]
 	)
 
-	for _, name := range dependsOn.Containers {
-		status, err := safe.ReaderGetByID[*ContainerStatus](ctx, r, name)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				waitingFor = append(waitingFor, "container: "+name)
+	for _, dependency := range dependsOn.Containers {
+		name := dependency.Name
 
-				continue
+		if dependency.Condition == ContainerDependencyConditionSucceeded {
+			succeeded, err := ContainerSucceeded(ctx, r, name)
+			if err != nil {
+				return nil, optional.None[time.Duration](), err
 			}
 
-			return nil, optional.None[time.Duration](), fmt.Errorf("failed to get container status %q: %w", name, err)
-		}
-
-		// State as well as Health: an instance on its way out keeps the Health it had, by design, so
-		// Health alone would let a dependency that is being torn down satisfy the gate.
-		if status.TypedSpec().Health != ContainerHealthHealthy || status.TypedSpec().State != ContainerStateRunning {
-			waitingFor = append(waitingFor, "container: "+name)
+			if !succeeded {
+				waitingFor = append(waitingFor, "container: "+name+" to succeed")
+			}
 
 			continue
 		}
 
-		instanceStatus, err := LatestInstanceStatus(ctx, r, name)
+		running, wakeUpAfterRunning, err := containerRunning(ctx, r, name)
 		if err != nil {
-			return nil, optional.None[time.Duration](), fmt.Errorf("failed to get instance status for container %q: %w", name, err)
+			return nil, optional.None[time.Duration](), err
 		}
 
-		// Health said Healthy but the newest instance status disagrees: a stale read between two
-		// resources written by different controllers. Treat as not yet trustworthy rather than
-		// erroring -- the next pass sees a consistent view.
-		if instanceStatus == nil || instanceStatus.TypedSpec().Phase != ContainerInstancePhaseRunning {
+		if !running {
 			waitingFor = append(waitingFor, "container: "+name)
-
-			continue
-		}
-
-		if since := time.Since(instanceStatus.TypedSpec().StartedAt); since < containerDependencyStabilityWindow {
-			waitingFor = append(waitingFor, "container: "+name)
-			wakeUpAfter = EarliestWakeUpAfter(wakeUpAfter, optional.Some(containerDependencyStabilityWindow-since))
+			wakeUpAfter = EarliestWakeUpAfter(wakeUpAfter, wakeUpAfterRunning)
 		}
 	}
 
 	return waitingFor, wakeUpAfter, nil
+}
+
+// containerRunning reports whether a container is running, healthy, and has been for long enough to
+// trust (see containerDependencyStabilityWindow), and how soon to recheck one which hasn't yet.
+func containerRunning(ctx context.Context, r controller.Reader, name string) (bool, optional.Optional[time.Duration], error) {
+	status, err := safe.ReaderGetByID[*ContainerStatus](ctx, r, name)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, optional.None[time.Duration](), nil
+		}
+
+		return false, optional.None[time.Duration](), fmt.Errorf("failed to get container status %q: %w", name, err)
+	}
+
+	// State as well as Health: an instance on its way out keeps the Health it had, by design, so
+	// Health alone would let a dependency that is being torn down satisfy the gate.
+	if status.TypedSpec().Health != ContainerHealthHealthy || status.TypedSpec().State != ContainerStateRunning {
+		return false, optional.None[time.Duration](), nil
+	}
+
+	instanceStatus, err := LatestInstanceStatus(ctx, r, name)
+	if err != nil {
+		return false, optional.None[time.Duration](), fmt.Errorf("failed to get instance status for container %q: %w", name, err)
+	}
+
+	// Health said Healthy but the newest instance status disagrees: a stale read between two
+	// resources written by different controllers. Treat as not yet trustworthy rather than
+	// erroring -- the next pass sees a consistent view.
+	if instanceStatus == nil || instanceStatus.TypedSpec().Phase != ContainerInstancePhaseRunning {
+		return false, optional.None[time.Duration](), nil
+	}
+
+	if since := time.Since(instanceStatus.TypedSpec().StartedAt); since < containerDependencyStabilityWindow {
+		return false, optional.Some(containerDependencyStabilityWindow - since), nil
+	}
+
+	return true, optional.None[time.Duration](), nil
 }
 
 // NetworkConditionMet reports whether one declared dependsOn.network condition is satisfied.

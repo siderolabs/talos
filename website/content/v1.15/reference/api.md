@@ -346,6 +346,7 @@ description: Talos gRPC API reference.
     - [BlockNFSVersion](#talos.resource.definitions.enums.BlockNFSVersion)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
+    - [ContainersContainerDependencyCondition](#talos.resource.definitions.enums.ContainersContainerDependencyCondition)
     - [ContainersContainerHealth](#talos.resource.definitions.enums.ContainersContainerHealth)
     - [ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase)
     - [ContainersContainerInstancePhase](#talos.resource.definitions.enums.ContainersContainerInstancePhase)
@@ -469,6 +470,7 @@ description: Talos gRPC API reference.
     - [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint)
   
 - [resource/definitions/containers/containers.proto](#resource/definitions/containers/containers.proto)
+    - [ContainerDependencySpec](#talos.resource.definitions.containers.ContainerDependencySpec)
     - [ContainerDependencyStatusSpec](#talos.resource.definitions.containers.ContainerDependencyStatusSpec)
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec)
@@ -5923,6 +5925,18 @@ BlockVolumeType describes volume type.
 
 
 
+<a name="talos.resource.definitions.enums.ContainersContainerDependencyCondition"></a>
+
+### ContainersContainerDependencyCondition
+ContainersContainerDependencyCondition describes what a container waits for in a container it depends on.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_DEPENDENCY_CONDITION_RUNNING | 0 |  |
+| CONTAINER_DEPENDENCY_CONDITION_SUCCEEDED | 1 |  |
+
+
+
 <a name="talos.resource.definitions.enums.ContainersContainerHealth"></a>
 
 ### ContainersContainerHealth
@@ -8263,6 +8277,22 @@ ServiceEndpoint describes a service endpoint for discovery.
 
 
 
+<a name="talos.resource.definitions.containers.ContainerDependencySpec"></a>
+
+### ContainerDependencySpec
+ContainerDependencySpec is a container another one depends on.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| condition | [talos.resource.definitions.enums.ContainersContainerDependencyCondition](#talos.resource.definitions.enums.ContainersContainerDependencyCondition) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.containers.ContainerDependencyStatusSpec"></a>
 
 ### ContainerDependencyStatusSpec
@@ -8289,7 +8319,7 @@ ContainerDependsOnSpec is the resolved dependency set.
 | paths | [string](#string) | repeated |  |
 | networks | [string](#string) | repeated |  |
 | time | [bool](#bool) |  |  |
-| containers | [string](#string) | repeated |  |
+| containers | [ContainerDependencySpec](#talos.resource.definitions.containers.ContainerDependencySpec) | repeated |  |
 
 
 

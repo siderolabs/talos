@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
@@ -439,6 +440,16 @@ mounts:
 			expectedErr: "restart.delay must be positive, got -1s",
 		},
 		{
+			name:        "duplicate container dependency",
+			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  containers: [db, {name: db, condition: succeeded}]",
+			expectedErr: `dependsOn.containers lists "db" more than once`,
+		},
+		{
+			name:        "unknown dependency condition",
+			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  containers: [{name: db, condition: started}]",
+			expectedErr: `unsupported dependsOn.containers condition "started"`,
+		},
+		{
 			name:        "zero restart delay",
 			doc:         "name: nginx\nimage: nginx\nrestart:\n  delay: 0s",
 			expectedErr: "restart.delay must be positive, got 0s",
@@ -761,4 +772,42 @@ restart:
 	assert.Equal(t, optional.Some(3), cfg.Restart().MaxRetries())
 	assert.Equal(t, time.Second, cfg.Restart().Delay())
 	assert.Equal(t, time.Minute, cfg.Restart().MaxDelay())
+}
+
+func TestContainerConfigDependsOnContainers(t *testing.T) {
+	t.Parallel()
+
+	cfg := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: app
+image: ghcr.io/example/app:v1.0.0
+dependsOn:
+  containers:
+    - name: migrate
+      condition: succeeded
+    - db
+    - name: cache
+`)
+
+	_, err := cfg.Validate(validationMode{})
+	require.NoError(t, err)
+
+	dependencies := cfg.DependsOn().Containers()
+	require.Len(t, dependencies, 3)
+
+	assert.Equal(t, "migrate", dependencies[0].Name())
+	assert.Equal(t, config.ContainerDependencyConditionSucceeded, dependencies[0].Condition())
+	assert.Equal(t, "db", dependencies[1].Name())
+	assert.Equal(t, config.ContainerDependencyConditionRunning, dependencies[1].Condition())
+	assert.Equal(t, config.ContainerDependencyConditionRunning, dependencies[2].Condition())
+
+	marshaled, err := yaml.Marshal(cfg.DependsOnConfig)
+	require.NoError(t, err)
+
+	assert.Equal(t, `containers:
+    - name: migrate
+      condition: succeeded
+    - db
+    - cache
+`, string(marshaled))
 }
