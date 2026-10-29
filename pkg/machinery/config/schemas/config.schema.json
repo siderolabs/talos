@@ -1522,9 +1522,9 @@
           },
           "type": "array",
           "title": "containers",
-          "description": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.\n",
-          "markdownDescription": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
-          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
+          "description": "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.\n",
+          "markdownDescription": "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
+          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -451,6 +451,14 @@ The timeout applies whenever Talos stops the container: on shutdown, reboot and 
 It defaults to 10s and can be at most 4m, so that stopping containers fits into the shutdown sequence.
 """
 
+    [notes.container_stop_order]
+        title = "Container Shutdown Order"
+        description = """\
+On shutdown, reboot and upgrade, `ContainerConfig` containers are now stopped in the reverse order of `dependsOn.containers`: a container is stopped before the containers it depends on, and independent containers are still stopped concurrently.
+Waiting for a dependent container ends when the container it depends on would otherwise not be stopped in time for the shutdown.
+The order applies to the containers on the same node only.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

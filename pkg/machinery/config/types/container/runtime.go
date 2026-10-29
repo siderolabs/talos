@@ -206,6 +206,10 @@ type ContainerDependsOn struct {
 	//   description: |
 	//     Other containers, by document name, which must be running first.
 	//
+	//     On shutdown, reboot and upgrade, the container is stopped before them, as long as that fits
+	//     into the time the shutdown gives the containers. The order applies to the containers on the
+	//     same node only.
+	//
 	//     Cycles are rejected when the machine configuration is applied.
 	ContainersConfig []string `yaml:"containers,omitempty"`
 }

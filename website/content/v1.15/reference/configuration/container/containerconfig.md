@@ -361,7 +361,7 @@ paths:
 {{< /highlight >}}</details> | |
 |`network` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
 |`time` |bool |Whether the clock must be synchronized before the container starts.  | |
-|`containers` |[]string |Other containers, by document name, which must be running first.<br><br>Cycles are rejected when the machine configuration is applied.  | |
+|`containers` |[]string |Other containers, by document name, which must be running first.<br><br>On shutdown, reboot and upgrade, the container is stopped before them, as long as that fits<br>into the time the shutdown gives the containers. The order applies to the containers on the<br>same node only.<br><br>Cycles are rejected when the machine configuration is applied.  | |
 
 
 

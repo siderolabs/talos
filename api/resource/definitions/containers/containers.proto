@@ -96,6 +96,12 @@ message ContainerInstanceStatusSpec {
   google.protobuf.Timestamp finished_at = 8;
 }
 
+// ContainerLifecycleSpec is the spec for ContainerLifecycle.
+message ContainerLifecycleSpec {
+  // ShutdownDeadline is set when the resource is torn down: all containers have to be stopped by then.
+  google.protobuf.Timestamp shutdown_deadline = 1;
+}
+
 // ContainerMountSpec is a resolved mount.
 //
 // Exactly one of VolumeName, Tmpfs or HostPath describes the source; Kind says which.

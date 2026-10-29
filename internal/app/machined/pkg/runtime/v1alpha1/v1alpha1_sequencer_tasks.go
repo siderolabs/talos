@@ -1907,11 +1907,34 @@ func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 //
 // Unlike TeardownVolumeLifecycle, this runs before stopServices: that phase is what stops the CRI
 // containerd instance itself, so a barrier torn down after it would find containerd already gone.
+//
+// The deadline is recorded on the resource first, so that the containers are stopped within it.
 func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return teardownLifecycleResource(
-		containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata(),
-		constants.ContainerShutdownTimeout,
-	), "teardownContainerLifecycle"
+	md := containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata()
+	teardown := teardownLifecycleResource(md, constants.ContainerShutdownTimeout)
+
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		ctx, cancel := context.WithTimeout(ctx, constants.ContainerShutdownTimeout)
+		defer cancel()
+
+		deadline, _ := ctx.Deadline()
+
+		// a shutdown taking over keeps the deadline of the one which started tearing down
+		if _, err := safe.StateUpdateWithConflicts(ctx, r.State().V1Alpha2().Resources(), md,
+			func(lifecycle *containersres.ContainerLifecycle) error {
+				if lifecycle.TypedSpec().ShutdownDeadline.IsZero() {
+					lifecycle.TypedSpec().ShutdownDeadline = deadline
+				}
+
+				return nil
+			},
+			state.WithExpectedPhaseAny(),
+		); err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		return teardown(ctx, logger, r)
+	}, "teardownContainerLifecycle"
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),

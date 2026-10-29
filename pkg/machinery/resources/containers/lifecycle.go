@@ -5,6 +5,8 @@
 package containers
 
 import (
+	"time"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -25,7 +27,10 @@ type ContainerLifecycle = typed.Resource[ContainerLifecycleSpec, ContainerLifecy
 // ContainerLifecycleSpec is the spec for ContainerLifecycle.
 //
 //gotagsrewrite:gen
-type ContainerLifecycleSpec struct{}
+type ContainerLifecycleSpec struct {
+	// ShutdownDeadline is set when the resource is torn down: all containers have to be stopped by then.
+	ShutdownDeadline time.Time `yaml:"shutdownDeadline,omitempty" protobuf:"1"`
+}
 
 // NewContainerLifecycle initializes a ContainerLifecycle resource.
 func NewContainerLifecycle(namespace resource.Namespace, id resource.ID) *ContainerLifecycle {

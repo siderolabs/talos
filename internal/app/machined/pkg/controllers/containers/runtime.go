@@ -5,9 +5,11 @@
 package containers
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -20,6 +22,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
+	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -56,6 +59,9 @@ type TaskRunner interface {
 	Close() error
 }
 
+// stopAllMargin is kept from the shutdown deadline for removing the containers and releasing the barrier.
+const stopAllMargin = 15 * time.Second
+
 // RuntimeController runs container instances by interacting with the container runtime.
 type RuntimeController struct {
 	// Runtime provides the logging manager for container logs.
@@ -91,6 +97,11 @@ func (ctrl *RuntimeController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerLifecycleType,
 			ID:        optional.Some(containers.ContainerLifecycleID),
 			Kind:      controller.InputStrong,
@@ -121,6 +132,9 @@ func (ctrl *RuntimeController) Outputs() []controller.Output {
 
 // instanceRunState tracks one running execution.
 type instanceRunState struct {
+	containerID string
+	stopTimeout time.Duration
+
 	cancel context.CancelFunc
 	// done is closed once the run has finished, before the controller is woken up for it.
 	done chan struct{}
@@ -181,11 +195,6 @@ func (s *instanceRunState) setFinished(exitCode int32, err error, everStarted bo
 	s.finishedAt = time.Now()
 }
 
-func (s *instanceRunState) stop() {
-	s.cancel()
-	<-s.done
-}
-
 func (s *instanceRunState) finished() bool {
 	select {
 	case <-s.done:
@@ -238,7 +247,7 @@ func (ctrl *RuntimeController) Run(ctx context.Context, runtime controller.Runti
 			return
 		}
 
-		ctrl.stopAll(logger)
+		ctrl.stopAll(logger, time.Time{}, nil)
 
 		// After the instances, never before: they wait on their tasks through this client.
 		ctrl.closeRunner()
@@ -345,7 +354,18 @@ func (ctrl *RuntimeController) reconcile(
 	// running into the phase that kills containerd, and their records behind to be swept as orphans on
 	// the next boot.
 	if containerLifecycle == nil || containerLifecycle.Metadata().Phase() == resource.PhaseTearingDown {
-		ctrl.stopAll(logger)
+		var deadline time.Time
+
+		if containerLifecycle != nil {
+			deadline = containerLifecycle.TypedSpec().ShutdownDeadline
+		}
+
+		dependsOn, err := containerDependencies(ctx, runtime)
+		if err != nil {
+			return err
+		}
+
+		ctrl.stopAll(logger, deadline, dependsOn)
 
 		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}
@@ -532,21 +552,26 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 // Used on the way down: the caller releases the shutdown barrier once this returns, so this has to
 // leave nothing running behind it.
 //
-// Everything is asked to stop before anything is waited for, so the graceful shutdown timeouts run
-// concurrently: serially, a handful of containers ignoring SIGTERM would take longer than the
-// shutdown sequence gives the barrier as a whole.
-func (ctrl *RuntimeController) stopAll(logger *zap.Logger) {
-	for instanceSpecID, instanceRun := range ctrl.instances {
-		logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
-
-		instanceRun.cancel()
+// An instance is stopped once no instance of a container depending on it is running any more, so
+// containers stop in the reverse order of dependsOn, and all the others concurrently. Waiting for the
+// dependents ends when the instance would otherwise not be stopped by the deadline.
+func (ctrl *RuntimeController) stopAll(logger *zap.Logger, deadline time.Time, dependsOn map[string][]string) {
+	if deadline.IsZero() {
+		deadline = time.Now().Add(constants.ContainerShutdownTimeout)
 	}
 
-	for instanceSpecID, instanceRun := range ctrl.instances {
-		instanceRun.stop()
-		delete(ctrl.instances, instanceSpecID)
+	deadline = deadline.Add(-stopAllMargin)
 
-		logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
+	stopping := map[string]struct{}{}
+
+	for {
+		nextForced := ctrl.stopReady(logger, deadline, dependsOn, stopping)
+
+		if len(ctrl.instances) == 0 {
+			return
+		}
+
+		ctrl.waitForRunOrTime(nextForced)
 	}
 }
 
@@ -595,6 +620,92 @@ func (ctrl *RuntimeController) refuseStale(
 	}
 
 	return true, nil
+}
+
+// stopReady forgets the instances which have stopped, and asks those to stop which are no longer waiting
+// for dependents.
+//
+// It returns the earliest time an instance still waiting has to be stopped regardless.
+func (ctrl *RuntimeController) stopReady(
+	logger *zap.Logger, deadline time.Time, dependsOn map[string][]string, stopping map[string]struct{},
+) time.Time {
+	var nextForced time.Time
+
+	for instanceSpecID, instanceRun := range ctrl.instances {
+		if instanceRun.finished() {
+			delete(ctrl.instances, instanceSpecID)
+
+			logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
+
+			continue
+		}
+
+		if _, ok := stopping[instanceSpecID]; ok {
+			continue
+		}
+
+		forceAt := deadline.Add(-instanceRun.stopTimeout - containerdrunner.KillWaitTimeout)
+
+		if ctrl.hasRunningDependents(instanceRun, dependsOn) && time.Now().Before(forceAt) {
+			if nextForced.IsZero() || forceAt.Before(nextForced) {
+				nextForced = forceAt
+			}
+
+			continue
+		}
+
+		if instanceRun.requestStop() {
+			logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
+		}
+
+		stopping[instanceSpecID] = struct{}{}
+	}
+
+	return nextForced
+}
+
+// waitForRunOrTime waits for a run to end, or until t if it is set.
+func (ctrl *RuntimeController) waitForRunOrTime(t time.Time) {
+	if t.IsZero() {
+		<-ctrl.notifyCh
+
+		return
+	}
+
+	timer := time.NewTimer(time.Until(t))
+	defer timer.Stop()
+
+	select {
+	case <-ctrl.notifyCh:
+	case <-timer.C:
+	}
+}
+
+// containerDependencies returns the containers each container depends on, as currently configured.
+func containerDependencies(ctx context.Context, r controller.Reader) (map[string][]string, error) {
+	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list container specs: %w", err)
+	}
+
+	dependsOn := map[string][]string{}
+
+	for containerSpec := range containerSpecs.All() {
+		dependsOn[containerSpec.Metadata().ID()] = containerSpec.TypedSpec().DependsOn.Containers
+	}
+
+	return dependsOn, nil
+}
+
+// hasRunningDependents reports whether an instance of a container depending on the one of instanceRun is still running.
+func (ctrl *RuntimeController) hasRunningDependents(instanceRun *instanceRunState, dependsOn map[string][]string) bool {
+	for _, other := range ctrl.instances {
+		if other != instanceRun && !other.finished() && slices.Contains(dependsOn[other.containerID], instanceRun.containerID) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // retainFinished reports whether the instance already ran to completion, keeping its status if so.
@@ -677,8 +788,10 @@ func (ctrl *RuntimeController) start(
 	instanceSpecID := containerInstanceSpec.Metadata().ID()
 
 	instanceRun := &instanceRunState{
-		done:  make(chan struct{}),
-		phase: containers.ContainerInstancePhaseCreated,
+		containerID: containerInstanceSpec.TypedSpec().ContainerID,
+		stopTimeout: cmp.Or(containerInstanceSpec.TypedSpec().StopTimeout, constants.ContainerDefaultStopTimeout),
+		done:        make(chan struct{}),
+		phase:       containers.ContainerInstancePhaseCreated,
 	}
 
 	// Derived from ctrl.instanceCtx, not from a Run's context: canceling this is how the task is

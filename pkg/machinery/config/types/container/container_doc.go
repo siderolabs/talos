@@ -540,7 +540,7 @@ func (ContainerDependsOn) Doc() *encoder.Doc {
 				Name:        "containers",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
+				Description: "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Other containers, by document name, which must be running first." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
