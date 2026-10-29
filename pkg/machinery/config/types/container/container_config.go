@@ -131,7 +131,8 @@ type ContainerConfigV1Alpha1 struct {
 	//     Time the container gets to exit after SIGTERM before it is killed with SIGKILL.
 	//
 	//     It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is
-	//     replaced after a change, and when it is removed. Defaults to 10s, at most 4m.
+	//     replaced after a change or restarted with `talosctl restart`, and when it is removed.
+	//     Defaults to 10s, at most 4m.
 	//     Changing it replaces the running container, which is still stopped with its previous timeout.
 	//   examples:
 	//     - value: >

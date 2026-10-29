@@ -447,7 +447,7 @@ image: ghcr.io/example/database:v1.0.0
 stopTimeout: 2m
 ```
 
-The timeout applies whenever Talos stops the container: on shutdown, reboot and upgrade, when the container is replaced after a change, and when it is removed.
+The timeout applies whenever Talos stops the container: on shutdown, reboot and upgrade, when the container is replaced after a change or restarted with `talosctl restart`, and when it is removed.
 It defaults to 10s and can be at most 4m, so that stopping containers fits into the shutdown sequence.
 """
 

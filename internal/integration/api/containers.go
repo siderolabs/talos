@@ -241,19 +241,23 @@ func (suite *ContainersSuite) TestRestartAfterTermination() {
 	}
 }
 
-// TestStopTimeout verifies that a container ignoring SIGTERM is killed once its stop timeout is over.
+// TestStopTimeout verifies that a container ignoring SIGTERM is killed once its stop timeout is over,
+// when it is replaced and when it is restarted.
 //
 // The container logs the time it gets SIGTERM and the time it starts, so the stop is measured on the
-// node: from SIGTERM to the replacement starting.
+// node: from SIGTERM to the container starting again.
 func (suite *ContainersSuite) TestStopTimeout() {
 	for _, test := range []struct {
 		name        string
+		restart     bool
 		stopTimeout time.Duration
 		minStop     time.Duration
 		maxStop     time.Duration
 	}{
 		{name: "configured", stopTimeout: 2 * time.Second, minStop: 2 * time.Second, maxStop: constants.ContainerDefaultStopTimeout},
 		{name: "default", minStop: constants.ContainerDefaultStopTimeout},
+		// a restarted container is started again 5s after it has exited
+		{name: "restart", restart: true, stopTimeout: 2 * time.Second, minStop: 7 * time.Second, maxStop: constants.ContainerDefaultStopTimeout + 5*time.Second},
 	} {
 		suite.Run(test.name, func() {
 			ctx, name, _ := suite.setupContainer("stop-timeout-" + test.name)
@@ -263,15 +267,19 @@ func (suite *ContainersSuite) TestStopTimeout() {
 
 			suite.applyContainers(ctx, doc)
 
-			suite.assertContainerRunning(ctx, name, "initial start")
+			instanceID, _ := suite.assertContainerRunning(ctx, name, "initial start")
 			suite.assertContainerLogged(ctx, name, "start=")
 
-			// replacing the container stops the running one with its stop timeout; only the environment is
-			// patched, as patching the lists again would append to them
-			replaced := suite.newContainer(name, containerShellImage)
-			replaced.ContainerEnvironment = []string{"REPLACED=1"}
+			if test.restart {
+				suite.Require().NoError(suite.Client.Restart(ctx, constants.TalosContainersContainerdNamespace, common.ContainerDriver_CONTAINERD, instanceID))
+			} else {
+				// replacing the container stops the running one with its stop timeout; only the environment is
+				// patched, as patching the lists again would append to them
+				replaced := suite.newContainer(name, containerShellImage)
+				replaced.ContainerEnvironment = []string{"REPLACED=1"}
 
-			suite.applyContainers(ctx, replaced)
+				suite.applyContainers(ctx, replaced)
+			}
 
 			var term, restart int64
 
@@ -283,7 +291,7 @@ func (suite *ContainersSuite) TestStopTimeout() {
 
 				starts, terms := logTimes(log, "start="), logTimes(log, "term=")
 
-				if assert.Len(collect, starts, 2, "no replacement yet:\n%s", log) && assert.Len(collect, terms, 1, "no SIGTERM logged:\n%s", log) {
+				if assert.Len(collect, starts, 2, "not started again yet:\n%s", log) && assert.Len(collect, terms, 1, "no SIGTERM logged:\n%s", log) {
 					term, restart = terms[0], starts[1]
 				}
 			}, containerStartTimeout, time.Second)

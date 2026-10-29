@@ -97,7 +97,7 @@ devices:
 |`network` |<a href="#ContainerConfig.network">ContainerNetwork</a> |Network settings for the container.  | |
 |`resources` |<a href="#ContainerConfig.resources">ContainerResources</a> |Resource limits, applied as cgroup v2 settings.  | |
 |`dependsOn` |<a href="#ContainerConfig.dependsOn">ContainerDependsOn</a> |Conditions which must be satisfied before the container is started.  | |
-|`stopTimeout` |Duration |Time the container gets to exit after SIGTERM before it is killed with SIGKILL.<br><br>It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is<br>replaced after a change, and when it is removed. Defaults to 10s, at most 4m.<br>Changing it replaces the running container, which is still stopped with its previous timeout. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`stopTimeout` |Duration |Time the container gets to exit after SIGTERM before it is killed with SIGKILL.<br><br>It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is<br>replaced after a change or restarted with `talosctl restart`, and when it is removed.<br>Defaults to 10s, at most 4m.<br>Changing it replaces the running container, which is still stopped with its previous timeout. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 stopTimeout: 30s
 {{< /highlight >}}</details> | |
 
