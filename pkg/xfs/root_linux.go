@@ -84,7 +84,7 @@ func (root *UnixRoot) Open(name string) (fs.File, error) {
 
 // OpenFile opens a file in the root filesystem with the specified name, flags, and permissions.
 func (root *UnixRoot) OpenFile(name string, flags int, perm os.FileMode) (File, error) {
-	fd, err := unix.Openat(root.mntfd, strings.TrimLeft(name, "/"), flags, uint32(perm))
+	fd, err := unix.Openat(root.mntfd, strings.TrimLeft(name, "/"), flags|unix.O_CLOEXEC, uint32(perm))
 	if err != nil {
 		return nil, err
 	}
