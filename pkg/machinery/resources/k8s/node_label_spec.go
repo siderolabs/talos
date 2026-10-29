@@ -44,7 +44,6 @@ func (NodeLabelSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             NodeLabelSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
-		Sensitivity:      meta.Sensitive,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Value",

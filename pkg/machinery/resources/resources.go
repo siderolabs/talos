@@ -70,6 +70,7 @@ func All() []meta.ResourceWithRD {
 	return []meta.ResourceWithRD{
 		&block.Device{},
 		&block.DiscoveredVolume{},
+		&block.DiscoveredVolumesStatus{},
 		&block.DiscoveryRefreshRequest{},
 		&block.DiscoveryRefreshStatus{},
 		&block.Disk{},

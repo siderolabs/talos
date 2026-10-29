@@ -53,6 +53,14 @@ func hasSecretsConfigSpec(spec *ConfigSpec) bool {
 		return true
 	}
 
+	if len(spec.Blob) > 0 {
+		return true
+	}
+
+	if len(spec.Sealed) > 0 {
+		return true
+	}
+
 	if spec.Endpoint != nil && spec.Endpoint.User != nil {
 		return true
 	}
@@ -108,6 +116,14 @@ func redactConfigSpec(spec *ConfigSpec) {
 
 	if len(spec.Raw) > 0 {
 		spec.Raw = nil
+	}
+
+	if len(spec.Blob) > 0 {
+		spec.Blob = []byte(constants.Redacted)
+	}
+
+	if len(spec.Sealed) > 0 {
+		spec.Sealed = []byte(constants.Redacted)
 	}
 
 	if spec.Endpoint != nil && spec.Endpoint.User != nil {

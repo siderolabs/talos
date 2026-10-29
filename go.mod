@@ -25,8 +25,6 @@ replace (
 	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72
 )
 
-replace google.golang.org/grpc v1.84.0 => google.golang.org/grpc v1.83.2
-
 // Kubernetes dependencies sharing the same version.
 require (
 	cel.dev/cel-go v0.33.0

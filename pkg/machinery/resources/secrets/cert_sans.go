@@ -60,7 +60,6 @@ func (CertSANExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             CertSANType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
-		Sensitivity:      meta.Sensitive,
 	}
 }
 

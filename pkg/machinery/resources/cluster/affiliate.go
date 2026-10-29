@@ -20,6 +20,8 @@ import (
 
 //go:generate go tool github.com/siderolabs/deep-copy -type AffiliateSpec -type ConfigSpec -type IdentitySpec -type MemberSpec -type InfoSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
+//go:generate go tool github.com/siderolabs/talos/tools/redactgen -header-file ../../../../hack/boilerplate.txt -o redact.generated.go .
+
 // AffiliateType is type of Affiliate resource.
 const AffiliateType = resource.Type("Affiliates.cluster.talos.dev")
 

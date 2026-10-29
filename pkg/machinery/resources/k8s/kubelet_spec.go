@@ -12,6 +12,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 )
 
 // KubeletSpecType is type of KubeletSpec resource.
@@ -60,4 +61,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[KubeletSpecSpec, KubeletSpecExtension]()
 }

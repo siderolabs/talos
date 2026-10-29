@@ -326,3 +326,138 @@ func podContainer(t *testing.T, pod map[string]any) map[string]any {
 
 	return container
 }
+
+// kubeletConfigFixture returns a kubelet configuration document carrying a static pod URL header.
+func kubeletConfigFixture() map[string]any {
+	return map[string]any{
+		"maxPods":            int64(250),
+		"staticPodURLHeader": map[string]any{"Authorization": []any{"Bearer s3cret"}},
+		"systemReserved":     map[string]any{"memory": "512Mi"},
+	}
+}
+
+// credentialProviderConfigFixture returns an image credential provider configuration with a provider
+// which takes its credentials from the environment and the command line.
+func credentialProviderConfigFixture() map[string]any {
+	return map[string]any{
+		"apiVersion": "kubelet.config.k8s.io/v1",
+		"kind":       "CredentialProviderConfig",
+		"providers": []any{
+			map[string]any{
+				"name":                 "ecr-credential-provider",
+				"matchImages":          []any{"*.dkr.ecr.*.amazonaws.com"},
+				"args":                 []any{"get-credentials", "--role-arn=arn:aws:iam::123:role/pull"},
+				"env":                  []any{map[string]any{"name": "AWS_SECRET_ACCESS_KEY", "value": "wJalrXU"}},
+				"defaultCacheDuration": "12h",
+			},
+		},
+	}
+}
+
+// assertKubeletConfigRedacted checks the redacted forms of the two fixtures above.
+func assertKubeletConfigRedacted(t *testing.T, config, credentialProviderConfig map[string]any) {
+	t.Helper()
+
+	// only the header values go, the rest of the kubelet configuration is what the resource is read for
+	assert.Equal(t, map[string]any{
+		"maxPods":            int64(250),
+		"staticPodURLHeader": map[string]any{"Authorization": []any{constants.Redacted}},
+		"systemReserved":     map[string]any{"memory": "512Mi"},
+	}, config)
+
+	provider := credentialProviderConfig["providers"].([]any)[0].(map[string]any) //nolint:forcetypeassert,errcheck
+
+	assert.Equal(t, "ecr-credential-provider", provider["name"])
+	assert.Equal(t, []any{"*.dkr.ecr.*.amazonaws.com"}, provider["matchImages"])
+	assert.Equal(t, []any{"get-credentials", "--role-arn=" + constants.Redacted}, provider["args"])
+	assert.Equal(t, []any{map[string]any{"name": "AWS_SECRET_ACCESS_KEY", "value": constants.Redacted}}, provider["env"])
+	assert.Equal(t, "kubelet.config.k8s.io/v1", credentialProviderConfig["apiVersion"])
+}
+
+// TestKubeletConfigRedaction covers the kubelet config: the extra arguments lose their values, the
+// kubelet configuration and the credential provider configuration lose the values carrying credentials.
+func TestKubeletConfigRedaction(t *testing.T) {
+	t.Parallel()
+
+	spec := k8s.KubeletConfigSpec{
+		Image:                    "ghcr.io/siderolabs/kubelet:v1.34.0",
+		ClusterDNS:               []string{"10.96.0.10"},
+		ExtraArgs:                map[string]k8s.ArgValues{"node-labels": {Values: []string{"role=storage"}}},
+		ExtraConfig:              kubeletConfigFixture(),
+		CredentialProviderConfig: credentialProviderConfigFixture(),
+		RegisterWithTaints:       map[string]string{"dedicated": "storage:NoSchedule"},
+	}
+
+	assert.True(t, spec.HasSecrets(resource.Metadata{}))
+
+	redacted := spec.DeepCopy()
+	redacted.RedactSecrets(resource.Metadata{})
+
+	assert.Equal(t, []string{constants.Redacted}, redacted.ExtraArgs["node-labels"].Values)
+	assertKubeletConfigRedacted(t, redacted.ExtraConfig, redacted.CredentialProviderConfig)
+
+	assert.Equal(t, spec.Image, redacted.Image)
+	assert.Equal(t, spec.ClusterDNS, redacted.ClusterDNS)
+	assert.Equal(t, spec.RegisterWithTaints, redacted.RegisterWithTaints)
+
+	// the deep copy shares everything below the top level of the free-form maps, so this is what
+	// catches a redaction written in place
+	assert.Equal(t, kubeletConfigFixture(), spec.ExtraConfig)
+	assert.Equal(t, credentialProviderConfigFixture(), spec.CredentialProviderConfig)
+	assert.Equal(t, []string{"role=storage"}, spec.ExtraArgs["node-labels"].Values)
+}
+
+// TestKubeletSpecRedaction covers the rendered kubelet spec, which carries the same values once more.
+func TestKubeletSpecRedaction(t *testing.T) {
+	t.Parallel()
+
+	spec := k8s.KubeletSpecSpec{
+		Image: "ghcr.io/siderolabs/kubelet:v1.34.0",
+		Args: []string{
+			"--config=/etc/kubernetes/kubelet.yaml",
+			"--node-labels=role=storage",
+			"--rotate-server-certificates",
+		},
+		ExpectedNodename:         "worker-1",
+		Config:                   kubeletConfigFixture(),
+		CredentialProviderConfig: credentialProviderConfigFixture(),
+	}
+
+	assert.True(t, spec.HasSecrets(resource.Metadata{}))
+
+	redacted := spec.DeepCopy()
+	redacted.RedactSecrets(resource.Metadata{})
+
+	assert.Equal(t, []string{
+		"--config=" + constants.Redacted,
+		"--node-labels=" + constants.Redacted,
+		"--rotate-server-certificates",
+	}, redacted.Args)
+	assertKubeletConfigRedacted(t, redacted.Config, redacted.CredentialProviderConfig)
+
+	assert.Equal(t, spec.Image, redacted.Image)
+	assert.Equal(t, spec.ExpectedNodename, redacted.ExpectedNodename)
+
+	assert.Equal(t, kubeletConfigFixture(), spec.Config)
+	assert.Equal(t, credentialProviderConfigFixture(), spec.CredentialProviderConfig)
+	assert.Equal(t, "--node-labels=role=storage", spec.Args[1])
+}
+
+// TestKubeletRedactionEmpty makes sure a kubelet with no credential configured on it is not reported
+// as carrying a secret.
+func TestKubeletRedactionEmpty(t *testing.T) {
+	t.Parallel()
+
+	assert.False(t, (&k8s.KubeletConfigSpec{
+		Image:       "kubelet",
+		ExtraConfig: map[string]any{"maxPods": int64(250)},
+		CredentialProviderConfig: map[string]any{
+			"providers": []any{map[string]any{"name": "ecr-credential-provider", "args": []any{"get-credentials"}}},
+		},
+	}).HasSecrets(resource.Metadata{}))
+	assert.False(t, (&k8s.KubeletSpecSpec{
+		Image:  "kubelet",
+		Args:   []string{"--rotate-server-certificates"},
+		Config: map[string]any{"maxPods": int64(250)},
+	}).HasSecrets(resource.Metadata{}))
+}

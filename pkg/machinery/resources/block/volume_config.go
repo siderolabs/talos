@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/yamlutils"
 )
 
@@ -28,6 +29,7 @@ type VolumeConfig = typed.Resource[VolumeConfigSpec, VolumeConfigExtension]
 // VolumeConfigSpec is the spec for VolumeConfig resource.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type VolumeConfigSpec struct {
 	// Parent volume ID, if set no operations on the volume continue until the parent volume is ready.
 	ParentID string `yaml:"parentId,omitempty" protobuf:"1"`
@@ -203,7 +205,7 @@ type EncryptionKey struct {
 	LockToSTATE bool              `yaml:"lockToState,omitempty" protobuf:"6"`
 
 	// Only for Type == "static":
-	StaticPassphrase yamlutils.StringBytes `yaml:"staticPassphrase,omitempty" protobuf:"3"`
+	StaticPassphrase yamlutils.StringBytes `yaml:"staticPassphrase,omitempty" protobuf:"3" redact:"replace"`
 
 	// Only for Type == "kms":
 	KMSEndpoint string `yaml:"kmsEndpoint,omitempty" protobuf:"4"`
@@ -325,4 +327,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[VolumeConfigSpec, VolumeConfigExtension]()
 }

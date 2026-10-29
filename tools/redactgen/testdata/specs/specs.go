@@ -10,17 +10,22 @@ import "net/url"
 // SecretKey is a named string type.
 type SecretKey string
 
+// SecretBytes is a named byte slice type.
+type SecretBytes []byte
+
 // ConfigSpec exercises all supported ways to reach a sensitive field.
 //
 //redactgen:gen
 type ConfigSpec struct {
 	Name     string
 	Count    int
-	Token    string    `redact:"replace"`
-	Key      SecretKey `redact:"replace"`
-	Raw      []byte    `redact:"zero"`
-	Endpoint *url.URL  `redact:"replace"`
-	Location url.URL   `redact:"replace"`
+	Token    string      `redact:"replace"`
+	Key      SecretKey   `redact:"replace"`
+	Raw      []byte      `redact:"zero"`
+	Blob     []byte      `redact:"replace"`
+	Sealed   SecretBytes `redact:"replace"`
+	Endpoint *url.URL    `redact:"replace"`
+	Location url.URL     `redact:"replace"`
 
 	Nested   NestedSpec
 	Optional *NestedSpec

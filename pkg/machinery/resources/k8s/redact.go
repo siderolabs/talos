@@ -25,6 +25,10 @@ import (
 // is all a struct tag can say, would leave nothing to read; keeping the names and taking out the
 // values leaves the resource useful for working out how the control plane is configured, which is
 // what a non-admin reads it for.
+//
+// The kubelet resources are redacted the same way: the extra arguments of the machine configuration
+// and the rendered command line lose their values, while the kubelet configuration and the image
+// credential provider configuration keep everything but the few values which carry a credential.
 
 // Check interfaces.
 var (
@@ -35,6 +39,8 @@ var (
 	_ redactable.Spec = &ExtraManifestsConfigSpec{}
 	_ redactable.Spec = &ManifestSpec{}
 	_ redactable.Spec = &StaticPodSpec{}
+	_ redactable.Spec = &KubeletConfigSpec{}
+	_ redactable.Spec = &KubeletSpecSpec{}
 )
 
 // HasSecrets implements redactable.Spec interface.
@@ -158,6 +164,36 @@ func (spec *StaticPodSpec) RedactSecrets(resource.Metadata) {
 	spec.Pod, _ = redactPodValues(spec.Pod)
 }
 
+// HasSecrets implements redactable.Spec interface.
+func (spec *KubeletConfigSpec) HasSecrets(resource.Metadata) bool {
+	_, configRedacted := redactKubeletConfig(spec.ExtraConfig)
+	_, credentialProviderRedacted := redactCredentialProviderConfig(spec.CredentialProviderConfig)
+
+	return hasArgValues(spec.ExtraArgs) || configRedacted || credentialProviderRedacted
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (spec *KubeletConfigSpec) RedactSecrets(resource.Metadata) {
+	spec.ExtraArgs = redactArgValues(spec.ExtraArgs)
+	spec.ExtraConfig, _ = redactKubeletConfig(spec.ExtraConfig)
+	spec.CredentialProviderConfig, _ = redactCredentialProviderConfig(spec.CredentialProviderConfig)
+}
+
+// HasSecrets implements redactable.Spec interface.
+func (spec *KubeletSpecSpec) HasSecrets(resource.Metadata) bool {
+	_, configRedacted := redactKubeletConfig(spec.Config)
+	_, credentialProviderRedacted := redactCredentialProviderConfig(spec.CredentialProviderConfig)
+
+	return redactable.HasKeyValues(spec.Args) || configRedacted || credentialProviderRedacted
+}
+
+// RedactSecrets implements redactable.Spec interface.
+func (spec *KubeletSpecSpec) RedactSecrets(resource.Metadata) {
+	spec.Args = redactable.RedactKeyValues(spec.Args)
+	spec.Config, _ = redactKubeletConfig(spec.Config)
+	spec.CredentialProviderConfig, _ = redactCredentialProviderConfig(spec.CredentialProviderConfig)
+}
+
 // hasArgValues reports whether any of the extra arguments carries a value.
 func hasArgValues(args map[string]ArgValues) bool {
 	for _, values := range args {
@@ -218,6 +254,64 @@ func redactURLUserinfo(rawURL string) string {
 	parsed.User = url.UserPassword(parsed.User.Username(), constants.Redacted)
 
 	return parsed.String()
+}
+
+// redactKubeletConfig returns the kubelet configuration with the values of the static pod URL headers
+// replaced, and reports whether it replaced anything.
+//
+// Unlike the scheduler configuration, the kubelet configuration is a single well-known document
+// (KubeletConfiguration), and the headers sent along with the static pod URL request are the only
+// place in it which carries a credential: the rest -- the reservations, the eviction thresholds, the
+// feature gates -- is what the resource is read for, so it stays. The header names stay as well.
+//
+// The configuration is not redacted in place, see redactPodValues.
+func redactKubeletConfig(config map[string]any) (map[string]any, bool) {
+	headers, ok := config["staticPodURLHeader"].(map[string]any)
+	if !ok || len(headers) == 0 {
+		return config, false
+	}
+
+	redactedHeaders := make(map[string]any, len(headers))
+
+	for name, values := range headers {
+		if list, ok := values.([]any); ok {
+			redactedHeaders[name] = xslices.Map(list, func(any) any { return constants.Redacted })
+		} else {
+			redactedHeaders[name] = constants.Redacted
+		}
+	}
+
+	out := maps.Clone(config)
+	out["staticPodURLHeader"] = redactedHeaders
+
+	return out, true
+}
+
+// redactCredentialProviderConfig returns the image credential provider configuration with the values
+// of the provider environment variables and command line flags replaced, and reports whether it
+// replaced anything.
+//
+// A provider (CredentialProviderConfig.providers) is an executable run the way a container is: the env
+// list of name/value pairs and the args are the only values it carries which may hold a credential, and
+// they have the same shape as in a container, so the container redaction covers them. The provider
+// names and the images they match stay.
+//
+// The configuration is not redacted in place, see redactPodValues.
+func redactCredentialProviderConfig(config map[string]any) (map[string]any, bool) {
+	providers, ok := config["providers"].([]any)
+	if !ok {
+		return config, false
+	}
+
+	redactedProviders, redacted := redactContainers(providers)
+	if !redacted {
+		return config, false
+	}
+
+	out := maps.Clone(config)
+	out["providers"] = redactedProviders
+
+	return out, true
 }
 
 // redactManifestObject returns the manifest with everything but the fields which name the object

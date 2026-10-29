@@ -45,7 +45,6 @@ func (NodeTaintSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             NodeTaintSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
-		Sensitivity:      meta.Sensitive,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Effect",

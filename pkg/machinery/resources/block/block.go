@@ -22,6 +22,8 @@ import (
 
 //go:generate go tool github.com/siderolabs/deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveredVolumesStatusSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec -type DiskSpec -type FSScrubScheduleSpec -type FSScrubStatusSpec -type MountRequestSpec -type MountStatusSpec -type ParameterSpec -type SMARTStatusSpec -type SwapStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -type VolumeTrimScheduleSpec -type ZswapStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
+//go:generate go tool github.com/siderolabs/talos/tools/redactgen -header-file ../../../../hack/boilerplate.txt -o redact.generated.go .
+
 //go:generate go tool github.com/dmarkham/enumer -type=VolumeType,VolumePhase,FilesystemType,NFSVersion,NFSLocking,NFSRecovery,NFSSecurity,NFSTransport,EncryptionKeyType,EncryptionProviderType,FSParameterType -linecomment -text
 
 // NamespaceName contains configuration resources.

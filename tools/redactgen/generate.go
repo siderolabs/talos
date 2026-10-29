@@ -25,8 +25,8 @@ const (
 	// tagKey is the struct tag key which marks a field as sensitive.
 	tagKey = "redact"
 
-	// strategyReplace replaces the value with constants.Redacted (strings) or redacts the
-	// password part of the URL (url.URL).
+	// strategyReplace replaces the value with constants.Redacted (strings and byte slices) or redacts
+	// the password part of the URL (url.URL).
 	strategyReplace = "replace"
 	// strategyZero resets the value to the zero value of its type.
 	strategyZero = "zero"
@@ -399,8 +399,30 @@ func (g *generator) replaceCode(expr string, typ types.Type, path string) (field
 		}, nil
 	}
 
-	return fieldCode{}, fmt.Errorf("%s: redact:%q is not supported for type %s (supported: string kinds, url.URL, *url.URL), use redact:%q instead",
+	if isByteSlice(typ) {
+		g.imports[constantsPkgPath] = struct{}{}
+
+		// an unnamed []byte is assignable to a named byte slice type, wherever that is declared
+		return fieldCode{
+			check:  []string{fmt.Sprintf("if len(%s) > 0 {\n\treturn true\n}", expr)},
+			redact: []string{fmt.Sprintf("if len(%s) > 0 {\n\t%s = []byte(constants.Redacted)\n}", expr, expr)},
+		}, nil
+	}
+
+	return fieldCode{}, fmt.Errorf("%s: redact:%q is not supported for type %s (supported: string kinds, byte slices, url.URL, *url.URL), use redact:%q instead",
 		path, strategyReplace, typ, strategyZero)
+}
+
+// isByteSlice reports whether the type is a slice of bytes, named or not.
+func isByteSlice(typ types.Type) bool {
+	slice, ok := typ.Underlying().(*types.Slice)
+	if !ok {
+		return false
+	}
+
+	elem, ok := slice.Elem().Underlying().(*types.Basic)
+
+	return ok && elem.Kind() == types.Byte
 }
 
 //nolint:gocyclo

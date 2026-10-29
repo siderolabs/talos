@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/redactable"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
@@ -26,6 +27,7 @@ type Config = typed.Resource[ConfigSpec, ConfigExtension]
 // ConfigSpec describes Discovery configuration.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type ConfigSpec struct {
 	// Deprecated: use ServiceEndpoints instead (configured via DiscoveryServiceConfig documents)
 	DiscoveryEnabled bool `yaml:"discoveryEnabled" protobuf:"1"`
@@ -39,7 +41,7 @@ type ConfigSpec struct {
 	// Deprecated: use ServiceEndpoints instead
 	ServiceEndpointInsecure bool `yaml:"serviceEndpointInsecure,omitempty" protobuf:"5"`
 
-	ServiceEncryptionKey []byte            `yaml:"serviceEncryptionKey" protobuf:"6"`
+	ServiceEncryptionKey []byte            `yaml:"serviceEncryptionKey" protobuf:"6" redact:"zero"`
 	ServiceClusterID     string            `yaml:"serviceClusterID" protobuf:"7"`
 	ServiceEndpoints     []ServiceEndpoint `yaml:"serviceEndpoints" protobuf:"8"`
 }
@@ -82,4 +84,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	// the spec is sensitive, but it is safe to be read in the redacted form
+	redactable.Register[ConfigSpec, ConfigExtension]()
 }
