@@ -123,8 +123,11 @@ MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 LIBVIRT_VERSION ?= v12.8.0
 # SHA-256 of https://download.libvirt.org/libvirt-$(patsubst v%,%,$(LIBVIRT_VERSION)).tar.xz; update with LIBVIRT_VERSION.
 LIBVIRT_SHA256 ?= 0cd46a8f3a2b9b63c35c6e6f42a6c2989183ef3b3d1499ee92b4876db35e6fe9
+# Alpine 3.24.3's kernel loses fixed ACPI power buttons after this backport:
+# https://github.com/gregkh/linux/commit/38c79dacc8063ff8a0d75ce2a900fbaff82ad94c
+# Keep the guest fixture on 3.24.2 until graceful reboot and shutdown qualify a newer image.
 # renovate: datasource=docker depName=alpine
-ALPINE_VERSION ?= 3.24.3
+ALPINE_VERSION ?= 3.24.2
 # Update the checksum with the image; mirrors of identical bytes can reuse it.
 ALPINE_ISO_SHA256 ?= 3ab424762af704b2c2a9e57df1dc37f982af260071504d977f2fb96822e7130b
 
