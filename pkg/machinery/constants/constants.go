@@ -603,6 +603,17 @@ const (
 	// history reads as a single continuous log.
 	TalosContainersLogPrefix = TalosContainersContainerdNamespace + "-"
 
+	// ContainerDefaultStopTimeout is the default time between SIGTERM and SIGKILL when a container is stopped.
+	ContainerDefaultStopTimeout = 10 * time.Second
+
+	// ContainerMaxStopTimeout is the longest stop timeout a container can be configured with.
+	//
+	// It leaves room within ContainerShutdownTimeout for the kill and the cleanup.
+	ContainerMaxStopTimeout = 4 * time.Minute
+
+	// ContainerShutdownTimeout bounds stopping all containers on shutdown, reboot and upgrade.
+	ContainerShutdownTimeout = 5 * time.Minute
+
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
 

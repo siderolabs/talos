@@ -4,7 +4,11 @@
 
 package config
 
-import "github.com/siderolabs/gen/optional"
+import (
+	"time"
+
+	"github.com/siderolabs/gen/optional"
+)
 
 // ContainerConfig defines the interface to access container configuration.
 //
@@ -39,6 +43,8 @@ type ContainerConfig interface {
 	Resources() ContainerResourcesConfig
 	// DependsOn conditions gating startup; never nil.
 	DependsOn() ContainerDependsOnConfig
+	// StopTimeout is the time between SIGTERM and SIGKILL.
+	StopTimeout() time.Duration
 }
 
 // ContainerMountConfig defines a single container mount.

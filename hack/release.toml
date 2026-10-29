@@ -434,6 +434,23 @@ devices:
 The container gets a device node at the destination and is allowed to read and write that device only, so it does not need the `privileged` profile. The container waits for the raw volume to be ready, gets the unlocked device for an encrypted raw volume, and the raw volume is not closed while the container runs. A raw volume can be handed to a single container.
 """
 
+    [notes.container_stop_timeout]
+        title = "Container Stop Timeout"
+        description = """\
+`ContainerConfig` documents can now set how long a container gets to exit after `SIGTERM` before it is killed with `SIGKILL`:
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: database
+image: ghcr.io/example/database:v1.0.0
+stopTimeout: 2m
+```
+
+The timeout applies whenever Talos stops the container: on shutdown, reboot and upgrade, when the container is replaced after a change, and when it is removed.
+It defaults to 10s and can be at most 4m, so that stopping containers fits into the shutdown sequence.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

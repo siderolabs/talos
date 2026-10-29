@@ -495,6 +495,7 @@ func (ctrl *InstanceController) createInstanceSpec(
 			instanceSpec.Security = containerSpec.TypedSpec().Security
 			instanceSpec.Network = containerSpec.TypedSpec().Network
 			instanceSpec.Resources = containerSpec.TypedSpec().Resources
+			instanceSpec.StopTimeout = containerSpec.TypedSpec().StopTimeout
 
 			return nil
 		},

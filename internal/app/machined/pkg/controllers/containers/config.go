@@ -195,6 +195,8 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 		Containers: dependsOn.Containers(),
 	}
 
+	containerSpecSpec.StopTimeout = containerConfig.StopTimeout()
+
 	return nil
 }
 

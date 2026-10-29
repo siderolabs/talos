@@ -7,6 +7,8 @@
 package container
 
 import (
+	"time"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
@@ -113,6 +115,13 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Conditions which must be satisfied before the container is started.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Conditions which must be satisfied before the container is started." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "stopTimeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change, and when it is removed. Defaults to 10s, at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Time the container gets to exit after SIGTERM before it is killed with SIGKILL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -120,6 +129,7 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.Fields[2].AddExample("", "docker.io/library/nginx:1.27")
 	doc.Fields[9].AddExample("", exampleContainerDevices())
+	doc.Fields[14].AddExample("", 30*time.Second)
 
 	return doc
 }

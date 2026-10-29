@@ -8353,6 +8353,7 @@ later changes to those inputs: a spec change destroys this instance rather than 
 | network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | devices | [ResolvedDeviceSpec](#talos.resource.definitions.containers.ResolvedDeviceSpec) | repeated | Devices are fully resolved, with host device nodes filled in. |
+| stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 
@@ -8512,6 +8513,7 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
 | devices | [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec) | repeated |  |
+| stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 

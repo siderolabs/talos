@@ -5,6 +5,7 @@
 package containers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,7 +15,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"time"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
 	ctrdcontainers "github.com/containerd/containerd/v2/core/containers"
@@ -37,11 +37,6 @@ import (
 )
 
 const (
-	// gracefulShutdownTimeout is how long a container gets after SIGTERM before SIGKILL.
-	//
-	// Internal and not configurable, matching the containerd service runner's existing default.
-	gracefulShutdownTimeout = 10 * time.Second
-
 	// oomScoreAdj matches what extension services get. Containers must be killed before apid and
 	// trustd, which sit at -998, so that the API stays reachable on a node under memory pressure.
 	oomScoreAdj = -600
@@ -147,7 +142,7 @@ func (r *containerdRunner) Run(
 		runner.WithCgroupPath(cgroupPath),
 		runner.WithCgroupResources(containersadapter.ContainerResourcesSpec(&spec.Resources).CgroupResources()),
 		runner.WithOOMScoreAdj(oomScoreAdj),
-		runner.WithGracefulShutdownTimeout(gracefulShutdownTimeout),
+		runner.WithGracefulShutdownTimeout(cmp.Or(spec.StopTimeout, constants.ContainerDefaultStopTimeout)),
 		runner.WithHostNetworkFiles(spec.Network.HostNetwork),
 		runner.WithSelinuxLabel(selinuxLabel),
 		runner.WithOCISpecOpts(r.ociSpecOpts(spec, image)...),

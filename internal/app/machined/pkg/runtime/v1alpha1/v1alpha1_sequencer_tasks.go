@@ -1873,9 +1873,9 @@ func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // something which has to be wound down before a given point in the shutdown holds a finalizer on it,
 // so tearing it down and waiting for that set to empty is how a phase waits for a subsystem to be
 // wound down.
-func teardownLifecycleResource(md *resource.Metadata) runtime.TaskExecutionFunc {
+func teardownLifecycleResource(md *resource.Metadata, timeout time.Duration) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
 		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, md)
@@ -1899,6 +1899,7 @@ func teardownLifecycleResource(md *resource.Metadata) runtime.TaskExecutionFunc 
 func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return teardownLifecycleResource(
 		blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID).Metadata(),
+		5*time.Minute,
 	), "teardownLifecycle"
 }
 
@@ -1909,6 +1910,7 @@ func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return teardownLifecycleResource(
 		containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata(),
+		constants.ContainerShutdownTimeout,
 	), "teardownContainerLifecycle"
 }
 
