@@ -87,17 +87,17 @@ func newBlankDiskFixtureOnNode(ctx context.Context, suite *LibvirtSuite, kind, n
 	volume.VolumeType = new(block.VolumeTypeDirectory)
 	suite.PatchMachineConfig(nodeCtx, volume)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeID,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeID,
 		func(status *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
 		})
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeID,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeID,
 		func(status *block.MountStatus, asrt *assert.Assertions) {
 			asrt.NotEmpty(status.TypedSpec().Target)
 		})
 
-	mount, err := safe.ReaderGetByID[*block.MountStatus](nodeCtx, suite.Client.COSI, fixture.volumeID)
+	mount, err := safe.ReaderGetByID[*block.MountStatus](nodeCtx, suite.Client.State(), fixture.volumeID)
 	suite.Require().NoError(err)
 
 	fixture.poolPath = filepath.Join(mount.TypedSpec().Target, fixture.poolName)
@@ -107,7 +107,7 @@ func newBlankDiskFixtureOnNode(ctx context.Context, suite *LibvirtSuite, kind, n
 	pool.VolumeConfig.VolumeName = fixture.volumeName
 	suite.PatchMachineConfig(nodeCtx, pool)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.poolName,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.poolName,
 		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
 			asrt.Equal(storage.StoragePoolPhaseReady, status.TypedSpec().Phase, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(fixture.poolPath, status.TypedSpec().TargetPath)
@@ -212,7 +212,7 @@ func (f *blankDiskFixture) cleanup() {
 	f.suite.assertNoDomainWithContext(ctx, f.node, f.vmName)
 
 	if f.poolPath != "" {
-		removeBlankDiskVolume(nodeCtx, f.suite.T(), f.suite.Client.COSI, f.volumeStatusID(), func() {
+		removeBlankDiskVolume(nodeCtx, f.suite.T(), f.suite.Client.State(), f.volumeStatusID(), func() {
 			output, exitCode := f.suite.RunDebugContainer(ctx, f.node, "/nix/var/nix/profiles/default/bin/busybox",
 				"rm", "-f", filepath.Join(f.poolPath, f.volumeFile))
 			f.suite.Assert().Zero(exitCode, "remove test volume: %s", output)
@@ -246,7 +246,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 
 	source := filepath.Join(fixture.poolPath, fixture.volumeFile)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID(),
 		func(status *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == storage.StoragePoolVolumePhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().Path)
@@ -261,7 +261,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 
 	diskID := fixture.diskStatusID()
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, diskID,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), diskID,
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, status.TypedSpec().Phase, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().SourcePath)
@@ -272,7 +272,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 			asrt.Equal(fixture.volumeFile, status.TypedSpec().Volume)
 		})
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.vmName,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.vmName,
 		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			asrt.Contains(spec.TypedSpec().DomainXML, `device="disk"`)
 			asrt.Contains(spec.TypedSpec().DomainXML, `<source file="`+source+`">`)
@@ -287,7 +287,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 	// QEMU holds a write lock, and for raw the resize would succeed while the guest saw the old size.
 	suite.PatchMachineConfig(nodeCtx, fixture.document("128MiB", hypervisorhelpers.PowerStateRunning))
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID(),
 		func(status *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(storage.StoragePoolVolumePhaseReady, status.TypedSpec().Phase)
 			asrt.Equal(uint64(64<<20), status.TypedSpec().Capacity)
@@ -305,7 +305,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 	// Stopping the guest lets the growth through.
 	suite.PatchMachineConfig(nodeCtx, fixture.document("128MiB", hypervisorhelpers.PowerStateStopped))
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID(),
 		func(status *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == storage.StoragePoolVolumePhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(uint64(128<<20), status.TypedSpec().Capacity)
@@ -319,7 +319,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 	// edited number is a worse outcome than the mismatch.
 	suite.PatchMachineConfig(nodeCtx, fixture.document("32MiB", hypervisorhelpers.PowerStateStopped))
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID(),
 		func(status *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == storage.StoragePoolVolumePhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(uint64(128<<20), status.TypedSpec().Capacity)
@@ -331,9 +331,9 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 	// Removing the virtual machine withdraws everything that tracked the volume, and nothing else.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, fixture.vmName)
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI, diskID)
-	rtestutils.AssertNoResource[*storage.StoragePoolVolumeSpec](nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID())
-	rtestutils.AssertNoResource[*storage.StoragePoolVolumeStatus](nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID())
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(), diskID)
+	rtestutils.AssertNoResource[*storage.StoragePoolVolumeSpec](nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID())
+	rtestutils.AssertNoResource[*storage.StoragePoolVolumeStatus](nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID())
 
 	suite.Require().True(fixture.fileExists(ctx), "removing the configuration must never delete a volume")
 	suite.Require().Equal(uint64(128<<20), fixture.virtualSize(ctx))
@@ -342,7 +342,7 @@ func (suite *LibvirtSuite) TestBlankDiskProvisioning() {
 	// the size asked for, and is not recreated.
 	suite.PatchMachineConfig(nodeCtx, fixture.document("64MiB", hypervisorhelpers.PowerStateStopped))
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID(),
 		func(status *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == storage.StoragePoolVolumePhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(uint64(128<<20), status.TypedSpec().Capacity, "an adopted volume keeps what it held")
@@ -363,14 +363,14 @@ func (suite *LibvirtSuite) TestBlankDiskPoolRemovalStopsGuest() {
 
 	suite.PatchMachineConfig(nodeCtx, fixture.document("64MiB", hypervisorhelpers.PowerStateRunning))
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID(),
 		func(status *storage.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == storage.StoragePoolVolumePhaseReady, "error: %q", status.TypedSpec().Error)
 		})
 
 	suite.assertRunningTransientDomainWithDevices(fixture.node, fixture.vmName, 1, 1, 0)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, fixture.poolName,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), fixture.poolName,
 		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
 			asrt.True(status.Metadata().Finalizers().Has("storage.StoragePoolVolumeController"), "the attached volume must hold the pool")
 		})
@@ -394,9 +394,9 @@ func (suite *LibvirtSuite) TestBlankDiskPoolRemovalStopsGuest() {
 
 	// These eventual absences establish convergence, not the exact order of teardown events.
 	suite.assertNoDomain(fixture.node, fixture.vmName)
-	rtestutils.AssertNoResource[*storage.StoragePoolVolumeStatus](nodeCtx, suite.T(), suite.Client.COSI, fixture.volumeStatusID())
-	rtestutils.AssertNoResource[*storage.StoragePoolSpec](nodeCtx, suite.T(), suite.Client.COSI, fixture.poolName)
-	rtestutils.AssertNoResource[*storage.StoragePoolStatus](nodeCtx, suite.T(), suite.Client.COSI, fixture.poolName)
+	rtestutils.AssertNoResource[*storage.StoragePoolVolumeStatus](nodeCtx, suite.T(), suite.Client.State(), fixture.volumeStatusID())
+	rtestutils.AssertNoResource[*storage.StoragePoolSpec](nodeCtx, suite.T(), suite.Client.State(), fixture.poolName)
+	rtestutils.AssertNoResource[*storage.StoragePoolStatus](nodeCtx, suite.T(), suite.Client.State(), fixture.poolName)
 
 	suite.Require().True(fixture.fileExists(ctx), "a pool's contents outlive the pool")
 }

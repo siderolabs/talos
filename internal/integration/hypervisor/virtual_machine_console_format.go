@@ -44,7 +44,7 @@ func (suite *LibvirtSuite) TestAlpineConsoleBlankDiskFormat() {
 	doc.DisksConfig = append(doc.DisksConfig, isoDisk)
 
 	suite.PatchMachineConfig(nodeCtx, doc)
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, disk.diskStatusID(),
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), disk.diskStatusID(),
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "blank disk: %s", status.TypedSpec().Error)
 			asrt.True(status.TypedSpec().Blank)

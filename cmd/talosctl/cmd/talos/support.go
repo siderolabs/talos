@@ -221,7 +221,7 @@ func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progr
 // If the check fails for any other reason, Kubernetes is assumed to be configured, so that its data
 // is still collected, and a real problem is reported when the Kubernetes client is created.
 func kubernetesConfigured(ctx context.Context, c *client.Client) bool {
-	_, err := safe.StateGetByID[*k8sres.KubeletConfig](ctx, c.COSI, k8sres.KubeletID)
+	_, err := safe.StateGetByID[*k8sres.KubeletConfig](ctx, c.State(), k8sres.KubeletID)
 
 	return !state.IsNotFoundError(err)
 }
@@ -270,7 +270,7 @@ func getClusterInfo(ctx context.Context, clientFactory *global.ClientFactory) (*
 
 	return safe.StateGetByID[*clusterresource.Info](
 		ctx,
-		c.COSI,
+		c.State(),
 		clusterresource.InfoID,
 	)
 }

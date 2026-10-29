@@ -352,7 +352,7 @@ func (suite *UpgradeSuite) TestRolling() {
 	for _, node := range suite.Cluster.Info().Nodes {
 		rtestutils.AssertResource(
 			talosclient.WithNode(suite.ctx, node.IPs[0].String()),
-			suite.T(), client.COSI,
+			suite.T(), client.State(),
 			runtime.SecurityStateID,
 			func(r *runtime.SecurityState, asrt *assert.Assertions) {
 				asrt.Equal(suite.spec.WithEnforcing, r.TypedSpec().SELinuxState == runtime.SELinuxStateEnforcing)
@@ -389,7 +389,7 @@ func (suite *UpgradeSuite) TestRolling() {
 	for _, node := range suite.Cluster.Info().Nodes {
 		rtestutils.AssertResource(
 			talosclient.WithNode(suite.ctx, node.IPs[0].String()),
-			suite.T(), client.COSI,
+			suite.T(), client.State(),
 			runtime.SecurityStateID,
 			func(r *runtime.SecurityState, asrt *assert.Assertions) {
 				asrt.Equal(suite.spec.WithEnforcing, r.TypedSpec().SELinuxState == runtime.SELinuxStateEnforcing)

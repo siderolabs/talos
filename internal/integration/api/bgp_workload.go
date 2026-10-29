@@ -60,7 +60,7 @@ func (helper bgpWorkloadHelper) assertTopology(
 	rtestutils.AssertResource(
 		nodeCtx,
 		helper.suite.T(),
-		helper.suite.Client.COSI,
+		helper.suite.Client.State(),
 		vethName,
 		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
 			asrt.Equal(networkres.LinkKindVeth, link.TypedSpec().Kind)
@@ -72,7 +72,7 @@ func (helper bgpWorkloadHelper) assertTopology(
 	rtestutils.AssertResource(
 		nodeCtx,
 		helper.suite.T(),
-		helper.suite.Client.COSI,
+		helper.suite.Client.State(),
 		vethPeerName,
 		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
 			asrt.Equal(networkres.LinkKindVeth, link.TypedSpec().Kind)
@@ -84,7 +84,7 @@ func (helper bgpWorkloadHelper) assertTopology(
 	rtestutils.AssertResource(
 		nodeCtx,
 		helper.suite.T(),
-		helper.suite.Client.COSI,
+		helper.suite.Client.State(),
 		vrfName,
 		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
 			asrt.Equal(networkres.LinkKindVRF, link.TypedSpec().Kind)
@@ -95,7 +95,7 @@ func (helper bgpWorkloadHelper) assertTopology(
 	rtestutils.AssertResources(
 		nodeCtx,
 		helper.suite.T(),
-		helper.suite.Client.COSI,
+		helper.suite.Client.State(),
 		[]resource.ID{
 			vethName + "/" + vethPrefix.String(),
 			vethPeerName + "/" + vethPeerPrefix.String(),
@@ -110,7 +110,7 @@ func (helper bgpWorkloadHelper) assertTopology(
 
 func (helper bgpWorkloadHelper) waitForPeer(nodeCtx context.Context, id, instance string, peerASN uint32) {
 	helper.suite.Require().Eventually(func() bool {
-		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.COSI, id)
+		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.State(), id)
 		if err != nil {
 			return false
 		}
@@ -123,7 +123,7 @@ func (helper bgpWorkloadHelper) waitForPeer(nodeCtx context.Context, id, instanc
 
 func (helper bgpWorkloadHelper) waitForPeerNotEstablished(nodeCtx context.Context, id string) {
 	helper.suite.Require().Eventually(func() bool {
-		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.COSI, id)
+		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.State(), id)
 		if err != nil {
 			return true
 		}
@@ -142,7 +142,7 @@ func (helper bgpWorkloadHelper) assertNoRouteInTable(
 	table nethelpers.RoutingTable,
 ) {
 	helper.suite.Require().Eventually(func() bool {
-		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, helper.suite.Client.COSI)
+		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, helper.suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -163,7 +163,7 @@ func (helper bgpWorkloadHelper) assertNoRouteSpecInTable(
 	table nethelpers.RoutingTable,
 ) {
 	helper.suite.Require().Eventually(func() bool {
-		routes, err := safe.StateListAll[*networkres.RouteSpec](nodeCtx, helper.suite.Client.COSI)
+		routes, err := safe.StateListAll[*networkres.RouteSpec](nodeCtx, helper.suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -181,7 +181,7 @@ func (helper bgpWorkloadHelper) assertNoRouteSpecInTable(
 
 func (helper bgpWorkloadHelper) waitForFabricRoute(nodeCtx context.Context, destination netip.Prefix) {
 	helper.suite.Require().Eventually(func() bool {
-		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, helper.suite.Client.COSI)
+		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, helper.suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -205,7 +205,7 @@ func (helper bgpWorkloadHelper) waitForFabricRoute(nodeCtx context.Context, dest
 
 func (helper bgpWorkloadHelper) waitForFabricRouteSpec(nodeCtx context.Context, destination netip.Prefix) {
 	helper.suite.Require().Eventually(func() bool {
-		routes, err := safe.StateListAll[*networkres.RouteSpec](nodeCtx, helper.suite.Client.COSI)
+		routes, err := safe.StateListAll[*networkres.RouteSpec](nodeCtx, helper.suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -222,7 +222,7 @@ func (helper bgpWorkloadHelper) waitForFabricRouteSpec(nodeCtx context.Context, 
 }
 
 func (helper bgpWorkloadHelper) fabricSessions(nodeCtx context.Context) map[resource.ID]time.Time {
-	peers, err := safe.StateListAll[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.COSI)
+	peers, err := safe.StateListAll[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.State())
 	helper.suite.Require().NoError(err)
 
 	result := map[resource.ID]time.Time{}
@@ -242,7 +242,7 @@ func (helper bgpWorkloadHelper) fabricSessions(nodeCtx context.Context) map[reso
 func (helper bgpWorkloadHelper) assertFabricSessions(nodeCtx context.Context, expected map[resource.ID]time.Time) {
 	helper.suite.Require().Eventually(func() bool {
 		for id, since := range expected {
-			peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.COSI, id)
+			peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, helper.suite.Client.State(), id)
 			if err != nil {
 				return false
 			}

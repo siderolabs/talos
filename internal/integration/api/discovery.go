@@ -285,7 +285,7 @@ func (suite *DiscoverySuite) TestServiceEndpoints() {
 	})
 
 	rtestutils.AssertResources(
-		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		nodeCtx, suite.T(), suite.Client.State(), []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.ElementsMatch(expected, cfg.TypedSpec().ServiceEndpoints)
 		},
@@ -326,7 +326,7 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 
 	// the cluster Config resource should now include the extra named endpoint
 	rtestutils.AssertResources(
-		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		nodeCtx, suite.T(), suite.Client.State(), []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.Contains(xslices.Map(cfg.TypedSpec().ServiceEndpoints, func(ep cluster.ServiceEndpoint) string { return ep.Name }), extraName)
 		},
@@ -342,7 +342,7 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 
 	// after removal, the extra endpoint disappears from the resource
 	rtestutils.AssertResources(
-		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		nodeCtx, suite.T(), suite.Client.State(), []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.NotContains(xslices.Map(cfg.TypedSpec().ServiceEndpoints, func(ep cluster.ServiceEndpoint) string { return ep.Name }), extraName)
 		},
@@ -350,7 +350,7 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 	)
 
 	// removing one of several endpoints must not disrupt discovery: all nodes remain members
-	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.COSI, len(suite.DiscoverNodeInternalIPs(suite.ctx)))
+	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.State(), len(suite.DiscoverNodeInternalIPs(suite.ctx)))
 
 	// Removing all discovery service configs disables discovery on this node entirely. On a KubeSpan
 	// cluster the WireGuard peer set is populated from discovery, so disabling it drops all peers and
@@ -377,7 +377,7 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 
 	// the cluster Config resource should no longer carry any service endpoints
 	rtestutils.AssertResources(
-		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		nodeCtx, suite.T(), suite.Client.State(), []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.Empty(cfg.TypedSpec().ServiceEndpoints)
 		},
@@ -385,14 +385,14 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 	)
 
 	// with discovery disabled, no members should be discovered.
-	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.COSI, 0)
+	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.State(), 0)
 
 	// restore the original configuration and verify discovery reconverges: all other nodes are
 	// discovered as members again.
 	suite.T().Logf("restoring original discovery service configuration on node %s", node)
 	suite.PatchMachineConfig(nodeCtx, originalDocuments...)
 
-	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.COSI, len(suite.DiscoverNodeInternalIPs(suite.ctx)))
+	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.State(), len(suite.DiscoverNodeInternalIPs(suite.ctx)))
 }
 
 // TestKubeSpanPeers verifies that KubeSpan peer specs are populated, and that peer statuses are available.
@@ -418,10 +418,10 @@ func (suite *DiscoverySuite) TestKubeSpanPeers() {
 	for _, node := range nodes {
 		nodeCtx := client.WithNode(suite.ctx, node)
 
-		rtestutils.AssertLength[*kubespan.PeerSpec](nodeCtx, suite.T(), suite.Client.COSI, len(nodes)-1)
-		rtestutils.AssertLength[*kubespan.PeerStatus](nodeCtx, suite.T(), suite.Client.COSI, len(nodes)-1)
+		rtestutils.AssertLength[*kubespan.PeerSpec](nodeCtx, suite.T(), suite.Client.State(), len(nodes)-1)
+		rtestutils.AssertLength[*kubespan.PeerStatus](nodeCtx, suite.T(), suite.Client.State(), len(nodes)-1)
 
-		rtestutils.AssertAll(nodeCtx, suite.T(), suite.Client.COSI,
+		rtestutils.AssertAll(nodeCtx, suite.T(), suite.Client.State(),
 			func(status *kubespan.PeerStatus, asrt *assert.Assertions) {
 				asrt.Equal(kubespan.PeerStateUp, status.TypedSpec().State)
 				asrt.False(value.IsZero(status.TypedSpec().Endpoint))
@@ -469,12 +469,12 @@ func (suite *DiscoverySuite) TestKubeSpanExtraEndpoints() {
 	suite.T().Logf("injecting extra endpoint %s to node %s", mockEndpoint, targetNode)
 	suite.PatchMachineConfig(client.WithNode(suite.ctx, targetNode), cfgDocument)
 
-	targetIdentity, err := safe.ReaderGetByID[*kubespan.Identity](client.WithNode(suite.ctx, targetNode), suite.Client.COSI, kubespan.LocalIdentity)
+	targetIdentity, err := safe.ReaderGetByID[*kubespan.Identity](client.WithNode(suite.ctx, targetNode), suite.Client.State(), kubespan.LocalIdentity)
 	suite.Require().NoError(err)
 
 	suite.T().Logf("checking extra endpoint %s on node %s", mockEndpoint, checkNode)
 	rtestutils.AssertResources(
-		client.WithNode(suite.ctx, checkNode), suite.T(), suite.Client.COSI, []string{targetIdentity.TypedSpec().PublicKey},
+		client.WithNode(suite.ctx, checkNode), suite.T(), suite.Client.State(), []string{targetIdentity.TypedSpec().PublicKey},
 		func(peer *kubespan.PeerSpec, asrt *assert.Assertions) {
 			asrt.Contains(peer.TypedSpec().Endpoints, mockEndpoint)
 		},
@@ -486,14 +486,14 @@ func (suite *DiscoverySuite) TestKubeSpanExtraEndpoints() {
 }
 
 func (suite *DiscoverySuite) getMembers(nodeCtx context.Context) []*cluster.Member {
-	items, err := safe.StateListAll[*cluster.Member](nodeCtx, suite.Client.COSI)
+	items, err := safe.StateListAll[*cluster.Member](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	return safe.ToSlice(items, func(m *cluster.Member) *cluster.Member { return m })
 }
 
 func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.Identity {
-	identity, err := safe.StateGet[*cluster.Identity](nodeCtx, suite.Client.COSI, resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
+	identity, err := safe.StateGet[*cluster.Identity](nodeCtx, suite.Client.State(), resource.NewMetadata(cluster.NamespaceName, cluster.IdentityType, cluster.LocalIdentity, resource.VersionUndefined))
 	suite.Require().NoError(err)
 
 	return identity
@@ -502,7 +502,7 @@ func (suite *DiscoverySuite) getNodeIdentity(nodeCtx context.Context) *cluster.I
 func (suite *DiscoverySuite) getAffiliates(nodeCtx context.Context, namespace resource.Namespace) []*cluster.Affiliate {
 	var result []*cluster.Affiliate
 
-	items, err := safe.StateList[*cluster.Affiliate](nodeCtx, suite.Client.COSI, resource.NewMetadata(namespace, cluster.AffiliateType, "", resource.VersionUndefined))
+	items, err := safe.StateList[*cluster.Affiliate](nodeCtx, suite.Client.State(), resource.NewMetadata(namespace, cluster.AffiliateType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
 	items.ForEach(func(item *cluster.Affiliate) { result = append(result, item) })

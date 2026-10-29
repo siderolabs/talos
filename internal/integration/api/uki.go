@@ -60,14 +60,14 @@ func (suite *UKISuite) TestUKIBooted() {
 			ctx := client.WithNode(suite.ctx, node)
 
 			rtestutils.AssertResources(
-				ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.SecurityStateID},
+				ctx, suite.T(), suite.Client.State(), []resource.ID{runtimeres.SecurityStateID},
 				func(r *runtimeres.SecurityState, asrt *assert.Assertions) {
 					asrt.True(r.TypedSpec().BootedWithUKI)
 				},
 			)
 
 			rtestutils.AssertResources(
-				ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.BootedEntryID},
+				ctx, suite.T(), suite.Client.State(), []resource.ID{runtimeres.BootedEntryID},
 				func(r *runtimeres.BootedEntry, asrt *assert.Assertions) {
 					asrt.NotEmpty(r.TypedSpec().BootedEntry, "BootedEntry should not be empty when booted with UKI")
 				},

@@ -58,7 +58,7 @@ func (suite *WipeSuite) TestWipeBlockDeviceInvalid() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for disk := range disks.All() {
@@ -88,7 +88,7 @@ func (suite *WipeSuite) TestWipeBlockDeviceInvalid() {
 	suite.Assert().Equal(codes.NotFound, client.StatusCode(err))
 
 	// try to wipe a system disk
-	systemDisk, err := safe.StateGetByID[*block.SystemDisk](nodeCtx, suite.Client.COSI, block.SystemDiskID)
+	systemDisk, err := safe.StateGetByID[*block.SystemDisk](nodeCtx, suite.Client.State(), block.SystemDiskID)
 	suite.Require().NoError(err)
 
 	suite.T().Logf("invalid wipe request for %s at %s", systemDisk.TypedSpec().DiskID, node)
@@ -138,7 +138,7 @@ func (suite *WipeSuite) TestWipeFilesystem() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	// wait for Talos to discover xfs
-	_, err := suite.Client.COSI.WatchFor(
+	_, err := suite.Client.State().WatchFor(
 		nodeCtx,
 		block.NewDiscoveredVolume(block.NamespaceName, deviceName).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
@@ -161,7 +161,7 @@ func (suite *WipeSuite) TestWipeFilesystem() {
 	suite.Require().NoError(err)
 
 	// wait for Talos to discover that the disk is wiped
-	_, err = suite.Client.COSI.WatchFor(
+	_, err = suite.Client.State().WatchFor(
 		nodeCtx,
 		block.NewDiscoveredVolume(block.NamespaceName, deviceName).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),

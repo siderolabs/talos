@@ -124,16 +124,16 @@ func provisionContentLibrary(suite *base.APISuite, ctx context.Context, node str
 		suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.ContentLibraryConfigKind, name)
 		suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, name)
 
-		rtestutils.AssertNoResource[*hypervisor.ContentLibraryStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.ContentLibraryStatus](nodeCtx, suite.T(), suite.Client.State(), name)
 	})
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{volumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{volumeID},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
 		},
 	)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{name},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{name},
 		func(cls *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
 			asrt.True(cls.TypedSpec().Phase == hypervisor.ContentLibraryPhaseReady, "error: %q", cls.TypedSpec().Error)
 		},
@@ -147,7 +147,7 @@ func provisionContentLibrary(suite *base.APISuite, ctx context.Context, node str
 func (suite *ContentLibrarySuite) TestLibraryBecomesReady() {
 	ctx, name, path := suite.provisionLibrary()
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{name},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{name},
 		func(cls *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
 			asrt.Equal(constants.UserVolumePrefix+name, cls.TypedSpec().VolumeID)
 			asrt.Equal(path, cls.TypedSpec().Path)

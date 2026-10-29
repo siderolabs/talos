@@ -274,7 +274,7 @@ func (suite *BaseSuite) assertSameVersionCluster(client *talosclient.Client, exp
 func (suite *BaseSuite) assertCmdlineContains(client *talosclient.Client, node string, expectedCmdlineContains string) {
 	ctx := talosclient.WithNode(suite.ctx, node)
 
-	cmdline, err := safe.ReaderGetByID[*runtime.KernelCmdline](ctx, client.COSI, runtime.KernelCmdlineID)
+	cmdline, err := safe.ReaderGetByID[*runtime.KernelCmdline](ctx, client.State(), runtime.KernelCmdlineID)
 	suite.Require().NoError(err)
 
 	suite.Assert().NotEmpty(cmdline, "expected cmdline to be not empty")
@@ -285,7 +285,7 @@ func (suite *BaseSuite) assertCmdlineContains(client *talosclient.Client, node s
 func (suite *BaseSuite) assertCmdlineNotContains(client *talosclient.Client, node string, expectedCmdlineContains string) {
 	ctx := talosclient.WithNode(suite.ctx, node)
 
-	cmdline, err := safe.ReaderGetByID[*runtime.KernelCmdline](ctx, client.COSI, runtime.KernelCmdlineID)
+	cmdline, err := safe.ReaderGetByID[*runtime.KernelCmdline](ctx, client.State(), runtime.KernelCmdlineID)
 	suite.Require().NoError(err)
 
 	suite.Assert().NotEmpty(cmdline, "expected cmdline to be not empty")

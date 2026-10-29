@@ -134,7 +134,7 @@ func listResources(ctx context.Context, out output.Writer, clientFactory *global
 		}
 
 		if resourceID == "" {
-			items, err := nodeClient.COSI.List(
+			items, err := nodeClient.State().List(
 				nodeCtx,
 				resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined),
 				state.WithListUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
@@ -151,7 +151,7 @@ func listResources(ctx context.Context, out output.Writer, clientFactory *global
 				}
 			}
 		} else {
-			r, err := nodeClient.COSI.Get(
+			r, err := nodeClient.State().Get(
 				nodeCtx,
 				resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined),
 				state.WithGetUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
@@ -190,7 +190,7 @@ func watchResources(ctx context.Context, out output.Writer, clientFactory *globa
 		watchCh := make(chan state.Event)
 
 		if resourceID == "" {
-			err = nodeClient.COSI.WatchKind(
+			err = nodeClient.State().WatchKind(
 				nodeCtx,
 				resource.NewMetadata(getCmdFlags.namespace, resourceType, "", resource.VersionUndefined),
 				watchCh,
@@ -198,7 +198,7 @@ func watchResources(ctx context.Context, out output.Writer, clientFactory *globa
 				state.WithWatchKindUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
 			)
 		} else {
-			err = nodeClient.COSI.Watch(
+			err = nodeClient.State().Watch(
 				nodeCtx,
 				resource.NewMetadata(getCmdFlags.namespace, resourceType, resourceID, resource.VersionUndefined),
 				watchCh,
@@ -295,7 +295,7 @@ func completeResourceDefinition(ctx context.Context, withAliases bool) ([]string
 
 	var result []string
 
-	items, err := safe.StateListAll[*meta.ResourceDefinition](ctx, c.COSI)
+	items, err := safe.StateListAll[*meta.ResourceDefinition](ctx, c.State())
 	if err != nil {
 		cobra.CompError(fmt.Sprintf("error listing resource definitions: %v", err))
 
@@ -340,7 +340,7 @@ func completeResourceID(ctx context.Context, resourceType, namespace string) ([]
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	items, err := c.COSI.List(ctx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
+	items, err := c.State().List(ctx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
 	if err != nil {
 		cobra.CompError(fmt.Sprintf("error listing resources: %v", err))
 
@@ -380,7 +380,7 @@ func completeNodes(cmd *cobra.Command, args []string, toComplete string) ([]stri
 
 	var nodes []string
 
-	items, err := safe.StateListAll[*cluster.Member](ctx, c.COSI)
+	items, err := safe.StateListAll[*cluster.Member](ctx, c.State())
 	if err != nil {
 		cobra.CompError(fmt.Sprintf("error listing cluster members: %v", err))
 

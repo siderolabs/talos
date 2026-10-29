@@ -76,7 +76,7 @@ func (suite *RotateCASuite) TestTalos() {
 	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	// save osRoot
-	osRoot, err := safe.StateGetByID[*secretsres.OSRoot](client.WithNode(suite.ctx, nodeInternalIP), suite.Client.COSI, secretsres.OSRootID)
+	osRoot, err := safe.StateGetByID[*secretsres.OSRoot](client.WithNode(suite.ctx, nodeInternalIP), suite.Client.State(), secretsres.OSRootID)
 	suite.Require().NoError(err)
 
 	suite.T().Logf("rotating current CA -> new CA")
@@ -151,7 +151,7 @@ func (suite *RotateCASuite) TestKubernetes() {
 	nodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	// save k8sRoot
-	k8sRoot, err := safe.StateGetByID[*secretsres.KubernetesRoot](client.WithNode(suite.ctx, nodeInternalIP), suite.Client.COSI, secretsres.KubernetesRootID)
+	k8sRoot, err := safe.StateGetByID[*secretsres.KubernetesRoot](client.WithNode(suite.ctx, nodeInternalIP), suite.Client.State(), secretsres.KubernetesRootID)
 	suite.Require().NoError(err)
 
 	suite.T().Logf("rotating current CA -> new CA")

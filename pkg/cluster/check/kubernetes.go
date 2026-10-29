@@ -473,7 +473,7 @@ func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 			},
 		} {
 			// Talos 1.14 introduces more IDs for the same type, so use simple List API to avoid sticking to IDs
-			items, err := c.COSI.List(nodeCtx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, staticPod.configResourceType, "", resource.VersionUndefined))
+			items, err := c.State().List(nodeCtx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, staticPod.configResourceType, "", resource.VersionUndefined))
 			if err != nil {
 				return fmt.Errorf("error listing static pods config for node %s: %w", node.InternalIP, err)
 			}
@@ -483,7 +483,7 @@ func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 			}
 		}
 
-		items, err := safe.StateListAll[*k8s.StaticPodStatus](nodeCtx, c.COSI)
+		items, err := safe.StateListAll[*k8s.StaticPodStatus](nodeCtx, c.State())
 		if err != nil {
 			return fmt.Errorf("error listing static pods on node %s: %w", node.InternalIP, err)
 		}

@@ -62,7 +62,7 @@ func PatchNodeConfigWithKubeletRestart(ctx context.Context, c *client.Client, no
 
 	watchCh := make(chan safe.WrappedStateEvent[*v1alpha1res.Service])
 
-	if err := safe.StateWatch(ctx, c.COSI, resource.NewMetadata(v1alpha1res.NamespaceName, v1alpha1res.ServiceType, "kubelet", resource.VersionUndefined), watchCh); err != nil {
+	if err := safe.StateWatch(ctx, c.State(), resource.NewMetadata(v1alpha1res.NamespaceName, v1alpha1res.ServiceType, "kubelet", resource.VersionUndefined), watchCh); err != nil {
 		return fmt.Errorf("error watching service: %w", err)
 	}
 
@@ -132,7 +132,7 @@ func PatchNodeConfigWithKubeletRestart(ctx context.Context, c *client.Client, no
 func patchNodeConfigInternal(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config.Provider) (config.Provider, error)) error {
 	ctx = client.WithNode(ctx, node)
 
-	mc, err := safe.StateGetByID[*configres.MachineConfig](ctx, c.COSI, configres.ActiveID)
+	mc, err := safe.StateGetByID[*configres.MachineConfig](ctx, c.State(), configres.ActiveID)
 	if err != nil {
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}

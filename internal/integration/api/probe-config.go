@@ -72,7 +72,7 @@ func (suite *ProbeConfigSuite) TestProbeConfig() { //nolint:dupl
 	// Wait for ProbeSpec resource to be created
 	//nolint:dupl
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS,
+		nodeCtx, suite.T(), suite.Client.State(), "tcp:"+googleDNS,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(2*time.Second, spec.TypedSpec().Interval)
 			asrt.Equal(3, spec.TypedSpec().FailureThreshold)
@@ -88,7 +88,7 @@ func (suite *ProbeConfigSuite) TestProbeConfig() { //nolint:dupl
 
 	// Wait for ProbeSpec resource to be updated
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS,
+		nodeCtx, suite.T(), suite.Client.State(), "tcp:"+googleDNS,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(5, spec.TypedSpec().FailureThreshold)
 		},
@@ -98,7 +98,7 @@ func (suite *ProbeConfigSuite) TestProbeConfig() { //nolint:dupl
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.TCPProbeKind)
 
 	// Wait for ProbeSpec resource to be removed
-	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS)
+	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.State(), "tcp:"+googleDNS)
 }
 
 // TestMultipleProbes tests that multiple ProbeConfig documents create multiple ProbeSpec resources.
@@ -127,7 +127,7 @@ func (suite *ProbeConfigSuite) TestMultipleProbes() {
 
 	// Verify both probes are created
 	rtestutils.AssertResources(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		[]string{"tcp:" + cfDNS, "tcp:" + googleDNS},
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			switch spec.TypedSpec().TCP.Endpoint {
@@ -147,8 +147,8 @@ func (suite *ProbeConfigSuite) TestMultipleProbes() {
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.TCPProbeKind)
 
 	// Verify both probes are removed
-	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+cfDNS)
-	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS)
+	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.State(), "tcp:"+cfDNS)
+	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.State(), "tcp:"+googleDNS)
 }
 
 // TestProbeStatus tests that ProbeSpec resources create ProbeStatus resources.
@@ -169,7 +169,7 @@ func (suite *ProbeConfigSuite) TestProbeStatus() {
 
 	// Wait for ProbeSpec to be created
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS,
+		nodeCtx, suite.T(), suite.Client.State(), "tcp:"+googleDNS,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(googleDNS, spec.TypedSpec().TCP.Endpoint)
 		},
@@ -179,7 +179,7 @@ func (suite *ProbeConfigSuite) TestProbeStatus() {
 	time.Sleep(3 * time.Second)
 
 	// Verify ProbeStatus is created and has success/failure data
-	probeStatuses, err := safe.StateListAll[*networkres.ProbeStatus](nodeCtx, suite.Client.COSI)
+	probeStatuses, err := safe.StateListAll[*networkres.ProbeStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var found bool
@@ -200,7 +200,7 @@ func (suite *ProbeConfigSuite) TestProbeStatus() {
 
 	// Clean up
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.TCPProbeKind)
-	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS)
+	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.State(), "tcp:"+googleDNS)
 }
 
 // TestHTTPProbeConfig tests that HTTPProbeConfig documents create ProbeSpec resources and run probes.
@@ -226,7 +226,7 @@ func (suite *ProbeConfigSuite) TestHTTPProbeConfig() {
 
 	// Wait for ProbeSpec resource to be created
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "http:"+probeURL,
+		nodeCtx, suite.T(), suite.Client.State(), "http:"+probeURL,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(1*time.Second, spec.TypedSpec().Interval)
 			asrt.Equal(3, spec.TypedSpec().FailureThreshold)
@@ -241,7 +241,7 @@ func (suite *ProbeConfigSuite) TestHTTPProbeConfig() {
 	suite.PatchMachineConfig(nodeCtx, probeConfig)
 
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "http:"+probeURL,
+		nodeCtx, suite.T(), suite.Client.State(), "http:"+probeURL,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(5, spec.TypedSpec().FailureThreshold)
 		},
@@ -251,7 +251,7 @@ func (suite *ProbeConfigSuite) TestHTTPProbeConfig() {
 	time.Sleep(3 * time.Second)
 
 	// Verify ProbeStatus is created and has been updated
-	probeStatuses, err := safe.StateListAll[*networkres.ProbeStatus](nodeCtx, suite.Client.COSI)
+	probeStatuses, err := safe.StateListAll[*networkres.ProbeStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var found bool
@@ -272,7 +272,7 @@ func (suite *ProbeConfigSuite) TestHTTPProbeConfig() {
 	// Remove the ProbeConfig
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.HTTPProbeKind)
 
-	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "http:"+probeURL)
+	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.State(), "http:"+probeURL)
 }
 
 func init() {

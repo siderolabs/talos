@@ -58,7 +58,7 @@ func (suite *BootPartitionSuite) TestBootPartitionDiscovered() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	bootPartition, err := safe.StateGetByID[*runtimeres.BootPartitionStatus](ctx, suite.Client.COSI, runtimeres.BootPartitionStatusID)
+	bootPartition, err := safe.StateGetByID[*runtimeres.BootPartitionStatus](ctx, suite.Client.State(), runtimeres.BootPartitionStatusID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			suite.T().Skipf("boot partition is not known on node %s", node)
@@ -70,7 +70,7 @@ func (suite *BootPartitionSuite) TestBootPartitionDiscovered() {
 	partitionUUID := bootPartition.TypedSpec().PartitionUUID
 	suite.Assert().NotEmpty(partitionUUID)
 
-	discoveredVolumes, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	discoveredVolumes, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var found bool

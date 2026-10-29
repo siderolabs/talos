@@ -131,7 +131,7 @@ func (f *storagePoolFixture) createVolumes(ctx context.Context) {
 	f.assertVolumes(ctx)
 
 	for i, id := range f.volumeIDs {
-		mount, err := safe.ReaderGetByID[*block.MountStatus](nodeCtx, f.suite.Client.COSI, id)
+		mount, err := safe.ReaderGetByID[*block.MountStatus](nodeCtx, f.suite.Client.State(), id)
 		f.suite.Require().NoError(err)
 		f.paths[i] = filepath.Join(mount.TypedSpec().Target, f.poolName)
 	}
@@ -139,12 +139,12 @@ func (f *storagePoolFixture) createVolumes(ctx context.Context) {
 
 func (f *storagePoolFixture) assertVolumes(ctx context.Context) {
 	nodeCtx := client.WithNode(ctx, f.node)
-	rtestutils.AssertResources(nodeCtx, f.suite.T(), f.suite.Client.COSI, f.volumeIDs,
+	rtestutils.AssertResources(nodeCtx, f.suite.T(), f.suite.Client.State(), f.volumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
 			asrt.Equal(block.VolumeTypeDirectory, vs.TypedSpec().Type)
 		})
-	rtestutils.AssertResources(nodeCtx, f.suite.T(), f.suite.Client.COSI, f.volumeIDs,
+	rtestutils.AssertResources(nodeCtx, f.suite.T(), f.suite.Client.State(), f.volumeIDs,
 		func(ms *block.MountStatus, asrt *assert.Assertions) {
 			asrt.NotEmpty(ms.TypedSpec().Target)
 		})
@@ -152,8 +152,8 @@ func (f *storagePoolFixture) assertVolumes(ctx context.Context) {
 
 func (f *storagePoolFixture) waitAbsent(ctx context.Context) {
 	nodeCtx := client.WithNode(ctx, f.node)
-	rtestutils.AssertNoResource[*storage.StoragePoolSpec](nodeCtx, f.suite.T(), f.suite.Client.COSI, f.poolName)
-	rtestutils.AssertNoResource[*storage.StoragePoolStatus](nodeCtx, f.suite.T(), f.suite.Client.COSI, f.poolName)
+	rtestutils.AssertNoResource[*storage.StoragePoolSpec](nodeCtx, f.suite.T(), f.suite.Client.State(), f.poolName)
+	rtestutils.AssertNoResource[*storage.StoragePoolStatus](nodeCtx, f.suite.T(), f.suite.Client.State(), f.poolName)
 
 	// Retry synchronously: RunDebugContainer can call FatalNow on transport errors.
 	f.suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
@@ -172,11 +172,11 @@ func (f *storagePoolFixture) waitAbsent(ctx context.Context) {
 
 func (f *storagePoolFixture) waitPool(ctx context.Context, volumeIndex int, expectedUUID string) string {
 	nodeCtx := client.WithNode(ctx, f.node)
-	rtestutils.AssertResource(nodeCtx, f.suite.T(), f.suite.Client.COSI, f.poolName,
+	rtestutils.AssertResource(nodeCtx, f.suite.T(), f.suite.Client.State(), f.poolName,
 		func(spec *storage.StoragePoolSpec, asrt *assert.Assertions) {
 			asrt.Equal(f.volumeIDs[volumeIndex], spec.TypedSpec().VolumeID)
 		})
-	rtestutils.AssertResource(nodeCtx, f.suite.T(), f.suite.Client.COSI, f.poolName,
+	rtestutils.AssertResource(nodeCtx, f.suite.T(), f.suite.Client.State(), f.poolName,
 		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
 			asrt.Equal(f.volumeIDs[volumeIndex], status.TypedSpec().VolumeID)
 			asrt.Equal(f.paths[volumeIndex], status.TypedSpec().TargetPath)

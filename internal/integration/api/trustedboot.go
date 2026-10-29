@@ -65,14 +65,14 @@ func (suite *TrustedBootSuite) TestTrustedBootState() {
 	ctx := client.WithNode(suite.ctx, node)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{runtimeres.SecurityStateID},
+		ctx, suite.T(), suite.Client.State(), []resource.ID{runtimeres.SecurityStateID},
 		func(r *runtimeres.SecurityState, asrt *assert.Assertions) {
 			asrt.True(r.TypedSpec().SecureBoot)
 		},
 	)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		[]resource.ID{constants.StatePartitionLabel, constants.EphemeralPartitionLabel},
 		func(r *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, r.TypedSpec().Phase)
@@ -122,7 +122,7 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 
 	// when we start the test we do not know the current encryption provider in use
 	// so let's read the volumestatus to get the information about the slot in use and whether lockToState is set
-	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, constants.EphemeralPartitionLabel)
+	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), constants.EphemeralPartitionLabel)
 	suite.Require().NoError(err)
 
 	existingEncryptionSlotInUse := *volumeStatus.TypedSpec().EncryptionSlot
@@ -320,7 +320,7 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 
 		suite.WaitForBootDone(suite.ctx)
 
-		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, constants.EphemeralPartitionLabel, func(r *block.VolumeStatus, asrt *assert.Assertions) {
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), constants.EphemeralPartitionLabel, func(r *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(test.expectedPCRs, r.TypedSpec().TPMEncryptionOptions.PCRs)
 			asrt.Equal(test.expectedPubKeyPCRs, r.TypedSpec().TPMEncryptionOptions.PubKeyPCRs)
 			asrt.Equal(test.expectedLockedToState, r.TypedSpec().EncryptionLockedToState)

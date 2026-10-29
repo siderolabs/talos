@@ -119,7 +119,7 @@ func (suite *ContainersSuite) TestContainerLifecycle() {
 
 	suite.applyContainers(ctx, updated)
 
-	rtestutils.AssertNoResource[*containers.ContainerInstanceSpec](ctx, suite.T(), suite.Client.COSI, oldInstanceID)
+	rtestutils.AssertNoResource[*containers.ContainerInstanceSpec](ctx, suite.T(), suite.Client.State(), oldInstanceID)
 
 	newInstanceID, newInstance := suite.assertContainerRunning(ctx, name, "after the environment change")
 
@@ -129,7 +129,7 @@ func (suite *ContainersSuite) TestContainerLifecycle() {
 	suite.Assert().NotEqual(oldInstance.PID, newInstance.PID,
 		"container %q is still running as PID %d, so it was not restarted", name, oldInstance.PID)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, newInstanceID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), newInstanceID,
 		func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
 			asrt.Contains(instance.TypedSpec().Environment, envVar)
 		})
@@ -138,7 +138,7 @@ func (suite *ContainersSuite) TestContainerLifecycle() {
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
 
-	rtestutils.AssertNoResource[*containers.ContainerSpec](ctx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*containers.ContainerSpec](ctx, suite.T(), suite.Client.State(), name)
 
 	suite.assertNoContainerdContainer(ctx, name)
 }
@@ -224,7 +224,7 @@ func (suite *ContainersSuite) TestRestartAfterTermination() {
 				})
 
 			// And the instance that exited is not kept around: zero instances are retained.
-			rtestutils.AssertNoResource[*containers.ContainerInstanceSpec](ctx, suite.T(), suite.Client.COSI, firstID)
+			rtestutils.AssertNoResource[*containers.ContainerInstanceSpec](ctx, suite.T(), suite.Client.State(), firstID)
 		})
 	}
 }
@@ -284,7 +284,7 @@ func (suite *ContainersSuite) TestContainerStatus() {
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
 
-	rtestutils.AssertNoResource[*containers.ContainerStatus](ctx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*containers.ContainerStatus](ctx, suite.T(), suite.Client.State(), name)
 }
 
 // TestContainerStatusWaitingFor verifies that the gates holding a container back reach the
@@ -356,7 +356,7 @@ func (suite *ContainersSuite) TestUnresolvableImage() {
 	// test should have, so the failed phase is not what gets asserted here.
 	suite.T().Logf("waiting for the image pull of %q to be under way", name)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
 			asrt.Equal(containers.ContainerImagePhasePulling, status.TypedSpec().Phase,
 				"image is in phase %s (error %q)", status.TypedSpec().Phase, status.TypedSpec().Error)
@@ -589,7 +589,7 @@ func (suite *ContainersSuite) TestResourceLimits() {
 
 	instanceID, _ := suite.assertContainerRunning(ctx, name, "with resource limits")
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, instanceID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), instanceID,
 		func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
 			asrt.EqualValues(memoryLimitBytes, instance.TypedSpec().Resources.MemoryLimit)
 			asrt.NotZero(instance.TypedSpec().Resources.CPULimit)
@@ -741,7 +741,7 @@ func (suite *ContainersSuite) TestTmpfsMount() {
 
 	instanceID, _ := suite.assertNewestInstanceID(ctx, name)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, instanceID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), instanceID,
 		func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
 			if asrt.Len(instance.TypedSpec().Mounts, 1) {
 				asrt.Equal(destination, instance.TypedSpec().Mounts[0].Destination)
@@ -1021,7 +1021,7 @@ func (suite *ContainersSuite) TestMultipleContainers() {
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, first)
 
-	rtestutils.AssertNoResource[*containers.ContainerSpec](ctx, suite.T(), suite.Client.COSI, first)
+	rtestutils.AssertNoResource[*containers.ContainerSpec](ctx, suite.T(), suite.Client.State(), first)
 	suite.assertNoContainerdContainer(ctx, first)
 
 	// The surviving container is not merely still declared: it is the same running instance, so
@@ -1090,7 +1090,7 @@ func (suite *ContainersSuite) TestContainerUserVolumeMount() {
 
 	// The host path is only knowable once the volume is actually mounted, which is what the mount
 	// status reports.
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
 
@@ -1109,14 +1109,14 @@ func (suite *ContainersSuite) TestContainerUserVolumeMount() {
 
 	requestID := containerMountRequestID(name, volumeName)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, requestID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), requestID,
 		func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
 			asrt.False(request.TypedSpec().ReadOnly, "volume was requested read-only despite the rw default")
 		})
 
 	// The hold: the finalizer on the mount status is what stops the volume being unmounted from under
 	// the running container.
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, requestID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), requestID,
 		func(status *block.VolumeMountStatus, asrt *assert.Assertions) {
 			asrt.Equal(filepath.Join(constants.UserVolumeMountPoint, volumeName), status.TypedSpec().Target)
 			asrt.True(status.Metadata().Finalizers().Has(containerMountControllerName),
@@ -1128,8 +1128,8 @@ func (suite *ContainersSuite) TestContainerUserVolumeMount() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
 
 	// The hold has to be given back, or tearing the volume down would block on our finalizer.
-	rtestutils.AssertNoResource[*containers.ContainerMountStatus](ctx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*block.VolumeMountRequest](ctx, suite.T(), suite.Client.COSI, requestID)
+	rtestutils.AssertNoResource[*containers.ContainerMountStatus](ctx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*block.VolumeMountRequest](ctx, suite.T(), suite.Client.State(), requestID)
 
 	suite.T().Logf("removing user volume %q", volumeName)
 
@@ -1137,7 +1137,7 @@ func (suite *ContainersSuite) TestContainerUserVolumeMount() {
 
 	// And the volume itself is then really unmounted, which is only possible because the hold was
 	// released above.
-	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.COSI,
+	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.State(),
 		constants.UserVolumePrefix+volumeName)
 }
 
@@ -1172,7 +1172,7 @@ func (suite *ContainersSuite) TestUserVolumeMountWritableByDefault() {
 
 	// The other half of the contract: writable has to reach the block subsystem as well, so that this
 	// container counts as a writable holder of the volume.
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, containerMountRequestID(name, volumeName),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), containerMountRequestID(name, volumeName),
 		func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
 			asrt.False(request.TypedSpec().ReadOnly, "volume %q was requested read-only", volumeName)
 		})
@@ -1207,7 +1207,7 @@ func (suite *ContainersSuite) TestUserVolumeMountGate() {
 
 	suite.T().Logf("verifying container %q waits for the undeclared volume %q", name, volumeName)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 			asrt.False(status.TypedSpec().Ready, "mounts are ready without the volume being declared")
 			asrt.Contains(status.TypedSpec().Error, volumeName)
@@ -1218,7 +1218,7 @@ func (suite *ContainersSuite) TestUserVolumeMountGate() {
 
 	suite.declareUserVolume(ctx, node, volumeName)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
 		})
@@ -1257,7 +1257,7 @@ sleep 3600`,
 		suite.Assert().Contains(logs, "SOCKET_OK",
 			"the machined socket is not mounted into the container: %s", logs)
 
-		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, constants.ContainerServicePIDPrefix+name,
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), constants.ContainerServicePIDPrefix+name,
 			func(servicePID *runtimeres.ServicePID, asrt *assert.Assertions) {
 				asrt.EqualValues(instance.PID, servicePID.TypedSpec().PID)
 			})
@@ -1266,7 +1266,7 @@ sleep 3600`,
 
 		suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
 
-		rtestutils.AssertNoResource[*runtimeres.ServicePID](ctx, suite.T(), suite.Client.COSI, constants.ContainerServicePIDPrefix+name)
+		rtestutils.AssertNoResource[*runtimeres.ServicePID](ctx, suite.T(), suite.Client.State(), constants.ContainerServicePIDPrefix+name)
 	})
 
 	suite.Run("disabled", func() {
@@ -1287,7 +1287,7 @@ sleep 3600`,
 		suite.Assert().Contains(logs, "SOCKET_ABSENT",
 			"the machined socket must not be mounted without security.machinedAccess")
 
-		rtestutils.AssertNoResource[*runtimeres.ServicePID](ctx, suite.T(), suite.Client.COSI, constants.ContainerServicePIDPrefix+name)
+		rtestutils.AssertNoResource[*runtimeres.ServicePID](ctx, suite.T(), suite.Client.State(), constants.ContainerServicePIDPrefix+name)
 	})
 }
 
@@ -1498,7 +1498,7 @@ func (suite *ContainersSuite) assertNewestInstance(
 func (suite *ContainersSuite) newestInstance(
 	ctx context.Context, containerName string, asrt *assert.Assertions,
 ) (*containers.ContainerInstanceStatus, bool) {
-	statuses, err := safe.StateListAll[*containers.ContainerInstanceStatus](ctx, suite.Client.COSI)
+	statuses, err := safe.StateListAll[*containers.ContainerInstanceStatus](ctx, suite.Client.State())
 	if !asrt.NoError(err) {
 		return nil, false
 	}
@@ -1522,7 +1522,7 @@ func (suite *ContainersSuite) newestInstance(
 func (suite *ContainersSuite) assertImageReady(ctx context.Context, containerName string) {
 	suite.T().Logf("waiting for the image of container %q to be pulled", containerName)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, containerName,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), containerName,
 		func(status *containers.ContainerImageStatus, asrt *assert.Assertions) {
 			asrt.Equal(containers.ContainerImagePhaseReady, status.TypedSpec().Phase,
 				"image is in phase %s (error %q)", status.TypedSpec().Phase, status.TypedSpec().Error)
@@ -1544,7 +1544,7 @@ func (suite *ContainersSuite) assertContainerStatus(
 
 	var status containers.ContainerStatusSpec
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, containerName,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), containerName,
 		func(res *containers.ContainerStatus, asrt *assert.Assertions) {
 			check(res.TypedSpec(), asrt)
 
@@ -1568,7 +1568,7 @@ func (suite *ContainersSuite) assertNoInstanceFor(ctx context.Context, container
 	suite.T().Logf("verifying container %q stays pending", containerName)
 
 	suite.Require().Never(func() bool {
-		specs, err := safe.StateListAll[*containers.ContainerInstanceSpec](ctx, suite.Client.COSI)
+		specs, err := safe.StateListAll[*containers.ContainerInstanceSpec](ctx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -1664,7 +1664,7 @@ func (suite *ContainersSuite) describeNewestInstance(ctx context.Context, contai
 func (suite *ContainersSuite) lookupNewestInstance(
 	ctx context.Context, containerName string,
 ) *containers.ContainerInstanceStatus {
-	statuses, err := safe.StateListAll[*containers.ContainerInstanceStatus](ctx, suite.Client.COSI)
+	statuses, err := safe.StateListAll[*containers.ContainerInstanceStatus](ctx, suite.Client.State())
 	if err != nil {
 		return nil
 	}
@@ -1910,7 +1910,7 @@ func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 	// victim's cgroup: the kill comes within milliseconds of each start and takes the cgroup with
 	// it, so the files exist for a sliver of every restart interval. TestResourceLimits covers the
 	// spec reaching the cgroup.
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
 			asrt.Zero(spec.TypedSpec().Resources.MemoryLimit, "victim carries its own memory limit")
 

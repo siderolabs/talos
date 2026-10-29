@@ -92,7 +92,7 @@ func (suite *NUMASuite) TestTopology() {
 			expected.Nodes = append(expected.Nodes, hardware.NUMANodeSpec{ID: id, CPUs: cpus, MemoryTotalBytes: memoryKiB * 1024})
 		}
 
-		rtestutils.AssertResource[*hardware.NUMATopology](ctx, suite.T(), suite.Client.COSI, hardware.NUMATopologyID,
+		rtestutils.AssertResource[*hardware.NUMATopology](ctx, suite.T(), suite.Client.State(), hardware.NUMATopologyID,
 			func(topology *hardware.NUMATopology, asrt *assert.Assertions) {
 				asrt.Equal(expected, *topology.TypedSpec(), "machine %s NUMA inventory", machine)
 			})

@@ -62,7 +62,7 @@ func (suite *MachineStatusSuite) waitMachineStatusReady(node string) error {
 
 	if err := safe.StateWatch(
 		ctx,
-		suite.Client.COSI,
+		suite.Client.State(),
 		resource.NewMetadata(runtime.NamespaceName, runtime.MachineStatusType, runtime.MachineStatusID, resource.VersionUndefined),
 		watchCh,
 	); err != nil {

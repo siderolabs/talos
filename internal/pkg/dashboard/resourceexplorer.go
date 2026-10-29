@@ -294,7 +294,7 @@ func (widget *ResourceExplorerGrid) loadResourceTypes() {
 	ctx := widget.nodeContext(widget.ctx)
 
 	go func() {
-		list, err := safe.StateListAll[*meta.ResourceDefinition](ctx, widget.dashboard.cli.COSI)
+		list, err := safe.StateListAll[*meta.ResourceDefinition](ctx, widget.dashboard.cli.State())
 		if err != nil {
 			widget.app.QueueUpdateDraw(func() {
 				widget.initTypesTableHeader()
@@ -578,7 +578,7 @@ func (widget *ResourceExplorerGrid) runResourceWatch(ctx context.Context, rd *me
 
 	md := resource.NewMetadata(spec.DefaultNamespace, spec.Type, "", resource.VersionUndefined)
 
-	if err := widget.dashboard.cli.COSI.WatchKind(
+	if err := widget.dashboard.cli.State().WatchKind(
 		nodeCtx, &md, eventCh,
 		state.WithBootstrapContents(true),
 		state.WithWatchKindUnmarshalOptions(state.WithSkipProtobufUnmarshal()),

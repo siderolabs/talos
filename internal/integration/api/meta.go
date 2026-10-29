@@ -64,26 +64,26 @@ func (suite *MetaSuite) TestMetaWriteDelete() {
 
 	suite.Run("regular operations", func() {
 		// no value in the initial state
-		rtestutils.AssertNoResource[*runtime.MetaKey](ctx, suite.T(), suite.Client.COSI, runtime.MetaKeyTagToID(meta.UserReserved1))
+		rtestutils.AssertNoResource[*runtime.MetaKey](ctx, suite.T(), suite.Client.State(), runtime.MetaKeyTagToID(meta.UserReserved1))
 
 		suite.Require().NoError(suite.Client.MetaWrite(ctx, meta.UserReserved1, []byte(metaValue)))
 
 		// value should appear after write
-		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, runtime.MetaKeyTagToID(meta.UserReserved1), func(mt *runtime.MetaKey, asrt *assert.Assertions) {
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), runtime.MetaKeyTagToID(meta.UserReserved1), func(mt *runtime.MetaKey, asrt *assert.Assertions) {
 			asrt.Equal(metaValue, mt.TypedSpec().Value)
 		})
 
 		// overwrite value
 		suite.Require().NoError(suite.Client.MetaWrite(ctx, meta.UserReserved1, []byte(metaValue2)))
 
-		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, runtime.MetaKeyTagToID(meta.UserReserved1), func(mt *runtime.MetaKey, asrt *assert.Assertions) {
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), runtime.MetaKeyTagToID(meta.UserReserved1), func(mt *runtime.MetaKey, asrt *assert.Assertions) {
 			asrt.Equal(metaValue2, mt.TypedSpec().Value)
 		})
 
 		// delete value
 		suite.Require().NoError(suite.Client.MetaDelete(ctx, meta.UserReserved1))
 
-		rtestutils.AssertNoResource[*runtime.MetaKey](ctx, suite.T(), suite.Client.COSI, runtime.MetaKeyTagToID(meta.UserReserved1))
+		rtestutils.AssertNoResource[*runtime.MetaKey](ctx, suite.T(), suite.Client.State(), runtime.MetaKeyTagToID(meta.UserReserved1))
 	})
 
 	suite.Run("invalid key", func() {

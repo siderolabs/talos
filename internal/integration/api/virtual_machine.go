@@ -85,8 +85,8 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 	}
 
 	// Do not take over an existing spec from another producer, even if no document names it.
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
@@ -179,8 +179,8 @@ func (suite *VirtualMachineSuite) TestConfigProjectionLifecycle() {
 
 	// Restoring the snapshot removes only our document, preserving all original VMs.
 	suite.applyVirtualMachineConfig(nodeCtx, originalBytes)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 }
 
 func (suite *VirtualMachineSuite) validateVirtualMachineConfig(cfg *container.Container, doc *hypervisorcfg.VirtualMachineConfigV1Alpha1) {
@@ -236,8 +236,8 @@ func (suite *VirtualMachineSuite) registerConfigRestore(node, name string, origi
 			return
 		}
 
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.State(), name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](cleanupCtx, suite.T(), suite.Client.State(), name)
 	})
 }
 
@@ -254,7 +254,7 @@ func (suite *VirtualMachineSuite) applyVirtualMachineConfig(ctx context.Context,
 func (suite *VirtualMachineSuite) assertVirtualMachineProjection(ctx context.Context, name string, expected hypervisor.VirtualMachineSpecSpec, fixture string) {
 	suite.T().Helper()
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 			asrt.Equal(expected, *spec.TypedSpec())
 		},
@@ -264,7 +264,7 @@ func (suite *VirtualMachineSuite) assertVirtualMachineProjection(ctx context.Con
 	// explicit disabled balloon and absence of stale CPU/memory or device fields.
 	expectedXML := strings.Replace(strings.TrimSuffix(fixture, "\n"), "<name>vm-integration</name>", "<name>"+name+"</name>", 1)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			asrt.Equal(expectedXML, spec.TypedSpec().DomainXML)
 		},
@@ -306,8 +306,8 @@ func (suite *VirtualMachineSuite) TestInterfaceProjection() {
 		suite.Require().NotEqual(name, vm.Name(), "test name collides with an existing document")
 	}
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 
 	// A link name the host cannot have. It is well formed, so it passes configuration validation
 	// and is only rejected later, when the renderer fails to resolve it.
@@ -322,12 +322,12 @@ func (suite *VirtualMachineSuite) TestInterfaceProjection() {
 	// from a stale one left behind, and holding back does not remove an already rendered domain.
 	suite.applyVirtualMachineConfig(nodeCtx, missingBytes)
 	suite.assertVirtualMachineInterfaces(nodeCtx, name, missingLink)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 
 	suite.applyVirtualMachineConfig(nodeCtx, attachedBytes)
 	suite.assertVirtualMachineInterfaces(nodeCtx, name, link)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			domainXML := spec.TypedSpec().DomainXML
 
@@ -371,7 +371,7 @@ func (suite *VirtualMachineSuite) virtualMachineWithInterface(original config.Pr
 func (suite *VirtualMachineSuite) assertVirtualMachineInterfaces(ctx context.Context, name, link string) {
 	suite.T().Helper()
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 			asrt.Equal([]hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: link}}, spec.TypedSpec().Interfaces)
 		},
@@ -381,7 +381,7 @@ func (suite *VirtualMachineSuite) assertVirtualMachineInterfaces(ctx context.Con
 // physicalLinkName returns the node's first physical link, by name. The interface attached to it is
 // only ever defined, never started, so the link carries no guest traffic.
 func (suite *VirtualMachineSuite) physicalLinkName(nodeCtx context.Context) string {
-	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var names []string

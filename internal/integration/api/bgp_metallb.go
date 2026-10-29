@@ -267,12 +267,12 @@ func (suite *BGPMetalLBSuite) TestMetalLBVRFBGP() { //nolint:gocyclo
 	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](
 		nodeCtx,
 		suite.T(),
-		suite.Client.COSI,
+		suite.Client.State(),
 		metalLBWorkloadBGP+"/"+metalLBSpeakerPrefix.Addr().String(),
 	)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, metalLBVethName)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, metalLBVethPeerName)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, metalLBWorkloadVRF)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), metalLBVethName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), metalLBVethPeerName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), metalLBWorkloadVRF)
 
 	workloadHelper.assertFabricSessions(nodeCtx, fabricSessions)
 }

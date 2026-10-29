@@ -152,7 +152,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsQEMUGuestAgent() {
 
 	hostnameSpec, err := safe.StateWatchFor[*network.HostnameStatus](
 		ctx,
-		suite.Client.COSI,
+		suite.Client.State(),
 		network.NewHostnameStatus(network.NamespaceName, resource.ID("hostname")).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
 	)
@@ -191,7 +191,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsTailscale() {
 
 	linkSpec, err := safe.StateWatchFor[*network.LinkStatus](
 		ctx,
-		suite.Client.COSI,
+		suite.Client.State(),
 		network.NewHostnameStatus(network.NamespaceName, resource.ID("tailscale0")).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
 	)
@@ -392,7 +392,7 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(t *assert.CollectT, node s
 
 	assert.True(t, found, "expected /dev/zvol/tank/vol symlink pointing to a zd* device")
 
-	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.State())
 	if !assert.NoError(t, err, "StateListAll disks") {
 		return
 	}
@@ -485,7 +485,7 @@ func (suite *ExtensionsSuiteQEMU) TestLoadedKernelModule() {
 	suite.T().Logf("using node %s", node)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{
+		ctx, suite.T(), suite.Client.State(), []resource.ID{
 			"virtio_balloon",
 			"virtio_pci",
 			"virtio_pci_legacy_dev",

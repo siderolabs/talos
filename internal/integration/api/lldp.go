@@ -52,7 +52,7 @@ func (suite *LLDPSuite) TestListener() {
 		nodeIP, err := netip.ParseAddr(node)
 		require.NoError(suite.T(), err)
 
-		addresses, err := safe.StateListAll[*network.AddressStatus](nodeCtx, suite.Client.COSI)
+		addresses, err := safe.StateListAll[*network.AddressStatus](nodeCtx, suite.Client.State())
 		require.NoError(suite.T(), err)
 
 		// The provisioned node IP belongs to net0, the management bridge NIC.
@@ -70,14 +70,14 @@ func (suite *LLDPSuite) TestListener() {
 
 		require.NotEmpty(suite.T(), managementLink, "node %s has no interface with its management IP", node)
 
-		link, err := safe.ReaderGetByID[*network.LinkStatus](nodeCtx, suite.Client.COSI, managementLink)
+		link, err := safe.ReaderGetByID[*network.LinkStatus](nodeCtx, suite.Client.State(), managementLink)
 		require.NoError(suite.T(), err)
 		require.True(suite.T(), link.TypedSpec().Physical(), "node %s management link %s is not physical", node, managementLink)
 		require.NotEmpty(suite.T(), link.TypedSpec().HardwareAddr)
 
 		var portID string
 
-		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, managementLink, func(status *network.LLDPNeighborStatus, assertions *assert.Assertions) {
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), managementLink, func(status *network.LLDPNeighborStatus, assertions *assert.Assertions) {
 			if !assertions.Len(status.TypedSpec().Neighbors, 1) {
 				return
 			}

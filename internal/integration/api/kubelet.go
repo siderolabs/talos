@@ -183,7 +183,7 @@ func (suite *KubeletSuite) patchKubeletExtraConfig(node string, extraConfig map[
 	})
 
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		"kubelet",
 		func(svc *v1alpha1.Service, asrt *assert.Assertions) {
 			asrt.True(svc.TypedSpec().Healthy)
@@ -337,7 +337,7 @@ func (suite *KubeletSuite) TestProjectedVolumeUpdatesSurviveKubeletRestart() {
 	suite.Require().NoError(err)
 
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		"kubelet",
 		func(svc *v1alpha1.Service, asrt *assert.Assertions) {
 			asrt.True(svc.TypedSpec().Healthy)

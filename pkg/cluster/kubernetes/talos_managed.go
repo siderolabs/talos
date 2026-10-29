@@ -132,7 +132,7 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 		return err
 	}
 
-	upgradeChecks, err := upgrade.NewChecks(options.Path, talosClient.COSI, k8sConfig, options.controlPlaneNodes, options.workerNodes, options.Log)
+	upgradeChecks, err := upgrade.NewChecks(options.Path, talosClient.State(), k8sConfig, options.controlPlaneNodes, options.workerNodes, options.Log)
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func prePullImages(ctx context.Context, talosClient *client.Client, options Upgr
 	}
 
 	for node := range xiter.Concat(slices.Values(options.controlPlaneNodes), slices.Values(options.workerNodes)) {
-		kubeletSpec, err := safe.StateGet[*k8s.KubeletSpec](client.WithNode(ctx, node), talosClient.COSI, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, kubelet, resource.VersionUndefined))
+		kubeletSpec, err := safe.StateGet[*k8s.KubeletSpec](client.WithNode(ctx, node), talosClient.State(), resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, kubelet, resource.VersionUndefined))
 		if err != nil {
 			return fmt.Errorf("error fetching kubelet spec on node %s: %w", node, err)
 		}
@@ -282,7 +282,7 @@ func watchControlPlaneConfigResource(ctx context.Context, c *client.Client, md r
 
 	watchCh := make(chan state.Event)
 
-	if err := c.COSI.Watch(watchCtx, md, watchCh); err != nil {
+	if err := c.State().Watch(watchCtx, md, watchCh); err != nil {
 		watchCancel()
 
 		return nil, nil, nil, fmt.Errorf("error watching service configuration %q: %w", md.ID(), err)
@@ -531,7 +531,7 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 
 	defer cluster.Close() //nolint:errcheck
 
-	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, nil)
+	return manifests.GetBootstrapManifests(ctx, talosclient.State(), nil)
 }
 
 // syncManifests is the legacy non SSA manifests sync function.

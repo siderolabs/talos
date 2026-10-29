@@ -296,7 +296,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	}
 
 	dashboard.resourceDataSource = &resourcedata.Source{
-		COSI:  cli.COSI,
+		COSI:  cli.State(),
 		Nodes: nodes,
 	}
 

@@ -55,7 +55,7 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 
 	nodeCtx := client.WithNode(ctx, node)
 
-	maxNamespaces, err := safe.StateGetByID[*runtime.KernelParamStatus](nodeCtx, suite.Client.COSI, "proc.sys.user.max_user_namespaces")
+	maxNamespaces, err := safe.StateGetByID[*runtime.KernelParamStatus](nodeCtx, suite.Client.State(), "proc.sys.user.max_user_namespaces")
 	suite.Require().NoError(err)
 
 	if maxNamespaces.TypedSpec().Current == "0" {

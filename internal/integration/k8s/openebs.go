@@ -85,7 +85,7 @@ func (suite *OpenEBSSuite) TestDeploy() {
 		k8sNode, err := suite.GetK8sNodeByInternalIP(ctx, node)
 		suite.Require().NoError(err)
 
-		diskResource, err := safe.ReaderGetByID[*block.Disk](client.WithNode(ctx, node), suite.Client.COSI, filepath.Base(disk))
+		diskResource, err := safe.ReaderGetByID[*block.Disk](client.WithNode(ctx, node), suite.Client.State(), filepath.Base(disk))
 		suite.Require().NoError(err)
 
 		suite.Require().Greater(len(diskResource.TypedSpec().Symlinks), 1, "disk symlinks should not be empty")

@@ -200,13 +200,13 @@ func (suite *ApplyConfigSuite) TestApply() {
 
 	// finally, verify the values actually applied to the running kernel
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "proc.sys."+applyConfigTestSysctl,
+		nodeCtx, suite.T(), suite.Client.State(), "proc.sys."+applyConfigTestSysctl,
 		func(r *runtimeres.KernelParamStatus, asrt *assert.Assertions) {
 			asrt.Equal(applyConfigTestSysctlVal, r.TypedSpec().Current)
 		},
 	)
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "proc.sys."+applyConfigTestSysctlConflict,
+		nodeCtx, suite.T(), suite.Client.State(), "proc.sys."+applyConfigTestSysctlConflict,
 		func(r *runtimeres.KernelParamStatus, asrt *assert.Assertions) {
 			asrt.Equal(applyConfigTestSysctlConflictDocVal, r.TypedSpec().Current)
 		},
@@ -468,7 +468,7 @@ func (suite *ApplyConfigSuite) TestApplyConfigRotateEncryptionSecrets() {
 		suite.WaitForBootDone(suite.ctx)
 
 		// verify that encryption key sync has no failures
-		rtestutils.AssertAll(nodeCtx, suite.T(), suite.Client.COSI, func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+		rtestutils.AssertAll(nodeCtx, suite.T(), suite.Client.State(), func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			suite.Assert().Contains([]block.VolumePhase{block.VolumePhaseReady, block.VolumePhaseMissing}, vs.TypedSpec().Phase)
 			suite.Assert().Empty(vs.TypedSpec().EncryptionFailedSyncs)
 		})
@@ -628,7 +628,7 @@ func (suite *ApplyConfigSuite) TestApplyTry() {
 	})
 	suite.Require().NoError(err)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
 		asrt.False(assertDummyInterface(r.Provider()))
 	})
 }
@@ -671,11 +671,11 @@ func (suite *ApplyConfigSuite) TestApplyTryStacked() {
 		return names
 	}
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
 		asrt.Subset(dummyLinkNames(r.Provider()), []string{"dummy-try-a", "dummy-try-b"})
 	})
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, mc.PersistentID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), mc.PersistentID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
 		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-a")
 		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-b")
 	})
@@ -684,15 +684,15 @@ func (suite *ApplyConfigSuite) TestApplyTryStacked() {
 	defer cancel()
 
 	// both tries are rolled back when the second one times out
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), mc.ActiveID, func(r *mc.MachineConfig, asrt *assert.Assertions) {
 		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-a")
 		asrt.NotContains(dummyLinkNames(r.Provider()), "dummy-try-b")
 	})
 
-	active, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.ActiveID)
+	active, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.State(), mc.ActiveID)
 	suite.Require().NoError(err)
 
-	persistent, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.COSI, mc.PersistentID)
+	persistent, err := safe.StateGetByID[*mc.MachineConfig](ctx, suite.Client.State(), mc.PersistentID)
 	suite.Require().NoError(err)
 
 	activeBytes, err := active.Provider().EncodeBytes()

@@ -156,7 +156,7 @@ func (suite *ResetSystemVolumesSuite) assertSystemVolumeTypes(node string) {
 	nodeCtx := talosclient.WithNode(suite.ctx, node)
 
 	for _, volumeID := range configconfig.PromotableSystemVolumeNames {
-		volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](nodeCtx, client.COSI, volumeID)
+		volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](nodeCtx, client.State(), volumeID)
 		suite.Require().NoError(err)
 		suite.Require().Equalf(suite.expectedVolumeType(), volumeStatus.TypedSpec().Type,
 			"unexpected backing of volume %q on node %s", volumeID, node)
@@ -220,7 +220,7 @@ func (suite *ResetSystemVolumesSuite) resetNode(node string) {
 		expectedParentVolume := constants.EphemeralPartitionLabel
 
 		// Spot-check the volume to make sure we're testing the right thing.
-		volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](nodeCtx, client.COSI, dirBackedVolume)
+		volumeStatus, err := safe.StateGetByID[*blockres.VolumeStatus](nodeCtx, client.State(), dirBackedVolume)
 		suite.Require().NoError(err)
 		suite.Require().Equalf(blockres.VolumeTypeDirectory, volumeStatus.TypedSpec().Type,
 			"unexpected backing of volume %q on node %s", dirBackedVolume, node)
@@ -260,7 +260,7 @@ func (suite *ResetSystemVolumesSuite) tryReadBootID(nodeCtx context.Context, cli
 	reqCtx, reqCtxCancel := context.WithTimeout(nodeCtx, 10*time.Second)
 	defer reqCtxCancel()
 
-	bootID, err := safe.StateGetByID[*runtimeres.BootID](reqCtx, client.COSI, runtimeres.BootIDID)
+	bootID, err := safe.StateGetByID[*runtimeres.BootID](reqCtx, client.State(), runtimeres.BootIDID)
 	if err != nil {
 		return "", err
 	}

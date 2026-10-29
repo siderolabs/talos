@@ -98,7 +98,7 @@ func (suite *DiskResizeSuite) TestResize() {
 
 	suite.Run("resize ephemeral partition", func() {
 		// verify current settings of the partition
-		ephemeralStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, cli.COSI, constants.EphemeralPartitionLabel)
+		ephemeralStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, cli.State(), constants.EphemeralPartitionLabel)
 		suite.Require().NoError(err)
 
 		preSize := ephemeralStatus.TypedSpec().Size
@@ -115,7 +115,7 @@ func (suite *DiskResizeSuite) TestResize() {
 
 		// the EPHEMERAL partition should be grown live
 		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-			ephemeralStatus, err = safe.StateGetByID[*block.VolumeStatus](ctx, cli.COSI, constants.EphemeralPartitionLabel)
+			ephemeralStatus, err = safe.StateGetByID[*block.VolumeStatus](ctx, cli.State(), constants.EphemeralPartitionLabel)
 			if !assert.NoError(collect, err) {
 				return
 			}
@@ -143,11 +143,11 @@ func (suite *DiskResizeSuite) TestResize() {
 
 		userVolumeMountPoint := filepath.Join(constants.UserVolumeMountPoint, "disk")
 
-		rtestutils.AssertResource[*block.VolumeStatus](ctx, suite.T(), cli.COSI, userVolumeID, func(status *block.VolumeStatus, asrt *assert.Assertions) {
+		rtestutils.AssertResource[*block.VolumeStatus](ctx, suite.T(), cli.State(), userVolumeID, func(status *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
 		})
 
-		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, cli.COSI, userVolumeID)
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, cli.State(), userVolumeID)
 		suite.Require().NoError(err)
 
 		preSize := volumeStatus.TypedSpec().Size
@@ -164,7 +164,7 @@ func (suite *DiskResizeSuite) TestResize() {
 
 		// the disk should be grown live
 		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-			volumeStatus, err = safe.StateGetByID[*block.VolumeStatus](ctx, cli.COSI, userVolumeID)
+			volumeStatus, err = safe.StateGetByID[*block.VolumeStatus](ctx, cli.State(), userVolumeID)
 			if !assert.NoError(collect, err) {
 				return
 			}
@@ -190,7 +190,7 @@ func (suite *DiskResizeSuite) TestResize() {
 func (suite *DiskResizeSuite) growDiskAndWatch(ctx context.Context, cli *client.Client, nodeName string, diskDevice string, diskIdx int, qemuDiskID string, growthSize uint64) {
 	diskWatchCh := make(chan safe.WrappedStateEvent[*block.Disk])
 
-	suite.Require().NoError(safe.StateWatch(ctx, cli.COSI, block.NewDisk(block.NamespaceName, diskDevice).Metadata(), diskWatchCh))
+	suite.Require().NoError(safe.StateWatch(ctx, cli.State(), block.NewDisk(block.NamespaceName, diskDevice).Metadata(), diskWatchCh))
 
 	var (
 		disk *block.Disk

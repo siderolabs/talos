@@ -178,7 +178,7 @@ func (r *rotator) fetchCurrentCA(ctx context.Context) error {
 		r.opts.ClusterInfo.NodesByType(machine.TypeControlPlane)...,
 	)[0]
 
-	osRoot, err := safe.StateGetByID[*secretsres.OSRoot](client.WithNode(ctx, firstNode.InternalIP.String()), r.opts.CurrentClient.COSI, secretsres.OSRootID)
+	osRoot, err := safe.StateGetByID[*secretsres.OSRoot](client.WithNode(ctx, firstNode.InternalIP.String()), r.opts.CurrentClient.State(), secretsres.OSRootID)
 	if err != nil {
 		return fmt.Errorf("error fetching existing Talos CA: %w", err)
 	}

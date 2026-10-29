@@ -39,7 +39,7 @@ func NoDiagnostics(ctx context.Context, cluster ClusterInfo) error {
 	respCh := multiplex.Unary(
 		ctx, nodeInternalIPs,
 		func(ctx context.Context) (safe.List[*runtime.Diagnostic], error) {
-			return safe.StateListAll[*runtime.Diagnostic](ctx, cli.COSI)
+			return safe.StateListAll[*runtime.Diagnostic](ctx, cli.State())
 		},
 	)
 

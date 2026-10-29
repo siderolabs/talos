@@ -53,7 +53,7 @@ func (suite *LibvirtSuite) preparePowerVM() (string, context.Context, string) {
 
 		cleanupCtx := client.WithNode(ctx, node)
 		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, hypervisorcfg.VirtualMachineConfigKind, name)
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](cleanupCtx, suite.T(), suite.Client.State(), name)
 	})
 
 	suite.PatchMachineConfig(nodeCtx, doc)
@@ -206,12 +206,12 @@ func (suite *LibvirtSuite) assertPowerOverride(ctx context.Context, name, powerS
 	suite.T().Helper()
 
 	if powerState == "" {
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachinePowerOverride](ctx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachinePowerOverride](ctx, suite.T(), suite.Client.State(), name)
 
 		return
 	}
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(override *hypervisor.VirtualMachinePowerOverride, asrt *assert.Assertions) {
 			asrt.Equal(powerState, override.TypedSpec().PowerState)
 		},
@@ -222,7 +222,7 @@ func (suite *LibvirtSuite) assertPowerOverride(ctx context.Context, name, powerS
 func (suite *LibvirtSuite) assertStopMode(ctx context.Context, name string, mode hypervisorhelpers.StopMode) {
 	suite.T().Helper()
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(override *hypervisor.VirtualMachinePowerOverride, asrt *assert.Assertions) {
 			asrt.Equal(mode, hypervisorhelpers.VirtualMachineStopRequestMode(override.TypedSpec().StopRequest))
 		},
@@ -245,7 +245,7 @@ func (suite *LibvirtSuite) waitForGracefulStop(ctx context.Context, node, name s
 	}
 
 	// Still there, so the status has to name the way out of a stop with no deadline on it.
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
 			asrt.Equal(hypervisorhelpers.VirtualMachineStagePending, status.TypedSpec().Stage)
 			asrt.Equal(hypervisor.GracefulStopPendingError, status.TypedSpec().Error)

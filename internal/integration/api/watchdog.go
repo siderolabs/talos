@@ -83,7 +83,7 @@ func (suite *WatchdogSuite) TestWatchdogSysfs() {
 	// deactivate the watchdog
 	suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
 
-	_, err := suite.Client.COSI.WatchFor(nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(), state.WithEventTypes(state.Destroyed))
+	_, err := suite.Client.State().WatchFor(nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(), state.WithEventTypes(state.Destroyed))
 	suite.Require().NoError(err)
 
 	wdState := suite.readWatchdogSysfs(nodeCtx, watchdog, "state")
@@ -92,7 +92,7 @@ func (suite *WatchdogSuite) TestWatchdogSysfs() {
 	// enable watchdog with 120s timeout
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
-	_, err = suite.Client.COSI.WatchFor(nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(), state.WithEventTypes(state.Created, state.Updated))
+	_, err = suite.Client.State().WatchFor(nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(), state.WithEventTypes(state.Created, state.Updated))
 	suite.Require().NoError(err)
 
 	wdState = suite.readWatchdogSysfs(nodeCtx, watchdog, "state")
@@ -105,7 +105,7 @@ func (suite *WatchdogSuite) TestWatchdogSysfs() {
 	cfgDocument.WatchdogTimeout = 60 * time.Second
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
-	_, err = suite.Client.COSI.WatchFor(
+	_, err = suite.Client.State().WatchFor(
 		nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
@@ -123,7 +123,7 @@ func (suite *WatchdogSuite) TestWatchdogSysfs() {
 	// deactivate the watchdog
 	suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
 
-	_, err = suite.Client.COSI.WatchFor(nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(), state.WithEventTypes(state.Destroyed))
+	_, err = suite.Client.State().WatchFor(nodeCtx, runtimeres.NewWatchdogTimerStatus(runtimeres.WatchdogTimerConfigID).Metadata(), state.WithEventTypes(state.Destroyed))
 	suite.Require().NoError(err)
 
 	wdState = suite.readWatchdogSysfs(nodeCtx, watchdog, "state")

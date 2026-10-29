@@ -734,7 +734,7 @@ func (widget *ContainersGrid) runWatch(ctx context.Context) {
 	} {
 		md := resource.NewMetadata(containers.NamespaceName, resourceType, "", resource.VersionUndefined)
 
-		if err := widget.dashboard.cli.COSI.WatchKind(nodeCtx, &md, eventCh, state.WithBootstrapContents(true)); err != nil {
+		if err := widget.dashboard.cli.State().WatchKind(nodeCtx, &md, eventCh, state.WithBootstrapContents(true)); err != nil {
 			widget.app.QueueUpdate(func() {
 				if ctx.Err() != nil {
 					return

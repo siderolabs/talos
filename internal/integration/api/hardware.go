@@ -59,7 +59,7 @@ func (suite *HardwareSuite) TearDownTest() {
 func (suite *HardwareSuite) TestSystemInformation() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 
-	sysInfo, err := safe.StateGetByID[*hardware.SystemInformation](client.WithNode(suite.ctx, node), suite.Client.COSI, hardware.SystemInformationID)
+	sysInfo, err := safe.StateGetByID[*hardware.SystemInformation](client.WithNode(suite.ctx, node), suite.Client.State(), hardware.SystemInformationID)
 	suite.Require().NoError(err)
 
 	suite.Assert().NotEmpty(sysInfo.TypedSpec().UUID)
@@ -82,7 +82,7 @@ func (suite *HardwareSuite) TestHardwareInfo() {
 	}
 
 	for _, resourceType := range resourceList {
-		items, err := suite.Client.COSI.List(client.WithNode(suite.ctx, node), resource.NewMetadata(hardware.NamespaceName, resourceType, "", resource.VersionUndefined))
+		items, err := suite.Client.State().List(client.WithNode(suite.ctx, node), resource.NewMetadata(hardware.NamespaceName, resourceType, "", resource.VersionUndefined))
 		suite.Require().NoError(err)
 
 		suite.Assert().NotEmpty(items.Items, "resource type %s is not populated", resourceType)
@@ -94,7 +94,7 @@ func (suite *HardwareSuite) TestPCRStatus() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	rtestutils.AssertNoResource[*hardware.PCRStatus](ctx, suite.T(), suite.Client.COSI, hardware.NewPCCRStatus(constants.UKIPCR).Metadata().ID())
+	rtestutils.AssertNoResource[*hardware.PCRStatus](ctx, suite.T(), suite.Client.State(), hardware.NewPCCRStatus(constants.UKIPCR).Metadata().ID())
 }
 
 // TestBIOSVersion tests that SystemInformation.BIOSVersion is populated.
@@ -107,7 +107,7 @@ func (suite *HardwareSuite) TestBIOSVersion() {
 	ctx := client.WithNode(suite.ctx, node)
 
 	sysInfo, err := safe.StateGetByID[*hardware.SystemInformation](
-		ctx, suite.Client.COSI, hardware.SystemInformationID,
+		ctx, suite.Client.State(), hardware.SystemInformationID,
 	)
 	suite.Require().NoError(err)
 
@@ -125,7 +125,7 @@ func (suite *HardwareSuite) TestDiskFirmwareVersion() {
 
 	items, err := safe.StateListAll[*block.Disk](
 		ctx,
-		suite.Client.COSI,
+		suite.Client.State(),
 	)
 	suite.Require().NoError(err)
 
@@ -157,13 +157,13 @@ func (suite *HardwareSuite) TestDiskSMARTStatus() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	ctx := client.WithNode(suite.ctx, node)
 
-	cfg, err := safe.StateGetByID[*config.MachineConfig](ctx, suite.Client.COSI, config.ActiveID)
+	cfg, err := safe.StateGetByID[*config.MachineConfig](ctx, suite.Client.State(), config.ActiveID)
 	suite.Require().NoError(err)
 
 	// the presence of the DiskSMARTConfig document is what enables SMART collection.
 	smartEnabled := cfg.Config().DiskSMARTConfig() != nil
 
-	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var checked int
@@ -187,7 +187,7 @@ func (suite *HardwareSuite) TestDiskSMARTStatus() {
 // SMART-enabled state, and reports whether the disk was actually checked (i.e. it supports
 // SMART and SMART is enabled).
 func (suite *HardwareSuite) assertDiskSMARTStatus(ctx context.Context, disk *block.Disk, smartEnabled bool) bool {
-	status, err := safe.StateGetByID[*block.SMARTStatus](ctx, suite.Client.COSI, disk.Metadata().ID())
+	status, err := safe.StateGetByID[*block.SMARTStatus](ctx, suite.Client.State(), disk.Metadata().ID())
 
 	if !smartEnabled {
 		// SMART is disabled: no SMARTStatus resource must ever be produced, for any disk.
@@ -241,7 +241,7 @@ func (suite *HardwareSuite) TestDiskSMARTStatusDisabled() {
 		suite.T().Skip("DiskSMARTConfig document is not present, SMART is already disabled")
 	}
 
-	statuses, err := safe.StateListAll[*block.SMARTStatus](nodeCtx, suite.Client.COSI)
+	statuses, err := safe.StateListAll[*block.SMARTStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	if statuses.Len() == 0 {
@@ -277,13 +277,13 @@ func (suite *HardwareSuite) TestDiskSMARTStatusDisabled() {
 
 	// without the document SMART is disabled: no status is collected, and the statuses collected
 	// earlier are reaped.
-	rtestutils.AssertLength[*block.SMARTStatus](nodeCtx, suite.T(), suite.Client.COSI, 0)
+	rtestutils.AssertLength[*block.SMARTStatus](nodeCtx, suite.T(), suite.Client.State(), 0)
 
 	suite.T().Logf("restoring DiskSMARTConfig on node %s", node)
 	suite.PatchMachineConfig(nodeCtx, originalDocument)
 
 	// with the document back, the same set of statuses is collected again.
-	rtestutils.AssertLength[*block.SMARTStatus](nodeCtx, suite.T(), suite.Client.COSI, statuses.Len())
+	rtestutils.AssertLength[*block.SMARTStatus](nodeCtx, suite.T(), suite.Client.State(), statuses.Len())
 }
 
 // TestBMCDevice tests that a BMC is discovered over the local IPMI interface.
@@ -298,7 +298,7 @@ func (suite *HardwareSuite) TestBMCDevice() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	bmc, err := safe.StateGetByID[*hardware.BMCDevice](ctx, suite.Client.COSI, "ipmi0")
+	bmc, err := safe.StateGetByID[*hardware.BMCDevice](ctx, suite.Client.State(), "ipmi0")
 	suite.Require().NoError(err)
 
 	suite.Assert().EqualValues(674, bmc.TypedSpec().ManufacturerID)

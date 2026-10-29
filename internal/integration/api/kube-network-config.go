@@ -184,7 +184,7 @@ func (suite *KubeNetworkConfigSuite) assertControllerManagerArgs(nodeCtx context
 	hasIPv4, hasIPv6 := podCIDRFamilies(netCfg)
 
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, k8sres.FinalControllerManagerConfigID,
+		nodeCtx, suite.T(), suite.Client.State(), k8sres.FinalControllerManagerConfigID,
 		func(cfg *k8sres.ControllerManagerConfig, asrt *assert.Assertions) {
 			if hasIPv4 {
 				asrt.Contains(cfg.TypedSpec().Args, fmt.Sprintf("--node-cidr-mask-size-ipv4=%d", ipv4MaskSize))

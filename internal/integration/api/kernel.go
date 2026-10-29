@@ -57,7 +57,7 @@ func (suite *KernelSuite) TestCmdline() {
 	suite.T().Logf("using node %s", node)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{runtime.KernelCmdlineID},
+		ctx, suite.T(), suite.Client.State(), []resource.ID{runtime.KernelCmdlineID},
 		func(res *runtime.KernelCmdline, asrt *assert.Assertions) {
 			asrt.NotEmpty(res.TypedSpec().Cmdline, "kernel cmdline should not be empty")
 		},
@@ -71,7 +71,7 @@ func (suite *KernelSuite) TestKernelModuleStatus() {
 
 	suite.T().Logf("using node %s", node)
 
-	list, err := safe.StateListAll[*runtime.KernelModuleStatus](ctx, suite.Client.COSI)
+	list, err := safe.StateListAll[*runtime.KernelModuleStatus](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	suite.Require().NotEmpty(list, "kernel module status list should not be empty")

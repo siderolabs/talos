@@ -115,7 +115,7 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 		nodeCtx := client.WithNode(suite.ctx, node)
 
 		for _, volumeID := range config.PromotableSystemVolumeNames {
-			vs, err := safe.ReaderGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+			vs, err := safe.ReaderGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), volumeID)
 			if err != nil || vs.TypedSpec().Type != block.VolumeTypePartition {
 				continue
 			}

@@ -142,7 +142,7 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 
 		// now sysctl spec should be active
 		rtestutils.AssertResource(
-			suite.ctx, suite.T(), maintenanceClient.COSI, "proc.sys.fs.inotify.max_user_watches",
+			suite.ctx, suite.T(), maintenanceClient.State(), "proc.sys.fs.inotify.max_user_watches",
 			func(*runtimeres.KernelParamSpec, *assert.Assertions) {},
 		)
 
@@ -152,7 +152,7 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 
 		// eventually, config should be rolled back, and sysctl spec should be removed
 		rtestutils.AssertNoResource[*runtimeres.KernelParamSpec](
-			waitCtx, suite.T(), maintenanceClient.COSI, "proc.sys.fs.inotify.max_user_watches",
+			waitCtx, suite.T(), maintenanceClient.State(), "proc.sys.fs.inotify.max_user_watches",
 		)
 	})
 
@@ -160,12 +160,12 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 		// it doesn't matter which machine to use, as they are all same in maintenance mode right now
 		maintenanceClient := maintenanceClients[0]
 
-		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](suite.ctx, maintenanceClient.COSI)
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](suite.ctx, maintenanceClient.State())
 		suite.Require().NoError(err)
 		suite.Assert().NotEmpty(linkStatuses)
 
 		// link specs should be not available (sensitive)
-		_, err = safe.ReaderListAll[*network.LinkSpec](suite.ctx, maintenanceClient.COSI)
+		_, err = safe.ReaderListAll[*network.LinkSpec](suite.ctx, maintenanceClient.State())
 		suite.Require().Error(err)
 		suite.Require().Equal(codes.PermissionDenied, client.StatusCode(err))
 

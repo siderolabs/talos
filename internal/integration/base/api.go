@@ -209,7 +209,7 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 
 	securityResource, err := safe.StateWatchFor[*runtimeres.SecurityState](
 		ctx,
-		apiSuite.Client.COSI,
+		apiSuite.Client.State(),
 		runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
 	)
@@ -220,7 +220,7 @@ func (apiSuite *APISuite) Capabilities() Capabilities {
 	// Kubernetes is configured only when the machine config carries a cluster section: a cluster
 	// created with --skip-etcd-k8s runs Talos on its own, and the kubelet configuration which every
 	// Kubernetes node has never appears.
-	_, err = safe.StateGetByID[*k8sres.KubeletConfig](ctx, apiSuite.Client.COSI, k8sres.KubeletID)
+	_, err = safe.StateGetByID[*k8sres.KubeletConfig](ctx, apiSuite.Client.State(), k8sres.KubeletID)
 
 	switch {
 	case err == nil:
@@ -240,7 +240,7 @@ func (apiSuite *APISuite) SupportsEtcd() bool {
 
 	nodeCtx := client.WithNode(ctx, apiSuite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane))
 
-	_, err := safe.StateGetByID[*secrets.EtcdRoot](nodeCtx, apiSuite.Client.COSI, secrets.EtcdRootID)
+	_, err := safe.StateGetByID[*secrets.EtcdRoot](nodeCtx, apiSuite.Client.State(), secrets.EtcdRootID)
 	if state.IsNotFoundError(err) {
 		return false
 	}
@@ -272,7 +272,7 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer reqCtxCancel()
 
-	bootID, err := safe.StateGetByID[*runtimeres.BootID](reqCtx, apiSuite.Client.COSI, runtimeres.BootIDID)
+	bootID, err := safe.StateGetByID[*runtimeres.BootID](reqCtx, apiSuite.Client.State(), runtimeres.BootIDID)
 	if err != nil {
 		return "", err
 	}
@@ -388,7 +388,7 @@ func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
 				reqCtx, reqCtxCancel := context.WithTimeout(ctx, 30*time.Second)
 				defer reqCtxCancel()
 
-				machineStatus, err := safe.StateGetByID[*runtimeres.MachineStatus](reqCtx, apiSuite.Client.COSI, runtimeres.MachineStatusID)
+				machineStatus, err := safe.StateGetByID[*runtimeres.MachineStatus](reqCtx, apiSuite.Client.State(), runtimeres.MachineStatusID)
 				if err != nil {
 					return retry.ExpectedErrorf("error reading machine status of node %q: %w", node, err)
 				}
@@ -526,7 +526,7 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 // ReadConfigFromNode reads machine configuration from the node.
 func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Provider, error) {
-	cfg, err := safe.StateGetByID[*configres.MachineConfig](nodeCtx, apiSuite.Client.COSI, configres.ActiveID)
+	cfg, err := safe.StateGetByID[*configres.MachineConfig](nodeCtx, apiSuite.Client.State(), configres.ActiveID)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching machine config resource: %w", err)
 	}
@@ -538,7 +538,7 @@ func (apiSuite *APISuite) ReadConfigFromNode(nodeCtx context.Context) (config.Pr
 func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) []string {
 	nodeCtx := client.WithNode(ctx, node)
 
-	disks, err := safe.ReaderListAll[*block.Disk](nodeCtx, apiSuite.Client.COSI)
+	disks, err := safe.ReaderListAll[*block.Disk](nodeCtx, apiSuite.Client.State())
 	apiSuite.Require().NoError(err, "failed to list disks")
 
 	var candidateDisks []string //nolint:prealloc
@@ -556,7 +556,7 @@ func (apiSuite *APISuite) UserDisks(ctx context.Context, node string) []string {
 	var availableDisks []string
 
 	for _, disk := range candidateDisks {
-		discoveredVolume, err := safe.ReaderGetByID[*block.DiscoveredVolume](nodeCtx, apiSuite.Client.COSI, disk)
+		discoveredVolume, err := safe.ReaderGetByID[*block.DiscoveredVolume](nodeCtx, apiSuite.Client.State(), disk)
 		apiSuite.Require().NoError(err, "failed to get discovered volume")
 
 		if discoveredVolume.TypedSpec().Name == "" {
@@ -659,7 +659,7 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 	nodeCtx := client.WithNode(ctx, node)
 
 	for _, moduleName := range expectedModules {
-		status, getErr := safe.StateGetByID[*runtimeres.KernelModuleStatus](nodeCtx, apiSuite.Client.COSI, moduleName)
+		status, getErr := safe.StateGetByID[*runtimeres.KernelModuleStatus](nodeCtx, apiSuite.Client.State(), moduleName)
 		apiSuite.Require().NoError(getErr, "expected kernel module %q to be present", moduleName)
 
 		apiSuite.Assert().Equal(runtimeres.KernelModuleTypeDynamic, status.TypedSpec().Type,
@@ -894,7 +894,7 @@ waitLoop:
 func (apiSuite *APISuite) KubeletVolumeIsDirectory(ctx context.Context, node string) bool {
 	nodeCtx := client.WithNode(ctx, node)
 
-	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, apiSuite.Client.COSI, constants.KubeletDataVolumeID)
+	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, apiSuite.Client.State(), constants.KubeletDataVolumeID)
 	apiSuite.Require().NoError(err)
 
 	return volumeStatus.TypedSpec().Type == block.VolumeTypeDirectory
@@ -1155,7 +1155,7 @@ func (apiSuite *APISuite) AssertNoNewOOMKills(nodeCtx context.Context, before ma
 func (apiSuite *APISuite) AssertNoUserspaceOOMSince(nodeCtx context.Context, since time.Time) {
 	apiSuite.T().Helper()
 
-	actions, err := safe.StateListAll[*runtimeres.OOMAction](nodeCtx, apiSuite.Client.COSI)
+	actions, err := safe.StateListAll[*runtimeres.OOMAction](nodeCtx, apiSuite.Client.State())
 	if !apiSuite.Assert().NoError(err) {
 		return
 	}

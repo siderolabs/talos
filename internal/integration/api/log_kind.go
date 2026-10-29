@@ -84,8 +84,8 @@ func (suite *LogsSuite) TestVMKindErrorsAndAuthorization() {
 		suite.Require().NotEqual(unknown, doc.Name())
 	}
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](suite.nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](suite.nodeCtx, suite.T(), suite.Client.COSI, unknown)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](suite.nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](suite.nodeCtx, suite.T(), suite.Client.State(), unknown)
 	suite.T().Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
@@ -96,7 +96,7 @@ func (suite *LogsSuite) TestVMKindErrorsAndAuthorization() {
 			Mode: machine.ApplyConfigurationRequest_NO_REBOOT,
 		})
 		suite.Assert().NoError(applyErr)
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.State(), name)
 	})
 
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
@@ -107,7 +107,7 @@ func (suite *LogsSuite) TestVMKindErrorsAndAuthorization() {
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(false)
 	suite.PatchMachineConfig(suite.nodeCtx, doc)
-	rtestutils.AssertResource(suite.nodeCtx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(suite.nodeCtx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 			asrt.False(spec.TypedSpec().Console.Serial)
 		})
@@ -119,7 +119,7 @@ func (suite *LogsSuite) TestVMKindErrorsAndAuthorization() {
 
 	doc.ConsoleConfig.SerialConfig.SerialEnabled = new(true)
 	suite.PatchMachineConfig(suite.nodeCtx, doc)
-	rtestutils.AssertResource(suite.nodeCtx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(suite.nodeCtx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 			asrt.True(spec.TypedSpec().Console.Serial)
 		})
@@ -187,7 +187,7 @@ func (suite *LogsSuite) assertVMKindError(cli *client.Client, name string, code 
 func missingVMLogCode(t *testing.T, ctx context.Context, cli *client.Client) codes.Code {
 	t.Helper()
 
-	system, err := safe.StateGetByID[*hardware.SystemInformation](ctx, cli.COSI, hardware.SystemInformationID)
+	system, err := safe.StateGetByID[*hardware.SystemInformation](ctx, cli.State(), hardware.SystemInformationID)
 	if state.IsNotFoundError(err) {
 		return codes.FailedPrecondition
 	}

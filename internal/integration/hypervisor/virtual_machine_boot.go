@@ -127,14 +127,14 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 		},
 	)
 
 	// The address only reaches the guest because the domain carries the reserved one.
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			asrt.Contains(spec.TypedSpec().DomainXML, `<mac address="`+ourRecord.MAC+`">`)
 		},
@@ -169,9 +169,9 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 	// Removing the document alone has to stop the running domain and take every resource derived
 	// from it with it: no explicit stop precedes this one.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
 		diskStatusID(name, doc.DisksConfig[0]))
 
 	// No status is left to read once the document is gone; ask libvirt whether the domain outlived it.
@@ -225,13 +225,13 @@ func (suite *LibvirtSuite) assertGuestHardware(guest *client.Client) {
 	ctx, cancel := context.WithTimeout(suite.ctx, time.Minute)
 	defer cancel()
 
-	cores, err := safe.StateListAll[*hardware.CPUCore](ctx, guest.COSI)
+	cores, err := safe.StateListAll[*hardware.CPUCore](ctx, guest.State())
 	suite.Require().NoError(err)
 	suite.Assert().Equal(guestCPUCount, cores.Len(), "the guest must see the cores it was given")
 
 	// Compared with a tolerance against what the kernel reports: the firmware and the kernel itself
 	// reserve some of what the domain was given, so the guest never sees quite all of it.
-	memory, err := safe.StateGetByID[*perf.Memory](ctx, guest.COSI, perf.MemoryID)
+	memory, err := safe.StateGetByID[*perf.Memory](ctx, guest.State(), perf.MemoryID)
 	suite.Require().NoError(err)
 
 	wanted := meta.MustByteSize(guestMemory)

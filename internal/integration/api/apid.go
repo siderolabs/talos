@@ -128,7 +128,7 @@ func (suite *ApidSuite) TestWorkerNoRouting() {
 		suite.T().Skip("no worker nodes found")
 	}
 
-	_, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, endpoints[0]), suite.Client.COSI, "ingress")
+	_, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, endpoints[0]), suite.Client.State(), "ingress")
 	if err == nil {
 		suite.T().Skip("worker nodes have ingress firewall enabled, skipping")
 	}
@@ -192,7 +192,7 @@ func (suite *ApidSuite) TestBigPayload() {
 	suite.T().Logf("testing big payload on node %s", node)
 
 	// we are going to simulate a big payload by making machine configuration big enough
-	cfg, err := safe.StateGetByID[*config.MachineConfig](nodeCtx, suite.Client.COSI, config.ActiveID)
+	cfg, err := safe.StateGetByID[*config.MachineConfig](nodeCtx, suite.Client.State(), config.ActiveID)
 	suite.Require().NoError(err)
 
 	originalCfg, err := cfg.Container().Bytes()
@@ -225,7 +225,7 @@ func (suite *ApidSuite) TestBigPayload() {
 
 	// now get the machine configuration back several times
 	for range 5 {
-		cfg, err = safe.StateGetByID[*config.MachineConfig](nodeCtx, suite.Client.COSI, config.ActiveID)
+		cfg, err = safe.StateGetByID[*config.MachineConfig](nodeCtx, suite.Client.State(), config.ActiveID)
 		suite.Require().NoError(err)
 
 		// check that the configuration is the same

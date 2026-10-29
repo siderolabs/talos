@@ -75,7 +75,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 		for _, node := range suite.Cluster.Info().Nodes {
 			nodeCtx := client.WithNode(ctx, node.IPs[0].String())
 
-			rtestutils.AssertResource(nodeCtx, suite.T(), c.COSI, runtime.MachineStatusID, func(r *runtime.MachineStatus, asrt *assert.Assertions) {
+			rtestutils.AssertResource(nodeCtx, suite.T(), c.State(), runtime.MachineStatusID, func(r *runtime.MachineStatus, asrt *assert.Assertions) {
 				asrt.True(r.TypedSpec().Status.Ready)
 				asrt.Empty(r.TypedSpec().Status.UnmetConditions)
 				asrt.Equal(runtime.MachineStageRunning, r.TypedSpec().Stage)
@@ -87,8 +87,8 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 		for _, node := range suite.Cluster.Info().Nodes {
 			nodeCtx := client.WithNode(ctx, node.IPs[0].String())
 
-			rtestutils.AssertNoResource[*v1alpha1.Service](nodeCtx, suite.T(), c.COSI, "etcd")
-			rtestutils.AssertNoResource[*v1alpha1.Service](nodeCtx, suite.T(), c.COSI, "kubelet")
+			rtestutils.AssertNoResource[*v1alpha1.Service](nodeCtx, suite.T(), c.State(), "etcd")
+			rtestutils.AssertNoResource[*v1alpha1.Service](nodeCtx, suite.T(), c.State(), "kubelet")
 		}
 	})
 
@@ -96,7 +96,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 		for _, node := range suite.Cluster.Info().Nodes {
 			nodeCtx := client.WithNode(ctx, node.IPs[0].String())
 
-			rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), c.COSI, options.ControlplaneNodes)
+			rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), c.State(), options.ControlplaneNodes)
 		}
 	})
 
@@ -104,7 +104,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 		for _, node := range suite.Cluster.Info().Nodes {
 			nodeCtx := client.WithNode(ctx, node.IPs[0].String())
 
-			rtestutils.AssertResource(nodeCtx, suite.T(), c.COSI, network.HostDNSConfigID, func(r *network.HostDNSConfig, asrt *assert.Assertions) {
+			rtestutils.AssertResource(nodeCtx, suite.T(), c.State(), network.HostDNSConfigID, func(r *network.HostDNSConfig, asrt *assert.Assertions) {
 				asrt.True(r.TypedSpec().Enabled)
 			})
 		}
@@ -113,7 +113,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 	suite.Run("reboot", func() {
 		nodeCtx := client.WithNode(ctx, suite.Cluster.Info().Nodes[0].IPs[0].String())
 
-		oldBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.COSI, runtime.BootIDID)
+		oldBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.State(), runtime.BootIDID)
 		suite.Require().NoError(err)
 
 		suite.Require().NoError(c.Reboot(nodeCtx))
@@ -121,7 +121,7 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 			asrt := assert.New(collect)
 
-			newBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.COSI, runtime.BootIDID)
+			newBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.State(), runtime.BootIDID)
 			if !asrt.NoError(err) {
 				return
 			}
@@ -135,10 +135,10 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 	suite.Run("reset", func() {
 		nodeCtx := client.WithNode(ctx, suite.Cluster.Info().Nodes[1].IPs[0].String())
 
-		oldBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.COSI, runtime.BootIDID)
+		oldBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.State(), runtime.BootIDID)
 		suite.Require().NoError(err)
 
-		oldIdentity, err := safe.StateGetByID[*cluster.Identity](nodeCtx, c.COSI, cluster.LocalIdentity)
+		oldIdentity, err := safe.StateGetByID[*cluster.Identity](nodeCtx, c.State(), cluster.LocalIdentity)
 		suite.Require().NoError(err)
 
 		suite.Require().NoError(c.Reset(nodeCtx, true, true))
@@ -146,14 +146,14 @@ func (suite *K8sLessSuite) TestBasicFlows() {
 		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 			asrt := assert.New(collect)
 
-			newBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.COSI, runtime.BootIDID)
+			newBootID, err := safe.StateGetByID[*runtime.BootID](nodeCtx, c.State(), runtime.BootIDID)
 			if !asrt.NoError(err) {
 				return
 			}
 
 			asrt.NotEqual(oldBootID.TypedSpec().BootID, newBootID.TypedSpec().BootID)
 
-			newIdentity, err := safe.StateGetByID[*cluster.Identity](nodeCtx, c.COSI, cluster.LocalIdentity)
+			newIdentity, err := safe.StateGetByID[*cluster.Identity](nodeCtx, c.State(), cluster.LocalIdentity)
 			if !asrt.NoError(err) {
 				return
 			}

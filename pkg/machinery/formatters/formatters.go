@@ -49,7 +49,7 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 					return err
 				}
 
-				items, err := c.COSI.List(ctx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
+				items, err := c.State().List(ctx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
 				if err != nil {
 					// ignore errors here
 					continue

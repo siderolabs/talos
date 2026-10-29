@@ -347,7 +347,7 @@ func (suite *MountsSuite) checkOptOnNode(node, opt string, exempt func(mountInfo
 func (suite *MountsSuite) promotableVolumeOption(node, volumeID, opt string) bool {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), volumeID)
 	suite.Require().NoError(err)
 
 	if opt == "noexec" {

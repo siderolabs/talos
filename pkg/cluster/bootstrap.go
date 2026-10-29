@@ -61,7 +61,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 			return retry.ExpectedError(err)
 		}
 
-		machineStatus, err := safe.ReaderGetByID[*runtime.MachineStatus](retryCtx, cli.COSI, runtime.MachineStatusID)
+		machineStatus, err := safe.ReaderGetByID[*runtime.MachineStatus](retryCtx, cli.State(), runtime.MachineStatusID)
 		if err != nil {
 			return retry.ExpectedError(err)
 		}

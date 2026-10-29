@@ -234,7 +234,7 @@ func etcdDisabled(ctx context.Context, cluster ClusterInfo) (bool, error) {
 		return false, err
 	}
 
-	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, cli.COSI, config.ActiveID)
+	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, cli.State(), config.ActiveID)
 	if err != nil {
 		return false, err
 	}
@@ -248,7 +248,7 @@ func kubeletDisabled(ctx context.Context, cluster ClusterInfo) (bool, error) {
 		return false, err
 	}
 
-	_, err = safe.ReaderGetByID[*k8s.KubeletConfig](ctx, cli.COSI, k8s.KubeletID)
+	_, err = safe.ReaderGetByID[*k8s.KubeletConfig](ctx, cli.State(), k8s.KubeletID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return true, nil
@@ -266,7 +266,7 @@ func cniDisabledStatus(ctx context.Context, cluster ClusterInfo) (bool, error) {
 		return false, err
 	}
 
-	bmc, err := safe.ReaderGetByID[*k8s.BootstrapManifestsConfig](ctx, cli.COSI, k8s.BootstrapManifestsConfigID)
+	bmc, err := safe.ReaderGetByID[*k8s.BootstrapManifestsConfig](ctx, cli.State(), k8s.BootstrapManifestsConfigID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return true, nil

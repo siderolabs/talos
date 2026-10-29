@@ -272,10 +272,10 @@ func (suite *BGPCiliumSuite) TestCiliumVRFBGP() { //nolint:gocyclo
 	}
 	suite.PatchMachineConfig(nodeCtx, bgpImportsRoutesDeletePatch)
 
-	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, peerID)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, ciliumVethName)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, ciliumVethPeerName)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, ciliumWorkloadVRF)
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.State(), peerID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), ciliumVethName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), ciliumVethPeerName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), ciliumWorkloadVRF)
 	workloadHelper.assertFabricSessions(nodeCtx, fabricSessions)
 }
 

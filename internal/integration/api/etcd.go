@@ -158,10 +158,10 @@ func (suite *EtcdSuite) TestMembers() {
 	etcdMembers := map[string]string{}
 
 	for _, node := range nodes {
-		member, err := safe.StateGet[*etcd.Member](client.WithNode(suite.ctx, node), suite.Client.COSI, etcd.NewMember(etcd.NamespaceName, etcd.LocalMemberID).Metadata())
+		member, err := safe.StateGet[*etcd.Member](client.WithNode(suite.ctx, node), suite.Client.State(), etcd.NewMember(etcd.NamespaceName, etcd.LocalMemberID).Metadata())
 		suite.Require().NoError(err)
 
-		hostname, err := safe.StateGet[*network.HostnameStatus](client.WithNode(suite.ctx, node), suite.Client.COSI, network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata())
+		hostname, err := safe.StateGet[*network.HostnameStatus](client.WithNode(suite.ctx, node), suite.Client.State(), network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata())
 		suite.Require().NoError(err)
 
 		etcdMembers[member.TypedSpec().MemberID] = hostname.TypedSpec().Hostname
@@ -218,7 +218,7 @@ func (suite *EtcdSuite) TestRemoveMember() {
 	_, err := suite.Client.EtcdForfeitLeadership(removeCtx, &machineapi.EtcdForfeitLeadershipRequest{})
 	suite.Require().NoError(err)
 
-	member, err := safe.StateGet[*etcd.Member](removeCtx, suite.Client.COSI, etcd.NewMember(etcd.NamespaceName, etcd.LocalMemberID).Metadata())
+	member, err := safe.StateGet[*etcd.Member](removeCtx, suite.Client.State(), etcd.NewMember(etcd.NamespaceName, etcd.LocalMemberID).Metadata())
 	suite.Require().NoError(err)
 
 	memberID, err := etcd.ParseMemberID(member.TypedSpec().MemberID)
@@ -260,7 +260,7 @@ func (suite *EtcdSuite) TestRemoveMember() {
 	// Wipe etcd data so the removed node rejoins the cluster fresh. If ETCD is directory-backed it
 	// lives under EPHEMERAL (wipe EPHEMERAL); if it is a dedicated partition, wipe that partition
 	// directly and leave EPHEMERAL intact.
-	etcdVolumeStatus, err := safe.StateGetByID[*block.VolumeStatus](removeCtx, suite.Client.COSI, constants.EtcdDataVolumeID)
+	etcdVolumeStatus, err := safe.StateGetByID[*block.VolumeStatus](removeCtx, suite.Client.State(), constants.EtcdDataVolumeID)
 	suite.Require().NoError(err)
 
 	partitionsToWipe := []*machineapi.ResetPartitionSpec{{Label: constants.EtcdDataVolumeID, Wipe: true}}

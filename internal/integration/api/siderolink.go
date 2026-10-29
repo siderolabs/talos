@@ -58,7 +58,7 @@ func (suite *SideroLinkSuite) TestTunnelSettingFlip() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	// check if SideroLink is enabled
-	sideroLinkConfig, err := safe.StateGetByID[*siderolink.Config](nodeCtx, suite.Client.COSI, siderolink.ConfigID)
+	sideroLinkConfig, err := safe.StateGetByID[*siderolink.Config](nodeCtx, suite.Client.State(), siderolink.ConfigID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			suite.T().Skip("skipping the test since SideroLink is not enabled")
@@ -68,7 +68,7 @@ func (suite *SideroLinkSuite) TestTunnelSettingFlip() {
 	}
 
 	// assert that siderolink is connected
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, siderolink.StatusID, func(status *siderolink.Status, asrt *assert.Assertions) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), siderolink.StatusID, func(status *siderolink.Status, asrt *assert.Assertions) {
 		asrt.True(status.TypedSpec().Connected, "SideroLink is not connected")
 	})
 
@@ -97,14 +97,14 @@ func (suite *SideroLinkSuite) TestTunnelSettingFlip() {
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
 	// first, the config should be updated
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, siderolink.ConfigID, func(config *siderolink.Config, asrt *assert.Assertions) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), siderolink.ConfigID, func(config *siderolink.Config, asrt *assert.Assertions) {
 		asrt.Equal(!sideroLinkConfig.TypedSpec().Tunnel, config.TypedSpec().Tunnel, "SideroLink tunnel setting is not updated")
 	})
 
 	suite.T().Log("configuration updated, waiting for SideroLink to reconnect...")
 
 	// second, new status should reflect the change
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, siderolink.StatusID, func(status *siderolink.Status, asrt *assert.Assertions) {
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), siderolink.StatusID, func(status *siderolink.Status, asrt *assert.Assertions) {
 		asrt.True(status.TypedSpec().Connected, "SideroLink is not connected")
 		asrt.Equal(!sideroLinkConfig.TypedSpec().Tunnel, status.TypedSpec().GRPCTunnel, "SideroLink tunnel setting is not updated")
 	})

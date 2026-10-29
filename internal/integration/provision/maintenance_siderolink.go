@@ -224,14 +224,14 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 		// the machines are not installed yet, so the value is only in memory at this point
 		for _, maintenanceClient := range sideroLinkMaintenanceClients {
 			rtestutils.AssertResource(
-				ctx, suite.T(), maintenanceClient.COSI, runtime.MetaKeyTagToID(meta.UserReserved2),
+				ctx, suite.T(), maintenanceClient.State(), runtime.MetaKeyTagToID(meta.UserReserved2),
 				func(metaValue *runtime.MetaKey, asrt *assert.Assertions) {
 					asrt.Equal(metaValueFromCmdline, metaValue.TypedSpec().Value)
 				},
 			)
 
 			rtestutils.AssertResource(
-				ctx, suite.T(), maintenanceClient.COSI, constants.MetaPartitionLabel,
+				ctx, suite.T(), maintenanceClient.State(), constants.MetaPartitionLabel,
 				func(volumeStatus *block.VolumeStatus, asrt *assert.Assertions) {
 					asrt.Equal(block.VolumePhaseMissing, volumeStatus.TypedSpec().Phase)
 				},
@@ -347,7 +347,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 
 		for _, maintenanceClient := range sideroLinkMaintenanceClients {
 			rtestutils.AssertResource(
-				ctx, suite.T(), maintenanceClient.COSI, block.SystemDiskID,
+				ctx, suite.T(), maintenanceClient.State(), block.SystemDiskID,
 				func(systemDisk *block.SystemDisk, asrt *assert.Assertions) {
 					asrt.Equal("/dev/vda", systemDisk.TypedSpec().DevPath)
 				},
@@ -361,7 +361,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 
 		for _, maintenanceClient := range sideroLinkMaintenanceClients {
 			rtestutils.AssertResource(
-				ctx, suite.T(), maintenanceClient.COSI, constants.MetaPartitionLabel,
+				ctx, suite.T(), maintenanceClient.State(), constants.MetaPartitionLabel,
 				func(volumeStatus *block.VolumeStatus, asrt *assert.Assertions) {
 					asrt.Equal(block.VolumePhaseReady, volumeStatus.TypedSpec().Phase)
 				},
@@ -421,7 +421,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 		maintenanceClient := sideroLinkMaintenanceClients[0]
 
 		rtestutils.AssertResource(
-			ctx, suite.T(), maintenanceClient.COSI, runtime.MetaKeyTagToID(meta.UserReserved2),
+			ctx, suite.T(), maintenanceClient.State(), runtime.MetaKeyTagToID(meta.UserReserved2),
 			func(metaValue *runtime.MetaKey, asrt *assert.Assertions) {
 				asrt.Equal(metaValueFromCmdline, metaValue.TypedSpec().Value)
 			},
@@ -490,7 +490,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 			meta.UserReserved2: metaValueFromCmdline,
 		} {
 			rtestutils.AssertResource(
-				ctx, suite.T(), maintenanceClient.COSI, runtime.MetaKeyTagToID(tag),
+				ctx, suite.T(), maintenanceClient.State(), runtime.MetaKeyTagToID(tag),
 				func(metaValue *runtime.MetaKey, asrt *assert.Assertions) {
 					asrt.Equal(expected, metaValue.TypedSpec().Value)
 				},

@@ -66,7 +66,7 @@ func (suite *FirewallSuite) TearDownTest() {
 func (suite *FirewallSuite) TestKubeletAccess() {
 	allNodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
-	_, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, allNodes[0]), suite.Client.COSI, "ingress")
+	_, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, allNodes[0]), suite.Client.State(), "ingress")
 	firewallEnabled := err == nil
 
 	eg, ctx := errgroup.WithContext(suite.ctx)
@@ -127,7 +127,7 @@ var nodePortServiceYAML []byte
 func (suite *FirewallSuite) TestNodePortAccess() {
 	allNodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 
-	chain, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, allNodes[0]), suite.Client.COSI, "ingress")
+	chain, err := safe.StateGetByID[*network.NfTablesChain](client.WithNode(suite.ctx, allNodes[0]), suite.Client.State(), "ingress")
 	firewallEnabled := err == nil
 	firewallDefaultBlock := firewallEnabled && chain.TypedSpec().Policy == nethelpers.VerdictDrop
 

@@ -135,7 +135,7 @@ func (suite *ResetSuite) assertSystemVolumeTypes(node string, expected map[strin
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	for _, volumeID := range config.PromotableSystemVolumeNames {
-		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), volumeID)
 		suite.Require().NoError(err)
 
 		suite.Require().Equalf(
@@ -317,7 +317,7 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 
 	// wait for EPHEMERAL failure
 	rtestutils.AssertResources(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		[]string{constants.EphemeralPartitionLabel},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseFailed, vs.TypedSpec().Phase)
@@ -371,7 +371,7 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 
 	// make sure EPHEMERAL is ready
 	rtestutils.AssertResources(
-		client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
+		client.WithNode(suite.ctx, node), suite.T(), suite.Client.State(),
 		[]string{constants.EphemeralPartitionLabel},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)

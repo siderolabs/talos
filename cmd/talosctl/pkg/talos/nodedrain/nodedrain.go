@@ -44,7 +44,7 @@ type Options struct {
 func GetKubernetesNodeName(ctx context.Context, c *client.Client) (string, error) {
 	nodenameRes, err := safe.StateGetByID[*k8s.Nodename](
 		ctx,
-		c.COSI,
+		c.State(),
 		k8s.NodenameID,
 	)
 	if err != nil {

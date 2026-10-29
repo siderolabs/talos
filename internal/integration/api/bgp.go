@@ -104,7 +104,7 @@ func (suite *BGPSuite) TestNumberedBGP() {
 
 	// session should reach Established with the fabric peer.
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, "fabric/"+fabric.String(),
+		nodeCtx, suite.T(), suite.Client.State(), "fabric/"+fabric.String(),
 		func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
 			asrt.Equal("fabric", peer.TypedSpec().Instance)
 			asrt.Equal(nethelpers.BGPSessionStateEstablished, peer.TypedSpec().State)
@@ -123,7 +123,7 @@ func (suite *BGPSuite) TestNumberedBGP() {
 	)
 
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, learnedRouteID,
+		nodeCtx, suite.T(), suite.Client.State(), learnedRouteID,
 		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
 			asrt.Equal(fabric, route.TypedSpec().Gateway)
 			asrt.Equal(nethelpers.ProtocolBGP, route.TypedSpec().Protocol)
@@ -134,8 +134,8 @@ func (suite *BGPSuite) TestNumberedBGP() {
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.BGPInstanceKind)
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, "lo")
 
-	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, "fabric/"+fabric.String())
-	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, learnedRouteID)
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.State(), "fabric/"+fabric.String())
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.State(), learnedRouteID)
 }
 
 // TestVRFBGP verifies that the embedded fabric peer can initiate a session into a passive BGP
@@ -253,17 +253,17 @@ func (suite *BGPSuite) TestVRFBGP() {
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BGPInstanceKind, defaultBGPName, vrfBGPName)
 
-	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, defaultBGPName+"/"+fabric.String())
-	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfPeerID)
-	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, learnedRouteID)
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.State(), defaultBGPName+"/"+fabric.String())
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.State(), vrfPeerID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.State(), learnedRouteID)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, "lo", vrfLink)
 
-	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, loopbackAddressID)
-	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfAddressID)
-	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfFabricRouteID)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.State(), loopbackAddressID)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.State(), vrfAddressID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.State(), vrfFabricRouteID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), vrfName)
 
 	finalManagementLink, finalManagementPrefix = suite.managementNetwork(nodeCtx)
 	suite.Require().Equal(managementLink, finalManagementLink)
@@ -358,7 +358,7 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 
 	originalIndex := suite.bgpLinkIndex(nodeCtx, vrfName)
 
-	originalPeer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.COSI, vrfPeerID)
+	originalPeer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.State(), vrfPeerID)
 	suite.Require().NoError(err)
 
 	originalSince := originalPeer.TypedSpec().Since
@@ -368,7 +368,7 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 	// Drop the VRF: the instance keeps running (its VRF is merely "not ready"), so the gobgp server,
 	// and its listening socket bound to this now-dead ifindex, survive the gap.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), vrfName)
 
 	// Bring it back under the same name; the kernel hands out a fresh ifindex.
 	suite.PatchMachineConfig(nodeCtx, vrf)
@@ -376,7 +376,7 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 	var recreatedIndex uint32
 
 	suite.Eventually(func() bool {
-		link, linkErr := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, vrfName)
+		link, linkErr := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.State(), vrfName)
 		if linkErr != nil {
 			return false
 		}
@@ -396,12 +396,12 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 	suite.T().Logf("VRF BGP session re-established at %s after the VRF was recreated", reestablishedSince)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BGPInstanceKind, vrfBGPName)
-	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfPeerID)
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.State(), vrfPeerID)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, vrfLink)
 
-	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.State(), vrfName)
 
 	suite.waitForManagementNetwork(nodeCtx, managementLink, managementPrefix)
 }
@@ -409,7 +409,7 @@ func (suite *BGPSuite) TestVRFBGPRecreate() {
 // assertBFDUp waits until BFD is up on every BGP peer.
 func (suite *BGPSuite) assertBFDUp(nodeCtx context.Context) {
 	rtestutils.AssertAll(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
 			asrt.Equal("up", peer.TypedSpec().BFDState)
 		},
@@ -418,9 +418,9 @@ func (suite *BGPSuite) assertBFDUp(nodeCtx context.Context) {
 
 // assertSessionsEstablished waits until exactly count BGP peers are present and all Established.
 func (suite *BGPSuite) assertSessionsEstablished(nodeCtx context.Context, count int) {
-	rtestutils.AssertLength[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, count)
+	rtestutils.AssertLength[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.State(), count)
 	rtestutils.AssertAll(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
 			asrt.Equal(nethelpers.BGPSessionStateEstablished, peer.TypedSpec().State)
 		},
@@ -431,7 +431,7 @@ func (suite *BGPSuite) assertSessionsEstablished(nodeCtx context.Context, count 
 // IPv6-link-local next-hops (RFC 8950), one per fabric link.
 func (suite *BGPSuite) assertLearnedRoute(nodeCtx context.Context, dest netip.Prefix, hops int) {
 	suite.Eventually(func() bool {
-		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.COSI)
+		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.State())
 		require.NoError(suite.T(), err)
 
 		for route := range routes.All() {
@@ -459,7 +459,7 @@ func (suite *BGPSuite) assertLearnedRoute(nodeCtx context.Context, dest netip.Pr
 }
 
 func (suite *BGPSuite) learnedRouteExists(nodeCtx context.Context, dest netip.Prefix) bool {
-	routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.COSI)
+	routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.State())
 	require.NoError(suite.T(), err)
 
 	for route := range routes.All() {
@@ -636,7 +636,7 @@ func (suite *BGPSuite) discoverCLOSVIP(nodeCtx context.Context, ownIP string) ne
 	own, err := netip.ParseAddr(ownIP)
 	suite.Require().NoError(err)
 
-	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, suite.Client.COSI)
+	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for address := range addresses.All() {
@@ -657,7 +657,7 @@ func (suite *BGPSuite) discoverCLOSVIP(nodeCtx context.Context, ownIP string) ne
 // closFabricLinks returns the sorted names of a full-CLOS node's fabric uplinks: the virtio-net physical
 // NICs (a no-net0 node has only these — there is no management bridge interface).
 func (suite *BGPSuite) closFabricLinks(nodeCtx context.Context) []string {
-	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var names []string
@@ -677,7 +677,7 @@ func (suite *BGPSuite) closFabricLinks(nodeCtx context.Context) []string {
 
 // managementNetwork returns the node's physical virtio-net management link and IPv4 subnet.
 func (suite *BGPSuite) managementNetwork(nodeCtx context.Context) (string, netip.Prefix) {
-	link, prefix, err := lookupBGPManagementNetwork(nodeCtx, suite.Client.COSI)
+	link, prefix, err := lookupBGPManagementNetwork(nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	return link, prefix
@@ -721,7 +721,7 @@ func lookupBGPManagementNetwork(nodeCtx context.Context, cosi state.State) (stri
 
 func (suite *BGPSuite) waitForManagementNetwork(nodeCtx context.Context, expectedLink string, expectedPrefix netip.Prefix) {
 	suite.Eventually(func() bool {
-		link, prefix, err := lookupBGPManagementNetwork(nodeCtx, suite.Client.COSI)
+		link, prefix, err := lookupBGPManagementNetwork(nodeCtx, suite.Client.State())
 
 		return err == nil && link == expectedLink && prefix == expectedPrefix
 	}, 2*time.Minute, time.Second, "management network %s %s did not recover after VRF configuration", expectedLink, expectedPrefix)
@@ -729,7 +729,7 @@ func (suite *BGPSuite) waitForManagementNetwork(nodeCtx context.Context, expecte
 
 func (suite *BGPSuite) waitForBGPPeer(nodeCtx context.Context, id, instance string, peerASN uint32) {
 	suite.Eventually(func() bool {
-		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.COSI, id)
+		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.State(), id)
 		if err != nil {
 			return false
 		}
@@ -747,7 +747,7 @@ func (suite *BGPSuite) waitForBGPRoute(
 	gateway netip.Addr,
 ) {
 	suite.Eventually(func() bool {
-		route, err := safe.StateGetByID[*networkres.RouteStatus](nodeCtx, suite.Client.COSI, id)
+		route, err := safe.StateGetByID[*networkres.RouteStatus](nodeCtx, suite.Client.State(), id)
 		if err != nil {
 			return false
 		}
@@ -769,7 +769,7 @@ func (suite *BGPSuite) waitForReestablishedBGPPeer(
 	var since time.Time
 
 	suite.Eventually(func() bool {
-		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.COSI, id)
+		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.State(), id)
 		if err != nil {
 			return false
 		}
@@ -794,7 +794,7 @@ func (suite *BGPSuite) waitForReestablishedBGPPeer(
 
 // bgpLinkIndex returns the current kernel ifindex of a link.
 func (suite *BGPSuite) bgpLinkIndex(nodeCtx context.Context, name string) uint32 {
-	link, err := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.COSI, name)
+	link, err := safe.StateGetByID[*networkres.LinkStatus](nodeCtx, suite.Client.State(), name)
 	suite.Require().NoError(err)
 
 	return link.TypedSpec().Index
@@ -810,7 +810,7 @@ func (suite *BGPSuite) bridgeGateway(nodeCtx context.Context) netip.Addr {
 
 // vrfBGPLink returns the extra e1000 NIC attached to the management bridge for the inbound VRF test.
 func (suite *BGPSuite) vrfBGPLink(nodeCtx context.Context) string {
-	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	var result []string
@@ -831,7 +831,7 @@ func (suite *BGPSuite) vrfBGPLink(nodeCtx context.Context) string {
 // assertDefaultRoute waits until a BGP-learned default route is installed (the fabric peer's default).
 func (suite *BGPSuite) assertDefaultRoute(nodeCtx context.Context) {
 	suite.Eventually(func() bool {
-		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.COSI)
+		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.State())
 		require.NoError(suite.T(), err)
 
 		for route := range routes.All() {
@@ -855,7 +855,7 @@ func (suite *BGPSuite) assertDefaultRoute(nodeCtx context.Context) {
 // CNI virtual interfaces (flannel.1, cni0, veth*) legitimately carry pod-CIDR addresses — both are
 // non-physical and intentionally ignored.
 func (suite *BGPSuite) assertNoManagementAddress(nodeCtx context.Context) {
-	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	physical := map[string]struct{}{}
@@ -866,7 +866,7 @@ func (suite *BGPSuite) assertNoManagementAddress(nodeCtx context.Context) {
 		}
 	}
 
-	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, suite.Client.COSI)
+	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for address := range addresses.All() {

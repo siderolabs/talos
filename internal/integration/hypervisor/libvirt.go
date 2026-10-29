@@ -105,7 +105,7 @@ func (suite *LibvirtSuite) TestDomainDefinition() {
 	suite.PatchMachineConfig(nodeCtx, doc)
 	suite.assertRunningTransientDomain(node, name, 1)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			asrt.True(spec.Metadata().Finalizers().Has("hypervisor.VirtualMachineController"))
 		},
@@ -120,8 +120,8 @@ func (suite *LibvirtSuite) TestDomainDefinition() {
 	suite.assertStoppedDomain(nodeCtx, node, name)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineStatus](nodeCtx, suite.T(), suite.Client.State(), name)
 
 	// No status exists after document removal; inspect libvirt to catch an orphaned domain.
 	suite.assertNoDomain(node, name)
@@ -252,7 +252,7 @@ func (suite *LibvirtSuite) assertStoppedDomain(ctx context.Context, node, name s
 func (suite *LibvirtSuite) assertVirtualMachineStatus(ctx context.Context, name string, powerState hypervisorhelpers.VirtualMachinePowerState) {
 	suite.T().Helper()
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(status *hypervisor.VirtualMachineStatus, asrt *assert.Assertions) {
 			asrt.Equal(powerState, status.TypedSpec().PowerState)
 			asrt.Equal(hypervisorhelpers.VirtualMachineStageReady, status.TypedSpec().Stage)
@@ -298,7 +298,7 @@ func (suite *LibvirtSuite) assertLibvirtConsoleAttached(ctx context.Context, nod
 	ptyPath := domain.Devices.Serials[0].Source.Pty.Path
 	suite.Require().NotEmpty(ptyPath)
 
-	virtqemudPID, err := safe.ReaderGetByID[*runtime.ServicePID](ctx, suite.Client.COSI, "ext-virtqemud")
+	virtqemudPID, err := safe.ReaderGetByID[*runtime.ServicePID](ctx, suite.Client.State(), "ext-virtqemud")
 	suite.Require().NoError(err)
 
 	lockPath := "/var/run/lock/LCK.." + strings.ReplaceAll(strings.TrimPrefix(ptyPath, "/dev"), "/", "_")
@@ -474,14 +474,14 @@ func (suite *LibvirtSuite) TestDomain() {
 		suite.T().Skip("skipping service restart and reboot checks in short mode")
 	}
 
-	virtqemudPID, err := safe.ReaderGetByID[*runtime.ServicePID](nodeCtx, suite.Client.COSI, "ext-virtqemud")
+	virtqemudPID, err := safe.ReaderGetByID[*runtime.ServicePID](nodeCtx, suite.Client.State(), "ext-virtqemud")
 	suite.Require().NoError(err)
 
 	_, err = suite.Client.ServiceRestart(nodeCtx, "ext-virtqemud")
 	suite.Require().NoError(err)
 
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.State(),
 		"ext-virtqemud",
 		func(servicePID *runtime.ServicePID, asrt *assert.Assertions) {
 			asrt.NotEqual(virtqemudPID.TypedSpec().PID, servicePID.TypedSpec().PID)

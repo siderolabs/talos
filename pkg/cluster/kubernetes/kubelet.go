@@ -65,7 +65,7 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 
 	watchCh := make(chan safe.WrappedStateEvent[*v1alpha1.Service])
 
-	if err = safe.StateWatch(ctx, c.COSI, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, kubelet, resource.VersionUndefined), watchCh); err != nil {
+	if err = safe.StateWatch(ctx, c.State(), resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, kubelet, resource.VersionUndefined), watchCh); err != nil {
 		return fmt.Errorf("error watching service: %w", err)
 	}
 
@@ -93,7 +93,7 @@ func upgradeKubeletOnNode(ctx context.Context, cluster UpgradeProvider, options 
 	// find out current kubelet version, as the machine config might have a missing image field,
 	// look it up from the kubelet spec
 
-	kubeletSpec, err := safe.StateGet[*k8s.KubeletSpec](ctx, c.COSI, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, kubelet, resource.VersionUndefined))
+	kubeletSpec, err := safe.StateGet[*k8s.KubeletSpec](ctx, c.State(), resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, kubelet, resource.VersionUndefined))
 	if err != nil {
 		return fmt.Errorf("error fetching kubelet spec: %w", err)
 	}

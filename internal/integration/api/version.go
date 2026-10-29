@@ -55,7 +55,7 @@ func (suite *VersionSuite) TestExpectedVersionMaster() {
 	node := suite.RandomDiscoveredNodeInternalIP(configmachine.TypeControlPlane)
 
 	clientCtx := client.WithNode(suite.ctx, node)
-	version, err := safe.StateGetByID[*runtime.Version](clientCtx, suite.Client.COSI, "version")
+	version, err := safe.StateGetByID[*runtime.Version](clientCtx, suite.Client.State(), "version")
 	suite.Require().NoError(err)
 	suite.Require().NotNil(version)
 

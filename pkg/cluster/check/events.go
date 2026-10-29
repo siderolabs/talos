@@ -44,7 +44,7 @@ func AllNodesBootedAssertion(ctx context.Context, cluster ClusterInfo) error {
 	for _, nodeIP := range nodeInternalIPs {
 		nodeEventCh := make(chan state.Event)
 
-		if err = cli.COSI.Watch(client.WithNode(ctx, nodeIP), runtime.NewMachineStatus().Metadata(), nodeEventCh); err != nil {
+		if err = cli.State().Watch(client.WithNode(ctx, nodeIP), runtime.NewMachineStatus().Metadata(), nodeEventCh); err != nil {
 			return err
 		}
 

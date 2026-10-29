@@ -55,7 +55,7 @@ func (suite *SBOMSuite) TestCommon() {
 	versionName := strings.ToLower(strings.ReplaceAll(version.Name, " ", "-"))
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		[]resource.ID{
 			// list of common SBOM items which should be present always
 			versionName,
@@ -69,7 +69,7 @@ func (suite *SBOMSuite) TestCommon() {
 
 	// Talos SBOM item should have a matching version.
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		versionName,
 		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
 			asrt.Equal(versionName, item.TypedSpec().Name, "SBOM item name should match Talos version name")
@@ -79,14 +79,14 @@ func (suite *SBOMSuite) TestCommon() {
 
 	// Assert on containerd/runc versions.
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		"containerd",
 		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
 			asrt.Equal("v"+constants.DefaultContainerdVersion, item.TypedSpec().Version)
 		},
 	)
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		"runc",
 		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
 			asrt.Equal("v"+constants.RuncVersion, item.TypedSpec().Version)
@@ -95,7 +95,7 @@ func (suite *SBOMSuite) TestCommon() {
 
 	// Assert on Go version.
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		"golang",
 		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
 			goVersion := strings.TrimPrefix(constants.GoVersion, "go")
@@ -107,7 +107,7 @@ func (suite *SBOMSuite) TestCommon() {
 	if suite.Capabilities().RunsTalosKernel {
 		// Assert on Talos kernel version.
 		rtestutils.AssertResource(
-			ctx, suite.T(), suite.Client.COSI,
+			ctx, suite.T(), suite.Client.State(),
 			"kernel",
 			func(item *runtime.SBOMItem, asrt *assert.Assertions) {
 				// cut the suffix, first try removing .0 patch version for kernel releases like 6.17
@@ -121,7 +121,7 @@ func (suite *SBOMSuite) TestCommon() {
 			},
 		)
 	} else {
-		rtestutils.AssertNoResource[*runtime.SBOMItem](ctx, suite.T(), suite.Client.COSI, "kernel")
+		rtestutils.AssertNoResource[*runtime.SBOMItem](ctx, suite.T(), suite.Client.State(), "kernel")
 	}
 }
 

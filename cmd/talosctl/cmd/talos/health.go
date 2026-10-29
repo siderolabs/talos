@@ -252,7 +252,7 @@ func buildClusterInfo(ctx context.Context, c *client.Client, clusterState cluste
 	// read members from the Talos API
 	var members []*clusterres.Member
 
-	items, err := safe.StateListAll[*clusterres.Member](ctx, c.COSI)
+	items, err := safe.StateListAll[*clusterres.Member](ctx, c.State())
 	if err != nil {
 		return nil, err
 	}

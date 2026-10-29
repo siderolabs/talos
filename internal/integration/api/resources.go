@@ -53,14 +53,14 @@ func (suite *ResourcesSuite) TestListResources() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	ctx := client.WithNode(suite.ctx, node)
 
-	nsList, err := safe.StateListAll[*meta.Namespace](ctx, suite.Client.COSI)
+	nsList, err := safe.StateListAll[*meta.Namespace](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	namespaces := safe.ToSlice(nsList, func(ns *meta.Namespace) string {
 		return ns.Metadata().ID()
 	})
 
-	rdList, err := safe.StateListAll[*meta.ResourceDefinition](ctx, suite.Client.COSI)
+	rdList, err := safe.StateListAll[*meta.ResourceDefinition](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	resourceTypes := safe.ToSlice(rdList, func(rd *meta.ResourceDefinition) string {
@@ -72,7 +72,7 @@ func (suite *ResourcesSuite) TestListResources() {
 	for _, resourceType := range resourceTypes {
 		eg.Go(func() error {
 			for _, namespace := range namespaces {
-				_, err := suite.Client.COSI.List(egCtx, resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
+				_, err := suite.Client.State().List(egCtx, resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined))
 				if err != nil {
 					return fmt.Errorf("failed to list resources of type %q in namespace %q: %w", resourceType, namespace, err)
 				}
@@ -90,15 +90,15 @@ func (suite *ResourcesSuite) TestForbiddenOperations() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	err := suite.Client.COSI.Create(ctx, v1alpha1.NewService("foo"))
+	err := suite.Client.State().Create(ctx, v1alpha1.NewService("foo"))
 	suite.Require().Error(err)
 	suite.Assert().True(state.IsConflictError(err)) // this is how COSI wraps the error
 
-	err = suite.Client.COSI.Destroy(ctx, v1alpha1.NewService("kubelet").Metadata())
+	err = suite.Client.State().Destroy(ctx, v1alpha1.NewService("kubelet").Metadata())
 	suite.Require().Error(err)
 	suite.Assert().True(state.IsConflictError(err)) // this is how COSI wraps the error
 
-	err = suite.Client.COSI.Update(ctx, v1alpha1.NewService("kubelet"))
+	err = suite.Client.State().Update(ctx, v1alpha1.NewService("kubelet"))
 	suite.Require().Error(err)
 	suite.Assert().True(state.IsConflictError(err)) // this is how COSI wraps the error
 }

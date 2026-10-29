@@ -105,7 +105,7 @@ func (suite *ManifestsSuite) TestSync() {
 	// wait for the manifest to be updated
 	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
 		rtestutils.AssertResource(
-			client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
+			client.WithNode(suite.ctx, node), suite.T(), suite.Client.State(),
 			"10-kube-proxy",
 			func(manifest *k8s.Manifest, asrt *assert.Assertions) {
 				marshaled, err := yaml.Marshal(manifest.TypedSpec())
@@ -160,7 +160,7 @@ func (suite *ManifestsSuite) TestSync() {
 	// wait for the manifest to be removed
 	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
 		rtestutils.AssertNoResource[*k8s.Manifest](
-			client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
+			client.WithNode(suite.ctx, node), suite.T(), suite.Client.State(),
 			"10-kube-proxy",
 		)
 	}

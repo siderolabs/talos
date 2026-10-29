@@ -149,7 +149,7 @@ func (suite *RedactionSuite) plantProbe() func() {
 
 	// the credentials are in the spec, and only in the spec: the ID has them stripped
 	rtestutils.AssertResource(
-		suite.nodeCtx, suite.T(), suite.Client.COSI, redactionProbeID,
+		suite.nodeCtx, suite.T(), suite.Client.State(), redactionProbeID,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.NotNil(spec.TypedSpec().HTTP.URL)
 		},
@@ -157,7 +157,7 @@ func (suite *RedactionSuite) plantProbe() func() {
 
 	return func() {
 		suite.RemoveMachineConfigDocuments(suite.nodeCtx, confignetwork.HTTPProbeKind)
-		rtestutils.AssertNoResource[*networkres.ProbeSpec](suite.nodeCtx, suite.T(), suite.Client.COSI, redactionProbeID)
+		rtestutils.AssertNoResource[*networkres.ProbeSpec](suite.nodeCtx, suite.T(), suite.Client.State(), redactionProbeID)
 	}
 }
 
@@ -167,7 +167,7 @@ func (suite *RedactionSuite) assertReadable(cli *client.Client, mode redactable.
 
 	ctx := redactable.WithMode(client.WithNode(suite.ctx, suite.node), mode)
 
-	_, err := cli.COSI.List(ctx, kind, state.WithListUnmarshalOptions(state.WithSkipProtobufUnmarshal()))
+	_, err := cli.State().List(ctx, kind, state.WithListUnmarshalOptions(state.WithSkipProtobufUnmarshal()))
 
 	if allowed {
 		suite.Assert().NoError(err, "%s: expected the read to be allowed", what)
@@ -185,7 +185,7 @@ func (suite *RedactionSuite) assertProbeRedacted(cli *client.Client, mode redact
 
 	ctx := redactable.WithMode(client.WithNode(suite.ctx, suite.node), mode)
 
-	probe, err := safe.StateGetByID[*networkres.ProbeSpec](ctx, cli.COSI, redactionProbeID)
+	probe, err := safe.StateGetByID[*networkres.ProbeSpec](ctx, cli.State(), redactionProbeID)
 	if !suite.Assert().NoError(err, "%s: expected the probe to be readable", what) {
 		return
 	}

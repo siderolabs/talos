@@ -358,7 +358,7 @@ func fetchParameters(ctx context.Context, name string) ([]string, error) {
 	var specs safe.List[*runtime.KernelModuleSpec]
 
 	if err = retryUnavailable(ctx, func() error {
-		specs, err = safe.StateListAll[*runtime.KernelModuleSpec](ctx, c.COSI)
+		specs, err = safe.StateListAll[*runtime.KernelModuleSpec](ctx, c.State())
 
 		return err
 	}); err != nil {

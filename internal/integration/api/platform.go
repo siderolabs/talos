@@ -54,7 +54,7 @@ func (suite *PlatformSuite) TestPlatformMetadata() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, runtime.PlatformMetadataID, func(md *runtime.PlatformMetadata, asrt *assert.Assertions) {
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), runtime.PlatformMetadataID, func(md *runtime.PlatformMetadata, asrt *assert.Assertions) {
 		marshaled, err := resource.MarshalYAML(md)
 		suite.Require().NoError(err)
 
@@ -101,12 +101,12 @@ func (suite *PlatformSuite) TestMetalPlatformMetadata() {
 	suite.Require().NoError(suite.Client.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, platformNetworkConfigMarshaled))
 
 	// link should appear on the node
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, linkName, func(*network.LinkStatus, *assert.Assertions) {})
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), linkName, func(*network.LinkStatus, *assert.Assertions) {})
 
 	suite.Require().NoError(suite.Client.MetaDelete(ctx, meta.MetalNetworkPlatformConfig))
 
 	// address should be removed
-	rtestutils.AssertNoResource[*network.LinkStatus](ctx, suite.T(), suite.Client.COSI, linkName)
+	rtestutils.AssertNoResource[*network.LinkStatus](ctx, suite.T(), suite.Client.State(), linkName)
 }
 
 func init() {

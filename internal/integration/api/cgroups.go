@@ -204,7 +204,7 @@ func (suite *CGroupsSuite) TestWorkloadMemoryLimits() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, runtime.WorkloadMemorySpecID,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), runtime.WorkloadMemorySpecID,
 		func(spec *runtime.WorkloadMemorySpec, asrt *assert.Assertions) {
 			asrt.Equal(containersLimit, spec.TypedSpec().TalosContainersLimit)
 			asrt.Equal(virtualMachinesLimit, spec.TypedSpec().VirtualMachinesLimit)

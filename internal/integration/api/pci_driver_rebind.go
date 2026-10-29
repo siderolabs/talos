@@ -86,7 +86,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	items, err := suite.Client.COSI.List(nodeCtx, resource.NewMetadata(hardware.NamespaceName, hardware.PCIDeviceType, "", resource.VersionUndefined))
+	items, err := suite.Client.State().List(nodeCtx, resource.NewMetadata(hardware.NamespaceName, hardware.PCIDeviceType, "", resource.VersionUndefined))
 	suite.Require().NoError(err)
 
 	var pciDeviceID string
@@ -113,7 +113,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 
 	suite.PatchMachineConfig(nodeCtx, kernelModuleDocument, cfgDocument)
 
-	_, err = suite.Client.COSI.WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Created, state.Updated))
+	_, err = suite.Client.State().WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Created, state.Updated))
 	suite.Require().NoError(err)
 
 	defer func() {
@@ -127,7 +127,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
-	_, err = suite.Client.COSI.WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Updated))
+	_, err = suite.Client.State().WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Updated))
 	suite.Require().NoError(err)
 
 	// verify that an update to the target driver takes effect
@@ -138,7 +138,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
-	_, err = suite.Client.COSI.WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Updated))
+	_, err = suite.Client.State().WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Updated))
 	suite.Require().NoError(err)
 
 	// verify that the update has taken effect
@@ -147,7 +147,7 @@ func (suite *PCIDriverRebindSuite) TestIOMMURebind() {
 	// now remove the pci driver rebind config
 	suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
 
-	_, err = suite.Client.COSI.WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Destroyed))
+	_, err = suite.Client.State().WatchFor(nodeCtx, hardware.NewPCIDriverRebindStatus(pciDeviceID).Metadata(), state.WithEventTypes(state.Destroyed))
 	suite.Require().NoError(err)
 
 	// verify that the device is back to original host driver

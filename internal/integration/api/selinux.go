@@ -166,7 +166,7 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 			suite.T().Skip("skipping SELinux test since SELinux is disabled")
 		}
 
-		extensions, err := safe.StateListAll[*runtimeres.ExtensionStatus](nodeCtx, suite.Client.COSI)
+		extensions, err := safe.StateListAll[*runtimeres.ExtensionStatus](nodeCtx, suite.Client.State())
 		suite.Require().NoError(err)
 
 		if extensions.Len() > 0 {
@@ -335,7 +335,7 @@ func (suite *SELinuxSuite) TestSecurityState() {
 		rtestutils.AssertResource(
 			nodeCtx,
 			suite.T(),
-			suite.Client.COSI,
+			suite.Client.State(),
 			runtimeres.SecurityStateID,
 			func(state *runtimeres.SecurityState, asrt *assert.Assertions) {
 				if suite.SelinuxEnforcing {
@@ -440,7 +440,7 @@ func (suite *SELinuxSuite) TestNoStateAccess() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	state, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, "STATE")
+	state, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), "STATE")
 	suite.Assert().NoError(err)
 
 	podDef, err := suite.NewPrivilegedPod("system-state-test")

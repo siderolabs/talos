@@ -82,7 +82,7 @@ func (suite *VolumesSuite) TestExternalVolumesNFS() {
 		constants.ExternalVolumePrefix + "nfs-v4",
 	}
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, volumeIDs,
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), volumeIDs,
 		func(status *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
 			asrt.Equal(block.VolumeTypeExternal, status.TypedSpec().Type)
@@ -101,7 +101,7 @@ func (suite *VolumesSuite) TestExternalVolumesNFS() {
 		},
 	)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, volumeIDs,
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), volumeIDs,
 		func(status *block.MountStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.FilesystemTypeNFS, status.TypedSpec().Filesystem)
 			asrt.False(status.TypedSpec().ReadOnly)
@@ -153,7 +153,7 @@ func (suite *VolumesSuite) TestExternalVolumesNFS() {
 		},
 	)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, constants.ExternalVolumePrefix+"nfs-v3",
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), constants.ExternalVolumePrefix+"nfs-v3",
 		func(status *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, status.TypedSpec().Phase)
 			asrt.Contains(status.TypedSpec().MountSpec.Parameters, block.NewStringParameter("vers", "4.1"))

@@ -117,7 +117,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 
 	source := filepath.Join(libraryPath, isoName)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().SourcePath)
@@ -126,7 +126,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 		},
 	)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 			asrt.Contains(spec.TypedSpec().DomainXML, `device="cdrom"`)
 			asrt.Contains(spec.TypedSpec().DomainXML, `<source file="`+source+`">`)
@@ -151,7 +151,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 		},
 	})
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
 		diskStatusID(name, installDisk))
 	suite.assertRunningTransientDomain(node, name, 1)
 
@@ -201,14 +201,14 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.False(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady)
 			asrt.Contains(status.TypedSpec().Error, isoName)
 		},
 	)
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 	suite.assertNoDomain(node, name)
 
 	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader([]byte("late arrival")))
@@ -291,7 +291,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, doc.DisksConfig[0])},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
@@ -381,7 +381,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
@@ -412,7 +412,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{swappedDisk}
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, swappedDisk)},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, swappedDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(filepath.Join(libraryPath, replacementISO), status.TypedSpec().SourcePath)
@@ -421,7 +421,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	// The status of the previous image is a resource of its own, and it goes once the domain has
 	// been redefined without it.
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
 		diskStatusID(name, installDisk))
 
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
@@ -461,7 +461,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, pinnedDisk)},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, pinnedDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.False(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady)
 			asrt.Contains(status.TypedSpec().Error, "digest mismatch")
@@ -539,7 +539,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	source := filepath.Join(libraryPath, isoName)
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{diskStatusID(name, installDisk)},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
 			asrt.Equal(source, status.TypedSpec().SourcePath)
@@ -551,7 +551,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	// Every link of the chain is in place: the domain holds the disk status, the disk holds the
 	// library status, and the library holds the mount its image is being read out of.
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{library},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{library},
 		func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
 			asrt.False(status.Metadata().Finalizers().Empty(), "the disk must hold the library")
 		},
@@ -559,7 +559,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	mountRequestID := contentLibraryControllerName + "/" + library + "/" + constants.UserVolumePrefix + library
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{mountRequestID},
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{mountRequestID},
 		func(*block.VolumeMountStatus, *assert.Assertions) {},
 	)
 
@@ -568,14 +568,14 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
 	suite.assertNoDomain(node, name)
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.COSI,
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](nodeCtx, suite.T(), suite.Client.State(),
 		diskStatusID(name, installDisk))
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.ContentLibraryConfigKind, library)
 
-	rtestutils.AssertNoResource[*hypervisor.ContentLibraryStatus](nodeCtx, suite.T(), suite.Client.COSI, library)
-	rtestutils.AssertNoResource[*block.VolumeMountRequest](nodeCtx, suite.T(), suite.Client.COSI, mountRequestID)
-	rtestutils.AssertNoResource[*block.VolumeMountStatus](nodeCtx, suite.T(), suite.Client.COSI, mountRequestID)
+	rtestutils.AssertNoResource[*hypervisor.ContentLibraryStatus](nodeCtx, suite.T(), suite.Client.State(), library)
+	rtestutils.AssertNoResource[*block.VolumeMountRequest](nodeCtx, suite.T(), suite.Client.State(), mountRequestID)
+	rtestutils.AssertNoResource[*block.VolumeMountStatus](nodeCtx, suite.T(), suite.Client.State(), mountRequestID)
 }
 
 // diskStatusID is the ID the disk status of one configured disk is published under.

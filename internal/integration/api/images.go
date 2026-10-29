@@ -268,7 +268,7 @@ func (suite *ImagesSuite) TestVerify() {
 
 	// wait for the configuration to be applied
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI,
+		ctx, suite.T(), suite.Client.State(),
 		[]resource.ID{"0000", "0001", "0002", "0003"},
 		func(rule *securityres.ImageVerificationRule, asrt *assert.Assertions) {
 			switch rule.Metadata().ID() {

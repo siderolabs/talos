@@ -84,7 +84,7 @@ func (suite *KernelModulesSuite) TestLoadedOnDemand() {
 	suite.T().Logf("dmsetup exit code %d, output:\n%s", exitCode, out)
 
 	// the module gets loaded on demand
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, moduleStatusID,
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), moduleStatusID,
 		func(*runtime.KernelModuleStatus, *assert.Assertions) {},
 	)
 
@@ -125,7 +125,7 @@ func (suite *KernelModulesSuite) TestAliasRefused() {
 	// give the request a chance to be (wrongly) handled
 	time.Sleep(10 * time.Second)
 
-	rtestutils.AssertNoResource[*runtime.KernelModuleStatus](nodeCtx, suite.T(), suite.Client.COSI, moduleStatusID)
+	rtestutils.AssertNoResource[*runtime.KernelModuleStatus](nodeCtx, suite.T(), suite.Client.State(), moduleStatusID)
 
 	suite.Assert().Equal(loadedBefore, suite.countModuleLoadedLogLines(node, module), "the alias request should not load the module")
 }
@@ -134,7 +134,7 @@ func (suite *KernelModulesSuite) TestAliasRefused() {
 func (suite *KernelModulesSuite) skipIfModuleLoaded(node, moduleStatusID string) {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	_, err := safe.StateGetByID[*runtime.KernelModuleStatus](nodeCtx, suite.Client.COSI, moduleStatusID)
+	_, err := safe.StateGetByID[*runtime.KernelModuleStatus](nodeCtx, suite.Client.State(), moduleStatusID)
 	if err == nil {
 		suite.T().Skipf("skipping test, module %q is already loaded on node %s", moduleStatusID, node)
 	}

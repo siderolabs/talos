@@ -86,7 +86,7 @@ func (suite *VolumesSuite) TestDiscoveredVolumes() {
 func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 	ctx := client.WithNode(suite.ctx, node)
 
-	volumes, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	volumes, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	expectedVolumes := map[string]struct {
@@ -146,7 +146,7 @@ func (suite *VolumesSuite) TestSystemDisk() {
 		suite.Run(node, func() {
 			ctx := client.WithNode(suite.ctx, node)
 
-			systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, suite.Client.COSI, block.SystemDiskID)
+			systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, suite.Client.State(), block.SystemDiskID)
 			suite.Require().NoError(err)
 
 			suite.Assert().NotEmpty(systemDisk.TypedSpec().DiskID)
@@ -162,7 +162,7 @@ func (suite *VolumesSuite) TestDisks() {
 		suite.Run(node, func() {
 			ctx := client.WithNode(suite.ctx, node)
 
-			disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+			disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.State())
 			suite.Require().NoError(err)
 
 			// there should be at least two disks - loop0 for Talos squashfs and a system disk
@@ -263,7 +263,7 @@ func (suite *VolumesSuite) TestSymlinks() {
 	expectedSymlink := "/dev/disk/by-uuid/" + fsUUID
 
 	// Talos should report a symlink to the disk via FS UUID
-	_, err = suite.Client.COSI.WatchFor(
+	_, err = suite.Client.State().WatchFor(
 		client.WithNode(suite.ctx, node), block.NewDisk(block.NamespaceName, userDiskName).Metadata(),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			disk, ok := r.(*block.Disk)
@@ -288,7 +288,7 @@ func (suite *VolumesSuite) TestSymlinks() {
 	}))
 
 	// Talos should remove a symlink to the disk
-	_, err = suite.Client.COSI.WatchFor(
+	_, err = suite.Client.State().WatchFor(
 		client.WithNode(suite.ctx, node), block.NewDisk(block.NamespaceName, userDiskName).Metadata(),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			disk, ok := r.(*block.Disk)
@@ -308,11 +308,11 @@ func (suite *VolumesSuite) TestUserVolumesStatus() {
 		suite.Run(node, func() {
 			ctx := client.WithNode(suite.ctx, node)
 
-			userVolumeIDs := rtestutils.ResourceIDs[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, state.WithLabelQuery(resource.LabelExists(block.UserVolumeLabel)))
+			userVolumeIDs := rtestutils.ResourceIDs[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), state.WithLabelQuery(resource.LabelExists(block.UserVolumeLabel)))
 
 			// check that the volumes are ready
 			rtestutils.AssertResources(
-				ctx, suite.T(), suite.Client.COSI,
+				ctx, suite.T(), suite.Client.State(),
 				userVolumeIDs,
 				func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 					asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
@@ -325,7 +325,7 @@ func (suite *VolumesSuite) TestUserVolumesStatus() {
 
 			// check that the volumes are mounted
 			rtestutils.AssertResources(
-				ctx, suite.T(), suite.Client.COSI,
+				ctx, suite.T(), suite.Client.State(),
 				userVolumeIDs,
 				func(vs *block.MountStatus, _ *assert.Assertions) {},
 			)
@@ -340,7 +340,7 @@ func (suite *VolumesSuite) TestVolumesStatus() {
 			ctx := client.WithNode(suite.ctx, node)
 
 			rtestutils.AssertAll(
-				ctx, suite.T(), suite.Client.COSI,
+				ctx, suite.T(), suite.Client.State(),
 				func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 					asrt.Contains([]block.VolumePhase{block.VolumePhaseReady, block.VolumePhaseMissing}, vs.TypedSpec().Phase)
 				},
@@ -378,7 +378,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-"
@@ -443,14 +443,14 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// the volumes have a bit different trim settings, let's verify that the trim schedule is updated accordingly
@@ -470,7 +470,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	}
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumesWithTrimSchedule,
+		ctx, suite.T(), suite.Client.State(), userVolumesWithTrimSchedule,
 		func(vs *block.VolumeTrimSchedule, asrt *assert.Assertions) {
 			expectedInterval := constants.DefaultFilesystemTrimInterval
 
@@ -482,7 +482,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		},
 	)
 
-	rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[2])
+	rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.State(), userVolumeIDs[2])
 
 	// create a pod using user volumes
 	podDef, err := suite.NewPod("user-volume-test")
@@ -520,7 +520,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	// verify that volume labels are set properly
 	expectedLabels := xslices.ToSet(userVolumeIDs)
 
-	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for dv := range dvs.All() {
@@ -534,7 +534,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(false)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{userVolumeIDs[0]},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().Spec.Secure, "expected Secure to be false")
 			asrt.True(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be true")
@@ -545,19 +545,19 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(true)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{userVolumeIDs[0]},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be false")
 			asrt.True(vs.TypedSpec().Spec.Secure, "expected Secure to be true")
 		})
 
 	// now, remove one of the volumes, wipe the partition and re-create the volume
-	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, userVolumeIDs[0])
+	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), userVolumeIDs[0])
 	suite.Require().NoError(err)
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs[0])
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[0])
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeIDs[0])
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -575,20 +575,20 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	}, time.Minute, time.Second, "failed to wipe partition %s", vs.TypedSpec().Location)
 
 	// wait for the discovered volume to disappear
-	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location))
+	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.State(), filepath.Base(vs.TypedSpec().Location))
 
 	// re-create the volume with project quota support
 	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).FilesystemSpec.ProjectQuotaSupportConfig = new(true)
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			if vs.Metadata().ID() == userVolumeIDs[0] {
 				// check that the project quota support is enabled
@@ -603,7 +603,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
 
 	for _, userVolumeID := range userVolumeIDs {
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	}
 
 	// verify that the mount points were removed after unmount
@@ -634,7 +634,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(userDisks[0]),
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
@@ -662,7 +662,7 @@ func (suite *VolumesSuite) TestPromoteSystemVolumeRejected() {
 		suite.T().Skipf("skipping test, not enough user disks available on node %s: %q", node, userDisks)
 	}
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	cfg, err := suite.ReadConfigFromNode(ctx)
@@ -675,7 +675,7 @@ func (suite *VolumesSuite) TestPromoteSystemVolumeRejected() {
 		suite.Run(volumeID, func() {
 			// Only a directory-backed volume can be (attempted to be) promoted; skip the ones that
 			// are already dedicated partitions.
-			vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), volumeID)
 			suite.Require().NoError(err)
 
 			if vs.TypedSpec().Type != block.VolumeTypeDirectory {
@@ -716,7 +716,7 @@ func (suite *VolumesSuite) TestPromoteSystemVolumeRejected() {
 				"rejection error must reference the create-only constraint")
 
 			// The volume must still be a directory: the config was rejected, nothing changed.
-			vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), volumeID)
 			suite.Require().NoError(err)
 			suite.Require().Equal(block.VolumeTypeDirectory, vs.TypedSpec().Type,
 				"%s must remain a directory after the rejected apply", volumeID)
@@ -752,7 +752,7 @@ func (suite *VolumesSuite) TestDemoteSystemVolumeRejected() {
 	for _, volumeID := range config.PromotableSystemVolumeNames {
 		suite.Run(volumeID, func() {
 			// Verify the volume is currently a dedicated partition (the control plane default in this cluster).
-			vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), volumeID)
 			suite.Require().NoError(err)
 
 			if vs.TypedSpec().Type != block.VolumeTypePartition {
@@ -792,7 +792,7 @@ func (suite *VolumesSuite) TestDemoteSystemVolumeRejected() {
 				"rejection error must reference the create-only constraint")
 
 			// The volume must still be a partition: the config was rejected, nothing changed.
-			vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), volumeID)
 			suite.Require().NoError(err)
 			suite.Require().Equal(block.VolumeTypePartition, vs.TypedSpec().Type,
 				"%s must remain a dedicated partition after the rejected apply", volumeID)
@@ -811,7 +811,7 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	ctx := client.WithNode(suite.ctx, node)
 
-	extensions, err := safe.StateListAll[*runtime.ExtensionStatus](ctx, suite.Client.COSI)
+	extensions, err := safe.StateListAll[*runtime.ExtensionStatus](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	extensionFound := false
@@ -855,9 +855,9 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 
 	suite.PatchMachineConfig(ctx, loadModuleDoc)
 
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, "btrfs", func(*runtime.KernelModuleStatus, *assert.Assertions) {})
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), "btrfs", func(*runtime.KernelModuleStatus, *assert.Assertions) {})
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	volumeID := fmt.Sprintf("%04x", rand.Int31())
@@ -876,14 +876,14 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 	suite.PatchMachineConfig(ctx, doc)
 
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI, userVolumeID,
+		ctx, suite.T(), suite.Client.State(), userVolumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, userVolumeID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), userVolumeID,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// create a pod using user volumes
@@ -920,7 +920,7 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 	}))
 
 	// verify that volume labels are set properly
-	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	found := false
@@ -939,14 +939,14 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 
 	// now unmount the volume, set it to grow, re-mount and re-check
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 
 	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.Size{}
 	doc.ProvisioningSpec.ProvisioningGrow = new(true)
 	suite.PatchMachineConfig(ctx, doc)
 
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI, userVolumeID,
+		ctx, suite.T(), suite.Client.State(), userVolumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 			asrt.Greater(vs.TypedSpec().Size, volumeSize, "volume should grow")
@@ -954,13 +954,13 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, userVolumeID,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), userVolumeID,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// clean up
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -977,7 +977,7 @@ func (suite *VolumesSuite) TestUserVolumeBTRFS() {
 	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(userDisks[0]),
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
@@ -1010,7 +1010,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-"
@@ -1040,14 +1040,14 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// create a pod using user volumes
@@ -1088,7 +1088,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(false)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{userVolumeIDs[0]},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().Spec.Secure, "expected Secure to be false")
 			asrt.True(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be true")
@@ -1099,19 +1099,19 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(true)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{userVolumeIDs[0]},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be false")
 			asrt.True(vs.TypedSpec().Spec.Secure, "expected Secure to be true")
 		})
 
 	// now, remove one of the volumes, wipe the partition and re-create the volume
-	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, userVolumeIDs[0])
+	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), userVolumeIDs[0])
 	suite.Require().NoError(err)
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs[0])
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[0])
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeIDs[0])
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -1129,7 +1129,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	}, time.Minute, time.Second, "failed to wipe partition %s", vs.TypedSpec().Location)
 
 	// wait for the discovered volume to lose filesystem
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location), func(r *block.DiscoveredVolume, asrt *assert.Assertions) {
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(vs.TypedSpec().Location), func(r *block.DiscoveredVolume, asrt *assert.Assertions) {
 		asrt.Empty(r.TypedSpec().Name) // no filesystem
 	})
 
@@ -1138,13 +1138,13 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			if vs.Metadata().ID() == userVolumeIDs[0] {
 				// check that the project quota support is enabled
@@ -1159,7 +1159,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
 
 	for _, userVolumeID := range userVolumeIDs {
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	}
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
@@ -1177,7 +1177,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(userDisks[0]),
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
@@ -1226,14 +1226,14 @@ func (suite *VolumesSuite) TestUserVolumesDirectory() {
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// create a pod using user volumes
@@ -1272,13 +1272,13 @@ func (suite *VolumesSuite) TestUserVolumesDirectory() {
 	// now, remove one of the volumes and re-create the volume
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs[0])
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[0])
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeIDs[0])
 
 	// re-create the volume
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
@@ -1288,7 +1288,7 @@ func (suite *VolumesSuite) TestUserVolumesDirectory() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
 
 	for _, userVolumeID := range userVolumeIDs {
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	}
 }
 
@@ -1319,7 +1319,7 @@ func (suite *VolumesSuite) TestRawVolumes() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	volumeName := fmt.Sprintf("%04x", rand.Int31()) + "-"
@@ -1350,7 +1350,7 @@ func (suite *VolumesSuite) TestRawVolumes() {
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, rawVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), rawVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
@@ -1358,22 +1358,22 @@ func (suite *VolumesSuite) TestRawVolumes() {
 
 	// verify that volume labels are set properly
 	for _, rawVolumeID := range rawVolumeIDs {
-		vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, rawVolumeID)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.State(), rawVolumeID)
 		suite.Require().NoError(err)
 
-		rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location),
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(vs.TypedSpec().Location),
 			func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 				asrt.Equal(vs.Metadata().ID(), dv.TypedSpec().PartitionLabel, "expected discovered volume %s to have label %s", dv.Metadata().ID(), vs.Metadata().ID())
 			})
 	}
 
 	// now, remove one of the volumes, wipe the partition and re-create the volume
-	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, rawVolumeIDs[0])
+	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), rawVolumeIDs[0])
 	suite.Require().NoError(err)
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.RawVolumeConfigKind, volumeIDs[0])
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeIDs[0])
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), rawVolumeIDs[0])
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -1391,13 +1391,13 @@ func (suite *VolumesSuite) TestRawVolumes() {
 	}, time.Minute, time.Second, "failed to wipe partition %s", vs.TypedSpec().Location)
 
 	// wait for the discovered volume to disappear
-	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location))
+	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.State(), filepath.Base(vs.TypedSpec().Location))
 
 	// re-create the volume
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, rawVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), rawVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
@@ -1407,7 +1407,7 @@ func (suite *VolumesSuite) TestRawVolumes() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.RawVolumeConfigKind, volumeIDs...)
 
 	for _, rawVolumeID := range rawVolumeIDs {
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), rawVolumeID)
 	}
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
@@ -1425,7 +1425,7 @@ func (suite *VolumesSuite) TestRawVolumes() {
 	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(userDisks[0]),
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
@@ -1460,7 +1460,7 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	rawVolumeName := fmt.Sprintf("%04x", rand.Int31())
@@ -1488,14 +1488,14 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	suite.PatchMachineConfig(ctx, rawVolumeDoc)
 
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI, rawVolumeID,
+		ctx, suite.T(), suite.Client.State(), rawVolumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// TODO: this will be refactored into a proper parent in https://github.com/siderolabs/talos/issues/14440
-	vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, rawVolumeID)
+	vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.State(), rawVolumeID)
 	suite.Require().NoError(err)
 
 	parentDevPath := vs.TypedSpec().MountLocation
@@ -1529,14 +1529,14 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// create a pod using user volumes
@@ -1575,7 +1575,7 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	// verify that volume labels are set properly
 	expectedLabels := xslices.ToSet(userVolumeIDs)
 
-	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for dv := range dvs.All() {
@@ -1585,12 +1585,12 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	suite.Require().Empty(expectedLabels, "expected labels %v to be set on discovered volumes", expectedLabels)
 
 	// now, remove one of the volumes, wipe the partition and re-create the volume
-	vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, userVolumeIDs[0])
+	vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), userVolumeIDs[0])
 	suite.Require().NoError(err)
 
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs[0])
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[0])
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeIDs[0])
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -1608,13 +1608,13 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	}, time.Minute, time.Second, "failed to wipe partition %s", vs.TypedSpec().Location)
 
 	// wait for the discovered volume to disappear
-	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location))
+	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.State(), filepath.Base(vs.TypedSpec().Location))
 
 	// re-create the volume
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
+		ctx, suite.T(), suite.Client.State(), userVolumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
@@ -1624,13 +1624,13 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeIDs...)
 
 	for _, userVolumeID := range userVolumeIDs {
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	}
 
 	// clean up raw volume
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.RawVolumeConfigKind, rawVolumeName)
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), rawVolumeID)
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -1647,7 +1647,7 @@ func (suite *VolumesSuite) TestDeviceMapperPartitions() {
 	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(userDisks[0]),
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
@@ -1682,7 +1682,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	volumeID := fmt.Sprintf("%04x", rand.Int31())
@@ -1703,7 +1703,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	suite.PatchMachineConfig(ctx, userVolumeDoc)
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeID},
+		ctx, suite.T(), suite.Client.State(), []resource.ID{userVolumeID},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
@@ -1713,7 +1713,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
 
 	// wait for the user volume to be removed
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 
 	// now, recreate the volume as an existing volume
 	existingVolumeDoc := blockcfg.NewExistingVolumeConfigV1Alpha1()
@@ -1731,7 +1731,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 
 	// wait for the existing volume to be discovered
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		ctx, suite.T(), suite.Client.State(), []resource.ID{existingVolumeID},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 			asrt.Equal(userDisks[0], vs.TypedSpec().ParentLocation)
@@ -1739,7 +1739,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	)
 
 	// check that the volume is mounted read-only
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().ReadOnly)
 		})
@@ -1748,7 +1748,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	existingVolumeDoc.MountSpec.MountReadOnly = new(false)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().ReadOnly)
 		})
@@ -1790,7 +1790,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	existingVolumeDoc.MountSpec.MountReadOnly = new(true)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().ReadOnly)
 		})
@@ -1801,7 +1801,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	existingVolumeDoc.MountSpec.MountSecure = new(false)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be true")
 		})
@@ -1811,7 +1811,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	existingVolumeDoc.MountSpec.MountSecure = new(true)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().Spec.Secure, "expected Secure to be true")
 		})
@@ -1819,7 +1819,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	// clean up
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.ExistingVolumeConfigKind, volumeID)
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, existingVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), existingVolumeID)
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -1836,7 +1836,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), filepath.Base(userDisks[0]),
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
@@ -1883,14 +1883,14 @@ func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
 
 	// wait for the external volume to be discovered
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
+		ctx, suite.T(), suite.Client.State(), []resource.ID{externalVolumeID},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volume is mounted
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{externalVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.False(vs.TypedSpec().ReadOnly)
 		})
@@ -1932,7 +1932,7 @@ func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
 	externalVolumeDoc.MountSpec.MountReadOnly = new(true)
 	suite.PatchMachineConfig(ctx, externalVolumeDoc)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []resource.ID{externalVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().ReadOnly)
 		})
@@ -1940,7 +1940,7 @@ func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
 	// clean up
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.ExternalVolumeConfigKind, volumeID)
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, externalVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), externalVolumeID)
 }
 
 // TestVolumeProvisioningErrors verifies that volume provisioning fails correctly for invalid disk selectors.
@@ -1982,7 +1982,7 @@ func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
 		suite.T().Logf("verifying volume %s on node %s/%s fails with no disks matched", userVolumeID, node, nodeName)
 
 		rtestutils.AssertResources(
-			ctx, suite.T(), suite.Client.COSI, []string{userVolumeID},
+			ctx, suite.T(), suite.Client.State(), []string{userVolumeID},
 			func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 				asrt.Equalf(block.VolumePhaseFailed, vs.TypedSpec().Phase,
 					"Expected %q, but got %q (%s)", block.VolumePhaseFailed, vs.TypedSpec().Phase, vs.Metadata().ID())
@@ -1994,7 +1994,7 @@ func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
 		// clean up
 		suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
 
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	})
 
 	suite.Run("MultipleDisksMatchedForDiskVolume", func() {
@@ -2008,11 +2008,11 @@ func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
 		userVolumeID := constants.UserVolumePrefix + volumeID
 
 		// build a selector that matches multiple user disks by using an OR of their symlinks
-		disk0, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+		disk0, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 		suite.Require().NoError(err)
 		suite.Require().NotEmpty(disk0.TypedSpec().Symlinks, "expected disk0 to have at least one symlink")
 
-		disk1, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[1]))
+		disk1, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[1]))
 		suite.Require().NoError(err)
 		suite.Require().NotEmpty(disk1.TypedSpec().Symlinks, "expected disk1 to have at least one symlink")
 
@@ -2031,7 +2031,7 @@ func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
 		suite.T().Logf("verifying volume %s on node %s/%s fails with multiple disks matched", userVolumeID, node, nodeName)
 
 		rtestutils.AssertResources(
-			ctx, suite.T(), suite.Client.COSI, []string{userVolumeID},
+			ctx, suite.T(), suite.Client.State(), []string{userVolumeID},
 			func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 				asrt.Equalf(block.VolumePhaseFailed, vs.TypedSpec().Phase,
 					"Expected %q, but got %q (%s)", block.VolumePhaseFailed, vs.TypedSpec().Phase, vs.Metadata().ID())
@@ -2043,7 +2043,7 @@ func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
 		// clean up
 		suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
 
-		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), userVolumeID)
 	})
 }
 
@@ -2053,7 +2053,7 @@ func (suite *VolumesSuite) TestSwapStatus() {
 		suite.Run(node, func() {
 			ctx := client.WithNode(suite.ctx, node)
 
-			swapVolumes, err := safe.StateListAll[*block.VolumeConfig](ctx, suite.Client.COSI, state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)))
+			swapVolumes, err := safe.StateListAll[*block.VolumeConfig](ctx, suite.Client.State(), state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)))
 			suite.Require().NoError(err)
 
 			if swapVolumes.Len() == 0 {
@@ -2061,7 +2061,7 @@ func (suite *VolumesSuite) TestSwapStatus() {
 			}
 
 			rtestutils.AssertResources(
-				ctx, suite.T(), suite.Client.COSI,
+				ctx, suite.T(), suite.Client.State(),
 				xslices.Map(slices.Collect(swapVolumes.All()), func(sv *block.VolumeConfig) string {
 					return sv.Metadata().ID()
 				}),
@@ -2070,7 +2070,7 @@ func (suite *VolumesSuite) TestSwapStatus() {
 				},
 			)
 
-			swapVolumesStatus, err := safe.StateListAll[*block.VolumeStatus](ctx, suite.Client.COSI, state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)))
+			swapVolumesStatus, err := safe.StateListAll[*block.VolumeStatus](ctx, suite.Client.State(), state.WithLabelQuery(resource.LabelExists(block.SwapVolumeLabel)))
 			suite.Require().NoError(err)
 
 			deviceNames := xslices.Map(slices.Collect(swapVolumesStatus.All()), func(sv *block.VolumeStatus) string {
@@ -2078,7 +2078,7 @@ func (suite *VolumesSuite) TestSwapStatus() {
 			})
 
 			rtestutils.AssertResources(
-				ctx, suite.T(), suite.Client.COSI,
+				ctx, suite.T(), suite.Client.State(),
 				deviceNames,
 				func(vs *block.SwapStatus, asrt *assert.Assertions) {},
 			)
@@ -2115,7 +2115,7 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 
 	volumeName := fmt.Sprintf("%04x", rand.Int31())
@@ -2145,29 +2145,29 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 	swapVolumeID := constants.SwapVolumePrefix + doc.MetaName
 
 	rtestutils.AssertResources(
-		ctx, suite.T(), suite.Client.COSI, []string{swapVolumeID},
+		ctx, suite.T(), suite.Client.State(), []string{swapVolumeID},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
 		},
 	)
 
 	// check that the volumes are mounted
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{swapVolumeID},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{swapVolumeID},
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
 
 	// check that the swap is enabled
-	volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, swapVolumeID)
+	volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.State(), swapVolumeID)
 	suite.Require().NoError(err)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{volumeStatus.TypedSpec().MountLocation},
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{volumeStatus.TypedSpec().MountLocation},
 		func(vs *block.SwapStatus, asrt *assert.Assertions) {})
 
 	// clean up
 	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.SwapVolumeConfigKind, volumeName)
 
-	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, swapVolumeID)
-	rtestutils.AssertNoResource[*block.SwapStatus](ctx, suite.T(), suite.Client.COSI, volumeStatus.TypedSpec().MountLocation)
-	rtestutils.AssertNoResource[*block.VolumeConfig](ctx, suite.T(), suite.Client.COSI, swapVolumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.State(), swapVolumeID)
+	rtestutils.AssertNoResource[*block.SwapStatus](ctx, suite.T(), suite.Client.State(), volumeStatus.TypedSpec().MountLocation)
+	rtestutils.AssertNoResource[*block.VolumeConfig](ctx, suite.T(), suite.Client.State(), swapVolumeID)
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting
@@ -2198,7 +2198,7 @@ func (suite *VolumesSuite) TestZswapStatus() {
 			}
 
 			rtestutils.AssertResource(
-				ctx, suite.T(), suite.Client.COSI,
+				ctx, suite.T(), suite.Client.State(),
 				block.ZswapStatusID,
 				func(vs *block.ZswapStatus, asrt *assert.Assertions) {
 					suite.T().Logf("zswap total size %s, stored pages %d", vs.TypedSpec().TotalSizeHuman, vs.TypedSpec().StoredPages)
@@ -2232,7 +2232,7 @@ func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
 			var shouldHaveSchedule, shouldNotHaveSchedule []string
 
 			for _, name := range []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel} {
-				vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, name)
+				vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.State(), name)
 				suite.Require().NoError(err)
 
 				if vs.TypedSpec().EncryptionProvider == block.EncryptionProviderLUKS2 && !vs.TypedSpec().EncryptionAllowDiscards {
@@ -2244,7 +2244,7 @@ func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
 
 			if len(shouldHaveSchedule) > 0 {
 				rtestutils.AssertResources(
-					ctx, suite.T(), suite.Client.COSI,
+					ctx, suite.T(), suite.Client.State(),
 					shouldHaveSchedule,
 					func(schedule *block.VolumeTrimSchedule, asrt *assert.Assertions) {
 						asrt.Equal(constants.DefaultFilesystemTrimInterval, schedule.TypedSpec().Interval)
@@ -2254,7 +2254,7 @@ func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
 			}
 
 			for _, name := range shouldNotHaveSchedule {
-				rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, name)
+				rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.State(), name)
 			}
 		})
 	}
@@ -2301,13 +2301,13 @@ func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
 	rtestutils.AssertResources(
 		ctx,
 		suite.T(),
-		suite.Client.COSI,
+		suite.Client.State(),
 		volumeIDs,
 		func(*block.VolumeStatus, *assert.Assertions) {},
 	)
 
 	for _, id := range volumeIDs {
-		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, id)
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.State(), id)
 		suite.Require().NoError(err)
 
 		if volumeStatus.TypedSpec().Phase == block.VolumePhaseReady {
@@ -2318,7 +2318,7 @@ func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
 	rtestutils.AssertResources(
 		ctx,
 		suite.T(),
-		suite.Client.COSI,
+		suite.Client.State(),
 		[]resource.ID{crires.ImageCacheConfigID},
 		func(cfg *crires.ImageCacheConfig, asrt *assert.Assertions) {
 			asrt.Equal(crires.ImageCacheStatusDisabled, cfg.TypedSpec().Status)
@@ -2336,7 +2336,7 @@ func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
 	rtestutils.AssertResources(
 		ctx,
 		suite.T(),
-		suite.Client.COSI,
+		suite.Client.State(),
 		mountRequestIDs,
 		func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
 			asrt.Equal(ctrlName, vmr.TypedSpec().Requester)
@@ -2362,7 +2362,7 @@ func (suite *VolumesSuite) assertImageCacheMountRequestsStable(ctx context.Conte
 	versions := make(map[resource.ID]resource.Version, len(ids))
 
 	for _, id := range ids {
-		vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.COSI, id)
+		vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.State(), id)
 		suite.Require().NoError(err)
 
 		versions[id] = vmr.Metadata().Version()
@@ -2381,7 +2381,7 @@ func (suite *VolumesSuite) assertImageCacheMountRequestsStable(ctx context.Conte
 			return
 		case <-ticker.C:
 			for _, id := range ids {
-				vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.COSI, id)
+				vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.State(), id)
 				suite.Require().NoError(err)
 				suite.Require().True(
 					versions[id].Equal(vmr.Metadata().Version()),

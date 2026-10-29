@@ -35,7 +35,7 @@ func (suite *ContainersSuite) TestExplicitContainerKind() {
 	suite.Require().NoError(err)
 	originalBytes, err := original.Bytes()
 	suite.Require().NoError(err)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](ctx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](ctx, suite.T(), suite.Client.State(), name)
 	suite.T().Cleanup(func() {
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
@@ -46,7 +46,7 @@ func (suite *ContainersSuite) TestExplicitContainerKind() {
 			Mode: machine.ApplyConfigurationRequest_NO_REBOOT,
 		})
 		suite.Assert().NoError(applyErr)
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](cleanupCtx, suite.T(), suite.Client.State(), name)
 	})
 
 	vm := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
@@ -59,7 +59,7 @@ func (suite *ContainersSuite) TestExplicitContainerKind() {
 	marker := "CONTAINER_KIND_" + uuid.NewString()
 	suite.PatchMachineConfig(ctx, vm, suite.shellContainer(name, "printf '%s\\n' '"+marker+"'; sleep 3600"))
 	suite.assertContainerLogged(ctx, name, marker)
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 			asrt.False(spec.TypedSpec().Console.Serial)
 		})

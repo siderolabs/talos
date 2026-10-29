@@ -64,7 +64,7 @@ func MachineConfigUpdater(ctx context.Context,
 			return fmt.Errorf("error building client for node %s: %w", node, err)
 		}
 
-		r, err := nodeClient.COSI.Get(
+		r, err := nodeClient.State().Get(
 			nodeCtx,
 			resource.NewMetadata(namespace, resourceType, resourceID, resource.VersionUndefined),
 			state.WithGetUnmarshalOptions(state.WithSkipProtobufUnmarshal()),

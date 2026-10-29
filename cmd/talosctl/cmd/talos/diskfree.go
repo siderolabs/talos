@@ -116,7 +116,7 @@ This is a per-volume view rather than the node's full mount table: use
 //nolint:gocyclo
 func collectDiskFree(ctx context.Context, c *client.Client, volumeID string) ([]dfRow, error) {
 	if volumeID != "" {
-		vs, err := safe.StateGetByID[*blockres.VolumeStatus](ctx, c.COSI, volumeID)
+		vs, err := safe.StateGetByID[*blockres.VolumeStatus](ctx, c.State(), volumeID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return nil, fmt.Errorf("volume %q not found", volumeID)
@@ -141,7 +141,7 @@ func collectDiskFree(ctx context.Context, c *client.Client, volumeID string) ([]
 		}
 	}
 
-	mountStatuses, err := safe.StateListAll[*blockres.MountStatus](ctx, c.COSI)
+	mountStatuses, err := safe.StateListAll[*blockres.MountStatus](ctx, c.State())
 	if err != nil {
 		return nil, err
 	}

@@ -131,7 +131,7 @@ func (suite *EtcFileConfigSuite) assertNoEtcFile(ctx context.Context, path strin
 
 func (suite *EtcFileConfigSuite) assertEtcFileSpec(ctx context.Context, name string, mode runtimecfg.EtcFileMode, contents string) {
 	rtestutils.AssertResource(
-		ctx, suite.T(), suite.Client.COSI, name,
+		ctx, suite.T(), suite.Client.State(), name,
 		func(spec *filesres.EtcFileSpec, asrt *assert.Assertions) {
 			asrt.EqualValues(mode, spec.TypedSpec().Mode)
 			asrt.Equal(contents, string(spec.TypedSpec().Contents))

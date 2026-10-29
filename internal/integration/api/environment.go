@@ -110,7 +110,7 @@ func (suite *EnvironmentSuite) validateEnvironment(node string, expectedVariable
 
 	ctx := client.WithNode(suite.ctx, node)
 
-	env, err := safe.StateGetByID[*runtime.Environment](ctx, suite.Client.COSI, "machined")
+	env, err := safe.StateGetByID[*runtime.Environment](ctx, suite.Client.State(), "machined")
 	if err != nil {
 		code := client.StatusCode(err)
 

@@ -192,7 +192,7 @@ func (r *rotator) fetchCurrentCA(ctx context.Context) error {
 		r.opts.ClusterInfo.NodesByType(machine.TypeControlPlane)...,
 	)[0]
 
-	k8sRoot, err := safe.StateGetByID[*secretsres.KubernetesRoot](client.WithNode(ctx, firstNode.InternalIP.String()), r.opts.TalosClient.COSI, secretsres.KubernetesRootID)
+	k8sRoot, err := safe.StateGetByID[*secretsres.KubernetesRoot](client.WithNode(ctx, firstNode.InternalIP.String()), r.opts.TalosClient.State(), secretsres.KubernetesRootID)
 	if err != nil {
 		return fmt.Errorf("error fetching current Kubernetes CA: %w", err)
 	}

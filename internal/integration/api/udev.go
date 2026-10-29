@@ -95,7 +95,7 @@ func (suite *UdevSuite) TestUdevRulesConfig() {
 }
 
 func (suite *UdevSuite) pickUdevTestDisk(nodeCtx context.Context) (string, string) {
-	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for disk := range disks.All() {

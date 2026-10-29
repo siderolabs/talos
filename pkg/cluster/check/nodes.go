@@ -162,7 +162,7 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 	respCh := multiplex.Unary(
 		ctx, nodesIP,
 		func(ctx context.Context) (*block.VolumeStatus, error) {
-			return safe.StateGetByID[*block.VolumeStatus](ctx, cl.COSI, constants.EphemeralPartitionLabel)
+			return safe.StateGetByID[*block.VolumeStatus](ctx, cl.State(), constants.EphemeralPartitionLabel)
 		},
 	)
 

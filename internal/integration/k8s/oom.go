@@ -286,7 +286,7 @@ func (suite *OomSuite) nodeMemoryPressureReason(nodeCtx context.Context, since t
 //
 // Any such kill means the OOM handler still considers the node to be under memory pressure.
 func (suite *OomSuite) recentOOMActionReason(nodeCtx context.Context, since time.Time) string {
-	actions, err := safe.StateListAll[*runtime.OOMAction](nodeCtx, suite.Client.COSI)
+	actions, err := safe.StateListAll[*runtime.OOMAction](nodeCtx, suite.Client.State())
 	if err != nil {
 		return fmt.Sprintf("failed to list OOM actions: %v", err)
 	}
@@ -413,7 +413,7 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 
 	// start watching OOM events on all worker nodes
 	for _, workerNode := range workerNodes {
-		suite.Assert().NoError(suite.Client.COSI.WatchKind(
+		suite.Assert().NoError(suite.Client.State().WatchKind(
 			client.WithNode(ctx, workerNode),
 			runtime.NewOOMActionSpec(runtime.NamespaceName, "").Metadata(),
 			watchCh,

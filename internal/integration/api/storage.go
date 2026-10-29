@@ -120,7 +120,7 @@ func (suite *StorageSuite) provisionVGViaConfig(nodeCtx context.Context, node, n
 	}))
 
 	suite.Require().Eventually(func() bool {
-		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -145,7 +145,7 @@ func (suite *StorageSuite) provisionVGViaConfig(nodeCtx context.Context, node, n
 	}, assertTimeout, assertInterval, "PV statuses not reported for %v", pvDisks)
 
 	suite.Require().Eventually(func() bool {
-		vg, err := safe.StateGetByID[*storageres.LVMVolumeGroupStatus](nodeCtx, suite.Client.COSI, vgName)
+		vg, err := safe.StateGetByID[*storageres.LVMVolumeGroupStatus](nodeCtx, suite.Client.State(), vgName)
 		if err != nil {
 			return false
 		}
@@ -167,7 +167,7 @@ func (suite *StorageSuite) assertLVStatus(nodeCtx context.Context, vg, lv string
 	fullName := vg + "/" + lv
 
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -192,7 +192,7 @@ func (suite *StorageSuite) lvDiskSymlink(nodeCtx context.Context, vg, lv string)
 	var symlink string
 
 	suite.Require().Eventually(func() bool {
-		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -295,7 +295,7 @@ func (suite *StorageSuite) TestLVMUserVolumeOnLogicalVolume() {
 	)
 
 	suite.Require().Eventually(func() bool {
-		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, userVolumeID)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), userVolumeID)
 		if err != nil {
 			return false
 		}
@@ -304,7 +304,7 @@ func (suite *StorageSuite) TestLVMUserVolumeOnLogicalVolume() {
 	}, assertTimeout, assertInterval, "user volume %q not ready", userVolumeID)
 
 	suite.Require().Eventually(func() bool {
-		_, err := safe.StateGetByID[*block.MountStatus](nodeCtx, suite.Client.COSI, userVolumeID)
+		_, err := safe.StateGetByID[*block.MountStatus](nodeCtx, suite.Client.State(), userVolumeID)
 
 		return err == nil
 	}, assertTimeout, assertInterval, "user volume %q not mounted", userVolumeID)
@@ -315,13 +315,13 @@ func (suite *StorageSuite) TestLVMUserVolumeOnLogicalVolume() {
 func (suite *StorageSuite) assertLVSpansDisk(nodeCtx context.Context, vg, lv, disk string) {
 	fullName := vg + "/" + lv
 
-	diskRes, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(disk))
+	diskRes, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.State(), filepath.Base(disk))
 	suite.Require().NoError(err)
 
 	diskSize := diskRes.TypedSpec().Size
 
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -451,7 +451,7 @@ func (suite *StorageSuite) assertLVLayout(nodeCtx context.Context, vg, lv, want 
 	fullName := vg + "/" + lv
 
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -536,7 +536,7 @@ func (suite *StorageSuite) TestLVMRaid10LogicalVolume() {
 func (suite *StorageSuite) lvObservedSize(nodeCtx context.Context, vg, lv string) uint64 {
 	fullName := vg + "/" + lv
 
-	lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+	lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	for lvStatus := range lvs.All() {
@@ -689,7 +689,7 @@ func (suite *StorageSuite) assertPVStatuses(nodeCtx context.Context, vgName stri
 	expectedPVIDs := xslices.ToSet(xslices.Map(devices, pvDeviceID))
 
 	suite.Require().Eventually(func() bool {
-		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -721,7 +721,7 @@ func (suite *StorageSuite) assertVGStatus(nodeCtx context.Context, vgName string
 	)
 
 	suite.Require().Eventually(func() bool {
-		vg, err := safe.StateGetByID[*storageres.LVMVolumeGroupStatus](nodeCtx, suite.Client.COSI, vgName)
+		vg, err := safe.StateGetByID[*storageres.LVMVolumeGroupStatus](nodeCtx, suite.Client.State(), vgName)
 		if err != nil {
 			return false
 		}
@@ -827,7 +827,7 @@ func (suite *StorageSuite) provisionRawVolumes(nodeCtx context.Context, diskMatc
 		rawVolumeID := constants.RawVolumePrefix + name
 
 		suite.Require().Eventually(func() bool {
-			vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+			vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), rawVolumeID)
 			if err != nil {
 				return false
 			}
@@ -835,7 +835,7 @@ func (suite *StorageSuite) provisionRawVolumes(nodeCtx context.Context, diskMatc
 			return vs.TypedSpec().Phase == block.VolumePhaseReady && vs.TypedSpec().Location != ""
 		}, assertTimeout, assertInterval, "raw volume %q not ready", rawVolumeID)
 
-		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), rawVolumeID)
 		suite.Require().NoError(err)
 
 		devices = append(devices, vs.TypedSpec().Location)
@@ -874,7 +874,7 @@ func (suite *StorageSuite) TestLVMOnRawVolumes() {
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(disk.TypedSpec().Symlinks)
 
@@ -1024,7 +1024,7 @@ func (suite *StorageSuite) TestLVMLogicalVolume() {
 	)
 
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -1111,7 +1111,7 @@ func (suite *StorageSuite) TestLVMOverlapConflict() {
 
 	// The losing VG surfaces a validation error referencing the winner.
 	suite.Require().Eventually(func() bool {
-		e, err := safe.StateGetByID[*storageres.LVMValidationError](nodeCtx, suite.Client.COSI, vgLose)
+		e, err := safe.StateGetByID[*storageres.LVMValidationError](nodeCtx, suite.Client.State(), vgLose)
 		if err != nil {
 			return false
 		}
@@ -1155,7 +1155,7 @@ func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(disk.TypedSpec().Symlinks)
 
@@ -1185,7 +1185,7 @@ func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
 	rawVolumeID := constants.RawVolumePrefix + rawName
 
 	suite.Require().Eventually(func() bool {
-		_, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+		_, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), rawVolumeID)
 
 		return state.IsNotFoundError(err)
 	}, 90*time.Second, 2*time.Second, "raw volume status %q not removed", rawVolumeID)
@@ -1193,7 +1193,7 @@ func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
 	// Non-destructive: the partition is retained and still claimed as an LVM PV
 	// (DiscoveredVolume keeps the lvm2-pv signature).
 	suite.Require().Eventually(func() bool {
-		dv, err := safe.StateGetByID[*block.DiscoveredVolume](nodeCtx, suite.Client.COSI, filepath.Base(partition))
+		dv, err := safe.StateGetByID[*block.DiscoveredVolume](nodeCtx, suite.Client.State(), filepath.Base(partition))
 		if err != nil {
 			return false
 		}
@@ -1333,7 +1333,7 @@ func (suite *StorageSuite) provisionRAID1Mirror(raidName string, minDisks int) (
 // raidArrayDevName returns the kernel device name (e.g. "md0") of the MD array
 // carrying the by-id md-name symlink, if it currently exists.
 func (suite *StorageSuite) raidArrayDevName(nodeCtx context.Context, raidName string) (string, bool) {
-	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.State())
 	if err != nil {
 		return "", false
 	}
@@ -1355,7 +1355,7 @@ func (suite *StorageSuite) raidDiskSymlink(nodeCtx context.Context, raidName str
 	var raidSymlink string
 
 	suite.Require().Eventually(func() bool {
-		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}
@@ -1380,7 +1380,7 @@ func (suite *StorageSuite) raidDiskSymlink(nodeCtx context.Context, raidName str
 // mounted.
 func (suite *StorageSuite) assertRAIDUserVolumeReadyMounted(nodeCtx context.Context, userVolumeID string) {
 	suite.Require().Eventually(func() bool {
-		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, userVolumeID)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), userVolumeID)
 		if err != nil {
 			return false
 		}
@@ -1389,7 +1389,7 @@ func (suite *StorageSuite) assertRAIDUserVolumeReadyMounted(nodeCtx context.Cont
 	}, raidAssertTimeout, raidAssertInterval, "raid-backed user volume %q not ready", userVolumeID)
 
 	suite.Require().Eventually(func() bool {
-		_, err := safe.StateGetByID[*block.MountStatus](nodeCtx, suite.Client.COSI, userVolumeID)
+		_, err := safe.StateGetByID[*block.MountStatus](nodeCtx, suite.Client.State(), userVolumeID)
 
 		return err == nil
 	}, raidAssertTimeout, raidAssertInterval, "raid-backed user volume %q not mounted", userVolumeID)
@@ -1438,14 +1438,14 @@ func (suite *StorageSuite) TestRAIDBootArrayDegradedReboot() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	systemDisk, err := safe.StateGetByID[*block.SystemDisk](nodeCtx, suite.Client.COSI, block.SystemDiskID)
+	systemDisk, err := safe.StateGetByID[*block.SystemDisk](nodeCtx, suite.Client.State(), block.SystemDiskID)
 	suite.Require().NoError(err)
 
 	if !strings.HasPrefix(systemDisk.TypedSpec().DiskID, "md") {
 		suite.T().Skipf("system disk %q is not an MD array", systemDisk.TypedSpec().DiskID)
 	}
 
-	status, err := safe.StateGetByID[*storageres.MDArrayStatus](nodeCtx, suite.Client.COSI, raidName)
+	status, err := safe.StateGetByID[*storageres.MDArrayStatus](nodeCtx, suite.Client.State(), raidName)
 	suite.Require().NoError(err)
 
 	members := slices.Sorted(slices.Values(status.TypedSpec().Members))
@@ -1547,7 +1547,7 @@ func (suite *StorageSuite) TestRAIDArrayUserVolumePartition_RAID1() {
 //
 //nolint:gocyclo
 func (suite *StorageSuite) mdArrayStatusMatches(ctx context.Context, name, device string, members []string) bool {
-	status, err := safe.StateGetByID[*storageres.MDArrayStatus](ctx, suite.Client.COSI, name)
+	status, err := safe.StateGetByID[*storageres.MDArrayStatus](ctx, suite.Client.State(), name)
 	if err != nil {
 		suite.T().Logf("MD array %q: status not found yet: %v", name, err)
 
@@ -1666,7 +1666,7 @@ func (suite *StorageSuite) deleteLVMVolumes(node string, pvDisks []string) {
 func (suite *StorageSuite) lvmVolumeExists(node string, expectedVolumes []string) bool {
 	ctx := client.WithNode(suite.ctx, node)
 
-	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
+	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.State())
 	suite.Require().NoError(err)
 
 	foundVolumes := xslices.ToSet(expectedVolumes)
@@ -1729,7 +1729,7 @@ func (suite *StorageSuite) provisionEncryptedRawVolumes(
 
 		// the failure is permanent rather than slow, so report the volume's own error
 		suite.Require().Eventually(func() bool {
-			vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+			vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), rawVolumeID)
 			if err != nil {
 				return false
 			}
@@ -1739,7 +1739,7 @@ func (suite *StorageSuite) provisionEncryptedRawVolumes(
 				vs.TypedSpec().MountLocation != ""
 		}, assertTimeout, assertInterval, "encrypted raw volume %q not ready: %s", rawVolumeID, suite.volumeError(nodeCtx, rawVolumeID))
 
-		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, rawVolumeID)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), rawVolumeID)
 		suite.Require().NoError(err)
 
 		ciphertext = append(ciphertext, vs.TypedSpec().Location)
@@ -1751,7 +1751,7 @@ func (suite *StorageSuite) provisionEncryptedRawVolumes(
 
 // volumeError reports a volume's current error message, for assertion messages.
 func (suite *StorageSuite) volumeError(nodeCtx context.Context, volumeID string) string {
-	vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+	vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), volumeID)
 	if err != nil {
 		return fmt.Sprintf("no VolumeStatus: %v", err)
 	}
@@ -1798,7 +1798,7 @@ func (suite *StorageSuite) testLVMOnEncryptedRawVolumes(vgEnc, selector string) 
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.State(), filepath.Base(userDisks[0]))
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(disk.TypedSpec().Symlinks)
 
@@ -1831,7 +1831,7 @@ func (suite *StorageSuite) testLVMOnEncryptedRawVolumes(vgEnc, selector string) 
 	ciphertextSet := xslices.ToSet(ciphertext)
 
 	suite.Require().Eventually(func() bool {
-		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.State())
 		if err != nil {
 			return false
 		}

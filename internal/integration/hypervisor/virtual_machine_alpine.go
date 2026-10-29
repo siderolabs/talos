@@ -171,8 +171,8 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 		suite.Require().NotEqual(name, existing.Name())
 	}
 
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineSpec](nodeCtx, suite.T(), suite.Client.State(), name)
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
@@ -208,7 +208,7 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 
 		cleanupCtx := client.WithNode(ctx, node)
 		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, hypervisorcfg.VirtualMachineConfigKind, name)
-		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](cleanupCtx, suite.T(), suite.Client.COSI, name)
+		rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](cleanupCtx, suite.T(), suite.Client.State(), name)
 		suite.assertNoDomainWithContext(cleanupCtx, node, name)
 	})
 
@@ -216,7 +216,7 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 	rtestutils.AssertResources(
 		nodeCtx,
 		suite.T(),
-		suite.Client.COSI,
+		suite.Client.State(),
 		[]string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
@@ -264,13 +264,13 @@ func (suite *LibvirtSuite) TestAlpineBuiltinProfiles() {
 			suite.Require().NotNil(doc.ProfileConfig)
 			suite.Require().Equal(test.name, *doc.ProfileConfig)
 
-			rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, doc.Name(),
+			rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), doc.Name(),
 				func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 					asrt.Equal(test.name, spec.TypedSpec().Profile)
 					asrt.EqualValues(cpuCount, spec.TypedSpec().CPU.Count)
 				})
 
-			rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, doc.Name(),
+			rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), doc.Name(),
 				func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 					var domain libvirtxml.Domain
 					if !asrt.NoError(domain.Unmarshal(spec.TypedSpec().DomainXML)) || !asrt.NotNil(domain.CPU) || !asrt.NotNil(domain.OS) || !asrt.NotNil(domain.OS.Type) {
@@ -396,14 +396,14 @@ func (suite *LibvirtSuite) TestAlpineProfileSwitch() {
 	assertProjected := func(profile, power, machine string, mode hypervisorhelpers.VirtualMachineProfileCPUMode) {
 		suite.T().Helper()
 
-		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
 			func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
 				asrt.Equal(profile, spec.TypedSpec().Profile)
 				asrt.Equal(power, spec.TypedSpec().PowerState)
 				asrt.EqualValues(cpuCount, spec.TypedSpec().CPU.Count)
 				asrt.EqualValues(memoryBytes, spec.TypedSpec().Memory.Size)
 			})
-		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, name,
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
 			func(spec *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
 				asrt.Equal(power, spec.TypedSpec().PowerState)
 
@@ -693,7 +693,7 @@ func (suite *LibvirtSuite) TestAlpineGuestWorkloadMemoryLimitEnforced() {
 
 	// Remove the VM before Talos restarts it into the same cap, then check the blast radius.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, guest.Name())
-	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](nodeCtx, suite.T(), suite.Client.COSI, guest.Name())
+	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainStatus](nodeCtx, suite.T(), suite.Client.State(), guest.Name())
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		pid, listErr := suite.alpineGuestQEMUPID(nodeCtx, guest.Name())
