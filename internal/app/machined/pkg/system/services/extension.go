@@ -230,6 +230,9 @@ func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oc
 	ociOpts := []oci.SpecOpts{
 		oci.WithRootFSPath(filepath.Join(constants.ExtensionServiceRootfsPath, svc.Spec.Name)),
 		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
+		// with host IPC, /dev/mqueue is the host's mqueue, which runc of a hostIPC pod relabels with
+		// the MCS categories of the pod; dropped before the extension mounts, so that an explicit one is kept
+		oci.WithoutMounts("/dev/mqueue"),
 		oci.WithMounts(mounts),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.IPCNamespace),

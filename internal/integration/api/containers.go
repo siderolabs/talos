@@ -155,6 +155,44 @@ func (suite *ContainersSuite) TestContainerLifecycle() {
 	suite.assertNoContainerdContainer(ctx, name)
 }
 
+// TestSELinuxLevel verifies that a container runs at the MCS categories allocated to it, taken from the share of
+// the Talos containers.
+func (suite *ContainersSuite) TestSELinuxLevel() {
+	ctx, name, _ := suite.setupContainer("selinux")
+
+	securityState, err := safe.StateGetByID[*runtimeres.SecurityState](ctx, suite.Client.State(), runtimeres.SecurityStateID)
+	suite.Require().NoError(err)
+
+	if !securityState.TypedSpec().SELinuxCategories {
+		suite.T().Skip("skipping the test since containers run without SELinux categories")
+	}
+
+	// The container reads its own label: with workload isolation the reported PID belongs to the sandbox
+	// PID namespace, so it cannot be looked up in the /proc of the host.
+	suite.applyContainers(ctx, suite.shellContainer(name, `echo "label=$(tr -d '\000' < /proc/self/attr/current);"`))
+
+	logs := suite.assertContainerLogged(ctx, name, "label=")
+
+	spec, err := safe.StateGetByID[*containers.ContainerSpec](ctx, suite.Client.State(), name)
+	suite.Require().NoError(err)
+
+	level := spec.TypedSpec().Security.SELinuxLevel
+
+	var low, high int
+
+	_, err = fmt.Sscanf(level, "s0:c%d,c%d", &low, &high)
+	suite.Require().NoError(err)
+
+	suite.Assert().GreaterOrEqual(low, constants.SELinuxCRICategoryRange)
+	suite.Assert().Less(high, constants.SELinuxReservedCategoryStart)
+
+	suite.Assert().Contains(logs, "label=system_u:system_r:taloscontainer_t:"+level+";")
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+
+	rtestutils.AssertNoResource[*containers.ContainerSpec](ctx, suite.T(), suite.Client.State(), name)
+}
+
 // TestSurvivesReboot verifies that a declared container is stopped on the way down and started again
 // as a new task on the way up.
 func (suite *ContainersSuite) TestSurvivesReboot() {

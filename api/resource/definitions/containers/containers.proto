@@ -158,6 +158,9 @@ message ContainerSecuritySpec {
   // MachinedAccess publishes the container's PID as a ServicePID resource and mounts the
   // machined API socket into the container.
   bool machined_access = 4;
+  // SELinuxLevel is the MCS level the container runs at, stable across restarts so that it keeps
+  // access to the files it writes; empty when containers run without categories.
+  string se_linux_level = 5;
 }
 
 // ContainerSpecSpec is the spec for ContainerSpec.

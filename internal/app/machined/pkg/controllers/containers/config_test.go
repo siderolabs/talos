@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
+	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -65,6 +66,36 @@ func (suite *ConfigSuite) TestNormalizesImageAndResolvesDefaults() {
 		asrt.False(spec.TypedSpec().Network.HostNetwork)
 		asrt.Zero(spec.TypedSpec().Resources.MemoryLimit)
 		asrt.Nil(spec.TypedSpec().Resources.SwapLimit)
+
+		// no SecurityProfileConfig: no categories
+		asrt.Empty(spec.TypedSpec().Security.SELinuxLevel)
+	})
+}
+
+func (suite *ConfigSuite) TestAssignsSELinuxLevels() {
+	privileged := newDoc("privileged", "nginx")
+	privileged.SecurityConfig = &containercfg.ContainerSecurity{SecurityProfile: "privileged"}
+
+	securityProfile := runtimecfg.NewSecurityProfileConfigV1Alpha1()
+	securityProfile.SELinuxCategoriesEnabled = new(true)
+
+	cfg, err := container.New(newDoc("a", "nginx"), newDoc("b", "nginx"), privileged, securityProfile)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
+
+	levels := map[string]string{}
+
+	ctest.AssertResources(suite, []string{"a", "b"}, func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Regexp(`^s0:c\d+,c\d+$`, spec.TypedSpec().Security.SELinuxLevel)
+
+		levels[spec.Metadata().ID()] = spec.TypedSpec().Security.SELinuxLevel
+	})
+
+	suite.Assert().NotEqual(levels["a"], levels["b"])
+
+	ctest.AssertResource(suite, "privileged", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Empty(spec.TypedSpec().Security.SELinuxLevel)
 	})
 }
 

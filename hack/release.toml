@@ -253,6 +253,26 @@ On UEFI systems booted via `systemd-boot` the boot partition comes from the `Loa
 now passes the `talos.boot.partuuid=<UUID>` kernel argument (probed by GRUB at boot). The detected boot partition is published as the `bootpartition` resource.
 """
 
+    [notes.selinux_workloads]
+        title = "SELinux Workload Categories"
+        description = """\
+A new `selinuxCategories` field of the `SecurityProfileConfig` document labels workloads with SELinux MCS categories,
+so that workloads sharing an SELinux type still cannot access each other's processes and files. `talosctl gen config`
+sets it for Talos 1.15+; clusters upgraded from older versions keep running their workloads without categories unless it is set.
+
+The categories are split three ways: the CRI labels pods with a random pair from `c0-c767`, containers declared via
+`ContainerConfig` get a stable pair from `c768-c1007` derived from their name, and `c1008-c1023` are reserved for Talos
+(the kube-apiserver static pod runs at `s0:c1022,c1023`, so that it keeps access to its audit log across reboots).
+
+Pods run as `pod_t`, and privileged containers as `pod_privileged_t`, which reads the host files and `/proc` and ignores the
+categories. `spc_t` is an alias of it, so charts written for Fedora and RHEL keep working. The kubelet gets
+`/sys/fs/selinux` and the containers contexts file, so that it labels volumes and its plugin directories.
+
+A pod writing files which outlive it, to a hostPath or a local volume, needs a fixed `securityContext.seLinuxOptions.level`,
+else the pod of the next start cannot read them. The CRI skips the pairs of running containers when it draws one, so
+the pair is exclusive only while the pod runs.
+"""
+
     [notes.kubespan_peer_endpoint_filters]
         title = "KubeSpan Peer Endpoint Filters"
         description = """\

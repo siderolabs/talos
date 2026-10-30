@@ -61,3 +61,17 @@ func TestSecurityProfileConfigIgnoreCtrlAltDelete(t *testing.T) {
 	cfg.IgnoreCtrlAltDeleteEnabled = new(false)
 	assert.False(t, cfg.IgnoreCtrlAltDelete())
 }
+
+func TestSecurityProfileConfigSELinuxCategories(t *testing.T) {
+	t.Parallel()
+
+	// absent field -> workloads run without categories
+	assert.False(t, runtime.NewSecurityProfileConfigV1Alpha1().SELinuxCategories())
+
+	cfg := runtime.NewSecurityProfileConfigV1Alpha1()
+	cfg.SELinuxCategoriesEnabled = new(true)
+	assert.True(t, cfg.SELinuxCategories())
+
+	cfg.SELinuxCategoriesEnabled = new(false)
+	assert.False(t, cfg.SELinuxCategories())
+}

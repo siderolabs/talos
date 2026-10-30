@@ -129,6 +129,10 @@ func (o *SecurityProfileConfigV1Alpha1) DeepCopy() *SecurityProfileConfigV1Alpha
 		cp.IgnoreCtrlAltDeleteEnabled = new(bool)
 		*cp.IgnoreCtrlAltDeleteEnabled = *o.IgnoreCtrlAltDeleteEnabled
 	}
+	if o.SELinuxCategoriesEnabled != nil {
+		cp.SELinuxCategoriesEnabled = new(bool)
+		*cp.SELinuxCategoriesEnabled = *o.SELinuxCategoriesEnabled
+	}
 	return &cp
 }
 

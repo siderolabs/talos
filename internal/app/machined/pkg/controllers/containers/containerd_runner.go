@@ -134,6 +134,11 @@ func (r *containerdRunner) Run(
 		selinuxLabel = constants.SelinuxLabelTalosContainerMachined
 	}
 
+	// The labels above run at s0: the container's own categories replace the level.
+	if spec.Security.SELinuxLevel != "" {
+		selinuxLabel = strings.TrimSuffix(selinuxLabel, ":s0") + ":" + spec.Security.SELinuxLevel
+	}
+
 	svc := containerdrunner.NewRunner(false,
 		&runner.Args{ID: id},
 		runner.WithNamespace(constants.TalosContainersContainerdNamespace),

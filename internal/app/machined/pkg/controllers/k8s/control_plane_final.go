@@ -82,6 +82,7 @@ func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalContro
 				out.TypedSpec().Resources = cfg.Resources
 				out.TypedSpec().StartupProbesEnabled = cfg.StartupProbesEnabled
 				out.TypedSpec().UseAuthenticationConfig = cfg.UseAuthenticationConfig
+				out.TypedSpec().SELinuxLevel = cfg.SELinuxLevel
 
 				enabledAdmissionPlugins := []string{"NodeRestriction"}
 

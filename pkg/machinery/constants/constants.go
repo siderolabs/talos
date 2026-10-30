@@ -301,6 +301,11 @@ const (
 	// KubernetesAuditLogDir defines the ephemeral directory where the kube-apiserver will store its audit logs.
 	KubernetesAuditLogDir = EphemeralMountPoint + "/" + "log" + "/" + "audit" + "/" + "kube"
 
+	// KubernetesAPIServerSELinuxLevel is the fixed MCS level of the kube-apiserver static pod: its audit log persists
+	// across reboots, so the pod keeps the same categories. The pair is taken from the categories reserved for Talos,
+	// which the CRI never draws from.
+	KubernetesAPIServerSELinuxLevel = "s0:c1022,c1023"
+
 	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
 
@@ -854,6 +859,20 @@ const (
 	// Distinct from the pod label even though both run on the CRI containerd: these are not pods, and
 	// a domain of their own is what lets them be told apart in audit and confined separately.
 	SelinuxLabelTalosContainer = "system_u:system_r:taloscontainer_t:s0"
+
+	// SELinuxCategoryCount is the number of MCS categories in the policy, c0 to c1023.
+	//
+	// With SELinux categories enabled, they are split in three: the CRI draws the pair of a pod from
+	// [0, SELinuxCRICategoryRange), containers declared via ContainerConfig get a stable pair from
+	// [SELinuxCRICategoryRange, SELinuxReservedCategoryStart), and the rest is reserved for Talos.
+	SELinuxCategoryCount = 1024
+
+	// SELinuxCRICategoryRange is the selinux_category_range of the CRI: the number of categories, from c0, it labels pods with.
+	SELinuxCRICategoryRange = 768
+
+	// SELinuxReservedCategoryStart is the first of the categories reserved for Talos, which no workload is labeled with
+	// unless Talos picks it (e.g. KubernetesAPIServerSELinuxLevel).
+	SELinuxReservedCategoryStart = 1008
 
 	// SelinuxLabelTalosContainerMachined is the SELinux label for containers declared via
 	// ContainerConfig with security.machinedAccess set.

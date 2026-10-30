@@ -296,6 +296,12 @@ func (contract *VersionContract) WorkloadIsolationEnabledByDefault() bool {
 	return contract.Greater(TalosVersion1_13)
 }
 
+// SELinuxCategoriesEnabledByDefault returns true if version of Talos should label workloads with SELinux MCS
+// categories by default (emitted as a SecurityProfileConfig document with selinuxCategories set by config generation).
+func (contract *VersionContract) SELinuxCategoriesEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_14)
+}
+
 // DiskSMARTEnabledByDefault returns true if version of Talos should have disk SMART monitoring
 // enabled by default (emitted as a DiskSMARTConfig document by config generation).
 //
