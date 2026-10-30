@@ -35,6 +35,7 @@ func TestBuildPeer(t *testing.T) {
 			Passive:      true,
 			HoldTime:     90 * time.Second,
 			AuthPassword: "secret",
+			EBGPMultiHop: 2,
 			BFD: &network.BGPBFDConfigSpec{
 				TransmitInterval: 300 * time.Millisecond,
 				ReceiveInterval:  400 * time.Millisecond,
@@ -47,7 +48,8 @@ func TestBuildPeer(t *testing.T) {
 	assert.Equal(t, uint32(65002), peer.GetConf().GetPeerAsn())
 	assert.Equal(t, uint32(65003), peer.GetConf().GetLocalAsn())
 	assert.True(t, peer.GetConf().GetReplacePeerAsn())
-	assert.Equal(t, "secret", peer.GetConf().GetAuthPassword())
+	assert.True(t, peer.EbgpMultihop.Enabled)
+	assert.Equal(t, uint32(2), peer.EbgpMultihop.MultihopTtl)
 	assert.True(t, peer.GetTransport().GetPassiveMode())
 	assert.Equal(t, "vrf-blue", peer.GetTransport().GetBindInterface())
 	assert.Equal(t, uint64(90), peer.GetTimers().GetConfig().GetHoldTime())

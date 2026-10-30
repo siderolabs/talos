@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://talos.dev/v1.15/schemas/config.schema.json",
+  "$id": "https://talos.dev/1.15/schemas/config.schema.json",
   "$defs": {
     "block.DiskSMARTConfigV1Alpha1": {
       "properties": {
@@ -5069,6 +5069,13 @@
           "description": "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nThe kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).\n",
           "markdownDescription": "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nThe kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).",
           "x-intellij-html-description": "\u003cp\u003ePassword for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nThe kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).\u003c/p\u003e\n"
+        },
+        "eBgpMultiHop": {
+          "type": "integer",
+          "title": "eBgpMultiHop",
+          "description": "TTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 0 and 255.\n",
+          "markdownDescription": "TTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 0 and 255.",
+          "x-intellij-html-description": "\u003cp\u003eTTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 0 and 255.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

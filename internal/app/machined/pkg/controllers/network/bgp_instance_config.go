@@ -285,6 +285,7 @@ func buildBGPInstanceConfigSpec(cfg talosconfig.NetworkBGPInstanceConfig) networ
 			Passive:      neighbor.Passive(),
 			HoldTime:     neighbor.HoldTime(),
 			AuthPassword: neighbor.AuthPassword(),
+			EBGPMultiHop: neighbor.EBGPMultiHop(),
 		}
 
 		if bfd := neighbor.BFD(); bfd != nil {

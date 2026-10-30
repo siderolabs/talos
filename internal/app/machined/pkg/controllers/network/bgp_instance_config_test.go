@@ -55,6 +55,7 @@ func newFabricConfig(holdTime time.Duration) *networkcfg.BGPInstanceConfigV1Alph
 			NeighborPassive:       true,
 			NeighborHoldTime:      15 * time.Second,
 			NeighborAuthPassword:  "secret",
+			NeighborEBGPMultiHop:  2,
 		},
 	}
 
@@ -90,6 +91,8 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 		assertions.Nil(spec.Neighbors[1].BFD)
 		assertions.Empty(spec.Neighbors[0].AuthPassword)
 		assertions.Equal("secret", spec.Neighbors[1].AuthPassword)
+		assertions.Empty(spec.Neighbors[0].EBGPMultiHop)
+		assertions.Equal(2, spec.Neighbors[1].EBGPMultiHop)
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	updatedInstance := newFabricConfig(12 * time.Second)
