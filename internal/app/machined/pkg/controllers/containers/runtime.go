@@ -5,9 +5,11 @@
 package containers
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -20,6 +22,7 @@ import (
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
+	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -56,6 +59,9 @@ type TaskRunner interface {
 	Close() error
 }
 
+// stopAllMargin is kept from the shutdown deadline for removing the containers and releasing the barrier.
+const stopAllMargin = 15 * time.Second
+
 // RuntimeController runs container instances by interacting with the container runtime.
 type RuntimeController struct {
 	// Runtime provides the logging manager for container logs.
@@ -91,6 +97,11 @@ func (ctrl *RuntimeController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerLifecycleType,
 			ID:        optional.Some(containers.ContainerLifecycleID),
 			Kind:      controller.InputStrong,
@@ -121,8 +132,12 @@ func (ctrl *RuntimeController) Outputs() []controller.Output {
 
 // instanceRunState tracks one running execution.
 type instanceRunState struct {
+	containerID string
+	stopTimeout time.Duration
+
 	cancel context.CancelFunc
-	wg     sync.WaitGroup
+	// done is closed once the run has finished, before the controller is woken up for it.
+	done chan struct{}
 
 	mu            sync.Mutex
 	phase         containers.ContainerInstancePhase
@@ -180,9 +195,13 @@ func (s *instanceRunState) setFinished(exitCode int32, err error, everStarted bo
 	s.finishedAt = time.Now()
 }
 
-func (s *instanceRunState) stop() {
-	s.cancel()
-	s.wg.Wait()
+func (s *instanceRunState) finished() bool {
+	select {
+	case <-s.done:
+		return true
+	default:
+		return false
+	}
 }
 
 // requestStop asks the task to stop, reporting whether this is the first time it has been asked.
@@ -228,7 +247,7 @@ func (ctrl *RuntimeController) Run(ctx context.Context, runtime controller.Runti
 			return
 		}
 
-		ctrl.stopAll(logger)
+		ctrl.stopAll(logger, time.Time{}, nil)
 
 		// After the instances, never before: they wait on their tasks through this client.
 		ctrl.closeRunner()
@@ -335,7 +354,18 @@ func (ctrl *RuntimeController) reconcile(
 	// running into the phase that kills containerd, and their records behind to be swept as orphans on
 	// the next boot.
 	if containerLifecycle == nil || containerLifecycle.Metadata().Phase() == resource.PhaseTearingDown {
-		ctrl.stopAll(logger)
+		var deadline time.Time
+
+		if containerLifecycle != nil {
+			deadline = containerLifecycle.TypedSpec().ShutdownDeadline
+		}
+
+		dependsOn, err := containerDependencies(ctx, runtime)
+		if err != nil {
+			return err
+		}
+
+		ctrl.stopAll(logger, deadline, dependsOn)
 
 		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}
@@ -368,19 +398,6 @@ func (ctrl *RuntimeController) reconcile(
 		ctrl.swept = true
 	}
 
-	// Ask every instance whose spec is tearing down to stop before waiting for any of them: one stop is
-	// bounded by the graceful shutdown timeout plus the wait for the kill, and stopping them one after
-	// another would multiply that bound by the number of containers going away at once.
-	for containerInstanceSpec := range containerInstanceSpecs.All() {
-		if containerInstanceSpec.Metadata().Phase() != resource.PhaseTearingDown {
-			continue
-		}
-
-		if instanceRun, exists := ctrl.instances[containerInstanceSpec.Metadata().ID()]; exists {
-			instanceRun.cancel()
-		}
-	}
-
 	runtime.StartTrackingOutputs()
 
 	live := map[string]struct{}{}
@@ -396,8 +413,7 @@ func (ctrl *RuntimeController) reconcile(
 		}
 	}
 
-	// Any goroutine whose spec vanished outright. Asked to stop first, joined second, for the same
-	// reason as the tearing-down pass above.
+	// Any goroutine whose spec vanished outright.
 	for instanceSpecID, instanceRun := range ctrl.instances {
 		if _, exists := live[instanceSpecID]; exists {
 			continue
@@ -406,21 +422,17 @@ func (ctrl *RuntimeController) reconcile(
 		if instanceRun.requestStop() {
 			logger.Info("instance spec is gone, stopping the container", zap.String("instance", instanceSpecID))
 		}
-	}
 
-	for instanceSpecID, instanceRun := range ctrl.instances {
-		if _, exists := live[instanceSpecID]; exists {
+		if !instanceRun.finished() {
 			continue
 		}
-
-		instanceRun.stop()
 
 		// The tearing-down path can afford to fail here because the finalizer stays on the spec and
 		// brings the next pass back to it. A vanished spec leaves nothing to hold a finalizer on, so
 		// this map entry is the only remaining record that the container exists: dropping it on a
 		// failure would leave the container behind with nothing left that knows about it, and no second
-		// orphan sweep coming to find it either. Keeping it costs a repeated stop on the retry, which
-		// is free: the cancel is idempotent and the join returns at once.
+		// orphan sweep coming to find it either. Keeping it costs a repeated stop request on the retry,
+		// which is free: the cancel is idempotent.
 		if err := ctrl.taskRunner.Remove(ctx, instanceSpecID); err != nil {
 			instanceErrs = errors.Join(instanceErrs, fmt.Errorf("failed to remove vanished container %q: %w", instanceSpecID, err))
 
@@ -502,11 +514,16 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 	case resource.PhaseTearingDown:
 		instanceRun, exists := ctrl.instances[instanceSpecID]
 		if exists {
-			logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
+			if instanceRun.requestStop() {
+				logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
+			}
 
-			// Stopping is synchronous: the task must be gone, and its runtime state cleaned up,
-			// before the instance controller is allowed to destroy the resource.
-			instanceRun.stop()
+			// the task must be gone before the instance controller is allowed to destroy the resource,
+			// the end of the run wakes the controller up again
+			if !instanceRun.finished() {
+				return ctrl.writeStatus(ctx, runtime, containerInstanceSpec, instanceRun)
+			}
+
 			delete(ctrl.instances, instanceSpecID)
 
 			logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
@@ -535,21 +552,26 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 // Used on the way down: the caller releases the shutdown barrier once this returns, so this has to
 // leave nothing running behind it.
 //
-// Everything is asked to stop before anything is waited for, so the graceful shutdown timeouts run
-// concurrently: serially, a handful of containers ignoring SIGTERM would take longer than the
-// shutdown sequence gives the barrier as a whole.
-func (ctrl *RuntimeController) stopAll(logger *zap.Logger) {
-	for instanceSpecID, instanceRun := range ctrl.instances {
-		logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
-
-		instanceRun.cancel()
+// An instance is stopped once no instance of a container depending on it is running any more, so
+// containers stop in the reverse order of dependsOn, and all the others concurrently. Waiting for the
+// dependents ends when the instance would otherwise not be stopped by the deadline.
+func (ctrl *RuntimeController) stopAll(logger *zap.Logger, deadline time.Time, dependsOn map[string][]string) {
+	if deadline.IsZero() {
+		deadline = time.Now().Add(constants.ContainerShutdownTimeout)
 	}
 
-	for instanceSpecID, instanceRun := range ctrl.instances {
-		instanceRun.stop()
-		delete(ctrl.instances, instanceSpecID)
+	deadline = deadline.Add(-stopAllMargin)
 
-		logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
+	stopping := map[string]struct{}{}
+
+	for {
+		nextForced := ctrl.stopReady(logger, deadline, dependsOn, stopping)
+
+		if len(ctrl.instances) == 0 {
+			return
+		}
+
+		ctrl.waitForRunOrTime(nextForced)
 	}
 }
 
@@ -598,6 +620,92 @@ func (ctrl *RuntimeController) refuseStale(
 	}
 
 	return true, nil
+}
+
+// stopReady forgets the instances which have stopped, and asks those to stop which are no longer waiting
+// for dependents.
+//
+// It returns the earliest time an instance still waiting has to be stopped regardless.
+func (ctrl *RuntimeController) stopReady(
+	logger *zap.Logger, deadline time.Time, dependsOn map[string][]string, stopping map[string]struct{},
+) time.Time {
+	var nextForced time.Time
+
+	for instanceSpecID, instanceRun := range ctrl.instances {
+		if instanceRun.finished() {
+			delete(ctrl.instances, instanceSpecID)
+
+			logger.Info("container instance stopped", zap.String("instance", instanceSpecID))
+
+			continue
+		}
+
+		if _, ok := stopping[instanceSpecID]; ok {
+			continue
+		}
+
+		forceAt := deadline.Add(-instanceRun.stopTimeout - containerdrunner.KillWaitTimeout)
+
+		if ctrl.hasRunningDependents(instanceRun, dependsOn) && time.Now().Before(forceAt) {
+			if nextForced.IsZero() || forceAt.Before(nextForced) {
+				nextForced = forceAt
+			}
+
+			continue
+		}
+
+		if instanceRun.requestStop() {
+			logger.Info("stopping container instance", zap.String("instance", instanceSpecID))
+		}
+
+		stopping[instanceSpecID] = struct{}{}
+	}
+
+	return nextForced
+}
+
+// waitForRunOrTime waits for a run to end, or until t if it is set.
+func (ctrl *RuntimeController) waitForRunOrTime(t time.Time) {
+	if t.IsZero() {
+		<-ctrl.notifyCh
+
+		return
+	}
+
+	timer := time.NewTimer(time.Until(t))
+	defer timer.Stop()
+
+	select {
+	case <-ctrl.notifyCh:
+	case <-timer.C:
+	}
+}
+
+// containerDependencies returns the containers each container depends on, as currently configured.
+func containerDependencies(ctx context.Context, r controller.Reader) (map[string][]string, error) {
+	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list container specs: %w", err)
+	}
+
+	dependsOn := map[string][]string{}
+
+	for containerSpec := range containerSpecs.All() {
+		dependsOn[containerSpec.Metadata().ID()] = containerSpec.TypedSpec().DependsOn.Containers
+	}
+
+	return dependsOn, nil
+}
+
+// hasRunningDependents reports whether an instance of a container depending on the one of instanceRun is still running.
+func (ctrl *RuntimeController) hasRunningDependents(instanceRun *instanceRunState, dependsOn map[string][]string) bool {
+	for _, other := range ctrl.instances {
+		if other != instanceRun && !other.finished() && slices.Contains(dependsOn[other.containerID], instanceRun.containerID) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // retainFinished reports whether the instance already ran to completion, keeping its status if so.
@@ -680,7 +788,10 @@ func (ctrl *RuntimeController) start(
 	instanceSpecID := containerInstanceSpec.Metadata().ID()
 
 	instanceRun := &instanceRunState{
-		phase: containers.ContainerInstancePhaseCreated,
+		containerID: containerInstanceSpec.TypedSpec().ContainerID,
+		stopTimeout: cmp.Or(containerInstanceSpec.TypedSpec().StopTimeout, constants.ContainerDefaultStopTimeout),
+		done:        make(chan struct{}),
+		phase:       containers.ContainerInstancePhaseCreated,
 	}
 
 	// Derived from ctrl.instanceCtx, not from a Run's context: canceling this is how the task is
@@ -711,7 +822,7 @@ func (ctrl *RuntimeController) start(
 		}
 	}
 
-	instanceRun.wg.Go(func() {
+	go func() {
 		var everStarted bool
 
 		defer func() {
@@ -730,6 +841,8 @@ func (ctrl *RuntimeController) start(
 					logger.Error("failed to clear container PID", zap.String("instance", instanceSpecID), zap.Error(err))
 				}
 			}
+
+			close(instanceRun.done)
 
 			// Wake the controller so the terminal status is published even if nothing else changes.
 			notify()
@@ -766,7 +879,7 @@ func (ctrl *RuntimeController) start(
 		default:
 			logger.Info("container exited", zap.String("instance", instanceSpecID))
 		}
-	})
+	}()
 
 	return instanceRun
 }

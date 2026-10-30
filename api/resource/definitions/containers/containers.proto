@@ -5,6 +5,7 @@ package talos.resource.definitions.containers;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/containers";
 option java_package = "dev.talos.api.resource.definitions.containers";
 
+import "google/protobuf/duration.proto";
 import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
@@ -72,6 +73,7 @@ message ContainerInstanceSpecSpec {
   ContainerResourcesSpec resources = 12;
   // Devices are fully resolved, with host device nodes filled in.
   repeated ResolvedDeviceSpec devices = 13;
+  google.protobuf.Duration stop_timeout = 14;
 }
 
 // ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
@@ -92,6 +94,12 @@ message ContainerInstanceStatusSpec {
   google.protobuf.Timestamp started_at = 7;
   // FinishedAt is when the task stopped running.
   google.protobuf.Timestamp finished_at = 8;
+}
+
+// ContainerLifecycleSpec is the spec for ContainerLifecycle.
+message ContainerLifecycleSpec {
+  // ShutdownDeadline is set when the resource is torn down: all containers have to be stopped by then.
+  google.protobuf.Timestamp shutdown_deadline = 1;
 }
 
 // ContainerMountSpec is a resolved mount.
@@ -175,6 +183,7 @@ message ContainerSpecSpec {
   ContainerResourcesSpec resources = 10;
   ContainerDependsOnSpec depends_on = 11;
   repeated ContainerDeviceSpec devices = 12;
+  google.protobuf.Duration stop_timeout = 13;
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.

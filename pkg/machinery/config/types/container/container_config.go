@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // ContainerConfigKind is a config document kind.
@@ -125,6 +127,20 @@ type ContainerConfigV1Alpha1 struct {
 	//   description: |
 	//     Conditions which must be satisfied before the container is started.
 	DependsOnConfig *ContainerDependsOn `yaml:"dependsOn,omitempty"`
+	//   description: |
+	//     Time the container gets to exit after SIGTERM before it is killed with SIGKILL.
+	//
+	//     It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is
+	//     replaced after a change or restarted with `talosctl restart`, and when it is removed.
+	//     Defaults to 10s, at most 4m.
+	//     Changing it replaces the running container, which is still stopped with its previous timeout.
+	//   examples:
+	//     - value: >
+	//         30 * time.Second
+	//   schema:
+	//     type: string
+	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
+	ContainerStopTimeout time.Duration `yaml:"stopTimeout,omitempty"`
 }
 
 // NewContainerConfigV1Alpha1 creates a new container config document.
@@ -298,6 +314,11 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 		validationErrors = errors.Join(validationErrors, c.RunAsConfig.Validate())
 	}
 
+	if c.ContainerStopTimeout < 0 || c.ContainerStopTimeout > constants.ContainerMaxStopTimeout {
+		validationErrors = errors.Join(validationErrors,
+			fmt.Errorf("stopTimeout: %s must be between 0 and %s", c.ContainerStopTimeout, constants.ContainerMaxStopTimeout))
+	}
+
 	return warnings, validationErrors
 }
 
@@ -439,6 +460,15 @@ func (c *ContainerConfigV1Alpha1) DependsOn() config.ContainerDependsOnConfig {
 	}
 
 	return c.DependsOnConfig
+}
+
+// StopTimeout implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) StopTimeout() time.Duration {
+	if c.ContainerStopTimeout == 0 {
+		return constants.ContainerDefaultStopTimeout
+	}
+
+	return c.ContainerStopTimeout
 }
 
 // mustParse re-parses an already-normalized reference. Normalization has succeeded by the time

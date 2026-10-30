@@ -475,6 +475,7 @@ description: Talos gRPC API reference.
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
     - [ContainerInstanceSpecSpec](#talos.resource.definitions.containers.ContainerInstanceSpecSpec)
     - [ContainerInstanceStatusSpec](#talos.resource.definitions.containers.ContainerInstanceStatusSpec)
+    - [ContainerLifecycleSpec](#talos.resource.definitions.containers.ContainerLifecycleSpec)
     - [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec)
     - [ContainerMountStatusSpec](#talos.resource.definitions.containers.ContainerMountStatusSpec)
     - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
@@ -8354,6 +8355,7 @@ later changes to those inputs: a spec change destroys this instance rather than 
 | network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | devices | [ResolvedDeviceSpec](#talos.resource.definitions.containers.ResolvedDeviceSpec) | repeated | Devices are fully resolved, with host device nodes filled in. |
+| stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 
@@ -8376,6 +8378,21 @@ ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
 | error | [string](#string) |  | Error describes why the task never started or exited abnormally. |
 | started_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | StartedAt is when the task's process started. |
 | finished_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | FinishedAt is when the task stopped running. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerLifecycleSpec"></a>
+
+### ContainerLifecycleSpec
+ContainerLifecycleSpec is the spec for ContainerLifecycle.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| shutdown_deadline | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | ShutdownDeadline is set when the resource is torn down: all containers have to be stopped by then. |
 
 
 
@@ -8513,6 +8530,7 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
 | devices | [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec) | repeated |  |
+| stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 

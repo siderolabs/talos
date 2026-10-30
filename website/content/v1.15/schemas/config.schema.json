@@ -1467,6 +1467,14 @@
           "description": "Conditions which must be satisfied before the container is started.\n",
           "markdownDescription": "Conditions which must be satisfied before the container is started.",
           "x-intellij-html-description": "\u003cp\u003eConditions which must be satisfied before the container is started.\u003c/p\u003e\n"
+        },
+        "stopTimeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "stopTimeout",
+          "description": "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with talosctl restart, and when it is removed.\nDefaults to 10s, at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.\n",
+          "markdownDescription": "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with `talosctl restart`, and when it is removed.\nDefaults to 10s, at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.",
+          "x-intellij-html-description": "\u003cp\u003eTime the container gets to exit after SIGTERM before it is killed with SIGKILL.\u003c/p\u003e\n\n\u003cp\u003eIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with \u003ccode\u003etalosctl restart\u003c/code\u003e, and when it is removed.\nDefaults to 10s, at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1514,9 +1522,9 @@
           },
           "type": "array",
           "title": "containers",
-          "description": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.\n",
-          "markdownDescription": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
-          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
+          "description": "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.\n",
+          "markdownDescription": "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
+          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

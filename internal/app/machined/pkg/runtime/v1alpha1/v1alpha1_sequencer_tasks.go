@@ -1873,9 +1873,9 @@ func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 // something which has to be wound down before a given point in the shutdown holds a finalizer on it,
 // so tearing it down and waiting for that set to empty is how a phase waits for a subsystem to be
 // wound down.
-func teardownLifecycleResource(md *resource.Metadata) runtime.TaskExecutionFunc {
+func teardownLifecycleResource(md *resource.Metadata, timeout time.Duration) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		ctx, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 
 		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, md)
@@ -1899,6 +1899,7 @@ func teardownLifecycleResource(md *resource.Metadata) runtime.TaskExecutionFunc 
 func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return teardownLifecycleResource(
 		blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID).Metadata(),
+		5*time.Minute,
 	), "teardownLifecycle"
 }
 
@@ -1906,10 +1907,34 @@ func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 //
 // Unlike TeardownVolumeLifecycle, this runs before stopServices: that phase is what stops the CRI
 // containerd instance itself, so a barrier torn down after it would find containerd already gone.
+//
+// The deadline is recorded on the resource first, so that the containers are stopped within it.
 func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return teardownLifecycleResource(
-		containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata(),
-	), "teardownContainerLifecycle"
+	md := containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata()
+	teardown := teardownLifecycleResource(md, constants.ContainerShutdownTimeout)
+
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		ctx, cancel := context.WithTimeout(ctx, constants.ContainerShutdownTimeout)
+		defer cancel()
+
+		deadline, _ := ctx.Deadline()
+
+		// a shutdown taking over keeps the deadline of the one which started tearing down
+		if _, err := safe.StateUpdateWithConflicts(ctx, r.State().V1Alpha2().Resources(), md,
+			func(lifecycle *containersres.ContainerLifecycle) error {
+				if lifecycle.TypedSpec().ShutdownDeadline.IsZero() {
+					lifecycle.TypedSpec().ShutdownDeadline = deadline
+				}
+
+				return nil
+			},
+			state.WithExpectedPhaseAny(),
+		); err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		return teardown(ctx, logger, r)
+	}, "teardownContainerLifecycle"
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),
