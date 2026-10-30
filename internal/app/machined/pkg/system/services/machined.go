@@ -54,6 +54,7 @@ var rules = map[string]role.Set{
 	"/machine.ContentLibraryService/Delete": role.MakeSet(role.Admin, role.Operator, role.ContentLibraryWriter),
 
 	"/machine.DebugService/ContainerRun":       role.MakeSet(role.Admin),
+	"/machine.DebugService/ContainerExec":      role.MakeSet(role.Admin),
 	"/machine.HypervisorService/ConsoleStream": role.MakeSet(role.Admin),
 	"/machine.HypervisorService/VNCStream":     role.MakeSet(role.Admin),
 	// Start and Stop override the power state of a virtual machine the machine configuration

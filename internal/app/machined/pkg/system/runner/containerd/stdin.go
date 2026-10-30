@@ -26,13 +26,13 @@ func (s *StdinCloser) Read(p []byte) (int, error) {
 	return n, err
 }
 
-// WaitAndClose closes containerd task stdin when StdinCloser is exhausted.
-func (s *StdinCloser) WaitAndClose(ctx context.Context, task containerd.Task) {
+// WaitAndClose closes containerd process stdin when StdinCloser is exhausted.
+func (s *StdinCloser) WaitAndClose(ctx context.Context, process containerd.Process) {
 	select {
 	case <-ctx.Done():
 		return
 	case <-s.Closer:
 		//nolint:errcheck
-		task.CloseIO(ctx, containerd.WithStdinCloser)
+		process.CloseIO(ctx, containerd.WithStdinCloser)
 	}
 }

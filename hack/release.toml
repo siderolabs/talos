@@ -331,6 +331,18 @@ The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
 `talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
 """
 
+    [notes.container_exec]
+        title = "Exec into Containers"
+        description = """\
+The new `talosctl container exec <container> -- <command>` command runs a command in a running container declared via a `ContainerConfig` document, as the container's own process runs: in its namespaces and cgroup, as its user, with its capabilities and SELinux label.
+The command runs as given, no shell is assumed; `-i` passes stdin to it and `-t` allocates a terminal (`talosctl container exec -it <container> -- /bin/sh`), stdout and stderr are kept apart unless a terminal is used, and `talosctl` exits with the exit code of the command.
+Access requires the `os:admin` role and exactly one target node.
+Canceling the call ends the command; like `docker exec`, processes it started in the background are not tracked.
+
+The API is `DebugService/ContainerExec`, and the machinery client has a `ContainerExec` helper which returns the exit code as a result.
+Each exec is logged on the node with the caller's roles, the container and the arguments, so secrets should be passed on stdin, which is not logged.
+"""
+
     [notes.container_swap_limit]
         title = "Container Swap Limit"
         description = """\

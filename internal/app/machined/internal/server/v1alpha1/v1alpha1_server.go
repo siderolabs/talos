@@ -163,7 +163,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
 	machine.RegisterStorageServiceServer(obj, machinestorage.NewService())
-	machine.RegisterDebugServiceServer(obj, &debug.Service{})
+	machine.RegisterDebugServiceServer(obj, &debug.Service{Resources: resourceState, Logger: s.Logger})
 
 	connector := libvirt.New().DomainConnector()
 	machine.RegisterHypervisorServiceServer(obj, hypervisord.NewService(

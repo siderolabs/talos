@@ -20,7 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DebugService_ContainerRun_FullMethodName = "/machine.DebugService/ContainerRun"
+	DebugService_ContainerRun_FullMethodName  = "/machine.DebugService/ContainerRun"
+	DebugService_ContainerExec_FullMethodName = "/machine.DebugService/ContainerExec"
 )
 
 // DebugServiceClient is the client API for DebugService service.
@@ -31,6 +32,8 @@ const (
 type DebugServiceClient interface {
 	// ContainerRun runs a debug container, attaches to it, and streams I/O.
 	ContainerRun(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerRunRequest, DebugContainerRunResponse], error)
+	// ContainerExec runs a command in a running ContainerConfig container, and streams I/O.
+	ContainerExec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerExecRequest, DebugContainerExecResponse], error)
 }
 
 type debugServiceClient struct {
@@ -54,6 +57,19 @@ func (c *debugServiceClient) ContainerRun(ctx context.Context, opts ...grpc.Call
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DebugService_ContainerRunClient = grpc.BidiStreamingClient[DebugContainerRunRequest, DebugContainerRunResponse]
 
+func (c *debugServiceClient) ContainerExec(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerExecRequest, DebugContainerExecResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &DebugService_ServiceDesc.Streams[1], DebugService_ContainerExec_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[DebugContainerExecRequest, DebugContainerExecResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type DebugService_ContainerExecClient = grpc.BidiStreamingClient[DebugContainerExecRequest, DebugContainerExecResponse]
+
 // DebugServiceServer is the server API for DebugService service.
 // All implementations must embed UnimplementedDebugServiceServer
 // for forward compatibility.
@@ -62,6 +78,8 @@ type DebugService_ContainerRunClient = grpc.BidiStreamingClient[DebugContainerRu
 type DebugServiceServer interface {
 	// ContainerRun runs a debug container, attaches to it, and streams I/O.
 	ContainerRun(grpc.BidiStreamingServer[DebugContainerRunRequest, DebugContainerRunResponse]) error
+	// ContainerExec runs a command in a running ContainerConfig container, and streams I/O.
+	ContainerExec(grpc.BidiStreamingServer[DebugContainerExecRequest, DebugContainerExecResponse]) error
 	mustEmbedUnimplementedDebugServiceServer()
 }
 
@@ -74,6 +92,9 @@ type UnimplementedDebugServiceServer struct{}
 
 func (UnimplementedDebugServiceServer) ContainerRun(grpc.BidiStreamingServer[DebugContainerRunRequest, DebugContainerRunResponse]) error {
 	return status.Error(codes.Unimplemented, "method ContainerRun not implemented")
+}
+func (UnimplementedDebugServiceServer) ContainerExec(grpc.BidiStreamingServer[DebugContainerExecRequest, DebugContainerExecResponse]) error {
+	return status.Error(codes.Unimplemented, "method ContainerExec not implemented")
 }
 func (UnimplementedDebugServiceServer) mustEmbedUnimplementedDebugServiceServer() {}
 func (UnimplementedDebugServiceServer) testEmbeddedByValue()                      {}
@@ -103,6 +124,13 @@ func _DebugService_ContainerRun_Handler(srv interface{}, stream grpc.ServerStrea
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type DebugService_ContainerRunServer = grpc.BidiStreamingServer[DebugContainerRunRequest, DebugContainerRunResponse]
 
+func _DebugService_ContainerExec_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(DebugServiceServer).ContainerExec(&grpc.GenericServerStream[DebugContainerExecRequest, DebugContainerExecResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type DebugService_ContainerExecServer = grpc.BidiStreamingServer[DebugContainerExecRequest, DebugContainerExecResponse]
+
 // DebugService_ServiceDesc is the grpc.ServiceDesc for DebugService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -114,6 +142,12 @@ var DebugService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "ContainerRun",
 			Handler:       _DebugService_ContainerRun_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "ContainerExec",
+			Handler:       _DebugService_ContainerExec_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

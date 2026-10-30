@@ -55,6 +55,9 @@ description: Talos gRPC API reference.
     - [ContentLibraryService](#machine.ContentLibraryService)
   
 - [machine/debug.proto](#machine/debug.proto)
+    - [DebugContainerExecRequest](#machine.DebugContainerExecRequest)
+    - [DebugContainerExecRequestSpec](#machine.DebugContainerExecRequestSpec)
+    - [DebugContainerExecResponse](#machine.DebugContainerExecResponse)
     - [DebugContainerRunRequest](#machine.DebugContainerRunRequest)
     - [DebugContainerRunRequestSpec](#machine.DebugContainerRunRequestSpec)
     - [DebugContainerRunRequestSpec.EnvEntry](#machine.DebugContainerRunRequestSpec.EnvEntry)
@@ -1476,6 +1479,60 @@ ContentLibraryConfig document and backed by a volume.
 
 
 
+<a name="machine.DebugContainerExecRequest"></a>
+
+### DebugContainerExecRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [DebugContainerExecRequestSpec](#machine.DebugContainerExecRequestSpec) |  | 1. send the exec spec |
+| stdin_data | [bytes](#bytes) |  | 2. send any of the below to interact with the command |
+| signal | [int32](#int32) |  |  |
+| term_resize | [DebugContainerTerminalResize](#machine.DebugContainerTerminalResize) |  |  |
+| stdin_eof | [bool](#bool) |  | stdin_eof ends the command's stdin, while signals and resizes can still be sent; with a terminal, stdin stays open until the command exits, as closing it would hang up the terminal. |
+
+
+
+
+
+
+<a name="machine.DebugContainerExecRequestSpec"></a>
+
+### DebugContainerExecRequestSpec
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| container | [string](#string) |  | container is the name of the ContainerConfig document. |
+| args | [string](#string) | repeated | args is the command and its arguments; it runs as given, no shell is assumed. |
+| tty | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerExecResponse"></a>
+
+### DebugContainerExecResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| instance_id | [string](#string) |  | instance_id is the container instance the command runs in, sent first. |
+| stdout_data | [bytes](#bytes) |  |  |
+| stderr_data | [bytes](#bytes) |  | stderr_data is only sent without a terminal, which merges it into stdout_data. |
+| exit_code | [int32](#int32) |  | exit_code is the exit code of the command, sent last. |
+
+
+
+
+
+
 <a name="machine.DebugContainerRunRequest"></a>
 
 ### DebugContainerRunRequest
@@ -1589,6 +1646,7 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ContainerRun | [DebugContainerRunRequest](#machine.DebugContainerRunRequest) stream | [DebugContainerRunResponse](#machine.DebugContainerRunResponse) stream | ContainerRun runs a debug container, attaches to it, and streams I/O. |
+| ContainerExec | [DebugContainerExecRequest](#machine.DebugContainerExecRequest) stream | [DebugContainerExecResponse](#machine.DebugContainerExecResponse) stream | ContainerExec runs a command in a running ContainerConfig container, and streams I/O. |
 
  <!-- end services -->
 

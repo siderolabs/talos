@@ -7,6 +7,7 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -25,6 +26,8 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v4"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/images"
@@ -1530,6 +1533,139 @@ func (suite *ContainersSuite) startWithUserVolume(ctx context.Context, name, vol
 		})
 
 	return instanceID
+}
+
+// TestContainerExec verifies that a command runs in a running container as the container's own
+// process does, with stdout and stderr kept apart, stdin forwarded and the exit code returned as a
+// result.
+func (suite *ContainersSuite) TestContainerExec() {
+	ctx, name, _ := suite.setupContainer("exec")
+
+	var (
+		uid int32 = 1234
+		gid int32 = 5678
+	)
+
+	doc := suite.shellContainer(name, "echo container-ok > /scratch/probe && sleep 3600")
+	doc.RunAsConfig = &containercfg.ContainerRunAs{
+		RunAsUID: &uid,
+		RunAsGID: &gid,
+	}
+	doc.MountsConfig = []containercfg.ContainerMount{
+		{
+			TmpfsMount: &containercfg.TmpfsMount{
+				MountDestination: "/scratch",
+				MountSize:        "1Mi",
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, doc)
+
+	instanceID, _ := suite.assertContainerRunning(ctx, name, "before exec")
+
+	exec := func(ctx context.Context, stdin io.Reader, tty bool, args ...string) (client.ContainerExecResult, string, string, error) {
+		var stdout, stderr bytes.Buffer
+
+		result, err := suite.Client.ContainerExec(ctx, &machine.DebugContainerExecRequestSpec{
+			Container: name,
+			Args:      args,
+			Tty:       tty,
+		}, client.ContainerStreamOptions{
+			Stdin:  stdin,
+			Stdout: &stdout,
+			Stderr: &stderr,
+		})
+
+		return result, stdout.String(), stderr.String(), err
+	}
+
+	suite.Run("output and exit code", func() {
+		result, stdout, stderr, err := exec(ctx, nil, false, "/bin/sh", "-c", "echo out; echo err >&2; exit 3")
+		suite.Require().NoError(err)
+
+		suite.Assert().Equal(3, result.ExitCode)
+		suite.Assert().Equal(instanceID, result.InstanceID)
+		suite.Assert().Equal("out\n", stdout)
+		suite.Assert().Equal("err\n", stderr)
+	})
+
+	suite.Run("stdin", func() {
+		result, stdout, _, err := exec(ctx, strings.NewReader("piped-data"), false, "/bin/cat")
+		suite.Require().NoError(err)
+
+		suite.Assert().Zero(result.ExitCode)
+		suite.Assert().Equal("piped-data", stdout)
+	})
+
+	suite.Run("container context", func() {
+		result, stdout, _, err := exec(ctx, nil, false, "/bin/sh", "-c", "cat /scratch/probe; id -u; id -g; grep '^CapEff:' /proc/self/status")
+		suite.Require().NoError(err)
+
+		suite.Assert().Zero(result.ExitCode)
+		// The container's own mounts, user and capabilities, which restricted has none of.
+		suite.Assert().Equal(fmt.Sprintf("container-ok\n%d\n%d\nCapEff:\t0000000000000000\n", uid, gid), stdout)
+	})
+
+	suite.Run("no shell", func() {
+		result, stdout, _, err := exec(ctx, nil, false, "/bin/echo", "direct")
+		suite.Require().NoError(err)
+
+		suite.Assert().Zero(result.ExitCode)
+		suite.Assert().Equal("direct\n", stdout)
+	})
+
+	suite.Run("terminal", func() {
+		result, stdout, stderr, err := exec(ctx, nil, true, "/bin/sh", "-c", "test -t 1 && echo tty-ok")
+		suite.Require().NoError(err)
+
+		suite.Assert().Zero(result.ExitCode)
+		suite.Assert().Contains(stdout, "tty-ok")
+		suite.Assert().Empty(stderr)
+	})
+
+	suite.Run("cancel ends the command", func() {
+		execCtx, cancel := context.WithCancel(ctx)
+
+		errC := make(chan error, 1)
+
+		go func() {
+			_, _, _, err := exec(execCtx, nil, false, "/bin/sleep", "3601")
+			errC <- err
+		}()
+
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			_, stdout, _, err := exec(ctx, nil, false, "/bin/ps", "-o", "args")
+			if !assert.NoError(collect, err) {
+				return
+			}
+
+			assert.Contains(collect, stdout, "sleep 3601")
+		}, time.Minute, time.Second)
+
+		cancel()
+
+		err := <-errC
+		suite.Require().Equal(codes.Canceled, status.Code(err), "error: %v", err)
+
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			_, stdout, _, err := exec(ctx, nil, false, "/bin/ps", "-o", "args")
+			if !assert.NoError(collect, err) {
+				return
+			}
+
+			assert.NotContains(collect, stdout, "sleep 3601")
+		}, time.Minute, time.Second)
+	})
+
+	suite.Run("unknown container", func() {
+		_, err := suite.Client.ContainerExec(ctx, &machine.DebugContainerExecRequestSpec{
+			Container: "no-such-container",
+			Args:      []string{"/bin/true"},
+		}, client.ContainerStreamOptions{})
+
+		suite.Require().Equal(codes.NotFound, status.Code(err), "error: %v", err)
+	})
 }
 
 // TestAllowMachinedAccess verifies that security.machinedAccess publishes the container's PID as a

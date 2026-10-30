@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/api"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 func collectMethods(t *testing.T) map[string]struct{} {
@@ -58,4 +59,13 @@ func TestRules(t *testing.T) {
 			assert.True(t, ok, "no rule for method %q", method)
 		}
 	})
+}
+
+// TestDebugRulesAdminOnly covers the debug APIs, which run commands on the node.
+func TestDebugRulesAdminOnly(t *testing.T) {
+	t.Parallel()
+
+	for _, method := range []string{"/machine.DebugService/ContainerRun", "/machine.DebugService/ContainerExec"} {
+		assert.Equal(t, role.MakeSet(role.Admin), rules[method], method)
+	}
 }
