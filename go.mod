@@ -4,16 +4,16 @@ go 1.27.0
 
 replace (
 	// forked to set O_CLOEXEC on device open and add SataDevice.CheckPowerMode (skip standby disks)
-	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c
+	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260723175002-53b369c3973c
 
 	// forked coredns so we don't carry caddy and other stuff into the Talos
-	github.com/coredns/coredns => github.com/siderolabs/coredns v1.15.0-sidero.1
+	github.com/coredns/coredns => github.com/siderolabs/coredns v1.15.0
 
 	// forked ethtool introduces missing APIs
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.1-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
@@ -27,38 +27,38 @@ replace (
 
 // Kubernetes dependencies sharing the same version.
 require (
-	cel.dev/cel-go v0.33.0
+	cel.dev/cel-go v0.33.2
 	cloud.google.com/go/compute/metadata v0.10.0
-	codeberg.org/miekg/dns v0.6.125
+	codeberg.org/miekg/dns v0.6.126
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.3
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.15.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.5.0
 	github.com/alexflint/go-filemutex v1.3.0
 	github.com/anatol/smart.go v0.0.0-20260913233941-486c28b93357
-	github.com/aws/aws-sdk-go-v2 v1.47.4
-	github.com/aws/aws-sdk-go-v2/config v1.33.11
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.4
-	github.com/aws/aws-sdk-go-v2/service/acm v1.50.6
-	github.com/aws/aws-sdk-go-v2/service/kms v1.62.0
-	github.com/aws/smithy-go v1.28.6
+	github.com/aws/aws-sdk-go-v2 v1.47.5
+	github.com/aws/aws-sdk-go-v2/config v1.33.13
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.5
+	github.com/aws/aws-sdk-go-v2/service/acm v1.51.1
+	github.com/aws/aws-sdk-go-v2/service/kms v1.62.2
+	github.com/aws/smithy-go v1.28.7
 	github.com/beevik/ntp v1.6.0
 	github.com/beevik/nts v0.3.3
 	github.com/blang/semver/v4 v4.0.0
 	github.com/bougou/go-ipmi v0.9.1
 	github.com/cenkalti/backoff/v7 v7.0.1
 	github.com/containerd/cgroups/v3 v3.1.3
-	github.com/containerd/containerd/api v1.11.1
-	github.com/containerd/containerd/v2 v2.3.7
+	github.com/containerd/containerd/api v1.12.0
+	github.com/containerd/containerd/v2 v2.4.2
 	github.com/containerd/errdefs v1.0.0
-	github.com/containerd/log v0.1.0
+	github.com/containerd/log v0.2.0
 	github.com/containerd/platforms v1.0.0-rc.5
 	github.com/containerd/typeurl/v2 v2.3.0
 	github.com/containernetworking/cni v1.3.1
 	github.com/containernetworking/plugins v1.9.1
 	github.com/coredns/coredns v1.15.0
 	github.com/coreos/go-iptables v0.8.0
-	github.com/cosi-project/runtime v1.16.3
+	github.com/cosi-project/runtime v1.16.4
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/digitalocean/go-libvirt v0.0.0-20261013170128-efbbdf578ac8
 	github.com/digitorus/pkcs7 v0.0.0-20260914070511-d678ea5ea03f
@@ -74,7 +74,7 @@ require (
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/g0rbe/go-chattr v1.0.1
-	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v3 v3.6.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.4
 	github.com/golang/mock v1.7.0-rc.1
@@ -94,7 +94,7 @@ require (
 	github.com/hetznercloud/hcloud-go/v2 v2.53.0
 	github.com/insomniacslk/dhcp v0.0.0-20261014062924-c6bb46ad3f3a
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260802200809-43bafec815b3
+	github.com/jsimonetti/rtnetlink/v2 9498c7a8aec5
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.20.3
 	github.com/klauspost/cpuid/v2 v2.4.1
@@ -120,7 +120,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.3.0
-	github.com/osrg/gobgp/v4 v4.10.1-0.20261020121312-57fa92f17f18
+	github.com/osrg/gobgp/v4 d234c86d3ad4
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/pin/tftp/v3 v3.2.0
@@ -145,7 +145,7 @@ require (
 	github.com/siderolabs/go-debug v0.6.3
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
-	github.com/siderolabs/go-kubernetes v0.2.43
+	github.com/siderolabs/go-kubernetes v0.2.44
 	github.com/siderolabs/go-lldp v0.1.0
 	github.com/siderolabs/go-loadbalancer v0.5.1
 	github.com/siderolabs/go-pcidb v0.3.4
@@ -154,7 +154,7 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/siderolabs/go-smbios v0.3.4
 	github.com/siderolabs/go-tail v0.1.1
-	github.com/siderolabs/go-talos-support v0.3.1
+	github.com/siderolabs/go-talos-support v0.3.2
 	github.com/siderolabs/grpc-proxy v0.5.2
 	github.com/siderolabs/kms-client v0.2.0
 	github.com/siderolabs/net v0.4.0
@@ -162,8 +162,8 @@ require (
 	github.com/siderolabs/siderolink v0.3.18
 	github.com/siderolabs/talos/pkg/machinery v1.15.0-alpha.2
 	github.com/sigstore/cosign/v3 v3.1.4
-	github.com/sigstore/sigstore v1.11.1
-	github.com/sigstore/sigstore-go v1.3.0
+	github.com/sigstore/sigstore v1.11.2
+	github.com/sigstore/sigstore-go v1.4.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -182,7 +182,7 @@ require (
 	go.uber.org/zap/exp v0.3.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.6
 	go4.org/netipx v0.0.0-20260823151212-3075585bcbeb
-	golang.org/x/net v0.61.0
+	golang.org/x/net v0.62.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sync v0.24.0
 	golang.org/x/sys v0.49.0
@@ -193,19 +193,19 @@ require (
 	google.golang.org/grpc v1.85.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/typ.v4 v4.4.0
-	k8s.io/api v0.38.0-alpha.2
-	k8s.io/apiextensions-apiserver v0.38.0-alpha.2
-	k8s.io/apimachinery v0.38.0-alpha.2
-	k8s.io/apiserver v0.38.0-alpha.2
-	k8s.io/client-go v0.38.0-alpha.2
-	k8s.io/component-base v0.38.0-alpha.2
-	k8s.io/cri-api v0.38.0-alpha.2
+	k8s.io/api v0.38.0-alpha.3
+	k8s.io/apiextensions-apiserver v0.38.0-alpha.3
+	k8s.io/apimachinery v0.38.0-alpha.3
+	k8s.io/apiserver v0.38.0-alpha.3
+	k8s.io/client-go v11.0.0+incompatible
+	k8s.io/component-base v0.38.0-alpha.3
+	k8s.io/cri-api v0.38.0-alpha.3
 	k8s.io/klog/v2 v2.140.0
-	k8s.io/kube-proxy v0.38.0-alpha.2
-	k8s.io/kube-scheduler v0.38.0-alpha.2
-	k8s.io/kubectl v0.38.0-alpha.2
-	k8s.io/kubelet v0.38.0-alpha.2
-	k8s.io/pod-security-admission v0.38.0-alpha.2
+	k8s.io/kube-proxy v0.38.0-alpha.3
+	k8s.io/kube-scheduler v0.38.0-alpha.3
+	k8s.io/kubectl v0.38.0-alpha.3
+	k8s.io/kubelet v0.38.0-alpha.3
+	k8s.io/pod-security-admission v0.38.0-alpha.3
 	k8s.io/utils v0.0.0-20261023123148-ca04ba58ecab
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	libvirt.org/go/libvirtxml v1.12008.0

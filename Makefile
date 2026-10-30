@@ -100,7 +100,7 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.27
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.49.1
+MARKDOWNLINTCLI_VERSION ?= 0.50.0
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -114,7 +114,7 @@ KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v4.3.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.20.1
+CILIUM_CLI_VERSION ?= v0.20.2
 # renovate: datasource=github-releases depName=cilium/cilium
 CILIUM_VERSION ?= v1.20.4
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
@@ -127,7 +127,7 @@ LIBVIRT_SHA256 ?= 0cd46a8f3a2b9b63c35c6e6f42a6c2989183ef3b3d1499ee92b4876db35e6f
 # https://github.com/gregkh/linux/commit/38c79dacc8063ff8a0d75ce2a900fbaff82ad94c
 # Keep the guest fixture on 3.24.2 until graceful reboot and shutdown qualify a newer image.
 # renovate: datasource=docker depName=alpine
-ALPINE_VERSION ?= 3.24.2
+ALPINE_VERSION ?= 3.24.3
 # Update the checksum with the image; mirrors of identical bytes can reuse it.
 ALPINE_ISO_SHA256 ?= 3ab424762af704b2c2a9e57df1dc37f982af260071504d977f2fb96822e7130b
 
