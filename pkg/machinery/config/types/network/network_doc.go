@@ -1998,7 +1998,7 @@ func (ResolverConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "nameservers",
 				Type:        "[]NameserverConfig",
 				Note:        "",
-				Description: "A list of nameservers (DNS servers) to use for resolving domain names.\n\nNameservers are used to resolve domain names on the host, and they are also\npropagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.\n\nThis overrides any nameservers obtained via DHCP or platform configuration.\nDefault configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.",
+				Description: "A list of nameservers (DNS servers) to use for resolving domain names.\n\nNameservers are used to resolve domain names on the host, and they are also\npropagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.\n\nThis overrides any nameservers obtained via DHCP or platform configuration.\nDefault configuration is to use 1.1.1.1, 8.8.8.8 (IPv4), and their IPv6\ncounterparts 2606:4700:4700::1111, 2001:4860:4860::8888 as nameservers.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of nameservers (DNS servers) to use for resolving domain names." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

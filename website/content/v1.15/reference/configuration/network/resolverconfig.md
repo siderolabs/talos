@@ -80,7 +80,7 @@ nameservers:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`nameservers` |<a href="#ResolverConfig.nameservers.">[]NameserverConfig</a> |A list of nameservers (DNS servers) to use for resolving domain names.<br><br>Nameservers are used to resolve domain names on the host, and they are also<br>propagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.<br><br>This overrides any nameservers obtained via DHCP or platform configuration.<br>Default configuration is to use 1.1.1.1 and 8.8.8.8 as nameservers.  | |
+|`nameservers` |<a href="#ResolverConfig.nameservers.">[]NameserverConfig</a> |A list of nameservers (DNS servers) to use for resolving domain names.<br><br>Nameservers are used to resolve domain names on the host, and they are also<br>propagated to Kubernetes DNS (CoreDNS) for use by pods running on the cluster.<br><br>This overrides any nameservers obtained via DHCP or platform configuration.<br>Default configuration is to use 1.1.1.1, 8.8.8.8 (IPv4), and their IPv6<br>counterparts 2606:4700:4700::1111, 2001:4860:4860::8888 as nameservers.  | |
 |`searchDomains` |<a href="#ResolverConfig.searchDomains">SearchDomainsConfig</a> |Configuration for search domains (in /etc/resolv.conf).<br><br>The default is to derive search domains from the hostname FQDN.  | |
 |`hostDNS` |<a href="#ResolverConfig.hostDNS">HostDNSConfig</a> |Configuration for host DNS resolver.<br><br>This configures a local DNS caching resolver on the host to improve DNS resolution performance and reliability.  | |
 
