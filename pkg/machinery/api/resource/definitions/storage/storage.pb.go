@@ -201,9 +201,23 @@ type LVMLogicalVolumeStatusSpec struct {
 	Tags []string `protobuf:"bytes,35,rep,name=tags,proto3" json:"tags,omitempty"`
 	// PrettySize is the human-readable rendering of Size; empty when Size is
 	// not a byte count.
-	PrettySize    string `protobuf:"bytes,36,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	PrettySize string `protobuf:"bytes,36,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	// CopyPercent is the raw copy_percent column: the sync progress of a raid
+	// or mirror LV ("0.00" to "100.00"); empty for other layouts.
+	CopyPercent string `protobuf:"bytes,37,opt,name=copy_percent,json=copyPercent,proto3" json:"copy_percent,omitempty"`
+	// HealthStatus is the raw lv_health_status column ("partial" /
+	// "refresh needed" / "mismatches exist" / "").
+	HealthStatus string `protobuf:"bytes,38,opt,name=health_status,json=healthStatus,proto3" json:"health_status,omitempty"`
+	// Attr is the raw lv_attr column.
+	Attr string `protobuf:"bytes,39,opt,name=attr,proto3" json:"attr,omitempty"`
+	// RaidSyncAction is the raw raid_sync_action column ("idle" / "frozen" /
+	// "resync" / "recover" / "check" / "repair" / ""); empty for non-raid LVs.
+	RaidSyncAction string `protobuf:"bytes,40,opt,name=raid_sync_action,json=raidSyncAction,proto3" json:"raid_sync_action,omitempty"`
+	// RaidMismatchCount is the raw raid_mismatch_count column: mismatches
+	// found by the last check or repair; empty for non-raid LVs.
+	RaidMismatchCount string `protobuf:"bytes,41,opt,name=raid_mismatch_count,json=raidMismatchCount,proto3" json:"raid_mismatch_count,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *LVMLogicalVolumeStatusSpec) Reset() {
@@ -484,6 +498,41 @@ func (x *LVMLogicalVolumeStatusSpec) GetTags() []string {
 func (x *LVMLogicalVolumeStatusSpec) GetPrettySize() string {
 	if x != nil {
 		return x.PrettySize
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeStatusSpec) GetCopyPercent() string {
+	if x != nil {
+		return x.CopyPercent
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeStatusSpec) GetHealthStatus() string {
+	if x != nil {
+		return x.HealthStatus
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeStatusSpec) GetAttr() string {
+	if x != nil {
+		return x.Attr
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeStatusSpec) GetRaidSyncAction() string {
+	if x != nil {
+		return x.RaidSyncAction
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeStatusSpec) GetRaidMismatchCount() string {
+	if x != nil {
+		return x.RaidMismatchCount
 	}
 	return ""
 }
@@ -1787,7 +1836,8 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"size_bytes\x18\x04 \x01(\x04R\tsizeBytes\x12&\n" +
 	"\x0fsize_percent_vg\x18\x05 \x01(\rR\rsizePercentVg\x12\x18\n" +
 	"\amirrors\x18\x06 \x01(\rR\amirrors\x12\x18\n" +
-	"\astripes\x18\a \x01(\rR\astripes\"\xdd\b\n" +
+	"\astripes\x18\a \x01(\rR\astripes\"\x93\n" +
+	"\n" +
 	"\x1aLVMLogicalVolumeStatusSpec\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x17\n" +
 	"\adm_path\x18\x02 \x01(\tR\x06dmPath\x12\x12\n" +
@@ -1834,7 +1884,12 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\twhen_full\x18\" \x01(\tR\bwhenFull\x12\x12\n" +
 	"\x04tags\x18# \x03(\tR\x04tags\x12\x1f\n" +
 	"\vpretty_size\x18$ \x01(\tR\n" +
-	"prettySize\"L\n" +
+	"prettySize\x12!\n" +
+	"\fcopy_percent\x18% \x01(\tR\vcopyPercent\x12#\n" +
+	"\rhealth_status\x18& \x01(\tR\fhealthStatus\x12\x12\n" +
+	"\x04attr\x18' \x01(\tR\x04attr\x12(\n" +
+	"\x10raid_sync_action\x18( \x01(\tR\x0eraidSyncAction\x12.\n" +
+	"\x13raid_mismatch_count\x18) \x01(\tR\x11raidMismatchCount\"L\n" +
 	"\x19LVMPhysicalVolumeSpecSpec\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x12\x17\n" +
 	"\avg_name\x18\x02 \x01(\tR\x06vgName\"\xb7\x04\n" +
