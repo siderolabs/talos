@@ -4,8 +4,23 @@
 
 package domain
 
+// DefinitionDigests is the full and profile-independent digests of a rendered domain.
+type DefinitionDigests struct {
+	Full          string
+	Configuration string
+}
+
+// DomainDefinition renders the definition of d and returns its text and digests.
+func DomainDefinition(d Domain, renderedXML string) (string, DefinitionDigests, error) {
+	def, err := domainDefinition(d, renderedXML)
+	if err != nil {
+		return "", DefinitionDigests{}, err
+	}
+
+	return def.text, DefinitionDigests{Full: def.full, Configuration: def.configuration}, nil
+}
+
 var (
-	DomainDefinition = domainDefinition
-	OpenVNCConn      = (*Connector).openVNCConn
-	VNCSocket        = vncSocket
+	OpenVNCConn = (*Connector).openVNCConn
+	VNCSocket   = vncSocket
 )

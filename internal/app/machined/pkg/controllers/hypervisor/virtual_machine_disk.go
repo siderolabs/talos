@@ -258,7 +258,7 @@ func stampDiskStatus(
 		status.Image = *image
 	}
 
-	if disk.Provision.Blank {
+	if provisionsVolume(disk) {
 		status.Blank = true
 		status.Pool = disk.Pool
 
@@ -359,7 +359,14 @@ func (ctrl *VirtualMachineDiskController) progressDisk(
 		}, err
 	}
 
-	if disk.Provision.Blank {
+	// An empty drive resolves to no host source at all, so it holds neither a library nor a volume:
+	// the guest is shown a cdrom with its tray open. Checked before both lookups, which have nothing
+	// to look up.
+	if isEmptyDrive(disk) {
+		return disks.ObserveEmptyDrive(), nil
+	}
+
+	if provisionsVolume(disk) {
 		request, err := ctrl.requestBlankVolume(ctx, r, name, disk, pass)
 		if err != nil {
 			return hypervisor.VirtualMachineDiskStatusSpec{
@@ -403,11 +410,11 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 
 	switch disk.Type {
 	case hypervisorhelpers.VirtualMachineDiskTypeCDROM.String():
-		switch {
-		case disk.Provision.Blank:
-			return fmt.Errorf("%w: a cdrom has no contents of its own", errDiskUnsupported)
-		case disk.Provision.FromImage == nil:
-			return fmt.Errorf("%w: a cdrom requires provision.fromImage", errDiskUnsupported)
+		// A blank cdrom is an empty drive: no volume, no medium, its tray open.
+		if disk.Provision.FromImage == nil && !disk.Provision.Blank {
+			// Machine configuration validation already requires one of the two of a cdrom; check anyway,
+			// so the status is the whole truth about a disk rather than a partial one.
+			return fmt.Errorf("%w: a cdrom requires provision.fromImage or provision.blank", errDiskUnsupported)
 		}
 
 		return nil
@@ -422,6 +429,17 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 	default:
 		return fmt.Errorf("%w: unsupported type %q", errDiskUnsupported, disk.Type)
 	}
+}
+
+// isEmptyDrive reports whether a disk is a cdrom with no medium in it: one provisioned blank.
+func isEmptyDrive(disk hypervisor.VirtualMachineDiskSpec) bool {
+	return disk.Type == hypervisorhelpers.VirtualMachineDiskTypeCDROM.String() && disk.Provision.Blank
+}
+
+// provisionsVolume reports whether a disk is backed by a blank volume in a storage pool. A blank
+// cdrom is not: it is an empty drive, and there is nothing to provision for it.
+func provisionsVolume(disk hypervisor.VirtualMachineDiskSpec) bool {
+	return disk.Provision.Blank && !isEmptyDrive(disk)
 }
 
 // checkBlankDiskSupported reports whether a blank disk describes a volume that can be made.

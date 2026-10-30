@@ -51,6 +51,19 @@ func ObserveImage(
 	}, nil
 }
 
+// ObserveEmptyDrive is a cdrom with no medium in it.
+//
+// Format and ReadOnly match what a loaded drive resolves to, and they have to: the definition of a
+// loaded and an empty drive differ only in the source element, which is what lets the medium be
+// changed on a running domain instead of restarting it.
+func ObserveEmptyDrive() hypervisor.VirtualMachineDiskStatusSpec {
+	return hypervisor.VirtualMachineDiskStatusSpec{
+		Format:   rawDiskFormat,
+		ReadOnly: true,
+		Phase:    hypervisor.VirtualMachineDiskPhaseReady,
+	}
+}
+
 // checkLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
 func checkLibraryFile(libraryPath, name, expected string) error {
 	root, err := os.OpenRoot(libraryPath)

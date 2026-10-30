@@ -212,13 +212,13 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// render, so an observed domain is on its way out: that obstacle outranks its apparent
 		// readiness. Rendering here rather than reading the obstacle off the domain spec keeps
 		// the reason legible even before a domain spec exists.
-		domainXML, attachedDisks, seedID, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
+		rendered, renderErr := renderVirtualMachineDomainWithSeed(ctx, runtime, name, spec.TypedSpec(), links, resolvedDisks)
 
 		// Placement is checked on the exact rendered definition, as VirtualMachineController admits
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
 		// running, and only its next start or replacement is held back.
 		if renderErr == nil && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
-			renderErr = validateDomainPlacement(name, domainXML, topology)
+			renderErr = validateDomainPlacement(name, rendered.DomainXML, topology)
 		}
 
 		definition := definitions[name]
@@ -232,7 +232,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		}
 
 		status := composeVirtualMachineStatus(&effective, stopMode, name, released, machineUUID, machineErr, renderErr, byName[name])
-		setVirtualMachineStatusGeneration(&status, &effective, generation, definition, domainXML, attachedDisks, seedID)
+		setVirtualMachineStatusGeneration(&status, &effective, generation, definition, rendered)
 
 		if writeErr := safe.WriterModify(ctx, runtime,
 			hypervisor.NewVirtualMachineStatus(hypervisor.NamespaceName, name),
@@ -250,13 +250,13 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 }
 
 func setVirtualMachineStatusGeneration(status *hypervisor.VirtualMachineStatusSpec, effective *hypervisor.VirtualMachineSpecSpec,
-	generation string, definition *hypervisor.VirtualMachineDomainSpec, domainXML string, attachedDisks []string, seedID string,
+	generation string, definition *hypervisor.VirtualMachineDomainSpec, rendered renderedDomain,
 ) {
 	status.ObservedGeneration = generation
 
 	if status.Stage == hypervisorhelpers.VirtualMachineStageReady && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() &&
 		(definition == nil || definition.TypedSpec().ObservedGeneration != generation ||
-			!matchesVMStartIntent(definition.TypedSpec(), domainXML, attachedDisks, seedID, effective.PowerState)) {
+			!matchesVMStartIntent(definition.TypedSpec(), rendered, effective.PowerState)) {
 		status.Stage = hypervisorhelpers.VirtualMachineStagePending
 		status.Error = "domain definition has not caught up"
 	}
