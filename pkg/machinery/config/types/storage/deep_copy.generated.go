@@ -9,6 +9,10 @@ package storage
 // DeepCopy generates a deep copy of *LVMVolumeGroupConfigV1Alpha1.
 func (o *LVMVolumeGroupConfigV1Alpha1) DeepCopy() *LVMVolumeGroupConfigV1Alpha1 {
 	var cp LVMVolumeGroupConfigV1Alpha1 = *o
+	if o.ProvisioningSpec.Parents != nil {
+		cp.ProvisioningSpec.Parents = make([]ProvisioningVolumeParent, len(o.ProvisioningSpec.Parents))
+		copy(cp.ProvisioningSpec.Parents, o.ProvisioningSpec.Parents)
+	}
 	return &cp
 }
 

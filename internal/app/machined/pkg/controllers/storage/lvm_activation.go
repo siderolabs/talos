@@ -19,13 +19,31 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// LVMActivationController activates discovered LVM volume groups.
+// LVMActivator is an interface used for testing.
+type LVMActivator interface {
+	PVScanAutoActivation(ctx context.Context, devicePath string) (map[string]string, error)
+	VGChangeActivate(ctx context.Context, vgName string) error
+}
+
+// LVMActivationController activates LVM volume groups that Talos did not
+// create itself - i.e. ones found pre-existing on disk, the same scope this
+// controller had before declarative LVM provisioning was introduced.
+//
+// A VG backed by a LVMVolumeGroupConfig is left alone entirely:
+// LVMVolumeGroupReconcileController owns its whole lifecycle (creation via
+// vgcreate, which activates it as an ordinary side effect of the LVM tooling
+// itself). This controller has no way to know what a foreign VG's backing
+// devices actually are or what else might depend on them, so it doesn't
+// place a finalizer on anything and doesn't participate in teardown -
+// activation only, for volumes fully outside Talos's own declared state.
 type LVMActivationController struct {
 	V1Alpha1Mode machineruntime.Mode
-	LVM          *lvm.LVM
+	LVM          LVMActivator
 
 	seenVolumes  map[string]struct{}
 	activatedVGs map[string]struct{}
@@ -47,13 +65,28 @@ func (ctrl *LVMActivationController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeStatusType,
-			ID:        optional.Some(constants.MetaPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        optional.Some("udevd"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.LVMVolumeGroupSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.LVMPhysicalVolumeSpecType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -64,7 +97,7 @@ func (ctrl *LVMActivationController) Outputs() []controller.Output {
 	return nil
 }
 
-// preconditions wait for udevd and META.
+// preconditions wait for udevd, META, and the machine config to be loaded.
 func (ctrl *LVMActivationController) preconditions(ctx context.Context, r controller.Reader, logger *zap.Logger) (bool, error) {
 	udevdService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "udevd")
 	if err != nil && !state.IsNotFoundError(err) {
@@ -100,12 +133,20 @@ func (ctrl *LVMActivationController) preconditions(ctx context.Context, r contro
 		return false, nil
 	}
 
+	if _, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID); err != nil {
+		if state.IsNotFoundError(err) {
+			logger.Debug("machine config not loaded yet")
+
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get machine config: %w", err)
+	}
+
 	return true, nil
 }
 
 // Run implements controller.Controller interface.
-//
-//nolint:gocyclo,cyclop
 func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.seenVolumes == nil {
 		ctrl.seenVolumes = map[string]struct{}{}
@@ -136,17 +177,47 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 			continue
 		}
 
+		if err := ctrl.reconcileNewActivations(ctx, r, logger); err != nil {
+			return err
+		}
+	}
+}
+
+// reconcileNewActivations looks for complete LVM volume groups that Talos
+// did not declare itself, and activates them if not already active.
+func (ctrl *LVMActivationController) reconcileNewActivations(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	{
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 		if err != nil {
 			return fmt.Errorf("failed to list discovered volumes: %w", err)
 		}
 
+		pendingDevices, err := ctrl.pendingPVDevices(ctx, r)
+		if err != nil {
+			return err
+		}
+
+		managedVGs, err := ctrl.managedVGNames(ctx, r)
+		if err != nil {
+			return err
+		}
+
 		var multiErr error
 
 		for dv := range discoveredVolumes.All() {
+			_, pending := pendingDevices[dv.TypedSpec().DevPath]
+
+			if pending {
+				// This volume is pending to be provisioned as a PV - keep
+				// re-checking it rather than writing it off as non-LVM.
+				delete(ctrl.seenVolumes, dv.Metadata().ID())
+			}
+
 			if dv.TypedSpec().Name != "lvm2-pv" {
-				// Only activate pre-existing LVM volumes, not ones just formatted.
-				ctrl.seenVolumes[dv.Metadata().ID()] = struct{}{}
+				if !pending {
+					// Keep track of pre-existing non-LVM volumes and ones just formatted.
+					ctrl.seenVolumes[dv.Metadata().ID()] = struct{}{}
+				}
 
 				continue
 			}
@@ -168,11 +239,20 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 				continue
 			}
 
+			if _, ok := managedVGs[vgName]; ok {
+				// A VG managed by LVMVolumeGroupReconcileController.
+				// ????Q: Deliberately not marked seen, so this keeps
+				// getting rechecked - if the LVMVolumeGroupConfig is later
+				// removed, this VG should fall back to being treated as foreign
+				// rather than being left with nobody managing it.
+				continue
+			}
+
 			if _, ok := ctrl.activatedVGs[vgName]; ok {
 				continue
 			}
 
-			logger.Info("activating LVM volume", zap.String("name", vgName))
+			logger.Info("activating foreign LVM volume group", zap.String("name", vgName))
 
 			if err = ctrl.LVM.VGChangeActivate(ctx, vgName); err != nil {
 				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to activate LVM volume %s: %w", vgName, err))
@@ -184,7 +264,46 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 		if multiErr != nil {
 			return multiErr
 		}
+
+		return nil
 	}
+}
+
+// pendingPVDevices returns the set of device paths claimed by any current
+// storage.LVMPhysicalVolumeSpec, including current and pending PVs.
+func (ctrl *LVMActivationController) pendingPVDevices(ctx context.Context, r controller.Reader) (map[string]struct{}, error) {
+	pvSpecs, err := safe.ReaderListAll[*storage.LVMPhysicalVolumeSpec](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list LVMPhysicalVolumeSpec: %w", err)
+	}
+
+	devices := make(map[string]struct{})
+
+	for pv := range pvSpecs.All() {
+		devices[pv.TypedSpec().Device] = struct{}{}
+	}
+
+	return devices, nil
+}
+
+// managedVGNames returns the set of VG names declared via
+// LVMVolumeGroupConfig (surfaced as LVMVolumeGroupSpec, one per doc,
+// regardless of whether any PVs have matched it yet).
+// LVMVolumeGroupReconcileController owns activation for these; this
+// controller only ever activates VGs outside this set.
+func (ctrl *LVMActivationController) managedVGNames(ctx context.Context, r controller.Reader) (map[string]struct{}, error) {
+	vgSpecs, err := safe.ReaderListAll[*storage.LVMVolumeGroupSpec](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list LVMVolumeGroupSpec: %w", err)
+	}
+
+	names := make(map[string]struct{}, vgSpecs.Len())
+
+	for vg := range vgSpecs.All() {
+		names[vg.TypedSpec().Name] = struct{}{}
+	}
+
+	return names, nil
 }
 
 // checkVGNeedsActivation returns VG name if auto-activation is needed.
