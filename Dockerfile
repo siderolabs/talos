@@ -20,6 +20,7 @@ ARG PKG_CONTAINERD=scratch
 ARG PKG_CPIO=scratch
 ARG PKG_CRYPTSETUP=scratch
 ARG PKG_DOSFSTOOLS=scratch
+ARG PKG_DTC=scratch
 ARG PKG_E2FSPROGS=scratch
 ARG PKG_FHS=scratch
 ARG PKG_FLANNEL_CNI=scratch
@@ -217,6 +218,7 @@ FROM --platform=arm64 ${PKG_ZSTD} AS pkg-zstd-arm64
 
 FROM ${PKG_CPIO} AS pkg-cpio
 FROM ${PKG_DOSFSTOOLS} AS pkg-dosfstools
+FROM ${PKG_DTC} AS pkg-dtc
 FROM ${PKG_E2FSPROGS} AS pkg-e2fsprogs
 FROM ${PKG_GLIB} AS pkg-glib
 FROM ${PKG_KMOD} AS pkg-kmod
@@ -1243,6 +1245,10 @@ ENTRYPOINT ["/bin/installer"]
 # It has the boot artifacts and tools to build any requested talos image with desired modifications and system extensions.
 # Imager is meant to be run outside of talos and the talos installation flow.
 FROM installer-base-image-squashed AS imager-image
+# fdtoverlay (from the dtc package) merges device tree overlays (.dtbo) onto a
+# base DTB when the imager builds a UKI with an overlay-provided, measured
+# device tree. It is a generic libfdt tool, not board-specific.
+COPY --link --exclude=**/*.a --exclude=**/*.la --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-dtc / /
 COPY --link --from=pkg-cpio / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/lib/pkgconfig --from=pkg-e2fsprogs / /
 COPY --link --exclude=**/*.a --exclude=**/*.la --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-glib / /

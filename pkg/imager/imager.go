@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -432,6 +433,127 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 	return nil
 }
 
+// isFDT reports whether b begins with the flattened device tree magic
+// (0xd00dfeed), i.e. it is already a compiled .dtb/.dtbo rather than .dts source.
+func isFDT(b []byte) bool {
+	return len(b) >= 4 && b[0] == 0xd0 && b[1] == 0x0d && b[2] == 0xfe && b[3] == 0xed
+}
+
+// overlayDeviceTree resolves the device tree the overlay wants embedded in the
+// UKI. It returns an empty path when the overlay asks for none, the base blob
+// when nothing has to be merged on top of it, and otherwise the merged result.
+func (i *Imager) overlayDeviceTree(ctx context.Context) (string, error) {
+	if i.overlayInstaller == nil {
+		return "", nil
+	}
+
+	options, err := i.overlayInstaller.GetOptions(ctx, i.prof.Overlay.ExtraOptions)
+	if err != nil {
+		return "", err
+	}
+
+	if options.DeviceTree == "" {
+		return "", nil
+	}
+
+	artifactsDir := filepath.Join(i.tempDir, constants.ImagerOverlayArtifactsPath)
+	base := filepath.Join(artifactsDir, options.DeviceTree)
+
+	if len(options.DeviceTreeOverlays) == 0 && len(options.DeviceTreeOverlaysInline) == 0 {
+		return base, nil
+	}
+
+	return i.mergeDeviceTreeOverlays(ctx, artifactsDir, base, options)
+}
+
+// mergeDeviceTreeOverlays applies the overlay-selected .dtbo files, and any
+// passed inline, on top of base with the imager's bundled fdtoverlay.
+func (i *Imager) mergeDeviceTreeOverlays(ctx context.Context, artifactsDir, base string, options overlay.Options) (string, error) {
+	merged := filepath.Join(i.tempDir, "uki.dtb")
+	args := []string{"-i", base, "-o", merged}
+
+	for _, ov := range options.DeviceTreeOverlays {
+		resolved := filepath.Join(artifactsDir, ov)
+
+		info, err := os.Stat(resolved)
+		if err != nil {
+			return "", fmt.Errorf("device tree overlay %q: %w", ov, err)
+		}
+
+		// A directory entry applies every .dtbo it contains (lexical order). This
+		// lets an artifact ship a set of overlays under a conventional path and
+		// have them all merged, without the overlay installer naming each file.
+		if info.IsDir() {
+			dtbos, globErr := filepath.Glob(filepath.Join(resolved, "*.dtbo"))
+			if globErr != nil {
+				return "", globErr
+			}
+
+			args = append(args, dtbos...)
+
+			continue
+		}
+
+		args = append(args, resolved)
+	}
+
+	for idx, blob := range options.DeviceTreeOverlaysInline {
+		dtboPath, err := i.writeInlineDeviceTreeOverlay(ctx, idx, blob)
+		if err != nil {
+			return "", err
+		}
+
+		args = append(args, dtboPath)
+	}
+
+	// fdtoverlay is bundled in the imager image (built from dtc); it is a
+	// generic libfdt tool, not board-specific.
+	cmd := exec.CommandContext(ctx, "fdtoverlay", args...)
+
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("failed to apply device tree overlays: %w: %s", err, out)
+	}
+
+	return merged, nil
+}
+
+// writeInlineDeviceTreeOverlay materializes one inline overlay blob as a .dtbo
+// under the imager's temporary directory, returning its path.
+//
+// Inline overlays are accepted either as a compiled .dtbo (flattened device
+// tree magic) or as .dts source, which is compiled here with the imager's
+// bundled dtc. Source keeps overlays human-readable when passed through the CLI
+// or a profile, instead of an opaque precompiled blob.
+func (i *Imager) writeInlineDeviceTreeOverlay(ctx context.Context, idx int, blob []byte) (string, error) {
+	dtboPath := filepath.Join(i.tempDir, fmt.Sprintf("uki-inline-%d.dtbo", idx))
+
+	if isFDT(blob) {
+		if err := os.WriteFile(dtboPath, blob, 0o600); err != nil {
+			return "", err
+		}
+
+		return dtboPath, nil
+	}
+
+	dtsPath := filepath.Join(i.tempDir, fmt.Sprintf("uki-inline-%d.dts", idx))
+
+	if err := os.WriteFile(dtsPath, blob, 0o600); err != nil {
+		return "", err
+	}
+
+	// -@ keeps symbols so the overlay can resolve labels in the base DTB. dtc
+	// ships alongside fdtoverlay in the bundled dtc package. Inline source must
+	// be self-contained (no cpp includes); overlays needing includes can be
+	// passed precompiled as a .dtbo instead.
+	cmd := exec.CommandContext(ctx, "dtc", "-@", "-I", "dts", "-O", "dtb", "-o", dtboPath, dtsPath)
+
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return "", fmt.Errorf("failed to compile inline device tree overlay %d: %w: %s", idx, err, out)
+	}
+
+	return dtboPath, nil
+}
+
 // buildUKI assembles the UKI and signs it.
 func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error {
 	printf := progressPrintf(report, reporter.Update{Message: "building UKI...", Status: reporter.StatusRunning})
@@ -452,6 +574,15 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 		OutSdBootPath: i.sdBootPath,
 		OutUKIPath:    i.ukiPath,
 	}
+
+	// embed the overlay-provided device tree (measured) into the UKI, so the
+	// kernel gets a signed/measured DTB instead of the mutable firmware one.
+	dtbPath, err := i.overlayDeviceTree(ctx)
+	if err != nil {
+		return err
+	}
+
+	builder.DTBPath = dtbPath
 
 	switch i.prof.Output.Kind { //nolint:exhaustive
 	case profile.OutKindISO:
