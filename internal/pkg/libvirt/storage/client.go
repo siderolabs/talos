@@ -42,13 +42,17 @@ func New(socket, uri string) *Connector {
 // Open bounds dialing, the handshake, RPCs and graceful disconnect with one
 // timeout context. Cancellation closes the transport because go-libvirt RPCs
 // do not accept a context.
-func (c *Connector) Open(ctx context.Context) (EvidenceClient, error) {
-	return c.OpenWithTimeout(ctx, operationTimeout)
+func (c *Connector) Open(ctx context.Context) (PoolClient, error) {
+	return c.openWithTimeout(ctx, operationTimeout)
 }
 
-// OpenWithTimeout is Open with an explicit session budget, for callers whose work does not fit the
-// default one.
-func (c *Connector) OpenWithTimeout(ctx context.Context, timeout time.Duration) (EvidenceClient, error) {
+// OpenVolumes opens a volume session with the budget provisioning needs.
+func (c *Connector) OpenVolumes(ctx context.Context) (VolumeClient, error) {
+	return c.openWithTimeout(ctx, VolumeOperationTimeout)
+}
+
+// openWithTimeout bounds the shared transport session.
+func (c *Connector) openWithTimeout(ctx context.Context, timeout time.Duration) (*Client, error) {
 	sessionCtx, cancel := context.WithTimeout(ctx, timeout)
 
 	conn, err := (&net.Dialer{}).DialContext(sessionCtx, "unix", c.socket)
@@ -63,9 +67,9 @@ func (c *Connector) OpenWithTimeout(ctx context.Context, timeout time.Duration) 
 
 // OpenConn connects over an already-connected transport for this connector.
 // It takes ownership of conn and cancel; ctx must bound the full session.
-func (c *Connector) OpenConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (EvidenceClient, error) {
+func (c *Connector) OpenConn(ctx context.Context, conn net.Conn, cancel context.CancelFunc) (*Client, error) {
 	rpc := libvirt.NewWithDialer(dialers.NewAlreadyConnected(conn))
-	client := &client{conn: conn, rpc: rpc, cancel: cancel}
+	client := &Client{conn: conn, rpc: rpc, cancel: cancel}
 
 	client.stopClose = context.AfterFunc(ctx, func() { closeTransport(conn) })
 	if err := rpc.ConnectToURI(libvirt.ConnectURI(c.uri)); err != nil {
@@ -146,32 +150,22 @@ func (e *mutationEvidence) record(err error) {
 	}
 }
 
-// Client is a bounded session; callers must Close it after each reconciliation.
-// A fresh connection on each pass avoids retaining poisoned RPC connections.
-type Client interface {
+// PoolClient is a bounded pool session closed after reconciliation.
+type PoolClient interface {
 	Pools() ([]Pool, error)
-	Ensure(Pool, string, func() error) error
-	Remove(Pool) error
-	Stop(Pool) error
-
-	// Volume looks a volume up within a pool. There is deliberately no verb which deletes one: a
-	// volume outlives the configuration that asked for it, exactly as a pool's contents outlive the
-	// pool, and nothing on this interface can take a guest's data away.
-	Volume(Pool, string) (Volume, bool, error)
-	CreateVolume(Pool, string, string, uint64, string, string) (Volume, error)
-	ResizeVolume(Pool, string, uint64) error
-
-	Close()
-}
-
-// EvidenceClient exposes per-invocation outcomes without changing legacy Client fakes.
-// Callers needing a safe fence must use these methods, not infer it from Client errors.
-type EvidenceClient interface {
-	Client
 	EnsureOperation(Pool, string, func() error) (OperationOutcome, error)
 	RemoveOperation(Pool) (OperationOutcome, error)
 	StopOperation(Pool) (OperationOutcome, error)
+	Close()
+}
+
+// VolumeClient provides provisioning and evidence, deliberately without deletion.
+type VolumeClient interface {
+	Volume(Pool, string) (Volume, bool, error)
+	CreateVolume(Pool, string, string, uint64, string, string) (Volume, error)
+	CopyVolume(Pool, string, string, string) (Volume, error)
 	ResizeVolumeOperation(Pool, string, uint64) (OperationOutcome, error)
+	Close()
 }
 
 //nolint:interfacebloat // libvirt's own RPC surface; it is mirrored here, not designed here.
@@ -196,7 +190,8 @@ type poolRPC interface {
 	StorageVolResize(libvirt.StorageVol, uint64, libvirt.StorageVolResizeFlags) error
 }
 
-type client struct {
+// Client is a bounded session with the libvirt storage daemon.
+type Client struct {
 	rpc        poolRPC
 	conn       net.Conn
 	cancel     context.CancelFunc
@@ -204,7 +199,8 @@ type client struct {
 	disconnect func() error
 }
 
-func (c *client) Close() {
+// Close disconnects the session and closes its transport.
+func (c *Client) Close() {
 	// Keep the session timer/cancellation callback armed while Disconnect waits
 	// for its reply. On any error (or deadline) the transport is still closed.
 	defer closeTransport(c.conn)
@@ -224,7 +220,8 @@ func closeTransport(conn net.Conn) {
 	conn.Close() //nolint:errcheck
 }
 
-func (c *client) Pools() ([]Pool, error) {
+// Pools lists the storage daemon's pools.
+func (c *Client) Pools() ([]Pool, error) {
 	// Flags 0 lists every pool: an owned orphan may be active or inactive.
 	pools, _, err := c.rpc.ConnectListAllStoragePools(1, 0)
 	if err != nil {
@@ -270,7 +267,7 @@ func (c *client) Pools() ([]Pool, error) {
 	return result, nil
 }
 
-func (c *client) target(p libvirt.StoragePool) (string, error) {
+func (c *Client) target(p libvirt.StoragePool) (string, error) {
 	text, err := c.rpc.StoragePoolGetXMLDesc(p, 0)
 	if err != nil {
 		return "", err
@@ -288,7 +285,7 @@ func (c *client) target(p libvirt.StoragePool) (string, error) {
 	return desc.Target.Path, nil
 }
 
-func (c *client) lookup(pool Pool) (libvirt.StoragePool, bool, error) {
+func (c *Client) lookup(pool Pool) (libvirt.StoragePool, bool, error) {
 	p, err := c.rpc.StoragePoolLookupByName(pool.Name)
 	if err != nil {
 		if rpcErr, ok := errors.AsType[libvirt.Error](err); ok && rpcErr.Code == uint32(libvirt.ErrNoStoragePool) {
@@ -305,17 +302,11 @@ func (c *client) lookup(pool Pool) (libvirt.StoragePool, bool, error) {
 	return p, true, nil
 }
 
-// Ensure disables libvirt autostart: only Talos may activate after the mount
-// hold exists. prepare must create only the pool directory, on a held mount.
-func (c *client) Ensure(pool Pool, target string, prepare func() error) error {
-	_, err := c.EnsureOperation(pool, target, prepare)
-
-	return err
-}
-
 // EnsureOperation returns evidence for every mutating RPC in this invocation.
 // A matching inactive pool is activated without destructive stop/redefine.
-func (c *client) EnsureOperation(pool Pool, target string, prepare func() error) (OperationOutcome, error) {
+// It disables libvirt autostart: only Talos may activate after the mount hold exists.
+// prepare must create only the pool directory, on a held mount.
+func (c *Client) EnsureOperation(pool Pool, target string, prepare func() error) (OperationOutcome, error) {
 	var evidence mutationEvidence
 
 	p, exists, err := c.lookup(pool)
@@ -363,7 +354,7 @@ func (c *client) EnsureOperation(pool Pool, target string, prepare func() error)
 	return evidence.outcome, nil
 }
 
-func (c *client) define(pool Pool, target string) (libvirt.StoragePool, error) {
+func (c *Client) define(pool Pool, target string) (libvirt.StoragePool, error) {
 	desc := libvirtxml.StoragePool{
 		Type:   "dir",
 		Name:   pool.Name,
@@ -380,7 +371,7 @@ func (c *client) define(pool Pool, target string) (libvirt.StoragePool, error) {
 }
 
 // prepareExisting disables daemon autostart and stops a pool before redefining it.
-func (c *client) prepareExisting(p libvirt.StoragePool, target string, evidence *mutationEvidence) (bool, error) {
+func (c *Client) prepareExisting(p libvirt.StoragePool, target string, evidence *mutationEvidence) (bool, error) {
 	text, err := c.rpc.StoragePoolGetXMLDesc(p, 0)
 	if err != nil {
 		return false, err
@@ -415,7 +406,7 @@ func (c *client) prepareExisting(p libvirt.StoragePool, target string, evidence 
 }
 
 // disableAutostart records the reply only when a mutation was submitted.
-func (c *client) disableAutostart(p libvirt.StoragePool, evidence *mutationEvidence) error {
+func (c *Client) disableAutostart(p libvirt.StoragePool, evidence *mutationEvidence) error {
 	// An unchanged healthy pool needs no mutating RPC on each reconcile.
 	autostart, err := c.rpc.StoragePoolGetAutostart(p)
 	if err != nil {
@@ -432,7 +423,7 @@ func (c *client) disableAutostart(p libvirt.StoragePool, evidence *mutationEvide
 	return err
 }
 
-func (c *client) stop(p libvirt.StoragePool, evidence *mutationEvidence) error {
+func (c *Client) stop(p libvirt.StoragePool, evidence *mutationEvidence) error {
 	active, err := c.rpc.StoragePoolIsActive(p)
 	if err != nil {
 		return err
@@ -448,15 +439,9 @@ func (c *client) stop(p libvirt.StoragePool, evidence *mutationEvidence) error {
 	return nil
 }
 
-// Stop leaves the persistent definition and all data intact.
-func (c *client) Stop(pool Pool) error {
-	_, err := c.StopOperation(pool)
-
-	return err
-}
-
 // StopOperation returns the outcome of stopping an active pool, or no mutation for an absent/inactive pool.
-func (c *client) StopOperation(pool Pool) (OperationOutcome, error) {
+// It leaves the persistent definition and all data intact.
+func (c *Client) StopOperation(pool Pool) (OperationOutcome, error) {
 	var evidence mutationEvidence
 
 	p, exists, err := c.lookup(pool)
@@ -469,16 +454,10 @@ func (c *client) StopOperation(pool Pool) (OperationOutcome, error) {
 	return evidence.outcome, err
 }
 
-// Remove always stops and undefines, regardless of pool contents. It never
-// deletes a storage pool's data, enumerates files or calls StoragePoolDelete.
-func (c *client) Remove(pool Pool) error {
-	_, err := c.RemoveOperation(pool)
-
-	return err
-}
-
 // RemoveOperation reports completed partial progress separately from a lost reply.
-func (c *client) RemoveOperation(pool Pool) (OperationOutcome, error) {
+// It always stops and undefines, regardless of pool contents. It never deletes
+// a storage pool's data, enumerates files or calls StoragePoolDelete.
+func (c *Client) RemoveOperation(pool Pool) (OperationOutcome, error) {
 	var evidence mutationEvidence
 
 	p, exists, err := c.lookup(pool)

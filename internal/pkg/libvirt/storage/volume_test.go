@@ -6,6 +6,7 @@ package storage_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -123,6 +124,8 @@ func (r *rpc) StorageVolGetXMLDesc(vol libvirt.StorageVol, _ uint32) (string, er
 	format := "raw"
 	if len(contents) >= len(qcow2Magic) && string(contents[:len(qcow2Magic)]) == string(qcow2Magic) {
 		format = "qcow2"
+	} else if len(contents) >= 0x8006 && string(contents[0x8001:0x8006]) == "CD001" {
+		format = "iso"
 	}
 
 	return (&libvirtxml.StorageVolume{
@@ -167,9 +170,155 @@ func (r *rpc) StorageVolResize(vol libvirt.StorageVol, capacity uint64, flags li
 	return os.Truncate(filepath.Join(r.target, vol.Name), int64(capacity)) //nolint:gosec
 }
 
+func TestCopyVolumeOwnsIndependentBytesAndNeverAdoptsForeignFile(t *testing.T) {
+	t.Parallel()
+
+	_, client, pool := newVolumeFixture(t)
+	copier, ok := client.(interface {
+		CopyVolume(libvirtstorage.Pool, string, string, string) (libvirtstorage.Volume, error)
+	})
+	require.True(t, ok, "storage client must support copying source media")
+
+	sourceRoot := t.TempDir()
+	source := filepath.Join(sourceRoot, "source.iso")
+	require.NoError(t, os.WriteFile(source, []byte("original"), 0o400))
+	require.NoError(t, os.Chmod(sourceRoot, 0o500))
+	t.Cleanup(func() { require.NoError(t, os.Chmod(sourceRoot, 0o700)) })
+
+	volume, err := copier.CopyVolume(pool, "guest.iso", source, "")
+	require.NoError(t, err)
+	require.Equal(t, "raw", volume.Format)
+	require.Equal(t, []byte("original"), mustReadVolume(t, volume.Path))
+	require.Equal(t, []byte("original"), mustReadVolume(t, source))
+
+	entries, err := os.ReadDir(sourceRoot)
+	require.NoError(t, err)
+	require.Len(t, entries, 1, "copy staging and ownership witnesses belong only in the destination pool")
+	require.Equal(t, "source.iso", entries[0].Name())
+
+	require.NoError(t, os.Chmod(sourceRoot, 0o700))
+	require.NoError(t, os.Chmod(source, 0o600))
+	require.NoError(t, os.WriteFile(source, []byte("changed!"), 0o600))
+	volume, err = copier.CopyVolume(pool, "guest.iso", source, "")
+	require.NoError(t, err)
+	require.Equal(t, []byte("original"), mustReadVolume(t, volume.Path))
+	require.NoError(t, os.WriteFile(volume.Path, []byte("guest!!!"), 0o600))
+	require.Equal(t, []byte("changed!"), mustReadVolume(t, source))
+
+	// A completed runtime volume must remain usable with its registry source gone.
+	require.NoError(t, os.Remove(source))
+	volume, err = copier.CopyVolume(pool, "guest.iso", source, "")
+	require.NoError(t, err)
+	require.Equal(t, []byte("guest!!!"), mustReadVolume(t, volume.Path))
+
+	foreign := filepath.Join(filepath.Dir(volume.Path), "foreign.iso")
+	require.NoError(t, os.WriteFile(foreign, []byte("untouched"), 0o600))
+
+	_, err = copier.CopyVolume(pool, "foreign.iso", source, "")
+	require.Error(t, err)
+	require.Equal(t, []byte("untouched"), mustReadVolume(t, foreign))
+}
+
+func TestCopyVolumeAcceptsLibvirtISOObservation(t *testing.T) {
+	t.Parallel()
+
+	_, session, pool := newVolumeFixture(t)
+	copier := session.(interface {
+		CopyVolume(libvirtstorage.Pool, string, string, string) (libvirtstorage.Volume, error)
+	})
+
+	// Directory pools identify ISO9660 media as "iso", not QEMU's "raw".
+	contents := make([]byte, 0x8800)
+	copy(contents[0x8000:], "\x01CD001\x01")
+
+	source := filepath.Join(t.TempDir(), "source.iso")
+	require.NoError(t, os.WriteFile(source, contents, 0o400))
+
+	volume, err := copier.CopyVolume(pool, "guest.iso", source, fmt.Sprintf("sha256:%x", sha256.Sum256(contents)))
+	require.NoError(t, err)
+	assert.Equal(t, "raw", volume.Format, "copied media must be attached using QEMU's raw driver")
+	assert.Equal(t, contents, mustReadVolume(t, volume.Path))
+
+	observed, found, err := session.Volume(pool, "guest.iso")
+	require.NoError(t, err)
+	require.True(t, found)
+	assert.Equal(t, "iso", observed.Format, "ordinary observation must retain libvirt's reported format")
+
+	require.NoError(t, os.Remove(source))
+	adopted, err := copier.CopyVolume(pool, "guest.iso", source, "")
+	require.NoError(t, err)
+	assert.Equal(t, volume, adopted, "adoption must normalize ISO observations without reopening the registry source")
+}
+
+func TestCopyVolumeRecoversCompletedPublication(t *testing.T) {
+	t.Parallel()
+
+	r, session, pool := newVolumeFixture(t)
+	copier := session.(interface {
+		CopyVolume(libvirtstorage.Pool, string, string, string) (libvirtstorage.Volume, error)
+	})
+	name := "interrupted.raw"
+	witnessDirectory := filepath.Join(r.target, ".copy-on-use")
+	require.NoError(t, os.Mkdir(witnessDirectory, 0o700))
+	witness := filepath.Join(witnessDirectory, fmt.Sprintf("%x", sha256.Sum256([]byte(name))))
+	contents := []byte("fully copied before interrupted publication")
+	require.NoError(t, os.WriteFile(witness, contents, 0o600))
+
+	volume, err := copier.CopyVolume(pool, name, "", "")
+	require.NoError(t, err)
+	assert.Equal(t, contents, mustReadVolume(t, volume.Path))
+}
+
+func TestCopyVolumeSweepsInterruptedStaging(t *testing.T) {
+	t.Parallel()
+
+	r, session, pool := newVolumeFixture(t)
+	copier := session.(interface {
+		CopyVolume(libvirtstorage.Pool, string, string, string) (libvirtstorage.Volume, error)
+	})
+	staged := filepath.Join(r.target, ".interrupted.raw.0123456789abcdef.staged")
+	require.NoError(t, os.WriteFile(staged, []byte("partial copy"), 0o600))
+	source := filepath.Join(t.TempDir(), "source.raw")
+	require.NoError(t, os.WriteFile(source, []byte("complete source"), 0o600))
+
+	_, err := copier.CopyVolume(pool, "fresh.raw", source, "")
+	require.NoError(t, err)
+	_, err = os.Lstat(staged)
+	assert.True(t, os.IsNotExist(err), "interrupted staging must not leak pool capacity: %v", err)
+}
+
+func TestCopyVolumeRejectsNonRawBeforePublication(t *testing.T) {
+	t.Parallel()
+
+	r, session, pool := newVolumeFixture(t)
+	copier := session.(interface {
+		CopyVolume(libvirtstorage.Pool, string, string, string) (libvirtstorage.Volume, error)
+	})
+	source := filepath.Join(t.TempDir(), "source.qcow2")
+	require.NoError(t, os.WriteFile(source, qcow2Magic, 0o600))
+
+	name := "unsupported.raw"
+
+	_, err := copier.CopyVolume(pool, name, source, "")
+	require.Error(t, err)
+	_, err = os.Lstat(filepath.Join(r.target, name))
+	assert.True(t, os.IsNotExist(err), "unsupported images must not be published: %v", err)
+	_, err = os.Lstat(filepath.Join(r.target, ".copy-on-use", fmt.Sprintf("%x", sha256.Sum256([]byte(name)))))
+	assert.True(t, os.IsNotExist(err), "unsupported images must not get an ownership witness: %v", err)
+}
+
+func mustReadVolume(t *testing.T, path string) []byte {
+	t.Helper()
+
+	contents, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	return contents
+}
+
 // newVolumeFixture builds a client over a pool whose directory really exists, because creation
 // renames a staged file into place on the host rather than through libvirt.
-func newVolumeFixture(t *testing.T) (*rpc, libvirtstorage.EvidenceClient, libvirtstorage.Pool) {
+func newVolumeFixture(t *testing.T) (*rpc, libvirtstorage.VolumeClient, libvirtstorage.Pool) {
 	t.Helper()
 
 	id := libvirtstorage.UUID(uuid.MustParse(machine), "images")
@@ -618,7 +767,8 @@ func TestVolumeResizeGrowsOnly(t *testing.T) {
 	_, err := client.CreateVolume(pool, "vm1__data.raw", "raw", 1<<20, "", "")
 	require.NoError(t, err)
 
-	require.NoError(t, client.ResizeVolume(pool, "vm1__data.raw", 2<<20))
+	_, err = client.ResizeVolumeOperation(pool, "vm1__data.raw", 2<<20)
+	require.NoError(t, err)
 
 	volume, found, err := client.Volume(pool, "vm1__data.raw")
 	require.NoError(t, err)
@@ -626,7 +776,8 @@ func TestVolumeResizeGrowsOnly(t *testing.T) {
 	assert.Equal(t, uint64(2<<20), volume.Capacity)
 
 	// The shrink flag is never passed, so libvirt itself is the last line of defense.
-	require.Error(t, client.ResizeVolume(pool, "vm1__data.raw", 1<<20))
+	_, err = client.ResizeVolumeOperation(pool, "vm1__data.raw", 1<<20)
+	require.Error(t, err)
 
 	volume, _, err = client.Volume(pool, "vm1__data.raw")
 	require.NoError(t, err)
@@ -646,7 +797,8 @@ func TestVolumeOperationsRefuseAForeignPool(t *testing.T) {
 	_, err = client.CreateVolume(pool, "vm1__data.raw", "raw", 1<<20, "", "")
 	require.ErrorContains(t, err, "not owned")
 
-	require.ErrorContains(t, client.ResizeVolume(pool, "vm1__data.raw", 1<<20), "not owned")
+	_, err = client.ResizeVolumeOperation(pool, "vm1__data.raw", 1<<20)
+	require.ErrorContains(t, err, "not owned")
 	assert.Empty(t, rpc.volCalls)
 }
 

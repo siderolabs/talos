@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/opencontainers/go-digest"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -81,10 +82,11 @@ func (suite *ContentLibrarySuite) TestRoundTrip() {
 		suite.T().Skipf("skipping test, node %s has no content library %q configured", node, testContentLibrary)
 	}
 
-	const (
-		name     = "cli-test.raw"
-		contents = "talos"
-	)
+	contents := "talos-" + uuid.NewString()
+
+	name := "cli-test-" + uuid.NewString() + ".raw"
+	object := digest.SHA256.FromString(contents).String()
+	objectRegexp := regexp.MustCompile(regexp.QuoteMeta(object))
 
 	nameRegexp := regexp.MustCompile(regexp.QuoteMeta(name))
 
@@ -92,20 +94,28 @@ func (suite *ContentLibrarySuite) TestRoundTrip() {
 	suite.RunCLI(
 		[]string{
 			"hypervisor", "content-library", "upload", "--nodes", node,
-			"--name", name, "--digest", digest.FromString(contents).String(), "--overwrite", testContentLibrary, "-",
+			"--name", name, "--digest", digest.FromString(contents).String(), testContentLibrary, "-",
 		},
 		base.WithStdin(strings.NewReader(contents)),
 		base.StdoutShouldMatch(nameRegexp),
 		// The digests themselves, not the wording around them: they carry their own algorithm
 		// prefix and appear nowhere else in the output.
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA256.FromString(contents).String()))),
-		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA512.FromString(contents).String()))),
 		base.StdoutShouldMatch(regexp.MustCompile(`integrity verified`)),
 	)
 
 	suite.RunCLI(
 		[]string{"hypervisor", "content-library", "list", "--nodes", node, testContentLibrary},
 		base.StdoutShouldMatch(nameRegexp),
+		base.StdoutShouldMatch(regexp.MustCompile(`SHA256\s+NAMES`)),
+		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA256.FromString(contents).String()))),
+	)
+
+	suite.RunCLI(
+		[]string{"hypervisor", "content-library", "delete", "--nodes", node, testContentLibrary, object},
+		base.ShouldFail(),
+		base.StderrShouldMatch(regexp.MustCompile(`code = FailedPrecondition`)),
+		base.StdoutEmpty(),
 	)
 
 	suite.RunCLI(
@@ -116,6 +126,31 @@ func (suite *ContentLibrarySuite) TestRoundTrip() {
 	suite.RunCLI(
 		[]string{"hypervisor", "content-library", "list", "--nodes", node, testContentLibrary},
 		base.StdoutShouldNotMatch(nameRegexp),
+		base.StdoutShouldMatch(objectRegexp),
+	)
+
+	suite.RunCLI(
+		[]string{"hypervisor", "content-library", "delete", "--nodes", node, testContentLibrary, object},
+		base.StdoutEmpty(),
+	)
+
+	// Recreate two aliases to the same, test-owned object and remove both with force.
+	for _, alias := range []string{name, name + ".second"} {
+		suite.RunCLI(
+			[]string{"hypervisor", "content-library", "upload", "--nodes", node, "--name", alias, testContentLibrary, "-"},
+			base.WithStdin(strings.NewReader(contents)),
+		)
+	}
+
+	suite.RunCLI(
+		[]string{"hypervisor", "content-library", "delete", "--nodes", node, "--force", testContentLibrary, object},
+		base.StdoutEmpty(),
+	)
+
+	suite.RunCLI(
+		[]string{"hypervisor", "content-library", "list", "--nodes", node, testContentLibrary},
+		base.StdoutShouldNotMatch(nameRegexp),
+		base.StdoutShouldNotMatch(objectRegexp),
 	)
 }
 
@@ -128,21 +163,20 @@ func (suite *ContentLibrarySuite) TestUploadDigestMismatch() {
 		suite.T().Skipf("skipping test, node %s has no content library %q configured", node, testContentLibrary)
 	}
 
-	const name = "cli-mismatch.raw"
+	name := "cli-mismatch-" + uuid.NewString() + ".raw"
 
 	nameRegexp := regexp.MustCompile(regexp.QuoteMeta(name))
 
 	suite.RunCLI(
 		[]string{
 			"hypervisor", "content-library", "upload", "--nodes", node,
-			"--name", name, "--digest", digest.FromString("something else").String(), "--overwrite", testContentLibrary, "-",
+			"--name", name, "--digest", digest.FromString("something else").String(), testContentLibrary, "-",
 		},
 		base.WithStdin(strings.NewReader("talos")),
 		base.ShouldFail(),
 		base.StderrShouldMatch(regexp.MustCompile(`code = DataLoss`)),
 		// A refused upload still says what the node received, on stdout and in plain text.
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA256.FromString("talos").String()))),
-		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(digest.SHA512.FromString("talos").String()))),
 		base.StdoutShouldNotMatch(regexp.MustCompile(`integrity verified`)),
 	)
 

@@ -13,7 +13,6 @@ import (
 
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 )
@@ -72,12 +71,12 @@ func (x *ContentLibraryServiceListRequest) GetLibraryId() string {
 
 type ContentLibraryServiceListResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Name of the file within the library.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Size of the file in bytes.
+	// Canonical immutable object identity.
+	Sha256 string `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
+	// Size of the object in bytes.
 	Size uint64 `protobuf:"varint,2,opt,name=size,proto3" json:"size,omitempty"`
-	// Time the file was last modified.
-	ModifiedAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=modified_at,json=modifiedAt,proto3" json:"modified_at,omitempty"`
+	// Sorted aliases referring to this object (may be empty).
+	Names         []string `protobuf:"bytes,3,rep,name=names,proto3" json:"names,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -112,9 +111,9 @@ func (*ContentLibraryServiceListResponse) Descriptor() ([]byte, []int) {
 	return file_machine_contentlibrary_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ContentLibraryServiceListResponse) GetName() string {
+func (x *ContentLibraryServiceListResponse) GetSha256() string {
 	if x != nil {
-		return x.Name
+		return x.Sha256
 	}
 	return ""
 }
@@ -126,9 +125,9 @@ func (x *ContentLibraryServiceListResponse) GetSize() uint64 {
 	return 0
 }
 
-func (x *ContentLibraryServiceListResponse) GetModifiedAt() *timestamppb.Timestamp {
+func (x *ContentLibraryServiceListResponse) GetNames() []string {
 	if x != nil {
-		return x.ModifiedAt
+		return x.Names
 	}
 	return nil
 }
@@ -142,13 +141,10 @@ type ContentLibraryServiceUploadInfo struct {
 	LibraryId string `protobuf:"bytes,1,opt,name=library_id,json=libraryId,proto3" json:"library_id,omitempty"`
 	// Name of the file within the library.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	// Overwrite an existing file with the same name.
-	Overwrite bool `protobuf:"varint,3,opt,name=overwrite,proto3" json:"overwrite,omitempty"`
-	// Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".
+	// Expected digest of the contents, as "sha256:<hex>".
 	//
 	// Optional: when it is set, the upload is rejected unless the contents hash to it.
-	// The algorithms supported are sha256 and sha512.
-	Digest        string `protobuf:"bytes,4,opt,name=digest,proto3" json:"digest,omitempty"`
+	Digest        string `protobuf:"bytes,3,opt,name=digest,proto3" json:"digest,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -195,13 +191,6 @@ func (x *ContentLibraryServiceUploadInfo) GetName() string {
 		return x.Name
 	}
 	return ""
-}
-
-func (x *ContentLibraryServiceUploadInfo) GetOverwrite() bool {
-	if x != nil {
-		return x.Overwrite
-	}
-	return false
 }
 
 func (x *ContentLibraryServiceUploadInfo) GetDigest() string {
@@ -303,9 +292,7 @@ func (*ContentLibraryServiceUploadRequest_Chunk) isContentLibraryServiceUploadRe
 type ContentLibraryServiceUploadDigests struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Digest of the contents, as "sha256:<hex>".
-	Sha256 string `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
-	// Digest of the contents, as "sha512:<hex>".
-	Sha512        string `protobuf:"bytes,2,opt,name=sha512,proto3" json:"sha512,omitempty"`
+	Sha256        string `protobuf:"bytes,1,opt,name=sha256,proto3" json:"sha256,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -343,13 +330,6 @@ func (*ContentLibraryServiceUploadDigests) Descriptor() ([]byte, []int) {
 func (x *ContentLibraryServiceUploadDigests) GetSha256() string {
 	if x != nil {
 		return x.Sha256
-	}
-	return ""
-}
-
-func (x *ContentLibraryServiceUploadDigests) GetSha512() string {
-	if x != nil {
-		return x.Sha512
 	}
 	return ""
 }
@@ -421,8 +401,16 @@ type ContentLibraryServiceDeleteRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// ID of the content library to delete from.
 	LibraryId string `protobuf:"bytes,1,opt,name=library_id,json=libraryId,proto3" json:"library_id,omitempty"`
-	// Name of the file within the library.
-	Name          string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Exactly one alias or immutable object to remove.
+	//
+	// Types that are valid to be assigned to Target:
+	//
+	//	*ContentLibraryServiceDeleteRequest_Name
+	//	*ContentLibraryServiceDeleteRequest_Sha256
+	Target isContentLibraryServiceDeleteRequest_Target `protobuf_oneof:"target"`
+	// Remove all symlinks to the selected object before deleting it.
+	// Valid only with a sha256 target; otherwise existing links prevent deletion.
+	Force         bool `protobuf:"varint,4,opt,name=force,proto3" json:"force,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -464,12 +452,55 @@ func (x *ContentLibraryServiceDeleteRequest) GetLibraryId() string {
 	return ""
 }
 
+func (x *ContentLibraryServiceDeleteRequest) GetTarget() isContentLibraryServiceDeleteRequest_Target {
+	if x != nil {
+		return x.Target
+	}
+	return nil
+}
+
 func (x *ContentLibraryServiceDeleteRequest) GetName() string {
 	if x != nil {
-		return x.Name
+		if x, ok := x.Target.(*ContentLibraryServiceDeleteRequest_Name); ok {
+			return x.Name
+		}
 	}
 	return ""
 }
+
+func (x *ContentLibraryServiceDeleteRequest) GetSha256() string {
+	if x != nil {
+		if x, ok := x.Target.(*ContentLibraryServiceDeleteRequest_Sha256); ok {
+			return x.Sha256
+		}
+	}
+	return ""
+}
+
+func (x *ContentLibraryServiceDeleteRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
+type isContentLibraryServiceDeleteRequest_Target interface {
+	isContentLibraryServiceDeleteRequest_Target()
+}
+
+type ContentLibraryServiceDeleteRequest_Name struct {
+	// Remove only this name, retaining the immutable object.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3,oneof"`
+}
+
+type ContentLibraryServiceDeleteRequest_Sha256 struct {
+	// Remove the object identified by "sha256:<hex>".
+	Sha256 string `protobuf:"bytes,3,opt,name=sha256,proto3,oneof"`
+}
+
+func (*ContentLibraryServiceDeleteRequest_Name) isContentLibraryServiceDeleteRequest_Target() {}
+
+func (*ContentLibraryServiceDeleteRequest_Sha256) isContentLibraryServiceDeleteRequest_Target() {}
 
 type ContentLibraryServiceDeleteResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -511,36 +542,36 @@ var File_machine_contentlibrary_proto protoreflect.FileDescriptor
 
 const file_machine_contentlibrary_proto_rawDesc = "" +
 	"\n" +
-	"\x1cmachine/contentlibrary.proto\x12\amachine\x1a\x13common/common.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"A\n" +
+	"\x1cmachine/contentlibrary.proto\x12\amachine\x1a\x13common/common.proto\"A\n" +
 	" ContentLibraryServiceListRequest\x12\x1d\n" +
 	"\n" +
-	"library_id\x18\x01 \x01(\tR\tlibraryId\"\x88\x01\n" +
-	"!ContentLibraryServiceListResponse\x12\x12\n" +
-	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
-	"\x04size\x18\x02 \x01(\x04R\x04size\x12;\n" +
-	"\vmodified_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"modifiedAt\"\x8a\x01\n" +
+	"library_id\x18\x01 \x01(\tR\tlibraryId\"e\n" +
+	"!ContentLibraryServiceListResponse\x12\x16\n" +
+	"\x06sha256\x18\x01 \x01(\tR\x06sha256\x12\x12\n" +
+	"\x04size\x18\x02 \x01(\x04R\x04size\x12\x14\n" +
+	"\x05names\x18\x03 \x03(\tR\x05names\"l\n" +
 	"\x1fContentLibraryServiceUploadInfo\x12\x1d\n" +
 	"\n" +
 	"library_id\x18\x01 \x01(\tR\tlibraryId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1c\n" +
-	"\toverwrite\x18\x03 \x01(\bR\toverwrite\x12\x16\n" +
-	"\x06digest\x18\x04 \x01(\tR\x06digest\"\x95\x01\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x16\n" +
+	"\x06digest\x18\x03 \x01(\tR\x06digest\"\x95\x01\n" +
 	"\"ContentLibraryServiceUploadRequest\x12>\n" +
 	"\x04info\x18\x01 \x01(\v2(.machine.ContentLibraryServiceUploadInfoH\x00R\x04info\x12$\n" +
 	"\x05chunk\x18\x02 \x01(\v2\f.common.DataH\x00R\x05chunkB\t\n" +
-	"\arequest\"T\n" +
+	"\arequest\"<\n" +
 	"\"ContentLibraryServiceUploadDigests\x12\x16\n" +
-	"\x06sha256\x18\x01 \x01(\tR\x06sha256\x12\x16\n" +
-	"\x06sha512\x18\x02 \x01(\tR\x06sha512\"\x94\x01\n" +
+	"\x06sha256\x18\x01 \x01(\tR\x06sha256\"\x94\x01\n" +
 	"#ContentLibraryServiceUploadResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x04R\x04size\x12E\n" +
-	"\adigests\x18\x03 \x01(\v2+.machine.ContentLibraryServiceUploadDigestsR\adigests\"W\n" +
+	"\adigests\x18\x03 \x01(\v2+.machine.ContentLibraryServiceUploadDigestsR\adigests\"\x93\x01\n" +
 	"\"ContentLibraryServiceDeleteRequest\x12\x1d\n" +
 	"\n" +
-	"library_id\x18\x01 \x01(\tR\tlibraryId\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\"%\n" +
+	"library_id\x18\x01 \x01(\tR\tlibraryId\x12\x14\n" +
+	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x12\x18\n" +
+	"\x06sha256\x18\x03 \x01(\tH\x00R\x06sha256\x12\x14\n" +
+	"\x05force\x18\x04 \x01(\bR\x05forceB\b\n" +
+	"\x06target\"%\n" +
 	"#ContentLibraryServiceDeleteResponse2\xc4\x02\n" +
 	"\x15ContentLibraryService\x12_\n" +
 	"\x04List\x12).machine.ContentLibraryServiceListRequest\x1a*.machine.ContentLibraryServiceListResponse0\x01\x12e\n" +
@@ -570,25 +601,23 @@ var file_machine_contentlibrary_proto_goTypes = []any{
 	(*ContentLibraryServiceUploadResponse)(nil), // 5: machine.ContentLibraryServiceUploadResponse
 	(*ContentLibraryServiceDeleteRequest)(nil),  // 6: machine.ContentLibraryServiceDeleteRequest
 	(*ContentLibraryServiceDeleteResponse)(nil), // 7: machine.ContentLibraryServiceDeleteResponse
-	(*timestamppb.Timestamp)(nil),               // 8: google.protobuf.Timestamp
-	(*common.Data)(nil),                         // 9: common.Data
+	(*common.Data)(nil),                         // 8: common.Data
 }
 var file_machine_contentlibrary_proto_depIdxs = []int32{
-	8, // 0: machine.ContentLibraryServiceListResponse.modified_at:type_name -> google.protobuf.Timestamp
-	2, // 1: machine.ContentLibraryServiceUploadRequest.info:type_name -> machine.ContentLibraryServiceUploadInfo
-	9, // 2: machine.ContentLibraryServiceUploadRequest.chunk:type_name -> common.Data
-	4, // 3: machine.ContentLibraryServiceUploadResponse.digests:type_name -> machine.ContentLibraryServiceUploadDigests
-	0, // 4: machine.ContentLibraryService.List:input_type -> machine.ContentLibraryServiceListRequest
-	3, // 5: machine.ContentLibraryService.Upload:input_type -> machine.ContentLibraryServiceUploadRequest
-	6, // 6: machine.ContentLibraryService.Delete:input_type -> machine.ContentLibraryServiceDeleteRequest
-	1, // 7: machine.ContentLibraryService.List:output_type -> machine.ContentLibraryServiceListResponse
-	5, // 8: machine.ContentLibraryService.Upload:output_type -> machine.ContentLibraryServiceUploadResponse
-	7, // 9: machine.ContentLibraryService.Delete:output_type -> machine.ContentLibraryServiceDeleteResponse
-	7, // [7:10] is the sub-list for method output_type
-	4, // [4:7] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	2, // 0: machine.ContentLibraryServiceUploadRequest.info:type_name -> machine.ContentLibraryServiceUploadInfo
+	8, // 1: machine.ContentLibraryServiceUploadRequest.chunk:type_name -> common.Data
+	4, // 2: machine.ContentLibraryServiceUploadResponse.digests:type_name -> machine.ContentLibraryServiceUploadDigests
+	0, // 3: machine.ContentLibraryService.List:input_type -> machine.ContentLibraryServiceListRequest
+	3, // 4: machine.ContentLibraryService.Upload:input_type -> machine.ContentLibraryServiceUploadRequest
+	6, // 5: machine.ContentLibraryService.Delete:input_type -> machine.ContentLibraryServiceDeleteRequest
+	1, // 6: machine.ContentLibraryService.List:output_type -> machine.ContentLibraryServiceListResponse
+	5, // 7: machine.ContentLibraryService.Upload:output_type -> machine.ContentLibraryServiceUploadResponse
+	7, // 8: machine.ContentLibraryService.Delete:output_type -> machine.ContentLibraryServiceDeleteResponse
+	6, // [6:9] is the sub-list for method output_type
+	3, // [3:6] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_machine_contentlibrary_proto_init() }
@@ -599,6 +628,10 @@ func file_machine_contentlibrary_proto_init() {
 	file_machine_contentlibrary_proto_msgTypes[3].OneofWrappers = []any{
 		(*ContentLibraryServiceUploadRequest_Info)(nil),
 		(*ContentLibraryServiceUploadRequest_Chunk)(nil),
+	}
+	file_machine_contentlibrary_proto_msgTypes[6].OneofWrappers = []any{
+		(*ContentLibraryServiceDeleteRequest_Name)(nil),
+		(*ContentLibraryServiceDeleteRequest_Sha256)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{

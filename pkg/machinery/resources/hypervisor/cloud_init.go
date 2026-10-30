@@ -33,17 +33,17 @@ type CloudInitSpec = typed.Resource[CloudInitSpecSpec, CloudInitSpecExtension]
 //gotagsrewrite:gen
 //redactgen:gen
 type CloudInitSpecSpec struct {
-	Library       string `yaml:"library" protobuf:"1"`
+	Pool          string `yaml:"pool" protobuf:"1"`
 	MetaData      string `yaml:"metaData,omitempty" protobuf:"2" redact:"replace"`
 	UserData      string `yaml:"userData,omitempty" protobuf:"3" redact:"replace"`
 	NetworkConfig string `yaml:"networkConfig,omitempty" protobuf:"4" redact:"replace"`
 }
 
-// InputDigest identifies the content and library without exposing seed contents.
+// InputDigest identifies the content and destination pool without exposing seed contents.
 func (s CloudInitSpecSpec) InputDigest() string {
 	h := sha256.New()
 
-	for _, item := range []string{s.Library, s.MetaData, s.UserData, s.NetworkConfig} {
+	for _, item := range []string{s.Pool, s.MetaData, s.UserData, s.NetworkConfig} {
 		writeHashPart(h, item)
 	}
 
@@ -93,7 +93,8 @@ func (CloudInitSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	}
 }
 
-// CloudInitStatus tracks one immutable asset, including the library backing it was produced on.
+// CloudInitStatus tracks one immutable seed incarnation. Its Path, Name and VolumeID
+// identify the seed file and backing mount once Ready.
 // Its ID is CloudInitStatusID; it stays held while an actual domain consumes the asset.
 type CloudInitStatus = typed.Resource[CloudInitStatusSpec, CloudInitStatusExtension]
 
@@ -102,7 +103,7 @@ type CloudInitStatus = typed.Resource[CloudInitStatusSpec, CloudInitStatusExtens
 //gotagsrewrite:gen
 type CloudInitStatusSpec struct {
 	VirtualMachine string `yaml:"virtualMachine" protobuf:"1"`
-	Library        string `yaml:"library" protobuf:"2"`
+	Pool           string `yaml:"pool" protobuf:"2"`
 	Name           string `yaml:"name" protobuf:"3"`
 
 	// Path and VolumeID pin the backing identity and prevent stale readiness across remounts.

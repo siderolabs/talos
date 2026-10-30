@@ -12,7 +12,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"slices"
+	"sort"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -23,8 +23,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/timestamppb"
 
+	cas "github.com/siderolabs/talos/internal/pkg/contentlibrary"
 	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
@@ -95,8 +95,10 @@ func validateName(name string) error {
 		return status.Error(codes.InvalidArgument, "name is required")
 	case len(name) > maxFileNameLength:
 		return status.Errorf(codes.InvalidArgument, "name %q must be %d characters or fewer", name, maxFileNameLength)
-	case strings.ContainsRune(name, os.PathSeparator):
-		return status.Errorf(codes.InvalidArgument, "name %q must not contain a path separator", name)
+	case strings.ContainsAny(name, "/\\\x00"):
+		return status.Errorf(codes.InvalidArgument, "name %q must not contain path separators or NUL", name)
+	case name == "objects":
+		return status.Errorf(codes.InvalidArgument, "name %q is reserved for object storage", name)
 	case strings.HasPrefix(name, staging.Prefix):
 		// Leading dots are reserved: uploads in flight are staged under one, and "." and ".." would
 		// address the library directory and its parent rather than a file in it.
@@ -106,12 +108,10 @@ func validateName(name string) error {
 	return nil
 }
 
-var supportedDigestAlgorithms = []digest.Algorithm{digest.SHA256, digest.SHA512}
-
 // parseDigest checks the digest an upload declared, if it declared one.
 //
 // An empty digest is what a client which does not know the digest of what it is uploading sends,
-// and leaves the contents unverified.
+// and does not assert an expected identity.
 func parseDigest(s string) (digest.Digest, error) {
 	if s == "" {
 		return "", nil
@@ -122,65 +122,50 @@ func parseDigest(s string) (digest.Digest, error) {
 		return "", status.Errorf(codes.InvalidArgument, "digest %q is invalid: %v", s, err)
 	}
 
-	if !slices.Contains(supportedDigestAlgorithms, dgst.Algorithm()) {
+	if dgst.Algorithm() != digest.SHA256 {
 		return "", status.Errorf(
 			codes.InvalidArgument,
-			"digest algorithm %q is not supported, expected one of %v",
-			dgst.Algorithm(), supportedDigestAlgorithms,
+			"digest algorithm %q is not supported, expected sha256",
+			dgst.Algorithm(),
 		)
 	}
 
 	return dgst, nil
 }
 
-// uploadSink is where the chunks of an upload are written: the file it is staged in, and a hash of
-// everything which goes into it under each algorithm the API can verify.
-//
-// Every upload is hashed under all of them, whether or not it declared a digest, so that what the
-// node received is reported back either way: a client which did not know the digest of what it was
-// uploading learns it, and one which did learns what it actually sent instead.
+// uploadSink writes staged bytes and computes their SHA256 identity in the same pass.
 type uploadSink struct {
 	io.Writer
 
-	digesters map[digest.Algorithm]digest.Digester
+	digester digest.Digester
 }
 
 // newUploadSink returns a sink writing to w and hashing what passes through it.
 func newUploadSink(w io.Writer) uploadSink {
-	sink := uploadSink{digesters: make(map[digest.Algorithm]digest.Digester, len(supportedDigestAlgorithms))}
+	digester := digest.SHA256.Digester()
 
-	writers := make([]io.Writer, 0, 1+len(supportedDigestAlgorithms))
-	writers = append(writers, w)
-
-	for _, algorithm := range supportedDigestAlgorithms {
-		digester := algorithm.Digester()
-
-		sink.digesters[algorithm] = digester
-		writers = append(writers, digester.Hash())
+	return uploadSink{
+		Writer:   io.MultiWriter(w, digester.Hash()),
+		digester: digester,
 	}
-
-	sink.Writer = io.MultiWriter(writers...)
-
-	return sink
 }
 
 // digests returns the digests of everything written to the sink.
 func (sink uploadSink) digests() *machine.ContentLibraryServiceUploadDigests {
 	return &machine.ContentLibraryServiceUploadDigests{
-		Sha256: sink.digesters[digest.SHA256].Digest().String(),
-		Sha512: sink.digesters[digest.SHA512].Digest().String(),
+		Sha256: sink.digester.Digest().String(),
 	}
 }
 
 // verify reports whether what was written is what the upload declared it would be.
 //
-// dgst has been through parseDigest, so its algorithm is one the sink hashed under.
+// expected has been through parseDigest and can only be SHA256.
 func (sink uploadSink) verify(expected digest.Digest) error {
 	if expected == "" {
 		return nil
 	}
 
-	if actual := sink.digesters[expected.Algorithm()].Digest(); actual != expected {
+	if actual := sink.digester.Digest(); actual != expected {
 		return status.Errorf(codes.DataLoss, "uploaded content's digest (%s) doesn't match the expected one (%s)", actual, expected)
 	}
 
@@ -212,7 +197,7 @@ func withDigests(err error, digests *machine.ContentLibraryServiceUploadDigests)
 	return withDetails.Err()
 }
 
-// List files stored in a content library.
+// List immutable objects and their attached names.
 func (svc *Service) List(req *machine.ContentLibraryServiceListRequest, srv grpc.ServerStreamingServer[machine.ContentLibraryServiceListResponse]) error {
 	root, err := svc.openLibrary(srv.Context(), req.GetLibraryId())
 	if err != nil {
@@ -233,26 +218,61 @@ func (svc *Service) List(req *machine.ContentLibraryServiceListRequest, srv grpc
 		return status.Errorf(codes.Internal, "failed to read content library: %v", err)
 	}
 
+	aliases := map[string][]string{}
+
 	for _, entry := range entries {
-		// Directories, symlinks and uploads in flight are not library contents.
-		if !entry.Type().IsRegular() || strings.HasPrefix(entry.Name(), ".") {
+		if entry.Type()&os.ModeSymlink != 0 {
+			object, resolveErr := cas.Resolve(root, entry.Name())
+			if resolveErr == nil {
+				aliases[object] = append(aliases[object], entry.Name())
+			}
+		}
+	}
+
+	return listObjects(root, aliases, srv)
+}
+
+func listObjects(root *os.Root, aliases map[string][]string, srv grpc.ServerStreamingServer[machine.ContentLibraryServiceListResponse]) error {
+	objects, err := root.Open("objects/sha256")
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil
+	}
+
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to list objects: %v", err)
+	}
+
+	defer objects.Close() //nolint:errcheck
+
+	stored, err := objects.ReadDir(-1)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to read objects: %v", err)
+	}
+
+	sort.Slice(stored, func(i, j int) bool { return stored[i].Name() < stored[j].Name() })
+
+	for _, entry := range stored {
+		if !entry.Type().IsRegular() {
 			continue
 		}
 
-		info, err := entry.Info()
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				// Deleted while the directory was being listed.
-				continue
-			}
-
-			return status.Errorf(codes.Internal, "failed to stat %q: %v", entry.Name(), err)
+		object, pathErr := cas.ObjectPath("sha256:" + entry.Name())
+		if pathErr != nil {
+			continue
 		}
 
+		info, infoErr := entry.Info()
+		if infoErr != nil {
+			return status.Errorf(codes.Internal, "failed to stat object: %v", infoErr)
+		}
+
+		names := aliases[object]
+		sort.Strings(names)
+
 		if err := srv.Send(&machine.ContentLibraryServiceListResponse{
-			Name:       info.Name(),
-			Size:       uint64(info.Size()),
-			ModifiedAt: timestamppb.New(info.ModTime()),
+			Sha256: "sha256:" + entry.Name(),
+			Names:  names,
+			Size:   uint64(info.Size()),
 		}); err != nil {
 			return err
 		}
@@ -298,21 +318,15 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 
 	defer root.Close() //nolint:errcheck
 
-	if info.GetOverwrite() {
-		// Reject early if in use
-		// receiveFile checks again right before the rename.
-		if err = svc.checkNotInUse(srv.Context(), info.GetLibraryId(), info.GetName()); err != nil {
-			return err
-		}
-	} else {
-		if _, err = root.Stat(info.GetName()); err == nil {
-			return status.Errorf(codes.AlreadyExists, "file %q already exists", info.GetName())
+	{
+		if _, err = root.Lstat(info.GetName()); err == nil {
+			return status.Errorf(codes.AlreadyExists, "name %q already exists", info.GetName())
 		} else if !errors.Is(err, fs.ErrNotExist) {
 			return status.Errorf(codes.Internal, "failed to stat %q: %v", info.GetName(), err)
 		}
 	}
 
-	written, digests, err := svc.receiveFile(srv, root, info.GetLibraryId(), info.GetName(), info.GetOverwrite(), dgst)
+	written, digests, err := svc.receiveFile(srv, root, info.GetLibraryId(), info.GetName(), dgst)
 	if err != nil {
 		return withDigests(err, digests)
 	}
@@ -322,7 +336,6 @@ func (svc *Service) Upload(srv grpc.ClientStreamingServer[machine.ContentLibrary
 		zap.String("name", info.GetName()),
 		zap.Uint64("size", written),
 		zap.String("sha256", digests.GetSha256()),
-		zap.String("sha512", digests.GetSha512()),
 	)
 
 	return srv.SendAndClose(&machine.ContentLibraryServiceUploadResponse{
@@ -345,7 +358,6 @@ func (svc *Service) receiveFile(
 	root *os.Root,
 	libraryID string,
 	name string,
-	overwrite bool,
 	dgst digest.Digest,
 ) (written uint64, digests *machine.ContentLibraryServiceUploadDigests, err error) {
 	// Whatever a failure leaves staged is swept by hypervisor.ContentLibraryController when it next
@@ -422,13 +434,8 @@ func (svc *Service) receiveFile(
 		return 0, digests, status.Errorf(codes.Internal, "failed to close %q: %v", name, err)
 	}
 
-	if err = svc.claimName(srv.Context(), root, libraryID, name, tmpName, overwrite); err != nil {
+	if err = svc.claimName(srv.Context(), root, libraryID, name, tmpName, digests.GetSha256()); err != nil {
 		return 0, digests, err
-	}
-
-	if overwrite {
-		// The rename consumed the staged name, so there is nothing staged left to clean up.
-		tmpName = ""
 	}
 
 	// Both failures below leave the upload in place under the name asked for, so neither is
@@ -459,37 +466,24 @@ func (svc *Service) receiveFile(
 	return written, digests, nil
 }
 
-// claimName gives the staged upload the name it was uploaded under. Linking it leaves the staged
-// name behind, renaming it consumes it.
-func (svc *Service) claimName(ctx context.Context, root *os.Root, libraryID, name, tmpName string, overwrite bool) error {
-	if !overwrite {
-		// A link fails if the name is taken, which makes claiming it atomic: unlike the stat in
-		// Upload, two concurrent uploads of the same name cannot both get past this one.
-		if err := root.Link(tmpName, name); err != nil {
-			if errors.Is(err, fs.ErrExist) {
-				return status.Errorf(codes.AlreadyExists, "file %q already exists", name)
-			}
-
-			return status.Errorf(codes.Internal, "failed to link %q: %v", name, err)
-		}
-
-		return nil
+// claimName publishes immutable bytes and atomically claims a create-only name.
+func (svc *Service) claimName(ctx context.Context, root *os.Root, libraryID, name, tmpName, hash string) error {
+	if err := ctx.Err(); err != nil {
+		return status.FromContextError(err).Err()
 	}
 
 	release, err := svc.claimLibraryFile(ctx, libraryID, name)
 	if err != nil {
 		return err
 	}
-
 	defer release()
 
-	// A VM may have started reading the file in the meantime.
-	if err := svc.checkNotInUse(ctx, libraryID, name); err != nil {
-		return err
-	}
+	if err := cas.Publish(root, tmpName, name, hash); err != nil {
+		if errors.Is(err, fs.ErrExist) {
+			return status.Errorf(codes.AlreadyExists, "name %q already exists", name)
+		}
 
-	if err := root.Rename(tmpName, name); err != nil {
-		return status.Errorf(codes.Internal, "failed to rename %q: %v", name, err)
+		return status.Errorf(codes.Internal, "failed to publish %q: %v", name, err)
 	}
 
 	return nil
@@ -562,55 +556,63 @@ func (svc *Service) claimLibraryFile(ctx context.Context, libraryID, name string
 	}, nil
 }
 
-// checkNotInUse refuses a file a running domain is reading from.
-func (svc *Service) checkNotInUse(ctx context.Context, libraryID, name string) error {
-	if err := svc.checkNotInUseBySeed(ctx, libraryID, name); err != nil {
-		return err
-	}
-
-	diskStatuses, err := safe.StateListAll[*hypervisor.VirtualMachineDiskStatus](ctx, svc.state)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to list virtual machine disk statuses: %v", err)
-	}
-
-	for diskStatus := range diskStatuses.All() {
-		if diskStatus.Metadata().Finalizers().Empty() {
-			continue
-		}
-
-		image := diskStatus.TypedSpec().Image
-
-		if image.Library == libraryID && image.File == name {
-			return status.Errorf(codes.FailedPrecondition, "file %q is in use by disk %q of virtual machine %q",
-				name, diskStatus.TypedSpec().Name, diskStatus.TypedSpec().VirtualMachine)
-		}
-	}
-
-	return nil
-}
-
-// checkNotInUseBySeed protects seed assets while an attached domain holds their status.
-func (svc *Service) checkNotInUseBySeed(ctx context.Context, libraryID, name string) error {
-	seeds, err := safe.StateListAll[*hypervisor.CloudInitStatus](ctx, svc.state)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to list cloud-init statuses: %v", err)
-	}
-
-	for seed := range seeds.All() {
-		if seed.Metadata().Finalizers().Empty() {
-			continue
-		}
-
-		if seed.TypedSpec().Library == libraryID && seed.TypedSpec().Name == name {
-			return status.Errorf(codes.FailedPrecondition, "file %q is in use by cloud-init seed of virtual machine %q", name, seed.TypedSpec().VirtualMachine)
-		}
-	}
-
-	return nil
-}
-
-// Delete a file from a content library.
+// Delete removes an alias or an explicitly selected immutable object.
 func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServiceDeleteRequest) (*machine.ContentLibraryServiceDeleteResponse, error) {
+	switch req.GetTarget().(type) {
+	case *machine.ContentLibraryServiceDeleteRequest_Sha256:
+		if _, err := cas.ObjectPath(req.GetSha256()); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		return svc.deleteObject(ctx, req)
+	case *machine.ContentLibraryServiceDeleteRequest_Name:
+		if req.GetForce() {
+			return nil, status.Error(codes.InvalidArgument, "force is valid only when deleting a SHA256 object")
+		}
+
+		return svc.deleteAlias(ctx, req)
+	default:
+		return nil, status.Error(codes.InvalidArgument, "an alias name or SHA256 object identity is required")
+	}
+}
+
+func (svc *Service) deleteObject(ctx context.Context, req *machine.ContentLibraryServiceDeleteRequest) (*machine.ContentLibraryServiceDeleteResponse, error) {
+	root, err := svc.openLibrary(ctx, req.GetLibraryId())
+	if err != nil {
+		return nil, err
+	}
+
+	defer root.Close() //nolint:errcheck
+
+	release, err := svc.claimLibraryFile(ctx, req.GetLibraryId(), req.GetSha256())
+	if err != nil {
+		return nil, err
+	}
+
+	defer release()
+
+	if err := cas.RemoveObject(root, req.GetSha256(), req.GetForce()); err != nil {
+		switch {
+		case errors.Is(err, fs.ErrNotExist):
+			return nil, status.Errorf(codes.NotFound, "object %q not found", req.GetSha256())
+		case errors.Is(err, cas.ErrObjectReferenced):
+			return nil, status.Error(codes.FailedPrecondition, err.Error())
+		default:
+			return nil, status.Errorf(codes.Internal, "failed to delete object %q: %v", req.GetSha256(), err)
+		}
+	}
+
+	svc.logger.Info("deleted an object from a content library",
+		zap.String("library", req.GetLibraryId()),
+		zap.String("sha256", req.GetSha256()),
+		zap.Bool("force", req.GetForce()),
+	)
+
+	return &machine.ContentLibraryServiceDeleteResponse{}, nil
+}
+
+// deleteAlias removes a validated root alias without removing its object.
+func (svc *Service) deleteAlias(ctx context.Context, req *machine.ContentLibraryServiceDeleteRequest) (*machine.ContentLibraryServiceDeleteResponse, error) {
 	if err := validateName(req.GetName()); err != nil {
 		return nil, err
 	}
@@ -622,6 +624,14 @@ func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServi
 
 	defer root.Close() //nolint:errcheck
 
+	if _, err := cas.Resolve(root, req.GetName()); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, status.Errorf(codes.NotFound, "alias %q not found", req.GetName())
+		}
+
+		return nil, status.Errorf(codes.FailedPrecondition, "alias %q is not a content library object: %v", req.GetName(), err)
+	}
+
 	release, err := svc.claimLibraryFile(ctx, req.GetLibraryId(), req.GetName())
 	if err != nil {
 		return nil, err
@@ -629,11 +639,7 @@ func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServi
 
 	defer release()
 
-	if err := svc.checkNotInUse(ctx, req.GetLibraryId(), req.GetName()); err != nil {
-		return nil, err
-	}
-
-	if err := root.Remove(req.GetName()); err != nil {
+	if err := cas.RemoveAlias(root, req.GetName()); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, status.Errorf(codes.NotFound, "file %q not found", req.GetName())
 		}

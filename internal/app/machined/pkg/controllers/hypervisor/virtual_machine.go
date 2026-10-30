@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"maps"
 	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -49,8 +48,7 @@ type VirtualMachineController struct {
 	// verified is the set of disk status IDs whose image was hashed under the hold now on it, so
 	// that a hold taken once costs one pass over the image rather than one per reconciliation. A
 	// hold does not outlive the process, and an entry is dropped with the hold it stands for.
-	verified      map[string]struct{}
-	verifiedSeeds map[string]struct{}
+	verified map[string]struct{}
 
 	// Rejected acquisitions never reached Start. Keep failed releases distinct
 	// from existing attachments across controller retries.
@@ -144,11 +142,6 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.ContentLibraryStatusType,
-			Kind:      controller.InputWeak,
-		},
-		{
 			Namespace: storage.NamespaceName,
 			Type:      storage.StoragePoolVolumeStatusType,
 			Kind:      controller.InputStrong,
@@ -190,7 +183,6 @@ func (ctrl *VirtualMachineController) Run(ctx context.Context, runtime controlle
 
 	// This controller holds nothing yet, whatever a previous Run left behind.
 	ctrl.verified = map[string]struct{}{}
-	ctrl.verifiedSeeds = map[string]struct{}{}
 
 	// A power button already pressed stays pressed across a restart; see the field comment.
 	if ctrl.shutdownRequested == nil {
@@ -554,7 +546,7 @@ func matchesVMStartIntent(spec *hypervisor.VirtualMachineDomainSpecSpec, text st
 	return text == spec.DomainXML && slices.Equal(disks, spec.Disks) && seedID == spec.CloudInit && powerState == spec.PowerState
 }
 
-// holdSeed pins the status before inspecting mutable library state or handing XML to libvirt.
+// holdSeed pins the status before inspecting its pool backing or handing XML to libvirt.
 func (ctrl *VirtualMachineController) holdSeed(ctx context.Context, r controller.ReaderWriter, spec *hypervisor.VirtualMachineDomainSpec) error {
 	id := spec.TypedSpec().CloudInit
 	if id == "" {
@@ -592,7 +584,7 @@ func (ctrl *VirtualMachineController) holdSeed(ctx context.Context, r controller
 	return ctrl.verifyHeldSeed(ctx, r, spec, seed)
 }
 
-// verifyHeldSeed checks that the held status still points to the attached library asset.
+// verifyHeldSeed checks that the held status still points to the attached pool volume.
 func (ctrl *VirtualMachineController) verifyHeldSeed(ctx context.Context, r controller.Reader, spec *hypervisor.VirtualMachineDomainSpec, seed *hypervisor.CloudInitStatus) error {
 	name, id := spec.Metadata().ID(), seed.Metadata().ID()
 	pending := func(reason string) error {
@@ -604,65 +596,47 @@ func (ctrl *VirtualMachineController) verifyHeldSeed(ctx context.Context, r cont
 		return pending("status invalid or not ready")
 	}
 
-	library, err := safe.ReaderGetByID[*hypervisor.ContentLibraryStatus](ctx, r, asset.Library)
+	pool, err := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, asset.Pool)
 	if state.IsNotFoundError(err) {
-		return pending("library missing")
+		return pending("pool missing")
 	}
 
 	if err != nil {
 		return err
 	}
 
-	if library.Metadata().Phase() != resource.PhaseRunning || library.TypedSpec().Phase != hypervisor.ContentLibraryPhaseReady ||
-		library.TypedSpec().Path != asset.Path || library.TypedSpec().VolumeID != asset.VolumeID ||
-		library.Metadata().Finalizers().Has(hypervisor.ContentLibraryMutationFinalizer(asset.Name)) {
-		return pending("library backing changed or file being mutated")
+	if !cloudInitPoolBackingMatches(pool, asset) {
+		return pending("pool backing changed or not ready")
 	}
 
-	return ctrl.verifyAttachedSeed(spec.TypedSpec().DomainXML, id, asset, pending)
+	return ctrl.verifyAttachedSeed(spec.TypedSpec().DomainXML, asset, pending)
 }
 
-// validHeldSeedAsset checks the status fields required to locate and verify the ISO.
+// validHeldSeedAsset checks the status fields required to locate the owned ISO.
 func validHeldSeedAsset(asset *hypervisor.CloudInitStatusSpec, name string) bool {
-	return asset.Phase == hypervisor.CloudInitPhaseReady && asset.VirtualMachine == name && asset.Library != "" && asset.Path != "" && asset.Name != "" &&
-		filepath.Base(asset.Name) == asset.Name && asset.Digest != "" && asset.VolumeID != "" && asset.InputDigest != ""
+	return asset.Phase == hypervisor.CloudInitPhaseReady && asset.VirtualMachine == name && asset.Pool != "" && asset.Path != "" &&
+		cloudInitAssetNameValid(asset) && asset.VolumeID != "" && asset.InputDigest != ""
 }
 
-// verifyAttachedSeed checks the actual definition and bytes before trusting the asset for this run.
-func (ctrl *VirtualMachineController) verifyAttachedSeed(domainXML, id string, asset *hypervisor.CloudInitStatusSpec, pending func(string) error) error {
-	path := filepath.Join(asset.Path, asset.Name)
+// verifyAttachedSeed checks that the definition attaches the held pool seed read-only.
+func (ctrl *VirtualMachineController) verifyAttachedSeed(domainXML string, asset *hypervisor.CloudInitStatusSpec, pending func(string) error) error {
+	path, err := cloudInitObjectPath(asset)
+	if err != nil {
+		return pending("invalid seed path")
+	}
 
 	var domain libvirtxml.Domain
 	if err := domain.Unmarshal(domainXML); err != nil {
 		return pending("invalid domain XML")
 	}
 
-	attached := false
-
 	for _, disk := range domain.Devices.Disks {
 		if seedDiskIsAttached(disk, path) {
-			attached = true
+			return nil
 		}
 	}
 
-	if !attached {
-		return pending("definition does not attach the seed read-only")
-	}
-
-	if _, verified := ctrl.verifiedSeeds[id]; !verified {
-		info, err := os.Stat(path)
-		if err != nil || !info.Mode().IsRegular() || uint64(info.Size()) != asset.SizeBytes {
-			return pending("seed file missing or wrong size")
-		}
-
-		if err := verifyDiskDigest(path, asset.Digest); err != nil {
-			return fmt.Errorf("%w: seed %q: %w", errDiskNotReady, id, err)
-		}
-
-		ctrl.verifiedSeeds[id] = struct{}{}
-	}
-
-	return nil
+	return pending("definition does not attach the seed read-only")
 }
 
 // seedDiskIsAttached recognizes only a read-only CD-ROM backed by the held seed.
@@ -687,8 +661,6 @@ func (ctrl *VirtualMachineController) releaseSeedsExcept(ctx context.Context, r 
 		if err := r.RemoveFinalizer(ctx, md, ctrl.Name()); err != nil && !state.IsNotFoundError(err) {
 			return err
 		}
-
-		delete(ctrl.verifiedSeeds, md.ID())
 	}
 
 	return nil
@@ -718,8 +690,6 @@ func (ctrl *VirtualMachineController) releaseOrphanSeeds(ctx context.Context, r 
 		if err := r.RemoveFinalizer(ctx, seed.Metadata(), ctrl.Name()); err != nil && !state.IsNotFoundError(err) {
 			return err
 		}
-
-		delete(ctrl.verifiedSeeds, seed.Metadata().ID())
 	}
 
 	return nil
@@ -770,7 +740,7 @@ func seedMatchesCurrentVM(ctx context.Context, r controller.Reader, name, seedID
 	desired := vm.TypedSpec().CloudInit
 
 	return hypervisor.CloudInitStatusID(name, hypervisor.CloudInitSpecSpec{
-		Library:       desired.Library,
+		Pool:          desired.Pool,
 		MetaData:      desired.MetaData,
 		UserData:      desired.UserData,
 		NetworkConfig: desired.NetworkConfig,
@@ -914,40 +884,15 @@ func checkHeldVolume(ctx context.Context, r controller.Reader, id resource.ID, s
 	return nil
 }
 
-// checkNotBeingReplaced refuses disks whose image is being replaced or volume resized.
-//
-// Read after the holds above are in place, against a marker the mutator publishes before its
-// fresh hold census: whichever wrote second sees the other, so exactly one backs off. This side
-// waits and keeps its holds. Storage clears its marker immediately when a hold defers growth,
-// rather than waiting for the pin and deadlocking a start.
+// checkNotBeingReplaced refuses disks whose owned pool volume is being mutated.
+// Read under the disk/volume holds: a source library is not part of the runtime
+// attachment after the independent copy has been published.
 func (ctrl *VirtualMachineController) checkNotBeingReplaced(
 	ctx context.Context, r controller.Reader, name string, statuses []*hypervisor.VirtualMachineDiskStatus,
 ) error {
 	for _, diskStatus := range statuses {
-		image := diskStatus.TypedSpec().Image
-
 		if err := checkVolumeNotBeingResized(ctx, r, name, diskStatus.TypedSpec()); err != nil {
 			return err
-		}
-
-		if image.Library == "" {
-			continue
-		}
-
-		library, err := safe.ReaderGetByID[*hypervisor.ContentLibraryStatus](ctx, r, image.Library)
-
-		switch {
-		case state.IsNotFoundError(err):
-			// No library is no marker, and the disk status resolved against one which is gone is
-			// refused on its own account elsewhere.
-			continue
-		case err != nil:
-			return fmt.Errorf("failed to get content library %q of domain %q: %w", image.Library, name, err)
-		}
-
-		if library.Metadata().Finalizers().Has(hypervisor.ContentLibraryMutationFinalizer(image.File)) {
-			return fmt.Errorf("domain %q: disk status %q is %w: its image is being replaced",
-				name, diskStatus.Metadata().ID(), errDiskNotReady)
 		}
 	}
 

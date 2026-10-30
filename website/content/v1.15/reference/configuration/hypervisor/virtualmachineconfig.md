@@ -78,6 +78,7 @@ disks:
         # Create an empty volume, formatted per `format`.
         blank: {}
     - name: install # Name of the disk, unique within the virtual machine.
+      pool: pool1 # Name of the `StoragePoolConfig` document this disk's volume lives in.
       type: cdrom # Kind of device the disk is presented as.
       bootOrder: 2 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
@@ -87,11 +88,8 @@ disks:
             library: images # Name of the `ContentLibraryConfig` document holding the image.
             file: ubuntu-24.04.iso # Name of the file within that library.
 
-            # # Integrity check of the library file, verified before the media is attached.
+            # # Integrity check of the library file, verified before media is copied.
             # digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
-
-      # # Name of the `StoragePoolConfig` document this disk's volume lives in.
-      # pool: pool1
 # Consoles attached to the virtual machine.
 console:
     # Serial console settings.
@@ -118,7 +116,7 @@ networking:
 guest:
     # Seed handed to the guest on first boot.
     cloudInit:
-        library: targetlibrary # Name of the content library where Talos stores the generated NoCloud ISO.
+        pool: pool1 # Storage pool holding the generated NoCloud seed.
         metaData: | # Contents of the seed's `meta-data` file, carrying the guest's identity.
             instance-id: vm1-001
             local-hostname: vm1
@@ -339,11 +337,11 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the disk, unique within the virtual machine.<br><br>Must be between 1 and 63 characters long, and can only contain ASCII letters,<br>digits and hyphens. It names the volume created in the storage pool.  | |
-|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose image is attached in place<br>from its content library and never lands in a pool. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`pool` |string |Name of the `StoragePoolConfig` document this disk's volume lives in.<br><br>The pool is declared separately and is not provisioned by this document, but it must be<br>declared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration<br>error.<br><br>The volume is named after this virtual machine and this disk, so a volume of that name<br>already in the pool is adopted with its existing contents. Removing the disk from the<br>configuration never deletes the volume, so re-declaring the same virtual machine and disk<br>names in the same pool reattaches the same data.<br><br>Required for both `disk` and `cdrom`. CD-ROM media is copied from the content library<br>into an independent volume in this pool, not attached directly from the library. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 pool: pool1
 {{< /highlight >}}</details> | |
 |`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |
-|`format` |VirtualMachineDiskFormat |On-disk format of a blank volume.<br><br>Choose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not<br>inferred from a content library image. Writable image-derived disks are not supported.<br><br>Optional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.  |`raw`<br />`qcow2`<br /> |
+|`format` |VirtualMachineDiskFormat |On-disk format of a blank volume.<br><br>Choose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not<br>inferred from a content library image. Writable image-derived disks are not supported.<br><br>Optional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose<br>copied ISO volume uses `raw`.  |`raw`<br />`qcow2`<br /> |
 |`bus` |VirtualMachineDiskBus |Controller the disk is attached to.<br><br>`virtio` for anything modern; `sata` for guests without virtio drivers at install time.<br><br>Optional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot<br>be attached to `virtio`, which presents no ejectable media.  |`virtio`<br />`scsi`<br />`sata`<br /> |
 |`type` |VirtualMachineDiskType |Kind of device the disk is presented as.<br><br>A `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and<br>it has no size and no format of its own.<br><br>Optional; defaults to `disk`.  |`disk`<br />`cdrom`<br /> |
 |`bootOrder` |uint32 |Position of this disk in the guest's boot order, lowest first.<br><br>Values must be unique across everything the virtual machine can boot from. Only disks<br>are bootable today, so that is only the disks; network interfaces will share this<br>namespace once they are configurable.<br><br>Optional; a disk without a boot order is not booted from.  | |
@@ -365,7 +363,7 @@ Exactly one source must be set.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
-|`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach read-only CD-ROM media from a content library.<br><br>Set `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is<br>attached in place, not copied into a volume. Writable image-derived disks (copy or<br>linked) are not supported. Use `provision.blank` for a writable disk and install from<br>CD-ROM media.  | |
+|`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach read-only CD-ROM media from a content library.<br><br>Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.<br>Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit<br>`size` and `format`; `mode: copy` may be explicit or omitted. Writable image-derived<br>disks are not supported. Use `provision.blank` for a writable disk and install from<br>CD-ROM media.  | |
 
 
 
@@ -397,10 +395,10 @@ library: images
 |`file` |string |Name of the file within that library. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 file: ubuntu-24.04.iso
 {{< /highlight >}}</details> | |
-|`digest` |string |Integrity check of the library file, verified before the media is attached.<br><br>Written as `<algorithm>:<hex>`, under either `sha256` or `sha512`.<br><br>Optional; the file is used as-is when this is unset. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`digest` |string |Integrity check of the library file, verified before media is copied.<br><br>Written as `<algorithm>:<hex>`, under either `sha256` or `sha512`.<br><br>Optional; the file is copied without a digest check when this is unset. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
 {{< /highlight >}}</details> | |
-|`mode` |VirtualMachineDiskImageMode |Mode for deriving a writable disk from an image (not supported yet).<br><br>Neither `copy` nor `linked` currently provisions a writable image-derived disk. For a<br>writable disk, use `provision.blank` instead; for image media, use a read-only `cdrom`.<br><br>Omit this field on a `cdrom`: even an explicit `copy` is rejected because its read-only<br>medium is attached in place. An omitted mode defaults to `copy` for a disk, but that<br>writable image-derived configuration is not supported.  |`copy`<br />`linked`<br /> |
+|`mode` |VirtualMachineDiskImageMode |Mode for copying CD-ROM media from a content library.<br><br>On a `cdrom`, omitted mode defaults to `copy`; explicit `copy` is also accepted.<br>`linked` is not supported because CD-ROM media must be an independent copy.<br>Writable image-derived disks (copy or linked) are not supported; use<br>`provision.blank` for a writable disk.  |`copy`<br />`linked`<br /> |
 
 
 
@@ -524,8 +522,8 @@ VirtualMachineCloudInit describes the NoCloud seed handed to the guest.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`library` |string |Name of the content library where Talos stores the generated NoCloud ISO.<br><br>Must name a content library with a nonempty identifier of at most 63 ASCII letters,<br>digits or hyphens. The library is declared separately by a `ContentLibraryConfig`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-library: targetlibrary
+|`pool` |string |Storage pool holding the generated NoCloud seed.<br><br>Must name a declared `StoragePoolConfig` document. Storage pool names are at most 63<br>characters, start with a letter or digit, and contain ASCII letters, digits, hyphens<br>or underscores. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+pool: pool1
 {{< /highlight >}}</details> | |
 |`metaData` |string |Contents of the seed's `meta-data` file, carrying the guest's identity.<br><br>`instance-id` is what decides whether a boot is a reboot or a new instance. An unchanged<br>id means edits to `userData` are inert; a changed id re-runs provisioning, which<br>regenerates the SSH host keys in most images.<br><br>Must be valid YAML. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 metaData: |

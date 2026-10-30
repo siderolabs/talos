@@ -6,15 +6,18 @@ package storage
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"math/rand/v2"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
 
 	libvirt "github.com/digitalocean/go-libvirt"
+	"github.com/opencontainers/go-digest"
 	"libvirt.org/go/libvirtxml"
 )
 
@@ -138,7 +141,7 @@ func isStagedVolumeNonce(nonce string) bool {
 // A miss refreshes the pool once before being reported: libvirt rereads a directory pool when it
 // activates it and at no other time, so a volume which appeared since -- including one this host
 // created before its last restart -- is otherwise invisible.
-func (c *client) Volume(pool Pool, name string) (Volume, bool, error) {
+func (c *Client) Volume(pool Pool, name string) (Volume, bool, error) {
 	p, exists, err := c.lookup(pool)
 	if err != nil {
 		return Volume{}, false, err
@@ -152,7 +155,7 @@ func (c *client) Volume(pool Pool, name string) (Volume, bool, error) {
 }
 
 // volume looks a volume up, optionally refreshing the pool once on a miss.
-func (c *client) volume(p libvirt.StoragePool, name string, refresh bool) (Volume, bool, error) {
+func (c *Client) volume(p libvirt.StoragePool, name string, refresh bool) (Volume, bool, error) {
 	vol, err := c.rpc.StorageVolLookupByName(p, name)
 	if err != nil {
 		if !isNoStorageVol(err) {
@@ -174,7 +177,7 @@ func (c *client) volume(p libvirt.StoragePool, name string, refresh bool) (Volum
 }
 
 // describeVolume reads a volume's path, format and logical capacity.
-func (c *client) describeVolume(vol libvirt.StorageVol, name string) (Volume, bool, error) {
+func (c *Client) describeVolume(vol libvirt.StorageVol, name string) (Volume, bool, error) {
 	path, err := c.rpc.StorageVolGetPath(vol)
 	if err != nil {
 		return Volume{}, false, volumeReadRPCError(err)
@@ -215,7 +218,7 @@ func (c *client) describeVolume(vol libvirt.StorageVol, name string) (Volume, bo
 // existing name, so the name asked for either does not exist or names a volume created in full.
 // That matters most for qcow2, where a truncated header is a file QEMU refuses to open at domain
 // start rather than one this can grade.
-func (c *client) CreateVolume(pool Pool, name, format string, capacity uint64, backingFile, backingFormat string) (Volume, error) {
+func (c *Client) CreateVolume(pool Pool, name, format string, capacity uint64, backingFile, backingFormat string) (Volume, error) {
 	p, target, err := c.poolDirectory(pool)
 	if err != nil {
 		return Volume{}, err
@@ -244,8 +247,270 @@ func (c *client) CreateVolume(pool Pool, name, format string, capacity uint64, b
 	return volume, nil
 }
 
+// ErrCopySourceRequired identifies an owned copy which has not yet been provisioned.
+var ErrCopySourceRequired = errors.New("copy source is required for initial provisioning")
+
+// CopyVolume publishes an independent raw copy in the destination pool. A same-inode witness
+// distinguishes completed copies from preexisting guest or foreign volumes on later passes.
+func (c *Client) CopyVolume(pool Pool, name, source, expected string) (Volume, error) {
+	if err := validateCopyName(name); err != nil {
+		return Volume{}, err
+	}
+
+	p, root, err := c.openCopyPool(pool)
+	if err != nil {
+		return Volume{}, err
+	}
+
+	defer root.Close() //nolint:errcheck
+
+	witness := fmt.Sprintf(".copy-on-use/%x", sha256.Sum256([]byte(name)))
+
+	volume, adopted, err := c.adoptCopy(p, root, name, witness)
+	if adopted || err != nil {
+		return volume, err
+	}
+
+	if source == "" {
+		return Volume{}, ErrCopySourceRequired
+	}
+
+	staged := stagedVolumeName(name)
+	defer root.Remove(staged) //nolint:errcheck
+
+	if err = c.stageCopy(p, root, staged, source, expected); err != nil {
+		return Volume{}, err
+	}
+
+	if err = publishCopy(root, staged, name, witness); err != nil {
+		return Volume{}, err
+	}
+
+	return c.copiedVolume(p, name)
+}
+
+func validateCopyName(name string) error {
+	if name == "" || filepath.Base(name) != name || name == "." || strings.HasPrefix(name, ".") {
+		return fmt.Errorf("invalid copy volume name %q", name)
+	}
+
+	return nil
+}
+
+func (c *Client) openCopyPool(pool Pool) (libvirt.StoragePool, *os.Root, error) {
+	p, target, err := c.poolDirectory(pool)
+	if err != nil {
+		return p, nil, err
+	}
+
+	if err = sweepStagedVolumes(target); err != nil {
+		return p, nil, err
+	}
+
+	root, err := os.OpenRoot(target)
+	if err != nil {
+		return p, nil, err
+	}
+
+	if err = root.Mkdir(".copy-on-use", 0o700); err != nil && !os.IsExist(err) {
+		return p, nil, errors.Join(err, root.Close())
+	}
+
+	return p, root, nil
+}
+
+func (c *Client) adoptCopy(p libvirt.StoragePool, root *os.Root, name, witness string) (Volume, bool, error) {
+	exists, err := checkCopyOwnership(root, name, witness)
+	if err != nil {
+		return Volume{}, false, err
+	}
+
+	if !exists {
+		exists, err = recoverCopy(root, name, witness)
+		if !exists || err != nil {
+			return Volume{}, false, err
+		}
+	} else {
+		// Ownership links may survive an attempt whose directory sync failed.
+		// Restore both ordered barriers before admitting the existing copy.
+		if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
+			return Volume{}, false, err
+		}
+
+		if err := syncCopyDirectory(root, "."); err != nil {
+			return Volume{}, false, err
+		}
+	}
+
+	volume, err := c.copiedVolume(p, name)
+
+	return volume, true, err
+}
+
+func checkCopyOwnership(root *os.Root, name, witness string) (bool, error) {
+	file, err := root.Lstat(name)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	owned, err := root.Lstat(witness)
+	if err != nil {
+		return false, fmt.Errorf("copy volume %q has no ownership witness: %w", name, err)
+	}
+
+	if !file.Mode().IsRegular() || !owned.Mode().IsRegular() || !os.SameFile(file, owned) {
+		return false, fmt.Errorf("copy volume %q exists without a matching ownership witness", name)
+	}
+
+	return true, nil
+}
+
+func recoverCopy(root *os.Root, name, witness string) (bool, error) {
+	owned, err := root.Lstat(witness)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	if !owned.Mode().IsRegular() {
+		return false, fmt.Errorf("copy volume %q has a nonregular ownership witness", name)
+	}
+
+	// A witness from an interrupted publication is not proven durable yet.
+	if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
+		return false, err
+	}
+
+	if err = root.Link(witness, name); err != nil {
+		return false, fmt.Errorf("recover copy volume %q: %w", name, err)
+	}
+
+	return true, syncCopyDirectory(root, ".")
+}
+
+func (c *Client) stageCopy(p libvirt.StoragePool, root *os.Root, staged, source, expected string) error {
+	info, err := os.Lstat(source)
+	if err != nil {
+		return err
+	}
+
+	if !info.Mode().IsRegular() {
+		return fmt.Errorf("copy source %q is not a regular file", source)
+	}
+
+	input, err := os.Open(source)
+	if err != nil {
+		return err
+	}
+
+	defer input.Close() //nolint:errcheck
+
+	opened, err := input.Stat()
+	if err != nil {
+		return err
+	}
+
+	if !os.SameFile(info, opened) {
+		return fmt.Errorf("copy source %q changed while opening", source)
+	}
+
+	if err = writeCopy(root, staged, input, expected); err != nil {
+		return err
+	}
+
+	if _, err = c.copiedVolume(p, staged); err != nil {
+		return fmt.Errorf("copy source must be a self-contained raw image or ISO: %w", err)
+	}
+
+	return nil
+}
+
+func writeCopy(root *os.Root, staged string, input io.Reader, expected string) error {
+	var verifier digest.Verifier
+
+	if expected != "" {
+		parsed, err := digest.Parse(expected)
+		if err != nil {
+			return err
+		}
+
+		verifier = parsed.Verifier()
+	}
+
+	output, err := root.OpenFile(staged, os.O_CREATE|os.O_EXCL|os.O_WRONLY, volumeMode)
+	if err != nil {
+		return err
+	}
+
+	var writer io.Writer = output
+
+	if verifier != nil {
+		writer = io.MultiWriter(output, verifier)
+	}
+
+	_, copyErr := io.Copy(writer, input)
+	if copyErr == nil && verifier != nil && !verifier.Verified() {
+		copyErr = fmt.Errorf("copy source digest mismatch: expected %s", expected)
+	}
+
+	if copyErr == nil {
+		copyErr = output.Sync()
+	}
+
+	return errors.Join(copyErr, output.Close())
+}
+
+func publishCopy(root *os.Root, staged, name, witness string) error {
+	if err := root.Link(staged, witness); err != nil {
+		return fmt.Errorf("claim copy volume %q: %w", name, err)
+	}
+
+	if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
+		return err
+	}
+
+	if err := root.Link(staged, name); err != nil {
+		return fmt.Errorf("publish copy volume %q: %w", name, err)
+	}
+
+	return syncCopyDirectory(root, ".")
+}
+
+// syncCopyDirectory makes ownership and publication durable before reporting a usable copy.
+func syncCopyDirectory(root *os.Root, name string) error {
+	directory, err := root.Open(name)
+	if err != nil {
+		return err
+	}
+
+	return errors.Join(directory.Sync(), directory.Close())
+}
+
+func (c *Client) copiedVolume(p libvirt.StoragePool, name string) (Volume, error) {
+	volume, found, err := c.volume(p, name, true)
+	if err != nil {
+		return Volume{}, err
+	}
+
+	if !found || (volume.Format != "raw" && volume.Format != "iso") {
+		return Volume{}, fmt.Errorf("copy volume %q has no raw or ISO libvirt observation", name)
+	}
+
+	// Libvirt probes ISO9660 media as "iso"; QEMU attaches its bytes with the raw driver.
+	volume.Format = "raw"
+
+	return volume, nil
+}
+
 // poolDirectory resolves a pool to its libvirt handle and the directory its volumes are files in.
-func (c *client) poolDirectory(pool Pool) (libvirt.StoragePool, string, error) {
+func (c *Client) poolDirectory(pool Pool) (libvirt.StoragePool, string, error) {
 	p, exists, err := c.lookup(pool)
 	if err != nil {
 		return p, "", err
@@ -268,7 +533,7 @@ func (c *client) poolDirectory(pool Pool) (libvirt.StoragePool, string, error) {
 }
 
 // stageVolumeIntoPlace builds the volume under a staged name and publishes it without replacement.
-func (c *client) stageVolumeIntoPlace(p libvirt.StoragePool, target, name, format string, capacity uint64, backingFile, backingFormat string) (result error) {
+func (c *Client) stageVolumeIntoPlace(p libvirt.StoragePool, target, name, format string, capacity uint64, backingFile, backingFormat string) (result error) {
 	// Leftovers from interrupted or failed creates are cleared first, so a pool directory does not
 	// collect one staged file per attempt. Safe here: StoragePoolVolumeController is the only writer
 	// of a pool's volumes and reconciles one at a time, so no staged name in flight is another
@@ -325,7 +590,7 @@ func (c *client) stageVolumeIntoPlace(p libvirt.StoragePool, target, name, forma
 }
 
 // createStagedVolume builds the volume libvirt will later be told to reread under its real name.
-func (c *client) createStagedVolume(p libvirt.StoragePool, name, format string, capacity uint64, backingFile, backingFormat string) error {
+func (c *Client) createStagedVolume(p libvirt.StoragePool, name, format string, capacity uint64, backingFile, backingFormat string) error {
 	desc := libvirtxml.StorageVolume{
 		Name: name,
 		// Allocation is pinned at zero so the volume is sparse. Left unset, libvirt allocates the
@@ -358,20 +623,14 @@ func (c *client) createStagedVolume(p libvirt.StoragePool, name, format string, 
 	return nil
 }
 
-// ResizeVolume grows a volume to capacity bytes.
+// ResizeVolumeOperation grows a volume to capacity bytes and reports whether the
+// resize RPC finished, was not submitted, or lost its reply.
 //
 // It only ever grows: the shrink flag is never passed, so libvirt refuses a capacity below the
 // volume's own even if a caller asks for one. Resizing a volume a guest has open is the caller's to
 // avoid -- for qcow2 QEMU holds a write lock and this fails, and for raw it succeeds while the
 // guest goes on seeing the old size.
-func (c *client) ResizeVolume(pool Pool, name string, capacity uint64) error {
-	_, err := c.ResizeVolumeOperation(pool, name, capacity)
-
-	return err
-}
-
-// ResizeVolumeOperation reports whether the resize RPC finished, was not submitted, or lost its reply.
-func (c *client) ResizeVolumeOperation(pool Pool, name string, capacity uint64) (OperationOutcome, error) {
+func (c *Client) ResizeVolumeOperation(pool Pool, name string, capacity uint64) (OperationOutcome, error) {
 	var evidence mutationEvidence
 
 	p, exists, err := c.lookup(pool)

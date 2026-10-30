@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage/internal/mutationevidence"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
@@ -61,7 +62,7 @@ type StoragePoolVolumeController struct {
 	V1Alpha1Mode machineruntime.Mode
 
 	// Open is injectable for deterministic reconciliation tests.
-	Open func(context.Context) (libvirtstorage.Client, error)
+	Open func(context.Context) (libvirtstorage.VolumeClient, error)
 }
 
 // Name implements controller.Controller interface.
@@ -107,13 +108,16 @@ func (ctrl *StoragePoolVolumeController) Outputs() []controller.Output {
 }
 
 // Run implements controller.Controller interface.
+//
+// Reconciliation wakes on input events and retries operational errors through restart
+// backoff. There is no periodic poll: silent external drift waits for another event.
 func (ctrl *StoragePoolVolumeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.V1Alpha1Mode.InContainer() {
 		return nil
 	}
 
 	if ctrl.Open == nil {
-		ctrl.Open = func(ctx context.Context) (libvirtstorage.Client, error) {
+		ctrl.Open = func(ctx context.Context) (libvirtstorage.VolumeClient, error) {
 			return libvirt.New().StorageVolumes(ctx)
 		}
 	}
@@ -157,7 +161,7 @@ func (ctrl *StoragePoolVolumeController) reconcile(
 	held := maps.Clone(poolsInUse)
 
 	var (
-		session libvirtstorage.Client
+		session libvirtstorage.VolumeClient
 		errs    []error
 	)
 
@@ -169,7 +173,7 @@ func (ctrl *StoragePoolVolumeController) reconcile(
 
 	// Opened lazily, and at most once: a host with no volumes to reconcile must not dial the daemon
 	// at all, or every pass turns a daemon outage into a restart loop for nothing.
-	openSession := func() (libvirtstorage.Client, error) {
+	openSession := func() (libvirtstorage.VolumeClient, error) {
 		if session != nil {
 			return session, nil
 		}
@@ -231,7 +235,7 @@ func (ctrl *StoragePoolVolumeController) reconcileSpecs(
 	specs safe.List[*storage.StoragePoolVolumeSpec],
 	poolStatuses map[string]*storage.StoragePoolStatus,
 	held map[string]struct{},
-	openSession func() (libvirtstorage.Client, error),
+	openSession func() (libvirtstorage.VolumeClient, error),
 ) (map[resource.ID]struct{}, []error, error) {
 	wanted := map[resource.ID]struct{}{}
 
@@ -265,7 +269,7 @@ func (ctrl *StoragePoolVolumeController) reconcileSpecs(
 func (ctrl *StoragePoolVolumeController) reconcileVolumeSpec(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
 	spec *storage.StoragePoolVolumeSpec, poolStatuses map[string]*storage.StoragePoolStatus,
-	held map[string]struct{}, openSession func() (libvirtstorage.Client, error),
+	held map[string]struct{}, openSession func() (libvirtstorage.VolumeClient, error),
 ) (bool, []error, error) {
 	id := spec.Metadata().ID()
 
@@ -317,7 +321,7 @@ func publishVolumeResolution(
 	resolved storage.StoragePoolVolumeStatusSpec, resolveErr error, mutation *volumeMutation,
 ) (error, error) {
 	if err := publishVolumeStatus(ctx, r, spec, resolved, resolveErr); err != nil {
-		if mutation.release != nil && mutation.outcome == libvirtstorage.NoMutationSubmitted {
+		if mutation.release != nil && mutationevidence.CanRelease(mutation.outcome, false) {
 			if releaseErr := mutation.release(); releaseErr != nil {
 				err = errors.Join(err, fmt.Errorf("release volume mutation marker: %w", releaseErr))
 			}
@@ -328,7 +332,7 @@ func publishVolumeResolution(
 
 	// Finished may have partially changed backing, so retire its marker only
 	// after replacement status is published. Unknown always remains fenced.
-	if mutation.release != nil && mutation.outcome != libvirtstorage.Unknown {
+	if mutation.release != nil && mutationevidence.CanRelease(mutation.outcome, true) {
 		return mutation.release(), nil
 	}
 
@@ -525,7 +529,7 @@ func (ctrl *StoragePoolVolumeController) resolve(
 	spec *storage.StoragePoolVolumeSpecSpec,
 	poolStatuses map[string]*storage.StoragePoolStatus,
 	held map[string]struct{},
-	openSession func() (libvirtstorage.Client, error),
+	openSession func() (libvirtstorage.VolumeClient, error),
 	mutation *volumeMutation,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
 	pool, err := ctrl.resolvePool(ctx, r, logger, spec.Pool, poolStatuses, held)
@@ -567,10 +571,14 @@ func (ctrl *StoragePoolVolumeController) resolve(
 }
 
 func (ctrl *StoragePoolVolumeController) resolveVolume(
-	ctx context.Context, r controller.ReaderWriter, session libvirtstorage.Client, logger *zap.Logger,
+	ctx context.Context, r controller.ReaderWriter, session libvirtstorage.VolumeClient, logger *zap.Logger,
 	pool libvirtstorage.Pool, poolStatus *storage.StoragePoolStatus, spec *storage.StoragePoolVolumeSpecSpec,
 	mutation *volumeMutation,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
+	if spec.Copy != nil {
+		return resolveCopiedVolume(session, pool, spec)
+	}
+
 	volume, exists, err := session.Volume(pool, spec.Name)
 	if err != nil {
 		phase := storage.StoragePoolVolumePhaseNotReady
@@ -596,6 +604,34 @@ func (ctrl *StoragePoolVolumeController) resolveVolume(
 	}
 
 	return ctrl.adopt(ctx, r, session, logger, pool, poolStatus, spec, volume, mutation)
+}
+
+func resolveCopiedVolume(session libvirtstorage.VolumeClient, pool libvirtstorage.Pool, spec *storage.StoragePoolVolumeSpecSpec) (storage.StoragePoolVolumeStatusSpec, error) {
+	if spec.Format != "raw" || spec.BackingFile != "" || spec.BackingFormat != "" || spec.Capacity != 0 {
+		return storage.StoragePoolVolumeStatusSpec{Phase: storage.StoragePoolVolumePhaseNotReady},
+			pending("copy volume %q requires raw format, no backing chain and no requested capacity", spec.Name)
+	}
+
+	volume, copyErr := session.CopyVolume(pool, spec.Name, spec.Copy.Source, spec.Copy.Digest)
+	if copyErr != nil {
+		return copyVolumeFailure(copyErr)
+	}
+
+	return readyVolume(volume), nil
+}
+
+func copyVolumeFailure(err error) (storage.StoragePoolVolumeStatusSpec, error) {
+	phase := storage.StoragePoolVolumePhaseNotReady
+
+	if errors.Is(err, libvirtstorage.ErrCopySourceRequired) {
+		return storage.StoragePoolVolumeStatusSpec{Phase: phase}, pending("%w", err)
+	}
+
+	if errors.Is(err, libvirtstorage.ErrVolumeObservationUnavailable) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+		phase = storage.StoragePoolVolumePhaseObservationUnavailable
+	}
+
+	return storage.StoragePoolVolumeStatusSpec{Phase: phase}, err
 }
 
 // resolvePool holds the pool a volume lives in and names it to libvirt, or says why it cannot yet.
@@ -675,7 +711,7 @@ func recheckHeldPool(ctx context.Context, r controller.Reader, name string, pool
 func (ctrl *StoragePoolVolumeController) adopt(
 	ctx context.Context,
 	r controller.ReaderWriter,
-	session libvirtstorage.Client,
+	session libvirtstorage.VolumeClient,
 	logger *zap.Logger,
 	pool libvirtstorage.Pool,
 	poolStatus *storage.StoragePoolStatus,
@@ -731,7 +767,7 @@ func (ctrl *StoragePoolVolumeController) adopt(
 func (ctrl *StoragePoolVolumeController) growVolume(
 	ctx context.Context,
 	r controller.ReaderWriter,
-	session libvirtstorage.Client,
+	session libvirtstorage.VolumeClient,
 	logger *zap.Logger,
 	pool libvirtstorage.Pool,
 	poolStatus *storage.StoragePoolStatus,
@@ -788,24 +824,10 @@ func (ctrl *StoragePoolVolumeController) growVolume(
 
 // resizeVolumeWithEvidence keeps exclusion when the daemon may still be resizing.
 func resizeVolumeWithEvidence(
-	session libvirtstorage.Client, pool libvirtstorage.Pool, spec *storage.StoragePoolVolumeSpecSpec, mutation *volumeMutation,
+	session libvirtstorage.VolumeClient, pool libvirtstorage.Pool, spec *storage.StoragePoolVolumeSpecSpec, mutation *volumeMutation,
 ) error {
-	operation, ok := session.(interface {
-		ResizeVolumeOperation(libvirtstorage.Pool, string, uint64) (libvirtstorage.OperationOutcome, error)
-	})
-	if !ok {
-		// No RPC was invoked: this pass may retire its own marker, but must
-		// report an error rather than falling back to the legacy mutation API.
-		return fmt.Errorf("storage client does not provide resize operation outcome evidence")
-	}
-
-	// Fail closed even if the client returns a malformed outcome or Unknown with nil.
-	mutation.outcome = libvirtstorage.Unknown
-
-	outcome, err := operation.ResizeVolumeOperation(pool, spec.Name, spec.Capacity)
-	if outcome == libvirtstorage.NoMutationSubmitted || outcome == libvirtstorage.Finished {
-		mutation.outcome = outcome
-	}
+	outcome, err := session.ResizeVolumeOperation(pool, spec.Name, spec.Capacity)
+	mutation.outcome = mutationevidence.Merge(mutation.outcome, outcome)
 
 	if err != nil {
 		return err

@@ -34,11 +34,12 @@ const (
 // Content libraries store virtual machine images; they are declared with the
 // ContentLibraryConfig document and backed by a volume.
 type ContentLibraryServiceClient interface {
-	// List files stored in a content library.
+	// One SHA256 object and the names currently attached to it.
 	List(ctx context.Context, in *ContentLibraryServiceListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ContentLibraryServiceListResponse], error)
 	// Upload a file to a content library.
 	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ContentLibraryServiceUploadRequest, ContentLibraryServiceUploadResponse], error)
-	// Delete a file from a content library.
+	// Delete removes an alias or explicitly deletes a SHA256 object.
+	// Object deletion refuses existing aliases unless force is set.
 	Delete(ctx context.Context, in *ContentLibraryServiceDeleteRequest, opts ...grpc.CallOption) (*ContentLibraryServiceDeleteResponse, error)
 }
 
@@ -101,11 +102,12 @@ func (c *contentLibraryServiceClient) Delete(ctx context.Context, in *ContentLib
 // Content libraries store virtual machine images; they are declared with the
 // ContentLibraryConfig document and backed by a volume.
 type ContentLibraryServiceServer interface {
-	// List files stored in a content library.
+	// One SHA256 object and the names currently attached to it.
 	List(*ContentLibraryServiceListRequest, grpc.ServerStreamingServer[ContentLibraryServiceListResponse]) error
 	// Upload a file to a content library.
 	Upload(grpc.ClientStreamingServer[ContentLibraryServiceUploadRequest, ContentLibraryServiceUploadResponse]) error
-	// Delete a file from a content library.
+	// Delete removes an alias or explicitly deletes a SHA256 object.
+	// Object deletion refuses existing aliases unless force is set.
 	Delete(context.Context, *ContentLibraryServiceDeleteRequest) (*ContentLibraryServiceDeleteResponse, error)
 	mustEmbedUnimplementedContentLibraryServiceServer()
 }

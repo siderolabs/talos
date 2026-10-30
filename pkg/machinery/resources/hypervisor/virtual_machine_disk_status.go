@@ -103,7 +103,7 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 
 		// A disk provisioned from neither hashes the zero value, so it still has one stable ID to
 		// report its own unsupportedness under.
-		parts = []string{image.Library, image.File, image.Digest, image.Mode}
+		parts = []string{image.Library, image.File, image.Digest, image.Mode, disk.Pool, disk.Format}
 	}
 
 	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))

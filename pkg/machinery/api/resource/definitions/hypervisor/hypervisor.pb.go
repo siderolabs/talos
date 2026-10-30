@@ -28,7 +28,7 @@ const (
 // CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
 type CloudInitSpecSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Library       string                 `protobuf:"bytes,1,opt,name=library,proto3" json:"library,omitempty"`
+	Pool          string                 `protobuf:"bytes,1,opt,name=pool,proto3" json:"pool,omitempty"`
 	MetaData      string                 `protobuf:"bytes,2,opt,name=meta_data,json=metaData,proto3" json:"meta_data,omitempty"`
 	UserData      string                 `protobuf:"bytes,3,opt,name=user_data,json=userData,proto3" json:"user_data,omitempty"`
 	NetworkConfig string                 `protobuf:"bytes,4,opt,name=network_config,json=networkConfig,proto3" json:"network_config,omitempty"`
@@ -66,9 +66,9 @@ func (*CloudInitSpecSpec) Descriptor() ([]byte, []int) {
 	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *CloudInitSpecSpec) GetLibrary() string {
+func (x *CloudInitSpecSpec) GetPool() string {
 	if x != nil {
-		return x.Library
+		return x.Pool
 	}
 	return ""
 }
@@ -98,7 +98,7 @@ func (x *CloudInitSpecSpec) GetNetworkConfig() string {
 type CloudInitStatusSpec struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	VirtualMachine string                 `protobuf:"bytes,1,opt,name=virtual_machine,json=virtualMachine,proto3" json:"virtual_machine,omitempty"`
-	Library        string                 `protobuf:"bytes,2,opt,name=library,proto3" json:"library,omitempty"`
+	Pool           string                 `protobuf:"bytes,2,opt,name=pool,proto3" json:"pool,omitempty"`
 	Name           string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
 	// Path and VolumeID pin the backing identity and prevent stale readiness across remounts.
 	Path               string                         `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
@@ -150,9 +150,9 @@ func (x *CloudInitStatusSpec) GetVirtualMachine() string {
 	return ""
 }
 
-func (x *CloudInitStatusSpec) GetLibrary() string {
+func (x *CloudInitStatusSpec) GetPool() string {
 	if x != nil {
-		return x.Library
+		return x.Pool
 	}
 	return ""
 }
@@ -564,7 +564,7 @@ func (x *VirtualMachineCPUTopologySpec) GetThreads() uint32 {
 // VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
 type VirtualMachineCloudInitSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Library       string                 `protobuf:"bytes,1,opt,name=library,proto3" json:"library,omitempty"`
+	Pool          string                 `protobuf:"bytes,1,opt,name=pool,proto3" json:"pool,omitempty"`
 	MetaData      string                 `protobuf:"bytes,2,opt,name=meta_data,json=metaData,proto3" json:"meta_data,omitempty"`
 	UserData      string                 `protobuf:"bytes,3,opt,name=user_data,json=userData,proto3" json:"user_data,omitempty"`
 	NetworkConfig string                 `protobuf:"bytes,4,opt,name=network_config,json=networkConfig,proto3" json:"network_config,omitempty"`
@@ -602,9 +602,9 @@ func (*VirtualMachineCloudInitSpec) Descriptor() ([]byte, []int) {
 	return file_resource_definitions_hypervisor_hypervisor_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *VirtualMachineCloudInitSpec) GetLibrary() string {
+func (x *VirtualMachineCloudInitSpec) GetPool() string {
 	if x != nil {
-		return x.Library
+		return x.Pool
 	}
 	return ""
 }
@@ -2225,15 +2225,15 @@ var File_resource_definitions_hypervisor_hypervisor_proto protoreflect.FileDescr
 
 const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\n" +
-	"0resource/definitions/hypervisor/hypervisor.proto\x12%talos.resource.definitions.hypervisor\x1a\x13common/common.proto\x1a&resource/definitions/enums/enums.proto\"\x8e\x01\n" +
-	"\x11CloudInitSpecSpec\x12\x18\n" +
-	"\alibrary\x18\x01 \x01(\tR\alibrary\x12\x1b\n" +
+	"0resource/definitions/hypervisor/hypervisor.proto\x12%talos.resource.definitions.hypervisor\x1a\x13common/common.proto\x1a&resource/definitions/enums/enums.proto\"\x88\x01\n" +
+	"\x11CloudInitSpecSpec\x12\x12\n" +
+	"\x04pool\x18\x01 \x01(\tR\x04pool\x12\x1b\n" +
 	"\tmeta_data\x18\x02 \x01(\tR\bmetaData\x12\x1b\n" +
 	"\tuser_data\x18\x03 \x01(\tR\buserData\x12%\n" +
-	"\x0enetwork_config\x18\x04 \x01(\tR\rnetworkConfig\"\x90\x03\n" +
+	"\x0enetwork_config\x18\x04 \x01(\tR\rnetworkConfig\"\x8a\x03\n" +
 	"\x13CloudInitStatusSpec\x12'\n" +
-	"\x0fvirtual_machine\x18\x01 \x01(\tR\x0evirtualMachine\x12\x18\n" +
-	"\alibrary\x18\x02 \x01(\tR\alibrary\x12\x12\n" +
+	"\x0fvirtual_machine\x18\x01 \x01(\tR\x0evirtualMachine\x12\x12\n" +
+	"\x04pool\x18\x02 \x01(\tR\x04pool\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12\x12\n" +
 	"\x04path\x18\x04 \x01(\tR\x04path\x12\x1b\n" +
 	"\tvolume_id\x18\x05 \x01(\tR\bvolumeId\x12\x16\n" +
@@ -2267,9 +2267,9 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x1dVirtualMachineCPUTopologySpec\x12\x18\n" +
 	"\asockets\x18\x01 \x01(\rR\asockets\x12\x14\n" +
 	"\x05cores\x18\x02 \x01(\rR\x05cores\x12\x18\n" +
-	"\athreads\x18\x03 \x01(\rR\athreads\"\x98\x01\n" +
-	"\x1bVirtualMachineCloudInitSpec\x12\x18\n" +
-	"\alibrary\x18\x01 \x01(\tR\alibrary\x12\x1b\n" +
+	"\athreads\x18\x03 \x01(\rR\athreads\"\x92\x01\n" +
+	"\x1bVirtualMachineCloudInitSpec\x12\x12\n" +
+	"\x04pool\x18\x01 \x01(\tR\x04pool\x12\x1b\n" +
 	"\tmeta_data\x18\x02 \x01(\tR\bmetaData\x12\x1b\n" +
 	"\tuser_data\x18\x03 \x01(\tR\buserData\x12%\n" +
 	"\x0enetwork_config\x18\x04 \x01(\tR\rnetworkConfig\"E\n" +

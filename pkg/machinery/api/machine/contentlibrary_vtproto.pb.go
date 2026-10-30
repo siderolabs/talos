@@ -9,10 +9,8 @@ import (
 	io "io"
 
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
-	timestamppb "github.com/planetscale/vtprotobuf/types/known/timestamppb"
 	proto "google.golang.org/protobuf/proto"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	timestamppb1 "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 )
@@ -94,25 +92,24 @@ func (m *ContentLibraryServiceListResponse) MarshalToSizedBufferVT(dAtA []byte) 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ModifiedAt != nil {
-		size, err := (*timestamppb.Timestamp)(m.ModifiedAt).MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if len(m.Names) > 0 {
+		for iNdEx := len(m.Names) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Names[iNdEx])
+			copy(dAtA[i:], m.Names[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Names[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
 		}
-		i -= size
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-		i--
-		dAtA[i] = 0x1a
 	}
 	if m.Size != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Size))
 		i--
 		dAtA[i] = 0x10
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
+	if len(m.Sha256) > 0 {
+		i -= len(m.Sha256)
+		copy(dAtA[i:], m.Sha256)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Sha256)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -154,17 +151,7 @@ func (m *ContentLibraryServiceUploadInfo) MarshalToSizedBufferVT(dAtA []byte) (i
 		copy(dAtA[i:], m.Digest)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Digest)))
 		i--
-		dAtA[i] = 0x22
-	}
-	if m.Overwrite {
-		i--
-		if m.Overwrite {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x1a
 	}
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
@@ -313,13 +300,6 @@ func (m *ContentLibraryServiceUploadDigests) MarshalToSizedBufferVT(dAtA []byte)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Sha512) > 0 {
-		i -= len(m.Sha512)
-		copy(dAtA[i:], m.Sha512)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Sha512)))
-		i--
-		dAtA[i] = 0x12
-	}
 	if len(m.Sha256) > 0 {
 		i -= len(m.Sha256)
 		copy(dAtA[i:], m.Sha256)
@@ -415,12 +395,24 @@ func (m *ContentLibraryServiceDeleteRequest) MarshalToSizedBufferVT(dAtA []byte)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
+	if vtmsg, ok := m.Target.(interface {
+		MarshalToSizedBufferVT([]byte) (int, error)
+	}); ok {
+		size, err := vtmsg.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+	}
+	if m.Force {
 		i--
-		dAtA[i] = 0x12
+		if m.Force {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
 	}
 	if len(m.LibraryId) > 0 {
 		i -= len(m.LibraryId)
@@ -432,6 +424,34 @@ func (m *ContentLibraryServiceDeleteRequest) MarshalToSizedBufferVT(dAtA []byte)
 	return len(dAtA) - i, nil
 }
 
+func (m *ContentLibraryServiceDeleteRequest_Name) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ContentLibraryServiceDeleteRequest_Name) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.Name)
+	copy(dAtA[i:], m.Name)
+	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
+	i--
+	dAtA[i] = 0x12
+	return len(dAtA) - i, nil
+}
+func (m *ContentLibraryServiceDeleteRequest_Sha256) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ContentLibraryServiceDeleteRequest_Sha256) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	i -= len(m.Sha256)
+	copy(dAtA[i:], m.Sha256)
+	i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Sha256)))
+	i--
+	dAtA[i] = 0x1a
+	return len(dAtA) - i, nil
+}
 func (m *ContentLibraryServiceDeleteResponse) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -485,16 +505,18 @@ func (m *ContentLibraryServiceListResponse) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Name)
+	l = len(m.Sha256)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	if m.Size != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Size))
 	}
-	if m.ModifiedAt != nil {
-		l = (*timestamppb.Timestamp)(m.ModifiedAt).SizeVT()
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if len(m.Names) > 0 {
+		for _, s := range m.Names {
+			l = len(s)
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
 	}
 	n += len(m.unknownFields)
 	return n
@@ -513,9 +535,6 @@ func (m *ContentLibraryServiceUploadInfo) SizeVT() (n int) {
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	if m.Overwrite {
-		n += 2
 	}
 	l = len(m.Digest)
 	if l > 0 {
@@ -582,10 +601,6 @@ func (m *ContentLibraryServiceUploadDigests) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Sha512)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -621,14 +636,36 @@ func (m *ContentLibraryServiceDeleteRequest) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if vtmsg, ok := m.Target.(interface{ SizeVT() int }); ok {
+		n += vtmsg.SizeVT()
+	}
+	if m.Force {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
 }
 
+func (m *ContentLibraryServiceDeleteRequest_Name) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Name)
+	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	return n
+}
+func (m *ContentLibraryServiceDeleteRequest_Sha256) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Sha256)
+	n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	return n
+}
 func (m *ContentLibraryServiceDeleteResponse) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -753,7 +790,7 @@ func (m *ContentLibraryServiceListResponse) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Sha256", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -781,7 +818,7 @@ func (m *ContentLibraryServiceListResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			m.Sha256 = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 0 {
@@ -804,9 +841,9 @@ func (m *ContentLibraryServiceListResponse) UnmarshalVT(dAtA []byte) error {
 			}
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ModifiedAt", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Names", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -816,27 +853,23 @@ func (m *ContentLibraryServiceListResponse) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return protohelpers.ErrInvalidLength
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return protohelpers.ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ModifiedAt == nil {
-				m.ModifiedAt = &timestamppb1.Timestamp{}
-			}
-			if err := (*timestamppb.Timestamp)(m.ModifiedAt).UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.Names = append(m.Names, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -954,26 +987,6 @@ func (m *ContentLibraryServiceUploadInfo) UnmarshalVT(dAtA []byte) error {
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Overwrite", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.Overwrite = bool(v != 0)
-		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Digest", wireType)
 			}
@@ -1237,38 +1250,6 @@ func (m *ContentLibraryServiceUploadDigests) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Sha256 = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Sha512", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Sha512 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -1520,8 +1501,60 @@ func (m *ContentLibraryServiceDeleteRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			m.Target = &ContentLibraryServiceDeleteRequest_Name{Name: string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sha256", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Target = &ContentLibraryServiceDeleteRequest_Sha256{Sha256: string(dAtA[iNdEx:postIndex])}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Force", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Force = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

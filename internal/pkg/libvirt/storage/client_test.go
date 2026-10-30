@@ -186,24 +186,38 @@ func TestPersistentPoolLifecycle(t *testing.T) {
 
 		return nil
 	}
-	require.NoError(t, client.Ensure(pool, "/var/mnt/u-vms/images", prepare))
+	outcome, err := client.EnsureOperation(pool, "/var/mnt/u-vms/images", prepare)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.Finished, outcome)
 	require.Equal(t, []string{"prepare", "define", "start"}, rpc.calls)
 	rpc.calls = nil
 
-	require.NoError(t, client.Ensure(pool, "/var/mnt/u-vms/images", prepare))
+	outcome, err = client.EnsureOperation(pool, "/var/mnt/u-vms/images", prepare)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 	require.Equal(t, []string{"prepare"}, rpc.calls, "unchanged reapply must not stop or redefine")
 	rpc.calls = nil
 
-	require.NoError(t, client.Ensure(pool, "/var/mnt/x-new/images", prepare))
+	outcome, err = client.EnsureOperation(pool, "/var/mnt/x-new/images", prepare)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.Finished, outcome)
 	require.Equal(t, []string{"stop", "prepare", "define", "start"}, rpc.calls)
 	require.Equal(t, libvirt.UUID(id), rpc.pools[0].UUID)
 	require.Equal(t, "/var/mnt/x-new/images", rpc.target)
 	rpc.calls = nil
 
-	require.NoError(t, client.Remove(pool))
+	outcome, err = client.RemoveOperation(pool)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.Finished, outcome)
 	require.Equal(t, []string{"stop", "undefine"}, rpc.calls, "remove must not inspect or delete data")
-	require.NoError(t, client.Remove(pool), "already absent removal is idempotent")
-	require.NoError(t, client.Stop(pool), "already absent stop is idempotent")
+
+	outcome, err = client.RemoveOperation(pool)
+	require.NoError(t, err, "already absent removal is idempotent")
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+
+	outcome, err = client.StopOperation(pool)
+	require.NoError(t, err, "already absent stop is idempotent")
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 	require.Zero(t, rpc.listCalls, "named pool operations must not enumerate unrelated pools")
 }
 
@@ -216,13 +230,21 @@ func TestPoolLookupErrors(t *testing.T) {
 		libvirt.Error{Code: uint32(libvirt.ErrNoDomain), Message: "not a missing pool"},
 	} {
 		client := libvirtstorage.NewTestClient(&rpc{lookupErr: lookupErr})
-		require.ErrorIs(t, client.Stop(pool), lookupErr)
-		require.ErrorIs(t, client.Remove(pool), lookupErr)
-		require.ErrorIs(t, client.Ensure(pool, "/unused", func() error {
+		outcome, err := client.StopOperation(pool)
+		require.ErrorIs(t, err, lookupErr)
+		require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+
+		outcome, err = client.RemoveOperation(pool)
+		require.ErrorIs(t, err, lookupErr)
+		require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+
+		outcome, err = client.EnsureOperation(pool, "/unused", func() error {
 			t.Fatal("a lookup failure must not be treated as permission to create a pool")
 
 			return nil
-		}), lookupErr)
+		})
+		require.ErrorIs(t, err, lookupErr)
+		require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 	}
 }
 
@@ -232,8 +254,13 @@ func TestPoolLookupWrappedAbsence(t *testing.T) {
 	rpc := &rpc{lookupErr: fmt.Errorf("lookup: %w", libvirt.Error{Code: uint32(libvirt.ErrNoStoragePool), Message: "pool not found"})}
 	client := libvirtstorage.NewTestClient(rpc)
 	pool := libvirtstorage.Pool{Name: "images", UUID: uuid.New()}
-	require.NoError(t, client.Remove(pool))
-	require.NoError(t, client.Stop(pool))
+	outcome, err := client.RemoveOperation(pool)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+
+	outcome, err = client.StopOperation(pool)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 	require.Empty(t, rpc.calls)
 }
 
@@ -246,12 +273,16 @@ func TestPoolXMLTarget(t *testing.T) {
 	client := libvirtstorage.NewTestClient(rpc)
 	prepare := func() error { return nil }
 
-	require.NoError(t, client.Ensure(pool, target, prepare), "missing XML target must trigger redefinition, not a nil dereference")
+	outcome, err := client.EnsureOperation(pool, target, prepare)
+	require.NoError(t, err, "missing XML target must trigger redefinition, not a nil dereference")
+	require.Equal(t, libvirtstorage.Finished, outcome)
 	require.Equal(t, target, rpc.target, "XML metacharacters must round-trip without changing the directory")
 	rpc.description = ""
 	rpc.calls = nil
 
-	require.NoError(t, client.Ensure(pool, target, prepare))
+	outcome, err = client.EnsureOperation(pool, target, prepare)
+	require.NoError(t, err)
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 	require.Empty(t, rpc.calls, "an escaped target must not cause perpetual redefinition")
 }
 
@@ -263,13 +294,21 @@ func TestCollisionRefusedBeforePreparingDirectory(t *testing.T) {
 	rpc := &rpc{pools: []libvirt.StoragePool{{Name: "images", UUID: libvirt.UUID(uuid.New())}}}
 	client := libvirtstorage.NewTestClient(rpc)
 	pool := libvirtstorage.Pool{Name: "images", UUID: id}
-	require.ErrorContains(t, client.Ensure(pool, "/unused", func() error {
+	outcome, err := client.EnsureOperation(pool, "/unused", func() error {
 		t.Fatal("must not create directory")
 
 		return nil
-	}), "not owned")
-	require.ErrorContains(t, client.Remove(pool), "not owned")
-	require.ErrorContains(t, client.Stop(pool), "not owned")
+	})
+	require.ErrorContains(t, err, "not owned")
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+
+	outcome, err = client.RemoveOperation(pool)
+	require.ErrorContains(t, err, "not owned")
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
+
+	outcome, err = client.StopOperation(pool)
+	require.ErrorContains(t, err, "not owned")
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 	require.Empty(t, rpc.calls)
 }
 
@@ -319,55 +358,55 @@ func TestPoolOperationEvidence(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		rpc    *rpc
-		invoke func(libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error)
+		invoke func(libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error)
 		want   libvirtstorage.OperationOutcome
 	}{
-		{"ensure read", &rpc{lookupErr: transportErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		{"ensure read", &rpc{lookupErr: transportErr}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
 		}, libvirtstorage.NoMutationSubmitted},
-		{"ensure prepare", &rpc{}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		{"ensure prepare", &rpc{}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.EnsureOperation(pool, "/mnt", func() error { return transportErr })
 		}, libvirtstorage.NoMutationSubmitted},
-		{"ensure define lost", &rpc{defineErr: transportErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		{"ensure define lost", &rpc{defineErr: transportErr}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
 		}, libvirtstorage.Unknown},
-		{"ensure define terminal", &rpc{defineErr: terminalErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		{"ensure define terminal", &rpc{defineErr: terminalErr}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
 		}, libvirtstorage.Finished},
 		{"ensure read after mutation", &rpc{
 			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
 			target: "/mnt", autostart: true, activeErr: transportErr,
-		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
 		}, libvirtstorage.Finished},
 		{"ensure activation lost", &rpc{
 			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
 			target: "/mnt", poolCreateErr: transportErr,
-		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.EnsureOperation(pool, "/mnt", func() error { return nil })
 		}, libvirtstorage.Unknown},
-		{"remove read", &rpc{lookupErr: transportErr}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		{"remove read", &rpc{lookupErr: transportErr}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.RemoveOperation(pool)
 		}, libvirtstorage.NoMutationSubmitted},
 		{"remove partial terminal", &rpc{
 			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
 			active: true, undefineErr: terminalErr,
-		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.RemoveOperation(pool)
 		}, libvirtstorage.Finished},
 		{"remove stop lost", &rpc{
 			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
 			active: true, destroyErr: transportErr,
-		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.RemoveOperation(pool)
 		}, libvirtstorage.Unknown},
-		{"stop inactive", &rpc{pools: []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}}}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		{"stop inactive", &rpc{pools: []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}}}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.StopOperation(pool)
 		}, libvirtstorage.NoMutationSubmitted},
 		{"stop terminal", &rpc{
 			pools:  []libvirt.StoragePool{{Name: pool.Name, UUID: libvirt.UUID(id)}},
 			active: true, destroyErr: terminalErr,
-		}, func(c libvirtstorage.EvidenceClient) (libvirtstorage.OperationOutcome, error) {
+		}, func(c libvirtstorage.PoolClient) (libvirtstorage.OperationOutcome, error) {
 			return c.StopOperation(pool)
 		}, libvirtstorage.Finished},
 	} {

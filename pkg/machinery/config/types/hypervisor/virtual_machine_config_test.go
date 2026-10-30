@@ -29,6 +29,53 @@ import (
 // exampleDigest is a well-formed sha256 digest, used wherever a valid one is needed.
 const exampleDigest = "sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c"
 
+func TestCloudInitPoolRequired(t *testing.T) {
+	cfg := hypervisor.NewVirtualMachineConfigV1Alpha1()
+	cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
+		UserDataConfig: "#cloud-config\n",
+	}
+	_, err := cfg.Validate(validationMode{})
+	require.ErrorContains(t, err, "guest.cloudInit.pool is required")
+}
+
+func TestCDROMPoolAndCopyMode(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		pool string
+		mode hypervisorhelpers.VirtualMachineDiskImageMode
+		want string
+	}{
+		{name: "pool required", want: "disks[0]: pool is required"},
+		{name: "pooled cdrom", pool: "pool1"},
+		{name: "explicit copy", pool: "pool1", mode: hypervisorhelpers.VirtualMachineDiskImageModeCopy},
+		{
+			name: "linked unsupported", pool: "pool1", mode: hypervisorhelpers.VirtualMachineDiskImageModeLinked,
+			want: "disks[0]: provision.fromImage.mode: linked is not supported on a cdrom",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := validVirtualMachineConfig()
+			disk := cdromDisk()
+			disk.DiskPool = test.pool
+			disk.ProvisionConfig.FromImageConfig.ImageMode = test.mode
+			cfg.DisksConfig = []hypervisor.VirtualMachineDisk{disk}
+
+			_, err := cfg.Validate(validationMode{})
+			if test.want == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, test.want)
+			}
+
+			assert.Equal(t, hypervisorhelpers.VirtualMachineDiskFormatRaw, disk.Format())
+		})
+	}
+}
+
 // instanceIDWarning is the warning a seed with no instance-id earns.
 const instanceIDWarning = "guest.cloudInit: no instance-id, so cloud-init cannot tell a reboot from a new instance " +
 	"and edits to userData may not take effect"
@@ -85,12 +132,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 						DiskBus:       hypervisorhelpers.VirtualMachineDiskBusVirtio,
 						DiskBootOrder: 1,
 						ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
-							FromImageConfig: &hypervisor.VirtualMachineDiskFromImage{
-								ImageLibrary: "images",
-								ImageFile:    "talos-1.14.qcow2",
-								ImageDigest:  exampleDigest,
-								ImageMode:    hypervisorhelpers.VirtualMachineDiskImageModeLinked,
-							},
+							BlankConfig: &hypervisor.VirtualMachineDiskBlank{},
 						},
 					},
 					{
@@ -103,12 +145,15 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 					},
 					{
 						DiskName:      "install",
+						DiskPool:      "pool1",
 						DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 						DiskBootOrder: 2,
 						ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
 							FromImageConfig: &hypervisor.VirtualMachineDiskFromImage{
 								ImageLibrary: "images",
 								ImageFile:    "ubuntu-24.04.iso",
+								ImageDigest:  "sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c",
+								ImageMode:    hypervisorhelpers.VirtualMachineDiskImageModeCopy,
 							},
 						},
 					},
@@ -233,7 +278,7 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.MemoryConfig.MemorySize = meta.MustByteSize("4GiB")
 				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:       "targetlibrary",
+					PoolConfig:          "pool1",
 					MetaDataConfig:      exampleMetaData,
 					UserDataConfig:      exampleUserData,
 					NetworkConfigConfig: exampleNetworkConfig,
@@ -530,7 +575,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: "disks[1]: duplicate bootOrder 1",
 		},
 		{
-			name: "linked clone of a raw disk",
+			name: "writable image-derived disk is unsupported",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
@@ -540,7 +585,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "disks[0]: provision.fromImage.mode: linked requires format qcow2, as backing chains are a qcow2 feature",
+			expectedErrors: "disks[0]: provision.fromImage: writable image-derived disks are not supported; use provision.blank and install from a cdrom",
 		},
 		{
 			name: "linked clone on a cdrom",
@@ -552,7 +597,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "disks[0]: provision.fromImage.mode is not allowed on a cdrom, whose read-only medium never diverges from the image",
+			expectedErrors: "disks[0]: provision.fromImage.mode: linked is not supported on a cdrom",
 		},
 		{
 			name: "copy mode on a cdrom",
@@ -563,8 +608,6 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 
 				return c
 			},
-
-			expectedErrors: "disks[0]: provision.fromImage.mode is not allowed on a cdrom, whose read-only medium never diverges from the image",
 		},
 		{
 			name: "underscored pool name",
@@ -603,16 +646,16 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			expectedErrors: `disks[0]: pool: storage pool name "` + strings.Repeat("a", 64) + `" must be 63 characters or fewer`,
 		},
 		{
-			name: "pooled cdrom",
+			name: "cdrom missing pool",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
-				c.DisksConfig[0].DiskPool = "pool1"
+				c.DisksConfig[0].DiskPool = ""
 
 				return c
 			},
 
-			expectedErrors: "disks[0]: pool is not allowed on a cdrom, whose image is attached in place from its content library",
+			expectedErrors: "disks[0]: pool is required",
 		},
 		{
 			name: "sized cdrom",
@@ -644,7 +687,6 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 				c := validVirtualMachineConfig()
 				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("install")}
 				c.DisksConfig[0].DiskType = hypervisorhelpers.VirtualMachineDiskTypeCDROM
-				c.DisksConfig[0].DiskPool = ""
 				c.DisksConfig[0].DiskSize = meta.ByteSize{}
 
 				return c
@@ -668,7 +710,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "malformed digest",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
+				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
 				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageDigest = "sha256:beef"
 
 				return c
@@ -680,7 +722,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "sha512 digest",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
+				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
 				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageDigest = "sha512:" + strings.Repeat("a", 128)
 
 				return c
@@ -690,7 +732,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "unsupported digest algorithm",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
+				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
 				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageDigest = "sha384:" + strings.Repeat("a", 96)
 
 				return c
@@ -702,7 +744,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "image file with a path separator",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
+				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
 				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageFile = "sub/talos.qcow2"
 
 				return c
@@ -762,62 +804,20 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "library alone is not a seed payload",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig: "targetlibrary",
-				}
+				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{}
 
 				return c
 			},
 
 			expectedErrors: "guest.cloudInit: at least one of metaData, userData or networkConfig must be set",
 		},
-		{
-			name: "cloudInit needs a library",
-			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
-				c := validVirtualMachineConfig()
-				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					MetaDataConfig: exampleMetaData,
-				}
 
-				return c
-			},
-
-			expectedErrors: "guest.cloudInit.library is required",
-		},
-		{
-			name: "invalid cloudInit library characters",
-			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
-				c := validVirtualMachineConfig()
-				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  "bad/library",
-					MetaDataConfig: exampleMetaData,
-				}
-
-				return c
-			},
-
-			expectedErrors: `guest.cloudInit.library: name "bad/library": name can only contain ASCII letters, digits and hyphens`,
-		},
-		{
-			name: "cloudInit library name too long",
-			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
-				c := validVirtualMachineConfig()
-				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  strings.Repeat("a", 64),
-					MetaDataConfig: exampleMetaData,
-				}
-
-				return c
-			},
-
-			expectedErrors: fmt.Sprintf("guest.cloudInit.library: name %q must be 63 characters or fewer", strings.Repeat("a", 64)),
-		},
 		{
 			name: "metaData is not YAML",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  "targetlibrary",
+					PoolConfig:     "pool1",
 					MetaDataConfig: "instance-id: vm1\n  local-hostname: vm1\n",
 				}
 
@@ -831,7 +831,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:       "targetlibrary",
+					PoolConfig:          "pool1",
 					NetworkConfigConfig: "version: 2\n  ethernets: {}\n",
 				}
 
@@ -849,7 +849,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  "targetlibrary",
+					PoolConfig:     "pool1",
 					UserDataConfig: "#!/bin/sh\necho hello\n",
 				}
 
@@ -863,7 +863,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  "targetlibrary",
+					PoolConfig:     "pool1",
 					MetaDataConfig: "local-hostname: vm1\n",
 					UserDataConfig: exampleUserData,
 				}
@@ -879,7 +879,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  "targetlibrary",
+					PoolConfig:     "pool1",
 					UserDataConfig: exampleUserData,
 				}
 
@@ -893,7 +893,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:  "targetlibrary",
+					PoolConfig:     "pool1",
 					MetaDataConfig: "- instance-id: vm1\n",
 				}
 
@@ -907,7 +907,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
 				c.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-					LibraryConfig:       "targetlibrary",
+					PoolConfig:          "pool1",
 					MetaDataConfig:      exampleMetaData,
 					UserDataConfig:      exampleUserData,
 					NetworkConfigConfig: exampleNetworkConfig,
@@ -1213,7 +1213,7 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			name: "valid with disks",
 			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
 				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("system"), imageDisk("data")}
+				c.DisksConfig = []hypervisor.VirtualMachineDisk{blankDisk("system"), cdromDisk()}
 				c.DisksConfig[0].DiskBootOrder = 1
 
 				return c
@@ -1479,11 +1479,11 @@ func blankDisk(name string) hypervisor.VirtualMachineDisk {
 	}
 }
 
-// cdromDisk is a valid cdrom: attached in place from a content library, so it carries neither a
-// pool nor a size nor a mode.
+// cdromDisk is a valid cdrom: copied into a pool-owned volume, with no size or mode.
 func cdromDisk() hypervisor.VirtualMachineDisk {
 	return hypervisor.VirtualMachineDisk{
 		DiskName: "install",
+		DiskPool: "pool1",
 		DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 		ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
 			FromImageConfig: &hypervisor.VirtualMachineDiskFromImage{
@@ -1920,7 +1920,7 @@ func TestVirtualMachineConfigRedact(t *testing.T) {
 
 		cfg := validVirtualMachineConfig()
 		cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-			LibraryConfig:       "targetlibrary",
+			PoolConfig:          "pool1",
 			MetaDataConfig:      exampleMetaData,
 			UserDataConfig:      exampleUserData,
 			NetworkConfigConfig: exampleNetworkConfig,
@@ -1929,7 +1929,7 @@ func TestVirtualMachineConfigRedact(t *testing.T) {
 		cfg.Redact("REDACTED")
 
 		assert.Equal(t, "REDACTED", cfg.GuestConfig.CloudInitConfig.UserDataConfig)
-		assert.Equal(t, "targetlibrary", cfg.GuestConfig.CloudInitConfig.Library())
+		assert.Equal(t, "pool1", cfg.GuestConfig.CloudInitConfig.Pool())
 		assert.Equal(t, exampleMetaData, cfg.GuestConfig.CloudInitConfig.MetaDataConfig)
 		assert.Equal(t, exampleNetworkConfig, cfg.GuestConfig.CloudInitConfig.NetworkConfigConfig)
 	})
@@ -1939,7 +1939,6 @@ func TestVirtualMachineConfigRedact(t *testing.T) {
 
 		cfg := validVirtualMachineConfig()
 		cfg.GuestConfig.CloudInitConfig = &hypervisor.VirtualMachineCloudInit{
-			LibraryConfig:  "targetlibrary",
 			MetaDataConfig: exampleMetaData,
 		}
 

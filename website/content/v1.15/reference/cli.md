@@ -2147,16 +2147,24 @@ talosctl hypervisor console <vm-name> [flags]
 
 ## talosctl hypervisor content-library delete
 
-Delete a file from a content library
+Delete an alias or a SHA-256 object from a content library
+
+### Synopsis
+
+A filename removes only that alias and retains the immutable object.
+A sha256:<hex> target explicitly removes the stored object. If any symlinks refer
+to it, deletion fails without changing them. Use --force to remove all of those
+symlinks before removing the object. Pool-owned copies are not affected.
 
 ```
-talosctl hypervisor content-library delete <library_id> <filename> [flags]
+talosctl hypervisor content-library delete <library_id> <name|sha256:digest> [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for delete
+      --force   remove all symlinks to the selected SHA-256 object before deleting it
+  -h, --help    help for delete
 ```
 
 ### Options inherited from parent commands
@@ -2176,7 +2184,7 @@ talosctl hypervisor content-library delete <library_id> <filename> [flags]
 
 ## talosctl hypervisor content-library list
 
-List the files stored in a content library
+List SHA256 objects and their attached names
 
 ```
 talosctl hypervisor content-library list <library_id> [flags]
@@ -2209,7 +2217,9 @@ Upload a file to a content library
 
 ### Synopsis
 
-Uploads a local file to a content library, under its own name.
+Uploads a local file as an immutable SHA-256 object and creates a name for it.
+An existing name is never overwritten, even when its contents are identical.
+Choose a new name, or explicitly delete an unused name before reusing it.
 
 If '-' is given for <filename>, the contents are read from stdin, and --name is required
 to say what the file should be called within the library.
@@ -2224,10 +2234,9 @@ talosctl hypervisor content-library upload <library_id> <filename> [flags]
 ### Options
 
 ```
-      --digest string   expected digest of the contents as <algorithm>:<hex>, e.g. sha256:2345cdef... (sha256 and sha512); the upload is refused unless the contents match it
+      --digest string   expected digest of the contents as sha256:<hex>; the upload is refused unless the contents match it
   -h, --help            help for upload
-      --name string     name of the file within the library (defaults to the base name of <filename>)
-      --overwrite       replace a file of the same name if it already exists
+      --name string     new name within the library (defaults to the base name of <filename>)
 ```
 
 ### Options inherited from parent commands
@@ -2251,8 +2260,12 @@ Manage the contents of content libraries
 
 ### Synopsis
 
-Content libraries store virtual machine images. They are declared with the
-ContentLibraryConfig document; this command manages what is stored in them.
+Content libraries store immutable SHA-256 objects under objects/sha256/<hex>.
+Names at the library root are create-only symlinks. Identical uploads share one object.
+Libraries are declared with ContentLibraryConfig.
+
+Deleting a name retains its object, including retired cloud-init seed contents.
+There is no automatic garbage collection.
 
 ### Options
 
@@ -2274,8 +2287,8 @@ ContentLibraryConfig document; this command manages what is stored in them.
 ### SEE ALSO
 
 * [talosctl hypervisor](#talosctl-hypervisor)	 - Manage the Talos hypervisor
-* [talosctl hypervisor content-library delete](#talosctl-hypervisor-content-library-delete)	 - Delete a file from a content library
-* [talosctl hypervisor content-library list](#talosctl-hypervisor-content-library-list)	 - List the files stored in a content library
+* [talosctl hypervisor content-library delete](#talosctl-hypervisor-content-library-delete)	 - Delete an alias or a SHA-256 object from a content library
+* [talosctl hypervisor content-library list](#talosctl-hypervisor-content-library-list)	 - List SHA256 objects and their attached names
 * [talosctl hypervisor content-library upload](#talosctl-hypervisor-content-library-upload)	 - Upload a file to a content library
 
 ## talosctl hypervisor reboot

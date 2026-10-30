@@ -3,7 +3,6 @@ syntax = "proto3";
 package machine;
 
 import "common/common.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
 option java_package = "dev.talos.api.machine";
@@ -13,11 +12,12 @@ option java_package = "dev.talos.api.machine";
 // Content libraries store virtual machine images; they are declared with the
 // ContentLibraryConfig document and backed by a volume.
 service ContentLibraryService {
-  // List files stored in a content library.
+  // One SHA256 object and the names currently attached to it.
   rpc List(ContentLibraryServiceListRequest) returns (stream ContentLibraryServiceListResponse);
   // Upload a file to a content library.
   rpc Upload(stream ContentLibraryServiceUploadRequest) returns (ContentLibraryServiceUploadResponse);
-  // Delete a file from a content library.
+  // Delete removes an alias or explicitly deletes a SHA256 object.
+  // Object deletion refuses existing aliases unless force is set.
   rpc Delete(ContentLibraryServiceDeleteRequest) returns (ContentLibraryServiceDeleteResponse);
 }
 
@@ -27,12 +27,12 @@ message ContentLibraryServiceListRequest {
 }
 
 message ContentLibraryServiceListResponse {
-  // Name of the file within the library.
-  string name = 1;
-  // Size of the file in bytes.
+  // Canonical immutable object identity.
+  string sha256 = 1;
+  // Size of the object in bytes.
   uint64 size = 2;
-  // Time the file was last modified.
-  google.protobuf.Timestamp modified_at = 3;
+  // Sorted aliases referring to this object (may be empty).
+  repeated string names = 3;
 }
 
 // ContentLibraryServiceUploadInfo is the metadata of an upload.
@@ -43,13 +43,10 @@ message ContentLibraryServiceUploadInfo {
   string library_id = 1;
   // Name of the file within the library.
   string name = 2;
-  // Overwrite an existing file with the same name.
-  bool overwrite = 3;
-  // Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".
+  // Expected digest of the contents, as "sha256:<hex>".
   //
   // Optional: when it is set, the upload is rejected unless the contents hash to it.
-  // The algorithms supported are sha256 and sha512.
-  string digest = 4;
+  string digest = 3;
 }
 
 message ContentLibraryServiceUploadRequest {
@@ -69,8 +66,6 @@ message ContentLibraryServiceUploadRequest {
 message ContentLibraryServiceUploadDigests {
   // Digest of the contents, as "sha256:<hex>".
   string sha256 = 1;
-  // Digest of the contents, as "sha512:<hex>".
-  string sha512 = 2;
 }
 
 message ContentLibraryServiceUploadResponse {
@@ -85,8 +80,16 @@ message ContentLibraryServiceUploadResponse {
 message ContentLibraryServiceDeleteRequest {
   // ID of the content library to delete from.
   string library_id = 1;
-  // Name of the file within the library.
-  string name = 2;
+  // Exactly one alias or immutable object to remove.
+  oneof target {
+    // Remove only this name, retaining the immutable object.
+    string name = 2;
+    // Remove the object identified by "sha256:<hex>".
+    string sha256 = 3;
+  }
+  // Remove all symlinks to the selected object before deleting it.
+  // Valid only with a sha256 target; otherwise existing links prevent deletion.
+  bool force = 4;
 }
 
 message ContentLibraryServiceDeleteResponse {}

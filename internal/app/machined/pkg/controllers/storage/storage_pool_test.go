@@ -84,7 +84,7 @@ func (c *poolClient) stop(name string) error {
 	return nil
 }
 
-func (c *poolClient) open(context.Context) (libvirtstorage.Client, error) {
+func (c *poolClient) open(context.Context) (libvirtstorage.PoolClient, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -214,24 +214,6 @@ func (c *poolClient) StopOperation(p libvirtstorage.Pool) (libvirtstorage.Operat
 	}
 
 	return libvirtstorage.Finished, nil
-}
-
-func (*poolClient) ResizeVolumeOperation(libvirtstorage.Pool, string, uint64) (libvirtstorage.OperationOutcome, error) {
-	panic("StoragePoolController must not resize volumes")
-}
-
-// StoragePoolController reconciles pool definitions and nothing within them. A volume call here
-// would mean it had grown a second responsibility, and with it a second writer of the same pool.
-func (*poolClient) Volume(libvirtstorage.Pool, string) (libvirtstorage.Volume, bool, error) {
-	panic("StoragePoolController must not touch volumes")
-}
-
-func (*poolClient) CreateVolume(libvirtstorage.Pool, string, string, uint64, string, string) (libvirtstorage.Volume, error) {
-	panic("StoragePoolController must not touch volumes")
-}
-
-func (*poolClient) ResizeVolume(libvirtstorage.Pool, string, uint64) error {
-	panic("StoragePoolController must not touch volumes")
 }
 
 func (c *poolClient) Close() {

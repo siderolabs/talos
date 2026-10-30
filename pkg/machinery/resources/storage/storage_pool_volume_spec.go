@@ -48,6 +48,18 @@ type StoragePoolVolumeSpecSpec struct {
 	// BackingFormat is the format of BackingFile, independent of the overlay Format.
 	// If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased.
 	BackingFormat string `yaml:"backingFormat,omitempty" protobuf:"6"`
+	// Copy requests an independent raw copy. A request without a source can adopt
+	// a completed pool-owned copy, but must never create an empty replacement.
+	Copy *StoragePoolVolumeCopySpec `yaml:"copy,omitempty" protobuf:"7"`
+}
+
+// StoragePoolVolumeCopySpec describes the initial source of a pool-owned copy.
+// Once published, a copy is adopted without consulting its source again.
+//
+//gotagsrewrite:gen
+type StoragePoolVolumeCopySpec struct {
+	Source string `yaml:"source,omitempty" protobuf:"1"`
+	Digest string `yaml:"digest,omitempty" protobuf:"2"`
 }
 
 // StoragePoolVolumeID builds the resource ID of a volume in a pool.

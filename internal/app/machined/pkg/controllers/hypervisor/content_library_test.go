@@ -2,9 +2,11 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package hypervisor
+package hypervisor_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -15,9 +17,11 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	"github.com/siderolabs/talos/internal/pkg/contentlibrary/staging"
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -37,13 +41,117 @@ const (
 )
 
 // contentLibraryControllerName is the controller's name, which its mount requests are keyed by.
-var contentLibraryControllerName = (&ContentLibraryController{}).Name()
+var contentLibraryControllerName = (&hypervisorctrl.ContentLibraryController{}).Name()
 
 // testVolumeID is the internal ID the backing volume gets, which the user never writes.
 var testVolumeID = constants.UserVolumePrefix + testVolumeName
 
 // testRequestID mirrors the controller's naming so tests can find what it creates.
 var testRequestID = contentLibraryControllerName + "/" + testLibrary + "/" + testVolumeID
+
+// fingerprint is the fingerprint of dir, and fails the test rather than returning an error.
+func fingerprint(t *testing.T, dir string) string {
+	t.Helper()
+
+	got, err := hypervisorctrl.FingerprintLibrary(dir)
+	require.NoError(t, err)
+
+	return got
+}
+
+// requireFullDigest fails unless s is a whole SHA-256 digest in hex.
+func requireFullDigest(t *testing.T, s string) {
+	t.Helper()
+
+	require.Len(t, s, hex.EncodedLen(sha256.Size), "the fingerprint must be a whole SHA-256 digest")
+
+	decoded, err := hex.DecodeString(s)
+	require.NoError(t, err, "the fingerprint must be hex")
+	require.Len(t, decoded, sha256.Size)
+}
+
+func TestFingerprintLibraryIsAWholeDigest(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+
+	// An empty library hashes no entries at all, which pins that nothing else is mixed in.
+	empty := fingerprint(t, dir)
+	requireFullDigest(t, empty)
+	require.Equal(t, hex.EncodeToString(sha256.New().Sum(nil)), empty)
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "talos.iso"), []byte("an image"), 0o600))
+	requireFullDigest(t, fingerprint(t, dir))
+}
+
+func TestFingerprintLibraryTracksContents(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+
+	empty := fingerprint(t, dir)
+	require.NotEmpty(t, empty)
+	require.Equal(t, empty, fingerprint(t, dir), "a fingerprint must not change on its own")
+
+	image := filepath.Join(dir, "talos.iso")
+	require.NoError(t, os.WriteFile(image, []byte("an image"), 0o600))
+
+	added := fingerprint(t, dir)
+	require.NotEqual(t, empty, added, "an added file must change the fingerprint")
+	require.Equal(t, added, fingerprint(t, dir), "rereading an unchanged library must agree")
+
+	require.NoError(t, os.WriteFile(image, []byte("a longer image"), 0o600))
+	resized := fingerprint(t, dir)
+	require.NotEqual(t, added, resized, "a changed size must change the fingerprint")
+
+	// Same size, different content: only the modification time distinguishes them.
+	require.NoError(t, os.WriteFile(image, []byte("a longer imagE"), 0o600))
+	require.NoError(t, os.Chtimes(image, time.Time{}, time.Now().Add(time.Hour)))
+	require.NotEqual(t, resized, fingerprint(t, dir), "a changed modification time must change the fingerprint")
+
+	require.NoError(t, os.Remove(image))
+	require.Equal(t, empty, fingerprint(t, dir), "removing the only file must restore the empty fingerprint")
+}
+
+// A rename is what an upload does on its last step, and is the only moment the library's contents
+// change: the staged file it renames from is not contents.
+func TestFingerprintLibraryIgnoresStagedAndDirs(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	empty := fingerprint(t, dir)
+
+	staged := filepath.Join(dir, staging.Prefix+"upload"+staging.Suffix)
+	require.NoError(t, os.WriteFile(staged, []byte("half an image"), 0o600))
+	require.Equal(t, empty, fingerprint(t, dir), "an upload in flight is not contents yet")
+
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "nested"), 0o700))
+	require.Equal(t, empty, fingerprint(t, dir), "a library is flat: a directory is not contents")
+
+	require.NoError(t, os.Rename(staged, filepath.Join(dir, "talos.iso")))
+	require.NotEqual(t, empty, fingerprint(t, dir), "the rename completing an upload is the change")
+}
+
+// The name is part of the fingerprint: two libraries holding the same bytes under different names
+// are different contents.
+func TestFingerprintLibraryCoversNames(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "a.iso"), []byte("same"), 0o600))
+	withA := fingerprint(t, dir)
+
+	require.NoError(t, os.Rename(filepath.Join(dir, "a.iso"), filepath.Join(dir, "b.iso")))
+	require.NotEqual(t, withA, fingerprint(t, dir), "a renamed file must change the fingerprint")
+}
+
+func TestFingerprintLibraryReportsAMissingDirectory(t *testing.T) {
+	t.Parallel()
+
+	_, err := hypervisorctrl.FingerprintLibrary(filepath.Join(t.TempDir(), "absent"))
+	require.ErrorIs(t, err, os.ErrNotExist)
+}
 
 type ContentLibrarySuite struct {
 	ctest.DefaultSuite
@@ -55,7 +163,7 @@ func TestContentLibrarySuite(t *testing.T) {
 	suite.Run(t, &ContentLibrarySuite{
 		Timeout: 15 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
-			suite.Require().NoError(suite.Runtime().RegisterController(&ContentLibraryController{}))
+			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.ContentLibraryController{}))
 		},
 	})
 }
@@ -252,7 +360,7 @@ func (suite *ContentLibrarySuite) TestRequestsMount() {
 		asrt.Equal(testVolumeID, request.TypedSpec().VolumeID)
 		asrt.Equal(contentLibraryControllerName, request.TypedSpec().Requester)
 
-		library, labeled := request.Metadata().Labels().Get(contentLibraryLabel)
+		library, labeled := request.Metadata().Labels().Get("content-library")
 		asrt.True(labeled, "the request must name the library it was made for")
 		asrt.Equal(testLibrary, library)
 
@@ -591,7 +699,7 @@ func (suite *ContentLibrarySuite) strayRequest(libraryID, volumeID string) strin
 	id := contentLibraryControllerName + "/" + libraryID + "/" + volumeID
 
 	request := block.NewVolumeMountRequest(block.NamespaceName, id)
-	request.Metadata().Labels().Set(contentLibraryLabel, libraryID)
+	request.Metadata().Labels().Set("content-library", libraryID)
 	request.TypedSpec().VolumeID = volumeID
 	request.TypedSpec().Requester = contentLibraryControllerName
 	suite.Create(request, state.WithCreateOwner(contentLibraryControllerName))
@@ -599,32 +707,52 @@ func (suite *ContentLibrarySuite) strayRequest(libraryID, volumeID string) strin
 	return id
 }
 
-// Which library a mount request belongs to decides whether it may be unmounted, so the ID the
-// controller writes has to be one it can read that back out of.
-func TestMountRequestIDRoundTrip(t *testing.T) {
-	t.Parallel()
+// Mount-request IDs must preserve library ownership, including volumes whose IDs contain a slash.
+func (suite *ContentLibrarySuite) TestMountRequestIDRoundTrip() {
+	suite.applyLibrary(newDoc())
+	ctest.AssertResource(suite, testLibrary, func(*hypervisor.ContentLibraryStatus, *assert.Assertions) {})
+	dir := suite.T().TempDir()
+	suite.satisfyMount(testRequestID, testVolumeID, dir, false)
+	suite.assertHeld(testRequestID, true)
 
-	ctrl := &ContentLibraryController{}
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
+	suite.AddFinalizer(library.Metadata(), "consumer")
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "hold-visible"), []byte("held"), 0o600))
+	fingerprint, err := hypervisorctrl.FingerprintLibrary(dir)
+	suite.Require().NoError(err)
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, a *assert.Assertions) {
+		a.Equal(fingerprint, status.TypedSpec().Fingerprint)
+	})
 
-	for name, test := range map[string]struct {
-		requestID string
-		library   string
-		ok        bool
-	}{
-		"built here":      {requestID: ctrl.mountRequestID("vm-images", "u-vm-images"), library: "vm-images", ok: true},
-		"volume with a /": {requestID: ctrl.mountRequestID("vm-images", "a/b"), library: "vm-images", ok: true},
-		"another owner":   {requestID: "block.VolumeMountController/vm-images/u-vm-images"},
-		"no volume":       {requestID: ctrl.Name() + "/vm-images"},
-		"no library":      {requestID: ctrl.Name() + "//u-vm-images"},
-		"empty":           {requestID: ""},
-	} {
-		t.Run(name, func(t *testing.T) {
-			t.Parallel()
+	// The changed fingerprint proves any pass with an older hold snapshot has finished.
+	heldID := suite.strayRequest(testLibrary, "a/b")
+	unheldID := suite.strayRequest("zz-images", "unheld")
 
-			library, ok := ctrl.parseMountRequestID(test.requestID)
+	// Malformed or foreign IDs cannot safely be attributed, even when their owner and label match.
+	unattributed := []string{
+		"block.VolumeMountController/" + testLibrary + "/" + testVolumeID,
+		contentLibraryControllerName + "//" + testVolumeID,
+		contentLibraryControllerName + "/" + testLibrary + "/",
+		"",
+	}
+	for _, id := range unattributed {
+		request := block.NewVolumeMountRequest(block.NamespaceName, id)
+		request.Metadata().Labels().Set("content-library", testLibrary)
+		request.TypedSpec().VolumeID = testVolumeID
+		request.TypedSpec().Requester = contentLibraryControllerName
+		suite.Create(request, state.WithCreateOwner(contentLibraryControllerName))
+	}
 
-			assert.Equal(t, test.ok, ok)
-			assert.Equal(t, test.library, library)
+	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "reconcile-requests"), []byte("wake"), 0o600))
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, unheldID)
+	ctest.AssertResource(suite, heldID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+	suite.RemoveFinalizer(library.Metadata(), "consumer")
+	ctest.AssertNoResource[*block.VolumeMountRequest](suite, heldID)
+	ctest.AssertResource(suite, testRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+
+	for _, id := range unattributed {
+		ctest.AssertResource(suite, id, func(request *block.VolumeMountRequest, a *assert.Assertions) {
+			a.Equal(resource.PhaseRunning, request.Metadata().Phase())
 		})
 	}
 }

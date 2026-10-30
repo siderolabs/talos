@@ -5,9 +5,9 @@
 package hypervisor_test
 
 import (
-	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,543 +19,361 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
+	"github.com/siderolabs/talos/internal/pkg/cloudinit"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
-type CloudInitISOSuite struct {
-	ctest.DefaultSuite
-}
+type CloudInitISOSuite struct{ ctest.DefaultSuite }
 
 func TestCloudInitISOSuite(t *testing.T) {
 	t.Parallel()
-
-	suite.Run(t, &CloudInitISOSuite{
-		ctest.DefaultSuite{
-			Timeout: 30 * time.Second,
-			AfterSetup: func(s *ctest.DefaultSuite) {
-				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitISOController{State: s.State()}))
-			},
+	suite.Run(t, &CloudInitISOSuite{ctest.DefaultSuite{
+		Timeout: 30 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitISOController{}))
 		},
+	}})
+}
+
+func (s *CloudInitISOSuite) TestBlockedBackingDoesNotTakePoolHold() {
+	for _, tc := range []struct {
+		name      string
+		mutating  bool
+		wantError string
+	}{
+		{
+			name:      "mutation-in-progress",
+			mutating:  true,
+			wantError: "backing is changing",
+		},
+		{
+			name:      "missing-mount",
+			wantError: "backing mount",
+		},
+	} {
+		s.Run(tc.name, func() {
+			dir := s.T().TempDir()
+			pool := storage.NewStoragePoolStatus(storage.NamespaceName, tc.name)
+			pool.TypedSpec().VolumeID = "backing-" + tc.name
+			pool.TypedSpec().TargetPath = filepath.Join(dir, tc.name)
+			pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
+
+			if tc.mutating {
+				pool.Metadata().Finalizers().Add("storage.StoragePoolController/mutating/backing")
+				mount := block.NewVolumeMountStatus(block.NamespaceName, pool.TypedSpec().VolumeID)
+				mount.TypedSpec().Target = dir
+				s.Create(mount)
+			}
+
+			s.Create(pool)
+			before, err := safe.StateGet[*storage.StoragePoolStatus](s.Ctx(), s.State(), pool.Metadata())
+			s.Require().NoError(err)
+
+			seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest-"+tc.name)
+			*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{
+				Pool:     tc.name,
+				UserData: "#cloud-config\n",
+			}
+			s.Create(seed)
+			id := hypervisor.CloudInitStatusID(seed.Metadata().ID(), *seed.TypedSpec())
+			ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+				a.Equal(hypervisor.CloudInitPhaseNotReady, status.TypedSpec().Phase)
+				a.Contains(status.TypedSpec().Error, tc.wantError)
+			})
+			after, err := safe.StateGet[*storage.StoragePoolStatus](s.Ctx(), s.State(), pool.Metadata())
+			s.Require().NoError(err)
+			s.Equal(before.Metadata().Version(), after.Metadata().Version(), "a known unusable backing must not acquire and release a pool hold")
+			s.False(after.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
+		})
+	}
+}
+
+func (s *CloudInitISOSuite) TestCreatesSeedDirectlyInPoolWithoutLibrary() {
+	dir := s.T().TempDir()
+	pool := storage.NewStoragePoolStatus(storage.NamespaceName, "pool-a")
+	pool.TypedSpec().VolumeID = "pool-backing"
+	pool.TypedSpec().TargetPath = filepath.Join(dir, "pool-a")
+	pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
+	s.Require().NoError(os.Mkdir(pool.TypedSpec().TargetPath, 0o700))
+
+	mount := block.NewVolumeMountStatus(block.NamespaceName, "pool-backing")
+	mount.TypedSpec().Target = dir
+	s.Create(mount)
+	s.Create(pool)
+
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "#cloud-config\n"}
+	s.Create(seed)
+	id := hypervisor.CloudInitStatusID("guest", *seed.TypedSpec())
+	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, status.TypedSpec().Phase)
+		a.Equal(pool.TypedSpec().TargetPath, status.TypedSpec().Path)
+
+		info, err := os.Lstat(filepath.Join(status.TypedSpec().Path, status.TypedSpec().Name))
+		if a.NoError(err) {
+			a.True(info.Mode().IsRegular())
+		}
+	})
+	requests, err := safe.StateListAll[*storage.StoragePoolVolumeSpec](s.Ctx(), s.State())
+	s.Require().NoError(err)
+	s.Zero(requests.Len())
+}
+
+func (s *CloudInitISOSuite) TestDoesNotPublishIntoTearingDownMount() {
+	dir := s.T().TempDir()
+	pool := storage.NewStoragePoolStatus(storage.NamespaceName, "pool-a")
+	pool.TypedSpec().VolumeID = "pool-backing"
+	pool.TypedSpec().TargetPath = filepath.Join(dir, "pool-a")
+	pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
+	s.Require().NoError(os.Mkdir(pool.TypedSpec().TargetPath, 0o700))
+
+	mount := block.NewVolumeMountStatus(block.NamespaceName, "pool-backing")
+	mount.TypedSpec().Target = dir
+	s.Create(mount)
+	s.AddFinalizer(mount.Metadata(), "mounted")
+	_, err := s.State().Teardown(s.Ctx(), mount.Metadata())
+	s.Require().NoError(err)
+	s.Create(pool)
+
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "#cloud-config\n"}
+	s.Create(seed)
+	ctest.AssertResource(s, hypervisor.CloudInitStatusID("guest", *seed.TypedSpec()), func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseNotReady, status.TypedSpec().Phase)
+		a.Empty(status.TypedSpec().Path)
 	})
 }
 
-func (s *CloudInitISOSuite) TestPublishesRealAssetAndCleansUp() {
+func (s *CloudInitISOSuite) pool() (*storage.StoragePoolStatus, *block.VolumeMountStatus) {
+	s.T().Helper()
 	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
+	pool := storage.NewStoragePoolStatus(storage.NamespaceName, "pool-a")
+	pool.TypedSpec().VolumeID = "pool-backing"
+	pool.TypedSpec().TargetPath = filepath.Join(dir, "pool-a")
+	pool.TypedSpec().Phase = storage.StoragePoolPhaseReady
+	s.Require().NoError(os.Mkdir(pool.TypedSpec().TargetPath, 0o700))
 
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		MetaData: "instance-id: guest\n",
-		UserData: "#cloud-config\npassword: secret\n",
-	}
-	id := hypervisor.CloudInitStatusID("guest", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-		a.Equal("images", status.TypedSpec().Library)
-		a.Equal("vol-a", status.TypedSpec().VolumeID)
-		a.Equal(dir, status.TypedSpec().Path)
-		a.NotEmpty(status.TypedSpec().Digest)
-		a.NotZero(status.TypedSpec().SizeBytes)
-		a.NotContains(status.TypedSpec().Error, "secret")
-		_, err := os.Stat(filepath.Join(dir, status.TypedSpec().Name))
-		a.NoError(err)
-	})
-	s.Destroy(spec)
-	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, id)
-	// The private ownership directory is retained for subsequent incarnations.
-	entries, err := os.ReadDir(dir)
-	s.Require().NoError(err)
-	s.Require().Len(entries, 1)
-	s.Require().Equal(".cloud-init-owners", entries[0].Name())
+	mount := block.NewVolumeMountStatus(block.NamespaceName, "pool-backing")
+	mount.TypedSpec().Target = dir
+	s.Create(mount)
+	s.Create(pool)
 
-	owners, err := os.ReadDir(filepath.Join(dir, ".cloud-init-owners"))
-	s.Require().NoError(err)
-	s.Require().Empty(owners)
+	return pool, mount
 }
 
-func (s *CloudInitISOSuite) TestMissingLibraryPublishesWaitingStatus() {
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "waiting")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		UserData: "secret",
-	}
-	id := hypervisor.CloudInitStatusID("waiting", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
-		a.NotEmpty(status.TypedSpec().Error)
-		a.NotContains(status.TypedSpec().Error, "secret")
-		a.Equal(spec.TypedSpec().InputDigest(), status.TypedSpec().InputDigest)
-	})
+func seedName(id string) string { return "cloud-init-" + id[strings.LastIndex(id, "@")+1:] + ".iso" }
 
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
+func (s *CloudInitISOSuite) TestChangedSeedRetiresOnlyAfterConsumerDetaches() {
+	pool, _ := s.pool()
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "first"}
+	s.Create(seed)
+	firstID := hypervisor.CloudInitStatusID("guest", *seed.TypedSpec())
+	ctest.AssertResource(s, firstID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, status.TypedSpec().Phase)
 	})
-}
+	first := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, firstID)
+	s.AddFinalizer(first.Metadata(), "consumer")
+	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitSpec) error {
+		current.TypedSpec().UserData = "second"
 
-func (s *CloudInitISOSuite) TestRetiresWhileLibraryIsTearingDown() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "leaving")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "images",
-	}
-	id := hypervisor.CloudInitStatusID("leaving", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
+		return nil
 	})
-	_, err := s.State().Teardown(s.Ctx(), library.Metadata())
-	s.Require().NoError(err)
-	s.Destroy(spec)
-	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, id)
-	ctest.AssertResource(s, "images", func(current *hypervisor.ContentLibraryStatus, a *assert.Assertions) {
+	changed := *seed.TypedSpec()
+	changed.UserData = "second"
+	secondID := hypervisor.CloudInitStatusID("guest", changed)
+	ctest.AssertResource(s, secondID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, status.TypedSpec().Phase)
+	})
+	ctest.AssertResource(s, firstID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(resource.PhaseTearingDown, status.Metadata().Phase())
+	})
+	firstPath := filepath.Join(pool.TypedSpec().TargetPath, seedName(firstID))
+	s.FileExists(firstPath)
+	s.RemoveFinalizer(first.Metadata(), "consumer")
+	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, firstID)
+	s.NoFileExists(firstPath)
+	s.FileExists(filepath.Join(pool.TypedSpec().TargetPath, seedName(secondID)))
+	s.Destroy(seed)
+	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, secondID)
+	s.NoFileExists(filepath.Join(pool.TypedSpec().TargetPath, seedName(secondID)))
+	ctest.AssertResource(s, "pool-a", func(current *storage.StoragePoolStatus, a *assert.Assertions) {
 		a.False(current.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
 	})
 }
 
-func (s *CloudInitISOSuite) TestRetiresOwnedISOWhenLibraryTearsDownWithStaleReadyAndSpecRemains() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "retained")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "images",
-	}
-	id := hypervisor.CloudInitStatusID(spec.Metadata().ID(), *spec.TypedSpec())
-	s.Create(spec)
+func (s *CloudInitISOSuite) TestRefusesUnownedSeedPublicationAndCleanup() {
+	pool, _ := s.pool()
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "seed"}
+	id := hypervisor.CloudInitStatusID("guest", *seed.TypedSpec())
+	path := filepath.Join(pool.TypedSpec().TargetPath, seedName(id))
+	// Even identical valid ISO bytes do not prove ownership.
+	s.Require().NoError(cloudinit.WriteISO(s.Ctx(), path, cloudinit.Seed{UserData: "seed"}))
+	before, err := os.ReadFile(path)
+	s.Require().NoError(err)
+	s.Create(seed)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
+		a.Equal(hypervisor.CloudInitPhaseNotReady, status.TypedSpec().Phase)
+		a.Contains(status.TypedSpec().Error, "refusing foreign cloud-init ISO collision")
+	})
+	s.Destroy(seed)
+	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(resource.PhaseTearingDown, status.Metadata().Phase())
 	})
 
-	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
+	after, err := os.ReadFile(path)
 	s.Require().NoError(err)
-
-	asset := filepath.Join(dir, status.TypedSpec().Name)
-	_, err = s.State().Teardown(s.Ctx(), library.Metadata())
-	s.Require().NoError(err)
-
-	current, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-	s.Require().NoError(err)
-	s.Require().Equal(resource.PhaseTearingDown, current.Metadata().Phase())
-	s.Require().Equal(hypervisor.ContentLibraryPhaseReady, current.TypedSpec().Phase, "teardown must exercise stale Ready")
-
-	s.Require().Eventually(func() bool {
-		_, statErr := os.Stat(asset)
-		currentLibrary, getErr := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-		libraryReleased := state.IsNotFoundError(getErr) || (getErr == nil && !currentLibrary.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
-
-		return os.IsNotExist(statErr) && libraryReleased
-	}, 3*time.Second, 10*time.Millisecond, "owned ISO and library hold must retire while the seed spec remains")
-	ctest.AssertResource(s, id, func(currentStatus *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.Equal(hypervisor.CloudInitPhaseNotReady, currentStatus.TypedSpec().Phase)
-		a.Empty(currentStatus.TypedSpec().Path)
-	})
+	s.Equal(before, after)
+	s.Require().NoError(os.Remove(path))
+	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, id)
 }
 
-func (s *CloudInitISOSuite) TestHeldISOIsNotRemovedWhenReadyLibraryTearsDown() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "held")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "images",
-	}
-	id := hypervisor.CloudInitStatusID(spec.Metadata().ID(), *spec.TypedSpec())
-	s.Create(spec)
+func (s *CloudInitISOSuite) TestRetiresSeedBeforePoolRetarget() {
+	pool, _ := s.pool()
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "seed"}
+	id := hypervisor.CloudInitStatusID("guest", *seed.TypedSpec())
+	s.Create(seed)
 	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
+		a.Equal(hypervisor.CloudInitPhaseReady, status.TypedSpec().Phase)
 	})
-
 	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
 	s.Require().NoError(err)
+	s.AddFinalizer(status.Metadata(), "test-consumer")
 
-	asset := filepath.Join(dir, status.TypedSpec().Name)
-	s.AddFinalizer(status.Metadata(), "test.running-vm")
-	_, err = s.State().Teardown(s.Ctx(), library.Metadata())
-	s.Require().NoError(err)
-
-	s.Require().Eventually(func() bool {
-		currentStatus, getErr := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-
-		return getErr == nil && currentStatus.Metadata().Phase() == resource.PhaseTearingDown
-	}, 3*time.Second, 10*time.Millisecond)
-	currentStatus, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-	s.Require().Equal(status.TypedSpec().Path, currentStatus.TypedSpec().Path)
-
-	_, err = os.Stat(asset)
-	s.Require().NoError(err, "running VM still needs its ISO")
-	currentLibrary, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-	s.Require().NoError(err)
-	s.Require().True(currentLibrary.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
-
-	s.RemoveFinalizer(status.Metadata(), "test.running-vm")
-	s.Require().Eventually(func() bool {
-		_, statErr := os.Stat(asset)
-		currentLibrary, getErr := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-		libraryReleased := state.IsNotFoundError(getErr) || (getErr == nil && !currentLibrary.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
-
-		return os.IsNotExist(statErr) && libraryReleased
-	}, 3*time.Second, 10*time.Millisecond)
-}
-
-func (s *CloudInitISOSuite) TestRetirementWaitsForMutationClaimEnteredBeforeLibraryTeardown() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "leaving-with-claim")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "images",
-	}
-	id := hypervisor.CloudInitStatusID(spec.Metadata().ID(), *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-
-	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-
-	asset := filepath.Join(dir, status.TypedSpec().Name)
-	marker := hypervisor.ContentLibraryMutationFinalizer(status.TypedSpec().Name)
-
-	// The controller publishes Ready while still holding this same marker for
-	// the build, so claim it atomically once released.
-	// A plain AddFinalizer would no-op and the controller would then drop it.
-	s.Require().Eventually(func() bool {
-		_, claimErr := s.State().UpdateWithConflicts(s.Ctx(), library.Metadata(), func(r resource.Resource) error {
-			if r.Metadata().Finalizers().Has(marker) {
-				return errors.New("already claimed")
-			}
-
-			r.Metadata().Finalizers().Add(marker)
-
-			return nil
-		}, state.WithExpectedPhase(resource.PhaseRunning))
-
-		return claimErr == nil
-	}, 3*time.Second, 10*time.Millisecond, "mutation claim was never released by the controller")
-
-	_, err = s.State().Teardown(s.Ctx(), library.Metadata())
-	s.Require().NoError(err)
-
-	// API claims require PhaseRunning. Once teardown has begun, even a
-	// simultaneous claimant cannot acquire another marker.
-	current, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-	s.Require().NoError(err)
-	_, err = s.State().UpdateWithConflicts(s.Ctx(), current.Metadata(), func(r resource.Resource) error {
-		r.Metadata().Finalizers().Add(hypervisor.ContentLibraryMutationFinalizer("another.iso"))
+	oldPath := filepath.Join(pool.TypedSpec().TargetPath, seedName(id))
+	ctest.UpdateWithConflicts(s, pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolPhaseNotReady
+		current.TypedSpec().Error = "waiting for consumers before replacing backing"
 
 		return nil
-	}, state.WithUpdateOwner(current.Metadata().Owner()), state.WithExpectedPhase(resource.PhaseRunning))
-	s.Require().True(state.IsPhaseConflictError(err), "API-style claim after teardown: %v", err)
-
-	s.Destroy(spec)
-	s.Require().Eventually(func() bool {
-		currentStatus, getErr := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-
-		return getErr == nil && currentStatus.Metadata().Phase() == resource.PhaseTearingDown
-	}, time.Second, 10*time.Millisecond)
-
-	_, err = os.Stat(asset)
-	s.Require().NoError(err, "retirement must wait for the mutation claim to finish")
-	current, err = safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-	s.Require().NoError(err)
-	s.Require().True(current.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"), "library hold must remain until cleanup")
-	s.Require().NoError(s.State().RemoveFinalizer(s.Ctx(), library.Metadata(), marker))
-	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, id)
-
-	_, err = os.Stat(asset)
-	s.Require().ErrorIs(err, os.ErrNotExist)
-}
-
-func (s *CloudInitISOSuite) TestInvalidLibraryPublishesSanitizedError() {
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "invalid")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "../escape",
-		UserData: "secret",
-	}
-	id := hypervisor.CloudInitStatusID("invalid", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
-		a.Contains(status.TypedSpec().Error, "invalid content library")
-		a.NotContains(status.TypedSpec().Error, "secret")
 	})
-}
-
-func (s *CloudInitISOSuite) TestBackingChangeNeverDeletesOldPathThroughNewMount() {
-	oldDir := s.T().TempDir()
-	newDir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = oldDir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "backing")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "images",
-	}
-	id := hypervisor.CloudInitStatusID("backing", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-
-	oldFile := filepath.Join(oldDir, status.TypedSpec().Name)
-	newFile := filepath.Join(newDir, status.TypedSpec().Name)
-	s.Require().NoError(os.WriteFile(newFile, []byte("foreign"), 0o600))
-
-	current, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](s.Ctx(), s.State(), "images")
-	s.Require().NoError(err)
-
-	current.TypedSpec().Path = newDir
-	current.TypedSpec().VolumeID = "vol-b"
-	s.Update(current, state.WithUpdateOwner(current.Metadata().Owner()))
-	retained, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-	s.Require().Equal(oldDir, retained.TypedSpec().Path)
-
-	_, err = os.Stat(oldFile)
-	s.Require().NoError(err)
-	contents, err := os.ReadFile(newFile)
-	s.Require().NoError(err)
-	s.Require().Equal("foreign", string(contents))
-}
-
-func (s *CloudInitISOSuite) TestBrokenLibraryDoesNotBlockIndependentGuest() {
-	brokenDir := filepath.Join(s.T().TempDir(), "missing")
-	broken := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "broken")
-	broken.TypedSpec().Path = brokenDir
-	broken.TypedSpec().VolumeID = "vol-b"
-	broken.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(broken)
-
-	goodDir := s.T().TempDir()
-	good := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "good")
-	good.TypedSpec().Path = goodDir
-	good.TypedSpec().VolumeID = "vol-g"
-	good.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(good)
-
-	badSpec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "bad")
-	*badSpec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "broken",
-	}
-	s.Create(badSpec)
-
-	goodSpec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "good")
-	*goodSpec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library: "good",
-	}
-	s.Create(goodSpec)
-	ctest.AssertResource(s, hypervisor.CloudInitStatusID("good", *goodSpec.TypedSpec()), func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-}
-
-func (s *CloudInitISOSuite) TestRecoversLinkedISOAfterStatusPublicationFailure() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "recover")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		UserData: "secret",
-	}
-	id := hypervisor.CloudInitStatusID("recover", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-	before, err := os.Stat(filepath.Join(dir, status.TypedSpec().Name))
-	s.Require().NoError(err)
-
-	status.TypedSpec().Phase = hypervisor.CloudInitPhaseNotReady
-	status.TypedSpec().Digest = ""
-	status.TypedSpec().SizeBytes = 0
-	status.TypedSpec().Error = "building cloud-init ISO"
-	s.Update(status, state.WithUpdateOwner(status.Metadata().Owner()))
-	_, err = safe.StateUpdateWithConflicts(s.Ctx(), s.State(), library.Metadata(),
-		func(current *hypervisor.ContentLibraryStatus) error {
-			current.TypedSpec().Fingerprint = "trigger-reconciliation-after-restart"
-
-			return nil
-		},
-	)
-	s.Require().NoError(err)
 	ctest.AssertResource(s, id, func(current *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.Equal(hypervisor.CloudInitPhaseReady, current.TypedSpec().Phase, current.TypedSpec().Error)
+		a.Equal(resource.PhaseTearingDown, current.Metadata().Phase())
+	})
+	s.FileExists(oldPath)
+	ctest.AssertResource(s, "pool-a", func(current *storage.StoragePoolStatus, a *assert.Assertions) {
+		a.True(current.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
+	})
+	s.RemoveFinalizer(status.Metadata(), "test-consumer")
+	ctest.AssertResource(s, "pool-a", func(current *storage.StoragePoolStatus, a *assert.Assertions) {
+		a.False(current.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
+	})
+	s.NoFileExists(oldPath)
+
+	mount := block.NewVolumeMountStatus(block.NamespaceName, "replacement-backing")
+	mount.TypedSpec().Target = s.T().TempDir()
+	s.Create(mount)
+	path := filepath.Join(mount.TypedSpec().Target, "pool-a")
+	s.Require().NoError(os.Mkdir(path, 0o700))
+	ctest.UpdateWithConflicts(s, pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().VolumeID = mount.Metadata().ID()
+		current.TypedSpec().TargetPath = path
+		current.TypedSpec().Phase = storage.StoragePoolPhaseReady
+		current.TypedSpec().Error = ""
+
+		return nil
+	})
+	ctest.AssertResource(s, id, func(current *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, current.TypedSpec().Phase)
+		a.Equal(mount.Metadata().ID(), current.TypedSpec().VolumeID)
+		a.Equal(path, current.TypedSpec().Path)
+	})
+	s.FileExists(filepath.Join(path, seedName(id)))
+}
+
+func (s *CloudInitISOSuite) TestRetiresOrphanWithoutWritingUnprovenPath() {
+	// Finish an initial reconciliation before introducing the orphan, so startup
+	// cannot mask a missing status-event subscription.
+	s.pool()
+
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "live-guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "seed"}
+	s.Create(seed)
+	ctest.AssertResource(s, hypervisor.CloudInitStatusID("live-guest", *seed.TypedSpec()), func(current *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, current.TypedSpec().Phase)
+	})
+
+	path := s.T().TempDir()
+	file := filepath.Join(path, "seed.iso")
+	s.Require().NoError(os.WriteFile(file, []byte("preserve me"), 0o600))
+
+	status := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "orphan")
+	*status.TypedSpec() = hypervisor.CloudInitStatusSpec{
+		VirtualMachine: "guest",
+		Pool:           "missing-pool",
+		Name:           "seed.iso",
+		Path:           path,
+		VolumeID:       "old-backing",
+		Phase:          hypervisor.CloudInitPhaseReady,
+	}
+	s.Create(status, state.WithCreateOwner("hypervisor.CloudInitISOController"))
+	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, "orphan")
+
+	data, err := os.ReadFile(file)
+
+	s.Require().NoError(err)
+	s.Equal("preserve me", string(data))
+}
+
+func (s *CloudInitISOSuite) TestRetirementWaitsForMountButNotStorageDaemon() {
+	pool, mount := s.pool()
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "seed"}
+	id := hypervisor.CloudInitStatusID("guest", *seed.TypedSpec())
+	s.Create(seed)
+	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, status.TypedSpec().Phase)
+	})
+	s.Destroy(mount)
+	s.Destroy(seed)
+	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(resource.PhaseTearingDown, status.Metadata().Phase())
+	})
+	path := filepath.Join(pool.TypedSpec().TargetPath, seedName(id))
+	s.FileExists(path)
+	ctest.AssertResource(s, "pool-a", func(current *storage.StoragePoolStatus, a *assert.Assertions) {
+		a.True(current.Metadata().Finalizers().Has("hypervisor.CloudInitISOController"))
+	})
+	ctest.UpdateWithConflicts(s, pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolPhaseObservationUnavailable
+
+		return nil
+	})
+	mount.Metadata().SetVersion(resource.VersionUndefined)
+	s.Create(mount)
+	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, id)
+	s.NoFileExists(path)
+}
+
+func (s *CloudInitISOSuite) TestRecoversInterruptedOwnedPublication() {
+	pool, _ := s.pool()
+	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
+	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{Pool: "pool-a", UserData: "seed"}
+	id := hypervisor.CloudInitStatusID("guest", *seed.TypedSpec())
+	name := seedName(id)
+	ownerDir := filepath.Join(pool.TypedSpec().TargetPath, ".cloud-init-owners")
+	s.Require().NoError(os.Mkdir(ownerDir, 0o700))
+	s.Require().NoError(cloudinit.WriteISO(s.Ctx(), filepath.Join(ownerDir, name), cloudinit.Seed{UserData: "seed"}))
+
+	status := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, id)
+	*status.TypedSpec() = hypervisor.CloudInitStatusSpec{
+		VirtualMachine: "guest", Pool: "pool-a", Name: name, Path: pool.TypedSpec().TargetPath,
+		VolumeID: pool.TypedSpec().VolumeID, InputDigest: seed.TypedSpec().InputDigest(), Phase: hypervisor.CloudInitPhaseNotReady,
+	}
+	s.Create(status, state.WithCreateOwner("hypervisor.CloudInitISOController"))
+	s.Create(seed)
+	ctest.AssertResource(s, id, func(current *hypervisor.CloudInitStatus, a *assert.Assertions) {
+		a.Equal(hypervisor.CloudInitPhaseReady, current.TypedSpec().Phase)
 		a.NotEmpty(current.TypedSpec().Digest)
 	})
 
-	after, err := os.Stat(filepath.Join(dir, status.TypedSpec().Name))
+	owner, err := os.Stat(filepath.Join(ownerDir, name))
 	s.Require().NoError(err)
-	s.Require().True(os.SameFile(before, after), "recovery must reuse its own durable hard link")
-}
-
-func (s *CloudInitISOSuite) TestFailedOpenRetriesWithoutResourceEvent() {
-	dir := filepath.Join(s.T().TempDir(), "not-yet-mounted")
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "retry")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		UserData: "secret",
-	}
-	id := hypervisor.CloudInitStatusID("retry", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
-		a.NotEmpty(status.TypedSpec().Error)
-	})
-	s.Require().NoError(os.Mkdir(dir, 0o700))
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-}
-
-func (s *CloudInitISOSuite) TestForeignSameNameIsNeverAdopted() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "foreign")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		UserData: "secret",
-	}
-	id := hypervisor.CloudInitStatusID("foreign", *spec.TypedSpec())
-	name := "cloud-init-" + id[len("foreign@"):] + ".iso"
-	s.Require().NoError(os.WriteFile(filepath.Join(dir, name), []byte("foreign"), 0o600))
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.False(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady)
-		a.NotEmpty(status.TypedSpec().Error)
-		a.NotContains(status.TypedSpec().Error, "secret")
-	})
-
-	contents, err := os.ReadFile(filepath.Join(dir, name))
+	published, err := os.Stat(filepath.Join(pool.TypedSpec().TargetPath, name))
 	s.Require().NoError(err)
-	s.Require().Equal("foreign", string(contents))
-}
-
-func (s *CloudInitISOSuite) TestChangedPublishedFileIsNotDeleted() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "changed")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		UserData: "original",
-	}
-	id := hypervisor.CloudInitStatusID("changed", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, id, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-	status, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-
-	name := status.TypedSpec().Name
-	s.Require().NoError(os.Remove(filepath.Join(dir, name)))
-	s.Require().NoError(os.WriteFile(filepath.Join(dir, name), []byte("foreign"), 0o600))
-	s.Destroy(spec)
-
-	contents, err := os.ReadFile(filepath.Join(dir, name))
-	s.Require().NoError(err)
-	s.Require().Equal("foreign", string(contents))
-	current, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), id)
-	s.Require().NoError(err)
-	s.Require().Equal(name, current.TypedSpec().Name)
-}
-
-func (s *CloudInitISOSuite) TestHeldOldGenerationSurvivesUpdate() {
-	dir := s.T().TempDir()
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	library.TypedSpec().Path = dir
-	library.TypedSpec().VolumeID = "vol-a"
-	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
-	s.Create(library)
-
-	spec := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, "guest")
-	*spec.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  "images",
-		UserData: "original",
-	}
-	oldID := hypervisor.CloudInitStatusID("guest", *spec.TypedSpec())
-	s.Create(spec)
-	ctest.AssertResource(s, oldID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-	old, err := safe.StateGetByID[*hypervisor.CloudInitStatus](s.Ctx(), s.State(), oldID)
-	s.Require().NoError(err)
-	s.AddFinalizer(old.Metadata(), "test.consumer")
-
-	current, err := safe.StateGetByID[*hypervisor.CloudInitSpec](s.Ctx(), s.State(), "guest")
-	s.Require().NoError(err)
-
-	current.TypedSpec().UserData = "replacement"
-	s.Update(current)
-	newID := hypervisor.CloudInitStatusID("guest", *current.TypedSpec())
-	ctest.AssertResource(s, newID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.True(status.TypedSpec().Phase == hypervisor.CloudInitPhaseReady, status.TypedSpec().Error)
-	})
-	ctest.AssertResource(s, oldID, func(status *hypervisor.CloudInitStatus, a *assert.Assertions) {
-		a.Equal("original", spec.TypedSpec().UserData)
-		_, statErr := os.Stat(filepath.Join(dir, status.TypedSpec().Name))
-		a.NoError(statErr)
-	})
-	s.RemoveFinalizer(old.Metadata(), "test.consumer")
-	ctest.AssertNoResource[*hypervisor.CloudInitStatus](s, oldID)
+	s.True(os.SameFile(owner, published))
 }

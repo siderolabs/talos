@@ -74,6 +74,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
 	library, _ := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, _ := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	dgst := suite.digestOfISO()
 
@@ -84,7 +85,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	suite.T().Logf("uploading %s (%s) into content library %q", suite.HypervisorTalosISOPath, dgst, library)
 
-	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, dgst.String(), iso)
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, dgst.String(), iso)
 	suite.Require().NoError(err)
 
 	name := "vm-boot-" + uuid.NewString()
@@ -98,6 +99,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName:      "install",
+			DiskPool:      pool,
 			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			DiskBootOrder: 1,
 			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{

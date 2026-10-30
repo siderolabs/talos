@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // newStoragePoolConfigDoc builds a StoragePoolConfig document on its own backing volume. Every virtual machine
@@ -29,9 +30,16 @@ func newStoragePoolConfigDoc(name, volumeName string) *storagecfg.StoragePoolCon
 	return doc
 }
 
+func newDirectoryUserVolumeDoc(name string) config.Document {
+	doc := newUserVolumeDoc(name)
+	doc.VolumeType = new(block.VolumeTypeDirectory)
+
+	return doc
+}
+
 // poolDocs are the documents a virtual machine with a disk in "pool1" needs to resolve it.
 func poolDocs() []config.Document {
-	return []config.Document{newUserVolumeDoc("vm-pool"), newStoragePoolConfigDoc("pool1", "vm-pool")}
+	return []config.Document{newDirectoryUserVolumeDoc("vm-pool"), newStoragePoolConfigDoc("pool1", "vm-pool")}
 }
 
 // newVirtualMachineDoc builds a VirtualMachineConfig document whose disks are provisioned from the
@@ -39,6 +47,8 @@ func poolDocs() []config.Document {
 func newVirtualMachineDoc(name string, libraryNames ...string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("1GiB")
 
@@ -46,7 +56,7 @@ func newVirtualMachineDoc(name string, libraryNames ...string) *hypervisorcfg.Vi
 		doc.DisksConfig = append(doc.DisksConfig, hypervisorcfg.VirtualMachineDisk{
 			DiskName: "disk" + string(rune('a'+i)),
 			DiskPool: "pool1",
-			DiskSize: meta.MustByteSize("20GiB"),
+			DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
 				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
 					ImageLibrary: libraryName,
@@ -64,6 +74,8 @@ func newVirtualMachineDoc(name string, libraryNames ...string) *hypervisorcfg.Vi
 func newBlankDiskVirtualMachineDoc(name string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
 	doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 	doc.MetaName = name
+	doc.PowerStateConfig = hypervisorhelpers.PowerStateRunning
+	doc.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeBIOS
 	doc.CPUConfig.CPUCount = 1
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("1GiB")
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
@@ -80,17 +92,17 @@ func newBlankDiskVirtualMachineDoc(name string) *hypervisorcfg.VirtualMachineCon
 	return doc
 }
 
-func newCloudInitVirtualMachineDoc(name, library string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
+func newCloudInitVirtualMachineDoc(name string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
 	doc := newBlankDiskVirtualMachineDoc(name)
 	doc.GuestConfig.CloudInitConfig = &hypervisorcfg.VirtualMachineCloudInit{
-		LibraryConfig:  library,
+		PoolConfig:     "pool1",
 		UserDataConfig: "#cloud-config\n",
 	}
 
 	return doc
 }
 
-func TestVirtualMachineImageReferences(t *testing.T) {
+func TestVirtualMachineImageReferencesAllowRetiredSources(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
@@ -101,7 +113,7 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 		{
 			name: "no virtual machines",
 			docs: []config.Document{
-				newUserVolumeDoc("vm-images"),
+				newDirectoryUserVolumeDoc("vm-images"),
 				newContentLibraryDoc("images", "vm-images"),
 			},
 		},
@@ -114,7 +126,7 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 		{
 			name: "library declared",
 			docs: append(poolDocs(),
-				newUserVolumeDoc("vm-images"),
+				newDirectoryUserVolumeDoc("vm-images"),
 				newContentLibraryDoc("images", "vm-images"),
 				newVirtualMachineDoc("vm1", "images"),
 			),
@@ -124,64 +136,19 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 			docs: append(poolDocs(),
 				newVirtualMachineDoc("vm1", "images"),
 			),
-			expectedErrs: []string{
-				`virtual machine "vm1": disks[0]: no ContentLibraryConfig declares content library "images"`,
-			},
 		},
 		{
 			name: "one disk resolves, one does not",
 			docs: append(poolDocs(),
-				newUserVolumeDoc("vm-images"),
+				newDirectoryUserVolumeDoc("vm-images"),
 				newContentLibraryDoc("images", "vm-images"),
 				newVirtualMachineDoc("vm1", "images", "nowhere"),
 			),
-			expectedErrs: []string{
-				`virtual machine "vm1": disks[1]: no ContentLibraryConfig declares content library "nowhere"`,
-			},
 		},
 		{
-			name: "cloud-init library declared",
+			name: "cloud-init needs no content library",
 			docs: append(poolDocs(),
-				newUserVolumeDoc("vm-images"),
-				newContentLibraryDoc("images", "vm-images"),
-				newCloudInitVirtualMachineDoc("vm1", "images"),
-			),
-		},
-		{
-			name: "cloud-init library not declared",
-			docs: append(poolDocs(),
-				newCloudInitVirtualMachineDoc("vm1", "images"),
-			),
-			expectedErrs: []string{
-				`virtual machine "vm1": guest.cloudInit: no ContentLibraryConfig declares content library "images"`,
-			},
-		},
-		{
-			name: "cloud-init library differs from declared library",
-			docs: append(poolDocs(),
-				newUserVolumeDoc("vm-images"),
-				newContentLibraryDoc("images", "vm-images"),
-				newCloudInitVirtualMachineDoc("vm1", "seeds"),
-			),
-			expectedErrs: []string{
-				`virtual machine "vm1": guest.cloudInit: no ContentLibraryConfig declares content library "seeds"`,
-			},
-		},
-		{
-			name: "multiple cloud-init libraries not declared",
-			docs: append(poolDocs(),
-				newCloudInitVirtualMachineDoc("vm2", "seeds"),
-				newCloudInitVirtualMachineDoc("vm1", "images"),
-			),
-			expectedErrs: []string{
-				`virtual machine "vm1": guest.cloudInit: no ContentLibraryConfig declares content library "images"`,
-				`virtual machine "vm2": guest.cloudInit: no ContentLibraryConfig declares content library "seeds"`,
-			},
-		},
-		{
-			name: "cloud-init missing library name",
-			docs: append(poolDocs(),
-				newCloudInitVirtualMachineDoc("vm1", ""),
+				newCloudInitVirtualMachineDoc("vm1"),
 			),
 		},
 		{
@@ -190,10 +157,6 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 				newVirtualMachineDoc("vm1", "images"),
 				newVirtualMachineDoc("vm2", "images"),
 			),
-			expectedErrs: []string{
-				`virtual machine "vm1": disks[0]: no ContentLibraryConfig declares content library "images"`,
-				`virtual machine "vm2": disks[0]: no ContentLibraryConfig declares content library "images"`,
-			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -205,12 +168,7 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 			_, err = ctr.ValidateAsClient(validationMode{})
 
 			if len(test.expectedErrs) == 0 {
-				if err != nil {
-					// The bare volume documents fail their own validation, which is not what this
-					// test is about.
-					assert.NotContains(t, err.Error(), "no ContentLibraryConfig declares")
-					assert.NotContains(t, err.Error(), "disks[")
-				}
+				require.NoError(t, err)
 
 				return
 			}
@@ -224,10 +182,45 @@ func TestVirtualMachineImageReferences(t *testing.T) {
 	}
 }
 
+func TestVirtualMachineCloudInitPoolReferences(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		pool string
+		want string
+	}{
+		{name: "declared", pool: "pool1"},
+		{name: "undeclared", pool: "other", want: `guest.cloudInit: no StoragePoolConfig document declares storage pool "other"`},
+		{name: "missing", want: "guest.cloudInit.pool is required"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			vm := newCloudInitVirtualMachineDoc("vm1")
+			vm.GuestConfig.CloudInitConfig.PoolConfig = test.pool
+			docs := append(poolDocs(), vm)
+			ctr, err := container.New(docs...)
+			require.NoError(t, err)
+
+			_, err = ctr.ValidateAsClient(validationMode{})
+			if test.want != "" {
+				require.ErrorContains(t, err, test.want)
+
+				if test.pool == "" {
+					assert.NotContains(t, err.Error(), `declares storage pool ""`)
+				}
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestVirtualMachinePoolReferences(t *testing.T) {
 	t.Parallel()
 
-	// A cdrom takes no pool at all, so it must not be reported as naming an undeclared one.
+	// A cdrom copies media into a pool-owned volume; an undeclared pool must be reported.
 	cdromDoc := func(name string) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
 		doc := hypervisorcfg.NewVirtualMachineConfigV1Alpha1()
 		doc.MetaName = name
@@ -236,6 +229,7 @@ func TestVirtualMachinePoolReferences(t *testing.T) {
 		doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 			{
 				DiskName: "boot",
+				DiskPool: "pool1",
 				DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 				ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
 					FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
@@ -270,8 +264,15 @@ func TestVirtualMachinePoolReferences(t *testing.T) {
 			},
 		},
 		{
-			name: "cdrom needs no pool",
+			name: "cdrom pool not declared",
 			docs: []config.Document{cdromDoc("vm1")},
+			expectedErrs: []string{
+				`virtual machine "vm1": disks[0]: no StoragePoolConfig document declares storage pool "pool1"`,
+			},
+		},
+		{
+			name: "cdrom pool declared",
+			docs: append(poolDocs(), cdromDoc("vm1")),
 		},
 		{
 			name: "two virtual machines, same missing pool",

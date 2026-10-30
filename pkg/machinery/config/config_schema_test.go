@@ -27,7 +27,7 @@ import (
 //go:embed schemas/config.schema.json
 var schemaData string
 
-func TestCloudInitLibrarySchema(t *testing.T) {
+func TestCloudInitPoolSchema(t *testing.T) {
 	t.Parallel()
 
 	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schemaData))
@@ -39,11 +39,16 @@ func TestCloudInitLibrarySchema(t *testing.T) {
 	schema, err := compiler.Compile("test-id#/$defs/hypervisor.VirtualMachineCloudInit")
 	require.NoError(t, err)
 
-	assert.Error(t, schema.Validate(map[string]any{"metaData": "instance-id: vm1"}), "library must be present")
+	assert.Error(t, schema.Validate(map[string]any{"metaData": "instance-id: vm1"}), "pool must be present")
 	assert.NoError(t, schema.Validate(map[string]any{
-		"library":  "targetlibrary",
+		"pool":     "pool1",
 		"metaData": "instance-id: vm1",
 	}))
+	assert.Error(t, schema.Validate(map[string]any{
+		"pool":     "pool1",
+		"library":  "images",
+		"metaData": "instance-id: vm1",
+	}), "cloud-init must not accept a content-library destination")
 }
 
 func TestVirtualMachineVideoSchema(t *testing.T) {

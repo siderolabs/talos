@@ -321,14 +321,8 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
-	// A virtual machine disk provisioned from an image names the content library holding it, which
-	// only the rest of the configuration can resolve.
-	if err := validateVirtualMachineImageReferences(container); err != nil {
-		errs = multierror.Append(errs, err)
-	}
-
-	// A virtual machine disk's volume lives in a storage pool declared elsewhere in the
-	// configuration, which only the rest of the configuration can resolve.
+	// Pools remain runtime dependencies. Libraries are only provisioning sources:
+	// copy controllers report missing sources or adopt existing copies without them.
 	if err := validateVirtualMachinePoolReferences(container); err != nil {
 		errs = multierror.Append(errs, err)
 	}

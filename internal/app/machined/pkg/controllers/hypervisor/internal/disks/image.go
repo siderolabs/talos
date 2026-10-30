@@ -15,6 +15,7 @@ import (
 
 	"github.com/opencontainers/go-digest"
 
+	"github.com/siderolabs/talos/internal/pkg/contentlibrary"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -22,7 +23,7 @@ import (
 // presented. A blank disk takes its driver type from the volume that was made for it.
 const rawDiskFormat = "raw"
 
-// ObserveImage finds the host source within a library already held by the controller.
+// ObserveImage finds the provisioning source within a library held until its pool copy is ready.
 // The disk must have passed the controller's supported-disk validation.
 func ObserveImage(
 	disk hypervisor.VirtualMachineDiskSpec,
@@ -36,15 +37,16 @@ func ObserveImage(
 		}, fmt.Errorf("content library %q is not ready: %s", image.Library, library.Error)
 	}
 
-	if err := checkLibraryFile(library.Path, image.File, image.Digest); err != nil {
+	object, err := checkLibraryFile(library.Path, image.File, image.Digest)
+	if err != nil {
 		return hypervisor.VirtualMachineDiskStatusSpec{
 			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
 		}, fmt.Errorf("content library %q: file %q: %w", image.Library, image.File, err)
 	}
 
 	return hypervisor.VirtualMachineDiskStatusSpec{
-		// Attached where it lies: nothing copies the image, so the library's mount has to stay under it.
-		SourcePath: filepath.Join(library.Path, image.File),
+		// Storage copies this source; domains attach only the independent pool destination.
+		SourcePath: filepath.Join(library.Path, object),
 		Format:     rawDiskFormat,
 		ReadOnly:   true,
 		Phase:      hypervisor.VirtualMachineDiskPhaseReady,
@@ -52,40 +54,44 @@ func ObserveImage(
 }
 
 // checkLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
-func checkLibraryFile(libraryPath, name, expected string) error {
+func checkLibraryFile(libraryPath, name, expected string) (string, error) {
 	root, err := os.OpenRoot(libraryPath)
 	if err != nil {
-		return fmt.Errorf("failed to open content library directory: %w", err)
+		return "", fmt.Errorf("failed to open content library directory: %w", err)
 	}
 
 	defer root.Close() //nolint:errcheck
 
-	f, err := root.Open(name)
+	object, err := contentlibrary.Resolve(root, name)
 	if err != nil {
-		return err
+		return "", err
+	}
+
+	f, err := root.Open(object)
+	if err != nil {
+		return "", err
 	}
 
 	defer f.Close() //nolint:errcheck
 
 	info, err := f.Stat()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if !info.Mode().IsRegular() {
-		return errors.New("not a regular file")
+		return "", errors.New("not a regular file")
 	}
 
 	if expected == "" {
-		return nil
+		return object, nil
 	}
 
-	return VerifyDigest(f, expected)
+	return object, VerifyDigest(f, expected)
 }
 
-// VerifyDigest rehashes the whole file. Image observation calls it on every reconciliation:
-// a library file is not immutable, and nothing else notices when it changes underneath a
-// virtual machine. The domain controller also uses it after acquiring its disk holds.
+// VerifyDigest hashes the complete reader and checks it against the expected digest.
+// Image observation uses it to validate a pinned provisioning source before copying.
 func VerifyDigest(r io.Reader, expected string) error {
 	// Machine configuration validation already accepted this digest, including its algorithm.
 	dgst, err := digest.Parse(expected)
