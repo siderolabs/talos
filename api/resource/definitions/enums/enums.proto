@@ -1052,6 +1052,18 @@ enum CriImageCacheCopyStatus {
   IMAGE_CACHE_COPY_STATUS_READY = 3;
 }
 
+// HardwarePCIDriverRebindPhase describes where a device stands in its rebind to a target driver.
+enum HardwarePCIDriverRebindPhase {
+  PCI_DRIVER_REBIND_PHASE_PENDING = 0;
+  PCI_DRIVER_REBIND_PHASE_HELD = 1;
+  PCI_DRIVER_REBIND_PHASE_ADOPTED = 2;
+  PCI_DRIVER_REBIND_PHASE_MOVING = 3;
+  PCI_DRIVER_REBIND_PHASE_BOUND = 4;
+  PCI_DRIVER_REBIND_PHASE_UNBOUND = 5;
+  PCI_DRIVER_REBIND_PHASE_RELEASING = 6;
+  PCI_DRIVER_REBIND_PHASE_FAILED = 7;
+}
+
 // HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COSI metadata lifecycle.
 enum HypervisorVirtualMachineDiskPhase {
   VIRTUAL_MACHINE_DISK_PHASE_UNKNOWN = 0;

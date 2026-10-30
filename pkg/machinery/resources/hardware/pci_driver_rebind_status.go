@@ -25,6 +25,13 @@ type PCIDriverRebindStatus = typed.Resource[PCIDriverRebindStatusSpec, PCIDriver
 type PCIDriverRebindStatusSpec struct {
 	PCIID        string `yaml:"pciID" protobuf:"1"`
 	TargetDriver string `yaml:"targetDriver" protobuf:"2"`
+	// Driver is the driver the device was last observed bound to, empty when it has none.
+	Driver string `yaml:"driver,omitempty" protobuf:"3"`
+	// Phase is where the device stands in its rebind, including whether the controller took it from
+	// its driver.
+	Phase PCIDriverRebindPhase `yaml:"phase" protobuf:"4"`
+	// Reason explains why the device is not bound to its target driver, or not handed back yet.
+	Reason string `yaml:"reason,omitempty" protobuf:"5"`
 }
 
 // NewPCIDriverRebindStatus initializes a PCIDriverRebindStatus resource.
@@ -56,6 +63,14 @@ func (PCIDriverRebindStatusExtension) ResourceDefinition() meta.ResourceDefiniti
 			{
 				Name:     "TargetDriver",
 				JSONPath: `{.targetDriver}`,
+			},
+			{
+				Name:     "Driver",
+				JSONPath: `{.driver}`,
+			},
+			{
+				Name:     "Phase",
+				JSONPath: `{.phase}`,
 			},
 		},
 	}
