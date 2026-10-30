@@ -181,7 +181,7 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 		}
 
 		// memory-backed EPHEMERAL is sized from RAM by the operator, not the system disk.
-		if vs.TypedSpec().Type == block.VolumeTypeTmpfs {
+		if resp.Payload.TypedSpec().Type == block.VolumeTypeTmpfs {
 			continue
 		}
 
