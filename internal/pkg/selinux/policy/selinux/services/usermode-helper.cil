@@ -1,0 +1,32 @@
+; Kernel usermode helpers: the kernel spawns every helper (request_module() as /sbin/modprobe,
+; orderly_poweroff() as /sbin/poweroff) from a kernel thread by executing the static usermode
+; helper, machined (/usr/bin/init), which dispatches on argv[0].
+(type usermode_helper_t)
+(call service_p (usermode_helper_t init_exec_t))
+
+; The policy is loaded after the kernel has started init, so the only init_exec_t executed
+; by kernel_t is the usermode helper.
+(allow kernel_t init_exec_t (file (execute)))
+(typetransition kernel_t init_exec_t process usermode_helper_t)
+(allow kernel_t usermode_helper_t (process (all))) ; including transition
+; init_exec_t lives on rootfs squashfs (NOSUID); kernel_t is not in service_p so this rule is required separately.
+(allow kernel_t usermode_helper_t (process2 (nosuid_transition)))
+(allow usermode_helper_t kernel_t (fd (use)))
+
+; the modprobe helper verifies it was spawned by a kernel thread via /proc/<ppid>/stat
+(allow usermode_helper_t kernel_t (fs_classes (ro)))
+
+; machined API: module parameters (modprobe), shutdown (poweroff)
+(allow usermode_helper_t machine_socket_t (fs_classes (rw)))
+(allow usermode_helper_t init_t (unix_stream_socket (connectto)))
+
+; the modprobe helper loads the module itself
+(allow usermode_helper_t module_t (system (module_load)))
+(allow usermode_helper_t self (capability (sys_module)))
+
+; module signature verification searches the kernel keyrings
+(allow usermode_helper_t kernel_t (key (search)))
+
+; logging to /dev/kmsg, opened read-write
+(allow usermode_helper_t self (capability2 (syslog)))
+(allow usermode_helper_t kernel_t (system (syslog_read)))
