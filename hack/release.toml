@@ -463,6 +463,28 @@ contents: |
 The extension does not provide a default configuration, so `multipathd` remains waiting until `/etc/multipath.conf` is present.
 """
 
+    [notes.multipath_native]
+        title = "Native Multipath"
+        description = """\
+Talos can now assemble multipath devices itself, which makes it possible to use a disk reachable via multiple paths
+(e.g. a SAN LUN) as the system disk.
+Native multipath is enabled with the `talos.multipath=on` kernel argument (it can't be a machine configuration setting,
+as the machine configuration is stored on the system disk).
+
+With native multipath enabled, every SCSI disk which reports a globally unique identifier (an NAA or EUI-64 WWID) is used
+via a multipath device only, even if a single path to it is present (the equivalent of `find_multipaths no`):
+Talos assembles the multipath device early in the boot, before anything on the disk is put to use, adds paths as they appear,
+drops the paths which can't be reached, and reinstates failed paths once they serve I/O again.
+The multipath devices are named and identified exactly as `multipath-tools` would name them (`mpath-<WWID>`),
+so once the `multipath-tools` system extension is started, `multipathd` adopts them, and Talos leaves them alone.
+
+Whether or not native multipath is enabled, once a multipath device is assembled (by Talos or by `multipathd`), Talos hides its paths
+(e.g. `sda` and `sdb` under `dm-0`): volumes are no longer discovered on the paths or their partitions, and the paths are no longer
+listed as `Disk` resources, so they can't be picked by volume locators, disk selectors or wipe operations.
+The paths remain visible as `BlockDevice` resources, and are listed in the `secondary_disks` of the multipath disk.
+The multipath disk carries the model, serial number and WWID of its paths, so a disk selector which matched a path matches the multipath disk.
+"""
+
     [notes.macvlan]
         title = "MACVLAN Links"
         description = """\
