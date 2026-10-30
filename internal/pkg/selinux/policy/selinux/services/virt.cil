@@ -47,6 +47,25 @@
 (allow svirt_t tap_device_t (fs_classes (rw)))
 (allow svirt_tcg_t tap_device_t (fs_classes (rw)))
 
+; VFIO character devices of passed-through PCI devices: one group node per IOMMU
+; group, plus the shared container node.
+;
+; libvirtd relabels a group node into the guest's image context before the
+; domain starts, and back to its file_contexts default once the domain stops,
+; so the default has to exist for the restore to land on a known type.
+(type vfio_device_t)
+(call protected_device_f (vfio_device_t))
+(filecon "/dev/vfio/vfio" char (system_u object_r vfio_device_t (systemLow systemLow)))
+(filecon "/dev/vfio/[0-9]+" char (system_u object_r vfio_device_t (systemLow systemLow)))
+
+(allow init_t vfio_device_t (chr_file (relabelfrom relabelto)))
+(allow init_t vfio_device_t (fs_classes (rw)))
+(allow init_t svirt_image_t (chr_file (relabelfrom)))
+
+; QEMU opens the container node directly and the group node by its image label.
+(allow svirt_t vfio_device_t (fs_classes (rw)))
+(allow svirt_tcg_t vfio_device_t (fs_classes (rw)))
+
 ; Storage pool volumes: the writable disks of a virtual machine.
 ;
 ; A pool is a directory under a user volume's mount, so its files are created

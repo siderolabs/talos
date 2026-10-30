@@ -97,6 +97,10 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 			*cp.GuestConfig.AgentConfig.AgentEnabled = *o.GuestConfig.AgentConfig.AgentEnabled
 		}
 	}
+	if o.HostDevicesConfig.PCIConfig != nil {
+		cp.HostDevicesConfig.PCIConfig = make([]VirtualMachinePCIDevice, len(o.HostDevicesConfig.PCIConfig))
+		copy(cp.HostDevicesConfig.PCIConfig, o.HostDevicesConfig.PCIConfig)
+	}
 	return &cp
 }
 

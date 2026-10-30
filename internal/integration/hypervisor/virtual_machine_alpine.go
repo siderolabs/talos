@@ -89,13 +89,15 @@ func (suite *LibvirtSuite) requireAlpineGuestNode() (string, context.Context) {
 }
 
 // prepareAlpineGuestOnNode provisions the stock ISO with the requested RAM, profile and optional NIC.
-// A nil DHCP record needs neither a reservation nor host macvtap support.
+// A nil DHCP record needs neither a reservation nor host macvtap support. Customizations are
+// applied to the document before it is patched into the machine configuration.
 func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 	node string,
 	nodeCtx context.Context,
 	ourRecord *provision.DHCPRecord,
 	memoryBytes uint64,
 	profile string,
+	customize ...func(*hypervisorcfg.VirtualMachineConfigV1Alpha1),
 ) *hypervisorcfg.VirtualMachineConfigV1Alpha1 {
 	suite.T().Helper()
 
@@ -201,6 +203,10 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 		},
 	}
 	doc.NetworkingConfig.InterfacesConfig = interfaces
+
+	for _, fn := range customize {
+		fn(doc)
+	}
 
 	suite.T().Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)

@@ -41,6 +41,8 @@ type VirtualMachineConfig interface {
 	Guest() VirtualMachineGuestConfig
 	// Video device settings; never nil.
 	Video() VirtualMachineVideoConfig
+	// HostDevices passed through to the guest; never nil.
+	HostDevices() VirtualMachineHostDevicesConfig
 }
 
 // VirtualMachineVideoConfig is the graphics device attached when a VNC console is enabled.
@@ -219,6 +221,22 @@ type VirtualMachineInterfaceConfig interface {
 	Link() string
 	// HardwareAddress is the address presented to the guest, empty when it is to be derived.
 	HardwareAddress() net.HardwareAddr
+}
+
+// VirtualMachineHostDevicesConfig defines the host devices passed through to a virtual machine.
+//
+//nolint:iface
+type VirtualMachineHostDevicesConfig interface {
+	// PCI devices passed through to the guest, in declaration order.
+	PCI() []VirtualMachinePCIDeviceConfig
+}
+
+// VirtualMachinePCIDeviceConfig defines a single host PCI device passed through to a virtual machine.
+type VirtualMachinePCIDeviceConfig interface {
+	// Address of the device on the host, in its canonical sysfs form, e.g. "0000:41:00.0".
+	Address() string
+	// BootOrder is the position of the device in the guest boot order; zero leaves it out.
+	BootOrder() uint32
 }
 
 // VirtualMachineGuestConfig defines the settings which apply inside the guest.
