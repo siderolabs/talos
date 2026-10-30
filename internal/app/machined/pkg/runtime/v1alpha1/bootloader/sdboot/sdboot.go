@@ -464,7 +464,11 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 				opts.Printf("sd-boot: pointing the default entry to the booted one for the duration of the upgrade: %s", c.BootedEntry)
 
 				if err = WriteVariable(LoaderEntryDefaultName, c.BootedEntry); err != nil {
-					return err
+					if !errors.Is(err, efivarfs.ErrWriteNotSupported) {
+						return err
+					}
+
+					opts.Printf("sd-boot: EFI variables are not writable, skipping: %v", err)
 				}
 			}
 
@@ -517,35 +521,15 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 func (c *Config) setup(opts options.InstallOptions, ukiFileName string) (*options.InstallResult, error) {
 	opts.Printf("updating EFI variables")
 
-	// set the new entry as a default one
-	if err := WriteVariable(LoaderEntryDefaultName, ukiFileName); err != nil {
-		return nil, err
-	}
+	if err := c.updateEFIVariables(opts, ukiFileName); err != nil {
+		if !errors.Is(err, efivarfs.ErrWriteNotSupported) {
+			return nil, err
+		}
 
-	// set default 5 second boot timeout
-	if err := WriteVariable(LoaderConfigTimeoutName, "5"); err != nil {
-		return nil, err
-	}
-
-	efiRW, err := efivarfs.NewFilesystemReaderWriter(true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
-	}
-
-	defer efiRW.Close() //nolint:errcheck
-
-	blkidInfo, err := blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true))
-	if err != nil {
-		return nil, fmt.Errorf("failed to probe block device %s: %w", opts.BootDisk, err)
-	}
-
-	sdbootFilename, err := bootloaderutils.Name(opts.Arch)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sd-boot file path: %w", err)
-	}
-
-	if err := CreateBootEntry(efiRW, blkidInfo, opts.Printf, sdbootFilename); err != nil {
-		return nil, fmt.Errorf("failed to create boot entry: %w", err)
+		// Some firmware (e.g. U-Boot built without CONFIG_EFI_RT_VOLATILE_STORE) can't write EFI variables at runtime.
+		// The UKI is already in place and systemd-boot boots the newest UKI (by version) when no default is set,
+		// so skip the EFI variables (and the boot entry) instead of failing the whole install/upgrade.
+		opts.Printf("EFI variables are not writable, skipping the EFI variables and boot entry update: %v", err)
 	}
 
 	if opts.ExtraInstallStep != nil {
@@ -557,6 +541,42 @@ func (c *Config) setup(opts options.InstallOptions, ukiFileName string) (*option
 	return &options.InstallResult{
 		PreviousLabel: c.Fallback,
 	}, nil
+}
+
+// updateEFIVariables sets the new UKI as the default entry and creates the UEFI boot entry.
+func (c *Config) updateEFIVariables(opts options.InstallOptions, ukiFileName string) error {
+	// set the new entry as a default one
+	if err := WriteVariable(LoaderEntryDefaultName, ukiFileName); err != nil {
+		return err
+	}
+
+	// set default 5 second boot timeout
+	if err := WriteVariable(LoaderConfigTimeoutName, "5"); err != nil {
+		return err
+	}
+
+	efiRW, err := efivarfs.NewFilesystemReaderWriter(true)
+	if err != nil {
+		return fmt.Errorf("failed to create efivarfs reader/writer: %w", err)
+	}
+
+	defer efiRW.Close() //nolint:errcheck
+
+	blkidInfo, err := blkid.ProbePath(opts.BootDisk, blkid.WithSkipLocking(true))
+	if err != nil {
+		return fmt.Errorf("failed to probe block device %s: %w", opts.BootDisk, err)
+	}
+
+	sdbootFilename, err := bootloaderutils.Name(opts.Arch)
+	if err != nil {
+		return fmt.Errorf("failed to get sd-boot file path: %w", err)
+	}
+
+	if err := CreateBootEntry(efiRW, blkidInfo, opts.Printf, sdbootFilename); err != nil {
+		return fmt.Errorf("failed to create boot entry: %w", err)
+	}
+
+	return nil
 }
 
 func (c *Config) copyAssets(opts options.InstallOptions, ukiFileName string) error {

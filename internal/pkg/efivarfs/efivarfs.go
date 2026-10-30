@@ -34,6 +34,12 @@ const (
 	Path = "/sys/firmware/efi/efivars"
 )
 
+// ErrWriteNotSupported is returned when efivarfs can not be made writable.
+//
+// The kernel mounts efivarfs read-only (and refuses to remount it read-write) when the firmware does not
+// implement the SetVariable runtime service, e.g. U-Boot built without CONFIG_EFI_RT_VOLATILE_STORE.
+var ErrWriteNotSupported = errors.New("efivarfs is read-only: the firmware does not support writing EFI variables at runtime")
+
 var (
 	// ScopeGlobal is the scope of variables defined by the EFI specification
 	// itself.
@@ -108,6 +114,10 @@ type FilesystemReaderWriter struct {
 func NewFilesystemReaderWriter(write bool) (*FilesystemReaderWriter, error) {
 	if write {
 		if err := unix.Mount("efivarfs", constants.EFIVarsMountPoint, "efivarfs", unix.MS_REMOUNT, ""); err != nil {
+			if errors.Is(err, unix.EINVAL) {
+				return nil, fmt.Errorf("%w: %w", ErrWriteNotSupported, err)
+			}
+
 			return nil, err
 		}
 	}
