@@ -26,7 +26,7 @@ import (
 
 // KernelModulesSuite verifies on-demand kernel module loading via the modprobe usermode helper.
 type KernelModulesSuite struct {
-	base.APISuite
+	base.K8sSuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
@@ -43,10 +43,6 @@ func (suite *KernelModulesSuite) SetupTest() {
 
 	if !suite.Capabilities().RunsTalosKernel {
 		suite.T().Skip("skipping kernel test since Talos kernel is not running")
-	}
-
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping in SELinux enforcing mode: host namespace debug mode doesn't function")
 	}
 }
 
@@ -77,11 +73,10 @@ func (suite *KernelModulesSuite) TestLoadedOnDemand() {
 
 	// device-mapper resolves the target type (which loads the module) before parsing the table,
 	// so the table is deliberately invalid: /dev/null is not a block device, and no device is left behind
-	out, exitCode := suite.RunDebugContainer(suite.ctx, node, "sh", "-c",
-		"dmsetup create talos-test-thin-pool --table '0 8 thin-pool /dev/null /dev/null 128 0'; dmsetup remove talos-test-thin-pool 2>/dev/null; true",
+	suite.runOnNode(node,
+		"dmsetup create --noudevsync talos-test-thin-pool --table '0 8 thin-pool /dev/null /dev/null 128 0'; "+
+			"dmsetup remove --noudevsync talos-test-thin-pool 2>/dev/null; true",
 	)
-
-	suite.T().Logf("dmsetup exit code %d, output:\n%s", exitCode, out)
 
 	// the module gets loaded on demand
 	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), moduleStatusID,
@@ -101,6 +96,11 @@ func (suite *KernelModulesSuite) TestAliasRefused() {
 		suite.T().Skip("skipping test in short mode")
 	}
 
+	// a pod might be denied the mount before the filesystem type is resolved, so the test would pass without a request
+	if suite.SelinuxEnforcing {
+		suite.T().Skip("skipping in SELinux enforcing mode: host namespace debug mode doesn't function")
+	}
+
 	const (
 		module         = "btrfs"
 		moduleStatusID = "btrfs"
@@ -116,11 +116,7 @@ func (suite *KernelModulesSuite) TestAliasRefused() {
 	loadedBefore := suite.countModuleLoadedLogLines(node, module)
 
 	// the filesystem type is resolved (which would load the module via the alias) before the source is checked
-	out, exitCode := suite.RunDebugContainer(suite.ctx, node, "sh", "-c",
-		"busybox mount -t btrfs /dev/null /tmp; true",
-	)
-
-	suite.T().Logf("mount exit code %d, output:\n%s", exitCode, out)
+	suite.runOnNode(node, "busybox mount -t btrfs /dev/null /tmp; true")
 
 	// give the request a chance to be (wrongly) handled
 	time.Sleep(10 * time.Second)
@@ -128,6 +124,41 @@ func (suite *KernelModulesSuite) TestAliasRefused() {
 	rtestutils.AssertNoResource[*runtime.KernelModuleStatus](nodeCtx, suite.T(), suite.Client.State(), moduleStatusID)
 
 	suite.Assert().Equal(loadedBefore, suite.countModuleLoadedLogLines(node, module), "the alias request should not load the module")
+}
+
+// runOnNode runs the shell command on the node with the host devices.
+//
+// In SELinux enforcing mode the host namespace debug mode doesn't function, so the command runs in a privileged pod
+// instead, which also has the kernel spawn the modprobe helper on behalf of a confined domain.
+func (suite *KernelModulesSuite) runOnNode(node, command string) {
+	if !suite.SelinuxEnforcing {
+		out, exitCode := suite.RunDebugContainer(suite.ctx, node, "sh", "-c", command)
+
+		suite.T().Logf("exit code %d, output:\n%s", exitCode, out)
+
+		return
+	}
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	podDef, err := suite.NewPrivilegedPod("kernel-modules")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNodeName(k8sNode.Name)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	// dmsetup
+	_, stderr, err := podDef.Exec(suite.ctx, "apk add --update device-mapper")
+	suite.Require().NoError(err, "stderr: %s", stderr)
+
+	stdout, stderr, err := podDef.Exec(suite.ctx, command)
+	suite.Require().NoError(err)
+
+	suite.T().Logf("stdout:\n%s\nstderr:\n%s", stdout, stderr)
 }
 
 // skipIfModuleLoaded skips the test if the module is already loaded, as Talos never unloads modules.
