@@ -222,12 +222,13 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 
 		// keyslot exists
 		if _, ok := keyslots.Keyslots[slot]; ok {
-			if err = h.updateKey(ctx, path, k, handler); err != nil {
+			updated, err := h.updateKey(ctx, path, k, handler)
+			if err != nil {
 				logger.Error("failed to update key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)), zap.Error(err))
 
 				failedSyncs = append(failedSyncs, fmt.Sprintf("error updating key slot %s %T: %s", slot, handler, err))
-			} else {
-				logger.Info("updated encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
+			} else if updated {
+				logger.Info("re-enrolled encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
 			}
 		} else {
 			// keyslot does not exist so just add the key
@@ -262,30 +263,38 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 	return failedSyncs, nil
 }
 
-func (h *Handler) updateKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) error {
+// updateKey verifies the key in the slot, and re-enrolls it if it's not valid anymore.
+//
+// It returns true if the key was re-enrolled.
+func (h *Handler) updateKey(ctx context.Context, path string, existingKey *encryption.Key, handler keys.Handler) (bool, error) {
 	valid, err := h.checkKey(ctx, path, handler)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if valid {
-		return nil
+		return false, nil
 	}
 
 	// re-add the key to the slot
 	err = h.encryptionProvider.RemoveKey(ctx, path, handler.Slot(), existingKey)
 	if err != nil {
-		return fmt.Errorf("failed to drop old key during key update %w", err)
+		return false, fmt.Errorf("failed to drop old key during key update %w", err)
 	}
 
 	err = h.addKey(ctx, path, existingKey, handler)
 	if err != nil {
-		return fmt.Errorf("failed to add new key during key update %w", err)
+		return false, fmt.Errorf("failed to add new key during key update %w", err)
 	}
 
-	return err
+	return true, nil
 }
 
+// checkKey returns true if the key handler can still produce a valid key for the slot.
+//
+// It returns false without an error if the slot needs to be re-enrolled:
+// either the token is invalid, or the key material can't be unwrapped anymore (e.g. TPM state changed),
+// or the key doesn't match the one in the slot.
 func (h *Handler) checkKey(ctx context.Context, path string, handler keys.Handler) (bool, error) {
 	token, err := h.readToken(ctx, path, handler.Slot())
 	if err != nil {
@@ -294,7 +303,7 @@ func (h *Handler) checkKey(ctx context.Context, path string, handler keys.Handle
 
 	key, err := handler.GetKey(ctx, token)
 	if err != nil {
-		if errors.Is(err, keys.ErrTokenInvalid) {
+		if errors.Is(err, keys.ErrTokenInvalid) || errors.Is(err, keys.ErrKeyStale) {
 			return false, nil
 		}
 
