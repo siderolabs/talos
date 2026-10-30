@@ -44,6 +44,7 @@ var _VolumeTypeNameToValueMap = map[string]VolumeType{
 	_VolumeTypeName[27:34]: VolumeTypeSymlink,
 	_VolumeTypeName[34:41]: VolumeTypeOverlay,
 	_VolumeTypeName[41:49]: VolumeTypeExternal,
+	_VolumeTypeName[49:55]: VolumeTypeMemory,
 }
 
 var _VolumeTypeLowerNameToValueMap = map[string]VolumeType{
@@ -54,7 +55,6 @@ var _VolumeTypeLowerNameToValueMap = map[string]VolumeType{
 	_VolumeTypeLowerName[27:34]: VolumeTypeSymlink,
 	_VolumeTypeLowerName[34:41]: VolumeTypeOverlay,
 	_VolumeTypeLowerName[41:49]: VolumeTypeExternal,
-	_VolumeTypeName[49:55]:      VolumeTypeMemory,
 	_VolumeTypeLowerName[49:55]: VolumeTypeMemory,
 }
 
