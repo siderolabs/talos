@@ -241,6 +241,176 @@ func (suite *ContainersSuite) TestRestartAfterTermination() {
 	}
 }
 
+// TestRestartPolicy verifies that a container which isn't restarted keeps its outcome, and that
+// on-failure restarts a failing container up to maxRetries.
+func (suite *ContainersSuite) TestRestartPolicy() {
+	for _, test := range []struct {
+		name     string
+		command  string
+		restart  *containercfg.ContainerRestart
+		state    containers.ContainerState
+		exitCode int32
+		runs     uint64
+	}{
+		{
+			name:    "never",
+			command: "exit 0",
+			restart: &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyNever},
+			state:   containers.ContainerStateCompleted,
+			runs:    1,
+		},
+		{
+			name:    "on-failure-success",
+			command: "exit 0",
+			restart: &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyOnFailure},
+			state:   containers.ContainerStateCompleted,
+			runs:    1,
+		},
+		{
+			name:    "on-failure-retries",
+			command: "exit 3",
+			restart: &containercfg.ContainerRestart{
+				RestartPolicy:     configcontainer.ContainerRestartPolicyOnFailure,
+				RestartMaxRetries: new(2),
+				RestartDelay:      new(time.Second),
+			},
+			state:    containers.ContainerStateFailed,
+			exitCode: 3,
+			runs:     3,
+		},
+	} {
+		suite.Run(test.name, func() {
+			ctx, name, _ := suite.setupContainer("restart-" + test.name)
+
+			doc := suite.shellContainer(name, test.command)
+			doc.RestartConfig = test.restart
+
+			suite.applyContainers(ctx, doc)
+
+			finished := suite.assertContainerStatus(ctx, name, "finished",
+				func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+					asrt.Equal(test.state, status.State, "error %q", status.Error)
+					asrt.Equal(test.exitCode, status.ExitCode)
+				})
+
+			suite.Assert().Equal(test.runs-1, finished.Generation)
+
+			// longer than the restart delay: it stays where it is
+			time.Sleep(2 * constants.ContainerDefaultRestartDelay)
+
+			suite.assertContainerStatus(ctx, name, "still finished",
+				func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+					asrt.Equal(test.state, status.State)
+					asrt.Equal(finished.Generation, status.Generation)
+				})
+		})
+	}
+}
+
+// TestRestartBackoff verifies that the restart delay doubles for a container which keeps exiting.
+//
+// The container logs when it starts and when it exits, so the delays are measured on the node; the
+// exact doubling and the cap are covered by the unit tests.
+func (suite *ContainersSuite) TestRestartBackoff() {
+	ctx, name, _ := suite.setupContainer("restart-backoff")
+
+	doc := suite.shellContainer(name, "date +start=%s; trap 'date +exit=%s' EXIT; exit 1")
+	doc.RestartConfig = &containercfg.ContainerRestart{RestartDelay: new(time.Second), RestartMaxDelay: new(4 * time.Second)}
+
+	suite.applyContainers(ctx, doc)
+
+	var starts, exits []int64
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		log, err := suite.readContainerLog(ctx, name)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		starts, exits = loggedTimes(log, "start="), loggedTimes(log, "exit=")
+
+		assert.GreaterOrEqual(collect, len(starts), 5, "not restarted often enough yet:\n%s", log)
+		assert.GreaterOrEqual(collect, len(exits), 4, "exits not logged:\n%s", log)
+	}, containerStartTimeout, time.Second)
+
+	for i, delay := range []int64{1, 2, 4, 4} {
+		suite.Assert().GreaterOrEqual(starts[i+1]-exits[i], delay, "restart %d", i+1)
+	}
+}
+
+// loggedTimes returns the Unix times logged after prefix, one per line.
+func loggedTimes(log, prefix string) []int64 {
+	var times []int64
+
+	for line := range strings.Lines(log) {
+		_, value, found := strings.Cut(strings.TrimSpace(line), prefix)
+		if !found {
+			continue
+		}
+
+		if t, err := strconv.ParseInt(value, 10, 64); err == nil {
+			times = append(times, t)
+		}
+	}
+
+	return times
+}
+
+// TestDependsOnSucceeded verifies that a container depending on another one having succeeded starts
+// after it, and sees what it prepared.
+func (suite *ContainersSuite) TestDependsOnSucceeded() {
+	ctx, name, node := suite.setupContainer("dependson-succeeded")
+
+	initName := name + "-init"
+
+	volumeName := suite.setupUserVolume(ctx, node, name, "init")
+
+	// after the volume's, so it runs before it: the volume can't go while a container uses it, and
+	// init can't go while the other container depends on it
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(context.Background(), node), containercfg.ContainerConfigKind, name, initName)
+	})
+
+	const destination = "/mnt/data"
+
+	mounts := []containercfg.ContainerMount{
+		{
+			VolumeMount: &containercfg.VolumeMount{
+				VolumeName:       volumeName,
+				MountDestination: destination,
+			},
+		},
+	}
+
+	initDoc := suite.shellContainer(initName, "sleep 5 && echo prepared > "+destination+"/state")
+	initDoc.MountsConfig = mounts
+	initDoc.RestartConfig = &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyNever}
+
+	doc := suite.shellContainer(name, "cat "+destination+"/state && sleep 3600")
+	doc.MountsConfig = mounts
+	doc.DependsOnConfig = &containercfg.ContainerDependsOn{
+		ContainersConfig: []containercfg.ContainerDependency{
+			{DependencyName: initName, DependencyCondition: configcontainer.ContainerDependencyConditionSucceeded},
+		},
+	}
+
+	suite.applyContainers(ctx, initDoc, doc)
+
+	suite.assertContainerStatus(ctx, name, "waiting for "+initName,
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State)
+			asrt.Contains(status.WaitingFor, "container: "+initName+" to succeed")
+		})
+
+	suite.assertContainerStatus(ctx, initName, "completed",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateCompleted, status.State, "error %q", status.Error)
+		})
+
+	suite.assertContainerRunning(ctx, name, "after "+initName+" succeeded")
+	suite.assertContainerLogged(ctx, name, "prepared")
+}
+
 // TestContainerStatus verifies the aggregated, user-facing ContainerStatus.
 func (suite *ContainersSuite) TestContainerStatus() {
 	if testing.Short() {
@@ -925,7 +1095,7 @@ func (suite *ContainersSuite) TestDependsOnContainers() {
 
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
 	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		ContainersConfig: []string{dependency},
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
 	}
 
 	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
@@ -984,7 +1154,7 @@ func (suite *ContainersSuite) TestDependsOnFailingContainer() {
 
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
 	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		ContainersConfig: []string{dependency},
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
 	}
 
 	suite.applyContainers(ctx, dependencyDoc, waiterDoc)

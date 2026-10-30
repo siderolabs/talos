@@ -13,6 +13,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -204,10 +205,77 @@ type ContainerDependsOn struct {
 	//     Whether the clock must be synchronized before the container starts.
 	TimeConfig *bool `yaml:"time,omitempty"`
 	//   description: |
-	//     Other containers, by document name, which must be running first.
+	//     Other containers, by document name, which must be running first, or have succeeded.
 	//
-	//     Cycles are rejected when the machine configuration is applied.
-	ContainersConfig []string `yaml:"containers,omitempty"`
+	//     An entry is either the name of a container which must be running and healthy, or a name with
+	//     a condition. Cycles are rejected when the machine configuration is applied.
+	//   examples:
+	//     - value: >
+	//         []ContainerDependency{{DependencyName: "migrate", DependencyCondition: config.ContainerDependencyConditionSucceeded}, {DependencyName: "db"}}
+	//   schema:
+	//     type: array
+	//     items:
+	//       oneOf:
+	//         - type: string
+	//         - $ref: "#/$defs/container.ContainerDependency"
+	ContainersConfig []ContainerDependency `yaml:"containers,omitempty"`
+}
+
+// ContainerDependency is a container which must be running, or have succeeded, first.
+type ContainerDependency struct {
+	//   description: |
+	//     Name of the ContainerConfig document.
+	DependencyName string `yaml:"name"`
+	//   description: |
+	//     `running` (the default) waits for the container to be running and healthy, `succeeded` for
+	//     it to have exited with code 0 and not to be restarted, e.g. a container preparing what this one
+	//     needs. It is checked again on every boot, as the containers run again.
+	//   values:
+	//     - running
+	//     - succeeded
+	//   schema:
+	//     type: string
+	DependencyCondition config.ContainerDependencyCondition `yaml:"condition,omitempty"`
+}
+
+var _ config.ContainerDependencyConfig = ContainerDependency{}
+
+// Name implements config.ContainerDependencyConfig interface.
+func (d ContainerDependency) Name() string { return d.DependencyName }
+
+// Condition implements config.ContainerDependencyConfig interface.
+func (d ContainerDependency) Condition() config.ContainerDependencyCondition {
+	if d.DependencyCondition == "" {
+		return config.ContainerDependencyConditionRunning
+	}
+
+	return d.DependencyCondition
+}
+
+// UnmarshalYAML accepts a plain name as well.
+func (d *ContainerDependency) UnmarshalYAML(unmarshal func(any) error) error {
+	var name string
+
+	if err := unmarshal(&name); err == nil {
+		*d = ContainerDependency{DependencyName: name}
+
+		return nil
+	}
+
+	type containerDependency ContainerDependency
+
+	return unmarshal((*containerDependency)(d))
+}
+
+// MarshalYAML writes a dependency without a condition as a plain name.
+func (d ContainerDependency) MarshalYAML() (any, error) {
+	if d.DependencyCondition == "" {
+		return d.DependencyName, nil
+	}
+
+	type containerDependency ContainerDependency
+
+	return containerDependency(d), nil
 }
 
 // Paths implements config.ContainerDependsOnConfig interface.
@@ -230,7 +298,9 @@ func (d *ContainerDependsOn) Time() bool {
 }
 
 // Containers implements config.ContainerDependsOnConfig interface.
-func (d *ContainerDependsOn) Containers() []string { return d.ContainersConfig }
+func (d *ContainerDependsOn) Containers() []config.ContainerDependencyConfig {
+	return xslices.Map(d.ContainersConfig, func(d ContainerDependency) config.ContainerDependencyConfig { return d })
+}
 
 // Validate checks the dependency settings.
 //
@@ -249,7 +319,11 @@ func (d *ContainerDependsOn) Validate(selfName string) error {
 		}
 	}
 
-	for _, name := range d.ContainersConfig {
+	seen := map[string]struct{}{}
+
+	for _, dependency := range d.ContainersConfig {
+		name := dependency.DependencyName
+
 		if name == "" {
 			validationErrors = errors.Join(validationErrors, errors.New("dependsOn.containers entry must not be empty"))
 
@@ -259,6 +333,19 @@ func (d *ContainerDependsOn) Validate(selfName string) error {
 		if name == selfName {
 			validationErrors = errors.Join(validationErrors,
 				fmt.Errorf("container %q cannot depend on itself", selfName))
+		}
+
+		if _, duplicate := seen[name]; duplicate {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("dependsOn.containers lists %q more than once", name))
+		}
+
+		seen[name] = struct{}{}
+
+		switch dependency.Condition() {
+		case config.ContainerDependencyConditionRunning, config.ContainerDependencyConditionSucceeded:
+		default:
+			validationErrors = errors.Join(validationErrors,
+				fmt.Errorf("unsupported dependsOn.containers condition %q, expected running or succeeded", dependency.DependencyCondition))
 		}
 	}
 

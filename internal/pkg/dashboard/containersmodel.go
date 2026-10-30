@@ -15,6 +15,7 @@ import (
 
 	"github.com/dustin/go-humanize"
 	"github.com/rivo/tview"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -104,7 +105,7 @@ func buildContainerRows(
 
 		// The Stats API is keyed by the containerd ID, which is the instance rather than the
 		// container: every restart runs under a new ID.
-		statsID := containers.InstanceID(name, spec.RestartCount)
+		statsID := containers.InstanceID(name, spec.Generation)
 
 		row := containerRow{
 			Name:       name,
@@ -523,7 +524,13 @@ func formatDependsOn(dependsOn containers.ContainerDependsOnSpec) string {
 	}
 
 	if len(dependsOn.Containers) > 0 {
-		parts = append(parts, "containers "+strings.Join(dependsOn.Containers, ","))
+		parts = append(parts, "containers "+strings.Join(xslices.Map(dependsOn.Containers, func(dependency containers.ContainerDependencySpec) string {
+			if dependency.Condition == containers.ContainerDependencyConditionSucceeded {
+				return dependency.Name + " (succeeded)"
+			}
+
+			return dependency.Name
+		}), ","))
 	}
 
 	if len(parts) == 0 {

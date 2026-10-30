@@ -5,6 +5,7 @@
 package containers_test
 
 import (
+	"cmp"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -36,6 +37,7 @@ func TestResolveContainerState(t *testing.T) {
 		containerImageStatus    *containers.ContainerImageStatus
 		gatesReady              bool
 		isStopping              bool
+		finishedState           containers.ContainerState
 		want                    containers.ContainerState
 	}{
 		{
@@ -96,13 +98,25 @@ func TestResolveContainerState(t *testing.T) {
 			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseFailed),
 			want:                    containers.ContainerStateExited,
 		},
+		{
+			name:                    "instance terminated, not restarted",
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseTerminated),
+			finishedState:           containers.ContainerStateCompleted,
+			want:                    containers.ContainerStateCompleted,
+		},
+		{
+			name:                    "instance running, not restarted once finished",
+			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseRunning),
+			finishedState:           containers.ContainerStateFailed,
+			want:                    containers.ContainerStateRunning,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got := containers.ResolveContainerState(tt.containerInstanceStatus, tt.containerImageStatus, tt.gatesReady, tt.isStopping)
+			got := containers.ResolveContainerState(tt.containerInstanceStatus, tt.containerImageStatus, tt.gatesReady, tt.isStopping, cmp.Or(tt.finishedState, containers.ContainerStateExited))
 			assert.Equal(t, tt.want, got)
 		})
 	}
@@ -199,6 +213,7 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 	newInstanceSpec := func(image string, phase resource.Phase) *containers.ContainerInstanceSpec {
 		spec := containers.NewContainerInstanceSpec(containers.NamespaceName, "nginx-0")
 		spec.TypedSpec().Image = image
+		spec.TypedSpec().ExecutionHash = newContainerSpec().TypedSpec().ExecutionHash()
 		spec.Metadata().SetPhase(phase)
 
 		return spec
@@ -240,7 +255,8 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				Health:       containers.ContainerHealthHealthy,
 				Image:        digest,
 				PID:          42,
-				RestartCount: 2,
+				RestartCount: 0,
+				Generation:   2,
 			},
 		},
 		{
@@ -257,7 +273,8 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				Health:       containers.ContainerHealthDegraded,
 				Image:        imageRef,
 				ExitCode:     1,
-				RestartCount: 1,
+				RestartCount: 0,
+				Generation:   1,
 			},
 		},
 		{
@@ -287,6 +304,7 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				Health:       containers.ContainerHealthDegraded,
 				PID:          9,
 				RestartCount: 3,
+				Generation:   3,
 				ExitCode:     7,
 				Error:        "task exited",
 			},
@@ -295,6 +313,7 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				Health:       containers.ContainerHealthPulling,
 				Image:        imageRef,
 				RestartCount: 3,
+				Generation:   3,
 				ExitCode:     7,
 				Error:        "task exited",
 			},
@@ -303,6 +322,7 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 			name: "a present instance status overwrites the carried-over outcome",
 			prev: containers.ContainerStatusSpec{
 				RestartCount: 3,
+				Generation:   3,
 				ExitCode:     7,
 			},
 			containerInstanceStatus: newInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
@@ -316,7 +336,8 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				Health:       containers.ContainerHealthHealthy,
 				Image:        imageRef,
 				PID:          11,
-				RestartCount: 5,
+				RestartCount: 3,
+				Generation:   5,
 			},
 		},
 		{
@@ -390,7 +411,8 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				State:        containers.ContainerStateStopping,
 				Health:       containers.ContainerHealthHealthy,
 				Image:        digest,
-				RestartCount: 1,
+				RestartCount: 0,
+				Generation:   1,
 			},
 		},
 		{
@@ -468,9 +490,52 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				tt.containerInstanceSpec,
 				tt.imageDigest,
 				containerDependencyStatus,
+				nil,
 			)
 
 			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestContainerStatusSpecUpdateFinished(t *testing.T) {
+	t.Parallel()
+
+	containerSpec := containers.NewContainerSpec(containers.NamespaceName, "migrate")
+	containerSpec.TypedSpec().Image = containers.ContainerImageSpec{Ref: "ghcr.io/example/migrate:v1.0.0"}
+	containerSpec.TypedSpec().Restart.Policy = containers.ContainerRestartPolicyNever
+
+	instanceStatus := containers.NewContainerInstanceStatus(containers.NamespaceName, "migrate-4")
+	instanceStatus.TypedSpec().Generation = 4
+	instanceStatus.TypedSpec().Phase = containers.ContainerInstancePhaseTerminated
+
+	runStatus := containers.NewContainerRunStatus(containers.NamespaceName, "migrate")
+	runStatus.TypedSpec().Restarts = 2
+
+	dependencyStatus := containers.NewContainerDependencyStatus(containers.NamespaceName, "migrate")
+	dependencyStatus.TypedSpec().WaitingFor = []string{"container: db"}
+
+	for _, test := range []struct {
+		name  string
+		hash  string
+		state containers.ContainerState
+	}{
+		{name: "current configuration", hash: containerSpec.TypedSpec().ExecutionHash(), state: containers.ContainerStateCompleted},
+		{name: "changed configuration", hash: "previous", state: containers.ContainerStatePending},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			instanceSpec := containers.NewContainerInstanceSpec(containers.NamespaceName, "migrate-4")
+			instanceSpec.TypedSpec().ExecutionHash = test.hash
+
+			var status containers.ContainerStatusSpec
+
+			status.Update(containerSpec, nil, instanceStatus, instanceSpec, "", dependencyStatus, runStatus)
+
+			assert.Equal(t, test.state, status.State)
+			assert.EqualValues(t, 2, status.RestartCount)
+			assert.EqualValues(t, 4, status.Generation)
 		})
 	}
 }

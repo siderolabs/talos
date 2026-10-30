@@ -1467,6 +1467,13 @@
           "description": "Conditions which must be satisfied before the container is started.\n",
           "markdownDescription": "Conditions which must be satisfied before the container is started.",
           "x-intellij-html-description": "\u003cp\u003eConditions which must be satisfied before the container is started.\u003c/p\u003e\n"
+        },
+        "restart": {
+          "$ref": "#/$defs/container.ContainerRestart",
+          "title": "restart",
+          "description": "How the container is restarted after it exits.\n",
+          "markdownDescription": "How the container is restarted after it exits.",
+          "x-intellij-html-description": "\u003cp\u003eHow the container is restarted after it exits.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1475,7 +1482,28 @@
         "apiVersion",
         "kind"
       ],
-      "description": "ContainerConfig is a container configuration document.\\nContainerConfig declares a container to be run by Talos directly, without Kubernetes.\\n\\nThe container is started as soon as the configuration is applied, with no image rebuild\\nand no reboot. It runs against the CRI containerd instance in the dedicated\\n`taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.\\n\\nContainers are not Talos services: they do not appear in `talosctl services`, and\\n`talosctl service` does not apply to them. Status is reported via `ContainerStatus`.\\n"
+      "description": "ContainerConfig is a container configuration document.\\nContainerConfig declares a container to be run by Talos directly, without Kubernetes.\\n\\nThe container is started as soon as the configuration is applied, with no image rebuild\\nand no reboot. It runs against the CRI containerd instance in the dedicated\\n`taloscontainers` namespace, and by default is restarted 5 seconds after it stops.\\n\\nContainers are not Talos services: they do not appear in `talosctl services`, and\\n`talosctl service` does not apply to them. Status is reported via `ContainerStatus`.\\n"
+    },
+    "container.ContainerDependency": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the ContainerConfig document.\n",
+          "markdownDescription": "Name of the ContainerConfig document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the ContainerConfig document.\u003c/p\u003e\n"
+        },
+        "condition": {
+          "type": "string",
+          "title": "condition",
+          "description": "running (the default) waits for the container to be running and healthy, succeeded for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.\n",
+          "markdownDescription": "`running` (the default) waits for the container to be running and healthy, `succeeded` for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.",
+          "x-intellij-html-description": "\u003cp\u003e\u003ccode\u003erunning\u003c/code\u003e (the default) waits for the container to be running and healthy, \u003ccode\u003esucceeded\u003c/code\u003e for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerDependency is a container which must be running, or have succeeded, first."
     },
     "container.ContainerDependsOn": {
       "properties": {
@@ -1510,13 +1538,20 @@
         },
         "containers": {
           "items": {
-            "type": "string"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/container.ContainerDependency"
+              }
+            ]
           },
           "type": "array",
           "title": "containers",
-          "description": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.\n",
-          "markdownDescription": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
-          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
+          "description": "Other containers, by document name, which must be running first, or have succeeded.\n\nAn entry is either the name of a container which must be running and healthy, or a name with\na condition. Cycles are rejected when the machine configuration is applied.\n",
+          "markdownDescription": "Other containers, by document name, which must be running first, or have succeeded.\n\nAn entry is either the name of a container which must be running and healthy, or a name with\na condition. Cycles are rejected when the machine configuration is applied.",
+          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first, or have succeeded.\u003c/p\u003e\n\n\u003cp\u003eAn entry is either the name of a container which must be running and healthy, or a name with\na condition. Cycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1620,6 +1655,43 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ContainerResources configures cgroup v2 resource limits."
+    },
+    "container.ContainerRestart": {
+      "properties": {
+        "policy": {
+          "type": "string",
+          "title": "policy",
+          "description": "When the container is restarted after it exits.\n\nalways restarts it after every exit, on-failure after it failed (a non-zero exit code\nor a failure to start), and never runs it once.\nA container which is not restarted keeps its outcome until its configuration changes or it\nis removed, and runs again after a reboot or a restart of machined.\ntalosctl restart only signals the container, so it doesn’t run such a container again.\n",
+          "markdownDescription": "When the container is restarted after it exits.\n\n`always` restarts it after every exit, `on-failure` after it failed (a non-zero exit code\nor a failure to start), and `never` runs it once.\nA container which is not restarted keeps its outcome until its configuration changes or it\nis removed, and runs again after a reboot or a restart of machined.\n`talosctl restart` only signals the container, so it doesn't run such a container again.",
+          "x-intellij-html-description": "\u003cp\u003eWhen the container is restarted after it exits.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003ealways\u003c/code\u003e restarts it after every exit, \u003ccode\u003eon-failure\u003c/code\u003e after it failed (a non-zero exit code\nor a failure to start), and \u003ccode\u003enever\u003c/code\u003e runs it once.\nA container which is not restarted keeps its outcome until its configuration changes or it\nis removed, and runs again after a reboot or a restart of machined.\n\u003ccode\u003etalosctl restart\u003c/code\u003e only signals the container, so it doesn\u0026rsquo;t run such a container again.\u003c/p\u003e\n"
+        },
+        "maxRetries": {
+          "type": "integer",
+          "title": "maxRetries",
+          "description": "How many times a failed container is restarted at most, with the on-failure policy.\n\nUnset restarts it until it succeeds.\n",
+          "markdownDescription": "How many times a failed container is restarted at most, with the `on-failure` policy.\n\nUnset restarts it until it succeeds.",
+          "x-intellij-html-description": "\u003cp\u003eHow many times a failed container is restarted at most, with the \u003ccode\u003eon-failure\u003c/code\u003e policy.\u003c/p\u003e\n\n\u003cp\u003eUnset restarts it until it succeeds.\u003c/p\u003e\n"
+        },
+        "delay": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "delay",
+          "description": "Time to wait after the container exited before it is restarted.\nDefaults to 5s.\n",
+          "markdownDescription": "Time to wait after the container exited before it is restarted.\nDefaults to 5s.",
+          "x-intellij-html-description": "\u003cp\u003eTime to wait after the container exited before it is restarted.\nDefaults to 5s.\u003c/p\u003e\n"
+        },
+        "maxDelay": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "maxDelay",
+          "description": "Longest time to wait before a restart.\n\nThe delay doubles with each restart of a container which ran for a shorter time than this,\nup to this. Defaults to the delay, so the delay doesn’t grow.\n",
+          "markdownDescription": "Longest time to wait before a restart.\n\nThe delay doubles with each restart of a container which ran for a shorter time than this,\nup to this. Defaults to the delay, so the delay doesn't grow.",
+          "x-intellij-html-description": "\u003cp\u003eLongest time to wait before a restart.\u003c/p\u003e\n\n\u003cp\u003eThe delay doubles with each restart of a container which ran for a shorter time than this,\nup to this. Defaults to the delay, so the delay doesn\u0026rsquo;t grow.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerRestart configures how the container is restarted after it exits."
     },
     "container.ContainerRunAs": {
       "properties": {

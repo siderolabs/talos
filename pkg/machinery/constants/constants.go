@@ -603,6 +603,9 @@ const (
 	// history reads as a single continuous log.
 	TalosContainersLogPrefix = TalosContainersContainerdNamespace + "-"
 
+	// ContainerDefaultRestartDelay is the default time to wait after a container exited before it is restarted.
+	ContainerDefaultRestartDelay = 5 * time.Second
+
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
 

@@ -5,6 +5,7 @@
 package containers_test
 
 import (
+	"cmp"
 	"os"
 	"path/filepath"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -296,7 +298,9 @@ func TestContainersReady(t *testing.T) {
 				require.NoError(t, st.Create(ctx, instanceStatus))
 			}
 
-			got, wakeUpAfter, err := containers.ContainerDependsOnSpec{Containers: tt.containers}.ContainersReady(ctx, st)
+			got, wakeUpAfter, err := containers.ContainerDependsOnSpec{Containers: xslices.Map(tt.containers, func(name string) containers.ContainerDependencySpec {
+				return containers.ContainerDependencySpec{Name: name}
+			})}.ContainersReady(ctx, st)
 			require.NoError(t, err)
 			assert.Equal(t, tt.want, got)
 
@@ -373,7 +377,7 @@ func TestReady(t *testing.T) {
 		{
 			name: "container dependency unmet",
 			dependsOn: containers.ContainerDependsOnSpec{
-				Containers: []string{"other"},
+				Containers: []containers.ContainerDependencySpec{{Name: "other"}},
 			},
 			wantWaitingFor: []string{"container: other"},
 		},
@@ -402,7 +406,7 @@ func TestReadyMissingStatuses(t *testing.T) {
 	dependsOn := containers.ContainerDependsOnSpec{
 		Networks:   []string{"addresses"},
 		Time:       true,
-		Containers: []string{"other"},
+		Containers: []containers.ContainerDependencySpec{{Name: "other"}},
 	}
 
 	waitingFor, wakeUpAfter, err := dependsOn.Ready(ctx, st)
@@ -411,4 +415,110 @@ func TestReadyMissingStatuses(t *testing.T) {
 
 	_, wakeUpAfterSet := wakeUpAfter.Get()
 	assert.False(t, wakeUpAfterSet)
+}
+
+func TestExecutionHash(t *testing.T) {
+	t.Parallel()
+
+	base := containers.ContainerSpecSpec{
+		Image:       containers.ContainerImageSpec{Ref: "docker.io/library/nginx:latest"},
+		Environment: []string{"A=1"},
+	}
+
+	hash := base.ExecutionHash()
+
+	same := base
+	same.Restart = containers.ContainerRestartSpec{Policy: containers.ContainerRestartPolicyNever, Delay: time.Minute}
+	same.DependsOn = containers.ContainerDependsOnSpec{Containers: []containers.ContainerDependencySpec{{Name: "db"}}}
+
+	assert.Equal(t, hash, same.ExecutionHash())
+
+	for _, mutate := range []func(*containers.ContainerSpecSpec){
+		func(spec *containers.ContainerSpecSpec) { spec.Image.Ref = "docker.io/library/nginx:1.27" },
+		func(spec *containers.ContainerSpecSpec) { spec.Environment = []string{"A=2"} },
+		func(spec *containers.ContainerSpecSpec) { spec.Args = []string{"-v"} },
+		func(spec *containers.ContainerSpecSpec) { spec.Network.HostNetwork = true },
+		func(spec *containers.ContainerSpecSpec) {
+			spec.Mounts = []containers.ContainerMountSpec{{Kind: containers.MountKindTmpfs, Destination: "/tmp"}}
+		},
+	} {
+		changed := base
+		mutate(&changed)
+
+		assert.NotEqual(t, hash, changed.ExecutionHash())
+	}
+}
+
+func TestContainersReadySucceeded(t *testing.T) {
+	t.Parallel()
+
+	initSpec := containers.ContainerSpecSpec{
+		Image:   containers.ContainerImageSpec{Ref: "ghcr.io/example/init:v1.0.0"},
+		Restart: containers.ContainerRestartSpec{Policy: containers.ContainerRestartPolicyNever},
+	}
+
+	for _, test := range []struct {
+		name       string
+		restart    containers.ContainerRestartSpec
+		phase      containers.ContainerInstancePhase
+		exitCode   int32
+		hash       string
+		charged    bool
+		noInstance bool
+		succeeded  bool
+	}{
+		{name: "completed", restart: initSpec.Restart, phase: containers.ContainerInstancePhaseTerminated, succeeded: true},
+		{name: "on-failure completed", restart: containers.ContainerRestartSpec{Policy: containers.ContainerRestartPolicyOnFailure}, phase: containers.ContainerInstancePhaseTerminated, succeeded: true},
+		{name: "not run yet", noInstance: true},
+		{name: "running", restart: initSpec.Restart, phase: containers.ContainerInstancePhaseRunning},
+		{name: "failed", restart: initSpec.Restart, phase: containers.ContainerInstancePhaseTerminated, exitCode: 3},
+		{name: "failed start", restart: initSpec.Restart, phase: containers.ContainerInstancePhaseFailed},
+		{name: "run of a changed configuration", restart: initSpec.Restart, phase: containers.ContainerInstancePhaseTerminated, hash: "previous"},
+		{name: "restart pending", restart: initSpec.Restart, phase: containers.ContainerInstancePhaseTerminated, charged: true},
+		{name: "restarted anyway", restart: containers.ContainerRestartSpec{}, phase: containers.ContainerInstancePhaseTerminated},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := t.Context()
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			spec := initSpec
+			spec.Restart = test.restart
+
+			containerSpec := containers.NewContainerSpec(containers.NamespaceName, "init")
+			*containerSpec.TypedSpec() = spec
+			require.NoError(t, st.Create(ctx, containerSpec))
+
+			if !test.noInstance {
+				instanceSpec := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID("init", 0))
+				instanceSpec.TypedSpec().ContainerID = "init"
+				instanceSpec.TypedSpec().ExecutionHash = cmp.Or(test.hash, spec.ExecutionHash())
+				instanceSpec.Metadata().Labels().Set(containers.ContainerSpecIdLabel, "init")
+				require.NoError(t, st.Create(ctx, instanceSpec))
+
+				instanceStatus := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID("init", 0))
+				instanceStatus.TypedSpec().ContainerID = "init"
+				instanceStatus.TypedSpec().Phase = test.phase
+				instanceStatus.TypedSpec().ExitCode = test.exitCode
+				instanceStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, "init")
+				require.NoError(t, st.Create(ctx, instanceStatus))
+			}
+
+			runStatus := containers.NewContainerRunStatus(containers.NamespaceName, "init")
+			runStatus.TypedSpec().Restarted = test.charged
+			require.NoError(t, st.Create(ctx, runStatus))
+
+			waitingFor, _, err := containers.ContainerDependsOnSpec{
+				Containers: []containers.ContainerDependencySpec{{Name: "init", Condition: containers.ContainerDependencyConditionSucceeded}},
+			}.ContainersReady(ctx, st)
+			require.NoError(t, err)
+
+			if test.succeeded {
+				assert.Empty(t, waitingFor)
+			} else {
+				assert.Equal(t, []string{"container: init to succeed"}, waitingFor)
+			}
+		})
+	}
 }

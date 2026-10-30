@@ -4,7 +4,11 @@
 
 package config
 
-import "github.com/siderolabs/gen/optional"
+import (
+	"time"
+
+	"github.com/siderolabs/gen/optional"
+)
 
 // ContainerConfig defines the interface to access container configuration.
 //
@@ -39,6 +43,8 @@ type ContainerConfig interface {
 	Resources() ContainerResourcesConfig
 	// DependsOn conditions gating startup; never nil.
 	DependsOn() ContainerDependsOnConfig
+	// Restart settings; never nil.
+	Restart() ContainerRestartConfig
 }
 
 // ContainerMountConfig defines a single container mount.
@@ -166,6 +172,50 @@ type ContainerDependsOnConfig interface {
 	Network() []string
 	// Time is true if the clock must be synchronized.
 	Time() bool
-	// Containers which must be running first, by document name.
-	Containers() []string
+	// Containers which must be running, or have succeeded, first.
+	Containers() []ContainerDependencyConfig
+}
+
+// ContainerDependencyCondition is what a container waits for in a container it depends on.
+type ContainerDependencyCondition string
+
+// Container dependency conditions.
+const (
+	// ContainerDependencyConditionRunning waits for the container to be running and healthy. This is the default.
+	ContainerDependencyConditionRunning ContainerDependencyCondition = "running"
+	// ContainerDependencyConditionSucceeded waits for the container to have exited with code 0, not to be restarted.
+	ContainerDependencyConditionSucceeded ContainerDependencyCondition = "succeeded"
+)
+
+// ContainerDependencyConfig is a container another one depends on.
+type ContainerDependencyConfig interface {
+	// Name of the ContainerConfig document.
+	Name() string
+	// Condition to wait for; defaults to running.
+	Condition() ContainerDependencyCondition
+}
+
+// ContainerRestartPolicy selects when a container is restarted after it exits.
+type ContainerRestartPolicy string
+
+// Container restart policies.
+const (
+	// ContainerRestartPolicyAlways restarts the container after every exit. This is the default.
+	ContainerRestartPolicyAlways ContainerRestartPolicy = "always"
+	// ContainerRestartPolicyOnFailure restarts the container after it failed.
+	ContainerRestartPolicyOnFailure ContainerRestartPolicy = "on-failure"
+	// ContainerRestartPolicyNever runs the container once.
+	ContainerRestartPolicyNever ContainerRestartPolicy = "never"
+)
+
+// ContainerRestartConfig defines how a container is restarted after it exits.
+type ContainerRestartConfig interface {
+	// Policy is when the container is restarted; defaults to always.
+	Policy() ContainerRestartPolicy
+	// MaxRetries is how many times a failed container is restarted at most; None means unlimited.
+	MaxRetries() optional.Optional[int]
+	// Delay is the time to wait before a restart.
+	Delay() time.Duration
+	// MaxDelay is the longest time the delay grows to.
+	MaxDelay() time.Duration
 }

@@ -6,6 +6,10 @@
 
 package container
 
+import (
+	"time"
+)
+
 // DeepCopy generates a deep copy of *ContainerConfigV1Alpha1.
 func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 	var cp ContainerConfigV1Alpha1 = *o
@@ -129,8 +133,24 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			*cp.DependsOnConfig.TimeConfig = *o.DependsOnConfig.TimeConfig
 		}
 		if o.DependsOnConfig.ContainersConfig != nil {
-			cp.DependsOnConfig.ContainersConfig = make([]string, len(o.DependsOnConfig.ContainersConfig))
+			cp.DependsOnConfig.ContainersConfig = make([]ContainerDependency, len(o.DependsOnConfig.ContainersConfig))
 			copy(cp.DependsOnConfig.ContainersConfig, o.DependsOnConfig.ContainersConfig)
+		}
+	}
+	if o.RestartConfig != nil {
+		cp.RestartConfig = new(ContainerRestart)
+		*cp.RestartConfig = *o.RestartConfig
+		if o.RestartConfig.RestartMaxRetries != nil {
+			cp.RestartConfig.RestartMaxRetries = new(int)
+			*cp.RestartConfig.RestartMaxRetries = *o.RestartConfig.RestartMaxRetries
+		}
+		if o.RestartConfig.RestartDelay != nil {
+			cp.RestartConfig.RestartDelay = new(time.Duration)
+			*cp.RestartConfig.RestartDelay = *o.RestartConfig.RestartDelay
+		}
+		if o.RestartConfig.RestartMaxDelay != nil {
+			cp.RestartConfig.RestartMaxDelay = new(time.Duration)
+			*cp.RestartConfig.RestartMaxDelay = *o.RestartConfig.RestartMaxDelay
 		}
 	}
 	return &cp

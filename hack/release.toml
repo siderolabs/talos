@@ -434,6 +434,46 @@ devices:
 The container gets a device node at the destination and is allowed to read and write that device only, so it does not need the `privileged` profile. The container waits for the raw volume to be ready, gets the unlocked device for an encrypted raw volume, and the raw volume is not closed while the container runs. A raw volume can be handed to a single container.
 """
 
+    [notes.container_restart_policy]
+        title = "Container Restart Policy"
+        description = """\
+`ContainerConfig` documents can now set when a container is restarted after it exits, and how long to wait before that:
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: migrate
+image: ghcr.io/example/migrate:v1.0.0
+restart:
+  policy: on-failure
+  maxRetries: 3
+  delay: 5s
+  maxDelay: 1m
+```
+
+`always` (the default) restarts the container after every exit, `on-failure` after it failed, up to `maxRetries` times, and `never` runs it once.
+The delay doubles with each restart of a container which ran for less than `maxDelay`, up to `maxDelay`; by default it stays at 5s.
+A container which is not restarted reports `completed` or `failed` in `ContainerStatus`, and keeps its outcome until its configuration changes or it is removed.
+It runs again after a reboot or a restart of machined, and `talosctl restart` only signals it, so it does not run it again.
+"""
+
+    [notes.container_depends_on_succeeded]
+        title = "Container Dependencies on Succeeded Containers"
+        description = """\
+A `ContainerConfig` container can now wait for another container to have run successfully, e.g. one preparing a directory or a database schema it needs:
+
+```yaml
+dependsOn:
+  containers:
+    - name: migrate
+      condition: succeeded
+    - db
+```
+
+`succeeded` waits for the container to have exited with code 0 and not to be restarted, so it has to use the `never` or `on-failure` restart policy; a plain name still waits for the container to be running and healthy.
+As the containers run again on every boot, so does this order.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

@@ -216,7 +216,7 @@ func TestFormatContainerDetail(t *testing.T) {
 		DependsOn: containers.ContainerDependsOnSpec{
 			Networks:   []string{"addresses"},
 			Time:       true,
-			Containers: []string{"collector"},
+			Containers: []containers.ContainerDependencySpec{{Name: "collector"}},
 		},
 	}
 
