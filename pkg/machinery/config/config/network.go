@@ -519,6 +519,8 @@ type NetworkBGPNeighbor interface {
 	BFD() NetworkBGPBFD
 	// AuthPassword is the TCP MD5 signature password; empty disables authentication.
 	AuthPassword() string
+	// EBGPMultiHop will enable eBGP with multi hope feature (setting the TTL of the BGP packet to higher than 1).
+	EBGPMultiHop() uint32
 }
 
 // NetworkBGPBFD defines BFD parameters for a BGP neighbor.

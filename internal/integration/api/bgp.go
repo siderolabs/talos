@@ -130,6 +130,35 @@ func (suite *BGPSuite) TestNumberedBGP() {
 		},
 	)
 
+	for _, ttl := range []uint32{2, 255, 0} {
+		bgp.BGPNeighborConfigs[0].NeighborEBGPMultiHop = ttl
+		suite.PatchMachineConfig(nodeCtx, bgp)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), "fabric",
+			func(config *networkres.BGPInstanceConfig, asrt *assert.Assertions) {
+				if asrt.Len(config.TypedSpec().Neighbors, 1) {
+					asrt.Equal(ttl, config.TypedSpec().Neighbors[0].EBGPMultiHop)
+				}
+			},
+		)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), "fabric/"+fabric.String(),
+			func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
+				asrt.Equal(nethelpers.BGPSessionStateEstablished, peer.TypedSpec().State)
+			},
+		)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), learnedRouteID,
+			func(route *networkres.RouteStatus, asrt *assert.Assertions) {
+				asrt.Equal(fabric, route.TypedSpec().Gateway)
+				asrt.Equal(nethelpers.ProtocolBGP, route.TypedSpec().Protocol)
+			},
+		)
+	}
+
 	// cleanup: removing the config should tear down the session and the learned route.
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.BGPInstanceKind)
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, "lo")

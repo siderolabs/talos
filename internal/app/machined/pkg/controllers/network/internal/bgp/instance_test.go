@@ -5,6 +5,7 @@
 package bgp_test
 
 import (
+	"errors"
 	"net"
 	"net/netip"
 	"strconv"
@@ -12,6 +13,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gopacket/gopacket"
+	"github.com/gopacket/gopacket/layers"
 	gobgpapi "github.com/osrg/gobgp/v4/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -390,4 +393,94 @@ func TestChangedPeerIsUpdatedInPlace(t *testing.T) {
 		require.Equal(t, gobgpapi.PeerState_SESSION_STATE_ESTABLISHED, state.GetState().GetSessionState(), "BGP session must stay up through an in-place update")
 		require.Equal(t, uptime, state.GetTimers().GetState().GetUptime().AsTime(), "BGP session must not be reset by an in-place update")
 	}
+
+	for _, ttl := range []uint32{2, 255, 0} {
+		peer.Config.EBGPMultiHop = ttl
+
+		ensure()
+
+		multihop := peerState().GetEbgpMultihop()
+		assert.Equal(t, ttl > 0, multihop.GetEnabled())
+
+		if ttl > 0 {
+			assert.Equal(t, ttl, multihop.GetMultihopTtl())
+		}
+	}
+}
+
+// TestEBGPPacketTTL verifies the configured and default eBGP TTL on the wire.
+func TestEBGPPacketTTL(t *testing.T) {
+	for _, ttl := range []uint32{0, 2, 42, 255} {
+		t.Run("TTL"+strconv.FormatUint(uint64(ttl), 10), func(t *testing.T) {
+			testEBGPPacketTTL(t, ttl)
+		})
+	}
+}
+
+func testEBGPPacketTTL(t *testing.T, ttl uint32) {
+	t.Helper()
+
+	fd, err := unix.Socket(unix.AF_INET, unix.SOCK_RAW|unix.SOCK_CLOEXEC, unix.IPPROTO_TCP)
+	if err != nil {
+		t.Skipf("cannot open raw socket: %v", err)
+
+		return
+	}
+
+	t.Cleanup(func() { unix.Close(fd) }) //nolint:errcheck
+
+	tv := unix.NsecToTimeval(int64(100 * time.Millisecond))
+	require.NoError(t, unix.SetsockoptTimeval(fd, unix.SOL_SOCKET, unix.SO_RCVTIMEO, &tv))
+
+	port := freeBGPImportTestPort(t)
+
+	instance := internalbgp.NewInstance()
+	t.Cleanup(instance.Stop)
+
+	require.NoError(t, instance.EnsureServer(
+		t.Context(),
+		zap.NewNop(),
+		network.BGPInstanceConfigSpec{LocalASN: 65001},
+		netip.MustParseAddr("10.0.0.1"),
+		0,
+		[]internalbgp.Peer{{
+			Address: "127.0.0.2",
+			Config: network.BGPNeighborConfigSpec{
+				Address:      netip.MustParseAddr("127.0.0.2"),
+				PeerASN:      65002,
+				EBGPMultiHop: ttl,
+			},
+		}},
+		nil,
+		port,
+		func() {},
+	))
+
+	buf := make([]byte, 65536)
+
+	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
+		n, _, err := unix.Recvfrom(fd, buf, 0)
+		if err != nil {
+			if errors.Is(err, unix.EAGAIN) || errors.Is(err, unix.EINTR) {
+				continue
+			}
+
+			require.NoError(t, err)
+		}
+
+		pkt := gopacket.NewPacket(buf[:n], layers.LayerTypeIPv4, gopacket.Default)
+
+		ip, _ := pkt.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
+		tcp, _ := pkt.Layer(layers.LayerTypeTCP).(*layers.TCP)
+
+		if ip == nil || tcp == nil || tcp.DstPort != 179 || ip.DstIP.String() != "127.0.0.2" {
+			continue
+		}
+
+		assert.EqualValues(t, max(uint32(1), ttl), ip.TTL, "eBGP packet must use the configured TTL")
+
+		return
+	}
+
+	t.Fatal("did not observe a BGP packet from the listener")
 }

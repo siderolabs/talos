@@ -76,6 +76,7 @@ message BGPNeighborConfigSpec {
   uint32 local_asn = 6;
   bool passive = 7;
   string auth_password = 8;
+  uint32 ebgp_multi_hop = 9;
 }
 
 // BGPPeerStatusSpec describes the status of a BGP peering session.

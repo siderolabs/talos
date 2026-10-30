@@ -216,6 +216,13 @@ func (BGPNeighborConfig) Doc() *encoder.Doc {
 				Description: "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session.\nThe same password must be configured on the neighbor. Supported for VRF-bound BGP instances as well.\nThe password must not exceed 80 bytes. If unset, the session is not authenticated.\nThe kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors\nsharing the same link-local address on different links must all use the same password (or none).",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Password for TCP MD5 signature authentication (RFC 2385) of the BGP session." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "ebgpMultiHop",
+				Type:        "uint32",
+				Note:        "",
+				Description: "TTL To be set on BGP packet for eBGPMultiHop feature.\nValue must be between 2 and 255.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "TTL To be set on BGP packet for eBGPMultiHop feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

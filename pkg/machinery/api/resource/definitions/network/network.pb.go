@@ -504,6 +504,7 @@ type BGPNeighborConfigSpec struct {
 	LocalAsn      uint32                 `protobuf:"varint,6,opt,name=local_asn,json=localAsn,proto3" json:"local_asn,omitempty"`
 	Passive       bool                   `protobuf:"varint,7,opt,name=passive,proto3" json:"passive,omitempty"`
 	AuthPassword  string                 `protobuf:"bytes,8,opt,name=auth_password,json=authPassword,proto3" json:"auth_password,omitempty"`
+	EbgpMultiHop  uint32                 `protobuf:"varint,9,opt,name=ebgp_multi_hop,json=ebgpMultiHop,proto3" json:"ebgp_multi_hop,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -592,6 +593,13 @@ func (x *BGPNeighborConfigSpec) GetAuthPassword() string {
 		return x.AuthPassword
 	}
 	return ""
+}
+
+func (x *BGPNeighborConfigSpec) GetEbgpMultiHop() uint32 {
+	if x != nil {
+		return x.EbgpMultiHop
+	}
+	return 0
 }
 
 // BGPPeerStatusSpec describes the status of a BGP peering session.
@@ -6582,7 +6590,7 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\tvrf_table\x18\t \x01(\x0e28.talos.resource.definitions.enums.NethelpersRoutingTableR\bvrfTable\x12[\n" +
 	"\rimport_routes\x18\n" +
 	" \x03(\v26.talos.resource.definitions.network.BGPImportRouteSpecR\fimportRoutes\x12%\n" +
-	"\x0einstall_routes\x18\v \x01(\bR\rinstallRoutes\"\xcb\x02\n" +
+	"\x0einstall_routes\x18\v \x01(\bR\rinstallRoutes\"\xf1\x02\n" +
 	"\x15BGPNeighborConfigSpec\x12'\n" +
 	"\aaddress\x18\x01 \x01(\v2\r.common.NetIPR\aaddress\x12\x12\n" +
 	"\x04link\x18\x02 \x01(\tR\x04link\x12\x19\n" +
@@ -6591,7 +6599,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x03bfd\x18\x05 \x01(\v24.talos.resource.definitions.network.BGPBFDConfigSpecR\x03bfd\x12\x1b\n" +
 	"\tlocal_asn\x18\x06 \x01(\rR\blocalAsn\x12\x18\n" +
 	"\apassive\x18\a \x01(\bR\apassive\x12#\n" +
-	"\rauth_password\x18\b \x01(\tR\fauthPassword\"\xa1\x03\n" +
+	"\rauth_password\x18\b \x01(\tR\fauthPassword\x12$\n" +
+	"\x0eebgp_multi_hop\x18\t \x01(\rR\febgpMultiHop\"\xa1\x03\n" +
 	"\x11BGPPeerStatusSpec\x12\x12\n" +
 	"\x04peer\x18\x01 \x01(\tR\x04peer\x12\x1b\n" +
 	"\tlocal_asn\x18\x02 \x01(\rR\blocalAsn\x12\x19\n" +

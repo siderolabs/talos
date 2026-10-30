@@ -171,6 +171,24 @@ func TestBGPInstanceConfigMerge(t *testing.T) {
 const bgpAuthPasswordWarning = "unnumbered neighbors use different authPassword values: " +
 	"the kernel matches TCP MD5 keys by peer address only, so neighbors sharing a link-local address must use the same password (or none)"
 
+func TestBGPInstanceConfigValidateMultiHop(t *testing.T) {
+	t.Parallel()
+
+	for _, ttl := range []uint32{0, 1, 2, 255, 256} {
+		cfg := bgpInstanceTestConfig()
+		for i := range cfg.BGPNeighborConfigs {
+			cfg.BGPNeighborConfigs[i].NeighborEBGPMultiHop = ttl
+		}
+
+		_, err := cfg.Validate(validationMode{})
+		if ttl == 1 || ttl > 255 {
+			require.ErrorContains(t, err, "ebgpMultiHop", "TTL %d", ttl)
+		} else {
+			require.NoError(t, err, "TTL %d", ttl)
+		}
+	}
+}
+
 func TestBGPInstanceConfigValidate(t *testing.T) {
 	t.Parallel()
 
