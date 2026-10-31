@@ -47,6 +47,9 @@ var (
 // bgpMaxAuthPasswordLength is the maximum TCP MD5 signature key length supported by the Linux kernel (TCP_MD5SIG_MAXKEYLEN).
 const bgpMaxAuthPasswordLength = 80
 
+// ebgpMultiHopMax is the maximum eBGPMultiHop possible (TTL of a TCP packet).
+const ebgpMultiHopMax = 255
+
 // BGPInstanceConfigV1Alpha1 configures a native BGP routing instance on the host.
 //
 //	examples:
@@ -174,6 +177,10 @@ type BGPNeighborConfig struct {
 	//     The kernel matches the password by peer address (and VRF, if any), so unnumbered neighbors
 	//     sharing the same link-local address on different links must all use the same password (or none).
 	NeighborAuthPassword string `yaml:"authPassword,omitempty"`
+	//   description: |
+	//     TTL To be set on BGP packet for eBGPMultiHop feature.
+	//     Value must be between 2 and 255.
+	NeighborEBGPMultiHop uint32 `yaml:"ebgpMultiHop,omitempty"`
 }
 
 // BGPBFDConfig configures BFD for a BGP neighbor.
@@ -506,6 +513,10 @@ func validateBGPNeighborBehavior(index int, neighbor BGPNeighborConfig, vrf stri
 		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: authPassword must not exceed %d bytes", index, bgpMaxAuthPasswordLength))
 	}
 
+	if neighbor.NeighborEBGPMultiHop <= 1 || neighbor.NeighborEBGPMultiHop > ebgpMultiHopMax {
+		errs = errors.Join(errs, fmt.Errorf("neighbor[%d]: ebgpMultiHop must be above 1 and not exceed %d", index, ebgpMultiHopMax))
+	}
+
 	if neighbor.NeighborBFDConfig == nil {
 		return errs
 	}
@@ -554,6 +565,9 @@ func (n BGPNeighborConfig) BFD() config.NetworkBGPBFD {
 
 // AuthPassword implements config.NetworkBGPNeighbor interface.
 func (n BGPNeighborConfig) AuthPassword() string { return n.NeighborAuthPassword }
+
+// EBGPMultiHop implements config.NetworkBGPNeighbor interface.
+func (n BGPNeighborConfig) EBGPMultiHop() uint32 { return n.NeighborEBGPMultiHop }
 
 // BGPInstance implements config.NetworkBGPImportRoute interface.
 func (route BGPImportRoute) BGPInstance() string { return route.ImportBGPInstance }

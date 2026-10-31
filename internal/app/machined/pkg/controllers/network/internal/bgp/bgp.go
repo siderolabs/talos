@@ -38,6 +38,10 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 			NeighborAddress: peer.Address,
 			AuthPassword:    peer.Config.AuthPassword,
 		},
+		EbgpMultihop: &gobgpapi.EbgpMultihop{
+			Enabled:     peer.Config.EBGPMultiHop > 0,
+			MultihopTtl: peer.Config.EBGPMultiHop,
+		},
 		AfiSafis: []*gobgpapi.AfiSafi{
 			afiSafi(gobgpapi.Family_AFI_IP, multipath),
 			afiSafi(gobgpapi.Family_AFI_IP6, multipath),
@@ -377,13 +381,14 @@ func PeerKey(peer Peer) string {
 
 	fmt.Fprintf(
 		&builder,
-		"%s/%d/%d/%t/%s/%s",
+		"%s/%d/%d/%t/%s/%s/%d",
 		peer.Address,
 		peer.Config.PeerASN,
 		peer.Config.LocalASN,
 		peer.Config.Passive,
 		peer.BindInterface,
 		peer.Config.HoldTime,
+		peer.Config.EBGPMultiHop,
 	)
 
 	if peer.Config.AuthPassword != "" {

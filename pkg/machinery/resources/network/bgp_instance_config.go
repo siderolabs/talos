@@ -45,6 +45,7 @@ type BGPNeighborConfigSpec struct {
 	LocalASN     uint32            `yaml:"localASN,omitempty" protobuf:"6"`
 	Passive      bool              `yaml:"passive,omitempty" protobuf:"7"`
 	AuthPassword string            `yaml:"authPassword,omitempty" protobuf:"8" redact:"replace"`
+	EBGPMultiHop uint32            `yaml:"eBgpMultiHop,omitempty" protobuf:"9"`
 }
 
 // BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
