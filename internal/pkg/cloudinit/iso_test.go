@@ -125,6 +125,35 @@ func TestISOMaxSeedPreservesPayload(t *testing.T) {
 	require.ErrorIs(t, err, os.ErrNotExist)
 }
 
+// BusyBox blkid probes ISO9660 only after a full 0x11000-byte read (SB_BUFFER_SIZE).
+func TestISOMinimumProbeSize(t *testing.T) {
+	t.Parallel()
+
+	for name, seed := range map[string]cloudinit.Seed{
+		"empty": {},
+		"small": {MetaData: "instance-id: a\n", UserData: "#cloud-config\n"},
+		"large": {UserData: strings.Repeat("x", 256<<10)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			path := filepath.Join(t.TempDir(), "seed.iso")
+			require.NoError(t, cloudinit.WriteISO(t.Context(), path, seed))
+
+			image, err := os.ReadFile(path)
+			require.NoError(t, err)
+			require.GreaterOrEqual(t, len(image), 0x11000)
+
+			pvd := image[16*2048:]
+			blocks := binary.LittleEndian.Uint32(pvd[80:84])
+			require.Equal(t, blocks, binary.BigEndian.Uint32(pvd[84:88]))
+			require.GreaterOrEqual(t, int(blocks)*2048, 0x11000)
+			require.LessOrEqual(t, int(blocks)*2048, len(image))
+			require.Equal(t, seed.UserData, readISOFile(t, readISO(t, path), "user-data"))
+		})
+	}
+}
+
 // Check the serialized metadata, not only the library's interpreted filenames:
 // a byte comparison alone could pass if both images retained the same ctime.
 func assertFixedRockRidgeAttributeTimes(t *testing.T, image []byte) {

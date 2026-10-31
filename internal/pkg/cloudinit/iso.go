@@ -143,6 +143,10 @@ func finalizeISO(ctx context.Context, out *os.File, workspace string) error {
 		}
 	}
 
+	if err = padForProbe(out); err != nil {
+		return fmt.Errorf("pad ISO: %w", err)
+	}
+
 	if err = ctx.Err(); err != nil {
 		return err
 	}
@@ -159,6 +163,33 @@ func finalizeISO(ctx context.Context, out *os.File, workspace string) error {
 }
 
 const isoSectorSize = 2048
+
+// minProbeSize is BusyBox volume_id SB_BUFFER_SIZE: blkid ignores ISO9660 on shorter devices.
+const minProbeSize = 0x11000
+
+func padForProbe(out *os.File) error {
+	info, err := out.Stat()
+	if err != nil {
+		return err
+	}
+
+	if info.Size() >= minProbeSize {
+		return nil
+	}
+
+	if err = out.Truncate(minProbeSize); err != nil {
+		return err
+	}
+
+	var blocks [8]byte
+
+	binary.LittleEndian.PutUint32(blocks[:4], minProbeSize/isoSectorSize)
+	binary.BigEndian.PutUint32(blocks[4:], minProbeSize/isoSectorSize)
+
+	_, err = out.WriteAt(blocks[:], 16*isoSectorSize+80)
+
+	return err
+}
 
 // Rock Ridge TF attribute time comes from filesystem ctime, which Chtimes cannot set.
 func normalizeRockRidgeTimes(out *os.File) error {
