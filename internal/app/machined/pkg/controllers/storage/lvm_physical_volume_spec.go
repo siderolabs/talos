@@ -19,14 +19,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 // LVMPhysicalVolumeSpecController evaluates v1alpha1 LVMVolumeGroupConfig
-// selectors against discovered volumes (whole disks and partitions) and emits
-// one LVMPhysicalVolumeSpec per match.
+// selectors against discovered volumes (whole disks and partitions), or resolves
+// the parent volumes, and emits one LVMPhysicalVolumeSpec per match.
 type LVMPhysicalVolumeSpecController struct{}
 
 // Name implements controller.Controller interface.
@@ -122,7 +123,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 
 	r.StartTrackingOutputs()
 
-	if err := ctrl.emitSpecs(ctx, r, logger, vgDocs, volumes); err != nil {
+	if err := ctrl.emitSpecs(ctx, r, logger, machineConfig, vgDocs, volumes); err != nil {
 		return err
 	}
 
@@ -137,13 +138,14 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 	return nil
 }
 
-// emitSpecs evaluates every VG selector against the discovered volumes and
-// writes PV specs for matches, recording overlap conflicts as validation
-// errors.
+// emitSpecs evaluates every VG selector against the discovered volumes (or
+// resolves the parent volumes) and writes PV specs for matches, recording
+// overlap conflicts as validation errors.
 func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	ctx context.Context,
 	r controller.Runtime,
 	logger *zap.Logger,
+	machineConfig configconfig.Config,
 	vgDocs []configconfig.LVMVolumeGroupConfig,
 	volumes []blockhelpers.MatchContext,
 ) error {
@@ -155,11 +157,16 @@ func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	conflicts := map[string]string{}
 
 	for _, doc := range vgDocs {
-		if doc.PhysicalVolumeSelector().IsZero() {
-			continue
+		var err error
+
+		switch {
+		case len(doc.ParentVolumeIDs()) > 0:
+			err = ctrl.matchParentsToVG(ctx, r, logger, machineConfig, doc, claimedBy, conflicts)
+		case !doc.PhysicalVolumeSelector().IsZero():
+			err = ctrl.matchVolumesToVG(ctx, r, logger, doc, volumes, claimedBy, conflicts)
 		}
 
-		if err := ctrl.matchVolumesToVG(ctx, r, logger, doc, volumes, claimedBy, conflicts); err != nil {
+		if err != nil {
 			return err
 		}
 	}
@@ -211,29 +218,93 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 
 		// DevPath is the device to operate on: for an encrypted volume, the opened
 		// device rather than the ciphertext the selector matched on.
-		devPath := vol.DevPath
-
-		if prev, ok := claimedBy[devPath]; ok && prev != doc.Name() {
-			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", devPath, prev)
-
-			logger.Warn(
-				"disk claimed by multiple LVM volume groups; skipping",
-				zap.String("device", devPath),
-				zap.String("first_vg", prev),
-				zap.String("conflicting_vg", doc.Name()),
-			)
-
-			continue
-		}
-
-		claimedBy[devPath] = doc.Name()
-
-		if err := ctrl.writePVSpec(ctx, r, devPath, doc.Name()); err != nil {
+		if err := ctrl.claimPV(ctx, r, logger, vol.DevPath, doc.Name(), claimedBy, conflicts); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+// matchParentsToVG emits PV specs for the parent volumes of a single VG doc
+// once all of them are ready.
+func (ctrl *LVMPhysicalVolumeSpecController) matchParentsToVG(
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	machineConfig configconfig.Config,
+	doc configconfig.LVMVolumeGroupConfig,
+	claimedBy map[string]string,
+	conflicts map[string]string,
+) error {
+	declared := map[string]struct{}{}
+
+	for _, rawVolume := range machineConfig.RawVolumeConfigs() {
+		declared[constants.RawVolumePrefix+rawVolume.Name()] = struct{}{}
+	}
+
+	parentIDs := doc.ParentVolumeIDs()
+	devices := make([]string, 0, len(parentIDs))
+
+	for _, id := range parentIDs {
+		if _, ok := declared[id]; !ok {
+			conflicts[doc.Name()] = fmt.Sprintf("parent volume %q is not declared in the machine config", id)
+
+			return nil
+		}
+
+		volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, r, id)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("get parent volume status %q: %w", id, err)
+		}
+
+		if volumeStatus == nil ||
+			volumeStatus.Metadata().Phase() != resource.PhaseRunning ||
+			volumeStatus.TypedSpec().Phase != block.VolumePhaseReady {
+			logger.Debug("waiting for parent volume to be ready", zap.String("vg", doc.Name()), zap.String("volume", id))
+
+			return nil
+		}
+
+		// MountLocation is the opened device for an encrypted volume.
+		devices = append(devices, volumeStatus.TypedSpec().MountLocation)
+	}
+
+	for _, devPath := range devices {
+		if err := ctrl.claimPV(ctx, r, logger, devPath, doc.Name(), claimedBy, conflicts); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// claimPV writes the PV spec for the device unless it is already claimed by
+// another VG, which is recorded as a conflict.
+func (ctrl *LVMPhysicalVolumeSpecController) claimPV(
+	ctx context.Context,
+	r controller.Runtime,
+	logger *zap.Logger,
+	devPath, vgName string,
+	claimedBy map[string]string,
+	conflicts map[string]string,
+) error {
+	if prev, ok := claimedBy[devPath]; ok && prev != vgName {
+		conflicts[vgName] = fmt.Sprintf("device %q already claimed by volume group %q", devPath, prev)
+
+		logger.Warn(
+			"disk claimed by multiple LVM volume groups; skipping",
+			zap.String("device", devPath),
+			zap.String("first_vg", prev),
+			zap.String("conflicting_vg", vgName),
+		)
+
+		return nil
+	}
+
+	claimedBy[devPath] = vgName
+
+	return ctrl.writePVSpec(ctx, r, devPath, vgName)
 }
 
 func (ctrl *LVMPhysicalVolumeSpecController) writePVSpec(ctx context.Context, r controller.Runtime, devPath, vgName string) error {
