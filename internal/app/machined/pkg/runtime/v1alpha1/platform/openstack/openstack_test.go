@@ -54,22 +54,27 @@ func TestParseMetadata(t *testing.T) {
 			setupState: func(t *testing.T, ctx context.Context, st state.State) {
 				eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
 				eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xa4, 0xbf, 0x00, 0x10, 0x20, 0x30}
+				eth0.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth0))
 
 				eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
 				eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xa4, 0xbf, 0x00, 0x10, 0x20, 0x31}
+				eth1.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth1))
 
 				eth2 := network.NewLinkStatus(network.NamespaceName, "eth2")
 				eth2.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xa4, 0xbf, 0x00, 0x10, 0x20, 0x33}
+				eth2.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth2))
 
 				eth3 := network.NewLinkStatus(network.NamespaceName, "eth3")
 				eth3.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x4c, 0xd9, 0x8f, 0xb3, 0x34, 0xf8}
+				eth3.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth3))
 
 				eth4 := network.NewLinkStatus(network.NamespaceName, "eth4")
 				eth4.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x4c, 0xd9, 0x8f, 0xb3, 0x34, 0xf7}
+				eth4.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth4))
 			},
 			expected: expectedNetworkConfig,
@@ -80,11 +85,36 @@ func TestParseMetadata(t *testing.T) {
 			setupState: func(t *testing.T, ctx context.Context, st state.State) {
 				eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
 				eth0.TypedSpec().HardwareAddr = nethelpers.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+				eth0.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth0))
 			},
 			checkResult: func(t *testing.T, cfg *runtime.PlatformNetworkConfig) {
 				require.Len(t, cfg.Links, 1)
 				assert.Equal(t, "eth0", cfg.Links[0].Name)
+			},
+		},
+		{
+			name: "bond sharing the slave MAC is not taken for the slave",
+			networkJSON: []byte(`{"links":[` +
+				`{"id":"iface1","type":"phy","ethernet_mac_address":"aa:bb:cc:dd:ee:ff"},` +
+				`{"id":"bond1","type":"bond","bond_mode":"802.3ad","bond_links":["iface1"],"bond_xmit_hash_policy":"layer3+4","ethernet_mac_address":"aa:bb:cc:dd:ee:ff"}` +
+				`],"networks":[]}`),
+			setupState: func(t *testing.T, ctx context.Context, st state.State) {
+				bond0 := network.NewLinkStatus(network.NamespaceName, "bond0")
+				bond0.TypedSpec().Kind = network.LinkKindBond
+				bond0.TypedSpec().HardwareAddr = nethelpers.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+				require.NoError(t, st.Create(ctx, bond0))
+
+				eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
+				eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+				eth0.TypedSpec().Type = nethelpers.LinkEther
+				require.NoError(t, st.Create(ctx, eth0))
+			},
+			checkResult: func(t *testing.T, cfg *runtime.PlatformNetworkConfig) {
+				require.Len(t, cfg.Links, 2)
+				assert.Equal(t, "bond0", cfg.Links[0].Name)
+				assert.Equal(t, "eth0", cfg.Links[1].Name)
+				assert.Equal(t, "bond0", cfg.Links[1].BondSlave.MasterName)
 			},
 		},
 		{
@@ -102,6 +132,7 @@ func TestParseMetadata(t *testing.T) {
 			setupState: func(t *testing.T, ctx context.Context, st state.State) {
 				eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
 				eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x11, 0x22, 0x33, 0x44, 0x55, 0x66}
+				eth0.TypedSpec().Type = nethelpers.LinkEther
 				require.NoError(t, st.Create(ctx, eth0))
 			},
 			expectedNeedsReconcile: true,
