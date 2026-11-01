@@ -154,13 +154,13 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/siderolabs/go-smbios v0.3.4
 	github.com/siderolabs/go-tail v0.1.1
-	github.com/siderolabs/go-talos-support v0.3.1
+	github.com/siderolabs/go-talos-support v0.3.2
 	github.com/siderolabs/grpc-proxy v0.5.2
 	github.com/siderolabs/kms-client v0.2.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.4
 	github.com/siderolabs/siderolink v0.3.18
-	github.com/siderolabs/talos/pkg/machinery v1.15.0-alpha.2
+	github.com/siderolabs/talos/pkg/machinery v1.15.0-alpha.2.0.20261029102713-bfac82405ccc
 	github.com/sigstore/cosign/v3 v3.1.4
 	github.com/sigstore/sigstore v1.11.1
 	github.com/sigstore/sigstore-go v1.3.0
@@ -215,7 +215,7 @@ require (
 
 require (
 	cel.dev/expr v0.25.3 // indirect
-	filippo.io/age v1.3.1 // indirect
+	filippo.io/age v1.3.2 // indirect
 	filippo.io/edwards25519 v1.2.0 // indirect
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.13.0 // indirect
