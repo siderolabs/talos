@@ -203,6 +203,11 @@ func (o *OpenStack) ParseMetadata(
 
 			if netLink.Mac != "" {
 				for hostInterface := range hostInterfaces.All() {
+					// logical links can carry the MAC address of a physical one, e.g. a bond
+					if !hostInterface.TypedSpec().Physical() {
+						continue
+					}
+
 					macAddress := hostInterface.TypedSpec().PermanentAddr.String()
 					if macAddress == "" {
 						macAddress = hostInterface.TypedSpec().HardwareAddr.String()
