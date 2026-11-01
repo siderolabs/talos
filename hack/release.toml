@@ -104,6 +104,14 @@ Kubelet drop-in directories are rejected while any cap is active; without caps, 
 Removing the Kubernetes cap restores the original kubelet configuration. The document has no effect in container mode.
 """
 
+    [notes.memory_protection_small_ram]
+        title = "Memory Protection on Small Machines"
+        description = """\
+Talos protects the memory of its own processes (machined, system services, CRI, kubelet) from reclaim via cgroup `memory.min` and `memory.low`.
+On machines with less than ~1.6 GiB of memory these protections are now scaled down proportionally, so that at most one third of the memory is hard-protected.
+Previously, on 1 GiB machines more than half of the memory (including page cache) was protected, so workloads could be OOM-killed with plenty of page cache still in memory.
+"""
+
     [notes.numa_topology]
         title = "NUMA Topology and VM Placement Validation"
         description = """\

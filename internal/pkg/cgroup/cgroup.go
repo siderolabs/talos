@@ -253,7 +253,10 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 
 // CreateCgroup creates a cgroup, with resources limits if configured and supported.
 func CreateCgroup(name string) (CommonCgroup, error) {
-	return CreateCgroupWithResources(name, getCgroupV2Resources(name))
+	resources := getCgroupV2Resources(name)
+	scaleMemoryProtection(resources, memoryProtectionScale())
+
+	return CreateCgroupWithResources(name, resources)
 }
 
 // CreateCgroupWithResources creates a cgroup with the given resource limits, if supported.

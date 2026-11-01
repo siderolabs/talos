@@ -1032,6 +1032,20 @@ const (
 	// CgroupPodRuntimeRootSoftReservedMemory is the soft memory protection for the CRI runtime, shims, kubelet, and etcd.
 	CgroupPodRuntimeRootSoftReservedMemory = CgroupPodRuntimeRootReservedMemory*2 + CgroupEtcdReservedMemory
 
+	// CgroupTotalReservedMemory is the sum of the hard memory protections of the top-level cgroups.
+	//
+	// Nested cgroups (e.g. system/runtime, podruntime/kubelet) are capped by their parents, so this is
+	// the total amount of memory Talos might protect from reclaim.
+	CgroupTotalReservedMemory = CgroupInitReservedMemory + CgroupSystemReservedMemory + CgroupPodRuntimeRootReservedMemory
+
+	// CgroupReservedMemoryMaxFraction is the maximum fraction (1/N) of the total system memory
+	// which might be hard-protected via memory.min.
+	//
+	// On machines with less memory, all memory protections (memory.min and memory.low) are scaled down
+	// proportionally, as otherwise the protected memory (including page cache) can't be reclaimed,
+	// and the workloads end up being OOM-killed with plenty of page cache still in memory.
+	CgroupReservedMemoryMaxFraction = 3
+
 	// CgroupDashboardMaxMemory is the hard memory limit for the dashboard process.
 	CgroupDashboardMaxMemory = 128 * 1024 * 1024
 
