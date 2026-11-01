@@ -93,8 +93,6 @@ type ExternalVolumeConfigV1Alpha1 struct {
 	//   values:
 	//     - virtiofs
 	//     - nfs
-	//  schema:
-	//    type: string
 	FilesystemType FilesystemType `yaml:"filesystemType"`
 	//   description: |
 	//     The mount describes additional mount options.

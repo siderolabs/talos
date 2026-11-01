@@ -32,7 +32,7 @@ require (
 	github.com/siderolabs/protoenc v0.2.4
 	github.com/stretchr/testify v1.12.1
 	go.uber.org/zap v1.28.0
-	go.yaml.in/yaml/v4 v4.0.0-rc.6
+	go.yaml.in/yaml/v4 v4.0.0-rc.8
 	golang.org/x/net v0.61.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20261026165753-2ffab32bce7e
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261026165753-2ffab32bce7e

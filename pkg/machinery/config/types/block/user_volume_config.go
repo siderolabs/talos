@@ -81,8 +81,6 @@ type UserVolumeConfigV1Alpha1 struct {
 	//     - directory
 	//     - disk
 	//     - partition
-	//  schema:
-	//    type: string
 	VolumeType *VolumeType `yaml:"volumeType,omitempty"`
 	//   description: |
 	//     The provisioning describes how the volume is provisioned.

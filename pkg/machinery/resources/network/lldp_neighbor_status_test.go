@@ -34,7 +34,7 @@ func TestLLDPNeighborStatusRoundTrip(t *testing.T) {
 	encoded, err := yaml.Marshal(status.TypedSpec())
 	require.NoError(t, err)
 	assert.Equal(t, `neighbors:
-    - chassisID: '02:00:00:00:00:01'
+    - chassisID: "02:00:00:00:00:01"
       systemName: switch
       systemDescription: switch OS
       portID: eth1
