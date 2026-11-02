@@ -46,6 +46,22 @@ func TestNewAdminCertificateAndKey(t *testing.T) {
 		assert.Equal(t, []string{"os:reader"}, parsed.Subject.Organization)
 	})
 
+	t.Run("not before is backdated to allow for clock skew", func(t *testing.T) {
+		t.Parallel()
+
+		cert, err := secrets.NewAdminCertificateAndKey(now, talosCA, role.MakeSet(role.Reader), time.Hour)
+		require.NoError(t, err)
+
+		block, _ := pem.Decode(cert.Crt)
+		require.NotNil(t, block)
+
+		parsed, err := stdx509.ParseCertificate(block.Bytes)
+		require.NoError(t, err)
+
+		assert.True(t, parsed.NotBefore.Before(now.Add(-30*time.Second)), "not before %s should be backdated from %s", parsed.NotBefore, now)
+		assert.WithinDuration(t, now.Add(time.Hour), parsed.NotAfter, time.Second)
+	})
+
 	t.Run("an empty role set is refused", func(t *testing.T) {
 		t.Parallel()
 

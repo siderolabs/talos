@@ -63,6 +63,12 @@ func NewTalosCA(currentTime time.Time) (ca *x509.CertificateAuthority, err error
 	return x509.NewSelfSignedCertificateAuthority(opts...)
 }
 
+// adminCertificateClockSkew is the backdating applied to the NotBefore of the admin certificate.
+//
+// The certificate is usually generated on a different machine than the one verifying it,
+// so allow for the verifying machine's clock to be slightly behind.
+const adminCertificateClockSkew = time.Minute
+
 // NewAdminCertificateAndKey generates the admin Talos certificate and key.
 func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertificateAndKey, roles role.Set, ttl time.Duration) (p *x509.PEMEncodedCertificateAndKey, err error) {
 	// A client certificate without any roles is no longer valid, as RBAC is now enabled by default (but it was valid in pre-RBAC days).
@@ -73,7 +79,7 @@ func NewAdminCertificateAndKey(currentTime time.Time, ca *x509.PEMEncodedCertifi
 	opts := []x509.Option{
 		x509.Organization(roles.Strings()...),
 		x509.NotAfter(currentTime.Add(ttl)),
-		x509.NotBefore(currentTime),
+		x509.NotBefore(currentTime.Add(-adminCertificateClockSkew)),
 		x509.KeyUsage(stdx509.KeyUsageDigitalSignature),
 		x509.ExtKeyUsage([]stdx509.ExtKeyUsage{stdx509.ExtKeyUsageClientAuth}),
 	}
