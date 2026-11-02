@@ -12,8 +12,10 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -178,6 +180,17 @@ func exampleContainerConfigV1Alpha1() *ContainerConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleContainerHealthCheck() *ContainerHealthCheck {
+	return &ContainerHealthCheck{
+		HTTPCheck: &ContainerHTTPHealthCheck{
+			CheckPort: 8080,
+			CheckPath: "/healthz",
+		},
+		CheckInterval: 10 * time.Second,
+		CheckTimeout:  time.Second,
+	}
+}
+
 func exampleContainerDevices() []ContainerDevice {
 	return []ContainerDevice{
 		{
@@ -312,6 +325,10 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 
 	if c.RunAsConfig != nil {
 		validationErrors = errors.Join(validationErrors, c.RunAsConfig.Validate())
+	}
+
+	if c.LifecycleConfig != nil && c.LifecycleConfig.HealthCheckConfig != nil {
+		validationErrors = errors.Join(validationErrors, c.LifecycleConfig.HealthCheckConfig.Validate())
 	}
 
 	return warnings, validationErrors
@@ -467,6 +484,15 @@ func (c *ContainerConfigV1Alpha1) dependsOnConfig() *ContainerDependsOn {
 	}
 
 	return c.DependsOnConfig
+}
+
+// HealthCheck implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) HealthCheck() optional.Optional[config.ContainerHealthCheckConfig] {
+	if c.LifecycleConfig == nil || c.LifecycleConfig.HealthCheckConfig == nil {
+		return optional.None[config.ContainerHealthCheckConfig]()
+	}
+
+	return optional.Some[config.ContainerHealthCheckConfig](c.LifecycleConfig.HealthCheckConfig)
 }
 
 // mustParse re-parses an already-normalized reference. Normalization has succeeded by the time

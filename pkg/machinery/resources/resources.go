@@ -96,6 +96,7 @@ func All() []meta.ResourceWithRD {
 		&containers.ContainerInstanceStatus{},
 		&containers.ContainerLifecycle{},
 		&containers.ContainerStatus{},
+		&containers.ContainerHealthStatus{},
 		&hypervisor.ContentLibraryStatus{},
 		&hypervisor.CloudInitSpec{},
 		&hypervisor.CloudInitStatus{},

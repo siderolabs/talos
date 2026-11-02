@@ -64,6 +64,15 @@ lifecycle:
             - addresses
         time: true # Whether the clock must be synchronized before the container starts.
 
+    # # Probe deciding whether the running container is healthy.
+    # healthCheck:
+    #     # Probe by sending an HTTP GET request to the port.
+    #     http:
+    #         port: 8080 # Port to connect to on the container's loopback address.
+    #         path: /healthz # Request path.
+    #     interval: 10s # Interval between checks.
+    #     timeout: 1s # Time after which a single check is considered failed.
+
 # # Devices to hand to the container.
 # devices:
 #     - # Hand a raw volume to the container as a block device.
@@ -353,6 +362,15 @@ ContainerLifecycle configures how Talos starts, runs and stops the container.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`dependsOn` |<a href="#ContainerConfig.lifecycle.dependsOn">ContainerDependsOn</a> |Conditions which must be satisfied before the container is started.  | |
+|`healthCheck` |<a href="#ContainerConfig.lifecycle.healthCheck">ContainerHealthCheck</a> |Probe deciding whether the running container is healthy.<br><br>Without a health check, a running container is healthy. With one, it is reported as<br>pending until the first check passes, and as degraded once `failureThreshold` consecutive<br>checks fail. A failing check never restarts the container. Health gates other containers<br>which list this one in `lifecycle.dependsOn.containers`.<br><br>The probe connects to `127.0.0.1` inside the container's network namespace. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+healthCheck:
+    # Probe by sending an HTTP GET request to the port.
+    http:
+        port: 8080 # Port to connect to on the container's loopback address.
+        path: /healthz # Request path.
+    interval: 10s # Interval between checks.
+    timeout: 1s # Time after which a single check is considered failed.
+{{< /highlight >}}</details> | |
 
 
 
@@ -373,6 +391,94 @@ paths:
 |`network` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
 |`time` |bool |Whether the clock must be synchronized before the container starts.  | |
 |`containers` |[]string |Other containers, by document name, which must be running first.<br><br>Cycles are rejected when the machine configuration is applied.  | |
+
+
+
+
+
+
+### healthCheck {#ContainerConfig.lifecycle.healthCheck}
+
+ContainerHealthCheck configures a probe which decides whether a running container is healthy.
+
+Exactly one of tcp, http or grpc must be set.
+
+
+
+
+{{< highlight yaml >}}
+lifecycle:
+    healthCheck:
+        # Probe by sending an HTTP GET request to the port.
+        http:
+            port: 8080 # Port to connect to on the container's loopback address.
+            path: /healthz # Request path.
+        interval: 10s # Interval between checks.
+        timeout: 1s # Time after which a single check is considered failed.
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`tcp` |<a href="#ContainerConfig.lifecycle.healthCheck.tcp">ContainerTCPHealthCheck</a> |Probe by opening a TCP connection to the port.<br><br>The check passes if the connection is established.  | |
+|`http` |<a href="#ContainerConfig.lifecycle.healthCheck.http">ContainerHTTPHealthCheck</a> |Probe by sending an HTTP GET request to the port.<br><br>The check passes if the response status is in the 200-399 range.  | |
+|`grpc` |<a href="#ContainerConfig.lifecycle.healthCheck.grpc">ContainerGRPCHealthCheck</a> |Probe by calling the gRPC health checking protocol (`grpc.health.v1.Health/Check`) on the port.<br><br>The check passes if the reported status is `SERVING`.  | |
+|`initialDelay` |Duration |Delay after the container starts before the first check runs.<br><br>Defaults to `0s`.  | |
+|`interval` |Duration |Interval between checks.<br><br>Defaults to `10s`.  | |
+|`timeout` |Duration |Time after which a single check is considered failed.<br><br>Defaults to `1s`, and may not exceed the interval.  | |
+|`failureThreshold` |uint32 |Number of consecutive failed checks after which the container is reported degraded.<br><br>Defaults to `3`.  | |
+
+
+
+
+#### tcp {#ContainerConfig.lifecycle.healthCheck.tcp}
+
+ContainerTCPHealthCheck probes a TCP port.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`port` |uint16 |Port to connect to on the container's loopback address.  | |
+
+
+
+
+
+
+#### http {#ContainerConfig.lifecycle.healthCheck.http}
+
+ContainerHTTPHealthCheck probes an HTTP endpoint.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`port` |uint16 |Port to connect to on the container's loopback address.  | |
+|`path` |string |Request path.<br><br>Defaults to `/`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+path: /healthz
+{{< /highlight >}}</details> | |
+
+
+
+
+
+
+#### grpc {#ContainerConfig.lifecycle.healthCheck.grpc}
+
+ContainerGRPCHealthCheck probes a gRPC health service.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`port` |uint16 |Port to connect to on the container's loopback address.  | |
+|`service` |string |Service name to pass in the health check request.<br><br>Empty asks for the overall health of the server.  | |
+
+
 
 
 

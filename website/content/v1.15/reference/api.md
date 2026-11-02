@@ -471,6 +471,7 @@ description: Talos gRPC API reference.
     - [ContainerDependencyStatusSpec](#talos.resource.definitions.containers.ContainerDependencyStatusSpec)
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec)
+    - [ContainerHealthStatusSpec](#talos.resource.definitions.containers.ContainerHealthStatusSpec)
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
     - [ContainerInstanceSpecSpec](#talos.resource.definitions.containers.ContainerInstanceSpecSpec)
@@ -8292,6 +8293,23 @@ ContainerDeviceSpec is a device handed to the container.
 | kind | [string](#string) |  | Kind is "rawVolume". |
 | volume_name | [string](#string) |  | VolumeName is the name of the RawVolumeConfig a rawVolume device refers to, e.g. "data". |
 | destination | [string](#string) |  | Destination of the device node inside the container. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerHealthStatusSpec"></a>
+
+### ContainerHealthStatusSpec
+ContainerHealthStatusSpec is the spec for ContainerHealthStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| healthy | [bool](#bool) |  | Healthy is true once a check has passed, and false once failureThreshold consecutive checks failed. |
+| message | [string](#string) |  | Message is the error of the last failed check, while unhealthy. |
+| last_change | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | LastChange is when Healthy last changed. |
 
 
 

@@ -7,10 +7,12 @@ package container_test
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/container"
@@ -256,6 +258,11 @@ lifecycle:
     network:
       - addresses
     time: true
+  healthCheck:
+    http:
+      port: 8080
+      path: /healthz
+    interval: 30s
 `)
 
 	_, err := cfg.Validate(validationMode{})
@@ -309,6 +316,13 @@ lifecycle:
 	hp, ok := mounts[2].HostPath().Get()
 	require.True(t, ok)
 	assert.NotContains(t, hp.MountOptions(), "ro")
+
+	healthCheck, ok := cfg.HealthCheck().Get()
+	require.True(t, ok)
+	assert.Equal(t, config.ContainerHealthCheckKindHTTP, healthCheck.Kind())
+	assert.Equal(t, uint16(8080), healthCheck.Port())
+	assert.Equal(t, "/healthz", healthCheck.HTTPPath())
+	assert.Equal(t, 30*time.Second, healthCheck.Interval())
 }
 
 func TestContainerConfigValidationErrors(t *testing.T) {
@@ -767,4 +781,51 @@ image: docker.io/library/python:3.13-alpine
 	require.NoError(t, merge.Merge(base, omitted))
 	assert.Equal(t, []string{"python3", "-u", "-c"}, base.Entrypoint())
 	assert.Equal(t, []string{"print('two')"}, base.Args())
+}
+
+func TestContainerConfigMergeReplacesHealthCheck(t *testing.T) {
+	t.Parallel()
+
+	const header = "apiVersion: v1alpha1\nkind: ContainerConfig\nname: web\nimage: docker.io/library/nginx:1.27\n"
+
+	t.Run("patch without lifecycle keeps the probe", func(t *testing.T) {
+		t.Parallel()
+
+		base := load(t, header+"lifecycle:\n  healthCheck:\n    http:\n      port: 8080\n")
+
+		require.NoError(t, merge.Merge(base, load(t, header)))
+
+		healthCheck, ok := base.HealthCheck().Get()
+		require.True(t, ok)
+		assert.Equal(t, config.ContainerHealthCheckKindHTTP, healthCheck.Kind())
+		assert.Equal(t, uint16(8080), healthCheck.Port())
+	})
+
+	t.Run("patch with another probe kind replaces the probe", func(t *testing.T) {
+		t.Parallel()
+
+		base := load(t, header+"lifecycle:\n  healthCheck:\n    http:\n      port: 8080\n    interval: 30s\n")
+
+		require.NoError(t, merge.Merge(base, load(t, header+"lifecycle:\n  healthCheck:\n    tcp:\n      port: 5432\n")))
+
+		_, err := base.Validate(validationMode{})
+		require.NoError(t, err)
+
+		healthCheck, ok := base.HealthCheck().Get()
+		require.True(t, ok)
+		assert.Equal(t, config.ContainerHealthCheckKindTCP, healthCheck.Kind())
+		assert.Equal(t, uint16(5432), healthCheck.Port())
+		assert.Equal(t, 10*time.Second, healthCheck.Interval())
+	})
+
+	t.Run("patch with only timing drops the probe", func(t *testing.T) {
+		t.Parallel()
+
+		base := load(t, header+"lifecycle:\n  healthCheck:\n    http:\n      port: 8080\n")
+
+		require.NoError(t, merge.Merge(base, load(t, header+"lifecycle:\n  healthCheck:\n    interval: 30s\n")))
+
+		_, err := base.Validate(validationMode{})
+		require.ErrorContains(t, err, "lifecycle.healthCheck: exactly one of tcp, http or grpc must be set")
+	})
 }

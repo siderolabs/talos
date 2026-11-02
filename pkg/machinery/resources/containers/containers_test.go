@@ -36,6 +36,7 @@ func TestRegisterResource(t *testing.T) {
 		&containers.ContainerLifecycle{},
 		&containers.ContainerStatus{},
 		&containers.ContainerDependencyStatus{},
+		&containers.ContainerHealthStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -249,6 +250,20 @@ func TestDependencyStatusProtobufRoundTrip(t *testing.T) {
 	status := containers.NewContainerDependencyStatus(containers.NamespaceName, "nginx")
 	*status.TypedSpec() = containers.ContainerDependencyStatusSpec{
 		WaitingFor: []string{"image", "mounts", "container: other"},
+	}
+
+	assertRoundTrip(t, status)
+}
+
+// TestHealthStatusProtobufRoundTrip guards the protobuf tags on ContainerHealthStatusSpec.
+func TestHealthStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerHealthStatus(containers.NamespaceName, containers.InstanceID("nginx", 2))
+	*status.TypedSpec() = containers.ContainerHealthStatusSpec{
+		Healthy:    false,
+		Message:    "connection refused",
+		LastChange: time.Date(2026, 10, 30, 12, 0, 0, 0, time.UTC),
 	}
 
 	assertRoundTrip(t, status)

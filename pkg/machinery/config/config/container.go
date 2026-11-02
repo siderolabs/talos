@@ -4,7 +4,11 @@
 
 package config
 
-import "github.com/siderolabs/gen/optional"
+import (
+	"time"
+
+	"github.com/siderolabs/gen/optional"
+)
 
 // ContainerConfig defines the interface to access container configuration.
 //
@@ -39,6 +43,8 @@ type ContainerConfig interface {
 	Resources() ContainerResourcesConfig
 	// DependsOn conditions gating startup; never nil.
 	DependsOn() ContainerDependsOnConfig
+	// HealthCheck probing the running container; None means health follows the lifecycle state.
+	HealthCheck() optional.Optional[ContainerHealthCheckConfig]
 }
 
 // ContainerMountConfig defines a single container mount.
@@ -182,4 +188,39 @@ type ContainerDependsOnConfig interface {
 	Time() bool
 	// Containers which must be running first, by document name.
 	Containers() []string
+}
+
+// ContainerHealthCheckKind selects the health check probe type.
+type ContainerHealthCheckKind string
+
+// Container health check kinds.
+const (
+	// ContainerHealthCheckKindTCP opens a TCP connection.
+	ContainerHealthCheckKindTCP ContainerHealthCheckKind = "tcp"
+	// ContainerHealthCheckKindHTTP sends an HTTP GET request.
+	ContainerHealthCheckKindHTTP ContainerHealthCheckKind = "http"
+	// ContainerHealthCheckKindGRPC calls the gRPC health checking protocol.
+	ContainerHealthCheckKindGRPC ContainerHealthCheckKind = "grpc"
+)
+
+// ContainerHealthCheckConfig defines a probe deciding whether a running container is healthy.
+//
+// The probe always targets the container's loopback address.
+type ContainerHealthCheckConfig interface {
+	// Kind of the probe.
+	Kind() ContainerHealthCheckKind
+	// Port to probe.
+	Port() uint16
+	// HTTPPath is the request path for an HTTP probe, defaulting to "/".
+	HTTPPath() string
+	// GRPCService is the service name for a gRPC probe; empty means the whole server.
+	GRPCService() string
+	// InitialDelay before the first check.
+	InitialDelay() time.Duration
+	// Interval between checks, with the default applied.
+	Interval() time.Duration
+	// Timeout of a single check, with the default applied.
+	Timeout() time.Duration
+	// FailureThreshold is the number of consecutive failures to report unhealthy, with the default applied.
+	FailureThreshold() uint32
 }

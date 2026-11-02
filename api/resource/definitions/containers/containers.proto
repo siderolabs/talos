@@ -32,6 +32,16 @@ message ContainerDeviceSpec {
   string destination = 3;
 }
 
+// ContainerHealthStatusSpec is the spec for ContainerHealthStatus.
+message ContainerHealthStatusSpec {
+  // Healthy is true once a check has passed, and false once failureThreshold consecutive checks failed.
+  bool healthy = 1;
+  // Message is the error of the last failed check, while unhealthy.
+  string message = 2;
+  // LastChange is when Healthy last changed.
+  google.protobuf.Timestamp last_change = 3;
+}
+
 // ContainerImageSpec is a resolved container image reference.
 message ContainerImageSpec {
   string ref = 1;

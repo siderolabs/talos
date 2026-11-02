@@ -160,6 +160,22 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 				copy(cp.LifecycleConfig.DependsOnConfig.ContainersConfig, o.LifecycleConfig.DependsOnConfig.ContainersConfig)
 			}
 		}
+		if o.LifecycleConfig.HealthCheckConfig != nil {
+			cp.LifecycleConfig.HealthCheckConfig = new(ContainerHealthCheck)
+			*cp.LifecycleConfig.HealthCheckConfig = *o.LifecycleConfig.HealthCheckConfig
+			if o.LifecycleConfig.HealthCheckConfig.TCPCheck != nil {
+				cp.LifecycleConfig.HealthCheckConfig.TCPCheck = new(ContainerTCPHealthCheck)
+				*cp.LifecycleConfig.HealthCheckConfig.TCPCheck = *o.LifecycleConfig.HealthCheckConfig.TCPCheck
+			}
+			if o.LifecycleConfig.HealthCheckConfig.HTTPCheck != nil {
+				cp.LifecycleConfig.HealthCheckConfig.HTTPCheck = new(ContainerHTTPHealthCheck)
+				*cp.LifecycleConfig.HealthCheckConfig.HTTPCheck = *o.LifecycleConfig.HealthCheckConfig.HTTPCheck
+			}
+			if o.LifecycleConfig.HealthCheckConfig.GRPCCheck != nil {
+				cp.LifecycleConfig.HealthCheckConfig.GRPCCheck = new(ContainerGRPCHealthCheck)
+				*cp.LifecycleConfig.HealthCheckConfig.GRPCCheck = *o.LifecycleConfig.HealthCheckConfig.GRPCCheck
+			}
+		}
 	}
 	return &cp
 }

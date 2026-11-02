@@ -186,6 +186,166 @@ func (RawVolumeDevice) Doc() *encoder.Doc {
 	return doc
 }
 
+func (ContainerHealthCheck) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerHealthCheck",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerHealthCheck configures a probe which decides whether a running container is healthy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerHealthCheck configures a probe which decides whether a running container is healthy.\n\nExactly one of tcp, http or grpc must be set.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerLifecycle",
+				FieldName: "healthCheck",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "tcp",
+				Type:        "ContainerTCPHealthCheck",
+				Note:        "",
+				Description: "Probe by opening a TCP connection to the port.\n\nThe check passes if the connection is established.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Probe by opening a TCP connection to the port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "http",
+				Type:        "ContainerHTTPHealthCheck",
+				Note:        "",
+				Description: "Probe by sending an HTTP GET request to the port.\n\nThe check passes if the response status is in the 200-399 range.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Probe by sending an HTTP GET request to the port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "grpc",
+				Type:        "ContainerGRPCHealthCheck",
+				Note:        "",
+				Description: "Probe by calling the gRPC health checking protocol (`grpc.health.v1.Health/Check`) on the port.\n\nThe check passes if the reported status is `SERVING`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Probe by calling the gRPC health checking protocol (`grpc.health.v1.Health/Check`) on the port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "initialDelay",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Delay after the container starts before the first check runs.\n\nDefaults to `0s`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Delay after the container starts before the first check runs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Interval between checks.\n\nDefaults to `10s`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Interval between checks." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "timeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Time after which a single check is considered failed.\n\nDefaults to `1s`, and may not exceed the interval.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Time after which a single check is considered failed." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "failureThreshold",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of consecutive failed checks after which the container is reported degraded.\n\nDefaults to `3`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of consecutive failed checks after which the container is reported degraded." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleContainerHealthCheck())
+
+	return doc
+}
+
+func (ContainerTCPHealthCheck) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerTCPHealthCheck",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerTCPHealthCheck probes a TCP port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerTCPHealthCheck probes a TCP port.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerHealthCheck",
+				FieldName: "tcp",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "port",
+				Type:        "uint16",
+				Note:        "",
+				Description: "Port to connect to on the container's loopback address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Port to connect to on the container's loopback address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (ContainerHTTPHealthCheck) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerHTTPHealthCheck",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerHTTPHealthCheck probes an HTTP endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerHTTPHealthCheck probes an HTTP endpoint.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerHealthCheck",
+				FieldName: "http",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "port",
+				Type:        "uint16",
+				Note:        "",
+				Description: "Port to connect to on the container's loopback address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Port to connect to on the container's loopback address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "path",
+				Type:        "string",
+				Note:        "",
+				Description: "Request path.\n\nDefaults to `/`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Request path." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[1].AddExample("", "/healthz")
+
+	return doc
+}
+
+func (ContainerGRPCHealthCheck) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerGRPCHealthCheck",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerGRPCHealthCheck probes a gRPC health service." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerGRPCHealthCheck probes a gRPC health service.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerHealthCheck",
+				FieldName: "grpc",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "port",
+				Type:        "uint16",
+				Note:        "",
+				Description: "Port to connect to on the container's loopback address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Port to connect to on the container's loopback address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "service",
+				Type:        "string",
+				Note:        "",
+				Description: "Service name to pass in the health check request.\n\nEmpty asks for the overall health of the server.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Service name to pass in the health check request." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (ContainerLifecycle) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ContainerLifecycle",
@@ -205,8 +365,17 @@ func (ContainerLifecycle) Doc() *encoder.Doc {
 				Description: "Conditions which must be satisfied before the container is started.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Conditions which must be satisfied before the container is started." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "healthCheck",
+				Type:        "ContainerHealthCheck",
+				Note:        "",
+				Description: "Probe deciding whether the running container is healthy.\n\nWithout a health check, a running container is healthy. With one, it is reported as\npending until the first check passes, and as degraded once `failureThreshold` consecutive\nchecks fail. A failing check never restarts the container. Health gates other containers\nwhich list this one in `lifecycle.dependsOn.containers`.\n\nThe probe connects to `127.0.0.1` inside the container's network namespace.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Probe deciding whether the running container is healthy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
+
+	doc.Fields[1].AddExample("", exampleContainerHealthCheck())
 
 	return doc
 }
@@ -665,6 +834,10 @@ func GetFileDoc() *encoder.FileDoc {
 			ContainerConfigV1Alpha1{}.Doc(),
 			ContainerDevice{}.Doc(),
 			RawVolumeDevice{}.Doc(),
+			ContainerHealthCheck{}.Doc(),
+			ContainerTCPHealthCheck{}.Doc(),
+			ContainerHTTPHealthCheck{}.Doc(),
+			ContainerGRPCHealthCheck{}.Doc(),
 			ContainerLifecycle{}.Doc(),
 			ContainerMount{}.Doc(),
 			VolumeMount{}.Doc(),
