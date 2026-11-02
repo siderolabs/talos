@@ -60,7 +60,7 @@ func (o ContainerSpecSpec) DeepCopy() ContainerSpecSpec {
 		copy(cp.DependsOn.Networks, o.DependsOn.Networks)
 	}
 	if o.DependsOn.Containers != nil {
-		cp.DependsOn.Containers = make([]string, len(o.DependsOn.Containers))
+		cp.DependsOn.Containers = make([]ContainerDependencySpec, len(o.DependsOn.Containers))
 		copy(cp.DependsOn.Containers, o.DependsOn.Containers)
 	}
 	if o.Devices != nil {

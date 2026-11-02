@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -694,7 +695,8 @@ func containerDependencies(ctx context.Context, r controller.Reader) (map[string
 	dependsOn := map[string][]string{}
 
 	for containerSpec := range containerSpecs.All() {
-		dependsOn[containerSpec.Metadata().ID()] = containerSpec.TypedSpec().DependsOn.Containers
+		dependsOn[containerSpec.Metadata().ID()] = xslices.Map(containerSpec.TypedSpec().DependsOn.Containers,
+			func(dependency containers.ContainerDependencySpec) string { return dependency.Name })
 	}
 
 	return dependsOn, nil

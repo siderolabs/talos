@@ -317,7 +317,7 @@ func (suite *ConfigSuite) TestResolvesDeprecatedDependsOn() {
 		PathsConfig:      []string{"/var/mnt/data"},
 		NetworksConfig:   []string{"addresses"}, //nolint:staticcheck // testing deprecated field
 		TimeConfig:       new(true),
-		ContainersConfig: []string{"database"},
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: "database"}},
 	}
 
 	suite.applyContainers(doc, newDoc("database", "ghcr.io/siderolabs/database:v1.0.0"))
@@ -327,7 +327,7 @@ func (suite *ConfigSuite) TestResolvesDeprecatedDependsOn() {
 			Paths:      []string{"/var/mnt/data"},
 			Networks:   []string{"addresses"},
 			Time:       true,
-			Containers: []string{"database"},
+			Containers: []containers.ContainerDependencySpec{{Name: "database", Condition: containers.ContainerDependencyConditionRunning}},
 		}, spec.TypedSpec().DependsOn)
 	})
 }

@@ -468,6 +468,57 @@ func logTimes(log, prefix string) []int64 {
 	return times
 }
 
+// TestDependsOnSucceeded verifies that a container depending on another one having succeeded starts
+// only once that one is done.
+func (suite *ContainersSuite) TestDependsOnSucceeded() {
+	ctx, name, node := suite.setupContainer("dependson-succeeded")
+
+	initName := name + "-init"
+
+	// init can't go while the other container depends on it
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(client.WithNode(context.Background(), node), containercfg.ContainerConfigKind, name, initName)
+	})
+
+	initDoc := suite.shellContainer(initName, "sleep 5 && date +done=%s")
+	initDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		RestartConfig: &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyNever},
+	}
+
+	doc := suite.shellContainer(name, "date +start=%s && sleep 3600")
+	doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			ContainersConfig: []containercfg.ContainerDependency{
+				{DependencyName: initName, DependencyCondition: configcontainer.ContainerDependencyConditionSucceeded},
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, initDoc, doc)
+
+	suite.assertContainerStatus(ctx, name, "waiting for "+initName,
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State)
+			asrt.Contains(status.WaitingFor, "container: "+initName+" to succeed")
+		})
+
+	suite.assertContainerStatus(ctx, initName, "completed",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateCompleted, status.State, "error %q", status.Error)
+		})
+
+	suite.assertContainerRunning(ctx, name, "after "+initName+" succeeded")
+
+	// the containers can't share a volume, as each gets its own SELinux categories, so the order is
+	// checked by the times they log
+	done := logTimes(suite.assertContainerLogged(ctx, initName, "done="), "done=")
+	start := logTimes(suite.assertContainerLogged(ctx, name, "start="), "start=")
+
+	suite.Require().Len(done, 1)
+	suite.Require().Len(start, 1)
+	suite.Assert().GreaterOrEqual(start[0], done[0], "started before %s was done", initName)
+}
+
 // TestContainerStatus verifies the aggregated, user-facing ContainerStatus.
 func (suite *ContainersSuite) TestContainerStatus() {
 	if testing.Short() {
@@ -1345,7 +1396,7 @@ func (suite *ContainersSuite) TestDependsOnContainers() {
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
 	waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
 		DependsOnConfig: &containercfg.ContainerDependsOn{
-			ContainersConfig: []string{dependency},
+			ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
 		},
 	}
 
@@ -1406,7 +1457,7 @@ func (suite *ContainersSuite) TestDependsOnFailingContainer() {
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
 	waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
 		DependsOnConfig: &containercfg.ContainerDependsOn{
-			ContainersConfig: []string{dependency},
+			ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
 		},
 	}
 

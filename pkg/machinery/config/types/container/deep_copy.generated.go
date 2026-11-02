@@ -137,7 +137,7 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			*cp.DependsOnConfig.TimeConfig = *o.DependsOnConfig.TimeConfig
 		}
 		if o.DependsOnConfig.ContainersConfig != nil {
-			cp.DependsOnConfig.ContainersConfig = make([]string, len(o.DependsOnConfig.ContainersConfig))
+			cp.DependsOnConfig.ContainersConfig = make([]ContainerDependency, len(o.DependsOnConfig.ContainersConfig))
 			copy(cp.DependsOnConfig.ContainersConfig, o.DependsOnConfig.ContainersConfig)
 		}
 	}
@@ -164,7 +164,7 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 				*cp.LifecycleConfig.DependsOnConfig.TimeConfig = *o.LifecycleConfig.DependsOnConfig.TimeConfig
 			}
 			if o.LifecycleConfig.DependsOnConfig.ContainersConfig != nil {
-				cp.LifecycleConfig.DependsOnConfig.ContainersConfig = make([]string, len(o.LifecycleConfig.DependsOnConfig.ContainersConfig))
+				cp.LifecycleConfig.DependsOnConfig.ContainersConfig = make([]ContainerDependency, len(o.LifecycleConfig.DependsOnConfig.ContainersConfig))
 				copy(cp.LifecycleConfig.DependsOnConfig.ContainersConfig, o.LifecycleConfig.DependsOnConfig.ContainersConfig)
 			}
 		}

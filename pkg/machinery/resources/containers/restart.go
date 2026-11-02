@@ -6,7 +6,14 @@ package containers
 
 import (
 	"cmp"
+	"context"
+	"fmt"
 	"time"
+
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -60,6 +67,72 @@ func (restart ContainerRestartSpec) RestartBackoff(runStatus ContainerRunStatusS
 	}
 
 	return step, min(delay, maxDelay)
+}
+
+// ContainerSucceeded reports whether a container ran successfully and is not run again: its latest
+// instance runs the current configuration and InstanceController decided it completed.
+func ContainerSucceeded(ctx context.Context, r controller.Reader, containerID string) (bool, error) {
+	containerSpec, err := safe.ReaderGetByID[*ContainerSpec](ctx, r, containerID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get container spec %q: %w", containerID, err)
+	}
+
+	instanceStatus, err := LatestInstanceStatus(ctx, r, containerID)
+	if err != nil {
+		return false, err
+	}
+
+	if instanceStatus == nil {
+		return false, nil
+	}
+
+	instanceSpec, err := CurrentInstanceSpec(ctx, r, containerID, instanceStatus)
+	if err != nil {
+		return false, err
+	}
+
+	if instanceSpec == nil || instanceSpec.Metadata().Phase() != resource.PhaseRunning {
+		return false, nil
+	}
+
+	return completedOutcome(ctx, r, containerSpec, instanceSpec, instanceStatus.TypedSpec().Generation)
+}
+
+// completedOutcome reports whether InstanceController decided the instance of the generation
+// completed, as a run of the current configuration of the container.
+func completedOutcome(
+	ctx context.Context,
+	r controller.Reader,
+	containerSpec *ContainerSpec,
+	instanceSpec *ContainerInstanceSpec,
+	generation uint64,
+) (bool, error) {
+	containerID := containerSpec.Metadata().ID()
+
+	containerRunStatus, err := safe.ReaderGetByID[*ContainerRunStatus](ctx, r, containerID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get run status %q: %w", containerID, err)
+	}
+
+	runStatus := containerRunStatus.TypedSpec()
+
+	// The run status is checked against the spec as well: InstanceController may not have caught up
+	// with a change of it yet, which makes the outcome one of a configuration no longer wanted.
+	if runStatus.Replaced(*instanceSpec.TypedSpec()) || runStatus.ExecutionHash != containerSpec.TypedSpec().ExecutionHash() {
+		return false, nil
+	}
+
+	outcome, ok := runStatus.Outcome(generation)
+
+	return ok && outcome == ContainerStateCompleted, nil
 }
 
 // FinishedState returns the state of a container whose newest instance has finished.

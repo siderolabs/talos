@@ -14,6 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -385,7 +386,10 @@ func (suite *RuntimeSuite) createInstanceSpec(id string) {
 // declareDependencies creates the container spec of id, depending on the given containers.
 func (suite *RuntimeSuite) declareDependencies(id string, dependsOn ...string) {
 	spec := containers.NewContainerSpec(containers.NamespaceName, id)
-	spec.TypedSpec().DependsOn.Containers = dependsOn
+	spec.TypedSpec().DependsOn.Containers = xslices.Map(dependsOn,
+		func(name string) containers.ContainerDependencySpec {
+			return containers.ContainerDependencySpec{Name: name}
+		})
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
 }

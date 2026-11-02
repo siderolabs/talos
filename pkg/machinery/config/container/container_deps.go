@@ -46,8 +46,11 @@ func validateContainerDependencies(configs []config.ContainerConfig) error {
 // buildContainerDependencyGraph builds the dependsOn adjacency list, reporting any dependency that
 // references a container which isn't configured.
 func buildContainerDependencyGraph(configs []config.ContainerConfig) (map[string]struct{}, map[string][]string, error) {
+	byName := make(map[string]config.ContainerConfig, len(configs))
 	names := make(map[string]struct{}, len(configs))
+
 	for _, cfg := range configs {
+		byName[cfg.Name()] = cfg
 		names[cfg.Name()] = struct{}{}
 	}
 
@@ -56,16 +59,23 @@ func buildContainerDependencyGraph(configs []config.ContainerConfig) (map[string
 	edges := make(map[string][]string, len(configs))
 
 	for _, cfg := range configs {
-		deps := cfg.DependsOn().Containers()
+		for _, dep := range cfg.DependsOn().Containers() {
+			edges[cfg.Name()] = append(edges[cfg.Name()], dep.Name())
 
-		for _, dep := range deps {
-			if _, exists := names[dep]; !exists {
+			target, exists := byName[dep.Name()]
+			if !exists {
 				errs = multierror.Append(errs,
-					fmt.Errorf("container %q depends on container %q, which is not configured", cfg.Name(), dep))
+					fmt.Errorf("container %q depends on container %q, which is not configured", cfg.Name(), dep.Name()))
+
+				continue
+			}
+
+			// a container which is always restarted never stays succeeded
+			if dep.Condition() == config.ContainerDependencyConditionSucceeded && target.Restart().Policy() == config.ContainerRestartPolicyAlways {
+				errs = multierror.Append(errs,
+					fmt.Errorf("container %q depends on container %q having succeeded, which needs its restart policy to be on-failure or never", cfg.Name(), dep.Name()))
 			}
 		}
-
-		edges[cfg.Name()] = deps
 	}
 
 	return names, edges, errs

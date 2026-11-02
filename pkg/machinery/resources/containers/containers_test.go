@@ -84,7 +84,7 @@ func TestProtobufRoundTrip(t *testing.T) {
 			Paths:      []string{"/var/mnt/web-content"},
 			Networks:   []string{"addresses"},
 			Time:       true,
-			Containers: []string{"other"},
+			Containers: []containers.ContainerDependencySpec{{Name: "other", Condition: containers.ContainerDependencyConditionSucceeded}},
 		},
 		Devices: []containers.ContainerDeviceSpec{
 			{

@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/go-pointer"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
@@ -794,15 +795,54 @@ func (ContainerDependsOn) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "containers",
-				Type:        "[]string",
+				Type:        "[]ContainerDependency",
 				Note:        "",
-				Description: "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Other containers, by document name, which must be running first." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Other containers, by document name, which must be running first, or have succeeded.\n\nAn entry is either the name of a container which must be running and healthy, or a name with\na condition.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Other containers, by document name, which must be running first, or have succeeded." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", []string{"/var/mnt/web-content"})
+	doc.Fields[4].AddExample("", []ContainerDependency{{DependencyName: "migrate", DependencyCondition: config.ContainerDependencyConditionSucceeded}, {DependencyName: "db"}})
+
+	return doc
+}
+
+func (ContainerDependency) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerDependency",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerDependency is a container which must be running, or have succeeded, first." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerDependency is a container which must be running, or have succeeded, first.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerDependsOn",
+				FieldName: "containers",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the ContainerConfig document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the ContainerConfig document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "condition",
+				Type:        "ContainerDependencyCondition",
+				Note:        "",
+				Description: "`running` (the default) waits for the container to be running and healthy, `succeeded` for\nit to have exited with code 0 and not to be restarted, e.g. a container preparing what this one\nneeds. It is checked again on every boot, as the containers run again.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "`running` (the default) waits for the container to be running and healthy, `succeeded` for" /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"running",
+					"succeeded",
+				},
+			},
+		},
+	}
+
+	doc.AddExample("", []ContainerDependency{{DependencyName: "migrate", DependencyCondition: config.ContainerDependencyConditionSucceeded}, {DependencyName: "db"}})
 
 	return doc
 }
@@ -959,6 +999,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ContainerResources{}.Doc(),
 			ContainerResourceLimits{}.Doc(),
 			ContainerDependsOn{}.Doc(),
+			ContainerDependency{}.Doc(),
 			ContainerSecurity{}.Doc(),
 			ContainerSeccomp{}.Doc(),
 			ContainerCapabilities{}.Doc(),
