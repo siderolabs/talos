@@ -18,6 +18,7 @@ import (
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -457,6 +458,60 @@ func (suite *InstanceSuite) TestGatesOnNetworkAndTime() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), timeStatus))
 
 	suite.assertInstance(0)
+}
+
+// TestGatesOnHealthCheckedDependency covers dependsOn.containers on a container with a health check:
+// its process running is not enough, its check has to pass; once it has, there is no stability
+// window on top.
+func (suite *InstanceSuite) TestGatesOnHealthCheckedDependency() {
+	const dependency = "db"
+
+	// No image status for the dependency: this suite has no RuntimeController, so its instance and
+	// status are faked below instead.
+	suite.createNamedSpec(dependency, func(spec *containers.ContainerSpecSpec) {
+		spec.HealthCheck = containers.ContainerHealthCheckSpec{Kind: string(config.ContainerHealthCheckKindTCP), Port: 5432}
+	})
+
+	dependencyInstanceStatus := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(dependency, 0))
+	dependencyInstanceStatus.TypedSpec().ContainerID = dependency
+	dependencyInstanceStatus.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+	dependencyInstanceStatus.TypedSpec().StartedAt = time.Now()
+	dependencyInstanceStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, dependency)
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), dependencyInstanceStatus))
+
+	// What StatusController writes while the check has not passed yet.
+	dependencyStatus := containers.NewContainerStatus(containers.NamespaceName, dependency)
+	dependencyStatus.TypedSpec().State = containers.ContainerStateRunning
+	dependencyStatus.TypedSpec().Health = containers.ContainerHealthPending
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), dependencyStatus))
+
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.DependsOn.Containers = []string{dependency}
+	})
+	suite.markImageReady()
+
+	suite.tick()
+	suite.assertNoInstance(0)
+	suite.assertWaitingFor("container: " + dependency)
+
+	ctest.UpdateWithConflicts(suite, dependencyStatus, func(res *containers.ContainerStatus) error {
+		res.TypedSpec().Health = containers.ContainerHealthHealthy
+
+		return nil
+	})
+
+	// Well within the stability window the dependency only just started in: had the window applied,
+	// the instance would not exist yet.
+	md := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(testContainer, 0)).Metadata()
+	ctx, st := suite.Ctx(), suite.State()
+
+	suite.Eventually(func() bool {
+		_, err := st.Get(ctx, md)
+
+		return err == nil
+	}, 2*time.Second, 10*time.Millisecond)
+
+	suite.assertWaitingFor()
 }
 
 // assertNetworkConditionStarts pins one dependsOn.network condition to the network.Status field it

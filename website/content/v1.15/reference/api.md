@@ -471,6 +471,7 @@ description: Talos gRPC API reference.
     - [ContainerDependencyStatusSpec](#talos.resource.definitions.containers.ContainerDependencyStatusSpec)
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec)
+    - [ContainerHealthCheckSpec](#talos.resource.definitions.containers.ContainerHealthCheckSpec)
     - [ContainerHealthStatusSpec](#talos.resource.definitions.containers.ContainerHealthStatusSpec)
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
@@ -8300,6 +8301,30 @@ ContainerDeviceSpec is a device handed to the container.
 
 
 
+<a name="talos.resource.definitions.containers.ContainerHealthCheckSpec"></a>
+
+### ContainerHealthCheckSpec
+ContainerHealthCheckSpec is the resolved health check configuration.
+
+An empty Kind means no health check: health then follows the lifecycle state alone.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  | Kind is one of "tcp", "http" or "grpc", or empty for no health check. |
+| port | [uint32](#uint32) |  | Port on the container's loopback address. |
+| path | [string](#string) |  | Path of an HTTP check. |
+| grpc_service | [string](#string) |  | GRPCService is the service name of a gRPC check. |
+| initial_delay | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| failure_threshold | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.containers.ContainerHealthStatusSpec"></a>
 
 ### ContainerHealthStatusSpec
@@ -8553,6 +8578,7 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
 | devices | [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec) | repeated |  |
 | stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| health_check | [ContainerHealthCheckSpec](#talos.resource.definitions.containers.ContainerHealthCheckSpec) |  | HealthCheck probes the running container. It is not part of the instance snapshot: changing it re-targets the probe of the running instance rather than replacing the instance. |
 
 
 

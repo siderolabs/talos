@@ -283,6 +283,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&containerctrls.RuntimeController{
 			Runtime: ctrl.v1alpha1Runtime,
 		},
+		&containerctrls.HealthController{},
 		&containerctrls.StatusController{},
 		&hypervisorctrls.ContentLibraryController{},
 		&hypervisorctrls.VirtualMachineSpecController{},
