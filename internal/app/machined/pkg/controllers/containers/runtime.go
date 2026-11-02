@@ -314,8 +314,8 @@ func (ctrl *RuntimeController) closeRunner() {
 	ctrl.taskRunner = nil
 }
 
-func (ctrl *RuntimeController) criIsUp(ctx context.Context, runtime controller.Runtime) (bool, error) {
-	criService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, runtime, criServiceID)
+func (ctrl *RuntimeController) criIsUp(ctx context.Context, reader controller.Reader) (bool, error) {
+	criService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, reader, criServiceID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return false, nil

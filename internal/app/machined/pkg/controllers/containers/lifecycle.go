@@ -21,8 +21,8 @@ import (
 //
 // It legitimately may not exist: the startup task creates it, so a controller can run a pass before
 // it is there.
-func readContainerLifecycle(ctx context.Context, runtime controller.Runtime) (*containers.ContainerLifecycle, error) {
-	containerLifecycle, err := safe.ReaderGetByID[*containers.ContainerLifecycle](ctx, runtime, containers.ContainerLifecycleID)
+func readContainerLifecycle(ctx context.Context, reader controller.Reader) (*containers.ContainerLifecycle, error) {
+	containerLifecycle, err := safe.ReaderGetByID[*containers.ContainerLifecycle](ctx, reader, containers.ContainerLifecycleID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return nil, nil

@@ -39,6 +39,24 @@ message ContainerDeviceSpec {
   string destination = 3;
 }
 
+// ContainerHealthCheckSpec is the resolved health check configuration.
+//
+// An empty Kind means no health check: health then follows the lifecycle state alone.
+message ContainerHealthCheckSpec {
+  // Kind is one of "tcp", "http" or "grpc", or empty for no health check.
+  string kind = 1;
+  // Port on the container's loopback address.
+  uint32 port = 2;
+  // Path of an HTTP check.
+  string path = 3;
+  // GRPCService is the service name of a gRPC check.
+  string grpc_service = 4;
+  google.protobuf.Duration initial_delay = 5;
+  google.protobuf.Duration interval = 6;
+  google.protobuf.Duration timeout = 7;
+  uint32 failure_threshold = 8;
+}
+
 // ContainerHealthStatusSpec is the spec for ContainerHealthStatus.
 message ContainerHealthStatusSpec {
   // Healthy is true once a check has passed, and false once failureThreshold consecutive checks failed.
@@ -205,7 +223,7 @@ message ContainerRunStatusSpec {
   // FinishedGeneration is the generation of the finished instance FinishedState is the outcome of.
   uint64 finished_generation = 8;
   // FinishedState is what InstanceController decided for that instance: exited while it is
-  // restarted, completed or failed when it is not. It is published so that what reports the state
+  // restarted, succeeded or failed when it is not. It is published so that what reports the state
   // of the container doesn't decide it again.
   talos.resource.definitions.enums.ContainersContainerState finished_state = 9;
 }
@@ -253,6 +271,9 @@ message ContainerSpecSpec {
   repeated ContainerDeviceSpec devices = 12;
   google.protobuf.Duration stop_timeout = 13;
   ContainerRestartSpec restart = 14;
+  // HealthCheck probes the running container. It is not part of the execution hash: changing it
+  // re-targets the probe of the running instance rather than replacing the instance.
+  ContainerHealthCheckSpec health_check = 15;
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.

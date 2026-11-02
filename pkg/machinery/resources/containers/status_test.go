@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -101,8 +102,8 @@ func TestResolveContainerState(t *testing.T) {
 		{
 			name:                    "instance terminated, not restarted",
 			containerInstanceStatus: newInstanceStatus(containers.ContainerInstancePhaseTerminated),
-			finishedState:           containers.ContainerStateCompleted,
-			want:                    containers.ContainerStateCompleted,
+			finishedState:           containers.ContainerStateSucceeded,
+			want:                    containers.ContainerStateSucceeded,
 		},
 		{
 			name:                    "instance running, not restarted once finished",
@@ -188,11 +189,28 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 		digest   = "sha256:new"
 	)
 
-	newContainerSpec := func() *containers.ContainerSpec {
+	newContainerSpec := func(healthChecked bool) *containers.ContainerSpec {
 		spec := containers.NewContainerSpec(containers.NamespaceName, "nginx")
 		spec.TypedSpec().Image = containers.ContainerImageSpec{Ref: imageRef}
 
+		if healthChecked {
+			spec.TypedSpec().HealthCheck = containers.ContainerHealthCheckSpec{Kind: string(config.ContainerHealthCheckKindTCP), Port: 80}
+		}
+
 		return spec
+	}
+
+	newHealthStatus := func(healthy bool, message string) *containers.ContainerHealthStatus {
+		status := containers.NewContainerHealthStatus(containers.NamespaceName, "nginx-0")
+		status.TypedSpec().Healthy = healthy
+		status.TypedSpec().Message = message
+
+		return status
+	}
+
+	runningInstance := func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Phase = containers.ContainerInstancePhaseRunning
+		spec.PID = 11
 	}
 
 	newInstanceStatus := func(mutate func(*containers.ContainerInstanceStatusSpec)) *containers.ContainerInstanceStatus {
@@ -213,7 +231,7 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 	newInstanceSpec := func(image string, phase resource.Phase) *containers.ContainerInstanceSpec {
 		spec := containers.NewContainerInstanceSpec(containers.NamespaceName, "nginx-0")
 		spec.TypedSpec().Image = image
-		spec.TypedSpec().ExecutionHash = newContainerSpec().TypedSpec().ExecutionHash()
+		spec.TypedSpec().ExecutionHash = newContainerSpec(false).TypedSpec().ExecutionHash()
 		spec.Metadata().SetPhase(phase)
 
 		return spec
@@ -228,8 +246,10 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 		imageDigest             string
 		waitingFor              []string
 		// Helps distinguish gates unmet, from gates that were not yet published.
-		gatesUnknown bool
-		want         containers.ContainerStatusSpec
+		gatesUnknown          bool
+		healthChecked         bool
+		containerHealthStatus *containers.ContainerHealthStatus
+		want                  containers.ContainerStatusSpec
 	}{
 		{
 			name:       "fresh container waiting on its gates",
@@ -468,6 +488,106 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				PID:    11,
 			},
 		},
+		{
+			name:                    "a running container with a health check is pending until a check decides",
+			containerInstanceStatus: newInstanceStatus(runningInstance),
+			containerInstanceSpec:   newInstanceSpec("", resource.PhaseRunning),
+			healthChecked:           true,
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStateRunning,
+				Health: containers.ContainerHealthPending,
+				Image:  imageRef,
+				PID:    11,
+			},
+		},
+		{
+			name:                    "a passing health check makes a running container healthy",
+			containerInstanceStatus: newInstanceStatus(runningInstance),
+			containerInstanceSpec:   newInstanceSpec("", resource.PhaseRunning),
+			healthChecked:           true,
+			containerHealthStatus:   newHealthStatus(true, ""),
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStateRunning,
+				Health: containers.ContainerHealthHealthy,
+				Image:  imageRef,
+				PID:    11,
+			},
+		},
+		{
+			name:                    "a failing health check degrades a running container and reports why",
+			containerInstanceStatus: newInstanceStatus(runningInstance),
+			containerInstanceSpec:   newInstanceSpec("", resource.PhaseRunning),
+			healthChecked:           true,
+			containerHealthStatus:   newHealthStatus(false, "connection refused"),
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStateRunning,
+				Health: containers.ContainerHealthDegraded,
+				Image:  imageRef,
+				PID:    11,
+				Error:  "health check: connection refused",
+			},
+		},
+		{
+			name:                    "a health status is ignored when no health check is configured",
+			containerInstanceStatus: newInstanceStatus(runningInstance),
+			containerInstanceSpec:   newInstanceSpec("", resource.PhaseRunning),
+			containerHealthStatus:   newHealthStatus(false, "connection refused"),
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStateRunning,
+				Health: containers.ContainerHealthHealthy,
+				Image:  imageRef,
+				PID:    11,
+			},
+		},
+		{
+			name: "an exited container with a health check is degraded by its exit, not by the check",
+			containerInstanceStatus: newInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+				spec.Phase = containers.ContainerInstancePhaseTerminated
+				spec.ExitCode = 1
+			}),
+			containerInstanceSpec: newInstanceSpec("", resource.PhaseRunning),
+			healthChecked:         true,
+			containerHealthStatus: newHealthStatus(false, "connection refused"),
+			want: containers.ContainerStatusSpec{
+				State:    containers.ContainerStateExited,
+				Health:   containers.ContainerHealthDegraded,
+				Image:    imageRef,
+				ExitCode: 1,
+			},
+		},
+		{
+			name: "stopping keeps the health a check last decided",
+			prev: containers.ContainerStatusSpec{
+				State:  containers.ContainerStateRunning,
+				Health: containers.ContainerHealthDegraded,
+			},
+			containerInstanceStatus: newInstanceStatus(runningInstance),
+			containerInstanceSpec:   newInstanceSpec(digest, resource.PhaseTearingDown),
+			healthChecked:           true,
+			want: containers.ContainerStatusSpec{
+				State:  containers.ContainerStateStopping,
+				Health: containers.ContainerHealthDegraded,
+				Image:  digest,
+				PID:    11,
+			},
+		},
+		{
+			// A check never ends an execution: its message is not why the last one went away.
+			name: "a health check error is not carried over as the last execution's outcome",
+			prev: containers.ContainerStatusSpec{
+				State:        containers.ContainerStateRunning,
+				Health:       containers.ContainerHealthDegraded,
+				RestartCount: 2,
+				Error:        "health check: connection refused",
+			},
+			healthChecked: true,
+			want: containers.ContainerStatusSpec{
+				State:        containers.ContainerStateStarting,
+				Health:       containers.ContainerHealthPulling,
+				Image:        imageRef,
+				RestartCount: 2,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -484,13 +604,14 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 			got := tt.prev
 
 			got.Update(
-				newContainerSpec(),
+				newContainerSpec(tt.healthChecked),
 				tt.containerImageStatus,
 				tt.containerInstanceStatus,
 				tt.containerInstanceSpec,
 				tt.imageDigest,
 				containerDependencyStatus,
 				nil,
+				tt.containerHealthStatus,
 			)
 
 			assert.Equal(t, tt.want, got)
@@ -514,7 +635,7 @@ func TestContainerStatusSpecUpdateFinished(t *testing.T) {
 	runStatus.TypedSpec().Policy = containerSpec.TypedSpec().Restart.Policy
 	runStatus.TypedSpec().Restarts = 2
 	runStatus.TypedSpec().FinishedGeneration = 4
-	runStatus.TypedSpec().FinishedState = containers.ContainerStateCompleted
+	runStatus.TypedSpec().FinishedState = containers.ContainerStateSucceeded
 
 	dependencyStatus := containers.NewContainerDependencyStatus(containers.NamespaceName, "migrate")
 	dependencyStatus.TypedSpec().WaitingFor = []string{"container: db"}
@@ -524,7 +645,7 @@ func TestContainerStatusSpecUpdateFinished(t *testing.T) {
 		hash  string
 		state containers.ContainerState
 	}{
-		{name: "current configuration", hash: containerSpec.TypedSpec().ExecutionHash(), state: containers.ContainerStateCompleted},
+		{name: "current configuration", hash: containerSpec.TypedSpec().ExecutionHash(), state: containers.ContainerStateSucceeded},
 		{name: "changed configuration", hash: "previous", state: containers.ContainerStatePending},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -535,7 +656,7 @@ func TestContainerStatusSpecUpdateFinished(t *testing.T) {
 
 			var status containers.ContainerStatusSpec
 
-			status.Update(containerSpec, nil, instanceStatus, instanceSpec, "", dependencyStatus, runStatus)
+			status.Update(containerSpec, nil, instanceStatus, instanceSpec, "", dependencyStatus, runStatus, nil)
 
 			assert.Equal(t, test.state, status.State)
 			assert.EqualValues(t, 2, status.RestartCount)

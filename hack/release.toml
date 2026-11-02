@@ -494,6 +494,10 @@ lifecycle:
     containers:
       - name: migrate
         condition: succeeded
+  healthCheck:
+    http:
+      port: 8080
+      path: /healthz
   stopTimeout: 30s
 ```
 
@@ -503,7 +507,7 @@ lifecycle:
 
 `lifecycle.restart.policy` sets when a container is run again after it exits: `always` (the default) after every exit, `on-failure` after a non-zero exit code or a failure to start, up to `maxRetries` times, and `never` not at all.
 The restart waits `delay` (5s by default), which doubles with each restart of a container which ran for less than `maxDelay`, up to `maxDelay`.
-A container which is not restarted reports `completed` or `failed` in `ContainerStatus` until its configuration changes or it is removed.
+A container which is not restarted reports `succeeded` or `failed` in `ContainerStatus` until its configuration changes or it is removed.
 Changing the configuration of a container runs it again, and changing its policy starts the `maxRetries` count over.
 Containers run again after a reboot or a restart of machined, so a container which runs once has to be safe to run again; `talosctl restart` only signals the container.
 
@@ -514,6 +518,15 @@ A container depended on as `succeeded` must use the `on-failure` or `never` rest
 
 `lifecycle.stopTimeout` sets how long a container gets to exit after `SIGTERM` before it is killed (10s by default, at most 4m).
 On shutdown, reboot and upgrade, containers are stopped in the reverse order of their dependencies.
+
+#### Health Checks
+
+`lifecycle.healthCheck` probes a running container on its loopback address with one of `tcp` (the connection is established), `http` (a `GET` of `path` answers 2xx or 3xx) or `grpc` (the `grpc.health.v1` service reports `SERVING`).
+The first check runs after `initialDelay` (0s by default), then every `interval` (10s by default); a check fails after `timeout` (1s by default, at most `interval`).
+A container with a health check reports `pending` health until a check passes, `healthy` after each passing check, and `degraded` after `failureThreshold` (3 by default) consecutive failures, reporting the failure as the `ContainerStatus` error.
+A failing check never stops or restarts the container.
+A container depended on by `lifecycle.dependsOn.containers` counts as ready once its health check passes, instead of after staying up for a fixed stability window.
+Changing the health check takes effect without restarting the container.
 
 #### Storage and Devices
 

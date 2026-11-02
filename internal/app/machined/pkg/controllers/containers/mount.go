@@ -249,10 +249,10 @@ func joinReasons(reason string, deviceReasons []string) string {
 }
 
 // liveContainers returns the containers which may still be using their mounts.
-func (ctrl *MountController) liveContainers(ctx context.Context, runtime controller.Runtime) (map[string]struct{}, error) {
+func (ctrl *MountController) liveContainers(ctx context.Context, reader controller.Reader) (map[string]struct{}, error) {
 	live := map[string]struct{}{}
 
-	containerInstanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, runtime)
+	containerInstanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance statuses: %w", err)
 	}
@@ -267,7 +267,7 @@ func (ctrl *MountController) liveContainers(ctx context.Context, runtime control
 		}
 	}
 
-	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
+	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance specs: %w", err)
 	}
@@ -527,8 +527,8 @@ func (ctrl *MountController) releaseAll(ctx context.Context, runtime controller.
 }
 
 // ownedRequests returns the mount requests created by this controller.
-func (ctrl *MountController) ownedRequests(ctx context.Context, runtime controller.Runtime) ([]*block.VolumeMountRequest, error) {
-	volumeMountRequests, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, runtime)
+func (ctrl *MountController) ownedRequests(ctx context.Context, reader controller.Reader) ([]*block.VolumeMountRequest, error) {
+	volumeMountRequests, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list mount requests: %w", err)
 	}

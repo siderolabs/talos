@@ -474,6 +474,7 @@ description: Talos gRPC API reference.
     - [ContainerDependencyStatusSpec](#talos.resource.definitions.containers.ContainerDependencyStatusSpec)
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec)
+    - [ContainerHealthCheckSpec](#talos.resource.definitions.containers.ContainerHealthCheckSpec)
     - [ContainerHealthStatusSpec](#talos.resource.definitions.containers.ContainerHealthStatusSpec)
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
@@ -6010,7 +6011,7 @@ ContainersContainerState describes where a container is in its lifecycle (intern
 | CONTAINER_STATE_EXITED | 4 |  |
 | CONTAINER_STATE_BACKOFF | 5 |  |
 | CONTAINER_STATE_STOPPING | 6 |  |
-| CONTAINER_STATE_COMPLETED | 7 |  |
+| CONTAINER_STATE_SUCCEEDED | 7 |  |
 | CONTAINER_STATE_FAILED | 8 |  |
 
 
@@ -8354,6 +8355,30 @@ ContainerDeviceSpec is a device handed to the container.
 
 
 
+<a name="talos.resource.definitions.containers.ContainerHealthCheckSpec"></a>
+
+### ContainerHealthCheckSpec
+ContainerHealthCheckSpec is the resolved health check configuration.
+
+An empty Kind means no health check: health then follows the lifecycle state alone.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  | Kind is one of "tcp", "http" or "grpc", or empty for no health check. |
+| port | [uint32](#uint32) |  | Port on the container's loopback address. |
+| path | [string](#string) |  | Path of an HTTP check. |
+| grpc_service | [string](#string) |  | GRPCService is the service name of a gRPC check. |
+| initial_delay | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| failure_threshold | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.containers.ContainerHealthStatusSpec"></a>
 
 ### ContainerHealthStatusSpec
@@ -8602,7 +8627,7 @@ ContainerRunStatusSpec is the spec for ContainerRunStatus.
 | restarted | [bool](#bool) |  |  |
 | policy | [talos.resource.definitions.enums.ContainersContainerRestartPolicy](#talos.resource.definitions.enums.ContainersContainerRestartPolicy) |  | Policy is the restart policy the restarts were counted under. |
 | finished_generation | [uint64](#uint64) |  | FinishedGeneration is the generation of the finished instance FinishedState is the outcome of. |
-| finished_state | [talos.resource.definitions.enums.ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState) |  | FinishedState is what InstanceController decided for that instance: exited while it is restarted, completed or failed when it is not. It is published so that what reports the state of the container doesn't decide it again. |
+| finished_state | [talos.resource.definitions.enums.ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState) |  | FinishedState is what InstanceController decided for that instance: exited while it is restarted, succeeded or failed when it is not. It is published so that what reports the state of the container doesn't decide it again. |
 
 
 
@@ -8654,6 +8679,7 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | devices | [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec) | repeated |  |
 | stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | restart | [ContainerRestartSpec](#talos.resource.definitions.containers.ContainerRestartSpec) |  |  |
+| health_check | [ContainerHealthCheckSpec](#talos.resource.definitions.containers.ContainerHealthCheckSpec) |  | HealthCheck probes the running container. It is not part of the execution hash: changing it re-targets the probe of the running instance rather than replacing the instance. |
 
 
 
