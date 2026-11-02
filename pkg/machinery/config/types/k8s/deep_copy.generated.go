@@ -236,6 +236,10 @@ func (o *KubeFlannelCNIConfigV1Alpha1) DeepCopy() *KubeFlannelCNIConfigV1Alpha1 
 		cp.FlannelKubeNetworkPoliciesEnabled = new(bool)
 		*cp.FlannelKubeNetworkPoliciesEnabled = *o.FlannelKubeNetworkPoliciesEnabled
 	}
+	if o.FlannelKubeNetworkPoliciesArgs != nil {
+		cp.FlannelKubeNetworkPoliciesArgs = make([]string, len(o.FlannelKubeNetworkPoliciesArgs))
+		copy(cp.FlannelKubeNetworkPoliciesArgs, o.FlannelKubeNetworkPoliciesArgs)
+	}
 	return &cp
 }
 

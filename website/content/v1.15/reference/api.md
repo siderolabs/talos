@@ -10204,6 +10204,7 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | proxy_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | proxy_resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | proxy_config_checksum | [string](#string) |  |  |
+| flannel_kube_network_policies_args | [string](#string) | repeated |  |
 
 
 

@@ -116,6 +116,7 @@ type K8sFlannelCNIConfig interface {
 	Resources() Resources
 	ExtraArgs() []string
 	KubeNetworkPoliciesEnabled() bool
+	KubeNetworkPoliciesArgs() []string
 }
 
 // K8sAdmissionControlPluginConfig defines the configuration options for kube-apiserver admission control plugins.

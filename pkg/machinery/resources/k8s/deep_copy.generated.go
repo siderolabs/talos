@@ -165,6 +165,10 @@ func (o BootstrapManifestsConfigSpec) DeepCopy() BootstrapManifestsConfigSpec {
 		cp.FlannelExtraArgs = make([]string, len(o.FlannelExtraArgs))
 		copy(cp.FlannelExtraArgs, o.FlannelExtraArgs)
 	}
+	if o.FlannelKubeNetworkPoliciesArgs != nil {
+		cp.FlannelKubeNetworkPoliciesArgs = make([]string, len(o.FlannelKubeNetworkPoliciesArgs))
+		copy(cp.FlannelKubeNetworkPoliciesArgs, o.FlannelKubeNetworkPoliciesArgs)
+	}
 	if o.FlannelBackendExtraConfig != nil {
 		cp.FlannelBackendExtraConfig = make(map[string]any, len(o.FlannelBackendExtraConfig))
 		for k2, v2 := range o.FlannelBackendExtraConfig {

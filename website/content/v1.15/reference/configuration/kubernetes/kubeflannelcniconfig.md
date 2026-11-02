@@ -26,6 +26,11 @@ backendMTU: 1420 # Transport MTU to be used for the pod network.
 extraArgs:
     - --iface-can-reach=192.168.1.1
 kubeNetworkPoliciesEnabled: true # Deploys kube-network-policies along with Flannel.
+# Command-line arguments for kube-network-policies.
+kubeNetworkPoliciesArgs:
+    - --hostname-override=$(MY_NODE_NAME)
+    - --v=2
+    - --metrics-bind-address=127.0.0.1:9080
 {{< /highlight >}}
 
 
@@ -41,6 +46,12 @@ extraArgs:
     - --iface-can-reach=192.168.1.1
 {{< /highlight >}}</details> | |
 |`kubeNetworkPoliciesEnabled` |bool |Deploys kube-network-policies along with Flannel.<br><br>This enables Kubernetes Network Policies support in the cluster.  | |
+|`kubeNetworkPoliciesArgs` |[]string |Command-line arguments for kube-network-policies.<br><br>If set to a non-empty list, the arguments are passed to kube-network-policies exactly as specified,<br>replacing the default arguments completely.<br>If not set or set to an empty list, the default arguments are used: "--hostname-override=$(MY_NODE_NAME)" and "--v=2".<br><br>The environment variable MY_NODE_NAME is set to the name of the node,<br>so "--hostname-override=$(MY_NODE_NAME)" should always be included.<br>kube-network-policies always starts a metrics server, by default on ":9080" (all addresses),<br>use "--metrics-bind-address=127.0.0.1:9080" to restrict it to the host loopback interface. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+kubeNetworkPoliciesArgs:
+    - --hostname-override=$(MY_NODE_NAME)
+    - --v=2
+    - --metrics-bind-address=127.0.0.1:9080
+{{< /highlight >}}</details> | |
 
 
 

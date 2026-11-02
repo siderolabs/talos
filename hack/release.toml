@@ -29,6 +29,14 @@ so on-demand loading can't be used to load arbitrary modules from workloads.
 The outcome of each request is logged to the kernel log (`talosctl dmesg`).
 """
 
+    [notes.kube_network_policies_args]
+        title = "kube-network-policies Arguments"
+        description = """\
+The `KubeFlannelCNIConfig` document has a new `kubeNetworkPoliciesArgs` field which replaces the default command-line arguments of kube-network-policies
+(`--hostname-override=$(MY_NODE_NAME)` and `--v=2`), e.g. to change log verbosity or format.
+kube-network-policies serves metrics on `:9080` on all node addresses by default; use `--metrics-bind-address=127.0.0.1:9080` to restrict it to the loopback interface.
+"""
+
     [notes.vm_vnc]
         title = "Virtual Machine VNC Console"
         description = """\

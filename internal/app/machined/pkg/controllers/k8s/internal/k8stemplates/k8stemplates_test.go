@@ -569,6 +569,25 @@ func TestTemplates(t *testing.T) {
 				return spec
 			},
 		},
+		{
+			name: "flannel-daemonset-with-network-policies-args",
+			obj: func() runtime.Object {
+				spec, err := k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+					FlannelImage:                      "quay.io/coreos/flannel:v0.14.0",
+					FlannelKubeNetworkPoliciesEnabled: true,
+					FlannelKubeNetworkPoliciesImage:   "registry.k8s.io/networking/kube-network-policies:v0.7.0",
+					FlannelKubeNetworkPoliciesArgs: []string{
+						"--hostname-override=$(MY_NODE_NAME)",
+						"--v=4",
+						"--metrics-bind-address=127.0.0.1:9080",
+						"--logging-format=json",
+					},
+				})
+				require.NoError(t, err)
+
+				return spec
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

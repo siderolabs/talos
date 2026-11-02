@@ -6,3 +6,6 @@ backendMTU: 1420
 extraArgs:
     - --iface-can-reach=10.0.0.1
 kubeNetworkPoliciesEnabled: true
+kubeNetworkPoliciesArgs:
+    - --hostname-override=$(MY_NODE_NAME)
+    - --metrics-bind-address=127.0.0.1:9080

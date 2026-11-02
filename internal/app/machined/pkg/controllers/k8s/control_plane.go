@@ -499,6 +499,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					res.TypedSpec().FlannelKubeServicePort = flannelKubeServicePort
 					res.TypedSpec().FlannelKubeNetworkPoliciesEnabled = k8sFlannelCNIConfig.KubeNetworkPoliciesEnabled()
 					res.TypedSpec().FlannelKubeNetworkPoliciesImage = images.KubeNetworkPolicies().String()
+					res.TypedSpec().FlannelKubeNetworkPoliciesArgs = k8sFlannelCNIConfig.KubeNetworkPoliciesArgs()
 					res.TypedSpec().CNIName = constants.FlannelCNI
 				} else {
 					res.TypedSpec().FlannelEnabled = false
@@ -513,6 +514,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					res.TypedSpec().FlannelKubeServicePort = ""
 					res.TypedSpec().FlannelKubeNetworkPoliciesEnabled = false
 					res.TypedSpec().FlannelKubeNetworkPoliciesImage = ""
+					res.TypedSpec().FlannelKubeNetworkPoliciesArgs = nil
 					res.TypedSpec().CNIName = constants.NoneCNI
 				}
 

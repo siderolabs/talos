@@ -99,6 +99,21 @@ type KubeFlannelCNIConfigV1Alpha1 struct {
 	//
 	//     This enables Kubernetes Network Policies support in the cluster.
 	FlannelKubeNetworkPoliciesEnabled *bool `yaml:"kubeNetworkPoliciesEnabled,omitempty"`
+	//   description: |
+	//     Command-line arguments for kube-network-policies.
+	//
+	//     If set to a non-empty list, the arguments are passed to kube-network-policies exactly as specified,
+	//     replacing the default arguments completely.
+	//     If not set or set to an empty list, the default arguments are used: "--hostname-override=$(MY_NODE_NAME)" and "--v=2".
+	//
+	//     The environment variable MY_NODE_NAME is set to the name of the node,
+	//     so "--hostname-override=$(MY_NODE_NAME)" should always be included.
+	//     kube-network-policies always starts a metrics server, by default on ":9080" (all addresses),
+	//     use "--metrics-bind-address=127.0.0.1:9080" to restrict it to the host loopback interface.
+	//   examples:
+	//     - value: >
+	//         []string{"--hostname-override=$(MY_NODE_NAME)", "--v=2", "--metrics-bind-address=127.0.0.1:9080"}
+	FlannelKubeNetworkPoliciesArgs []string `yaml:"kubeNetworkPoliciesArgs,omitempty"`
 }
 
 // NewKubeFlannelCNIConfigV1Alpha1 creates a new KubeFlannelCNIConfig config document.
@@ -118,6 +133,7 @@ func exampleKubeFlannelCNIConfigV1Alpha1() *KubeFlannelCNIConfigV1Alpha1 {
 	cfg.FlannelBackendMTU = 1420
 	cfg.FlannelExtraArgs = []string{"--iface-can-reach=192.168.1.1"}
 	cfg.FlannelKubeNetworkPoliciesEnabled = new(true)
+	cfg.FlannelKubeNetworkPoliciesArgs = []string{"--hostname-override=$(MY_NODE_NAME)", "--v=2", "--metrics-bind-address=127.0.0.1:9080"}
 
 	return cfg
 }
@@ -195,6 +211,11 @@ func (s *KubeFlannelCNIConfigV1Alpha1) ExtraArgs() []string {
 // KubeNetworkPoliciesEnabled implements config.K8sFlannelCNIConfig interface.
 func (s *KubeFlannelCNIConfigV1Alpha1) KubeNetworkPoliciesEnabled() bool {
 	return pointer.SafeDeref(s.FlannelKubeNetworkPoliciesEnabled)
+}
+
+// KubeNetworkPoliciesArgs implements config.K8sFlannelCNIConfig interface.
+func (s *KubeFlannelCNIConfigV1Alpha1) KubeNetworkPoliciesArgs() []string {
+	return s.FlannelKubeNetworkPoliciesArgs
 }
 
 // ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.

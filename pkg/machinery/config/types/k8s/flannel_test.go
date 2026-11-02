@@ -32,6 +32,7 @@ func TestKubeFlannelCNIConfigMarshalStability(t *testing.T) {
 	cfg.FlannelBackendMTU = 1420
 	cfg.FlannelExtraArgs = []string{"--iface-can-reach=10.0.0.1"}
 	cfg.FlannelKubeNetworkPoliciesEnabled = new(true)
+	cfg.FlannelKubeNetworkPoliciesArgs = []string{"--hostname-override=$(MY_NODE_NAME)", "--metrics-bind-address=127.0.0.1:9080"}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -60,6 +61,7 @@ func TestKubeFlannelCNIConfigUnmarshal(t *testing.T) {
 		FlannelBackendMTU:                 1420,
 		FlannelExtraArgs:                  []string{"--iface-can-reach=10.0.0.1"},
 		FlannelKubeNetworkPoliciesEnabled: new(true),
+		FlannelKubeNetworkPoliciesArgs:    []string{"--hostname-override=$(MY_NODE_NAME)", "--metrics-bind-address=127.0.0.1:9080"},
 	}, docs[0])
 }
 

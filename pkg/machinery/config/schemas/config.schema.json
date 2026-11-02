@@ -4135,6 +4135,16 @@
           "description": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.\n",
           "markdownDescription": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
           "x-intellij-html-description": "\u003cp\u003eDeploys kube-network-policies along with Flannel.\u003c/p\u003e\n\n\u003cp\u003eThis enables Kubernetes Network Policies support in the cluster.\u003c/p\u003e\n"
+        },
+        "kubeNetworkPoliciesArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "kubeNetworkPoliciesArgs",
+          "description": "Command-line arguments for kube-network-policies.\n\nIf set to a non-empty list, the arguments are passed to kube-network-policies exactly as specified,\nreplacing the default arguments completely.\nIf not set or set to an empty list, the default arguments are used: “–hostname-override=$(MY_NODE_NAME)” and “–v=2”.\n\nThe environment variable MY_NODE_NAME is set to the name of the node,\nso “–hostname-override=$(MY_NODE_NAME)” should always be included.\nkube-network-policies always starts a metrics server, by default on “:9080” (all addresses),\nuse “–metrics-bind-address=127.0.0.1:9080” to restrict it to the host loopback interface.\n",
+          "markdownDescription": "Command-line arguments for kube-network-policies.\n\nIf set to a non-empty list, the arguments are passed to kube-network-policies exactly as specified,\nreplacing the default arguments completely.\nIf not set or set to an empty list, the default arguments are used: \"--hostname-override=$(MY_NODE_NAME)\" and \"--v=2\".\n\nThe environment variable MY_NODE_NAME is set to the name of the node,\nso \"--hostname-override=$(MY_NODE_NAME)\" should always be included.\nkube-network-policies always starts a metrics server, by default on \":9080\" (all addresses),\nuse \"--metrics-bind-address=127.0.0.1:9080\" to restrict it to the host loopback interface.",
+          "x-intellij-html-description": "\u003cp\u003eCommand-line arguments for kube-network-policies.\u003c/p\u003e\n\n\u003cp\u003eIf set to a non-empty list, the arguments are passed to kube-network-policies exactly as specified,\nreplacing the default arguments completely.\nIf not set or set to an empty list, the default arguments are used: \u0026ldquo;\u0026ndash;hostname-override=$(MY_NODE_NAME)\u0026rdquo; and \u0026ldquo;\u0026ndash;v=2\u0026rdquo;.\u003c/p\u003e\n\n\u003cp\u003eThe environment variable MY_NODE_NAME is set to the name of the node,\nso \u0026ldquo;\u0026ndash;hostname-override=$(MY_NODE_NAME)\u0026rdquo; should always be included.\nkube-network-policies always starts a metrics server, by default on \u0026ldquo;:9080\u0026rdquo; (all addresses),\nuse \u0026ldquo;\u0026ndash;metrics-bind-address=127.0.0.1:9080\u0026rdquo; to restrict it to the host loopback interface.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

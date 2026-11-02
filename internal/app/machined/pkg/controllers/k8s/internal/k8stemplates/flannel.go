@@ -188,6 +188,12 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 	}
 }
 
+// defaultKubeNetworkPoliciesArgs are used when no kube-network-policies arguments are configured.
+var defaultKubeNetworkPoliciesArgs = []string{
+	"--hostname-override=$(MY_NODE_NAME)",
+	"--v=2",
+}
+
 // FlannelDaemonSetTemplate returns the template of the DaemonSet
 // for the flannel CNI plugin.
 func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.Object, error) {
@@ -296,14 +302,15 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.O
 	}
 
 	if spec.FlannelKubeNetworkPoliciesEnabled {
+		netpolArgs := spec.FlannelKubeNetworkPoliciesArgs
+		if len(netpolArgs) == 0 {
+			netpolArgs = defaultKubeNetworkPoliciesArgs
+		}
+
 		containers = append(containers, corev1.Container{
-			Name:  "kube-network-policies",
-			Image: spec.FlannelKubeNetworkPoliciesImage,
-			Command: []string{
-				"/bin/netpol",
-				"--hostname-override=$(MY_NODE_NAME)",
-				"--v=2",
-			},
+			Name:    "kube-network-policies",
+			Image:   spec.FlannelKubeNetworkPoliciesImage,
+			Command: append([]string{"/bin/netpol"}, netpolArgs...),
 			Env: []corev1.EnvVar{
 				{
 					Name: "MY_NODE_NAME",

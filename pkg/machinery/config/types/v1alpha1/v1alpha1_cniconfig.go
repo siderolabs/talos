@@ -65,3 +65,8 @@ func (c *FlannelCNIConfig) ExtraArgs() []string {
 func (c *FlannelCNIConfig) KubeNetworkPoliciesEnabled() bool {
 	return pointer.SafeDeref(c.FlannelKubeNetworkPoliciesEnabled)
 }
+
+// KubeNetworkPoliciesArgs implements the config.K8sFlannelCNIConfig interface.
+func (c *FlannelCNIConfig) KubeNetworkPoliciesArgs() []string {
+	return nil
+}

@@ -109,6 +109,7 @@ message BootstrapManifestsConfigSpec {
   google.protobuf.Struct proxy_config = 27;
   Resources proxy_resources = 28;
   string proxy_config_checksum = 29;
+  repeated string flannel_kube_network_policies_args = 30;
 }
 
 // ConfigStatusSpec describes status of rendered secrets.
