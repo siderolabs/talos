@@ -7,6 +7,8 @@
 package container
 
 import (
+	"time"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
@@ -372,10 +374,18 @@ func (ContainerLifecycle) Doc() *encoder.Doc {
 				Description: "Probe deciding whether the running container is healthy.\n\nWithout a health check, a running container is healthy. With one, it is reported as\npending until the first check passes, and as degraded once `failureThreshold` consecutive\nchecks fail. A failing check never restarts the container. Health gates other containers\nwhich list this one in `lifecycle.dependsOn.containers`.\n\nThe probe connects to `127.0.0.1` inside the container's network namespace.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Probe deciding whether the running container is healthy." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "stopTimeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with `talosctl restart`, and when it is removed.\nDefaults to 10s. Must be greater than 0 and at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Time the container gets to exit after SIGTERM before it is killed with SIGKILL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[1].AddExample("", exampleContainerHealthCheck())
+	doc.Fields[2].AddExample("", 30*time.Second)
 
 	return doc
 }
@@ -725,7 +735,7 @@ func (ContainerDependsOn) Doc() *encoder.Doc {
 				Name:        "containers",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
+				Description: "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Other containers, by document name, which must be running first." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},

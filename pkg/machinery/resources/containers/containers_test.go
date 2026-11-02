@@ -269,11 +269,12 @@ func TestHealthStatusProtobufRoundTrip(t *testing.T) {
 	assertRoundTrip(t, status)
 }
 
-// TestLifecycleProtobufRoundTrip guards the (empty) protobuf tags on ContainerLifecycleSpec.
+// TestLifecycleProtobufRoundTrip guards the protobuf tags on ContainerLifecycleSpec.
 func TestLifecycleProtobufRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	lifecycle := containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID)
+	lifecycle.TypedSpec().ShutdownDeadline = time.Date(2026, 10, 29, 12, 0, 0, 0, time.UTC)
 
 	assertRoundTrip(t, lifecycle)
 }

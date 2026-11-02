@@ -6,6 +6,8 @@ package container
 
 //docgen:jsonschema
 
+import "time"
+
 // ContainerLifecycle configures how Talos starts, runs and stops the container.
 type ContainerLifecycle struct {
 	//   description: |
@@ -23,4 +25,18 @@ type ContainerLifecycle struct {
 	//   examples:
 	//     - value: exampleContainerHealthCheck()
 	HealthCheckConfig *ContainerHealthCheck `yaml:"healthCheck,omitempty" merge:"replace"`
+	//   description: |
+	//     Time the container gets to exit after SIGTERM before it is killed with SIGKILL.
+	//
+	//     It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is
+	//     replaced after a change or restarted with `talosctl restart`, and when it is removed.
+	//     Defaults to 10s. Must be greater than 0 and at most 4m.
+	//     Changing it replaces the running container, which is still stopped with its previous timeout.
+	//   examples:
+	//     - value: >
+	//         30 * time.Second
+	//   schema:
+	//     type: string
+	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
+	StopTimeoutConfig *time.Duration `yaml:"stopTimeout,omitempty"`
 }

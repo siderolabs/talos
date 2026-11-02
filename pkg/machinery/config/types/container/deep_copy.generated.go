@@ -6,6 +6,10 @@
 
 package container
 
+import (
+	"time"
+)
+
 // DeepCopy generates a deep copy of *ContainerConfigV1Alpha1.
 func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 	var cp ContainerConfigV1Alpha1 = *o
@@ -175,6 +179,10 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 				cp.LifecycleConfig.HealthCheckConfig.GRPCCheck = new(ContainerGRPCHealthCheck)
 				*cp.LifecycleConfig.HealthCheckConfig.GRPCCheck = *o.LifecycleConfig.HealthCheckConfig.GRPCCheck
 			}
+		}
+		if o.LifecycleConfig.StopTimeoutConfig != nil {
+			cp.LifecycleConfig.StopTimeoutConfig = new(time.Duration)
+			*cp.LifecycleConfig.StopTimeoutConfig = *o.LifecycleConfig.StopTimeoutConfig
 		}
 	}
 	return &cp

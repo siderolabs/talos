@@ -61,12 +61,13 @@ func (suite *ConfigSuite) TestNormalizesImageAndResolvesDefaults() {
 		// canonical string.
 		asrt.Equal("index.docker.io/library/nginx:latest", spec.TypedSpec().Image.Ref)
 
-		// Defaults: restricted, default seccomp profile, no host network, no limits.
+		// Defaults: restricted, default seccomp profile, no host network, no limits, the default stop timeout.
 		asrt.False(spec.TypedSpec().Security.Privileged)
 		asrt.False(spec.TypedSpec().Security.SeccompUnconfined)
 		asrt.False(spec.TypedSpec().Network.HostNetwork)
 		asrt.Zero(spec.TypedSpec().Resources.MemoryLimit)
 		asrt.Nil(spec.TypedSpec().Resources.SwapLimit)
+		asrt.Equal(10*time.Second, spec.TypedSpec().StopTimeout)
 
 		// no SecurityProfileConfig: no categories
 		asrt.Empty(spec.TypedSpec().Security.SELinuxLevel)
@@ -182,6 +183,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 			NetworkConfig: []string{"addresses"},
 			TimeConfig:    new(true),
 		},
+		StopTimeoutConfig: new(30 * time.Second),
 	}
 	doc.RunAsConfig = &containercfg.ContainerRunAs{
 		RunAsUID: new(int32(1000)),
@@ -207,6 +209,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		asrt.Equal([]string{"/var/mnt/data"}, spec.TypedSpec().DependsOn.Paths)
 		asrt.Equal([]string{"addresses"}, spec.TypedSpec().DependsOn.Networks)
 		asrt.True(spec.TypedSpec().DependsOn.Time)
+		asrt.Equal(30*time.Second, spec.TypedSpec().StopTimeout)
 
 		if asrt.NotNil(spec.TypedSpec().RunAs.UID) {
 			asrt.Equal(int32(1000), *spec.TypedSpec().RunAs.UID)

@@ -65,6 +65,8 @@ type ContainerSpecSpec struct {
 	DependsOn ContainerDependsOnSpec `yaml:"dependsOn,omitempty" protobuf:"11"`
 
 	Devices []ContainerDeviceSpec `yaml:"devices,omitempty" protobuf:"12"`
+
+	StopTimeout time.Duration `yaml:"stopTimeout,omitempty" protobuf:"13"`
 }
 
 // Ready reports the container's unmet dependencies (image, mounts, devices, dependsOn gates),
@@ -179,13 +181,14 @@ func (containerSpec ContainerSpecSpec) ResolvedWaitingFor(resolved ContainerMoun
 	return waitingFor
 }
 
-// InstanceProcessEqual compares the parts of the spec that describe the process itself.
+// InstanceProcessEqual compares the parts of the spec that describe the process itself, including how it is stopped.
 func (containerSpec ContainerSpecSpec) InstanceProcessEqual(instanceSpec ContainerInstanceSpecSpec) bool {
 	return slices.Equal(containerSpec.Entrypoint, instanceSpec.Entrypoint) &&
 		slices.Equal(containerSpec.Args, instanceSpec.Args) &&
 		containerSpec.WorkingDir == instanceSpec.WorkingDir &&
 		containerSpec.RunAs.Equal(instanceSpec.RunAs) &&
-		slices.Equal(containerSpec.Environment, instanceSpec.Environment)
+		slices.Equal(containerSpec.Environment, instanceSpec.Environment) &&
+		containerSpec.StopTimeout == instanceSpec.StopTimeout
 }
 
 // MountsResolvedMatchDeclared reports whether resolved describes the same mounts as declared.

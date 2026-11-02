@@ -44,12 +44,7 @@ type containerdRunner struct {
 	stdinCloser *StdinCloser
 }
 
-const (
-	taskWaitRetryInterval = time.Second
-
-	// killWaitTimeout bounds the wait for a task to be reaped after SIGKILL.
-	killWaitTimeout = 30 * time.Second
-)
+const taskWaitRetryInterval = time.Second
 
 var errTaskWaitClosed = errors.New("task wait stream closed without an exit status")
 
@@ -348,7 +343,7 @@ taskWaitLoop:
 	// never reaps, and waiting for it forever would hold up whatever is driving the stop.
 	select {
 	case <-statusC:
-	case <-time.After(killWaitTimeout):
+	case <-time.After(constants.TaskKillWaitTimeout):
 		return status, fmt.Errorf("task %q did not exit after SIGKILL", c.args.ID)
 	}
 

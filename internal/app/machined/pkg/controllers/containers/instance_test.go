@@ -741,6 +741,7 @@ func (suite *InstanceSuite) TestEveryComparedFieldReplacesInstance() {
 		func(spec *containers.ContainerSpecSpec) { spec.Resources.CPULimit = 1500 },
 		// nil and zero differ for the swap limit, so the comparison must see the pointer appear.
 		func(spec *containers.ContainerSpecSpec) { spec.Resources.SwapLimit = new(uint64(0)) },
+		func(spec *containers.ContainerSpecSpec) { spec.StopTimeout = time.Minute },
 		func(spec *containers.ContainerSpecSpec) {
 			spec.Mounts = []containers.ContainerMountSpec{{Kind: containers.MountKindTmpfs, Destination: "/tmp"}}
 		},

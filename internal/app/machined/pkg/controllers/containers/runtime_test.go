@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
@@ -36,6 +37,8 @@ type fakeTaskRunner struct {
 	removeFails  map[string]struct{}
 	removeFailed map[string]int
 	selfExit     map[string]chan int32
+	heldStops    map[string]chan struct{}
+	stopping     map[string]struct{}
 	closed       bool
 
 	// stopsWanted, when non-zero, holds every stop until that many of them are in flight at once.
@@ -52,7 +55,21 @@ func newFakeTaskRunner() *fakeTaskRunner {
 		removeFails:  map[string]struct{}{},
 		removeFailed: map[string]int{},
 		selfExit:     map[string]chan int32{},
+		heldStops:    map[string]chan struct{}{},
+		stopping:     map[string]struct{}{},
 	}
+}
+
+// holdStop keeps a stop of id from completing until release is called, standing in for a container
+// sitting out its graceful shutdown timeout.
+func (f *fakeTaskRunner) holdStop(id string) (release func()) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	held := make(chan struct{})
+	f.heldStops[id] = held
+
+	return sync.OnceFunc(func() { close(held) })
 }
 
 // failRemove makes Remove fail for id until clearRemoveFailure is called, standing in for a
@@ -147,6 +164,15 @@ func (f *fakeTaskRunner) Run(ctx context.Context, id string, _ containers.Contai
 		// process is simply gone once asked.
 		f.awaitConcurrentStops()
 
+		f.mu.Lock()
+		f.stopping[id] = struct{}{}
+		held := f.heldStops[id]
+		f.mu.Unlock()
+
+		if held != nil {
+			<-held
+		}
+
 		return 0, nil
 	case exitCode := <-exitCh:
 		return exitCode, nil
@@ -233,6 +259,16 @@ func (f *fakeTaskRunner) startCount(id string) int {
 	defer f.mu.Unlock()
 
 	return f.starts[id]
+}
+
+// isStopping reports whether a stop of id has been requested.
+func (f *fakeTaskRunner) isStopping(id string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	_, ok := f.stopping[id]
+
+	return ok
 }
 
 // hasFinished reports whether Run has returned for id, i.e. the task is no longer running.
@@ -346,6 +382,55 @@ func (suite *RuntimeSuite) createInstanceSpec(id string) {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
 }
 
+// declareDependencies creates the container spec of id, depending on the given containers.
+func (suite *RuntimeSuite) declareDependencies(id string, dependsOn ...string) {
+	spec := containers.NewContainerSpec(containers.NamespaceName, id)
+	spec.TypedSpec().DependsOn.Containers = dependsOn
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
+}
+
+func (suite *RuntimeSuite) setShutdownDeadline(deadline time.Time) {
+	_, err := safe.StateUpdateWithConflicts(suite.Ctx(), suite.State(),
+		containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata(),
+		func(lifecycle *containers.ContainerLifecycle) error {
+			lifecycle.TypedSpec().ShutdownDeadline = deadline
+
+			return nil
+		},
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *RuntimeSuite) assertRunning(ids ...string) {
+	ctest.AssertResources(suite, ids, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+}
+
+func (suite *RuntimeSuite) assertStopping(id string) {
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.isStopping(id) {
+			return retry.ExpectedErrorf("%q is not stopping", id)
+		}
+
+		return nil
+	})
+}
+
+func (suite *RuntimeSuite) teardownLifecycleAndWait() {
+	md := containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata()
+
+	_, err := suite.State().Teardown(suite.Ctx(), md)
+	suite.Require().NoError(err)
+
+	ctx, cancel := context.WithTimeout(suite.Ctx(), 10*time.Second)
+	defer cancel()
+
+	_, err = suite.State().WatchFor(ctx, md, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+}
+
 func (suite *RuntimeSuite) createInstanceSpecAllowingMachined(id string) {
 	spec := containers.NewContainerInstanceSpec(containers.NamespaceName, id)
 	spec.TypedSpec().ContainerID = id
@@ -418,6 +503,122 @@ func (suite *RuntimeSuite) TestTeardownStopsRemovesAndReleasesFinalizer() {
 	suite.Assert().True(suite.runner.wasRemoved(id))
 
 	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), md))
+}
+
+// TestSlowStopDoesNotHoldBackOtherInstances covers an instance taking its time to stop: other
+// instances are still stopped and released meanwhile.
+func (suite *RuntimeSuite) TestSlowStopDoesNotHoldBackOtherInstances() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const slowID, otherID = "a-slow-1", "b-other-1"
+
+	suite.createInstanceSpec(slowID)
+	suite.createInstanceSpec(otherID)
+
+	release := suite.runner.holdStop(slowID)
+	defer release()
+
+	ctest.AssertResources(suite, []string{slowID, otherID}, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	slowMD := containers.NewContainerInstanceSpec(containers.NamespaceName, slowID).Metadata()
+	otherMD := containers.NewContainerInstanceSpec(containers.NamespaceName, otherID).Metadata()
+
+	_, err := suite.State().Teardown(suite.Ctx(), slowMD)
+	suite.Require().NoError(err)
+
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.isStopping(slowID) {
+			return retry.ExpectedErrorf("%q is not stopping yet", slowID)
+		}
+
+		return nil
+	})
+
+	_, err = suite.State().Teardown(suite.Ctx(), otherMD)
+	suite.Require().NoError(err)
+
+	watchCtx, watchCancel := context.WithTimeout(suite.Ctx(), 3*time.Second)
+	defer watchCancel()
+
+	_, err = suite.State().WatchFor(watchCtx, otherMD, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Assert().True(suite.runner.wasRemoved(otherID))
+	suite.Assert().False(suite.runner.wasRemoved(slowID))
+
+	slowSpec, err := suite.State().Get(suite.Ctx(), slowMD)
+	suite.Require().NoError(err)
+	suite.Assert().False(slowSpec.Metadata().Finalizers().Empty())
+
+	// the status of the container is kept while it is stopping
+	ctest.AssertResource(suite, slowID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	// nothing else changes from here on, the end of the run alone has to bring the controller back
+	release()
+
+	_, err = suite.State().WatchFor(suite.Ctx(), slowMD, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Assert().True(suite.runner.wasRemoved(slowID))
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), slowMD))
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), otherMD))
+}
+
+// TestSlowStopDoesNotDelayShutdown covers the shutdown barrier being torn down while an instance is
+// still stopping: the other instances are stopped right away.
+func (suite *RuntimeSuite) TestSlowStopDoesNotDelayShutdown() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const slowID, otherID = "a-slow-2", "b-other-2"
+
+	suite.createInstanceSpec(slowID)
+	suite.createInstanceSpec(otherID)
+
+	release := suite.runner.holdStop(slowID)
+	defer release()
+
+	ctest.AssertResources(suite, []string{slowID, otherID}, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+	})
+
+	_, err := suite.State().Teardown(suite.Ctx(), containers.NewContainerInstanceSpec(containers.NamespaceName, slowID).Metadata())
+	suite.Require().NoError(err)
+
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.isStopping(slowID) {
+			return retry.ExpectedErrorf("%q is not stopping yet", slowID)
+		}
+
+		return nil
+	})
+
+	_, err = suite.State().Teardown(suite.Ctx(), containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata())
+	suite.Require().NoError(err)
+
+	suite.AssertWithin(3*time.Second, 50*time.Millisecond, func() error {
+		if !suite.runner.hasFinished(otherID) {
+			return retry.ExpectedErrorf("%q is still running", otherID)
+		}
+
+		return nil
+	})
+
+	suite.Assert().False(suite.runner.hasFinished(slowID))
+
+	release()
+
+	_, err = suite.State().WatchFor(suite.Ctx(),
+		containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata(),
+		state.WithFinalizerEmpty(),
+	)
+	suite.Require().NoError(err)
 }
 
 // TestAllowMachinedAccessRecordsAndClearsServicePID covers the ServicePID half of
@@ -698,6 +899,120 @@ func (suite *RuntimeSuite) TestStopsContainersConcurrentlyOnBarrierTeardown() {
 
 	suite.Assert().True(suite.runner.hasFinished(idA))
 	suite.Assert().True(suite.runner.hasFinished(idB))
+}
+
+// TestStopsDependentsFirstOnBarrierTeardown covers the order on the way down: a container is stopped
+// only once the containers depending on it are, the others concurrently.
+func (suite *RuntimeSuite) TestStopsDependentsFirstOnBarrierTeardown() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const backend, frontend, other = "order-backend", "order-frontend", "order-other"
+
+	suite.createInstanceSpec(backend)
+	suite.createInstanceSpec(frontend)
+	suite.createInstanceSpec(other)
+
+	release := suite.runner.holdStop(frontend)
+	defer release()
+
+	suite.assertRunning(backend, frontend, other)
+
+	// declared while the containers run: the order follows the configuration, not how they were started
+	suite.declareDependencies(frontend, backend)
+
+	md := containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata()
+
+	_, err := suite.State().Teardown(suite.Ctx(), md)
+	suite.Require().NoError(err)
+
+	suite.assertStopping(frontend)
+	suite.assertStopping(other)
+
+	suite.Never(func() bool { return suite.runner.isStopping(backend) }, time.Second, 50*time.Millisecond)
+
+	release()
+
+	ctx, cancel := context.WithTimeout(suite.Ctx(), 10*time.Second)
+	defer cancel()
+
+	_, err = suite.State().WatchFor(ctx, md, state.WithFinalizerEmpty())
+	suite.Require().NoError(err)
+
+	suite.Assert().True(suite.runner.hasFinished(backend))
+}
+
+// TestShutdownDeadlineStopsDependency covers a dependent taking too long to stop: its dependency is
+// stopped anyway, in time for the shutdown deadline.
+func (suite *RuntimeSuite) TestShutdownDeadlineStopsDependency() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const backend, frontend = "deadline-backend", "deadline-frontend"
+
+	suite.createInstanceSpec(backend)
+	suite.createInstanceSpec(frontend)
+	suite.declareDependencies(frontend, backend)
+
+	release := suite.runner.holdStop(frontend)
+	defer release()
+
+	suite.assertRunning(backend, frontend)
+
+	// too close to wait for the frontend
+	suite.setShutdownDeadline(time.Now())
+
+	_, err := suite.State().Teardown(suite.Ctx(),
+		containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID).Metadata())
+	suite.Require().NoError(err)
+
+	suite.assertStopping(backend)
+	suite.Assert().False(suite.runner.hasFinished(frontend))
+
+	release()
+}
+
+// TestShutdownDeadlineBreaksCycle covers containers depending on each other, which configuration
+// validation rejects: they are stopped by the deadline anyway.
+func (suite *RuntimeSuite) TestShutdownDeadlineBreaksCycle() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const first, second = "cycle-first", "cycle-second"
+
+	suite.createInstanceSpec(first)
+	suite.declareDependencies(first, second)
+	suite.createInstanceSpec(second)
+	suite.declareDependencies(second, first)
+
+	suite.assertRunning(first, second)
+
+	// waiting ends a few seconds from now: the deadline less the stop timeout, the kill wait and the margin
+	suite.setShutdownDeadline(time.Now().Add(time.Minute))
+
+	suite.teardownLifecycleAndWait()
+}
+
+// TestExitedDependentDoesNotHoldDependency covers a dependent which has already exited on its own.
+func (suite *RuntimeSuite) TestExitedDependentDoesNotHoldDependency() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const backend, frontend = "exited-backend", "exited-frontend"
+
+	suite.createInstanceSpec(backend)
+	suite.createInstanceSpec(frontend)
+	suite.declareDependencies(frontend, backend)
+
+	suite.assertRunning(backend, frontend)
+
+	suite.runner.exitNow(frontend, 1)
+
+	ctest.AssertResource(suite, frontend, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseTerminated, status.TypedSpec().Phase)
+	})
+
+	suite.teardownLifecycleAndWait()
 }
 
 // provokeControllerRestart takes the controller down and returns once it is back up and idle.

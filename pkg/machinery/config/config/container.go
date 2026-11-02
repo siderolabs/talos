@@ -45,6 +45,8 @@ type ContainerConfig interface {
 	DependsOn() ContainerDependsOnConfig
 	// HealthCheck probing the running container; None means health follows the lifecycle state.
 	HealthCheck() optional.Optional[ContainerHealthCheckConfig]
+	// StopTimeout is the time between SIGTERM and SIGKILL.
+	StopTimeout() time.Duration
 }
 
 // ContainerMountConfig defines a single container mount.

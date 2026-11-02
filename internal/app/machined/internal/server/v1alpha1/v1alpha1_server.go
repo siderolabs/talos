@@ -1736,6 +1736,18 @@ func (s *Server) Stats(ctx context.Context, in *machine.StatsRequest) (reply *ma
 
 // Restart implements the machine.MachineServer interface.
 func (s *Server) Restart(ctx context.Context, in *machine.RestartRequest) (*machine.RestartResponse, error) {
+	if in.Driver == common.ContainerDriver_CONTAINERD && in.Namespace == constants.TalosContainersContainerdNamespace {
+		if err := s.restartContainer(ctx, in.Id); err != nil {
+			return nil, err
+		}
+
+		return &machine.RestartResponse{
+			Messages: []*machine.Restart{
+				{},
+			},
+		}, nil
+	}
+
 	inspector, err := getContainerInspector(ctx, in.Namespace, in.Driver)
 	if err != nil {
 		return nil, err

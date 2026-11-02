@@ -1514,9 +1514,9 @@
           },
           "type": "array",
           "title": "containers",
-          "description": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.\n",
-          "markdownDescription": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
-          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
+          "description": "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.\n",
+          "markdownDescription": "Other containers, by document name, which must be running first.\n\nOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\n\nCycles are rejected when the machine configuration is applied.",
+          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eOn shutdown, reboot and upgrade, the container is stopped before them, as long as that fits\ninto the time the shutdown gives the containers. The order applies to the containers on the\nsame node only.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1653,6 +1653,14 @@
           "description": "Probe deciding whether the running container is healthy.\n\nWithout a health check, a running container is healthy. With one, it is reported as\npending until the first check passes, and as degraded once failureThreshold consecutive\nchecks fail. A failing check never restarts the container. Health gates other containers\nwhich list this one in lifecycle.dependsOn.containers.\n\nThe probe connects to 127.0.0.1 inside the container’s network namespace.\n",
           "markdownDescription": "Probe deciding whether the running container is healthy.\n\nWithout a health check, a running container is healthy. With one, it is reported as\npending until the first check passes, and as degraded once `failureThreshold` consecutive\nchecks fail. A failing check never restarts the container. Health gates other containers\nwhich list this one in `lifecycle.dependsOn.containers`.\n\nThe probe connects to `127.0.0.1` inside the container's network namespace.",
           "x-intellij-html-description": "\u003cp\u003eProbe deciding whether the running container is healthy.\u003c/p\u003e\n\n\u003cp\u003eWithout a health check, a running container is healthy. With one, it is reported as\npending until the first check passes, and as degraded once \u003ccode\u003efailureThreshold\u003c/code\u003e consecutive\nchecks fail. A failing check never restarts the container. Health gates other containers\nwhich list this one in \u003ccode\u003elifecycle.dependsOn.containers\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eThe probe connects to \u003ccode\u003e127.0.0.1\u003c/code\u003e inside the container\u0026rsquo;s network namespace.\u003c/p\u003e\n"
+        },
+        "stopTimeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "stopTimeout",
+          "description": "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with talosctl restart, and when it is removed.\nDefaults to 10s. Must be greater than 0 and at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.\n",
+          "markdownDescription": "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with `talosctl restart`, and when it is removed.\nDefaults to 10s. Must be greater than 0 and at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.",
+          "x-intellij-html-description": "\u003cp\u003eTime the container gets to exit after SIGTERM before it is killed with SIGKILL.\u003c/p\u003e\n\n\u003cp\u003eIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with \u003ccode\u003etalosctl restart\u003c/code\u003e, and when it is removed.\nDefaults to 10s. Must be greater than 0 and at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

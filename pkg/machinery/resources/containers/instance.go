@@ -69,6 +69,8 @@ type ContainerInstanceSpecSpec struct {
 
 	// Devices are fully resolved, with host device nodes filled in.
 	Devices []ResolvedDeviceSpec `yaml:"devices,omitempty" protobuf:"13"`
+
+	StopTimeout time.Duration `yaml:"stopTimeout,omitempty" protobuf:"14"`
 }
 
 // ResolvedMountSpec is a mount with its host-side source resolved.

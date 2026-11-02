@@ -57,6 +57,7 @@ image: nginx
 	assert.Equal(t, "none", string(cfg.Network().Mode()))
 	assert.False(t, cfg.Resources().MemoryLimit().IsPresent())
 	assert.Empty(t, cfg.DependsOn().Paths())
+	assert.Equal(t, 10*time.Second, cfg.StopTimeout())
 }
 
 func TestContainerConfigDependsOnDeprecatedNetworks(t *testing.T) {
@@ -263,6 +264,7 @@ lifecycle:
       port: 8080
       path: /healthz
     interval: 30s
+  stopTimeout: 2m
 `)
 
 	_, err := cfg.Validate(validationMode{})
@@ -275,6 +277,7 @@ lifecycle:
 	assert.Equal(t, "unconfined", string(cfg.Security().SeccompProfile()))
 	assert.Equal(t, "host", string(cfg.Network().Mode()))
 	assert.True(t, cfg.DependsOn().Time())
+	assert.Equal(t, 2*time.Minute, cfg.StopTimeout())
 
 	uid, ok := cfg.RunAs().UID().Get()
 	require.True(t, ok)
@@ -495,6 +498,21 @@ mounts:
 			name:        "self dependency",
 			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  containers: [nginx]",
 			expectedErr: "cannot depend on itself",
+		},
+		{
+			name:        "negative stop timeout",
+			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  stopTimeout: -1s",
+			expectedErr: "lifecycle.stopTimeout: -1s must be greater than 0 and at most 4m0s",
+		},
+		{
+			name:        "zero stop timeout",
+			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  stopTimeout: 0s",
+			expectedErr: "lifecycle.stopTimeout: 0s must be greater than 0 and at most 4m0s",
+		},
+		{
+			name:        "stop timeout too long",
+			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  stopTimeout: 5m",
+			expectedErr: "lifecycle.stopTimeout: 5m0s must be greater than 0 and at most 4m0s",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

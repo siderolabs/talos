@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // ContainerConfigKind is a config document kind.
@@ -327,8 +328,17 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 		validationErrors = errors.Join(validationErrors, c.RunAsConfig.Validate())
 	}
 
-	if c.LifecycleConfig != nil && c.LifecycleConfig.HealthCheckConfig != nil {
-		validationErrors = errors.Join(validationErrors, c.LifecycleConfig.HealthCheckConfig.Validate())
+	if c.LifecycleConfig != nil {
+		if c.LifecycleConfig.HealthCheckConfig != nil {
+			validationErrors = errors.Join(validationErrors, c.LifecycleConfig.HealthCheckConfig.Validate())
+		}
+
+		if c.LifecycleConfig.StopTimeoutConfig != nil {
+			if stopTimeout := *c.LifecycleConfig.StopTimeoutConfig; stopTimeout <= 0 || stopTimeout > constants.ContainerMaxStopTimeout {
+				validationErrors = errors.Join(validationErrors,
+					fmt.Errorf("lifecycle.stopTimeout: %s must be greater than 0 and at most %s", stopTimeout, constants.ContainerMaxStopTimeout))
+			}
+		}
 	}
 
 	return warnings, validationErrors
@@ -493,6 +503,15 @@ func (c *ContainerConfigV1Alpha1) HealthCheck() optional.Optional[config.Contain
 	}
 
 	return optional.Some[config.ContainerHealthCheckConfig](c.LifecycleConfig.HealthCheckConfig)
+}
+
+// StopTimeout implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) StopTimeout() time.Duration {
+	if c.LifecycleConfig == nil || c.LifecycleConfig.StopTimeoutConfig == nil {
+		return constants.ContainerDefaultStopTimeout
+	}
+
+	return *c.LifecycleConfig.StopTimeoutConfig
 }
 
 // mustParse re-parses an already-normalized reference. Normalization has succeeded by the time
