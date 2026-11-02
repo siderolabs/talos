@@ -73,6 +73,8 @@ hostDNS:
   enabled: true
   logLevel: warn
 ```
+
+The field is not available in the deprecated `.machine.features.hostDNS` section, so move the host DNS configuration to the `ResolverConfig` document to use it.
 """
 
     [notes.credential_provider_config_files]

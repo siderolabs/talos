@@ -99,7 +99,8 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 		}
 
 		if err != nil {
-			logger.Warn("dns request to upstream failed", zap.String("upstream", ups.Addr()), zap.Error(err))
+			// Use the base logger to avoid dumping the full DNS message on each upstream failure.
+			h.logger.Warn("dns request to upstream failed", zap.String("question", req.QName()), zap.String("upstream", ups.Addr()), zap.Error(err))
 
 			// Kick off health check to see if the upstream is broken, so that
 			// further requests try healthy upstreams first.
