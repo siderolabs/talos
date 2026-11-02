@@ -20,7 +20,7 @@ var SupportedArchitectures = []string{
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "7.3.0-talos"
+	DefaultKernelVersion = "7.3.1-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
