@@ -52,15 +52,17 @@ resources:
 
         # # Swap ceiling, mapped onto cgroup v2 `memory.swap.max`.
         # swap: "0"
-# Conditions which must be satisfied before the container is started.
-dependsOn:
-    # Host paths which must exist before the container starts.
-    paths:
-        - /var/mnt/web-content
-    # Network readiness conditions which must be satisfied.
-    network:
-        - addresses
-    time: true # Whether the clock must be synchronized before the container starts.
+# Lifecycle settings for the container.
+lifecycle:
+    # Conditions which must be satisfied before the container is started.
+    dependsOn:
+        # Host paths which must exist before the container starts.
+        paths:
+            - /var/mnt/web-content
+        # Network readiness conditions which must be satisfied.
+        network:
+            - addresses
+        time: true # Whether the clock must be synchronized before the container starts.
 
 # # Devices to hand to the container.
 # devices:
@@ -93,7 +95,7 @@ devices:
 |`security` |<a href="#ContainerConfig.security">ContainerSecurity</a> |Security settings for the container.  | |
 |`network` |<a href="#ContainerConfig.network">ContainerNetwork</a> |Network settings for the container.  | |
 |`resources` |<a href="#ContainerConfig.resources">ContainerResources</a> |Resource limits, applied as cgroup v2 settings.  | |
-|`dependsOn` |<a href="#ContainerConfig.dependsOn">ContainerDependsOn</a> |Conditions which must be satisfied before the container is started.  | |
+|`lifecycle` |<a href="#ContainerConfig.lifecycle">ContainerLifecycle</a> |Lifecycle settings for the container.  | |
 
 
 
@@ -341,7 +343,21 @@ swap: "0"
 
 
 
-## dependsOn {#ContainerConfig.dependsOn}
+## lifecycle {#ContainerConfig.lifecycle}
+
+ContainerLifecycle configures how Talos starts, runs and stops the container.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`dependsOn` |<a href="#ContainerConfig.lifecycle.dependsOn">ContainerDependsOn</a> |Conditions which must be satisfied before the container is started.  | |
+
+
+
+
+### dependsOn {#ContainerConfig.lifecycle.dependsOn}
 
 ContainerDependsOn gates container startup on external conditions.
 
@@ -357,6 +373,8 @@ paths:
 |`network` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
 |`time` |bool |Whether the clock must be synchronized before the container starts.  | |
 |`containers` |[]string |Other containers, by document name, which must be running first.<br><br>Cycles are rejected when the machine configuration is applied.  | |
+
+
 
 
 

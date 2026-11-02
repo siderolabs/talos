@@ -122,9 +122,13 @@ type ContainerConfigV1Alpha1 struct {
 	//   description: |
 	//     Resource limits, applied as cgroup v2 settings.
 	ResourcesConfig *ContainerResources `yaml:"resources,omitempty"`
-	//   description: |
-	//     Conditions which must be satisfied before the container is started.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `lifecycle.dependsOn` instead.
 	DependsOnConfig *ContainerDependsOn `yaml:"dependsOn,omitempty"`
+	//   description: |
+	//     Lifecycle settings for the container.
+	LifecycleConfig *ContainerLifecycle `yaml:"lifecycle,omitempty"`
 }
 
 // NewContainerConfigV1Alpha1 creates a new container config document.
@@ -163,10 +167,12 @@ func exampleContainerConfigV1Alpha1() *ContainerConfigV1Alpha1 {
 			Memory: "512MiB",
 		},
 	}
-	cfg.DependsOnConfig = &ContainerDependsOn{
-		PathsConfig:   []string{"/var/mnt/web-content"},
-		NetworkConfig: []string{"addresses"},
-		TimeConfig:    new(true),
+	cfg.LifecycleConfig = &ContainerLifecycle{
+		DependsOnConfig: &ContainerDependsOn{
+			PathsConfig:   []string{"/var/mnt/web-content"},
+			NetworkConfig: []string{"addresses"},
+			TimeConfig:    new(true),
+		},
 	}
 
 	return cfg
@@ -291,7 +297,17 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 	}
 
 	if c.DependsOnConfig != nil {
-		validationErrors = errors.Join(validationErrors, c.DependsOnConfig.Validate(c.MetaName))
+		warnings = append(warnings,
+			fmt.Sprintf("container %q: dependsOn is deprecated, use lifecycle.dependsOn instead", c.MetaName))
+
+		if c.LifecycleConfig != nil && c.LifecycleConfig.DependsOnConfig != nil {
+			validationErrors = errors.Join(validationErrors,
+				errors.New("dependsOn and lifecycle.dependsOn are mutually exclusive, use lifecycle.dependsOn"))
+		}
+	}
+
+	if dependsOn := c.dependsOnConfig(); dependsOn != nil {
+		validationErrors = errors.Join(validationErrors, dependsOn.Validate(c.MetaName))
 	}
 
 	if c.RunAsConfig != nil {
@@ -434,8 +450,20 @@ func (c *ContainerConfigV1Alpha1) Resources() config.ContainerResourcesConfig {
 
 // DependsOn implements config.ContainerConfig interface.
 func (c *ContainerConfigV1Alpha1) DependsOn() config.ContainerDependsOnConfig {
-	if c.DependsOnConfig == nil {
-		return &ContainerDependsOn{}
+	if dependsOn := c.dependsOnConfig(); dependsOn != nil {
+		return dependsOn
+	}
+
+	return &ContainerDependsOn{}
+}
+
+// dependsOnConfig returns the dependency settings in effect, or nil if there are none.
+//
+// The deprecated top-level `dependsOn` is used only when `lifecycle.dependsOn` is not set; setting
+// both is rejected by validation.
+func (c *ContainerConfigV1Alpha1) dependsOnConfig() *ContainerDependsOn {
+	if c.LifecycleConfig != nil && c.LifecycleConfig.DependsOnConfig != nil {
+		return c.LifecycleConfig.DependsOnConfig
 	}
 
 	return c.DependsOnConfig

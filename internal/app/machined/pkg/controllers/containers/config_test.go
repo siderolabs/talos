@@ -176,10 +176,12 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 	doc.ResourcesConfig = &containercfg.ContainerResources{
 		Limits: &containercfg.ContainerResourceLimits{CPU: "1500m", Memory: "512MiB", Swap: "0"},
 	}
-	doc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		PathsConfig:   []string{"/var/mnt/data"},
-		NetworkConfig: []string{"addresses"},
-		TimeConfig:    new(true),
+	doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			PathsConfig:   []string{"/var/mnt/data"},
+			NetworkConfig: []string{"addresses"},
+			TimeConfig:    new(true),
+		},
 	}
 	doc.RunAsConfig = &containercfg.ContainerRunAs{
 		RunAsUID: new(int32(1000)),
@@ -203,6 +205,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		}
 
 		asrt.Equal([]string{"/var/mnt/data"}, spec.TypedSpec().DependsOn.Paths)
+		asrt.Equal([]string{"addresses"}, spec.TypedSpec().DependsOn.Networks)
 		asrt.True(spec.TypedSpec().DependsOn.Time)
 
 		if asrt.NotNil(spec.TypedSpec().RunAs.UID) {
@@ -212,6 +215,29 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 		if asrt.NotNil(spec.TypedSpec().RunAs.GID) {
 			asrt.Equal(int32(1000), *spec.TypedSpec().RunAs.GID)
 		}
+	})
+}
+
+// TestResolvesDeprecatedDependsOn covers a document written against v1.14, with dependsOn at the top
+// level rather than under lifecycle: every condition still reaches the spec.
+func (suite *ConfigSuite) TestResolvesDeprecatedDependsOn() {
+	doc := newDoc("api", "ghcr.io/siderolabs/api:v1.0.0")
+	doc.DependsOnConfig = &containercfg.ContainerDependsOn{ //nolint:staticcheck // testing deprecated field
+		PathsConfig:      []string{"/var/mnt/data"},
+		NetworksConfig:   []string{"addresses"}, //nolint:staticcheck // testing deprecated field
+		TimeConfig:       new(true),
+		ContainersConfig: []string{"database"},
+	}
+
+	suite.applyContainers(doc, newDoc("database", "ghcr.io/siderolabs/database:v1.0.0"))
+
+	ctest.AssertResource(suite, "api", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerDependsOnSpec{
+			Paths:      []string{"/var/mnt/data"},
+			Networks:   []string{"addresses"},
+			Time:       true,
+			Containers: []string{"database"},
+		}, spec.TypedSpec().DependsOn)
 	})
 }
 

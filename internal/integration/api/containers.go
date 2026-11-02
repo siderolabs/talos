@@ -886,8 +886,10 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 		ctx, name, _ := suite.setupContainer("dependson-repoint")
 
 		doc := suite.newContainer(name, containerPauseImage)
-		doc.DependsOnConfig = &containercfg.ContainerDependsOn{
-			PathsConfig: []string{fmt.Sprintf("/var/%s-absent", name)},
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			DependsOnConfig: &containercfg.ContainerDependsOn{
+				PathsConfig: []string{fmt.Sprintf("/var/%s-absent", name)},
+			},
 		}
 
 		suite.applyContainers(ctx, doc)
@@ -910,8 +912,10 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 		// Note that /etc/hostname is not: Talos does not manage one, despite what the controller's
 		// doc comment says.
 		doc = suite.newContainer(name, containerPauseImage)
-		doc.DependsOnConfig = &containercfg.ContainerDependsOn{
-			PathsConfig: []string{"/etc/hosts"},
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			DependsOnConfig: &containercfg.ContainerDependsOn{
+				PathsConfig: []string{"/etc/hosts"},
+			},
 		}
 
 		suite.applyContainers(ctx, doc)
@@ -940,8 +944,10 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 		})
 
 		waiterDoc := suite.newContainer(waiter, containerPauseImage)
-		waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-			PathsConfig: []string{marker},
+		waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			DependsOnConfig: &containercfg.ContainerDependsOn{
+				PathsConfig: []string{marker},
+			},
 		}
 
 		suite.applyContainers(ctx, waiterDoc)
@@ -996,13 +1002,17 @@ func (suite *ContainersSuite) TestDependsOnContainers() {
 	})
 
 	dependencyDoc := suite.newContainer(dependency, containerPauseImage)
-	dependencyDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		PathsConfig: []string{marker},
+	dependencyDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			PathsConfig: []string{marker},
+		},
 	}
 
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
-	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		ContainersConfig: []string{dependency},
+	waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			ContainersConfig: []string{dependency},
+		},
 	}
 
 	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
@@ -1060,8 +1070,10 @@ func (suite *ContainersSuite) TestDependsOnFailingContainer() {
 	dependencyDoc := suite.shellContainer(dependency, "exit 1")
 
 	waiterDoc := suite.newContainer(waiter, containerPauseImage)
-	waiterDoc.DependsOnConfig = &containercfg.ContainerDependsOn{
-		ContainersConfig: []string{dependency},
+	waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			ContainersConfig: []string{dependency},
+		},
 	}
 
 	suite.applyContainers(ctx, dependencyDoc, waiterDoc)

@@ -1461,12 +1461,12 @@
           "markdownDescription": "Resource limits, applied as cgroup v2 settings.",
           "x-intellij-html-description": "\u003cp\u003eResource limits, applied as cgroup v2 settings.\u003c/p\u003e\n"
         },
-        "dependsOn": {
-          "$ref": "#/$defs/container.ContainerDependsOn",
-          "title": "dependsOn",
-          "description": "Conditions which must be satisfied before the container is started.\n",
-          "markdownDescription": "Conditions which must be satisfied before the container is started.",
-          "x-intellij-html-description": "\u003cp\u003eConditions which must be satisfied before the container is started.\u003c/p\u003e\n"
+        "lifecycle": {
+          "$ref": "#/$defs/container.ContainerLifecycle",
+          "title": "lifecycle",
+          "description": "Lifecycle settings for the container.\n",
+          "markdownDescription": "Lifecycle settings for the container.",
+          "x-intellij-html-description": "\u003cp\u003eLifecycle settings for the container.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1536,6 +1536,20 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ContainerDevice describes a single device to hand to the container.\\n\\nExactly one source must be set.\\n"
+    },
+    "container.ContainerLifecycle": {
+      "properties": {
+        "dependsOn": {
+          "$ref": "#/$defs/container.ContainerDependsOn",
+          "title": "dependsOn",
+          "description": "Conditions which must be satisfied before the container is started.\n",
+          "markdownDescription": "Conditions which must be satisfied before the container is started.",
+          "x-intellij-html-description": "\u003cp\u003eConditions which must be satisfied before the container is started.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerLifecycle configures how Talos starts, runs and stops the container."
     },
     "container.ContainerMount": {
       "properties": {

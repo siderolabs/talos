@@ -106,12 +106,13 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Resource limits, applied as cgroup v2 settings.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Resource limits, applied as cgroup v2 settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{},
 			{
-				Name:        "dependsOn",
-				Type:        "ContainerDependsOn",
+				Name:        "lifecycle",
+				Type:        "ContainerLifecycle",
 				Note:        "",
-				Description: "Conditions which must be satisfied before the container is started.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Conditions which must be satisfied before the container is started." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Lifecycle settings for the container.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Lifecycle settings for the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -181,6 +182,31 @@ func (RawVolumeDevice) Doc() *encoder.Doc {
 	}
 
 	doc.Fields[1].AddExample("", "/dev/data")
+
+	return doc
+}
+
+func (ContainerLifecycle) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerLifecycle",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerLifecycle configures how Talos starts, runs and stops the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerLifecycle configures how Talos starts, runs and stops the container.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerConfigV1Alpha1",
+				FieldName: "lifecycle",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "dependsOn",
+				Type:        "ContainerDependsOn",
+				Note:        "",
+				Description: "Conditions which must be satisfied before the container is started.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Conditions which must be satisfied before the container is started." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -493,7 +519,7 @@ func (ContainerDependsOn) Doc() *encoder.Doc {
 		Description: "ContainerDependsOn gates container startup on external conditions.",
 		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "ContainerConfigV1Alpha1",
+				TypeName:  "ContainerLifecycle",
 				FieldName: "dependsOn",
 			},
 		},
@@ -639,6 +665,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ContainerConfigV1Alpha1{}.Doc(),
 			ContainerDevice{}.Doc(),
 			RawVolumeDevice{}.Doc(),
+			ContainerLifecycle{}.Doc(),
 			ContainerMount{}.Doc(),
 			VolumeMount{}.Doc(),
 			TmpfsMount{}.Doc(),

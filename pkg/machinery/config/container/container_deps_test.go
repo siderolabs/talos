@@ -22,9 +22,24 @@ func newContainerDoc(name string, dependsOn ...string) *containercfg.ContainerCo
 	doc.ContainerImage = "docker.io/library/nginx:latest"
 
 	if len(dependsOn) > 0 {
-		doc.DependsOnConfig = &containercfg.ContainerDependsOn{
-			ContainersConfig: dependsOn,
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			DependsOnConfig: &containercfg.ContainerDependsOn{
+				ContainersConfig: dependsOn,
+			},
 		}
+	}
+
+	return doc
+}
+
+// newDeprecatedContainerDoc is newContainerDoc, declaring the dependencies via the deprecated
+// top-level dependsOn instead of lifecycle.dependsOn.
+func newDeprecatedContainerDoc(name string, dependsOn ...string) *containercfg.ContainerConfigV1Alpha1 {
+	doc := containercfg.NewContainerConfigV1Alpha1()
+	doc.MetaName = name
+	doc.ContainerImage = "docker.io/library/nginx:latest"
+	doc.DependsOnConfig = &containercfg.ContainerDependsOn{ //nolint:staticcheck // testing deprecated field
+		ContainersConfig: dependsOn,
 	}
 
 	return doc
@@ -103,6 +118,29 @@ func TestContainerDependencyCycles(t *testing.T) {
 				newContainerDoc("a", "nonexistent"),
 			},
 			expectedErr: `depends on container "nonexistent", which is not configured`,
+		},
+		{
+			name: "chain through the deprecated dependsOn",
+			docs: []*containercfg.ContainerConfigV1Alpha1{
+				newDeprecatedContainerDoc("a", "b"),
+				newContainerDoc("b", "c"),
+				newContainerDoc("c"),
+			},
+		},
+		{
+			name: "dangling reference in the deprecated dependsOn",
+			docs: []*containercfg.ContainerConfigV1Alpha1{
+				newDeprecatedContainerDoc("a", "nonexistent"),
+			},
+			expectedErr: `depends on container "nonexistent", which is not configured`,
+		},
+		{
+			name: "cycle across the deprecated and the lifecycle dependsOn",
+			docs: []*containercfg.ContainerConfigV1Alpha1{
+				newDeprecatedContainerDoc("a", "b"),
+				newContainerDoc("b", "a"),
+			},
+			expectedErr: "container dependsOn cycle detected",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

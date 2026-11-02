@@ -67,12 +67,12 @@ func TestContainerConfigDependsOnDeprecatedNetworks(t *testing.T) {
 	}{
 		{
 			name:     "networks only",
-			doc:      "dependsOn:\n  networks: [addresses]",
+			doc:      "lifecycle:\n  dependsOn:\n    networks: [addresses]",
 			expected: []string{"addresses"},
 		},
 		{
 			name:     "network wins over networks",
-			doc:      "dependsOn:\n  network: [connectivity]\n  networks: [addresses]",
+			doc:      "lifecycle:\n  dependsOn:\n    network: [connectivity]\n    networks: [addresses]",
 			expected: []string{"connectivity"},
 		},
 	} {
@@ -87,6 +87,72 @@ func TestContainerConfigDependsOnDeprecatedNetworks(t *testing.T) {
 			assert.Equal(t, test.expected, cfg.DependsOn().Network())
 		})
 	}
+}
+
+func TestContainerConfigDeprecatedDependsOn(t *testing.T) {
+	t.Parallel()
+
+	const header = "apiVersion: v1alpha1\nkind: ContainerConfig\nname: nginx\nimage: nginx@sha256:" +
+		"0000000000000000000000000000000000000000000000000000000000000000\n"
+
+	t.Run("top-level dependsOn is still honored, with a warning", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := load(t, header+"dependsOn:\n  paths: [/var/mnt/data]\n  network: [addresses]\n  time: true\n  containers: [database]\n")
+
+		warnings, err := cfg.Validate(validationMode{})
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{`container "nginx": dependsOn is deprecated, use lifecycle.dependsOn instead`}, warnings)
+		assert.Equal(t, []string{"/var/mnt/data"}, cfg.DependsOn().Paths())
+		assert.Equal(t, []string{"addresses"}, cfg.DependsOn().Network())
+		assert.True(t, cfg.DependsOn().Time())
+		assert.Equal(t, []string{"database"}, cfg.DependsOn().Containers())
+	})
+
+	// Both deprecations at once, as in a v1.14 configuration: top-level dependsOn with networks.
+	t.Run("top-level dependsOn with the deprecated networks key", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := load(t, header+"dependsOn:\n  networks: [connectivity]\n")
+
+		_, err := cfg.Validate(validationMode{})
+		require.NoError(t, err)
+
+		assert.Equal(t, []string{"connectivity"}, cfg.DependsOn().Network())
+	})
+
+	t.Run("lifecycle.dependsOn does not warn", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := load(t, header+"lifecycle:\n  dependsOn:\n    paths: [/var/mnt/data]\n")
+
+		warnings, err := cfg.Validate(validationMode{})
+		require.NoError(t, err)
+
+		assert.Empty(t, warnings)
+		assert.Equal(t, []string{"/var/mnt/data"}, cfg.DependsOn().Paths())
+	})
+
+	t.Run("an empty lifecycle falls back to the top-level dependsOn", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := load(t, header+"dependsOn:\n  time: true\nlifecycle: {}\n")
+
+		_, err := cfg.Validate(validationMode{})
+		require.NoError(t, err)
+
+		assert.True(t, cfg.DependsOn().Time())
+	})
+
+	t.Run("both are rejected", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := load(t, header+"dependsOn:\n  time: true\nlifecycle:\n  dependsOn:\n    paths: [/var/mnt/data]\n")
+
+		_, err := cfg.Validate(validationMode{})
+		require.ErrorContains(t, err, "dependsOn and lifecycle.dependsOn are mutually exclusive")
+	})
 }
 
 func TestContainerConfigDeprecatedUserVolumeMount(t *testing.T) {
@@ -183,12 +249,13 @@ resources:
     cpu: 1500m
     memory: 512MiB
     swap: "0"
-dependsOn:
-  paths:
-    - /var/mnt/director-data
-  network:
-    - addresses
-  time: true
+lifecycle:
+  dependsOn:
+    paths:
+      - /var/mnt/director-data
+    network:
+      - addresses
+    time: true
 `)
 
 	_, err := cfg.Validate(validationMode{})
@@ -396,20 +463,21 @@ mounts:
 		},
 		{
 			name:        "unknown network condition",
-			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  network: [dns]",
+			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  dependsOn:\n    network: [dns]",
 			expectedErr: `unsupported dependsOn.network condition "dns"`,
 		},
 		{
 			name:        "unknown network condition via deprecated networks",
-			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  networks: [dns]",
+			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  dependsOn:\n    networks: [dns]",
 			expectedErr: `unsupported dependsOn.network condition "dns"`,
 		},
 		{
 			name:        "relative dependsOn path",
-			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  paths: [var/mnt/data]",
+			doc:         "name: nginx\nimage: nginx\nlifecycle:\n  dependsOn:\n    paths: [var/mnt/data]",
 			expectedErr: "must be an absolute path",
 		},
 		{
+			// The deprecated top-level dependsOn is still validated.
 			name:        "self dependency",
 			doc:         "name: nginx\nimage: nginx\ndependsOn:\n  containers: [nginx]",
 			expectedErr: "cannot depend on itself",

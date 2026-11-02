@@ -445,9 +445,29 @@ apiVersion: v1alpha1
 kind: ContainerConfig
 name: web
 image: docker.io/library/nginx:1.27
-dependsOn:
-  network:
-    - addresses
+lifecycle:
+  dependsOn:
+    network:
+      - addresses
+```
+"""
+
+    [notes.container_lifecycle_depends_on]
+        title = "ContainerConfig `dependsOn` Moved under `lifecycle`"
+        description = """\
+The `dependsOn` field of the `ContainerConfig` document has moved to `lifecycle.dependsOn`, where further container lifecycle settings will be grouped.
+The top-level `dependsOn` is still accepted but deprecated, and validation warns when it is used. Setting both `dependsOn` and `lifecycle.dependsOn` is rejected; migrate ContainerConfigs to `lifecycle.dependsOn`.
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: web
+image: docker.io/library/nginx:1.27
+lifecycle:
+  dependsOn:
+    containers:
+      - database
+    time: true
 ```
 """
 

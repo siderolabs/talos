@@ -133,5 +133,33 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			copy(cp.DependsOnConfig.ContainersConfig, o.DependsOnConfig.ContainersConfig)
 		}
 	}
+	if o.LifecycleConfig != nil {
+		cp.LifecycleConfig = new(ContainerLifecycle)
+		*cp.LifecycleConfig = *o.LifecycleConfig
+		if o.LifecycleConfig.DependsOnConfig != nil {
+			cp.LifecycleConfig.DependsOnConfig = new(ContainerDependsOn)
+			*cp.LifecycleConfig.DependsOnConfig = *o.LifecycleConfig.DependsOnConfig
+			if o.LifecycleConfig.DependsOnConfig.PathsConfig != nil {
+				cp.LifecycleConfig.DependsOnConfig.PathsConfig = make([]string, len(o.LifecycleConfig.DependsOnConfig.PathsConfig))
+				copy(cp.LifecycleConfig.DependsOnConfig.PathsConfig, o.LifecycleConfig.DependsOnConfig.PathsConfig)
+			}
+			if o.LifecycleConfig.DependsOnConfig.NetworkConfig != nil {
+				cp.LifecycleConfig.DependsOnConfig.NetworkConfig = make([]string, len(o.LifecycleConfig.DependsOnConfig.NetworkConfig))
+				copy(cp.LifecycleConfig.DependsOnConfig.NetworkConfig, o.LifecycleConfig.DependsOnConfig.NetworkConfig)
+			}
+			if o.LifecycleConfig.DependsOnConfig.NetworksConfig != nil {
+				cp.LifecycleConfig.DependsOnConfig.NetworksConfig = make([]string, len(o.LifecycleConfig.DependsOnConfig.NetworksConfig))
+				copy(cp.LifecycleConfig.DependsOnConfig.NetworksConfig, o.LifecycleConfig.DependsOnConfig.NetworksConfig)
+			}
+			if o.LifecycleConfig.DependsOnConfig.TimeConfig != nil {
+				cp.LifecycleConfig.DependsOnConfig.TimeConfig = new(bool)
+				*cp.LifecycleConfig.DependsOnConfig.TimeConfig = *o.LifecycleConfig.DependsOnConfig.TimeConfig
+			}
+			if o.LifecycleConfig.DependsOnConfig.ContainersConfig != nil {
+				cp.LifecycleConfig.DependsOnConfig.ContainersConfig = make([]string, len(o.LifecycleConfig.DependsOnConfig.ContainersConfig))
+				copy(cp.LifecycleConfig.DependsOnConfig.ContainersConfig, o.LifecycleConfig.DependsOnConfig.ContainersConfig)
+			}
+		}
+	}
 	return &cp
 }
