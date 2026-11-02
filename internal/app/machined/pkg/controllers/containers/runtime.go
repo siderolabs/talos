@@ -613,6 +613,7 @@ func (ctrl *RuntimeController) refuseStale(
 				Phase:       containers.ContainerInstancePhaseFailed,
 				Error:       "mounts or devices changed before the container was started",
 				FinishedAt:  now,
+				Refused:     true,
 			}
 
 			return nil

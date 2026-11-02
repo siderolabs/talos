@@ -1402,6 +1402,7 @@ func (suite *RuntimeSuite) TestRefusesInstanceWithStaleDevices() {
 	ctest.AssertResource(suite, staleID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerInstancePhaseFailed, status.TypedSpec().Phase)
 		asrt.Equal("mounts or devices changed before the container was started", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Refused)
 	})
 
 	suite.Assert().False(suite.runner.wasStarted(staleID))

@@ -229,8 +229,31 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 	}
 
 	containerSpecSpec.StopTimeout = containerConfig.StopTimeout()
+	restart := containerConfig.Restart()
+	containerSpecSpec.Restart = containers.ContainerRestartSpec{
+		Policy:   restartPolicy(restart.Policy()),
+		Delay:    restart.Delay(),
+		MaxDelay: restart.MaxDelay(),
+	}
+
+	if maxRetries, ok := restart.MaxRetries().Get(); ok {
+		containerSpecSpec.Restart.MaxRetries = new(uint32(maxRetries)) //nolint:gosec // validated to be non-negative
+	}
 
 	return nil
+}
+
+func restartPolicy(policy configcfg.ContainerRestartPolicy) containers.ContainerRestartPolicy {
+	switch policy {
+	case configcfg.ContainerRestartPolicyOnFailure:
+		return containers.ContainerRestartPolicyOnFailure
+	case configcfg.ContainerRestartPolicyNever:
+		return containers.ContainerRestartPolicyNever
+	case configcfg.ContainerRestartPolicyAlways:
+	}
+
+	// always, and anything else, which validation rejects
+	return containers.ContainerRestartPolicyAlways
 }
 
 // resolveMounts turns typed configuration mounts into mount specs.

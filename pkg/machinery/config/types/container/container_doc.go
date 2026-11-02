@@ -18,7 +18,7 @@ func (ContainerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ContainerConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerConfig is a container configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ContainerConfig is a container configuration document.\nContainerConfig declares a container to be run by Talos directly, without Kubernetes.\n\nThe container is started as soon as the configuration is applied, with no image rebuild\nand no reboot. It runs against the CRI containerd instance in the dedicated\n`taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.\n\nContainers are not Talos services: they do not appear in `talosctl services`, and\n`talosctl service` does not apply to them. Status is reported via `ContainerStatus`.\n",
+		Description: "ContainerConfig is a container configuration document.\nContainerConfig declares a container to be run by Talos directly, without Kubernetes.\n\nThe container is started as soon as the configuration is applied, with no image rebuild\nand no reboot. It runs against the CRI containerd instance in the dedicated\n`taloscontainers` namespace, and by default is restarted 5 seconds after it stops.\n\nContainers are not Talos services: they do not appear in `talosctl services`, and\n`talosctl service` does not apply to them. Status is reported via `ContainerStatus`.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -381,6 +381,13 @@ func (ContainerLifecycle) Doc() *encoder.Doc {
 				Description: "Time the container gets to exit after SIGTERM before it is killed with SIGKILL.\n\nIt applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is\nreplaced after a change or restarted with `talosctl restart`, and when it is removed.\nDefaults to 10s. Must be greater than 0 and at most 4m.\nChanging it replaces the running container, which is still stopped with its previous timeout.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Time the container gets to exit after SIGTERM before it is killed with SIGKILL." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "restart",
+				Type:        "ContainerRestart",
+				Note:        "",
+				Description: "How the container is restarted after it exits.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How the container is restarted after it exits." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -555,6 +562,60 @@ func (HostPathMount) Doc() *encoder.Doc {
 			},
 		},
 	}
+
+	return doc
+}
+
+func (ContainerRestart) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerRestart",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerRestart configures how the container is restarted after it exits." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerRestart configures how the container is restarted after it exits.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerLifecycle",
+				FieldName: "restart",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "policy",
+				Type:        "ContainerRestartPolicy",
+				Note:        "",
+				Description: "When the container is restarted after it exits.\n\n`always` restarts it after every exit, `on-failure` after it failed (a non-zero exit code\nor a failure to start), and `never` runs it once.\nA container which is not restarted keeps its outcome until its configuration changes or it\nis removed, and runs again after a reboot or a restart of machined.\n`talosctl restart` only signals the container, so it doesn't run such a container again.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "When the container is restarted after it exits." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"always",
+					"on-failure",
+					"never",
+				},
+			},
+			{
+				Name:        "maxRetries",
+				Type:        "int",
+				Note:        "",
+				Description: "How many times a failed container is restarted at most, with the `on-failure` policy.\n\nUnset restarts it until it succeeds.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How many times a failed container is restarted at most, with the `on-failure` policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "delay",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Time to wait after the container exited before it is restarted.\nDefaults to 5s.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Time to wait after the container exited before it is restarted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "maxDelay",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Longest time to wait before a restart.\n\nThe delay doubles with each restart of a container which ran for a shorter time than this,\nup to this. Defaults to the delay, so the delay doesn't grow.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Longest time to wait before a restart." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[2].AddExample("", 5*time.Second)
+	doc.Fields[3].AddExample("", time.Minute)
 
 	return doc
 }
@@ -892,6 +953,7 @@ func GetFileDoc() *encoder.FileDoc {
 			VolumeMount{}.Doc(),
 			TmpfsMount{}.Doc(),
 			HostPathMount{}.Doc(),
+			ContainerRestart{}.Doc(),
 			ContainerRunAs{}.Doc(),
 			ContainerNetwork{}.Doc(),
 			ContainerResources{}.Doc(),

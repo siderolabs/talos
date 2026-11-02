@@ -84,6 +84,8 @@ message ContainerInstanceSpecSpec {
   // Devices are fully resolved, with host device nodes filled in.
   repeated ResolvedDeviceSpec devices = 13;
   google.protobuf.Duration stop_timeout = 14;
+  // ExecutionHash is the ContainerSpec execution hash the instance was created for.
+  string execution_hash = 15;
 }
 
 // ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
@@ -104,6 +106,9 @@ message ContainerInstanceStatusSpec {
   google.protobuf.Timestamp started_at = 7;
   // FinishedAt is when the task stopped running.
   google.protobuf.Timestamp finished_at = 8;
+  // Refused is set when Talos didn't start the instance because the mounts or devices it was
+  // created with are out of date. It says nothing about the container itself.
+  bool refused = 9;
 }
 
 // ContainerLifecycleSpec is the spec for ContainerLifecycle.
@@ -159,12 +164,44 @@ message ContainerResourcesSpec {
   uint64 swap_limit = 3;
 }
 
+// ContainerRestartSpec describes how a container is restarted after it exits.
+message ContainerRestartSpec {
+  talos.resource.definitions.enums.ContainersContainerRestartPolicy policy = 1;
+  // MaxRetries is how many times a failed container is restarted at most; nil is unlimited.
+  optional uint32 max_retries = 2;
+  google.protobuf.Duration delay = 3;
+  google.protobuf.Duration max_delay = 4;
+}
+
 // ContainerRunAsSpec is the resolved uid/gid override.
 //
 // Nil means use the image's own USER for that half.
 message ContainerRunAsSpec {
   int32 uid = 1;
   int32 gid = 2;
+}
+
+// ContainerRunStatusSpec is the spec for ContainerRunStatus.
+message ContainerRunStatusSpec {
+  // ExecutionHash is the ContainerSpec execution hash the counters are for.
+  string execution_hash = 1;
+  // NextGeneration is the generation of the next instance.
+  uint64 next_generation = 2;
+  // Restarts is the number of restarts since the execution hash or the restart policy last changed.
+  uint32 restarts = 3;
+  // BackoffStep is how many times the restart delay has doubled.
+  uint32 backoff_step = 4;
+  // RestartedGeneration is the generation whose restart has been charged, if Restarted.
+  uint64 restarted_generation = 5;
+  bool restarted = 6;
+  // Policy is the restart policy the restarts were counted under.
+  talos.resource.definitions.enums.ContainersContainerRestartPolicy policy = 7;
+  // FinishedGeneration is the generation of the finished instance FinishedState is the outcome of.
+  uint64 finished_generation = 8;
+  // FinishedState is what InstanceController decided for that instance: exited while it is
+  // restarted, completed or failed when it is not. It is published so that what reports the state
+  // of the container doesn't decide it again.
+  talos.resource.definitions.enums.ContainersContainerState finished_state = 9;
 }
 
 // ContainerSecuritySpec is the resolved security posture.
@@ -206,6 +243,7 @@ message ContainerSpecSpec {
   ContainerDependsOnSpec depends_on = 11;
   repeated ContainerDeviceSpec devices = 12;
   google.protobuf.Duration stop_timeout = 13;
+  ContainerRestartSpec restart = 14;
 }
 
 // ContainerStatusSpec is the spec for ContainerStatus.
@@ -220,12 +258,14 @@ message ContainerStatusSpec {
   uint32 pid = 4;
   // ExitCode of the last task exit.
   int32 exit_code = 5;
-  // RestartCount is the current instance generation, i.e. restarts beyond the first start.
+  // RestartCount is the number of restarts since the configuration of the container last changed.
   uint64 restart_count = 6;
   // Error is the last failure, verbatim, from whichever stage produced it.
   string error = 7;
   // WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending.
   repeated string waiting_for = 8;
+  // Generation is the generation of the newest instance.
+  uint64 generation = 9;
 }
 
 // ResolvedDeviceSpec is a device with its host-side device node resolved.

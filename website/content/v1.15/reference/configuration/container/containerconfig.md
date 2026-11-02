@@ -5,7 +5,7 @@ description: |
 
     The container is started as soon as the configuration is applied, with no image rebuild
     and no reboot. It runs against the CRI containerd instance in the dedicated
-    `taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.
+    `taloscontainers` namespace, and by default is restarted 5 seconds after it stops.
 
     Containers are not Talos services: they do not appear in `talosctl services`, and
     `talosctl service` does not apply to them. Status is reported via `ContainerStatus`.
@@ -411,6 +411,7 @@ healthCheck:
 |`stopTimeout` |Duration |Time the container gets to exit after SIGTERM before it is killed with SIGKILL.<br><br>It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is<br>replaced after a change or restarted with `talosctl restart`, and when it is removed.<br>Defaults to 10s. Must be greater than 0 and at most 4m.<br>Changing it replaces the running container, which is still stopped with its previous timeout. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 stopTimeout: 30s
 {{< /highlight >}}</details> | |
+|`restart` |<a href="#ContainerConfig.lifecycle.restart">ContainerRestart</a> |How the container is restarted after it exits.  | |
 
 
 
@@ -519,6 +520,29 @@ ContainerGRPCHealthCheck probes a gRPC health service.
 |`service` |string |Service name to pass in the health check request.<br><br>Empty asks for the overall health of the server.  | |
 
 
+
+
+
+
+
+
+### restart {#ContainerConfig.lifecycle.restart}
+
+ContainerRestart configures how the container is restarted after it exits.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`policy` |ContainerRestartPolicy |When the container is restarted after it exits.<br><br>`always` restarts it after every exit, `on-failure` after it failed (a non-zero exit code<br>or a failure to start), and `never` runs it once.<br>A container which is not restarted keeps its outcome until its configuration changes or it<br>is removed, and runs again after a reboot or a restart of machined.<br>`talosctl restart` only signals the container, so it doesn't run such a container again.  |`always`<br />`on-failure`<br />`never`<br /> |
+|`maxRetries` |int |How many times a failed container is restarted at most, with the `on-failure` policy.<br><br>Unset restarts it until it succeeds.  | |
+|`delay` |Duration |Time to wait after the container exited before it is restarted.<br>Defaults to 5s. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+delay: 5s
+{{< /highlight >}}</details> | |
+|`maxDelay` |Duration |Longest time to wait before a restart.<br><br>The delay doubles with each restart of a container which ran for a shorter time than this,<br>up to this. Defaults to the delay, so the delay doesn't grow. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+maxDelay: 1m0s
+{{< /highlight >}}</details> | |
 
 
 

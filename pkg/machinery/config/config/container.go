@@ -47,6 +47,8 @@ type ContainerConfig interface {
 	HealthCheck() optional.Optional[ContainerHealthCheckConfig]
 	// StopTimeout is the time between SIGTERM and SIGKILL.
 	StopTimeout() time.Duration
+	// Restart settings; never nil.
+	Restart() ContainerRestartConfig
 }
 
 // ContainerMountConfig defines a single container mount.
@@ -230,4 +232,29 @@ type ContainerHealthCheckConfig interface {
 	Timeout() time.Duration
 	// FailureThreshold is the number of consecutive failures to report unhealthy, with the default applied.
 	FailureThreshold() uint32
+}
+
+// ContainerRestartPolicy selects when a container is restarted after it exits.
+type ContainerRestartPolicy string
+
+// Container restart policies.
+const (
+	// ContainerRestartPolicyAlways restarts the container after every exit. This is the default.
+	ContainerRestartPolicyAlways ContainerRestartPolicy = "always"
+	// ContainerRestartPolicyOnFailure restarts the container after it failed.
+	ContainerRestartPolicyOnFailure ContainerRestartPolicy = "on-failure"
+	// ContainerRestartPolicyNever runs the container once.
+	ContainerRestartPolicyNever ContainerRestartPolicy = "never"
+)
+
+// ContainerRestartConfig defines how a container is restarted after it exits.
+type ContainerRestartConfig interface {
+	// Policy is when the container is restarted; defaults to always.
+	Policy() ContainerRestartPolicy
+	// MaxRetries is how many times a failed container is restarted at most; None means unlimited.
+	MaxRetries() optional.Optional[int]
+	// Delay is the time to wait before a restart.
+	Delay() time.Duration
+	// MaxDelay is the longest time the delay grows to.
+	MaxDelay() time.Duration
 }

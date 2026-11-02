@@ -5,6 +5,7 @@
 package proto_test
 
 import (
+	"go/types"
 	"testing"
 
 	"github.com/siderolabs/talos/tools/structprotogen/proto"
@@ -35,4 +36,24 @@ func TestToSnakeCase(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestOptionalTypeName(t *testing.T) {
+	uint32Type := types.Typ[types.Uint32]
+
+	if got := proto.OptionalTypeName("Spec", "Field", uint32Type, false, "uint32"); got != "uint32" {
+		t.Errorf("not optional: got %q", got)
+	}
+
+	if got := proto.OptionalTypeName("Spec", "Field", types.NewPointer(uint32Type), true, "uint32"); got != "optional uint32" {
+		t.Errorf("optional pointer: got %q", got)
+	}
+
+	defer func() {
+		if recover() == nil {
+			t.Error("optional non-pointer: expected a panic")
+		}
+	}()
+
+	proto.OptionalTypeName("Spec", "Field", uint32Type, true, "uint32")
 }

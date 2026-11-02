@@ -213,7 +213,13 @@ type Fields map[string]FieldInfo
 type FieldInfo struct {
 	Num      int
 	Comments []string
+	// Optional is set by the OptionalDirective: the field is generated with explicit presence.
+	Optional bool
 }
+
+// OptionalDirective on a pointer to a basic type generates the field as proto3 `optional`, so that
+// nil and the zero value can be told apart.
+const OptionalDirective = "//structprotogen:optional"
 
 // getStructFieldsWithTags returns all fields of the given struct with their tags.
 func getStructFieldsWithTags(structDecl *ast.TypeSpec) Fields {
@@ -248,9 +254,12 @@ func getStructFieldsWithTags(structDecl *ast.TypeSpec) Fields {
 				panic(fmt.Errorf("invalid protobuf tag: field '%s', tag '%s': %w", name, tagValue, err))
 			}
 
+			comments, optional := FieldComments(field)
+
 			result[name.Name] = FieldInfo{
 				Num:      num,
-				Comments: fieldComments(field),
+				Comments: comments,
+				Optional: optional,
 			}
 		}
 	}
@@ -258,21 +267,29 @@ func getStructFieldsWithTags(structDecl *ast.TypeSpec) Fields {
 	return result
 }
 
-// fieldComments collects doc and trailing line comments attached to a struct field.
-func fieldComments(field *ast.Field) []string {
-	var result []string
+// FieldComments collects doc and trailing line comments attached to a struct field, and reports
+// whether they carry the OptionalDirective, which is left out of them.
+func FieldComments(field *ast.Field) ([]string, bool) {
+	var (
+		result   []string
+		optional bool
+	)
 
-	if field.Doc != nil {
-		for _, c := range field.Doc.List {
+	for _, group := range []*ast.CommentGroup{field.Doc, field.Comment} {
+		if group == nil {
+			continue
+		}
+
+		for _, c := range group.List {
+			if c.Text == OptionalDirective {
+				optional = true
+
+				continue
+			}
+
 			result = append(result, c.Text)
 		}
 	}
 
-	if field.Comment != nil {
-		for _, c := range field.Comment.List {
-			result = append(result, c.Text)
-		}
-	}
-
-	return result
+	return result, optional
 }

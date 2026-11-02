@@ -6,6 +6,11 @@ package containers
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -66,7 +71,50 @@ type ContainerSpecSpec struct {
 
 	Devices []ContainerDeviceSpec `yaml:"devices,omitempty" protobuf:"12"`
 
-	StopTimeout time.Duration `yaml:"stopTimeout,omitempty" protobuf:"13"`
+	StopTimeout time.Duration        `yaml:"stopTimeout,omitempty" protobuf:"13"`
+	Restart     ContainerRestartSpec `yaml:"restart,omitempty" protobuf:"14"`
+}
+
+// ContainerRestartSpec describes how a container is restarted after it exits.
+//
+//gotagsrewrite:gen
+type ContainerRestartSpec struct {
+	Policy ContainerRestartPolicy `yaml:"policy" protobuf:"1"`
+	// MaxRetries is how many times a failed container is restarted at most; nil is unlimited.
+	//structprotogen:optional
+	MaxRetries *uint32       `yaml:"maxRetries,omitempty" protobuf:"2"`
+	Delay      time.Duration `yaml:"delay" protobuf:"3"`
+	MaxDelay   time.Duration `yaml:"maxDelay" protobuf:"4"`
+}
+
+// executionHashKey keys the execution hash, so that it can't be used to check a guess at a value it
+// covers, like a password in the environment. It is random per process: the hash is only compared
+// within machined, whose container state doesn't outlive it.
+var executionHashKey = func() []byte {
+	key := make([]byte, 32)
+
+	rand.Read(key) //nolint:errcheck // never returns an error
+
+	return key
+}()
+
+// ExecutionHash identifies the declared configuration a container is run with.
+//
+// The restart settings, the dependencies and the stop timeout are left out: they decide when the
+// container runs and how it is stopped, not how it runs, and changing them doesn't make it a different
+// container.
+func (containerSpec ContainerSpecSpec) ExecutionHash() string {
+	containerSpec.Restart = ContainerRestartSpec{}
+	containerSpec.DependsOn = ContainerDependsOnSpec{}
+	containerSpec.StopTimeout = 0
+
+	// a struct of plain values, so marshaling it can't fail
+	encoded, _ := json.Marshal(containerSpec) //nolint:errcheck,errchkjson
+
+	mac := hmac.New(sha256.New, executionHashKey)
+	mac.Write(encoded) //nolint:errcheck // never returns an error
+
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 // Ready reports the container's unmet dependencies (image, mounts, devices, dependsOn gates),

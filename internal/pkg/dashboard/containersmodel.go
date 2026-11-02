@@ -104,7 +104,7 @@ func buildContainerRows(
 
 		// The Stats API is keyed by the containerd ID, which is the instance rather than the
 		// container: every restart runs under a new ID.
-		statsID := containers.InstanceID(name, spec.RestartCount)
+		statsID := containers.InstanceID(name, spec.Generation)
 
 		row := containerRow{
 			Name:       name,

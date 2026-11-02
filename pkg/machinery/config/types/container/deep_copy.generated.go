@@ -188,6 +188,22 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			cp.LifecycleConfig.StopTimeoutConfig = new(time.Duration)
 			*cp.LifecycleConfig.StopTimeoutConfig = *o.LifecycleConfig.StopTimeoutConfig
 		}
+		if o.LifecycleConfig.RestartConfig != nil {
+			cp.LifecycleConfig.RestartConfig = new(ContainerRestart)
+			*cp.LifecycleConfig.RestartConfig = *o.LifecycleConfig.RestartConfig
+			if o.LifecycleConfig.RestartConfig.RestartMaxRetries != nil {
+				cp.LifecycleConfig.RestartConfig.RestartMaxRetries = new(int)
+				*cp.LifecycleConfig.RestartConfig.RestartMaxRetries = *o.LifecycleConfig.RestartConfig.RestartMaxRetries
+			}
+			if o.LifecycleConfig.RestartConfig.RestartDelay != nil {
+				cp.LifecycleConfig.RestartConfig.RestartDelay = new(time.Duration)
+				*cp.LifecycleConfig.RestartConfig.RestartDelay = *o.LifecycleConfig.RestartConfig.RestartDelay
+			}
+			if o.LifecycleConfig.RestartConfig.RestartMaxDelay != nil {
+				cp.LifecycleConfig.RestartConfig.RestartMaxDelay = new(time.Duration)
+				*cp.LifecycleConfig.RestartConfig.RestartMaxDelay = *o.LifecycleConfig.RestartConfig.RestartMaxDelay
+			}
+		}
 	}
 	return &cp
 }

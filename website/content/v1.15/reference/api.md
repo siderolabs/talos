@@ -349,6 +349,7 @@ description: Talos gRPC API reference.
     - [ContainersContainerHealth](#talos.resource.definitions.enums.ContainersContainerHealth)
     - [ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase)
     - [ContainersContainerInstancePhase](#talos.resource.definitions.enums.ContainersContainerInstancePhase)
+    - [ContainersContainerRestartPolicy](#talos.resource.definitions.enums.ContainersContainerRestartPolicy)
     - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
@@ -482,7 +483,9 @@ description: Talos gRPC API reference.
     - [ContainerMountStatusSpec](#talos.resource.definitions.containers.ContainerMountStatusSpec)
     - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
     - [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec)
+    - [ContainerRestartSpec](#talos.resource.definitions.containers.ContainerRestartSpec)
     - [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec)
+    - [ContainerRunStatusSpec](#talos.resource.definitions.containers.ContainerRunStatusSpec)
     - [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec)
     - [ContainerSpecSpec](#talos.resource.definitions.containers.ContainerSpecSpec)
     - [ContainerStatusSpec](#talos.resource.definitions.containers.ContainerStatusSpec)
@@ -5970,6 +5973,19 @@ ContainersContainerInstancePhase describes the state of a container instance's e
 
 
 
+<a name="talos.resource.definitions.enums.ContainersContainerRestartPolicy"></a>
+
+### ContainersContainerRestartPolicy
+ContainersContainerRestartPolicy describes when a container is restarted after it exits.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_RESTART_POLICY_ALWAYS | 0 |  |
+| CONTAINER_RESTART_POLICY_ON_FAILURE | 1 |  |
+| CONTAINER_RESTART_POLICY_NEVER | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.ContainersContainerState"></a>
 
 ### ContainersContainerState
@@ -5984,6 +6000,8 @@ ContainersContainerState describes where a container is in its lifecycle (intern
 | CONTAINER_STATE_EXITED | 4 |  |
 | CONTAINER_STATE_BACKOFF | 5 |  |
 | CONTAINER_STATE_STOPPING | 6 |  |
+| CONTAINER_STATE_COMPLETED | 7 |  |
+| CONTAINER_STATE_FAILED | 8 |  |
 
 
 
@@ -8396,6 +8414,7 @@ later changes to those inputs: a spec change destroys this instance rather than 
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | devices | [ResolvedDeviceSpec](#talos.resource.definitions.containers.ResolvedDeviceSpec) | repeated | Devices are fully resolved, with host device nodes filled in. |
 | stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| execution_hash | [string](#string) |  | ExecutionHash is the ContainerSpec execution hash the instance was created for. |
 
 
 
@@ -8418,6 +8437,7 @@ ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
 | error | [string](#string) |  | Error describes why the task never started or exited abnormally. |
 | started_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | StartedAt is when the task's process started. |
 | finished_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | FinishedAt is when the task stopped running. |
+| refused | [bool](#bool) |  | Refused is set when Talos didn't start the instance because the mounts or devices it was created with are out of date. It says nothing about the container itself. |
 
 
 
@@ -8514,6 +8534,24 @@ meaningful there: it keeps the container out of swap, while nil leaves swap unli
 
 
 
+<a name="talos.resource.definitions.containers.ContainerRestartSpec"></a>
+
+### ContainerRestartSpec
+ContainerRestartSpec describes how a container is restarted after it exits.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| policy | [talos.resource.definitions.enums.ContainersContainerRestartPolicy](#talos.resource.definitions.enums.ContainersContainerRestartPolicy) |  |  |
+| max_retries | [uint32](#uint32) | optional | MaxRetries is how many times a failed container is restarted at most; nil is unlimited. |
+| delay | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| max_delay | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.containers.ContainerRunAsSpec"></a>
 
 ### ContainerRunAsSpec
@@ -8526,6 +8564,29 @@ Nil means use the image's own USER for that half.
 | ----- | ---- | ----- | ----------- |
 | uid | [int32](#int32) |  |  |
 | gid | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerRunStatusSpec"></a>
+
+### ContainerRunStatusSpec
+ContainerRunStatusSpec is the spec for ContainerRunStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| execution_hash | [string](#string) |  | ExecutionHash is the ContainerSpec execution hash the counters are for. |
+| next_generation | [uint64](#uint64) |  | NextGeneration is the generation of the next instance. |
+| restarts | [uint32](#uint32) |  | Restarts is the number of restarts since the execution hash or the restart policy last changed. |
+| backoff_step | [uint32](#uint32) |  | BackoffStep is how many times the restart delay has doubled. |
+| restarted_generation | [uint64](#uint64) |  | RestartedGeneration is the generation whose restart has been charged, if Restarted. |
+| restarted | [bool](#bool) |  |  |
+| policy | [talos.resource.definitions.enums.ContainersContainerRestartPolicy](#talos.resource.definitions.enums.ContainersContainerRestartPolicy) |  | Policy is the restart policy the restarts were counted under. |
+| finished_generation | [uint64](#uint64) |  | FinishedGeneration is the generation of the finished instance FinishedState is the outcome of. |
+| finished_state | [talos.resource.definitions.enums.ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState) |  | FinishedState is what InstanceController decided for that instance: exited while it is restarted, completed or failed when it is not. It is published so that what reports the state of the container doesn't decide it again. |
 
 
 
@@ -8575,6 +8636,7 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
 | devices | [ContainerDeviceSpec](#talos.resource.definitions.containers.ContainerDeviceSpec) | repeated |  |
 | stop_timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| restart | [ContainerRestartSpec](#talos.resource.definitions.containers.ContainerRestartSpec) |  |  |
 
 
 
@@ -8594,9 +8656,10 @@ ContainerStatusSpec is the spec for ContainerStatus.
 | image | [string](#string) |  | Image is the resolved digest once the pull completes, otherwise the requested reference. |
 | pid | [uint32](#uint32) |  | PID of the running task; zero when not running. |
 | exit_code | [int32](#int32) |  | ExitCode of the last task exit. |
-| restart_count | [uint64](#uint64) |  | RestartCount is the current instance generation, i.e. restarts beyond the first start. |
+| restart_count | [uint64](#uint64) |  | RestartCount is the number of restarts since the configuration of the container last changed. |
 | error | [string](#string) |  | Error is the last failure, verbatim, from whichever stage produced it. |
 | waiting_for | [string](#string) | repeated | WaitingFor lists the unmet readiness gates (image, mounts, dependsOn entries) while State is pending. |
+| generation | [uint64](#uint64) |  | Generation is the generation of the newest instance. |
 
 
 
