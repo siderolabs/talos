@@ -39,4 +39,6 @@ type ContainerLifecycle struct {
 	//     type: string
 	//     pattern: ^[-+]?(((\d+(\.\d*)?|\d*(\.\d+)+)([nuµm]?s|m|h))|0)+$
 	StopTimeoutConfig *time.Duration `yaml:"stopTimeout,omitempty"`
+	//     How the container is restarted after it exits.
+	RestartConfig *ContainerRestart `yaml:"restart,omitempty"`
 }

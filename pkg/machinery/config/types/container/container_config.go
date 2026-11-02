@@ -58,7 +58,7 @@ var (
 //
 //	  The container is started as soon as the configuration is applied, with no image rebuild
 //	  and no reboot. It runs against the CRI containerd instance in the dedicated
-//	  `taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.
+//	  `taloscontainers` namespace, and by default is restarted 5 seconds after it stops.
 //
 //	  Containers are not Talos services: they do not appear in `talosctl services`, and
 //	  `talosctl service` does not apply to them. Status is reported via `ContainerStatus`.
@@ -339,6 +339,10 @@ func (c *ContainerConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 					fmt.Errorf("lifecycle.stopTimeout: %s must be greater than 0 and at most %s", stopTimeout, constants.ContainerMaxStopTimeout))
 			}
 		}
+
+		if c.LifecycleConfig.RestartConfig != nil {
+			validationErrors = errors.Join(validationErrors, c.LifecycleConfig.RestartConfig.Validate())
+		}
 	}
 
 	return warnings, validationErrors
@@ -512,6 +516,15 @@ func (c *ContainerConfigV1Alpha1) StopTimeout() time.Duration {
 	}
 
 	return *c.LifecycleConfig.StopTimeoutConfig
+}
+
+// Restart implements config.ContainerConfig interface.
+func (c *ContainerConfigV1Alpha1) Restart() config.ContainerRestartConfig {
+	if c.LifecycleConfig == nil || c.LifecycleConfig.RestartConfig == nil {
+		return &ContainerRestart{}
+	}
+
+	return c.LifecycleConfig.RestartConfig
 }
 
 // mustParse re-parses an already-normalized reference. Normalization has succeeded by the time

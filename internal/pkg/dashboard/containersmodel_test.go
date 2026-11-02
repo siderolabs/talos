@@ -55,25 +55,37 @@ func TestBuildContainerRows(t *testing.T) {
 			Health:       containers.ContainerHealthHealthy,
 			RestartCount: 2,
 		}),
+		// Its restarts start over with a change of its configuration, its generations don't: the
+		// instance running now is the fourth one, even though it hasn't been restarted.
+		"reconfigured": newStatus("reconfigured", containers.ContainerStatusSpec{
+			State:        containers.ContainerStateRunning,
+			Health:       containers.ContainerHealthHealthy,
+			RestartCount: 0,
+			Generation:   3,
+		}),
 	}
 
 	// The Stats API is keyed by the containerd ID, i.e. the instance: "<name>-<generation>".
 	// Stats under the bare name, or under a previous generation, must not be joined.
 	stats := map[string]*machine.Stat{
-		"director-0":  {Id: "director-0", MemoryUsage: 48 << 20},
-		"restarted":   {Id: "restarted", MemoryUsage: 1},
-		"restarted-1": {Id: "restarted-1", MemoryUsage: 1},
+		"director-0":     {Id: "director-0", MemoryUsage: 48 << 20},
+		"restarted":      {Id: "restarted", MemoryUsage: 1},
+		"restarted-1":    {Id: "restarted-1", MemoryUsage: 1},
+		"reconfigured-0": {Id: "reconfigured-0", MemoryUsage: 1},
+		"reconfigured-3": {Id: "reconfigured-3", MemoryUsage: 64 << 20},
 	}
 
 	// One second of CPU time over a five second interval is 20% of a core.
 	cpuDiff := map[string]uint64{
-		"director-0":  uint64(time.Second),
-		"restarted":   uint64(time.Second),
-		"restarted-1": uint64(time.Second),
+		"director-0":     uint64(time.Second),
+		"restarted":      uint64(time.Second),
+		"restarted-1":    uint64(time.Second),
+		"reconfigured-0": uint64(time.Second),
+		"reconfigured-3": uint64(2 * time.Second),
 	}
 
 	rows := buildContainerRows(statuses, stats, cpuDiff, 5*time.Second, "", containerSortName)
-	require.Len(t, rows, 3)
+	require.Len(t, rows, 4)
 
 	assert.Equal(t, "collector", rows[0].Name)
 	assert.Equal(t, "pending (volume web-content +1)", rows[0].State)
@@ -90,9 +102,15 @@ func TestBuildContainerRows(t *testing.T) {
 	assert.Equal(t, uint64(48<<20), rows[1].Memory)
 	assert.Equal(t, "1423", formatPID(rows[1].PID))
 
-	assert.Equal(t, "restarted", rows[2].Name)
-	assert.False(t, rows[2].MemoryKnown)
-	assert.True(t, math.IsNaN(rows[2].CPUPercent))
+	// joined by the generation of the instance, not by the restarts of the container
+	assert.Equal(t, "reconfigured", rows[2].Name)
+	assert.True(t, rows[2].MemoryKnown)
+	assert.Equal(t, uint64(64<<20), rows[2].Memory)
+	assert.InDelta(t, 40.0, rows[2].CPUPercent, 0.001)
+
+	assert.Equal(t, "restarted", rows[3].Name)
+	assert.False(t, rows[3].MemoryKnown)
+	assert.True(t, math.IsNaN(rows[3].CPUPercent))
 }
 
 func TestBuildContainerRowsFilter(t *testing.T) {
@@ -214,9 +232,12 @@ func TestFormatContainerDetail(t *testing.T) {
 			{Kind: containers.DeviceKindRawVolume, VolumeName: "data", Destination: "/dev/data"},
 		},
 		DependsOn: containers.ContainerDependsOnSpec{
-			Networks:   []string{"addresses"},
-			Time:       true,
-			Containers: []string{"collector"},
+			Networks: []string{"addresses"},
+			Time:     true,
+			Containers: []containers.ContainerDependencySpec{
+				{Name: "collector"},
+				{Name: "migrate", Condition: containers.ContainerDependencyConditionSucceeded},
+			},
 		},
 	}
 
@@ -244,7 +265,7 @@ func TestFormatContainerDetail(t *testing.T) {
 	assert.Contains(t, detail, "volume web-content to /var/www")
 	assert.Contains(t, detail, "tmpfs 64 MiB to /var/cache (rw)")
 	assert.Contains(t, detail, "raw volume data to /dev/data")
-	assert.Contains(t, detail, "network addresses · time · containers collector")
+	assert.Contains(t, detail, "network addresses · time · containers collector,migrate (succeeded)")
 }
 
 func TestFormatContainerDetailSeccompLocalhostProfile(t *testing.T) {

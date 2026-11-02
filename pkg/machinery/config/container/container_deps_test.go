@@ -7,6 +7,7 @@ package container_test
 import (
 	"testing"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -24,7 +25,7 @@ func newContainerDoc(name string, dependsOn ...string) *containercfg.ContainerCo
 	if len(dependsOn) > 0 {
 		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
 			DependsOnConfig: &containercfg.ContainerDependsOn{
-				ContainersConfig: dependsOn,
+				ContainersConfig: dependencies(dependsOn...),
 			},
 		}
 	}
@@ -39,7 +40,7 @@ func newDeprecatedContainerDoc(name string, dependsOn ...string) *containercfg.C
 	doc.MetaName = name
 	doc.ContainerImage = "docker.io/library/nginx:latest"
 	doc.DependsOnConfig = &containercfg.ContainerDependsOn{ //nolint:staticcheck // testing deprecated field
-		ContainersConfig: dependsOn,
+		ContainersConfig: dependencies(dependsOn...),
 	}
 
 	return doc
@@ -142,6 +143,29 @@ func TestContainerDependencyCycles(t *testing.T) {
 			},
 			expectedErr: "container dependsOn cycle detected",
 		},
+		{
+			name: "succeeded on a container which isn't restarted",
+			docs: []*containercfg.ContainerConfigV1Alpha1{
+				dependsOnSucceeded(newContainerDoc("a"), "init"),
+				withRestartPolicy(newContainerDoc("init"), config.ContainerRestartPolicyNever),
+			},
+		},
+		{
+			name: "succeeded on a container which is always restarted",
+			docs: []*containercfg.ContainerConfigV1Alpha1{
+				dependsOnSucceeded(newContainerDoc("a"), "init"),
+				newContainerDoc("init"),
+			},
+			expectedErr: `container "a" depends on container "init" having succeeded, which needs its restart policy to be on-failure or never`,
+		},
+		{
+			name: "cycle across both conditions",
+			docs: []*containercfg.ContainerConfigV1Alpha1{
+				dependsOnSucceeded(newContainerDoc("a"), "init"),
+				withRestartPolicy(newContainerDoc("init", "a"), config.ContainerRestartPolicyNever),
+			},
+			expectedErr: "container dependsOn cycle detected",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -158,4 +182,33 @@ func TestContainerDependencyCycles(t *testing.T) {
 			assert.Contains(t, err.Error(), test.expectedErr)
 		})
 	}
+}
+
+// dependencies builds dependsOn.containers entries for the given names, with the default condition.
+func dependencies(names ...string) []containercfg.ContainerDependency {
+	return xslices.Map(names, func(name string) containercfg.ContainerDependency {
+		return containercfg.ContainerDependency{DependencyName: name}
+	})
+}
+
+func lifecycle(doc *containercfg.ContainerConfigV1Alpha1) *containercfg.ContainerLifecycle {
+	if doc.LifecycleConfig == nil {
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{}
+	}
+
+	return doc.LifecycleConfig
+}
+
+func dependsOnSucceeded(doc *containercfg.ContainerConfigV1Alpha1, name string) *containercfg.ContainerConfigV1Alpha1 {
+	lifecycle(doc).DependsOnConfig = &containercfg.ContainerDependsOn{
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: name, DependencyCondition: config.ContainerDependencyConditionSucceeded}},
+	}
+
+	return doc
+}
+
+func withRestartPolicy(doc *containercfg.ContainerConfigV1Alpha1, policy config.ContainerRestartPolicy) *containercfg.ContainerConfigV1Alpha1 {
+	lifecycle(doc).RestartConfig = &containercfg.ContainerRestart{RestartPolicy: policy}
+
+	return doc
 }

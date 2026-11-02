@@ -6,6 +6,7 @@ package containers_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -36,6 +38,7 @@ type fakeTaskRunner struct {
 	removed      []string
 	removeFails  map[string]struct{}
 	removeFailed map[string]int
+	startFails   map[string]error
 	selfExit     map[string]chan int32
 	heldStops    map[string]chan struct{}
 	stopping     map[string]struct{}
@@ -54,6 +57,7 @@ func newFakeTaskRunner() *fakeTaskRunner {
 		finished:     map[string]struct{}{},
 		removeFails:  map[string]struct{}{},
 		removeFailed: map[string]int{},
+		startFails:   map[string]error{},
 		selfExit:     map[string]chan int32{},
 		heldStops:    map[string]chan struct{}{},
 		stopping:     map[string]struct{}{},
@@ -80,6 +84,15 @@ func (f *fakeTaskRunner) failRemove(id string) {
 	defer f.mu.Unlock()
 
 	f.removeFails[id] = struct{}{}
+}
+
+// failStart makes Run of id return err without ever calling started, standing in for a container
+// whose task cannot be created or started, e.g. an entrypoint that doesn't exist.
+func (f *fakeTaskRunner) failStart(id string, err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.startFails[id] = err
 }
 
 func (f *fakeTaskRunner) clearRemoveFailure(id string) {
@@ -143,8 +156,16 @@ func (f *fakeTaskRunner) Run(ctx context.Context, id string, _ containers.Contai
 	const fakePID = 4242
 
 	f.mu.Lock()
-	f.started[id] = fakePID
 	f.starts[id]++
+
+	if err := f.startFails[id]; err != nil {
+		f.finished[id] = struct{}{}
+		f.mu.Unlock()
+
+		return 0, err
+	}
+
+	f.started[id] = fakePID
 	exitCh := make(chan int32, 1)
 	f.selfExit[id] = exitCh
 	f.mu.Unlock()
@@ -385,7 +406,10 @@ func (suite *RuntimeSuite) createInstanceSpec(id string) {
 // declareDependencies creates the container spec of id, depending on the given containers.
 func (suite *RuntimeSuite) declareDependencies(id string, dependsOn ...string) {
 	spec := containers.NewContainerSpec(containers.NamespaceName, id)
-	spec.TypedSpec().DependsOn.Containers = dependsOn
+	spec.TypedSpec().DependsOn.Containers = xslices.Map(dependsOn,
+		func(name string) containers.ContainerDependencySpec {
+			return containers.ContainerDependencySpec{Name: name}
+		})
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), spec))
 }
@@ -828,6 +852,69 @@ func (suite *RuntimeSuite) TestDoesNotRerunFinishedInstance() {
 	ctest.AssertResource(suite, finishedID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerInstancePhaseTerminated, status.TypedSpec().Phase)
 	})
+}
+
+// TestReportsFailedStart covers a container whose task never started: it is reported failed, without
+// an exit code or a PID, which is what keeps it from counting as a success.
+func (suite *RuntimeSuite) TestReportsFailedStart() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const id = "nginx-0"
+
+	suite.runner.failStart(id, errors.New("exec: \"/nonexistent\": stat /nonexistent: no such file or directory"))
+
+	suite.createInstanceSpec(id)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		spec := status.TypedSpec()
+
+		asrt.Equal(containers.ContainerInstancePhaseFailed, spec.Phase)
+		asrt.Zero(spec.ExitCode)
+		asrt.Zero(spec.PID)
+		asrt.Contains(spec.Error, "no such file or directory")
+		asrt.True(spec.StartedAt.IsZero(), "a task that never started has no start time")
+		asrt.False(spec.FinishedAt.IsZero())
+		asrt.False(spec.Succeeded())
+	})
+
+	suite.Assert().Equal(1, suite.runner.startCount(id))
+	suite.Assert().False(suite.runner.wasStarted(id))
+}
+
+// TestRerunsInstanceReportedRunning covers an instance whose status says it is running while nothing
+// runs it, e.g. one interrupted by a restart of the controller: it is started again and its status
+// corrected, rather than kept as a finished run.
+func (suite *RuntimeSuite) TestRerunsInstanceReportedRunning() {
+	markCRIUp(suite)
+	suite.createLifecycle()
+
+	const (
+		id       = "nginx-5"
+		stalePID = 1111
+	)
+
+	staleStartedAt := time.Now().Add(-time.Hour)
+
+	status := containers.NewContainerInstanceStatus(containers.NamespaceName, id)
+	status.TypedSpec().ContainerID = "nginx"
+	status.TypedSpec().Generation = 5
+	status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+	status.TypedSpec().PID = stalePID
+	status.TypedSpec().StartedAt = staleStartedAt
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), status,
+		state.WithCreateOwner((&containersctrl.RuntimeController{}).Name())))
+
+	suite.createInstanceSpec(id)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerInstancePhaseRunning, status.TypedSpec().Phase)
+		asrt.NotEqual(uint32(stalePID), status.TypedSpec().PID)
+		asrt.True(status.TypedSpec().StartedAt.After(staleStartedAt))
+	})
+
+	suite.Assert().Equal(1, suite.runner.startCount(id))
 }
 
 // TestHandlesBarrierWithoutContainerRuntime covers a reboot with the CRI down.
@@ -1402,6 +1489,7 @@ func (suite *RuntimeSuite) TestRefusesInstanceWithStaleDevices() {
 	ctest.AssertResource(suite, staleID, func(status *containers.ContainerInstanceStatus, asrt *assert.Assertions) {
 		asrt.Equal(containers.ContainerInstancePhaseFailed, status.TypedSpec().Phase)
 		asrt.Equal("mounts or devices changed before the container was started", status.TypedSpec().Error)
+		asrt.True(status.TypedSpec().Refused)
 	})
 
 	suite.Assert().False(suite.runner.wasStarted(staleID))

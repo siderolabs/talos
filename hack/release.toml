@@ -635,6 +635,49 @@ Waiting for a dependent container ends when the container it depends on would ot
 The order applies to the containers on the same node only.
 """
 
+    [notes.container_restart_policy]
+        title = "Container Restart Policy"
+        description = """\
+`ContainerConfig` documents can now set when a container is restarted after it exits, and how long to wait before that, in `lifecycle.restart`:
+
+```yaml
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: migrate
+image: ghcr.io/example/migrate:v1.0.0
+lifecycle:
+  restart:
+    policy: on-failure
+    maxRetries: 3
+    delay: 5s
+    maxDelay: 1m
+```
+
+`always` (the default) restarts the container after every exit, `on-failure` after it failed, up to `maxRetries` times, and `never` runs it once.
+Changing the policy starts the `maxRetries` count over.
+The delay doubles with each restart of a container which ran for less than `maxDelay`, up to `maxDelay`; by default it stays at 5s.
+A container which is not restarted reports `completed` or `failed` in `ContainerStatus`, and keeps its outcome until its configuration changes or it is removed.
+It runs again after a reboot or a restart of machined, and `talosctl restart` only signals it, so it does not run it again.
+"""
+
+    [notes.container_depends_on_succeeded]
+        title = "Container Dependencies on Succeeded Containers"
+        description = """\
+A `ContainerConfig` container can now wait for another container to have run successfully, e.g. one preparing a directory or a database schema it needs:
+
+```yaml
+lifecycle:
+  dependsOn:
+    containers:
+      - name: migrate
+        condition: succeeded
+      - db
+```
+
+`succeeded` waits for the container to have exited with code 0 and not to be restarted, so it has to use the `never` or `on-failure` restart policy; a plain name still waits for the container to be running and healthy.
+As the containers run again on every boot, so does this order.
+"""
+
     [notes.extension_service_configuration]
         title = "Extension Service Configuration"
         description = """\

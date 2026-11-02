@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/redactable"
@@ -71,6 +70,8 @@ type ContainerInstanceSpecSpec struct {
 	Devices []ResolvedDeviceSpec `yaml:"devices,omitempty" protobuf:"13"`
 
 	StopTimeout time.Duration `yaml:"stopTimeout,omitempty" protobuf:"14"`
+	// ExecutionHash is the ContainerSpec execution hash the instance was created for.
+	ExecutionHash string `yaml:"executionHash,omitempty" protobuf:"15"`
 }
 
 // ResolvedMountSpec is a mount with its host-side source resolved.
@@ -183,6 +184,9 @@ type ContainerInstanceStatusSpec struct {
 	StartedAt time.Time `yaml:"startedAt,omitempty" protobuf:"7"`
 	// FinishedAt is when the task stopped running.
 	FinishedAt time.Time `yaml:"finishedAt,omitempty" protobuf:"8"`
+	// Refused is set when Talos didn't start the instance because the mounts or devices it was
+	// created with are out of date. It says nothing about the container itself.
+	Refused bool `yaml:"refused,omitempty" protobuf:"9"`
 }
 
 // NewContainerInstanceStatus initializes a ContainerInstanceStatus resource.
@@ -264,20 +268,6 @@ func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx contex
 		containerSpec.Resources.Equal(instanceSpec.Resources)
 
 	return inSync, nil
-}
-
-// RestartWindowWakeAfter returns how long is left of restartInterval since a finished instance's
-// FinishedAt, if it is still inside that window.
-func (instanceStatusSpec ContainerInstanceStatusSpec) RestartWindowWakeAfter(restartInterval time.Duration) optional.Optional[time.Duration] {
-	switch instanceStatusSpec.Phase {
-	case ContainerInstancePhaseTerminated, ContainerInstancePhaseFailed:
-		if remaining := restartInterval - time.Since(instanceStatusSpec.FinishedAt); remaining > 0 {
-			return optional.Some(remaining)
-		}
-	case ContainerInstancePhaseCreated, ContainerInstancePhaseRunning:
-	}
-
-	return optional.None[time.Duration]()
 }
 
 // GetImageDigest returns the digest an instance of this container should run, or an empty string if
