@@ -13866,6 +13866,7 @@ OSRootSpec describes operating system CA.
 | cert_sandns_names | [string](#string) | repeated |  |
 | token | [string](#string) |  |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+| trustd_check_ext_key_usage | [bool](#bool) |  | TrustdCheckExtKeyUsage enables strict verification of the trustd server certificate on worker nodes. |
 
 
 

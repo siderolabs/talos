@@ -314,6 +314,7 @@ type SystemDiskEncryption interface {
 // Features describe individual Talos features that can be switched on or off.
 type Features interface {
 	DiskQuotaSupportEnabled() bool
+	TrustdCheckExtKeyUsageEnabled() bool
 	NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm
 }
 

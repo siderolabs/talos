@@ -20,7 +20,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/grpc/gen"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/auth/basic"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -353,7 +355,13 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runtime, logger *zap.Logger,
 	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec,
 ) error {
-	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.AcceptedCAs)
+	var connOpts []basic.ConnectionOption
+
+	if rootSpec.TrustdCheckExtKeyUsage {
+		connOpts = append(connOpts, basic.WithRequiredServerExtKeyUsage(constants.TrustdServerExtKeyUsage))
+	}
+
+	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.AcceptedCAs, connOpts...)
 	if err != nil {
 		return fmt.Errorf("failed creating trustd client: %w", err)
 	}

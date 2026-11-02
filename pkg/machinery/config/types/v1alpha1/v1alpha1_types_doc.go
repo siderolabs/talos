@@ -444,6 +444,13 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 			{},
 			{},
 			{
+				Name:        "trustdCheckExtKeyUsage",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable strict verification of the trustd server certificate on worker nodes.\nWhen enabled, worker nodes only accept trustd server certificates with the trustd-specific extended key usage.\nThis setting has effect only on worker nodes, and requires all control plane nodes to run Talos 1.15+.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable strict verification of the trustd server certificate on worker nodes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "diskQuotaSupport",
 				Type:        "bool",
 				Note:        "",

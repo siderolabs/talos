@@ -786,8 +786,10 @@ type OSRootSpec struct {
 	CertSandnsNames []string                            `protobuf:"bytes,3,rep,name=cert_sandns_names,json=certSandnsNames,proto3" json:"cert_sandns_names,omitempty"`
 	Token           string                              `protobuf:"bytes,4,opt,name=token,proto3" json:"token,omitempty"`
 	AcceptedCAs     []*common.PEMEncodedCertificate     `protobuf:"bytes,5,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// TrustdCheckExtKeyUsage enables strict verification of the trustd server certificate on worker nodes.
+	TrustdCheckExtKeyUsage bool `protobuf:"varint,6,opt,name=trustd_check_ext_key_usage,json=trustdCheckExtKeyUsage,proto3" json:"trustd_check_ext_key_usage,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *OSRootSpec) Reset() {
@@ -853,6 +855,13 @@ func (x *OSRootSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
 		return x.AcceptedCAs
 	}
 	return nil
+}
+
+func (x *OSRootSpec) GetTrustdCheckExtKeyUsage() bool {
+	if x != nil {
+		return x.TrustdCheckExtKeyUsage
+	}
+	return false
 }
 
 // TrustdCertsSpec describes etcd certs secrets.
@@ -976,7 +985,7 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"\x10accepted_issuers\x18\x14 \x03(\tR\x0facceptedIssuers\x12#\n" +
 	"\rapi_audiences\x18\x15 \x03(\tR\fapiAudiences\"J\n" +
 	"\x13MaintenanceRootSpec\x123\n" +
-	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\"\x86\x02\n" +
+	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\"\xc2\x02\n" +
 	"\n" +
 	"OSRootSpec\x12B\n" +
 	"\n" +
@@ -985,7 +994,8 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"certSaniPs\x12*\n" +
 	"\x11cert_sandns_names\x18\x03 \x03(\tR\x0fcertSandnsNames\x12\x14\n" +
 	"\x05token\x18\x04 \x01(\tR\x05token\x12A\n" +
-	"\raccepted_c_as\x18\x05 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\"\x91\x01\n" +
+	"\raccepted_c_as\x18\x05 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x12:\n" +
+	"\x1atrustd_check_ext_key_usage\x18\x06 \x01(\bR\x16trustdCheckExtKeyUsage\"\x91\x01\n" +
 	"\x0fTrustdCertsSpec\x12;\n" +
 	"\x06server\x18\x02 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06server\x12A\n" +
 	"\raccepted_c_as\x18\x03 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAsBx\n" +

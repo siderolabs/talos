@@ -57,7 +57,12 @@ func (o *KubeAPIServerConfigV1Alpha1) DeepCopy() *KubeAPIServerConfigV1Alpha1 {
 	if o.PodArgs != nil {
 		cp.PodArgs = make(map[string]meta.ArgValue, len(o.PodArgs))
 		for k2, v2 := range o.PodArgs {
-			cp.PodArgs[k2] = v2
+			var cp_PodArgs_v2 meta.ArgValue
+			{
+				retV := v2.DeepCopy()
+				cp_PodArgs_v2 = *retV
+			}
+			cp.PodArgs[k2] = cp_PodArgs_v2
 		}
 	}
 	if o.PodEnv != nil {
@@ -153,7 +158,12 @@ func (o *KubeControllerManagerConfigV1Alpha1) DeepCopy() *KubeControllerManagerC
 	if o.PodArgs != nil {
 		cp.PodArgs = make(map[string]meta.ArgValue, len(o.PodArgs))
 		for k2, v2 := range o.PodArgs {
-			cp.PodArgs[k2] = v2
+			var cp_PodArgs_v2 meta.ArgValue
+			{
+				retV := v2.DeepCopy()
+				cp_PodArgs_v2 = *retV
+			}
+			cp.PodArgs[k2] = cp_PodArgs_v2
 		}
 	}
 	if o.PodEnv != nil {
@@ -265,7 +275,12 @@ func (o *KubeletConfigV1Alpha1) DeepCopy() *KubeletConfigV1Alpha1 {
 	if o.KubeletArgs != nil {
 		cp.KubeletArgs = make(map[string]meta.ArgValue, len(o.KubeletArgs))
 		for k2, v2 := range o.KubeletArgs {
-			cp.KubeletArgs[k2] = v2
+			var cp_KubeletArgs_v2 meta.ArgValue
+			{
+				retV := v2.DeepCopy()
+				cp_KubeletArgs_v2 = *retV
+			}
+			cp.KubeletArgs[k2] = cp_KubeletArgs_v2
 		}
 	}
 	if o.KubeletClusterDNS != nil {
@@ -343,7 +358,12 @@ func (o *KubeProxyConfigV1Alpha1) DeepCopy() *KubeProxyConfigV1Alpha1 {
 	if o.ProxyExtraArgs != nil {
 		cp.ProxyExtraArgs = make(map[string]meta.ArgValue, len(o.ProxyExtraArgs))
 		for k2, v2 := range o.ProxyExtraArgs {
-			cp.ProxyExtraArgs[k2] = v2
+			var cp_ProxyExtraArgs_v2 meta.ArgValue
+			{
+				retV := v2.DeepCopy()
+				cp_ProxyExtraArgs_v2 = *retV
+			}
+			cp.ProxyExtraArgs[k2] = cp_ProxyExtraArgs_v2
 		}
 	}
 	{
@@ -371,7 +391,12 @@ func (o *KubeSchedulerConfigV1Alpha1) DeepCopy() *KubeSchedulerConfigV1Alpha1 {
 	if o.PodArgs != nil {
 		cp.PodArgs = make(map[string]meta.ArgValue, len(o.PodArgs))
 		for k2, v2 := range o.PodArgs {
-			cp.PodArgs[k2] = v2
+			var cp_PodArgs_v2 meta.ArgValue
+			{
+				retV := v2.DeepCopy()
+				cp_PodArgs_v2 = *retV
+			}
+			cp.PodArgs[k2] = cp_PodArgs_v2
 		}
 	}
 	if o.PodEnv != nil {

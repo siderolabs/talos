@@ -7,6 +7,7 @@ package meta
 import (
 	"fmt"
 	"maps"
+	"slices"
 
 	"go.yaml.in/yaml/v4"
 )
@@ -70,6 +71,24 @@ func NewArgValue(s string, l []string) ArgValue {
 		listValue: l,
 		strValue:  s,
 	}
+}
+
+// DeepCopyInto copies the receiver into out. in must be non-nil.
+func (in *ArgValue) DeepCopyInto(out *ArgValue) {
+	out.strValue = in.strValue
+	out.listValue = slices.Clone(in.listValue)
+}
+
+// DeepCopy creates a deep copy of ArgValue.
+func (in *ArgValue) DeepCopy() *ArgValue {
+	if in == nil {
+		return nil
+	}
+
+	out := new(ArgValue)
+	in.DeepCopyInto(out)
+
+	return out
 }
 
 // MarshalYAML is a custom marshaller for `ArgValue`.

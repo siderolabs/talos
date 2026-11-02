@@ -99,8 +99,8 @@ github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57Hu
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 github.com/sasha-s/go-deadlock v0.3.9 h1:fiaT9rB7g5sr5ddNZvlwheclN9IP86eFW9WgqlEQV+w=
 github.com/sasha-s/go-deadlock v0.3.9/go.mod h1:KuZj51ZFmx42q/mPaYbRk0P1xcwe697zsJKE03vD4/Y=
-github.com/siderolabs/crypto v0.6.5 h1:Elq5tpWP2ApZ4Y+Kg+eIDiiWbmriCPI1mjYIMwvsYkw=
-github.com/siderolabs/crypto v0.6.5/go.mod h1:QjVcrdJQE1sxhjHqieCgwGdlIYq/xCP2DL53Up8nbU4=
+github.com/siderolabs/crypto v0.6.6 h1:tUFqUifryTTc0yRoKAlga+DGXYrrJQ4As4qrD7H6dMk=
+github.com/siderolabs/crypto v0.6.6/go.mod h1:mucveFVYuAGvxkUIx/Wfpt5m3qQKQjVJH5sa3o520oE=
 github.com/siderolabs/ethtool v0.6.1-sidero h1:4otXK0rvt8QXgnkVU85tSE8+Bqr0poqdjJPsYt4pNRA=
 github.com/siderolabs/ethtool v0.6.1-sidero/go.mod h1:pZdvfpIRgnKmcS2kDJSqE9AjyPEQORZ3O3tKsJzkcwA=
 github.com/siderolabs/gen v0.8.8 h1:wDDlHAT7q4JYr1nD6I8iJml2jUgMKKuCpd05W5UoM+A=

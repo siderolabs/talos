@@ -15,6 +15,18 @@ preface = """
 """
 
 [notes]
+    [notes.trustd_ext_key_usage]
+        title = "trustd Server Certificate Verification"
+        description = """\
+trustd server certificates are now issued with a trustd-specific extended key usage.
+
+The new `.machine.features.trustdCheckExtKeyUsage` setting makes worker nodes accept only trustd server certificates with this extended key usage.
+The setting is enabled by default for worker machine configuration generated for Talos 1.15+.
+
+For existing clusters, enable the setting on worker nodes once all control plane nodes run Talos 1.15+:
+worker nodes with the setting enabled fail to refresh the Talos API certificate if trustd runs an older version of Talos.
+"""
+
     [notes.kernel_modules_on_demand]
         title = "On-demand Kernel Module Loading"
         description = """\

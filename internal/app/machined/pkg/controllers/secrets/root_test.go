@@ -134,6 +134,7 @@ func (suite *RootSuite) TestReconcileWorker() {
 		suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.OSRootID},
 		func(res *secrets.OSRoot, asrt *assert.Assertions) {
 			asrt.Nil(res.TypedSpec().IssuingCA)
+			asrt.True(res.TypedSpec().TrustdCheckExtKeyUsage)
 			asrt.Equal(
 				[]*x509.PEMEncodedCertificate{
 					{
@@ -147,4 +148,16 @@ func (suite *RootSuite) TestReconcileWorker() {
 
 	rtestutils.AssertNoResource[*secrets.EtcdRoot](suite.Ctx(), suite.T(), suite.State(), secrets.EtcdRootID)
 	rtestutils.AssertNoResource[*secrets.KubernetesRoot](suite.Ctx(), suite.T(), suite.State(), secrets.KubernetesRootID)
+}
+
+func (suite *RootSuite) TestReconcileWorkerLegacyContract() {
+	suite.genConfig(false, talosconfig.TalosVersion1_14)
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.OSRootID},
+		func(res *secrets.OSRoot, asrt *assert.Assertions) {
+			asrt.Nil(res.TypedSpec().IssuingCA)
+			asrt.False(res.TypedSpec().TrustdCheckExtKeyUsage)
+		},
+	)
 }

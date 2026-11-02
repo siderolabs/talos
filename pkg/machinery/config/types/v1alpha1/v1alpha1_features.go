@@ -15,6 +15,11 @@ func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
 
+// TrustdCheckExtKeyUsageEnabled implements config.Features interface.
+func (f *FeaturesConfig) TrustdCheckExtKeyUsageEnabled() bool {
+	return pointer.SafeDeref(f.TrustdCheckExtKeyUsage)
+}
+
 // NodeAddressSortAlgorithm implements config.Features interface.
 func (f *FeaturesConfig) NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm {
 	if f.FeatureNodeAddressSortAlgorithm == "" {

@@ -15,7 +15,7 @@ package v1alpha1
 
 //go:generate go tool github.com/siderolabs/talos/tools/docgen -output ./v1alpha1_types_doc.go ./v1alpha1_types.go
 
-//go:generate go tool k8s.io/code-generator/cmd/deepcopy-gen --go-header-file ../../../../../hack/boilerplate.txt --output-file zz_generated.deepcopy
+//go:generate go tool k8s.io/code-generator/cmd/deepcopy-gen --go-header-file ../../../../../hack/boilerplate.txt --output-file zz_generated.deepcopy.go .
 
 //docgen:jsonschema
 
@@ -2140,6 +2140,11 @@ type FeaturesConfig struct {
 	KubernetesTalosAPIAccessConfig *KubernetesTalosAPIAccessConfig `yaml:"kubernetesTalosAPIAccess,omitempty"`
 	// docgen:nodoc
 	ApidCheckExtKeyUsage *bool `yaml:"apidCheckExtKeyUsage,omitempty"`
+	//   description: |
+	//     Enable strict verification of the trustd server certificate on worker nodes.
+	//     When enabled, worker nodes only accept trustd server certificates with the trustd-specific extended key usage.
+	//     This setting has effect only on worker nodes, and requires all control plane nodes to run Talos 1.15+.
+	TrustdCheckExtKeyUsage *bool `yaml:"trustdCheckExtKeyUsage,omitempty"`
 	//   description: |
 	//     Enable XFS project quota support for EPHEMERAL partition and user disks.
 	//     Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.

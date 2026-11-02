@@ -7,6 +7,7 @@ package secrets
 import (
 	"context"
 	stdlibx509 "crypto/x509"
+	"encoding/asn1"
 	"errors"
 	"fmt"
 	"time"
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -230,6 +232,10 @@ func (ctrl *TrustdController) generateControlPlane(ctx context.Context, r contro
 		x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature|stdlibx509.KeyUsageKeyEncipherment),
 		x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
 			stdlibx509.ExtKeyUsageServerAuth,
+		}),
+		// mark the certificate as trustd server certificate
+		x509.UnknownExtKeyUsage([]asn1.ObjectIdentifier{
+			constants.TrustdServerExtKeyUsage,
 		}),
 	)
 	if err != nil {

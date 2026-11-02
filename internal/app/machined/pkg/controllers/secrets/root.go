@@ -222,6 +222,7 @@ func NewRootOSController() *RootOSController {
 				}
 
 				osSecrets.Token = cfgProvider.Machine().Security().Token()
+				osSecrets.TrustdCheckExtKeyUsage = cfgProvider.Machine().Features().TrustdCheckExtKeyUsageEnabled()
 
 				return nil
 			},

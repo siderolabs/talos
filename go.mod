@@ -133,7 +133,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.7.0
 	github.com/scaleway/scaleway-sdk-go v1.39.0
-	github.com/siderolabs/crypto v0.6.5
+	github.com/siderolabs/crypto v0.6.6
 	github.com/siderolabs/discovery-api v0.1.8
 	github.com/siderolabs/discovery-client v0.1.15
 	github.com/siderolabs/gen v0.8.8

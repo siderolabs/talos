@@ -11,6 +11,7 @@ machine:
         - foo
         - bar
     features:
+        trustdCheckExtKeyUsage: true
         diskQuotaSupport: true
 cluster:
     token: inn7ol.u4ehnti8qyls9ymo

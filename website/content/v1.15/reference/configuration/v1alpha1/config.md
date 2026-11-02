@@ -106,6 +106,7 @@ machine:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
+|`trustdCheckExtKeyUsage` |bool |Enable strict verification of the trustd server certificate on worker nodes.<br>When enabled, worker nodes only accept trustd server certificates with the trustd-specific extended key usage.<br>This setting has effect only on worker nodes, and requires all control plane nodes to run Talos 1.15+.  | |
 |`diskQuotaSupport` |bool |Enable XFS project quota support for EPHEMERAL partition and user disks.<br>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.  | |
 |`nodeAddressSortAlgorithm` |string |Select the node address sort algorithm.<br>The 'v1' algorithm sorts addresses by the address itself.<br>The 'v2' algorithm prefers more specific prefixes.<br>If unset, defaults to 'v1'.  | |
 

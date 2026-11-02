@@ -311,6 +311,12 @@ func (contract *VersionContract) DiskSMARTEnabledByDefault() bool {
 	return contract.Greater(TalosVersion1_14)
 }
 
+// TrustdExtKeyUsageCheckEnabled returns true if version of Talos should enable the check
+// of the trustd server certificate extended key usage on worker nodes.
+func (contract *VersionContract) TrustdExtKeyUsageCheckEnabled() bool {
+	return contract.Greater(TalosVersion1_14)
+}
+
 // MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
 func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

@@ -9645,6 +9645,13 @@
     },
     "v1alpha1.FeaturesConfig": {
       "properties": {
+        "trustdCheckExtKeyUsage": {
+          "type": "boolean",
+          "title": "trustdCheckExtKeyUsage",
+          "description": "Enable strict verification of the trustd server certificate on worker nodes.\nWhen enabled, worker nodes only accept trustd server certificates with the trustd-specific extended key usage.\nThis setting has effect only on worker nodes, and requires all control plane nodes to run Talos 1.15+.\n",
+          "markdownDescription": "Enable strict verification of the trustd server certificate on worker nodes.\nWhen enabled, worker nodes only accept trustd server certificates with the trustd-specific extended key usage.\nThis setting has effect only on worker nodes, and requires all control plane nodes to run Talos 1.15+.",
+          "x-intellij-html-description": "\u003cp\u003eEnable strict verification of the trustd server certificate on worker nodes.\nWhen enabled, worker nodes only accept trustd server certificates with the trustd-specific extended key usage.\nThis setting has effect only on worker nodes, and requires all control plane nodes to run Talos 1.15+.\u003c/p\u003e\n"
+        },
         "diskQuotaSupport": {
           "type": "boolean",
           "title": "diskQuotaSupport",

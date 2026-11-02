@@ -1106,6 +1106,16 @@ func (m *OSRootSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.TrustdCheckExtKeyUsage {
+		i--
+		if m.TrustdCheckExtKeyUsage {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x30
+	}
 	if len(m.AcceptedCAs) > 0 {
 		for iNdEx := len(m.AcceptedCAs) - 1; iNdEx >= 0; iNdEx-- {
 			if vtmsg, ok := interface{}(m.AcceptedCAs[iNdEx]).(interface {
@@ -1772,6 +1782,9 @@ func (m *OSRootSpec) SizeVT() (n int) {
 			}
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.TrustdCheckExtKeyUsage {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -4280,6 +4293,26 @@ func (m *OSRootSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
+		case 6:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TrustdCheckExtKeyUsage", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.TrustdCheckExtKeyUsage = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

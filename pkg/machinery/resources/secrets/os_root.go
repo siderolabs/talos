@@ -35,6 +35,9 @@ type OSRootSpec struct {
 	CertSANDNSNames []string                          `yaml:"certSANDNSNames" protobuf:"3"`
 
 	Token string `yaml:"token" protobuf:"4"`
+
+	// TrustdCheckExtKeyUsage enables strict verification of the trustd server certificate on worker nodes.
+	TrustdCheckExtKeyUsage bool `yaml:"trustdCheckExtKeyUsage" protobuf:"6"`
 }
 
 // NewOSRoot initializes a OSRoot resource.

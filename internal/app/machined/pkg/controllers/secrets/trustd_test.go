@@ -6,6 +6,7 @@ package secrets_test
 
 import (
 	stdlibx509 "crypto/x509"
+	"encoding/asn1"
 	"fmt"
 	"net/netip"
 	"testing"
@@ -20,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -126,6 +128,7 @@ func (suite *TrustdSuite) TestReconcileControlPlane() {
 			serverCert.KeyUsage,
 		)
 		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
+		suite.Assert().Equal([]asn1.ObjectIdentifier{constants.TrustdServerExtKeyUsage}, serverCert.UnknownExtKeyUsage)
 
 		return nil
 	})

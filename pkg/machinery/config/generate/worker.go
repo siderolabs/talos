@@ -71,6 +71,10 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = new(true)
 	}
 
+	if in.Options.VersionContract.TrustdExtKeyUsageCheckEnabled() {
+		machine.MachineFeatures.TrustdCheckExtKeyUsage = new(true)
+	}
+
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
 			if kubePrismPort > 0 {
