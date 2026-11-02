@@ -2157,8 +2157,23 @@ func (HostDNSConfig) Doc() *encoder.Doc {
 				Description: "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Resolve member hostnames using the host DNS resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "logLevel",
+				Type:        "string",
+				Note:        "",
+				Description: "Log level for the host DNS resolver.\n\nThe default log level is `debug`, which logs every DNS request and response.\nRaise the log level to reduce the verbosity of the host DNS resolver logs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Log level for the host DNS resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"debug",
+					"info",
+					"warn",
+					"error",
+				},
+			},
 		},
 	}
+
+	doc.Fields[3].AddExample("", "warn")
 
 	return doc
 }

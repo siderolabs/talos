@@ -60,6 +60,21 @@ Use a viewer that supports unauthenticated RFB.
 Talos authenticates the tunnel, and no VNC TCP port is opened on the node.
 """
 
+    [notes.hostdns_log_level]
+        title = "Host DNS Log Level"
+        description = """\
+The `ResolverConfig` document supports a new `hostDNS.logLevel` field to configure the log level of the host DNS resolver (`dns-resolve-cache`).
+The default stays `debug`, which logs every DNS request and response; set it to `info`, `warn` or `error` to reduce the verbosity:
+
+```yaml
+apiVersion: v1alpha1
+kind: ResolverConfig
+hostDNS:
+  enabled: true
+  logLevel: warn
+```
+"""
+
     [notes.credential_provider_config_files]
         title = "Kubelet Credential Provider Config Files"
         description = """\

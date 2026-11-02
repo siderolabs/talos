@@ -342,6 +342,7 @@ message HostDNSConfigSpec {
   common.NetIP service_host_dns_address = 3;
   bool resolve_member_names = 4;
   common.NetIP service_host_dns_address_v6 = 5;
+  string log_level = 6;
 }
 
 // HostnameSpecSpec describes node hostname.

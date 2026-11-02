@@ -96,6 +96,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			// machine configuration can disable it once it is loaded.
 			res.TypedSpec().Enabled = cfg == nil
 			res.TypedSpec().ResolveMemberNames = false
+			res.TypedSpec().LogLevel = ""
 
 			res.TypedSpec().ServiceHostDNSAddress = netip.Addr{}
 			res.TypedSpec().ServiceHostDNSAddressV6 = netip.Addr{}
@@ -106,6 +107,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 
 			res.TypedSpec().Enabled = hostDNSConfig.HostDNSEnabled()
 			res.TypedSpec().ResolveMemberNames = hostDNSConfig.ResolveMemberNames()
+			res.TypedSpec().LogLevel = hostDNSConfig.LogLevel()
 
 			if !hostDNSConfig.ForwardKubeDNSToHost() {
 				return nil

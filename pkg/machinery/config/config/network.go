@@ -454,6 +454,7 @@ type NetworkHostDNSConfig interface {
 	HostDNSEnabled() bool
 	ForwardKubeDNSToHost() bool
 	ResolveMemberNames() bool
+	LogLevel() string
 }
 
 // NetworkHTTPProbeConfig defines an HTTP probe configuration.

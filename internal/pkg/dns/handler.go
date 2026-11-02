@@ -99,12 +99,16 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 		}
 
 		if err != nil {
+			logger.Warn("dns request to upstream failed", zap.String("upstream", ups.Addr()), zap.Error(err))
+
 			// Kick off health check to see if the upstream is broken, so that
 			// further requests try healthy upstreams first.
 			ups.Healthcheck()
 		}
 
 		if resp != nil && (resp.Rcode == dns.RcodeServerFailure || resp.Rcode == dns.RcodeRefused) {
+			logger.Debug("dns upstream returned failure, trying next upstream", zap.String("upstream", ups.Addr()), zap.String("rcode", dns.RcodeToString[resp.Rcode]))
+
 			continue
 		}
 
