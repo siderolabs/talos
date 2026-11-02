@@ -193,11 +193,11 @@ func (i *ContainerInstancePhase) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _ContainerStateName = "pendingpullingstartingrunningexitedbackoffstoppingcompletedfailed"
+const _ContainerStateName = "pendingpullingstartingrunningexitedbackoffstoppingsucceededfailed"
 
 var _ContainerStateIndex = [...]uint8{0, 7, 14, 22, 29, 35, 42, 50, 59, 65}
 
-const _ContainerStateLowerName = "pendingpullingstartingrunningexitedbackoffstoppingcompletedfailed"
+const _ContainerStateLowerName = "pendingpullingstartingrunningexitedbackoffstoppingsucceededfailed"
 
 func (i ContainerState) String() string {
 	if i < 0 || i >= ContainerState(len(_ContainerStateIndex)-1) {
@@ -217,11 +217,11 @@ func _ContainerStateNoOp() {
 	_ = x[ContainerStateExited-(4)]
 	_ = x[ContainerStateBackoff-(5)]
 	_ = x[ContainerStateStopping-(6)]
-	_ = x[ContainerStateCompleted-(7)]
+	_ = x[ContainerStateSucceeded-(7)]
 	_ = x[ContainerStateFailed-(8)]
 }
 
-var _ContainerStateValues = []ContainerState{ContainerStatePending, ContainerStatePulling, ContainerStateStarting, ContainerStateRunning, ContainerStateExited, ContainerStateBackoff, ContainerStateStopping, ContainerStateCompleted, ContainerStateFailed}
+var _ContainerStateValues = []ContainerState{ContainerStatePending, ContainerStatePulling, ContainerStateStarting, ContainerStateRunning, ContainerStateExited, ContainerStateBackoff, ContainerStateStopping, ContainerStateSucceeded, ContainerStateFailed}
 
 var _ContainerStateNameToValueMap = map[string]ContainerState{
 	_ContainerStateName[0:7]:   ContainerStatePending,
@@ -231,7 +231,7 @@ var _ContainerStateNameToValueMap = map[string]ContainerState{
 	_ContainerStateName[29:35]: ContainerStateExited,
 	_ContainerStateName[35:42]: ContainerStateBackoff,
 	_ContainerStateName[42:50]: ContainerStateStopping,
-	_ContainerStateName[50:59]: ContainerStateCompleted,
+	_ContainerStateName[50:59]: ContainerStateSucceeded,
 	_ContainerStateName[59:65]: ContainerStateFailed,
 }
 
@@ -243,7 +243,7 @@ var _ContainerStateLowerNameToValueMap = map[string]ContainerState{
 	_ContainerStateLowerName[29:35]: ContainerStateExited,
 	_ContainerStateLowerName[35:42]: ContainerStateBackoff,
 	_ContainerStateLowerName[42:50]: ContainerStateStopping,
-	_ContainerStateLowerName[50:59]: ContainerStateCompleted,
+	_ContainerStateLowerName[50:59]: ContainerStateSucceeded,
 	_ContainerStateLowerName[59:65]: ContainerStateFailed,
 }
 

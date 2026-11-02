@@ -345,6 +345,34 @@ func (suite *ConfigSuite) TestResolvesDeprecatedDependsOn() {
 	})
 }
 
+func (suite *ConfigSuite) TestResolvesHealthCheck() {
+	withCheck := newDoc("api", "ghcr.io/siderolabs/api:v1.0.0")
+	withCheck.LifecycleConfig = &containercfg.ContainerLifecycle{
+		HealthCheckConfig: &containercfg.ContainerHealthCheck{
+			GRPCCheck:         &containercfg.ContainerGRPCHealthCheck{CheckPort: 9000, CheckService: "api"},
+			CheckInitialDelay: 2 * time.Second,
+		},
+	}
+
+	suite.applyContainers(withCheck, newDoc("plain", "nginx"))
+
+	ctest.AssertResource(suite, "api", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerHealthCheckSpec{
+			Kind:             string(configcfg.ContainerHealthCheckKindGRPC),
+			Port:             9000,
+			GRPCService:      "api",
+			InitialDelay:     2 * time.Second,
+			Interval:         containercfg.DefaultHealthCheckInterval,
+			Timeout:          containercfg.DefaultHealthCheckTimeout,
+			FailureThreshold: containercfg.DefaultHealthCheckFailureThreshold,
+		}, spec.TypedSpec().HealthCheck)
+	})
+
+	ctest.AssertResource(suite, "plain", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.False(spec.TypedSpec().HealthCheck.Enabled())
+	})
+}
+
 func (suite *ConfigSuite) TestRemovesSpecWhenDocumentGoesAway() {
 	suite.applyContainers(newDoc("a", "nginx"), newDoc("b", "nginx"))
 

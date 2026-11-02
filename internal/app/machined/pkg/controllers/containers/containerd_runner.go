@@ -60,6 +60,11 @@ func newContainerdRunner(logging runtime.LoggingManager) (TaskRunner, error) {
 	}, nil
 }
 
+// containerCgroupPath returns the cgroup the task of a container runs in, relative to the cgroup root.
+func containerCgroupPath(containerID string) string {
+	return filepath.Join(constants.CgroupTalosContainersRoot, containerID)
+}
+
 // withNamespace scopes a context to the dedicated namespace.
 func withNamespace(ctx context.Context) context.Context {
 	return namespaces.WithNamespace(ctx, constants.TalosContainersContainerdNamespace)
@@ -120,7 +125,7 @@ func (r *containerdRunner) Run(
 		return 0, fmt.Errorf("failed to get image %q: %w", spec.Image, err)
 	}
 
-	cgroupPath := filepath.Join(constants.CgroupTalosContainersRoot, spec.ContainerID)
+	cgroupPath := containerCgroupPath(spec.ContainerID)
 
 	// The mount alone does not make the socket usable: only the machined-access domain is permitted to
 	// connect to it, so a container that asked for the socket has to be labeled for it as well.

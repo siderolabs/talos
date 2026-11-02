@@ -75,7 +75,7 @@ type RuntimeController struct {
 
 	// Everything below outlives a single Run: see init.
 	instances map[string]*instanceRunState
-	notifyCh  chan struct{}
+	notifyCh  notifier
 	// instanceCtx parents the per-instance run goroutines.
 	instanceCtx context.Context //nolint:containedctx
 	taskRunner  TaskRunner
@@ -127,6 +127,31 @@ func (ctrl *RuntimeController) Outputs() []controller.Output {
 			Type: containers.ContainerInstanceStatusType,
 			Kind: controller.OutputExclusive,
 		},
+	}
+}
+
+// notifier wakes the main loop when an instance run ends.
+//
+// It is a coalescing "something changed, look again" signal: a single slot, so a pending wake-up
+// already covers every change made before the loop gets to it, and a second one is redundant.
+//
+// It is not runtime.QueueReconcile because it is also waited on outside the main loop: stopAll waits
+// on it for instances to exit, including from Run's defer once its context is canceled. Waiting on
+// runtime.EventCh there would swallow input changes meant for the next reconcile.
+type notifier chan struct{}
+
+func newNotifier() notifier {
+	return make(notifier, 1)
+}
+
+// notify wakes the main loop, never blocking.
+//
+// Blocking here would deadlock the controller's shutdown: once the main loop has returned, nothing
+// drains the notifier again.
+func (n notifier) notify() {
+	select {
+	case n <- struct{}{}:
+	default:
 	}
 }
 
@@ -293,7 +318,7 @@ func (ctrl *RuntimeController) init(ctx context.Context) {
 	}
 
 	ctrl.instances = map[string]*instanceRunState{}
-	ctrl.notifyCh = make(chan struct{}, 1)
+	ctrl.notifyCh = newNotifier()
 
 	// Cancellation is what stops a container, so the instances are deliberately hung off a context
 	// that nothing cancels: stopping is driven explicitly instead, per instance when its spec tears
@@ -314,8 +339,8 @@ func (ctrl *RuntimeController) closeRunner() {
 	ctrl.taskRunner = nil
 }
 
-func (ctrl *RuntimeController) criIsUp(ctx context.Context, runtime controller.Runtime) (bool, error) {
-	criService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, runtime, criServiceID)
+func (ctrl *RuntimeController) criIsUp(ctx context.Context, reader controller.Reader) (bool, error) {
+	criService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, reader, criServiceID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			return false, nil
@@ -832,20 +857,10 @@ func (ctrl *RuntimeController) start(
 	// ctrl.taskRunner, and reading it from here would race with it.
 	taskRunner := ctrl.taskRunner
 
-	// notify wakes the controller's main loop without blocking. ctrl.notifyCh is single-slot and purely
-	// a coalescing "something changed, look again" signal: a full buffer already means a reconcile
-	// is pending, so a second send is redundant, and it must never block. Blocking here on a
-	// canceled or uncancelable context can deadlock the controller's shutdown: if the main loop has
-	// already returned via ctx.Done(), nothing will ever drain this channel again.
-	//
-	// It belongs to the controller rather than to one Run for the same reason as the map it wakes the
-	// loop to look at: an instance that exits just after a restart still has to reach the next loop.
-	notify := func() {
-		select {
-		case ctrl.notifyCh <- struct{}{}:
-		default:
-		}
-	}
+	// The notifier belongs to the controller rather than to one Run for the same reason as the map it
+	// wakes the loop to look at: an instance that exits just after a restart still has to reach the
+	// next loop.
+	notify := ctrl.notifyCh.notify
 
 	go func() {
 		var everStarted bool

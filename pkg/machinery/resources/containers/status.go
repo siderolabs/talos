@@ -104,6 +104,7 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 	imageDigest string,
 	containerDependencyStatus *ContainerDependencyStatus,
 	containerRunStatus *ContainerRunStatus,
+	containerHealthStatus *ContainerHealthStatus,
 ) {
 	prev := *containerStatusSpec
 
@@ -149,7 +150,9 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 
 	containerStatusSpec.State = ResolveContainerState(stateInstanceStatus, containerImageStatus, gatesReady, isStopping, finishedState)
 
-	containerStatusSpec.Health = containerStatusSpec.State.Health(prev.Health)
+	healthCheckEnabled := containerSpec.TypedSpec().HealthCheck.Enabled()
+
+	containerStatusSpec.Health = containerStatusSpec.State.CheckedHealth(prev.Health, healthCheckEnabled, containerHealthStatus)
 
 	if containerStatusSpec.State == ContainerStatePending && containerDependencyStatus != nil {
 		containerStatusSpec.WaitingFor = containerDependencyStatus.TypedSpec().WaitingFor
@@ -157,9 +160,13 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 
 	containerStatusSpec.Error = DeriveReportedError(containerInstanceStatus, containerImageStatus)
 
-	// Same reasoning as RestartCount and ExitCode: keep the reason the last execution ended visible
-	// while the status that reported it is gone.
-	if containerStatusSpec.Error == "" && containerInstanceStatus == nil {
+	healthChecked := healthCheckEnabled && containerStatusSpec.State == ContainerStateRunning
+
+	if containerStatusSpec.Error == "" && healthChecked && containerHealthStatus != nil && !containerHealthStatus.TypedSpec().Healthy {
+		containerStatusSpec.Error = healthCheckErrorPrefix + containerHealthStatus.TypedSpec().Message
+	}
+
+	if containerStatusSpec.Error == "" && containerInstanceStatus == nil && prev.State != ContainerStateRunning {
 		containerStatusSpec.Error = prev.Error
 	}
 }
@@ -194,6 +201,9 @@ func finishedOutcome(
 	return containerInstanceStatus, ContainerStateExited
 }
 
+// healthCheckErrorPrefix tells the reader that an Error comes from a failing health check.
+const healthCheckErrorPrefix = "health check: "
+
 // ResolveReportedImage picks the image to report.
 func ResolveReportedImage(containerSpec *ContainerSpec, containerInstanceSpec *ContainerInstanceSpec, imageDigest string) string {
 	if containerInstanceSpec != nil && containerInstanceSpec.TypedSpec().Image != "" {
@@ -209,7 +219,7 @@ func ResolveReportedImage(containerSpec *ContainerSpec, containerInstanceSpec *C
 
 // ResolveContainerState maps the observable resources onto a container state.
 //
-// finishedState is the state of a finished instance: exited while a restart is pending, completed or
+// finishedState is the state of a finished instance: exited while a restart is pending, succeeded or
 // failed when the restart policy doesn't restart it.
 func ResolveContainerState(
 	containerInstanceStatus *ContainerInstanceStatus,

@@ -42,7 +42,7 @@ type ContainerRunStatusSpec struct {
 	// FinishedGeneration is the generation of the finished instance FinishedState is the outcome of.
 	FinishedGeneration uint64 `yaml:"finishedGeneration,omitempty" protobuf:"8"`
 	// FinishedState is what InstanceController decided for that instance: exited while it is
-	// restarted, completed or failed when it is not. It is published so that what reports the state
+	// restarted, succeeded or failed when it is not. It is published so that what reports the state
 	// of the container doesn't decide it again.
 	FinishedState ContainerState `yaml:"finishedState,omitempty" protobuf:"9"`
 }

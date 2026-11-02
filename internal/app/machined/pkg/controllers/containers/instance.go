@@ -60,6 +60,12 @@ func (ctrl *InstanceController) Inputs() []controller.Input {
 			Type:      containers.ContainerStatusType,
 			Kind:      controller.InputWeak,
 		},
+		// Gates on dependsOn.containers: a dependency whose health check passed skips the stability window.
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerHealthStatusType,
+			Kind:      controller.InputWeak,
+		},
 		// Gate on dependsOn.network.
 		{
 			Namespace: network.NamespaceName,

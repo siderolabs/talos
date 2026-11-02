@@ -10,4 +10,13 @@ var (
 	SELinuxPair           = selinuxPair
 	SELinuxPairCount      = selinuxPairCount
 	DecodeSeccompProfile  = decodeSeccompProfile
+	RunProbeLoop          = runProbeLoop
+	NetNSPath             = netNSPath
+	NetNSDialer           = netNSDialer
+	OpenTaskNetNS         = openTaskNetNS
+	TaskNetNSDialer       = taskNetNSDialer
+	TaskCgroupPath        = taskCgroupPath
+	CheckCgroup           = checkCgroup
+
+	LogContainerStatusTransition = logContainerStatusTransition
 )

@@ -250,6 +250,8 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 		containerSpecSpec.Restart.MaxRetries = new(uint32(maxRetries)) //nolint:gosec // validated to be non-negative
 	}
 
+	containerSpecSpec.HealthCheck = resolveHealthCheck(containerConfig.HealthCheck())
+
 	return nil
 }
 
@@ -264,6 +266,25 @@ func restartPolicy(policy configcfg.ContainerRestartPolicy) containers.Container
 
 	// always, and anything else, which validation rejects
 	return containers.ContainerRestartPolicyAlways
+}
+
+// resolveHealthCheck turns the typed configuration health check into a health check spec.
+func resolveHealthCheck(healthCheckConfig optional.Optional[configcfg.ContainerHealthCheckConfig]) containers.ContainerHealthCheckSpec {
+	healthCheck, ok := healthCheckConfig.Get()
+	if !ok {
+		return containers.ContainerHealthCheckSpec{}
+	}
+
+	return containers.ContainerHealthCheckSpec{
+		Kind:             string(healthCheck.Kind()),
+		Port:             uint32(healthCheck.Port()),
+		Path:             healthCheck.HTTPPath(),
+		GRPCService:      healthCheck.GRPCService(),
+		InitialDelay:     healthCheck.InitialDelay(),
+		Interval:         healthCheck.Interval(),
+		Timeout:          healthCheck.Timeout(),
+		FailureThreshold: healthCheck.FailureThreshold(),
+	}
 }
 
 // resolveMounts turns typed configuration mounts into mount specs.

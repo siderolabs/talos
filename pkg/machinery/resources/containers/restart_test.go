@@ -34,9 +34,9 @@ func TestRestartPermitted(t *testing.T) {
 	}{
 		{name: "always after success", restart: containers.ContainerRestartSpec{}, instance: succeeded, permitted: true, finished: containers.ContainerStateExited, succeeded: true},
 		{name: "always after failure", restart: containers.ContainerRestartSpec{}, instance: exitedNonZero, permitted: true, finished: containers.ContainerStateExited},
-		{name: "never after success", restart: never(), instance: succeeded, finished: containers.ContainerStateCompleted, succeeded: true},
+		{name: "never after success", restart: never(), instance: succeeded, finished: containers.ContainerStateSucceeded, succeeded: true},
 		{name: "never after failure", restart: never(), instance: exitedNonZero, finished: containers.ContainerStateFailed},
-		{name: "on-failure after success", restart: onFailure(nil), instance: succeeded, finished: containers.ContainerStateCompleted, succeeded: true},
+		{name: "on-failure after success", restart: onFailure(nil), instance: succeeded, finished: containers.ContainerStateSucceeded, succeeded: true},
 		{name: "on-failure after failure", restart: onFailure(nil), restarts: 100, instance: exitedNonZero, permitted: true, finished: containers.ContainerStateExited},
 		{name: "on-failure after a failed start", restart: onFailure(nil), instance: failedStart, permitted: true, finished: containers.ContainerStateExited},
 		{name: "on-failure after a runtime error", restart: onFailure(nil), instance: runtimeError, permitted: true, finished: containers.ContainerStateExited},
@@ -201,11 +201,11 @@ func TestFinishedStateRefused(t *testing.T) {
 func TestRunStatusOutcome(t *testing.T) {
 	t.Parallel()
 
-	decided := containers.ContainerRunStatusSpec{FinishedGeneration: 3, FinishedState: containers.ContainerStateCompleted}
+	decided := containers.ContainerRunStatusSpec{FinishedGeneration: 3, FinishedState: containers.ContainerStateSucceeded}
 
 	outcome, ok := decided.Outcome(3)
 	assert.True(t, ok)
-	assert.Equal(t, containers.ContainerStateCompleted, outcome)
+	assert.Equal(t, containers.ContainerStateSucceeded, outcome)
 
 	_, ok = decided.Outcome(4)
 	assert.False(t, ok, "another generation")

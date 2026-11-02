@@ -70,7 +70,7 @@ func (restart ContainerRestartSpec) RestartBackoff(runStatus ContainerRunStatusS
 }
 
 // ContainerSucceeded reports whether a container ran successfully and is not run again: its latest
-// instance runs the current configuration and InstanceController decided it completed.
+// instance runs the current configuration and InstanceController decided it succeeded.
 func ContainerSucceeded(ctx context.Context, r controller.Reader, containerID string) (bool, error) {
 	containerSpec, err := safe.ReaderGetByID[*ContainerSpec](ctx, r, containerID)
 	if err != nil {
@@ -99,12 +99,12 @@ func ContainerSucceeded(ctx context.Context, r controller.Reader, containerID st
 		return false, nil
 	}
 
-	return completedOutcome(ctx, r, containerSpec, instanceSpec, instanceStatus.TypedSpec().Generation)
+	return succeededOutcome(ctx, r, containerSpec, instanceSpec, instanceStatus.TypedSpec().Generation)
 }
 
-// completedOutcome reports whether InstanceController decided the instance of the generation
-// completed, as a run of the current configuration of the container.
-func completedOutcome(
+// succeededOutcome reports whether InstanceController decided the instance of the generation
+// succeeded, as a run of the current configuration of the container.
+func succeededOutcome(
 	ctx context.Context,
 	r controller.Reader,
 	containerSpec *ContainerSpec,
@@ -132,7 +132,7 @@ func completedOutcome(
 
 	outcome, ok := runStatus.Outcome(generation)
 
-	return ok && outcome == ContainerStateCompleted, nil
+	return ok && outcome == ContainerStateSucceeded, nil
 }
 
 // FinishedState returns the state of a container whose newest instance has finished.
@@ -143,7 +143,7 @@ func (restart ContainerRestartSpec) FinishedState(runStatus ContainerRunStatusSp
 	case instanceStatus.Refused, runStatus.RestartCharged(instanceStatus.Generation), restart.RestartPermitted(runStatus, instanceStatus):
 		return ContainerStateExited
 	case instanceStatus.Succeeded():
-		return ContainerStateCompleted
+		return ContainerStateSucceeded
 	default:
 		return ContainerStateFailed
 	}
