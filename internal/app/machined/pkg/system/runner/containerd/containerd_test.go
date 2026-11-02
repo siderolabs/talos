@@ -21,8 +21,10 @@ import (
 	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/pkg/cio"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
+	"github.com/containerd/errdefs"
 	"github.com/google/uuid"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/suite"
@@ -65,6 +67,8 @@ type ContainerdSuite struct {
 	runnerCancel        context.CancelFunc
 	containerdWg        sync.WaitGroup
 	containerdAddress   string
+	containerdArgs      *runner.Args
+	containerdCgroup    string
 
 	containerID string
 
@@ -111,7 +115,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.Require().NoError(os.MkdirAll(constants.EtcCRIConfdPath, 0o755))
 	suite.Require().NoError(os.WriteFile(filepath.Join(constants.EtcCRIConfdPath, "cri.toml"), nil, 0o644))
 
-	args := &runner.Args{
+	suite.containerdArgs = &runner.Args{
 		ID: "containerd",
 		ProcessArgs: []string{
 			"/bin/containerd",
@@ -121,23 +125,9 @@ func (suite *ContainerdSuite) SetupSuite() {
 			"--config", constants.CRIContainerdConfig,
 		},
 	}
+	suite.containerdCgroup = "/" + suite.T().Name()
 
-	suite.runnerCtx, suite.runnerCancel = context.WithCancel(context.Background())
-
-	suite.containerdRunner = process.NewRunner(
-		false,
-		args,
-		runner.WithLoggingManager(suite.loggingManager),
-		runner.WithEnv([]string{constants.EnvPathWithBin}),
-		runner.WithCgroupPath("/"+suite.T().Name()),
-	)
-	suite.Require().NoError(suite.containerdRunner.Open())
-
-	suite.containerdWg.Go(func() {
-		defer suite.containerdRunner.Close() //nolint:errcheck
-
-		suite.containerdRunner.Run(suite.runnerCtx, MockEventSink, nil) //nolint:errcheck
-	})
+	suite.startContainerd()
 
 	suite.client, err = containerd.New(suite.containerdAddress)
 	suite.Require().NoError(err)
@@ -149,6 +139,42 @@ func (suite *ContainerdSuite) SetupSuite() {
 
 	suite.image, err = suite.client.Pull(ctx, busyboxImage, containerd.WithPullUnpack)
 	suite.Require().NoError(err)
+}
+
+func (suite *ContainerdSuite) startContainerd() {
+	suite.runnerCtx, suite.runnerCancel = context.WithCancel(context.Background())
+
+	containerdRunner := process.NewRunner(
+		false,
+		suite.containerdArgs,
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithEnv([]string{constants.EnvPathWithBin}),
+		runner.WithCgroupPath(suite.containerdCgroup),
+	)
+	suite.Require().NoError(containerdRunner.Open())
+
+	suite.containerdRunner = containerdRunner
+	runnerCtx := suite.runnerCtx
+
+	suite.containerdWg.Go(func() {
+		defer containerdRunner.Close() //nolint:errcheck
+
+		containerdRunner.Run(runnerCtx, MockEventSink, nil) //nolint:errcheck
+	})
+}
+
+// restartContainerd stops and starts containerd again, as a CRI restart does on a node: running tasks survive under their shims.
+func (suite *ContainerdSuite) restartContainerd() {
+	suite.runnerCancel()
+	suite.containerdWg.Wait()
+
+	suite.startContainerd()
+
+	suite.Require().Eventually(func() bool {
+		serving, err := suite.client.IsServing(context.Background())
+
+		return err == nil && serving
+	}, 30*time.Second, 100*time.Millisecond)
 }
 
 func (suite *ContainerdSuite) SetupTest() {
@@ -420,6 +446,110 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 
 	runCancel()
 	suite.Assert().NoError(<-done)
+}
+
+func (suite *ContainerdSuite) TestStopAcrossContainerdRestart() {
+	r := containerdrunner.NewRunner(
+		false, &runner.Args{
+			ID:          suite.containerID,
+			ProcessArgs: []string{"/bin/sh", "-c", "trap -- '' SIGTERM; while :; do sleep 1; done"},
+		},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithNamespace(suite.containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+		runner.WithGracefulShutdownTimeout(5*time.Second),
+		runner.WithContainerdAddress(suite.containerdAddress),
+	)
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
+	started := make(chan struct{})
+	done := make(chan error, 1)
+
+	go func() {
+		_, runErr := r.Run(runCtx, MockEventSink, func(int32) { close(started) })
+
+		done <- runErr
+	}()
+
+	select {
+	case <-started:
+	case err := <-done:
+		suite.FailNow("runner exited before the task started", "%v", err)
+	case <-time.After(time.Minute):
+		suite.FailNow("task did not start")
+	}
+
+	// the task ignores SIGTERM, so the runner is still waiting for it to exit when containerd goes away
+	runCancel()
+	time.Sleep(100 * time.Millisecond)
+
+	suite.restartContainerd()
+
+	select {
+	case err := <-done:
+		suite.Require().NoError(err)
+	case <-time.After(time.Minute):
+		suite.FailNow("runner did not stop")
+	}
+
+	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
+
+	container, err := suite.client.LoadContainer(ctx, suite.containerID)
+	suite.Require().NoError(err)
+
+	task, err := container.Task(ctx, nil)
+	if errdefs.IsNotFound(err) {
+		return
+	}
+
+	suite.Require().NoError(err)
+
+	status, err := task.Status(ctx)
+	suite.Require().NoError(err)
+	suite.Assert().NotEqual(containerd.Running, status.Status, "the runner reported the task as stopped while it is still running")
+}
+
+func (suite *ContainerdSuite) TestOpenDeletesStaleTask() {
+	ctx := namespaces.WithNamespace(context.Background(), suite.containerdNamespace)
+
+	// a task left running by a previous instance of the service which lost track of it
+	container, err := suite.client.NewContainer(
+		ctx,
+		suite.containerID,
+		containerd.WithNewSnapshot(suite.containerID, suite.image),
+		containerd.WithNewSpec(
+			oci.WithImageConfig(suite.image),
+			oci.WithProcessArgs("/bin/sh", "-c", "trap -- '' SIGTERM; while :; do sleep 1; done"),
+		),
+	)
+	suite.Require().NoError(err)
+
+	task, err := container.NewTask(ctx, cio.NullIO)
+	suite.Require().NoError(err)
+	suite.Require().NoError(task.Start(ctx))
+
+	r := containerdrunner.NewRunner(
+		false, &runner.Args{
+			ID:          suite.containerID,
+			ProcessArgs: []string{"/bin/sh", "-c", "exit 0"},
+		},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithNamespace(suite.containerdNamespace),
+		runner.WithContainerImage(busyboxImage),
+		runner.WithContainerdAddress(suite.containerdAddress),
+	)
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	suite.assertRunSucceeds(r)
 }
 
 func (suite *ContainerdSuite) TestContainerStdin() {
