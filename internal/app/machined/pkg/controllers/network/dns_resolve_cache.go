@@ -32,9 +32,10 @@ type DNSResolveCacheController struct {
 	State  state.State
 	Logger *zap.Logger
 
-	mx        sync.Mutex
-	manager   *dns.Manager
-	reconcile chan struct{}
+	mx                 sync.Mutex
+	manager            *dns.Manager
+	dnsManagerLogLevel zap.AtomicLevel
+	reconcile          chan struct{}
 }
 
 // Name implements controller.Controller interface.
@@ -110,6 +111,7 @@ func (ctrl *DNSResolveCacheController) run(ctx context.Context, r controller.Run
 		return fmt.Errorf("error getting host dns config: %w", err)
 	}
 
+	ctrl.setLogLevel(cfg.TypedSpec().LogLevel)
 	ctrl.manager.AllowNodeResolving(cfg.TypedSpec().ResolveMemberNames)
 
 	if !cfg.TypedSpec().Enabled {
@@ -174,11 +176,15 @@ func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r con
 
 func (ctrl *DNSResolveCacheController) init(ctx context.Context) {
 	if ctrl.manager == nil {
+		// The DNS manager log level defaults to debug, and it can be raised via the host DNS configuration.
+		ctrl.dnsManagerLogLevel = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		managerLogger := ctrl.Logger.WithOptions(zap.IncreaseLevel(ctrl.dnsManagerLogLevel))
+
 		ctrl.manager = dns.NewManager(
 			&memberReader{st: ctrl.State},
 			&staticHostReader{st: ctrl.State},
-			ctrl.eventHook,
-			ctrl.Logger,
+			func(event suture.Event) { ctrl.eventHook(managerLogger, event) },
+			managerLogger,
 		)
 
 		// Ensure we stop all runners when the context is canceled, no matter where we are currently.
@@ -197,8 +203,28 @@ func (ctrl *DNSResolveCacheController) init(ctx context.Context) {
 	ctrl.manager.ServeBackground(ctx)
 }
 
-func (ctrl *DNSResolveCacheController) eventHook(event suture.Event) {
-	ctrl.Logger.Info("dns-resolve-cache-runners event", zap.String("event", event.String()))
+func (ctrl *DNSResolveCacheController) setLogLevel(level string) {
+	newLevel := zapcore.DebugLevel
+
+	if level != "" {
+		parsed, err := zapcore.ParseLevel(level)
+		if err != nil {
+			ctrl.Logger.Warn("invalid host dns log level, using debug", zap.String("level", level), zap.Error(err))
+		} else {
+			newLevel = parsed
+		}
+	}
+
+	if newLevel == ctrl.dnsManagerLogLevel.Level() {
+		return
+	}
+
+	ctrl.Logger.Info("setting host dns log level", zap.Stringer("level", newLevel))
+	ctrl.dnsManagerLogLevel.SetLevel(newLevel)
+}
+
+func (ctrl *DNSResolveCacheController) eventHook(logger *zap.Logger, event suture.Event) {
+	logger.Info("dns-resolve-cache-runners event", zap.String("event", event.String()))
 
 	select {
 	case ctrl.reconcile <- struct{}{}:

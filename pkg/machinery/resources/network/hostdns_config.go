@@ -33,6 +33,7 @@ type HostDNSConfigSpec struct {
 	ServiceHostDNSAddress   netip.Addr       `yaml:"serviceHostDNSAddress,omitempty" protobuf:"3"`
 	ResolveMemberNames      bool             `yaml:"resolveMemberNames,omitempty" protobuf:"4"`
 	ServiceHostDNSAddressV6 netip.Addr       `yaml:"serviceHostDNSAddressV6,omitempty" protobuf:"5"`
+	LogLevel                string           `yaml:"logLevel,omitempty" protobuf:"6"`
 }
 
 // NewHostDNSConfig initializes a HostDNSConfig resource.

@@ -70,6 +70,7 @@ func TestResolverConfigMarshalStabilityWithHostDNS(t *testing.T) {
 		HostDNSEnabled:              new(true),
 		HostDNSForwardKubeDNSToHost: new(true),
 		HostDNSResolveMemberNames:   new(false),
+		HostDNSLogLevel:             "warn",
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -394,6 +395,34 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			},
 
 			expectedError: "hostDNS.resolveMemberNames cannot be enabled when hostDNS.enabled is false",
+		},
+		{
+			name: "logLevel set but HostDNSEnabled false",
+			cfg: func() *network.ResolverConfigV1Alpha1 {
+				cfg := network.NewResolverConfigV1Alpha1()
+				cfg.ResolverHostDNS = network.HostDNSConfig{
+					HostDNSEnabled:  new(false),
+					HostDNSLogLevel: "info",
+				}
+
+				return cfg
+			},
+
+			expectedError: "hostDNS.logLevel cannot be set when hostDNS.enabled is false",
+		},
+		{
+			name: "invalid logLevel",
+			cfg: func() *network.ResolverConfigV1Alpha1 {
+				cfg := network.NewResolverConfigV1Alpha1()
+				cfg.ResolverHostDNS = network.HostDNSConfig{
+					HostDNSEnabled:  new(true),
+					HostDNSLogLevel: "verbose",
+				}
+
+				return cfg
+			},
+
+			expectedError: "hostDNS.logLevel \"verbose\" is invalid, must be one of: debug, info, warn, error",
 		},
 		{
 			name: "search domain with newline",

@@ -252,6 +252,7 @@ func (suite *HostDNSConfigSuite) TestResolverConfigDocument() {
 		HostDNSEnabled:              new(true),
 		HostDNSForwardKubeDNSToHost: new(true),
 		HostDNSResolveMemberNames:   new(true),
+		HostDNSLogLevel:             "warn",
 	}
 
 	v1 := &v1alpha1.Config{
@@ -274,6 +275,7 @@ func (suite *HostDNSConfigSuite) TestResolverConfigDocument() {
 	ctest.AssertResource(suite, network.HostDNSConfigID, func(r *network.HostDNSConfig, asrt *assert.Assertions) {
 		asrt.True(r.TypedSpec().Enabled)
 		asrt.True(r.TypedSpec().ResolveMemberNames)
+		asrt.Equal("warn", r.TypedSpec().LogLevel)
 		asrt.Equal(
 			[]netip.AddrPort{
 				netip.MustParseAddrPort("127.0.0.53:53"),

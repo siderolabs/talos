@@ -6,3 +6,4 @@ hostDNS:
     enabled: true
     forwardKubeDNSToHost: true
     resolveMemberNames: false
+    logLevel: warn

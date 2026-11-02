@@ -2406,6 +2406,7 @@ type HostDNSConfigSpec struct {
 	ServiceHostDnsAddress   *common.NetIP          `protobuf:"bytes,3,opt,name=service_host_dns_address,json=serviceHostDnsAddress,proto3" json:"service_host_dns_address,omitempty"`
 	ResolveMemberNames      bool                   `protobuf:"varint,4,opt,name=resolve_member_names,json=resolveMemberNames,proto3" json:"resolve_member_names,omitempty"`
 	ServiceHostDnsAddressV6 *common.NetIP          `protobuf:"bytes,5,opt,name=service_host_dns_address_v6,json=serviceHostDnsAddressV6,proto3" json:"service_host_dns_address_v6,omitempty"`
+	LogLevel                string                 `protobuf:"bytes,6,opt,name=log_level,json=logLevel,proto3" json:"log_level,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -2473,6 +2474,13 @@ func (x *HostDNSConfigSpec) GetServiceHostDnsAddressV6() *common.NetIP {
 		return x.ServiceHostDnsAddressV6
 	}
 	return nil
+}
+
+func (x *HostDNSConfigSpec) GetLogLevel() string {
+	if x != nil {
+		return x.LogLevel
+	}
+	return ""
 }
 
 // HostnameSpecSpec describes node hostname.
@@ -6821,13 +6829,14 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"K\n" +
 	"\x10HardwareAddrSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12#\n" +
-	"\rhardware_addr\x18\x02 \x01(\fR\fhardwareAddr\"\xb2\x02\n" +
+	"\rhardware_addr\x18\x02 \x01(\fR\fhardwareAddr\"\xcf\x02\n" +
 	"\x11HostDNSConfigSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12<\n" +
 	"\x10listen_addresses\x18\x02 \x03(\v2\x11.common.NetIPPortR\x0flistenAddresses\x12F\n" +
 	"\x18service_host_dns_address\x18\x03 \x01(\v2\r.common.NetIPR\x15serviceHostDnsAddress\x120\n" +
 	"\x14resolve_member_names\x18\x04 \x01(\bR\x12resolveMemberNames\x12K\n" +
-	"\x1bservice_host_dns_address_v6\x18\x05 \x01(\v2\r.common.NetIPR\x17serviceHostDnsAddressV6\"\xa7\x01\n" +
+	"\x1bservice_host_dns_address_v6\x18\x05 \x01(\v2\r.common.NetIPR\x17serviceHostDnsAddressV6\x12\x1b\n" +
+	"\tlog_level\x18\x06 \x01(\tR\blogLevel\"\xa7\x01\n" +
 	"\x10HostnameSpecSpec\x12\x1a\n" +
 	"\bhostname\x18\x01 \x01(\tR\bhostname\x12\x1e\n" +
 	"\n" +
