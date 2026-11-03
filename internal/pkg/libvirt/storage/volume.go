@@ -609,10 +609,3 @@ func isNoStorageVol(err error) bool {
 
 	return ok && rpcErr.Code == uint32(libvirt.ErrNoStorageVol)
 }
-
-// ResizeVolume preserves the bounded provisioning contract for current controllers.
-func (c *Client) ResizeVolume(pool Pool, name string, capacity uint64) error {
-	_, err := c.ResizeVolumeOperation(pool, name, capacity)
-
-	return err
-}

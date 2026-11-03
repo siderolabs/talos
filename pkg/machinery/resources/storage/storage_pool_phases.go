@@ -30,3 +30,20 @@ const (
 	StoragePoolVolumePhaseReady                                                // ready
 	StoragePoolVolumePhaseObservationUnavailable                               // observationUnavailable
 )
+
+// StoragePoolVolumeCopyPhase describes a copy attempt independently of attachability.
+type StoragePoolVolumeCopyPhase int
+
+// Copy phases. Unknown carries no proof of success or failure.
+//
+//structprotogen:gen_enum
+//nolint:misspell // Public copy phase spelling.
+const (
+	StoragePoolVolumeCopyPhaseUnknown    StoragePoolVolumeCopyPhase = iota // unknown
+	StoragePoolVolumeCopyPhaseWaiting                                      // waiting
+	StoragePoolVolumeCopyPhaseQueued                                       // queued
+	StoragePoolVolumeCopyPhaseRunning                                      // running
+	StoragePoolVolumeCopyPhaseCancelling                                   // cancelling
+	StoragePoolVolumeCopyPhaseSucceeded                                    // succeeded
+	StoragePoolVolumeCopyPhaseFailed                                       // failed
+)

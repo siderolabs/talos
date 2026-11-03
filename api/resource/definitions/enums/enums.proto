@@ -984,6 +984,17 @@ enum StorageStoragePoolVolumePhase {
   STORAGE_POOL_VOLUME_PHASE_OBSERVATION_UNAVAILABLE = 3;
 }
 
+// StorageStoragePoolVolumeCopyPhase describes a copy attempt independently of attachability.
+enum StorageStoragePoolVolumeCopyPhase {
+  STORAGE_POOL_VOLUME_COPY_PHASE_UNKNOWN = 0;
+  STORAGE_POOL_VOLUME_COPY_PHASE_WAITING = 1;
+  STORAGE_POOL_VOLUME_COPY_PHASE_QUEUED = 2;
+  STORAGE_POOL_VOLUME_COPY_PHASE_RUNNING = 3;
+  STORAGE_POOL_VOLUME_COPY_PHASE_CANCELLING = 4;
+  STORAGE_POOL_VOLUME_COPY_PHASE_SUCCEEDED = 5;
+  STORAGE_POOL_VOLUME_COPY_PHASE_FAILED = 6;
+}
+
 // NetworkConfigLayer describes network configuration layers, with lowest priority first.
 enum NetworkConfigLayer {
   CONFIG_DEFAULT = 0;

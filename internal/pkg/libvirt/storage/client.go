@@ -42,7 +42,7 @@ func New(socket, uri string) *Connector {
 // Open bounds dialing, the handshake, RPCs and graceful disconnect with one
 // timeout context. Cancellation closes the transport because go-libvirt RPCs
 // do not accept a context.
-func (c *Connector) Open(ctx context.Context) (EvidenceClient, error) {
+func (c *Connector) Open(ctx context.Context) (PoolClient, error) {
 	return c.openWithTimeout(ctx, operationTimeout)
 }
 
@@ -168,34 +168,6 @@ type VolumeClient interface {
 	FinishCopy(context.Context, Pool, *CopyOperation, func() error) (Volume, error)
 	ResizeVolumeOperation(Pool, string, uint64) (OperationOutcome, error)
 	Close()
-}
-
-// Session is a bounded session; callers must Close it after each reconciliation.
-// A fresh connection on each pass avoids retaining poisoned RPC connections.
-type Session interface {
-	Pools() ([]Pool, error)
-	Ensure(Pool, string, func() error) error
-	Remove(Pool) error
-	Stop(Pool) error
-
-	// Volume looks a volume up within a pool. There is deliberately no verb which deletes one: a
-	// volume outlives the configuration that asked for it, exactly as a pool's contents outlive the
-	// pool, and nothing on this interface can take a guest's data away.
-	Volume(Pool, string) (Volume, bool, error)
-	CreateVolume(Pool, string, string, uint64, string, string) (Volume, error)
-	ResizeVolume(Pool, string, uint64) error
-
-	Close()
-}
-
-// EvidenceClient exposes per-invocation outcomes without changing legacy Session fakes.
-// Callers needing a safe fence must use these methods, not infer it from Session errors.
-type EvidenceClient interface {
-	Session
-	EnsureOperation(Pool, string, func() error) (OperationOutcome, error)
-	RemoveOperation(Pool) (OperationOutcome, error)
-	StopOperation(Pool) (OperationOutcome, error)
-	ResizeVolumeOperation(Pool, string, uint64) (OperationOutcome, error)
 }
 
 //nolint:interfacebloat // libvirt's own RPC surface; it is mirrored here, not designed here.
@@ -503,30 +475,4 @@ func (c *Client) RemoveOperation(pool Pool) (OperationOutcome, error) {
 	evidence.record(err)
 
 	return evidence.outcome, err
-}
-
-// OpenWithTimeout opens a bounded session for existing volume consumers.
-func (c *Connector) OpenWithTimeout(ctx context.Context, timeout time.Duration) (EvidenceClient, error) {
-	return c.openWithTimeout(ctx, timeout)
-}
-
-// Ensure preserves the bounded session contract for current controllers.
-func (c *Client) Ensure(pool Pool, target string, prepare func() error) error {
-	_, err := c.EnsureOperation(pool, target, prepare)
-
-	return err
-}
-
-// Remove preserves the bounded session contract for current controllers.
-func (c *Client) Remove(pool Pool) error {
-	_, err := c.RemoveOperation(pool)
-
-	return err
-}
-
-// Stop preserves the bounded session contract for current controllers.
-func (c *Client) Stop(pool Pool) error {
-	_, err := c.StopOperation(pool)
-
-	return err
 }

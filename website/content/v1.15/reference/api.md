@@ -419,6 +419,7 @@ description: Talos gRPC API reference.
     - [StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel)
     - [StorageMDMetadata](#talos.resource.definitions.enums.StorageMDMetadata)
     - [StorageStoragePoolPhase](#talos.resource.definitions.enums.StorageStoragePoolPhase)
+    - [StorageStoragePoolVolumeCopyPhase](#talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhase)
     - [StorageStoragePoolVolumePhase](#talos.resource.definitions.enums.StorageStoragePoolVolumePhase)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
@@ -816,6 +817,8 @@ description: Talos gRPC API reference.
     - [MDRefreshRequestSpec](#talos.resource.definitions.storage.MDRefreshRequestSpec)
     - [StoragePoolSpecSpec](#talos.resource.definitions.storage.StoragePoolSpecSpec)
     - [StoragePoolStatusSpec](#talos.resource.definitions.storage.StoragePoolStatusSpec)
+    - [StoragePoolVolumeCopySpec](#talos.resource.definitions.storage.StoragePoolVolumeCopySpec)
+    - [StoragePoolVolumeCopyStatusSpec](#talos.resource.definitions.storage.StoragePoolVolumeCopyStatusSpec)
     - [StoragePoolVolumeSpecSpec](#talos.resource.definitions.storage.StoragePoolVolumeSpecSpec)
     - [StoragePoolVolumeStatusSpec](#talos.resource.definitions.storage.StoragePoolVolumeStatusSpec)
   
@@ -7324,6 +7327,23 @@ StorageStoragePoolPhase describes observed pool attachability, not COSI metadata
 | STORAGE_POOL_PHASE_NOT_READY | 1 |  |
 | STORAGE_POOL_PHASE_READY | 2 |  |
 | STORAGE_POOL_PHASE_OBSERVATION_UNAVAILABLE | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhase"></a>
+
+### StorageStoragePoolVolumeCopyPhase
+StorageStoragePoolVolumeCopyPhase describes a copy attempt independently of attachability.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| STORAGE_POOL_VOLUME_COPY_PHASE_UNKNOWN | 0 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_WAITING | 1 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_QUEUED | 2 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_RUNNING | 3 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_CANCELLING | 4 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_SUCCEEDED | 5 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_FAILED | 6 |  |
 
 
 
@@ -14382,6 +14402,40 @@ StoragePoolStatusSpec reports the pool's backing volume, directory and observed 
 
 
 
+<a name="talos.resource.definitions.storage.StoragePoolVolumeCopySpec"></a>
+
+### StoragePoolVolumeCopySpec
+StoragePoolVolumeCopySpec describes the initial source of a pool-owned copy.
+Once published, a copy is adopted without consulting its source again.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| source | [string](#string) |  |  |
+| digest | [string](#string) |  |  |
+| source_library | [string](#string) |  | SourceLibrary is the immutable source dependency held until copy completion or withdrawal acknowledgment. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.StoragePoolVolumeCopyStatusSpec"></a>
+
+### StoragePoolVolumeCopyStatusSpec
+StoragePoolVolumeCopyStatusSpec observes an intent, never scheduler ownership.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| phase | [talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhase](#talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhase) |  |  |
+| intent | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.storage.StoragePoolVolumeSpecSpec"></a>
 
 ### StoragePoolVolumeSpecSpec
@@ -14396,6 +14450,7 @@ StoragePoolVolumeSpecSpec is the spec for StoragePoolVolumeSpec.
 | format | [string](#string) |  | Format is the on-disk format the volume is created with, as libvirt names it.<br><br>It applies at creation only. A volume already in the pool under another format is refused rather than rewritten. |
 | backing_file | [string](#string) |  | BackingFile is an optional base image path used only when creating the volume. An existing volume is not rebased when this changes. |
 | backing_format | [string](#string) |  | BackingFormat is the format of BackingFile, independent of the overlay Format. If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased. |
+| copy | [StoragePoolVolumeCopySpec](#talos.resource.definitions.storage.StoragePoolVolumeCopySpec) |  | Copy requests an independent raw copy. A request without a source can adopt a completed pool-owned copy, but must never create an empty replacement. |
 
 
 
@@ -14418,6 +14473,7 @@ StoragePoolVolumeStatusSpec is the spec for StoragePoolVolumeStatus.
 | pending_capacity | [uint64](#uint64) |  | PendingCapacity is a growth which has been asked for but not applied yet, in bytes.<br><br>Zero when there is none. A volume a guest has open cannot be grown underneath it, so the change waits for the guest to stop rather than being lost or forced. |
 | phase | [talos.resource.definitions.enums.StorageStoragePoolVolumePhase](#talos.resource.definitions.enums.StorageStoragePoolVolumePhase) |  | Phase reports whether the volume may be attached, independently of deferred growth or Error. |
 | error | [string](#string) |  | Error describes why the volume is not ready, or -- when it is -- which part of what was asked for was refused. |
+| copy | [StoragePoolVolumeCopyStatusSpec](#talos.resource.definitions.storage.StoragePoolVolumeCopyStatusSpec) |  | Copy observes the current copy intent; nil for blank volumes. |
 
 
 

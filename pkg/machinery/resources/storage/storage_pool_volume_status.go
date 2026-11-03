@@ -5,6 +5,10 @@
 package storage
 
 import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -55,6 +59,8 @@ type StoragePoolVolumeStatusSpec struct {
 	// Error describes why the volume is not ready, or -- when it is -- which part of what was asked
 	// for was refused.
 	Error string `yaml:"error,omitempty" protobuf:"8"`
+	// Copy observes the current copy intent; nil for blank volumes.
+	Copy *StoragePoolVolumeCopyStatusSpec `yaml:"copy,omitempty" protobuf:"9"`
 }
 
 // NewStoragePoolVolumeStatus initializes a StoragePoolVolumeStatus resource.
@@ -79,6 +85,7 @@ func (StoragePoolVolumeStatusExtension) ResourceDefinition() meta.ResourceDefini
 			{Name: "Capacity", JSONPath: "{.capacity}"},
 			{Name: "Path", JSONPath: "{.path}"},
 			{Name: "Phase", JSONPath: "{.phase}"},
+			{Name: "Copy", JSONPath: "{.copy.phase}"},
 			{Name: "Error", JSONPath: "{.error}"},
 		},
 	}
@@ -90,4 +97,44 @@ func init() {
 	if err := protobuf.RegisterDynamic(StoragePoolVolumeStatusType, &StoragePoolVolumeStatus{}); err != nil {
 		panic(err)
 	}
+}
+
+// StoragePoolVolumeCopyStatusSpec observes an intent, never scheduler ownership.
+//
+//gotagsrewrite:gen
+type StoragePoolVolumeCopyStatusSpec struct {
+	Phase  StoragePoolVolumeCopyPhase `yaml:"phase" protobuf:"1"`
+	Intent string                     `yaml:"intent" protobuf:"2"`
+}
+
+// StoragePoolVolumeCopyIntent correlates an observation with the request incarnation,
+// semantic contents and observed pool backing. Metadata versions, labels and finalizers
+// are deliberately excluded. An absent pool carries no qualified identity.
+func StoragePoolVolumeCopyIntent(spec *StoragePoolVolumeSpec, pool *StoragePoolStatus) string {
+	if spec.TypedSpec().Copy == nil || pool == nil {
+		return ""
+	}
+
+	data, err := json.Marshal(struct {
+		Namespace   string
+		ID          string
+		Created     string
+		PoolCreated string
+		Spec        *StoragePoolVolumeSpecSpec
+		Target      string
+		Backing     string
+	}{
+		Namespace:   spec.Metadata().Namespace(),
+		ID:          spec.Metadata().ID(),
+		Created:     spec.Metadata().Created().UTC().String(),
+		PoolCreated: pool.Metadata().Created().UTC().String(),
+		Spec:        spec.TypedSpec(),
+		Target:      pool.TypedSpec().TargetPath,
+		Backing:     pool.TypedSpec().VolumeID,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return fmt.Sprintf("%x", sha256.Sum256(data))
 }

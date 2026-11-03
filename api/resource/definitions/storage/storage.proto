@@ -305,6 +305,21 @@ message StoragePoolStatusSpec {
   string error = 4;
 }
 
+// StoragePoolVolumeCopySpec describes the initial source of a pool-owned copy.
+// Once published, a copy is adopted without consulting its source again.
+message StoragePoolVolumeCopySpec {
+  string source = 1;
+  string digest = 2;
+  // SourceLibrary is the immutable source dependency held until copy completion or withdrawal acknowledgment.
+  string source_library = 3;
+}
+
+// StoragePoolVolumeCopyStatusSpec observes an intent, never scheduler ownership.
+message StoragePoolVolumeCopyStatusSpec {
+  talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhase phase = 1;
+  string intent = 2;
+}
+
 // StoragePoolVolumeSpecSpec is the spec for StoragePoolVolumeSpec.
 message StoragePoolVolumeSpecSpec {
   // Pool is the name of the storage pool the volume lives in.
@@ -327,6 +342,9 @@ message StoragePoolVolumeSpecSpec {
   // BackingFormat is the format of BackingFile, independent of the overlay Format.
   // If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased.
   string backing_format = 6;
+  // Copy requests an independent raw copy. A request without a source can adopt
+  // a completed pool-owned copy, but must never create an empty replacement.
+  StoragePoolVolumeCopySpec copy = 7;
 }
 
 // StoragePoolVolumeStatusSpec is the spec for StoragePoolVolumeStatus.
@@ -357,5 +375,7 @@ message StoragePoolVolumeStatusSpec {
   // Error describes why the volume is not ready, or -- when it is -- which part of what was asked
   // for was refused.
   string error = 8;
+  // Copy observes the current copy intent; nil for blank volumes.
+  StoragePoolVolumeCopyStatusSpec copy = 9;
 }
 
