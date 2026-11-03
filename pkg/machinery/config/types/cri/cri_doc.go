@@ -291,6 +291,40 @@ func (RegistryTLSConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (SeccompProfileConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SeccompProfileConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SeccompProfileConfig declares a named seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SeccompProfileConfig declares a named seccomp profile.\nSeccompProfileConfig declares a seccomp profile which can be referenced by name.\n\nEvery profile is written to `/var/lib/kubelet/seccomp/profiles/<name>`, so Kubernetes pods\ncan use it with `securityContext.seccompProfile.type: Localhost` and\n`localhostProfile: profiles/<name>`.\n\nThis document replaces the deprecated `.machine.seccompProfiles` field.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the seccomp profile.\n\nThe name is used as the profile's file name, so it must be at most 255 characters long\nand may only contain ASCII letters, digits, `.`, `_` and `-`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "profile",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "The seccomp profile, in the OCI runtime specification `LinuxSeccomp` format.\n\nThis is the same JSON format Kubernetes `Localhost` seccomp profiles use, expressed\nas YAML. `defaultAction` is required.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The seccomp profile, in the OCI runtime specification `LinuxSeccomp` format." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleSeccompProfileConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "audit.json")
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file cri_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -305,6 +339,7 @@ func GetFileDoc() *encoder.FileDoc {
 			RegistryMirrorConfigV1Alpha1{}.Doc(),
 			RegistryEndpoint{}.Doc(),
 			RegistryTLSConfigV1Alpha1{}.Doc(),
+			SeccompProfileConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

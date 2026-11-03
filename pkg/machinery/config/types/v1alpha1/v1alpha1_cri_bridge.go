@@ -7,6 +7,8 @@ package v1alpha1
 import (
 	"path/filepath"
 
+	"github.com/siderolabs/gen/xslices"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -63,4 +65,16 @@ func (c *Config) CRICustomizationConfigs() []config.CRICustomizationConfig {
 	}
 
 	return nil
+}
+
+// SeccompProfiles implements the config.Config interface.
+func (c *Config) SeccompProfiles() []config.SeccompProfile {
+	if c == nil || c.MachineConfig == nil {
+		return nil
+	}
+
+	return xslices.Map(
+		c.MachineConfig.MachineSeccompProfiles, //nolint:staticcheck // compatibility with deprecated configuration
+		func(m *MachineSeccompProfile) config.SeccompProfile { return m },
+	)
 }

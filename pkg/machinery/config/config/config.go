@@ -99,6 +99,7 @@ type Config interface { //nolint:interfacebloat
 	ImageCacheConfig() ImageCacheConfig
 	CRIBaseRuntimeSpecConfig() CRIBaseRuntimeSpecConfig
 	CRICustomizationConfigs() []CRICustomizationConfig
+	SeccompProfiles() []SeccompProfile
 
 	// - misc:
 	ExtensionServiceConfigs() []ExtensionServiceConfig

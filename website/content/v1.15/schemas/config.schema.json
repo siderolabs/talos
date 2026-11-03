@@ -2282,6 +2282,51 @@
       ],
       "description": "RegistryTLSConfig configures TLS for a registry endpoint."
     },
+    "cri.SeccompProfileConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "SeccompProfileConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the seccomp profile.\n\nThe name is used as the profile’s file name, so it must be at most 255 characters long\nand may only contain ASCII letters, digits, ., _ and -.\n",
+          "markdownDescription": "Name of the seccomp profile.\n\nThe name is used as the profile's file name, so it must be at most 255 characters long\nand may only contain ASCII letters, digits, `.`, `_` and `-`.",
+          "x-intellij-html-description": "\u003cp\u003eName of the seccomp profile.\u003c/p\u003e\n\n\u003cp\u003eThe name is used as the profile\u0026rsquo;s file name, so it must be at most 255 characters long\nand may only contain ASCII letters, digits, \u003ccode\u003e.\u003c/code\u003e, \u003ccode\u003e_\u003c/code\u003e and \u003ccode\u003e-\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "profile": {
+          "type": "object",
+          "title": "profile",
+          "description": "The seccomp profile, in the OCI runtime specification LinuxSeccomp format.\n\nThis is the same JSON format Kubernetes Localhost seccomp profiles use, expressed\nas YAML. defaultAction is required.\n",
+          "markdownDescription": "The seccomp profile, in the OCI runtime specification `LinuxSeccomp` format.\n\nThis is the same JSON format Kubernetes `Localhost` seccomp profiles use, expressed\nas YAML. `defaultAction` is required.",
+          "x-intellij-html-description": "\u003cp\u003eThe seccomp profile, in the OCI runtime specification \u003ccode\u003eLinuxSeccomp\u003c/code\u003e format.\u003c/p\u003e\n\n\u003cp\u003eThis is the same JSON format Kubernetes \u003ccode\u003eLocalhost\u003c/code\u003e seccomp profiles use, expressed\nas YAML. \u003ccode\u003edefaultAction\u003c/code\u003e is required.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "profile"
+      ],
+      "description": "SeccompProfileConfig declares a named seccomp profile.\\nSeccompProfileConfig declares a seccomp profile which can be referenced by name.\\n\\nEvery profile is written to `/var/lib/kubelet/seccomp/profiles/\u003cname\u003e`, so Kubernetes pods\\ncan use it with `securityContext.seccompProfile.type: Localhost` and\\n`localhostProfile: profiles/\u003cname\u003e`.\\n\\nThis document replaces the deprecated `.machine.seccompProfiles` field.\\n"
+    },
     "extensions.ConfigFile": {
       "properties": {
         "content": {
@@ -9802,42 +9847,11 @@
           "description": "Configures the logging system.\n",
           "markdownDescription": "Configures the logging system.",
           "x-intellij-html-description": "\u003cp\u003eConfigures the logging system.\u003c/p\u003e\n"
-        },
-        "seccompProfiles": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.MachineSeccompProfile"
-          },
-          "type": "array",
-          "title": "seccompProfiles",
-          "description": "Configures the seccomp profiles for the machine.\n",
-          "markdownDescription": "Configures the seccomp profiles for the machine.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures the seccomp profiles for the machine.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "description": "MachineConfig represents the machine-specific config values."
-    },
-    "v1alpha1.MachineSeccompProfile": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "The name field is used to provide the file name of the seccomp profile.\n",
-          "markdownDescription": "The `name` field is used to provide the file name of the seccomp profile.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003ename\u003c/code\u003e field is used to provide the file name of the seccomp profile.\u003c/p\u003e\n"
-        },
-        "value": {
-          "type": "object",
-          "title": "value",
-          "description": "The value field is used to provide the seccomp profile.\n",
-          "markdownDescription": "The `value` field is used to provide the seccomp profile.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003evalue\u003c/code\u003e field is used to provide the seccomp profile.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "MachineSeccompProfile defines seccomp profiles for the machine."
     }
   },
   "oneOf": [
@@ -9897,6 +9911,9 @@
     },
     {
       "$ref": "#/$defs/cri.RegistryTLSConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cri.SeccompProfileConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/extensions.ServiceConfigV1Alpha1"

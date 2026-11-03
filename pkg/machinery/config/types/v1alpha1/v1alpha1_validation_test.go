@@ -1983,6 +1983,39 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "MachineSeccompProfiles",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+						Key: []byte("bar"),
+					},
+					MachineSeccompProfiles: []*v1alpha1.MachineSeccompProfile{ //nolint:staticcheck // test deprecated compatibility
+						{
+							MachineSeccompProfileName: "audit.json",
+							MachineSeccompProfileValue: meta.Unstructured{
+								Object: map[string]any{
+									"defaultAction": "SCMP_ACT_LOG",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+				},
+			},
+			expectedWarnings: []string{
+				`.machine.seccompProfiles is deprecated; use SeccompProfileConfig documents instead`,
+			},
+		},
+		{
 			name: "MachineFeaturesInvalidAddressSortingAlgorithm",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",

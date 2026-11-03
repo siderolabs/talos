@@ -93,19 +93,6 @@ func clusterAdminKubeconfigExample() *AdminKubeconfigConfig {
 	}
 }
 
-func machineSeccompExample() []*MachineSeccompProfile {
-	return []*MachineSeccompProfile{
-		{
-			MachineSeccompProfileName: "audit.json",
-			MachineSeccompProfileValue: meta.Unstructured{
-				Object: map[string]any{
-					"defaultAction": "SCMP_ACT_LOG",
-				},
-			},
-		},
-	}
-}
-
 func machineLoggingExample1() LoggingConfig {
 	return LoggingConfig{
 		LoggingDestinations: []LoggingDestination{

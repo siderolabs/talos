@@ -101,6 +101,10 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		warnings = append(warnings, ".machine.baseRuntimeSpecOverrides is deprecated; use a CRIBaseRuntimeSpecConfig document instead")
 	}
 
+	if len(c.MachineConfig.MachineSeccompProfiles) > 0 { //nolint:staticcheck // warn about deprecated configuration
+		warnings = append(warnings, ".machine.seccompProfiles is deprecated; use SeccompProfileConfig documents instead")
+	}
+
 	if err := c.ClusterConfig.Validate(c.Machine().Type().IsControlPlane()); err != nil {
 		result = multierror.Append(result, err)
 	}

@@ -80,13 +80,6 @@ logging:
           extraTags:
             machine: worker-1
 {{< /highlight >}}</details> | |
-|`seccompProfiles` |<a href="#Config.machine.seccompProfiles.">[]MachineSeccompProfile</a> |Configures the seccomp profiles for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-seccompProfiles:
-    - name: audit.json # The `name` field is used to provide the file name of the seccomp profile.
-      # The `value` field is used to provide the seccomp profile.
-      value:
-        defaultAction: SCMP_ACT_LOG
-{{< /highlight >}}</details> | |
 
 
 
@@ -179,32 +172,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 
 
 
-
-
-
-
-
-
-### seccompProfiles[] {#Config.machine.seccompProfiles.}
-
-MachineSeccompProfile defines seccomp profiles for the machine.
-
-
-
-{{< highlight yaml >}}
-machine:
-    seccompProfiles:
-        - name: audit.json # The `name` field is used to provide the file name of the seccomp profile.
-          # The `value` field is used to provide the seccomp profile.
-          value:
-            defaultAction: SCMP_ACT_LOG
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`name` |string |The `name` field is used to provide the file name of the seccomp profile.  | |
-|`value` |Unstructured |The `value` field is used to provide the seccomp profile.  | |
 
 
 

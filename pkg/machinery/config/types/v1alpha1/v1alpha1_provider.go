@@ -79,11 +79,6 @@ func (c *Config) UdevRulesConfig() config.UdevConfig {
 	return c.Machine().Udev()
 }
 
-// SeccompProfiles implements the config.Provider interface.
-func (m *MachineConfig) SeccompProfiles() []config.SeccompProfile {
-	return xslices.Map(m.MachineSeccompProfiles, func(m *MachineSeccompProfile) config.SeccompProfile { return m })
-}
-
 // Name implements the config.Provider interface.
 func (m *MachineSeccompProfile) Name() string {
 	return m.MachineSeccompProfileName

@@ -286,6 +286,24 @@ func (container *Container) CRICustomizationConfigs() []config.CRICustomizationC
 	return matching
 }
 
+// SeccompProfiles implements config.Config interface.
+//
+// Profiles from the deprecated `.machine.seccompProfiles` field come first, followed by
+// SeccompProfileConfig documents.
+func (container *Container) SeccompProfiles() []config.SeccompProfile {
+	var profiles []config.SeccompProfile
+
+	if container.v1alpha1Config != nil {
+		profiles = append(profiles, container.v1alpha1Config.SeccompProfiles()...)
+	}
+
+	for _, doc := range findMatchingDocs[config.SeccompProfileConfig](container.documents) {
+		profiles = append(profiles, doc)
+	}
+
+	return profiles
+}
+
 // CRIBaseRuntimeSpecConfig implements config.Config interface.
 func (container *Container) CRIBaseRuntimeSpecConfig() config.CRIBaseRuntimeSpecConfig {
 	matching := findMatchingDocs[config.CRIBaseRuntimeSpecConfig](container.documents)

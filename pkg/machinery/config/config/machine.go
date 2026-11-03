@@ -35,14 +35,6 @@ type MachineConfig interface {
 	Features() Features
 	Udev() UdevConfig
 	Logging() Logging
-	SeccompProfiles() []SeccompProfile
-}
-
-// SeccompProfile defines the requirements for a config that pertains to seccomp
-// related options.
-type SeccompProfile interface {
-	Name() string
-	Value() map[string]any
 }
 
 // Disk represents the options available for partitioning, formatting, and

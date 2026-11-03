@@ -68,8 +68,8 @@ func (ctrl *SeccompProfileController) Run(ctx context.Context, r controller.Runt
 
 		r.StartTrackingOutputs()
 
-		if cfg.Config().Machine() != nil {
-			for _, profile := range cfg.Config().Machine().SeccompProfiles() {
+		if cfg.Config() != nil {
+			for _, profile := range cfg.Config().SeccompProfiles() {
 				if err = safe.WriterModify(ctx, r, cri.NewSeccompProfile(profile.Name()), func(cri *cri.SeccompProfile) error {
 					cri.TypedSpec().Name = profile.Name()
 					cri.TypedSpec().Value = profile.Value()

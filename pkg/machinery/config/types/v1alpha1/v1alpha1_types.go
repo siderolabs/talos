@@ -219,10 +219,9 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use 'KernelModuleConfig' instead.
 	MachineKernel *KernelConfig `yaml:"kernel,omitempty"`
-	//  description: |
-	//    Configures the seccomp profiles for the machine.
-	//  examples:
-	//    - value: machineSeccompExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use SeccompProfileConfig documents instead.
 	MachineSeccompProfiles []*MachineSeccompProfile `yaml:"seccompProfiles,omitempty" talos:"omitonlyifnil"`
 	// docgen:nodoc
 	//
@@ -243,6 +242,10 @@ type MachineConfig struct {
 }
 
 // MachineSeccompProfile defines seccomp profiles for the machine.
+//
+// docgen:nodoc
+//
+// Deprecated: Use SeccompProfileConfig documents instead.
 type MachineSeccompProfile struct {
 	//  description: |
 	//    The `name` field is used to provide the file name of the seccomp profile.

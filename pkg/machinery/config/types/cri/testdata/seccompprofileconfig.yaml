@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: SeccompProfileConfig
+name: no-ns.json
+profile:
+    defaultAction: SCMP_ACT_ALLOW
+    syscalls:
+        - action: SCMP_ACT_ERRNO
+          errnoRet: 1
+          names:
+            - unshare
+            - setns

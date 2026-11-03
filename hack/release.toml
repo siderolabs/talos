@@ -410,6 +410,24 @@ The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
 `talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
 """
 
+    [notes.seccomp_profile_config]
+        title = "SeccompProfileConfig"
+        description = """\
+Seccomp profiles are now declared with the new `SeccompProfileConfig` document, one document per profile:
+
+```yaml
+apiVersion: v1alpha1
+kind: SeccompProfileConfig
+name: audit.json
+profile:
+  defaultAction: SCMP_ACT_LOG
+```
+
+As before, every profile is written to `/var/lib/kubelet/seccomp/profiles/<name>`, so Kubernetes pods can use it with `securityContext.seccompProfile.type: Localhost` and `localhostProfile: profiles/<name>`.
+
+The `.machine.seccompProfiles` field is deprecated in favor of `SeccompProfileConfig` documents. It keeps working, but a document may not reuse the name of a profile declared there.
+"""
+
     [notes.container_seccomp_profile]
         title = "Container Seccomp Profile"
         description = """\

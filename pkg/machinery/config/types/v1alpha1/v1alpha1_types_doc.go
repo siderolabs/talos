@@ -142,13 +142,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the logging system." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
-			{
-				Name:        "seccompProfiles",
-				Type:        "[]MachineSeccompProfile",
-				Note:        "",
-				Description: "Configures the seccomp profiles for the machine.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the seccomp profiles for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{},
@@ -164,41 +158,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
 	doc.Fields[20].AddExample("", machineLoggingExample2())
-	doc.Fields[22].AddExample("", machineSeccompExample())
-
-	return doc
-}
-
-func (MachineSeccompProfile) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "MachineSeccompProfile",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineSeccompProfile defines seccomp profiles for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineSeccompProfile defines seccomp profiles for the machine.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "seccompProfiles",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "The `name` field is used to provide the file name of the seccomp profile.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `name` field is used to provide the file name of the seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "value",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "The `value` field is used to provide the seccomp profile.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `value` field is used to provide the seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineSeccompExample())
 
 	return doc
 }
@@ -554,7 +513,6 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			Config{}.Doc(),
 			MachineConfig{}.Doc(),
-			MachineSeccompProfile{}.Doc(),
 			ClusterConfig{}.Doc(),
 			Endpoint{}.Doc(),
 			EtcdConfig{}.Doc(),
