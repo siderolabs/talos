@@ -9,11 +9,13 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -43,6 +45,10 @@ type CPUScalingController struct {
 
 	// ReconcileCh triggers an additional reconcile on each receive. Intended for testing only.
 	ReconcileCh <-chan struct{}
+
+	// ReadFile reads a sysfs attribute, defaults to os.ReadFile. Overridable for testing, as some
+	// sysfs read errors (e.g. EBUSY from an inactive policy) cannot be reproduced with plain files.
+	ReadFile func(name string) ([]byte, error)
 
 	// defaults holds the value of each attribute before this controller first wrote it.
 	defaults map[string]string
@@ -90,6 +96,10 @@ func (ctrl *CPUScalingController) Run(ctx context.Context, r controller.Runtime,
 
 	if ctrl.SysfsPath == "" {
 		ctrl.SysfsPath = "/sys"
+	}
+
+	if ctrl.ReadFile == nil {
+		ctrl.ReadFile = os.ReadFile
 	}
 
 	if ctrl.defaults == nil {
@@ -152,7 +162,7 @@ func (ctrl *CPUScalingController) reconcile(ctx context.Context, r controller.Ru
 		return err
 	}
 
-	return ctrl.reportStatuses(ctx, r)
+	return ctrl.reportStatuses(ctx, r, logger)
 }
 
 // policies lists the cpufreq policy directories. A machine with no cpufreq driver (most VMs) has
@@ -161,37 +171,67 @@ func (ctrl *CPUScalingController) policies() ([]string, error) {
 	return filepath.Glob(filepath.Join(ctrl.SysfsPath, cpufreqPath, "policy*"))
 }
 
-func (ctrl *CPUScalingController) reportStatuses(ctx context.Context, r controller.Runtime) error {
+// isInactive reports whether err is the error the kernel returns for every attribute of a cpufreq
+// policy whose CPUs are all offline. The policy directory stays in place until a CPU comes back,
+// which raises a uevent and so a reconcile.
+func isInactive(err error) bool {
+	return errors.Is(err, syscall.EBUSY)
+}
+
+// cpufreqPolicy is a cpufreq policy as read from sysfs.
+type cpufreqPolicy struct {
+	id   string
+	spec hardware.CPUScalingStatusSpec
+
+	// microarch identifies the core design of the policy's first CPU on arm64 (the MIDR_EL1
+	// implementer and part number), zero where unknown.
+	microarch uint64
+}
+
+func (ctrl *CPUScalingController) reportStatuses(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	dirs, err := ctrl.policies()
 	if err != nil {
 		return fmt.Errorf("error listing cpufreq policies: %w", err)
 	}
 
-	coreTypes, err := ctrl.readCoreTypes()
-	if err != nil {
+	policies := make([]cpufreqPolicy, 0, len(dirs))
+
+	for _, dir := range dirs {
+		id := filepath.Base(dir)
+
+		policy, err := ctrl.readPolicy(dir)
+
+		switch {
+		case err == nil:
+		case errors.Is(err, fs.ErrNotExist):
+			continue
+		case isInactive(err):
+			// an inactive policy drives no CPU, and the kernel refuses to describe it
+			continue
+		default:
+			// a driver presenting something unexpected should not take down every other policy
+			logger.Warn("error reading cpufreq policy, skipping", zap.String("policy", id), zap.Error(err))
+
+			continue
+		}
+
+		policy.id = id
+		policies = append(policies, policy)
+	}
+
+	if err = ctrl.classifyCoreTypes(policies); err != nil {
 		return fmt.Errorf("error reading CPU core types: %w", err)
 	}
 
 	r.StartTrackingOutputs()
 
-	for _, dir := range dirs {
-		id := filepath.Base(dir)
-
-		spec, err := ctrl.readPolicy(dir, coreTypes)
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				continue
-			}
-
-			return fmt.Errorf("error reading cpufreq policy %q: %w", id, err)
-		}
-
-		if err := safe.WriterModify(ctx, r, hardware.NewCPUScalingStatus(id), func(res *hardware.CPUScalingStatus) error {
-			*res.TypedSpec() = spec
+	for _, policy := range policies {
+		if err := safe.WriterModify(ctx, r, hardware.NewCPUScalingStatus(policy.id), func(res *hardware.CPUScalingStatus) error {
+			*res.TypedSpec() = policy.spec
 
 			return nil
 		}); err != nil {
-			return fmt.Errorf("error updating CPUScalingStatus resource %q: %w", id, err)
+			return fmt.Errorf("error updating CPUScalingStatus resource %q: %w", policy.id, err)
 		}
 	}
 
@@ -201,83 +241,150 @@ func (ctrl *CPUScalingController) reportStatuses(ctx context.Context, r controll
 // readPolicy reads a single cpufreq policy directory.
 //
 // Drivers differ in which attributes they expose, so a missing one leaves its field zero.
-func (ctrl *CPUScalingController) readPolicy(dir string, coreTypes map[uint32]string) (hardware.CPUScalingStatusSpec, error) {
-	var spec hardware.CPUScalingStatusSpec
+func (ctrl *CPUScalingController) readPolicy(dir string) (cpufreqPolicy, error) {
+	var policy cpufreqPolicy
+
+	spec := &policy.spec
 
 	// the cpufreq core creates scaling_driver for every policy, so its absence means there is no
 	// policy here (any more)
-	driver, err := readAttr(dir, "scaling_driver")
+	driver, err := ctrl.readAttr(dir, "scaling_driver")
 	if err != nil {
-		return spec, err
+		return policy, err
 	}
 
 	if driver == "" {
-		return spec, fs.ErrNotExist
+		return policy, fs.ErrNotExist
 	}
 
 	spec.Driver = driver
 
 	if err = firstError(
-		readInto(dir, "affected_cpus", readCPUList, &spec.AffectedCPUs),
-		readInto(dir, "related_cpus", readCPUList, &spec.RelatedCPUs),
-		readInto(dir, "scaling_available_governors", readFields, &spec.AvailableGovernors),
-		readInto(dir, "energy_performance_available_preferences", readFields, &spec.AvailableEPPs),
-		readInto(dir, "scaling_governor", readAttr, &spec.Governor),
-		readInto(dir, "energy_performance_preference", readAttr, &spec.EnergyPerformancePreference),
-		readInto(dir, "cpuinfo_min_freq", readUintAttr, &spec.CPUInfoMinFrequencyKhz),
-		readInto(dir, "cpuinfo_max_freq", readUintAttr, &spec.CPUInfoMaxFrequencyKhz),
-		readInto(dir, "base_frequency", readUintAttr, &spec.BaseFrequencyKhz),
-		readInto(dir, "scaling_min_freq", readUintAttr, &spec.ScalingMinFrequencyKhz),
-		readInto(dir, "scaling_max_freq", readUintAttr, &spec.ScalingMaxFrequencyKhz),
+		readInto(dir, "affected_cpus", ctrl.readCPUFreqCPUs, &spec.AffectedCPUs),
+		readInto(dir, "related_cpus", ctrl.readCPUFreqCPUs, &spec.RelatedCPUs),
+		readInto(dir, "scaling_available_governors", ctrl.readFields, &spec.AvailableGovernors),
+		readInto(dir, "energy_performance_available_preferences", ctrl.readFields, &spec.AvailableEPPs),
+		readInto(dir, "scaling_governor", ctrl.readAttr, &spec.Governor),
+		readInto(dir, "energy_performance_preference", ctrl.readAttr, &spec.EnergyPerformancePreference),
+		readInto(dir, "cpuinfo_min_freq", ctrl.readUintAttr, &spec.CPUInfoMinFrequencyKhz),
+		readInto(dir, "cpuinfo_max_freq", ctrl.readUintAttr, &spec.CPUInfoMaxFrequencyKhz),
+		readInto(dir, "base_frequency", ctrl.readUintAttr, &spec.BaseFrequencyKhz),
+		readInto(dir, "scaling_min_freq", ctrl.readUintAttr, &spec.ScalingMinFrequencyKhz),
+		readInto(dir, "scaling_max_freq", ctrl.readUintAttr, &spec.ScalingMaxFrequencyKhz),
 	); err != nil {
-		return spec, err
+		return policy, err
 	}
 
-	// an offline policy has no affected CPUs, so describe the hardware through the related ones
-	cpus := spec.AffectedCPUs
-	if len(cpus) == 0 {
-		cpus = spec.RelatedCPUs
+	// An active policy has at least one online CPU. The per-CPU attributes below exist only while
+	// the CPU is online, and one going offline meanwhile leaves its field zero.
+	if len(spec.AffectedCPUs) == 0 {
+		return policy, nil
 	}
 
-	if len(cpus) > 0 {
-		spec.CoreType = coreTypes[cpus[0]]
+	cpuDir := filepath.Join(ctrl.SysfsPath, "devices/system/cpu", fmt.Sprintf("cpu%d", spec.AffectedCPUs[0]))
 
-		capacity, err := readUintAttr(filepath.Join(ctrl.SysfsPath, "devices/system/cpu", fmt.Sprintf("cpu%d", cpus[0])), "cpu_capacity")
-		if err != nil {
-			return spec, err
-		}
-
-		spec.CPUCapacity = uint32(capacity)
+	capacity, err := ctrl.readUintAttr(cpuDir, "cpu_capacity")
+	if err != nil {
+		return policy, err
 	}
 
-	return spec, nil
+	spec.CPUCapacity = uint32(capacity)
+
+	policy.microarch, err = ctrl.readMicroarch(cpuDir)
+
+	return policy, err
 }
 
-// readCoreTypes maps logical CPUs to a core type on machines with a hybrid topology, and is empty
-// on uniform ones.
-func (ctrl *CPUScalingController) readCoreTypes() (map[uint32]string, error) {
+// classifyCoreTypes sets the core type of each policy on machines whose cores are not all alike,
+// leaving it empty on uniform ones.
+func (ctrl *CPUScalingController) classifyCoreTypes(policies []cpufreqPolicy) error {
+	coreTypes, err := ctrl.readHybridPMUs()
+	if err != nil {
+		return err
+	}
+
+	if len(coreTypes) > 0 {
+		for i := range policies {
+			if cpus := policies[i].spec.AffectedCPUs; len(cpus) > 0 {
+				policies[i].spec.CoreType = coreTypes[cpus[0]]
+			}
+		}
+
+		return nil
+	}
+
+	classifyByMicroarch(policies)
+
+	return nil
+}
+
+// readHybridPMUs maps logical CPUs to a core type on Intel hybrid CPUs, which register a perf PMU
+// per core type, each listing its CPUs. It is empty everywhere else.
+func (ctrl *CPUScalingController) readHybridPMUs() (map[uint32]string, error) {
 	coreTypes := map[uint32]string{}
 
-	for _, source := range []struct {
-		path     string
+	for _, pmu := range []struct {
+		name     string
 		coreType string
 	}{
-		{"devices/cpu_core/cpus", hardware.CoreTypePerformance},
-		{"devices/cpu_atom/cpus", hardware.CoreTypeEfficiency},
-		{"devices/system/cpu/types/intel_core/cpulist", hardware.CoreTypePerformance},
-		{"devices/system/cpu/types/intel_atom/cpulist", hardware.CoreTypeEfficiency},
+		{"cpu_core", hardware.CoreTypePerformance},
+		{"cpu_atom", hardware.CoreTypeEfficiency},
+		// the low power E-cores of a three-tier part, e.g. Arrow Lake-H
+		{"cpu_lowpower", hardware.CoreTypeEfficiency},
 	} {
-		cpus, err := readCPUList(filepath.Join(ctrl.SysfsPath, filepath.Dir(source.path)), filepath.Base(source.path))
+		cpus, err := ctrl.readCPUList(filepath.Join(ctrl.SysfsPath, "devices", pmu.name), "cpus")
 		if err != nil {
 			return nil, err
 		}
 
 		for _, cpu := range cpus {
-			coreTypes[cpu] = source.coreType
+			coreTypes[cpu] = pmu.coreType
 		}
 	}
 
 	return coreTypes, nil
+}
+
+// classifyByMicroarch classifies the policies of an Arm system mixing core designs (big.LITTLE,
+// DynamIQ): those on the design the scheduler rates the least capable are efficiency cores, the
+// rest performance cores.
+//
+// The scheduler capacity alone does not tell core designs apart: it also scales with the maximum
+// frequency, so two clusters of the same core clocked differently have different capacities, and
+// intel_pstate sets a slightly different capacity on each core of a uniform CPU.
+func classifyByMicroarch(policies []cpufreqPolicy) {
+	// the capacity of each core design, taken as the highest seen, as one design may be clocked
+	// differently across clusters
+	capacities := map[uint64]uint32{}
+
+	for _, policy := range policies {
+		if policy.microarch == 0 || policy.spec.CPUCapacity == 0 {
+			// can not be ranked
+			return
+		}
+
+		capacities[policy.microarch] = max(capacities[policy.microarch], policy.spec.CPUCapacity)
+	}
+
+	if len(capacities) < 2 {
+		return
+	}
+
+	lowest := slices.Min(slices.Collect(maps.Values(capacities)))
+	highest := slices.Max(slices.Collect(maps.Values(capacities)))
+
+	if lowest == highest {
+		// the firmware does not rate the cores (no `capacity-dmips-mhz`), so there is no telling them apart
+		return
+	}
+
+	for i := range policies {
+		if capacities[policies[i].microarch] == lowest {
+			policies[i].spec.CoreType = hardware.CoreTypeEfficiency
+		} else {
+			policies[i].spec.CoreType = hardware.CoreTypePerformance
+		}
+	}
 }
 
 func (ctrl *CPUScalingController) applySpecs(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
@@ -332,7 +439,23 @@ func requestedAttributes(spec *hardware.CPUScalingSpecSpec) []cpufreqAttribute {
 }
 
 func (ctrl *CPUScalingController) apply(policy string, spec *hardware.CPUScalingSpecSpec, logger *zap.Logger) error {
+	err := ctrl.applyAttributes(policy, spec, logger)
+	if isInactive(err) {
+		// the policy keeps its settings while inactive, and is applied again once a CPU comes back
+		return nil
+	}
+
+	return err
+}
+
+func (ctrl *CPUScalingController) applyAttributes(policy string, spec *hardware.CPUScalingSpecSpec, logger *zap.Logger) error {
 	dir := filepath.Join(ctrl.SysfsPath, cpufreqPath, policy)
+
+	// the kernel refuses writes to an inactive policy as it does reads, so find out before
+	// touching anything
+	if err := ctrl.checkActive(dir); err != nil {
+		return err
+	}
 
 	attrs := requestedAttributes(spec)
 
@@ -371,7 +494,7 @@ func (ctrl *CPUScalingController) apply(policy string, spec *hardware.CPUScaling
 }
 
 func (ctrl *CPUScalingController) supports(dir, availableAttr, value string) (bool, error) {
-	available, err := readFields(dir, availableAttr)
+	available, err := ctrl.readFields(dir, availableAttr)
 	if err != nil {
 		return false, err
 	}
@@ -385,7 +508,7 @@ func (ctrl *CPUScalingController) write(dir, policy, name, value string) error {
 	key := policy + "/" + name
 
 	if _, ok := ctrl.defaults[key]; !ok {
-		current, err := readAttr(dir, name)
+		current, err := ctrl.readAttr(dir, name)
 		if err != nil {
 			return err
 		}
@@ -414,9 +537,22 @@ func (ctrl *CPUScalingController) write(dir, policy, name, value string) error {
 func (ctrl *CPUScalingController) restore(key string) error {
 	policy, name, _ := strings.Cut(key, "/")
 
-	path := filepath.Join(ctrl.SysfsPath, cpufreqPath, policy, name)
+	dir := filepath.Join(ctrl.SysfsPath, cpufreqPath, policy)
+	path := filepath.Join(dir, name)
 
-	if err := os.WriteFile(path, []byte(ctrl.defaults[key]), 0o644); err != nil && !errors.Is(err, fs.ErrNotExist) {
+	// the kernel refuses writes to an inactive policy as it does reads, but a write which fails
+	// for that reason is hard to tell from one rejecting the value
+	_, err := ctrl.readAttr(dir, name)
+	if err == nil {
+		err = os.WriteFile(path, []byte(ctrl.defaults[key]), 0o644)
+	}
+
+	switch {
+	case err == nil, errors.Is(err, fs.ErrNotExist):
+	case isInactive(err):
+		// keep the default to restore once a CPU of the policy comes back
+		return nil
+	default:
 		return fmt.Errorf("error writing %q: %w", path, err)
 	}
 
@@ -449,9 +585,16 @@ func firstError(fns ...func() error) error {
 	return nil
 }
 
+// checkActive returns the error the kernel answers with for an inactive policy, if it is one.
+func (ctrl *CPUScalingController) checkActive(dir string) error {
+	_, err := ctrl.readAttr(dir, "scaling_driver")
+
+	return err
+}
+
 // readAttr reads a sysfs attribute, returning an empty string when the driver does not expose it.
-func readAttr(dir, name string) (string, error) {
-	contents, err := os.ReadFile(filepath.Join(dir, name))
+func (ctrl *CPUScalingController) readAttr(dir, name string) (string, error) {
+	contents, err := ctrl.ReadFile(filepath.Join(dir, name))
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", nil
@@ -463,8 +606,10 @@ func readAttr(dir, name string) (string, error) {
 	return strings.TrimSpace(string(contents)), nil
 }
 
-func readFields(dir, name string) ([]string, error) {
-	value, err := readAttr(dir, name)
+// readFields reads a sysfs attribute holding a space-separated list, such as
+// scaling_available_governors.
+func (ctrl *CPUScalingController) readFields(dir, name string) ([]string, error) {
+	value, err := ctrl.readAttr(dir, name)
 	if err != nil || value == "" {
 		return nil, err
 	}
@@ -472,8 +617,8 @@ func readFields(dir, name string) ([]string, error) {
 	return strings.Fields(value), nil
 }
 
-func readUintAttr(dir, name string) (uint64, error) {
-	value, err := readAttr(dir, name)
+func (ctrl *CPUScalingController) readUintAttr(dir, name string) (uint64, error) {
+	value, err := ctrl.readAttr(dir, name)
 	if err != nil || value == "" {
 		return 0, err
 	}
@@ -486,9 +631,33 @@ func readUintAttr(dir, name string) (uint64, error) {
 	return parsed, nil
 }
 
-// readCPUList reads an attribute in Linux CPU list format, e.g. `0-5,34`.
-func readCPUList(dir, name string) ([]uint32, error) {
-	value, err := readAttr(dir, name)
+// readCPUFreqCPUs reads a cpufreq CPU mask attribute (affected_cpus, related_cpus). Unlike most of
+// sysfs, cpufreq prints it as space-separated CPU numbers in ascending order, e.g. `0 1 2 3`, see
+// cpufreq_show_cpus() in drivers/cpufreq/cpufreq.c.
+func (ctrl *CPUScalingController) readCPUFreqCPUs(dir, name string) ([]uint32, error) {
+	fields, err := ctrl.readFields(dir, name)
+	if err != nil || len(fields) == 0 {
+		return nil, err
+	}
+
+	cpus := make([]uint32, 0, len(fields))
+
+	for _, field := range fields {
+		cpu, err := strconv.ParseUint(field, 10, 32)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing %q: %w", filepath.Join(dir, name), err)
+		}
+
+		cpus = append(cpus, uint32(cpu))
+	}
+
+	return cpus, nil
+}
+
+// readCPUList reads an attribute in Linux CPU list format, e.g. `0-5,34`, as printed by
+// cpumap_print_to_pagebuf().
+func (ctrl *CPUScalingController) readCPUList(dir, name string) ([]uint32, error) {
+	value, err := ctrl.readAttr(dir, name)
 	if err != nil || value == "" {
 		return nil, err
 	}
@@ -499,6 +668,28 @@ func readCPUList(dir, name string) ([]uint32, error) {
 	}
 
 	return xslices.Map(set.List(), func(cpu int) uint32 { return uint32(cpu) }), nil
+}
+
+// midrCoreMask selects the implementer and part number fields of MIDR_EL1, which identify the
+// core design, leaving out its variant and revision.
+const midrCoreMask = 0xff00fff0
+
+// readMicroarch reads the core design of an online CPU on arm64, and returns zero elsewhere. The
+// kernel prints MIDR_EL1 as `0x%016llx`, or nothing at all if it could not read it.
+func (ctrl *CPUScalingController) readMicroarch(cpuDir string) (uint64, error) {
+	dir := filepath.Join(cpuDir, "regs/identification")
+
+	value, err := ctrl.readAttr(dir, "midr_el1")
+	if err != nil || value == "" {
+		return 0, err
+	}
+
+	midr, err := strconv.ParseUint(value, 0, 64)
+	if err != nil {
+		return 0, fmt.Errorf("error parsing %q: %w", filepath.Join(dir, "midr_el1"), err)
+	}
+
+	return midr & midrCoreMask, nil
 }
 
 func formatFreq(khz uint64) string {

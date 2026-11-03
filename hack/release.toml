@@ -235,6 +235,9 @@ selector:
 governor: powersave
 ```
 
+`core_type` is reported on Intel hybrid CPUs, and on Arm systems mixing core designs (big.LITTLE) whose firmware rates the
+capacity of each core; it is empty on uniform machines.
+
 The selector matches against the fields of the `CPUScalingStatus` resource, and may also set `energyPerformancePreference`,
 `minFrequencyKhz` and `maxFrequencyKhz`. Where several documents match the same policy, the one whose name sorts first wins, and the
 document which claimed a policy is reported on the resulting `CPUScalingSpec` resource. Removing the configuration restores the
