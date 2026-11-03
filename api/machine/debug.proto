@@ -11,6 +11,8 @@ option java_package = "dev.talos.api.machine";
 service DebugService {
   // ContainerRun runs a debug container, attaches to it, and streams I/O.
   rpc ContainerRun(stream DebugContainerRunRequest) returns (stream DebugContainerRunResponse);
+  // ContainerExec runs a command in a running ContainerConfig container, and streams I/O.
+  rpc ContainerExec(stream DebugContainerExecRequest) returns (stream DebugContainerExecResponse);
 }
 
 message DebugContainerRunRequest {
@@ -50,6 +52,40 @@ message DebugContainerTerminalResize {
 message DebugContainerRunResponse {
   oneof resp {
     bytes stdout_data = 2;
+    int32 exit_code = 3;
+  }
+}
+
+message DebugContainerExecRequest {
+  oneof request {
+    // 1. send the exec spec
+    DebugContainerExecRequestSpec spec = 1;
+    // 2. send any of the below to interact with the command
+    bytes stdin_data = 2;
+    int32 signal = 3;
+    DebugContainerTerminalResize term_resize = 4;
+    // stdin_eof ends the command's stdin, while signals and resizes can still be sent; with a terminal,
+    // stdin stays open until the command exits, as closing it would hang up the terminal.
+    bool stdin_eof = 5;
+  }
+}
+
+message DebugContainerExecRequestSpec {
+  // container is the name of the ContainerConfig document.
+  string container = 1;
+  // args is the command and its arguments; it runs as given, no shell is assumed.
+  repeated string args = 2;
+  bool tty = 3;
+}
+
+message DebugContainerExecResponse {
+  oneof resp {
+    // instance_id is the container instance the command runs in, sent first.
+    string instance_id = 4;
+    bytes stdout_data = 1;
+    // stderr_data is only sent without a terminal, which merges it into stdout_data.
+    bytes stderr_data = 2;
+    // exit_code is the exit code of the command, sent last.
     int32 exit_code = 3;
   }
 }

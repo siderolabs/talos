@@ -1119,6 +1119,83 @@ Run conformance tests
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl conformance kubernetes](#talosctl-conformance-kubernetes)	 - Run Kubernetes conformance tests
 
+## talosctl container exec
+
+Run a command in a running container
+
+### Synopsis
+
+Runs a command in a running container declared with a ContainerConfig document, as the container's
+own process runs: in its namespaces and cgroup, as its user, with its capabilities.
+
+The command runs as given, no shell is assumed. talosctl exits with the exit code of the command.
+stdin is passed to the command with --stdin, and a terminal is allocated with --tty; without a
+terminal, stdout and stderr of the command are kept apart. Interrupting talosctl ends the command;
+processes it started in the background are not tracked.
+
+The command and its arguments are logged on the node; pass secrets on stdin, which is not.
+
+```
+talosctl container exec <container> -- <command> [<args>...] [flags]
+```
+
+### Examples
+
+```
+  # Run a command
+    talosctl container exec app -- /usr/bin/status
+
+  # Run a command and pass data on its stdin
+    talosctl container exec -i app -- /usr/bin/import < data.json
+
+  # Open a shell in a container
+    talosctl container exec -it nginx -- /bin/sh
+```
+
+### Options
+
+```
+  -h, --help    help for exec
+  -i, --stdin   pass stdin to the command
+  -t, --tty     allocate a terminal for the command; with --stdin, stdin has to be a terminal
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl container](#talosctl-container)	 - Manage containers declared with ContainerConfig documents
+
+## talosctl container
+
+Manage containers declared with ContainerConfig documents
+
+### Options
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -h, --help                       help for container
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl container exec](#talosctl-container-exec)	 - Run a command in a running container
+
 ## talosctl containers
 
 List containers
@@ -4104,6 +4181,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl completion](#talosctl-completion)	 - Generate the autocompletion script for the specified shell
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
+* [talosctl container](#talosctl-container)	 - Manage containers declared with ContainerConfig documents
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, containers, logs and real-time metrics

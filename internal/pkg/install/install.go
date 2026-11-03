@@ -250,7 +250,7 @@ func RunInstallerContainer(
 
 	var r interface {
 		io.Reader
-		WaitAndClose(context.Context, containerd.Task)
+		WaitAndClose(context.Context, containerd.Process)
 	}
 
 	if cfgContainer != nil {

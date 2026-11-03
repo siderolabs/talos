@@ -409,6 +409,319 @@ func (*DebugContainerRunResponse_StdoutData) isDebugContainerRunResponse_Resp() 
 
 func (*DebugContainerRunResponse_ExitCode) isDebugContainerRunResponse_Resp() {}
 
+type DebugContainerExecRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Request:
+	//
+	//	*DebugContainerExecRequest_Spec
+	//	*DebugContainerExecRequest_StdinData
+	//	*DebugContainerExecRequest_Signal
+	//	*DebugContainerExecRequest_TermResize
+	//	*DebugContainerExecRequest_StdinEof
+	Request       isDebugContainerExecRequest_Request `protobuf_oneof:"request"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DebugContainerExecRequest) Reset() {
+	*x = DebugContainerExecRequest{}
+	mi := &file_machine_debug_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DebugContainerExecRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DebugContainerExecRequest) ProtoMessage() {}
+
+func (x *DebugContainerExecRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_debug_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DebugContainerExecRequest.ProtoReflect.Descriptor instead.
+func (*DebugContainerExecRequest) Descriptor() ([]byte, []int) {
+	return file_machine_debug_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DebugContainerExecRequest) GetRequest() isDebugContainerExecRequest_Request {
+	if x != nil {
+		return x.Request
+	}
+	return nil
+}
+
+func (x *DebugContainerExecRequest) GetSpec() *DebugContainerExecRequestSpec {
+	if x != nil {
+		if x, ok := x.Request.(*DebugContainerExecRequest_Spec); ok {
+			return x.Spec
+		}
+	}
+	return nil
+}
+
+func (x *DebugContainerExecRequest) GetStdinData() []byte {
+	if x != nil {
+		if x, ok := x.Request.(*DebugContainerExecRequest_StdinData); ok {
+			return x.StdinData
+		}
+	}
+	return nil
+}
+
+func (x *DebugContainerExecRequest) GetSignal() int32 {
+	if x != nil {
+		if x, ok := x.Request.(*DebugContainerExecRequest_Signal); ok {
+			return x.Signal
+		}
+	}
+	return 0
+}
+
+func (x *DebugContainerExecRequest) GetTermResize() *DebugContainerTerminalResize {
+	if x != nil {
+		if x, ok := x.Request.(*DebugContainerExecRequest_TermResize); ok {
+			return x.TermResize
+		}
+	}
+	return nil
+}
+
+func (x *DebugContainerExecRequest) GetStdinEof() bool {
+	if x != nil {
+		if x, ok := x.Request.(*DebugContainerExecRequest_StdinEof); ok {
+			return x.StdinEof
+		}
+	}
+	return false
+}
+
+type isDebugContainerExecRequest_Request interface {
+	isDebugContainerExecRequest_Request()
+}
+
+type DebugContainerExecRequest_Spec struct {
+	// 1. send the exec spec
+	Spec *DebugContainerExecRequestSpec `protobuf:"bytes,1,opt,name=spec,proto3,oneof"`
+}
+
+type DebugContainerExecRequest_StdinData struct {
+	// 2. send any of the below to interact with the command
+	StdinData []byte `protobuf:"bytes,2,opt,name=stdin_data,json=stdinData,proto3,oneof"`
+}
+
+type DebugContainerExecRequest_Signal struct {
+	Signal int32 `protobuf:"varint,3,opt,name=signal,proto3,oneof"`
+}
+
+type DebugContainerExecRequest_TermResize struct {
+	TermResize *DebugContainerTerminalResize `protobuf:"bytes,4,opt,name=term_resize,json=termResize,proto3,oneof"`
+}
+
+type DebugContainerExecRequest_StdinEof struct {
+	// stdin_eof ends the command's stdin, while signals and resizes can still be sent; with a terminal,
+	// stdin stays open until the command exits, as closing it would hang up the terminal.
+	StdinEof bool `protobuf:"varint,5,opt,name=stdin_eof,json=stdinEof,proto3,oneof"`
+}
+
+func (*DebugContainerExecRequest_Spec) isDebugContainerExecRequest_Request() {}
+
+func (*DebugContainerExecRequest_StdinData) isDebugContainerExecRequest_Request() {}
+
+func (*DebugContainerExecRequest_Signal) isDebugContainerExecRequest_Request() {}
+
+func (*DebugContainerExecRequest_TermResize) isDebugContainerExecRequest_Request() {}
+
+func (*DebugContainerExecRequest_StdinEof) isDebugContainerExecRequest_Request() {}
+
+type DebugContainerExecRequestSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// container is the name of the ContainerConfig document.
+	Container string `protobuf:"bytes,1,opt,name=container,proto3" json:"container,omitempty"`
+	// args is the command and its arguments; it runs as given, no shell is assumed.
+	Args          []string `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty"`
+	Tty           bool     `protobuf:"varint,3,opt,name=tty,proto3" json:"tty,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DebugContainerExecRequestSpec) Reset() {
+	*x = DebugContainerExecRequestSpec{}
+	mi := &file_machine_debug_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DebugContainerExecRequestSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DebugContainerExecRequestSpec) ProtoMessage() {}
+
+func (x *DebugContainerExecRequestSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_debug_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DebugContainerExecRequestSpec.ProtoReflect.Descriptor instead.
+func (*DebugContainerExecRequestSpec) Descriptor() ([]byte, []int) {
+	return file_machine_debug_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DebugContainerExecRequestSpec) GetContainer() string {
+	if x != nil {
+		return x.Container
+	}
+	return ""
+}
+
+func (x *DebugContainerExecRequestSpec) GetArgs() []string {
+	if x != nil {
+		return x.Args
+	}
+	return nil
+}
+
+func (x *DebugContainerExecRequestSpec) GetTty() bool {
+	if x != nil {
+		return x.Tty
+	}
+	return false
+}
+
+type DebugContainerExecResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Resp:
+	//
+	//	*DebugContainerExecResponse_InstanceId
+	//	*DebugContainerExecResponse_StdoutData
+	//	*DebugContainerExecResponse_StderrData
+	//	*DebugContainerExecResponse_ExitCode
+	Resp          isDebugContainerExecResponse_Resp `protobuf_oneof:"resp"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DebugContainerExecResponse) Reset() {
+	*x = DebugContainerExecResponse{}
+	mi := &file_machine_debug_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DebugContainerExecResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DebugContainerExecResponse) ProtoMessage() {}
+
+func (x *DebugContainerExecResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_debug_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DebugContainerExecResponse.ProtoReflect.Descriptor instead.
+func (*DebugContainerExecResponse) Descriptor() ([]byte, []int) {
+	return file_machine_debug_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DebugContainerExecResponse) GetResp() isDebugContainerExecResponse_Resp {
+	if x != nil {
+		return x.Resp
+	}
+	return nil
+}
+
+func (x *DebugContainerExecResponse) GetInstanceId() string {
+	if x != nil {
+		if x, ok := x.Resp.(*DebugContainerExecResponse_InstanceId); ok {
+			return x.InstanceId
+		}
+	}
+	return ""
+}
+
+func (x *DebugContainerExecResponse) GetStdoutData() []byte {
+	if x != nil {
+		if x, ok := x.Resp.(*DebugContainerExecResponse_StdoutData); ok {
+			return x.StdoutData
+		}
+	}
+	return nil
+}
+
+func (x *DebugContainerExecResponse) GetStderrData() []byte {
+	if x != nil {
+		if x, ok := x.Resp.(*DebugContainerExecResponse_StderrData); ok {
+			return x.StderrData
+		}
+	}
+	return nil
+}
+
+func (x *DebugContainerExecResponse) GetExitCode() int32 {
+	if x != nil {
+		if x, ok := x.Resp.(*DebugContainerExecResponse_ExitCode); ok {
+			return x.ExitCode
+		}
+	}
+	return 0
+}
+
+type isDebugContainerExecResponse_Resp interface {
+	isDebugContainerExecResponse_Resp()
+}
+
+type DebugContainerExecResponse_InstanceId struct {
+	// instance_id is the container instance the command runs in, sent first.
+	InstanceId string `protobuf:"bytes,4,opt,name=instance_id,json=instanceId,proto3,oneof"`
+}
+
+type DebugContainerExecResponse_StdoutData struct {
+	StdoutData []byte `protobuf:"bytes,1,opt,name=stdout_data,json=stdoutData,proto3,oneof"`
+}
+
+type DebugContainerExecResponse_StderrData struct {
+	// stderr_data is only sent without a terminal, which merges it into stdout_data.
+	StderrData []byte `protobuf:"bytes,2,opt,name=stderr_data,json=stderrData,proto3,oneof"`
+}
+
+type DebugContainerExecResponse_ExitCode struct {
+	// exit_code is the exit code of the command, sent last.
+	ExitCode int32 `protobuf:"varint,3,opt,name=exit_code,json=exitCode,proto3,oneof"`
+}
+
+func (*DebugContainerExecResponse_InstanceId) isDebugContainerExecResponse_Resp() {}
+
+func (*DebugContainerExecResponse_StdoutData) isDebugContainerExecResponse_Resp() {}
+
+func (*DebugContainerExecResponse_StderrData) isDebugContainerExecResponse_Resp() {}
+
+func (*DebugContainerExecResponse_ExitCode) isDebugContainerExecResponse_Resp() {}
+
 var File_machine_debug_proto protoreflect.FileDescriptor
 
 const file_machine_debug_proto_rawDesc = "" +
@@ -446,9 +759,32 @@ const file_machine_debug_proto_rawDesc = "" +
 	"\vstdout_data\x18\x02 \x01(\fH\x00R\n" +
 	"stdoutData\x12\x1d\n" +
 	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCodeB\x06\n" +
-	"\x04resp2i\n" +
+	"\x04resp\"\x88\x02\n" +
+	"\x19DebugContainerExecRequest\x12<\n" +
+	"\x04spec\x18\x01 \x01(\v2&.machine.DebugContainerExecRequestSpecH\x00R\x04spec\x12\x1f\n" +
+	"\n" +
+	"stdin_data\x18\x02 \x01(\fH\x00R\tstdinData\x12\x18\n" +
+	"\x06signal\x18\x03 \x01(\x05H\x00R\x06signal\x12H\n" +
+	"\vterm_resize\x18\x04 \x01(\v2%.machine.DebugContainerTerminalResizeH\x00R\n" +
+	"termResize\x12\x1d\n" +
+	"\tstdin_eof\x18\x05 \x01(\bH\x00R\bstdinEofB\t\n" +
+	"\arequest\"c\n" +
+	"\x1dDebugContainerExecRequestSpec\x12\x1c\n" +
+	"\tcontainer\x18\x01 \x01(\tR\tcontainer\x12\x12\n" +
+	"\x04args\x18\x02 \x03(\tR\x04args\x12\x10\n" +
+	"\x03tty\x18\x03 \x01(\bR\x03tty\"\xac\x01\n" +
+	"\x1aDebugContainerExecResponse\x12!\n" +
+	"\vinstance_id\x18\x04 \x01(\tH\x00R\n" +
+	"instanceId\x12!\n" +
+	"\vstdout_data\x18\x01 \x01(\fH\x00R\n" +
+	"stdoutData\x12!\n" +
+	"\vstderr_data\x18\x02 \x01(\fH\x00R\n" +
+	"stderrData\x12\x1d\n" +
+	"\texit_code\x18\x03 \x01(\x05H\x00R\bexitCodeB\x06\n" +
+	"\x04resp2\xc7\x01\n" +
 	"\fDebugService\x12Y\n" +
-	"\fContainerRun\x12!.machine.DebugContainerRunRequest\x1a\".machine.DebugContainerRunResponse(\x010\x01BN\n" +
+	"\fContainerRun\x12!.machine.DebugContainerRunRequest\x1a\".machine.DebugContainerRunResponse(\x010\x01\x12\\\n" +
+	"\rContainerExec\x12\".machine.DebugContainerExecRequest\x1a#.machine.DebugContainerExecResponse(\x010\x01BN\n" +
 	"\x15dev.talos.api.machineZ5github.com/siderolabs/talos/pkg/machinery/api/machineb\x06proto3"
 
 var (
@@ -464,29 +800,36 @@ func file_machine_debug_proto_rawDescGZIP() []byte {
 }
 
 var file_machine_debug_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_machine_debug_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_machine_debug_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_machine_debug_proto_goTypes = []any{
 	(DebugContainerRunRequestSpec_Profile)(0), // 0: machine.DebugContainerRunRequestSpec.Profile
 	(*DebugContainerRunRequest)(nil),          // 1: machine.DebugContainerRunRequest
 	(*DebugContainerRunRequestSpec)(nil),      // 2: machine.DebugContainerRunRequestSpec
 	(*DebugContainerTerminalResize)(nil),      // 3: machine.DebugContainerTerminalResize
 	(*DebugContainerRunResponse)(nil),         // 4: machine.DebugContainerRunResponse
-	nil,                                       // 5: machine.DebugContainerRunRequestSpec.EnvEntry
-	(*common.ContainerdInstance)(nil),         // 6: common.ContainerdInstance
+	(*DebugContainerExecRequest)(nil),         // 5: machine.DebugContainerExecRequest
+	(*DebugContainerExecRequestSpec)(nil),     // 6: machine.DebugContainerExecRequestSpec
+	(*DebugContainerExecResponse)(nil),        // 7: machine.DebugContainerExecResponse
+	nil,                                       // 8: machine.DebugContainerRunRequestSpec.EnvEntry
+	(*common.ContainerdInstance)(nil),         // 9: common.ContainerdInstance
 }
 var file_machine_debug_proto_depIdxs = []int32{
 	2, // 0: machine.DebugContainerRunRequest.spec:type_name -> machine.DebugContainerRunRequestSpec
 	3, // 1: machine.DebugContainerRunRequest.term_resize:type_name -> machine.DebugContainerTerminalResize
-	6, // 2: machine.DebugContainerRunRequestSpec.containerd:type_name -> common.ContainerdInstance
-	5, // 3: machine.DebugContainerRunRequestSpec.env:type_name -> machine.DebugContainerRunRequestSpec.EnvEntry
+	9, // 2: machine.DebugContainerRunRequestSpec.containerd:type_name -> common.ContainerdInstance
+	8, // 3: machine.DebugContainerRunRequestSpec.env:type_name -> machine.DebugContainerRunRequestSpec.EnvEntry
 	0, // 4: machine.DebugContainerRunRequestSpec.profile:type_name -> machine.DebugContainerRunRequestSpec.Profile
-	1, // 5: machine.DebugService.ContainerRun:input_type -> machine.DebugContainerRunRequest
-	4, // 6: machine.DebugService.ContainerRun:output_type -> machine.DebugContainerRunResponse
-	6, // [6:7] is the sub-list for method output_type
-	5, // [5:6] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	6, // 5: machine.DebugContainerExecRequest.spec:type_name -> machine.DebugContainerExecRequestSpec
+	3, // 6: machine.DebugContainerExecRequest.term_resize:type_name -> machine.DebugContainerTerminalResize
+	1, // 7: machine.DebugService.ContainerRun:input_type -> machine.DebugContainerRunRequest
+	5, // 8: machine.DebugService.ContainerExec:input_type -> machine.DebugContainerExecRequest
+	4, // 9: machine.DebugService.ContainerRun:output_type -> machine.DebugContainerRunResponse
+	7, // 10: machine.DebugService.ContainerExec:output_type -> machine.DebugContainerExecResponse
+	9, // [9:11] is the sub-list for method output_type
+	7, // [7:9] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_machine_debug_proto_init() }
@@ -504,13 +847,26 @@ func file_machine_debug_proto_init() {
 		(*DebugContainerRunResponse_StdoutData)(nil),
 		(*DebugContainerRunResponse_ExitCode)(nil),
 	}
+	file_machine_debug_proto_msgTypes[4].OneofWrappers = []any{
+		(*DebugContainerExecRequest_Spec)(nil),
+		(*DebugContainerExecRequest_StdinData)(nil),
+		(*DebugContainerExecRequest_Signal)(nil),
+		(*DebugContainerExecRequest_TermResize)(nil),
+		(*DebugContainerExecRequest_StdinEof)(nil),
+	}
+	file_machine_debug_proto_msgTypes[6].OneofWrappers = []any{
+		(*DebugContainerExecResponse_InstanceId)(nil),
+		(*DebugContainerExecResponse_StdoutData)(nil),
+		(*DebugContainerExecResponse_StderrData)(nil),
+		(*DebugContainerExecResponse_ExitCode)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_debug_proto_rawDesc), len(file_machine_debug_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   5,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
