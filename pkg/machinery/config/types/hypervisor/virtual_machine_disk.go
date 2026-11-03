@@ -179,12 +179,12 @@ type VirtualMachineDiskProvision struct {
 	//     Not allowed on a `cdrom`, which has no meaningful empty contents.
 	BlankConfig *VirtualMachineDiskBlank `yaml:"blank,omitempty"`
 	//   description: |
-	//     Attach read-only CD-ROM media from a content library.
+	//     Attach a content library image.
 	//
-	//     Set `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is
-	//     attached in place, not copied into a volume. Writable image-derived disks (copy or
-	//     linked) are not supported. Use `provision.blank` for a writable disk and install from
-	//     CD-ROM media.
+	//     On a `cdrom`, the library file is attached in place, read-only; omit `pool`, `size`,
+	//     `format`, and `mode`. On a `disk`, the image is materialized into the disk's pool as
+	//     `<vm>/<disk>.qcow2`; see `fromImage.mode` for the disk-type semantics (`copy` makes an
+	//     independent qcow2, `linked` makes a thin overlay).
 	FromImageConfig *VirtualMachineDiskFromImage `yaml:"fromImage,omitempty"`
 }
 

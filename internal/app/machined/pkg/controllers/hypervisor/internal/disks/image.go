@@ -36,7 +36,7 @@ func ObserveImage(
 		}, fmt.Errorf("content library %q is not ready: %s", image.Library, library.Error)
 	}
 
-	if err := checkLibraryFile(library.Path, image.File, image.Digest); err != nil {
+	if err := CheckLibraryFile(library.Path, image.File, image.Digest); err != nil {
 		return hypervisor.VirtualMachineDiskStatusSpec{
 			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
 		}, fmt.Errorf("content library %q: file %q: %w", image.Library, image.File, err)
@@ -51,8 +51,8 @@ func ObserveImage(
 	}, nil
 }
 
-// checkLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
-func checkLibraryFile(libraryPath, name, expected string) error {
+// CheckLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
+func CheckLibraryFile(libraryPath, name, expected string) error {
 	root, err := os.OpenRoot(libraryPath)
 	if err != nil {
 		return fmt.Errorf("failed to open content library directory: %w", err)

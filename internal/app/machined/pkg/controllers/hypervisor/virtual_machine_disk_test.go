@@ -68,6 +68,20 @@ func (suite *VirtualMachineDiskSuite) library() string {
 	return path
 }
 
+// pool publishes a ready storage pool over a fresh directory, where materialized disks would land.
+func (suite *VirtualMachineDiskSuite) pool() string {
+	suite.T().Helper()
+
+	path := suite.T().TempDir()
+
+	status := storage.NewStoragePoolStatus(storage.NamespaceName, "pool1")
+	status.TypedSpec().TargetPath = path
+	status.TypedSpec().Phase = storage.StoragePoolPhaseReady
+	suite.Create(status)
+
+	return path
+}
+
 func (suite *VirtualMachineDiskSuite) createVM(disks ...hypervisor.VirtualMachineDiskSpec) {
 	suite.T().Helper()
 
@@ -276,12 +290,13 @@ func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 	})
 }
 
-// A disk this slice does not provision is reported, not silently dropped: the operator sees why
-// the virtual machine never gets a domain.
+// A materialized disk whose format is not qcow2 is reported, not silently dropped: both linked
+// and copy modes write a qcow2 file, and letting a raw-format request through would make the
+// status disagree with what landed on disk.
 func (suite *VirtualMachineDiskSuite) TestReportsUnsupportedDisks() {
 	suite.createVM(
 		hypervisor.VirtualMachineDiskSpec{
-			Name: "system", Pool: "pool1", Size: 20 << 30, Format: "qcow2", Bus: "virtio", Type: "disk",
+			Name: "system", Pool: "pool1", Size: 20 << 30, Format: "raw", Bus: "virtio", Type: "disk",
 			Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 				FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.qcow2"},
 			},
@@ -290,8 +305,34 @@ func (suite *VirtualMachineDiskSuite) TestReportsUnsupportedDisks() {
 
 	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.False(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
-		asrt.Contains(spec.Error, "a disk is only provisioned from provision.blank today")
+		asrt.Contains(spec.Error, "a materialized disk must be qcow2")
 	})
+}
+
+// A materialized disk holds its storage pool the whole time it resolves against it, so the pool is
+// not torn down under the qcow2 the guest uses. The hold is taken before the source is read (a disk
+// waiting on a missing image still holds the pool) and given back once the disk is gone.
+func (suite *VirtualMachineDiskSuite) TestHoldsAndReleasesPoolForMaterializedDisk() {
+	suite.pool()
+	suite.library()
+
+	// The image is absent, so materialization fails — but the pool is held regardless, as the hold is
+	// taken before the source is touched.
+	suite.createVM(materializedDiskSpec("system", "pool1", libraryName, "absent.qcow2"))
+
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+		asrt.Equal("pool1", spec.Pool)
+	})
+
+	suite.assertPoolHeld(true)
+	suite.assertLibraryHeld(true)
+
+	suite.Destroy(hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName))
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDiskStatus](suite, suite.diskStatusID("system"))
+
+	suite.assertPoolHeld(false)
+	suite.assertLibraryHeld(false)
 }
 
 // A shared VM spec need not have passed machine-configuration validation. An ambiguous source
@@ -315,6 +356,20 @@ func (suite *VirtualMachineDiskSuite) TestRejectsBothBlankAndImageSources() {
 	ctest.AssertNoResource[*storage.StoragePoolVolumeSpec](suite,
 		storage.StoragePoolVolumeID("pool1", vmName+"__data.qcow2"))
 	suite.assertLibraryHeld(false)
+}
+
+// materializedDiskSpec is a disk-type disk materialized from a content-library image into a pool.
+func materializedDiskSpec(name, pool, library, file string) hypervisor.VirtualMachineDiskSpec {
+	return hypervisor.VirtualMachineDiskSpec{
+		Name:   name,
+		Pool:   pool,
+		Format: "qcow2",
+		Bus:    "virtio",
+		Type:   "disk",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: library, File: file},
+		},
+	}
 }
 
 // blankDiskSpec is a disk provisioned as an empty volume in a pool.
@@ -634,6 +689,14 @@ func (suite *VirtualMachineDiskSuite) assertLibraryHeld(held bool) {
 	suite.T().Helper()
 
 	ctest.AssertResource(suite, libraryName, func(res *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.Equal(held, res.Metadata().Finalizers().Has("hypervisor.VirtualMachineDiskController"))
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) assertPoolHeld(held bool) {
+	suite.T().Helper()
+
+	ctest.AssertResource(suite, "pool1", func(res *storage.StoragePoolStatus, asrt *assert.Assertions) {
 		asrt.Equal(held, res.Metadata().Finalizers().Has("hypervisor.VirtualMachineDiskController"))
 	})
 }

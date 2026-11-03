@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -45,8 +47,16 @@ var blankDiskFormats = []string{
 	hypervisorhelpers.VirtualMachineDiskFormatQCOW2.String(),
 }
 
-// errHoldFailed marks the controller's own failure to hold a library.
-var errHoldFailed = errors.New("failed to hold content library")
+// errHoldFailed marks a failure to hold a backing resource (a content library or a storage pool);
+// reconcileDisk treats it as a hard error.
+var errHoldFailed = errors.New("failed to hold backing resource")
+
+// diskNotReady pairs a not-ready status with the error explaining why.
+func diskNotReady(err error) (hypervisor.VirtualMachineDiskStatusSpec, error) {
+	return hypervisor.VirtualMachineDiskStatusSpec{
+		Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
+	}, err
+}
 
 // VirtualMachineDiskController resolves each disk of a virtual machine to a host source.
 type VirtualMachineDiskController struct{}
@@ -55,10 +65,13 @@ type VirtualMachineDiskController struct{}
 // every pass: Ready sources still need observation, and obsolete held statuses are considered
 // separately during teardown before any backing-resource holds are released.
 type diskReconciliation struct {
-	libraries map[string]*hypervisor.ContentLibraryStatus
-	wanted    map[resource.ID]struct{}
-	held      map[string]struct{}
-	volumes   map[resource.ID]struct{}
+	libraries   map[string]*hypervisor.ContentLibraryStatus
+	pools       map[string]*storage.StoragePoolStatus
+	wanted      map[resource.ID]struct{}
+	held        map[string]struct{}
+	heldPools   map[string]struct{}
+	volumes     map[resource.ID]struct{}
+	wantedFiles map[string]struct{}
 }
 
 // Name implements controller.Controller interface.
@@ -93,6 +106,13 @@ func (ctrl *VirtualMachineDiskController) Inputs() []controller.Input {
 			Namespace: storage.NamespaceName,
 			Type:      storage.StoragePoolVolumeSpecType,
 			Kind:      controller.InputDestroyReady,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolStatusType,
+			// Strong: a materialized disk file lives under a pool's target directory; the pool
+			// has to outlive every guest reading or writing one.
+			Kind: controller.InputStrong,
 		},
 	}
 }
@@ -145,11 +165,25 @@ func (ctrl *VirtualMachineDiskController) reconcile(ctx context.Context, r contr
 		libraries[library.Metadata().ID()] = library
 	}
 
+	poolStatuses, err := safe.ReaderListAll[*storage.StoragePoolStatus](ctx, r)
+	if err != nil {
+		return fmt.Errorf("failed to list storage pool statuses: %w", err)
+	}
+
+	pools := make(map[string]*storage.StoragePoolStatus, poolStatuses.Len())
+
+	for pool := range poolStatuses.All() {
+		pools[pool.Metadata().ID()] = pool
+	}
+
 	pass := &diskReconciliation{
-		libraries: libraries,
-		wanted:    make(map[resource.ID]struct{}, specs.Len()),
-		held:      map[string]struct{}{},
-		volumes:   map[resource.ID]struct{}{},
+		libraries:   libraries,
+		pools:       pools,
+		wanted:      make(map[resource.ID]struct{}, specs.Len()),
+		held:        map[string]struct{}{},
+		heldPools:   map[string]struct{}{},
+		volumes:     map[resource.ID]struct{}{},
+		wantedFiles: map[string]struct{}{},
 	}
 
 	var errs []error
@@ -174,8 +208,9 @@ func (ctrl *VirtualMachineDiskController) reconcile(ctx context.Context, r contr
 	return errors.Join(append(errs, ctrl.teardown(ctx, r, logger, pass))...)
 }
 
-// teardown first asks domains to release obsolete disk statuses, then withdraws volume requests,
-// then releases libraries. Held statuses continue protecting both kinds of backing resource.
+// teardown releases obsolete disk statuses, withdraws volume requests, sweeps unwanted materialized
+// files, then releases the pools and libraries nothing resolves against. Pools are released after the
+// sweep so cleanup still runs with them mounted.
 func (ctrl *VirtualMachineDiskController) teardown(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, pass *diskReconciliation,
 ) error {
@@ -184,6 +219,14 @@ func (ctrl *VirtualMachineDiskController) teardown(
 	}
 
 	if err := ctrl.releaseVolumeSpecs(ctx, r, pass); err != nil {
+		return err
+	}
+
+	if err := ctrl.cleanupMaterializedFiles(logger, pass); err != nil {
+		return err
+	}
+
+	if err := ctrl.releasePools(ctx, r, logger, pass); err != nil {
 		return err
 	}
 
@@ -267,61 +310,67 @@ func stampDiskStatus(
 		}
 	}
 
+	// A materialized disk names its pool too: that is what keeps the pool held while a domain holds
+	// this status.
+	if disk.Provision.FromImage != nil && disk.Type == hypervisorhelpers.VirtualMachineDiskTypeDisk.String() {
+		status.Pool = disk.Pool
+	}
+
 	if resolveErr != nil {
 		status.Error = resolveErr.Error()
 	}
 }
 
-// holdLibrary keeps a library's mount in place for as long as a disk resolves against it. One which
-// is tearing down is refused rather than held, as holding it now would block that teardown forever.
-func holdLibrary(
-	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, library *hypervisor.ContentLibraryStatus,
+// holdBackingResource holds a content library or storage pool for as long as a disk resolves against
+// it, so it outlives the guest. One already tearing down is refused, as holding it would block that
+// teardown forever. kind and logField only name the resource in messages.
+func holdBackingResource(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, md *resource.Metadata, kind, logField string,
 ) error {
-	if library.Metadata().Phase() != resource.PhaseRunning {
-		return fmt.Errorf("content library %q is going away", library.Metadata().ID())
+	if md.Phase() != resource.PhaseRunning {
+		return fmt.Errorf("%s %q is going away", kind, md.ID())
 	}
 
-	if library.Metadata().Finalizers().Has(diskControllerName) {
+	if md.Finalizers().Has(diskControllerName) {
 		return nil
 	}
 
-	if err := r.AddFinalizer(ctx, library.Metadata(), diskControllerName); err != nil {
-		return fmt.Errorf("%w %q: %w", errHoldFailed, library.Metadata().ID(), err)
+	if err := r.AddFinalizer(ctx, md, diskControllerName); err != nil {
+		return fmt.Errorf("%w: %s %q: %w", errHoldFailed, kind, md.ID(), err)
 	}
 
-	logger.Info("holding content library for a virtual machine disk", zap.String("content_library", library.Metadata().ID()))
+	logger.Info("holding "+kind+" for a virtual machine disk", zap.String(logField, md.ID()))
 
 	return nil
 }
 
-// releaseLibraries gives back the hold on every library nothing resolves against any more.
-func (ctrl *VirtualMachineDiskController) releaseLibraries(
+// releaseBackingResources drops the hold on every resource not named by inUse that still carries this
+// controller's finalizer.
+func releaseBackingResources[T resource.Resource](
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
-	pass *diskReconciliation,
+	resources map[string]T, inUse map[string]struct{}, kind, logField string,
 ) error {
-	inUse, err := librariesInUse(ctx, r, pass.held)
-	if err != nil {
-		return err
-	}
-
-	for id, library := range pass.libraries {
-		if _, used := inUse[id]; used || !library.Metadata().Finalizers().Has(diskControllerName) {
+	for id, res := range resources {
+		if _, used := inUse[id]; used || !res.Metadata().Finalizers().Has(diskControllerName) {
 			continue
 		}
 
-		if err := r.RemoveFinalizer(ctx, library.Metadata(), diskControllerName); err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("failed to release content library %q: %w", id, err)
+		if err := r.RemoveFinalizer(ctx, res.Metadata(), diskControllerName); err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to release %s %q: %w", kind, id, err)
 		}
 
-		logger.Info("released content library held for a virtual machine disk", zap.String("content_library", id))
+		logger.Info("released "+kind+" held for a virtual machine disk", zap.String(logField, id))
 	}
 
 	return nil
 }
 
-// librariesInUse names the libraries which must stay held, by ID: the ones held names, plus every
-// library named by a disk status something else holds.
-func librariesInUse(ctx context.Context, reader controller.Reader, held map[string]struct{}) (map[string]struct{}, error) {
+// statusesInUse names the resources that must stay held: those in held, plus every one named (via
+// key) by a disk status something else still holds. key returns "" for a status that names none.
+func statusesInUse(
+	ctx context.Context, reader controller.Reader, held map[string]struct{},
+	key func(*hypervisor.VirtualMachineDiskStatusSpec) string,
+) (map[string]struct{}, error) {
 	diskStatuses, err := safe.ReaderListAll[*hypervisor.VirtualMachineDiskStatus](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list virtual machine disk statuses: %w", err)
@@ -334,12 +383,44 @@ func librariesInUse(ctx context.Context, reader controller.Reader, held map[stri
 			continue
 		}
 
-		if library := diskStatus.TypedSpec().Image.Library; library != "" {
-			inUse[library] = struct{}{}
+		if id := key(diskStatus.TypedSpec()); id != "" {
+			inUse[id] = struct{}{}
 		}
 	}
 
 	return inUse, nil
+}
+
+// releaseLibraries gives back the hold on every library nothing resolves against any more.
+func (ctrl *VirtualMachineDiskController) releaseLibraries(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, pass *diskReconciliation,
+) error {
+	inUse, err := statusesInUse(ctx, r, pass.held,
+		func(spec *hypervisor.VirtualMachineDiskStatusSpec) string { return spec.Image.Library })
+	if err != nil {
+		return err
+	}
+
+	return releaseBackingResources(ctx, r, logger, pass.libraries, inUse, "content library", "content_library")
+}
+
+// releasePools gives back the hold on every pool no materialized disk resolves against any more; a
+// blank disk's pool is held by the storage controller, not here.
+func (ctrl *VirtualMachineDiskController) releasePools(
+	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, pass *diskReconciliation,
+) error {
+	inUse, err := statusesInUse(ctx, r, pass.heldPools, func(spec *hypervisor.VirtualMachineDiskStatusSpec) string {
+		if spec.Blank {
+			return ""
+		}
+
+		return spec.Pool
+	})
+	if err != nil {
+		return err
+	}
+
+	return releaseBackingResources(ctx, r, logger, pass.pools, inUse, "storage pool", "storage_pool")
 }
 
 // progressDisk validates the disk, publishes its backing-volume request or acquires its library
@@ -354,17 +435,13 @@ func (ctrl *VirtualMachineDiskController) progressDisk(
 	pass *diskReconciliation,
 ) (hypervisor.VirtualMachineDiskStatusSpec, error) {
 	if err := checkVirtualMachineDiskSupported(disk); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{
-			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-		}, err
+		return diskNotReady(err)
 	}
 
 	if disk.Provision.Blank {
 		request, err := ctrl.requestBlankVolume(ctx, r, name, disk, pass)
 		if err != nil {
-			return hypervisor.VirtualMachineDiskStatusSpec{
-				Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-			}, err
+			return diskNotReady(err)
 		}
 
 		return disks.ObserveVolume(ctx, r, request)
@@ -374,20 +451,384 @@ func (ctrl *VirtualMachineDiskController) progressDisk(
 
 	library, found := pass.libraries[image.Library]
 	if !found {
-		return hypervisor.VirtualMachineDiskStatusSpec{
-			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-		}, fmt.Errorf("content library %q is not configured", image.Library)
+		return diskNotReady(fmt.Errorf("content library %q is not configured", image.Library))
 	}
 
-	if err := holdLibrary(ctx, r, logger, library); err != nil {
-		return hypervisor.VirtualMachineDiskStatusSpec{
-			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-		}, err
+	if err := holdBackingResource(ctx, r, logger, library.Metadata(), "content library", "content_library"); err != nil {
+		return diskNotReady(err)
 	}
 
 	pass.held[image.Library] = struct{}{}
 
+	if disk.Type == hypervisorhelpers.VirtualMachineDiskTypeDisk.String() {
+		return ctrl.progressMaterializedDisk(ctx, r, logger, name, disk, library, pass)
+	}
+
 	return disks.ObserveImage(disk, *library.TypedSpec())
+}
+
+// progressMaterializedDisk resolves a disk-type disk backed by a content library image. The host
+// file lives under the pool's target directory as <vm>/<disk>.qcow2 and is materialized once per
+// (vm, disk): linked mode writes a thin qcow2 overlay backed by the library file; copy mode writes
+// an independent qcow2 from it. Idempotent at the file level: pre-existing files are left alone.
+func (ctrl *VirtualMachineDiskController) progressMaterializedDisk(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	logger *zap.Logger,
+	vmName string,
+	disk hypervisor.VirtualMachineDiskSpec,
+	library *hypervisor.ContentLibraryStatus,
+	pass *diskReconciliation,
+) (hypervisor.VirtualMachineDiskStatusSpec, error) {
+	// vmName is a directory under the pool; reject one that could escape it (disk.Name is checked in
+	// checkMaterializedDiskSupported).
+	if err := hypervisorhelpers.ValidateName(vmName); err != nil {
+		return diskNotReady(fmt.Errorf("%w: virtual machine %w", errDiskUnsupported, err))
+	}
+
+	// Resolve and mark the target wanted before touching the source, so a transient library or digest
+	// failure below cannot make the cleanup sweep delete an already-materialized file.
+	target, err := materializedDiskPath(vmName, disk, pass)
+	if err != nil {
+		return diskNotReady(err)
+	}
+
+	// Hold the pool: InputStrong only permits managing its finalizers, it does not stop the pool being
+	// torn down out from under a file a guest is using.
+	if err := holdBackingResource(ctx, r, logger, pass.pools[disk.Pool].Metadata(), "storage pool", "storage_pool"); err != nil {
+		return diskNotReady(err)
+	}
+
+	pass.heldPools[disk.Pool] = struct{}{}
+
+	pass.wantedFiles[target] = struct{}{}
+
+	switch _, statErr := os.Stat(target); {
+	case statErr == nil:
+		// Already materialized: reconcile only its size, don't re-read or re-hash the source.
+		size, err := reconcileDiskSize(ctx, logger, target, disk.Size)
+		if err != nil {
+			return diskNotReady(err)
+		}
+
+		return materializedDiskReady(target, size), nil
+	case !errors.Is(statErr, os.ErrNotExist):
+		return diskNotReady(fmt.Errorf("stat %q: %w", target, statErr))
+	}
+
+	size, err := materializeFromLibrary(ctx, logger, disk, *library.TypedSpec(), target)
+	if err != nil {
+		return diskNotReady(err)
+	}
+
+	return materializedDiskReady(target, size), nil
+}
+
+// materializedDiskPath resolves a materialized disk's host path, creating and marking its per-VM
+// directory under the (configured, ready) pool.
+func materializedDiskPath(vmName string, disk hypervisor.VirtualMachineDiskSpec, pass *diskReconciliation) (string, error) {
+	pool, found := pass.pools[disk.Pool]
+	if !found {
+		return "", fmt.Errorf("storage pool %q is not configured", disk.Pool)
+	}
+
+	if pool.TypedSpec().Phase != storage.StoragePoolPhaseReady {
+		return "", fmt.Errorf("storage pool %q is not ready: %s", disk.Pool, pool.TypedSpec().Error)
+	}
+
+	dir := filepath.Join(pool.TypedSpec().TargetPath, vmName)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", fmt.Errorf("create pool directory %q: %w", dir, err)
+	}
+
+	if err := markVMDir(dir); err != nil {
+		return "", err
+	}
+
+	return filepath.Join(dir, disk.Name+"."+qcow2Format), nil
+}
+
+// materializeFromLibrary creates target from the library image once the source is verified ready,
+// intact, and not smaller than requested. It returns the new disk's virtual size: the request, or the
+// image's own size when the request is zero.
+func materializeFromLibrary(
+	ctx context.Context,
+	logger *zap.Logger,
+	disk hypervisor.VirtualMachineDiskSpec,
+	librarySpec hypervisor.ContentLibraryStatusSpec,
+	target string,
+) (uint64, error) {
+	image := disk.Provision.FromImage
+
+	if librarySpec.Phase != hypervisor.ContentLibraryPhaseReady {
+		return 0, fmt.Errorf("content library %q is not ready: %s", image.Library, librarySpec.Error)
+	}
+
+	if err := disks.CheckLibraryFile(librarySpec.Path, image.File, image.Digest); err != nil {
+		return 0, fmt.Errorf("content library %q: file %q: %w", image.Library, image.File, err)
+	}
+
+	source := filepath.Join(librarySpec.Path, image.File)
+
+	srcInfo, err := qemuImgInspect(ctx, source)
+	if err != nil {
+		return 0, fmt.Errorf("inspect image %q: %w", image.File, err)
+	}
+
+	// qemu-img cannot build a disk smaller than its source; catch it here with a clear message.
+	if disk.Size > 0 && disk.Size < srcInfo.VirtualSize {
+		return 0, fmt.Errorf(
+			"requested disk size %d is smaller than image %q virtual size %d",
+			disk.Size, image.File, srcInfo.VirtualSize)
+	}
+
+	if err := materializeDisk(ctx, logger, image.Mode, source, target, disk.Size); err != nil {
+		return 0, err
+	}
+
+	if disk.Size == 0 {
+		return srcInfo.VirtualSize, nil
+	}
+
+	return disk.Size, nil
+}
+
+// materializedDiskReady is the status of a disk whose host file is present and sized.
+func materializedDiskReady(target string, size uint64) hypervisor.VirtualMachineDiskStatusSpec {
+	return hypervisor.VirtualMachineDiskStatusSpec{
+		SourcePath: target,
+		Format:     qcow2Format,
+		ReadOnly:   false,
+		Phase:      hypervisor.VirtualMachineDiskPhaseReady,
+		Size:       size,
+	}
+}
+
+// reconcileDiskSize reports a materialized disk's actual virtual size, growing the qcow2 in place for
+// a larger request and refusing (with a log) a smaller one. requested == 0 inherits the image size.
+func reconcileDiskSize(ctx context.Context, logger *zap.Logger, target string, requested uint64) (uint64, error) {
+	info, err := qemuImgInspect(ctx, target)
+	if err != nil {
+		return 0, fmt.Errorf("inspect %q: %w", target, err)
+	}
+
+	switch {
+	case requested == 0 || requested == info.VirtualSize:
+		return info.VirtualSize, nil
+	case requested > info.VirtualSize:
+		if err := qemuImgResize(ctx, target, requested); err != nil {
+			return 0, err
+		}
+
+		logger.Info("grew materialized virtual machine disk",
+			zap.String("target", target),
+			zap.Uint64("from", info.VirtualSize), zap.Uint64("to", requested))
+
+		return requested, nil
+	default:
+		logger.Warn("refusing to shrink materialized virtual machine disk in place",
+			zap.String("target", target),
+			zap.Uint64("actual", info.VirtualSize), zap.Uint64("requested", requested))
+
+		return info.VirtualSize, nil
+	}
+}
+
+// materializeDisk creates target from source in the requested mode (default copy), sizing it to size.
+// It writes a sibling temp file renamed into place only once complete, so an interrupted qemu-img run
+// never leaves a half-written file the existence check would mistake for a finished disk.
+func materializeDisk(ctx context.Context, logger *zap.Logger, mode, source, target string, size uint64) error {
+	tmp := target + ".tmp"
+
+	// Drop a temp left by an earlier interrupted attempt before writing a fresh one.
+	if err := os.Remove(tmp); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove stale temporary disk %q: %w", tmp, err)
+	}
+
+	switch mode {
+	case hypervisorhelpers.VirtualMachineDiskImageModeLinked.String():
+		if err := qemuImgCreateLinked(ctx, source, tmp, size); err != nil {
+			return err
+		}
+	default:
+		if err := qemuImgConvert(ctx, source, tmp); err != nil {
+			return err
+		}
+
+		if size > 0 {
+			if err := qemuImgResize(ctx, tmp, size); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := os.Rename(tmp, target); err != nil {
+		return fmt.Errorf("finalize materialized disk %q: %w", target, err)
+	}
+
+	logger.Info("materialized virtual machine disk",
+		zap.String("mode", mode), zap.String("source", source),
+		zap.String("target", target), zap.Uint64("size", size))
+
+	return nil
+}
+
+// materializedDiskMarker tags a VM directory this controller created, so the cleanup sweep only ever
+// removes its own directories, never a foreign one sharing the pool mount (lost+found, operator-made).
+const materializedDiskMarker = ".talos-vm-disk"
+
+// markVMDir records this controller's ownership of dir, creating the marker if absent.
+func markVMDir(dir string) error {
+	f, err := os.OpenFile(filepath.Join(dir, materializedDiskMarker), os.O_CREATE|os.O_WRONLY, 0o600)
+	if err != nil {
+		return fmt.Errorf("mark vm directory %q: %w", dir, err)
+	}
+
+	return f.Close()
+}
+
+// isMarkedVMDir reports whether dir carries this controller's ownership marker.
+func isMarkedVMDir(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, materializedDiskMarker))
+
+	return err == nil
+}
+
+// cleanupMaterializedFiles deletes files under every pool's target directory which no wanted disk
+// resolves to. The sweep runs on every reconcile, so an orphan survives at most one pass. Only
+// VM-scoped subdirectories (one per virtual machine) are touched; sibling files written by the
+// storage controller are left alone.
+func (ctrl *VirtualMachineDiskController) cleanupMaterializedFiles(
+	logger *zap.Logger, pass *diskReconciliation,
+) error {
+	wantedDirs := map[string]struct{}{}
+
+	for target := range pass.wantedFiles {
+		wantedDirs[filepath.Dir(target)] = struct{}{}
+	}
+
+	var errs []error
+
+	for id, pool := range pass.pools {
+		if pool.TypedSpec().Phase != storage.StoragePoolPhaseReady {
+			continue
+		}
+
+		errs = append(errs, ctrl.cleanupPoolMaterializedFiles(logger, id, pool.TypedSpec().TargetPath, wantedDirs, pass)...)
+	}
+
+	return errors.Join(errs...)
+}
+
+// cleanupPoolMaterializedFiles sweeps a single ready pool's target directory, dropping VM
+// subdirectories and files that no wanted disk resolves to.
+func (ctrl *VirtualMachineDiskController) cleanupPoolMaterializedFiles(
+	logger *zap.Logger, id, targetPath string, wantedDirs map[string]struct{}, pass *diskReconciliation,
+) []error {
+	entries, err := os.ReadDir(targetPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+
+		return []error{fmt.Errorf("read pool %q: %w", id, err)}
+	}
+
+	var errs []error
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		vmDir := filepath.Join(targetPath, entry.Name())
+
+		// Only sweep directories this controller marked; leave foreign ones (lost+found, operator) alone.
+		if !isMarkedVMDir(vmDir) {
+			continue
+		}
+
+		if _, wanted := wantedDirs[vmDir]; !wanted && !dirHasWantedFiles(vmDir, pass.wantedFiles) {
+			// VM has no materialized disks any more; try to drop the whole subdir.
+			if err := removeEmptyVMDir(logger, vmDir); err != nil {
+				errs = append(errs, err)
+			}
+
+			continue
+		}
+
+		if err := cleanupMaterializedVMDirectory(logger, id, vmDir, pass.wantedFiles); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errs
+}
+
+// dirHasWantedFiles reports whether any wanted file lives in dir.
+func dirHasWantedFiles(dir string, wanted map[string]struct{}) bool {
+	for path := range wanted {
+		if filepath.Dir(path) == dir {
+			return true
+		}
+	}
+
+	return false
+}
+
+// removeEmptyVMDir drops a VM subdir if it holds no wanted files. Files sitting there are removed
+// first so the directory can be emptied before the Remove call.
+func removeEmptyVMDir(logger *zap.Logger, vmDir string) error {
+	files, err := os.ReadDir(vmDir)
+	if err != nil {
+		return fmt.Errorf("read vm directory %q: %w", vmDir, err)
+	}
+
+	for _, file := range files {
+		path := filepath.Join(vmDir, file.Name())
+
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove materialized disk %q: %w", path, err)
+		}
+
+		logger.Info("removed orphan virtual machine disk file", zap.String("path", path))
+	}
+
+	if err := os.Remove(vmDir); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("remove empty vm directory %q: %w", vmDir, err)
+	}
+
+	return nil
+}
+
+func cleanupMaterializedVMDirectory(
+	logger *zap.Logger, poolID, vmDir string, wantedFiles map[string]struct{},
+) error {
+	files, err := os.ReadDir(vmDir)
+	if err != nil {
+		return fmt.Errorf("read pool %q vm directory %q: %w", poolID, vmDir, err)
+	}
+
+	for _, file := range files {
+		// Keep the marker as long as the directory lives; removeEmptyVMDir drops it with the directory.
+		if file.Name() == materializedDiskMarker {
+			continue
+		}
+
+		path := filepath.Join(vmDir, file.Name())
+
+		if _, keep := wantedFiles[path]; keep {
+			continue
+		}
+
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove materialized disk %q: %w", path, err)
+		}
+
+		logger.Info("removed orphan virtual machine disk file", zap.String("path", path))
+	}
+
+	return nil
 }
 
 // checkVirtualMachineDiskSupported reports whether a disk is one this slice provisions at all, as
@@ -412,16 +853,46 @@ func checkVirtualMachineDiskSupported(disk hypervisor.VirtualMachineDiskSpec) er
 
 		return nil
 	case hypervisorhelpers.VirtualMachineDiskTypeDisk.String():
-		if !disk.Provision.Blank {
-			// Copying or backing a disk from a content library image is not implemented yet; see
-			// the follow-up to siderolabs/talos#14511.
-			return fmt.Errorf("%w: a disk is only provisioned from provision.blank today", errDiskUnsupported)
+		switch {
+		case disk.Provision.Blank:
+			return checkBlankDiskSupported(disk)
+		case disk.Provision.FromImage != nil:
+			return checkMaterializedDiskSupported(disk)
+		default:
+			return fmt.Errorf("%w: a disk requires provision.blank or provision.fromImage", errDiskUnsupported)
 		}
-
-		return checkBlankDiskSupported(disk)
 	default:
 		return fmt.Errorf("%w: unsupported type %q", errDiskUnsupported, disk.Type)
 	}
+}
+
+// checkMaterializedDiskSupported reports whether a disk-type disk backed by a content library
+// image can be materialized. Format is pinned to qcow2 because both linked and copy modes write
+// a qcow2 file; the backing format is detected at create time.
+func checkMaterializedDiskSupported(disk hypervisor.VirtualMachineDiskSpec) error {
+	if disk.Format != qcow2Format {
+		return fmt.Errorf("%w: a materialized disk must be qcow2, got %q", errDiskUnsupported, disk.Format)
+	}
+
+	// disk.Name is a filename component under the pool directory; reject one that could escape it.
+	if err := hypervisorhelpers.ValidateName(disk.Name); err != nil {
+		return fmt.Errorf("%w: disk %w", errDiskUnsupported, err)
+	}
+
+	if err := storagehelpers.ValidateStoragePoolName(disk.Pool); err != nil {
+		return fmt.Errorf("%w: %w", errDiskUnsupported, err)
+	}
+
+	mode := disk.Provision.FromImage.Mode
+	switch mode {
+	case "",
+		hypervisorhelpers.VirtualMachineDiskImageModeCopy.String(),
+		hypervisorhelpers.VirtualMachineDiskImageModeLinked.String():
+	default:
+		return fmt.Errorf("%w: unsupported image mode %q", errDiskUnsupported, mode)
+	}
+
+	return nil
 }
 
 // checkBlankDiskSupported reports whether a blank disk describes a volume that can be made.
