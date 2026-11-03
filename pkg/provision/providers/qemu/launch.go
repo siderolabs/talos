@@ -157,7 +157,13 @@ func launchVM(config *LaunchConfig) error {
 		bootOrder = "nc"
 	}
 
+	// with hardware acceleration, pass through the host CPU model as is,
+	// `max` is only needed for TCG (and it might enable features with broken dependencies under KVM)
 	cpuArg := "max"
+
+	if config.ArchitectureData.acceleratorAvailable() {
+		cpuArg = "host"
+	}
 
 	if config.BadRTC {
 		cpuArg += ",-kvmclock"
@@ -167,7 +173,18 @@ func launchVM(config *LaunchConfig) error {
 		"-m", strconv.FormatInt(config.MemSize, 10),
 		"-smp", smpArg(config),
 		"-cpu", cpuArg,
+		// don't create default devices (VGA, CD-ROM, serial, parallel, monitor, etc.),
+		// everything the VM needs is declared explicitly (VGA is added back below on amd64)
+		"-nodefaults",
 		"-nographic",
+		// serial console goes to stdio (the node log file), as `-nodefaults` disables the default serial port
+		"-serial", "stdio",
+	}
+
+	// display device goes first to keep it at the same PCI slot as the QEMU default one
+	args = append(args, config.ArchitectureData.DisplayDeviceArgs()...)
+
+	args = append(args,
 		// TODO: uncomment the following line to get another eth interface not connected to anything
 		// "-nic", "tap,model=e1000,script=no,downscript=no",
 		"-device", "virtio-rng-pci",
@@ -182,7 +199,7 @@ func launchVM(config *LaunchConfig) error {
 		"-device", "virtio-keyboard-pci",
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action", "pause",
-	}
+	)
 
 	memory, err := memoryArgs(config)
 	if err != nil {

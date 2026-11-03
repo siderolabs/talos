@@ -66,6 +66,25 @@ func (arch Arch) Console() string {
 	}
 }
 
+// DisplayDeviceArgs returns the display device which `-nodefaults` drops.
+//
+// On amd64 (q35) QEMU creates a standard VGA by default, and the firmware and the kernel
+// behave differently without it (no GOP framebuffer, no BGRT): this was observed to break
+// kexec into the installed kernel (its built-in BTF gets corrupted, so all module loads fail).
+// The default device is restored to keep the VM the same as without `-nodefaults`.
+//
+// On arm64 (virt) there is no default display device.
+func (arch Arch) DisplayDeviceArgs() []string {
+	switch arch {
+	case ArchAmd64:
+		return []string{"-device", "VGA"}
+	case ArchArm64:
+		return nil
+	default:
+		panic("unsupported architecture")
+	}
+}
+
 // PFlash for UEFI boot.
 type PFlash struct {
 	Size        int64
