@@ -41,10 +41,12 @@ import (
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
+	cricfg "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -92,6 +94,8 @@ type ContainersSuite struct {
 
 	// ownedVolumes maps a container name to the names of the volumes declared for it.
 	ownedVolumes map[string][]string
+	// ownedSeccompProfiles maps a container name to the names of the seccomp profiles declared for it.
+	ownedSeccompProfiles map[string][]string
 }
 
 // SuiteName ...
@@ -728,7 +732,7 @@ func (suite *ContainersSuite) capSet(logs, set string) string {
 }
 
 // TestSeccompProfile verifies that every container is filtered by the default seccomp profile, the
-// privileged ones included, unless it explicitly asks to run unconfined.
+// privileged ones included, unless it explicitly asks to run unconfined or with a localhost profile.
 func (suite *ContainersSuite) TestSeccompProfile() {
 	// Reading the Seccomp mode rather than probing a filtered syscall: 2 is filter mode, 0 is none, so
 	// the assertion cannot pass for an unrelated reason.
@@ -754,8 +758,10 @@ func (suite *ContainersSuite) TestSeccompProfile() {
 
 		doc := suite.shellContainer(name, readSeccomp)
 		doc.SecurityConfig = &containercfg.ContainerSecurity{
-			SecurityProfile:        configcontainer.ContainerSecurityProfilePrivileged,
-			SecuritySeccompProfile: configcontainer.ContainerSeccompProfileUnconfined,
+			SecurityProfile: configcontainer.ContainerSecurityProfilePrivileged,
+			SecuritySeccompProfile: &containercfg.ContainerSeccomp{
+				SeccompType: configcontainer.ContainerSeccompProfileUnconfined,
+			},
 		}
 
 		suite.applyContainers(ctx, doc)
@@ -763,6 +769,64 @@ func (suite *ContainersSuite) TestSeccompProfile() {
 		logs := suite.assertContainerLogged(ctx, name, "Seccomp:")
 
 		suite.Assert().Contains(logs, "Seccomp:\t0", "seccompProfile: unconfined should leave the container unfiltered")
+	})
+
+	suite.Run("localhost", func() {
+		ctx, name, _ := suite.setupContainer("seccomp-localhost")
+
+		const probe = "grep '^Seccomp:' /proc/self/status; " +
+			"mkdir /probe/dir >/dev/null 2>&1 && echo MKDIR-ALLOWED || echo MKDIR-DENIED; " +
+			"sleep 3600"
+
+		profile := suite.newSeccompProfile(name, "deny-mkdir", map[string]any{
+			"defaultAction": "SCMP_ACT_ALLOW",
+			"syscalls": []any{
+				map[string]any{
+					"names":    []any{"mkdir", "mkdirat"},
+					"action":   "SCMP_ACT_ERRNO",
+					"errnoRet": 1,
+				},
+			},
+		})
+
+		doc := suite.shellContainer(name, probe)
+		doc.MountsConfig = []containercfg.ContainerMount{
+			{
+				TmpfsMount: &containercfg.TmpfsMount{
+					MountDestination: "/probe",
+					MountSize:        "1Mi",
+				},
+			},
+		}
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecuritySeccompProfile: &containercfg.ContainerSeccomp{
+				SeccompType:             configcontainer.ContainerSeccompProfileLocalhost,
+				SeccompLocalhostProfile: profile.Name(),
+			},
+		}
+
+		suite.PatchMachineConfig(ctx, profile, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "MKDIR-ALLOWED", "MKDIR-DENIED")
+
+		suite.Assert().Contains(logs, "Seccomp:\t2", "a localhost profile should filter the container")
+		suite.Assert().Contains(logs, "MKDIR-DENIED", "the localhost profile should replace the default one")
+		suite.Assert().NotContains(logs, "MKDIR-ALLOWED", "the localhost profile should replace the default one")
+
+		// The profile is also published for the kubelet, like any other declared profile.
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), profile.Name(),
+			func(res *crires.SeccompProfile, asrt *assert.Assertions) {
+				asrt.Equal(profile.Name(), res.TypedSpec().Name)
+			})
+
+		// Editing only the profile restarts the container with the edited profile: the first
+		// instance is still sleeping, so nothing else could log the marker.
+		edited := cricfg.NewSeccompProfileConfigV1Alpha1(profile.Name())
+		edited.ProfileConfig.Object = map[string]any{"defaultAction": "SCMP_ACT_ALLOW"}
+
+		suite.PatchMachineConfig(ctx, edited)
+
+		suite.assertContainerLogged(ctx, name, "MKDIR-ALLOWED")
 	})
 }
 
@@ -1918,6 +1982,9 @@ func (suite *ContainersSuite) setupContainerOn(purpose, node string) (context.Co
 		volumes := suite.ownedVolumes[name]
 		delete(suite.ownedVolumes, name)
 
+		seccompProfiles := suite.ownedSeccompProfiles[name]
+		delete(suite.ownedSeccompProfiles, name)
+
 		suite.UpdateMachineConfig(cleanupCtx,
 			func(*machine.ApplyConfigurationRequest) {},
 			func(cfg config.Provider) (config.Provider, error) {
@@ -1933,6 +2000,8 @@ func (suite *ContainersSuite) setupContainerOn(purpose, node string) (context.Co
 					case blockcfg.UserVolumeConfigKind, blockcfg.ExistingVolumeConfigKind, blockcfg.ExternalVolumeConfigKind:
 						// Matched by name across the volume kinds, as a test may swap one kind for another.
 						return !slices.Contains(volumes, named.Name())
+					case cricfg.SeccompProfileConfigKind:
+						return !slices.Contains(seccompProfiles, named.Name())
 					default:
 						return true
 					}
@@ -1950,6 +2019,23 @@ func (suite *ContainersSuite) ownVolume(owner, name string) {
 	}
 
 	suite.ownedVolumes[owner] = append(suite.ownedVolumes[owner], name)
+}
+
+// newSeccompProfile builds a seccomp profile document unique to this test, owned by the given
+// container, which is removed together with it.
+func (suite *ContainersSuite) newSeccompProfile(owner, purpose string, profile map[string]any) *cricfg.SeccompProfileConfigV1Alpha1 {
+	name := fmt.Sprintf("itsp-%s-%04x.json", purpose, rand.Int31())
+
+	if suite.ownedSeccompProfiles == nil {
+		suite.ownedSeccompProfiles = map[string][]string{}
+	}
+
+	suite.ownedSeccompProfiles[owner] = append(suite.ownedSeccompProfiles[owner], name)
+
+	doc := cricfg.NewSeccompProfileConfigV1Alpha1(name)
+	doc.ProfileConfig.Object = profile
+
+	return doc
 }
 
 // setupUserVolume declares a user volume unique to this test, owned by the given container, and

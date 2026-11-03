@@ -1772,6 +1772,27 @@
       "type": "object",
       "description": "ContainerRunAs overrides the image's user and group."
     },
+    "container.ContainerSeccomp": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Seccomp profile type.\n\ndefault applies the containerd default seccomp profile. unconfined applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings. localhost applies the profile named by localhostProfile.\n",
+          "markdownDescription": "Seccomp profile type.\n\n`default` applies the containerd default seccomp profile. `unconfined` applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings. `localhost` applies the profile named by `localhostProfile`.",
+          "x-intellij-html-description": "\u003cp\u003eSeccomp profile type.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003edefault\u003c/code\u003e applies the containerd default seccomp profile. \u003ccode\u003eunconfined\u003c/code\u003e applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings. \u003ccode\u003elocalhost\u003c/code\u003e applies the profile named by \u003ccode\u003elocalhostProfile\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "localhostProfile": {
+          "type": "string",
+          "title": "localhostProfile",
+          "description": "Name of the seccomp profile to apply, declared by a SeccompProfileConfig document\n(or the deprecated .machine.seccompProfiles field).\n\nRequired with, and only allowed with, type: localhost. Updating the referenced\nprofile restarts the container with the new profile.\n",
+          "markdownDescription": "Name of the seccomp profile to apply, declared by a `SeccompProfileConfig` document\n(or the deprecated `.machine.seccompProfiles` field).\n\nRequired with, and only allowed with, `type: localhost`. Updating the referenced\nprofile restarts the container with the new profile.",
+          "x-intellij-html-description": "\u003cp\u003eName of the seccomp profile to apply, declared by a \u003ccode\u003eSeccompProfileConfig\u003c/code\u003e document\n(or the deprecated \u003ccode\u003e.machine.seccompProfiles\u003c/code\u003e field).\u003c/p\u003e\n\n\u003cp\u003eRequired with, and only allowed with, \u003ccode\u003etype: localhost\u003c/code\u003e. Updating the referenced\nprofile restarts the container with the new profile.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerSeccomp selects the seccomp filter applied to the container.\\n\\nFor compatibility, a bare profile type (e.g. `seccompProfile: unconfined`) is accepted as a\\nshorthand for `seccompProfile: {type: unconfined}`.\\n"
+    },
     "container.ContainerSecurity": {
       "properties": {
         "profile": {
@@ -1796,11 +1817,22 @@
           "x-intellij-html-description": "\u003cp\u003ePublishes the container\u0026rsquo;s PID so machined\u0026rsquo;s API can recognize it, and bind-mounts the\nmachined API socket into the container.\u003c/p\u003e\n\n\u003cp\u003eThis alone does not grant DAC access to the socket, which is owned by the \u003ccode\u003eapid\u003c/code\u003e user:\nreaching it in practice still requires \u003ccode\u003eprofile: privileged\u003c/code\u003e or an equivalent capability/\n\u003ccode\u003erunAs\u003c/code\u003e grant. Once connected, the container may request any role, same as extension\nservices; the RPC\u0026rsquo;s own role requirements are what actually gate access.\u003c/p\u003e\n"
         },
         "seccompProfile": {
-          "type": "string",
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "default",
+                "unconfined"
+              ]
+            },
+            {
+              "$ref": "#/$defs/container.ContainerSeccomp"
+            }
+          ],
           "title": "seccompProfile",
-          "description": "Seccomp profile.\n\ndefault applies the containerd default seccomp profile, independently of the security\nprofile: even a privileged container is filtered by it. unconfined applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings.\n",
-          "markdownDescription": "Seccomp profile.\n\n`default` applies the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it. `unconfined` applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings.",
-          "x-intellij-html-description": "\u003cp\u003eSeccomp profile.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003edefault\u003c/code\u003e applies the containerd default seccomp profile, independently of the security\nprofile: even a \u003ccode\u003eprivileged\u003c/code\u003e container is filtered by it. \u003ccode\u003eunconfined\u003c/code\u003e applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings.\u003c/p\u003e\n"
+          "description": "Seccomp profile applied to the container.\n\nUnset means the containerd default seccomp profile, independently of the security\nprofile: even a privileged container is filtered by it.\n",
+          "markdownDescription": "Seccomp profile applied to the container.\n\nUnset means the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it.",
+          "x-intellij-html-description": "\u003cp\u003eSeccomp profile applied to the container.\u003c/p\u003e\n\n\u003cp\u003eUnset means the containerd default seccomp profile, independently of the security\nprofile: even a \u003ccode\u003eprivileged\u003c/code\u003e container is filtered by it.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

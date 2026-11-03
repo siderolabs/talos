@@ -325,3 +325,27 @@ func TestWithResolvedDevicesMissingSource(t *testing.T) {
 	})(t.Context(), nil, nil, spec)
 	require.ErrorContains(t, err, `failed to add device "/dev/data"`)
 }
+
+func TestDecodeSeccompProfile(t *testing.T) {
+	t.Parallel()
+
+	profile, err := containersctrl.DecodeSeccompProfile(containers.ContainerSecuritySpec{})
+	require.NoError(t, err)
+	assert.Nil(t, profile, "no localhost profile keeps the default one")
+
+	profile, err = containersctrl.DecodeSeccompProfile(containers.ContainerSecuritySpec{
+		SeccompLocalhostProfile:        "no-ns.json",
+		SeccompLocalhostProfileContent: `{"defaultAction":"SCMP_ACT_ALLOW","syscalls":[{"names":["unshare"],"action":"SCMP_ACT_ERRNO"}]}`,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, &specs.LinuxSeccomp{
+		DefaultAction: specs.ActAllow,
+		Syscalls:      []specs.LinuxSyscall{{Names: []string{"unshare"}, Action: specs.ActErrno}},
+	}, profile)
+
+	_, err = containersctrl.DecodeSeccompProfile(containers.ContainerSecuritySpec{
+		SeccompLocalhostProfile:        "broken.json",
+		SeccompLocalhostProfileContent: `{`,
+	})
+	assert.ErrorContains(t, err, `failed to decode seccomp profile "broken.json"`)
+}

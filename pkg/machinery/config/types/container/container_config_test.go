@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
+	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/container"
 )
@@ -439,6 +440,26 @@ mounts:
 			expectedErr: "unsupported seccomp profile",
 		},
 		{
+			name:        "unknown seccomp profile type",
+			doc:         "name: nginx\nimage: nginx\nsecurity:\n  seccompProfile:\n    type: RuntimeDefault",
+			expectedErr: `unsupported seccomp profile "RuntimeDefault", expected default, unconfined or localhost`,
+		},
+		{
+			name:        "localhost seccomp profile without name",
+			doc:         "name: nginx\nimage: nginx\nsecurity:\n  seccompProfile:\n    type: localhost",
+			expectedErr: "seccompProfile.localhostProfile is required with seccompProfile.type: localhost",
+		},
+		{
+			name:        "seccomp localhostProfile without localhost type",
+			doc:         "name: nginx\nimage: nginx\nsecurity:\n  seccompProfile:\n    localhostProfile: audit.json",
+			expectedErr: `seccompProfile.localhostProfile is only allowed with seccompProfile.type: localhost, got "default"`,
+		},
+		{
+			name:        "seccomp localhostProfile with unconfined type",
+			doc:         "name: nginx\nimage: nginx\nsecurity:\n  seccompProfile:\n    type: unconfined\n    localhostProfile: audit.json",
+			expectedErr: `seccompProfile.localhostProfile is only allowed with seccompProfile.type: localhost, got "unconfined"`,
+		},
+		{
 			name:        "capability with CAP_ prefix",
 			doc:         "name: nginx\nimage: nginx\nsecurity:\n  capabilities:\n    add: [CAP_NET_ADMIN]",
 			expectedErr: "without the CAP_ prefix",
@@ -845,5 +866,127 @@ func TestContainerConfigMergeReplacesHealthCheck(t *testing.T) {
 
 		_, err := base.Validate(validationMode{})
 		require.ErrorContains(t, err, "lifecycle.healthCheck: exactly one of tcp, http or grpc must be set")
+	})
+}
+
+func TestContainerConfigSeccompProfile(t *testing.T) {
+	t.Parallel()
+
+	const header = "apiVersion: v1alpha1\nkind: ContainerConfig\nname: web\nimage: docker.io/library/nginx:1.27\n"
+
+	for _, test := range []struct {
+		name string
+		doc  string
+
+		expectedProfile          config.ContainerSeccompProfile
+		expectedLocalhostProfile string
+	}{
+		{
+			name:            "unset",
+			expectedProfile: config.ContainerSeccompProfileDefault,
+		},
+		{
+			name:            "empty object",
+			doc:             "security:\n  seccompProfile: {}\n",
+			expectedProfile: config.ContainerSeccompProfileDefault,
+		},
+		{
+			name:            "default",
+			doc:             "security:\n  seccompProfile:\n    type: default\n",
+			expectedProfile: config.ContainerSeccompProfileDefault,
+		},
+		{
+			name:            "unconfined",
+			doc:             "security:\n  seccompProfile:\n    type: unconfined\n",
+			expectedProfile: config.ContainerSeccompProfileUnconfined,
+		},
+		{
+			name:            "unconfined shorthand",
+			doc:             "security:\n  seccompProfile: unconfined\n",
+			expectedProfile: config.ContainerSeccompProfileUnconfined,
+		},
+		{
+			name:                     "localhost",
+			doc:                      "security:\n  seccompProfile:\n    type: localhost\n    localhostProfile: audit.json\n",
+			expectedProfile:          config.ContainerSeccompProfileLocalhost,
+			expectedLocalhostProfile: "audit.json",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := load(t, header+test.doc)
+
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expectedProfile, cfg.Security().SeccompProfile())
+			assert.Equal(t, test.expectedLocalhostProfile, cfg.Security().SeccompLocalhostProfile())
+		})
+	}
+}
+
+func TestContainerConfigSeccompProfileUnknownField(t *testing.T) {
+	t.Parallel()
+
+	_, err := configloader.NewFromBytes([]byte(`apiVersion: v1alpha1
+kind: ContainerConfig
+name: web
+image: docker.io/library/nginx:1.27
+security:
+  seccompProfile:
+    type: localhost
+    localhostprofile: audit.json
+`))
+	require.ErrorContains(t, err, "unknown keys found during decoding")
+	require.ErrorContains(t, err, "localhostprofile: audit.json")
+}
+
+func TestContainerConfigSeccompProfileMarshal(t *testing.T) {
+	t.Parallel()
+
+	cfg := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: web
+image: docker.io/library/nginx:1.27
+security:
+  seccompProfile: unconfined
+`)
+
+	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+	require.NoError(t, err)
+
+	// The shorthand is normalized to the object form.
+	assert.Contains(t, string(marshaled), "seccompProfile:\n        type: unconfined\n")
+}
+
+func TestContainerConfigMergeReplacesSeccompProfile(t *testing.T) {
+	t.Parallel()
+
+	const header = "apiVersion: v1alpha1\nkind: ContainerConfig\nname: web\nimage: docker.io/library/nginx:1.27\n"
+
+	t.Run("patch without seccompProfile keeps it", func(t *testing.T) {
+		t.Parallel()
+
+		base := load(t, header+"security:\n  seccompProfile:\n    type: localhost\n    localhostProfile: audit.json\n")
+
+		require.NoError(t, merge.Merge(base, load(t, header+"security:\n  profile: privileged\n")))
+
+		assert.Equal(t, config.ContainerSeccompProfileLocalhost, base.Security().SeccompProfile())
+		assert.Equal(t, "audit.json", base.Security().SeccompLocalhostProfile())
+	})
+
+	t.Run("patch with another type drops the profile name", func(t *testing.T) {
+		t.Parallel()
+
+		base := load(t, header+"security:\n  seccompProfile:\n    type: localhost\n    localhostProfile: audit.json\n")
+
+		require.NoError(t, merge.Merge(base, load(t, header+"security:\n  seccompProfile:\n    type: default\n")))
+
+		_, err := base.Validate(validationMode{})
+		require.NoError(t, err)
+
+		assert.Equal(t, config.ContainerSeccompProfileDefault, base.Security().SeccompProfile())
+		assert.Empty(t, base.Security().SeccompLocalhostProfile())
 	})
 }

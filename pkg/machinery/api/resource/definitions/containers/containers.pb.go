@@ -1045,9 +1045,16 @@ type ContainerSecuritySpec struct {
 	SeccompUnconfined bool `protobuf:"varint,5,opt,name=seccomp_unconfined,json=seccompUnconfined,proto3" json:"seccomp_unconfined,omitempty"`
 	// SELinuxLevel is the MCS level the container runs at, stable across restarts so that it keeps
 	// access to the files it writes; empty when containers run without categories.
-	SeLinuxLevel  string `protobuf:"bytes,6,opt,name=se_linux_level,json=seLinuxLevel,proto3" json:"se_linux_level,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	SeLinuxLevel string `protobuf:"bytes,6,opt,name=se_linux_level,json=seLinuxLevel,proto3" json:"se_linux_level,omitempty"`
+	// SeccompLocalhostProfile is the name of the seccomp profile applied instead of the default
+	// one; empty when the default profile applies, or none at all.
+	SeccompLocalhostProfile string `protobuf:"bytes,7,opt,name=seccomp_localhost_profile,json=seccompLocalhostProfile,proto3" json:"seccomp_localhost_profile,omitempty"`
+	// SeccompLocalhostProfileContent is the seccomp profile named by SeccompLocalhostProfile, as
+	// JSON in the OCI runtime-spec LinuxSeccomp format. Carrying the content rather than only the
+	// name makes an edit of the profile change the spec, which restarts the container.
+	SeccompLocalhostProfileContent string `protobuf:"bytes,8,opt,name=seccomp_localhost_profile_content,json=seccompLocalhostProfileContent,proto3" json:"seccomp_localhost_profile_content,omitempty"`
+	unknownFields                  protoimpl.UnknownFields
+	sizeCache                      protoimpl.SizeCache
 }
 
 func (x *ContainerSecuritySpec) Reset() {
@@ -1118,6 +1125,20 @@ func (x *ContainerSecuritySpec) GetSeccompUnconfined() bool {
 func (x *ContainerSecuritySpec) GetSeLinuxLevel() string {
 	if x != nil {
 		return x.SeLinuxLevel
+	}
+	return ""
+}
+
+func (x *ContainerSecuritySpec) GetSeccompLocalhostProfile() string {
+	if x != nil {
+		return x.SeccompLocalhostProfile
+	}
+	return ""
+}
+
+func (x *ContainerSecuritySpec) GetSeccompLocalhostProfileContent() string {
+	if x != nil {
+		return x.SeccompLocalhostProfileContent
 	}
 	return ""
 }
@@ -1640,7 +1661,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"swap_limit\x18\x03 \x01(\x04R\tswapLimit\"8\n" +
 	"\x12ContainerRunAsSpec\x12\x10\n" +
 	"\x03uid\x18\x01 \x01(\x05R\x03uid\x12\x10\n" +
-	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\x8d\x02\n" +
+	"\x03gid\x18\x02 \x01(\x05R\x03gid\"\x94\x03\n" +
 	"\x15ContainerSecuritySpec\x12\x1e\n" +
 	"\n" +
 	"privileged\x18\x01 \x01(\bR\n" +
@@ -1649,7 +1670,9 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x11capabilities_drop\x18\x03 \x03(\tR\x10capabilitiesDrop\x12'\n" +
 	"\x0fmachined_access\x18\x04 \x01(\bR\x0emachinedAccess\x12-\n" +
 	"\x12seccomp_unconfined\x18\x05 \x01(\bR\x11seccompUnconfined\x12$\n" +
-	"\x0ese_linux_level\x18\x06 \x01(\tR\fseLinuxLevel\"\x80\a\n" +
+	"\x0ese_linux_level\x18\x06 \x01(\tR\fseLinuxLevel\x12:\n" +
+	"\x19seccomp_localhost_profile\x18\a \x01(\tR\x17seccompLocalhostProfile\x12I\n" +
+	"!seccomp_localhost_profile_content\x18\b \x01(\tR\x1eseccompLocalhostProfileContent\"\x80\a\n" +
 	"\x11ContainerSpecSpec\x12O\n" +
 	"\x05image\x18\x01 \x01(\v29.talos.resource.definitions.containers.ContainerImageSpecR\x05image\x12\x1e\n" +
 	"\n" +

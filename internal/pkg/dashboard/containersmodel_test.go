@@ -247,6 +247,20 @@ func TestFormatContainerDetail(t *testing.T) {
 	assert.Contains(t, detail, "network addresses · time · containers collector")
 }
 
+func TestFormatContainerDetailSeccompLocalhostProfile(t *testing.T) {
+	spec := containers.NewContainerSpec(containers.NamespaceName, "sandboxed")
+	spec.TypedSpec().Security = containers.ContainerSecuritySpec{
+		SeccompLocalhostProfile:        "no-ns.json",
+		SeccompLocalhostProfileContent: `{"defaultAction":"SCMP_ACT_ALLOW"}`,
+	}
+
+	detail := formatContainerDetail(nil, spec, nil, time.Now())
+
+	assert.Contains(t, detail, "seccomp no-ns.json")
+	assert.NotContains(t, detail, "seccomp unconfined")
+	assert.NotContains(t, detail, "SCMP_ACT_ALLOW")
+}
+
 func TestFormatContainerDetailPartial(t *testing.T) {
 	// The status, the spec and the instance are produced by different controllers, so any of them
 	// may be missing while the rest render.

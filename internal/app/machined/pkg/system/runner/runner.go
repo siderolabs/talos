@@ -101,6 +101,8 @@ type Options struct {
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// SeccompUnconfined applies no seccomp profile at all, instead of the default one.
 	SeccompUnconfined bool
+	// SeccompProfile replaces the default seccomp profile as a whole.
+	SeccompProfile *specs.LinuxSeccomp
 	// AmbientCapabilitiesForNonRoot raises the final permitted capabilities of a non-root process
 	// into its inheritable and ambient sets.
 	AmbientCapabilitiesForNonRoot bool
@@ -276,6 +278,16 @@ func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 func WithSeccompUnconfined(enabled bool) Option {
 	return func(args *Options) {
 		args.SeccompUnconfined = enabled
+	}
+}
+
+// WithSeccompProfile applies the given seccomp profile instead of the default one.
+//
+// Unlike WithCustomSeccompProfile, the profile is not derived from the default one, and nil keeps the
+// default profile. WithSeccompUnconfined takes precedence.
+func WithSeccompProfile(profile *specs.LinuxSeccomp) Option {
+	return func(args *Options) {
+		args.SeccompProfile = profile
 	}
 }
 

@@ -131,6 +131,9 @@ type ContainerSecurityConfig interface {
 	MachinedAccess() bool
 	// SeccompProfile is the seccomp filter applied to the container; defaults to default.
 	SeccompProfile() ContainerSeccompProfile
+	// SeccompLocalhostProfile names the seccomp profile applied with the localhost seccomp
+	// profile; empty otherwise.
+	SeccompLocalhostProfile() string
 }
 
 // ContainerSeccompProfile selects the seccomp filter applied to a container.
@@ -143,6 +146,8 @@ const (
 	ContainerSeccompProfileDefault ContainerSeccompProfile = "default"
 	// ContainerSeccompProfileUnconfined applies no seccomp filter at all.
 	ContainerSeccompProfileUnconfined ContainerSeccompProfile = "unconfined"
+	// ContainerSeccompProfileLocalhost applies a seccomp profile declared in the machine configuration.
+	ContainerSeccompProfileLocalhost ContainerSeccompProfile = "localhost"
 )
 
 // ContainerNetworkMode selects the container's network namespace.

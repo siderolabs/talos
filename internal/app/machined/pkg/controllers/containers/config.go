@@ -7,6 +7,7 @@ package containers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -17,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -103,6 +105,12 @@ func (ctrl *ConfigController) reconcile(ctx context.Context, runtime controller.
 			selinuxLevels = allocateSELinuxLevels(machineConfig.Config().ContainerConfigs())
 		}
 
+		seccompProfiles := map[string]configcfg.SeccompProfile{}
+
+		for _, seccompProfile := range machineConfig.Config().SeccompProfiles() {
+			seccompProfiles[seccompProfile.Name()] = seccompProfile
+		}
+
 		for _, containerConfig := range machineConfig.Config().ContainerConfigs() {
 			containerSpecID := containerConfig.Name()
 
@@ -120,7 +128,7 @@ func (ctrl *ConfigController) reconcile(ctx context.Context, runtime controller.
 				ctx, runtime,
 				containers.NewContainerSpec(containers.NamespaceName, containerSpecID),
 				func(res *containers.ContainerSpec) error {
-					if err := applyConfig(res.TypedSpec(), containerConfig); err != nil {
+					if err := applyConfig(res.TypedSpec(), containerConfig, seccompProfiles); err != nil {
 						return err
 					}
 
@@ -148,7 +156,9 @@ func (ctrl *ConfigController) reconcile(ctx context.Context, runtime controller.
 }
 
 // applyConfig resolves a ContainerConfig document into a ContainerSpec.
-func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfig configcfg.ContainerConfig) error {
+//
+// seccompProfiles are the seccomp profiles declared in the machine configuration, by name.
+func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfig configcfg.ContainerConfig, seccompProfiles map[string]configcfg.SeccompProfile) error {
 	// Image() already returns the canonical form: normalizing in the config layer rather than
 	// downstream keeps the reference identical to what the pull records, which is what image
 	// garbage collection matches against.
@@ -187,6 +197,16 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 		CapabilitiesDrop:  security.CapabilitiesDrop(),
 		MachinedAccess:    security.MachinedAccess(),
 		SeccompUnconfined: security.SeccompProfile() == configcfg.ContainerSeccompProfileUnconfined,
+	}
+
+	if security.SeccompProfile() == configcfg.ContainerSeccompProfileLocalhost {
+		content, err := resolveSeccompProfile(security.SeccompLocalhostProfile(), seccompProfiles)
+		if err != nil {
+			return err
+		}
+
+		containerSpecSpec.Security.SeccompLocalhostProfile = security.SeccompLocalhostProfile()
+		containerSpecSpec.Security.SeccompLocalhostProfileContent = content
 	}
 
 	containerSpecSpec.Network = containers.ContainerNetworkSpec{
@@ -292,4 +312,28 @@ func resolveDevices(configDevices []configcfg.ContainerDeviceConfig) ([]containe
 	}
 
 	return containerDeviceSpecs, nil
+}
+
+// resolveSeccompProfile looks up a seccomp profile by name, and returns it as canonical JSON.
+//
+// Round-tripping through the OCI runtime-spec type both validates the profile and drops any key
+// the runtime would ignore anyway, so that only a meaningful edit of the profile restarts the
+// container.
+func resolveSeccompProfile(name string, seccompProfiles map[string]configcfg.SeccompProfile) (string, error) {
+	seccompProfile, ok := seccompProfiles[name]
+	if !ok {
+		return "", fmt.Errorf("seccomp profile %q is not declared", name)
+	}
+
+	parsed, err := cri.ParseSeccompProfile(seccompProfile.Value())
+	if err != nil {
+		return "", fmt.Errorf("seccomp profile %q: %w", name, err)
+	}
+
+	content, err := json.Marshal(parsed)
+	if err != nil {
+		return "", fmt.Errorf("seccomp profile %q: failed to marshal: %w", name, err)
+	}
+
+	return string(content), nil
 }

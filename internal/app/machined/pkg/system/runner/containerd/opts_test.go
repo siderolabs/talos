@@ -142,10 +142,18 @@ func TestOCISpecOptsSeccomp(t *testing.T) {
 	// runner's own seccomp option, which must still have the final say.
 	privileged := runner.WithOCISpecOpts(oci.WithCapabilities([]string{"CAP_SYS_ADMIN"}))
 
+	localhost := &specs.LinuxSeccomp{
+		DefaultAction: specs.ActErrno,
+		Syscalls: []specs.LinuxSyscall{
+			{Names: []string{"read", "write", "exit_group"}, Action: specs.ActAllow},
+		},
+	}
+
 	for _, test := range []struct {
 		name       string
 		setters    []runner.Option
 		unconfined bool
+		expected   *specs.LinuxSeccomp
 	}{
 		{
 			name: "default profile",
@@ -171,6 +179,31 @@ func TestOCISpecOptsSeccomp(t *testing.T) {
 			},
 			unconfined: true,
 		},
+		{
+			name:     "localhost profile replaces the default one",
+			setters:  []runner.Option{privileged, runner.WithSeccompProfile(localhost)},
+			expected: localhost,
+		},
+		{
+			name:    "nil localhost profile keeps the default one",
+			setters: []runner.Option{runner.WithSeccompProfile(nil)},
+		},
+		{
+			name: "localhost profile wins over a custom profile",
+			setters: []runner.Option{
+				runner.WithCustomSeccompProfile(func(*specs.LinuxSeccomp) {}),
+				runner.WithSeccompProfile(localhost),
+			},
+			expected: localhost,
+		},
+		{
+			name: "unconfined wins over a localhost profile",
+			setters: []runner.Option{
+				runner.WithSeccompProfile(localhost),
+				runner.WithSeccompUnconfined(true),
+			},
+			unconfined: true,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -180,10 +213,16 @@ func TestOCISpecOptsSeccomp(t *testing.T) {
 			spec, err := oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "test"), nil, &ctrdcontainers.Container{ID: "test"}, opts...)
 			require.NoError(t, err)
 
-			if test.unconfined {
+			switch {
+			case test.unconfined:
 				assert.Nil(t, spec.Linux.Seccomp)
-			} else {
+			case test.expected != nil:
+				assert.Equal(t, test.expected, spec.Linux.Seccomp)
+				// The spec gets its own copy of the profile.
+				assert.NotSame(t, test.expected, spec.Linux.Seccomp)
+			default:
 				assert.NotNil(t, spec.Linux.Seccomp)
+				assert.Equal(t, specs.ActErrno, spec.Linux.Seccomp.DefaultAction, "expected the default profile")
 			}
 
 			// Opting out of seccomp must not take no-new-privileges along with it.

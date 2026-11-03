@@ -437,19 +437,36 @@ The `.machine.seccompProfiles` field is deprecated in favor of `SeccompProfileCo
     [notes.container_seccomp_profile]
         title = "Container Seccomp Profile"
         description = """\
-`ContainerConfig` documents can now opt a container out of the default seccomp profile:
+`ContainerConfig` documents can now choose the seccomp profile applied to a container: the default one, none at all, or a profile declared by a `SeccompProfileConfig` document:
 
 ```yaml
+apiVersion: v1alpha1
+kind: SeccompProfileConfig
+name: audit.json
+profile:
+  defaultAction: SCMP_ACT_LOG
+---
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: collector
+image: ghcr.io/example/collector:v1.0.0
+security:
+  seccompProfile:
+    type: localhost
+    localhostProfile: audit.json
+---
 apiVersion: v1alpha1
 kind: ContainerConfig
 name: buildkit
 image: docker.io/moby/buildkit:v0.34.1
 security:
   profile: privileged
-  seccompProfile: unconfined
+  seccompProfile:
+    type: unconfined
 ```
 
-The default seccomp profile still applies to every container unless it sets `seccompProfile: unconfined`, `privileged` ones included.
+The default seccomp profile still applies to every container unless it sets another `seccompProfile.type`, `privileged` ones included.
+Editing a profile restarts the containers using it.
 """
 
     [notes.container_swap_limit]

@@ -178,6 +178,30 @@ func TestSecurityEqual(t *testing.T) {
 			want: false,
 		},
 		{
+			name: "seccompLocalhostProfile differs",
+			securitySpecA: containers.ContainerSecuritySpec{
+				SeccompLocalhostProfile:        "audit.json",
+				SeccompLocalhostProfileContent: `{"defaultAction":"SCMP_ACT_LOG"}`,
+			},
+			securitySpecB: containers.ContainerSecuritySpec{
+				SeccompLocalhostProfile:        "deny.json",
+				SeccompLocalhostProfileContent: `{"defaultAction":"SCMP_ACT_LOG"}`,
+			},
+			want: false,
+		},
+		{
+			name: "seccompLocalhostProfileContent differs",
+			securitySpecA: containers.ContainerSecuritySpec{
+				SeccompLocalhostProfile:        "audit.json",
+				SeccompLocalhostProfileContent: `{"defaultAction":"SCMP_ACT_LOG"}`,
+			},
+			securitySpecB: containers.ContainerSecuritySpec{
+				SeccompLocalhostProfile:        "audit.json",
+				SeccompLocalhostProfileContent: `{"defaultAction":"SCMP_ACT_ERRNO"}`,
+			},
+			want: false,
+		},
+		{
 			name: "capabilitiesAdd differs",
 			securitySpecA: containers.ContainerSecuritySpec{
 				CapabilitiesAdd: []string{"NET_ADMIN"},

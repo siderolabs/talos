@@ -785,17 +785,56 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "seccompProfile",
-				Type:        "ContainerSeccompProfile",
+				Type:        "ContainerSeccomp",
 				Note:        "",
-				Description: "Seccomp profile.\n\n`default` applies the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it. `unconfined` applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"default",
-					"unconfined",
-				},
+				Description: "Seccomp profile applied to the container.\n\nUnset means the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Seccomp profile applied to the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
+
+	doc.Fields[3].AddExample("", exampleContainerSeccompLocalhost())
+
+	return doc
+}
+
+func (ContainerSeccomp) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ContainerSeccomp",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerSeccomp selects the seccomp filter applied to the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ContainerSeccomp selects the seccomp filter applied to the container.\n\nFor compatibility, a bare profile type (e.g. `seccompProfile: unconfined`) is accepted as a\nshorthand for `seccompProfile: {type: unconfined}`.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ContainerSecurity",
+				FieldName: "seccompProfile",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "type",
+				Type:        "ContainerSeccompProfile",
+				Note:        "",
+				Description: "Seccomp profile type.\n\n`default` applies the containerd default seccomp profile. `unconfined` applies no\nseccomp filter at all, which some workloads need, e.g. a nested container runtime\ncreating session keyrings. `localhost` applies the profile named by `localhostProfile`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Seccomp profile type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"default",
+					"unconfined",
+					"localhost",
+				},
+			},
+			{
+				Name:        "localhostProfile",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the seccomp profile to apply, declared by a `SeccompProfileConfig` document\n(or the deprecated `.machine.seccompProfiles` field).\n\nRequired with, and only allowed with, `type: localhost`. Updating the referenced\nprofile restarts the container with the new profile.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the seccomp profile to apply, declared by a `SeccompProfileConfig` document" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleContainerSeccompLocalhost())
+
+	doc.Fields[1].AddExample("", "audit.json")
 
 	return doc
 }
@@ -859,6 +898,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ContainerResourceLimits{}.Doc(),
 			ContainerDependsOn{}.Doc(),
 			ContainerSecurity{}.Doc(),
+			ContainerSeccomp{}.Doc(),
 			ContainerCapabilities{}.Doc(),
 		},
 	}

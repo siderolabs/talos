@@ -456,23 +456,7 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		specOpts = append(specOpts, WithAmbientFromPermittedForNonRoot)
 	}
 
-	switch {
-	case c.opts.SeccompUnconfined:
-		specOpts = append(
-			specOpts,
-			oci.WithSeccompUnconfined, // applied last, so that nothing above can put a profile back
-		)
-	case c.opts.OverrideSeccompProfile != nil:
-		specOpts = append(
-			specOpts,
-			WithCustomSeccompProfile(c.opts.OverrideSeccompProfile),
-		)
-	default:
-		specOpts = append(
-			specOpts,
-			seccomp.WithDefaultProfile(), // add seccomp profile last, as it depends on process capabilities
-		)
-	}
+	specOpts = append(specOpts, c.seccompSpecOpt())
 
 	if selinux.IsEnabled() {
 		if c.opts.SelinuxLabel != "" {
@@ -489,6 +473,23 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 	}
 
 	return specOpts
+}
+
+// seccompSpecOpt returns the seccomp option for the container.
+//
+// It must be applied after every other process option: the default profile depends on the
+// process capabilities, and an explicit profile (or unconfined) must not be replaced by anything.
+func (c *containerdRunner) seccompSpecOpt() oci.SpecOpts {
+	switch {
+	case c.opts.SeccompUnconfined:
+		return oci.WithSeccompUnconfined
+	case c.opts.SeccompProfile != nil:
+		return WithSeccompProfile(c.opts.SeccompProfile)
+	case c.opts.OverrideSeccompProfile != nil:
+		return WithCustomSeccompProfile(c.opts.OverrideSeccompProfile)
+	default:
+		return seccomp.WithDefaultProfile()
+	}
 }
 
 func (c *containerdRunner) String() string {

@@ -9,4 +9,5 @@ var (
 	AllocateSELinuxLevels = allocateSELinuxLevels
 	SELinuxPair           = selinuxPair
 	SELinuxPairCount      = selinuxPairCount
+	DecodeSeccompProfile  = decodeSeccompProfile
 )

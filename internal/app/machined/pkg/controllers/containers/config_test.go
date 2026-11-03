@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
+	cricfg "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -64,6 +65,8 @@ func (suite *ConfigSuite) TestNormalizesImageAndResolvesDefaults() {
 		// Defaults: restricted, default seccomp profile, no host network, no limits, the default stop timeout.
 		asrt.False(spec.TypedSpec().Security.Privileged)
 		asrt.False(spec.TypedSpec().Security.SeccompUnconfined)
+		asrt.Empty(spec.TypedSpec().Security.SeccompLocalhostProfile)
+		asrt.Empty(spec.TypedSpec().Security.SeccompLocalhostProfileContent)
 		asrt.False(spec.TypedSpec().Network.HostNetwork)
 		asrt.Zero(spec.TypedSpec().Resources.MemoryLimit)
 		asrt.Nil(spec.TypedSpec().Resources.SwapLimit)
@@ -163,6 +166,59 @@ func (suite *ConfigSuite) TestResolvesMounts() {
 	})
 }
 
+func (suite *ConfigSuite) TestResolvesSeccompLocalhostProfile() {
+	profile := cricfg.NewSeccompProfileConfigV1Alpha1("no-ns.json")
+	profile.ProfileConfig.Object = map[string]any{
+		"defaultAction": "SCMP_ACT_ALLOW",
+		// Not part of the OCI format: dropped from the resolved profile.
+		"comment": "deny namespace creation",
+		"syscalls": []any{
+			map[string]any{
+				"action": "SCMP_ACT_ERRNO",
+				"names":  []any{"unshare", "setns"},
+			},
+		},
+	}
+
+	doc := newDoc("sandboxed", "ghcr.io/siderolabs/sandboxed:v1.0.0")
+	doc.SecurityConfig = &containercfg.ContainerSecurity{
+		SecuritySeccompProfile: &containercfg.ContainerSeccomp{
+			SeccompType:             configcfg.ContainerSeccompProfileLocalhost,
+			SeccompLocalhostProfile: "no-ns.json",
+		},
+	}
+
+	suite.applyContainers(profile, doc)
+
+	ctest.AssertResource(suite, "sandboxed", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.False(spec.TypedSpec().Security.SeccompUnconfined)
+		asrt.Equal("no-ns.json", spec.TypedSpec().Security.SeccompLocalhostProfile)
+		asrt.JSONEq(
+			`{"defaultAction":"SCMP_ACT_ALLOW","syscalls":[{"names":["unshare","setns"],"action":"SCMP_ACT_ERRNO"}]}`,
+			spec.TypedSpec().Security.SeccompLocalhostProfileContent,
+		)
+	})
+
+	// Editing the profile updates the spec, which is what restarts the container.
+	edited := profile.DeepCopy()
+	edited.ProfileConfig.Object = map[string]any{"defaultAction": "SCMP_ACT_LOG"}
+
+	cfg, err := container.New(edited, doc)
+	suite.Require().NoError(err)
+
+	oldCfg, err := suite.State().Get(suite.Ctx(), config.NewMachineConfig(nil).Metadata())
+	suite.Require().NoError(err)
+
+	newCfg := config.NewMachineConfig(cfg)
+	newCfg.Metadata().SetVersion(oldCfg.Metadata().Version())
+
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), newCfg))
+
+	ctest.AssertResource(suite, "sandboxed", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.JSONEq(`{"defaultAction":"SCMP_ACT_LOG"}`, spec.TypedSpec().Security.SeccompLocalhostProfileContent)
+	})
+}
+
 func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 	doc := newDoc("director", "ghcr.io/siderolabs/director:v1.0.0")
 	doc.SecurityConfig = &containercfg.ContainerSecurity{
@@ -171,7 +227,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 			CapabilitiesAddConfig:  []string{"NET_ADMIN"},
 			CapabilitiesDropConfig: []string{"ALL"},
 		},
-		SecuritySeccompProfile: "unconfined",
+		SecuritySeccompProfile: &containercfg.ContainerSeccomp{SeccompType: "unconfined"},
 	}
 	doc.NetworkConfig = &containercfg.ContainerNetwork{NetworkMode: "host"}
 	doc.ResourcesConfig = &containercfg.ContainerResources{

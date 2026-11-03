@@ -82,6 +82,36 @@ video:
 	require.Error(t, schema.Validate(doc))
 }
 
+func TestContainerSeccompProfileSchema(t *testing.T) {
+	t.Parallel()
+
+	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schemaData))
+	require.NoError(t, err)
+
+	compiler := validatejsonschema.NewCompiler()
+	require.NoError(t, compiler.AddResource("test-id", schemaJSON))
+
+	schema, err := compiler.Compile("test-id#/$defs/container.ContainerSecurity")
+	require.NoError(t, err)
+
+	for _, valid := range []any{
+		"default",
+		"unconfined",
+		map[string]any{"type": "unconfined"},
+		map[string]any{"type": "localhost", "localhostProfile": "audit.json"},
+	} {
+		assert.NoError(t, schema.Validate(map[string]any{"seccompProfile": valid}), "seccompProfile: %v", valid)
+	}
+
+	for _, invalid := range []any{
+		"bogus",
+		"localhost", // the shorthand cannot carry the required profile name
+		map[string]any{"type": "unconfined", "unknown": true},
+	} {
+		assert.Error(t, schema.Validate(map[string]any{"seccompProfile": invalid}), "seccompProfile: %v", invalid)
+	}
+}
+
 func TestSchemaValidation(t *testing.T) {
 	t.Parallel()
 

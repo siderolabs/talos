@@ -8546,6 +8546,8 @@ ContainerSecuritySpec is the resolved security posture.
 | machined_access | [bool](#bool) |  | MachinedAccess publishes the container's PID as a ServicePID resource and mounts the machined API socket into the container. |
 | seccomp_unconfined | [bool](#bool) |  | SeccompUnconfined applies no seccomp filter instead of the default profile. |
 | se_linux_level | [string](#string) |  | SELinuxLevel is the MCS level the container runs at, stable across restarts so that it keeps access to the files it writes; empty when containers run without categories. |
+| seccomp_localhost_profile | [string](#string) |  | SeccompLocalhostProfile is the name of the seccomp profile applied instead of the default one; empty when the default profile applies, or none at all. |
+| seccomp_localhost_profile_content | [string](#string) |  | SeccompLocalhostProfileContent is the seccomp profile named by SeccompLocalhostProfile, as JSON in the OCI runtime-spec LinuxSeccomp format. Carrying the content rather than only the name makes an edit of the profile change the spec, which restarts the container. |
 
 
 

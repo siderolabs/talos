@@ -100,6 +100,10 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 				copy(cp.SecurityConfig.SecurityCapabilities.CapabilitiesDropConfig, o.SecurityConfig.SecurityCapabilities.CapabilitiesDropConfig)
 			}
 		}
+		if o.SecurityConfig.SecuritySeccompProfile != nil {
+			cp.SecurityConfig.SecuritySeccompProfile = new(ContainerSeccomp)
+			*cp.SecurityConfig.SecuritySeccompProfile = *o.SecurityConfig.SecuritySeccompProfile
+		}
 	}
 	if o.NetworkConfig != nil {
 		cp.NetworkConfig = new(ContainerNetwork)

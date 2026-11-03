@@ -134,6 +134,11 @@ func (r *containerdRunner) Run(
 		selinuxLabel = strings.TrimSuffix(selinuxLabel, ":s0") + ":" + spec.Security.SELinuxLevel
 	}
 
+	seccompProfile, err := decodeSeccompProfile(spec.Security)
+	if err != nil {
+		return 0, err
+	}
+
 	svc := containerdrunner.NewRunner(false,
 		&runner.Args{ID: id},
 		runner.WithNamespace(constants.TalosContainersContainerdNamespace),
@@ -151,6 +156,7 @@ func (r *containerdRunner) Run(
 		runner.WithHostNetworkFiles(spec.Network.HostNetwork),
 		runner.WithSelinuxLabel(selinuxLabel),
 		runner.WithSeccompUnconfined(spec.Security.SeccompUnconfined),
+		runner.WithSeccompProfile(seccompProfile),
 		// A non-root container (runAs or the image USER) would otherwise lose every capability it
 		// was granted on execve.
 		runner.WithAmbientCapabilitiesForNonRoot(true),
@@ -471,4 +477,19 @@ func MountsRequestSharedPropagation(mounts []containersres.ResolvedMountSpec) bo
 	}
 
 	return false
+}
+
+// decodeSeccompProfile decodes the container's localhost seccomp profile; nil means the default profile.
+func decodeSeccompProfile(security containersres.ContainerSecuritySpec) (*specs.LinuxSeccomp, error) {
+	if security.SeccompLocalhostProfileContent == "" {
+		return nil, nil //nolint:nilnil
+	}
+
+	var profile specs.LinuxSeccomp
+
+	if err := json.Unmarshal([]byte(security.SeccompLocalhostProfileContent), &profile); err != nil {
+		return nil, fmt.Errorf("failed to decode seccomp profile %q: %w", security.SeccompLocalhostProfile, err)
+	}
+
+	return &profile, nil
 }

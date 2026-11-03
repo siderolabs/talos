@@ -301,6 +301,14 @@ type ContainerSecuritySpec struct {
 	// SELinuxLevel is the MCS level the container runs at, stable across restarts so that it keeps
 	// access to the files it writes; empty when containers run without categories.
 	SELinuxLevel string `yaml:"selinuxLevel,omitempty" protobuf:"6"`
+
+	// SeccompLocalhostProfile is the name of the seccomp profile applied instead of the default
+	// one; empty when the default profile applies, or none at all.
+	SeccompLocalhostProfile string `yaml:"seccompLocalhostProfile,omitempty" protobuf:"7"`
+	// SeccompLocalhostProfileContent is the seccomp profile named by SeccompLocalhostProfile, as
+	// JSON in the OCI runtime-spec LinuxSeccomp format. Carrying the content rather than only the
+	// name makes an edit of the profile change the spec, which restarts the container.
+	SeccompLocalhostProfileContent string `yaml:"seccompLocalhostProfileContent,omitempty" protobuf:"8"`
 }
 
 // Equal compares two security specs field by field, as they carry slices.
@@ -310,7 +318,9 @@ func (a ContainerSecuritySpec) Equal(b ContainerSecuritySpec) bool {
 		slices.Equal(a.CapabilitiesDrop, b.CapabilitiesDrop) &&
 		a.MachinedAccess == b.MachinedAccess &&
 		a.SeccompUnconfined == b.SeccompUnconfined &&
-		a.SELinuxLevel == b.SELinuxLevel
+		a.SELinuxLevel == b.SELinuxLevel &&
+		a.SeccompLocalhostProfile == b.SeccompLocalhostProfile &&
+		a.SeccompLocalhostProfileContent == b.SeccompLocalhostProfileContent
 }
 
 // ContainerNetworkSpec is the resolved network configuration.

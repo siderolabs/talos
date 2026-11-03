@@ -51,18 +51,73 @@ type ContainerSecurity struct {
 	//     services; the RPC's own role requirements are what actually gate access.
 	SecurityMachinedAccess bool `yaml:"machinedAccess,omitempty"`
 	//   description: |
-	//     Seccomp profile.
+	//     Seccomp profile applied to the container.
 	//
-	//     `default` applies the containerd default seccomp profile, independently of the security
-	//     profile: even a `privileged` container is filtered by it. `unconfined` applies no
+	//     Unset means the containerd default seccomp profile, independently of the security
+	//     profile: even a `privileged` container is filtered by it.
+	//   examples:
+	//     - value: exampleContainerSeccompLocalhost()
+	//   schema:
+	//     oneOf:
+	//       - type: string
+	//         enum:
+	//           - default
+	//           - unconfined
+	//       - $ref: "#/$defs/container.ContainerSeccomp"
+	SecuritySeccompProfile *ContainerSeccomp `yaml:"seccompProfile,omitempty" merge:"replace"`
+}
+
+// ContainerSeccomp selects the seccomp filter applied to the container.
+//
+// For compatibility, a bare profile type (e.g. `seccompProfile: unconfined`) is accepted as a
+// shorthand for `seccompProfile: {type: unconfined}`.
+type ContainerSeccomp struct {
+	//   description: |
+	//     Seccomp profile type.
+	//
+	//     `default` applies the containerd default seccomp profile. `unconfined` applies no
 	//     seccomp filter at all, which some workloads need, e.g. a nested container runtime
-	//     creating session keyrings.
+	//     creating session keyrings. `localhost` applies the profile named by `localhostProfile`.
 	//   values:
 	//     - default
 	//     - unconfined
+	//     - localhost
 	//   schema:
 	//     type: string
-	SecuritySeccompProfile config.ContainerSeccompProfile `yaml:"seccompProfile,omitempty"`
+	SeccompType config.ContainerSeccompProfile `yaml:"type,omitempty"`
+	//   description: |
+	//     Name of the seccomp profile to apply, declared by a `SeccompProfileConfig` document
+	//     (or the deprecated `.machine.seccompProfiles` field).
+	//
+	//     Required with, and only allowed with, `type: localhost`. Updating the referenced
+	//     profile restarts the container with the new profile.
+	//   examples:
+	//     - value: '"audit.json"'
+	SeccompLocalhostProfile string `yaml:"localhostProfile,omitempty"`
+}
+
+// UnmarshalYAML implements yaml.Unmarshaler, accepting the bare profile type shorthand.
+//
+// The callback form keeps the strict decoding of the config loader, so unknown fields are still rejected.
+func (s *ContainerSeccomp) UnmarshalYAML(unmarshal func(any) error) error {
+	var profileType config.ContainerSeccompProfile
+
+	if err := unmarshal(&profileType); err == nil {
+		*s = ContainerSeccomp{SeccompType: profileType}
+
+		return nil
+	}
+
+	type rawContainerSeccomp ContainerSeccomp
+
+	return unmarshal((*rawContainerSeccomp)(s))
+}
+
+func exampleContainerSeccompLocalhost() *ContainerSeccomp {
+	return &ContainerSeccomp{
+		SeccompType:             config.ContainerSeccompProfileLocalhost,
+		SeccompLocalhostProfile: "audit.json",
+	}
 }
 
 // ContainerCapabilities adjusts the container's Linux capabilities.
@@ -116,11 +171,20 @@ func (s *ContainerSecurity) MachinedAccess() bool {
 
 // SeccompProfile implements config.ContainerSecurityConfig interface.
 func (s *ContainerSecurity) SeccompProfile() config.ContainerSeccompProfile {
-	if s.SecuritySeccompProfile == "" {
+	if s.SecuritySeccompProfile == nil || s.SecuritySeccompProfile.SeccompType == "" {
 		return config.ContainerSeccompProfileDefault
 	}
 
-	return s.SecuritySeccompProfile
+	return s.SecuritySeccompProfile.SeccompType
+}
+
+// SeccompLocalhostProfile implements config.ContainerSecurityConfig interface.
+func (s *ContainerSecurity) SeccompLocalhostProfile() string {
+	if s.SecuritySeccompProfile == nil {
+		return ""
+	}
+
+	return s.SecuritySeccompProfile.SeccompLocalhostProfile
 }
 
 // Validate checks the security settings.
@@ -134,12 +198,7 @@ func (s *ContainerSecurity) Validate() error {
 			fmt.Errorf("unsupported security profile %q, expected restricted or privileged", s.SecurityProfile))
 	}
 
-	switch s.SeccompProfile() {
-	case config.ContainerSeccompProfileDefault, config.ContainerSeccompProfileUnconfined:
-	default:
-		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("unsupported seccomp profile %q, expected default or unconfined", s.SecuritySeccompProfile))
-	}
+	validationErrors = errors.Join(validationErrors, s.validateSeccomp())
 
 	if s.SecurityCapabilities == nil {
 		return validationErrors
@@ -175,6 +234,25 @@ func (s *ContainerSecurity) Validate() error {
 	}
 
 	return validationErrors
+}
+
+// validateSeccomp checks the seccomp profile settings.
+func (s *ContainerSecurity) validateSeccomp() error {
+	switch s.SeccompProfile() {
+	case config.ContainerSeccompProfileDefault, config.ContainerSeccompProfileUnconfined:
+		if s.SeccompLocalhostProfile() != "" {
+			return fmt.Errorf("seccompProfile.localhostProfile is only allowed with seccompProfile.type: localhost, got %q", s.SeccompProfile())
+		}
+	case config.ContainerSeccompProfileLocalhost:
+		// Whether the profile is declared is checked against the whole configuration.
+		if s.SeccompLocalhostProfile() == "" {
+			return errors.New("seccompProfile.localhostProfile is required with seccompProfile.type: localhost")
+		}
+	default:
+		return fmt.Errorf("unsupported seccomp profile %q, expected default, unconfined or localhost", s.SeccompProfile())
+	}
+
+	return nil
 }
 
 func ValidateCapabilityName(field, capability string) error {
