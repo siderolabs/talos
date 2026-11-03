@@ -245,7 +245,8 @@ func (suite *ApidSuite) TestBigPayload() {
 
 // TestPKIMismatch verifies that PKI mismatch is handled correctly.
 func (suite *ApidSuite) TestPKIMismatch() {
-	bundle, err := secrets.NewBundle(secrets.NewClock(), cfg.TalosVersionCurrent)
+	// Keep clock skew from masking the issuer mismatch with a validity error.
+	bundle, err := secrets.NewBundle(secrets.NewFixedClock(time.Now().Add(-time.Hour)), cfg.TalosVersionCurrent)
 	suite.Require().NoError(err)
 
 	cert, err := bundle.GenerateTalosAPIClientCertificate(role.MakeSet(role.Admin))

@@ -84,7 +84,7 @@ func (suite *LibvirtSuite) TestBootsAndServesItsAPI() {
 
 	suite.T().Logf("uploading %s (%s) into content library %q", suite.HypervisorTalosISOPath, dgst, library)
 
-	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, dgst.String(), iso)
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, dgst.String(), iso)
 	suite.Require().NoError(err)
 
 	name := "vm-boot-" + uuid.NewString()

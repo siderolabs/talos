@@ -78,7 +78,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
 
 	contents := []byte("talos integration cdrom")
-	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader(contents))
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader(contents))
 	suite.Require().NoError(err)
 
 	name := "vm-cdrom-" + uuid.NewString()
@@ -211,7 +211,7 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 	rtestutils.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](nodeCtx, suite.T(), suite.Client.State(), name)
 	suite.assertNoDomain(node, name)
 
-	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader([]byte("late arrival")))
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("late arrival")))
 	suite.Require().NoError(err)
 
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
@@ -252,7 +252,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 	started := time.Now()
 
 	// The digest is declared, so the node verifies what it received before committing it.
-	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, dgst.String(), iso)
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, dgst.String(), iso)
 	suite.Require().NoError(err)
 
 	suite.T().Logf("upload took %s", time.Since(started).Round(time.Millisecond))
@@ -344,10 +344,10 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	const replacementISO = "replacement.iso"
 
-	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader([]byte("talos first cdrom")))
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos first cdrom")))
 	suite.Require().NoError(err)
 
-	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, false, "", bytes.NewReader([]byte("talos second cdrom")))
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, "", bytes.NewReader([]byte("talos second cdrom")))
 	suite.Require().NoError(err)
 
 	name := "vm-swap-" + uuid.NewString()
@@ -390,18 +390,18 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 
-	// The guest is reading from this file, so the content library refuses to take it away, by
-	// deleting it or by overwriting it in place.
+	// The attached alias cannot be deleted while the guest reads it. Existing aliases
+	// are create-only, regardless of whether they are attached.
 	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
-		Name:      isoName,
+		Target:    &machineapi.ContentLibraryServiceDeleteRequest_Name{Name: isoName},
 	})
 	suite.Require().Error(err)
 	suite.Require().Equal(codes.FailedPrecondition, grpcstatus.Code(err))
 
-	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, true, "", bytes.NewReader([]byte("talos overwritten")))
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos overwritten")))
 	suite.Require().Error(err)
-	suite.Require().Equal(codes.FailedPrecondition, grpcstatus.Code(err))
+	suite.Require().Equal(codes.AlreadyExists, grpcstatus.Code(err))
 
 	swappedDisk := installDisk
 	swappedDisk.ProvisionConfig.FromImageConfig = &hypervisorcfg.VirtualMachineDiskFromImage{
@@ -434,17 +434,23 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	// Nothing reads the first image any more, so it may go.
 	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
-		Name:      isoName,
+		Target:    &machineapi.ContentLibraryServiceDeleteRequest_Name{Name: isoName},
 	})
 	suite.Require().NoError(err)
 
-	// A stopped virtual machine reads nothing, so its image is the operator's to replace again. The
-	// disk is still configured, and still has a status; what is gone is the hold on it.
+	// Stopping releases the name hold, but does not permit overwrite. Reuse requires an explicit delete.
 	doc.PowerStateConfig = hypervisorhelpers.PowerStateStopped
 	suite.PatchMachineConfig(nodeCtx, doc)
 	suite.assertNoDomain(node, name)
 
-	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, true, "", bytes.NewReader([]byte("talos replaced")))
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, "", bytes.NewReader([]byte("talos replaced")))
+	suite.Require().Equal(codes.AlreadyExists, grpcstatus.Code(err))
+	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
+		LibraryId: library,
+		Target:    &machineapi.ContentLibraryServiceDeleteRequest_Name{Name: replacementISO},
+	})
+	suite.Require().NoError(err)
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, replacementISO, "", bytes.NewReader([]byte("talos replaced")))
 	suite.Require().NoError(err)
 
 	// Which is the other half of the bargain: an image the operator may replace is one a guest must
@@ -477,7 +483,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
-		Name:      replacementISO,
+		Target:    &machineapi.ContentLibraryServiceDeleteRequest_Name{Name: replacementISO},
 	})
 	suite.Require().NoError(err)
 
@@ -503,7 +509,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
 
-	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, false, "", bytes.NewReader([]byte("talos held cdrom")))
+	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos held cdrom")))
 	suite.Require().NoError(err)
 
 	name := "vm-release-" + uuid.NewString()

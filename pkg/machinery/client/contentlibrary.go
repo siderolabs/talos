@@ -30,7 +30,6 @@ const contentLibraryUploadChunkSize = 1 << 20
 func (c *Client) ContentLibraryUpload(
 	ctx context.Context,
 	libraryID, name string,
-	overwrite bool,
 	digest string,
 	contents io.Reader,
 	callOptions ...grpc.CallOption,
@@ -45,7 +44,6 @@ func (c *Client) ContentLibraryUpload(
 			Info: &machineapi.ContentLibraryServiceUploadInfo{
 				LibraryId: libraryID,
 				Name:      name,
-				Overwrite: overwrite,
 				Digest:    digest,
 			},
 		},

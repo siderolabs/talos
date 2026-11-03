@@ -157,7 +157,6 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 		nodeCtx,
 		library,
 		alpineISOName,
-		false,
 		isoDigest.String(),
 		iso,
 	)

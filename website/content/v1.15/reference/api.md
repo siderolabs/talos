@@ -1327,7 +1327,8 @@ InspectService provides auxiliary API to inspect OS internals.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | library_id | [string](#string) |  | ID of the content library to delete from. |
-| name | [string](#string) |  | Name of the file within the library. |
+| name | [string](#string) |  | Remove only this name, retaining the immutable object. |
+| sha256 | [string](#string) |  | Remove the object identified by "sha256:<hex>". |
 
 
 
@@ -1367,9 +1368,9 @@ InspectService provides auxiliary API to inspect OS internals.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  | Name of the file within the library. |
-| size | [uint64](#uint64) |  | Size of the file in bytes. |
-| modified_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Time the file was last modified. |
+| sha256 | [string](#string) |  | Canonical immutable object identity. |
+| size | [uint64](#uint64) |  | Size of the object in bytes. |
+| names | [string](#string) | repeated | Sorted aliases referring to this object (may be empty). |
 
 
 
@@ -1389,7 +1390,6 @@ succeeded, and by the details of the error of one which completed and was then r
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | sha256 | [string](#string) |  | Digest of the contents, as "sha256:<hex>". |
-| sha512 | [string](#string) |  | Digest of the contents, as "sha512:<hex>". |
 
 
 
@@ -1408,8 +1408,7 @@ It is sent as the first message of the Upload stream.
 | ----- | ---- | ----- | ----------- |
 | library_id | [string](#string) |  | ID of the content library to upload to. |
 | name | [string](#string) |  | Name of the file within the library. |
-| overwrite | [bool](#bool) |  | Overwrite an existing file with the same name. |
-| digest | [string](#string) |  | Expected digest of the contents, as "<algorithm>:<hex>", e.g. "sha256:2345cdef...".<br><br>Optional: when it is set, the upload is rejected unless the contents hash to it. The algorithms supported are sha256 and sha512. |
+| digest | [string](#string) |  | Expected digest of the contents, as "sha256:<hex>".<br><br>Optional: when it is set, the upload is rejected unless the contents hash to it. |
 
 
 
@@ -1465,9 +1464,9 @@ ContentLibraryConfig document and backed by a volume.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| List | [ContentLibraryServiceListRequest](#machine.ContentLibraryServiceListRequest) | [ContentLibraryServiceListResponse](#machine.ContentLibraryServiceListResponse) stream | List files stored in a content library. |
+| List | [ContentLibraryServiceListRequest](#machine.ContentLibraryServiceListRequest) | [ContentLibraryServiceListResponse](#machine.ContentLibraryServiceListResponse) stream | One SHA256 object and the names currently attached to it. |
 | Upload | [ContentLibraryServiceUploadRequest](#machine.ContentLibraryServiceUploadRequest) stream | [ContentLibraryServiceUploadResponse](#machine.ContentLibraryServiceUploadResponse) | Upload a file to a content library. |
-| Delete | [ContentLibraryServiceDeleteRequest](#machine.ContentLibraryServiceDeleteRequest) | [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse) | Delete a file from a content library. |
+| Delete | [ContentLibraryServiceDeleteRequest](#machine.ContentLibraryServiceDeleteRequest) | [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse) | Delete removes an alias or explicitly deletes a SHA256 object. Object deletion refuses existing aliases. |
 
  <!-- end services -->
 
