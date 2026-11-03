@@ -6,7 +6,14 @@ package constants
 
 import "encoding/asn1"
 
+// SideroLabsPEN is the IANA Private Enterprise Number assigned to Sidero Labs.
+const SideroLabsPEN = 67497
+
 // TrustdServerExtKeyUsage is the custom extended key usage OID set on trustd server certificates.
 //
-// TODO: replace the placeholder 1.3.6.1.4.1.32473 (RFC 5612 example PEN) with the Sidero Labs PEN.
-var TrustdServerExtKeyUsage = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, 32473, 1, 1}
+// OID layout under the Sidero Labs PEN (1.3.6.1.4.1.67497):
+//
+//	.1       Talos
+//	.1.1     Talos extended key usages
+//	.1.1.1   trustd server
+var TrustdServerExtKeyUsage = asn1.ObjectIdentifier{1, 3, 6, 1, 4, 1, SideroLabsPEN, 1, 1, 1}
