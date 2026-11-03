@@ -227,7 +227,7 @@ func (k *Kubelet) HealthFunc(runtime.Runtime) health.Check {
 // HealthSettings implements the HealthcheckedService interface.
 func (k *Kubelet) HealthSettings(runtime.Runtime) *health.Settings {
 	settings := health.DefaultSettings
-	settings.InitialDelay = 2 * time.Second // increase initial delay as kubelet is slow on startup
+	settings.StartupWindow = 10 * time.Second // kubelet is slow on startup, so give it a longer startup window
 
 	return &settings
 }

@@ -30,6 +30,8 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/etcdutl/v3/snapshot"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
@@ -255,13 +257,31 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	), nil
 }
 
+// healthCheckConnectParams are the gRPC connection parameters for the health check etcd client.
+//
+// The client is reused across health checks, and etcd is probed early and often during startup,
+// so the default gRPC reconnect backoff (1s base, capped at 2 minutes) would grow with every refused
+// connection before etcd opens its client listener, delaying the detection of a healthy etcd.
+//
+// MinConnectTimeout is set explicitly, as otherwise the connection attempt deadline is limited to
+// the (short) backoff delay, while etcd holds the connection until it is ready to serve (e.g. has quorum).
+var healthCheckConnectParams = grpc.ConnectParams{
+	Backoff: backoff.Config{
+		BaseDelay:  100 * time.Millisecond,
+		Multiplier: 1.6,
+		Jitter:     0.2,
+		MaxDelay:   2 * time.Second,
+	},
+	MinConnectTimeout: 20 * time.Second,
+}
+
 // HealthFunc implements the HealthcheckedService interface.
 func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
 		if e.client == nil {
 			var err error
 
-			e.client, err = etcd.NewLocalClient(ctx)
+			e.client, err = etcd.NewLocalClient(ctx, grpc.WithConnectParams(healthCheckConnectParams))
 			if err != nil {
 				return err
 			}
@@ -274,9 +294,15 @@ func (e *Etcd) HealthFunc(runtime.Runtime) health.Check {
 // HealthSettings implements the HealthcheckedService interface.
 func (e *Etcd) HealthSettings(runtime.Runtime) *health.Settings {
 	return &health.Settings{
-		InitialDelay: 5 * time.Second,
+		InitialDelay: 100 * time.Millisecond,
 		Period:       20 * time.Second,
 		Timeout:      15 * time.Second,
+
+		// etcd might take a while to reach quorum (e.g. when the whole cluster is restarting),
+		// so probe silently and report the first success right away
+		StartupWindow:  30 * time.Second,
+		StartupPeriod:  time.Second,
+		StartupTimeout: time.Second,
 	}
 }
 
