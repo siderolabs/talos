@@ -26,7 +26,7 @@ jobs:
       packages: write
       pull-requests: read
     runs-on:
-      group: large
+      group: yardi-lab-kvm
     if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref,
       'dependabot/'))
     needs:
