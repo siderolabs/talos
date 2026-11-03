@@ -226,6 +226,21 @@ func SyncActionForDevice(device string) (SyncAction, error) {
 	return SyncAction(action), nil
 }
 
+// DegradedForDevice returns the number of RAID devices an MD array is missing.
+func DegradedForDevice(device string) (int, error) {
+	value, err := readMDAttribute(device, "degraded")
+	if err != nil {
+		return 0, err
+	}
+
+	degraded, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse degraded count %q: %w", value, err)
+	}
+
+	return degraded, nil
+}
+
 func readMDAttribute(device, attr string) (string, error) {
 	if device == "" {
 		return "", fmt.Errorf("%w: device must be set", ErrInvalidArgument)

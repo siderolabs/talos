@@ -318,6 +318,7 @@ description: Talos gRPC API reference.
     - [MachineService](#machine.MachineService)
   
 - [machine/md.proto](#machine/md.proto)
+    - [MDAddRequest](#machine.MDAddRequest)
     - [MDDestroyRequest](#machine.MDDestroyRequest)
   
     - [MDService](#machine.MDService)
@@ -5601,6 +5602,22 @@ The machine service definition.
 
 
 
+<a name="machine.MDAddRequest"></a>
+
+### MDAddRequest
+MDAddRequest identifies the array to restore and the disk to add to it.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device is the full array device path (e.g. "/dev/disk/by-id/md-name-talos:boot"). |
+| member | [string](#string) |  | Member is the full path of the disk to add (e.g. "/dev/nvme1n1" or a /dev/disk/by-path link). |
+
+
+
+
+
+
 <a name="machine.MDDestroyRequest"></a>
 
 ### MDDestroyRequest
@@ -5628,10 +5645,12 @@ MDDestroyRequest identifies the array device to tear down.
 MDService maintains MD (Multiple Device, software RAID) arrays.
 
   - Destroy: stop the array and clear member superblocks.
+  - Add: add a blank disk to a degraded array to restore its redundancy.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Destroy | [MDDestroyRequest](#machine.MDDestroyRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Destroy stops the array and clears the superblock on every member.<br><br>The array must not be in use (e.g. mounted or claimed by another device) at the time of the call. |
+| Add | [MDAddRequest](#machine.MDAddRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Add adds a disk to a degraded raid1 array, which then rebuilds onto it.<br><br>Arrays managed by a RAIDArrayConfig are refused: their volume selector decides which disks are added to them.<br><br>Add only restores the redundancy the array already declares: the array must be degraded, with no sync action (resync, recovery, check, repair) in progress, so the disk never becomes a spare and the number of RAID devices never grows.<br><br>The disk must be a whole disk which is blank (no partition table or filesystem signature), not the system disk, not in use, at least as large as the active members and with the same logical sector size. |
 
  <!-- end services -->
 

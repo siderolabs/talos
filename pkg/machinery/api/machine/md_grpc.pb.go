@@ -22,6 +22,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	MDService_Destroy_FullMethodName = "/machine.MDService/Destroy"
+	MDService_Add_FullMethodName     = "/machine.MDService/Add"
 )
 
 // MDServiceClient is the client API for MDService service.
@@ -31,12 +32,27 @@ const (
 // MDService maintains MD (Multiple Device, software RAID) arrays.
 //
 //   - Destroy: stop the array and clear member superblocks.
+//   - Add: add a blank disk to a degraded array to restore its redundancy.
 type MDServiceClient interface {
 	// Destroy stops the array and clears the superblock on every member.
 	//
 	// The array must not be in use (e.g. mounted or claimed by another
 	// device) at the time of the call.
 	Destroy(ctx context.Context, in *MDDestroyRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Add adds a disk to a degraded raid1 array, which then rebuilds onto it.
+	//
+	// Arrays managed by a RAIDArrayConfig are refused: their volume selector
+	// decides which disks are added to them.
+	//
+	// Add only restores the redundancy the array already declares: the array
+	// must be degraded, with no sync action (resync, recovery, check, repair) in
+	// progress, so the disk never becomes a spare and the number of RAID devices
+	// never grows.
+	//
+	// The disk must be a whole disk which is blank (no partition table or
+	// filesystem signature), not the system disk, not in use, at least as large
+	// as the active members and with the same logical sector size.
+	Add(ctx context.Context, in *MDAddRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type mDServiceClient struct {
@@ -57,6 +73,16 @@ func (c *mDServiceClient) Destroy(ctx context.Context, in *MDDestroyRequest, opt
 	return out, nil
 }
 
+func (c *mDServiceClient) Add(ctx context.Context, in *MDAddRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, MDService_Add_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MDServiceServer is the server API for MDService service.
 // All implementations must embed UnimplementedMDServiceServer
 // for forward compatibility.
@@ -64,12 +90,27 @@ func (c *mDServiceClient) Destroy(ctx context.Context, in *MDDestroyRequest, opt
 // MDService maintains MD (Multiple Device, software RAID) arrays.
 //
 //   - Destroy: stop the array and clear member superblocks.
+//   - Add: add a blank disk to a degraded array to restore its redundancy.
 type MDServiceServer interface {
 	// Destroy stops the array and clears the superblock on every member.
 	//
 	// The array must not be in use (e.g. mounted or claimed by another
 	// device) at the time of the call.
 	Destroy(context.Context, *MDDestroyRequest) (*emptypb.Empty, error)
+	// Add adds a disk to a degraded raid1 array, which then rebuilds onto it.
+	//
+	// Arrays managed by a RAIDArrayConfig are refused: their volume selector
+	// decides which disks are added to them.
+	//
+	// Add only restores the redundancy the array already declares: the array
+	// must be degraded, with no sync action (resync, recovery, check, repair) in
+	// progress, so the disk never becomes a spare and the number of RAID devices
+	// never grows.
+	//
+	// The disk must be a whole disk which is blank (no partition table or
+	// filesystem signature), not the system disk, not in use, at least as large
+	// as the active members and with the same logical sector size.
+	Add(context.Context, *MDAddRequest) (*emptypb.Empty, error)
 	mustEmbedUnimplementedMDServiceServer()
 }
 
@@ -82,6 +123,9 @@ type UnimplementedMDServiceServer struct{}
 
 func (UnimplementedMDServiceServer) Destroy(context.Context, *MDDestroyRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Destroy not implemented")
+}
+func (UnimplementedMDServiceServer) Add(context.Context, *MDAddRequest) (*emptypb.Empty, error) {
+	return nil, status.Error(codes.Unimplemented, "method Add not implemented")
 }
 func (UnimplementedMDServiceServer) mustEmbedUnimplementedMDServiceServer() {}
 func (UnimplementedMDServiceServer) testEmbeddedByValue()                   {}
@@ -122,6 +166,24 @@ func _MDService_Destroy_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _MDService_Add_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MDAddRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MDServiceServer).Add(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MDService_Add_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MDServiceServer).Add(ctx, req.(*MDAddRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MDService_ServiceDesc is the grpc.ServiceDesc for MDService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -132,6 +194,10 @@ var MDService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Destroy",
 			Handler:    _MDService_Destroy_Handler,
+		},
+		{
+			MethodName: "Add",
+			Handler:    _MDService_Add_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -400,6 +400,20 @@ Users can override it by adding `lockdown=confidentiality` to the kernel command
 A new `talosctl diskfree` command (aliased to `df`) reports storage and inode usage for mounted volumes.
 """
 
+    [notes.md_add]
+        title = "Restoring Degraded MD Arrays"
+        description = """\
+A new `talosctl md add` command (`MDService.Add` API) adds a replacement disk to a degraded raid1 MD array which is not managed by a
+`RAIDArrayConfig` (e.g. created outside Talos), and the array rebuilds onto it:
+
+```sh
+talosctl md add /dev/disk/by-id/md-name-talos:boot /dev/disk/by-path/pci-0000:02:00.0-nvme-1
+```
+
+It only restores the redundancy the array already declares (it never adds a spare or grows the array), and only accepts a blank, unused
+whole disk which is at least as large as the array members and has the same logical sector size.
+"""
+
     [notes.containers_namespace]
         title = "Unified --namespace Flag"
         description = """\

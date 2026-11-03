@@ -72,6 +72,7 @@ func TestSysfsHelpers(t *testing.T) {
 	require.NoError(t, os.MkdirAll(filepath.Join(sysBlockDir, "md0", "md", "dev-sda"), 0o755))
 	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md0", "md", "array_state"), []byte("inactive\n"), 0o644))
 	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md0", "md", "sync_action"), []byte("resync\n"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(sysBlockDir, "md0", "md", "degraded"), []byte("1\n"), 0o644))
 
 	dev, err := FindDeviceByMember("/dev/sda")
 	require.NoError(t, err)
@@ -92,6 +93,13 @@ func TestSysfsHelpers(t *testing.T) {
 	syncing, err := IsSyncing("/dev/md0")
 	require.NoError(t, err)
 	assert.True(t, syncing)
+
+	degraded, err := DegradedForDevice("/dev/md0")
+	require.NoError(t, err)
+	assert.Equal(t, 1, degraded)
+
+	_, err = DegradedForDevice("/dev/md1")
+	assert.ErrorIs(t, err, ErrNotFound)
 }
 
 func TestInSyncMembers(t *testing.T) {

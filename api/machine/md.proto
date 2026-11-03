@@ -10,16 +10,39 @@ option java_package = "dev.talos.api.machine";
 // MDService maintains MD (Multiple Device, software RAID) arrays.
 //
 //   - Destroy: stop the array and clear member superblocks.
+//   - Add: add a blank disk to a degraded array to restore its redundancy.
 service MDService {
   // Destroy stops the array and clears the superblock on every member.
   //
   // The array must not be in use (e.g. mounted or claimed by another
   // device) at the time of the call.
   rpc Destroy(MDDestroyRequest) returns (google.protobuf.Empty);
+  // Add adds a disk to a degraded raid1 array, which then rebuilds onto it.
+  //
+  // Arrays managed by a RAIDArrayConfig are refused: their volume selector
+  // decides which disks are added to them.
+  //
+  // Add only restores the redundancy the array already declares: the array
+  // must be degraded, with no sync action (resync, recovery, check, repair) in
+  // progress, so the disk never becomes a spare and the number of RAID devices
+  // never grows.
+  //
+  // The disk must be a whole disk which is blank (no partition table or
+  // filesystem signature), not the system disk, not in use, at least as large
+  // as the active members and with the same logical sector size.
+  rpc Add(MDAddRequest) returns (google.protobuf.Empty);
 }
 
 // MDDestroyRequest identifies the array device to tear down.
 message MDDestroyRequest {
   // Device is the full array device path to destroy (e.g. "/dev/disk/by-id/md-name-data").
   string device = 1;
+}
+
+// MDAddRequest identifies the array to restore and the disk to add to it.
+message MDAddRequest {
+  // Device is the full array device path (e.g. "/dev/disk/by-id/md-name-talos:boot").
+  string device = 1;
+  // Member is the full path of the disk to add (e.g. "/dev/nvme1n1" or a /dev/disk/by-path link).
+  string member = 2;
 }

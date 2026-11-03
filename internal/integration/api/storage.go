@@ -22,6 +22,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -1475,6 +1476,102 @@ echo b > /proc/sysrq-trigger
 	suite.Require().Eventually(func() bool {
 		return suite.mdArrayStatusMatches(nodeCtx, raidName, status.TypedSpec().Device, members)
 	}, raidAssertTimeout, raidAssertInterval, "boot array %q was not rebuilt", raidName)
+}
+
+// TestRAIDArrayAdd_RAID1 restores a degraded raid1 array with MDService.Add.
+//
+// The array's RAIDArrayConfig is removed first, so the reconciler does not re-add the member
+// itself: this is the state of an array provisioned outside Talos. A member is then failed and
+// removed through md's sysfs interface. Add refuses the removed member while it still carries md
+// metadata, and accepts it once wiped, after which the array rebuilds onto it.
+func (suite *StorageSuite) TestRAIDArrayAdd_RAID1() {
+	const (
+		raidName = "mdadd"
+		busybox  = "/nix/var/nix/profiles/default/bin/busybox"
+	)
+
+	nodeCtx, device, userDisks, teardown := suite.provisionRAID1Mirror(raidName, 2)
+	defer teardown()
+
+	outgoing, _ := metadata.FromOutgoingContext(nodeCtx)
+	suite.Require().Len(outgoing.Get("node"), 1)
+
+	node := outgoing.Get("node")[0]
+
+	devName, ok := suite.raidArrayDevName(nodeCtx, raidName)
+	suite.Require().True(ok, "MD array %q device name not found", raidName)
+
+	victim := userDisks[1]
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.RAIDArrayConfigKind, raidName)
+
+	// once the array's status is gone, the reconciler no longer manages it and won't re-add the
+	// member removed below
+	suite.Require().Eventually(func() bool {
+		_, err := safe.StateGetByID[*storageres.MDArrayStatus](nodeCtx, suite.Client.State(), raidName)
+
+		return state.IsNotFoundError(err)
+	}, raidAssertTimeout, raidAssertInterval, "MD array %q is still managed after its config was removed", raidName)
+
+	suite.T().Logf("failing and removing %s from %s (%s) on %s", victim, devName, device, node)
+
+	out, exitCode := suite.RunDebugContainer(suite.ctx, node, busybox, "sh", "-c", `
+set -e
+echo faulty > "/sys/block/$1/md/dev-$2/state"
+echo remove > "/sys/block/$1/md/dev-$2/state"
+`, "degrade-array", devName, filepath.Base(victim))
+	suite.Require().Zero(exitCode, "failed to degrade the array: %s", out)
+
+	suite.Require().Equal("1", suite.ReadFile(nodeCtx, "/sys/block/"+devName+"/md/degraded"))
+
+	// the removed member still carries the md superblock, so it is refused as not blank; retry while
+	// the block resources still list it as a member of the array, which is refused too
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		_, err := suite.Client.MDService().Add(nodeCtx, &machineapi.MDAddRequest{Device: device, Member: victim})
+		assert.Equal(collect, codes.FailedPrecondition, grpcstatus.Code(err), "unexpected error: %v", err)
+		assert.ErrorContains(collect, err, "is not blank (linux_raid_member signature found)")
+	}, time.Minute, 5*time.Second, "Add should refuse a disk which still carries md metadata")
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		assert.NoError(collect, suite.Client.BlockDeviceWipe(nodeCtx, &storageapi.BlockDeviceWipeRequest{
+			Devices: []*storageapi.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(victim),
+					Method: storageapi.BlockDeviceWipeDescriptor_FAST,
+				},
+			},
+		}))
+	}, time.Minute, 5*time.Second, "failed to wipe %s", victim)
+
+	// wait for the wiped disk to be probed again as blank; AlreadyExists means a previous attempt
+	// went through even though its response was lost
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		_, err := suite.Client.MDService().Add(nodeCtx, &machineapi.MDAddRequest{Device: device, Member: victim})
+		if grpcstatus.Code(err) == codes.AlreadyExists {
+			return
+		}
+
+		assert.NoError(collect, err)
+	}, time.Minute, 5*time.Second, "Add should accept the wiped disk")
+
+	suite.Require().Eventually(func() bool {
+		degraded := suite.ReadFile(nodeCtx, "/sys/block/"+devName+"/md/degraded")
+		syncAction := suite.ReadFile(nodeCtx, "/sys/block/"+devName+"/md/sync_action")
+
+		suite.T().Logf("%s: degraded=%s sync_action=%s", devName, degraded, syncAction)
+
+		return degraded == "0" && syncAction == "idle"
+	}, raidAssertTimeout, raidAssertInterval, "array %s was not rebuilt onto %s", devName, victim)
+
+	_, err := suite.Client.MDService().Add(nodeCtx, &machineapi.MDAddRequest{Device: device, Member: victim})
+	suite.Require().Equal(codes.AlreadyExists, grpcstatus.Code(err), "unexpected error: %v", err)
+
+	// the array is whole again: another disk is refused rather than becoming a spare
+	if len(userDisks) > 2 {
+		_, err = suite.Client.MDService().Add(nodeCtx, &machineapi.MDAddRequest{Device: device, Member: userDisks[2]})
+		suite.Require().Equal(codes.FailedPrecondition, grpcstatus.Code(err), "unexpected error: %v", err)
+		suite.Require().ErrorContains(err, "array is not degraded")
+	}
 }
 
 // TestRAIDArrayUserVolumeDisk provisions a disk-backed (whole-device) UserVolume

@@ -69,15 +69,74 @@ func (x *MDDestroyRequest) GetDevice() string {
 	return ""
 }
 
+// MDAddRequest identifies the array to restore and the disk to add to it.
+type MDAddRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Device is the full array device path (e.g. "/dev/disk/by-id/md-name-talos:boot").
+	Device string `protobuf:"bytes,1,opt,name=device,proto3" json:"device,omitempty"`
+	// Member is the full path of the disk to add (e.g. "/dev/nvme1n1" or a /dev/disk/by-path link).
+	Member        string `protobuf:"bytes,2,opt,name=member,proto3" json:"member,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MDAddRequest) Reset() {
+	*x = MDAddRequest{}
+	mi := &file_machine_md_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MDAddRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MDAddRequest) ProtoMessage() {}
+
+func (x *MDAddRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_md_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MDAddRequest.ProtoReflect.Descriptor instead.
+func (*MDAddRequest) Descriptor() ([]byte, []int) {
+	return file_machine_md_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *MDAddRequest) GetDevice() string {
+	if x != nil {
+		return x.Device
+	}
+	return ""
+}
+
+func (x *MDAddRequest) GetMember() string {
+	if x != nil {
+		return x.Member
+	}
+	return ""
+}
+
 var File_machine_md_proto protoreflect.FileDescriptor
 
 const file_machine_md_proto_rawDesc = "" +
 	"\n" +
 	"\x10machine/md.proto\x12\amachine\x1a\x1bgoogle/protobuf/empty.proto\"*\n" +
 	"\x10MDDestroyRequest\x12\x16\n" +
-	"\x06device\x18\x01 \x01(\tR\x06device2I\n" +
+	"\x06device\x18\x01 \x01(\tR\x06device\">\n" +
+	"\fMDAddRequest\x12\x16\n" +
+	"\x06device\x18\x01 \x01(\tR\x06device\x12\x16\n" +
+	"\x06member\x18\x02 \x01(\tR\x06member2\x7f\n" +
 	"\tMDService\x12<\n" +
-	"\aDestroy\x12\x19.machine.MDDestroyRequest\x1a\x16.google.protobuf.EmptyBN\n" +
+	"\aDestroy\x12\x19.machine.MDDestroyRequest\x1a\x16.google.protobuf.Empty\x124\n" +
+	"\x03Add\x12\x15.machine.MDAddRequest\x1a\x16.google.protobuf.EmptyBN\n" +
 	"\x15dev.talos.api.machineZ5github.com/siderolabs/talos/pkg/machinery/api/machineb\x06proto3"
 
 var (
@@ -92,16 +151,19 @@ func file_machine_md_proto_rawDescGZIP() []byte {
 	return file_machine_md_proto_rawDescData
 }
 
-var file_machine_md_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_machine_md_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_machine_md_proto_goTypes = []any{
 	(*MDDestroyRequest)(nil), // 0: machine.MDDestroyRequest
-	(*emptypb.Empty)(nil),    // 1: google.protobuf.Empty
+	(*MDAddRequest)(nil),     // 1: machine.MDAddRequest
+	(*emptypb.Empty)(nil),    // 2: google.protobuf.Empty
 }
 var file_machine_md_proto_depIdxs = []int32{
 	0, // 0: machine.MDService.Destroy:input_type -> machine.MDDestroyRequest
-	1, // 1: machine.MDService.Destroy:output_type -> google.protobuf.Empty
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: machine.MDService.Add:input_type -> machine.MDAddRequest
+	2, // 2: machine.MDService.Destroy:output_type -> google.protobuf.Empty
+	2, // 3: machine.MDService.Add:output_type -> google.protobuf.Empty
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -118,7 +180,7 @@ func file_machine_md_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_md_proto_rawDesc), len(file_machine_md_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

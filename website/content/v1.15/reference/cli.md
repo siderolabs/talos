@@ -3023,6 +3023,81 @@ Machine config related commands
 * [talosctl machineconfig gen](#talosctl-machineconfig-gen)	 - Generates a set of configuration files for Talos cluster
 * [talosctl machineconfig patch](#talosctl-machineconfig-patch)	 - Patch a machine config
 
+## talosctl md add
+
+Add a disk to a degraded MD (software RAID) array
+
+### Synopsis
+
+Add a disk to a degraded raid1 MD (software RAID) array, which then rebuilds onto it.
+
+Use this after replacing a failed member: it restores the redundancy the array
+already declares, it never adds a spare or grows the number of RAID devices.
+The array must be degraded, with no sync action in progress. Arrays managed by
+a RAIDArrayConfig are refused: update its volume selector instead.
+
+The disk must be a whole disk which is blank (no partition table or filesystem
+signature, see "talosctl wipe disk"), not the system disk, not in use, at least
+as large as the array members and with the same logical sector size.
+
+Both arguments are full /dev paths, e.g.
+/dev/disk/by-id/md-name-talos:boot and /dev/nvme1n1 (or a /dev/disk/by-path link).
+As disk paths are specific to a machine, exactly one node must be targeted.
+
+```
+talosctl md add <array device> <disk> [flags]
+```
+
+### Examples
+
+```
+  talosctl md add /dev/disk/by-id/md-name-talos:boot /dev/disk/by-path/pci-0000:02:00.0-nvme-1
+```
+
+### Options
+
+```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for add
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl md](#talosctl-md)	 - Manage MD (software RAID) arrays
+
+## talosctl md
+
+Manage MD (software RAID) arrays
+
+### Options
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -h, --help                       help for md
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl md add](#talosctl-md-add)	 - Add a disk to a degraded MD (software RAID) array
+
 ## talosctl memory
 
 Show memory usage
@@ -4124,6 +4199,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing
 * [talosctl logs](#talosctl-logs)	 - Retrieve service, container, or VM serial logs
 * [talosctl machineconfig](#talosctl-machineconfig)	 - Machine config related commands
+* [talosctl md](#talosctl-md)	 - Manage MD (software RAID) arrays
 * [talosctl memory](#talosctl-memory)	 - Show memory usage
 * [talosctl meta](#talosctl-meta)	 - Write and delete keys in the META partition
 * [talosctl mounts](#talosctl-mounts)	 - List mounts
