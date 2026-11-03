@@ -34,6 +34,12 @@ type ContainerSecurity struct {
 	SecurityProfile config.ContainerSecurityProfile `yaml:"profile,omitempty"`
 	//   description: |
 	//     Linux capabilities to add or drop on top of the profile.
+	//
+	//     When the container runs as a non-root user (through `runAs` or the image's `USER`), the
+	//     resulting capabilities (the profile's, minus `drop`, plus `add`) are also raised into the
+	//     ambient set, so that they remain effective after the entrypoint is executed. Ambient
+	//     capabilities are inherited by every program the container runs, not only its entrypoint,
+	//     so grant only what the workload needs.
 	SecurityCapabilities *ContainerCapabilities `yaml:"capabilities,omitempty"`
 	//   description: |
 	//     Publishes the container's PID so machined's API can recognize it, and bind-mounts the

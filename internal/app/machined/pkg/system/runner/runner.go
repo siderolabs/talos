@@ -101,6 +101,9 @@ type Options struct {
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// SeccompUnconfined applies no seccomp profile at all, instead of the default one.
 	SeccompUnconfined bool
+	// AmbientCapabilitiesForNonRoot raises the final permitted capabilities of a non-root process
+	// into its inheritable and ambient sets.
+	AmbientCapabilitiesForNonRoot bool
 	// DroppedCapabilities is the list of capabilities to drop.
 	DroppedCapabilities []string
 	// SelinuxLabel is the SELinux label to be assigned
@@ -273,6 +276,17 @@ func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 func WithSeccompUnconfined(enabled bool) Option {
 	return func(args *Options) {
 		args.SeccompUnconfined = enabled
+	}
+}
+
+// WithAmbientCapabilitiesForNonRoot controls whether a non-root process keeps its permitted
+// capabilities across execve, by raising them into the inheritable and ambient sets.
+//
+// Off by default. It is applied after every OCI spec option given through WithOCISpecOpts, so it
+// sees the final process user and the final capability sets.
+func WithAmbientCapabilitiesForNonRoot(enabled bool) Option {
+	return func(args *Options) {
+		args.AmbientCapabilitiesForNonRoot = enabled
 	}
 }
 

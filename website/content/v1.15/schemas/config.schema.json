@@ -1784,9 +1784,9 @@
         "capabilities": {
           "$ref": "#/$defs/container.ContainerCapabilities",
           "title": "capabilities",
-          "description": "Linux capabilities to add or drop on top of the profile.\n",
-          "markdownDescription": "Linux capabilities to add or drop on top of the profile.",
-          "x-intellij-html-description": "\u003cp\u003eLinux capabilities to add or drop on top of the profile.\u003c/p\u003e\n"
+          "description": "Linux capabilities to add or drop on top of the profile.\n\nWhen the container runs as a non-root user (through runAs or the image’s USER), the\nresulting capabilities (the profile’s, minus drop, plus add) are also raised into the\nambient set, so that they remain effective after the entrypoint is executed. Ambient\ncapabilities are inherited by every program the container runs, not only its entrypoint,\nso grant only what the workload needs.\n",
+          "markdownDescription": "Linux capabilities to add or drop on top of the profile.\n\nWhen the container runs as a non-root user (through `runAs` or the image's `USER`), the\nresulting capabilities (the profile's, minus `drop`, plus `add`) are also raised into the\nambient set, so that they remain effective after the entrypoint is executed. Ambient\ncapabilities are inherited by every program the container runs, not only its entrypoint,\nso grant only what the workload needs.",
+          "x-intellij-html-description": "\u003cp\u003eLinux capabilities to add or drop on top of the profile.\u003c/p\u003e\n\n\u003cp\u003eWhen the container runs as a non-root user (through \u003ccode\u003erunAs\u003c/code\u003e or the image\u0026rsquo;s \u003ccode\u003eUSER\u003c/code\u003e), the\nresulting capabilities (the profile\u0026rsquo;s, minus \u003ccode\u003edrop\u003c/code\u003e, plus \u003ccode\u003eadd\u003c/code\u003e) are also raised into the\nambient set, so that they remain effective after the entrypoint is executed. Ambient\ncapabilities are inherited by every program the container runs, not only its entrypoint,\nso grant only what the workload needs.\u003c/p\u003e\n"
         },
         "machinedAccess": {
           "type": "boolean",

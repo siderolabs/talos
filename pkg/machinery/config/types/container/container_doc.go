@@ -773,7 +773,7 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Name:        "capabilities",
 				Type:        "ContainerCapabilities",
 				Note:        "",
-				Description: "Linux capabilities to add or drop on top of the profile.",
+				Description: "Linux capabilities to add or drop on top of the profile.\n\nWhen the container runs as a non-root user (through `runAs` or the image's `USER`), the\nresulting capabilities (the profile's, minus `drop`, plus `add`) are also raised into the\nambient set, so that they remain effective after the entrypoint is executed. Ambient\ncapabilities are inherited by every program the container runs, not only its entrypoint,\nso grant only what the workload needs.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Linux capabilities to add or drop on top of the profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

@@ -151,6 +151,9 @@ func (r *containerdRunner) Run(
 		runner.WithHostNetworkFiles(spec.Network.HostNetwork),
 		runner.WithSelinuxLabel(selinuxLabel),
 		runner.WithSeccompUnconfined(spec.Security.SeccompUnconfined),
+		// A non-root container (runAs or the image USER) would otherwise lose every capability it
+		// was granted on execve.
+		runner.WithAmbientCapabilitiesForNonRoot(true),
 		runner.WithOCISpecOpts(r.ociSpecOpts(spec, image)...),
 	)
 

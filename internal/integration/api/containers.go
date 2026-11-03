@@ -640,6 +640,91 @@ func (suite *ContainersSuite) TestCapabilities() {
 		suite.Assert().Contains(logs, "CapEff:\t0000000000000000",
 			"the restricted profile left capabilities in the effective set")
 	})
+
+	// A non-root process loses every capability that is not ambient on execve, so this is the case
+	// that tells an added capability that is merely bounded apart from one that is actually usable.
+	suite.Run("non-root-added-capability-effective", func() {
+		ctx, name, _ := suite.setupContainer("caps-non-root-add")
+
+		var (
+			uid int32 = 65534
+			gid int32 = 65534
+		)
+
+		doc := suite.shellContainer(name, readCapSets)
+		doc.RunAsConfig = &containercfg.ContainerRunAs{
+			RunAsUID: &uid,
+			RunAsGID: &gid,
+		}
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityCapabilities: &containercfg.ContainerCapabilities{
+				CapabilitiesDropConfig: []string{"ALL"},
+				CapabilitiesAddConfig:  []string{"NET_BIND_SERVICE"},
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "CapAmb:")
+
+		// CAP_NET_BIND_SERVICE is bit 10. Every set is checked, so that a capability leaking into
+		// bounding or permitted alongside it is caught too, not only a missing one.
+		for _, set := range capSets {
+			suite.Assert().Equal("0000000000000400", suite.capSet(logs, set),
+				"%s is not exactly the added capability for a non-root process", set)
+		}
+	})
+
+	// The privileged profile has no add list at all, so this is what tells a non-root fix tied to
+	// add apart from one covering every capability the container ends up with.
+	suite.Run("non-root-privileged-effective", func() {
+		ctx, name, _ := suite.setupContainer("caps-non-root-privileged")
+
+		var (
+			uid int32 = 65534
+			gid int32 = 65534
+		)
+
+		doc := suite.shellContainer(name, readCapSets)
+		doc.RunAsConfig = &containercfg.ContainerRunAs{
+			RunAsUID: &uid,
+			RunAsGID: &gid,
+		}
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityProfile: configcontainer.ContainerSecurityProfilePrivileged,
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "CapAmb:")
+
+		// The grantable set depends on the kernel, so compare the sets against one another rather
+		// than against a fixed mask.
+		bounding := suite.capSet(logs, "CapBnd")
+
+		suite.Assert().NotEqual("0000000000000000", bounding, "privileged container has an empty bounding set")
+
+		for _, set := range []string{"CapInh", "CapPrm", "CapEff", "CapAmb"} {
+			suite.Assert().Equal(bounding, suite.capSet(logs, set),
+				"%s differs from the bounding set for a non-root privileged process", set)
+		}
+	})
+}
+
+// readCapSets prints every capability set of the container process.
+const readCapSets = "grep -E '^Cap(Inh|Prm|Eff|Bnd|Amb):' /proc/self/status"
+
+// capSets lists the capability sets readCapSets prints.
+var capSets = []string{"CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb"}
+
+// capSet extracts the hex mask of the named capability set from the container logs.
+func (suite *ContainersSuite) capSet(logs, set string) string {
+	_, rest, found := strings.Cut(logs, set+":\t")
+	suite.Require().True(found, "no %s line in the container logs:\n%s", set, logs)
+
+	mask, _, _ := strings.Cut(rest, "\n")
+
+	return strings.TrimSpace(mask)
 }
 
 // TestSeccompProfile verifies that every container is filtered by the default seccomp profile, the

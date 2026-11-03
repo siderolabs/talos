@@ -5,6 +5,7 @@
 package containerd_test
 
 import (
+	"context"
 	"testing"
 
 	ctrdcontainers "github.com/containerd/containerd/v2/core/containers"
@@ -14,9 +15,125 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	containersadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
+	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
+
+func TestOCISpecOptsAmbientCapabilities(t *testing.T) {
+	t.Parallel()
+
+	grantable := []string{"CAP_NET_BIND_SERVICE", "CAP_CHOWN", "CAP_SETFCAP"}
+
+	withUID := func(uid uint32) oci.SpecOpts {
+		return func(_ context.Context, _ oci.Client, _ *ctrdcontainers.Container, s *specs.Spec) error {
+			s.Process.User.UID = uid
+
+			return nil
+		}
+	}
+
+	for _, test := range []struct {
+		name     string
+		uid      uint32
+		security containers.ContainerSecuritySpec
+		// userLast sets the user after the capability options, the way an option appended later
+		// to the caller's chain would.
+		userLast      bool
+		disabled      bool
+		expectAmbient []string
+	}{
+		{
+			name: "non-root with a single added capability",
+			uid:  65534,
+			security: containers.ContainerSecuritySpec{
+				CapabilitiesDrop: []string{"ALL"},
+				CapabilitiesAdd:  []string{"NET_BIND_SERVICE"},
+			},
+			expectAmbient: []string{"CAP_NET_BIND_SERVICE"},
+		},
+		{
+			name: "non-root user set after the capability options",
+			uid:  65534,
+			security: containers.ContainerSecuritySpec{
+				CapabilitiesDrop: []string{"ALL"},
+				CapabilitiesAdd:  []string{"NET_BIND_SERVICE"},
+			},
+			userLast:      true,
+			expectAmbient: []string{"CAP_NET_BIND_SERVICE"},
+		},
+		{
+			name:          "non-root privileged",
+			uid:           1000,
+			security:      containers.ContainerSecuritySpec{Privileged: true},
+			expectAmbient: grantable,
+		},
+		{
+			name: "non-root privileged with a partial drop",
+			uid:  1000,
+			security: containers.ContainerSecuritySpec{
+				Privileged:       true,
+				CapabilitiesDrop: []string{"CHOWN"},
+			},
+			expectAmbient: []string{"CAP_NET_BIND_SERVICE", "CAP_SETFCAP"},
+		},
+		{
+			name:          "non-root restricted",
+			uid:           1000,
+			security:      containers.ContainerSecuritySpec{},
+			expectAmbient: []string{},
+		},
+		{
+			name:     "root privileged",
+			uid:      0,
+			security: containers.ContainerSecuritySpec{Privileged: true},
+		},
+		{
+			name: "non-root with the option off",
+			uid:  65534,
+			security: containers.ContainerSecuritySpec{
+				CapabilitiesDrop: []string{"ALL"},
+				CapabilitiesAdd:  []string{"NET_BIND_SERVICE"},
+			},
+			disabled: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			callerOpts := containersadapter.ContainerSecuritySpec(&test.security).OCISpecOpts(grantable)
+
+			if test.userLast {
+				callerOpts = append(callerOpts, withUID(test.uid))
+			} else {
+				callerOpts = append([]oci.SpecOpts{withUID(test.uid)}, callerOpts...)
+			}
+
+			opts := containerdrunner.OCISpecOpts(
+				&runner.Args{ID: "test", ProcessArgs: []string{"/bin/true"}},
+				runner.WithOCISpecOpts(callerOpts...),
+				runner.WithAmbientCapabilitiesForNonRoot(!test.disabled),
+			)
+
+			spec, err := oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "test"), nil, &ctrdcontainers.Container{ID: "test"}, opts...)
+			require.NoError(t, err)
+
+			capabilities := spec.Process.Capabilities
+			require.NotNil(t, capabilities)
+
+			if test.expectAmbient == nil {
+				assert.Empty(t, capabilities.Ambient)
+
+				return
+			}
+
+			assert.ElementsMatch(t, test.expectAmbient, capabilities.Ambient)
+			assert.ElementsMatch(t, capabilities.Permitted, capabilities.Ambient, "ambient differs from permitted")
+			assert.ElementsMatch(t, capabilities.Permitted, capabilities.Inheritable, "inheritable differs from permitted")
+		})
+	}
+}
 
 func TestOCISpecOptsSeccomp(t *testing.T) {
 	t.Parallel()

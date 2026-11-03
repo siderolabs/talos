@@ -449,6 +449,13 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		c.opts.OCISpecOpts...,
 	)
 
+	// Applied after every caller option, so that it sees the final process user and capability
+	// sets. Ahead of seccomp is fine: the default profile only looks at the bounding and effective
+	// sets, which this leaves alone.
+	if c.opts.AmbientCapabilitiesForNonRoot {
+		specOpts = append(specOpts, WithAmbientFromPermittedForNonRoot)
+	}
+
 	switch {
 	case c.opts.SeccompUnconfined:
 		specOpts = append(
