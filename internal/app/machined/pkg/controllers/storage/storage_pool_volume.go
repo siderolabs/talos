@@ -61,7 +61,7 @@ type StoragePoolVolumeController struct {
 	V1Alpha1Mode machineruntime.Mode
 
 	// Open is injectable for deterministic reconciliation tests.
-	Open func(context.Context) (libvirtstorage.Client, error)
+	Open func(context.Context) (libvirtstorage.Session, error)
 }
 
 // Name implements controller.Controller interface.
@@ -113,7 +113,7 @@ func (ctrl *StoragePoolVolumeController) Run(ctx context.Context, r controller.R
 	}
 
 	if ctrl.Open == nil {
-		ctrl.Open = func(ctx context.Context) (libvirtstorage.Client, error) {
+		ctrl.Open = func(ctx context.Context) (libvirtstorage.Session, error) {
 			return libvirt.New().StorageVolumes(ctx)
 		}
 	}
@@ -157,7 +157,7 @@ func (ctrl *StoragePoolVolumeController) reconcile(
 	held := maps.Clone(poolsInUse)
 
 	var (
-		session libvirtstorage.Client
+		session libvirtstorage.Session
 		errs    []error
 	)
 
@@ -169,7 +169,7 @@ func (ctrl *StoragePoolVolumeController) reconcile(
 
 	// Opened lazily, and at most once: a host with no volumes to reconcile must not dial the daemon
 	// at all, or every pass turns a daemon outage into a restart loop for nothing.
-	openSession := func() (libvirtstorage.Client, error) {
+	openSession := func() (libvirtstorage.Session, error) {
 		if session != nil {
 			return session, nil
 		}
@@ -231,7 +231,7 @@ func (ctrl *StoragePoolVolumeController) reconcileSpecs(
 	specs safe.List[*storage.StoragePoolVolumeSpec],
 	poolStatuses map[string]*storage.StoragePoolStatus,
 	held map[string]struct{},
-	openSession func() (libvirtstorage.Client, error),
+	openSession func() (libvirtstorage.Session, error),
 ) (map[resource.ID]struct{}, []error, error) {
 	wanted := map[resource.ID]struct{}{}
 
@@ -265,7 +265,7 @@ func (ctrl *StoragePoolVolumeController) reconcileSpecs(
 func (ctrl *StoragePoolVolumeController) reconcileVolumeSpec(
 	ctx context.Context, r controller.ReaderWriter, logger *zap.Logger,
 	spec *storage.StoragePoolVolumeSpec, poolStatuses map[string]*storage.StoragePoolStatus,
-	held map[string]struct{}, openSession func() (libvirtstorage.Client, error),
+	held map[string]struct{}, openSession func() (libvirtstorage.Session, error),
 ) (bool, []error, error) {
 	id := spec.Metadata().ID()
 
@@ -525,7 +525,7 @@ func (ctrl *StoragePoolVolumeController) resolve(
 	spec *storage.StoragePoolVolumeSpecSpec,
 	poolStatuses map[string]*storage.StoragePoolStatus,
 	held map[string]struct{},
-	openSession func() (libvirtstorage.Client, error),
+	openSession func() (libvirtstorage.Session, error),
 	mutation *volumeMutation,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
 	pool, err := ctrl.resolvePool(ctx, r, logger, spec.Pool, poolStatuses, held)
@@ -567,7 +567,7 @@ func (ctrl *StoragePoolVolumeController) resolve(
 }
 
 func (ctrl *StoragePoolVolumeController) resolveVolume(
-	ctx context.Context, r controller.ReaderWriter, session libvirtstorage.Client, logger *zap.Logger,
+	ctx context.Context, r controller.ReaderWriter, session libvirtstorage.Session, logger *zap.Logger,
 	pool libvirtstorage.Pool, poolStatus *storage.StoragePoolStatus, spec *storage.StoragePoolVolumeSpecSpec,
 	mutation *volumeMutation,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
@@ -675,7 +675,7 @@ func recheckHeldPool(ctx context.Context, r controller.Reader, name string, pool
 func (ctrl *StoragePoolVolumeController) adopt(
 	ctx context.Context,
 	r controller.ReaderWriter,
-	session libvirtstorage.Client,
+	session libvirtstorage.Session,
 	logger *zap.Logger,
 	pool libvirtstorage.Pool,
 	poolStatus *storage.StoragePoolStatus,
@@ -731,7 +731,7 @@ func (ctrl *StoragePoolVolumeController) adopt(
 func (ctrl *StoragePoolVolumeController) growVolume(
 	ctx context.Context,
 	r controller.ReaderWriter,
-	session libvirtstorage.Client,
+	session libvirtstorage.Session,
 	logger *zap.Logger,
 	pool libvirtstorage.Pool,
 	poolStatus *storage.StoragePoolStatus,
@@ -788,7 +788,7 @@ func (ctrl *StoragePoolVolumeController) growVolume(
 
 // resizeVolumeWithEvidence keeps exclusion when the daemon may still be resizing.
 func resizeVolumeWithEvidence(
-	session libvirtstorage.Client, pool libvirtstorage.Pool, spec *storage.StoragePoolVolumeSpecSpec, mutation *volumeMutation,
+	session libvirtstorage.Session, pool libvirtstorage.Pool, spec *storage.StoragePoolVolumeSpecSpec, mutation *volumeMutation,
 ) error {
 	operation, ok := session.(interface {
 		ResizeVolumeOperation(libvirtstorage.Pool, string, uint64) (libvirtstorage.OperationOutcome, error)

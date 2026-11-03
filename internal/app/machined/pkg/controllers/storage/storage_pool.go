@@ -47,7 +47,7 @@ type StoragePoolController struct {
 	V1Alpha1Mode machineruntime.Mode
 
 	// Open is injectable for deterministic reconciliation tests.
-	Open func(context.Context) (libvirtstorage.Client, error)
+	Open func(context.Context) (libvirtstorage.Session, error)
 }
 
 // Name implements controller.Controller interface.
@@ -106,7 +106,7 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 	}
 
 	if ctrl.Open == nil {
-		ctrl.Open = func(ctx context.Context) (libvirtstorage.Client, error) {
+		ctrl.Open = func(ctx context.Context) (libvirtstorage.Session, error) {
 			return libvirt.New().Storage(ctx)
 		}
 	}
@@ -177,7 +177,7 @@ func (ctrl *StoragePoolController) Run(ctx context.Context, r controller.Runtime
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.Runtime, client libvirtstorage.Client,
+func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.Runtime, client libvirtstorage.Session,
 	machineUUID uuid.UUID, specs safe.List[*storage.StoragePoolSpec], mounts safe.List[*block.VolumeMountStatus],
 ) (reconcileErr error) {
 	desired := map[string]string{}

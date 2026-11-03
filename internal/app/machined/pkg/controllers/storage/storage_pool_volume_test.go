@@ -58,7 +58,7 @@ type volumeClient struct {
 	checkHold      func(pool string) error
 }
 
-func (c *volumeClient) open(context.Context) (libvirtstorage.Client, error) {
+func (c *volumeClient) open(context.Context) (libvirtstorage.Session, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -752,7 +752,7 @@ func (suite *StoragePoolVolumeSuite) TestNoSubmittedResizePublicationFailureRele
 	})
 }
 
-type volumeInvalidOutcomeClient struct{ libvirtstorage.Client }
+type volumeInvalidOutcomeClient struct{ libvirtstorage.Session }
 
 func (volumeInvalidOutcomeClient) ResizeVolumeOperation(libvirtstorage.Pool, string, uint64) (libvirtstorage.OperationOutcome, error) {
 	return libvirtstorage.Unknown, nil
@@ -765,7 +765,7 @@ func (suite *StoragePoolVolumeSuite) TestUnknownNilResizeOutcomeNeverPublishesRe
 	})
 	request := suite.spec(volumePool, "unknown-nil.raw", "raw", 128<<20)
 	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{
-		Open: func(ctx context.Context) (libvirtstorage.Client, error) {
+		Open: func(ctx context.Context) (libvirtstorage.Session, error) {
 			client, err := suite.client.open(ctx)
 			if err != nil {
 				return nil, err
@@ -783,7 +783,7 @@ func (suite *StoragePoolVolumeSuite) TestUnknownNilResizeOutcomeNeverPublishesRe
 	})
 }
 
-type volumeLegacyClient struct{ libvirtstorage.Client }
+type volumeLegacyClient struct{ libvirtstorage.Session }
 
 func (suite *StoragePoolVolumeSuite) TestUnsupportedResizeEvidenceFailsClosed() {
 	pool := suite.pool(true)
@@ -792,7 +792,7 @@ func (suite *StoragePoolVolumeSuite) TestUnsupportedResizeEvidenceFailsClosed() 
 	})
 	request := suite.spec(volumePool, "legacy.raw", "raw", 128<<20)
 	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{
-		Open: func(ctx context.Context) (libvirtstorage.Client, error) {
+		Open: func(ctx context.Context) (libvirtstorage.Session, error) {
 			client, err := suite.client.open(ctx)
 			if err != nil {
 				return nil, err

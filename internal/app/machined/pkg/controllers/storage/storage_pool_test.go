@@ -84,7 +84,7 @@ func (c *poolClient) stop(name string) error {
 	return nil
 }
 
-func (c *poolClient) open(context.Context) (libvirtstorage.Client, error) {
+func (c *poolClient) open(context.Context) (libvirtstorage.Session, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 

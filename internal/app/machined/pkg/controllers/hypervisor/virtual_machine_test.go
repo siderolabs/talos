@@ -913,7 +913,7 @@ func (s *VirtualMachineDomainSuite) TestFailedRemovalKeepsSpecFinalizer() {
 
 // outageStorage provides real COSI controllers with a deterministic daemon boundary.
 type outageStorage struct {
-	libvirtstorage.Client
+	libvirtstorage.Session
 	mu              sync.Mutex
 	failed          bool
 	path            string
@@ -922,7 +922,7 @@ type outageStorage struct {
 	poolOpenRelease chan struct{}
 }
 
-func (c *outageStorage) open(context.Context) (libvirtstorage.Client, error) {
+func (c *outageStorage) open(context.Context) (libvirtstorage.Session, error) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -933,7 +933,7 @@ func (c *outageStorage) open(context.Context) (libvirtstorage.Client, error) {
 	return c, nil
 }
 
-func (c *outageStorage) openPool(ctx context.Context) (libvirtstorage.Client, error) {
+func (c *outageStorage) openPool(ctx context.Context) (libvirtstorage.Session, error) {
 	c.mu.Lock()
 	entered, release := c.poolOpenEntered, c.poolOpenRelease
 	c.mu.Unlock()
@@ -1059,7 +1059,7 @@ func (s *VirtualMachineDomainSuite) TestPostHandshakeVolumeReadOutageRetainsRunn
 	s.Create(mount)
 
 	s.Require().NoError(s.Runtime().RegisterController(&storagectrl.StoragePoolController{Open: store.openPool}))
-	s.Require().NoError(s.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{Open: func(context.Context) (libvirtstorage.Client, error) {
+	s.Require().NoError(s.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{Open: func(context.Context) (libvirtstorage.Session, error) {
 		return store, nil
 	}}))
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDiskController{}))
@@ -2670,7 +2670,7 @@ func (g *resizeGate) unblock() {
 // resizeStorage pauses observation (after the old reconciliation census),
 // mutation publication (between admission censuses), or the destructive call.
 type resizeStorage struct {
-	libvirtstorage.Client
+	libvirtstorage.Session
 	mu             sync.Mutex
 	capacity       uint64
 	resizes        int
@@ -2774,7 +2774,7 @@ func (s *VirtualMachineDomainSuite) resizeFixture(store *resizeStorage, vmResour
 
 	s.Require().NoError(s.Runtime().RegisterController(&observedController{
 		Controller: &storagectrl.StoragePoolVolumeController{
-			Open: func(context.Context) (libvirtstorage.Client, error) { return store, nil },
+			Open: func(context.Context) (libvirtstorage.Session, error) { return store, nil },
 		},
 		beforeMutation: store.beforeMutation,
 	}))
