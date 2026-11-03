@@ -15,6 +15,7 @@ import (
 
 	"github.com/opencontainers/go-digest"
 
+	"github.com/siderolabs/talos/internal/pkg/contentlibrary"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
@@ -22,9 +23,32 @@ import (
 // presented. A blank disk takes its driver type from the volume that was made for it.
 const rawDiskFormat = "raw"
 
-// ObserveImage finds the host source within a library already held by the controller.
+// ErrImageDigestMismatch distinguishes an incompatible source from an absent library.
+var ErrImageDigestMismatch = errors.New("image digest mismatch")
+
+// ErrSourceWaiting requires an input change before resolution can progress.
+var ErrSourceWaiting = errors.New("waiting for image source")
+
+// ErrSourceRetryable identifies an operational source failure needing a timed retry.
+var ErrSourceRetryable = errors.New("retryable image source failure")
+
+// ErrSourceRejected identifies invalid or incompatible source intent.
+var ErrSourceRejected = errors.New("rejected image source")
+
+// ImageVerifier caches successful pins for unchanged immutable object/file identities.
+// Its zero value is ready for use by one controller run.
+type ImageVerifier struct {
+	verified map[string]imageVerification
+}
+
+type imageVerification struct {
+	object string
+	file   os.FileInfo
+}
+
+// Observe finds the provisioning source within a library held until its pool copy is ready.
 // The disk must have passed the controller's supported-disk validation.
-func ObserveImage(
+func (verifier *ImageVerifier) Observe(
 	disk hypervisor.VirtualMachineDiskSpec,
 	library hypervisor.ContentLibraryStatusSpec,
 ) (hypervisor.VirtualMachineDiskStatusSpec, error) {
@@ -33,18 +57,19 @@ func ObserveImage(
 	if library.Phase != hypervisor.ContentLibraryPhaseReady {
 		return hypervisor.VirtualMachineDiskStatusSpec{
 			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
-		}, fmt.Errorf("content library %q is not ready: %s", image.Library, library.Error)
+		}, fmt.Errorf("%w: content library %q is not ready: %s", ErrSourceWaiting, image.Library, library.Error)
 	}
 
-	if err := checkLibraryFile(library.Path, image.File, image.Digest); err != nil {
+	object, err := verifier.checkLibraryFile(library.Path, image.File, image.Digest)
+	if err != nil {
 		return hypervisor.VirtualMachineDiskStatusSpec{
 			Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
 		}, fmt.Errorf("content library %q: file %q: %w", image.Library, image.File, err)
 	}
 
 	return hypervisor.VirtualMachineDiskStatusSpec{
-		// Attached where it lies: nothing copies the image, so the library's mount has to stay under it.
-		SourcePath: filepath.Join(library.Path, image.File),
+		// Storage copies this source; domains attach only the independent pool destination.
+		SourcePath: filepath.Join(library.Path, object),
 		Format:     rawDiskFormat,
 		ReadOnly:   true,
 		Phase:      hypervisor.VirtualMachineDiskPhaseReady,
@@ -52,45 +77,94 @@ func ObserveImage(
 }
 
 // checkLibraryFile confirms the image exists and, when a digest is pinned, that it still hashes to it.
-func checkLibraryFile(libraryPath, name, expected string) error {
+func (verifier *ImageVerifier) checkLibraryFile(libraryPath, name, expected string) (string, error) {
 	root, err := os.OpenRoot(libraryPath)
 	if err != nil {
-		return fmt.Errorf("failed to open content library directory: %w", err)
+		return "", fmt.Errorf("%w: failed to open content library directory: %w", ErrSourceRetryable, err)
 	}
 
 	defer root.Close() //nolint:errcheck
 
-	f, err := root.Open(name)
+	object, err := contentlibrary.Resolve(root, name)
 	if err != nil {
-		return err
+		var pathErr *os.PathError
+		if !errors.As(err, &pathErr) {
+			return "", fmt.Errorf("%w: %w", ErrSourceRejected, err)
+		}
+
+		if errors.Is(err, os.ErrNotExist) && pathErr.Path == name {
+			return "", fmt.Errorf("%w: %w", ErrSourceWaiting, err)
+		}
+
+		return "", classifySourceError(err)
+	}
+
+	f, err := root.Open(object)
+	if err != nil {
+		return "", classifySourceError(err)
 	}
 
 	defer f.Close() //nolint:errcheck
 
 	info, err := f.Stat()
 	if err != nil {
-		return err
+		return "", classifySourceError(err)
 	}
 
 	if !info.Mode().IsRegular() {
-		return errors.New("not a regular file")
+		return "", fmt.Errorf("%w: not a regular file", ErrSourceRejected)
 	}
 
 	if expected == "" {
+		return object, nil
+	}
+
+	key := filepath.Join(libraryPath, name) + "\x00" + expected
+
+	return object, classifySourceError(verifier.verifyObject(f, info, key, object, expected))
+}
+
+func (verifier *ImageVerifier) verifyObject(f *os.File, info os.FileInfo, key, object, expected string) error {
+	if previous, ok := verifier.verified[key]; ok && previous.object == object && sameImageFile(previous.file, info) {
 		return nil
 	}
 
-	return VerifyDigest(f, expected)
+	if err := VerifyDigest(f, expected); err != nil {
+		return err
+	}
+
+	after, err := f.Stat()
+	if err != nil {
+		return err
+	}
+
+	if !sameImageFile(info, after) {
+		return errors.New("image source changed during digest verification")
+	}
+
+	if verifier.verified == nil {
+		verifier.verified = make(map[string]imageVerification)
+	}
+
+	verifier.verified[key] = imageVerification{
+		object: object,
+		file:   after,
+	}
+
+	return nil
 }
 
-// VerifyDigest rehashes the whole file. Image observation calls it on every reconciliation:
-// a library file is not immutable, and nothing else notices when it changes underneath a
-// virtual machine. The domain controller also uses it after acquiring its disk holds.
+func sameImageFile(a, b os.FileInfo) bool {
+	return os.SameFile(a, b) && a.Size() == b.Size() && a.ModTime().Equal(b.ModTime())
+}
+
+// VerifyDigest hashes the complete reader and checks it against the expected digest.
+// Image observation uses it to validate a pinned provisioning source before copying.
 func VerifyDigest(r io.Reader, expected string) error {
 	// Machine configuration validation already accepted this digest, including its algorithm.
 	dgst, err := digest.Parse(expected)
 	if err != nil {
-		return fmt.Errorf("digest %q is invalid: %w", expected, err)
+		return fmt.Errorf("%w: digest %q is invalid: %w", ErrSourceRejected, expected, err)
 	}
 
 	verifier := dgst.Verifier()
@@ -100,8 +174,21 @@ func VerifyDigest(r io.Reader, expected string) error {
 	}
 
 	if !verifier.Verified() {
-		return fmt.Errorf("digest mismatch: expected %s", dgst)
+		return fmt.Errorf("%w: expected %s", ErrImageDigestMismatch, dgst)
 	}
 
 	return nil
+}
+
+func classifySourceError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	category := ErrSourceRetryable
+	if errors.Is(err, ErrImageDigestMismatch) || errors.Is(err, ErrSourceRejected) {
+		category = ErrSourceRejected
+	}
+
+	return fmt.Errorf("%w: %w", category, err)
 }

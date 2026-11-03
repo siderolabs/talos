@@ -404,6 +404,16 @@ func (m *ContentLibraryServiceDeleteRequest) MarshalToSizedBufferVT(dAtA []byte)
 		}
 		i -= size
 	}
+	if m.Force {
+		i--
+		if m.Force {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x20
+	}
 	if len(m.LibraryId) > 0 {
 		i -= len(m.LibraryId)
 		copy(dAtA[i:], m.LibraryId)
@@ -628,6 +638,9 @@ func (m *ContentLibraryServiceDeleteRequest) SizeVT() (n int) {
 	}
 	if vtmsg, ok := m.Target.(interface{ SizeVT() int }); ok {
 		n += vtmsg.SizeVT()
+	}
+	if m.Force {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -1522,6 +1535,26 @@ func (m *ContentLibraryServiceDeleteRequest) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Target = &ContentLibraryServiceDeleteRequest_Sha256{Sha256: string(dAtA[iNdEx:postIndex])}
 			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Force", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Force = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

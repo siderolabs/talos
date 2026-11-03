@@ -8,6 +8,8 @@ import (
 	"context"
 	"errors"
 	"net/netip"
+	"os"
+	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -25,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -955,9 +959,11 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
 	s.client.domains[name] = libvirtdomain.Domain{Name: name, UUID: libvirtdomain.UUID(uuid.MustParse(machineUUID), name)}
 
 	disk := hypervisor.VirtualMachineDiskSpec{
-		Name: "install",
-		Bus:  hypervisorhelpers.VirtualMachineDiskBusSATA.String(),
-		Type: hypervisorhelpers.VirtualMachineDiskTypeCDROM.String(),
+		Name:   "install",
+		Pool:   "pool1",
+		Format: "raw",
+		Bus:    hypervisorhelpers.VirtualMachineDiskBusSATA.String(),
+		Type:   hypervisorhelpers.VirtualMachineDiskTypeCDROM.String(),
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"},
 		},
@@ -974,8 +980,11 @@ func (s *VirtualMachineStatusSuite) TestUnresolvedDiskHoldsBackReadiness() {
 	status := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, hypervisor.VirtualMachineDiskStatusID(name, disk))
 	status.TypedSpec().VirtualMachine = name
 	status.TypedSpec().Name = "install"
-	status.TypedSpec().SourcePath = "/var/lib/libvirt/images/vm1-install.qcow2"
-	status.TypedSpec().Format = "qcow2"
+	status.TypedSpec().SourcePath = "/var/lib/libvirt/images/install.iso"
+	status.TypedSpec().Format = "raw"
+	status.TypedSpec().ReadOnly = true
+	status.TypedSpec().Pool = "pool1"
+	status.TypedSpec().Volume = "install.iso"
 	status.TypedSpec().Phase = hypervisor.VirtualMachineDiskPhaseReady
 	status.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: "vm-images", File: "talos.iso"}
 	s.Create(status)
@@ -1121,8 +1130,12 @@ func (s *VirtualMachineStatusSuite) TestLibvirtOutageMarksObservationUnknownUnti
 	s.assertStatus(name, "unknown", hypervisorhelpers.VirtualMachineStageUnknown, "domain has not been observed")
 }
 
-func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryEvents() {
+func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndPoolEvents() {
 	const name = "seeded"
+
+	dir := s.T().TempDir()
+	imagePath := filepath.Join(dir, "seed.iso")
+	s.Require().NoError(os.WriteFile(imagePath, []byte("seed"), 0o600))
 
 	s.client.domains[name] = libvirtdomain.Domain{
 		Name: name,
@@ -1131,7 +1144,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 	vm := newRenderableSpec(name, "running")
 	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
-		Library:  "images",
+		Pool:     "pool1",
 		MetaData: "instance-id: seeded\n",
 		UserData: "#cloud-config\n",
 	}
@@ -1143,7 +1156,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 
 	seed := hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, name)
 	*seed.TypedSpec() = hypervisor.CloudInitSpecSpec{
-		Library:  vm.TypedSpec().CloudInit.Library,
+		Pool:     vm.TypedSpec().CloudInit.Pool,
 		MetaData: vm.TypedSpec().CloudInit.MetaData,
 		UserData: vm.TypedSpec().CloudInit.UserData,
 	}
@@ -1157,11 +1170,12 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	asset := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, hypervisor.CloudInitStatusID(name, *seed.TypedSpec()))
 	*asset.TypedSpec() = hypervisor.CloudInitStatusSpec{
 		VirtualMachine:     name,
-		Library:            "images",
+		Pool:               "pool1",
+		SizeBytes:          uint64(len("seed")),
 		Name:               "seed.iso",
-		Path:               "/images",
+		Path:               dir,
 		VolumeID:           "volume-a",
-		Digest:             "sha256:seed",
+		Digest:             digest.FromString("seed").String(),
 		InputDigest:        seed.TypedSpec().InputDigest(),
 		ObservedGeneration: projected.Metadata().Version().String(),
 		Error:              "seed generation failed",
@@ -1186,13 +1200,24 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
-	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
-	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		Path:     "/images",
-		VolumeID: "volume-a",
-		Phase:    hypervisor.ContentLibraryPhaseReady,
+	pool := storage.NewStoragePoolStatus(storage.NamespaceName, "pool1")
+	*pool.TypedSpec() = storage.StoragePoolStatusSpec{
+		TargetPath: dir,
+		VolumeID:   "volume-a",
+		Phase:      storage.StoragePoolPhaseReady,
 	}
-	s.Create(library)
+	s.Create(pool)
+
+	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, storage.StoragePoolVolumeID("pool1", "seed.iso"))
+	*volume.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool:     "pool1",
+		Name:     "seed.iso",
+		Path:     imagePath,
+		Format:   "raw",
+		Capacity: uint64(len("seed")),
+		Phase:    storage.StoragePoolVolumePhaseReady,
+	}
+	s.Create(volume)
 	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitSpec) error {
@@ -1218,19 +1243,26 @@ func (s *VirtualMachineStatusSuite) TestCloudInitReadinessFollowsSeedAndLibraryE
 	})
 	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
-	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
-		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
+	ctest.UpdateWithConflicts(s, pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolPhaseNotReady
 
 		return nil
 	})
 	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStagePending,
 		`virtual machine "seeded": cloud-init seed is not ready`)
 
-	ctest.UpdateWithConflicts(s, library, func(current *hypervisor.ContentLibraryStatus) error {
-		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
+	ctest.UpdateWithConflicts(s, pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolPhaseReady
 
 		return nil
 	})
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
+
+	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
+	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
+	s.Create(library)
+	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
+	s.Destroy(library)
 	s.assertStatus(name, "running", hypervisorhelpers.VirtualMachineStageReady, "")
 
 	s.Destroy(asset)
@@ -1276,7 +1308,7 @@ func (s *VirtualMachineStatusSuite) TestCloudInitInvalidationStopsOldDomainWitho
 
 	ctest.UpdateWithConflicts(s, vm, func(current *hypervisor.VirtualMachineSpec) error {
 		current.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
-			Library:  "images",
+			Pool:     "pool1",
 			UserData: "#cloud-config\n",
 		}
 

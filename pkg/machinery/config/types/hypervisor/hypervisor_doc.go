@@ -14,7 +14,7 @@ func (ContentLibraryConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ContentLibraryConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ContentLibraryConfig is a content library configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ContentLibraryConfig is a content library configuration document.\nContentLibraryConfig declares a content library: a store for virtual machine images\nkept on a volume.\n\nThe library is the root of the backing volume, so a library backed by the user volume\n`vm-images` keeps its images directly in `/var/mnt/vm-images`. A volume backs exactly\none library: two libraries pointed at the same volume are rejected.\n\nContents are managed over the API with `talosctl hv content-library`, never by editing\nthe machine configuration. Status is reported via `ContentLibraryStatus`.\n",
+		Description: "ContentLibraryConfig is a content library configuration document.\nContentLibraryConfig declares a content library: a store for virtual machine images\nkept on a volume.\n\nThe library is the root of the backing volume, so a library backed by the user volume\n`vm-images` keeps its images directly in `/var/mnt/vm-images`. A volume backs exactly\none library: two libraries pointed at the same volume are rejected.\n\nContents are managed over the API with `talosctl hv content-library`, never by editing\nthe machine configuration. Status is reported via `ContentLibraryStatus`.\n\nFor virtual machine provisioning, the library is a read-only image registry. Images are\ncopied on use into independent StoragePool volumes; guests never attach library files.\nOnce provisioned, those copies do not depend on library availability. Generated cloud-init\nmedia is written directly into its StoragePool, never staged or published in the library.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -524,7 +524,7 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "pool",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for a `disk`, and not allowed on a `cdrom`, whose image is attached in place\nfrom its content library and never lands in a pool.",
+				Description: "Name of the `StoragePoolConfig` document this disk's volume lives in.\n\nThe pool is declared separately and is not provisioned by this document, but it must be\ndeclared: a disk naming a pool no `StoragePoolConfig` document declares is a configuration\nerror.\n\nThe volume is named after this virtual machine and this disk, so a volume of that name\nalready in the pool is adopted with its existing contents. Removing the disk from the\nconfiguration never deletes the volume, so re-declaring the same virtual machine and disk\nnames in the same pool reattaches the same data.\n\nRequired for both `disk` and `cdrom`. CD-ROM media is copied from the content library\ninto an independent volume in this pool, not attached directly from the library.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `StoragePoolConfig` document this disk's volume lives in." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -538,7 +538,7 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "format",
 				Type:        "VirtualMachineDiskFormat",
 				Note:        "",
-				Description: "On-disk format of a blank volume.\n\nChoose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\n\nOptional; defaults to `qcow2`. Not allowed on a `cdrom`, which is used as-is.",
+				Description: "On-disk format of a blank volume.\n\nChoose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\n\nOptional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose\ncopied ISO volume uses `raw`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "On-disk format of a blank volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"raw",
@@ -613,7 +613,7 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "fromImage",
 				Type:        "VirtualMachineDiskFromImage",
 				Note:        "",
-				Description: "Attach read-only CD-ROM media from a content library.\n\nSet `type: cdrom` and omit `pool`, `size`, `format`, and `mode`; the library file is\nattached in place, not copied into a volume. Writable image-derived disks (copy or\nlinked) are not supported. Use `provision.blank` for a writable disk and install from\nCD-ROM media.",
+				Description: "Attach read-only CD-ROM media from a content library.\n\nSet `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.\nTalos copies the image into an independent read-only CD-ROM volume in the pool. Omit\n`size` and `format`; `mode: copy` may be explicit or omitted. Writable image-derived\ndisks are not supported. Use `provision.blank` for a writable disk and install from\nCD-ROM media.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach read-only CD-ROM media from a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
@@ -669,15 +669,15 @@ func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 				Name:        "digest",
 				Type:        "string",
 				Note:        "",
-				Description: "Integrity check of the library file, verified before the media is attached.\n\nWritten as `<algorithm>:<hex>`, under either `sha256` or `sha512`.\n\nOptional; the file is used as-is when this is unset.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Integrity check of the library file, verified before the media is attached." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Integrity check of the library file, verified before media is copied.\n\nWritten as `<algorithm>:<hex>`, under either `sha256` or `sha512`.\n\nOptional; the file is copied without a digest check when this is unset.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Integrity check of the library file, verified before media is copied." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "mode",
 				Type:        "VirtualMachineDiskImageMode",
 				Note:        "",
-				Description: "Mode for deriving a writable disk from an image (not supported yet).\n\nNeither `copy` nor `linked` currently provisions a writable image-derived disk. For a\nwritable disk, use `provision.blank` instead; for image media, use a read-only `cdrom`.\n\nOmit this field on a `cdrom`: even an explicit `copy` is rejected because its read-only\nmedium is attached in place. An omitted mode defaults to `copy` for a disk, but that\nwritable image-derived configuration is not supported.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mode for deriving a writable disk from an image (not supported yet)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Mode for copying CD-ROM media from a content library.\n\nOn a `cdrom`, omitted mode defaults to `copy`; explicit `copy` is also accepted.\n`linked` is not supported because CD-ROM media must be an independent copy.\nWritable image-derived disks (copy or linked) are not supported; use\n`provision.blank` for a writable disk.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mode for copying CD-ROM media from a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"copy",
 					"linked",
@@ -1067,11 +1067,11 @@ func (VirtualMachineCloudInit) Doc() *encoder.Doc {
 		},
 		Fields: []encoder.Doc{
 			{
-				Name:        "library",
+				Name:        "pool",
 				Type:        "string",
 				Note:        "",
-				Description: "Name of the content library where Talos stores the generated NoCloud ISO.\n\nMust name a content library with a nonempty identifier of at most 63 ASCII letters,\ndigits or hyphens. The library is declared separately by a `ContentLibraryConfig`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the content library where Talos stores the generated NoCloud ISO." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Storage pool holding the generated NoCloud seed.\n\nMust name a declared `StoragePoolConfig` document. Storage pool names are at most 63\ncharacters, start with a letter or digit, and contain ASCII letters, digits, hyphens\nor underscores.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Storage pool holding the generated NoCloud seed." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "metaData",
@@ -1097,7 +1097,7 @@ func (VirtualMachineCloudInit) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.Fields[0].AddExample("", "targetlibrary")
+	doc.Fields[0].AddExample("", "pool1")
 	doc.Fields[1].AddExample("", "instance-id: vm1-001\nlocal-hostname: vm1\n")
 
 	return doc

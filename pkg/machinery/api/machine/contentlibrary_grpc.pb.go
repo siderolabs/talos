@@ -39,7 +39,7 @@ type ContentLibraryServiceClient interface {
 	// Upload a file to a content library.
 	Upload(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ContentLibraryServiceUploadRequest, ContentLibraryServiceUploadResponse], error)
 	// Delete removes an alias or explicitly deletes a SHA256 object.
-	// Object deletion refuses existing aliases.
+	// Object deletion refuses existing aliases unless force is set.
 	Delete(ctx context.Context, in *ContentLibraryServiceDeleteRequest, opts ...grpc.CallOption) (*ContentLibraryServiceDeleteResponse, error)
 }
 
@@ -107,7 +107,7 @@ type ContentLibraryServiceServer interface {
 	// Upload a file to a content library.
 	Upload(grpc.ClientStreamingServer[ContentLibraryServiceUploadRequest, ContentLibraryServiceUploadResponse]) error
 	// Delete removes an alias or explicitly deletes a SHA256 object.
-	// Object deletion refuses existing aliases.
+	// Object deletion refuses existing aliases unless force is set.
 	Delete(context.Context, *ContentLibraryServiceDeleteRequest) (*ContentLibraryServiceDeleteResponse, error)
 	mustEmbedUnimplementedContentLibraryServiceServer()
 }

@@ -212,7 +212,7 @@ func projectCloudInit(vm configcfg.VirtualMachineConfig) *hypervisor.VirtualMach
 	}
 
 	return &hypervisor.VirtualMachineCloudInitSpec{
-		Library:       cloud.Library(),
+		Pool:          cloud.Pool(),
 		MetaData:      cloud.MetaData(),
 		UserData:      cloud.UserData(),
 		NetworkConfig: cloud.NetworkConfig(),

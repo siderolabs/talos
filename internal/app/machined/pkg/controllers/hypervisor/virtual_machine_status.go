@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 // VirtualMachineStatusController combines desired VMs with independent libvirt observations, and
@@ -72,8 +73,13 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.ContentLibraryStatusType,
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.StoragePoolVolumeStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{

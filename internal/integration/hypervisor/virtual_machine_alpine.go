@@ -151,6 +151,7 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 	suite.T().Logf("uploading supplied stock Alpine ISO %s (%d bytes, %s)", suite.HypervisorAlpineISOPath, info.Size(), isoDigest)
 
 	library, _ := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, _ := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	started := time.Now()
 	response, err := suite.Client.ContentLibraryUpload(
@@ -188,6 +189,7 @@ func (suite *LibvirtSuite) prepareAlpineGuestOnNode(
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName:      "alpine",
+			DiskPool:      pool,
 			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			DiskBootOrder: 1,
 			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{

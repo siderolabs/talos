@@ -565,6 +565,10 @@ func (svc *Service) Delete(ctx context.Context, req *machine.ContentLibraryServi
 
 		return svc.deleteObject(ctx, req)
 	case *machine.ContentLibraryServiceDeleteRequest_Name:
+		if req.GetForce() {
+			return nil, status.Error(codes.InvalidArgument, "force is valid only when deleting a SHA256 object")
+		}
+
 		return svc.deleteAlias(ctx, req)
 	default:
 		return nil, status.Error(codes.InvalidArgument, "an alias name or SHA256 object identity is required")
@@ -586,7 +590,7 @@ func (svc *Service) deleteObject(ctx context.Context, req *machine.ContentLibrar
 
 	defer release()
 
-	if err := cas.RemoveObject(root, req.GetSha256(), false); err != nil {
+	if err := cas.RemoveObject(root, req.GetSha256(), req.GetForce()); err != nil {
 		switch {
 		case errors.Is(err, fs.ErrNotExist):
 			return nil, status.Errorf(codes.NotFound, "object %q not found", req.GetSha256())
@@ -600,6 +604,7 @@ func (svc *Service) deleteObject(ctx context.Context, req *machine.ContentLibrar
 	svc.logger.Info("deleted an object from a content library",
 		zap.String("library", req.GetLibraryId()),
 		zap.String("sha256", req.GetSha256()),
+		zap.Bool("force", req.GetForce()),
 	)
 
 	return &machine.ContentLibraryServiceDeleteResponse{}, nil
@@ -633,12 +638,6 @@ func (svc *Service) deleteAlias(ctx context.Context, req *machine.ContentLibrary
 
 	defer release()
 
-	if err := svc.checkLegacySourcesNotInUse(ctx, req.GetLibraryId(), func(name string) bool {
-		return name == req.GetName()
-	}); err != nil {
-		return nil, err
-	}
-
 	if err := cas.RemoveAlias(root, req.GetName()); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return nil, status.Errorf(codes.NotFound, "file %q not found", req.GetName())
@@ -653,40 +652,4 @@ func (svc *Service) deleteAlias(ctx context.Context, req *machine.ContentLibrary
 	)
 
 	return &machine.ContentLibraryServiceDeleteResponse{}, nil
-}
-
-// checkLegacySourcesNotInUse protects directly attached library sources until VM media
-// and cloud-init provisioning migrate to independent storage-pool copies.
-func (svc *Service) checkLegacySourcesNotInUse(ctx context.Context, libraryID string, matches func(string) bool) error {
-	disks, err := safe.StateListAll[*hypervisor.VirtualMachineDiskStatus](ctx, svc.state)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to list virtual machine disk statuses: %v", err)
-	}
-
-	for disk := range disks.All() {
-		image := disk.TypedSpec().Image
-
-		if !disk.Metadata().Finalizers().Empty() && image.Library == libraryID && matches(image.File) {
-			return status.Errorf(codes.FailedPrecondition, "file %q is in use by disk %q of virtual machine %q",
-				image.File, disk.TypedSpec().Name, disk.TypedSpec().VirtualMachine)
-		}
-	}
-
-	return svc.checkLegacySeedsNotInUse(ctx, libraryID, matches)
-}
-
-func (svc *Service) checkLegacySeedsNotInUse(ctx context.Context, libraryID string, matches func(string) bool) error {
-	seeds, err := safe.StateListAll[*hypervisor.CloudInitStatus](ctx, svc.state)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to list cloud-init statuses: %v", err)
-	}
-
-	for seed := range seeds.All() {
-		if !seed.Metadata().Finalizers().Empty() && seed.TypedSpec().Library == libraryID && matches(seed.TypedSpec().Name) {
-			return status.Errorf(codes.FailedPrecondition, "file %q is in use by cloud-init seed of virtual machine %q",
-				seed.TypedSpec().Name, seed.TypedSpec().VirtualMachine)
-		}
-	}
-
-	return nil
 }

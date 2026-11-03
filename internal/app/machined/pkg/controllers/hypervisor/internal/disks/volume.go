@@ -7,6 +7,7 @@ package disks
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -72,6 +73,15 @@ func ObserveVolume(
 		}, volumeErr
 	}
 
+	if request.TypedSpec().Copy != nil {
+		poolStatus, poolErr := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, reader, pool)
+		if poolErr != nil || !CopyPublicationReady(request, volumeStatus, poolStatus) {
+			return hypervisor.VirtualMachineDiskStatusSpec{
+				Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
+			}, fmt.Errorf("volume %q copy is not qualified for current intent", id)
+		}
+	}
+
 	return hypervisor.VirtualMachineDiskStatusSpec{
 		SourcePath: volumeStatus.TypedSpec().Path,
 		Format:     volumeStatus.TypedSpec().Format,
@@ -80,4 +90,29 @@ func ObserveVolume(
 		Phase:    hypervisor.VirtualMachineDiskPhaseReady,
 		Size:     volumeStatus.TypedSpec().Capacity,
 	}, nil
+}
+
+// CopyPublicationReady qualifies immutable publication against the current request
+// incarnation and backing. An attachability phase alone is not copy completion.
+func CopyPublicationReady(request *storage.StoragePoolVolumeSpec, status *storage.StoragePoolVolumeStatus, pool *storage.StoragePoolStatus) bool {
+	if pool == nil || request.Metadata().Phase() != resource.PhaseRunning || request.TypedSpec().Copy == nil || status.TypedSpec().Copy == nil {
+		return false
+	}
+
+	observed := status.TypedSpec().Copy
+
+	return status.Metadata().Phase() == resource.PhaseRunning &&
+		observed.Phase == storage.StoragePoolVolumeCopyPhaseSucceeded &&
+		observed.Intent != "" &&
+		observed.Intent == storage.StoragePoolVolumeCopyIntent(request, pool) &&
+		copyVolumeIdentityMatches(request.TypedSpec(), status.TypedSpec(), pool.TypedSpec())
+}
+
+func copyVolumeIdentityMatches(request *storage.StoragePoolVolumeSpecSpec, status *storage.StoragePoolVolumeStatusSpec, pool *storage.StoragePoolStatusSpec) bool {
+	return status.Phase == storage.StoragePoolVolumePhaseReady &&
+		status.Pool == request.Pool &&
+		status.Name == request.Name &&
+		status.Format == request.Format &&
+		pool.TargetPath != "" &&
+		status.Path == filepath.Join(pool.TargetPath, request.Name)
 }

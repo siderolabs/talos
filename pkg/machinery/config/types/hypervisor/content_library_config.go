@@ -50,6 +50,11 @@ var (
 //
 //	  Contents are managed over the API with `talosctl hv content-library`, never by editing
 //	  the machine configuration. Status is reported via `ContentLibraryStatus`.
+//
+//	  For virtual machine provisioning, the library is a read-only image registry. Images are
+//	  copied on use into independent StoragePool volumes; guests never attach library files.
+//	  Once provisioned, those copies do not depend on library availability. Generated cloud-init
+//	  media is written directly into its StoragePool, never staged or published in the library.
 //	examples:
 //	  - value: exampleContentLibraryConfigV1Alpha1()
 //	alias: ContentLibraryConfig

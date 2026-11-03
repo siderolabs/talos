@@ -126,15 +126,17 @@ func TestVirtualMachineDiskStatusIDIsPinned(t *testing.T) {
 	t.Parallel()
 
 	cdrom := hypervisor.VirtualMachineDiskStatusID("guest", hypervisor.VirtualMachineDiskSpec{
-		Name: "install",
-		Type: "cdrom",
+		Name:   "install",
+		Pool:   "pool1",
+		Format: "raw",
+		Type:   "cdrom",
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "images", File: "alpine.iso"},
 		},
 	})
-	// Independently: sha256("images\0alpine.iso\0\0"), the derivation in use before blank disks
-	// existed. An image-provisioned disk must hash exactly what it always did.
-	assert.Equal(t, "guest/install@92090893089c", cdrom)
+	// Independently: sha256("images\0alpine.iso\0\0\0pool1\0raw").
+	// Pool-owned copies include the destination, so an attached status cannot be retargeted.
+	assert.Equal(t, "guest/install@c3dc411884f8", cdrom)
 
 	blank := hypervisor.VirtualMachineDiskStatusID("guest", hypervisor.VirtualMachineDiskSpec{
 		Name:      "data",
@@ -195,4 +197,32 @@ func TestVirtualMachineDiskStatusIDCoversBlankProvisioning(t *testing.T) {
 		FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "pool1", File: "qcow2"},
 	}
 	assert.NotEqual(t, id(base), id(fromImage))
+}
+
+func TestVirtualMachineDiskStatusIDCoversImageDestination(t *testing.T) {
+	t.Parallel()
+
+	base := hypervisor.VirtualMachineDiskSpec{
+		Name:   "install",
+		Pool:   "pool1",
+		Format: "raw",
+		Type:   "cdrom",
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
+			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "images", File: "alpine.iso"},
+		},
+	}
+
+	for name, change := range map[string]func(*hypervisor.VirtualMachineDiskSpec){
+		"pool":   func(disk *hypervisor.VirtualMachineDiskSpec) { disk.Pool = "pool2" },
+		"format": func(disk *hypervisor.VirtualMachineDiskSpec) { disk.Format = "qcow2" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			changed := base
+			change(&changed)
+			assert.NotEqual(t, hypervisor.VirtualMachineDiskStatusID("guest", base),
+				hypervisor.VirtualMachineDiskStatusID("guest", changed))
+		})
+	}
 }

@@ -17,7 +17,7 @@ service ContentLibraryService {
   // Upload a file to a content library.
   rpc Upload(stream ContentLibraryServiceUploadRequest) returns (ContentLibraryServiceUploadResponse);
   // Delete removes an alias or explicitly deletes a SHA256 object.
-  // Object deletion refuses existing aliases.
+  // Object deletion refuses existing aliases unless force is set.
   rpc Delete(ContentLibraryServiceDeleteRequest) returns (ContentLibraryServiceDeleteResponse);
 }
 
@@ -87,6 +87,9 @@ message ContentLibraryServiceDeleteRequest {
     // Remove the object identified by "sha256:<hex>".
     string sha256 = 3;
   }
+  // Remove all symlinks to the selected object before deleting it.
+  // Valid only with a sha256 target; otherwise existing links prevent deletion.
+  bool force = 4;
 }
 
 message ContentLibraryServiceDeleteResponse {}

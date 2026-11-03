@@ -57,7 +57,7 @@ type VirtualMachineVideoSpec struct {
 //
 //gotagsrewrite:gen
 type VirtualMachineCloudInitSpec struct {
-	Library       string `yaml:"library" protobuf:"1"`
+	Pool          string `yaml:"pool" protobuf:"1"`
 	MetaData      string `yaml:"metaData,omitempty" protobuf:"2" redact:"replace"`
 	UserData      string `yaml:"userData,omitempty" protobuf:"3" redact:"replace"`
 	NetworkConfig string `yaml:"networkConfig,omitempty" protobuf:"4" redact:"replace"`

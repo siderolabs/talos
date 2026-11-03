@@ -21,11 +21,14 @@ func TestContentLibraryDeleteRequest(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
 		target  string
+		force   bool
 		object  bool
 		wantErr bool
 	}{
 		{name: "alias", target: "image.iso"},
 		{name: "object", target: hash, object: true},
+		{name: "force object", target: hash, force: true, object: true},
+		{name: "force alias", target: "image.iso", force: true, wantErr: true},
 		{name: "invalid digest", target: "sha256:../escape", wantErr: true},
 		{name: "reserved alias", target: "sha256:notes.iso", wantErr: true},
 		{name: "uppercase digest", target: "sha256:" + strings.Repeat("A", 64), wantErr: true},
@@ -33,7 +36,7 @@ func TestContentLibraryDeleteRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			req, err := contentLibraryDeleteRequest("images", tc.target)
+			req, err := contentLibraryDeleteRequest("images", tc.target, tc.force)
 			if tc.wantErr {
 				require.Error(t, err)
 				require.Nil(t, req)
@@ -43,6 +46,7 @@ func TestContentLibraryDeleteRequest(t *testing.T) {
 
 			require.NoError(t, err)
 			require.Equal(t, "images", req.GetLibraryId())
+			require.Equal(t, tc.force, req.GetForce())
 
 			encoded, err := req.MarshalVT()
 			require.NoError(t, err)

@@ -85,7 +85,7 @@ func (ctrl *CloudInitSpecController) reconcile(ctx context.Context, r controller
 
 		if err := safe.WriterModify(ctx, r, hypervisor.NewCloudInitSpec(hypervisor.NamespaceName, id), func(out *hypervisor.CloudInitSpec) error {
 			*out.TypedSpec() = hypervisor.CloudInitSpecSpec{
-				Library:       cloud.Library,
+				Pool:          cloud.Pool,
 				MetaData:      cloud.MetaData,
 				UserData:      cloud.UserData,
 				NetworkConfig: cloud.NetworkConfig,

@@ -2153,7 +2153,8 @@ Delete an alias or a SHA-256 object from a content library
 
 A filename removes only that alias and retains the immutable object.
 A sha256:<hex> target explicitly removes the stored object. If any symlinks refer
-to it, deletion fails without changing them.
+to it, deletion fails without changing them. Use --force to remove all of those
+symlinks before removing the object. Pool-owned copies are not affected.
 
 ```
 talosctl hypervisor content-library delete <library_id> <name|sha256:digest> [flags]
@@ -2162,7 +2163,8 @@ talosctl hypervisor content-library delete <library_id> <name|sha256:digest> [fl
 ### Options
 
 ```
-  -h, --help   help for delete
+      --force   remove all symlinks to the selected SHA-256 object before deleting it
+  -h, --help    help for delete
 ```
 
 ### Options inherited from parent commands

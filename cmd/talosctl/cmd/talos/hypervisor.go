@@ -230,14 +230,20 @@ var contentLibraryDeleteCmd = &cobra.Command{
 	Short:   "Delete an alias or a SHA-256 object from a content library",
 	Long: `A filename removes only that alias and retains the immutable object.
 A sha256:<hex> target explicitly removes the stored object. If any symlinks refer
-to it, deletion fails without changing them.`,
+to it, deletion fails without changing them. Use --force to remove all of those
+symlinks before removing the object. Pool-owned copies are not affected.`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return contentLibraryDelete(cmd.Context(), args[0], args[1])
+		force, err := cmd.Flags().GetBool("force")
+		if err != nil {
+			return err
+		}
+
+		return contentLibraryDelete(cmd.Context(), args[0], args[1], force)
 	},
 }
 
-func contentLibraryDeleteRequest(libraryID, target string) (*machine.ContentLibraryServiceDeleteRequest, error) {
+func contentLibraryDeleteRequest(libraryID, target string, force bool) (*machine.ContentLibraryServiceDeleteRequest, error) {
 	req := &machine.ContentLibraryServiceDeleteRequest{LibraryId: libraryID}
 
 	if strings.HasPrefix(target, "sha256:") {
@@ -247,15 +253,20 @@ func contentLibraryDeleteRequest(libraryID, target string) (*machine.ContentLibr
 		}
 
 		req.Target = &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: target}
+		req.Force = force
 	} else {
+		if force {
+			return nil, errors.New("--force requires a sha256:<hex> object target; deleting a name only removes its alias")
+		}
+
 		req.Target = &machine.ContentLibraryServiceDeleteRequest_Name{Name: target}
 	}
 
 	return req, nil
 }
 
-func contentLibraryDelete(ctx context.Context, libraryID, target string) error {
-	req, err := contentLibraryDeleteRequest(libraryID, target)
+func contentLibraryDelete(ctx context.Context, libraryID, target string, force bool) error {
+	req, err := contentLibraryDeleteRequest(libraryID, target, force)
 	if err != nil {
 		return err
 	}
@@ -286,6 +297,8 @@ func contentLibraryDelete(ctx context.Context, libraryID, target string) error {
 }
 
 func init() {
+	contentLibraryDeleteCmd.Flags().Bool("force", false, "remove all symlinks to the selected SHA-256 object before deleting it")
+
 	contentLibraryUploadCmd.Flags().StringVar(&contentLibraryUploadCmdFlags.name, "name", "", "new name within the library (defaults to the base name of <filename>)")
 	contentLibraryUploadCmd.Flags().StringVar(&contentLibraryUploadCmdFlags.digest, "digest", "",
 		"expected digest of the contents as sha256:<hex>; the upload is refused unless the contents match it")

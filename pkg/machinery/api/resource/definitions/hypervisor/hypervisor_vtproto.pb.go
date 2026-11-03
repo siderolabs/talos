@@ -74,10 +74,10 @@ func (m *CloudInitSpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Library) > 0 {
-		i -= len(m.Library)
-		copy(dAtA[i:], m.Library)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Library)))
+	if len(m.Pool) > 0 {
+		i -= len(m.Pool)
+		copy(dAtA[i:], m.Pool)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Pool)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -173,10 +173,10 @@ func (m *CloudInitStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.Library) > 0 {
-		i -= len(m.Library)
-		copy(dAtA[i:], m.Library)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Library)))
+	if len(m.Pool) > 0 {
+		i -= len(m.Pool)
+		copy(dAtA[i:], m.Pool)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Pool)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -534,10 +534,10 @@ func (m *VirtualMachineCloudInitSpec) MarshalToSizedBufferVT(dAtA []byte) (int, 
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Library) > 0 {
-		i -= len(m.Library)
-		copy(dAtA[i:], m.Library)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Library)))
+	if len(m.Pool) > 0 {
+		i -= len(m.Pool)
+		copy(dAtA[i:], m.Pool)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Pool)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1986,7 +1986,7 @@ func (m *CloudInitSpecSpec) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Library)
+	l = len(m.Pool)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -2016,7 +2016,7 @@ func (m *CloudInitStatusSpec) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.Library)
+	l = len(m.Pool)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -2180,7 +2180,7 @@ func (m *VirtualMachineCloudInitSpec) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Library)
+	l = len(m.Pool)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -2809,7 +2809,7 @@ func (m *CloudInitSpecSpec) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Library", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pool", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2837,7 +2837,7 @@ func (m *CloudInitSpecSpec) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Library = string(dAtA[iNdEx:postIndex])
+			m.Pool = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -3020,7 +3020,7 @@ func (m *CloudInitStatusSpec) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Library", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pool", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3048,7 +3048,7 @@ func (m *CloudInitStatusSpec) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Library = string(dAtA[iNdEx:postIndex])
+			m.Pool = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
@@ -4100,7 +4100,7 @@ func (m *VirtualMachineCloudInitSpec) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Library", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pool", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4128,7 +4128,7 @@ func (m *VirtualMachineCloudInitSpec) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Library = string(dAtA[iNdEx:postIndex])
+			m.Pool = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {

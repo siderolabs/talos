@@ -1332,6 +1332,7 @@ InspectService provides auxiliary API to inspect OS internals.
 | library_id | [string](#string) |  | ID of the content library to delete from. |
 | name | [string](#string) |  | Remove only this name, retaining the immutable object. |
 | sha256 | [string](#string) |  | Remove the object identified by "sha256:<hex>". |
+| force | [bool](#bool) |  | Remove all symlinks to the selected object before deleting it. Valid only with a sha256 target; otherwise existing links prevent deletion. |
 
 
 
@@ -1469,7 +1470,7 @@ ContentLibraryConfig document and backed by a volume.
 | ----------- | ------------ | ------------- | ------------|
 | List | [ContentLibraryServiceListRequest](#machine.ContentLibraryServiceListRequest) | [ContentLibraryServiceListResponse](#machine.ContentLibraryServiceListResponse) stream | One SHA256 object and the names currently attached to it. |
 | Upload | [ContentLibraryServiceUploadRequest](#machine.ContentLibraryServiceUploadRequest) stream | [ContentLibraryServiceUploadResponse](#machine.ContentLibraryServiceUploadResponse) | Upload a file to a content library. |
-| Delete | [ContentLibraryServiceDeleteRequest](#machine.ContentLibraryServiceDeleteRequest) | [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse) | Delete removes an alias or explicitly deletes a SHA256 object. Object deletion refuses existing aliases. |
+| Delete | [ContentLibraryServiceDeleteRequest](#machine.ContentLibraryServiceDeleteRequest) | [ContentLibraryServiceDeleteResponse](#machine.ContentLibraryServiceDeleteResponse) | Delete removes an alias or explicitly deletes a SHA256 object. Object deletion refuses existing aliases unless force is set. |
 
  <!-- end services -->
 
@@ -9426,7 +9427,7 @@ CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim conten
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| library | [string](#string) |  |  |
+| pool | [string](#string) |  |  |
 | meta_data | [string](#string) |  |  |
 | user_data | [string](#string) |  |  |
 | network_config | [string](#string) |  |  |
@@ -9445,7 +9446,7 @@ CloudInitStatusSpec never contains the raw guest seed.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | virtual_machine | [string](#string) |  |  |
-| library | [string](#string) |  |  |
+| pool | [string](#string) |  |  |
 | name | [string](#string) |  |  |
 | path | [string](#string) |  | Path and VolumeID pin the backing identity and prevent stale readiness across remounts. |
 | volume_id | [string](#string) |  |  |
@@ -9557,7 +9558,7 @@ VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| library | [string](#string) |  |  |
+| pool | [string](#string) |  |  |
 | meta_data | [string](#string) |  |  |
 | user_data | [string](#string) |  |  |
 | network_config | [string](#string) |  |  |

@@ -14,7 +14,7 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
+	"github.com/siderolabs/talos/pkg/machinery/storagehelpers"
 )
 
 // Check interfaces.
@@ -54,14 +54,15 @@ type VirtualMachineAgent struct {
 // VirtualMachineCloudInit describes the NoCloud seed handed to the guest.
 type VirtualMachineCloudInit struct {
 	//   description: |
-	//     Name of the content library where Talos stores the generated NoCloud ISO.
+	//     Storage pool holding the generated NoCloud seed.
 	//
-	//     Must name a content library with a nonempty identifier of at most 63 ASCII letters,
-	//     digits or hyphens. The library is declared separately by a `ContentLibraryConfig`.
+	//     Must name a declared `StoragePoolConfig` document. Storage pool names are at most 63
+	//     characters, start with a letter or digit, and contain ASCII letters, digits, hyphens
+	//     or underscores.
 	//   examples:
-	//     - value: '"targetlibrary"'
+	//     - value: '"pool1"'
 	//   schemaRequired: true
-	LibraryConfig string `yaml:"library"`
+	PoolConfig string `yaml:"pool"`
 	//   description: |
 	//     Contents of the seed's `meta-data` file, carrying the guest's identity.
 	//
@@ -125,9 +126,9 @@ func (a *VirtualMachineAgent) Enabled() bool {
 	return *a.AgentEnabled
 }
 
-// Library implements config.VirtualMachineCloudInitConfig interface.
-func (c *VirtualMachineCloudInit) Library() string {
-	return c.LibraryConfig
+// Pool implements config.VirtualMachineCloudInitConfig interface.
+func (c *VirtualMachineCloudInit) Pool() string {
+	return c.PoolConfig
 }
 
 // MetaData implements config.VirtualMachineCloudInitConfig interface.
@@ -173,11 +174,7 @@ func (g *VirtualMachineGuest) validate() ([]string, error) {
 		warnings         []string
 	)
 
-	if cloudInit.LibraryConfig == "" {
-		validationErrors = errors.Join(validationErrors, errors.New("guest.cloudInit.library is required"))
-	} else if err := hypervisorhelpers.ValidateName(cloudInit.LibraryConfig); err != nil {
-		validationErrors = errors.Join(validationErrors, fmt.Errorf("guest.cloudInit.library: %w", err))
-	}
+	validationErrors = errors.Join(validationErrors, cloudInit.validateReferences())
 
 	hasInstanceID, err := validateMetaData(cloudInit.MetaDataConfig)
 	validationErrors = errors.Join(validationErrors, err)
@@ -192,6 +189,19 @@ func (g *VirtualMachineGuest) validate() ([]string, error) {
 	}
 
 	return warnings, validationErrors
+}
+
+// validateReferences checks the declared seed destination.
+func (c *VirtualMachineCloudInit) validateReferences() error {
+	var validationErrors error
+
+	if c.PoolConfig == "" {
+		validationErrors = errors.Join(validationErrors, errors.New("guest.cloudInit.pool is required"))
+	} else if err := storagehelpers.ValidateStoragePoolName(c.PoolConfig); err != nil {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("guest.cloudInit.pool: %w", err))
+	}
+
+	return validationErrors
 }
 
 // validateMetaData checks the seed's `meta-data` file and reports whether it carries an

@@ -10,7 +10,7 @@ import "resource/definitions/enums/enums.proto";
 
 // CloudInitSpecSpec carries opaque payload bytes (strings preserve verbatim content).
 message CloudInitSpecSpec {
-  string library = 1;
+  string pool = 1;
   string meta_data = 2;
   string user_data = 3;
   string network_config = 4;
@@ -19,7 +19,7 @@ message CloudInitSpecSpec {
 // CloudInitStatusSpec never contains the raw guest seed.
 message CloudInitStatusSpec {
   string virtual_machine = 1;
-  string library = 2;
+  string pool = 2;
   string name = 3;
   // Path and VolumeID pin the backing identity and prevent stale readiness across remounts.
   string path = 4;
@@ -84,7 +84,7 @@ message VirtualMachineCPUTopologySpec {
 
 // VirtualMachineCloudInitSpec is backend-neutral guest seed intent.
 message VirtualMachineCloudInitSpec {
-  string library = 1;
+  string pool = 1;
   string meta_data = 2;
   string user_data = 3;
   string network_config = 4;

@@ -407,7 +407,10 @@ type ContentLibraryServiceDeleteRequest struct {
 	//
 	//	*ContentLibraryServiceDeleteRequest_Name
 	//	*ContentLibraryServiceDeleteRequest_Sha256
-	Target        isContentLibraryServiceDeleteRequest_Target `protobuf_oneof:"target"`
+	Target isContentLibraryServiceDeleteRequest_Target `protobuf_oneof:"target"`
+	// Remove all symlinks to the selected object before deleting it.
+	// Valid only with a sha256 target; otherwise existing links prevent deletion.
+	Force         bool `protobuf:"varint,4,opt,name=force,proto3" json:"force,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -472,6 +475,13 @@ func (x *ContentLibraryServiceDeleteRequest) GetSha256() string {
 		}
 	}
 	return ""
+}
+
+func (x *ContentLibraryServiceDeleteRequest) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
 }
 
 type isContentLibraryServiceDeleteRequest_Target interface {
@@ -554,12 +564,13 @@ const file_machine_contentlibrary_proto_rawDesc = "" +
 	"#ContentLibraryServiceUploadResponse\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04size\x18\x02 \x01(\x04R\x04size\x12E\n" +
-	"\adigests\x18\x03 \x01(\v2+.machine.ContentLibraryServiceUploadDigestsR\adigests\"}\n" +
+	"\adigests\x18\x03 \x01(\v2+.machine.ContentLibraryServiceUploadDigestsR\adigests\"\x93\x01\n" +
 	"\"ContentLibraryServiceDeleteRequest\x12\x1d\n" +
 	"\n" +
 	"library_id\x18\x01 \x01(\tR\tlibraryId\x12\x14\n" +
 	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x12\x18\n" +
-	"\x06sha256\x18\x03 \x01(\tH\x00R\x06sha256B\b\n" +
+	"\x06sha256\x18\x03 \x01(\tH\x00R\x06sha256\x12\x14\n" +
+	"\x05force\x18\x04 \x01(\bR\x05forceB\b\n" +
 	"\x06target\"%\n" +
 	"#ContentLibraryServiceDeleteResponse2\xc4\x02\n" +
 	"\x15ContentLibraryService\x12_\n" +

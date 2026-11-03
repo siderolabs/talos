@@ -288,7 +288,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&hypervisorctrls.VirtualMachineSpecController{},
 		&hypervisorctrls.VirtualMachineProfileSpecController{},
 		&hypervisorctrls.CloudInitSpecController{},
-		&hypervisorctrls.CloudInitISOController{State: ctrl.v1alpha1Runtime.State().V1Alpha2().Resources()},
+		&hypervisorctrls.CloudInitISOController{},
 		&hypervisorctrls.VirtualMachineDiskController{},
 		&hypervisorctrls.VirtualMachineDomainSpecController{},
 		&hypervisorctrls.VirtualMachineDomainStatusController{

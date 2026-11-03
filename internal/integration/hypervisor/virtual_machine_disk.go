@@ -27,10 +27,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	hypervisorcfg "github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 // isoName is the library file the cdrom tests attach. Its contents are not a real ISO: nothing
@@ -65,8 +67,7 @@ func (suite *LibvirtSuite) requireContentLibrary() {
 	}
 }
 
-// TestCDROMFromContentLibrary covers a cdrom sourced from a content library: the image is attached
-// where it lies, so the domain names the library's own path and nothing is copied.
+// TestCDROMFromContentLibrary attaches an independent pool copy of a library object.
 func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 	suite.requireContentLibrarySupport()
 
@@ -76,6 +77,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, poolPath := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	contents := []byte("talos integration cdrom")
 	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader(contents))
@@ -91,6 +93,7 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 	doc.MemoryConfig.MemorySize = meta.MustByteSize("128MiB")
 	installDisk := hypervisorcfg.VirtualMachineDisk{
 		DiskName:      "install",
+		DiskPool:      pool,
 		DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 		DiskBootOrder: 1,
 		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
@@ -115,12 +118,14 @@ func (suite *LibvirtSuite) TestCDROMFromContentLibrary() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	source := filepath.Join(libraryPath, isoName)
+	var source string
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
-			asrt.Equal(source, status.TypedSpec().SourcePath)
+			source = status.TypedSpec().SourcePath
+			asrt.Equal(filepath.Join(poolPath, status.TypedSpec().Volume), source)
+			asrt.NotContains(source, libraryPath+"/objects/")
 			asrt.Equal("raw", status.TypedSpec().Format)
 			asrt.True(status.TypedSpec().ReadOnly)
 		},
@@ -170,6 +175,7 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
 	library, _ := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, _ := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	name := "vm-absent-" + uuid.NewString()
 
@@ -182,6 +188,7 @@ func (suite *LibvirtSuite) TestCDROMWaitsForItsImage() {
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName: "install",
+			DiskPool: pool,
 			DiskType: hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
 				FromImageConfig: &hypervisorcfg.VirtualMachineDiskFromImage{
@@ -236,6 +243,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, poolPath := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	info, err := os.Stat(suite.HypervisorTalosISOPath)
 	suite.Require().NoError(err)
@@ -268,6 +276,7 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 	doc.DisksConfig = []hypervisorcfg.VirtualMachineDisk{
 		{
 			DiskName:      "install",
+			DiskPool:      pool,
 			DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 			DiskBootOrder: 1,
 			ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
@@ -294,19 +303,19 @@ func (suite *LibvirtSuite) TestCDROMFromTalosISO() {
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, doc.DisksConfig[0])},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
-			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
+			asrt.Equal(filepath.Join(poolPath, status.TypedSpec().Volume), status.TypedSpec().SourcePath)
+			asrt.NotEqual(contentLibraryObjectPath(libraryPath, dgst), status.TypedSpec().SourcePath)
 		},
 	)
 
 	// libvirt refuses to start a domain whose backing file it cannot open, so a running domain is
-	// what proves QEMU reached the image through the library's mount and its labels.
+	// what proves QEMU reached the pool copy and its labels.
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 
-	// The guest holds the library file open; the image must still be listed as the library's own.
-	suite.Require().Contains(
-		suite.runVirsh(node, "domblklist", name, "--details"),
-		filepath.Join(libraryPath, isoName),
-	)
+	// QEMU opens only the independent pool copy.
+	blocks := suite.runVirsh(node, "domblklist", name, "--details")
+	suite.Require().Contains(blocks, poolPath)
+	suite.Require().NotContains(blocks, contentLibraryObjectPath(libraryPath, dgst))
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, hypervisorcfg.VirtualMachineConfigKind, name)
 	suite.assertNoDomain(node, name)
@@ -329,9 +338,7 @@ func (suite *LibvirtSuite) digestOfISO() digest.Digest {
 	return digester.Digest()
 }
 
-// TestCDROMImageIsHeldWhileAttached covers the holds which keep the medium under a running guest:
-// the library file a domain is reading from cannot be deleted, and swapping the image frees the
-// previous one only once the domain has actually been redefined.
+// TestCDROMImageIsHeldWhileAttached checks pool-copy lifetime, alias independence and identity changes.
 func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	suite.requireContentLibrarySupport()
 
@@ -341,6 +348,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, poolPath := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	const replacementISO = "replacement.iso"
 
@@ -354,6 +362,7 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	installDisk := hypervisorcfg.VirtualMachineDisk{
 		DiskName:      "install",
+		DiskPool:      pool,
 		DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 		DiskBootOrder: 1,
 		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
@@ -384,24 +393,25 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
-			asrt.Equal(filepath.Join(libraryPath, isoName), status.TypedSpec().SourcePath)
+			asrt.Equal(filepath.Join(poolPath, status.TypedSpec().Volume), status.TypedSpec().SourcePath)
+			asrt.NotContains(status.TypedSpec().SourcePath, libraryPath+"/objects/")
 		},
 	)
 
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 
-	// The attached alias cannot be deleted while the guest reads it. Existing aliases
-	// are create-only, regardless of whether they are attached.
+	// Existing aliases remain create-only, but deleting one cannot invalidate a pool copy.
+	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos overwritten")))
+	suite.Require().Equal(codes.AlreadyExists, grpcstatus.Code(err))
 	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
 		LibraryId: library,
 		Target:    &machineapi.ContentLibraryServiceDeleteRequest_Name{Name: isoName},
 	})
-	suite.Require().Error(err)
-	suite.Require().Equal(codes.FailedPrecondition, grpcstatus.Code(err))
-
+	suite.Require().NoError(err)
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 	_, err = suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos overwritten")))
-	suite.Require().Error(err)
-	suite.Require().Equal(codes.AlreadyExists, grpcstatus.Code(err))
+	suite.Require().NoError(err)
+	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 
 	swappedDisk := installDisk
 	swappedDisk.ProvisionConfig.FromImageConfig = &hypervisorcfg.VirtualMachineDiskFromImage{
@@ -415,7 +425,8 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, swappedDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
-			asrt.Equal(filepath.Join(libraryPath, replacementISO), status.TypedSpec().SourcePath)
+			asrt.Equal(filepath.Join(poolPath, status.TypedSpec().Volume), status.TypedSpec().SourcePath)
+			asrt.NotContains(status.TypedSpec().SourcePath, libraryPath+"/objects/")
 		},
 	)
 
@@ -426,10 +437,9 @@ func (suite *LibvirtSuite) TestCDROMImageIsHeldWhileAttached() {
 
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 
-	suite.Require().Contains(
-		suite.runVirsh(node, "domblklist", name, "--details"),
-		filepath.Join(libraryPath, replacementISO),
-	)
+	blocks := suite.runVirsh(node, "domblklist", name, "--details")
+	suite.Require().Contains(blocks, poolPath)
+	suite.Require().NotContains(blocks, libraryPath+"/objects/")
 
 	// Nothing reads the first image any more, so it may go.
 	_, err = suite.Client.ContentLibraryService().Delete(nodeCtx, &machineapi.ContentLibraryServiceDeleteRequest{
@@ -508,6 +518,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 	suite.AssertServicesRunning(suite.ctx, node, map[string]string{"ext-virtqemud": "Running"})
 
 	library, libraryPath := provisionContentLibrary(&suite.APISuite, nodeCtx, node)
+	pool, poolPath := suite.provisionContentLibraryPool(nodeCtx, node, library)
 
 	_, err := suite.Client.ContentLibraryUpload(nodeCtx, library, isoName, "", bytes.NewReader([]byte("talos held cdrom")))
 	suite.Require().NoError(err)
@@ -516,6 +527,7 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	installDisk := hypervisorcfg.VirtualMachineDisk{
 		DiskName:      "install",
+		DiskPool:      pool,
 		DiskType:      hypervisorhelpers.VirtualMachineDiskTypeCDROM,
 		DiskBootOrder: 1,
 		ProvisionConfig: hypervisorcfg.VirtualMachineDiskProvision{
@@ -543,23 +555,24 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 
 	suite.PatchMachineConfig(nodeCtx, doc)
 
-	source := filepath.Join(libraryPath, isoName)
+	var source string
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{diskStatusID(name, installDisk)},
 		func(status *hypervisor.VirtualMachineDiskStatus, asrt *assert.Assertions) {
 			asrt.True(status.TypedSpec().Phase == hypervisor.VirtualMachineDiskPhaseReady, "error: %q", status.TypedSpec().Error)
-			asrt.Equal(source, status.TypedSpec().SourcePath)
+			source = status.TypedSpec().SourcePath
+			asrt.Equal(filepath.Join(poolPath, status.TypedSpec().Volume), source)
+			asrt.NotContains(source, libraryPath+"/objects/")
 		},
 	)
 
 	suite.assertRunningTransientDomainWithDevices(node, name, 1, 1, 0)
 	suite.Require().Contains(suite.runVirsh(node, "domblklist", name, "--details"), source)
 
-	// Every link of the chain is in place: the domain holds the disk status, the disk holds the
-	// library status, and the library holds the mount its image is being read out of.
+	// Only the pool copy remains attached. The source library has no consumer holds.
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.State(), []string{library},
 		func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-			asrt.False(status.Metadata().Finalizers().Empty(), "the disk must hold the library")
+			asrt.True(status.Metadata().Finalizers().Empty(), "a completed copy must release its library")
 		},
 	)
 
@@ -584,6 +597,46 @@ func (suite *LibvirtSuite) TestContentLibraryIsReleasedWithItsGuest() {
 	rtestutils.AssertNoResource[*block.VolumeMountStatus](nodeCtx, suite.T(), suite.Client.State(), mountRequestID)
 }
 
+// provisionContentLibraryPool creates a distinct pool directory on the library's filesystem volume.
+// The pool owns its own mount request and files, independently of the source library resource.
+func (suite *LibvirtSuite) provisionContentLibraryPool(ctx context.Context, node, library string) (string, string) {
+	suite.T().Helper()
+	suite.AssertServicesRunning(ctx, node, map[string]string{"ext-virtstoraged": "Running"})
+
+	pool := storagecfg.NewStoragePoolConfigV1Alpha1()
+	pool.MetaName = "copy-" + uuid.NewString()
+	pool.VolumeConfig.VolumeName = library
+
+	var target string
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cancel()
+
+		nodeCtx := client.WithNode(cleanupCtx, node)
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.StoragePoolConfigKind, pool.MetaName)
+		rtestutils.AssertNoResource[*storage.StoragePoolStatus](nodeCtx, suite.T(), suite.Client.State(), pool.MetaName)
+
+		if target != "" {
+			output, code := suite.RunDebugContainer(cleanupCtx, node, "/nix/var/nix/profiles/default/bin/busybox", "rm", "-rf", "--", target)
+			suite.Assert().Zero(code, "remove test-created pool directory: %s", output)
+		}
+	})
+	suite.PatchMachineConfig(ctx, pool)
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), pool.MetaName,
+		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
+			asrt.Equal(storage.StoragePoolPhaseReady, status.TypedSpec().Phase, status.TypedSpec().Error)
+
+			if !asrt.Equal(pool.MetaName, filepath.Base(status.TypedSpec().TargetPath)) || !asrt.True(filepath.IsAbs(status.TypedSpec().TargetPath)) {
+				return
+			}
+
+			target = filepath.Clean(status.TypedSpec().TargetPath)
+		})
+
+	return pool.MetaName, target
+}
+
 // diskStatusID is the ID the disk status of one configured disk is published under.
 //
 // The ID covers what the disk is provisioned from as well as its name, so it is built from the same
@@ -592,7 +645,10 @@ func diskStatusID(vm string, disk hypervisorcfg.VirtualMachineDisk) string {
 	image := disk.ProvisionConfig.FromImageConfig
 
 	return hypervisor.VirtualMachineDiskStatusID(vm, hypervisor.VirtualMachineDiskSpec{
-		Name: disk.Name(),
+		Name:   disk.Name(),
+		Pool:   disk.Pool(),
+		Format: disk.Format().String(),
+		Type:   disk.Type().String(),
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{
 				Library: image.ImageLibrary,

@@ -42,10 +42,13 @@ func TestDeleteObject(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		referenced bool
+		force      bool
 		code       codes.Code
 	}{
 		{name: "unreferenced", code: codes.OK},
 		{name: "referenced", referenced: true, code: codes.FailedPrecondition},
+		{name: "forced", referenced: true, force: true, code: codes.OK},
+		{name: "forced unreferenced", force: true, code: codes.OK},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
@@ -70,6 +73,7 @@ func TestDeleteObject(t *testing.T) {
 			_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{
 				LibraryId: testLibrary,
 				Target:    &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: hash.String()},
+				Force:     tc.force,
 			})
 			require.Equal(t, tc.code, grpcstatus.Code(err), "%v", err)
 
@@ -117,6 +121,10 @@ func TestDeleteRejectsInvalidTarget(t *testing.T) {
 		}},
 		{name: "invalid digest", request: &machine.ContentLibraryServiceDeleteRequest{
 			Target: &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: "sha256:../escape"},
+		}},
+		{name: "force alias", request: &machine.ContentLibraryServiceDeleteRequest{
+			Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.iso"},
+			Force:  true,
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -310,12 +318,6 @@ func TestListSkipsObjectDeletedDuringEnumeration(t *testing.T) {
 	for _, payload := range []string{"first", "second", "third"} {
 		require.NoError(t, upload(t, svc, payload+".iso", payload))
 
-		_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{
-			LibraryId: testLibrary,
-			Target:    &machine.ContentLibraryServiceDeleteRequest_Name{Name: payload + ".iso"},
-		})
-		require.NoError(t, err)
-
 		hashes = append(hashes, digest.SHA256.FromString(payload).String())
 	}
 
@@ -328,6 +330,7 @@ func TestListSkipsObjectDeletedDuringEnumeration(t *testing.T) {
 		_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{
 			LibraryId: testLibrary,
 			Target:    &machine.ContentLibraryServiceDeleteRequest_Sha256{Sha256: hashes[1]},
+			Force:     true,
 		})
 
 		return err
@@ -777,6 +780,46 @@ func TestDeleteRejectsNonObjectAliases(t *testing.T) {
 	}
 }
 
+// A held disk reads copied immutable bytes; removing a library name cannot change its object.
+func TestDeletesAliasOfHeldImageWithoutRemovingObject(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+
+	require.NoError(t, upload(t, svc, "image.raw", "talos"))
+	require.NoError(t, upload(t, svc, "other.raw", "talos"))
+
+	object := filepath.Join(path, "objects", "sha256", digest.SHA256.FromString("talos").Encoded())
+
+	diskStatus := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/install@aaaaaaaaaaaa")
+	diskStatus.TypedSpec().VirtualMachine = "vm"
+	diskStatus.TypedSpec().Name = "install"
+	diskStatus.TypedSpec().Image = hypervisor.VirtualMachineDiskFromImageSpec{Library: testLibrary, File: "image.raw"}
+	require.NoError(t, st.Create(t.Context(), diskStatus))
+	require.NoError(t, st.AddFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
+
+	_, err := svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
+	require.NoError(t, err)
+	require.NoFileExists(t, filepath.Join(path, "image.raw"))
+
+	contents, err := os.ReadFile(object)
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+	contents, err = os.ReadFile(filepath.Join(path, "other.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+
+	// A previously held name remains create-only until it is explicitly deleted.
+	require.NoError(t, upload(t, svc, "image.raw", "replacement"))
+
+	contents, err = os.ReadFile(object)
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+	contents, err = os.ReadFile(filepath.Join(path, "other.raw"))
+	require.NoError(t, err)
+	assert.Equal(t, "talos", string(contents))
+}
+
 // A disk waiting for an image which is not in its library yet is how that image is meant to arrive:
 // a name nothing holds, because nothing can be reading a file which does not exist.
 func TestUploadsAnImageADiskIsWaitingFor(t *testing.T) {
@@ -864,6 +907,35 @@ func TestRefusesToOverwriteAnImageNoDomainHolds(t *testing.T) {
 	}
 }
 
+func TestHeldCloudInitSeedDoesNotKeepLibraryAlias(t *testing.T) {
+	t.Parallel()
+
+	svc, path, st := setupWithState(t, true)
+
+	const name = "cloud-init-guest.iso"
+
+	require.NoError(t, upload(t, svc, name, "original"))
+
+	object := filepath.Join(path, "objects", "sha256", digest.SHA256.FromString("original").Encoded())
+
+	seed := hypervisor.NewCloudInitStatus(hypervisor.NamespaceName, "guest@seed")
+	seed.TypedSpec().VirtualMachine = "guest"
+	require.NoError(t, st.Create(t.Context(), seed))
+	require.NoError(t, st.AddFinalizer(t.Context(), seed.Metadata(), "hypervisor.VirtualMachineController"))
+
+	err := upload(t, svc, name, "replacement")
+	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
+
+	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: name}})
+	require.NoError(t, err)
+	require.NoFileExists(t, filepath.Join(path, name))
+
+	contents, err := os.ReadFile(object)
+	require.NoError(t, err)
+	assert.Equal(t, "original", string(contents))
+	assert.True(t, libraryFinalizers(t, st).Empty(), "successful mutations release their markers")
+}
+
 // libraryMetadata points at the status the mutation markers live on.
 func libraryMetadata() resource.Pointer {
 	return hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary).Metadata()
@@ -928,11 +1000,6 @@ func TestGivesBackWhatItClaimed(t *testing.T) {
 	err := upload(t, svc, "image.raw", "refused")
 	assert.Equal(t, codes.AlreadyExists, grpcstatus.Code(err))
 	assert.True(t, libraryFinalizers(t, st).Empty(), "a refused upload gives its claim back")
-
-	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
-	require.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
-	assert.True(t, libraryFinalizers(t, st).Empty(), "a refused delete gives its claim back")
-	require.NoError(t, st.RemoveFinalizer(t.Context(), diskStatus.Metadata(), "hypervisor.VirtualMachineController"))
 
 	_, err = svc.Delete(t.Context(), &machine.ContentLibraryServiceDeleteRequest{LibraryId: testLibrary, Target: &machine.ContentLibraryServiceDeleteRequest_Name{Name: "image.raw"}})
 	require.NoError(t, err)

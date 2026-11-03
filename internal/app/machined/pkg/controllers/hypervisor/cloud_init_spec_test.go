@@ -35,7 +35,7 @@ func TestCloudInitProjectionSuite(t *testing.T) {
 func (s *CloudInitProjectionSuite) TestExternalVMUpdatesAndRemovesSeed() {
 	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, "external")
 	vm.TypedSpec().CloudInit = &hypervisor.VirtualMachineCloudInitSpec{
-		Library:  "images",
+		Pool:     "pool1",
 		MetaData: "instance-id: external\n",
 		UserData: "secret",
 	}
@@ -43,7 +43,7 @@ func (s *CloudInitProjectionSuite) TestExternalVMUpdatesAndRemovesSeed() {
 	s.Create(vm)
 
 	ctest.AssertResource(s, "external", func(res *hypervisor.CloudInitSpec, a *assert.Assertions) {
-		a.Equal("images", res.TypedSpec().Library)
+		a.Equal("pool1", res.TypedSpec().Pool)
 		a.Equal("secret", res.TypedSpec().UserData)
 		a.Equal("hypervisor.CloudInitSpecController", res.Metadata().Owner())
 	})

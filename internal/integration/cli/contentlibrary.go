@@ -134,6 +134,19 @@ func (suite *ContentLibrarySuite) TestRoundTrip() {
 		base.StdoutEmpty(),
 	)
 
+	// Recreate two aliases to the same, test-owned object and remove both with force.
+	for _, alias := range []string{name, name + ".second"} {
+		suite.RunCLI(
+			[]string{"hypervisor", "content-library", "upload", "--nodes", node, "--name", alias, testContentLibrary, "-"},
+			base.WithStdin(strings.NewReader(contents)),
+		)
+	}
+
+	suite.RunCLI(
+		[]string{"hypervisor", "content-library", "delete", "--nodes", node, "--force", testContentLibrary, object},
+		base.StdoutEmpty(),
+	)
+
 	suite.RunCLI(
 		[]string{"hypervisor", "content-library", "list", "--nodes", node, testContentLibrary},
 		base.StdoutShouldNotMatch(nameRegexp),
