@@ -14,6 +14,16 @@ description: |
     exclusive slice must not overlap any other root, and every other root must then be
     bounded explicitly.
 
+    The policy is applied once at boot, before the workloads it governs start, and never
+    re-applied. Adding, changing or removing the document takes effect after the next
+    reboot; apply and patch print a warning saying so. Talos does not watch or repair the
+    CPU masks afterwards, and never restarts or moves running processes, pods or virtual
+    machines.
+
+    Bounding `kubepods` switches the kubelet to the `static` CPU manager policy with
+    `reservedSystemCPUs` set to the online CPUs outside `kubepods`, so at least one online
+    CPU must stay outside `kubepods`.
+
     In container mode the document is validated but declares no policy.
 title: CPUPartitionConfig
 ---

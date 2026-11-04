@@ -149,7 +149,6 @@ func All() []meta.ResourceWithRD {
 		&k8s.EtcdEncryptionConfig{},
 		&k8s.ExtraManifestsConfig{},
 		&k8s.KubeletConfig{},
-		&k8s.KubeletCPUReservation{},
 		&k8s.KubeletKubeconfig{},
 		&k8s.KubeletLifecycle{},
 		&k8s.KubeletSpec{},

@@ -8,13 +8,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"maps"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -24,38 +21,28 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/cpupartition"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
-	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// virtualMachineRuntimeName is the finalizer the virtual machine runtime holds on domain specs
-// and placements while a domain may exist.
-const virtualMachineRuntimeName = "hypervisor.VirtualMachineController"
+const (
+	partitionMember = "member"
+	partitionRoot   = "root"
+)
 
-// CPUPartitionController applies the desired CPU partition policy to the kernel.
+// CPUPartitionController applies the CPU partition policy of the boot once.
 //
-// It is the only writer of cpuset.cpus on the fixed roots and the virtual machine partitions, and
-// the producer of the kubelet CPU reservation and of virtual machine CPU placements. It never
-// stops, pauses or restarts a virtual machine.
+// It sets every bounded cgroup, verifies them and publishes a ready CPUPartitionStatus, after which
+// it never touches the cgroups again: the masks are not watched or repaired. A failed setup
+// publishes a status which is not ready, logs the error and is retried until it first succeeds.
+// Without a policy, and in container
+// mode, the status is ready without any cgroup access.
 //
-// Admission protocol: the virtual machine runtime claims a domain spec or placement (finalizer)
-// before it reads the status phase, and starts only while the phase admits and no enforcement
-// loss is reported. The controller publishes a closed phase before it takes the occupancy
-// snapshot that any write, grant or withdrawal relies on, so a claim taken before the close is in
-// the snapshot and a claim taken after it reads the closed phase.
+// Exclusive slices are remote partition roots: the virtual machine root stays a member and
+// delegates their CPUs through its cpuset.cpus.exclusive, every other cgroup stays a member.
 type CPUPartitionController struct {
 	V1Alpha1Mode machineruntime.Mode
 	// FS defaults to the host cgroup and sysfs mounts.
 	FS cpupartition.CgroupFS
-	// PollInterval is the re-check period while a transition waits on the filesystem.
-	PollInterval time.Duration
-	// BarrierTimeout reports a barrier pending for longer as an error; it keeps waiting.
-	BarrierTimeout time.Duration
-
-	barrier      string
-	barrierSince time.Time
 }
 
 // Name implements controller.Controller interface.
@@ -72,38 +59,6 @@ func (ctrl *CPUPartitionController) Inputs() []controller.Input {
 			ID:        optional.Some(runtime.CPUPartitionSpecID),
 			Kind:      controller.InputWeak,
 		},
-		{
-			Namespace: k8s.NamespaceName,
-			Type:      k8s.KubeletSpecType,
-			ID:        optional.Some(k8s.KubeletID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.VirtualMachineSpecType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.VirtualMachineDomainSpecType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.VirtualMachineDomainStatusType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: hypervisor.NamespaceName,
-			Type:      hypervisor.VirtualMachineCPUPlacementType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			// Wake-up only: the online set is read from sysfs.
-			Namespace: hardware.NamespaceName,
-			Type:      hardware.CPUCoreType,
-			Kind:      controller.InputWeak,
-		},
 	}
 }
 
@@ -114,335 +69,275 @@ func (ctrl *CPUPartitionController) Outputs() []controller.Output {
 			Type: runtime.CPUPartitionStatusType,
 			Kind: controller.OutputExclusive,
 		},
-		{
-			Type: k8s.KubeletCPUReservationType,
-			Kind: controller.OutputExclusive,
-		},
-		{
-			Type: hypervisor.VirtualMachineCPUPlacementType,
-			Kind: controller.OutputExclusive,
-		},
 	}
 }
 
 // Run implements controller.Controller interface.
+//
+// A failed setup returns an error, so the controller runtime retries it with backoff. Once ready it
+// returns nil and is not run again; a restart after an error before that finds the ready status
+// and does nothing.
 func (ctrl *CPUPartitionController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.FS == nil {
 		ctrl.FS = cpupartition.HostFS{CgroupRoot: constants.CgroupMountPath, SysfsPath: "/sys"}
 	}
-
-	if ctrl.PollInterval == 0 {
-		ctrl.PollInterval = 2 * time.Second
-	}
-
-	if ctrl.BarrierTimeout == 0 {
-		ctrl.BarrierTimeout = 5 * time.Minute
-	}
-
-	var poll <-chan time.Time
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 		case <-r.EventCh():
-		case <-poll:
 		}
 
-		pending, err := ctrl.reconcile(ctx, r, logger)
+		done, err := ctrl.reconcile(ctx, r)
 		if err != nil {
+			logger.Warn("CPU partition policy of the boot is not applied", zap.Error(err))
+
 			return err
 		}
 
-		// Only a transition waiting on the filesystem polls; resource changes arrive as events.
-		poll = nil
-		if pending {
-			poll = time.After(ctrl.PollInterval)
+		if done {
+			return nil
 		}
-
-		r.ResetRestartBackoff()
 	}
 }
 
-// reconcile returns true while the transition waits on a filesystem change.
-func (ctrl *CPUPartitionController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) (bool, error) {
-	spec, err := safe.ReaderGetByID[*runtime.CPUPartitionSpec](ctx, r, runtime.CPUPartitionSpecID)
-	if err != nil && !state.IsNotFoundError(err) {
-		return false, fmt.Errorf("error getting CPU partition spec: %w", err)
-	}
-
-	if spec == nil {
-		// Projection pending: nothing is known yet.
-		return false, nil
-	}
-
-	if ctrl.V1Alpha1Mode.InContainer() {
-		return false, ctrl.publishReservation(ctx, r, nil)
-	}
-
+// reconcile applies the policy of the boot unless it is already applied; it is done once the status is ready.
+func (ctrl *CPUPartitionController) reconcile(ctx context.Context, r controller.Runtime) (bool, error) {
 	status, err := safe.ReaderGetByID[*runtime.CPUPartitionStatus](ctx, r, runtime.CPUPartitionStatusID)
 	if err != nil && !state.IsNotFoundError(err) {
 		return false, fmt.Errorf("error getting CPU partition status: %w", err)
 	}
 
-	if !spec.TypedSpec().Enabled && status == nil {
-		// No policy and nothing applied: no filesystem access at all.
-		return false, errors.Join(ctrl.publishReservation(ctx, r, nil), cleanupPlacements(ctx, r, nil))
+	if status != nil && status.TypedSpec().Ready {
+		return true, nil
 	}
 
-	return ctrl.converge(ctx, r, logger, spec, status)
-}
-
-func (ctrl *CPUPartitionController) converge(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	spec *runtime.CPUPartitionSpec, status *runtime.CPUPartitionStatus,
-) (bool, error) {
-	obs, err := ctrl.observe(ctx, r, spec, status)
+	spec, err := safe.ReaderGetByID[*runtime.CPUPartitionSpec](ctx, r, runtime.CPUPartitionSpecID)
 	if err != nil {
-		return false, err
-	}
-
-	if rejected, err := ctrl.rejected(ctx, r, obs); rejected {
-		return obs.waitsOnKernel(), err
-	}
-
-	if obs.settled() {
-		return ctrl.finish(ctx, r, obs, false)
-	}
-
-	// Close admission, then take the authoritative snapshot: a claim taken before the close is
-	// visible now, a claim taken after it reads the closed phase.
-	if err = ctrl.closeAdmission(ctx, r, obs); err != nil {
-		return false, err
-	}
-
-	if obs, err = ctrl.observe(ctx, r, spec, obs.status); err != nil {
-		return false, err
-	}
-
-	if rejected, err := ctrl.rejected(ctx, r, obs); rejected {
-		return obs.waitsOnKernel(), err
-	}
-
-	if !obs.enabled() {
-		return ctrl.restore(ctx, r, logger, obs)
-	}
-
-	if done, err := ctrl.execute(ctx, r, logger, obs); !done {
-		return true, err
-	}
-
-	return ctrl.finish(ctx, r, obs, true)
-}
-
-// rejected publishes a known enforcement loss, an invalid desired policy or a rejected
-// transition: nothing applied, reserved or granted changes.
-func (ctrl *CPUPartitionController) rejected(ctx context.Context, r controller.Runtime, obs *observation) (bool, error) {
-	switch {
-	case len(obs.loss) > 0:
-		obs.applied.Blocked = obs.loss
-	case len(obs.unverified) > 0:
-		// A written mask not yet in effect outranks how the desired policy is classified: admission
-		// stays closed and the write keeps being verified.
-		return true, ctrl.unverified(ctx, r, obs, obs.unverified)
-	case obs.desiredErr != nil:
-		obs.applied.Blocked = []runtime.CPUPartitionBlock{{Reason: "invalid desired policy: " + obs.desiredErr.Error()}}
-	case obs.result.IsBlocked():
-		obs.applied.Blocked = nil
-
-		for _, block := range obs.result.Blocked {
-			obs.applied.Blocked = append(obs.applied.Blocked, runtime.CPUPartitionBlock{
-				Reason:          block.Reason,
-				VirtualMachines: block.Consumers,
-				CPUs:            cpusString(block.CPUs),
-			})
+		if state.IsNotFoundError(err) {
+			return false, nil
 		}
-	default:
-		return false, nil
+
+		return false, fmt.Errorf("error getting CPU partition spec: %w", err)
 	}
 
-	ctrl.barrier = ""
-	obs.applied.Error, obs.applied.Waiting = "", ""
+	applied := runtime.CPUPartitionStatusSpec{Ready: true}
 
-	// Blocked keeps admission open under the applied policy; a removed policy keeps it closed.
-	obs.applied.Phase = runtime.CPUPartitionPhaseBlocked
-	if !obs.enabled() {
-		obs.applied.Phase = runtime.CPUPartitionPhaseRestoring
+	if !ctrl.V1Alpha1Mode.InContainer() && spec.TypedSpec().Enabled {
+		applied, err = ctrl.apply(spec.TypedSpec())
 	}
 
-	return true, ctrl.publishStatus(ctx, r, obs)
+	if publishErr := publishCPUPartitionStatus(ctx, r, applied); publishErr != nil {
+		return false, publishErr
+	}
+
+	return err == nil, err
 }
 
-// finish runs once the applied masks equal the desired ones: targets dropped from the policy are
-// released, placements are granted and withdrawn, and admission opens. A dropped slice still
-// placed or populated is only reported: the machines in it are admitted like any other, which
-// is how they leave it.
-func (ctrl *CPUPartitionController) finish(ctx context.Context, r controller.Runtime, obs *observation, closed bool) (bool, error) {
-	ctrl.barrier = ""
-
-	// Ready, adoption and admission rest on every desired boundary actually being in effect.
-	if failures := ctrl.verifyDesired(obs); len(failures) > 0 {
-		return true, ctrl.unverified(ctx, r, obs, failures)
-	}
-
-	obs.applied.Error, obs.applied.Blocked = "", nil
-
-	pending, err := ctrl.release(ctx, r, obs, closed)
+func (ctrl *CPUPartitionController) apply(spec *runtime.CPUPartitionSpecSpec) (runtime.CPUPartitionStatusSpec, error) {
+	online, err := ctrl.FS.Online()
 	if err != nil {
-		return false, err
+		return runtime.CPUPartitionStatusSpec{}, fmt.Errorf("error reading online CPUs: %w", err)
 	}
 
-	obs.adoptMatching()
-
-	if obs.desired.KubeletReservation == nil {
-		// Nothing to stage: the kubelet need not wait for this controller.
-		if err = ctrl.publishReservation(ctx, r, nil); err != nil {
-			return false, err
-		}
-	}
-
-	if err = ctrl.admit(ctx, r, obs); err != nil {
-		return false, err
-	}
-
-	obs.applied.Phase = runtime.CPUPartitionPhaseReady
-	obs.applied.Exclusive = exclusiveSlices(obs.spec)
-
-	// Unattributed tasks keep refusing exclusive owners until they exit, which only polling sees.
-	return pending || obs.residual, ctrl.publishStatus(ctx, r, obs)
-}
-
-// adoptMatching owns every already-matching desired mask from now on, so a later foreign change is
-// detected and admission may rely on it; restoring it leaves the value it was found with.
-func (obs *observation) adoptMatching() {
-	for target, set := range obs.desired.Sets {
-		if _, managed := obs.applied.Target(target.Key()); !managed && !obs.restored[target] && obs.actual.Sets[target].Equals(set) {
-			obs.applied.SetTarget(runtime.CPUPartitionTargetStatus{Key: target.Key(), Initial: set.String(), LastApplied: set.String(), Intended: set.String()})
-		}
-	}
-}
-
-// unverified keeps admission closed while written masks are not in effect; it is retried by polling.
-func (ctrl *CPUPartitionController) unverified(ctx context.Context, r controller.Runtime, obs *observation, failures []string) error {
-	obs.applied.Phase = runtime.CPUPartitionPhaseConverging
-	if !obs.enabled() {
-		obs.applied.Phase = runtime.CPUPartitionPhaseRestoring
-	}
-
-	obs.applied.Blocked, obs.applied.Waiting = nil, ""
-	obs.applied.Error = strings.Join(failures, "; ")
-
-	return ctrl.publishStatus(ctx, r, obs)
-}
-
-// verifyDesired checks the effective set of every target the policy bounds.
-func (ctrl *CPUPartitionController) verifyDesired(obs *observation) []string {
-	var failures []string
-
-	for _, target := range slices.SortedFunc(maps.Keys(obs.desired.Sets), compareTargets) {
-		if obs.restored[target] {
-			continue
-		}
-
-		if err := ctrl.verifyEffective(target, obs.desired.Sets[target].String()); err != nil {
-			failures = append(failures, err.Error())
-		}
-	}
-
-	return failures
-}
-
-func (ctrl *CPUPartitionController) closeAdmission(ctx context.Context, r controller.Runtime, obs *observation) error {
-	switch {
-	case !obs.enabled():
-		obs.applied.Phase = runtime.CPUPartitionPhaseRestoring
-	case obs.applied.Phase != runtime.CPUPartitionPhaseConverging:
-		obs.applied.Phase = runtime.CPUPartitionPhaseApplying
-	}
-
-	obs.applied.Blocked = nil
-
-	return ctrl.publishStatus(ctx, r, obs)
-}
-
-// publishStatus writes the status; an unchanged status is not rewritten.
-func (ctrl *CPUPartitionController) publishStatus(ctx context.Context, r controller.Runtime, obs *observation) error {
-	res, err := safe.WriterModifyWithResult(ctx, r, runtime.NewCPUPartitionStatus(), func(res *runtime.CPUPartitionStatus) error {
-		*res.TypedSpec() = obs.applied.DeepCopy()
-
-		return nil
-	})
+	policy, err := cpupartition.NewPolicy(spec, online)
 	if err != nil {
-		return fmt.Errorf("error publishing CPU partition status: %w", err)
+		return runtime.CPUPartitionStatusSpec{}, err
 	}
 
-	obs.status = res
+	if err = ctrl.setup(policy); err != nil {
+		return runtime.CPUPartitionStatusSpec{}, err
+	}
 
-	return nil
+	return policy.Status(), nil
 }
 
-func (ctrl *CPUPartitionController) publishReservation(ctx context.Context, r controller.Runtime, reserved *cpuset.CPUSet) error {
-	if err := safe.WriterModify(ctx, r, k8s.NewKubeletCPUReservation(), func(res *k8s.KubeletCPUReservation) error {
-		if reserved == nil {
-			*res.TypedSpec() = k8s.KubeletCPUReservationSpec{}
-		} else {
-			*res.TypedSpec() = k8s.KubeletCPUReservationSpec{Managed: true, ReservedCPUs: reserved.String()}
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("error publishing kubelet CPU reservation: %w", err)
+// setup writes every cgroup of the boot policy, parents first, then verifies all of them. It is
+// idempotent, so a retry after a partial failure resumes towards the same policy.
+func (ctrl *CPUPartitionController) setup(policy cpupartition.Policy) error {
+	if err := ctrl.preflight(policy); err != nil {
+		return err
 	}
 
-	return nil
-}
-
-// cleanupPlacements withdraws every placement not in keep; a claimed one stays tearing down
-// until the runtime releases it.
-func cleanupPlacements(ctx context.Context, r controller.ReaderWriter, keep map[string]struct{}) error {
-	placements, err := safe.ReaderListAll[*hypervisor.VirtualMachineCPUPlacement](ctx, r)
-	if err != nil {
-		return fmt.Errorf("error listing CPU placements: %w", err)
-	}
-
-	for placement := range placements.All() {
-		if _, ok := keep[placement.Metadata().ID()]; ok && placement.Metadata().Phase() == resource.PhaseRunning {
-			continue
-		}
-
-		if err = withdrawPlacement(ctx, r, placement); err != nil {
+	for _, mask := range policy.Masks {
+		if err := ctrl.write(mask); err != nil {
 			return err
 		}
 	}
 
-	return nil
-}
+	var errs error
 
-// withdrawPlacement tears the placement down and destroys it once the runtime released it.
-func withdrawPlacement(ctx context.Context, r controller.ReaderWriter, placement *hypervisor.VirtualMachineCPUPlacement) error {
-	ready, err := r.Teardown(ctx, placement.Metadata())
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			return nil
-		}
-
-		return fmt.Errorf("error withdrawing CPU placement %q: %w", placement.Metadata().ID(), err)
+	for _, mask := range policy.Masks {
+		errs = errors.Join(errs, ctrl.verify(policy.Partitioned, mask))
 	}
 
-	if !ready {
+	return errs
+}
+
+// preflight refuses setup over a virtual machine root which already runs tasks: they were not
+// started under the policy, and moving them is not done. The populated flag is hierarchical, so
+// this covers its slices and any unknown children.
+func (ctrl *CPUPartitionController) preflight(policy cpupartition.Policy) error {
+	if !slices.ContainsFunc(policy.Masks, func(mask cpupartition.Mask) bool { return mask.Target == cpupartition.VirtualMachinesRoot }) {
 		return nil
 	}
 
-	if err = r.Destroy(ctx, placement.Metadata()); err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error destroying CPU placement %q: %w", placement.Metadata().ID(), err)
+	path := cpupartition.VirtualMachinesRoot.CgroupPath()
+
+	exists, err := ctrl.FS.Exists(path)
+	if err != nil || !exists {
+		return err
+	}
+
+	populated, err := ctrl.FS.Populated(path)
+	if err != nil {
+		return fmt.Errorf("error reading the tasks of %s: %w", cpupartition.VirtualMachinesRoot, err)
+	}
+
+	if populated {
+		return fmt.Errorf("%s: already runs tasks started before the CPU partition policy", cpupartition.VirtualMachinesRoot)
 	}
 
 	return nil
 }
 
-func cpusString(set cpuset.CPUSet) string {
-	if set.IsEmpty() {
-		return ""
+// write creates the cgroup and writes its mask, its exclusive CPUs and its partition mode, in that order.
+func (ctrl *CPUPartitionController) write(mask cpupartition.Mask) error {
+	path := mask.Target.CgroupPath()
+
+	if err := ctrl.FS.Ensure(path); err != nil {
+		return fmt.Errorf("error creating %s: %w", mask.Target, err)
 	}
 
-	return set.String()
+	if err := ctrl.FS.SetCPUs(path, mask.CPUs.String()); err != nil {
+		return fmt.Errorf("error writing %s: %w", mask.Target, err)
+	}
+
+	if !mask.ExclusiveCPUs.IsEmpty() {
+		if err := ctrl.FS.SetExclusive(path, mask.ExclusiveCPUs.String()); err != nil {
+			return fmt.Errorf("error writing the exclusive CPUs of %s: %w", mask.Target, err)
+		}
+	}
+
+	if !mask.Exclusive {
+		return nil
+	}
+
+	return ctrl.promote(mask)
+}
+
+// promote makes the slice a partition root. An invalid root is written again, never accepted; any
+// other unexpected mode is left alone.
+func (ctrl *CPUPartitionController) promote(mask cpupartition.Mask) error {
+	path := mask.Target.CgroupPath()
+
+	mode, err := ctrl.FS.Partition(path)
+	if err != nil {
+		return fmt.Errorf("error reading the partition of %s: %w", mask.Target, err)
+	}
+
+	switch {
+	case mode == partitionRoot:
+		return nil
+	case mode != partitionMember && !strings.HasPrefix(mode, partitionRoot+" "):
+		return fmt.Errorf("%s: unexpected partition %q", mask.Target, mode)
+	}
+
+	if err = ctrl.FS.SetPartition(path, partitionRoot); err != nil {
+		return fmt.Errorf("error making %s a partition root: %w", mask.Target, err)
+	}
+
+	return nil
+}
+
+// verify reads back the configured CPUs, the partition mode and exclusive CPUs when an exclusive
+// slice makes them matter, and the effective CPUs of the target, each once.
+func (ctrl *CPUPartitionController) verify(partitioned bool, mask cpupartition.Mask) error {
+	path := mask.Target.CgroupPath()
+
+	type check struct {
+		what string
+		want cpuset.CPUSet
+		read func() (cpuset.CPUSet, error)
+	}
+
+	checks := []check{{"configured CPUs", mask.CPUs, func() (cpuset.CPUSet, error) { return readCPUs(ctrl.FS.CPUs, path) }}}
+
+	if partitioned {
+		if err := ctrl.verifyPartition(mask); err != nil {
+			return err
+		}
+
+		if !mask.ExclusiveCPUs.IsEmpty() {
+			checks = append(checks, check{"exclusive CPUs", mask.ExclusiveCPUs, func() (cpuset.CPUSet, error) { return readCPUs(ctrl.FS.Exclusive, path) }})
+		}
+
+		if mask.Exclusive {
+			checks = append(checks, check{"effective exclusive CPUs", mask.ExclusiveCPUs, func() (cpuset.CPUSet, error) { return ctrl.FS.ExclusiveEffective(path) }})
+		}
+	}
+
+	// When exclusive slices take every CPU of the virtual machine root the kernel falls back to the
+	// parent's CPUs, which no machine may use.
+	if want := mask.Effective(); !want.IsEmpty() {
+		checks = append(checks, check{"effective CPUs", want, func() (cpuset.CPUSet, error) { return ctrl.FS.Effective(path) }})
+	}
+
+	for _, c := range checks {
+		actual, err := c.read()
+		if err != nil {
+			return fmt.Errorf("error reading the %s of %s: %w", c.what, mask.Target, err)
+		}
+
+		if !actual.Equals(c.want) {
+			return fmt.Errorf("%s: %s %q differ from %q", mask.Target, c.what, actual, c.want)
+		}
+	}
+
+	return nil
+}
+
+func (ctrl *CPUPartitionController) verifyPartition(mask cpupartition.Mask) error {
+	want := partitionMember
+	if mask.Exclusive {
+		want = partitionRoot
+	}
+
+	mode, err := ctrl.FS.Partition(mask.Target.CgroupPath())
+	if err != nil {
+		return fmt.Errorf("error reading the partition of %s: %w", mask.Target, err)
+	}
+
+	if mode != want {
+		return fmt.Errorf("%s: partition %q, expected %q", mask.Target, mode, want)
+	}
+
+	return nil
+}
+
+func readCPUs(read func(string) (string, error), path string) (cpuset.CPUSet, error) {
+	list, err := read(path)
+	if err != nil {
+		return cpuset.New(), err
+	}
+
+	set, err := cpuset.Parse(list)
+	if err != nil {
+		return cpuset.New(), fmt.Errorf("invalid CPU list %q: %w", list, err)
+	}
+
+	return set, nil
+}
+
+func publishCPUPartitionStatus(ctx context.Context, r controller.Runtime, applied runtime.CPUPartitionStatusSpec) error {
+	if err := safe.WriterModify(ctx, r, runtime.NewCPUPartitionStatus(), func(res *runtime.CPUPartitionStatus) error {
+		*res.TypedSpec() = applied
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error publishing CPU partition status: %w", err)
+	}
+
+	return nil
 }

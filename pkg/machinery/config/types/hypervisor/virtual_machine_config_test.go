@@ -1541,6 +1541,9 @@ func TestVirtualMachineConfigCPUTopology(t *testing.T) {
 		{name: "overflow wrapping to count", cpu: "count: 4, topology: {sockets: 111620, cores: 429509837, threads: 384773}", expected: "must equal cpu.count"},
 		{name: "count required", cpu: "count: 0", expected: "cpu.count is required"},
 		{name: "maximum count", cpu: "count: 65535, topology: {sockets: 1, cores: 65535, threads: 1}"},
+		{name: "slice", cpu: "count: 4, slice: database"},
+		{name: "invalid slice name", cpu: "count: 4, slice: Database_1", expected: "cpu.slice"},
+		{name: "reserved slice name", cpu: "count: 4, slice: shared", expected: `"shared" is reserved`},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -1564,8 +1567,13 @@ func TestVirtualMachineConfigCPUTopology(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, cfg, reloaded.Documents()[0])
 
-			if test.name == "count only" {
+			switch test.name {
+			case "count only":
 				assert.NotContains(t, string(marshaled), "topology:")
+				assert.NotContains(t, string(marshaled), "slice:")
+				assert.Empty(t, cfg.CPU().Slice())
+			case "slice":
+				assert.Equal(t, "database", cfg.CPU().Slice())
 			}
 		})
 	}

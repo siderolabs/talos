@@ -217,7 +217,7 @@ func (m *BootedEntrySpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *CPUPartitionBlock) MarshalVT() (dAtA []byte, err error) {
+func (m *CPUPartitionPoolSpec) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -230,12 +230,12 @@ func (m *CPUPartitionBlock) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *CPUPartitionBlock) MarshalToVT(dAtA []byte) (int, error) {
+func (m *CPUPartitionPoolSpec) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *CPUPartitionBlock) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *CPUPartitionPoolSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -247,26 +247,24 @@ func (m *CPUPartitionBlock) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Partition) > 0 {
+		i -= len(m.Partition)
+		copy(dAtA[i:], m.Partition)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Partition)))
+		i--
+		dAtA[i] = 0x1a
+	}
 	if len(m.CpUs) > 0 {
 		i -= len(m.CpUs)
 		copy(dAtA[i:], m.CpUs)
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.CpUs)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x12
 	}
-	if len(m.VirtualMachines) > 0 {
-		for iNdEx := len(m.VirtualMachines) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.VirtualMachines[iNdEx])
-			copy(dAtA[i:], m.VirtualMachines[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.VirtualMachines[iNdEx])))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if len(m.Reason) > 0 {
-		i -= len(m.Reason)
-		copy(dAtA[i:], m.Reason)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Reason)))
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Name)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -434,139 +432,34 @@ func (m *CPUPartitionStatusSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Waiting) > 0 {
-		i -= len(m.Waiting)
-		copy(dAtA[i:], m.Waiting)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Waiting)))
-		i--
-		dAtA[i] = 0x42
-	}
-	if len(m.AdmissionErrors) > 0 {
-		for iNdEx := len(m.AdmissionErrors) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.AdmissionErrors[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
+	if len(m.VirtualMachinePools) > 0 {
+		for iNdEx := len(m.VirtualMachinePools) - 1; iNdEx >= 0; iNdEx-- {
+			size, err := m.VirtualMachinePools[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
 			i -= size
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x3a
-		}
-	}
-	if len(m.Error) > 0 {
-		i -= len(m.Error)
-		copy(dAtA[i:], m.Error)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Error)))
-		i--
-		dAtA[i] = 0x32
-	}
-	if len(m.EnforcementLoss) > 0 {
-		for iNdEx := len(m.EnforcementLoss) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.EnforcementLoss[iNdEx])
-			copy(dAtA[i:], m.EnforcementLoss[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.EnforcementLoss[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
-	}
-	if len(m.Blocked) > 0 {
-		for iNdEx := len(m.Blocked) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.Blocked[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x22
-		}
-	}
-	if len(m.Exclusive) > 0 {
-		for iNdEx := len(m.Exclusive) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Exclusive[iNdEx])
-			copy(dAtA[i:], m.Exclusive[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Exclusive[iNdEx])))
 			i--
 			dAtA[i] = 0x1a
 		}
 	}
-	if len(m.Targets) > 0 {
-		for iNdEx := len(m.Targets) - 1; iNdEx >= 0; iNdEx-- {
-			size, err := m.Targets[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if m.Phase != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Phase))
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *CPUPartitionTargetStatus) MarshalVT() (dAtA []byte, err error) {
-	if m == nil {
-		return nil, nil
-	}
-	size := m.SizeVT()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *CPUPartitionTargetStatus) MarshalToVT(dAtA []byte) (int, error) {
-	size := m.SizeVT()
-	return m.MarshalToSizedBufferVT(dAtA[:size])
-}
-
-func (m *CPUPartitionTargetStatus) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
-	if m == nil {
-		return 0, nil
-	}
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.unknownFields != nil {
-		i -= len(m.unknownFields)
-		copy(dAtA[i:], m.unknownFields)
-	}
-	if len(m.Intended) > 0 {
-		i -= len(m.Intended)
-		copy(dAtA[i:], m.Intended)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Intended)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.LastApplied) > 0 {
-		i -= len(m.LastApplied)
-		copy(dAtA[i:], m.LastApplied)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.LastApplied)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Initial) > 0 {
-		i -= len(m.Initial)
-		copy(dAtA[i:], m.Initial)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Initial)))
+	if len(m.KubeletReservedCpUs) > 0 {
+		i -= len(m.KubeletReservedCpUs)
+		copy(dAtA[i:], m.KubeletReservedCpUs)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.KubeletReservedCpUs)))
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Key) > 0 {
-		i -= len(m.Key)
-		copy(dAtA[i:], m.Key)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Key)))
+	if m.Ready {
 		i--
-		dAtA[i] = 0xa
+		if m.Ready {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -2568,23 +2461,21 @@ func (m *BootedEntrySpec) SizeVT() (n int) {
 	return n
 }
 
-func (m *CPUPartitionBlock) SizeVT() (n int) {
+func (m *CPUPartitionPoolSpec) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Reason)
+	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.VirtualMachines) > 0 {
-		for _, s := range m.VirtualMachines {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
 	l = len(m.CpUs)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	l = len(m.Partition)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
@@ -2646,72 +2537,18 @@ func (m *CPUPartitionStatusSpec) SizeVT() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Phase != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.Phase))
+	if m.Ready {
+		n += 2
 	}
-	if len(m.Targets) > 0 {
-		for _, e := range m.Targets {
+	l = len(m.KubeletReservedCpUs)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if len(m.VirtualMachinePools) > 0 {
+		for _, e := range m.VirtualMachinePools {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
-	}
-	if len(m.Exclusive) > 0 {
-		for _, s := range m.Exclusive {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
-	if len(m.Blocked) > 0 {
-		for _, e := range m.Blocked {
-			l = e.SizeVT()
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
-	if len(m.EnforcementLoss) > 0 {
-		for _, s := range m.EnforcementLoss {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
-	l = len(m.Error)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	if len(m.AdmissionErrors) > 0 {
-		for _, e := range m.AdmissionErrors {
-			l = e.SizeVT()
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
-	l = len(m.Waiting)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	n += len(m.unknownFields)
-	return n
-}
-
-func (m *CPUPartitionTargetStatus) SizeVT() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Key)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	l = len(m.Initial)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	l = len(m.LastApplied)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-	}
-	l = len(m.Intended)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3870,7 +3707,7 @@ func (m *BootedEntrySpec) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *CPUPartitionBlock) UnmarshalVT(dAtA []byte) error {
+func (m *CPUPartitionPoolSpec) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3893,15 +3730,15 @@ func (m *CPUPartitionBlock) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: CPUPartitionBlock: wiretype end group for non-group")
+			return fmt.Errorf("proto: CPUPartitionPoolSpec: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CPUPartitionBlock: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: CPUPartitionPoolSpec: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Reason", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3929,41 +3766,9 @@ func (m *CPUPartitionBlock) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Reason = string(dAtA[iNdEx:postIndex])
+			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field VirtualMachines", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.VirtualMachines = append(m.VirtualMachines, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CpUs", wireType)
 			}
@@ -3994,6 +3799,38 @@ func (m *CPUPartitionBlock) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.CpUs = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Partition", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Partition = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4415,9 +4252,9 @@ func (m *CPUPartitionStatusSpec) UnmarshalVT(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Phase", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Ready", wireType)
 			}
-			m.Phase = 0
+			var v int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -4427,16 +4264,17 @@ func (m *CPUPartitionStatusSpec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Phase |= enums.RuntimeCPUPartitionPhase(b&0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			m.Ready = bool(v != 0)
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Targets", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field KubeletReservedCpUs", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -4446,61 +4284,27 @@ func (m *CPUPartitionStatusSpec) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return protohelpers.ErrInvalidLength
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return protohelpers.ErrInvalidLength
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Targets = append(m.Targets, &CPUPartitionTargetStatus{})
-			if err := m.Targets[len(m.Targets)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.KubeletReservedCpUs = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Exclusive", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Exclusive = append(m.Exclusive, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Blocked", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field VirtualMachinePools", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4527,319 +4331,10 @@ func (m *CPUPartitionStatusSpec) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Blocked = append(m.Blocked, &CPUPartitionBlock{})
-			if err := m.Blocked[len(m.Blocked)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			m.VirtualMachinePools = append(m.VirtualMachinePools, &CPUPartitionPoolSpec{})
+			if err := m.VirtualMachinePools[len(m.VirtualMachinePools)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EnforcementLoss", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.EnforcementLoss = append(m.EnforcementLoss, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Error = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AdmissionErrors", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.AdmissionErrors = append(m.AdmissionErrors, &CPUPartitionBlock{})
-			if err := m.AdmissionErrors[len(m.AdmissionErrors)-1].UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Waiting", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Waiting = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *CPUPartitionTargetStatus) UnmarshalVT(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return protohelpers.ErrIntOverflow
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: CPUPartitionTargetStatus: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: CPUPartitionTargetStatus: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Key = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Initial", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Initial = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastApplied", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.LastApplied = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Intended", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Intended = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

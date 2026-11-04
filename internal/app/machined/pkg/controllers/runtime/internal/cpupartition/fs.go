@@ -21,15 +21,13 @@ import (
 // CgroupFS is the view of the cgroup v2 hierarchy and of the sysfs CPU inventory CPU partitioning operates on.
 //
 // Paths are relative to the cgroup root, e.g. "kubepods" or "virtualmachines.partition/shared.partition".
-type CgroupFS interface {
+type CgroupFS interface { //nolint:interfacebloat // one method per cpuset interface file
 	// Online returns the online CPU set.
 	Online() (cpuset.CPUSet, error)
 	// Exists reports whether the cgroup exists.
 	Exists(path string) (bool, error)
 	// Ensure creates the cgroup if missing, with the cpu and cpuset controllers delegated to it.
 	Ensure(path string) error
-	// Remove deletes an empty cgroup.
-	Remove(path string) error
 	// CPUs reads the configured cpuset.cpus; it is empty when the cgroup inherits its parent's.
 	CPUs(path string) (string, error)
 	// Effective reads cpuset.cpus.effective.
@@ -38,11 +36,16 @@ type CgroupFS interface {
 	SetCPUs(path, cpus string) error
 	// Populated reports the populated flag of cgroup.events.
 	Populated(path string) (bool, error)
-	// LeafEffective returns the effective set of every leaf cgroup under path with a configured
-	// cpuset.cpus, keyed by its path relative to path.
-	LeafEffective(path string) (map[string]cpuset.CPUSet, error)
-	// Children returns the sorted names of the direct child cgroups; none when path does not exist.
-	Children(path string) ([]string, error)
+	// Partition reads cpuset.cpus.partition verbatim.
+	Partition(path string) (string, error)
+	// SetPartition writes cpuset.cpus.partition.
+	SetPartition(path, partition string) error
+	// Exclusive reads the configured cpuset.cpus.exclusive.
+	Exclusive(path string) (string, error)
+	// SetExclusive writes cpuset.cpus.exclusive.
+	SetExclusive(path, cpus string) error
+	// ExclusiveEffective reads cpuset.cpus.exclusive.effective.
+	ExclusiveEffective(path string) (cpuset.CPUSet, error)
 }
 
 var _ CgroupFS = HostFS{}
@@ -125,11 +128,6 @@ func delegate(dir string) error {
 	return nil
 }
 
-// Remove implements CgroupFS.
-func (h HostFS) Remove(path string) error {
-	return os.Remove(filepath.Join(h.CgroupRoot, path))
-}
-
 // CPUs implements CgroupFS.
 func (h HostFS) CPUs(path string) (string, error) {
 	node, err := cgroups.GetCgroupProperty(filepath.Join(h.CgroupRoot, path), "cpuset.cpus")
@@ -158,12 +156,58 @@ func effective(dir string) (cpuset.CPUSet, error) {
 //
 // The file is never created: a missing cpuset.cpus means cpuset is not delegated to the cgroup.
 func (h HostFS) SetCPUs(path, cpus string) error {
-	f, err := os.OpenFile(filepath.Join(h.CgroupRoot, path, "cpuset.cpus"), os.O_WRONLY|os.O_TRUNC, 0)
+	return h.writeProperty(path, "cpuset.cpus", cpus)
+}
+
+// Partition reads cpuset.cpus.partition verbatim, so an invalid state keeps the kernel's reason,
+// e.g. "root invalid (Parent is not a partition root)".
+func (h HostFS) Partition(path string) (string, error) {
+	return h.readProperty(path, "cpuset.cpus.partition")
+}
+
+// SetPartition writes cpuset.cpus.partition; the file is never created.
+func (h HostFS) SetPartition(path, partition string) error {
+	return h.writeProperty(path, "cpuset.cpus.partition", partition)
+}
+
+// Exclusive reads the configured cpuset.cpus.exclusive; it may be empty.
+func (h HostFS) Exclusive(path string) (string, error) {
+	return h.readProperty(path, "cpuset.cpus.exclusive")
+}
+
+// SetExclusive writes cpuset.cpus.exclusive; the file is never created.
+func (h HostFS) SetExclusive(path, cpus string) error {
+	return h.writeProperty(path, "cpuset.cpus.exclusive", cpus)
+}
+
+// ExclusiveEffective reads cpuset.cpus.exclusive.effective.
+func (h HostFS) ExclusiveEffective(path string) (cpuset.CPUSet, error) {
+	value, err := h.readProperty(path, "cpuset.cpus.exclusive.effective")
+	if err != nil {
+		return cpuset.New(), err
+	}
+
+	return cpuset.Parse(value)
+}
+
+func (h HostFS) readProperty(path, property string) (string, error) {
+	data, err := os.ReadFile(filepath.Join(h.CgroupRoot, path, property))
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(data)), nil
+}
+
+// writeProperty never creates the file: a missing interface file means the controller is not
+// delegated to the cgroup, or the kernel does not support the property.
+func (h HostFS) writeProperty(path, property, value string) error {
+	f, err := os.OpenFile(filepath.Join(h.CgroupRoot, path, property), os.O_WRONLY|os.O_TRUNC, 0)
 	if err != nil {
 		return err
 	}
 
-	_, err = f.WriteString(cpus + "\n")
+	_, err = f.WriteString(value + "\n")
 	if closeErr := f.Close(); err == nil {
 		err = closeErr
 	}
@@ -184,87 +228,4 @@ func (h HostFS) Populated(path string) (bool, error) {
 	}
 
 	return populated.Val == 1, nil
-}
-
-// Children implements CgroupFS.
-func (h HostFS) Children(path string) ([]string, error) {
-	entries, err := os.ReadDir(filepath.Join(h.CgroupRoot, path))
-	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	var children []string
-
-	for _, entry := range entries {
-		if entry.IsDir() {
-			children = append(children, entry.Name())
-		}
-	}
-
-	return children, nil
-}
-
-// LeafEffective implements CgroupFS.
-//
-// A leaf which cannot be read fails the walk, so callers never treat an unread leaf as released.
-func (h HostFS) LeafEffective(path string) (map[string]cpuset.CPUSet, error) {
-	root := filepath.Join(h.CgroupRoot, path)
-	leaves := map[string]cpuset.CPUSet{}
-
-	err := filepath.WalkDir(root, func(dir string, entry fs.DirEntry, walkErr error) error {
-		if walkErr != nil {
-			if errors.Is(walkErr, fs.ErrNotExist) {
-				return nil
-			}
-
-			return walkErr
-		}
-
-		if !entry.IsDir() || dir == root {
-			return nil
-		}
-
-		set, isLeaf, err := leafEffective(dir)
-		if err != nil || !isLeaf {
-			return err
-		}
-
-		rel, err := filepath.Rel(root, dir)
-		if err != nil {
-			return err
-		}
-
-		leaves[rel] = set
-
-		return nil
-	})
-
-	return leaves, err
-}
-
-// leafEffective returns the effective set of dir if it has no child cgroups and a configured cpuset.cpus.
-func leafEffective(dir string) (cpuset.CPUSet, bool, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return cpuset.New(), false, err
-	}
-
-	for _, child := range entries {
-		if child.IsDir() {
-			return cpuset.New(), false, nil
-		}
-	}
-
-	node, err := cgroups.GetCgroupProperty(dir, "cpuset.cpus")
-	if err != nil || strings.TrimSpace(string(node.CPUSetCPUs)) == "" {
-		return cpuset.New(), false, err
-	}
-
-	set, err := effective(dir)
-
-	return set, err == nil, err
 }

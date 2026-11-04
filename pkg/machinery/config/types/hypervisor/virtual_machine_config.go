@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 )
@@ -180,6 +181,15 @@ type VirtualMachineCPU struct {
 	//     all three must be positive and their product must equal `count`.
 	//     Pinning may be configured without guest geometry.
 	TopologyConfig VirtualMachineCPUTopology `yaml:"topology,omitempty"`
+	//   description: |
+	//     Name of the `CPUPartitionConfig` slice of the virtual machine root this virtual machine
+	//     runs in.
+	//
+	//     Optional; omitting it selects the CPUs of the root outside every named slice. It only
+	//     applies while a CPU partition policy bounds the virtual machine root.
+	//   examples:
+	//     - value: '"database"'
+	CPUSlice string `yaml:"slice,omitempty"`
 }
 
 // VirtualMachineMemory describes the memory presented to the guest.
@@ -386,6 +396,11 @@ func (c *VirtualMachineCPU) Topology() config.VirtualMachineCPUTopologyConfig {
 	return &c.TopologyConfig
 }
 
+// Slice implements config.VirtualMachineCPUConfig interface.
+func (c *VirtualMachineCPU) Slice() string {
+	return c.CPUSlice
+}
+
 // Size implements config.VirtualMachineMemoryConfig interface.
 func (m *VirtualMachineMemory) Size() uint64 {
 	return m.MemorySize.Value()
@@ -519,6 +534,15 @@ func (c *VirtualMachineConfigV1Alpha1) ValidateCPU() error {
 		} else if limit < hypervisorhelpers.MinCPULimitMillicores || limit > hypervisorhelpers.MaxCPULimitMillicores {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("cpu.limit must be between %d and %d millicores",
 				hypervisorhelpers.MinCPULimitMillicores, hypervisorhelpers.MaxCPULimitMillicores))
+		}
+	}
+
+	if c.CPUConfig.CPUSlice != "" {
+		if err := hypervisorhelpers.ValidateName(c.CPUConfig.CPUSlice); err != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("cpu.slice: %w", err))
+		} else if c.CPUConfig.CPUSlice == runtime.CPUPartitionSharedSliceName {
+			validationErrors = errors.Join(validationErrors,
+				fmt.Errorf("cpu.slice: %q is reserved; omit the slice to select the shared CPUs", runtime.CPUPartitionSharedSliceName))
 		}
 	}
 

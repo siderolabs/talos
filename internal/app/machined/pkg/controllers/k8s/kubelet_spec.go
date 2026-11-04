@@ -62,6 +62,8 @@ func (ctrl *KubeletSpecController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
+//
+//nolint:dupl
 func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
@@ -92,6 +94,12 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 			Namespace: runtimeres.NamespaceName,
 			Type:      runtimeres.SecurityStateType,
 			ID:        optional.Some(runtimeres.SecurityStateID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -216,7 +224,22 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			args["image-credential-provider-config"] = argsbuilder.Value{constants.KubeletCredentialProviderConfig}
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType(), ctrl.kubeletConfigurationOptions(cfgSpec)...)
+		options := ctrl.kubeletConfigurationOptions(cfgSpec)
+
+		reservedCPUs, ready, err := ctrl.bootCPUReservation(ctx, r)
+		if err != nil {
+			return err
+		}
+
+		if !ready {
+			continue
+		}
+
+		if cpus, managed := reservedCPUs.Get(); managed {
+			options = append(options, WithReservedCPUs(cpus))
+		}
+
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType(), options...)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -284,6 +307,28 @@ func (ctrl *KubeletSpecController) kubeletConfigurationOptions(cfgSpec *k8s.Kube
 	}
 
 	return []KubeletConfigurationOption{WithHostMemory(readCapacity, os.Getpagesize())}
+}
+
+// bootCPUReservation returns the reservedSystemCPUs of the boot CPU partition policy, absent when it
+// does not bound kubepods, and whether the kubelet may be configured yet.
+func (ctrl *KubeletSpecController) bootCPUReservation(ctx context.Context, r controller.Reader) (optional.Optional[string], bool, error) {
+	status, err := safe.ReaderGetByID[*runtimeres.CPUPartitionStatus](ctx, r, runtimeres.CPUPartitionStatusID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return optional.None[string](), false, nil
+		}
+
+		return optional.None[string](), false, fmt.Errorf("error getting CPU partition status: %w", err)
+	}
+
+	switch {
+	case !status.TypedSpec().Ready:
+		return optional.None[string](), false, nil
+	case status.TypedSpec().KubeletReservedCPUs == "":
+		return optional.None[string](), true, nil
+	default:
+		return optional.Some(status.TypedSpec().KubeletReservedCPUs), true, nil
+	}
 }
 
 // selinuxMounts reports whether the CRI labels pods with MCS categories, in which case the kubelet needs selinuxfs and the contexts file.
@@ -357,9 +402,26 @@ func NewKubeletConfiguration(
 		}
 	}
 
+	reservedCPUs, reservationManaged := options.reservedCPUs.Get()
+
+	if reservationManaged {
+		extraArgs := maps.Map(cfgSpec.ExtraArgs, func(flag string, v k8s.ArgValues) (string, []string) { return flag, v.Values })
+
+		if err := kubelet.ValidateCPUReservationConfiguration(cfgSpec.ExtraConfig, extraArgs); err != nil {
+			return nil, err
+		}
+	}
+
 	config, err := prepareExtraConfig(cfgSpec.ExtraConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	// Under the static policy the kubelet leaves the kubepods cpuset alone: under none it writes
+	// every online CPU into it on each start.
+	if reservationManaged {
+		config.CPUManagerPolicy = kubelet.CPUManagerPolicyStatic
+		config.ReservedSystemCPUs = reservedCPUs
 	}
 
 	// required fields (always set)

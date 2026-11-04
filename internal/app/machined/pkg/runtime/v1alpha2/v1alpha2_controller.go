@@ -527,6 +527,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.CPUPartitionConfigController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&runtimecontrollers.CPUPartitionController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&runtimecontrollers.DevicesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

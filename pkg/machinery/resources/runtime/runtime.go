@@ -16,7 +16,5 @@ import (
 
 //go:generate go tool github.com/dmarkham/enumer -type=MachineStage -type=KernelModuleState -type=KernelModuleType -type=FIPSState -type=SELinuxState -type=UnattendedInstallPhase -type=LockdownState -linecomment -text
 
-//go:generate go tool github.com/dmarkham/enumer -type=CPUPartitionPhase -linecomment -text
-
 // NamespaceName contains configuration resources.
 const NamespaceName resource.Namespace = v1alpha1.NamespaceName

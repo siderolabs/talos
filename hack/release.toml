@@ -141,6 +141,33 @@ Invalid placement leaves an existing guest running; CPUs and guest memory may in
 This validates placement, not available memory capacity or reservations. Host inventory is not exposed in container mode.
 """
 
+    [notes.cpu_partition]
+        title = "CPU Partitioning"
+        description = """\
+The `CPUPartitionConfig` document assigns host CPUs to Talos system services, Kubernetes pods,
+Talos containers and virtual machines:
+
+```yaml
+apiVersion: v1alpha1
+kind: CPUPartitionConfig
+init:
+  cpus: "0"
+system:
+  cpus: "0"
+podruntime:
+  cpus: "0"
+kubepods:
+  cpus: "1-3"
+```
+
+The virtual machine CPUs can be divided into named slices, optionally exclusive; a virtual machine picks one with `cpu.slice`.
+
+The policy is applied once at boot, before the workloads it governs start, and is not watched or repaired afterwards.
+Adding, changing or removing it takes effect only after a reboot: applying the change returns a warning, and running processes,
+pods and virtual machines keep their CPUs. Bounding `kubepods` switches the kubelet to the static CPU manager policy,
+which requires at least one CPU outside `kubepods`.
+"""
+
     [notes.hypervisor_blank_disk]
         title = "Blank Virtual Machine Disks"
         description = """A virtual machine disk can now be provisioned as an empty volume in a storage pool, rather than only

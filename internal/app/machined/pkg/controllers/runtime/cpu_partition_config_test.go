@@ -5,13 +5,13 @@
 package runtime_test
 
 import (
+	"reflect"
 	"testing"
-	"testing/synctest"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -124,26 +124,65 @@ func (suite *CPUPartitionConfigSuite) assertSpec(expected runtime.CPUPartitionSp
 	})
 }
 
-func (suite *CPUPartitionConfigSuite) TestPendingThenDisabledThenPolicyThenRemoved() {
+func (suite *CPUPartitionConfigSuite) TestNothingCapturedWithoutActiveConfig() {
 	suite.register(machineruntime.ModeMetal)
 
+	// A staged configuration alone is not the policy of this boot.
+	cfg, err := container.New(newCPUPartitionConfig())
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfigWithID(cfg, config.PersistentID))
+
 	ctest.AssertNoResource[*runtime.CPUPartitionSpec](suite, runtime.CPUPartitionSpecID)
+}
+
+// The first active configuration is captured; later changes, removal of the active configuration
+// included, leave the policy of the boot as it is.
+func (suite *CPUPartitionConfigSuite) TestPolicyCapturedOnce() {
+	suite.register(machineruntime.ModeMetal)
 
 	watchdog := newWatchdogDocument("/dev/watchdog0")
-	suite.createConfig(watchdog)
-	suite.assertSpec(runtime.CPUPartitionSpecSpec{})
-
-	suite.replaceConfig(watchdog, newCPUPartitionConfig())
+	suite.createConfig(watchdog, newCPUPartitionConfig())
 	suite.assertSpec(newCPUPartitionSpec())
 
+	edited := newCPUPartitionConfig()
+	edited.KubepodsConfig.RootCPUs = "2"
+
+	suite.replaceConfig(watchdog, edited)
+	suite.assertUnchanged(newCPUPartitionSpec())
+
 	suite.replaceConfig(watchdog)
-	suite.assertSpec(runtime.CPUPartitionSpecSpec{})
+	suite.assertUnchanged(newCPUPartitionSpec())
 
 	old, err := safe.StateGetByID[*config.MachineConfig](suite.Ctx(), suite.State(), config.ActiveID)
 	suite.Require().NoError(err)
 	suite.Destroy(old)
 
-	ctest.AssertNoResource[*runtime.CPUPartitionSpec](suite, runtime.CPUPartitionSpecID)
+	suite.assertUnchanged(newCPUPartitionSpec())
+}
+
+func (suite *CPUPartitionConfigSuite) TestNoPolicyCapturedOnce() {
+	suite.register(machineruntime.ModeMetal)
+
+	watchdog := newWatchdogDocument("/dev/watchdog0")
+	suite.createConfig(watchdog)
+	suite.assertSpec(runtime.CPUPartitionSpecSpec{})
+
+	// A policy added after startup governs nothing until the next boot.
+	suite.replaceConfig(watchdog, newCPUPartitionConfig())
+	suite.assertUnchanged(runtime.CPUPartitionSpecSpec{})
+}
+
+func (suite *CPUPartitionConfigSuite) TestControllerRestartKeepsBootPolicy() {
+	// The policy captured by an earlier run of the controller.
+	boot := runtime.NewCPUPartitionSpec()
+	*boot.TypedSpec() = newCPUPartitionSpec()
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), boot, state.WithCreateOwner("runtime.CPUPartitionConfigController")))
+
+	suite.createConfig(newWatchdogDocument("/dev/watchdog0"))
+
+	suite.register(machineruntime.ModeMetal)
+
+	suite.assertUnchanged(newCPUPartitionSpec())
 }
 
 func (suite *CPUPartitionConfigSuite) TestKubernetesOnlyYAML() {
@@ -171,47 +210,12 @@ func (suite *CPUPartitionConfigSuite) TestContainerModeIgnoresPolicy() {
 	suite.assertSpec(runtime.CPUPartitionSpecSpec{})
 }
 
-func TestCPUPartitionConfigUnchangedProjectionKeepsVersion(t *testing.T) {
-	t.Parallel()
+func (suite *CPUPartitionConfigSuite) assertUnchanged(expected runtime.CPUPartitionSpecSpec) {
+	ctx, st := suite.Ctx(), suite.State()
 
-	synctest.Test(t, func(t *testing.T) {
-		suite := &CPUPartitionConfigSuite{Timeout: 30 * time.Second}
-		suite.SetT(t)
-		suite.SetupTest()
+	suite.Require().Never(func() bool {
+		spec, err := safe.StateGetByID[*runtime.CPUPartitionSpec](ctx, st, runtime.CPUPartitionSpecID)
 
-		defer suite.TearDownTest()
-
-		suite.register(machineruntime.ModeMetal)
-
-		suite.createConfig(newWatchdogDocument("/dev/watchdog0"), newCPUPartitionConfig())
-		synctest.Wait()
-
-		spec, err := safe.StateGetByID[*runtime.CPUPartitionSpec](suite.Ctx(), suite.State(), runtime.CPUPartitionSpecID)
-		require.NoError(t, err)
-		require.Equal(t, newCPUPartitionSpec(), *spec.TypedSpec())
-
-		version := spec.Metadata().Version()
-
-		rewritten := newCPUPartitionConfig()
-		rewritten.InitConfig.RootCPUs = "0,1"
-		rewritten.VirtualMachinesConfig.SlicesConfig[0].SliceCPUs = "4-5"
-
-		suite.replaceConfig(newWatchdogDocument("/dev/watchdog1"), rewritten)
-		synctest.Wait()
-
-		spec, err = safe.StateGetByID[*runtime.CPUPartitionSpec](suite.Ctx(), suite.State(), runtime.CPUPartitionSpecID)
-		require.NoError(t, err)
-		assert.Equal(t, version, spec.Metadata().Version())
-
-		changed := newCPUPartitionConfig()
-		changed.KubepodsConfig.RootCPUs = "2"
-
-		suite.replaceConfig(newWatchdogDocument("/dev/watchdog1"), changed)
-		synctest.Wait()
-
-		spec, err = safe.StateGetByID[*runtime.CPUPartitionSpec](suite.Ctx(), suite.State(), runtime.CPUPartitionSpecID)
-		require.NoError(t, err)
-		assert.Equal(t, "2", spec.TypedSpec().Roots["kubepods"])
-		assert.Equal(t, version.Next(), spec.Metadata().Version())
-	})
+		return err != nil || !reflect.DeepEqual(expected, *spec.TypedSpec())
+	}, 300*time.Millisecond, 10*time.Millisecond)
 }

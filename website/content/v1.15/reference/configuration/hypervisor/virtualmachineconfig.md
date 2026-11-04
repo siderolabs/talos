@@ -44,6 +44,9 @@ cpu:
                 - vcpu: 1 # Guest vCPU index, starting at 0 and below `cpu.count`.
                   cpus: 9-10 # Host CPUs the vCPU is pinned to, as a Linux CPU list, e.g. `8` or `9-10`.
             emulator: 0-1 # Host CPUs the emulator threads (everything of the virtual machine that is not a vCPU)
+
+    # # Name of the `CPUPartitionConfig` slice of the virtual machine root this virtual machine
+    # slice: database
 # Memory settings for the virtual machine.
 memory:
     size: 4GiB # Memory allocated to the guest at boot.
@@ -170,6 +173,9 @@ count: 4
 limit: 3000m
 {{< /highlight >}}</details> | |
 |`topology` |<a href="#VirtualMachineConfig.cpu.topology">VirtualMachineCPUTopology</a> |Optional guest CPU geometry and host CPU pinning.<br><br>Geometry counts describe the guest, not host CPU IDs. When any dimension is set,<br>all three must be positive and their product must equal `count`.<br>Pinning may be configured without guest geometry.  | |
+|`slice` |string |Name of the `CPUPartitionConfig` slice of the virtual machine root this virtual machine<br>runs in.<br><br>Optional; omitting it selects the CPUs of the root outside every named slice. It only<br>applies while a CPU partition policy bounds the virtual machine root. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+slice: database
+{{< /highlight >}}</details> | |
 
 
 

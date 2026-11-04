@@ -306,6 +306,7 @@ type VirtualMachineDomainSuite struct {
 
 func (s *VirtualMachineDomainSuite) SetupTest() {
 	s.DefaultSuite.SetupTest()
+	cpuPartitionReady(&s.DefaultSuite)
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
 	s.client = &domainClient{
 		domains:         make(map[string]libvirtdomain.Domain),
