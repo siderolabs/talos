@@ -641,17 +641,22 @@ func (suite *SELinuxSuite) TestPodProcAccess() {
 			domain: "pod_cni_t", capabilities: []corev1.Capability{"SYS_ADMIN", "SYS_PTRACE"},
 			command: "cat /proc/self/attr/current; nsenter -t 1 -n -- ip link show lo", want: `(?s)^system_u:system_r:pod_cni_t:s0:c\d+,c\d+.*\blo:`,
 		},
-		// lvm also probes /dev/mapper/control, which the device cgroup of a non-privileged container refuses
+		// lvm also probes /dev/mapper/control, which the device cgroup of a non-privileged container refuses; Talos mounts its
+		// rootfs and extensions from loop devices, so loop0 exists on every node
 		{
 			domain: "pod_csi_t", capabilities: []corev1.Capability{"SYS_ADMIN", "SYS_PTRACE", "SYS_CHROOT"},
-			command: "cat /proc/self/attr/current; nsenter -t 1 -m -- /usr/bin/lvm version", want: `(?s)^system_u:system_r:pod_csi_t:s0:c\d+,c\d+.*LVM version`,
+			command: "cat /proc/self/attr/current; nsenter -t 1 -m -- /usr/bin/lvm version; " +
+				"f=/host/sys/devices/virtual/block/loop0/queue/read_ahead_kb; echo $(cat $f) > $f && echo tuned",
+			want: `(?s)^system_u:system_r:pod_csi_t:s0:c\d+,c\d+.*LVM version.*\btuned`,
 		},
+		// the settings of a physical disk, the system disk among them, stay read-only
+		{domain: "pod_csi_t", command: "for d in /host/sys/block/*; do readlink $d | grep -q /virtual/ || break; done; f=$d/queue/read_ahead_kb; echo $(cat $f) > $f"},
 	} {
 		podDef, err := suite.NewPod("selinux-proc-" + strings.ReplaceAll(test.domain, "_", "-"))
 		suite.Require().NoError(err)
 
 		pod := podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostPID().WithCapabilities(test.capabilities...).
-			WithSELinuxOptions(&corev1.SELinuxOptions{Type: test.domain})
+			WithHostVolumeMount("/sys", "/host/sys").WithSELinuxOptions(&corev1.SELinuxOptions{Type: test.domain})
 
 		before := suite.denials(ip, test.domain)
 		stdout, stderr, err := suite.exec(pod, test.command)
