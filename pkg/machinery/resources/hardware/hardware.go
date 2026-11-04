@@ -10,5 +10,7 @@ import (
 
 //go:generate go tool github.com/siderolabs/deep-copy -type BMCDeviceSpec -type CPUCoreSpec -type CPUScalingSpecSpec -type CPUScalingStatusSpec -type MemoryModuleSpec -type NUMATopologySpec -type PCIDeviceSpec -type PCIDriverRebindConfigSpec -type PCIDriverRebindStatusSpec -type PCRStatusSpec -type ProcessorSpec -type SystemInformationSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
+//go:generate go tool github.com/dmarkham/enumer -type=PCIDriverRebindPhase -linecomment -text
+
 // NamespaceName contains resources related to hardware as a whole.
 const NamespaceName resource.Namespace = "hardware"
