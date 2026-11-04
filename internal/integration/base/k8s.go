@@ -246,6 +246,7 @@ type podInfo interface { //nolint:interfacebloat
 	WithHostVolumeMount(hostPath, mountPath string) podInfo
 	WithSELinuxOptions(opts *corev1.SELinuxOptions) podInfo
 	WithHostPID() podInfo
+	WithCapabilities(capabilities ...corev1.Capability) podInfo
 	WithPersistentVolumeClaim(claim, mountPath string) podInfo
 	Create(ctx context.Context, waitTimeout time.Duration) error
 	Delete(ctx context.Context) error
@@ -314,6 +315,22 @@ func (p *pod) WithSELinuxOptions(opts *corev1.SELinuxOptions) podInfo {
 
 func (p *pod) WithHostPID() podInfo {
 	p.pod.Spec.HostPID = true
+
+	return p
+}
+
+func (p *pod) WithCapabilities(capabilities ...corev1.Capability) podInfo {
+	sc := p.pod.Spec.Containers[0].SecurityContext
+	if sc == nil {
+		sc = &corev1.SecurityContext{}
+		p.pod.Spec.Containers[0].SecurityContext = sc
+	}
+
+	if sc.Capabilities == nil {
+		sc.Capabilities = &corev1.Capabilities{}
+	}
+
+	sc.Capabilities.Add = append(sc.Capabilities.Add, capabilities...)
 
 	return p
 }

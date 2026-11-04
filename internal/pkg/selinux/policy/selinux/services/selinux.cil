@@ -1,5 +1,9 @@
 (allow initramfs_t security_t (security (setbool setsecparam)))
 (allow init_t security_t (security (setbool setsecparam)))
+; Only init and machined set the booleans, from the machine config
+(typeattribute setbool_locked_p)
+(typeattributeset setbool_locked_p (and any_p (not (or initramfs_t init_t))))
+(neverallow setbool_locked_p security_t (security (setbool)))
 ; Policy is loaded by initramfs init and mustn't be modified
 ; The only way to set mode to permissive is setting enforcing=0 in kernel cmdline
 (neverallow any_p security_t (security (load_policy setenforce)))

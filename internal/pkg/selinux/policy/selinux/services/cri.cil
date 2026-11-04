@@ -159,7 +159,11 @@
 
 ; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
 ; TODO: label static pods with the correct domains
-(allow pod_p log_f (fs_classes (rw)))
+(allow pod_p log_f (fs_classes (ro)))
+; the process monitor (mcs_read_exempt_p) reads the logs it forwards and writes none of them
+(typeattribute log_writer_p)
+(typeattributeset log_writer_p (and pod_p (not mcs_read_exempt_p)))
+(allow log_writer_p log_f (fs_classes (rw)))
 
 (type cni_state_t)
 (call protected_f (cni_state_t))
