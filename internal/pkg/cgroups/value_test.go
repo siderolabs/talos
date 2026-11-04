@@ -54,7 +54,73 @@ func TestParseValue(t *testing.T) {
 			assert.Equal(t, test.expectedFloat64, v.Float64())
 
 			assert.Equal(t, test.in, v.String())
+
+			v, err = cgroups.ParseValueBytes([]byte(test.in))
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, v)
 		})
+	}
+}
+
+func TestParseValueEdgeCases(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		in string
+
+		expected  cgroups.Value
+		expectErr bool
+	}{
+		{in: "-5", expected: cgroups.Value{Val: -5, IsSet: true}},
+		{in: "+5", expected: cgroups.Value{Val: 5, IsSet: true}},
+		{in: "-0.25", expected: cgroups.Value{Val: -25, Frac: 2, IsSet: true}},
+		{in: "1.", expected: cgroups.Value{Val: 1, IsSet: true}},
+		{in: ".5", expected: cgroups.Value{Val: 5, Frac: 1, IsSet: true}},
+		{in: "9223372036854775807", expected: cgroups.Value{Val: math.MaxInt64, IsSet: true}},
+		{in: "-9223372036854775808", expected: cgroups.Value{Val: math.MinInt64, IsSet: true}},
+		{in: "9223372036854775808", expectErr: true},
+		{in: "", expectErr: true},
+		{in: "-", expectErr: true},
+		{in: ".", expectErr: true},
+		{in: "1.2.3", expectErr: true},
+		{in: "abc", expectErr: true},
+		{in: "12 ", expectErr: true},
+	} {
+		t.Run(test.in, func(t *testing.T) {
+			t.Parallel()
+
+			v, err := cgroups.ParseValue(test.in)
+			vb, errb := cgroups.ParseValueBytes([]byte(test.in))
+
+			if test.expectErr {
+				require.Error(t, err)
+				require.Error(t, errb)
+				assert.Equal(t, err.Error(), errb.Error())
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.NoError(t, errb)
+
+			assert.Equal(t, test.expected, v)
+			assert.Equal(t, test.expected, vb)
+		})
+	}
+}
+
+func TestParseValueBytesAllocs(t *testing.T) {
+	for _, in := range []string{"42", "max", "17.06", "-0.25", "12172340"} {
+		b := []byte(in)
+
+		allocs := testing.AllocsPerRun(100, func() {
+			if _, err := cgroups.ParseValueBytes(b); err != nil {
+				t.Fatal(err)
+			}
+		})
+
+		assert.Zero(t, allocs, "input %q", in)
 	}
 }
 

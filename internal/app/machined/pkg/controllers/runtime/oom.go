@@ -44,7 +44,6 @@ type OOMController struct {
 	V1Alpha1Mode    runtime.Mode
 	actionLog       []actionLogItem
 	idSeq           int
-	oldValues       map[string]float64
 }
 
 // Name implements controller.Controller interface.
@@ -83,7 +82,6 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 	}
 
 	triggerExpr, scoringExpr, sampleInterval, strictClassOrdering := ctrl.getConfig(nil)
-	ctrl.oldValues = make(map[string]float64)
 
 	ticker := time.NewTicker(sampleInterval)
 	tickerC := ticker.C
@@ -91,6 +89,9 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 	if ctrl.CgroupRoot == "" {
 		ctrl.CgroupRoot = constants.CgroupMountPath
 	}
+
+	sampler := oom.NewSampler(ctrl.CgroupRoot)
+	defer sampler.Close()
 
 	for {
 		select {
@@ -113,16 +114,15 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		case <-tickerC:
 		}
 
-		evalContext := map[string]any{
-			"time_since_trigger": time.Since(ctrl.ActionTriggered),
-		}
-
-		err := oom.PopulatePsiToCtx(ctrl.CgroupRoot, evalContext, ctrl.oldValues, sampleInterval)
-		if err != nil {
-			logger.Error("cannot populate PSI context", zap.Error(err))
+		if err := sampler.Sample(sampleInterval); err != nil {
+			logger.Error("cannot sample memory PSI", zap.Error(err))
 
 			continue
 		}
+
+		// evalContext is owned by the sampler, and it is reused across iterations
+		evalContext := sampler.EvalContext()
+		evalContext["time_since_trigger"] = time.Since(ctrl.ActionTriggered)
 
 		trigger, err := oom.EvaluateTrigger(triggerExpr, evalContext)
 		if err != nil {

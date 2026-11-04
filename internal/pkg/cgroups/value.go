@@ -113,6 +113,70 @@ type NestedKeyed map[string]FlatMap
 
 // ParseValue parses the cgroup value from the string.
 func ParseValue(s string) (Value, error) {
+	return parseValue(s)
+}
+
+// ParseValueBytes parses the cgroup value from the byte slice.
+//
+// It is equivalent to ParseValue(string(b)), but it doesn't allocate for well-formed values.
+func ParseValueBytes(b []byte) (Value, error) {
+	return parseValue(b)
+}
+
+// maxFastPathDigits is the number of decimal digits which always fit into int64.
+const maxFastPathDigits = 18
+
+//nolint:gocyclo
+func parseValue[T string | []byte](s T) (Value, error) {
+	if string(s) == "max" {
+		return Value{IsMax: true, IsSet: true}, nil
+	}
+
+	// fast path: [-]digits[.digits], which covers all values exposed by cgroupfs
+	var (
+		val          int64
+		frac, digits int
+		seenDot      bool
+	)
+
+	neg := len(s) > 0 && s[0] == '-'
+
+	i := 0
+	if neg {
+		i++
+	}
+
+	for ; i < len(s); i++ {
+		c := s[i]
+
+		switch {
+		case c >= '0' && c <= '9':
+			val = val*10 + int64(c-'0')
+			digits++
+
+			if seenDot {
+				frac++
+			}
+		case c == '.' && !seenDot:
+			seenDot = true
+		default:
+			return parseValueSlow(string(s))
+		}
+	}
+
+	if digits == 0 || digits > maxFastPathDigits {
+		return parseValueSlow(string(s))
+	}
+
+	if neg {
+		val = -val
+	}
+
+	return Value{Val: val, Frac: frac, IsSet: true}, nil
+}
+
+// parseValueSlow handles the values not covered by the fast path of parseValue, including all the errors.
+func parseValueSlow(s string) (Value, error) {
 	if s == "max" {
 		return Value{IsMax: true, IsSet: true}, nil
 	}
