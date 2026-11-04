@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -23,116 +24,128 @@ import (
 )
 
 // EtcFileController watches EtcFileSpecs, creates/updates files.
+//
+// EtcFileController is a QController: each EtcFileSpec is reconciled on its own when it changes,
+// so a change to one file doesn't cause all the other files (e.g. the large CA bundle) to be
+// copied out of the state and compared to the contents on disk.
 type EtcFileController struct {
 	// EtcRoot is the root for /etc filesystem operations.
 	EtcRoot xfs.Root
 }
 
-// Name implements controller.Controller interface.
+// Name implements controller.QController interface.
 func (ctrl *EtcFileController) Name() string {
 	return "files.EtcFileController"
 }
 
-// Inputs implements controller.Controller interface.
-func (ctrl *EtcFileController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
-			Namespace: files.NamespaceName,
-			Type:      files.EtcFileSpecType,
-			Kind:      controller.InputStrong,
+// Settings implements controller.QController interface.
+func (ctrl *EtcFileController) Settings() controller.QSettings {
+	return controller.QSettings{
+		Inputs: []controller.Input{
+			{
+				Namespace: files.NamespaceName,
+				Type:      files.EtcFileSpecType,
+				Kind:      controller.InputQPrimary,
+			},
+		},
+		Outputs: []controller.Output{
+			{
+				Type: files.EtcFileStatusType,
+				Kind: controller.OutputExclusive,
+			},
 		},
 	}
 }
 
-// Outputs implements controller.Controller interface.
-func (ctrl *EtcFileController) Outputs() []controller.Output {
-	return []controller.Output{
-		{
-			Type: files.EtcFileStatusType,
-			Kind: controller.OutputExclusive,
-		},
+// MapInput implements controller.QController interface.
+func (ctrl *EtcFileController) MapInput(_ context.Context, _ *zap.Logger, _ controller.QRuntime, ptr controller.ReducedResourceMetadata) ([]resource.Pointer, error) {
+	return nil, fmt.Errorf("unexpected input %s", ptr)
+}
+
+// Reconcile implements controller.QController interface.
+func (ctrl *EtcFileController) Reconcile(ctx context.Context, logger *zap.Logger, r controller.QRuntime, ptr resource.Pointer) error {
+	spec, err := safe.ReaderGet[*files.EtcFileSpec](ctx, r, ptr)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// the spec is gone without the finalizer being set (it was never written), clean up the status if any
+			return ctrl.destroyStatus(ctx, r, ptr.ID())
+		}
+
+		return fmt.Errorf("error getting spec: %w", err)
+	}
+
+	switch spec.Metadata().Phase() {
+	case resource.PhaseTearingDown:
+		return ctrl.teardown(ctx, logger, r, spec)
+	case resource.PhaseRunning:
+		return ctrl.write(ctx, logger, r, spec)
+	default:
+		return fmt.Errorf("unexpected phase %s", spec.Metadata().Phase())
 	}
 }
 
-// Run implements controller.Controller interface.
-//
-//nolint:gocyclo
-func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
-		case <-r.EventCh():
-		}
+func (ctrl *EtcFileController) teardown(ctx context.Context, logger *zap.Logger, r controller.QRuntime, spec *files.EtcFileSpec) error {
+	filename := spec.Metadata().ID()
 
-		list, err := safe.ReaderList[*files.EtcFileSpec](ctx, r, resource.NewMetadata(files.NamespaceName, files.EtcFileSpecType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing specs: %w", err)
-		}
-
-		// add finalizers for all live resources
-		for res := range list.All() {
-			if res.Metadata().Phase() != resource.PhaseRunning {
-				continue
-			}
-
-			if err = r.AddFinalizer(ctx, res.Metadata(), ctrl.Name()); err != nil {
-				return fmt.Errorf("error adding finalizer: %w", err)
-			}
-		}
-
-		touchedIDs := make(map[resource.ID]struct{})
-
-		for spec := range list.All() {
-			filename := spec.Metadata().ID()
-
-			switch spec.Metadata().Phase() {
-			case resource.PhaseTearingDown:
-				logger.Debug("removing file", zap.String("name", filename))
-
-				if err = xfs.Remove(ctrl.EtcRoot, filename); err != nil && !errors.Is(err, os.ErrNotExist) {
-					return fmt.Errorf("failed to remove %q: %w", filename, err)
-				}
-
-				// now remove finalizer as the file was deleted
-				if err = r.RemoveFinalizer(ctx, spec.Metadata(), ctrl.Name()); err != nil {
-					return fmt.Errorf("error removing finalizer: %w", err)
-				}
-			case resource.PhaseRunning:
-				logger.Debug("writing file contents", zap.String("name", filename), zap.Stringer("version", spec.Metadata().Version()))
-
-				if err = AtomicUpdate(ctrl.EtcRoot, filename, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
-					return fmt.Errorf("error updating %q: %w", filename, err)
-				}
-
-				if err = safe.WriterModify(ctx, r, files.NewEtcFileStatus(files.NamespaceName, filename), func(r *files.EtcFileStatus) error {
-					r.TypedSpec().SpecVersion = spec.Metadata().Version().String()
-
-					return nil
-				}); err != nil {
-					return fmt.Errorf("error updating status: %w", err)
-				}
-
-				touchedIDs[filename] = struct{}{}
-			}
-		}
-
-		// list statuses for cleanup
-		statuses, err := safe.ReaderList[*files.EtcFileStatus](ctx, r, resource.NewMetadata(files.NamespaceName, files.EtcFileStatusType, "", resource.VersionUndefined))
-		if err != nil {
-			return fmt.Errorf("error listing resources: %w", err)
-		}
-
-		for res := range statuses.All() {
-			if _, ok := touchedIDs[res.Metadata().ID()]; !ok {
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
-					return fmt.Errorf("error cleaning up specs: %w", err)
-				}
-			}
-		}
-
-		r.ResetRestartBackoff()
+	if err := ctrl.destroyStatus(ctx, r, filename); err != nil {
+		return err
 	}
+
+	if !spec.Metadata().Finalizers().Has(ctrl.Name()) {
+		// the file was never written
+		return nil
+	}
+
+	logger.Debug("removing file", zap.String("name", filename))
+
+	if err := xfs.Remove(ctrl.EtcRoot, filename); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("failed to remove %q: %w", filename, err)
+	}
+
+	// now remove finalizer as the file was deleted
+	if err := r.RemoveFinalizer(ctx, spec.Metadata(), ctrl.Name()); err != nil {
+		return fmt.Errorf("error removing finalizer: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *EtcFileController) write(ctx context.Context, logger *zap.Logger, r controller.QRuntime, spec *files.EtcFileSpec) error {
+	filename := spec.Metadata().ID()
+
+	if !spec.Metadata().Finalizers().Has(ctrl.Name()) {
+		// adding the finalizer bumps the spec version, which requeues the spec,
+		// so the file is written (once) with the final version on the next reconcile
+		if err := r.AddFinalizer(ctx, spec.Metadata(), ctrl.Name()); err != nil {
+			return fmt.Errorf("error adding finalizer: %w", err)
+		}
+
+		return nil
+	}
+
+	logger.Debug("writing file contents", zap.String("name", filename), zap.Stringer("version", spec.Metadata().Version()))
+
+	if err := AtomicUpdate(ctrl.EtcRoot, filename, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
+		return fmt.Errorf("error updating %q: %w", filename, err)
+	}
+
+	if err := safe.WriterModify(ctx, r, files.NewEtcFileStatus(files.NamespaceName, filename), func(status *files.EtcFileStatus) error {
+		status.TypedSpec().SpecVersion = spec.Metadata().Version().String()
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error updating status: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *EtcFileController) destroyStatus(ctx context.Context, r controller.QRuntime, id resource.ID) error {
+	if err := r.Destroy(ctx, files.NewEtcFileStatus(files.NamespaceName, id).Metadata()); err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("error cleaning up status: %w", err)
+	}
+
+	return nil
 }
 
 // UpdateFile is like `os.WriteFile`, but it will only update the file if the
