@@ -32,7 +32,7 @@
 //     so any externalRefs on it never reach the vulnerability matcher.
 //
 //  2. Enrich the Go-module packages syft catalogs: per-module license
-//     discovery is enabled against the local module cache (GOMODCACHE), and
+//     discovery is enabled against complete, checksum-verified module inputs,
 //     each go-module package gets its PackageDownloadLocation (module proxy
 //     zip) and PackageHomePage (pkg.go.dev) filled in, both derived from the
 //     module path and version. syft leaves these as NOASSERTION otherwise.
@@ -71,6 +71,7 @@ import (
 	_ "modernc.org/sqlite" // pulled in by syft catalogers; harmless if unused
 )
 
+//nolint:gocyclo
 func main() {
 	var (
 		sourceDir       string
@@ -80,6 +81,8 @@ func main() {
 		cpeProduct      string
 		sourceDateEpoch int64
 		outputPath      string
+		licenseInputs   string
+		prepareInputs   string
 	)
 
 	flag.StringVar(&sourceDir, "source-dir", "", "path to the directory to scan (required)")
@@ -89,7 +92,21 @@ func main() {
 	flag.StringVar(&cpeProduct, "cpe-product", "talos_linux", "CPE product for the OS root package")
 	flag.Int64Var(&sourceDateEpoch, "source-date-epoch", parseEpochFromEnv(), "unix timestamp for SBOM creation; defaults to SOURCE_DATE_EPOCH env or 0")
 	flag.StringVar(&outputPath, "output", "", "path to write the SBOM (required)")
+	flag.StringVar(&licenseInputs, "license-inputs", "", "prepared checksum-verified license inputs (required for generation)")
+	flag.StringVar(&prepareInputs, "prepare-license-inputs", "", "prepare license archives from source-dir into a new directory, then exit")
 	flag.Parse()
+
+	if prepareInputs != "" {
+		if sourceDir == "" || licenseInputs != "" || outputPath != "" {
+			log.Fatal("preparation requires source-dir and no generation output/license-inputs")
+		}
+
+		if err := prepare(sourceDir, prepareInputs); err != nil {
+			log.Fatalf("prepare license inputs: %v", err)
+		}
+
+		return
+	}
 
 	if sourceDir == "" || sourceName == "" || sourceVersion == "" || outputPath == "" {
 		flag.Usage()
@@ -97,12 +114,30 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err := run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct, sourceDateEpoch, outputPath); err != nil {
+	if err := run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct, sourceDateEpoch, outputPath, licenseInputs); err != nil {
 		log.Fatalf("error: %v", err)
 	}
 }
 
-func run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct string, sourceDateEpoch int64, outputPath string) error {
+// prepare bounds license input preparation, including module downloads.
+func prepare(sourceDir, outputDir string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
+	defer cancel()
+
+	return prepareLicenseInputs(ctx, sourceDir, outputDir, fetchModule)
+}
+
+func run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct string, sourceDateEpoch int64, outputPath, licenseInputs string) error {
+	cacheDir, cleanup, err := materializeLicenseInputs(sourceDir, licenseInputs)
+	if err != nil {
+		return fmt.Errorf("license input closure: %w", err)
+	}
+	defer cleanup()
+
+	return catalog(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct, sourceDateEpoch, outputPath, cacheDir, false)
+}
+
+func catalog(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct string, sourceDateEpoch int64, outputPath, cacheDir string, usePackagesLib bool) error {
 	normalizedName := normalize(sourceName)
 	cpeVersion := strings.TrimPrefix(sourceVersion, "v")
 
@@ -119,14 +154,13 @@ func run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct string, sou
 	}
 	defer src.Close() //nolint:errcheck
 
-	// Enable the Go cataloger's per-module license discovery from the local
-	// module cache. syft's default mod-cache dir is derived from GOPATH, but the
-	// Talos build sets GOMODCACHE explicitly (e.g. /.cache/mod), so point the
-	// cataloger at GOMODCACHE when it is set. The cache is fully populated by the
-	// preceding `go mod download`, so this stays offline and reproducible.
+	// All admitted scan trees contain manifests/SPDX, not Go source. Do not let
+	// go/packages consult a mutable compiler cache or resolve dependencies.
+	// The unchanged cataloger selection still imports the supplied SPDX files.
 	goCfg := golang.DefaultCatalogerConfig().
+		WithUsePackagesLib(usePackagesLib).
 		WithSearchLocalModCacheLicenses(true).
-		WithLocalModCacheDir(os.Getenv("GOMODCACHE"))
+		WithLocalModCacheDir(cacheDir)
 
 	cfg := syft.DefaultCreateSBOMConfig().
 		WithCatalogerSelection(
@@ -332,8 +366,6 @@ func addGoModulePackage(doc *v2_3.Document, version string) {
 		}
 	}
 }
-
-const goProxyBaseURL = "https://proxy.golang.org"
 
 // enrichGoModuleURLs fills in PackageDownloadLocation and PackageHomePage for
 // every Go-module package syft cataloged. syft leaves both as NOASSERTION for
