@@ -1065,5 +1065,23 @@
 ; membership as small as possible, and grant it from the service policy that
 ; needs it rather than here.
 (typeattribute mcs_exempt_p)
+; Domains that observe every pod (process monitoring) read across categories but never write.
+(typeattribute mcs_read_exempt_p)
 
-(mlsconstrain mcs_classes (or (dom h1 h2) (eq t1 mcs_exempt_p)))
+(classpermission mcs_write_perms)
+(classpermissionset mcs_write_perms (file (and (all) (not (getattr read open lock map)))))
+(classpermissionset mcs_write_perms (dir (and (all) (not (getattr read open search lock)))))
+(classpermissionset mcs_write_perms (lnk_file (and (all) (not (getattr read)))))
+(classpermissionset mcs_write_perms (chr_file (and (all) (not (getattr read open)))))
+(classpermissionset mcs_write_perms (blk_file (and (all) (not (getattr read open)))))
+(classpermissionset mcs_write_perms (sock_file (and (all) (not (getattr read open)))))
+(classpermissionset mcs_write_perms (fifo_file (and (all) (not (getattr read open)))))
+(classpermissionset mcs_write_perms (process (and (all) (not (getattr getsched getpgid getsession getcap getrlimit)))))
+(classpermissionset mcs_write_perms (sem (all)))
+(classpermissionset mcs_write_perms (msgq (all)))
+(classpermissionset mcs_write_perms (msg (all)))
+(classpermissionset mcs_write_perms (shm (all)))
+(classpermissionset mcs_write_perms (key (all)))
+
+(mlsconstrain mcs_classes (or (dom h1 h2) (or (eq t1 mcs_exempt_p) (eq t1 mcs_read_exempt_p))))
+(mlsconstrain mcs_write_perms (or (dom h1 h2) (eq t1 mcs_exempt_p)))
