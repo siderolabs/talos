@@ -84,6 +84,11 @@ func TestPolicy(t *testing.T) {
 			"(neverallow pod_privileged_t cni_plugin_t (file (write)))\n",
 			"neverallow check failed",
 		},
+		{
+			"the CRI relabels a volume formatted without labels",
+			"(neverallow pod_containerd_t unlabeled_t (dir (relabelfrom)))\n",
+			"neverallow check failed",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			dir := t.TempDir()
