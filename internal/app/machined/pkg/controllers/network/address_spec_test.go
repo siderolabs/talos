@@ -6,8 +6,6 @@
 package network_test
 
 import (
-	"fmt"
-	"math/rand/v2"
 	"net"
 	"net/netip"
 	"os"
@@ -31,10 +29,6 @@ import (
 
 type AddressSpecSuite struct {
 	ctest.DefaultSuite
-}
-
-func (suite *AddressSpecSuite) uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
 func assertLinkAddress(asrt *assert.Assertions, linkName, address string) {
@@ -142,7 +136,7 @@ func (suite *AddressSpecSuite) TestIPV6ULA() {
 }
 
 func (suite *AddressSpecSuite) TestDummy() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -206,7 +200,7 @@ func (suite *AddressSpecSuite) TestDummy() {
 // the kernel marks all but the first IPv4 address in the subnet as IFA_F_SECONDARY, and Talos should not
 // try to enforce the flags it doesn't manage.
 func (suite *AddressSpecSuite) TestDummySecondary() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -291,8 +285,8 @@ func (suite *AddressSpecSuite) TestDummySecondary() {
 }
 
 func (suite *AddressSpecSuite) TestDummyAlias() {
-	dummyInterface := suite.uniqueDummyInterface()
-	dummyAlias := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
+	dummyAlias := uniqueDummyInterface()
 
 	suite.T().Logf("dummyInterface: %s, dummyAlias: %s", dummyInterface, dummyAlias)
 

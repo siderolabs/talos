@@ -44,10 +44,6 @@ type LinkSpecSuite struct {
 	observedLogs *observer.ObservedLogs
 }
 
-func (suite *LinkSpecSuite) uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
-}
-
 func (suite *LinkSpecSuite) TestLoopback() {
 	loopback := network.NewLinkSpec(network.NamespaceName, "lo")
 	*loopback.TypedSpec() = network.LinkSpecSpec{
@@ -64,7 +60,7 @@ func (suite *LinkSpecSuite) TestLoopback() {
 }
 
 func (suite *LinkSpecSuite) TestDummy() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
 	*dummy.TypedSpec() = network.LinkSpecSpec{
@@ -135,7 +131,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 }
 
 func (suite *LinkSpecSuite) TestDummyWithMAC() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	newHardwareAddr := net.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
 
@@ -166,7 +162,7 @@ func (suite *LinkSpecSuite) TestDummyWithMAC() {
 }
 
 func (suite *LinkSpecSuite) TestDummyDropsLogical() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
 	*dummy.TypedSpec() = network.LinkSpecSpec{
@@ -200,8 +196,8 @@ func (suite *LinkSpecSuite) TestDummyDropsLogical() {
 }
 
 func (suite *LinkSpecSuite) TestVeth() {
-	primaryName := suite.uniqueDummyInterface()
-	peerName := suite.uniqueDummyInterface()
+	primaryName := uniqueDummyInterface()
+	peerName := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -280,10 +276,10 @@ func (suite *LinkSpecSuite) TestVeth() {
 }
 
 func (suite *LinkSpecSuite) TestVethReconfigurePeers() {
-	nameA := suite.uniqueDummyInterface()
-	nameB := suite.uniqueDummyInterface()
-	nameC := suite.uniqueDummyInterface()
-	nameD := suite.uniqueDummyInterface()
+	nameA := uniqueDummyInterface()
+	nameB := uniqueDummyInterface()
+	nameC := uniqueDummyInterface()
+	nameD := uniqueDummyInterface()
 
 	specA, specB := newVethLinkSpecs(nameA, nameB)
 	specC, specD := newVethLinkSpecs(nameC, nameD)
@@ -335,8 +331,8 @@ func (suite *LinkSpecSuite) TestVethReconfigurePeers() {
 }
 
 func (suite *LinkSpecSuite) TestVethReplacesWrongKind() {
-	primaryName := suite.uniqueDummyInterface()
-	peerName := suite.uniqueDummyInterface()
+	primaryName := uniqueDummyInterface()
+	peerName := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -407,7 +403,7 @@ func newVethLinkSpecs(primaryName, peerName string) (*network.LinkSpec, *network
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestVLAN() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
 	*dummy.TypedSpec() = network.LinkSpecSpec{
@@ -497,7 +493,7 @@ func (suite *LinkSpecSuite) TestVLAN() {
 }
 
 func (suite *LinkSpecSuite) TestVXLAN() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
 	*dummy.TypedSpec() = network.LinkSpecSpec{
@@ -585,7 +581,7 @@ func (suite *LinkSpecSuite) assertLinkNotRecreated(linkName string, index uint32
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestVLANViaAlias() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	dummy := network.NewLinkSpec(network.NamespaceName, dummyInterface)
 	*dummy.TypedSpec() = network.LinkSpecSpec{
@@ -613,7 +609,7 @@ func (suite *LinkSpecSuite) TestVLANViaAlias() {
 	iface, err := net.InterfaceByName(dummyInterface)
 	suite.Require().NoError(err)
 
-	dummyAlias := suite.uniqueDummyInterface()
+	dummyAlias := uniqueDummyInterface()
 
 	suite.Require().NoError(
 		conn.Link.Set(
@@ -693,7 +689,7 @@ func (suite *LinkSpecSuite) TestVLANViaAlias() {
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestBond() {
-	bondName := suite.uniqueDummyInterface()
+	bondName := uniqueDummyInterface()
 	bond := network.NewLinkSpec(network.NamespaceName, bondName)
 	*bond.TypedSpec() = network.LinkSpecSpec{
 		Name:    bondName,
@@ -716,7 +712,7 @@ func (suite *LinkSpecSuite) TestBond() {
 	}
 	networkadapter.BondMasterSpec(&bond.TypedSpec().BondMaster).FillDefaults()
 
-	dummy0Name := suite.uniqueDummyInterface()
+	dummy0Name := uniqueDummyInterface()
 	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
 	*dummy0.TypedSpec() = network.LinkSpecSpec{
 		Name:    dummy0Name,
@@ -731,7 +727,7 @@ func (suite *LinkSpecSuite) TestBond() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	dummy1Name := suite.uniqueDummyInterface()
+	dummy1Name := uniqueDummyInterface()
 	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
 	*dummy1.TypedSpec() = network.LinkSpecSpec{
 		Name:    dummy1Name,
@@ -795,7 +791,7 @@ func (suite *LinkSpecSuite) TestBond() {
 }
 
 func (suite *LinkSpecSuite) TestBondActiveBackup() {
-	bondName := suite.uniqueDummyInterface()
+	bondName := uniqueDummyInterface()
 	bond := network.NewLinkSpec(network.NamespaceName, bondName)
 	*bond.TypedSpec() = network.LinkSpecSpec{
 		Name:    bondName,
@@ -818,7 +814,7 @@ func (suite *LinkSpecSuite) TestBondActiveBackup() {
 	networkadapter.BondMasterSpec(&bond.TypedSpec().BondMaster).FillDefaults()
 
 	for idx := range 2 {
-		dummyName := suite.uniqueDummyInterface()
+		dummyName := uniqueDummyInterface()
 		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
 		*dummy.TypedSpec() = network.LinkSpecSpec{
 			Name:    dummyName,
@@ -848,10 +844,10 @@ func (suite *LinkSpecSuite) TestBondActiveBackup() {
 // The slaves are returned separately from the bond so that a test can create the slave links first,
 // which is what happens with real NICs: the physical links already exist by the time the bond is built.
 func (suite *LinkSpecSuite) bondWithSlaves(primary func(dummyNames []string) string) (bondName string, dummyNames []string, dummies []resource.Resource, bond resource.Resource) {
-	bondName = suite.uniqueDummyInterface()
+	bondName = uniqueDummyInterface()
 
 	for range 2 {
-		dummyNames = append(dummyNames, suite.uniqueDummyInterface())
+		dummyNames = append(dummyNames, uniqueDummyInterface())
 	}
 
 	for idx, dummyName := range dummyNames {
@@ -1017,7 +1013,7 @@ func (suite *LinkSpecSuite) TestBondPrimaryNotPresent() {
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestBond8023ad() {
-	bondName := suite.uniqueDummyInterface()
+	bondName := uniqueDummyInterface()
 	bond := network.NewLinkSpec(network.NamespaceName, bondName)
 	*bond.TypedSpec() = network.LinkSpecSpec{
 		Name:    bondName,
@@ -1042,7 +1038,7 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 	)
 
 	for range 4 {
-		dummyName := suite.uniqueDummyInterface()
+		dummyName := uniqueDummyInterface()
 		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
 		*dummy.TypedSpec() = network.LinkSpecSpec{
 			Name:    dummyName,
@@ -1100,7 +1096,7 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestBridge() {
-	bridgeName := suite.uniqueDummyInterface()
+	bridgeName := uniqueDummyInterface()
 	bridge := network.NewLinkSpec(network.NamespaceName, bridgeName)
 	*bridge.TypedSpec() = network.LinkSpecSpec{
 		Name:    bridgeName,
@@ -1116,7 +1112,7 @@ func (suite *LinkSpecSuite) TestBridge() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	dummy0Name := suite.uniqueDummyInterface()
+	dummy0Name := uniqueDummyInterface()
 	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
 	*dummy0.TypedSpec() = network.LinkSpecSpec{
 		Name:    dummy0Name,
@@ -1130,7 +1126,7 @@ func (suite *LinkSpecSuite) TestBridge() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	dummy1Name := suite.uniqueDummyInterface()
+	dummy1Name := uniqueDummyInterface()
 	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
 	*dummy1.TypedSpec() = network.LinkSpecSpec{
 		Name:    dummy1Name,
@@ -1197,7 +1193,7 @@ func (suite *LinkSpecSuite) TestBridge() {
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestVRF() {
-	vrfName := suite.uniqueDummyInterface()
+	vrfName := uniqueDummyInterface()
 	vrf := network.NewLinkSpec(network.NamespaceName, vrfName)
 	*vrf.TypedSpec() = network.LinkSpecSpec{
 		Name:    vrfName,
@@ -1211,7 +1207,7 @@ func (suite *LinkSpecSuite) TestVRF() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	dummy0Name := suite.uniqueDummyInterface()
+	dummy0Name := uniqueDummyInterface()
 	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
 	*dummy0.TypedSpec() = network.LinkSpecSpec{
 		Name:    dummy0Name,
@@ -1225,7 +1221,7 @@ func (suite *LinkSpecSuite) TestVRF() {
 		ConfigLayer: network.ConfigDefault,
 	}
 
-	dummy1Name := suite.uniqueDummyInterface()
+	dummy1Name := uniqueDummyInterface()
 	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
 	*dummy1.TypedSpec() = network.LinkSpecSpec{
 		Name:    dummy1Name,
@@ -1315,7 +1311,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 		priv2Pub = priv2.PublicKey()
 	})
 
-	wgInterface := suite.uniqueDummyInterface()
+	wgInterface := uniqueDummyInterface()
 
 	wg := network.NewLinkSpec(network.NamespaceName, wgInterface)
 	*wg.TypedSpec() = network.LinkSpecSpec{

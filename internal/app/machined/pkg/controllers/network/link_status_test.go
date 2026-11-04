@@ -34,8 +34,13 @@ type LinkStatusSuite struct {
 	ctest.DefaultSuite
 }
 
+// uniqueDummyInterface returns a random name for a dummy link.
+//
+// Unit tests from concurrent CI jobs share a network namespace, which may also hold links left
+// behind by test runs killed before their cleanup, so the name is as random as it can be: it is
+// 13 characters long, so that names derived from it (VLAN "<name>.N") still fit in IFNAMSIZ.
 func uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
+	return fmt.Sprintf("dummy%08x", rand.Uint32())
 }
 
 // uniqueVXLANID returns a random VXLAN network identifier.

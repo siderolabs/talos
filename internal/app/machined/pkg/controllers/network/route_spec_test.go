@@ -6,7 +6,6 @@ package network_test
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"net"
 	"net/netip"
 	"os"
@@ -29,10 +28,6 @@ import (
 
 type RouteSpecSuite struct {
 	ctest.DefaultSuite
-}
-
-func (suite *RouteSpecSuite) uniqueDummyInterface() string {
-	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
 // assertSingleRoute lists the kernel routes, expects exactly one to satisfy match, and runs check on it.
@@ -324,7 +319,7 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 }
 
 func (suite *RouteSpecSuite) TestIPv6DefaultPriorityLifecycle() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -379,7 +374,7 @@ func (suite *RouteSpecSuite) TestIPv6DefaultPriorityLifecycle() {
 }
 
 func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -459,7 +454,7 @@ func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 }
 
 func (suite *RouteSpecSuite) TestLinkLocalRoute() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -517,8 +512,8 @@ func (suite *RouteSpecSuite) TestLinkLocalRoute() {
 }
 
 func (suite *RouteSpecSuite) TestLinkLocalRouteAlias() {
-	dummyInterface := suite.uniqueDummyInterface()
-	dummyAlias := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
+	dummyAlias := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -637,7 +632,7 @@ func (suite *RouteSpecSuite) assertNoRouteChurn(family nethelpers.Family, destin
 }
 
 func (suite *RouteSpecSuite) TestIPv6GatewaylessRoute() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -705,10 +700,10 @@ func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
 
 	defer conn.Close() //nolint:errcheck
 
-	firstIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/31"))
+	firstIndex := suite.createDummyInterface(conn, uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/31"))
 	defer conn.Link.Delete(firstIndex) //nolint:errcheck
 
-	secondIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.3/31"))
+	secondIndex := suite.createDummyInterface(conn, uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.3/31"))
 	defer conn.Link.Delete(secondIndex) //nolint:errcheck
 
 	gateways := []netip.Addr{netip.MustParseAddr("192.0.2.0"), netip.MustParseAddr("192.0.2.2")}
@@ -780,7 +775,7 @@ func (suite *RouteSpecSuite) TestMultipathRouteNumberedNextHops() {
 // TestIPv4RouteScopeMismatch covers the other side of routeScopeMatches: for IPv4 the kernel does
 // store the scope, so a route already present with the wrong one must be rewritten.
 func (suite *RouteSpecSuite) TestIPv4RouteScopeMismatch() {
-	dummyInterface := suite.uniqueDummyInterface()
+	dummyInterface := uniqueDummyInterface()
 
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
@@ -932,7 +927,7 @@ func (suite *RouteSpecSuite) TestNextHopChangeInPlace() {
 
 			defer conn.Close() //nolint:errcheck
 
-			first, second := suite.uniqueDummyInterface(), suite.uniqueDummyInterface()
+			first, second := uniqueDummyInterface(), uniqueDummyInterface()
 
 			firstIndex := suite.createDummyInterface(conn, first, netip.MustParsePrefix("192.0.2.1/31"))
 			defer conn.Link.Delete(firstIndex) //nolint:errcheck
@@ -1037,7 +1032,7 @@ func (suite *RouteSpecSuite) TestReplaceOwnedRoute() {
 
 	defer conn.Close() //nolint:errcheck
 
-	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	ifaceIndex := suite.createDummyInterface(conn, uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
 	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("10.99.0.0/16")
@@ -1101,7 +1096,7 @@ func (suite *RouteSpecSuite) TestForeignRouteUntouched() {
 
 	defer conn.Close() //nolint:errcheck
 
-	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	ifaceIndex := suite.createDummyInterface(conn, uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
 	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("10.96.0.0/16")
@@ -1185,7 +1180,7 @@ func (suite *RouteSpecSuite) TestTeardownByKey() {
 
 	defer conn.Close() //nolint:errcheck
 
-	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	ifaceIndex := suite.createDummyInterface(conn, uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
 	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("10.98.0.0/16")
@@ -1213,7 +1208,7 @@ func (suite *RouteSpecSuite) TestTeardownByKey() {
 	// the spec is updated to a next-hop which can't be applied (the link doesn't exist), so the old route stays
 	ctest.UpdateWithConflicts(suite, route, func(r *network.RouteSpec) error {
 		r.TypedSpec().Gateway = netip.MustParseAddr("192.0.2.4")
-		r.TypedSpec().OutLinkName = suite.uniqueDummyInterface()
+		r.TypedSpec().OutLinkName = uniqueDummyInterface()
 
 		return nil
 	})
@@ -1231,7 +1226,7 @@ func (suite *RouteSpecSuite) TestTeardownAfterProtocolChange() {
 
 	defer conn.Close() //nolint:errcheck
 
-	ifaceIndex := suite.createDummyInterface(conn, suite.uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
+	ifaceIndex := suite.createDummyInterface(conn, uniqueDummyInterface(), netip.MustParsePrefix("192.0.2.1/24"))
 	defer conn.Link.Delete(ifaceIndex) //nolint:errcheck
 
 	destination := netip.MustParsePrefix("10.97.0.0/16")
@@ -1259,7 +1254,7 @@ func (suite *RouteSpecSuite) TestTeardownAfterProtocolChange() {
 	// the spec is replaced by a lower layer route with another protocol, which can't be applied (the link doesn't exist)
 	ctest.UpdateWithConflicts(suite, route, func(r *network.RouteSpec) error {
 		r.TypedSpec().Gateway = netip.MustParseAddr("fe80::1")
-		r.TypedSpec().OutLinkName = suite.uniqueDummyInterface()
+		r.TypedSpec().OutLinkName = uniqueDummyInterface()
 		r.TypedSpec().Protocol = nethelpers.ProtocolBGP
 		r.TypedSpec().ConfigLayer = network.ConfigOperator
 
