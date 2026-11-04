@@ -29,6 +29,9 @@ const ControlPlaneDiscoveredEndpointsID = resource.ID("discovery")
 // ControlPlaneKubernetesEndpointsID is resource ID for control plane endpoint-based Endpoints.
 const ControlPlaneKubernetesEndpointsID = resource.ID("controlplane")
 
+// ControlPlaneStaticEndpointsID is resource ID for statically configured Endpoints.
+const ControlPlaneStaticEndpointsID = resource.ID("static")
+
 // Endpoint resource holds definition of rendered secrets.
 type Endpoint = typed.Resource[EndpointSpec, EndpointExtension]
 

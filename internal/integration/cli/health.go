@@ -69,6 +69,13 @@ func (suite *HealthSuite) TestClientSideWithDiscovery() {
 
 // TestServerSide does successful health check run from server-side.
 func (suite *HealthSuite) TestServerSide() {
+	discoveryEnabled, err := suite.isDiscoveryEnabled()
+	suite.Require().NoError(err)
+
+	if !discoveryEnabled {
+		suite.T().Skipf("skipping test: discovery is not enabled on the cluster")
+	}
+
 	randomControlPlaneNodeInternalIP := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	suite.RunCLI(
 		[]string{"health", "--nodes", randomControlPlaneNodeInternalIP},

@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: StaticEndpointsConfig
+addresses:
+    - 10.0.0.11
+    - 2001:db8::12
+hostnames:
+    - cp1.example.com

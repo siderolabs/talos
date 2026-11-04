@@ -40,6 +40,7 @@ type Config interface { //nolint:interfacebloat
 	// - cluster
 	DiscoveryServiceConfigs() []DiscoveryServiceConfig
 	DiscoveryIdentityConfig() DiscoveryIdentityConfig
+	StaticEndpointsConfig() StaticEndpointsConfig
 
 	// - k8s:
 	K8sAPIServerCAConfig() K8sAPIServerCAConfig

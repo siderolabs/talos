@@ -75,6 +75,7 @@ type Common struct {
 	SkipEtcdK8sConfig           bool
 	EnableKubeSpan              bool
 	EnableClusterDiscovery      bool
+	WithStaticEndpoints         bool
 	ConfigPatch                 []string
 	ConfigPatchControlPlane     []string
 	ConfigPatchWorker           []string

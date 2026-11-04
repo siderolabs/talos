@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	clustercfg "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
@@ -206,7 +207,38 @@ func (m *Maker[T]) initConfigBundleOps() error {
 	m.ConfigBundleOps = []bundle.Option{}
 	m.userConfigBundleOps = configPatchBundleOps
 
+	if m.Ops.WithStaticEndpoints {
+		staticEndpointsPatch, err := m.getStaticEndpointsPatch()
+		if err != nil {
+			return err
+		}
+
+		m.ConfigBundleOps = append(m.ConfigBundleOps, bundle.WithPatch([]configpatcher.Patch{staticEndpointsPatch}))
+	}
+
 	return nil
+}
+
+// getStaticEndpointsPatch builds a StaticEndpointsConfig document listing IPs of all controlplane nodes.
+func (m *Maker[T]) getStaticEndpointsPatch() (configpatcher.Patch, error) {
+	if !m.VersionContract.Greater(config.TalosVersion1_14) {
+		return nil, fmt.Errorf("static endpoints are not supported for Talos version %q", m.Ops.TalosVersion)
+	}
+
+	staticEndpoints := clustercfg.NewStaticEndpointsConfigV1Alpha1()
+
+	for _, node := range m.ClusterRequest.Nodes {
+		if node.Type.IsControlPlane() {
+			staticEndpoints.EndpointAddresses = append(staticEndpoints.EndpointAddresses, node.IPs...)
+		}
+	}
+
+	ctr, err := container.New(staticEndpoints)
+	if err != nil {
+		return nil, err
+	}
+
+	return configpatcher.NewStrategicMergePatch(ctr), nil
 }
 
 func (m *Maker[T]) initVersionContract() error {

@@ -5,6 +5,7 @@
 package makers_test
 
 import (
+	"net/netip"
 	"regexp"
 	"testing"
 
@@ -251,4 +252,77 @@ func assertMachineConfig(t *testing.T, in *generate.Input, node provision.NodeRe
 	require.NoError(t, err)
 
 	assert.Equal(t, string(cfgExpectedBytes), string(cfgGotBytes))
+}
+
+func TestCommonMaker_StaticEndpoints(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	cOps.Controlplanes = 3
+	cOps.Workers = 2
+	cOps.NetworkIPv6 = true
+	cOps.WithInitNode = true
+	cOps.WithStaticEndpoints = true
+
+	m := getInitializedTestMaker(t, cOps)
+
+	clusterCfgs, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	require.Len(t, clusterCfgs.ClusterRequest.Nodes, 5)
+
+	for _, node := range clusterCfgs.ClusterRequest.Nodes {
+		staticEndpoints := node.Config.StaticEndpointsConfig()
+		require.NotNil(t, staticEndpoints, "node %s", node.Name)
+
+		assert.Equal(t,
+			[]netip.Addr{
+				netip.MustParseAddr("10.5.0.2"), netip.MustParseAddr("fd74:616c:a05::2"),
+				netip.MustParseAddr("10.5.0.3"), netip.MustParseAddr("fd74:616c:a05::3"),
+				netip.MustParseAddr("10.5.0.4"), netip.MustParseAddr("fd74:616c:a05::4"),
+			},
+			staticEndpoints.Addresses(),
+			"node %s", node.Name,
+		)
+		assert.Empty(t, staticEndpoints.Hostnames())
+	}
+}
+
+func TestCommonMaker_StaticEndpointsUnsupportedVersion(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	cOps.TalosVersion = "v1.14"
+	cOps.WithStaticEndpoints = true
+
+	m, err := makers.New(makers.MakerOptions[any]{CommonOps: cOps, Provisioner: testProvisioner{}})
+	require.NoError(t, err)
+
+	m.SetExtraOptionsProvider(&nothingProvider{})
+
+	assert.ErrorContains(t, m.Init(), "static endpoints are not supported for Talos version \"v1.14\"")
+}
+
+func TestCommonMaker_StaticEndpointsSkipEtcdK8s(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	cOps.Controlplanes = 2
+	cOps.Workers = 1
+	cOps.EnableClusterDiscovery = false
+	cOps.SkipEtcdK8sConfig = true
+	cOps.WithStaticEndpoints = true
+
+	m := getInitializedTestMaker(t, cOps)
+
+	clusterCfgs, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	workers := clusterCfgs.ClusterRequest.Nodes.WorkerNodes()
+	require.Len(t, workers, 1)
+
+	// the static endpoints are the only source of control plane endpoints on the worker
+	cfg := workers[0].Config
+	assert.Nil(t, cfg.K8sClusterConfig())
+	assert.Empty(t, cfg.DiscoveryServiceConfigs())
+
+	require.NotNil(t, cfg.StaticEndpointsConfig())
+	assert.Equal(t,
+		[]netip.Addr{netip.MustParseAddr("10.5.0.2"), netip.MustParseAddr("10.5.0.3")},
+		cfg.StaticEndpointsConfig().Addresses(),
+	)
 }

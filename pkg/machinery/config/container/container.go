@@ -456,6 +456,16 @@ func (container *Container) DiscoveryIdentityConfig() config.DiscoveryIdentityCo
 	return nil
 }
 
+// StaticEndpointsConfig implements config.Config interface.
+func (container *Container) StaticEndpointsConfig() config.StaticEndpointsConfig {
+	// take first, since this doc is not named
+	if docs := findMatchingDocs[config.StaticEndpointsConfig](container.documents); len(docs) > 0 {
+		return docs[0]
+	}
+
+	return nil
+}
+
 // PCIDriverRebindConfig implements config.Config interface.
 func (container *Container) PCIDriverRebindConfig() config.PCIDriverRebindConfig {
 	return config.WrapPCIDriverRebindConfig(findMatchingDocs[config.PCIDriverRebindConfig](container.documents)...)

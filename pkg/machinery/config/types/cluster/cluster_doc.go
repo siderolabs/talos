@@ -7,6 +7,8 @@
 package cluster
 
 import (
+	"net/netip"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
@@ -76,6 +78,41 @@ func (DiscoveryIdentityConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (StaticEndpointsConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "StaticEndpointsConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "StaticEndpointsConfig is a config document to provide a static list of control plane endpoints." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "StaticEndpointsConfig is a config document to provide a static list of control plane endpoints.\nTalos discovers control plane endpoints dynamically from the discovery service, the Kubernetes API server endpoints, and the cluster control plane endpoint.\nThe control plane endpoints are used by worker nodes to reach trustd, and by control plane nodes to join etcd.\nThis document provides a static list of control plane node addresses and hostnames which is merged with the dynamically discovered endpoints.\nIt is useful when the discovery service is not available, or in clusters without Kubernetes.\n\nThe list is not trusted: every connection is authenticated with TLS, and unreachable endpoints are skipped.\nEndpoints don't include a port, as the port is defined by the service being accessed.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "addresses",
+				Type:        "[]Addr",
+				Note:        "",
+				Description: "List of control plane node IP addresses.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "List of control plane node IP addresses." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hostnames",
+				Type:        "[]string",
+				Note:        "",
+				Description: "List of control plane node hostnames.\nThe hostnames are resolved by the services connecting to them.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "List of control plane node hostnames." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleStaticEndpointsConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", []netip.Addr{netip.MustParseAddr("10.0.0.11"), netip.MustParseAddr("10.0.0.12"), netip.MustParseAddr("2001:db8::13")})
+	doc.Fields[2].AddExample("", []string{"cp1.example.com", "cp2.example.com"})
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file cluster_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -84,6 +121,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			DiscoveryServiceConfigV1Alpha1{}.Doc(),
 			DiscoveryIdentityConfigV1Alpha1{}.Doc(),
+			StaticEndpointsConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

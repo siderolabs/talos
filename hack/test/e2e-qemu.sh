@@ -62,6 +62,12 @@ case "${WITH_CLUSTER_DISCOVERY:-true}" in
     ;;
 esac
 
+case "${WITH_STATIC_ENDPOINTS:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-static-endpoints")
+    ;;
+esac
+
 case "${WITH_KUBESPAN:-false}" in
   true)
     QEMU_FLAGS+=("--with-kubespan")

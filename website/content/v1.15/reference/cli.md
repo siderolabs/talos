@@ -228,6 +228,7 @@ talosctl cluster create dev [flags]
       --with-network-packet-reorder float             specify percent of reordered packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)
       --with-nfs[=true|false]                         run an embedded userspace NFS server and mount NFSv3 and NFSv4 test volumes
       --with-siderolink true                          enables the use of siderolink agent as configuration apply mechanism. true or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling (default none)
+      --with-static-endpoints[=true|false]            generate a StaticEndpointsConfig document listing the IPs of all controlplane nodes and apply it to all nodes
       --with-tpm1_2[=true|false]                      enable TPM 1.2 emulation support using swtpm
       --with-tpm2[=true|false]                        enable TPM 2.0 emulation support using swtpm
       --with-uefi[=true|false]                        enable UEFI on x86_64 architecture (default true)

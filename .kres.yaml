@@ -1195,6 +1195,15 @@ spec:
           - variant: default
             test: e2e-no-cluster-discovery
             withClusterDiscovery: "false"
+          # Static endpoints are the only control plane endpoint source in this cluster: with discovery,
+          # etcd and Kubernetes disabled, workers reach trustd (to get Talos API certificates) only
+          # via the StaticEndpointsConfig document.
+          - variant: default
+            test: e2e-static-endpoints
+            withClusterDiscovery: "false"
+            withStaticEndpoints: "true"
+            withSkipEtcdK8s: "true"
+            testMode: skip-etcd-k8s
           - variant: default
             test: e2e-kubespan
             withClusterDiscovery: "true"
@@ -1250,6 +1259,9 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: ${{ matrix.withClusterDiscovery }}
+            WITH_STATIC_ENDPOINTS: ${{ matrix.withStaticEndpoints }}
+            WITH_SKIP_ETCD_K8S: ${{ matrix.withSkipEtcdK8s }}
+            TEST_MODE: ${{ matrix.testMode }}
             WITH_KUBESPAN: ${{ matrix.withKubespan }}
             VIA_MAINTENANCE_MODE: ${{ matrix.viaMaintenanceMode }}
             DISABLE_DHCP_HOSTNAME: ${{ matrix.disableDhcpHostname }}

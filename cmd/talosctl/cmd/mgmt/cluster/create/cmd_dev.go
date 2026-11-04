@@ -127,6 +127,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		configDebugFlag               = "with-debug"
 		dnsDomainFlag                 = "dns-domain"
 		withClusterDiscoveryFlag      = "with-cluster-discovery"
+		withStaticEndpointsFlag       = "with-static-endpoints"
 		registryInsecureFlag          = "registry-insecure-skip-verify"
 		customCNIUrlFlag              = "custom-cni-url"
 		encryptStatePartitionFlag     = "encrypt-state"
@@ -201,6 +202,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		common.BoolVar(&cOps.SkipInjectingConfig, skipInjectingConfigFlag, cOps.SkipInjectingConfig,
 			"skip injecting config from embedded metadata server, write config files to current directory")
 		common.BoolVar(&cOps.EnableClusterDiscovery, withClusterDiscoveryFlag, cOps.EnableClusterDiscovery, "enable cluster discovery")
+		common.BoolVar(&cOps.WithStaticEndpoints, withStaticEndpointsFlag, cOps.WithStaticEndpoints,
+			"generate a StaticEndpointsConfig document listing the IPs of all controlplane nodes and apply it to all nodes")
 		common.BoolVar(&cOps.EnableKubeSpan, enableKubeSpanFlag, cOps.EnableKubeSpan, "enable KubeSpan system")
 		common.IntVar(&cOps.KubePrismPort, kubePrismFlag, cOps.KubePrismPort, "KubePrism port (set to 0 to disable)")
 		common.BoolVar(&cOps.SkipK8sNodeReadinessCheck, skipK8sNodeReadinessCheckFlag, cOps.SkipK8sNodeReadinessCheck, "skip k8s node readiness checks")

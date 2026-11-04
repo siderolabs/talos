@@ -1155,6 +1155,27 @@ content: |
 Snapshots already broken by an earlier crash are not repaired: remove the affected image (e.g. `talosctl image rm`) so that it is pulled again.
 """
 
+    [notes.static_endpoints]
+        title = "Static Control Plane Endpoints"
+        description = """\
+The new `StaticEndpointsConfig` document provides a static list of control plane node addresses and hostnames:
+
+```yaml
+apiVersion: v1alpha1
+kind: StaticEndpointsConfig
+addresses:
+  - 10.0.0.11
+  - 10.0.0.12
+  - 10.0.0.13
+```
+
+The list is merged with the control plane endpoints discovered via the discovery service, the Kubernetes API server endpoints, and the cluster control plane endpoint.
+Worker nodes use these endpoints to reach trustd, and control plane nodes use them to join etcd.
+Distributing the list to all machines in the cluster makes these operations independent of the discovery service and Kubernetes.
+
+Every connection to the endpoints is authenticated with TLS, and unreachable endpoints are skipped, so a stale list doesn't break the cluster.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -1315,6 +1315,56 @@
       ],
       "description": "DiscoveryServiceConfig is a config document to configure a discovery service."
     },
+    "cluster.StaticEndpointsConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "StaticEndpointsConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f.:]+$"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "List of control plane node IP addresses.\n",
+          "markdownDescription": "List of control plane node IP addresses.",
+          "x-intellij-html-description": "\u003cp\u003eList of control plane node IP addresses.\u003c/p\u003e\n"
+        },
+        "hostnames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "hostnames",
+          "description": "List of control plane node hostnames.\nThe hostnames are resolved by the services connecting to them.\n",
+          "markdownDescription": "List of control plane node hostnames.\nThe hostnames are resolved by the services connecting to them.",
+          "x-intellij-html-description": "\u003cp\u003eList of control plane node hostnames.\nThe hostnames are resolved by the services connecting to them.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "StaticEndpointsConfig is a config document to provide a static list of control plane endpoints.\\nTalos discovers control plane endpoints dynamically from the discovery service, the Kubernetes API server endpoints, and the cluster control plane endpoint.\\nThe control plane endpoints are used by worker nodes to reach trustd, and by control plane nodes to join etcd.\\nThis document provides a static list of control plane node addresses and hostnames which is merged with the dynamically discovered endpoints.\\nIt is useful when the discovery service is not available, or in clusters without Kubernetes.\\n\\nThe list is not trusted: every connection is authenticated with TLS, and unreachable endpoints are skipped.\\nEndpoints don't include a port, as the port is defined by the service being accessed.\\n"
+    },
     "container.ContainerCapabilities": {
       "properties": {
         "add": {
@@ -9929,6 +9979,9 @@
     },
     {
       "$ref": "#/$defs/cluster.DiscoveryServiceConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cluster.StaticEndpointsConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/container.ContainerConfigV1Alpha1"

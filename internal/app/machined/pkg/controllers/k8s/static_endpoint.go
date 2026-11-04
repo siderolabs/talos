@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -17,11 +18,13 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
-// StaticEndpointController injects endpoints based on machine configuration.
+// StaticEndpointController injects endpoints based on machine configuration:
+// static endpoints from the StaticEndpointsConfig document, and the cluster control plane endpoint.
 type StaticEndpointController struct{}
 
 // Name implements controller.Controller interface.
@@ -69,33 +72,16 @@ func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runt
 
 		r.StartTrackingOutputs()
 
+		// static endpoints go first, so that a failure to resolve the control plane endpoint doesn't block them
+		if machineConfig != nil && machineConfig.Config().StaticEndpointsConfig() != nil {
+			if err = ctrl.updateStaticEndpoints(ctx, r, machineConfig.Config().StaticEndpointsConfig()); err != nil {
+				return err
+			}
+		}
+
 		if machineConfig != nil && machineConfig.Config().K8sClusterConfig() != nil {
-			cpHostname := machineConfig.Config().K8sClusterConfig().ClusterEndpoint().Hostname()
-
-			var (
-				resolver net.Resolver
-				addrs    []netip.Addr
-				hosts    []string
-			)
-
-			addrs, err = resolver.LookupNetIP(ctx, "ip", cpHostname)
-			if err != nil {
-				return fmt.Errorf("error resolving %q: %w", cpHostname, err)
-			}
-
-			addrs = xslices.Map(addrs, netip.Addr.Unmap)
-
-			if len(addrs) != 1 || addrs[0].String() != cpHostname {
-				hosts = []string{cpHostname}
-			}
-
-			if err = safe.WriterModify(ctx, r, k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneKubernetesEndpointsID), func(endpoint *k8s.Endpoint) error {
-				endpoint.TypedSpec().Addresses = addrs
-				endpoint.TypedSpec().Hosts = hosts
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("error modifying endpoint: %w", err)
+			if err = ctrl.updateControlPlaneEndpoint(ctx, r, machineConfig.Config().K8sClusterConfig().ClusterEndpoint().Hostname()); err != nil {
+				return err
 			}
 		}
 
@@ -103,4 +89,46 @@ func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 	}
+}
+
+func (ctrl *StaticEndpointController) updateStaticEndpoints(ctx context.Context, r controller.Runtime, staticEndpoints talosconfig.StaticEndpointsConfig) error {
+	if err := safe.WriterModify(ctx, r, k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneStaticEndpointsID), func(endpoint *k8s.Endpoint) error {
+		endpoint.TypedSpec().Addresses = slices.Clone(staticEndpoints.Addresses())
+		endpoint.TypedSpec().Hosts = slices.Clone(staticEndpoints.Hostnames())
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error modifying static endpoint: %w", err)
+	}
+
+	return nil
+}
+
+func (ctrl *StaticEndpointController) updateControlPlaneEndpoint(ctx context.Context, r controller.Runtime, cpHostname string) error {
+	var (
+		resolver net.Resolver
+		hosts    []string
+	)
+
+	addrs, err := resolver.LookupNetIP(ctx, "ip", cpHostname)
+	if err != nil {
+		return fmt.Errorf("error resolving %q: %w", cpHostname, err)
+	}
+
+	addrs = xslices.Map(addrs, netip.Addr.Unmap)
+
+	if len(addrs) != 1 || addrs[0].String() != cpHostname {
+		hosts = []string{cpHostname}
+	}
+
+	if err = safe.WriterModify(ctx, r, k8s.NewEndpoint(k8s.ControlPlaneNamespaceName, k8s.ControlPlaneKubernetesEndpointsID), func(endpoint *k8s.Endpoint) error {
+		endpoint.TypedSpec().Addresses = addrs
+		endpoint.TypedSpec().Hosts = hosts
+
+		return nil
+	}); err != nil {
+		return fmt.Errorf("error modifying endpoint: %w", err)
+	}
+
+	return nil
 }
