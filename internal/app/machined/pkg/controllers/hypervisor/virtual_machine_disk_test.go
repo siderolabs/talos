@@ -1881,6 +1881,13 @@ func (suite *VirtualMachineDiskSuite) TestLegacyPendingRequestDoesNotGuessSource
 
 		return nil
 	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+	// Volume requests only wake the controller once they are ready to be destroyed, so the update
+	// above goes unnoticed if the controller has already settled: wake it through the library.
+	ctest.UpdateWithConflicts(suite, hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName), func(library *hypervisor.ContentLibraryStatus) error {
+		library.Metadata().Annotations().Set("test.wake", "legacy-request")
+
+		return nil
+	})
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.Contains(spec.Error, "cannot rebind source library")
 	})
