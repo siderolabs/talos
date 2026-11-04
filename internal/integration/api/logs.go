@@ -18,7 +18,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -143,7 +142,7 @@ func (suite *LogsSuite) TestKernelLogs() {
 	suite.Require().Greater(n, int64(1024))
 
 	version := strings.Contains(buf.String(), fmt.Sprintf("Linux version %s", constants.DefaultKernelVersion))
-	overflow := n >= logging.DesiredCapacity/2
+	overflow := n >= constants.LogBufferCapacity/2
 
 	if !version && overflow {
 		suite.T().Skip("skipping the test as kernel log buffer might have overflowed")

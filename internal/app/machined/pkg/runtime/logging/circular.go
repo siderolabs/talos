@@ -23,19 +23,18 @@ import (
 	"github.com/siderolabs/go-tail"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // These constants should some day move to config.
 const (
-	// Overall capacity of the log buffer (in raw bytes, memory size will be smaller due to compression).
-	DesiredCapacity = 1048576
 	// Some logs are tiny, no need to reserve too much memory.
 	InitialCapacity = 16384
 	// Chunk capacity is the length of each chunk, it should be
 	// big enough for the compression to be efficient.
 	ChunkCapacity = 65536
 	// Number of zstd-compressed chunks to keep.
-	NumCompressedChunks = (DesiredCapacity / ChunkCapacity) - 1
+	NumCompressedChunks = (constants.LogBufferCapacity / ChunkCapacity) - 1
 	// Safety gap to avoid buffer overruns, can be lowered as with compression we don't need much.
 	SafetyGap = 1
 )

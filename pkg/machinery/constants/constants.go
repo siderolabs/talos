@@ -1601,6 +1601,9 @@ const (
 	// LogRotateThreshold is the size (in bytes), upon exceeding which the log file should be rotated.
 	LogRotateThreshold = 5 * 1024 * 1024
 
+	// LogBufferCapacity is the overall capacity of the in-memory log buffer (in raw bytes, memory size will be smaller due to compression).
+	LogBufferCapacity = 1048576
+
 	// LogFlushPeriod is the period for flushing in-memory log buffers to the filesystem.
 	LogFlushPeriod = 15 * time.Second
 
