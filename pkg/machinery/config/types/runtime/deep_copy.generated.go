@@ -133,6 +133,12 @@ func (o *SecurityProfileConfigV1Alpha1) DeepCopy() *SecurityProfileConfigV1Alpha
 		cp.SELinuxCategoriesEnabled = new(bool)
 		*cp.SELinuxCategoriesEnabled = *o.SELinuxCategoriesEnabled
 	}
+	if o.SELinuxBooleansConfig != nil {
+		cp.SELinuxBooleansConfig = make(map[string]bool, len(o.SELinuxBooleansConfig))
+		for k2, v2 := range o.SELinuxBooleansConfig {
+			cp.SELinuxBooleansConfig[k2] = v2
+		}
+	}
 	return &cp
 }
 

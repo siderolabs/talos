@@ -33,7 +33,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	runtimeconfig "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -892,3 +895,64 @@ func init() {
 	allSuites = append(allSuites, new(SELinuxSuite))
 }
 
+// TestSELinuxBooleans sets a boolean in the machine config: with pod_write_cni_plugins on, a regular pod writes the CNI
+// plugins directory, off, it is denied and the denial audited, while the CNI agent domain still writes it.
+func (suite *SELinuxSuite) TestSELinuxBooleans() {
+	ip, node := suite.labelingNode(true)
+	nodeCtx := client.WithNode(suite.ctx, ip)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), "pod_write_cni_plugins",
+		func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
+			asrt.Equal(runtimeres.SELinuxBooleanStatusSpec{Value: true, Default: true}, *status.TypedSpec())
+		})
+
+	write := func(domain string) (string, string, error) {
+		podDef, err := suite.NewPod("selinux-boolean-" + strings.ReplaceAll(domain, "_", "-"))
+		suite.Require().NoError(err)
+
+		podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostVolumeMount("/opt/cni/bin", "/cni").
+			WithSELinuxOptions(&corev1.SELinuxOptions{Type: domain})
+
+		return suite.exec(podDef, "touch /cni/.selinux-boolean-"+podDef.Name()+" && rm /cni/.selinux-boolean-"+podDef.Name()+" && echo written")
+	}
+
+	stdout, stderr, err := write("pod_t")
+	suite.Require().NoError(err, stderr)
+	suite.Assert().Equal("written\n", stdout)
+
+	suite.setSELinuxBooleans(nodeCtx, map[string]bool{"pod_write_cni_plugins": false})
+
+	defer suite.setSELinuxBooleans(nodeCtx, nil)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), "pod_write_cni_plugins",
+		func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
+			asrt.Equal(runtimeres.SELinuxBooleanStatusSpec{Value: false, Default: true, Configured: true}, *status.TypedSpec())
+		})
+
+	before := suite.denials(ip, "pod_t")
+
+	stdout, _, _ = write("pod_t") //nolint:errcheck
+	suite.Assert().Empty(stdout)
+	suite.Assert().Greater(suite.denials(ip, "pod_t"), before)
+
+	stdout, stderr, err = write("pod_cni_t")
+	suite.Require().NoError(err, stderr)
+	suite.Assert().Equal("written\n", stdout)
+}
+
+// setSELinuxBooleans sets the selinuxBooleans of the SecurityProfileConfig document of the node, nil removes them.
+func (suite *SELinuxSuite) setSELinuxBooleans(nodeCtx context.Context, booleans map[string]bool) {
+	suite.UpdateMachineConfig(nodeCtx, func(*machineapi.ApplyConfigurationRequest) {}, func(cfg config.Provider) (config.Provider, error) {
+		docs := slices.Clone(cfg.Documents())
+
+		for i, doc := range docs {
+			if profile, ok := doc.(*runtimeconfig.SecurityProfileConfigV1Alpha1); ok {
+				profile = profile.DeepCopy()
+				profile.SELinuxBooleansConfig = booleans
+				docs[i] = profile
+			}
+		}
+
+		return container.New(docs...)
+	})
+}

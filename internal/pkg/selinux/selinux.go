@@ -23,6 +23,12 @@ import (
 	"github.com/siderolabs/talos/pkg/xfs"
 )
 
+// BooleansPath is the selinuxfs directory of the booleans of the loaded policy.
+const BooleansPath = "/sys/fs/selinux/booleans"
+
+// CommitPendingBoolsPath is the selinuxfs file that commits the pending values of the booleans.
+const CommitPendingBoolsPath = "/sys/fs/selinux/commit_pending_bools"
+
 //go:embed policy/policy.33
 var policy []byte
 
