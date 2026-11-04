@@ -321,7 +321,7 @@ func NewControlPlaneControllerManagerFinalController() *ControlPlaneControllerMa
 					"authentication-kubeconfig":        {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
 					"authorization-kubeconfig":         {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
 					"leader-elect":                     {"true"},
-					"root-ca-file":                     {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")},
+					"root-ca-file":                     {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "root-ca.crt")},
 					"service-account-private-key-file": {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")},
 					"profiling":                        {"false"},
 					"terminated-pod-gc-threshold":      {"100"},

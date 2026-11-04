@@ -13870,6 +13870,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | issuer_url | [string](#string) |  | IssuerURL is the URL of the service account issuer. |
 | accepted_issuers | [string](#string) | repeated | AcceptedIssuers are the accepted service account issuers.<br><br>It doesn't contain the issuerURL. |
 | api_audiences | [string](#string) | repeated | APIAudiences are the accepted service account audiences. |
+| root_ca_bundle | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) |  | RootCABundle is the CA bundle published to the pods, defaults to the issuing CA. |
 
 
 
