@@ -11,6 +11,7 @@ import (
 	"cel.dev/cel-go/common"
 	"cel.dev/cel-go/common/ast"
 	"cel.dev/cel-go/common/types"
+	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 // Builder allows building CEL expressions programmatically.
@@ -38,21 +39,15 @@ func (b *Builder) NextID() int64 {
 
 // ToBooleanExpression converts the AST to a boolean expression.
 func (b *Builder) ToBooleanExpression(expr ast.Expr) (*Expression, error) {
-	rawAst := ast.NewAST(expr, nil)
-
-	pbAst, err := ast.ToProto(rawAst)
+	pbExpr, err := ast.ExprToProto(expr)
 	if err != nil {
 		return nil, err
 	}
 
-	celAst, err := cel.CheckedExprToAstWithSource(pbAst, common.NewTextSource(""))
-	if err != nil {
-		return nil, err
-	}
+	// the built expression is not type-checked yet, so it is a parsed (not checked) expression
+	celAst := cel.ParsedExprToAstWithSource(&exprpb.ParsedExpr{Expr: pbExpr}, common.NewTextSource(""))
 
-	var issues *cel.Issues
-
-	celAst, issues = b.env.Check(celAst)
+	celAst, issues := b.env.Check(celAst)
 	if issues != nil && issues.Err() != nil {
 		return nil, issues.Err()
 	}

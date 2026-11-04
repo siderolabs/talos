@@ -132,12 +132,10 @@ func (expr *Expression) ParseDouble(env *cel.Env) error {
 }
 
 // EvalBool evaluates the expression in the given environment.
+//
+// The compiled program is cached, so repeated evaluations of the same expression (or its copies) are cheap.
 func (expr Expression) EvalBool(env *cel.Env, values map[string]any) (bool, error) {
-	if err := expr.ParseBool(env); err != nil {
-		return false, err
-	}
-
-	prog, err := env.Program(expr.ast)
+	prog, err := expr.program(env, types.BoolType)
 	if err != nil {
 		return false, err
 	}
@@ -156,12 +154,10 @@ func (expr Expression) EvalBool(env *cel.Env, values map[string]any) (bool, erro
 }
 
 // EvalDouble evaluates the expression in the given environment.
+//
+// The compiled program is cached, so repeated evaluations of the same expression (or its copies) are cheap.
 func (expr Expression) EvalDouble(env *cel.Env, values map[string]any) (float64, error) {
-	if err := expr.ParseDouble(env); err != nil {
-		return math.NaN(), err
-	}
-
-	prog, err := env.Program(expr.ast)
+	prog, err := expr.program(env, types.DoubleType)
 	if err != nil {
 		return math.NaN(), err
 	}
