@@ -288,7 +288,7 @@ func (suite *UnattendedInstallSuite) TestInstallImageFromBootEntry() {
 	suite.createSchematic()
 	suite.createDisk("sda")
 
-	expected := images.NewInstallerImage(testFactoryHost, testPlatform, testSchematicID, "")
+	expected := images.NewInstallerImage(testFactoryHost, testPlatform, testSchematicID, "", images.NoSecureBoot)
 
 	rtestutils.AssertResource[*runtime.UnattendedInstallStatus](suite.Ctx(), suite.T(), suite.State(), runtime.UnattendedInstallStatusID,
 		func(status *runtime.UnattendedInstallStatus, asrt *assert.Assertions) {

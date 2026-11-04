@@ -76,7 +76,7 @@ const (
 )
 
 func installerImageFor(version string) string {
-	return images.NewInstallerImage("", "metal", images.DefaultInstallerImageSchematic, version)
+	return images.NewInstallerImage("", "metal", images.DefaultInstallerImageSchematic, version, images.NoSecureBoot)
 }
 
 // upgradePreviousToStable upgrades from the previous Talos release to the stable release.

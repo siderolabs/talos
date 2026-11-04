@@ -330,6 +330,7 @@ func (ctrl *UnattendedInstallController) getInstallerFromBootEntry(ctx context.C
 		strings.ToLower(ctrl.PlatformFunc()),
 		schematic.TypedSpec().SchematicID,
 		"", // automatic fallback to current version if not specified
+		images.NoSecureBoot,
 	), nil
 }
 

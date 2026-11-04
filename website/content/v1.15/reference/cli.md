@@ -3723,34 +3723,63 @@ talosctl time [--check server] [flags]
 
 ## talosctl upgrade
 
-Upgrade Talos on the target node
+Upgrade Talos on the target node(s)
+
+### Synopsis
+
+Upgrade Talos on the target node(s)
+
+For nodes running Talos versions before 1.14 supplying an --image flag is necessary.
+
+For nodes running Talos 1.14 and newer, the upgrade image is automatically detected for each node.
+This means that each node retains its schematic, Image Factory host, platform and secureboot setting as they are set on that node.
+The options can be optionally modified with the cli flags.
 
 ```
 talosctl upgrade [flags]
 ```
 
+### Examples
+
+```
+# upgrade node(s) to a set version keeping other parameters the same
+# (each node retains its schematic, Image Factory host, platform and secureboot setting)
+talosctl upgrade -n <NODE(S)> --talos-version 1.14.2
+
+# upgrade node(s) to a different schematic
+# (--talos-version defaults to the talosctl version, so set it explicitly to keep the current Talos version)
+talosctl upgrade -n <NODE(S)> --schematic-id=e3c92... --talos-version 1.14.2
+
+# upgrade node(s) to an exact image
+talosctl upgrade -n <NODE(S)> --image=factory.talos.dev/metal-installer-secureboot/ecc3...b557:v1.14.2
+```
+
 ### Options
 
 ```
-  -c, --cluster string             cluster to connect to if a proxy endpoint is used
-      --context string             context to be used in command
-      --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
-      --drain                      drain the Kubernetes node before rebooting (cordon + evict pods) (default true)
-      --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
-  -e, --endpoints strings          override default endpoints in Talos configuration
-  -h, --help                       help for upgrade
-  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.15.0-alpha.2")
-      --k8s-endpoint string        use endpoint instead of kubeconfig default when draining the Kubernetes node
-      --legacy                     force use of legacy upgrade method
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
-      --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)
-  -n, --nodes strings              target the specified nodes
-      --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
-  -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
-      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
-      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
-      --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
-      --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
+  -c, --cluster string              cluster to connect to if a proxy endpoint is used
+      --context string              context to be used in command
+      --debug                       debug operation from kernel logs. --wait is set to true when this flag is set
+      --drain                       drain the Kubernetes node before rebooting (cordon + evict pods) (default true)
+      --drain-timeout duration      timeout for draining the Kubernetes node (default 5m0s)
+  -e, --endpoints strings           override default endpoints in Talos configuration
+  -h, --help                        help for upgrade
+  -i, --image string                the container image to use for performing the install
+      --image-factory-host string   Image Factory host to use for the installer image, e.g. factory.talos.dev (defaults to the node's factory)
+      --k8s-endpoint string         use endpoint instead of kubeconfig default when draining the Kubernetes node
+      --legacy                      force use of legacy upgrade method
+      --namespace string            namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
+      --no-reboot                   do not reboot the node after upgrade (skip reboot and drain)
+  -n, --nodes strings               target the specified nodes
+      --progress string             output mode for upgrade progress. Values: [auto plain] (default "auto")
+  -m, --reboot-mode string          select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
+      --schematic-id string         Image Factory schematic ID to use for the installer image (defaults to the node's current schematic)
+      --secure-boot                 use the SecureBoot installer image (defaults to the node's current SecureBoot state)
+      --siderov1-keys-dir string    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talos-version string        Talos version to upgrade to (defaults to talosctl version) (default "v1.15.0-alpha.2")
+      --talosconfig string          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+      --timeout duration            time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
+      --wait                        wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
 ```
 
 ### SEE ALSO
@@ -4156,7 +4185,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl stats](#talosctl-stats)	 - Get container stats
 * [talosctl support](#talosctl-support)	 - Dump debug information about the cluster
 * [talosctl time](#talosctl-time)	 - Gets current server time
-* [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node
+* [talosctl upgrade](#talosctl-upgrade)	 - Upgrade Talos on the target node(s)
 * [talosctl upgrade-k8s](#talosctl-upgrade-k8s)	 - Upgrade Kubernetes control plane in the Talos cluster.
 * [talosctl usage](#talosctl-usage)	 - Retrieve a disk usage
 * [talosctl validate](#talosctl-validate)	 - Validate config

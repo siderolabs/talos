@@ -844,6 +844,36 @@ Setting `ignoreCtrlAltDelete: true` in the `SecurityProfileConfig` document make
 Ctrl-Alt-Delete still reboots the machine until a configuration with this option is applied.
 """
 
+    [notes.talosctl_upgrade]
+        title = "Talosctl upgrade improvements"
+        description = """\
+For nodes running Talos 1.14 and newer the upgrade image is now automatically detected for each node.
+Each node keeps its own Image Factory host, schematic, platform and SecureBoot setting, so nodes with different images can be upgraded with a single command.
+Any of these, except the platform, can be changed with the CLI flags.
+
+Upgrade to a new Talos version, keeping everything else as it is:
+
+```bash
+talosctl upgrade -n <NODES> --talos-version 1.15.0
+```
+
+Upgrade to a different schematic, e.g. to add a system extension:
+
+```bash
+talosctl upgrade -n <NODES> --schematic-id <SCHEMATIC_ID> --talos-version 1.15.0
+```
+
+`--talos-version` defaults to the version of `talosctl`, so set it explicitly to stay on the Talos version the nodes are running.
+
+Upgrade to an exact installer image (it can't be combined with the flags above):
+
+```bash
+talosctl upgrade -n <NODES> --image factory.talos.dev/metal-installer/<SCHEMATIC_ID>:v1.15.0
+```
+
+The `--image` flag is now mandatory when upgrading nodes running Talos versions before 1.14.
+"""
+
     [notes.route_spec_id]
         title = "Route Updates"
         description = """\

@@ -75,27 +75,47 @@ var (
 	DefaultExtensionsManifestRepository = Registry + "/" + DefaultExtensionsManifestName
 )
 
+// SecureBoot selects whether the secureboot variant of the installer image is used.
+type SecureBoot bool
+
+// SecureBoot options for the installer image.
+const (
+	NoSecureBoot   SecureBoot = false
+	WithSecureBoot SecureBoot = true
+)
+
 // InstallerImageRepository returns the default container repository for the installer for the given platform.
 func InstallerImageRepository(platform string) string {
-	return NewInstallerImageRepository(Factory, platform, DefaultInstallerImageSchematic)
+	return NewInstallerImageRepository(Factory, platform, DefaultInstallerImageSchematic, NoSecureBoot)
 }
 
 // InstallerImage returns the default installer image for the given platform.
 func InstallerImage(platform string) string {
-	return NewInstallerImage(Factory, platform, DefaultInstallerImageSchematic, version.Tag)
+	return NewInstallerImage(Factory, platform, DefaultInstallerImageSchematic, version.Tag, NoSecureBoot)
 }
 
-// NewInstallerImageRepository builds a new installer image for the given factory, platform and schematic.
-func NewInstallerImageRepository(factory, platform, schematic string) string {
+// NewInstallerImageRepository builds a new installer image repository of the form
+// <factory>/<platform>-installer[-secureboot]/<schematic>.
+//
+// If factory is empty, the default Image Factory is used.
+func NewInstallerImageRepository(factory, platform, schematic string, secureBoot SecureBoot) string {
 	if factory == "" {
 		factory = Factory
 	}
 
-	return factory + "/" + platform + "-installer/" + schematic
+	installerType := platform + "-installer"
+	if secureBoot {
+		installerType += "-secureboot"
+	}
+
+	return factory + "/" + installerType + "/" + schematic
 }
 
-// NewInstallerImage builds a new installer image for the given factory, platform, schematic and tag.
-func NewInstallerImage(factory, platform, schematic, tag string) string {
+// NewInstallerImage builds a new installer image of the form
+// <factory>/<platform>-installer[-secureboot]/<schematic>:<tag>.
+//
+// If factory is empty, the default Image Factory is used; if tag is empty, the current Talos version is used.
+func NewInstallerImage(factory, platform, schematic, tag string, secureBoot SecureBoot) string {
 	if factory == "" {
 		factory = Factory
 	}
@@ -104,5 +124,5 @@ func NewInstallerImage(factory, platform, schematic, tag string) string {
 		tag = version.Tag
 	}
 
-	return NewInstallerImageRepository(factory, platform, schematic) + ":" + tag
+	return NewInstallerImageRepository(factory, platform, schematic, secureBoot) + ":" + tag
 }

@@ -57,7 +57,7 @@ func (suite *UpgradeSuite) TestIncompatibleMachineConfig() {
 	suite.Require().NoError(err)
 
 	factoryInstaller := func(version string) string {
-		return images.NewInstallerImage("", "metal", images.DefaultInstallerImageSchematic, version)
+		return images.NewInstallerImage("", "metal", images.DefaultInstallerImageSchematic, version, images.NoSecureBoot)
 	}
 
 	config, _ := suite.RunCLI([]string{"get", "--nodes", node, "mc", "v1alpha1", "--output", "jsonpath={.spec}"})

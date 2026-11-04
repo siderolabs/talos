@@ -8,13 +8,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"text/tabwriter"
 	"time"
 
 	"github.com/blang/semver/v4"
-	"github.com/siderolabs/gen/xerrors"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"google.golang.org/grpc"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/lifecycle"
@@ -29,18 +33,33 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/reporter"
+)
+
+const (
+	upgradeImageFlagName     = "image"
+	imageFactoryHostFlagName = "image-factory-host"
+	schematicIDFlagName      = "schematic-id"
+	talosVersionFlagName     = "talos-version"
+	secureBootFlagName       = "secure-boot"
 )
 
 var upgradeCmdFlags = struct {
 	trackableActionCmdFlags
 	imageCmdFlagsType
 
-	upgradeImage string
-	noReboot     bool
-	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
-	progress     flags.PflagExtended[reporter.OutputMode]
+	upgradeImage     string
+	imageFactoryHost string
+	schematicID      string
+	talosVersion     string
+	secureBoot       bool
+	// no platform flag as changing the platform via an upgrade is not officially supported
+
+	noReboot   bool
+	rebootMode flags.PflagExtended[machine.RebootRequest_Mode]
+	progress   flags.PflagExtended[reporter.OutputMode]
 
 	drain        bool
 	drainTimeout time.Duration
@@ -55,12 +74,32 @@ var upgradeCmdFlags = struct {
 	progress:   reporter.NewOutputModeFlag(),
 }
 
+const (
+	upgradeCmdDescription     = "Upgrade Talos on the target node(s)"
+	upgradeCmdDescriptionLong = upgradeCmdDescription + "\n" + `
+For nodes running Talos versions before 1.14 supplying an --image flag is necessary.
+
+For nodes running Talos 1.14 and newer, the upgrade image is automatically detected for each node.
+This means that each node retains its schematic, Image Factory host, platform and secureboot setting as they are set on that node.
+The options can be optionally modified with the cli flags.`
+)
+
 // upgradeCmd represents the processes command.
 var upgradeCmd = &cobra.Command{
 	Use:   "upgrade",
-	Short: "Upgrade Talos on the target node",
-	Long:  ``,
+	Short: upgradeCmdDescription,
+	Long:  upgradeCmdDescriptionLong,
 	Args:  cobra.NoArgs,
+	Example: fmt.Sprintf(`# upgrade node(s) to a set version keeping other parameters the same
+# (each node retains its schematic, Image Factory host, platform and secureboot setting)
+talosctl upgrade -n <NODE(S)> --talos-version 1.14.2
+
+# upgrade node(s) to a different schematic
+# (--talos-version defaults to the talosctl version, so set it explicitly to keep the current Talos version)
+talosctl upgrade -n <NODE(S)> --%s=e3c92... --talos-version 1.14.2
+
+# upgrade node(s) to an exact image
+talosctl upgrade -n <NODE(S)> --image=factory.talos.dev/metal-installer-secureboot/ecc3...b557:v1.14.2`, schematicIDFlagName),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if upgradeCmdFlags.debug {
 			upgradeCmdFlags.wait = true
@@ -70,11 +109,11 @@ var upgradeCmd = &cobra.Command{
 			upgradeCmdFlags.wait = true
 		}
 
-		return upgradeRun(cmd.Context())
+		return upgradeRun(cmd.Context(), cmd.Flags())
 	},
 }
 
-func upgradeRun(ctx context.Context) error {
+func upgradeRun(ctx context.Context, flags *pflag.FlagSet) error {
 	clientFactory, err := NewClientFactory(ctx, &upgradeCmdFlags, action.GRPCDialOptions()...)
 	if err != nil {
 		return err
@@ -82,16 +121,19 @@ func upgradeRun(ctx context.Context) error {
 
 	defer clientFactory.Close() //nolint:errcheck
 
-	return upgradeViaLifecycleService(ctx, clientFactory)
+	return upgradeViaLifecycleService(ctx, clientFactory, flags)
 }
 
-var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0")
+var (
+	talosUpgradeAPIVersionRange            = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0")
+	talosImageFactorySchematicVersionRange = semver.MustParseRange(">=1.14.0-alpha.2")
+)
 
 // upgradeViaLifecycleService tries the new LifecycleService.Upgrade streaming API.
 // If the server returns codes.Unimplemented, it falls back to the legacy MachineService.Upgrade.
 //
-//nolint:gocyclo
-func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.ClientFactory) (retErr error) {
+//nolint:gocyclo,cyclop
+func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.ClientFactory, flags *pflag.FlagSet) (retErr error) {
 	if upgradeCmdFlags.debug {
 		upgradeCmdFlags.wait = true
 	}
@@ -102,6 +144,10 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 
 	if upgradeCmdFlags.legacy {
 		safeout.Warningf("Forcing use of legacy upgrade method. This flag is deprecated and will be removed in Talos 1.18.")
+
+		if upgradeCmdFlags.upgradeImage == "" {
+			return errors.New("error: --image flag is required with the legacy mode")
+		}
 
 		return upgradeLegacy(ctx, clientFactory)
 	}
@@ -120,25 +166,51 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		reporter.WithLineFilter(safeout.String),
 	)
 
-	if err = helpers.TalosVersionCheck(ctx, clientFactory, talosUpgradeAPIVersionRange); err != nil {
-		if xerrors.TagIs[helpers.VersionOutsideRangeError](err) {
-			rep.Report(reporter.Update{
-				Status:  reporter.StatusError,
-				Message: "New upgrade API is not available, falling back to legacy",
-			})
-
-			return upgradeLegacy(ctx, clientFactory)
-		}
-
+	lowestVersion, highestVersion, err := helpers.GetTalosVersionBounds(ctx, clientFactory)
+	if err != nil {
 		return fmt.Errorf("error checking Talos version compatibility: %w", err)
 	}
 
-	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, upgradeCmdFlags.upgradeImage, rep)
+	versionsErr := fmt.Errorf("the Talos versions across the nodes range from %s to %s", lowestVersion, highestVersion)
+
+	// the range is contiguous, so all nodes are within it if both the lowest and the highest versions are
+	if !talosUpgradeAPIVersionRange(lowestVersion) || !talosUpgradeAPIVersionRange(highestVersion) {
+		if err = requireImageFlag(versionsErr); err != nil {
+			return err
+		}
+
+		rep.Report(reporter.Update{
+			Status:  reporter.StatusError,
+			Message: "New upgrade API is not available, falling back to legacy",
+		})
+
+		return upgradeLegacy(ctx, clientFactory)
+	}
+
+	// Talos < 1.14 doesn't have the ImageFactorySchematic resource, so the install image can't be derived from the node state.
+	if !talosImageFactorySchematicVersionRange(lowestVersion) {
+		if err = requireImageFlag(versionsErr); err != nil {
+			return err
+		}
+	}
+
+	nodes := clientFactory.Nodes()
+
+	nodeImageMap, err := getNodeInstallImageMap(ctx, nodes, clientFactory, flags)
+	if err != nil {
+		return fmt.Errorf("failed to build the upgrade image: %w", err)
+	}
+
+	for _, node := range slices.Sorted(maps.Keys(nodeImageMap)) {
+		safeout.Printf("%s upgrade image: %s\n", node, nodeImageMap[node])
+	}
+
+	_, err = imagePullPerNode(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
 	if err != nil {
 		return fmt.Errorf("error pulling upgrade image: %w", err)
 	}
 
-	_, err = upgradeInternal(ctx, clientFactory, containerdInstance, upgradeCmdFlags.upgradeImage, rep)
+	_, err = upgradeInternal(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
 	if err != nil {
 		return fmt.Errorf("error during upgrade: %w", err)
 	}
@@ -174,7 +246,180 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	return nil
 }
 
-func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, containerdInstance *common.ContainerdInstance, imageRef string, rep *reporter.Reporter) (map[string]int32, error) {
+// nodeImageParams are the components the installer image reference is built from.
+type nodeImageParams struct {
+	factoryHost string
+	schematic   string
+	platform    string
+	version     string
+	secureBoot  bool
+
+	// defaultedFactoryHost is set when the node didn't report the Image Factory URL and the default one was used.
+	defaultedFactoryHost bool
+}
+
+func (p nodeImageParams) imageRef() string {
+	version := p.version
+	if !strings.HasPrefix(version, "v") && version != "" {
+		version = "v" + version
+	}
+
+	return images.NewInstallerImage(p.factoryHost, p.platform, p.schematic, version, images.SecureBoot(p.secureBoot))
+}
+
+// imageComponentFlagNames are the flags which build the installer image, they can't be used together with --image.
+var imageComponentFlagNames = []string{
+	imageFactoryHostFlagName,
+	schematicIDFlagName,
+	talosVersionFlagName,
+	secureBootFlagName,
+}
+
+// changedImageFlags tracks which install image components were set explicitly via flags.
+type changedImageFlags struct {
+	factoryHost bool
+	schematic   bool
+	secureBoot  bool
+}
+
+func newChangedImageFlags(flags *pflag.FlagSet) changedImageFlags {
+	return changedImageFlags{
+		factoryHost: flags.Changed(imageFactoryHostFlagName),
+		schematic:   flags.Changed(schematicIDFlagName),
+		secureBoot:  flags.Changed(secureBootFlagName),
+	}
+}
+
+// imageParamsFromFlags returns the install image components as set via flags.
+func imageParamsFromFlags() nodeImageParams {
+	return nodeImageParams{
+		factoryHost: upgradeCmdFlags.imageFactoryHost,
+		schematic:   upgradeCmdFlags.schematicID,
+		version:     upgradeCmdFlags.talosVersion,
+		secureBoot:  upgradeCmdFlags.secureBoot,
+	}
+}
+
+// readNodeImageParams reads the install image components from the node state, skipping the ones set explicitly.
+//
+//nolint:gocyclo
+func readNodeImageParams(ctx context.Context, st state.State, overrides nodeImageParams, changed changedImageFlags) (nodeImageParams, error) {
+	p := overrides
+
+	if !changed.factoryHost || !changed.schematic {
+		schematic, err := safe.StateGetByID[*runtime.ImageFactorySchematic](ctx, st, runtime.ImageFactorySchematicID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return nodeImageParams{}, fmt.Errorf(
+					"the node was not installed from Image Factory, so the install image can't be detected: "+
+						"use --%s, or both --%s and --%s", upgradeImageFlagName, schematicIDFlagName, imageFactoryHostFlagName,
+				)
+			}
+
+			return nodeImageParams{}, fmt.Errorf("error reading image factory schematic: %w", err)
+		}
+
+		if !changed.factoryHost {
+			if schematic.TypedSpec().APIURL == "" {
+				p.factoryHost = images.Factory
+				p.defaultedFactoryHost = true
+			} else {
+				factoryURL, err := helpers.ParseImageFactoryURL(schematic.TypedSpec().APIURL)
+				if err != nil {
+					return nodeImageParams{}, err
+				}
+
+				p.factoryHost = factoryURL.Host
+			}
+		}
+
+		if !changed.schematic {
+			p.schematic = schematic.TypedSpec().SchematicID
+		}
+	}
+
+	platform, err := safe.StateGetByID[*runtime.PlatformMetadata](ctx, st, runtime.PlatformMetadataID)
+	if err != nil {
+		return nodeImageParams{}, fmt.Errorf("error reading platform metadata: %w", err)
+	}
+
+	p.platform = strings.ToLower(platform.TypedSpec().Platform)
+
+	if !changed.secureBoot {
+		security, err := safe.StateGetByID[*runtime.SecurityState](ctx, st, runtime.SecurityStateID)
+		if err != nil {
+			return nodeImageParams{}, fmt.Errorf("error reading security state: %w", err)
+		}
+
+		p.secureBoot = security.TypedSpec().SecureBoot
+	}
+
+	return p, nil
+}
+
+// requireImageFlag returns an error if --image is not set.
+//
+// It is used for the nodes which can't report the components to build the install image from.
+// versionErr, if any, describes why the image can't be detected (e.g. which nodes are running old Talos versions).
+func requireImageFlag(versionErr error) error {
+	if upgradeCmdFlags.upgradeImage != "" {
+		return nil
+	}
+
+	err := fmt.Errorf("--%s flag is required if any of the nodes runs Talos version before 1.14", upgradeImageFlagName)
+	if versionErr != nil {
+		err = fmt.Errorf("%w:\n%w", err, versionErr)
+	}
+
+	return err
+}
+
+// getNodeInstallImageMap returns the installer image for each node.
+func getNodeInstallImageMap(ctx context.Context, nodes []string, clientFactory *global.ClientFactory, flags *pflag.FlagSet) (map[string]string, error) {
+	overrides := imageParamsFromFlags()
+	changed := newChangedImageFlags(flags)
+
+	if upgradeCmdFlags.upgradeImage != "" {
+		return uniformImageMap(nodes, upgradeCmdFlags.upgradeImage), nil
+	}
+
+	respCh := multiplex.UnaryViaFactory(ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (nodeImageParams, error) {
+			return readNodeImageParams(ctx, c.State(), overrides, changed)
+		})
+
+	var errs error
+
+	nodeImageMap := make(map[string]string, len(nodes))
+
+	for resp := range respCh {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("node %s: %w", resp.Node, resp.Err))
+
+			continue
+		}
+
+		if resp.Payload.defaultedFactoryHost {
+			safeout.Warningf("node %s doesn't report the Image Factory URL, using %s (override with --%s)", resp.Node, images.Factory, imageFactoryHostFlagName)
+		}
+
+		nodeImageMap[resp.Node] = resp.Payload.imageRef()
+	}
+
+	if errs != nil {
+		return nil, errs
+	}
+
+	return nodeImageMap, nil
+}
+
+func upgradeInternal(
+	ctx context.Context,
+	clientFactory *global.ClientFactory,
+	containerdInstance *common.ContainerdInstance,
+	nodeImageMap map[string]string,
+	rep *reporter.Reporter,
+) (map[string]int32, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -184,13 +429,13 @@ func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, c
 
 	finishedUpgrades := map[string]int32{}
 
-	responseChan := multiplex.StreamingViaFactory(
+	responseChan := multiplex.StreamingViaFactoryPerNode(
 		ctx, clientFactory,
-		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.LifecycleServiceUpgradeResponse], error) {
+		func(ctx context.Context, c *client.Client, node multiplex.NodeRef) (grpc.ServerStreamingClient[machine.LifecycleServiceUpgradeResponse], error) {
 			return c.LifecycleService().Upgrade(ctx, &machine.LifecycleServiceUpgradeRequest{
 				Containerd: containerdInstance,
 				Source: &machine.InstallArtifactsSource{
-					ImageName: imageRef,
+					ImageName: nodeImageMap[node],
 				},
 			})
 		},
@@ -355,9 +600,22 @@ func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.Upgr
 }
 
 func init() {
-	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
-		fmt.Sprintf("%s:%s", images.InstallerImageRepository("metal"), version.Trim(version.Tag)),
+	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, upgradeImageFlagName, "i", "",
 		"the container image to use for performing the install")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.imageFactoryHost, imageFactoryHostFlagName, "",
+		"Image Factory host to use for the installer image, e.g. factory.talos.dev (defaults to the node's factory)")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.schematicID, schematicIDFlagName, "",
+		"Image Factory schematic ID to use for the installer image (defaults to the node's current schematic)")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.talosVersion, talosVersionFlagName, version.Trim(version.Tag),
+		"Talos version to upgrade to (defaults to talosctl version)")
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.secureBoot, secureBootFlagName, false,
+		"use the SecureBoot installer image (defaults to the node's current SecureBoot state)")
+
+	// --image is a complete image reference, it can't be combined with the flags which build one.
+	for _, name := range imageComponentFlagNames {
+		upgradeCmd.MarkFlagsMutuallyExclusive(upgradeImageFlagName, name)
+	}
+
 	upgradeCmd.Flags().StringVar(
 		&upgradeCmdFlags.namespace, "namespace", "system",
 		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",
