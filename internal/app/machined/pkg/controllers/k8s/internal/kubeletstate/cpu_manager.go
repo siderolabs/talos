@@ -15,12 +15,14 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 	"k8s.io/utils/cpuset"
+
+	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 )
 
 // CPU manager policy names (see k8s.io/kubernetes/pkg/kubelet/cm/cpumanager).
 const (
 	CPUManagerPolicyNone   = "none"
-	CPUManagerPolicyStatic = "static"
+	CPUManagerPolicyStatic = kubelet.CPUManagerPolicyStatic
 
 	strictCPUReservationOption = "strict-cpu-reservation"
 )

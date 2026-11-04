@@ -7,6 +7,7 @@ package container
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net/netip"
 	"slices"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
+	"k8s.io/utils/cpuset"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -24,7 +26,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // ValidateAsClient validates the config in the client context (outside of Talos).
@@ -160,7 +164,137 @@ func (container *Container) runtimeValidate(ctx context.Context, st state.State,
 		multiErr = multierror.Append(multiErr, err)
 	}
 
-	return warnings, multiErr.ErrorOrNil()
+	cpuWarnings, err := container.runtimeValidateCPUPartition(ctx, st, mode)
+	if err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	return append(warnings, cpuWarnings...), multiErr.ErrorOrNil()
+}
+
+// runtimeValidateCPUPartition checks the bounded roots against the online CPUs, and warns when the
+// policy differs from the one the node booted with: it only takes effect after a reboot.
+func (container *Container) runtimeValidateCPUPartition(ctx context.Context, st state.State, mode validation.RuntimeMode) ([]string, error) {
+	if mode.InContainer() {
+		return nil, nil
+	}
+
+	declared := ProjectCPUPartition(container.CPUPartitionConfig())
+
+	if err := validateCPUPartitionCPUs(ctx, st, declared.Roots); err != nil {
+		return nil, err
+	}
+
+	boot, err := safe.StateGetByID[*runtime.CPUPartitionSpec](ctx, st, runtime.CPUPartitionSpecID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	if sameCPUPartition(boot.TypedSpec(), &declared) {
+		return nil, nil
+	}
+
+	warnings := []string{"CPUPartitionConfig: the CPU partition policy changes take effect only after a reboot"}
+
+	// The kubelet keeps the policy of the boot, which validateCPUPartitionKubelet doesn't see once the
+	// written policy leaves kubepods unbounded: a conflicting kubelet configuration isn't rendered at all.
+	if _, bounded := boot.TypedSpec().Roots[constants.CgroupKubepods]; bounded && container.kubeletEligible() {
+		kubeletConfig := container.K8sKubeletConfig()
+
+		if err := kubelet.ValidateCPUReservationConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs()); err != nil {
+			warnings = append(warnings, fmt.Sprintf(
+				"CPUPartitionConfig: the kubelet configuration conflicts with the CPU partition policy of the boot and is not updated until a reboot: %s", err))
+		}
+	}
+
+	return warnings, nil
+}
+
+// validateCPUPartitionCPUs requires every bounded root to name online CPUs only, and an online CPU
+// outside a bounded kubepods root: the kubelet static CPU manager policy refuses to start without a
+// reserved CPU. Slices need no check, the document validation keeps them within their root and
+// reports an invalid list.
+func validateCPUPartitionCPUs(ctx context.Context, st state.State, roots map[string]string) error {
+	if len(roots) == 0 {
+		return nil
+	}
+
+	topology, err := safe.StateGetByID[*hardware.NUMATopology](ctx, st, hardware.NUMATopologyID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil
+		}
+
+		return err
+	}
+
+	online := cpuset.New(xslices.Map(topology.TypedSpec().OnlineCPUs, func(id uint32) int { return int(id) })...)
+
+	var errs *multierror.Error
+
+	for _, root := range slices.Sorted(maps.Keys(roots)) {
+		bound, err := cpuset.Parse(roots[root])
+		if err != nil {
+			continue
+		}
+
+		if offline := bound.Difference(online); !offline.IsEmpty() {
+			errs = multierror.Append(errs, fmt.Errorf("CPUPartitionConfig: root %s names offline CPUs %q", root, offline))
+		}
+
+		if root == constants.CgroupKubepods && online.Difference(bound).IsEmpty() {
+			errs = multierror.Append(errs, fmt.Errorf("CPUPartitionConfig: kubepods.cpus %q leaves no online CPU outside kubepods, "+
+				"which the kubelet static CPU manager policy requires", roots[root]))
+		}
+	}
+
+	return errs.ErrorOrNil()
+}
+
+// ProjectCPUPartition is the CPUPartitionSpec a CPU partition configuration declares; nil declares no policy.
+func ProjectCPUPartition(partition configconfig.CPUPartitionConfig) runtime.CPUPartitionSpecSpec {
+	if partition == nil {
+		return runtime.CPUPartitionSpecSpec{}
+	}
+
+	spec := runtime.CPUPartitionSpecSpec{Roots: map[string]string{}}
+
+	for root, cpus := range partition.Roots() {
+		spec.Roots[string(root)] = cpus
+	}
+
+	for _, slice := range partition.Slices() {
+		spec.Slices = append(spec.Slices, runtime.CPUPartitionSliceSpec{Name: slice.Name(), CPUs: slice.CPUs(), Exclusive: slice.Exclusive()})
+	}
+
+	return spec
+}
+
+// sameCPUPartition compares CPU sets, not their spelling; slices are named and disjoint, so their order is irrelevant.
+func sameCPUPartition(a, b *runtime.CPUPartitionSpecSpec) bool {
+	byName := func(x, y runtime.CPUPartitionSliceSpec) int { return strings.Compare(x.Name, y.Name) }
+
+	sameCPUs := func(x, y string) bool {
+		xs, errX := cpuset.Parse(x)
+		ys, errY := cpuset.Parse(y)
+
+		if errX != nil || errY != nil {
+			return x == y
+		}
+
+		return xs.Equals(ys)
+	}
+
+	sameSlice := func(x, y runtime.CPUPartitionSliceSpec) bool {
+		return x.Name == y.Name && x.Exclusive == y.Exclusive && sameCPUs(x.CPUs, y.CPUs)
+	}
+
+	return maps.EqualFunc(a.Roots, b.Roots, sameCPUs) &&
+		slices.EqualFunc(slices.SortedFunc(slices.Values(a.Slices), byName), slices.SortedFunc(slices.Values(b.Slices), byName), sameSlice)
 }
 
 // runtimeValidateContainer validates the full configuration container in the runtime context.
@@ -327,10 +461,20 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 		errs = multierror.Append(errs, err)
 	}
 
+	if err := container.validateCPUPartitionKubelet(mode); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// Pools remain runtime dependencies. Libraries are only provisioning sources:
 	// copy controllers report missing sources or adopt existing copies without them.
 	if err := validateVirtualMachinePoolReferences(container); err != nil {
 		errs = multierror.Append(errs, err)
+	}
+
+	if !mode.InContainer() {
+		if err := validateVirtualMachineCPUSlices(container); err != nil {
+			errs = multierror.Append(errs, err)
+		}
 	}
 
 	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
@@ -444,6 +588,28 @@ func (container *Container) validateWorkloadResourceKubelet(mode validation.Runt
 	multiErr = multierror.Append(multiErr, kubelet.ValidateWorkloadRootConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs()))
 
 	return multiErr.ErrorOrNil()
+}
+
+// validateCPUPartitionKubelet rejects user reserved CPUs while the CPU partition policy bounds kubepods,
+// which derives them. It checks the configuration as written; the running kubelet follows the
+// policy captured at boot until a reboot.
+func (container *Container) validateCPUPartitionKubelet(mode validation.RuntimeMode) error {
+	if mode.InContainer() || !container.kubeletEligible() {
+		return nil
+	}
+
+	partition := container.CPUPartitionConfig()
+	if partition == nil {
+		return nil
+	}
+
+	if _, bounded := partition.Roots()[constants.CgroupKubepods]; !bounded {
+		return nil
+	}
+
+	kubeletConfig := container.K8sKubeletConfig()
+
+	return kubelet.ValidateCPUReservationConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs())
 }
 
 // kubeletEligible mirrors the inputs the kubelet configuration controller requires before it renders anything.

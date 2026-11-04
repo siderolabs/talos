@@ -224,6 +224,7 @@ func All() []meta.ResourceWithRD {
 		&runtime.BootID{},
 		&runtime.BootPartitionStatus{},
 		&runtime.CPUPartitionSpec{},
+		&runtime.CPUPartitionStatus{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.Environment{},

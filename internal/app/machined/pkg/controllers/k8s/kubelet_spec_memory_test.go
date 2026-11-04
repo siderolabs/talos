@@ -85,6 +85,7 @@ func newKubeletSpecMemorySuite(mode v1alpha1runtime.Mode) *KubeletSpecMemorySuit
 			s.memory.err.Store(nil)
 			s.memory.reads.Store(0)
 			logs.TakeAll()
+			cpuPartitionReady(ds)
 
 			ds.Require().NoError(ds.Runtime().RegisterController(&k8sctrl.KubeletSpecController{
 				V1Alpha1Mode:   mode,

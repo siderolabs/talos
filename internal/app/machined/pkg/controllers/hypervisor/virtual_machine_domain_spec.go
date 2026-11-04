@@ -19,16 +19,18 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/cpupool"
 	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -98,6 +100,12 @@ func (ctrl *VirtualMachineDomainSpecController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -220,6 +228,10 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 			return renderErr
 		}
 
+		if cpupool.IsHeld(renderErr) {
+			return retainDomainOnCPUPoolHold(domain, powerState, stopRequest, renderErr)
+		}
+
 		// Keep the attached disks held until the runtime has stopped.
 		domain.TypedSpec().PowerState = hypervisorhelpers.PowerStateStopped.String()
 		domain.TypedSpec().StopRequest = stopRequest
@@ -243,6 +255,22 @@ func updateRenderedDomain(ctx context.Context, r controller.Reader, logger *zap.
 		StopMode:           stopModeOf(stopRequest),
 		StopRequest:        stopRequest,
 	}
+
+	return nil
+}
+
+// retainDomainOnCPUPoolHold keeps the last definition when the CPU selection is not available in
+// the boot CPU partition policy: a running domain keeps running on it, while the start intent
+// check refuses to start or replace anything on it. An operator's stop still applies; any other
+// change is refused, which leaves the definition as it is.
+func retainDomainOnCPUPoolHold(domain *hypervisor.VirtualMachineDomainSpec, powerState, stopRequest string, renderErr error) error {
+	if powerState != hypervisorhelpers.PowerStateStopped.String() {
+		return renderErr
+	}
+
+	domain.TypedSpec().PowerState = powerState
+	domain.TypedSpec().StopRequest = stopRequest
+	domain.TypedSpec().StopMode = stopModeOf(stopRequest)
 
 	return nil
 }
@@ -487,6 +515,11 @@ func renderVirtualMachineDomainWithSeed(
 		return "", nil, "", err
 	}
 
+	partition, err := resolveCPUPool(ctx, r, name, spec.CPU)
+	if err != nil {
+		return "", nil, "", err
+	}
+
 	profileName := spec.Profile
 	if profileName == "" {
 		profileName = "host"
@@ -509,7 +542,7 @@ func renderVirtualMachineDomainWithSeed(
 		return "", nil, "", fmt.Errorf("virtual machine %q: profile %q: %w", name, profileName, err)
 	}
 
-	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, profile.TypedSpec(), links, resolvedDisks)
+	domainXML, attachedDisks, err := renderVirtualMachineDomain(name, spec, profile.TypedSpec(), links, resolvedDisks, partition)
 	if err != nil || spec.CloudInit == nil {
 		return domainXML, attachedDisks, "", err
 	}
@@ -724,6 +757,7 @@ func renderVirtualMachineDomain(
 	profile *hypervisor.VirtualMachineProfileSpecSpec,
 	links hostLinks,
 	resolvedDisks map[resource.ID]hypervisor.VirtualMachineDiskStatusSpec,
+	partition string,
 ) (string, []string, error) {
 	interfaces, err := renderVirtualMachineInterfaces(name, spec.Interfaces, links)
 	if err != nil {
@@ -741,11 +775,12 @@ func renderVirtualMachineDomain(
 			Value: uint(spec.Memory.Size),
 			Unit:  "bytes",
 		},
-		// Talos creates this partition at boot and weights it against the other roots; without an
-		// explicit partition libvirt would place the domain in its own /machine default, outside
-		// the tree Talos tracks and kills on shutdown.
+		// Talos creates the virtual machine root at boot and weights it against the other roots;
+		// without an explicit partition libvirt would place the domain in its own /machine default,
+		// outside the tree Talos tracks and kills on shutdown. A CPU partition policy places the
+		// domain in its pool below the root.
 		Resource: &libvirtxml.DomainResource{
-			Partition: "/" + constants.CgroupVirtualMachines,
+			Partition: partition,
 		},
 		OS: &libvirtxml.DomainOS{
 			Type: &libvirtxml.DomainOSType{
@@ -1003,7 +1038,8 @@ var errDiskUnsupported = errors.New("unsupported disk")
 // cannot satisfy is a permanent obstacle to report, but still no reason to restart the controller.
 func isHeldBack(err error) bool {
 	return errors.Is(err, errLinkNotFound) || errors.Is(err, errLinkNotEthernet) ||
-		errors.Is(err, errDiskNotReady) || errors.Is(err, errDiskUnsupported) || errors.Is(err, vmprofile.ErrNotReady)
+		errors.Is(err, errDiskNotReady) || errors.Is(err, errDiskUnsupported) || errors.Is(err, vmprofile.ErrNotReady) ||
+		cpupool.IsHeld(err)
 }
 
 // hostLinks carries what an interface needs to know about the host's links: how to resolve a

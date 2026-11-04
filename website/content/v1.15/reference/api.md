@@ -649,9 +649,11 @@ description: Talos gRPC API reference.
     - [BootIDSpec](#talos.resource.definitions.runtime.BootIDSpec)
     - [BootPartitionStatusSpec](#talos.resource.definitions.runtime.BootPartitionStatusSpec)
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
+    - [CPUPartitionPoolSpec](#talos.resource.definitions.runtime.CPUPartitionPoolSpec)
     - [CPUPartitionSliceSpec](#talos.resource.definitions.runtime.CPUPartitionSliceSpec)
     - [CPUPartitionSpecSpec](#talos.resource.definitions.runtime.CPUPartitionSpecSpec)
     - [CPUPartitionSpecSpec.RootsEntry](#talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry)
+    - [CPUPartitionStatusSpec](#talos.resource.definitions.runtime.CPUPartitionStatusSpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
     - [EnvironmentSpec](#talos.resource.definitions.runtime.EnvironmentSpec)
@@ -11315,6 +11317,23 @@ BootedEntrySpec describes the booted entry resource properties.
 
 
 
+<a name="talos.resource.definitions.runtime.CPUPartitionPoolSpec"></a>
+
+### CPUPartitionPoolSpec
+CPUPartitionPoolSpec is one pool of the virtual machine root.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name is the slice name, or "shared" for the CPUs outside every named slice. |
+| cp_us | [string](#string) |  |  |
+| partition | [string](#string) |  | Partition is the libvirt resource partition of the pool. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.CPUPartitionSliceSpec"></a>
 
 ### CPUPartitionSliceSpec
@@ -11335,13 +11354,12 @@ CPUPartitionSliceSpec is one named subset of the virtual machine root.
 <a name="talos.resource.definitions.runtime.CPUPartitionSpecSpec"></a>
 
 ### CPUPartitionSpecSpec
-CPUPartitionSpecSpec describes the desired CPU partition policy.
+CPUPartitionSpecSpec describes the CPU partition policy of the current boot.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| enabled | [bool](#bool) |  |  |
-| roots | [CPUPartitionSpecSpec.RootsEntry](#talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry) | repeated | Omitted roots are unrestricted. |
+| roots | [CPUPartitionSpecSpec.RootsEntry](#talos.resource.definitions.runtime.CPUPartitionSpecSpec.RootsEntry) | repeated | Omitted roots are unrestricted; no roots is no policy. |
 | slices | [CPUPartitionSliceSpec](#talos.resource.definitions.runtime.CPUPartitionSliceSpec) | repeated |  |
 
 
@@ -11359,6 +11377,24 @@ CPUPartitionSpecSpec describes the desired CPU partition policy.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.CPUPartitionStatusSpec"></a>
+
+### CPUPartitionStatusSpec
+CPUPartitionStatusSpec describes the applied CPU partition policy.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  |  |
+| kubelet_reserved_cp_us | [string](#string) |  | KubeletReservedCPUs is set when kubepods is bounded: the online CPUs outside kubepods. |
+| virtual_machine_pools | [CPUPartitionPoolSpec](#talos.resource.definitions.runtime.CPUPartitionPoolSpec) | repeated | VirtualMachinePools is set when the virtual machine root is bounded. |
+| error | [string](#string) |  | Error is why the policy failed to apply. |
 
 
 

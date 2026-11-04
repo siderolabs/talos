@@ -236,11 +236,19 @@ func (VirtualMachineCPU) Doc() *encoder.Doc {
 				Description: "Optional guest CPU geometry and host CPU pinning.\n\nGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal `count`.\nPinning may be configured without guest geometry.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional guest CPU geometry and host CPU pinning." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "slice",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the `CPUPartitionConfig` slice of the virtual machine root this virtual machine\nruns in.\n\nOptional; omitting it selects the CPUs of the root outside every named slice. It only\napplies while a CPU partition policy bounds the virtual machine root.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the `CPUPartitionConfig` slice of the virtual machine root this virtual machine" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", 4)
 	doc.Fields[1].AddExample("", "3000m")
+	doc.Fields[3].AddExample("", "database")
 
 	return doc
 }

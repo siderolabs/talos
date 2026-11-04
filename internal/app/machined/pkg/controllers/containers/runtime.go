@@ -25,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -115,6 +116,12 @@ func (ctrl *RuntimeController) Inputs() []controller.Input {
 		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerMountStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -375,6 +382,17 @@ func (ctrl *RuntimeController) reconcile(
 
 	if ctrl.taskRunner == nil {
 		logger.Debug("waiting for the container runtime")
+
+		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
+	}
+
+	cpuPartition, err := runtimeres.ReadyCPUPartitionStatus(ctx, runtime)
+	if err != nil {
+		return err
+	}
+
+	if cpuPartition == nil {
+		logger.Debug("waiting for the CPU partition policy of the boot")
 
 		return reconcileLifecycle(ctx, runtime, logger, containerLifecycle, ctrl.Name(), len(ctrl.instances) == 0)
 	}

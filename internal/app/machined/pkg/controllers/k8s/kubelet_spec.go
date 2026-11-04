@@ -62,6 +62,8 @@ func (ctrl *KubeletSpecController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
+//
+//nolint:dupl
 func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
@@ -94,6 +96,12 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 			ID:        optional.Some(runtimeres.SecurityStateID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -110,7 +118,7 @@ func (ctrl *KubeletSpecController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -216,7 +224,32 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			args["image-credential-provider-config"] = argsbuilder.Value{constants.KubeletCredentialProviderConfig}
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType(), ctrl.kubeletConfigurationOptions(cfgSpec)...)
+		options := ctrl.kubeletConfigurationOptions(cfgSpec)
+
+		cpuPartition, err := runtimeres.ReadyCPUPartitionStatus(ctx, r)
+		if err != nil {
+			return err
+		}
+
+		if cpuPartition == nil {
+			continue
+		}
+
+		if cpus := cpuPartition.KubeletReservedCPUs; cpus != "" {
+			// Machine configuration validation follows the policy as written, which takes effect at the
+			// next boot: until then a setting which conflicts with the policy of this boot is not rendered.
+			reservationArgs := maps.Map(cfgSpec.ExtraArgs, func(flag string, v k8s.ArgValues) (string, []string) { return flag, v.Values })
+
+			if err = kubelet.ValidateCPUReservationConfiguration(cfgSpec.ExtraConfig, reservationArgs); err != nil {
+				logger.Warn("kubelet configuration conflicts with the CPU partition policy of the boot, keeping the current one until reboot", zap.Error(err))
+
+				continue
+			}
+
+			options = append(options, WithReservedCPUs(cpus))
+		}
+
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType(), options...)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -360,6 +393,13 @@ func NewKubeletConfiguration(
 	config, err := prepareExtraConfig(cfgSpec.ExtraConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	// Under the static policy the kubelet leaves the kubepods cpuset alone: under none it writes
+	// every online CPU into it on each start.
+	if reservedCPUs, managed := options.reservedCPUs.Get(); managed {
+		config.CPUManagerPolicy = kubelet.CPUManagerPolicyStatic
+		config.ReservedSystemCPUs = reservedCPUs
 	}
 
 	// required fields (always set)

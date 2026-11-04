@@ -371,6 +371,7 @@ func (suite *RuntimeSuite) SetupTest() {
 	suite.pidRecorder = newFakePIDRecorder()
 
 	suite.AfterSetup = func(s *ctest.DefaultSuite) {
+		cpuPartitionReady(s)
 		s.Require().NoError(s.Runtime().RegisterController(&containersctrl.RuntimeController{
 			RunnerProvider: func() (containersctrl.TaskRunner, error) { return suite.runner, nil },
 			PIDRecorder:    suite.pidRecorder.record,

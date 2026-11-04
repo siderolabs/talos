@@ -28,6 +28,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.BootPartitionStatus{},
 		&runtime.BootedEntry{},
 		&runtime.CPUPartitionSpec{},
+		&runtime.CPUPartitionStatus{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.EventSinkConfig{},

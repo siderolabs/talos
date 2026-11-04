@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/cpupool"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/placement"
 	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -25,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -107,6 +109,12 @@ func (*VirtualMachineStatusController) Inputs() []controller.Input {
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDomainSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -291,7 +299,8 @@ func listVirtualMachineDomainSpecs(ctx context.Context, reader controller.Reader
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
 func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
-	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, placement.ErrPending) || errors.Is(err, vmprofile.ErrNotReady) {
+	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, placement.ErrPending) || errors.Is(err, vmprofile.ErrNotReady) ||
+		errors.Is(err, cpupool.ErrPending) {
 		return hypervisorhelpers.VirtualMachineStagePending
 	}
 
