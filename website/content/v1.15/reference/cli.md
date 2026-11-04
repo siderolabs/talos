@@ -2994,7 +2994,26 @@ talosctl machineconfig gen <cluster name> <cluster endpoint> [flags]
 ### Options
 
 ```
-  -h, --help[=true|false]   help for gen
+      --additional-sans strings                  additional Subject-Alt-Names for the APIServer certificate
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
+      --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
+      --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
+  -f, --force[=true|false]                       will overwrite existing files
+  -h, --help[=true|false]                        help for gen
+      --install-disk string                      the disk to install to (default "/dev/sda")
+      --install-image string                     the image used to perform an installation (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
+      --kubernetes-version string                desired kubernetes version to run (default "1.38.0-beta.0")
+  -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
+  -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
+      --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --talos-version string                     the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
+      --version string                           the desired machine config version to generate (default "v1alpha1")
+      --with-cluster-discovery[=true|false]      enable cluster discovery feature (default true)
+      --with-docs[=true|false]                   renders all machine configs adding the documentation for each field (default true)
+      --with-examples[=true|false]               renders all machine configs with the commented examples (default true)
+      --with-kubespan[=true|false]               enable KubeSpan feature
+      --with-secrets string                      use a secrets file generated using 'gen secrets'
 ```
 
 ### SEE ALSO
