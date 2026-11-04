@@ -8,5 +8,7 @@ import "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/gen"
 
 func init() {
 	// alias for `talosctl gen config`
-	Cmd.AddCommand(gen.NewConfigCmd("gen"))
+	cmd := gen.NewConfigCmd("gen")
+	cmd.Flags().AddFlagSet(gen.Cmd.PersistentFlags())
+	Cmd.AddCommand(cmd)
 }
