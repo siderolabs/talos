@@ -38,6 +38,14 @@
 (typeattribute not_workload_p)
 (typeattributeset not_workload_p (not workload_p))
 (neverallow workload_p not_workload_p (process (transition dyntransition)))
+; A workload that mounts the host /dev does not log into the syslog of machined through /dev/log, and is not audited for
+; trying, as storage daemons do at every start.
+(dontaudit workload_p init_t (unix_dgram_socket (sendto)))
+; A workload that scans /proc, as the health scripts of Kafka do, meets the runc process of an exec probe in its pod:
+; reading it stays denied and is not audited.
+(dontaudit workload_p pod_containerd_t (dir (getattr search)))
+(dontaudit workload_p pod_containerd_t (file (getattr open read)))
+(dontaudit workload_p pod_containerd_t (lnk_file (getattr read)))
 
 ; Booleans narrow what a regular pod may do. They default to the rights pods had before they existed. The other pod
 ; domains below have the rights of their role, whatever the booleans say.
@@ -98,32 +106,50 @@
     (allow pod_p ARG1 (unix_stream_socket (connectto)))
 )
 
-; A CNI agent: the host access, the CNI plugins it installs and runs, perf events and bpffs.
+; Network rights: the CNI plugins a CNI agent installs and runs, perf events, bpffs, and the BPF programs runc attaches
+; to the cgroups of containers, which Cilium reads.
+(macro pod_network_rights ((type ARG1))
+    (allow ARG1 cni_plugin_t (fs_classes (rw)))
+    (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
+    (allow ARG1 self (perf_event (all)))
+    (allow ARG1 bpf_t (fs_classes (rw)))
+    (allow ARG1 pod_containerd_t (bpf (prog_run)))
+    (allow ARG1 sys_containerd_t (bpf (prog_run)))
+)
+
+; Storage rights: the network filesystems, semctl(IPC_INFO) from lvm, io_uring with a polling kernel thread and the
+; commands SPDK and ublk pass to the devices, the sysfs settings of virtual storage devices (block queues, NVMe over
+; fabrics controllers and multipath), and xfs_growfs on the staged mount of a volume, whose root is unlabeled until the
+; CRI labels it for a pod. Physical disks and the rest of sysfs stay read-only.
+(macro pod_storage_rights ((type ARG1))
+    (allow ARG1 network_fs_t (fs_classes (rw)))
+    (allow ARG1 kernel_t (system (ipc_info)))
+    (allow ARG1 self (io_uring (allowed sqpoll)))
+    (allow ARG1 common_device_f (io_uring (cmd)))
+    (allow ARG1 sys_storage_t (file (open write)))
+    ; sysfs creates no file: opening the queue setting of a device the kernel has not published yet is not audited
+    (dontaudit ARG1 sys_storage_t (dir (write add_name)))
+    (dontaudit ARG1 sys_storage_t (file (create)))
+    (allow ARG1 unlabeled_t (dir (getattr search open read ioctl)))
+)
+
+; A CNI agent: the host access and the network rights.
 (macro pod_cni_domain ((type ARG1))
     (call pod_host_domain (ARG1))
-    (allow ARG1 cni_plugin_t (fs_classes (rw)))
-    (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
-    (allow ARG1 self (perf_event (all)))
-    (allow ARG1 bpf_t (fs_classes (rw)))
+    (call pod_network_rights (ARG1))
 )
 
-; A CSI node plugin: the host access, the network filesystems, and semctl(IPC_INFO) from lvm.
+; A CSI node plugin: the host access and the storage rights.
 (macro pod_csi_domain ((type ARG1))
     (call pod_host_domain (ARG1))
-    (allow ARG1 network_fs_t (fs_classes (rw)))
-    (allow ARG1 kernel_t (system (ipc_info)))
+    (call pod_storage_rights (ARG1))
 )
 
-; A privileged container: the host access and the rights of both roles, which is what it had when it shared the rights
-; of pod_t.
+; A privileged container: the host access and the rights of both roles, since it may run either agent.
 (macro pod_privileged_domain ((type ARG1))
     (call pod_host_domain (ARG1))
-    (allow ARG1 cni_plugin_t (fs_classes (rw)))
-    (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
-    (allow ARG1 self (perf_event (all)))
-    (allow ARG1 bpf_t (fs_classes (rw)))
-    (allow ARG1 network_fs_t (fs_classes (rw)))
-    (allow ARG1 kernel_t (system (ipc_info)))
+    (call pod_network_rights (ARG1))
+    (call pod_storage_rights (ARG1))
 )
 
 ; A process monitor or a log forwarder: it reads /proc, the logs and the files of every pod across MCS categories, writes

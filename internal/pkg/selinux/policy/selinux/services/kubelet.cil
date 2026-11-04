@@ -58,6 +58,7 @@
 
 ; Manage system configuration
 (allow kubelet_t sysfs_t (fs_classes (rw)))
+(allow kubelet_t sys_storage_t (fs_classes (rw)))
 
 ; CNI config, /etc/hosts written by kubelet
 (allow pod_p kubelet_state_t (fs_classes (ro)))

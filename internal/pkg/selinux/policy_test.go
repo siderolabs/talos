@@ -89,6 +89,22 @@ func TestPolicy(t *testing.T) {
 			"(neverallow pod_containerd_t unlabeled_t (dir (relabelfrom)))\n",
 			"neverallow check failed",
 		},
+		{
+			"the CSI node plugin and a privileged container drive the disks through io_uring",
+			"(neverallow pod_csi_t self (io_uring (sqpoll)))\n",
+			"neverallow check failed",
+		},
+		{
+			"the CSI node plugin tunes the virtual storage devices in sysfs",
+			"(neverallow pod_csi_t sys_storage_t (file (write)))\n",
+			"neverallow check failed",
+		},
+		{
+			"neither the CNI agent nor a regular pod uses io_uring, and no workload writes the rest of sysfs",
+			"(neverallow pod_cni_t self (io_uring (allowed)))\n(neverallow pod_t self (io_uring (allowed)))\n" +
+				"(neverallow workload_p sysfs_t (file (write)))\n",
+			"",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			dir := t.TempDir()
