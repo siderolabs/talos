@@ -389,6 +389,60 @@ func TestGenerateDiscoveryIdentityConfig(t *testing.T) {
 	}
 }
 
+func TestGenerateEtcdEncryptionConfig(t *testing.T) {
+	t.Parallel()
+
+	secretboxProvider := map[string]any{"secretbox": map[string]any{"keys": []any{map[string]any{"name": "key2", "secret": "secretbox-secret"}}}}
+	aescbcProvider := map[string]any{"aescbc": map[string]any{"keys": []any{map[string]any{"name": "key1", "secret": "aescbc-secret"}}}}
+
+	for _, test := range []struct {
+		name            string
+		secretboxSecret string
+		aescbcSecret    string
+
+		expectedProviders []any
+	}{
+		{
+			name:              "secretbox",
+			secretboxSecret:   "secretbox-secret",
+			expectedProviders: []any{secretboxProvider},
+		},
+		{
+			name:              "aescbc",
+			aescbcSecret:      "aescbc-secret",
+			expectedProviders: []any{aescbcProvider},
+		},
+		{
+			name:              "both",
+			secretboxSecret:   "secretbox-secret",
+			aescbcSecret:      "aescbc-secret",
+			expectedProviders: []any{secretboxProvider, aescbcProvider},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			input, err := generate.NewInput("test", "https://10.0.1.5:6443", constants.DefaultKubernetesVersion, generate.WithVersionContract(config.TalosVersion1_14))
+			require.NoError(t, err)
+
+			input.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret = test.secretboxSecret
+			input.Options.SecretsBundle.Secrets.AESCBCEncryptionSecret = test.aescbcSecret
+
+			cfg, err := input.Config(machine.TypeControlPlane)
+			require.NoError(t, err)
+
+			require.NotNil(t, cfg.K8sEtcdEncryptionConfig())
+
+			assert.Equal(t, []any{
+				map[string]any{
+					"providers": test.expectedProviders,
+					"resources": []any{"secrets"},
+				},
+			}, cfg.K8sEtcdEncryptionConfig().EtcdEncryptionConfig()["resources"])
+		})
+	}
+}
+
 func TestGenerateNoEtcdKubernetes(t *testing.T) {
 	t.Parallel()
 
