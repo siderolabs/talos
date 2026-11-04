@@ -277,6 +277,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 	secretsDir := constants.KubernetesControllerManagerSecretsDir
 	kubeconfigPath := filepath.Join(secretsDir, "kubeconfig")
 	caCrtPath := filepath.Join(secretsDir, "ca.crt")
+	rootCAPath := filepath.Join(secretsDir, "root-ca.crt")
 	caKeyPath := filepath.Join(secretsDir, "ca.key")
 	saKeyPath := filepath.Join(secretsDir, "service-account.key")
 
@@ -329,7 +330,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--leader-elect=true",
 					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=10.96.0.0/12",
 					"--terminated-pod-gc-threshold=100",
@@ -366,7 +367,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--leader-elect=true",
 					"--node-cidr-mask-size-ipv4=25",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=10.96.0.0/12",
 					"--terminated-pod-gc-threshold=100",
@@ -403,7 +404,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--leader-elect=true",
 					"--node-cidr-mask-size-ipv6=64",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=fd00:1::/108",
 					"--terminated-pod-gc-threshold=100",
@@ -442,7 +443,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--leader-elect=true",
 					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=10.96.0.0/12",
 					"--terminated-pod-gc-threshold=100",
@@ -480,7 +481,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--leader-elect=true",
 					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=10.96.0.0/12",
 					"--terminated-pod-gc-threshold=100",
@@ -523,7 +524,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--node-cidr-mask-size-ipv4=24",
 					"--node-cidr-mask-size-ipv6=64",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=10.96.0.0/12,fd00:1::/108",
 					"--terminated-pod-gc-threshold=100",
@@ -585,7 +586,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--leader-elect=true",
 					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
-					"--root-ca-file=" + caCrtPath,
+					"--root-ca-file=" + rootCAPath,
 					"--service-account-private-key-file=" + saKeyPath,
 					"--service-cluster-ip-range=10.96.0.0/12",
 					"--terminated-pod-gc-threshold=50",

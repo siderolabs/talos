@@ -147,6 +147,7 @@ func NewRootKubernetesController() *RootKubernetesController {
 
 				k8sSecrets.IssuingCA = cfgProvider.K8sAPIServerCAConfig().IssuingCA()
 				k8sSecrets.AcceptedCAs = cfgProvider.K8sAPIServerCAConfig().AcceptedCAs()
+				k8sSecrets.RootCABundle = cfgProvider.K8sAPIServerCAConfig().RootCABundle()
 
 				if len(k8sSecrets.AcceptedCAs) == 0 {
 					return errors.New("missing cluster.CA secret")

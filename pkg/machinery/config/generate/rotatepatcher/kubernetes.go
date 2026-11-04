@@ -141,6 +141,9 @@ func K8sSetCA(newCA *x509.PEMEncodedCertificateAndKey) PatcherFunc {
 					Key:  string(newCA.Key),
 				}
 
+				// the root CA bundle was built for the previous issuing CA, reset it to publish the new one
+				caCfg.APIRootCABundle = ""
+
 				return nil
 			},
 		)
