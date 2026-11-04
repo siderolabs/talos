@@ -14,6 +14,7 @@ import (
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -209,6 +210,106 @@ func (suite *StatusSuite) TestRunningReflectsInstance() {
 		asrt.Equal(containers.ContainerStateRunning, status.TypedSpec().State)
 		asrt.Equal(containers.ContainerHealthHealthy, status.TypedSpec().Health)
 		asrt.Equal(uint32(1234), status.TypedSpec().PID)
+	})
+}
+
+// TestRunningFollowsHealthCheck covers a container with a health check: running is not healthy
+// until a check passes, and a failing check degrades it without changing its state.
+func (suite *StatusSuite) TestRunningFollowsHealthCheck() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.HealthCheck = containers.ContainerHealthCheckSpec{Kind: string(config.ContainerHealthCheckKindTCP), Port: 80}
+	})
+	suite.markImageReady()
+
+	suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Phase = containers.ContainerInstancePhaseRunning
+		spec.PID = 1234
+	})
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateRunning, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerHealthPending, status.TypedSpec().Health)
+	})
+
+	healthStatus := containers.NewContainerHealthStatus(containers.NamespaceName, containers.InstanceID(statusTestContainer, 0))
+	healthStatus.TypedSpec().Healthy = true
+	suite.Create(healthStatus)
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerHealthHealthy, status.TypedSpec().Health)
+		asrt.Empty(status.TypedSpec().Error)
+	})
+
+	existing, err := suite.State().Get(suite.Ctx(), healthStatus.Metadata())
+	suite.Require().NoError(err)
+
+	healthStatus = existing.(*containers.ContainerHealthStatus) //nolint:forcetypeassert,errcheck
+	healthStatus.TypedSpec().Healthy = false
+	healthStatus.TypedSpec().Message = "connection refused"
+	suite.Update(healthStatus)
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateRunning, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
+		asrt.Equal("health check: connection refused", status.TypedSpec().Error)
+	})
+}
+
+// degradeByHealthCheck runs statusTestContainer with a health check and reports that check failing.
+func (suite *StatusSuite) degradeByHealthCheck() (*containers.ContainerInstanceStatus, *containers.ContainerHealthStatus) {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.HealthCheck = containers.ContainerHealthCheckSpec{Kind: string(config.ContainerHealthCheckKindTCP), Port: 80}
+	})
+	suite.markImageReady()
+
+	instanceStatus := suite.setInstanceStatus(func(spec *containers.ContainerInstanceStatusSpec) {
+		spec.Phase = containers.ContainerInstancePhaseRunning
+		spec.PID = 1234
+	})
+
+	healthStatus := containers.NewContainerHealthStatus(containers.NamespaceName, containers.InstanceID(statusTestContainer, 0))
+	healthStatus.TypedSpec().Message = "connection refused"
+	suite.Create(healthStatus)
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerHealthDegraded, status.TypedSpec().Health)
+		asrt.Equal("health check: connection refused", status.TypedSpec().Error)
+	})
+
+	return instanceStatus, healthStatus
+}
+
+// TestHealthCheckRecovers covers a check that passes again: the container is healthy once more and
+// the failure it reported is gone.
+func (suite *StatusSuite) TestHealthCheckRecovers() {
+	_, healthStatus := suite.degradeByHealthCheck()
+
+	existing, err := suite.State().Get(suite.Ctx(), healthStatus.Metadata())
+	suite.Require().NoError(err)
+
+	healthStatus = existing.(*containers.ContainerHealthStatus) //nolint:forcetypeassert,errcheck
+	healthStatus.TypedSpec().Healthy = true
+	healthStatus.TypedSpec().Message = ""
+	suite.Update(healthStatus)
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerStateRunning, status.TypedSpec().State)
+		asrt.Equal(containers.ContainerHealthHealthy, status.TypedSpec().Health)
+		asrt.Empty(status.TypedSpec().Error)
+	})
+}
+
+// TestHealthCheckErrorNotCarriedOver covers a degraded container whose instance goes away: unlike
+// the reason an execution ended, a failing check describes a probe that is no longer running, so it
+// is not kept on display.
+func (suite *StatusSuite) TestHealthCheckErrorNotCarriedOver() {
+	instanceStatus, _ := suite.degradeByHealthCheck()
+
+	suite.Destroy(instanceStatus)
+
+	suite.assertStatus(func(status *containers.ContainerStatus, asrt *assert.Assertions) {
+		asrt.NotEqual(containers.ContainerStateRunning, status.TypedSpec().State)
+		asrt.Empty(status.TypedSpec().Error)
 	})
 }
 

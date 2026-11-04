@@ -209,8 +209,28 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 	}
 
 	containerSpecSpec.StopTimeout = containerConfig.StopTimeout()
+	containerSpecSpec.HealthCheck = resolveHealthCheck(containerConfig.HealthCheck())
 
 	return nil
+}
+
+// resolveHealthCheck turns the typed configuration health check into a health check spec.
+func resolveHealthCheck(healthCheckConfig optional.Optional[configcfg.ContainerHealthCheckConfig]) containers.ContainerHealthCheckSpec {
+	healthCheck, ok := healthCheckConfig.Get()
+	if !ok {
+		return containers.ContainerHealthCheckSpec{}
+	}
+
+	return containers.ContainerHealthCheckSpec{
+		Kind:             string(healthCheck.Kind()),
+		Port:             uint32(healthCheck.Port()),
+		Path:             healthCheck.HTTPPath(),
+		GRPCService:      healthCheck.GRPCService(),
+		InitialDelay:     healthCheck.InitialDelay(),
+		Interval:         healthCheck.Interval(),
+		Timeout:          healthCheck.Timeout(),
+		FailureThreshold: healthCheck.FailureThreshold(),
+	}
 }
 
 // resolveMounts turns typed configuration mounts into mount specs.

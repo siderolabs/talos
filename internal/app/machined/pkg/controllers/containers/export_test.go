@@ -9,4 +9,8 @@ var (
 	AllocateSELinuxLevels = allocateSELinuxLevels
 	SELinuxPair           = selinuxPair
 	SELinuxPairCount      = selinuxPairCount
+	RunProbeLoop          = runProbeLoop
+	NetNSPath             = netNSPath
+
+	LogContainerStatusTransition = logContainerStatusTransition
 )

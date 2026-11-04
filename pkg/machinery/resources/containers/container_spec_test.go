@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -202,6 +203,7 @@ func TestContainersReady(t *testing.T) {
 		containers      []string
 		setup           func(*containers.ContainerStatus)
 		setupInstance   func(*containers.ContainerInstanceStatus)
+		healthChecked   bool
 		want            []string
 		wantWakeUpAfter bool
 	}{
@@ -228,6 +230,52 @@ func TestContainersReady(t *testing.T) {
 			},
 			want:            []string{"container: other"},
 			wantWakeUpAfter: true,
+		},
+		{
+			// Passing its health check is proof enough: no stability window on top of it.
+			name:          "health checked and just started",
+			containers:    []string{"other"},
+			healthChecked: true,
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now()
+			},
+			want: nil,
+		},
+		{
+			// Running, but its health check has not passed yet: the process alone does not satisfy the gate.
+			name:          "health checked but not passed yet",
+			containers:    []string{"other"},
+			healthChecked: true,
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthPending
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now().Add(-time.Hour)
+			},
+			want: []string{"container: other"},
+		},
+		{
+			// ContainerStatus has not caught up with an instance that has already exited: a stale read
+			// between two controllers' outputs, waited out rather than trusted.
+			name:          "healthy but newest instance exited",
+			containers:    []string{"other"},
+			healthChecked: true,
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseTerminated
+				status.TypedSpec().StartedAt = time.Now().Add(-time.Hour)
+			},
+			want: []string{"container: other"},
 		},
 		{
 			name:       "healthy and stable",
@@ -281,6 +329,12 @@ func TestContainersReady(t *testing.T) {
 			t.Parallel()
 
 			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			if tt.healthChecked {
+				spec := containers.NewContainerSpec(containers.NamespaceName, "other")
+				spec.TypedSpec().HealthCheck = containers.ContainerHealthCheckSpec{Kind: string(config.ContainerHealthCheckKindTCP), Port: 80}
+				require.NoError(t, st.Create(ctx, spec))
+			}
 
 			if tt.setup != nil {
 				status := containers.NewContainerStatus(containers.NamespaceName, "other")

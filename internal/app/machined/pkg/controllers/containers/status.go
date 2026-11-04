@@ -51,6 +51,11 @@ func (ctrl *StatusController) Inputs() []controller.Input {
 			Type:      containers.ContainerInstanceSpecType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerHealthStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -133,6 +138,11 @@ func (ctrl *StatusController) reconcileContainerStatus(
 		return err
 	}
 
+	containerHealthStatus, err := containers.CurrentHealthStatus(ctx, runtime, containerSpecID, containerInstanceStatus)
+	if err != nil {
+		return err
+	}
+
 	// The digest which the current reference resolves to, which is not necessarily the one actually running.
 	imageDigest := containers.ImageDigest(containerImageStatus, containerSpec.TypedSpec().Image.Ref)
 
@@ -143,7 +153,7 @@ func (ctrl *StatusController) reconcileContainerStatus(
 		func(res *containers.ContainerStatus) error {
 			before = *res.TypedSpec()
 
-			res.TypedSpec().Update(containerSpec, containerImageStatus, containerInstanceStatus, containerInstanceSpec, imageDigest, containerDependencyStatus)
+			res.TypedSpec().Update(containerSpec, containerImageStatus, containerInstanceStatus, containerInstanceSpec, imageDigest, containerDependencyStatus, containerHealthStatus)
 
 			after = *res.TypedSpec()
 
@@ -160,7 +170,7 @@ func (ctrl *StatusController) reconcileContainerStatus(
 	return nil
 }
 
-// logContainerStatusTransition reports a change in the aggregated state or error of one container.
+// logContainerStatusTransition reports a change in the aggregated state, health or error of one container.
 func logContainerStatusTransition(logger *zap.Logger, containerSpecID string, before, after containers.ContainerStatusSpec) {
 	if before.State != after.State {
 		fields := []zap.Field{
@@ -183,6 +193,30 @@ func logContainerStatusTransition(logger *zap.Logger, containerSpecID string, be
 		}
 
 		logger.Info("container state changed", fields...)
+
+		return
+	}
+
+	// Within one state, health only moves on the outcome of a health check.
+	if before.Health != after.Health {
+		fields := []zap.Field{
+			zap.String("container", containerSpecID),
+			zap.Stringer("state", after.State),
+			zap.Stringer("from", before.Health),
+			zap.Stringer("to", after.Health),
+		}
+
+		if after.Error != "" {
+			fields = append(fields, zap.String("error", after.Error))
+		}
+
+		// A degradation is the news a warning filter is there to catch; the error it carries would
+		// otherwise only ever be logged at info.
+		if after.Health == containers.ContainerHealthDegraded {
+			logger.Warn("container health changed", fields...)
+		} else {
+			logger.Info("container health changed", fields...)
+		}
 
 		return
 	}

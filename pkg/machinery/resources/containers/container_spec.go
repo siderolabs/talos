@@ -67,6 +67,10 @@ type ContainerSpecSpec struct {
 	Devices []ContainerDeviceSpec `yaml:"devices,omitempty" protobuf:"12"`
 
 	StopTimeout time.Duration `yaml:"stopTimeout,omitempty" protobuf:"13"`
+
+	// HealthCheck probes the running container. It is not part of the instance snapshot: changing it
+	// re-targets the probe of the running instance rather than replacing the instance.
+	HealthCheck ContainerHealthCheckSpec `yaml:"healthCheck,omitempty" protobuf:"14"`
 }
 
 // Ready reports the container's unmet dependencies (image, mounts, devices, dependsOn gates),
@@ -321,6 +325,32 @@ type ContainerNetworkSpec struct {
 	HostNetwork bool `yaml:"hostNetwork,omitempty" protobuf:"1"`
 }
 
+// ContainerHealthCheckSpec is the resolved health check configuration.
+//
+// An empty Kind means no health check: health then follows the lifecycle state alone.
+//
+//gotagsrewrite:gen
+type ContainerHealthCheckSpec struct {
+	// Kind is one of "tcp", "http" or "grpc", or empty for no health check.
+	Kind string `yaml:"kind,omitempty" protobuf:"1"`
+	// Port on the container's loopback address.
+	Port uint32 `yaml:"port,omitempty" protobuf:"2"`
+	// Path of an HTTP check.
+	Path string `yaml:"path,omitempty" protobuf:"3"`
+	// GRPCService is the service name of a gRPC check.
+	GRPCService string `yaml:"grpcService,omitempty" protobuf:"4"`
+
+	InitialDelay     time.Duration `yaml:"initialDelay,omitempty" protobuf:"5"`
+	Interval         time.Duration `yaml:"interval,omitempty" protobuf:"6"`
+	Timeout          time.Duration `yaml:"timeout,omitempty" protobuf:"7"`
+	FailureThreshold uint32        `yaml:"failureThreshold,omitempty" protobuf:"8"`
+}
+
+// Enabled reports whether a health check is configured.
+func (healthCheck ContainerHealthCheckSpec) Enabled() bool {
+	return healthCheck.Kind != ""
+}
+
 // ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
 //
 // Zero means unset, which for a limit means unlimited. The swap limit is a pointer because zero is
@@ -499,46 +529,83 @@ func (dependsOn ContainerDependsOnSpec) ContainersReady(
 	)
 
 	for _, name := range dependsOn.Containers {
-		status, err := safe.ReaderGetByID[*ContainerStatus](ctx, r, name)
+		instanceStatus, err := runningHealthyInstance(ctx, r, name)
 		if err != nil {
-			if state.IsNotFoundError(err) {
-				waitingFor = append(waitingFor, "container: "+name)
-
-				continue
-			}
-
-			return nil, optional.None[time.Duration](), fmt.Errorf("failed to get container status %q: %w", name, err)
+			return nil, optional.None[time.Duration](), err
 		}
 
-		// State as well as Health: an instance on its way out keeps the Health it had, by design, so
-		// Health alone would let a dependency that is being torn down satisfy the gate.
-		if status.TypedSpec().Health != ContainerHealthHealthy || status.TypedSpec().State != ContainerStateRunning {
+		if instanceStatus == nil {
 			waitingFor = append(waitingFor, "container: "+name)
 
 			continue
 		}
 
-		instanceStatus, err := LatestInstanceStatus(ctx, r, name)
+		remaining, err := stabilityWindowRemaining(ctx, r, name, instanceStatus)
 		if err != nil {
-			return nil, optional.None[time.Duration](), fmt.Errorf("failed to get instance status for container %q: %w", name, err)
+			return nil, optional.None[time.Duration](), err
 		}
 
-		// Health said Healthy but the newest instance status disagrees: a stale read between two
-		// resources written by different controllers. Treat as not yet trustworthy rather than
-		// erroring -- the next pass sees a consistent view.
-		if instanceStatus == nil || instanceStatus.TypedSpec().Phase != ContainerInstancePhaseRunning {
+		if remaining > 0 {
 			waitingFor = append(waitingFor, "container: "+name)
-
-			continue
-		}
-
-		if since := time.Since(instanceStatus.TypedSpec().StartedAt); since < containerDependencyStabilityWindow {
-			waitingFor = append(waitingFor, "container: "+name)
-			wakeUpAfter = EarliestWakeUpAfter(wakeUpAfter, optional.Some(containerDependencyStabilityWindow-since))
+			wakeUpAfter = EarliestWakeUpAfter(wakeUpAfter, optional.Some(remaining))
 		}
 	}
 
 	return waitingFor, wakeUpAfter, nil
+}
+
+// runningHealthyInstance returns the running instance of a dependency that reports healthy and
+// running, or nil if it does not (yet).
+func runningHealthyInstance(ctx context.Context, r controller.Reader, name string) (*ContainerInstanceStatus, error) {
+	status, err := safe.ReaderGetByID[*ContainerStatus](ctx, r, name)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to get container status %q: %w", name, err)
+	}
+
+	// State as well as Health: an instance on its way out keeps the Health it had, by design, so
+	// Health alone would let a dependency that is being torn down satisfy the gate.
+	if status.TypedSpec().Health != ContainerHealthHealthy || status.TypedSpec().State != ContainerStateRunning {
+		return nil, nil
+	}
+
+	instanceStatus, err := LatestInstanceStatus(ctx, r, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get instance status for container %q: %w", name, err)
+	}
+
+	// Health said Healthy but the newest instance status disagrees: a stale read between two
+	// resources written by different controllers. Treat as not yet trustworthy rather than
+	// erroring -- the next pass sees a consistent view.
+	if instanceStatus == nil || instanceStatus.TypedSpec().Phase != ContainerInstancePhaseRunning {
+		return nil, nil
+	}
+
+	return instanceStatus, nil
+}
+
+// stabilityWindowRemaining returns how much longer a running, healthy dependency has to stay running
+// before it is trusted; zero once it is.
+//
+// A dependency with a health check has already proven itself by passing it: the window is only a
+// stand-in for that proof on containers which have none. A container whose spec is gone has none
+// either, so it falls back to the window.
+func stabilityWindowRemaining(
+	ctx context.Context, r controller.Reader, name string, instanceStatus *ContainerInstanceStatus,
+) (time.Duration, error) {
+	containerSpec, err := safe.ReaderGetByID[*ContainerSpec](ctx, r, name)
+	if err != nil && !state.IsNotFoundError(err) {
+		return 0, fmt.Errorf("failed to get container spec %q: %w", name, err)
+	}
+
+	if err == nil && containerSpec.TypedSpec().HealthCheck.Enabled() {
+		return 0, nil
+	}
+
+	return max(containerDependencyStabilityWindow-time.Since(instanceStatus.TypedSpec().StartedAt), 0), nil
 }
 
 // NetworkConditionMet reports whether one declared dependsOn.network condition is satisfied.

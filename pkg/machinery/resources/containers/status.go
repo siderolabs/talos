@@ -5,6 +5,8 @@
 package containers
 
 import (
+	"strings"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -101,6 +103,7 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 	containerInstanceSpec *ContainerInstanceSpec,
 	imageDigest string,
 	containerDependencyStatus *ContainerDependencyStatus,
+	containerHealthStatus *ContainerHealthStatus,
 ) {
 	prev := *containerStatusSpec
 
@@ -139,7 +142,9 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 
 	containerStatusSpec.State = ResolveContainerState(containerInstanceStatus, containerImageStatus, gatesReady, isStopping)
 
-	containerStatusSpec.Health = containerStatusSpec.State.Health(prev.Health)
+	healthCheckEnabled := containerSpec.TypedSpec().HealthCheck.Enabled()
+
+	containerStatusSpec.Health = containerStatusSpec.State.CheckedHealth(prev.Health, healthCheckEnabled, containerHealthStatus)
 
 	if containerStatusSpec.State == ContainerStatePending && containerDependencyStatus != nil {
 		containerStatusSpec.WaitingFor = containerDependencyStatus.TypedSpec().WaitingFor
@@ -147,12 +152,22 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 
 	containerStatusSpec.Error = DeriveReportedError(containerInstanceStatus, containerImageStatus)
 
+	healthChecked := healthCheckEnabled && containerStatusSpec.State == ContainerStateRunning
+
+	if containerStatusSpec.Error == "" && healthChecked && containerHealthStatus != nil && !containerHealthStatus.TypedSpec().Healthy {
+		containerStatusSpec.Error = healthCheckErrorPrefix + containerHealthStatus.TypedSpec().Message
+	}
+
 	// Same reasoning as RestartCount and ExitCode: keep the reason the last execution ended visible
-	// while the status that reported it is gone.
-	if containerStatusSpec.Error == "" && containerInstanceStatus == nil {
+	// while the status that reported it is gone. A health check failure is not such a reason: a check
+	// never ends an execution, so it describes a probe that is no longer running.
+	if containerStatusSpec.Error == "" && containerInstanceStatus == nil && !strings.HasPrefix(prev.Error, healthCheckErrorPrefix) {
 		containerStatusSpec.Error = prev.Error
 	}
 }
+
+// healthCheckErrorPrefix marks an Error that comes from a failing health check.
+const healthCheckErrorPrefix = "health check: "
 
 // ResolveReportedImage picks the image to report.
 func ResolveReportedImage(containerSpec *ContainerSpec, containerInstanceSpec *ContainerInstanceSpec, imageDigest string) string {

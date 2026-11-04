@@ -205,6 +205,113 @@ func (x *ContainerDeviceSpec) GetDestination() string {
 	return ""
 }
 
+// ContainerHealthCheckSpec is the resolved health check configuration.
+//
+// An empty Kind means no health check: health then follows the lifecycle state alone.
+type ContainerHealthCheckSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Kind is one of "tcp", "http" or "grpc", or empty for no health check.
+	Kind string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	// Port on the container's loopback address.
+	Port uint32 `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	// Path of an HTTP check.
+	Path string `protobuf:"bytes,3,opt,name=path,proto3" json:"path,omitempty"`
+	// GRPCService is the service name of a gRPC check.
+	GrpcService      string               `protobuf:"bytes,4,opt,name=grpc_service,json=grpcService,proto3" json:"grpc_service,omitempty"`
+	InitialDelay     *durationpb.Duration `protobuf:"bytes,5,opt,name=initial_delay,json=initialDelay,proto3" json:"initial_delay,omitempty"`
+	Interval         *durationpb.Duration `protobuf:"bytes,6,opt,name=interval,proto3" json:"interval,omitempty"`
+	Timeout          *durationpb.Duration `protobuf:"bytes,7,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	FailureThreshold uint32               `protobuf:"varint,8,opt,name=failure_threshold,json=failureThreshold,proto3" json:"failure_threshold,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ContainerHealthCheckSpec) Reset() {
+	*x = ContainerHealthCheckSpec{}
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerHealthCheckSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerHealthCheckSpec) ProtoMessage() {}
+
+func (x *ContainerHealthCheckSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerHealthCheckSpec.ProtoReflect.Descriptor instead.
+func (*ContainerHealthCheckSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *ContainerHealthCheckSpec) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *ContainerHealthCheckSpec) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *ContainerHealthCheckSpec) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ContainerHealthCheckSpec) GetGrpcService() string {
+	if x != nil {
+		return x.GrpcService
+	}
+	return ""
+}
+
+func (x *ContainerHealthCheckSpec) GetInitialDelay() *durationpb.Duration {
+	if x != nil {
+		return x.InitialDelay
+	}
+	return nil
+}
+
+func (x *ContainerHealthCheckSpec) GetInterval() *durationpb.Duration {
+	if x != nil {
+		return x.Interval
+	}
+	return nil
+}
+
+func (x *ContainerHealthCheckSpec) GetTimeout() *durationpb.Duration {
+	if x != nil {
+		return x.Timeout
+	}
+	return nil
+}
+
+func (x *ContainerHealthCheckSpec) GetFailureThreshold() uint32 {
+	if x != nil {
+		return x.FailureThreshold
+	}
+	return 0
+}
+
 // ContainerHealthStatusSpec is the spec for ContainerHealthStatus.
 type ContainerHealthStatusSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -220,7 +327,7 @@ type ContainerHealthStatusSpec struct {
 
 func (x *ContainerHealthStatusSpec) Reset() {
 	*x = ContainerHealthStatusSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[3]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -232,7 +339,7 @@ func (x *ContainerHealthStatusSpec) String() string {
 func (*ContainerHealthStatusSpec) ProtoMessage() {}
 
 func (x *ContainerHealthStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[3]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -245,7 +352,7 @@ func (x *ContainerHealthStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerHealthStatusSpec.ProtoReflect.Descriptor instead.
 func (*ContainerHealthStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ContainerHealthStatusSpec) GetHealthy() bool {
@@ -279,7 +386,7 @@ type ContainerImageSpec struct {
 
 func (x *ContainerImageSpec) Reset() {
 	*x = ContainerImageSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[4]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +398,7 @@ func (x *ContainerImageSpec) String() string {
 func (*ContainerImageSpec) ProtoMessage() {}
 
 func (x *ContainerImageSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[4]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +411,7 @@ func (x *ContainerImageSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerImageSpec.ProtoReflect.Descriptor instead.
 func (*ContainerImageSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *ContainerImageSpec) GetRef() string {
@@ -330,7 +437,7 @@ type ContainerImageStatusSpec struct {
 
 func (x *ContainerImageStatusSpec) Reset() {
 	*x = ContainerImageStatusSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[5]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -342,7 +449,7 @@ func (x *ContainerImageStatusSpec) String() string {
 func (*ContainerImageStatusSpec) ProtoMessage() {}
 
 func (x *ContainerImageStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[5]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -355,7 +462,7 @@ func (x *ContainerImageStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerImageStatusSpec.ProtoReflect.Descriptor instead.
 func (*ContainerImageStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ContainerImageStatusSpec) GetPhase() enums.ContainersContainerImagePhase {
@@ -418,7 +525,7 @@ type ContainerInstanceSpecSpec struct {
 
 func (x *ContainerInstanceSpecSpec) Reset() {
 	*x = ContainerInstanceSpecSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[6]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -430,7 +537,7 @@ func (x *ContainerInstanceSpecSpec) String() string {
 func (*ContainerInstanceSpecSpec) ProtoMessage() {}
 
 func (x *ContainerInstanceSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[6]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -443,7 +550,7 @@ func (x *ContainerInstanceSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerInstanceSpecSpec.ProtoReflect.Descriptor instead.
 func (*ContainerInstanceSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ContainerInstanceSpecSpec) GetContainerId() string {
@@ -569,7 +676,7 @@ type ContainerInstanceStatusSpec struct {
 
 func (x *ContainerInstanceStatusSpec) Reset() {
 	*x = ContainerInstanceStatusSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[7]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -581,7 +688,7 @@ func (x *ContainerInstanceStatusSpec) String() string {
 func (*ContainerInstanceStatusSpec) ProtoMessage() {}
 
 func (x *ContainerInstanceStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[7]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -594,7 +701,7 @@ func (x *ContainerInstanceStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerInstanceStatusSpec.ProtoReflect.Descriptor instead.
 func (*ContainerInstanceStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ContainerInstanceStatusSpec) GetContainerId() string {
@@ -664,7 +771,7 @@ type ContainerLifecycleSpec struct {
 
 func (x *ContainerLifecycleSpec) Reset() {
 	*x = ContainerLifecycleSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[8]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -676,7 +783,7 @@ func (x *ContainerLifecycleSpec) String() string {
 func (*ContainerLifecycleSpec) ProtoMessage() {}
 
 func (x *ContainerLifecycleSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[8]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -689,7 +796,7 @@ func (x *ContainerLifecycleSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerLifecycleSpec.ProtoReflect.Descriptor instead.
 func (*ContainerLifecycleSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ContainerLifecycleSpec) GetShutdownDeadline() *timestamppb.Timestamp {
@@ -723,7 +830,7 @@ type ContainerMountSpec struct {
 
 func (x *ContainerMountSpec) Reset() {
 	*x = ContainerMountSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[9]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -735,7 +842,7 @@ func (x *ContainerMountSpec) String() string {
 func (*ContainerMountSpec) ProtoMessage() {}
 
 func (x *ContainerMountSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[9]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -748,7 +855,7 @@ func (x *ContainerMountSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerMountSpec.ProtoReflect.Descriptor instead.
 func (*ContainerMountSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ContainerMountSpec) GetKind() string {
@@ -810,7 +917,7 @@ type ContainerMountStatusSpec struct {
 
 func (x *ContainerMountStatusSpec) Reset() {
 	*x = ContainerMountStatusSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[10]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -822,7 +929,7 @@ func (x *ContainerMountStatusSpec) String() string {
 func (*ContainerMountStatusSpec) ProtoMessage() {}
 
 func (x *ContainerMountStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[10]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -835,7 +942,7 @@ func (x *ContainerMountStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerMountStatusSpec.ProtoReflect.Descriptor instead.
 func (*ContainerMountStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{10}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ContainerMountStatusSpec) GetReady() bool {
@@ -877,7 +984,7 @@ type ContainerNetworkSpec struct {
 
 func (x *ContainerNetworkSpec) Reset() {
 	*x = ContainerNetworkSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[11]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -889,7 +996,7 @@ func (x *ContainerNetworkSpec) String() string {
 func (*ContainerNetworkSpec) ProtoMessage() {}
 
 func (x *ContainerNetworkSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[11]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -902,7 +1009,7 @@ func (x *ContainerNetworkSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerNetworkSpec.ProtoReflect.Descriptor instead.
 func (*ContainerNetworkSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{11}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ContainerNetworkSpec) GetHostNetwork() bool {
@@ -927,7 +1034,7 @@ type ContainerResourcesSpec struct {
 
 func (x *ContainerResourcesSpec) Reset() {
 	*x = ContainerResourcesSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -939,7 +1046,7 @@ func (x *ContainerResourcesSpec) String() string {
 func (*ContainerResourcesSpec) ProtoMessage() {}
 
 func (x *ContainerResourcesSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[12]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -952,7 +1059,7 @@ func (x *ContainerResourcesSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerResourcesSpec.ProtoReflect.Descriptor instead.
 func (*ContainerResourcesSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *ContainerResourcesSpec) GetMemoryLimit() uint64 {
@@ -989,7 +1096,7 @@ type ContainerRunAsSpec struct {
 
 func (x *ContainerRunAsSpec) Reset() {
 	*x = ContainerRunAsSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[13]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1001,7 +1108,7 @@ func (x *ContainerRunAsSpec) String() string {
 func (*ContainerRunAsSpec) ProtoMessage() {}
 
 func (x *ContainerRunAsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[13]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1014,7 +1121,7 @@ func (x *ContainerRunAsSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerRunAsSpec.ProtoReflect.Descriptor instead.
 func (*ContainerRunAsSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{13}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ContainerRunAsSpec) GetUid() int32 {
@@ -1052,7 +1159,7 @@ type ContainerSecuritySpec struct {
 
 func (x *ContainerSecuritySpec) Reset() {
 	*x = ContainerSecuritySpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[14]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1064,7 +1171,7 @@ func (x *ContainerSecuritySpec) String() string {
 func (*ContainerSecuritySpec) ProtoMessage() {}
 
 func (x *ContainerSecuritySpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[14]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1077,7 +1184,7 @@ func (x *ContainerSecuritySpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerSecuritySpec.ProtoReflect.Descriptor instead.
 func (*ContainerSecuritySpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{14}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ContainerSecuritySpec) GetPrivileged() bool {
@@ -1126,26 +1233,29 @@ func (x *ContainerSecuritySpec) GetSeLinuxLevel() string {
 type ContainerSpecSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Image is the OCI reference in canonical form, already normalized by ContainerConfigController.
-	Image         *ContainerImageSpec     `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
-	Entrypoint    []string                `protobuf:"bytes,2,rep,name=entrypoint,proto3" json:"entrypoint,omitempty"`
-	Args          []string                `protobuf:"bytes,3,rep,name=args,proto3" json:"args,omitempty"`
-	WorkingDir    string                  `protobuf:"bytes,4,opt,name=working_dir,json=workingDir,proto3" json:"working_dir,omitempty"`
-	RunAs         *ContainerRunAsSpec     `protobuf:"bytes,5,opt,name=run_as,json=runAs,proto3" json:"run_as,omitempty"`
-	Environment   []string                `protobuf:"bytes,6,rep,name=environment,proto3" json:"environment,omitempty"`
-	Mounts        []*ContainerMountSpec   `protobuf:"bytes,7,rep,name=mounts,proto3" json:"mounts,omitempty"`
-	Security      *ContainerSecuritySpec  `protobuf:"bytes,8,opt,name=security,proto3" json:"security,omitempty"`
-	Network       *ContainerNetworkSpec   `protobuf:"bytes,9,opt,name=network,proto3" json:"network,omitempty"`
-	Resources     *ContainerResourcesSpec `protobuf:"bytes,10,opt,name=resources,proto3" json:"resources,omitempty"`
-	DependsOn     *ContainerDependsOnSpec `protobuf:"bytes,11,opt,name=depends_on,json=dependsOn,proto3" json:"depends_on,omitempty"`
-	Devices       []*ContainerDeviceSpec  `protobuf:"bytes,12,rep,name=devices,proto3" json:"devices,omitempty"`
-	StopTimeout   *durationpb.Duration    `protobuf:"bytes,13,opt,name=stop_timeout,json=stopTimeout,proto3" json:"stop_timeout,omitempty"`
+	Image       *ContainerImageSpec     `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	Entrypoint  []string                `protobuf:"bytes,2,rep,name=entrypoint,proto3" json:"entrypoint,omitempty"`
+	Args        []string                `protobuf:"bytes,3,rep,name=args,proto3" json:"args,omitempty"`
+	WorkingDir  string                  `protobuf:"bytes,4,opt,name=working_dir,json=workingDir,proto3" json:"working_dir,omitempty"`
+	RunAs       *ContainerRunAsSpec     `protobuf:"bytes,5,opt,name=run_as,json=runAs,proto3" json:"run_as,omitempty"`
+	Environment []string                `protobuf:"bytes,6,rep,name=environment,proto3" json:"environment,omitempty"`
+	Mounts      []*ContainerMountSpec   `protobuf:"bytes,7,rep,name=mounts,proto3" json:"mounts,omitempty"`
+	Security    *ContainerSecuritySpec  `protobuf:"bytes,8,opt,name=security,proto3" json:"security,omitempty"`
+	Network     *ContainerNetworkSpec   `protobuf:"bytes,9,opt,name=network,proto3" json:"network,omitempty"`
+	Resources   *ContainerResourcesSpec `protobuf:"bytes,10,opt,name=resources,proto3" json:"resources,omitempty"`
+	DependsOn   *ContainerDependsOnSpec `protobuf:"bytes,11,opt,name=depends_on,json=dependsOn,proto3" json:"depends_on,omitempty"`
+	Devices     []*ContainerDeviceSpec  `protobuf:"bytes,12,rep,name=devices,proto3" json:"devices,omitempty"`
+	StopTimeout *durationpb.Duration    `protobuf:"bytes,13,opt,name=stop_timeout,json=stopTimeout,proto3" json:"stop_timeout,omitempty"`
+	// HealthCheck probes the running container. It is not part of the instance snapshot: changing it
+	// re-targets the probe of the running instance rather than replacing the instance.
+	HealthCheck   *ContainerHealthCheckSpec `protobuf:"bytes,14,opt,name=health_check,json=healthCheck,proto3" json:"health_check,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ContainerSpecSpec) Reset() {
 	*x = ContainerSpecSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[15]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1157,7 +1267,7 @@ func (x *ContainerSpecSpec) String() string {
 func (*ContainerSpecSpec) ProtoMessage() {}
 
 func (x *ContainerSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[15]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1170,7 +1280,7 @@ func (x *ContainerSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerSpecSpec.ProtoReflect.Descriptor instead.
 func (*ContainerSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{15}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ContainerSpecSpec) GetImage() *ContainerImageSpec {
@@ -1264,6 +1374,13 @@ func (x *ContainerSpecSpec) GetStopTimeout() *durationpb.Duration {
 	return nil
 }
 
+func (x *ContainerSpecSpec) GetHealthCheck() *ContainerHealthCheckSpec {
+	if x != nil {
+		return x.HealthCheck
+	}
+	return nil
+}
+
 // ContainerStatusSpec is the spec for ContainerStatus.
 type ContainerStatusSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1289,7 +1406,7 @@ type ContainerStatusSpec struct {
 
 func (x *ContainerStatusSpec) Reset() {
 	*x = ContainerStatusSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[16]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1301,7 +1418,7 @@ func (x *ContainerStatusSpec) String() string {
 func (*ContainerStatusSpec) ProtoMessage() {}
 
 func (x *ContainerStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[16]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1314,7 +1431,7 @@ func (x *ContainerStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ContainerStatusSpec.ProtoReflect.Descriptor instead.
 func (*ContainerStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{16}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ContainerStatusSpec) GetState() enums.ContainersContainerState {
@@ -1390,7 +1507,7 @@ type ResolvedDeviceSpec struct {
 
 func (x *ResolvedDeviceSpec) Reset() {
 	*x = ResolvedDeviceSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[17]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1402,7 +1519,7 @@ func (x *ResolvedDeviceSpec) String() string {
 func (*ResolvedDeviceSpec) ProtoMessage() {}
 
 func (x *ResolvedDeviceSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[17]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1415,7 +1532,7 @@ func (x *ResolvedDeviceSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolvedDeviceSpec.ProtoReflect.Descriptor instead.
 func (*ResolvedDeviceSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{17}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *ResolvedDeviceSpec) GetKind() string {
@@ -1473,7 +1590,7 @@ type ResolvedMountSpec struct {
 
 func (x *ResolvedMountSpec) Reset() {
 	*x = ResolvedMountSpec{}
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[18]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1485,7 +1602,7 @@ func (x *ResolvedMountSpec) String() string {
 func (*ResolvedMountSpec) ProtoMessage() {}
 
 func (x *ResolvedMountSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_containers_containers_proto_msgTypes[18]
+	mi := &file_resource_definitions_containers_containers_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1498,7 +1615,7 @@ func (x *ResolvedMountSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolvedMountSpec.ProtoReflect.Descriptor instead.
 func (*ResolvedMountSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{18}
+	return file_resource_definitions_containers_containers_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ResolvedMountSpec) GetKind() string {
@@ -1569,7 +1686,16 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x1f\n" +
 	"\vvolume_name\x18\x02 \x01(\tR\n" +
 	"volumeName\x12 \n" +
-	"\vdestination\x18\x03 \x01(\tR\vdestination\"\x8c\x01\n" +
+	"\vdestination\x18\x03 \x01(\tR\vdestination\"\xd2\x02\n" +
+	"\x18ContainerHealthCheckSpec\x12\x12\n" +
+	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x12\n" +
+	"\x04port\x18\x02 \x01(\rR\x04port\x12\x12\n" +
+	"\x04path\x18\x03 \x01(\tR\x04path\x12!\n" +
+	"\fgrpc_service\x18\x04 \x01(\tR\vgrpcService\x12>\n" +
+	"\rinitial_delay\x18\x05 \x01(\v2\x19.google.protobuf.DurationR\finitialDelay\x125\n" +
+	"\binterval\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\binterval\x123\n" +
+	"\atimeout\x18\a \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12+\n" +
+	"\x11failure_threshold\x18\b \x01(\rR\x10failureThreshold\"\x8c\x01\n" +
 	"\x19ContainerHealthStatusSpec\x12\x18\n" +
 	"\ahealthy\x18\x01 \x01(\bR\ahealthy\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12;\n" +
@@ -1649,7 +1775,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x11capabilities_drop\x18\x03 \x03(\tR\x10capabilitiesDrop\x12'\n" +
 	"\x0fmachined_access\x18\x04 \x01(\bR\x0emachinedAccess\x12-\n" +
 	"\x12seccomp_unconfined\x18\x05 \x01(\bR\x11seccompUnconfined\x12$\n" +
-	"\x0ese_linux_level\x18\x06 \x01(\tR\fseLinuxLevel\"\x80\a\n" +
+	"\x0ese_linux_level\x18\x06 \x01(\tR\fseLinuxLevel\"\xe4\a\n" +
 	"\x11ContainerSpecSpec\x12O\n" +
 	"\x05image\x18\x01 \x01(\v29.talos.resource.definitions.containers.ContainerImageSpecR\x05image\x12\x1e\n" +
 	"\n" +
@@ -1668,7 +1794,8 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\n" +
 	"depends_on\x18\v \x01(\v2=.talos.resource.definitions.containers.ContainerDependsOnSpecR\tdependsOn\x12T\n" +
 	"\adevices\x18\f \x03(\v2:.talos.resource.definitions.containers.ContainerDeviceSpecR\adevices\x12<\n" +
-	"\fstop_timeout\x18\r \x01(\v2\x19.google.protobuf.DurationR\vstopTimeout\"\xdd\x02\n" +
+	"\fstop_timeout\x18\r \x01(\v2\x19.google.protobuf.DurationR\vstopTimeout\x12b\n" +
+	"\fhealth_check\x18\x0e \x01(\v2?.talos.resource.definitions.containers.ContainerHealthCheckSpecR\vhealthCheck\"\xdd\x02\n" +
 	"\x13ContainerStatusSpec\x12P\n" +
 	"\x05state\x18\x01 \x01(\x0e2:.talos.resource.definitions.enums.ContainersContainerStateR\x05state\x12S\n" +
 	"\x06health\x18\x02 \x01(\x0e2;.talos.resource.definitions.enums.ContainersContainerHealthR\x06health\x12\x14\n" +
@@ -1709,66 +1836,71 @@ func file_resource_definitions_containers_containers_proto_rawDescGZIP() []byte 
 	return file_resource_definitions_containers_containers_proto_rawDescData
 }
 
-var file_resource_definitions_containers_containers_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
+var file_resource_definitions_containers_containers_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_resource_definitions_containers_containers_proto_goTypes = []any{
 	(*ContainerDependencyStatusSpec)(nil),       // 0: talos.resource.definitions.containers.ContainerDependencyStatusSpec
 	(*ContainerDependsOnSpec)(nil),              // 1: talos.resource.definitions.containers.ContainerDependsOnSpec
 	(*ContainerDeviceSpec)(nil),                 // 2: talos.resource.definitions.containers.ContainerDeviceSpec
-	(*ContainerHealthStatusSpec)(nil),           // 3: talos.resource.definitions.containers.ContainerHealthStatusSpec
-	(*ContainerImageSpec)(nil),                  // 4: talos.resource.definitions.containers.ContainerImageSpec
-	(*ContainerImageStatusSpec)(nil),            // 5: talos.resource.definitions.containers.ContainerImageStatusSpec
-	(*ContainerInstanceSpecSpec)(nil),           // 6: talos.resource.definitions.containers.ContainerInstanceSpecSpec
-	(*ContainerInstanceStatusSpec)(nil),         // 7: talos.resource.definitions.containers.ContainerInstanceStatusSpec
-	(*ContainerLifecycleSpec)(nil),              // 8: talos.resource.definitions.containers.ContainerLifecycleSpec
-	(*ContainerMountSpec)(nil),                  // 9: talos.resource.definitions.containers.ContainerMountSpec
-	(*ContainerMountStatusSpec)(nil),            // 10: talos.resource.definitions.containers.ContainerMountStatusSpec
-	(*ContainerNetworkSpec)(nil),                // 11: talos.resource.definitions.containers.ContainerNetworkSpec
-	(*ContainerResourcesSpec)(nil),              // 12: talos.resource.definitions.containers.ContainerResourcesSpec
-	(*ContainerRunAsSpec)(nil),                  // 13: talos.resource.definitions.containers.ContainerRunAsSpec
-	(*ContainerSecuritySpec)(nil),               // 14: talos.resource.definitions.containers.ContainerSecuritySpec
-	(*ContainerSpecSpec)(nil),                   // 15: talos.resource.definitions.containers.ContainerSpecSpec
-	(*ContainerStatusSpec)(nil),                 // 16: talos.resource.definitions.containers.ContainerStatusSpec
-	(*ResolvedDeviceSpec)(nil),                  // 17: talos.resource.definitions.containers.ResolvedDeviceSpec
-	(*ResolvedMountSpec)(nil),                   // 18: talos.resource.definitions.containers.ResolvedMountSpec
-	(*timestamppb.Timestamp)(nil),               // 19: google.protobuf.Timestamp
-	(enums.ContainersContainerImagePhase)(0),    // 20: talos.resource.definitions.enums.ContainersContainerImagePhase
-	(*durationpb.Duration)(nil),                 // 21: google.protobuf.Duration
-	(enums.ContainersContainerInstancePhase)(0), // 22: talos.resource.definitions.enums.ContainersContainerInstancePhase
-	(enums.ContainersContainerState)(0),         // 23: talos.resource.definitions.enums.ContainersContainerState
-	(enums.ContainersContainerHealth)(0),        // 24: talos.resource.definitions.enums.ContainersContainerHealth
+	(*ContainerHealthCheckSpec)(nil),            // 3: talos.resource.definitions.containers.ContainerHealthCheckSpec
+	(*ContainerHealthStatusSpec)(nil),           // 4: talos.resource.definitions.containers.ContainerHealthStatusSpec
+	(*ContainerImageSpec)(nil),                  // 5: talos.resource.definitions.containers.ContainerImageSpec
+	(*ContainerImageStatusSpec)(nil),            // 6: talos.resource.definitions.containers.ContainerImageStatusSpec
+	(*ContainerInstanceSpecSpec)(nil),           // 7: talos.resource.definitions.containers.ContainerInstanceSpecSpec
+	(*ContainerInstanceStatusSpec)(nil),         // 8: talos.resource.definitions.containers.ContainerInstanceStatusSpec
+	(*ContainerLifecycleSpec)(nil),              // 9: talos.resource.definitions.containers.ContainerLifecycleSpec
+	(*ContainerMountSpec)(nil),                  // 10: talos.resource.definitions.containers.ContainerMountSpec
+	(*ContainerMountStatusSpec)(nil),            // 11: talos.resource.definitions.containers.ContainerMountStatusSpec
+	(*ContainerNetworkSpec)(nil),                // 12: talos.resource.definitions.containers.ContainerNetworkSpec
+	(*ContainerResourcesSpec)(nil),              // 13: talos.resource.definitions.containers.ContainerResourcesSpec
+	(*ContainerRunAsSpec)(nil),                  // 14: talos.resource.definitions.containers.ContainerRunAsSpec
+	(*ContainerSecuritySpec)(nil),               // 15: talos.resource.definitions.containers.ContainerSecuritySpec
+	(*ContainerSpecSpec)(nil),                   // 16: talos.resource.definitions.containers.ContainerSpecSpec
+	(*ContainerStatusSpec)(nil),                 // 17: talos.resource.definitions.containers.ContainerStatusSpec
+	(*ResolvedDeviceSpec)(nil),                  // 18: talos.resource.definitions.containers.ResolvedDeviceSpec
+	(*ResolvedMountSpec)(nil),                   // 19: talos.resource.definitions.containers.ResolvedMountSpec
+	(*durationpb.Duration)(nil),                 // 20: google.protobuf.Duration
+	(*timestamppb.Timestamp)(nil),               // 21: google.protobuf.Timestamp
+	(enums.ContainersContainerImagePhase)(0),    // 22: talos.resource.definitions.enums.ContainersContainerImagePhase
+	(enums.ContainersContainerInstancePhase)(0), // 23: talos.resource.definitions.enums.ContainersContainerInstancePhase
+	(enums.ContainersContainerState)(0),         // 24: talos.resource.definitions.enums.ContainersContainerState
+	(enums.ContainersContainerHealth)(0),        // 25: talos.resource.definitions.enums.ContainersContainerHealth
 }
 var file_resource_definitions_containers_containers_proto_depIdxs = []int32{
-	19, // 0: talos.resource.definitions.containers.ContainerHealthStatusSpec.last_change:type_name -> google.protobuf.Timestamp
-	20, // 1: talos.resource.definitions.containers.ContainerImageStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerImagePhase
-	13, // 2: talos.resource.definitions.containers.ContainerInstanceSpecSpec.run_as:type_name -> talos.resource.definitions.containers.ContainerRunAsSpec
-	18, // 3: talos.resource.definitions.containers.ContainerInstanceSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
-	14, // 4: talos.resource.definitions.containers.ContainerInstanceSpecSpec.security:type_name -> talos.resource.definitions.containers.ContainerSecuritySpec
-	11, // 5: talos.resource.definitions.containers.ContainerInstanceSpecSpec.network:type_name -> talos.resource.definitions.containers.ContainerNetworkSpec
-	12, // 6: talos.resource.definitions.containers.ContainerInstanceSpecSpec.resources:type_name -> talos.resource.definitions.containers.ContainerResourcesSpec
-	17, // 7: talos.resource.definitions.containers.ContainerInstanceSpecSpec.devices:type_name -> talos.resource.definitions.containers.ResolvedDeviceSpec
-	21, // 8: talos.resource.definitions.containers.ContainerInstanceSpecSpec.stop_timeout:type_name -> google.protobuf.Duration
-	22, // 9: talos.resource.definitions.containers.ContainerInstanceStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerInstancePhase
-	19, // 10: talos.resource.definitions.containers.ContainerInstanceStatusSpec.started_at:type_name -> google.protobuf.Timestamp
-	19, // 11: talos.resource.definitions.containers.ContainerInstanceStatusSpec.finished_at:type_name -> google.protobuf.Timestamp
-	19, // 12: talos.resource.definitions.containers.ContainerLifecycleSpec.shutdown_deadline:type_name -> google.protobuf.Timestamp
-	18, // 13: talos.resource.definitions.containers.ContainerMountStatusSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
-	17, // 14: talos.resource.definitions.containers.ContainerMountStatusSpec.devices:type_name -> talos.resource.definitions.containers.ResolvedDeviceSpec
-	4,  // 15: talos.resource.definitions.containers.ContainerSpecSpec.image:type_name -> talos.resource.definitions.containers.ContainerImageSpec
-	13, // 16: talos.resource.definitions.containers.ContainerSpecSpec.run_as:type_name -> talos.resource.definitions.containers.ContainerRunAsSpec
-	9,  // 17: talos.resource.definitions.containers.ContainerSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ContainerMountSpec
-	14, // 18: talos.resource.definitions.containers.ContainerSpecSpec.security:type_name -> talos.resource.definitions.containers.ContainerSecuritySpec
-	11, // 19: talos.resource.definitions.containers.ContainerSpecSpec.network:type_name -> talos.resource.definitions.containers.ContainerNetworkSpec
-	12, // 20: talos.resource.definitions.containers.ContainerSpecSpec.resources:type_name -> talos.resource.definitions.containers.ContainerResourcesSpec
-	1,  // 21: talos.resource.definitions.containers.ContainerSpecSpec.depends_on:type_name -> talos.resource.definitions.containers.ContainerDependsOnSpec
-	2,  // 22: talos.resource.definitions.containers.ContainerSpecSpec.devices:type_name -> talos.resource.definitions.containers.ContainerDeviceSpec
-	21, // 23: talos.resource.definitions.containers.ContainerSpecSpec.stop_timeout:type_name -> google.protobuf.Duration
-	23, // 24: talos.resource.definitions.containers.ContainerStatusSpec.state:type_name -> talos.resource.definitions.enums.ContainersContainerState
-	24, // 25: talos.resource.definitions.containers.ContainerStatusSpec.health:type_name -> talos.resource.definitions.enums.ContainersContainerHealth
-	26, // [26:26] is the sub-list for method output_type
-	26, // [26:26] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	20, // 0: talos.resource.definitions.containers.ContainerHealthCheckSpec.initial_delay:type_name -> google.protobuf.Duration
+	20, // 1: talos.resource.definitions.containers.ContainerHealthCheckSpec.interval:type_name -> google.protobuf.Duration
+	20, // 2: talos.resource.definitions.containers.ContainerHealthCheckSpec.timeout:type_name -> google.protobuf.Duration
+	21, // 3: talos.resource.definitions.containers.ContainerHealthStatusSpec.last_change:type_name -> google.protobuf.Timestamp
+	22, // 4: talos.resource.definitions.containers.ContainerImageStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerImagePhase
+	14, // 5: talos.resource.definitions.containers.ContainerInstanceSpecSpec.run_as:type_name -> talos.resource.definitions.containers.ContainerRunAsSpec
+	19, // 6: talos.resource.definitions.containers.ContainerInstanceSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
+	15, // 7: talos.resource.definitions.containers.ContainerInstanceSpecSpec.security:type_name -> talos.resource.definitions.containers.ContainerSecuritySpec
+	12, // 8: talos.resource.definitions.containers.ContainerInstanceSpecSpec.network:type_name -> talos.resource.definitions.containers.ContainerNetworkSpec
+	13, // 9: talos.resource.definitions.containers.ContainerInstanceSpecSpec.resources:type_name -> talos.resource.definitions.containers.ContainerResourcesSpec
+	18, // 10: talos.resource.definitions.containers.ContainerInstanceSpecSpec.devices:type_name -> talos.resource.definitions.containers.ResolvedDeviceSpec
+	20, // 11: talos.resource.definitions.containers.ContainerInstanceSpecSpec.stop_timeout:type_name -> google.protobuf.Duration
+	23, // 12: talos.resource.definitions.containers.ContainerInstanceStatusSpec.phase:type_name -> talos.resource.definitions.enums.ContainersContainerInstancePhase
+	21, // 13: talos.resource.definitions.containers.ContainerInstanceStatusSpec.started_at:type_name -> google.protobuf.Timestamp
+	21, // 14: talos.resource.definitions.containers.ContainerInstanceStatusSpec.finished_at:type_name -> google.protobuf.Timestamp
+	21, // 15: talos.resource.definitions.containers.ContainerLifecycleSpec.shutdown_deadline:type_name -> google.protobuf.Timestamp
+	19, // 16: talos.resource.definitions.containers.ContainerMountStatusSpec.mounts:type_name -> talos.resource.definitions.containers.ResolvedMountSpec
+	18, // 17: talos.resource.definitions.containers.ContainerMountStatusSpec.devices:type_name -> talos.resource.definitions.containers.ResolvedDeviceSpec
+	5,  // 18: talos.resource.definitions.containers.ContainerSpecSpec.image:type_name -> talos.resource.definitions.containers.ContainerImageSpec
+	14, // 19: talos.resource.definitions.containers.ContainerSpecSpec.run_as:type_name -> talos.resource.definitions.containers.ContainerRunAsSpec
+	10, // 20: talos.resource.definitions.containers.ContainerSpecSpec.mounts:type_name -> talos.resource.definitions.containers.ContainerMountSpec
+	15, // 21: talos.resource.definitions.containers.ContainerSpecSpec.security:type_name -> talos.resource.definitions.containers.ContainerSecuritySpec
+	12, // 22: talos.resource.definitions.containers.ContainerSpecSpec.network:type_name -> talos.resource.definitions.containers.ContainerNetworkSpec
+	13, // 23: talos.resource.definitions.containers.ContainerSpecSpec.resources:type_name -> talos.resource.definitions.containers.ContainerResourcesSpec
+	1,  // 24: talos.resource.definitions.containers.ContainerSpecSpec.depends_on:type_name -> talos.resource.definitions.containers.ContainerDependsOnSpec
+	2,  // 25: talos.resource.definitions.containers.ContainerSpecSpec.devices:type_name -> talos.resource.definitions.containers.ContainerDeviceSpec
+	20, // 26: talos.resource.definitions.containers.ContainerSpecSpec.stop_timeout:type_name -> google.protobuf.Duration
+	3,  // 27: talos.resource.definitions.containers.ContainerSpecSpec.health_check:type_name -> talos.resource.definitions.containers.ContainerHealthCheckSpec
+	24, // 28: talos.resource.definitions.containers.ContainerStatusSpec.state:type_name -> talos.resource.definitions.enums.ContainersContainerState
+	25, // 29: talos.resource.definitions.containers.ContainerStatusSpec.health:type_name -> talos.resource.definitions.enums.ContainersContainerHealth
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_containers_containers_proto_init() }
@@ -1782,7 +1914,7 @@ func file_resource_definitions_containers_containers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_containers_containers_proto_rawDesc), len(file_resource_definitions_containers_containers_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   19,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
