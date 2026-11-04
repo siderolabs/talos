@@ -110,6 +110,8 @@ type SecurityProfileConfig interface {
 	IgnoreCtrlAltDelete() bool
 	// SELinuxCategories reports whether workloads should be labeled with SELinux MCS categories.
 	SELinuxCategories() bool
+	// SELinuxBooleans returns the SELinux booleans to set, by name.
+	SELinuxBooleans() map[string]bool
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.

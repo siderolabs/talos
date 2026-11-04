@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/process"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/environment"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -117,6 +118,11 @@ func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 			cond,
 			runtimeres.NewUnattendedInstallCondition(r.State().V1Alpha2().Resources()),
 		)
+	}
+
+	// the booleans of the machine config narrow or widen what pods may do, so they are set before the CRI serves pods
+	if cfg != nil && selinux.IsEnabled() && cfg.SecurityProfileConfig() != nil && len(cfg.SecurityProfileConfig().SELinuxBooleans()) > 0 {
+		cond = append(cond, runtimeres.NewSELinuxBooleansCondition(r.State().V1Alpha2().Resources(), cfg.SecurityProfileConfig().SELinuxBooleans()))
 	}
 
 	return conditions.WaitForAll(cond...)

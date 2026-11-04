@@ -263,6 +263,18 @@ message SBOMItemSpec {
   bool extension = 6;
 }
 
+// SELinuxBooleanStatusSpec describes the SELinuxBooleanStatus resource.
+message SELinuxBooleanStatusSpec {
+  // Value is the value of the boolean in the kernel.
+  bool value = 1;
+  // Default is the value of the boolean when the policy was loaded.
+  bool default = 2;
+  // Configured is true when the machine config sets the boolean.
+  bool configured = 3;
+  // Unknown is true when the machine config sets a boolean the loaded policy does not define.
+  bool unknown = 4;
+}
+
 // SecurityStateSpec describes the security state resource properties.
 message SecurityStateSpec {
   bool secure_boot = 1;

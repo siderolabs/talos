@@ -349,6 +349,24 @@ With the categories enabled, the CRI passes an SELinux label to every container 
 SELinux labels (e.g. gVisor, youki, Spin) fail to start pods.
 """
 
+    [notes.selinux_pod_domains]
+        title = "SELinux Pod Domains and Booleans"
+        description = """\
+The SELinux policy ships domains for the workloads that would otherwise run privileged. A pod selects one with
+`securityContext.seLinuxOptions.type` when `selinuxCategories` is set:
+
+* `pod_hostmon_t` for process monitors and log forwarders, which read `/proc`, the logs and the files of every pod, and
+  write none of them.
+* `pod_cni_t` for CNI agents and `pod_csi_t` for CSI node plugins: the host access of a privileged container, plus the
+  CNI plugins and eBPF for the first, the network filesystems and lvm for the second, without `privileged: true` and its
+  devices and capabilities.
+
+The new `selinuxBooleans` field of the `SecurityProfileConfig` document sets SELinux booleans without loading the policy
+again. `pod_write_cni_plugins`, `pod_use_network_fs` and `pod_use_ebpf` narrow what every regular pod may do, and default
+to the rights pods had before. `talosctl get selinuxbooleans` lists the booleans of the loaded policy with their default
+and their value.
+"""
+
     [notes.kubespan_peer_endpoint_filters]
         title = "KubeSpan Peer Endpoint Filters"
         description = """\

@@ -6,6 +6,8 @@ package runtime
 
 import (
 	"context"
+	"maps"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -185,4 +187,48 @@ func (condition *APIServiceConfigCondition) Wait(ctx context.Context) error {
 	)
 
 	return err
+}
+
+// SELinuxBooleansCondition implements condition which waits for the SELinux booleans of the machine config to be set.
+type SELinuxBooleansCondition struct {
+	state    state.State
+	booleans map[string]bool
+}
+
+// NewSELinuxBooleansCondition builds a condition which waits for each boolean to hold its value, or to be reported
+// unknown to the loaded policy.
+func NewSELinuxBooleansCondition(state state.State, booleans map[string]bool) *SELinuxBooleansCondition {
+	return &SELinuxBooleansCondition{
+		state:    state,
+		booleans: booleans,
+	}
+}
+
+func (condition *SELinuxBooleansCondition) String() string {
+	return "selinux booleans"
+}
+
+// Wait implements condition interface.
+func (condition *SELinuxBooleansCondition) Wait(ctx context.Context) error {
+	for _, name := range slices.Sorted(maps.Keys(condition.booleans)) {
+		want := condition.booleans[name]
+
+		if _, err := condition.state.WatchFor(
+			ctx,
+			resource.NewMetadata(NamespaceName, SELinuxBooleanStatusType, name, resource.VersionUndefined),
+			state.WithCondition(func(r resource.Resource) (bool, error) {
+				if resource.IsTombstone(r) {
+					return false, nil
+				}
+
+				spec := r.(*SELinuxBooleanStatus).TypedSpec()
+
+				return spec.Unknown || (spec.Configured && spec.Value == want), nil
+			}),
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
