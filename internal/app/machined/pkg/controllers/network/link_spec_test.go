@@ -510,6 +510,7 @@ func (suite *LinkSpecSuite) TestVXLAN() {
 	}
 
 	vxlanName := fmt.Sprintf("vx%s", dummyInterface[5:])
+	vni := uniqueVXLANID()
 	vxlan := network.NewLinkSpec(network.NamespaceName, vxlanName)
 	*vxlan.TypedSpec() = network.LinkSpecSpec{
 		Name:        vxlanName,
@@ -520,7 +521,7 @@ func (suite *LinkSpecSuite) TestVXLAN() {
 		ParentName:  dummyInterface,
 		ConfigLayer: network.ConfigDefault,
 		VXLAN: network.VXLANSpec{
-			ID:       100,
+			ID:       vni,
 			Port:     4789,
 			Learning: true,
 		},
@@ -534,7 +535,7 @@ func (suite *LinkSpecSuite) TestVXLAN() {
 
 	ctest.AssertResource(suite, vxlanName, func(r *network.LinkStatus, asrt *assert.Assertions) {
 		asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
-		asrt.EqualValues(100, r.TypedSpec().VXLAN.ID)
+		asrt.Equal(vni, r.TypedSpec().VXLAN.ID)
 		asrt.EqualValues(4789, r.TypedSpec().VXLAN.Port)
 		asrt.True(r.TypedSpec().VXLAN.Learning)
 		asrt.NotZero(r.TypedSpec().LinkIndex)
@@ -549,14 +550,14 @@ func (suite *LinkSpecSuite) TestVXLAN() {
 
 	// attempt to change the VNI: the link has to be re-created
 	ctest.UpdateWithConflicts(suite, vxlan, func(r *network.LinkSpec) error {
-		r.TypedSpec().VXLAN.ID = 200
+		r.TypedSpec().VXLAN.ID = vni + 1
 
 		return nil
 	})
 
 	ctest.AssertResource(suite, vxlanName, func(r *network.LinkStatus, asrt *assert.Assertions) {
 		asrt.Equal(network.LinkKindVXLAN, r.TypedSpec().Kind)
-		asrt.EqualValues(200, r.TypedSpec().VXLAN.ID)
+		asrt.Equal(vni+1, r.TypedSpec().VXLAN.ID)
 	})
 
 	// teardown the links

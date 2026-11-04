@@ -653,13 +653,16 @@ func (suite *ContentLibrarySuite) TestKeepsTheMountOfAHeldLibraryItNoLongerWants
 	libraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
 	suite.AddFinalizer(libraryStatus.Metadata(), "consumer")
 
+	target := suite.T().TempDir()
+	suite.satisfyMount(testRequestID, testVolumeID, target, false)
+	suite.assertHeld(testRequestID, true)
+	suite.awaitReconcile(target, "hold-visible")
+
 	// Requests of a previous generation, as a library pointed at another volume leaves behind.
 	heldID := suite.strayRequest(testLibrary, testVolumeID+"-old")
 	unheldID := suite.strayRequest("other-images", "u-other-images")
 
-	// A strong input, so the controller is woken once everything above is in place.
-	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
-	suite.assertHeld(testRequestID, true)
+	suite.awaitReconcile(target, "reconcile-requests")
 
 	// Nothing wants either request any more. The one whose library is held stays anyway.
 	ctest.AssertNoResource[*block.VolumeMountRequest](suite, unheldID)
@@ -679,11 +682,15 @@ func (suite *ContentLibrarySuite) TestReleasesTheMountOfAPreviousGenerationOnceT
 	libraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
 	suite.AddFinalizer(libraryStatus.Metadata(), "consumer")
 
+	target := suite.T().TempDir()
+	suite.satisfyMount(testRequestID, testVolumeID, target, false)
+	suite.assertHeld(testRequestID, true)
+	suite.awaitReconcile(target, "hold-visible")
+
 	// A request of a previous generation, as a library pointed at another volume leaves behind.
 	heldID := suite.strayRequest(testLibrary, testVolumeID+"-old")
 
-	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
-	suite.assertHeld(testRequestID, true)
+	suite.awaitReconcile(target, "reconcile-requests")
 	ctest.AssertResource(suite, heldID, func(*block.VolumeMountRequest, *assert.Assertions) {})
 
 	// The only thing that changes from here: the hold comes back. The configuration does not move,
@@ -692,6 +699,26 @@ func (suite *ContentLibrarySuite) TestReleasesTheMountOfAPreviousGenerationOnceT
 
 	ctest.AssertNoResource[*block.VolumeMountRequest](suite, heldID)
 	ctest.AssertResource(suite, testRequestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+}
+
+// awaitReconcile wakes the controller by putting a file into the library mounted at target, and
+// waits for the fingerprint which includes it.
+//
+// A pass reads which libraries are held before it lists the mount requests it might release, so a
+// pass already running when a test holds a library (or creates a request) can act on an older view.
+// The library is watched before its fingerprint is taken, so the new fingerprint is published by a
+// pass which started after the file was written, and every pass before it has finished.
+func (suite *ContentLibrarySuite) awaitReconcile(target, name string) {
+	suite.T().Helper()
+
+	suite.Require().NoError(os.WriteFile(filepath.Join(target, name), []byte(name), 0o600))
+
+	fingerprint, err := hypervisorctrl.FingerprintLibrary(target)
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.Equal(fingerprint, status.TypedSpec().Fingerprint)
+	})
 }
 
 // strayRequest creates a mount request this controller owns but no configuration asks for.
@@ -717,14 +744,8 @@ func (suite *ContentLibrarySuite) TestMountRequestIDRoundTrip() {
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
 	suite.AddFinalizer(library.Metadata(), "consumer")
-	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "hold-visible"), []byte("held"), 0o600))
-	fingerprint, err := hypervisorctrl.FingerprintLibrary(dir)
-	suite.Require().NoError(err)
-	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, a *assert.Assertions) {
-		a.Equal(fingerprint, status.TypedSpec().Fingerprint)
-	})
+	suite.awaitReconcile(dir, "hold-visible")
 
-	// The changed fingerprint proves any pass with an older hold snapshot has finished.
 	heldID := suite.strayRequest(testLibrary, "a/b")
 	unheldID := suite.strayRequest("zz-images", "unheld")
 
@@ -743,7 +764,7 @@ func (suite *ContentLibrarySuite) TestMountRequestIDRoundTrip() {
 		suite.Create(request, state.WithCreateOwner(contentLibraryControllerName))
 	}
 
-	suite.Require().NoError(os.WriteFile(filepath.Join(dir, "reconcile-requests"), []byte("wake"), 0o600))
+	suite.awaitReconcile(dir, "reconcile-requests")
 	ctest.AssertNoResource[*block.VolumeMountRequest](suite, unheldID)
 	ctest.AssertResource(suite, heldID, func(*block.VolumeMountRequest, *assert.Assertions) {})
 	suite.RemoveFinalizer(library.Metadata(), "consumer")

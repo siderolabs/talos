@@ -38,6 +38,16 @@ func uniqueDummyInterface() string {
 	return fmt.Sprintf("dummy%02x%02x%02x", rand.Int32()&0xff, rand.Int32()&0xff, rand.Int32()&0xff)
 }
 
+// uniqueVXLANID returns a random VXLAN network identifier.
+//
+// Unit tests from concurrent CI jobs share a network namespace, and the kernel refuses (EEXIST)
+// to create a VXLAN link which has the same VNI and destination port as an existing one, so fixed VNIs collide.
+//
+// The returned value is in range [1, 0xfffffe), so that ID+1 is still a valid VNI.
+func uniqueVXLANID() uint32 {
+	return 1 + rand.Uint32N(0xfffffd)
+}
+
 func (suite *LinkStatusSuite) TestInterfaceHwInfo() {
 	errNoInterfaces := errors.New("no suitable interfaces found")
 
@@ -343,7 +353,7 @@ func (suite *LinkStatusSuite) TestVXLANInterface() {
 	defer conn.Link.Delete(uint32(parentIface.Index)) //nolint:errcheck
 
 	vxlanSpec := network.VXLANSpec{
-		ID:       100,
+		ID:       uniqueVXLANID(),
 		Port:     4789,
 		Learning: false,
 	}

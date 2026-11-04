@@ -44,6 +44,35 @@ func MockEventSink(t *testing.T) func(state events.ServiceState, message string,
 	}
 }
 
+// runningEventSink logs like MockEventSink, and closes running once the runner reports the process
+// as running.
+//
+// The runner applies the process properties (priority, IO priority, scheduling policy) only after
+// the process is launched, so the process can be observed before they are in place: the running
+// state is reported once they are.
+func runningEventSink(t *testing.T, running chan<- struct{}) func(state events.ServiceState, message string, args ...any) {
+	var once sync.Once
+
+	sink := MockEventSink(t)
+
+	return func(state events.ServiceState, message string, args ...any) {
+		sink(state, message, args...)
+
+		if state == events.StateRunning {
+			once.Do(func() { close(running) })
+		}
+	}
+}
+
+// waitRunning waits for runningEventSink to see the process running.
+func (suite *ProcessSuite) waitRunning(running <-chan struct{}) {
+	select {
+	case <-running:
+	case <-time.After(5 * time.Second):
+		suite.Require().FailNow("timed out waiting for the process to be reported as running")
+	}
+}
+
 type ProcessSuite struct {
 	suite.Suite
 
@@ -272,9 +301,10 @@ func (suite *ProcessSuite) TestPriority() {
 	defer runCancel()
 
 	done := make(chan error, 1)
+	running := make(chan struct{})
 
 	go func() {
-		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+		_, runErr := r.Run(runCtx, runningEventSink(suite.T(), running), nil)
 
 		done <- runErr
 	}()
@@ -292,6 +322,8 @@ func (suite *ProcessSuite) TestPriority() {
 		pid, parseErr = strconv.ParseUint(strings.Trim(string(data), "\r\n"), 10, 32)
 		assert.NoError(collect, parseErr)
 	}, time.Second, 10*time.Millisecond)
+
+	suite.waitRunning(running)
 
 	currentPriority, err = syscall.Getpriority(syscall.PRIO_PROCESS, int(pid))
 	suite.Assert().NoError(err)
@@ -338,9 +370,10 @@ func (suite *ProcessSuite) TestIOPriority() {
 	defer runCancel()
 
 	done := make(chan error, 1)
+	running := make(chan struct{})
 
 	go func() {
-		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+		_, runErr := r.Run(runCtx, runningEventSink(suite.T(), running), nil)
 
 		done <- runErr
 	}()
@@ -358,6 +391,8 @@ func (suite *ProcessSuite) TestIOPriority() {
 		pid, parseErr = strconv.ParseUint(strings.Trim(string(data), "\r\n"), 10, 32)
 		assert.NoError(collect, parseErr)
 	}, time.Second, 10*time.Millisecond)
+
+	suite.waitRunning(running)
 
 	//nolint:errcheck
 	ioprio, _, _ = syscall.Syscall(syscall.SYS_IOPRIO_GET, uintptr(1), uintptr(pid), 0)
@@ -403,9 +438,10 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 	defer runCancel()
 
 	done := make(chan error, 1)
+	running := make(chan struct{})
 
 	go func() {
-		_, runErr := r.Run(runCtx, MockEventSink(suite.T()), nil)
+		_, runErr := r.Run(runCtx, runningEventSink(suite.T(), running), nil)
 
 		done <- runErr
 	}()
@@ -423,6 +459,8 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 		pid, parseErr = strconv.ParseUint(strings.Trim(string(data), "\r\n"), 10, 32)
 		assert.NoError(collect, parseErr)
 	}, time.Second, 10*time.Millisecond)
+
+	suite.waitRunning(running)
 
 	pol, _, errno = syscall.Syscall(syscall.SYS_SCHED_GETSCHEDULER, uintptr(pid), 0, 0)
 	suite.Assert().Equal(0, int(errno))

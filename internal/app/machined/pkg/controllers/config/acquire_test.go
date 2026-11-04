@@ -157,6 +157,11 @@ func (v validationModeMock) InContainer() bool {
 	return false
 }
 
+// embeddedConfigTests lists the tests which boot with the partial machine config embedded, by test method name.
+var embeddedConfigTests = map[string]bool{
+	"TestFromEmbeddedToMaintenance": true,
+}
+
 func TestAcquireSuite(t *testing.T) {
 	t.Parallel()
 
@@ -198,6 +203,12 @@ func TestAcquireSuite(t *testing.T) {
 		s.Require().NoError(err)
 
 		s.embeddedPath = t.TempDir()
+
+		// The controller reads the embedded config once, as it starts, and it starts as soon as it is
+		// registered: a test booting with an embedded config can't write it from the test body.
+		if embeddedConfigTests[filepath.Base(s.T().Name())] {
+			s.Require().NoError(os.WriteFile(filepath.Join(s.embeddedPath, constants.ConfigFilename), s.partialMachineConfig, 0o644))
+		}
 
 		s.Require().NoError(s.Runtime().RegisterController(&configctrl.AcquireController{
 			PlatformConfiguration: s.platformConfig,
@@ -776,9 +787,8 @@ func (suite *AcquireSuite) TestFromMaintenance() {
 	)
 }
 
+// TestFromEmbeddedToMaintenance boots with the partial machine config embedded, see embeddedConfigTests.
 func (suite *AcquireSuite) TestFromEmbeddedToMaintenance() {
-	suite.Require().NoError(os.WriteFile(filepath.Join(suite.embeddedPath, constants.ConfigFilename), suite.partialMachineConfig, 0o644))
-
 	suite.noStateVolume()
 	suite.triggerAcquire()
 
