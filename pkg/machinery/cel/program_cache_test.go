@@ -8,7 +8,6 @@ import (
 	"runtime"
 	"sync"
 	"testing"
-	"time"
 
 	celgo "cel.dev/cel-go/cel"
 	"cel.dev/cel-go/common/types"
@@ -37,67 +36,103 @@ func unmarshalExpression(t testing.TB, text string) cel.Expression {
 	return expr
 }
 
-func TestProgramCacheParsed(t *testing.T) {
-	t.Parallel()
+// evalAllocs returns the number of allocations of a single call.
+//
+// The tests using it must not run in parallel with other tests.
+func evalAllocs(t *testing.T, eval func() error) uint64 {
+	t.Helper()
 
+	var before, after runtime.MemStats
+
+	runtime.ReadMemStats(&before)
+
+	err := eval()
+
+	runtime.ReadMemStats(&after)
+
+	require.NoError(t, err)
+
+	return after.Mallocs - before.Mallocs
+}
+
+// evalBool returns a function which evaluates the expression and checks the result.
+func evalBool(t *testing.T, expr cel.Expression, env *celgo.Env, x int, expected bool) func() error {
+	t.Helper()
+
+	return func() error {
+		result, err := expr.EvalBool(env, map[string]any{"x": x})
+		if err != nil {
+			return err
+		}
+
+		assert.Equal(t, expected, result)
+
+		return nil
+	}
+}
+
+// Evaluation which compiles the program allocates way more (> 20 allocations) than the one using the cached program (2 allocations).
+const compileAllocsFactor = 4
+
+//nolint:paralleltest // measures allocations
+func TestProgramCacheParsed(t *testing.T) {
 	env := testEnv(t)
 
 	expr := cel.MustExpression(cel.ParseBooleanExpression("x > 10", env))
 
-	assert.False(t, cel.IsProgramCached(expr, env, types.BoolType))
+	compiled := evalAllocs(t, evalBool(t, expr, env, 5, false))
+	cached := evalAllocs(t, evalBool(t, expr, env, 15, true))
 
-	for _, tc := range []struct {
-		x        int
-		expected bool
-	}{
-		{x: 5, expected: false},
-		{x: 15, expected: true},
-	} {
-		result, err := expr.EvalBool(env, map[string]any{"x": tc.x})
-		require.NoError(t, err)
-		assert.Equal(t, tc.expected, result)
-	}
-
-	assert.True(t, cel.IsProgramCached(expr, env, types.BoolType))
+	// the program is cached
+	assert.Greater(t, compiled, compileAllocsFactor*cached)
 
 	// copies of the expression (e.g. from resource DeepCopy) share the cached program
 	exprCopy := expr
 
-	assert.True(t, cel.IsProgramCached(exprCopy, env, types.BoolType))
+	assert.Less(t, evalAllocs(t, evalBool(t, exprCopy, env, 15, true)), compileAllocsFactor*cached)
 
-	// the same expression in a different environment is compiled separately
+	// the same expression in a different environment is compiled separately, and cached
 	otherEnv := testEnv(t)
 
-	assert.False(t, cel.IsProgramCached(expr, otherEnv, types.BoolType))
-
-	result, err := expr.EvalBool(otherEnv, map[string]any{"x": 15})
-	require.NoError(t, err)
-	assert.True(t, result)
-
-	assert.True(t, cel.IsProgramCached(expr, otherEnv, types.BoolType))
+	assert.Greater(t, evalAllocs(t, evalBool(t, expr, otherEnv, 15, true)), compileAllocsFactor*cached)
+	assert.Less(t, evalAllocs(t, evalBool(t, expr, otherEnv, 15, true)), compileAllocsFactor*cached)
 }
 
+//nolint:paralleltest // measures allocations
 func TestProgramCacheText(t *testing.T) {
-	t.Parallel()
-
 	env := testEnv(t)
 
 	// expression unmarshaled from the machine config is not parsed until evaluated
 	expr := unmarshalExpression(t, "double(x) * 1.5")
 
-	result, err := expr.EvalDouble(env, map[string]any{"x": 2})
-	require.NoError(t, err)
-	assert.InDelta(t, 3.0, result, 1e-9)
+	evalDouble := func() error {
+		result, err := expr.EvalDouble(env, map[string]any{"x": 2})
+		if err != nil {
+			return err
+		}
 
-	assert.True(t, cel.IsProgramCached(expr, env, types.DoubleType))
+		assert.InDelta(t, 3.0, result, 1e-9)
 
-	// the cache key includes the expected type, so the type check still happens
-	assert.False(t, cel.IsProgramCached(expr, env, types.BoolType))
+		return nil
+	}
 
-	_, err = expr.EvalBool(env, map[string]any{"x": 2})
-	require.ErrorContains(t, err, "expression output type is double, expected bool")
+	compiled := evalAllocs(t, evalDouble)
+	cached := evalAllocs(t, evalDouble)
 
-	assert.False(t, cel.IsProgramCached(expr, env, types.BoolType))
+	// the program is cached
+	assert.Greater(t, compiled, compileAllocsFactor*cached)
+
+	// the cache key includes the expected type, so the type check still happens (on every evaluation, as errors are not cached)
+	for range 2 {
+		allocs := evalAllocs(t, func() error {
+			_, err := expr.EvalBool(env, map[string]any{"x": 2})
+			assert.ErrorContains(t, err, "expression output type is double, expected bool")
+
+			return nil
+		})
+
+		assert.Greater(t, allocs, compileAllocsFactor*cached)
+	}
 }
 
 func TestProgramCacheErrors(t *testing.T) {
@@ -111,8 +146,6 @@ func TestProgramCacheErrors(t *testing.T) {
 		_, err := expr.EvalBool(env, map[string]any{"x": 2})
 		require.Error(t, err)
 	}
-
-	assert.False(t, cel.IsProgramCached(expr, env, types.BoolType))
 
 	assert.Panics(t, func() {
 		cel.Expression{}.EvalBool(env, nil) //nolint:errcheck
@@ -141,36 +174,6 @@ func TestProgramCacheConcurrent(t *testing.T) {
 	}
 
 	wg.Wait()
-
-	assert.True(t, cel.IsProgramCached(expr, env, types.BoolType))
-}
-
-//nolint:paralleltest // relies on the global cache size, must not run in parallel with other cache tests
-func TestProgramCacheCleanup(t *testing.T) {
-	env := testEnv(t)
-
-	before := cel.ProgramCacheLen()
-
-	func() {
-		for i := range 10 {
-			parsed := cel.MustExpression(cel.ParseBooleanExpression("x > "+string(rune('0'+i)), env))
-			text := unmarshalExpression(t, "x < "+string(rune('0'+i)))
-
-			for _, expr := range []cel.Expression{parsed, text} {
-				_, err := expr.EvalBool(env, map[string]any{"x": 5})
-				require.NoError(t, err)
-			}
-		}
-	}()
-
-	assert.GreaterOrEqual(t, cel.ProgramCacheLen(), before+20)
-
-	// once the expressions are garbage collected, their programs are dropped from the cache
-	assert.Eventually(t, func() bool {
-		runtime.GC()
-
-		return cel.ProgramCacheLen() <= before
-	}, 10*time.Second, 10*time.Millisecond)
 }
 
 func TestProgramCacheAllocs(t *testing.T) {

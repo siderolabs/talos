@@ -12,9 +12,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"cel.dev/cel-go/common/ast"
-	"cel.dev/cel-go/common/operators"
-	"cel.dev/cel-go/common/types"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -26,9 +23,8 @@ import (
 	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/internal/pkg/celmatch"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	"github.com/siderolabs/talos/pkg/machinery/cel"
-	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	cfg "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -266,50 +262,10 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 }
 
 func (ctrl *ImageCacheConfigController) createVolumeConfigISO(ctx context.Context, r controller.ReaderWriter) error {
-	builder := cel.NewBuilder(celenv.VolumeLocator())
-
-	// volume.name in ["iso9660", "vfat"] && volume.label.startsWith("TALOS_")
-	expr := builder.NewCall(
-		builder.NextID(),
-		operators.LogicalAnd,
-		builder.NewCall(
-			builder.NextID(),
-			operators.In,
-			builder.NewSelect(
-				builder.NextID(),
-				builder.NewIdent(builder.NextID(), "volume"),
-				"name",
-			),
-			builder.NewList(
-				builder.NextID(),
-				[]ast.Expr{
-					builder.NewLiteral(builder.NextID(), types.String("iso9660")),
-					builder.NewLiteral(builder.NextID(), types.String("vfat")),
-				},
-				nil,
-			),
-		),
-		builder.NewMemberCall(
-			builder.NextID(),
-			"startsWith",
-			builder.NewSelect(
-				builder.NextID(),
-				builder.NewIdent(builder.NextID(), "volume"),
-				"label",
-			),
-			builder.NewLiteral(builder.NextID(), types.String("TALOS_")),
-		),
-	)
-
-	boolExpr, err := builder.ToBooleanExpression(expr)
-	if err != nil {
-		return fmt.Errorf("error creating boolean expression: %w", err)
-	}
-
 	return safe.WriterModify(ctx, r, block.NewVolumeConfig(block.NamespaceName, VolumeImageCacheISO), func(volumeCfg *block.VolumeConfig) error {
 		volumeCfg.TypedSpec().Type = block.VolumeTypeDisk
 		volumeCfg.TypedSpec().Locator = block.LocatorSpec{
-			Match: *boolExpr,
+			Match: celmatch.ImageCacheISO(),
 		}
 		volumeCfg.TypedSpec().Mount = block.MountSpec{
 			TargetPath: constants.ImageCacheISOMountPoint,
@@ -323,44 +279,15 @@ func (ctrl *ImageCacheConfigController) createVolumeConfigISO(ctx context.Contex
 }
 
 func (ctrl *ImageCacheConfigController) createVolumeConfigDisk(ctx context.Context, r controller.ReaderWriter, cfg cfg.Config) error {
-	builder := cel.NewBuilder(celenv.VolumeLocator())
-
-	// volume.partition_label == "IMAGECACHE"
-	expr := builder.NewCall(
-		builder.NextID(),
-		operators.Equals,
-		builder.NewSelect(
-			builder.NextID(),
-			builder.NewIdent(builder.NextID(), "volume"),
-			"partition_label",
-		),
-		builder.NewLiteral(builder.NextID(), types.String(constants.ImageCachePartitionLabel)),
-	)
-
-	locatorExpr, err := builder.ToBooleanExpression(expr)
-	if err != nil {
-		return fmt.Errorf("error creating boolean expression: %w", err)
-	}
-
-	// system_disk
-	builder = cel.NewBuilder(celenv.DiskLocator())
-
-	expr = builder.NewIdent(builder.NextID(), "system_disk")
-
-	diskExpr, err := builder.ToBooleanExpression(expr)
-	if err != nil {
-		return fmt.Errorf("error creating boolean expression: %w", err)
-	}
-
 	return safe.WriterModify(ctx, r, block.NewVolumeConfig(block.NamespaceName, VolumeImageCacheDISK), func(volumeCfg *block.VolumeConfig) error {
 		volumeCfg.TypedSpec().Type = block.VolumeTypePartition
 		volumeCfg.TypedSpec().Locator = block.LocatorSpec{
-			Match: *locatorExpr,
+			Match: celmatch.VolumePartitionLabel(constants.ImageCachePartitionLabel),
 		}
 
 		if extraCfg, ok := cfg.Volumes().ByName(constants.ImageCachePartitionLabel); ok {
 			volumeCfg.TypedSpec().Provisioning.Wave = block.WaveSystemDisk
-			volumeCfg.TypedSpec().Provisioning.DiskSelector.Match = extraCfg.Provisioning().DiskSelector().ValueOr(*diskExpr)
+			volumeCfg.TypedSpec().Provisioning.DiskSelector.Match = extraCfg.Provisioning().DiskSelector().ValueOr(celmatch.SystemDisk())
 			volumeCfg.TypedSpec().Provisioning.PartitionSpec.Grow = extraCfg.Provisioning().Grow().ValueOr(false)
 			volumeCfg.TypedSpec().Provisioning.PartitionSpec.MinSize = extraCfg.Provisioning().MinSize().ValueOr(MinImageCacheSize)
 			volumeCfg.TypedSpec().Provisioning.PartitionSpec.MaxSize = extraCfg.Provisioning().MaxSize().ValueOr(MaxImageCacheSize)

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
+	"github.com/siderolabs/talos/internal/pkg/celmatch"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
@@ -33,7 +34,7 @@ func GetSystemVolumeTransformers(ctx context.Context,
 				Label:    block.SystemVolumeLabel,
 				TransformFunc: NewBuilder().
 					WithType(block.VolumeTypePartition).
-					WithLocator(metaMatch()).
+					WithLocator(celmatch.Meta()).
 					WriterFunc(),
 			},
 		}, nil
@@ -114,7 +115,7 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 					WithProvisioning(block.ProvisioningSpec{
 						Wave: block.WaveSystemDisk,
 						DiskSelector: block.DiskSelector{
-							Match: extraVolumeConfig.Provisioning().DiskSelector().ValueOr(systemDiskMatch()),
+							Match: extraVolumeConfig.Provisioning().DiskSelector().ValueOr(celmatch.SystemDisk()),
 						},
 						PartitionSpec: block.PartitionSpec{
 							MinSize:         extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
@@ -140,7 +141,7 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 						ProjectQuotaSupport: cfg.Machine().Features().DiskQuotaSupportEnabled(),
 						Secure:              extraVolumeConfig.Mount().Secure(),
 					}).
-					WithLocator(labelVolumeMatch(constants.EphemeralPartitionLabel)).
+					WithLocator(celmatch.VolumePartitionLabel(constants.EphemeralPartitionLabel)).
 					WithTrim(cfg, extraVolumeConfig).
 					WithScrub(cfg, extraVolumeConfig).
 					WithFunc(func(vcs *block.VolumeConfigSpec) error {
@@ -205,9 +206,9 @@ func GetOverlayVolumesTransformer(inContainer bool) func(configconfig.Config) ([
 }
 
 func manageStateNoConfig(encryptionMeta *runtime.MetaKey, isAgent bool) func(vc *block.VolumeConfig) error {
-	match := labelVolumeMatchAndNonEmpty(constants.StatePartitionLabel)
+	match := celmatch.VolumePartitionLabelNonEmpty(constants.StatePartitionLabel)
 	if isAgent { // mark as missing
-		match = noMatch
+		match = celmatch.NoMatch()
 	}
 
 	return NewBuilder().
@@ -267,7 +268,7 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 			WithProvisioning(block.ProvisioningSpec{
 				Wave: block.WaveSystemDisk,
 				DiskSelector: block.DiskSelector{
-					Match: systemDiskMatch(),
+					Match: celmatch.SystemDisk(),
 				},
 				PartitionSpec: block.PartitionSpec{
 					MinSize:  quirks.New("").PartitionSizes().StateSize(),
@@ -283,7 +284,7 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 			}).
 			WithTrim(cfg, extraVolumeConfig).
 			WithScrub(cfg, extraVolumeConfig).
-			WithLocator(labelVolumeMatch(constants.StatePartitionLabel)).
+			WithLocator(celmatch.VolumePartitionLabel(constants.StatePartitionLabel)).
 			WithConvertEncryptionConfiguration(encryptionConfig).
 			Apply(vc.TypedSpec())
 	}
@@ -391,7 +392,7 @@ func GetPromotableSystemVolumesTransformer(inContainer bool) volumeConfigTransfo
 					WithProvisioning(block.ProvisioningSpec{
 						Wave: block.WaveSystemDisk,
 						DiskSelector: block.DiskSelector{
-							Match: provisioning.DiskSelector().ValueOr(systemDiskMatch()),
+							Match: provisioning.DiskSelector().ValueOr(celmatch.SystemDisk()),
 						},
 						PartitionSpec: block.PartitionSpec{
 							MinSize:         provisioning.MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
@@ -409,7 +410,7 @@ func GetPromotableSystemVolumesTransformer(inContainer bool) volumeConfigTransfo
 						},
 					}).
 					WithMount(mountSpec).
-					WithLocator(labelVolumeMatch(volume.ID)).
+					WithLocator(celmatch.VolumePartitionLabel(volume.ID)).
 					WithTrim(cfg, extraVolumeConfig).
 					WithConvertEncryptionConfiguration(extraVolumeConfig.Encryption())
 			}

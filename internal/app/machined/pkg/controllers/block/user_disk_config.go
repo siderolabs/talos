@@ -17,9 +17,8 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/pkg/celmatch"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	"github.com/siderolabs/talos/pkg/machinery/cel"
-	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	machineconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -73,14 +72,6 @@ func (ctrl *UserDiskConfigController) Outputs() []controller.Output {
 			Kind: controller.OutputExclusive,
 		},
 	}
-}
-
-func diskPathMatch(devicePath string) cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("disk.dev_path == '%s'", devicePath), celenv.DiskLocator()))
-}
-
-func partitionIdxMatch(devicePath string, partitionIdx int) cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.parent_dev_path == '%s' && volume.partition_index == %du", devicePath, partitionIdx), celenv.VolumeLocator()))
 }
 
 // Run implements controller.Controller interface.
@@ -193,7 +184,7 @@ func (ctrl *UserDiskConfigController) processUserDiskPartition(
 				// in wrong order
 				Wave: block.WaveLegacyUserDisks + idx,
 				DiskSelector: block.DiskSelector{
-					Match: diskPathMatch(resolvedDevicePath),
+					Match: celmatch.DiskDevPath(resolvedDevicePath),
 				},
 				PartitionSpec: block.PartitionSpec{
 					MinSize:  part.Size(),
@@ -207,7 +198,7 @@ func (ctrl *UserDiskConfigController) processUserDiskPartition(
 			}
 
 			vc.TypedSpec().Locator = block.LocatorSpec{
-				Match: partitionIdxMatch(resolvedDevicePath, idx+1),
+				Match: celmatch.VolumePartitionIndex(resolvedDevicePath, uint64(idx+1)),
 			}
 
 			targetPath := part.MountPoint()
