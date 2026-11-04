@@ -57,6 +57,13 @@ func WithDetached(detached bool) VolumeMounterOption {
 	}
 }
 
+// MountID returns the ID of the VolumeMountRequest/VolumeMountStatus used by the volume mounter.
+//
+// Controllers might use it to filter their inputs to the volume mount status of their own request.
+func MountID(requester, volumeID string) string {
+	return requester + "-" + volumeID
+}
+
 // NewVolumeMounter creates a new volume mounter controller state machine.
 //
 // It ensures that the volume is mounted, and calls the callback function when the volume is mounted,
@@ -70,7 +77,7 @@ func NewVolumeMounter(requester, volumeID string, callback VolumeMountCallbackFu
 	return automaton.NewControllerAutomaton(
 		createVolumeMountRequest,
 		volumeMountContext{
-			mountID:   requester + "-" + volumeID,
+			mountID:   MountID(requester, volumeID),
 			volumeID:  volumeID,
 			requester: requester,
 			callback:  callback,

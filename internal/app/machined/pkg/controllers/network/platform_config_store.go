@@ -8,8 +8,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
@@ -29,6 +31,10 @@ import (
 type PlatformConfigStoreController struct {
 	stateMachine                    blockautomaton.VolumeMounterAutomaton
 	configToStore, lastStoredConfig *network.PlatformConfig
+
+	// lastSeenVersion and lastSeenCreated identify the active config which was compared last time.
+	lastSeenVersion resource.Version
+	lastSeenCreated time.Time
 }
 
 // Name implements controller.Controller interface.
@@ -38,6 +44,8 @@ func (ctrl *PlatformConfigStoreController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *PlatformConfigStoreController) Inputs() []controller.Input {
+	mountID := blockautomaton.MountID(ctrl.Name(), constants.StatePartitionLabel)
+
 	return []controller.Input{
 		{
 			Namespace: network.NamespaceName,
@@ -48,11 +56,13 @@ func (ctrl *PlatformConfigStoreController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeMountStatusType,
+			ID:        optional.Some(mountID),
 			Kind:      controller.InputStrong,
 		},
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeMountRequestType,
+			ID:        optional.Some(mountID),
 			Kind:      controller.InputDestroyReady,
 		},
 	}
@@ -89,9 +99,15 @@ func (ctrl *PlatformConfigStoreController) Run(ctx context.Context, r controller
 			return fmt.Errorf("error getting active network config: %w", err)
 		}
 
-		// if we haven't stored any config yet, or the active config has changed
-		if ctrl.lastStoredConfig == nil || !activeConfig.TypedSpec().Equal(ctrl.lastStoredConfig.TypedSpec()) {
-			ctrl.configToStore = activeConfig
+		// compare the configs only if the active config has changed since the last time (comparison marshals both configs)
+		if !activeConfig.Metadata().Version().Equal(ctrl.lastSeenVersion) || !activeConfig.Metadata().Created().Equal(ctrl.lastSeenCreated) {
+			ctrl.lastSeenVersion = activeConfig.Metadata().Version()
+			ctrl.lastSeenCreated = activeConfig.Metadata().Created()
+
+			// if we haven't stored any config yet, or the active config has changed
+			if ctrl.lastStoredConfig == nil || !activeConfig.TypedSpec().Equal(ctrl.lastStoredConfig.TypedSpec()) {
+				ctrl.configToStore = activeConfig
+			}
 		}
 
 		if ctrl.stateMachine == nil && ctrl.configToStore != nil {
