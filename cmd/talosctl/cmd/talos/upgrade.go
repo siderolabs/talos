@@ -205,10 +205,14 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		fmt.Fprintf(safeout.Stderr(), "%s upgrade image: %s\n", node, nodeImageMap[node])
 	}
 
-	_, err = imagePullPerNode(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
+	pulledImageMap, err := imagePullPerNode(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
 	if err != nil {
 		return fmt.Errorf("error pulling upgrade image: %w", err)
 	}
+
+	// The image is stored on the node under the reference returned by the pull, which might differ from the requested one
+	// (e.g. `repo:tag@digest` is stored as `repo@digest`), so upgrade using the pulled reference.
+	maps.Copy(nodeImageMap, pulledImageMap)
 
 	_, err = upgradeInternal(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
 	if err != nil {
