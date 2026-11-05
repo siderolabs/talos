@@ -37,6 +37,8 @@ const (
 	NumCompressedChunks = (constants.LogBufferCapacity / ChunkCapacity) - 1
 	// Safety gap to avoid buffer overruns, can be lowered as with compression we don't need much.
 	SafetyGap = 1
+	// Compression window size, half of the chunk capacity.
+	CompressionWindowSize = ChunkCapacity / 2
 )
 
 // CircularBufferLoggingManager implements logging to circular fixed size buffer.
@@ -55,9 +57,19 @@ type CircularBufferLoggingManager struct {
 
 // NewCircularBufferLoggingManager initializes new CircularBufferLoggingManager.
 func NewCircularBufferLoggingManager(fallbackLogger *log.Logger) *CircularBufferLoggingManager {
+	// The compressor is shared by all log buffers, and it compresses each chunk (ChunkCapacity) with EncodeAll.
+	//
+	// Measured on real Talos logs (64 KiB chunks), compared to the default level with a 2 KiB window:
+	//   - lower encoder memory: EncodeAll doesn't preallocate the output to the size of the input,
+	//     so each compressed chunk retains ~its compressed size (instead of 64 KiB), and the encoder
+	//     history buffer is not rounded up to 1 MiB;
+	//   - fastest level: smaller hash tables (encoder state ~0.5 MiB instead of ~2.6 MiB), with almost the same ratio;
+	//   - 32 KiB window: ~20x compression ratio instead of ~8x with 2 KiB window, and ~4x faster compression.
 	compressor, err := zstd.NewCompressor(
 		corezstd.WithEncoderConcurrency(1),
-		corezstd.WithWindowSize(2*corezstd.MinWindowSize),
+		corezstd.WithEncoderLevel(corezstd.SpeedFastest),
+		corezstd.WithLowerEncoderMem(true),
+		corezstd.WithWindowSize(CompressionWindowSize),
 	)
 	if err != nil {
 		// should not happen
