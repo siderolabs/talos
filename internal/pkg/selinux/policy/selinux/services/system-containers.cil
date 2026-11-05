@@ -54,6 +54,16 @@
 ; Talk to machined
 (allow installer_t machine_socket_t (sock_file (write)))
 (allow installer_t init_t (unix_stream_socket (connectto)))
+; talosctl upgrade runs the installer in the system namespace of the CRI containerd by default, next to the images of
+; etcd and the kubelet: the CRI starts it as installer_t from the image it pulled, as the system containerd does.
+(allow pod_containerd_t installer_t (process2 (nnp_transition nosuid_transition)))
+(allow pod_containerd_t installer_t (process (transition)))
+(allow pod_containerd_t installer_t (fs_classes (rw)))
+(allow pod_containerd_t installer_t (process_classes (full)))
+(allow pod_containerd_t installer_t (key (view read write search link setattr create)))
+(allow installer_t pod_containerd_t (fd (use)))
+(allow installer_t pod_containerd_t (fifo_file (append getattr ioctl map open read rename setattr watch write)))
+(allow installer_t containerd_state_t (file (entrypoint execute execute_no_trans)))
 
 ; talosctl debug container, automatically transition to it
 (type debug_t)

@@ -31,9 +31,10 @@
 (neverallow workload_p system_socket_f (sock_file (write)))
 (neverallow workload_p init_t (unix_stream_socket (connectto)))
 (neverallow workload_p system_p (process (ptrace)))
-; Every domain the CRI starts is a workload, the system services it runs aside, and a workload enters no other domain.
+; Every domain the CRI starts is a workload, the system services it runs aside (etcd, the kubelet, the Talos containers
+; and the installer of an upgrade), and a workload enters no other domain.
 (typeattribute not_cri_workload_p)
-(typeattributeset not_cri_workload_p (not (or workload_p (or pod_containerd_t (or kubelet_t (or etcd_t (or taloscontainer_t taloscontainer_machined_t)))))))
+(typeattributeset not_cri_workload_p (not (or workload_p (or pod_containerd_t (or kubelet_t (or etcd_t (or taloscontainer_t (or taloscontainer_machined_t installer_t))))))))
 (neverallow pod_containerd_t not_cri_workload_p (process (transition dyntransition)))
 (typeattribute not_workload_p)
 (typeattributeset not_workload_p (not workload_p))

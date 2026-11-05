@@ -105,6 +105,11 @@ func TestPolicy(t *testing.T) {
 				"(neverallow workload_p sysfs_t (file (write)))\n",
 			"",
 		},
+		{
+			"the CRI starts the installer of an upgrade",
+			"(neverallow pod_containerd_t installer_t (process (transition)))\n",
+			"neverallow check failed",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			dir := t.TempDir()
