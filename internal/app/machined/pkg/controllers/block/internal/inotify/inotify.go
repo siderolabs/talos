@@ -61,11 +61,16 @@ func (w *watches) removePath(path string) (uint32, bool) {
 	return wd, true
 }
 
-func (w *watches) byWd(wd uint32) *watch {
+func (w *watches) byWd(wd uint32) (watch, bool) {
 	w.mu.RLock()
 	defer w.mu.RUnlock()
 
-	return w.wd[wd]
+	existing, ok := w.wd[wd]
+	if !ok {
+		return watch{}, false
+	}
+
+	return *existing, true
 }
 
 func (w *watches) updatePath(path string, f func(*watch) (*watch, error)) error {
@@ -189,16 +194,16 @@ func (w *Watcher) Run() (<-chan string, <-chan error) {
 				// doesn't append the filename to the event, but we would like to always fill the
 				// the "Name" field with a valid filename. We retrieve the path of the watch from
 				// the "paths" map.
-				watch := w.watches.byWd(uint32(raw.Wd))
+				watch, ok := w.watches.byWd(uint32(raw.Wd))
 
 				// inotify will automatically remove the watch on deletes; just need
 				// to clean our state here.
-				if watch != nil && mask&unix.IN_DELETE_SELF == unix.IN_DELETE_SELF {
+				if ok && mask&unix.IN_DELETE_SELF == unix.IN_DELETE_SELF {
 					w.watches.remove(watch.wd)
 				}
 
 				var name string
-				if watch != nil {
+				if ok {
 					name = watch.path
 				}
 

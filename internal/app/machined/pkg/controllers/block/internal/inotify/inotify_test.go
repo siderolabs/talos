@@ -126,3 +126,47 @@ func TestWatcherDirectory(t *testing.T) {
 
 	require.NoError(t, watcher.Close())
 }
+
+func TestWatcherReAddDeletedPath(t *testing.T) {
+	watcher, err := inotify.NewWatcher()
+	require.NoError(t, err)
+
+	path := filepath.Join(t.TempDir(), "dev")
+
+	require.NoError(t, os.WriteFile(path, nil, 0o644))
+	require.NoError(t, watcher.Add(path, unix.IN_CLOSE_WRITE))
+
+	watchCh, errCh := watcher.Run()
+
+	done := make(chan struct{})
+	drained := make(chan struct{})
+
+	go func() {
+		defer close(drained)
+
+		for {
+			select {
+			case <-watchCh:
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	for range 2000 {
+		require.NoError(t, os.Remove(path))
+		require.NoError(t, os.WriteFile(path, nil, 0o644))
+		require.NoError(t, watcher.Add(path, unix.IN_CLOSE_WRITE))
+	}
+
+	select {
+	case err = <-errCh:
+		require.NoError(t, err)
+	default:
+	}
+
+	close(done)
+	<-drained
+
+	require.NoError(t, watcher.Close())
+}
