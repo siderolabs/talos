@@ -274,7 +274,7 @@ spec:
           command: |-
             gh release upload "${RELEASE}" --clobber \
               _out/cloud-images.json
-    - name: base-unit-tests
+    - name: unit-tests
       buildxOptions:
         enabled: true
       depends:
@@ -288,14 +288,40 @@ spec:
             artifactPath: _out
         - name: ci-temp-release-tag
         - name: unit-tests
-        - name: unit-tests-fips
-        - name: unit-tests-race
         - name: coverage
           coverageStep:
             files:
               - _out/coverage.txt
           timeoutMinutes: 3
-    - name: base-lint
+    - name: unit-tests-fips
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: unit-tests-fips
+    - name: unit-tests-race
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: unit-tests-race
+    - name: lint
       buildxOptions:
         enabled: true
       depends:
