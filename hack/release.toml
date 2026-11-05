@@ -1092,6 +1092,31 @@ neighbors:
 The password is redacted from the machine configuration output. The `BGPInstanceConfigs` resource is now sensitive: the `os:admin` role reads it in full, while the other roles get it with the password replaced by `REDACTED`.
 """
 
+    [notes.image_layers_sync_fs]
+        title = "Image Layers Synced to Disk"
+        description = """\
+The CRI containerd now syncs each unpacked image layer to disk (`syncfs`) before committing the snapshot.
+Previously, a power loss or a hard reset shortly after an image pull could leave a committed layer with zero-length files:
+containers using the image failed with `exec format error`, and the broken snapshot was reused until the image was removed by hand.
+
+This applies to all image layers unpacked by the CRI containerd: images pulled by the kubelet, the `kubelet` and `etcd` images pulled by Talos,
+and images imported into the CRI containerd with `talosctl image import`.
+
+Each synced layer flushes all dirty data of the `EPHEMERAL` filesystem, which can slow down image pulls and add I/O latency on write-heavy nodes.
+If image pull performance matters more than crash consistency, the sync can be disabled with a machine configuration patch:
+
+```yaml
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: disable-sync-fs
+content: |
+    [plugins."io.containerd.service.v1.diff-service"]
+      sync_fs = false
+```
+
+Snapshots already broken by an earlier crash are not repaired: remove the affected image (e.g. `talosctl image rm`) so that it is pulled again.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -4,6 +4,9 @@ version = 4
   discard_unpacked_layers = true
   use_local_image_pull = true
 
+[plugins."io.containerd.service.v1.diff-service"]
+  sync_fs = true
+
 [plugins."io.containerd.cri.v1.runtime"]
   enable_cdi = true
   cdi_spec_dirs = ["/run/cdi"]
