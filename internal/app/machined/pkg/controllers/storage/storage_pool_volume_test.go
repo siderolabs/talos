@@ -655,8 +655,7 @@ func (suite *StoragePoolVolumeSuite) TestCompletedCopyOutageFences() {
 			})
 		}},
 		{name: "request-incarnation", change: func(f completedVolumeFixture) {
-			suite.RemoveFinalizer(f.request.Metadata(), volumeFinalizer)
-			suite.Destroy(f.request, state.WithDestroyOwner("hypervisor.VirtualMachineDiskController"))
+			suite.forceDestroy(f.request.Metadata(), "hypervisor.VirtualMachineDiskController")
 			replacement := storageres.NewStoragePoolVolumeSpec(storageres.NamespaceName, f.request.Metadata().ID())
 			*replacement.TypedSpec() = *f.request.TypedSpec()
 			key, _ := f.request.Metadata().Labels().Get(libvirtstorage.CopyBindingLabel)
@@ -679,8 +678,7 @@ func (suite *StoragePoolVolumeSuite) TestCompletedCopyOutageFences() {
 			}, state.WithUpdateOwner("storage.StoragePoolController"))
 		}},
 		{name: "pool-incarnation", change: func(f completedVolumeFixture) {
-			suite.RemoveFinalizer(f.pool.Metadata(), volumeFinalizer)
-			suite.Destroy(f.pool, state.WithDestroyOwner("storage.StoragePoolController"))
+			suite.forceDestroy(f.pool.Metadata(), "storage.StoragePoolController")
 
 			replacement := storageres.NewStoragePoolStatus(storageres.NamespaceName, f.pool.Metadata().ID())
 			*replacement.TypedSpec() = *f.pool.TypedSpec()
@@ -692,8 +690,7 @@ func (suite *StoragePoolVolumeSuite) TestCompletedCopyOutageFences() {
 			suite.Require().NoError(err)
 		}},
 		{name: "missing-pool", change: func(f completedVolumeFixture) {
-			suite.RemoveFinalizer(f.pool.Metadata(), volumeFinalizer)
-			suite.Destroy(f.pool, state.WithDestroyOwner("storage.StoragePoolController"))
+			suite.forceDestroy(f.pool.Metadata(), "storage.StoragePoolController")
 		}},
 		{name: "pool-mutation", change: func(f completedVolumeFixture) {
 			suite.AddFinalizer(f.pool.Metadata(), "storage.StoragePoolController/mutating/backing")
@@ -795,8 +792,7 @@ func (suite *StoragePoolVolumeSuite) TestCompletedCopyOutageRequestWithdrawal() 
 				suite.Require().NoError(err)
 				ctest.AssertNoResource[*storageres.StoragePoolVolumeStatus](suite, f.request.Metadata().ID())
 			case "missing-request":
-				suite.RemoveFinalizer(f.request.Metadata(), volumeFinalizer)
-				suite.Destroy(f.request, state.WithDestroyOwner("hypervisor.VirtualMachineDiskController"))
+				suite.forceDestroy(f.request.Metadata(), "hypervisor.VirtualMachineDiskController")
 				ctest.AssertNoResource[*storageres.StoragePoolVolumeStatus](suite, f.request.Metadata().ID())
 			}
 		})
@@ -2495,6 +2491,19 @@ func (suite *StoragePoolVolumeSuite) changeCopySpec(spec *storageres.StoragePool
 
 		return nil
 	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+}
+
+// forceDestroy destroys a resource behind the controller's back. A controller
+// retrying through an outage can re-add its finalizer between the removal and
+// the destroy, so both are repeated until the destroy wins.
+func (suite *StoragePoolVolumeSuite) forceDestroy(ptr resource.Pointer, owner string) {
+	suite.Require().EventuallyWithT(func(t *assert.CollectT) {
+		if !assert.NoError(t, suite.State().RemoveFinalizer(suite.Ctx(), ptr, volumeFinalizer)) {
+			return
+		}
+
+		assert.NoError(t, suite.State().Destroy(suite.Ctx(), ptr, state.WithDestroyOwner(owner)))
+	}, 2*time.Second, 10*time.Millisecond)
 }
 
 func (suite *StoragePoolVolumeSuite) TestCopyBackingChangeRejectsOldCompletion() {
