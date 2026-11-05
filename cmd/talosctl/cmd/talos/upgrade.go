@@ -202,7 +202,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	}
 
 	for _, node := range slices.Sorted(maps.Keys(nodeImageMap)) {
-		safeout.Printf("%s upgrade image: %s\n", node, nodeImageMap[node])
+		fmt.Fprintf(safeout.Stderr(), "%s upgrade image: %s\n", node, nodeImageMap[node])
 	}
 
 	_, err = imagePullPerNode(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
