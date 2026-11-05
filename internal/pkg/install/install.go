@@ -351,7 +351,7 @@ func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest)
 		WithForce(!in.GetPreserve()),
 	}
 
-	if r.Config() != nil && r.Config().Machine() != nil {
+	if r.Config() != nil && r.Config().Machine() != nil && r.Config().Machine().Install() != nil {
 		opts = append(opts, WithExtraKernelArgs(r.Config().Machine().Install().ExtraKernelArgs()))
 	}
 
