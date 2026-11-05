@@ -1840,6 +1840,8 @@ func (s *Server) Processes(ctx context.Context, in *emptypb.Empty) (reply *machi
 		return nil, err
 	}
 
+	defer procs.Close() //nolint:errcheck
+
 	for {
 		info, err := procs.Next()
 		if err != nil {
