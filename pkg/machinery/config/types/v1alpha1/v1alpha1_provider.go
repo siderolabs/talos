@@ -226,10 +226,6 @@ func redactVIPSecrets(vip *DeviceVIPConfig, redactStr func(string) string) {
 
 // Install implements the config.Provider interface.
 func (m *MachineConfig) Install() config.Install {
-	if m.MachineInstall == nil {
-		return &InstallConfig{}
-	}
-
 	return m.MachineInstall
 }
 
@@ -1217,16 +1213,28 @@ func (t *TimeConfig) UseNTS() bool {
 
 // Image implements the config.Provider interface.
 func (i *InstallConfig) Image() string {
+	if i == nil {
+		return ""
+	}
+
 	return i.InstallImage
 }
 
 // Extensions implements the config.Provider interface.
 func (i *InstallConfig) Extensions() []config.Extension {
+	if i == nil {
+		return []config.Extension{}
+	}
+
 	return xslices.Map(i.InstallExtensions, func(e InstallExtensionConfig) config.Extension { return e })
 }
 
 // Disk implements the config.Provider interface.
 func (i *InstallConfig) Disk() string {
+	if i == nil {
+		return ""
+	}
+
 	return i.InstallDisk
 }
 
@@ -1234,7 +1242,7 @@ func (i *InstallConfig) Disk() string {
 //
 //nolint:gocyclo
 func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
-	if i.InstallDiskSelector == nil {
+	if i == nil || i.InstallDiskSelector == nil {
 		return nil, nil
 	}
 
@@ -1404,21 +1412,37 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 
 // ExtraKernelArgs implements the config.Provider interface.
 func (i *InstallConfig) ExtraKernelArgs() []string {
+	if i == nil {
+		return []string{}
+	}
+
 	return i.InstallExtraKernelArgs
 }
 
 // Zero implements the config.Provider interface.
 func (i *InstallConfig) Zero() bool {
+	if i == nil {
+		return false
+	}
+
 	return pointer.SafeDeref(i.InstallWipe)
 }
 
 // LegacyBIOSSupport implements the config.Provider interface.
 func (i *InstallConfig) LegacyBIOSSupport() bool {
+	if i == nil {
+		return false
+	}
+
 	return pointer.SafeDeref(i.InstallLegacyBIOSSupport)
 }
 
 // GrubUseUKICmdline implements the config.Provider interface.
 func (i *InstallConfig) GrubUseUKICmdline() bool {
+	if i == nil {
+		return false
+	}
+
 	return pointer.SafeDeref(i.InstallGrubUseUKICmdline)
 }
 

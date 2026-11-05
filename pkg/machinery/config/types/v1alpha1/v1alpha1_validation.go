@@ -1039,12 +1039,12 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 
 		// if booted using sd-boot, extra kernel arguments are not supported
 		if _, err := os.Stat("/sys/firmware/efi/efivars/StubInfo-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f"); err == nil {
-			if len(c.MachineConfig.Install().ExtraKernelArgs()) > 0 {
+			if c.MachineConfig.Install() != nil && len(c.MachineConfig.Install().ExtraKernelArgs()) > 0 {
 				warnings = append(warnings, "extra kernel arguments are not supported when booting using SDBoot")
 			}
 		}
 
-		if len(c.MachineConfig.Install().Extensions()) > 0 {
+		if c.MachineConfig.Install() != nil && len(c.MachineConfig.Install().Extensions()) > 0 {
 			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets")
 		}
 	}

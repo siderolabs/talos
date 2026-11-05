@@ -163,7 +163,7 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 		}
 
 		// If no Install config is present, skip the install sequence entirely.
-		if r.Config() != nil &&
+		if r.Config() == nil ||
 			(r.Config().Machine().Install() == nil && r.Config().UnattendedInstallConfig() == nil) {
 			return nil
 		}
