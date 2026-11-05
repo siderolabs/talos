@@ -10,22 +10,12 @@ import (
 )
 
 func (in *Input) generateSecurityProfileConfigs() []config.Document {
-	workloadIsolation := in.Options.VersionContract.WorkloadIsolationEnabledByDefault()
-	selinuxCategories := in.Options.VersionContract.SELinuxCategoriesEnabledByDefault()
-
-	if !workloadIsolation && !selinuxCategories {
+	if !in.Options.VersionContract.WorkloadIsolationEnabledByDefault() {
 		return nil
 	}
 
 	securityProfile := runtime.NewSecurityProfileConfigV1Alpha1()
-
-	if workloadIsolation {
-		securityProfile.WorkloadIsolationEnabled = new(true)
-	}
-
-	if selinuxCategories {
-		securityProfile.SELinuxCategoriesEnabled = new(true)
-	}
+	securityProfile.WorkloadIsolationEnabled = new(true)
 
 	return []config.Document{securityProfile}
 }

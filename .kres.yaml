@@ -591,7 +591,7 @@ spec:
             withEnforcing: "true"
             withUserDisk: "true"
             userDisksMounts: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
-            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml:@hack/test/patches/selinux-categories.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             qemuExtraDisks: "3"
             qemuExtraDisksDrivers: "ide,nvme"
@@ -730,7 +730,7 @@ spec:
           - variant: default
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
           - variant: enforcing
-            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml:@hack/test/patches/selinux-categories.yaml"
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
@@ -790,7 +790,7 @@ spec:
             extraTestArgs: "-talos.trustedboot"
             withTrustedBootDiskImage: "true"
           - variant: enforcing
-            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml:@hack/test/patches/selinux-categories.yaml"
             tagSuffixIn: -enforcing
             withTrustedBootISO: "true"
             withEnforcing: "true"

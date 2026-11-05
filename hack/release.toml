@@ -319,8 +319,8 @@ now passes the `talos.boot.partuuid=<UUID>` kernel argument (probed by GRUB at b
         title = "SELinux Workload Categories"
         description = """\
 A new `selinuxCategories` field of the `SecurityProfileConfig` document labels workloads with SELinux MCS categories,
-so that workloads sharing an SELinux type still cannot access each other's processes and files. `talosctl gen config`
-sets it for Talos 1.15+; clusters upgraded from older versions keep running their workloads without categories unless it is set.
+so that workloads sharing an SELinux type still cannot access each other's processes and files. The categories are disabled
+by default, and have to be enabled explicitly by setting `selinuxCategories: true`.
 
 The categories are split three ways: the CRI labels pods with a random pair from `c0-c767`, containers declared via
 `ContainerConfig` get a stable pair from `c768-c1007` derived from their name, and `c1008-c1023` are reserved for Talos
@@ -333,6 +333,9 @@ categories. `spc_t` is an alias of it, so charts written for Fedora and RHEL kee
 A pod writing files which outlive it, to a hostPath or a local volume, needs a fixed `securityContext.seLinuxOptions.level`,
 else the pod of the next start cannot read them. The CRI skips the pairs of running containers when it draws one, so
 the pair is exclusive only while the pod runs.
+
+With the categories enabled, the CRI passes an SELinux label to every container runtime, so the runtimes which do not support
+SELinux labels (e.g. gVisor, youki, Spin) fail to start pods.
 """
 
     [notes.kubespan_peer_endpoint_filters]

@@ -59,9 +59,9 @@ var (
 //	  processes and files, even when they share an SELinux type. The kubelet gets `/sys/fs/selinux` and the
 //	  containers contexts file, so that it labels volumes and its plugin directories.
 //
-//	  `talosctl gen config` emits this document with `selinuxCategories: true` for Talos 1.15+; clusters
-//	  upgraded from older versions keep running their workloads without categories unless it is set.
-//	  The categories only take effect when SELinux is enabled.
+//	  SELinux categories are disabled by default and have to be enabled explicitly with `selinuxCategories: true`.
+//	  The categories only take effect when SELinux is enabled. Container runtimes which do not support SELinux
+//	  labels (e.g. gVisor, youki, Spin) fail to start pods when the categories are enabled.
 //
 //	  By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
 //	  is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
