@@ -49,7 +49,27 @@ const (
 
 // DevicePath returns the stable by-id path for an MD array name.
 func DevicePath(name string) string {
-	return byIDDir + "/md-name-" + mdHomeHost + ":" + name
+	return byIDDir + "/md-name-" + ArrayName(name)
+}
+
+// ArrayName returns the metadata-stamped array name (homehost:name) Talos assigns to an array created for name.
+func ArrayName(name string) string {
+	return mdHomeHost + ":" + name
+}
+
+// ByIDPath returns the stable by-id path for an already existing array, identified by its
+// metadata-stamped name (preferred) or its UUID.
+//
+// It returns an empty string if neither is known.
+func ByIDPath(detail Detail) string {
+	switch {
+	case detail.Name != "":
+		return byIDDir + "/md-name-" + detail.Name
+	case detail.UUID != "":
+		return byIDDir + "/md-uuid-" + detail.UUID
+	default:
+		return ""
+	}
 }
 
 // FindDeviceByMember returns the /dev/mdN node that contains member.
@@ -195,6 +215,36 @@ func InactiveArrays() ([]string, error) {
 	}
 
 	return inactive, nil
+}
+
+// ListArrays returns the /dev/mdN device paths for all present MD arrays, regardless of state.
+func (*MD) ListArrays() ([]string, error) {
+	return ListArrays()
+}
+
+// ListArrays returns the /dev/mdN device paths for all present MD arrays, regardless of state.
+func ListArrays() ([]string, error) {
+	entries, err := os.ReadDir(sysBlockDir)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read %s: %w", sysBlockDir, err)
+	}
+
+	var arrays []string
+
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasPrefix(name, "md") {
+			continue
+		}
+
+		if _, err := os.Stat(filepath.Join(sysBlockDir, name, "md")); err != nil {
+			continue
+		}
+
+		arrays = append(arrays, filepath.Join("/dev", name))
+	}
+
+	return arrays, nil
 }
 
 // ArrayStateForDevice returns the current array state for an MD device.
