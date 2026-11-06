@@ -119,6 +119,11 @@ func TestPolicy(t *testing.T) {
 				"(neverallow workload_p sysfs_t (file (write)))\n",
 			"",
 		},
+		{
+			"machined kexecs the kernel and the initramfs it holds in its memfds",
+			"(neverallow init_t self (system (kexec_image_load kexec_initramfs_load)))\n",
+			"neverallow check failed",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			output, err := compile(t, test.statements)
