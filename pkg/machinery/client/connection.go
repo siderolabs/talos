@@ -16,8 +16,6 @@ import (
 	"strings"
 
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-api-signature/pkg/client/interceptor"
-	"github.com/siderolabs/go-api-signature/pkg/pgp/client"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
@@ -25,7 +23,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Conn returns underlying client connection.
@@ -86,31 +83,13 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 		dialOpts = append(dialOpts, WithGRPCBasicAuth(basicAuth.Username, basicAuth.Password))
 	}
 
-	sideroV1 := c.options.configContext.Auth.SideroV1
-	if sideroV1 != nil {
-		var contextName string
-
-		if c.options.config != nil {
-			contextName = c.options.config.Context
+	if sideroV1 := c.options.configContext.Auth.SideroV1; sideroV1 != nil {
+		sideroV1Opts, err := c.sideroV1DialOptions(sideroV1)
+		if err != nil {
+			return nil, err
 		}
 
-		if c.options.contextOverrideSet {
-			contextName = c.options.contextOverride
-		}
-
-		authInterceptor := interceptor.New(interceptor.Options{
-			UserKeyProvider:      getKeyProvider(c.options.sideroV1KeysDir),
-			ContextName:          contextName,
-			Identity:             sideroV1.Identity,
-			ClientName:           version.Name,
-			ServiceAccountBase64: c.options.serviceAccountBase64,
-		})
-
-		dialOpts = append(
-			dialOpts,
-			grpc.WithUnaryInterceptor(authInterceptor.Unary()),
-			grpc.WithStreamInterceptor(authInterceptor.Stream()),
-		)
+		dialOpts = append(dialOpts, sideroV1Opts...)
 	}
 
 	creds, err := buildCredentials(c.options.configContext, endpoints)
@@ -119,20 +98,6 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 	}
 
 	return c.makeConnection(target, creds, dialOpts)
-}
-
-func getKeyProvider(customKeysDir string) *client.KeyProvider {
-	if customKeysDir != "" {
-		return client.NewKeyProviderWithFallback("talos/keys", customKeysDir, "", true)
-	}
-
-	talosDir, err := clientconfig.GetTalosDirectory()
-	if err != nil {
-		// TODO: start failing instead of falling back to XDG data directory if we can't resolve Talos directory
-		return client.NewKeyProvider("talos/keys")
-	}
-
-	return client.NewKeyProviderWithFallback("talos/keys", talosDir, "keys", true)
 }
 
 func buildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
