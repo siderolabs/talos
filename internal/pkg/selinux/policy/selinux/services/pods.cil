@@ -47,14 +47,31 @@
 (dontaudit workload_p pod_containerd_t (file (getattr open read)))
 (dontaudit workload_p pod_containerd_t (lnk_file (getattr read)))
 
-; Booleans narrow what a regular pod may do. They default to the rights pods had before they existed. The other pod
-; domains below have the rights of their role, whatever the booleans say.
+; Booleans narrow what a regular pod may do. They default to the rights pods had before they existed. Each one grants a
+; right below to pod_t, and the domains that need the right have it whatever the boolean says.
 ; Write and run the CNI plugins in /opt/cni/bin, the way CNI installers do.
 (boolean pod_write_cni_plugins true)
 ; Read and write the network filesystems (NFS, CIFS) mounted as volumes.
 (boolean pod_use_network_fs true)
 ; Open perf events and pin eBPF objects in bpffs.
 (boolean pod_use_ebpf true)
+
+; CNI installers copy their plugins, and `install` also runs them.
+(macro pod_cni_plugins_right ((type ARG1))
+    (allow ARG1 cni_plugin_t (fs_classes (rw)))
+    (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
+)
+
+; Network filesystems are labeled network_fs_t by genfscon. The filesystem and the mount options still enforce read-only
+; and Unix-level access controls.
+(macro pod_network_fs_right ((type ARG1))
+    (allow ARG1 network_fs_t (fs_classes (rw)))
+)
+
+(macro pod_ebpf_right ((type ARG1))
+    (allow ARG1 self (perf_event (all)))
+    (allow ARG1 bpf_t (fs_classes (rw)))
+)
 
 ; What every pod domain shares: it is a workload, entered from the rootfs of its container.
 (macro pod_workload ((type ARG1))
@@ -70,26 +87,9 @@
 ; The rights of a regular pod, which the booleans narrow: pod_t is built on this macro.
 (macro pod_domain ((type ARG1))
     (call pod_workload (ARG1))
-    ; Network filesystems are labeled network_fs_t by genfscon. The filesystem and the mount options still enforce
-    ; read-only and Unix-level access controls.
-    (booleanif pod_use_network_fs
-        (true
-            (allow ARG1 network_fs_t (fs_classes (rw)))
-        )
-    )
-    ; CNI installers copy their plugins, and `install` also runs them
-    (booleanif pod_write_cni_plugins
-        (true
-            (allow ARG1 cni_plugin_t (fs_classes (rw)))
-            (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
-        )
-    )
-    (booleanif pod_use_ebpf
-        (true
-            (allow ARG1 self (perf_event (all)))
-            (allow ARG1 bpf_t (fs_classes (rw)))
-        )
-    )
+    (booleanif pod_write_cni_plugins (true (call pod_cni_plugins_right (ARG1))))
+    (booleanif pod_use_network_fs (true (call pod_network_fs_right (ARG1))))
+    (booleanif pod_use_ebpf (true (call pod_ebpf_right (ARG1))))
 )
 
 (typeattribute privileged_readable_f)
@@ -109,10 +109,8 @@
 ; Network rights: the CNI plugins a CNI agent installs and runs, perf events, bpffs, and the BPF programs runc attaches
 ; to the cgroups of containers, which Cilium reads.
 (macro pod_network_rights ((type ARG1))
-    (allow ARG1 cni_plugin_t (fs_classes (rw)))
-    (allow ARG1 cni_plugin_t (file (execute execute_no_trans)))
-    (allow ARG1 self (perf_event (all)))
-    (allow ARG1 bpf_t (fs_classes (rw)))
+    (call pod_cni_plugins_right (ARG1))
+    (call pod_ebpf_right (ARG1))
     (allow ARG1 pod_containerd_t (bpf (prog_run)))
     (allow ARG1 sys_containerd_t (bpf (prog_run)))
 )
@@ -122,7 +120,7 @@
 ; fabrics controllers and multipath), and xfs_growfs on the staged mount of a volume, whose root is unlabeled until the
 ; CRI labels it for a pod. Physical disks and the rest of sysfs stay read-only.
 (macro pod_storage_rights ((type ARG1))
-    (allow ARG1 network_fs_t (fs_classes (rw)))
+    (call pod_network_fs_right (ARG1))
     (allow ARG1 kernel_t (system (ipc_info)))
     (allow ARG1 self (io_uring (allowed sqpoll)))
     (allow ARG1 common_device_f (io_uring (cmd)))
@@ -162,9 +160,17 @@
     (allow ARG1 bpf_t (fs_classes (ro)))
 )
 
-; Domains a pod selects with seLinuxOptions.type, for the roles that would otherwise run privileged. A CNI agent or a
-; CSI node plugin gets the host access of a privileged container and the rights of its role, without `privileged: true`
-; and its devices and capabilities.
+; Domains a pod or a container selects with seLinuxOptions.type. pod_netfs_t and pod_ebpf_t are regular pods that keep
+; one right whatever its boolean says, for the workloads that need it once the boolean takes it from the other pods: no
+; host access, and the MCS categories still apply. The other domains are for the roles that would otherwise run
+; privileged: a CNI agent or a CSI node plugin gets the host access of a privileged container and the rights of its
+; role, without `privileged: true` and its devices and capabilities.
+(type pod_netfs_t)
+(call pod_domain (pod_netfs_t))
+(call pod_network_fs_right (pod_netfs_t))
+(type pod_ebpf_t)
+(call pod_domain (pod_ebpf_t))
+(call pod_ebpf_right (pod_ebpf_t))
 (type pod_hostmon_t)
 (call pod_hostmon_domain (pod_hostmon_t))
 (type pod_cni_t)

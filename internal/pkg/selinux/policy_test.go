@@ -27,6 +27,19 @@ func TestPolicy(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, sources)
 
+	// compile compiles the policy sources with the test statements and returns the output of secilc.
+	compile := func(t *testing.T, statements string) (string, error) {
+		dir := t.TempDir()
+		module := filepath.Join(dir, "test.cil")
+
+		require.NoError(t, os.WriteFile(module, []byte(statements), 0o644))
+
+		cmd := exec.CommandContext(t.Context(), secilc, append([]string{"-c", "33", "-O", "-o", filepath.Join(dir, "policy.33"), "-f", filepath.Join(dir, "file_contexts")}, append(sources, module)...)...)
+		output, err := cmd.CombinedOutput()
+
+		return string(output), err
+	}
+
 	for _, test := range []struct {
 		name, statements, wantErr string
 	}{
@@ -68,21 +81,12 @@ func TestPolicy(t *testing.T) {
 			"neverallow check failed",
 		},
 		{
-			"each role domain has the rights of its role only, and the process monitor writes no log",
+			"each domain has the rights of its role only, and the process monitor writes no log",
 			"(neverallow pod_cni_t network_fs_t (file (write)))\n(neverallow pod_cni_t kernel_t (system (ipc_info)))\n" +
 				"(neverallow pod_csi_t cni_plugin_t (file (write)))\n(neverallow pod_csi_t bpf_t (file (write)))\n" +
+				"(neverallow pod_netfs_t init_t (file (read)))\n(neverallow pod_ebpf_t init_t (file (read)))\n" +
 				"(neverallow pod_hostmon_t log_f (file (write append)))\n",
 			"",
-		},
-		{
-			"a privileged container keeps the network filesystems of the CSI node plugin",
-			"(neverallow pod_privileged_t network_fs_t (file (write)))\n",
-			"neverallow check failed",
-		},
-		{
-			"a privileged container keeps the CNI plugins of the CNI agent",
-			"(neverallow pod_privileged_t cni_plugin_t (file (write)))\n",
-			"neverallow check failed",
 		},
 		{
 			"the CRI relabels a volume formatted without labels",
@@ -107,20 +111,33 @@ func TestPolicy(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			dir := t.TempDir()
-			module := filepath.Join(dir, "test.cil")
-
-			require.NoError(t, os.WriteFile(module, []byte(test.statements), 0o644))
-
-			cmd := exec.CommandContext(t.Context(), secilc, append([]string{"-c", "33", "-O", "-o", filepath.Join(dir, "policy.33"), "-f", filepath.Join(dir, "file_contexts")}, append(sources, module)...)...)
-			output, err := cmd.CombinedOutput()
+			output, err := compile(t, test.statements)
 
 			if test.wantErr == "" {
-				require.NoError(t, err, string(output))
+				require.NoError(t, err, output)
 			} else {
 				require.Error(t, err)
-				require.Contains(t, string(output), test.wantErr)
+				require.Contains(t, output, test.wantErr)
 			}
 		})
+	}
+
+	// The domains that need the right of a boolean keep it whatever the boolean says: secilc traces such a rule through
+	// calls only, and a rule a boolean grants through a booleanif.
+	for domain, rights := range map[string][]string{
+		"pod_cni_t":        {"cni_plugin_t", "bpf_t"},
+		"pod_csi_t":        {"network_fs_t"},
+		"pod_netfs_t":      {"network_fs_t"},
+		"pod_ebpf_t":       {"bpf_t"},
+		"pod_privileged_t": {"cni_plugin_t", "network_fs_t", "bpf_t"},
+	} {
+		for _, right := range rights {
+			t.Run(domain+" writes "+right+" whatever the booleans say", func(t *testing.T) {
+				output, err := compile(t, "(neverallow "+domain+" "+right+" (file (write)))\n")
+
+				require.Error(t, err)
+				require.Regexp(t, `<root>\n(\s+call at .+\n)+\s+allow at`, output)
+			})
+		}
 	}
 }

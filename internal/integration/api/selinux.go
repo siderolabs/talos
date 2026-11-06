@@ -402,7 +402,7 @@ func (suite *SELinuxSuite) denials(node, subject string) int {
 var kubeletPluginDirs = []string{"/var/lib/kubelet/plugins", "/var/lib/kubelet/plugins_registry", "/var/lib/kubelet/device-plugins"}
 
 // podDomains are the workload domains of the base policy.
-var podDomains = []string{"pod_t", "pod_privileged_t", "pod_hostmon_t", "pod_cni_t", "pod_csi_t"}
+var podDomains = []string{"pod_t", "pod_privileged_t", "pod_netfs_t", "pod_ebpf_t", "pod_hostmon_t", "pod_cni_t", "pod_csi_t"}
 
 // selinuxCategories reports whether the node labels workloads with MCS categories.
 func (suite *SELinuxSuite) selinuxCategories(nodeCtx context.Context) bool {
@@ -507,6 +507,8 @@ func (suite *SELinuxSuite) TestPodDomains() {
 	}{
 		{name: "selinux-pod", label: `^system_u:system_r:pod_t:s0:c\d+,c\d+$`},
 		{name: "selinux-privileged", privileged: true, label: `^system_u:system_r:pod_privileged_t:s0$`},
+		{name: "selinux-netfs", options: &corev1.SELinuxOptions{Type: "pod_netfs_t"}, label: `^system_u:system_r:pod_netfs_t:s0:c\d+,c\d+$`},
+		{name: "selinux-ebpf", options: &corev1.SELinuxOptions{Type: "pod_ebpf_t"}, label: `^system_u:system_r:pod_ebpf_t:s0:c\d+,c\d+$`},
 		{name: "selinux-hostmon", options: &corev1.SELinuxOptions{Type: "pod_hostmon_t"}, label: `^system_u:system_r:pod_hostmon_t:s0:c\d+,c\d+$`},
 		{name: "selinux-cni", options: &corev1.SELinuxOptions{Type: "pod_cni_t"}, label: `^system_u:system_r:pod_cni_t:s0:c\d+,c\d+$`},
 		{name: "selinux-csi", options: &corev1.SELinuxOptions{Type: "pod_csi_t"}, label: `^system_u:system_r:pod_csi_t:s0:c\d+,c\d+$`},
@@ -900,49 +902,67 @@ func init() {
 	allSuites = append(allSuites, new(SELinuxSuite))
 }
 
-// TestSELinuxBooleans sets a boolean in the machine config: with pod_write_cni_plugins on, a regular pod writes the CNI
-// plugins directory, off, it is denied and the denial audited, while the CNI agent domain still writes it.
+// TestSELinuxBooleans sets booleans in the machine config: with pod_write_cni_plugins and pod_use_ebpf on, a regular pod
+// writes the CNI plugins directory and bpffs, off, it is denied and the denials audited, while the domain that needs each
+// right still writes it.
 func (suite *SELinuxSuite) TestSELinuxBooleans() {
 	ip, node := suite.labelingNode(true)
 	nodeCtx := client.WithNode(suite.ctx, ip)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), "pod_write_cni_plugins",
-		func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
-			asrt.Equal(runtimeres.SELinuxBooleanStatusSpec{Value: true, Default: true}, *status.TypedSpec())
-		})
+	booleans := []struct{ name, domain, path string }{
+		{"pod_write_cni_plugins", "pod_cni_t", "/opt/cni/bin"},
+		{"pod_use_ebpf", "pod_ebpf_t", "/sys/fs/bpf"},
+	}
 
-	write := func(domain string) (string, string, error) {
+	assertBoolean := func(name string, want runtimeres.SELinuxBooleanStatusSpec) {
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
+			func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
+				asrt.Equal(want, *status.TypedSpec())
+			})
+	}
+
+	write := func(domain, path string) (string, string, error) {
 		podDef, err := suite.NewPod("selinux-boolean-" + strings.ReplaceAll(domain, "_", "-"))
 		suite.Require().NoError(err)
 
-		podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostVolumeMount("/opt/cni/bin", "/cni").
+		podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostVolumeMount(path, "/host").
 			WithSELinuxOptions(&corev1.SELinuxOptions{Type: domain})
 
-		return suite.exec(podDef, "touch /cni/.selinux-boolean-"+podDef.Name()+" && rm /cni/.selinux-boolean-"+podDef.Name()+" && echo written")
+		// a directory, since bpffs creates files only by pinning, and no dot in its name, which bpffs refuses
+		dir := "/host/selinux-boolean-" + podDef.Name()
+
+		return suite.exec(podDef, "mkdir "+dir+" && rmdir "+dir+" && echo written")
 	}
 
-	stdout, stderr, err := write("pod_t")
-	suite.Require().NoError(err, stderr)
-	suite.Assert().Equal("written\n", stdout)
+	off := map[string]bool{}
 
-	suite.setSELinuxBooleans(nodeCtx, map[string]bool{"pod_write_cni_plugins": false})
+	for _, boolean := range booleans {
+		assertBoolean(boolean.name, runtimeres.SELinuxBooleanStatusSpec{Value: true, Default: true})
+
+		stdout, stderr, err := write("pod_t", boolean.path)
+		suite.Require().NoError(err, stderr)
+		suite.Assert().Equal("written\n", stdout, boolean.path)
+
+		off[boolean.name] = false
+	}
+
+	suite.setSELinuxBooleans(nodeCtx, off)
 
 	defer suite.setSELinuxBooleans(nodeCtx, nil)
 
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), "pod_write_cni_plugins",
-		func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
-			asrt.Equal(runtimeres.SELinuxBooleanStatusSpec{Value: false, Default: true, Configured: true}, *status.TypedSpec())
-		})
+	for _, boolean := range booleans {
+		assertBoolean(boolean.name, runtimeres.SELinuxBooleanStatusSpec{Value: false, Default: true, Configured: true})
 
-	before := suite.denials(ip, "pod_t")
+		before := suite.denials(ip, "pod_t")
 
-	stdout, _, _ = write("pod_t") //nolint:errcheck
-	suite.Assert().Empty(stdout)
-	suite.Assert().Greater(suite.denials(ip, "pod_t"), before)
+		stdout, _, _ := write("pod_t", boolean.path) //nolint:errcheck
+		suite.Assert().Empty(stdout, boolean.path)
+		suite.Assert().Greater(suite.denials(ip, "pod_t"), before, boolean.path)
 
-	stdout, stderr, err = write("pod_cni_t")
-	suite.Require().NoError(err, stderr)
-	suite.Assert().Equal("written\n", stdout)
+		stdout, stderr, err := write(boolean.domain, boolean.path)
+		suite.Require().NoError(err, stderr)
+		suite.Assert().Equal("written\n", stdout, boolean.domain)
+	}
 }
 
 // setSELinuxBooleans sets the selinuxBooleans of the SecurityProfileConfig document of the node, nil removes them.
