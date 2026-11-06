@@ -14,8 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -44,24 +42,16 @@ const awsInterfaceName = "eth0"
 const awsIPv6DNSServer = "fd00:ec2::253"
 
 // AWS is the concrete type that implements the runtime.Platform interface.
-type AWS struct {
-	cfg aws.Config
-}
-
-// NewAWS initializes AWS platform.
 //
 // The IMDS client is built lazily on first use because the IMDS endpoint
 // (IPv4 vs IPv6) can only be determined once the network is reachable —
 // AWS supports IPv4-only, IPv6-only, and dual-stack instances and the SDK
 // will not auto-fall back between the two endpoints.
-func NewAWS() (*AWS, error) {
-	cfg, err := config.LoadDefaultConfig(context.TODO())
-	if err != nil {
-		return nil, fmt.Errorf("error initializing AWS default config: %w", err)
-	}
-
-	return &AWS{cfg: cfg}, nil
-}
+//
+// The client is created with [imds.New] rather than from the SDK default config:
+// IMDS doesn't need credentials, and loading the default config links in the whole
+// credential provider chain (SSO, STS, shared config parsing) for nothing.
+type AWS struct{}
 
 // buildIMDSClient picks an IMDS endpoint that responds (IPv4 or IPv6) and
 // returns a client bound to it. It races a probe against both endpoints and
@@ -114,8 +104,8 @@ func (a *AWS) probeIMDS(ctx context.Context) (*imds.Client, error) {
 	ch := make(chan result, len(candidates))
 
 	for _, c := range candidates {
-		client := imds.NewFromConfig(a.cfg, func(o *imds.Options) {
-			o.EndpointMode = c.mode
+		client := imds.New(imds.Options{
+			EndpointMode: c.mode,
 		})
 
 		go func(client *imds.Client, name string) {
