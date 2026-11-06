@@ -9,6 +9,7 @@ import (
 	"iter"
 	"maps"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -148,14 +149,29 @@ type OOMConfig interface {
 // DefaultOOMConfig provides default OOM configuration values.
 type DefaultOOMConfig struct{}
 
-// TriggerExpression implements OOMConfig interface, returning the default OOM trigger expression.
-func (DefaultOOMConfig) TriggerExpression() cel.Expression {
+// defaultOOMTriggerExpression is parsed once, so that the parsed expression (and its compiled program) is shared.
+var defaultOOMTriggerExpression = sync.OnceValue(func() cel.Expression {
 	return cel.MustExpression(
 		cel.ParseBooleanExpression(
 			constants.DefaultOOMTriggerExpression,
 			celenv.OOMTrigger(),
 		),
 	)
+})
+
+// defaultOOMCgroupRankingExpression is parsed once, so that the parsed expression (and its compiled program) is shared.
+var defaultOOMCgroupRankingExpression = sync.OnceValue(func() cel.Expression {
+	return cel.MustExpression(
+		cel.ParseDoubleExpression(
+			constants.DefaultOOMCgroupRankingExpression,
+			celenv.OOMCgroupScoring(),
+		),
+	)
+})
+
+// TriggerExpression implements OOMConfig interface, returning the default OOM trigger expression.
+func (DefaultOOMConfig) TriggerExpression() cel.Expression {
+	return defaultOOMTriggerExpression()
 }
 
 // CgroupRankingExpression implements OOMConfig interface, returning the default cgroup ranking expression.
@@ -179,12 +195,7 @@ func (DefaultOOMConfig) TriggerExpression() cel.Expression {
 //
 // Sort to make the most prioritized to OOM-kill cgroup to the first place.
 func (DefaultOOMConfig) CgroupRankingExpression() cel.Expression {
-	return cel.MustExpression(
-		cel.ParseDoubleExpression(
-			constants.DefaultOOMCgroupRankingExpression,
-			celenv.OOMCgroupScoring(),
-		),
-	)
+	return defaultOOMCgroupRankingExpression()
 }
 
 // StrictCgroupClassOrdering implements OOMConfig interface, returning the default value for strict cgroup class ordering.

@@ -5,6 +5,9 @@
 package oom_test
 
 import (
+	"maps"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -808,18 +811,49 @@ func TestPopulatePsiToCtx(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := map[string]any{}
+			sampler := oom.NewSampler(test.dir)
 
-			err := oom.PopulatePsiToCtx(test.dir, ctx, make(map[string]float64), 500*time.Millisecond)
+			err := sampler.Sample(500 * time.Millisecond)
 
 			if test.expectErr == "" {
 				require.NoError(t, err)
-				assert.Equal(t, test.expect, ctx)
+				assert.Equal(t, test.expect, sampler.EvalContext())
 			} else {
 				assert.ErrorContains(t, err, test.expectErr)
 			}
 		})
 	}
+}
+
+// sampleAfterZeroInitPSI samples the cgroups from the fixture dir, after a previous sample in which the init cgroup PSI was zero.
+//
+// The fixture is copied, so that the init cgroup PSI can be zeroed for the previous sample.
+func sampleAfterZeroInitPSI(t *testing.T, dir string) (*oom.Sampler, error) {
+	t.Helper()
+
+	root := t.TempDir()
+
+	if _, err := os.Stat(dir); err == nil {
+		require.NoError(t, os.CopyFS(root, os.DirFS(dir)))
+	}
+
+	sampler := oom.NewSampler(root)
+	t.Cleanup(sampler.Close)
+
+	initPressure := filepath.Join(root, constants.CgroupInit, "memory.pressure")
+
+	if contents, err := os.ReadFile(initPressure); err == nil {
+		require.NoError(t, os.WriteFile(initPressure, []byte(
+			"some avg10=0.00 avg60=0.00 avg300=0.00 total=0\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n",
+		), 0o644))
+
+		// the error (for the broken fixtures) is reported by the next sample
+		sampler.Sample(500 * time.Millisecond) //nolint:errcheck
+
+		require.NoError(t, os.WriteFile(initPressure, contents, 0o644))
+	}
+
+	return sampler, sampler.Sample(500 * time.Millisecond)
 }
 
 func TestEvaluateTrigger(t *testing.T) {
@@ -909,23 +943,15 @@ func TestEvaluateTrigger(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := oom.PopulatePsiToCtx(test.dir, test.ctx, map[string]float64{
-				"memory_full_avg10":  0,
-				"memory_full_avg300": 0,
-				"memory_full_avg60":  0,
-				"memory_full_total":  0,
-				"memory_some_avg10":  0,
-				"memory_some_avg300": 0,
-				"memory_some_avg60":  0,
-				"memory_some_total":  0,
-
-				"init/memory_full_total": 0,
-			}, 500*time.Millisecond)
+			sampler, err := sampleAfterZeroInitPSI(t, test.dir)
 
 			if test.expectErr == "" {
 				require.NoError(t, err)
 
-				trigger, err := oom.EvaluateTrigger(test.triggerExpr, test.ctx)
+				evalContext := sampler.EvalContext()
+				maps.Copy(evalContext, test.ctx)
+
+				trigger, err := oom.EvaluateTrigger(test.triggerExpr, evalContext)
 
 				assert.Equal(t, test.expect, trigger)
 

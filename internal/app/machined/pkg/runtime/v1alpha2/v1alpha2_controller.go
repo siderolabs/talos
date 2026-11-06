@@ -327,9 +327,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			EtcRoot: etcRoot,
 		},
 		&files.EtcFileConfigController{},
-		&files.EtcFileController{
-			EtcRoot: etcRoot,
-		},
 		&files.IQNController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
@@ -654,6 +651,16 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 	} {
 		if err := ctrl.controllerRuntime.RegisterController(ctrltrace.WrapController(c)); err != nil {
+			return err
+		}
+	}
+
+	for _, c := range []controller.QController{
+		&files.EtcFileController{
+			EtcRoot: etcRoot,
+		},
+	} {
+		if err := ctrl.controllerRuntime.RegisterQController(c); err != nil {
 			return err
 		}
 	}

@@ -7,6 +7,7 @@ package v1alpha2
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -44,14 +45,9 @@ func setupUdevWritablePaths(udevPath string, logger *zap.Logger) (func() error, 
 
 	sourcePath := filepath.Join(udevPath, hwdbFilename)
 
-	contents, err := os.ReadFile(sourcePath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read %q: %w", sourcePath, err)
-	}
-
 	hwdbRoot := point.Root()
 
-	if err = xfs.WriteFile(hwdbRoot, hwdbFilename, contents, 0o640); err != nil {
+	if err = copyHWDB(sourcePath, hwdbRoot); err != nil {
 		return nil, fmt.Errorf("failed to seed udev hwdb: %w", err)
 	}
 
@@ -73,4 +69,25 @@ func setupUdevWritablePaths(udevPath string, logger *zap.Logger) (func() error, 
 	}
 
 	return unmount, nil
+}
+
+// copyHWDB copies the hwdb file into the root.
+//
+// The hwdb file is quite large (~10 MiB), so copy it without reading it into memory.
+func copyHWDB(sourcePath string, root xfs.Root) error {
+	src, err := os.Open(sourcePath)
+	if err != nil {
+		return fmt.Errorf("failed to open %q: %w", sourcePath, err)
+	}
+
+	defer src.Close() //nolint:errcheck
+
+	dst, err := root.OpenFile(hwdbFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o640)
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(dst, src)
+
+	return errors.Join(err, dst.Close())
 }

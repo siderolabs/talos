@@ -50,6 +50,58 @@ func (suite *EtcFileSuite) TestFiles() {
 	rtestutils.Destroy[*files.EtcFileSpec](suite.Ctx(), suite.T(), suite.State(), []string{etcFileSpec.Metadata().ID()})
 }
 
+func (suite *EtcFileSuite) TestUpdate() {
+	specs := make([]*files.EtcFileSpec, 0, 2)
+
+	for _, id := range []string{"update1", "update2"} {
+		spec := files.NewEtcFileSpec(files.NamespaceName, id)
+		spec.TypedSpec().Contents = []byte(id)
+		spec.TypedSpec().Mode = 0o644
+
+		suite.Create(spec)
+
+		specs = append(specs, spec)
+	}
+
+	assertFile := func(id, contents string) {
+		ctest.AssertResource(suite, id, func(r *files.EtcFileStatus, asrt *assert.Assertions) {
+			spec, err := suite.State().Get(suite.Ctx(), files.NewEtcFileSpec(files.NamespaceName, id).Metadata())
+			asrt.NoError(err)
+
+			// consumers (e.g. WaitForCARoots) wait for the status to match the latest spec version
+			asrt.Equal(spec.Metadata().Version().String(), r.TypedSpec().SpecVersion)
+
+			rwb, err := xfs.ReadFile(suite.etcRoot, id)
+			asrt.NoError(err)
+			asrt.Equal(contents, string(rwb))
+		})
+	}
+
+	assertFile("update1", "update1")
+	assertFile("update2", "update2")
+
+	ctest.UpdateWithConflicts(suite, specs[0], func(spec *files.EtcFileSpec) error {
+		spec.TypedSpec().Contents = []byte("updated")
+
+		return nil
+	})
+
+	assertFile("update1", "updated")
+	assertFile("update2", "update2")
+
+	// destroying the spec removes the file and the status
+	rtestutils.Destroy[*files.EtcFileSpec](suite.Ctx(), suite.T(), suite.State(), []string{"update1"})
+
+	ctest.AssertNoResource[*files.EtcFileStatus](suite, "update1")
+
+	_, err := xfs.Stat(suite.etcRoot, "update1")
+	suite.Assert().ErrorIs(err, os.ErrNotExist)
+
+	assertFile("update2", "update2")
+
+	rtestutils.Destroy[*files.EtcFileSpec](suite.Ctx(), suite.T(), suite.State(), []string{"update2"})
+}
+
 func TestEtcFileSuite(t *testing.T) {
 	t.Parallel()
 
@@ -72,7 +124,7 @@ func TestEtcFileSuite(t *testing.T) {
 
 			s.Require().NoError(etcSuite.etcRoot.OpenFS())
 
-			s.Require().NoError(s.Runtime().RegisterController(&filesctrl.EtcFileController{
+			s.Require().NoError(s.Runtime().RegisterQController(&filesctrl.EtcFileController{
 				EtcRoot: etcSuite.etcRoot,
 			}))
 		},

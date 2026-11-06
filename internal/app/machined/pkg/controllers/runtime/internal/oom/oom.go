@@ -11,7 +11,6 @@ import (
 	"math"
 	"os"
 	"path/filepath"
-	"time"
 
 	"cel.dev/cel-go/common/types"
 	"go.uber.org/zap"
@@ -38,54 +37,6 @@ var qosClasses = []runtime.QoSCgroupClass{
 	runtime.QoSCgroupClassGuaranteed,
 	runtime.QoSCgroupClassPodruntime,
 	runtime.QoSCgroupClassSystem,
-}
-
-// guaranteedCgroups lists the cgroup paths (relative to root) of Guaranteed QoS pods.
-//
-// The kubelet places Guaranteed pods directly under the kubepods cgroup, next to the
-// besteffort/burstable class cgroups (which are excluded here), rather than in a
-// dedicated "guaranteed" sub-cgroup.
-func guaranteedCgroups(root string) []string {
-	entries, err := os.ReadDir(filepath.Join(root, constants.CgroupKubepods))
-	if err != nil {
-		return nil
-	}
-
-	var paths []string
-
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		if entry.Name() == cgroupBesteffort || entry.Name() == cgroupBurstable {
-			continue
-		}
-
-		paths = append(paths, filepath.Join(constants.CgroupKubepods, entry.Name()))
-	}
-
-	return paths
-}
-
-// qosMap returns the per-class map stored under key in evalContext, creating it
-// (pre-seeded with all QoS classes set to zero) if it doesn't exist yet.
-//
-// Pre-seeding keeps every QoS class present in the eval context even when no cgroup
-// of that class currently exists (e.g. no Guaranteed pods scheduled).
-func qosMap(evalContext map[string]any, key string) map[int]float64 {
-	if v, ok := evalContext[key]; ok {
-		return v.(map[int]float64)
-	}
-
-	m := make(map[int]float64, len(qosClasses))
-	for _, class := range qosClasses {
-		m[int(class)] = 0
-	}
-
-	evalContext[key] = m
-
-	return m
 }
 
 // RankedCgroup contains information about a cgroup used for OOM handling.
@@ -130,128 +81,6 @@ func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any) (bo
 	}
 
 	return trigger, nil
-}
-
-// PopulatePsiToCtx populates the context with PSI data from a cgroup.
-//
-//nolint:gocyclo
-func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[string]float64, sampleInterval time.Duration) error {
-	if sampleInterval <= 0 {
-		return fmt.Errorf("sample interval must be greater than zero")
-	}
-
-	type subtree struct {
-		path string
-		qos  runtime.QoSCgroupClass
-	}
-
-	subtrees := []subtree{
-		{"", -1},
-		{constants.CgroupInit, runtime.QoSCgroupClassSystem},
-		{constants.CgroupSystem, runtime.QoSCgroupClassSystem},
-		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime},
-		{constants.CgroupKubepods + "/" + cgroupBesteffort, runtime.QoSCgroupClassBesteffort},
-		{constants.CgroupKubepods + "/" + cgroupBurstable, runtime.QoSCgroupClassBurstable},
-	}
-
-	// Guaranteed pods live directly under the kubepods cgroup (there is no dedicated
-	// "guaranteed" QoS cgroup), so aggregate the class metrics by summing over each
-	// Guaranteed pod cgroup.
-	for _, path := range guaranteedCgroups(cgroup) {
-		subtrees = append(subtrees, subtree{path, runtime.QoSCgroupClassGuaranteed})
-	}
-
-	for _, subtree := range subtrees {
-		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree.path), "memory.pressure")
-
-		for _, psiType := range []string{"some", "full"} {
-			for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
-				value := 0.
-
-				// Default non-existent cgroups to all-zero, e.g. during system boot
-				if err == nil {
-					value, err = extractPsiEntry(node, psiType, span)
-					if err != nil {
-						return err
-					}
-				}
-
-				// calculate delta
-				psiPath := subtree.path + "/" + "memory_" + psiType + "_" + span
-
-				diff := 0.
-				if oldValue, ok := oldValues[psiPath]; ok {
-					diff = (value - oldValue) / sampleInterval.Seconds()
-				}
-
-				oldValues[psiPath] = value
-
-				if subtree.qos == -1 {
-					evalContext["d_memory_"+psiType+"_"+span] = diff
-					evalContext["memory_"+psiType+"_"+span] = value
-				} else {
-					qosMap(evalContext, "qos_memory_"+psiType+"_"+span)[int(subtree.qos)] += value
-					qosMap(evalContext, "d_qos_memory_"+psiType+"_"+span)[int(subtree.qos)] += diff
-				}
-			}
-		}
-
-		node = &cgroups.Node{}
-		// Best effort, if any is not present it will return NaN
-		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.current") //nolint:errcheck
-		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.max")     //nolint:errcheck
-		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.peak")    //nolint:errcheck
-
-		if subtree.qos == -1 {
-			continue
-		}
-
-		for _, parameter := range []struct {
-			name  string
-			value float64
-		}{
-			{"current", node.MemoryCurrent.Float64()},
-			{"max", node.MemoryMax.Float64()},
-			{"peak", node.MemoryPeak.Float64()},
-		} {
-			value := parameter.value
-			// These values cannot be expressed in JSON
-			if math.IsNaN(value) || math.IsInf(value, 0) {
-				value = 0.0
-			}
-
-			qosMap(evalContext, "qos_memory_"+parameter.name)[int(subtree.qos)] += value
-
-			oldPath := subtree.path + "/" + "memory_" + parameter.name
-
-			diff := 0.
-			if oldValue, ok := oldValues[oldPath]; ok {
-				diff = (value - oldValue) / sampleInterval.Seconds()
-			}
-
-			qosMap(evalContext, "d_qos_memory_"+parameter.name)[int(subtree.qos)] += diff
-		}
-	}
-
-	return nil
-}
-
-func extractPsiEntry(node *cgroups.Node, psiType string, span string) (float64, error) {
-	spans, ok := node.MemoryPressure[psiType]
-	if !ok {
-		return 0, fmt.Errorf("cannot find memory pressure type: type: %s", psiType)
-	}
-
-	cgValue, ok := spans[span]
-	if !ok {
-		return 0, fmt.Errorf("cannot find memory pressure span: span: %s", span)
-	}
-
-	if !cgValue.IsSet || cgValue.IsMax {
-		return 0, fmt.Errorf("PSI is not defined")
-	}
-
-	return cgValue.Float64(), nil
 }
 
 // RankCgroups ranks cgroups using a scoring expression and returns a map.
