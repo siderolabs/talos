@@ -18,5 +18,4 @@ const (
 	VolumeTypeSymlink                     // symlink
 	VolumeTypeOverlay                     // overlay
 	VolumeTypeExternal                    // external
-	VolumeTypeMemory                      // memory
 )

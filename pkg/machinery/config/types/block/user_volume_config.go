@@ -302,7 +302,7 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		warnings = append(warnings, extraWarnings...)
 		validationErrors = errors.Join(validationErrors, extraErrors)
 
-	case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal, block.VolumeTypeMemory:
+	case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 		fallthrough
 
 	default:

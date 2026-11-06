@@ -336,9 +336,6 @@ func (ctrl *MountController) handleMountOperation(
 		return ctrl.handleSymlinkMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
 
 	case block.VolumeTypeTmpfs:
-		return fmt.Errorf("not implemented yet")
-
-	case block.VolumeTypeMemory:
 		return ctrl.handleMemoryMountOperation(logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
 
 	case block.VolumeTypeExternal:
@@ -1232,9 +1229,6 @@ func (ctrl *MountController) handleUnmountOperation(
 		return ctrl.handleDirectoryUnmountOperation(logger, mountRequest, volumeStatus)
 
 	case block.VolumeTypeTmpfs:
-		return fmt.Errorf("not implemented yet")
-
-	case block.VolumeTypeMemory:
 		return ctrl.handleMemoryUnmountOperation(logger, mountRequest, volumeStatus)
 
 	case block.VolumeTypeExternal:

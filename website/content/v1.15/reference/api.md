@@ -5925,7 +5925,6 @@ BlockVolumeType describes volume type.
 | VOLUME_TYPE_SYMLINK | 4 |  |
 | VOLUME_TYPE_OVERLAY | 5 |  |
 | VOLUME_TYPE_EXTERNAL | 6 |  |
-| VOLUME_TYPE_MEMORY | 7 |  |
 
 
 

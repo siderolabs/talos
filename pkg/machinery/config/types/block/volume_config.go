@@ -284,10 +284,10 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 			validationErrors = errors.Join(validationErrors, err)
 		}
 
-	case block.VolumeTypeMemory:
-		validationErrors = errors.Join(validationErrors, s.validateMemoryVolume(vtype))
+	case block.VolumeTypeTmpfs:
+		validationErrors = errors.Join(validationErrors, s.validateTmpfsVolume(vtype))
 
-	case block.VolumeTypeDisk, block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+	case block.VolumeTypeDisk, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 		fallthrough
 	default:
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("unsupported volume type %q", vtype))
@@ -348,8 +348,8 @@ func (s *VolumeConfigV1Alpha1) validateVolumeConstraints() error {
 	return validationErrors
 }
 
-// validateMemoryVolume validates the constraints specific to memory (tmpfs) volumes.
-func (s *VolumeConfigV1Alpha1) validateMemoryVolume(vtype block.VolumeType) error {
+// validateTmpfsVolume validates the constraints specific to memory (tmpfs) volumes.
+func (s *VolumeConfigV1Alpha1) validateTmpfsVolume(vtype block.VolumeType) error {
 	var validationErrors error
 
 	// encryption is meaningless for a tmpfs-backed STATE.

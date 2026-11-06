@@ -112,9 +112,9 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 
 				q := quirks.New("")
 
-				if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeMemory {
+				if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeTmpfs {
 					return NewBuilder().
-						WithType(block.VolumeTypeMemory).
+						WithType(block.VolumeTypeTmpfs).
 						WithMount(block.MountSpec{
 							TargetPath:   constants.EphemeralMountPoint,
 							SelinuxLabel: constants.EphemeralSelinuxLabel,
@@ -276,9 +276,9 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 	return func(vc *block.VolumeConfig) error {
 		extraVolumeConfig, _ := cfg.Volumes().ByName(constants.StatePartitionLabel)
 
-		if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeMemory {
+		if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeTmpfs {
 			return NewBuilder().
-				WithType(block.VolumeTypeMemory).
+				WithType(block.VolumeTypeTmpfs).
 				WithMount(block.MountSpec{
 					TargetPath:   constants.StateMountPoint,
 					SelinuxLabel: constants.StateSelinuxLabel,

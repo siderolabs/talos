@@ -68,12 +68,12 @@ func handleSimpleVolumeTypes(vc ManagerContext) (bool, error) {
 	spec := vc.Cfg.TypedSpec()
 
 	switch spec.Type {
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+	case block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		vc.Status.Phase = block.VolumePhaseReady
 
 		return true, nil
 
-	case block.VolumeTypeMemory:
+	case block.VolumeTypeTmpfs:
 		for _, param := range spec.Mount.Parameters {
 			if param.Name != "size" || param.String == nil {
 				continue
@@ -378,7 +378,7 @@ func applyProvisioning(ctx context.Context, logger *zap.Logger, vc ManagerContex
 		vc.Status.PartitionUUID = partRes.Partition.PartGUID.String()
 		vc.Status.SetSize(partRes.Size)
 
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal, block.VolumeTypeMemory:
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
 		fallthrough
 
 	default:

@@ -454,7 +454,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
@@ -472,7 +472,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 
 				return c
@@ -487,7 +487,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("4GiB")
@@ -504,7 +504,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
 
@@ -528,7 +528,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.EphemeralPartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
 
@@ -542,7 +542,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.StatePartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 
 				return c
@@ -555,7 +555,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				c := block.NewVolumeConfigV1Alpha1()
 				c.MetaName = constants.StatePartitionLabel
 
-				vt := blockres.VolumeTypeMemory
+				vt := blockres.VolumeTypeTmpfs
 				c.VolumeType = &vt
 
 				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
