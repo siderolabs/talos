@@ -27,8 +27,6 @@ import (
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/pull"
@@ -63,19 +61,6 @@ type imageCmdFlagsType struct {
 }
 
 var imageCmdFlags imageCmdFlagsType
-
-func (flags imageCmdFlagsType) apiNamespace() (common.ContainerdNamespace, error) {
-	switch flags.namespace {
-	case "cri":
-		return common.ContainerdNamespace_NS_CRI, nil
-	case "system":
-		return common.ContainerdNamespace_NS_SYSTEM, nil
-	case constants.TalosContainersContainerdNamespace:
-		return common.ContainerdNamespace_NS_TALOSCONTAINERS, nil
-	default:
-		return 0, fmt.Errorf("unsupported namespace %q", flags.namespace)
-	}
-}
 
 func (flags imageCmdFlagsType) containerdInstance() (*common.ContainerdInstance, error) {
 	switch flags.namespace {
@@ -173,11 +158,6 @@ func imageList(ctx context.Context) error {
 
 	for resp := range responseChan {
 		if resp.Err != nil {
-			if status.Code(resp.Err) == codes.Unimplemented {
-				// fallback to legacy API for older Talos
-				return imageListLegacy(ctx, clientFactory)
-			}
-
 			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 
 			continue
@@ -197,47 +177,6 @@ func imageList(ctx context.Context) error {
 			humanize.Bytes(uint64(resp.Payload.GetSize())),
 			helpers.FormatLabels(resp.Payload.GetLabels()),
 			resp.Payload.GetCreatedAt().AsTime().Format(time.RFC3339),
-		)
-	}
-
-	return errors.Join(errs, w.Flush())
-}
-
-// imageListLegacy lists images using the legacy ImageList API.
-//
-// Note: remove me in Talos 1.15.
-func imageListLegacy(ctx context.Context, clientFactory *global.ClientFactory) error {
-	ns, err := imageCmdFlags.apiNamespace()
-	if err != nil {
-		return err
-	}
-
-	responseChan := multiplex.StreamingViaFactory(
-		ctx, clientFactory,
-		func(ctx context.Context, c *client.Client) (machine.MachineService_ImageListClient, error) {
-			return c.ImageList(ctx, ns) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
-		},
-	)
-
-	w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
-
-	var errs error
-
-	for resp := range responseChan {
-		if resp.Err != nil {
-			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-
-			continue
-		}
-
-		safeout.Fprintf(
-			w, "%s\t%s\t%s\t%s\t%s\n",
-			resp.Node,
-			resp.Payload.Name,
-			resp.Payload.Digest,
-			humanize.Bytes(uint64(resp.Payload.Size)),
-			resp.Payload.CreatedAt.AsTime().Format(time.RFC3339),
 		)
 	}
 
@@ -294,20 +233,10 @@ func imagePullInternal(
 	imageRef string,
 	rep *reporter.Reporter,
 ) (map[string]string, error) {
-	nodeImageMap := uniformImageMap(clientFactory.Nodes(), imageRef)
-
-	finishedPulls, err := imagePullPerNode(ctx, clientFactory, containerdInstance, nodeImageMap, rep)
-	if status.Code(err) == codes.Unimplemented {
-		// fallback to legacy API for older Talos
-		return nil, imagePullLegacy(ctx, imageRef)
-	}
-
-	return finishedPulls, err
+	return imagePullPerNode(ctx, clientFactory, containerdInstance, uniformImageMap(clientFactory.Nodes(), imageRef), rep)
 }
 
 // imagePullPerNode pulls nodeImageMap[node] on each node.
-//
-// If any node doesn't support the ImageService API, the codes.Unimplemented error is returned as is.
 func imagePullPerNode(
 	ctx context.Context,
 	clientFactory *global.ClientFactory,
@@ -337,10 +266,6 @@ func imagePullPerNode(
 
 	for resp := range responseChan {
 		if resp.Err != nil {
-			if status.Code(resp.Err) == codes.Unimplemented {
-				return nil, resp.Err
-			}
-
 			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 
 			continue
@@ -375,40 +300,6 @@ func imagePullPerNode(
 	}
 
 	return finishedPulls, errs
-}
-
-// imagePullLegacy pulls an image using the legacy ImagePull API.
-//
-// Note: remove me in Talos 1.15.
-func imagePullLegacy(ctx context.Context, imageRef string) error {
-	clientFactory, err := NewClientFactory(ctx, &imageCmdFlags)
-	if err != nil {
-		return err
-	}
-
-	defer clientFactory.Close() //nolint:errcheck
-
-	ns, err := imageCmdFlags.apiNamespace()
-	if err != nil {
-		return err
-	}
-
-	responseChan := multiplex.UnaryViaFactory(
-		ctx, clientFactory,
-		func(ctx context.Context, c *client.Client) (struct{}, error) {
-			return struct{}{}, c.ImagePull(ctx, ns, imageRef) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
-		},
-	)
-
-	var errs error
-
-	for resp := range responseChan {
-		if resp.Err != nil {
-			errs = errors.Join(errs, fmt.Errorf("error pulling image on node %s: %w", resp.Node, resp.Err))
-		}
-	}
-
-	return errs
 }
 
 // imageImportInternal imports an image from a tarball.

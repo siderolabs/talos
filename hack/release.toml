@@ -416,6 +416,13 @@ The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
 `talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
 """
 
+    [notes.talosctl_legacy_image_api]
+        title = "talosctl Legacy Image APIs"
+        description = """\
+`talosctl image list`, `talosctl image pull` and `talosctl debug` no longer fall back to the legacy `MachineService.ImageList` and `MachineService.ImagePull` APIs.
+They now require the `ImageService` API, which is available in Talos 1.13 and later.
+"""
+
     [notes.seccomp_profile_config]
         title = "SeccompProfileConfig"
         description = """\

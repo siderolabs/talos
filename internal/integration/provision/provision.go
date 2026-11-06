@@ -37,8 +37,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"go.yaml.in/yaml/v4"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -316,10 +314,8 @@ type upgradeOptions struct {
 	TargetVersion        string
 	// Use in-memory containerd: in general we should prefer to use CRI containerd,
 	// but we should use in-memory for 'enforcing' mode due to SELinux restrictions.
-	//
-	// Ignored for legacy upgrade paths (before 1.13).
 	UpgradeUseInmemoryContainerd bool
-	// RebootPowercycle control how the machine is rebooted (only for lifecycle upgrades).
+	// RebootPowercycle control how the machine is rebooted.
 	RebootPowercycle bool
 }
 
@@ -331,29 +327,34 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 
 	nodeCtx := talosclient.WithNode(ctx, node.IPs[0].String())
 
-	if suite.tryUpgradeViaLifecycleService(nodeCtx, client, node, options) {
-		// LifecycleService.Upgrade succeeded — trigger reboot and wait.
-		rebootMode := "kexec"
-
-		var rebootOptions []talosclient.RebootMode
-
-		if options.RebootPowercycle {
-			rebootMode = "powercycle"
-			rebootOptions = []talosclient.RebootMode{talosclient.WithPowerCycle}
-		}
-
-		suite.T().Logf("upgrade via LifecycleService succeeded, rebooting node %s via %s", node.IPs[0], rebootMode)
-
-		suite.rebootNode(nodeCtx, client, rebootOptions)
-		suite.waitForUpgrade(nodeCtx, client, node, options.TargetVersion)
-
-		return
+	containerdInstance := &common.ContainerdInstance{
+		Driver:    common.ContainerDriver_CRI,
+		Namespace: common.ContainerdNamespace_NS_SYSTEM,
 	}
 
-	suite.T().Logf("LifecycleService.Upgrade not available, falling back to legacy MachineService.Upgrade")
+	if options.UpgradeUseInmemoryContainerd {
+		containerdInstance.Driver = common.ContainerDriver_CONTAINERD
+	}
 
-	// Legacy path: MachineService.Upgrade (handles image pull, install, and reboot in one call).
-	suite.upgradeNodeLegacy(nodeCtx, client, options)
+	nodes := []string{node.IPs[0].String()}
+
+	suite.T().Logf("pre-pulling installer image %q on node %s", options.TargetInstallerImage, node.IPs[0])
+
+	suite.pullInstallerImage(nodeCtx, client, containerdInstance, nodes, options.TargetInstallerImage)
+	suite.upgradeViaLifecycleService(nodeCtx, client, containerdInstance, nodes, options.TargetInstallerImage)
+
+	rebootMode := "kexec"
+
+	var rebootOptions []talosclient.RebootMode
+
+	if options.RebootPowercycle {
+		rebootMode = "powercycle"
+		rebootOptions = []talosclient.RebootMode{talosclient.WithPowerCycle}
+	}
+
+	suite.T().Logf("upgrade via LifecycleService succeeded, rebooting node %s via %s", node.IPs[0], rebootMode)
+
+	suite.rebootNode(nodeCtx, client, rebootOptions)
 	suite.waitForUpgrade(nodeCtx, client, node, options.TargetVersion)
 }
 
@@ -367,43 +368,6 @@ func (suite *BaseSuite) rollbackNode(client *talosclient.Client, node provision.
 
 	suite.rollbackNodeLegacy(nodeCtx, client)
 	suite.waitForUpgrade(nodeCtx, client, node, options.SourceVersion)
-}
-
-// tryUpgradeViaLifecycleService attempts to upgrade via the new streaming
-// LifecycleService.Upgrade API. It pre-pulls the installer image, then calls
-// the streaming RPC. Returns true on success, false if the server returned
-// codes.Unimplemented (indicating the API is not available).
-//
-//nolint:gocyclo
-func (suite *BaseSuite) tryUpgradeViaLifecycleService(
-	nodeCtx context.Context,
-	c *talosclient.Client,
-	node provision.NodeInfo,
-	options upgradeOptions,
-) bool {
-	// Step 1: Pre-pull the installer image into the system containerd namespace.
-	suite.T().Logf("pre-pulling installer image %q on node %s", options.TargetInstallerImage, node.IPs[0])
-
-	containerdInstance := &common.ContainerdInstance{
-		Driver:    common.ContainerDriver_CRI,
-		Namespace: common.ContainerdNamespace_NS_SYSTEM,
-	}
-
-	if options.UpgradeUseInmemoryContainerd {
-		containerdInstance.Driver = common.ContainerDriver_CONTAINERD
-	}
-
-	nodes := []string{node.IPs[0].String()}
-
-	if !suite.pullInstallerImageViaLifecycleService(nodeCtx, c, containerdInstance, nodes, options.TargetInstallerImage) {
-		return false
-	}
-
-	if !suite.upgradeViaLifecycleService(nodeCtx, c, containerdInstance, nodes, options.TargetInstallerImage) {
-		return false
-	}
-
-	return true
 }
 
 type provisionStreamResponse[ResponseT any] struct {
@@ -483,13 +447,13 @@ func sendProvisionResponse[ResponseT any](
 	}
 }
 
-func (suite *BaseSuite) pullInstallerImageViaLifecycleService(
+func (suite *BaseSuite) pullInstallerImage(
 	ctx context.Context,
 	c *talosclient.Client,
 	containerdInstance *common.ContainerdInstance,
 	nodes []string,
 	imageRef string,
-) bool {
+) {
 	responseChan := streamPerNode(
 		ctx, nodes,
 		func(ctx context.Context) (grpc.ServerStreamingClient[machineapi.ImageServicePullResponse], error) {
@@ -507,10 +471,6 @@ func (suite *BaseSuite) pullInstallerImageViaLifecycleService(
 
 	for resp := range responseChan {
 		if resp.Err != nil {
-			if status.Code(resp.Err) == codes.Unimplemented {
-				return false
-			}
-
 			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 
 			continue
@@ -536,8 +496,6 @@ func (suite *BaseSuite) pullInstallerImageViaLifecycleService(
 	for node, imageName := range finishedPulls {
 		suite.T().Logf("node %s pulled image %s", node, imageName)
 	}
-
-	return true
 }
 
 func (suite *BaseSuite) upgradeViaLifecycleService(
@@ -546,7 +504,7 @@ func (suite *BaseSuite) upgradeViaLifecycleService(
 	containerdInstance *common.ContainerdInstance,
 	nodes []string,
 	imageRef string,
-) bool {
+) {
 	responseChan := streamPerNode(
 		ctx, nodes,
 		func(ctx context.Context) (grpc.ServerStreamingClient[machineapi.LifecycleServiceUpgradeResponse], error) {
@@ -566,10 +524,6 @@ func (suite *BaseSuite) upgradeViaLifecycleService(
 
 	for resp := range responseChan {
 		if resp.Err != nil {
-			if status.Code(resp.Err) == codes.Unimplemented {
-				return false
-			}
-
 			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 
 			continue
@@ -596,52 +550,6 @@ func (suite *BaseSuite) upgradeViaLifecycleService(
 	for node, exitCode := range exitCodes {
 		suite.Require().Equalf(int32(0), exitCode, "LifecycleService.Upgrade exited with non-zero code on node %s", node)
 	}
-
-	return true
-}
-
-// upgradeNodeLegacy performs an upgrade using the legacy (deprecated) MachineService.Upgrade
-// unary API, which handles image pull, install, and reboot in a single call.
-func (suite *BaseSuite) upgradeNodeLegacy(
-	nodeCtx context.Context,
-	c *talosclient.Client,
-	options upgradeOptions,
-) {
-	var (
-		resp *machineapi.UpgradeResponse
-		err  error
-	)
-
-	err = retry.Constant(time.Minute, retry.WithUnits(10*time.Second)).Retry(
-		func() error {
-			resp, err = c.Upgrade( //nolint:staticcheck // using deprecated API for testing backward compatibility
-				nodeCtx,
-				options.TargetInstallerImage,
-				false,
-				false,
-			)
-			if err != nil {
-				if strings.Contains(err.Error(), "leader changed") {
-					return retry.ExpectedError(err)
-				}
-
-				if strings.Contains(err.Error(), "failed to acquire upgrade lock") {
-					return retry.ExpectedError(err)
-				}
-
-				return err
-			}
-
-			return nil
-		},
-	)
-
-	suite.Require().NoError(err)
-	suite.Require().Equal("Upgrade request received", resp.Messages[0].Ack)
-
-	actorID := resp.Messages[0].ActorId
-
-	suite.waitForSequencerReboot(nodeCtx, c, actorID, "upgrade")
 }
 
 // rollbackNodeLegacy performs a rollback using legacy API
@@ -726,8 +634,7 @@ waitLoop:
 }
 
 // waitForUpgrade waits for the node to come back up after a reboot with the
-// expected target version, then verifies cluster health. This is shared by
-// both the new LifecycleService and the legacy MachineService upgrade paths.
+// expected target version, then verifies cluster health.
 func (suite *BaseSuite) waitForUpgrade(
 	nodeCtx context.Context,
 	c *talosclient.Client,
