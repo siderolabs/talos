@@ -127,8 +127,11 @@ func TestPolicy(t *testing.T) {
 		})
 	}
 
-	// The domains that need the right of a boolean keep it whatever the boolean says: secilc traces such a rule through
-	// calls only, and a rule a boolean grants through a booleanif.
+	// secilc traces a rule the policy grants whatever the booleans say through calls only, and a rule a boolean grants
+	// through a booleanif.
+	const unconditional = `<root>\n(\s+call at .+\n)*\s+allow at`
+
+	// The domains that need the right of a boolean keep it whatever the boolean says.
 	for domain, rights := range map[string][]string{
 		"pod_cni_t":        {"cni_plugin_t", "bpf_t"},
 		"pod_csi_t":        {"network_fs_t"},
@@ -141,8 +144,25 @@ func TestPolicy(t *testing.T) {
 				output, err := compile(t, "(neverallow "+domain+" "+right+" (file (write)))\n")
 
 				require.Error(t, err)
-				require.Regexp(t, `<root>\n(\s+call at .+\n)+\s+allow at`, output)
+				require.Regexp(t, unconditional, output)
 			})
 		}
+	}
+
+	// A node may refuse a pod domain: the CRI enters it only under its boolean, and enters pod_t whatever the booleans
+	// say.
+	for _, domain := range []string{"pod_t", "pod_netfs_t", "pod_ebpf_t", "pod_hostmon_t", "pod_cni_t", "pod_csi_t", "pod_privileged_t"} {
+		t.Run("the CRI enters "+domain, func(t *testing.T) {
+			output, err := compile(t, "(neverallow pod_containerd_t "+domain+" (process (transition dyntransition)))\n")
+
+			require.Error(t, err)
+
+			if domain == "pod_t" {
+				require.Regexp(t, unconditional, output)
+			} else {
+				require.NotRegexp(t, unconditional, output)
+				require.Contains(t, output, "booleanif at")
+			}
+		})
 	}
 }

@@ -365,8 +365,10 @@ selects one with `securityContext.seLinuxOptions.type` when `selinuxCategories` 
 
 The new `selinuxBooleans` field of the `SecurityProfileConfig` document sets SELinux booleans without loading the policy
 again. `pod_write_cni_plugins`, `pod_use_network_fs` and `pod_use_ebpf` narrow what every regular pod of the node may do,
-and default to the rights pods had before. Once one is off, only the pods whose domain needs the right keep it.
-`talosctl get selinuxbooleans` lists the booleans of the loaded policy with their default and their value.
+and default to the rights pods had before. Once one is off, only the pods whose domain needs the right keep it. A boolean
+per pod domain, such as `allow_pod_csi_t`, lets a node refuse that domain, on its control plane nodes for instance: a
+container that selects it then fails to start. `talosctl get selinuxbooleans` lists the booleans of the loaded policy
+with their default and their value.
 """
 
     [notes.kubespan_peer_endpoint_filters]
