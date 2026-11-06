@@ -99,6 +99,12 @@ func TestPolicy(t *testing.T) {
 			"",
 		},
 		{
+			"the CNI agent reads no host file outside its role, such as the configuration of the kubelet, and only the CRI connects to its sockets",
+			"(neverallow pod_cni_t k8s_conf_t (file (read)))\n(neverallow pod_cni_t bin_exec_t (file (read)))\n" +
+				"(neverallow pod_t pod_cni_t (unix_stream_socket (connectto)))\n",
+			"",
+		},
+		{
 			"the CRI relabels a volume formatted without labels",
 			"(neverallow pod_containerd_t unlabeled_t (dir (relabelfrom)))\n",
 			"neverallow check failed",
