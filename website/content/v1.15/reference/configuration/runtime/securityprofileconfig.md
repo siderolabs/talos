@@ -26,6 +26,13 @@ description: |
     The categories only take effect when SELinux is enabled. Container runtimes which do not support SELinux
     labels (e.g. gVisor, youki, Spin) fail to start pods when the categories are enabled.
 
+    SELinux booleans tune the policy on the node without changing it: `selinuxBooleans` sets each named boolean,
+    and a boolean left out keeps the default of the policy. With SELinux categories, the static pods of the control
+    plane run in SELinux domains of their own, and `pod_use_control_plane_files`, which lets the other pods read their
+    secrets, is off unless set. `talosctl get selinuxbooleans` lists the booleans of the loaded policy, their default
+    and their value. A name the loaded policy does not define is reported there and otherwise ignored. The booleans
+    only take effect when SELinux is enabled.
+
     By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
     is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
     option is applied. The option has no effect in container mode.
@@ -55,6 +62,7 @@ selinuxCategories: true # Label workloads with SELinux MCS categories, split bet
 |`workloadIsolation` |bool |Enable workload isolation (run the container plane inside the sandbox namespace).  | |
 |`ignoreCtrlAltDelete` |bool |Ignore Ctrl-Alt-Delete instead of rebooting the machine.  | |
 |`selinuxCategories` |bool |Label workloads with SELinux MCS categories, split between the CRI, Talos containers and Talos itself.  | |
+|`selinuxBooleans` |map[string]bool |SELinux booleans to set, by name. A boolean left out keeps the default of the policy.  | |
 
 
 

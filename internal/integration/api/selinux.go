@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,7 +34,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	runtimeconfig "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -288,6 +292,8 @@ func (suite *SELinuxSuite) TestProcessLabels() {
 			suite.T().Skip("skipping SELinux test since SELinux is disabled")
 		}
 
+		categories := suite.selinuxCategories(nodeCtx)
+
 		r, err := suite.Client.Processes(nodeCtx)
 		suite.Require().NoError(err)
 
@@ -295,6 +301,15 @@ func (suite *SELinuxSuite) TestProcessLabels() {
 			procs := msg.Processes
 
 			for _, p := range procs {
+				if domain, ok := controlPlaneDomains[p.Command]; ok {
+					// the static pods of the control plane run in their domains when the CRI labels containers
+					if !categories {
+						domain = "pod_t"
+					}
+
+					suite.Assert().Contains(suite.getLabel(nodeCtx, p.Pid), ":"+domain+":", p.Command)
+				}
+
 				switch p.Command {
 				case "systemd-udevd":
 					suite.Require().Contains(
@@ -399,7 +414,15 @@ func (suite *SELinuxSuite) denials(node, subject string) int {
 var kubeletPluginDirs = []string{"/var/lib/kubelet/plugins", "/var/lib/kubelet/plugins_registry", "/var/lib/kubelet/device-plugins"}
 
 // podDomains are the workload domains of the base policy.
-var podDomains = []string{"pod_t", "pod_privileged_t"}
+var podDomains = []string{"pod_t", "pod_privileged_t", "pod_netfs_t", "pod_ebpf_t", "pod_hostmon_t", "pod_cni_t", "pod_csi_t"}
+
+// controlPlaneDomains are the domains of the static pods of the control plane, by their command, which the kernel
+// truncates to 15 characters.
+var controlPlaneDomains = map[string]string{
+	"kube-apiserver":  constants.KubernetesAPIServerSELinuxType,
+	"kube-controller": constants.KubernetesControllerManagerSELinuxType,
+	"kube-scheduler":  constants.KubernetesSchedulerSELinuxType,
+}
 
 // selinuxCategories reports whether the node labels workloads with MCS categories.
 func (suite *SELinuxSuite) selinuxCategories(nodeCtx context.Context) bool {
@@ -504,6 +527,11 @@ func (suite *SELinuxSuite) TestPodDomains() {
 	}{
 		{name: "selinux-pod", label: `^system_u:system_r:pod_t:s0:c\d+,c\d+$`},
 		{name: "selinux-privileged", privileged: true, label: `^system_u:system_r:pod_privileged_t:s0$`},
+		{name: "selinux-netfs", options: &corev1.SELinuxOptions{Type: "pod_netfs_t"}, label: `^system_u:system_r:pod_netfs_t:s0:c\d+,c\d+$`},
+		{name: "selinux-ebpf", options: &corev1.SELinuxOptions{Type: "pod_ebpf_t"}, label: `^system_u:system_r:pod_ebpf_t:s0:c\d+,c\d+$`},
+		{name: "selinux-hostmon", options: &corev1.SELinuxOptions{Type: "pod_hostmon_t"}, label: `^system_u:system_r:pod_hostmon_t:s0:c\d+,c\d+$`},
+		{name: "selinux-cni", options: &corev1.SELinuxOptions{Type: "pod_cni_t"}, label: `^system_u:system_r:pod_cni_t:s0:c\d+,c\d+$`},
+		{name: "selinux-csi", options: &corev1.SELinuxOptions{Type: "pod_csi_t"}, label: `^system_u:system_r:pod_csi_t:s0:c\d+,c\d+$`},
 		{name: "selinux-spc", options: &corev1.SELinuxOptions{Type: "spc_t", Level: "s0"}, label: `^system_u:system_r:pod_privileged_t:s0$`},
 		{name: "selinux-unknown", options: &corev1.SELinuxOptions{Type: "unknown_t"}},
 		{name: "selinux-kubelet", options: &corev1.SELinuxOptions{Type: "kubelet_t"}, enforcing: true},
@@ -537,7 +565,7 @@ func (suite *SELinuxSuite) TestPodDomains() {
 }
 
 // TestPodMCSIsolation checks the MCS categories on a hostPath: a pod reads the files of another pod only at the same
-// fixed level, which outlives the pods.
+// fixed level, which outlives the pods, and a process monitor reads them all without writing any.
 func (suite *SELinuxSuite) TestPodMCSIsolation() {
 	_, node := suite.labelingNode(true)
 
@@ -552,6 +580,8 @@ func (suite *SELinuxSuite) TestPodMCSIsolation() {
 	}{
 		{"selinux-mcs-writer", nil, "echo secret > " + file + " && echo written", "written\n"},
 		{"selinux-mcs-reader", nil, "cat " + file, ""},
+		{"selinux-mcs-hostmon", &corev1.SELinuxOptions{Type: "pod_hostmon_t"}, "cat " + file, "secret\n"},
+		{"selinux-mcs-tamper", &corev1.SELinuxOptions{Type: "pod_hostmon_t"}, "echo tampered >> " + file, ""},
 		{"selinux-level-first", &corev1.SELinuxOptions{Level: "s0:c600,c601"}, "echo secret > " + file + "-fixed && echo written", "written\n"},
 		{"selinux-level-second", &corev1.SELinuxOptions{Level: "s0:c600,c601"}, "cat " + file + "-fixed", "secret\n"},
 		{"selinux-level-other", &corev1.SELinuxOptions{Level: "s0:c602,c603"}, "cat " + file + "-fixed", ""},
@@ -614,23 +644,41 @@ func (suite *SELinuxSuite) TestPrivilegedHostAccess() {
 }
 
 // TestPodProcAccess reads the /proc of every host process from a pod sharing the host PID namespace: pod_t is denied and
-// the denial audited.
+// the denial audited, the process monitor and the domains with host access are not. The CNI agent enters the network
+// namespace of the host, and the CSI node plugin runs lvm in its mount namespace.
 func (suite *SELinuxSuite) TestPodProcAccess() {
 	ip, node := suite.labelingNode(true)
 
 	for _, test := range []struct {
-		domain  string
-		command string
-		want    string // a regexp the output matches, empty when the command must be denied and audited
+		domain       string
+		capabilities []corev1.Capability
+		command      string
+		want         string // a regexp the output matches, empty when the command must be denied and audited
 	}{
 		// the shell glob drops the entries it cannot search, hence the explicit loop
 		{domain: "pod_t", command: "rc=0; for p in $(ls /proc | grep -E '^[0-9]+$'); do cat /proc/$p/comm >/dev/null || rc=1; done; exit $rc"},
+		// readlink of /proc/1/exe needs CAP_SYS_PTRACE on a non-dumpable process, a DAC check with no AVC record
+		{domain: "pod_hostmon_t", command: "for p in /proc/[0-9]*; do cat $p/stat $p/comm; ls $p/task; readlink $p/exe; done >/dev/null 2>&1; cat /proc/1/comm", want: `\S`},
+		{
+			domain: "pod_cni_t", capabilities: []corev1.Capability{"SYS_ADMIN", "SYS_PTRACE"},
+			command: "cat /proc/self/attr/current; nsenter -t 1 -n -- ip link show lo", want: `(?s)^system_u:system_r:pod_cni_t:s0:c\d+,c\d+.*\blo:`,
+		},
+		// lvm also probes /dev/mapper/control, which the device cgroup of a non-privileged container refuses; Talos mounts its
+		// rootfs and extensions from loop devices, so loop0 exists on every node
+		{
+			domain: "pod_csi_t", capabilities: []corev1.Capability{"SYS_ADMIN", "SYS_PTRACE", "SYS_CHROOT"},
+			command: "cat /proc/self/attr/current; nsenter -t 1 -m -- /usr/bin/lvm version; " +
+				"f=/host/sys/devices/virtual/block/loop0/queue/read_ahead_kb; echo $(cat $f) > $f && echo tuned",
+			want: `(?s)^system_u:system_r:pod_csi_t:s0:c\d+,c\d+.*LVM version.*\btuned`,
+		},
+		// the settings of a physical disk, the system disk among them, stay read-only
+		{domain: "pod_csi_t", command: "for d in /host/sys/block/*; do readlink $d | grep -q /virtual/ || break; done; f=$d/queue/read_ahead_kb; echo $(cat $f) > $f"},
 	} {
 		podDef, err := suite.NewPod("selinux-proc-" + strings.ReplaceAll(test.domain, "_", "-"))
 		suite.Require().NoError(err)
 
-		pod := podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostPID().
-			WithSELinuxOptions(&corev1.SELinuxOptions{Type: test.domain})
+		pod := podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostPID().WithCapabilities(test.capabilities...).
+			WithHostVolumeMount("/sys", "/host/sys").WithSELinuxOptions(&corev1.SELinuxOptions{Type: test.domain})
 
 		before := suite.denials(ip, test.domain)
 		stdout, stderr, err := suite.exec(pod, test.command)
@@ -870,6 +918,148 @@ func (suite *SELinuxSuite) TestNoStateAccess() {
 	suite.Assert().Contains(stderr, "cat: can't open '/mnt/config.yaml': Permission denied")
 }
 
+// TestControlPlaneSecrets checks that, when the CRI labels containers, Talos turns pod_use_control_plane_files off, and a
+// regular pod that mounts the secrets of the API server is denied them.
+func (suite *SELinuxSuite) TestControlPlaneSecrets() {
+	if !suite.SelinuxEnforcing {
+		suite.T().Skip("skipping SELinux negative tests in permissive mode")
+	}
+
+	ip := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	nodeCtx := client.WithNode(suite.ctx, ip)
+
+	if !suite.selinuxCategories(nodeCtx) {
+		suite.T().Skip("skipping SELinux control plane domain tests since workloads run without SELinux categories")
+	}
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), constants.SELinuxBooleanControlPlaneFiles,
+		func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
+			asrt.Equal(runtimeres.SELinuxBooleanStatusSpec{Value: false, Default: true, Configured: true}, *status.TypedSpec())
+		})
+
+	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, ip)
+	suite.Require().NoError(err)
+
+	podDef, err := suite.NewPod("selinux-control-plane-secrets")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node.Name).
+		WithHostVolumeMount(constants.KubernetesAPIServerSecretsDir, "/host")
+
+	before := suite.denials(ip, "pod_t")
+
+	_, stderr, err := suite.exec(podDef, "cat /host/service-account.key")
+	suite.Require().Error(err)
+	suite.Assert().Contains(stderr, "Permission denied")
+	suite.Assert().Greater(suite.denials(ip, "pod_t"), before)
+}
+
+// TestControlPlaneDomainsAdmission checks that the API server refuses the domains of the control plane to a pod: the
+// admission policy of Talos keeps them to the static pods.
+func (suite *SELinuxSuite) TestControlPlaneDomainsAdmission() {
+	podDef, err := suite.NewPod("selinux-control-plane-domain")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNamespace("kube-system").
+		WithSELinuxOptions(&corev1.SELinuxOptions{Type: constants.KubernetesAPIServerSELinuxType})
+
+	err = podDef.Create(suite.ctx, 20*time.Second)
+	suite.Assert().True(apierrors.IsForbidden(err), "%v", err)
+	suite.Assert().ErrorContains(err, "talos-control-plane-selinux-domains")
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+}
+
 func init() {
 	allSuites = append(allSuites, new(SELinuxSuite))
+}
+
+// TestSELinuxBooleans sets booleans in the machine config: with pod_write_cni_plugins and pod_use_ebpf on, a regular pod
+// writes the CNI plugins directory and bpffs, off, it is denied and the denials audited, while the domain that needs each
+// right still writes it. With allow_pod_netfs_t off, the node refuses pod_netfs_t.
+func (suite *SELinuxSuite) TestSELinuxBooleans() {
+	ip, node := suite.labelingNode(true)
+	nodeCtx := client.WithNode(suite.ctx, ip)
+
+	booleans := []struct{ name, domain, path string }{
+		{"pod_write_cni_plugins", "pod_cni_t", "/opt/cni/bin"},
+		{"pod_use_ebpf", "pod_ebpf_t", "/sys/fs/bpf"},
+	}
+
+	assertBoolean := func(name string, want runtimeres.SELinuxBooleanStatusSpec) {
+		rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), name,
+			func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
+				asrt.Equal(want, *status.TypedSpec())
+			})
+	}
+
+	write := func(domain, path string) (string, string, error) {
+		podDef, err := suite.NewPod("selinux-boolean-" + strings.ReplaceAll(domain, "_", "-"))
+		suite.Require().NoError(err)
+
+		podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithHostVolumeMount(path, "/host").
+			WithSELinuxOptions(&corev1.SELinuxOptions{Type: domain})
+
+		// a directory, since bpffs creates files only by pinning, and no dot in its name, which bpffs refuses
+		dir := "/host/selinux-boolean-" + podDef.Name()
+
+		return suite.exec(podDef, "mkdir "+dir+" && rmdir "+dir+" && echo written")
+	}
+
+	off := map[string]bool{"allow_pod_netfs_t": false}
+
+	for _, boolean := range booleans {
+		assertBoolean(boolean.name, runtimeres.SELinuxBooleanStatusSpec{Value: true, Default: true})
+
+		stdout, stderr, err := write("pod_t", boolean.path)
+		suite.Require().NoError(err, stderr)
+		suite.Assert().Equal("written\n", stdout, boolean.path)
+
+		off[boolean.name] = false
+	}
+
+	suite.setSELinuxBooleans(nodeCtx, off)
+
+	defer suite.setSELinuxBooleans(nodeCtx, nil)
+
+	for _, boolean := range booleans {
+		assertBoolean(boolean.name, runtimeres.SELinuxBooleanStatusSpec{Value: false, Default: true, Configured: true})
+
+		before := suite.denials(ip, "pod_t")
+
+		stdout, _, _ := write("pod_t", boolean.path) //nolint:errcheck
+		suite.Assert().Empty(stdout, boolean.path)
+		suite.Assert().Greater(suite.denials(ip, "pod_t"), before, boolean.path)
+
+		stdout, stderr, err := write(boolean.domain, boolean.path)
+		suite.Require().NoError(err, stderr)
+		suite.Assert().Equal("written\n", stdout, boolean.domain)
+	}
+
+	podDef, err := suite.NewPod("selinux-boolean-refused")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithSELinuxOptions(&corev1.SELinuxOptions{Type: "pod_netfs_t"})
+
+	before := suite.denials(ip, "pod_containerd_t")
+
+	suite.Assert().Error(podDef.Create(suite.ctx, 20*time.Second))
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+	suite.Assert().Greater(suite.denials(ip, "pod_containerd_t"), before)
+}
+
+// setSELinuxBooleans sets the selinuxBooleans of the SecurityProfileConfig document of the node, nil removes them.
+func (suite *SELinuxSuite) setSELinuxBooleans(nodeCtx context.Context, booleans map[string]bool) {
+	suite.UpdateMachineConfig(nodeCtx, func(*machineapi.ApplyConfigurationRequest) {}, func(cfg config.Provider) (config.Provider, error) {
+		docs := slices.Clone(cfg.Documents())
+
+		for i, doc := range docs {
+			if profile, ok := doc.(*runtimeconfig.SecurityProfileConfigV1Alpha1); ok {
+				profile = profile.DeepCopy()
+				profile.SELinuxBooleansConfig = booleans
+				docs[i] = profile
+			}
+		}
+
+		return container.New(docs...)
+	})
 }

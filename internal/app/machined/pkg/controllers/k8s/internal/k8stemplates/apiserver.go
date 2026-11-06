@@ -230,7 +230,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 				RunAsUser:    new(int64(constants.KubernetesAPIServerRunUser)),
 				RunAsGroup:   new(int64(constants.KubernetesAPIServerRunGroup)),
 				// the audit log outlives the pod: with the random categories of the CRI, the pod of the next boot could not append to it
-				SELinuxOptions: selinuxOptions(cfg.SELinuxLevel),
+				SELinuxOptions: selinuxOptions(constants.KubernetesAPIServerSELinuxType, cfg.SELinuxLevel),
 			},
 			Volumes: append([]corev1.Volume{
 				{
@@ -256,11 +256,8 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 	}, nil
 }
 
-// selinuxOptions returns the SELinux options of a pod running at a fixed MCS level, nil to let the CRI pick one.
-func selinuxOptions(level string) *corev1.SELinuxOptions {
-	if level == "" {
-		return nil
-	}
-
-	return &corev1.SELinuxOptions{Level: level}
+// selinuxOptions returns the SELinux options of a control plane pod: its domain, which the CRI applies when it labels
+// containers, and a fixed MCS level, empty to let the CRI pick one.
+func selinuxOptions(domain, level string) *corev1.SELinuxOptions {
+	return &corev1.SELinuxOptions{Type: domain, Level: level}
 }

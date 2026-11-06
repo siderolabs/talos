@@ -131,3 +131,69 @@ func TestCondition(t *testing.T) {
 		})
 	}
 }
+
+func TestSELinuxBooleansCondition(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		Name     string
+		Statuses map[string]runtime.SELinuxBooleanStatusSpec
+		Succeeds bool
+	}{
+		{
+			Name: "set",
+			Statuses: map[string]runtime.SELinuxBooleanStatusSpec{
+				"pod_use_ebpf":      {Value: false, Default: true, Configured: true},
+				"ext_agent_clients": {Value: true, Configured: true},
+			},
+			Succeeds: true,
+		},
+		{
+			Name: "unknown to the policy",
+			Statuses: map[string]runtime.SELinuxBooleanStatusSpec{
+				"pod_use_ebpf":      {Configured: true, Unknown: true},
+				"ext_agent_clients": {Value: true, Configured: true},
+			},
+			Succeeds: true,
+		},
+		{
+			Name: "not set yet",
+			Statuses: map[string]runtime.SELinuxBooleanStatusSpec{
+				"pod_use_ebpf":      {Value: true, Default: true},
+				"ext_agent_clients": {Value: true, Configured: true},
+			},
+			Succeeds: false,
+		},
+		{
+			Name: "not reported yet",
+			Statuses: map[string]runtime.SELinuxBooleanStatusSpec{
+				"ext_agent_clients": {Value: true, Configured: true},
+			},
+			Succeeds: false,
+		},
+	} {
+		t.Run(tt.Name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, ctxCancel := context.WithTimeout(t.Context(), time.Second)
+			t.Cleanup(ctxCancel)
+
+			st := state.WrapCore(inmem.NewState())
+
+			for name, spec := range tt.Statuses {
+				status := runtime.NewSELinuxBooleanStatus(name)
+				*status.TypedSpec() = spec
+
+				require.NoError(t, st.Create(ctx, status))
+			}
+
+			err := runtime.NewSELinuxBooleansCondition(st, map[string]bool{"pod_use_ebpf": false, "ext_agent_clients": true}).Wait(ctx)
+
+			if tt.Succeeds {
+				assert.NoError(t, err)
+			} else {
+				assert.True(t, errors.Is(err, context.DeadlineExceeded), "error is %v", err)
+			}
+		})
+	}
+}

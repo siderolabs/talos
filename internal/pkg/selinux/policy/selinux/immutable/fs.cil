@@ -26,9 +26,17 @@
 (type sys_module_t)
 (call filesystem_f (sys_module_t))
 (allow sys_module_t sysfs_t (filesystem (associate)))
+; The virtual storage devices a storage agent creates and tunes: ublk, nbd, rbd, loop and device mapper disks, and the
+; NVMe over fabrics controllers and subsystems. Physical disks and the rest of sysfs keep sysfs_t.
+(type sys_storage_t)
+(call filesystem_f (sys_storage_t))
+(allow sys_storage_t sysfs_t (filesystem (associate)))
 
 (genfscon sysfs "/" (system_u object_r sysfs_t (systemLow systemLow)))
 (genfscon sysfs "/module" (system_u object_r sys_module_t (systemLow systemLow)))
+(genfscon sysfs "/devices/virtual/block" (system_u object_r sys_storage_t (systemLow systemLow)))
+(genfscon sysfs "/devices/virtual/nvme-fabrics" (system_u object_r sys_storage_t (systemLow systemLow)))
+(genfscon sysfs "/devices/virtual/nvme-subsystem" (system_u object_r sys_storage_t (systemLow systemLow)))
 
 (type bpf_t)
 (call filesystem_f (bpf_t))

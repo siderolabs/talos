@@ -468,6 +468,14 @@ func TestTemplates(t *testing.T) {
 			obj:  k8stemplates.TalosServiceAccountCRDTemplate,
 		},
 		{
+			name: "selinux-control-plane-domains-policy",
+			obj:  k8stemplates.ControlPlaneSELinuxDomainsPolicyTemplate,
+		},
+		{
+			name: "selinux-control-plane-domains-policy-binding",
+			obj:  k8stemplates.ControlPlaneSELinuxDomainsPolicyBindingTemplate,
+		},
+		{
 			name: "flannel-cluster-role",
 			obj: func() runtime.Object {
 				return k8stemplates.FlannelClusterRoleTemplate(&k8s.BootstrapManifestsConfigSpec{})

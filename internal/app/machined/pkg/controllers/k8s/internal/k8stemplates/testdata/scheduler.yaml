@@ -88,6 +88,8 @@ spec:
     runAsGroup: 65536
     runAsNonRoot: true
     runAsUser: 65536
+    seLinuxOptions:
+      type: kube_scheduler_t
   volumes:
   - hostPath:
       path: /system/secrets/kubernetes/kube-scheduler

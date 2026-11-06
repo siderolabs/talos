@@ -7,12 +7,19 @@ package runtime
 //docgen:jsonschema
 
 import (
+	"errors"
+	"fmt"
+	"maps"
+	"regexp"
+	"slices"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // SecurityProfileConfigKind is a config document kind.
@@ -63,6 +70,13 @@ var (
 //	  The categories only take effect when SELinux is enabled. Container runtimes which do not support SELinux
 //	  labels (e.g. gVisor, youki, Spin) fail to start pods when the categories are enabled.
 //
+//	  SELinux booleans tune the policy on the node without changing it: `selinuxBooleans` sets each named boolean,
+//	  and a boolean left out keeps the default of the policy. With SELinux categories, the static pods of the control
+//	  plane run in SELinux domains of their own, and `pod_use_control_plane_files`, which lets the other pods read their
+//	  secrets, is off unless set. `talosctl get selinuxbooleans` lists the booleans of the loaded policy, their default
+//	  and their value. A name the loaded policy does not define is reported there and otherwise ignored. The booleans
+//	  only take effect when SELinux is enabled.
+//
 //	  By default, Ctrl-Alt-Delete reboots the machine. With `ignoreCtrlAltDelete: true`, Ctrl-Alt-Delete
 //	  is logged and ignored. Ctrl-Alt-Delete still reboots the machine until a configuration with this
 //	  option is applied. The option has no effect in container mode.
@@ -89,6 +103,13 @@ type SecurityProfileConfigV1Alpha1 struct {
 	//   schema:
 	//     type: boolean
 	SELinuxCategoriesEnabled *bool `yaml:"selinuxCategories,omitempty"`
+	//   description: |
+	//     SELinux booleans to set, by name. A boolean left out keeps the default of the policy.
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       type: boolean
+	SELinuxBooleansConfig map[string]bool `yaml:"selinuxBooleans,omitempty"`
 }
 
 // NewSecurityProfileConfigV1Alpha1 creates a new security profile config document.
@@ -114,9 +135,20 @@ func (s *SecurityProfileConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
 }
 
+// selinuxBooleanName matches the name of an SELinux boolean.
+var selinuxBooleanName = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
+
 // Validate implements config.Validator interface.
 func (s *SecurityProfileConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	return nil, nil
+	var errs error
+
+	for _, name := range slices.Sorted(maps.Keys(s.SELinuxBooleansConfig)) {
+		if !selinuxBooleanName.MatchString(name) {
+			errs = errors.Join(errs, fmt.Errorf("invalid SELinux boolean name %q", name))
+		}
+	}
+
+	return nil, errs
 }
 
 // SecurityProfileConfigSignal is a signal for security profile config.
@@ -135,4 +167,19 @@ func (s *SecurityProfileConfigV1Alpha1) IgnoreCtrlAltDelete() bool {
 // SELinuxCategories implements config.SecurityProfileConfig interface.
 func (s *SecurityProfileConfigV1Alpha1) SELinuxCategories() bool {
 	return pointer.SafeDeref(s.SELinuxCategoriesEnabled)
+}
+
+// SELinuxBooleans implements config.SecurityProfileConfig interface.
+//
+// With SELinux categories, the static pods of the control plane run in domains of their own, so the boolean that lets
+// pod_t use their files is off unless the document sets it.
+func (s *SecurityProfileConfigV1Alpha1) SELinuxBooleans() map[string]bool {
+	if !s.SELinuxCategories() {
+		return s.SELinuxBooleansConfig
+	}
+
+	booleans := map[string]bool{constants.SELinuxBooleanControlPlaneFiles: false}
+	maps.Copy(booleans, s.SELinuxBooleansConfig)
+
+	return booleans
 }
