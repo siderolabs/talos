@@ -62,6 +62,11 @@ type Builder struct {
 	KernelPath string
 	// Path to the initrd image.
 	InitrdPath string
+	// Path to the device tree blob to embed in the UKI.
+	//
+	// Optional: when set, the DTB is embedded in a measured `.dtb` section so
+	// systemd-stub hands it to the kernel in place of the firmware-provided one.
+	DTBPath string
 	// Kernel cmdline.
 	Cmdline string
 	// SecureBoot certificate and signer.
@@ -139,6 +144,7 @@ func (builder *Builder) Build(printf func(string, ...any)) error {
 		builder.generateSplash,
 		builder.generateKernel,
 		builder.generateInitrd,
+		builder.generateDTB,
 		builder.generateProfiles,
 	} {
 		if err = generateSection(); err != nil {
@@ -201,6 +207,7 @@ func (builder *Builder) BuildSigned(printf func(string, ...any)) error {
 		builder.generatePCRPublicKey,
 		builder.generateKernel,
 		builder.generateInitrd,
+		builder.generateDTB,
 		builder.generateProfiles,
 		builder.generatePCRSig,
 	} {
