@@ -64,6 +64,7 @@ spec:
     runAsUser: 65534
     seLinuxOptions:
       level: s0:c1022,c1023
+      type: kube_apiserver_t
   volumes:
   - hostPath:
       path: /system/secrets/kubernetes/kube-apiserver

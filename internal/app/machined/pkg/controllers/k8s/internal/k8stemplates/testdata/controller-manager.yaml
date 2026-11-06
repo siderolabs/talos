@@ -77,6 +77,8 @@ spec:
     runAsGroup: 65535
     runAsNonRoot: true
     runAsUser: 65535
+    seLinuxOptions:
+      type: kube_controller_manager_t
   volumes:
   - hostPath:
       path: /system/secrets/kubernetes/kube-controller-manager

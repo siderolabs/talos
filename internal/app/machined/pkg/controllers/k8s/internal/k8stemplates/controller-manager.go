@@ -114,9 +114,10 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 			},
 			HostNetwork: true,
 			SecurityContext: &corev1.PodSecurityContext{
-				RunAsNonRoot: new(true),
-				RunAsUser:    new(int64(constants.KubernetesControllerManagerRunUser)),
-				RunAsGroup:   new(int64(constants.KubernetesControllerManagerRunGroup)),
+				RunAsNonRoot:   new(true),
+				RunAsUser:      new(int64(constants.KubernetesControllerManagerRunUser)),
+				RunAsGroup:     new(int64(constants.KubernetesControllerManagerRunGroup)),
+				SELinuxOptions: selinuxOptions(constants.KubernetesControllerManagerSELinuxType, ""),
 			},
 			Volumes: append(append([]corev1.Volume{
 				{

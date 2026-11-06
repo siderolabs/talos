@@ -135,9 +135,10 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 			},
 			HostNetwork: true,
 			SecurityContext: &corev1.PodSecurityContext{
-				RunAsNonRoot: new(true),
-				RunAsUser:    new(int64(constants.KubernetesSchedulerRunUser)),
-				RunAsGroup:   new(int64(constants.KubernetesSchedulerRunGroup)),
+				RunAsNonRoot:   new(true),
+				RunAsUser:      new(int64(constants.KubernetesSchedulerRunUser)),
+				RunAsGroup:     new(int64(constants.KubernetesSchedulerRunGroup)),
+				SELinuxOptions: selinuxOptions(constants.KubernetesSchedulerSELinuxType, ""),
 			},
 			Volumes: append(append([]corev1.Volume{
 				{

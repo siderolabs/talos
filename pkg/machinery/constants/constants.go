@@ -306,6 +306,20 @@ const (
 	// which the CRI never draws from.
 	KubernetesAPIServerSELinuxLevel = "s0:c1022,c1023"
 
+	// KubernetesAPIServerSELinuxType is the SELinux domain of the kube-apiserver static pod, which the CRI applies when it
+	// labels containers.
+	KubernetesAPIServerSELinuxType = "kube_apiserver_t"
+
+	// KubernetesControllerManagerSELinuxType is the SELinux domain of the kube-controller-manager static pod.
+	KubernetesControllerManagerSELinuxType = "kube_controller_manager_t"
+
+	// KubernetesSchedulerSELinuxType is the SELinux domain of the kube-scheduler static pod.
+	KubernetesSchedulerSELinuxType = "kube_scheduler_t"
+
+	// SELinuxBooleanControlPlaneFiles is the SELinux boolean that lets pod_t use the secrets, the configuration and the
+	// audit log of the control plane, whose static pods run as pod_t when the CRI does not label containers.
+	SELinuxBooleanControlPlaneFiles = "pod_use_control_plane_files"
+
 	// KubernetesAPIServerSecretsDir defines directory with kube-apiserver secrets.
 	KubernetesAPIServerSecretsDir = KubebernetesStaticSecretsDir + "/" + "kube-apiserver"
 
