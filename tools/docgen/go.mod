@@ -3,13 +3,13 @@ module github.com/siderolabs/talos/tools/docgen
 go 1.26.8
 
 require (
-	github.com/gomarkdown/markdown v0.0.0-20261026184151-79e163b7b632
+	github.com/gomarkdown/markdown v0.0.0-20261105214116-27ca101938a9
 	github.com/invopop/jsonschema v0.14.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/pb33f/ordered-map/v2 v2.3.2
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/siderolabs/gen v0.8.8
-	go.yaml.in/yaml/v4 v4.0.0-rc.8
+	go.yaml.in/yaml/v4 v4.0.0
 	mvdan.cc/gofumpt v0.12.0
 )
 

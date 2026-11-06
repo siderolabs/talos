@@ -420,7 +420,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
-	DefaultCoreDNSVersion = "v1.14.7"
+	DefaultCoreDNSVersion = "v1.15.0"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
@@ -1426,7 +1426,7 @@ const (
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
 	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
-	KubeNetworkPoliciesVersion = "v1.1.2"
+	KubeNetworkPoliciesVersion = "v1.1.3"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
