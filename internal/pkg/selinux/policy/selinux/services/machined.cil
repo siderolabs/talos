@@ -81,7 +81,9 @@
 
 ; reboot & kexec
 (allow init_t self (capability (sys_boot)))
-(allow init_t tmpfs_t (system (kexec_image_load kexec_initramfs_load)))
+; machined copies the kernel and the initramfs it kexecs into memfds, which carry its domain
+; with the memfd_class policy capability (kexec_load(2) is disabled in the kernel, only kexec_file_load(2) is checked)
+(allow init_t self (system (kexec_image_load kexec_initramfs_load)))
 
 ; labeling FS
 (allow init_t any_f (fs_classes (relabelfrom relabelto)))

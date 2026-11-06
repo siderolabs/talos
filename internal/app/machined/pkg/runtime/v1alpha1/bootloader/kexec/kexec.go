@@ -67,6 +67,8 @@ func loadSkipReason(err error) string {
 		return "kexec support is disabled in the kernel"
 	case errors.Is(err, unix.EPERM):
 		return "kexec support is disabled via sysctl"
+	case errors.Is(err, unix.EACCES):
+		return "kexec is denied by the security policy"
 	case errors.Is(err, unix.EBUSY):
 		return "kexec is busy"
 	case errors.Is(err, unix.EADDRNOTAVAIL):

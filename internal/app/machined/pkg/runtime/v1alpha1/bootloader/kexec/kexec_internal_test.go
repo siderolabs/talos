@@ -24,6 +24,7 @@ func TestLoadSkipReason(t *testing.T) {
 	}{
 		{name: "not in the kernel", err: unix.ENOSYS, skipped: true},
 		{name: "disabled via sysctl", err: unix.EPERM, skipped: true},
+		{name: "denied by the security policy", err: unix.EACCES, skipped: true},
 		{name: "busy", err: unix.EBUSY, skipped: true},
 		{name: "no memory region for the kernel", err: unix.EADDRNOTAVAIL, skipped: true},
 		{name: "wrapped", err: fmt.Errorf("kexec_file_load: %w", unix.EADDRNOTAVAIL), skipped: true},

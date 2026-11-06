@@ -41,6 +41,10 @@ type upgradeSpec struct {
 	TargetVersion         string
 	TargetK8sVersion      string
 	TargetCmdlineContains string
+	// TargetKexecUsed asserts that the upgraded node was booted via kexec (sd-boot only).
+	//
+	// A failed kexec falls back to a firmware reboot, so the upgrade succeeds either way.
+	TargetKexecUsed bool
 
 	SkipKubeletUpgrade bool
 
@@ -180,6 +184,8 @@ func upgradeCurrentToCurrent(useGRUB, useKexec, useEncryption bool) func() upgra
 			WorkerNodes:       0,
 
 			TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+			// GRUB always passes the boot partition kernel argument, so kexec can't be told apart from a firmware boot
+			TargetKexecUsed: useKexec && !useGRUB,
 
 			UpgradeRebootPowercyle: !useKexec,
 
@@ -212,14 +218,16 @@ func upgradeCurrentToCurrentEnforcing() upgradeSpec {
 
 		VersionContract: config.TalosVersionCurrent.DisableEtcd().DisableKubernetes(),
 
-		TargetInstallerImage: installerImage,
+		// a different target image, so that an upgrade reverted on a failed reboot sequence is detected
+		TargetInstallerImage: installerImage + "-extra-cmdline",
 		TargetVersion:        DefaultSettings.CurrentVersion,
 		TargetK8sVersion:     currentK8sVersion,
 
 		ControlplaneNodes: 1,
 		WorkerNodes:       0,
 
-		TargetCmdlineContains: "enforcing=1",
+		TargetCmdlineContains: "talos.extra_cmdline=extra-super-cmdline",
+		TargetKexecUsed:       true,
 
 		WithApplyConfig:              true,
 		WithEnforcing:                true,
@@ -405,6 +413,13 @@ func (suite *UpgradeSuite) TestRolling() {
 	if suite.spec.TargetCmdlineContains != "" {
 		for _, node := range suite.Cluster.Info().Nodes {
 			suite.assertCmdlineContains(client, node.IPs[0].String(), suite.spec.TargetCmdlineContains)
+		}
+	}
+
+	if suite.spec.TargetKexecUsed {
+		// sd-boot reports the boot partition via an EFI variable, the kernel argument is only set on kexec
+		for _, node := range suite.Cluster.Info().Nodes {
+			suite.assertCmdlineContains(client, node.IPs[0].String(), constants.KernelParamBootPartitionUUID+"=")
 		}
 	}
 
