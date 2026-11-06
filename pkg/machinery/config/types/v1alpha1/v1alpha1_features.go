@@ -75,6 +75,13 @@ func (h *HostDNSConfig) ResolveMemberNames() bool {
 	return pointer.SafeDeref(h.HostDNSResolveMemberNames)
 }
 
+// LogLevel implements config.NetworkHostDNSConfig interface.
+//
+// Log level configuration is only supported in the ResolverConfig document.
+func (h *HostDNSConfig) LogLevel() string {
+	return ""
+}
+
 // LocalEnabled implements config.ImageCache.
 func (i *ImageCacheConfig) LocalEnabled() bool {
 	return pointer.SafeDeref(i.CacheLocalEnabled)

@@ -188,6 +188,20 @@ type HostDNSConfig struct {
 	//     When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.
 	//     This requires service discovery to be enabled.
 	HostDNSResolveMemberNames *bool `yaml:"resolveMemberNames,omitempty"`
+	//   description: |
+	//     Log level for the host DNS resolver.
+	//
+	//     The default log level is `debug`, which logs every DNS request and response.
+	//     Raise the log level to reduce the verbosity of the host DNS resolver logs.
+	//   values:
+	//     - "debug"
+	//     - "info"
+	//     - "warn"
+	//     - "error"
+	//   examples:
+	//     - value: >
+	//        "warn"
+	HostDNSLogLevel string `yaml:"logLevel,omitempty"`
 }
 
 // NewResolverConfigV1Alpha1 creates a new ResolverConfig config document.
@@ -319,6 +333,16 @@ func (s *ResolverConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 			if s.ResolveMemberNames() {
 				errs = errors.Join(errs, errors.New("hostDNS.resolveMemberNames cannot be enabled when hostDNS.enabled is false"))
 			}
+
+			if s.ResolverHostDNS.HostDNSLogLevel != "" {
+				errs = errors.Join(errs, errors.New("hostDNS.logLevel cannot be set when hostDNS.enabled is false"))
+			}
+		}
+
+		switch s.ResolverHostDNS.HostDNSLogLevel {
+		case "", "debug", "info", "warn", "error":
+		default:
+			errs = errors.Join(errs, fmt.Errorf("hostDNS.logLevel %q is invalid, must be one of: debug, info, warn, error", s.ResolverHostDNS.HostDNSLogLevel))
 		}
 	}
 
@@ -410,4 +434,9 @@ func (s *ResolverConfigV1Alpha1) ForwardKubeDNSToHost() bool {
 // ResolveMemberNames implements NetworkHostDNSConfig interface.
 func (s *ResolverConfigV1Alpha1) ResolveMemberNames() bool {
 	return pointer.SafeDeref(s.ResolverHostDNS.HostDNSResolveMemberNames)
+}
+
+// LogLevel implements NetworkHostDNSConfig interface.
+func (s *ResolverConfigV1Alpha1) LogLevel() string {
+	return s.ResolverHostDNS.HostDNSLogLevel
 }
