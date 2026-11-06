@@ -120,6 +120,11 @@ func TestPolicy(t *testing.T) {
 			"",
 		},
 		{
+			"machined kexecs the kernel and the initramfs it holds in its memfds",
+			"(neverallow init_t self (system (kexec_image_load kexec_initramfs_load)))\n",
+			"neverallow check failed",
+		},
+		{
 			"the CRI starts the installer of an upgrade",
 			"(neverallow pod_containerd_t installer_t (process (transition)))\n",
 			"neverallow check failed",
