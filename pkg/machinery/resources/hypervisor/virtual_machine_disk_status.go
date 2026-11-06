@@ -108,7 +108,14 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 
 	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))
 
-	return virtualMachine + "/" + disk.Name + "@" + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
+	return VirtualMachineDiskStatusIDPrefix(virtualMachine, disk.Name) + hex.EncodeToString(sum[:])[:diskStatusIDDigestLength]
+}
+
+// VirtualMachineDiskStatusIDPrefix is the part of every VirtualMachineDiskStatusID of one disk of a
+// virtual machine which does not depend on what the disk is provisioned from. Two IDs sharing it
+// name the same disk, provisioned the same way or not.
+func VirtualMachineDiskStatusIDPrefix(virtualMachine, disk string) string {
+	return virtualMachine + "/" + disk + "@"
 }
 
 // NewVirtualMachineDiskStatus initializes a VirtualMachineDiskStatus resource.

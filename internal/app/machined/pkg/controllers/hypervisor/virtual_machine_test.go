@@ -3497,6 +3497,35 @@ func (s *VirtualMachineDomainSuite) TestCoalescedStartAndSuccessorStopAskTheGues
 	s.assertAsked("coalesced", 2)
 }
 
+// A guest which has locked its tray refuses a medium change, and nothing about the resources changes
+// when it lets go. The change is tried again every retry interval until it goes through.
+func (s *VirtualMachineDomainSuite) TestRefusedMediaChangeIsRetriedWithoutAnEvent() {
+	var refusals atomic.Int32
+
+	s.client.checkStart = func() error {
+		// More refusals than the passes the controller's own writes cause, so only the retry
+		// interval can get the change through.
+		if refusals.Add(1) <= 3 {
+			return fmt.Errorf("%w: tray is locked", libvirtdomain.ErrMediaChange)
+		}
+
+		return nil
+	}
+
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineController{
+		Open:                      s.client.open,
+		GracefulStopRetryInterval: 200 * time.Millisecond,
+	}))
+
+	spec := hypervisor.NewVirtualMachineDomainSpec(hypervisor.NamespaceName, "media")
+	spec.TypedSpec().DomainXML = `<domain><name>media</name><vcpu>1</vcpu></domain>`
+	spec.TypedSpec().PowerState = "running"
+	s.Create(spec)
+
+	s.assertDomain("media", spec.TypedSpec().DomainXML, true)
+	s.Require().Greater(refusals.Load(), int32(3))
+}
+
 // A press the guest was not listening for yet is lost, so a guest which has not powered off is
 // asked again once the retry interval passes, and one libvirt refuses the press for, such as a
 // paused one, does not fail the controller.

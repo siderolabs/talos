@@ -22,6 +22,7 @@
       <source file="/storage-pool/booted__data.qcow2"></source>
       <target dev="vda" bus="virtio"></target>
       <boot order="1"></boot>
+      <alias name="ua-talos-disk-data"></alias>
     </disk>
     <channel type="unix">
       <source mode="bind"></source>
