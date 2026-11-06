@@ -5,6 +5,10 @@
 package k8s_test
 
 import (
+	"bytes"
+	"compress/gzip"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -65,6 +69,61 @@ metadata:
 		}
 	})
 	rtestutils.AssertLength[*k8s.Manifest](suite.Ctx(), suite.T(), suite.State(), 1)
+}
+
+func (suite *ExtraManifestSuite) TestReconcileURLManifests() {
+	var buf bytes.Buffer
+
+	zw := gzip.NewWriter(&buf)
+
+	_, err := zw.Write([]byte(`
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: downloaded
+`))
+	suite.Require().NoError(err)
+	suite.Require().NoError(zw.Close())
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/manifest.yaml.gz" || r.Header.Get("X-Token") != "secret" {
+			w.WriteHeader(http.StatusForbidden)
+
+			return
+		}
+
+		w.Write(buf.Bytes()) //nolint:errcheck
+	}))
+	suite.T().Cleanup(srv.Close)
+
+	configExtraManifests := k8s.NewExtraManifestsConfig()
+	*configExtraManifests.TypedSpec() = k8s.ExtraManifestsConfigSpec{
+		ExtraManifests: []k8s.ExtraManifest{
+			{
+				Name:     "downloaded",
+				Priority: "99",
+				URL:      srv.URL + "/manifest.yaml.gz",
+				ExtraHeaders: map[string]string{
+					"X-Token": "secret",
+				},
+			},
+		},
+	}
+
+	statusNetwork := network.NewStatus(network.NamespaceName, network.StatusID)
+	statusNetwork.TypedSpec().AddressReady = true
+	statusNetwork.TypedSpec().ConnectivityReady = true
+
+	suite.Create(configExtraManifests)
+	suite.Create(statusNetwork)
+
+	ctest.AssertResources(suite, []resource.ID{"99-downloaded"}, func(manifest *k8s.Manifest, asrt *assert.Assertions) {
+		objects := k8sadapter.Manifest(manifest).Objects()
+
+		if asrt.Len(objects, 1) {
+			asrt.Equal("downloaded", objects[0].GetName())
+		}
+	})
 }
 
 func TestExtraManifestSuite(t *testing.T) {
