@@ -53,7 +53,7 @@ func ParseSecureBootState(rawLog, pcr7 []byte) (*extract.SecurebootState, error)
 		return nil, fmt.Errorf("failed to replay PCR %d: %w", SecureBootPCR, err)
 	}
 
-	state, err := extract.ParseSecurebootState(events, extract.TPMRegisterConfig)
+	state, err := extract.ParseSecurebootState(events, extract.TPMRegisterConfig, extract.Opts{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse SecureBoot state: %w", err)
 	}

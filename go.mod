@@ -80,7 +80,7 @@ require (
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/cadvisor/lib v0.60.6
 	github.com/google/go-containerregistry v0.22.1
-	github.com/google/go-eventlog v0.0.2
+	github.com/google/go-eventlog v0.0.3-0.20261001001437-1991f15bc4b0
 	github.com/google/go-tpm v0.9.8
 	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0

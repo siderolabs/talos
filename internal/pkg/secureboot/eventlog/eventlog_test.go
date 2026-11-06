@@ -30,6 +30,8 @@ const (
 	evSeparator               = 0x00000004
 	evEFIVariableDriverConfig = 0x80000001
 	evEFIVariableAuthority    = 0x800000E0
+	// evUnknown is an event type that no TCG specification defines.
+	evUnknown = 0x800000FF
 )
 
 const (
@@ -238,4 +240,25 @@ func TestParseSecureBootStateTamperedEvent(t *testing.T) {
 
 	_, err := eventlog.ParseSecureBootState(tampered, pcr7)
 	assert.ErrorContains(t, err, "invalid digest for authority")
+}
+
+// TestParseSecureBootStateUnknownEventType asserts that a PCR 7 event of a type go-eventlog does
+// not recognize is reported as an error.
+//
+// The event type is not covered by any digest, so the log still replays to PCR 7. go-eventlog
+// before 1991f15bc4b0 (GO-2026-6893) recursed without bound on such an event, which overflowed
+// the stack and took down machined.
+func TestParseSecureBootStateUnknownEventType(t *testing.T) {
+	t.Parallel()
+
+	events := slices.Insert(
+		secureBootEvents(t, selfSignedCert(t, "test db")),
+		0,
+		event{[]byte("unknown"), evUnknown},
+	)
+
+	rawLog, pcr7 := buildLog(events)
+
+	_, err := eventlog.ParseSecureBootState(rawLog, pcr7)
+	assert.ErrorContains(t, err, "unrecognised event type") //nolint:misspell // go-eventlog error text spelling.
 }
