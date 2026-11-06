@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/distribution/reference"
-	"github.com/sigstore/cosign/v3/pkg/cosign"
+	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func TestVerifyImage(t *testing.T) {
 
 	resolver := image.NewResolver(mockRegistriesConfig{})
 	tagFetcher := image.NewTagFetcher(mockRegistriesConfig{})
-	trustedRoot, err := cosign.TrustedRoot()
+	trustedRoot, err := root.FetchTrustedRoot()
 	require.NoError(t, err)
 
 	pubKey, err := cryptoutils.UnmarshalPEMToPublicKey(staticSigningPubKey)
@@ -54,27 +54,37 @@ func TestVerifyImage(t *testing.T) {
 	pubKeyVerifier, err := signature.LoadVerifier(pubKey, crypto.SHA256)
 	require.NoError(t, err)
 
+	keyless := func(issuer, subject, subjectRegExp string) func(t *testing.T) ourcosign.CheckOpts {
+		return func(t *testing.T) ourcosign.CheckOpts {
+			co, err := ourcosign.NewKeylessCheckOpts(trustedRoot, issuer, subject, subjectRegExp)
+			require.NoError(t, err)
+
+			return co
+		}
+	}
+
 	for _, test := range []struct {
 		imageRef string
 
-		checkOpts cosign.CheckOpts
+		checkOpts func(t *testing.T) ourcosign.CheckOpts
 
 		expectedResultMessage string
 		expectedError         string
 	}{
 		{
-			imageRef: "registry.k8s.io/etcd:v3.6.8@sha256:397189418d1a00e500c0605ad18d1baf3b541a1004d768448c367e48071622e5",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:  "https://accounts.google.com",
-						Subject: "krel-trust@k8s-releng-prod.iam.gserviceaccount.com",
-					},
-				},
-			},
+			imageRef:  "registry.k8s.io/etcd:v3.6.8@sha256:397189418d1a00e500c0605ad18d1baf3b541a1004d768448c367e48071622e5",
+			checkOpts: keyless("https://accounts.google.com", "krel-trust@k8s-releng-prod.iam.gserviceaccount.com", ""),
 
 			expectedResultMessage: "verified via legacy signature (bundle verified true)",
+		},
+		{
+			// legacy keyless signature must still enforce the certificate identity
+			imageRef:  "registry.k8s.io/etcd:v3.6.8@sha256:397189418d1a00e500c0605ad18d1baf3b541a1004d768448c367e48071622e5",
+			checkOpts: keyless("https://accounts.google.com", "someone-else@k8s-releng-prod.iam.gserviceaccount.com", ""),
+
+			expectedError: "no valid signature found: bundle tag not found\nno valid legacy signature: failed to verify certificate identity: " +
+				"no matching CertificateIdentity found, last error: expected SAN value \"someone-else@k8s-releng-prod.iam.gserviceaccount.com\", " +
+				"got \"krel-trust@k8s-releng-prod.iam.gserviceaccount.com\"",
 		},
 		{
 			// Regression for siderolabs/talos#13342: registry.k8s.io's CDN serves the .sig
@@ -82,44 +92,20 @@ func TestVerifyImage(t *testing.T) {
 			// fetched by digest from another region (e.g. europe-west4). The TagFetcher
 			// fallback fetches by tag through the same RegistryHosts (auth/TLS/mirror)
 			// the resolver uses.
-			imageRef: "registry.k8s.io/etcd:v3.6.11@sha256:fbab3d2954652f592b2653cc1b9decdbe2a633de9320735e9f364b185b6b309a",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:  "https://accounts.google.com",
-						Subject: "krel-trust@k8s-releng-prod.iam.gserviceaccount.com",
-					},
-				},
-			},
+			imageRef:  "registry.k8s.io/etcd:v3.6.11@sha256:fbab3d2954652f592b2653cc1b9decdbe2a633de9320735e9f364b185b6b309a",
+			checkOpts: keyless("https://accounts.google.com", "krel-trust@k8s-releng-prod.iam.gserviceaccount.com", ""),
 
 			expectedResultMessage: "verified via legacy signature (bundle verified true)",
 		},
 		{
-			imageRef: "ghcr.io/siderolabs/talos:v1.13.0-alpha.2@sha256:9361de6684b441da62298998ab89166efccca35772afc24fee3ae53c569ec44c",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:        "https://accounts.google.com",
-						SubjectRegExp: "@siderolabs.com$",
-					},
-				},
-			},
+			imageRef:  "ghcr.io/siderolabs/talos:v1.13.0-alpha.2@sha256:9361de6684b441da62298998ab89166efccca35772afc24fee3ae53c569ec44c",
+			checkOpts: keyless("https://accounts.google.com", "", "@siderolabs.com$"),
 
 			expectedResultMessage: "verified via bundle",
 		},
 		{
-			imageRef: "ghcr.io/siderolabs/extensions:v1.13.0-alpha.2@sha256:033cbce24e681208245797e53386b4bef1c4a995a32feebdfa05c5063f889334",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:  "https://accounts.google.com",
-						Subject: "releasemgr-svc@talos-production.iam.gserviceaccount.com",
-					},
-				},
-			},
+			imageRef:  "ghcr.io/siderolabs/extensions:v1.13.0-alpha.2@sha256:033cbce24e681208245797e53386b4bef1c4a995a32feebdfa05c5063f889334",
+			checkOpts: keyless("https://accounts.google.com", "releasemgr-svc@talos-production.iam.gserviceaccount.com", ""),
 
 			expectedResultMessage: "verified via bundle",
 		},
@@ -128,55 +114,27 @@ func TestVerifyImage(t *testing.T) {
 			// referrer (sigstore bundle v0.3) reachable only via the OCI Distribution referrers
 			// API endpoint, not via the bundle/.sig tag schemes. Requires HostCapabilityReferrers
 			// on the resolver hosts so containerd queries /v2/<name>/referrers/<digest>.
-			imageRef: "quay.io/cilium/cilium:v1.19.5@sha256:20fbbc14ac20b55a292c0dcda5571bf31cde30a7dbc68c29db3e709390ab0732",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:        "https://token.actions.githubusercontent.com",
-						SubjectRegExp: `^https://github\.com/cilium/cilium/\.github/workflows/build-images-releases\.yaml@refs/tags/v.*$`,
-					},
-				},
-			},
+			imageRef:  "quay.io/cilium/cilium:v1.19.5@sha256:20fbbc14ac20b55a292c0dcda5571bf31cde30a7dbc68c29db3e709390ab0732",
+			checkOpts: keyless("https://token.actions.githubusercontent.com", "", `^https://github\.com/cilium/cilium/\.github/workflows/build-images-releases\.yaml@refs/tags/v.*$`),
 
 			expectedResultMessage: "verified via bundle referrer with digest sha256:3ae99bc9aa2691fe7c6c4b9d1261c84afcc8aaf96f426fde7bba481c8dd0fabb",
 		},
 		{
-			imageRef: "ghcr.io/siderolabs/extensions:v1.13.0-alpha.1-17-gc538dab@sha256:32ed7bb3845215bfd71bf4284a2a5113ecd49ce45cde0324764fe84b378c8633",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:  "https://accounts.google.com",
-						Subject: "releasemgr-svc@talos-production.iam.gserviceaccount.com",
-					},
-				},
-			},
+			imageRef:  "ghcr.io/siderolabs/extensions:v1.13.0-alpha.1-17-gc538dab@sha256:32ed7bb3845215bfd71bf4284a2a5113ecd49ce45cde0324764fe84b378c8633",
+			checkOpts: keyless("https://accounts.google.com", "releasemgr-svc@talos-production.iam.gserviceaccount.com", ""),
 
 			expectedError: "no valid signature found: bundle tag not found\nlegacy signature tag not found",
 		},
 		{
-			imageRef: "ghcr.io/siderolabs/extensions:v1.13.0-alpha.1@sha256:5c3abcee03ef7369bb92f1f3d76c1afd27ccc97fa2879145a486b554f3091648",
-			checkOpts: cosign.CheckOpts{
-				TrustedMaterial: trustedRoot,
-				Identities: []cosign.Identity{
-					{
-						Issuer:  "https://some.entity",
-						Subject: "releasemgr@world",
-					},
-				},
-			},
+			imageRef:  "ghcr.io/siderolabs/extensions:v1.13.0-alpha.1@sha256:5c3abcee03ef7369bb92f1f3d76c1afd27ccc97fa2879145a486b554f3091648",
+			checkOpts: keyless("https://some.entity", "releasemgr@world", ""),
 
 			expectedError: "no valid bundle layer: failed to verify certificate identity: no matching CertificateIdentity found, last error: expected SAN " +
 				"value \"releasemgr@world\", got \"releasemgr-svc@talos-production.iam.gserviceaccount.com\"",
 		},
 		{
-			imageRef: "ghcr.io/siderolabs/kubelet:v1.19.3-1-ga70d5db@sha256:3fc16b37247f6f154d0ebf7428a28f89079a0a138c92c91fe975803d2e19ef2b",
-			checkOpts: cosign.CheckOpts{
-				Offline:     true,
-				IgnoreTlog:  true,
-				SigVerifier: pubKeyVerifier,
-			},
+			imageRef:  "ghcr.io/siderolabs/kubelet:v1.19.3-1-ga70d5db@sha256:3fc16b37247f6f154d0ebf7428a28f89079a0a138c92c91fe975803d2e19ef2b",
+			checkOpts: func(*testing.T) ourcosign.CheckOpts { return ourcosign.NewPublicKeyCheckOpts(pubKeyVerifier) },
 
 			expectedResultMessage: "verified via bundle",
 		},
@@ -192,7 +150,7 @@ func TestVerifyImage(t *testing.T) {
 			imageRef, ok := namedRef.(reference.Canonical)
 			require.True(t, ok, "image reference must be digested")
 
-			result, err := ourcosign.VerifyImage(t.Context(), logger, resolver, tagFetcher, imageRef, test.checkOpts)
+			result, err := ourcosign.VerifyImage(t.Context(), logger, resolver, tagFetcher, imageRef, test.checkOpts(t))
 
 			if test.expectedError != "" {
 				require.Error(t, err)
