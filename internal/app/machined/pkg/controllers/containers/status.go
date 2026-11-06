@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -49,6 +50,11 @@ func (ctrl *StatusController) Inputs() []controller.Input {
 		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerRunStatusType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -133,6 +139,11 @@ func (ctrl *StatusController) reconcileContainerStatus(
 		return err
 	}
 
+	containerRunStatus, err := safe.ReaderGetByID[*containers.ContainerRunStatus](ctx, runtime, containerSpecID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return fmt.Errorf("failed to get run status %q: %w", containerSpecID, err)
+	}
+
 	// The digest which the current reference resolves to, which is not necessarily the one actually running.
 	imageDigest := containers.ImageDigest(containerImageStatus, containerSpec.TypedSpec().Image.Ref)
 
@@ -143,7 +154,7 @@ func (ctrl *StatusController) reconcileContainerStatus(
 		func(res *containers.ContainerStatus) error {
 			before = *res.TypedSpec()
 
-			res.TypedSpec().Update(containerSpec, containerImageStatus, containerInstanceStatus, containerInstanceSpec, imageDigest, containerDependencyStatus)
+			res.TypedSpec().Update(containerSpec, containerImageStatus, containerInstanceStatus, containerInstanceSpec, imageDigest, containerDependencyStatus, containerRunStatus)
 
 			after = *res.TypedSpec()
 

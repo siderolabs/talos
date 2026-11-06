@@ -104,6 +104,38 @@ func (suite *ConfigSuite) TestAssignsSELinuxLevels() {
 	})
 }
 
+func (suite *ConfigSuite) TestResolvesRestart() {
+	doc := newDoc("migrate", "ghcr.io/example/migrate:v1.0.0")
+	doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		RestartConfig: &containercfg.ContainerRestart{
+			RestartPolicy:     configcfg.ContainerRestartPolicyOnFailure,
+			RestartMaxRetries: new(2),
+			RestartDelay:      new(time.Second),
+			RestartMaxDelay:   new(time.Minute),
+		},
+	}
+
+	suite.applyContainers(doc, newDoc("nginx", "nginx"))
+
+	ctest.AssertResource(suite, "migrate", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerRestartSpec{
+			Policy:     containers.ContainerRestartPolicyOnFailure,
+			MaxRetries: new(uint32(2)),
+			Delay:      time.Second,
+			MaxDelay:   time.Minute,
+		}, spec.TypedSpec().Restart)
+	})
+
+	// the defaults: always, and a fixed delay
+	ctest.AssertResource(suite, "nginx", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
+		asrt.Equal(containers.ContainerRestartSpec{
+			Policy:   containers.ContainerRestartPolicyAlways,
+			Delay:    5 * time.Second,
+			MaxDelay: 5 * time.Second,
+		}, spec.TypedSpec().Restart)
+	})
+}
+
 func (suite *ConfigSuite) TestResolvesMounts() {
 	doc := newDoc("director", "ghcr.io/siderolabs/director:v1.0.0")
 	doc.MountsConfig = []containercfg.ContainerMount{
@@ -285,7 +317,7 @@ func (suite *ConfigSuite) TestResolvesDeprecatedDependsOn() {
 		PathsConfig:      []string{"/var/mnt/data"},
 		NetworksConfig:   []string{"addresses"}, //nolint:staticcheck // testing deprecated field
 		TimeConfig:       new(true),
-		ContainersConfig: []string{"database"},
+		ContainersConfig: []containercfg.ContainerDependency{{DependencyName: "database"}},
 	}
 
 	suite.applyContainers(doc, newDoc("database", "ghcr.io/siderolabs/database:v1.0.0"))
@@ -295,7 +327,7 @@ func (suite *ConfigSuite) TestResolvesDeprecatedDependsOn() {
 			Paths:      []string{"/var/mnt/data"},
 			Networks:   []string{"addresses"},
 			Time:       true,
-			Containers: []string{"database"},
+			Containers: []containers.ContainerDependencySpec{{Name: "database", Condition: containers.ContainerDependencyConditionRunning}},
 		}, spec.TypedSpec().DependsOn)
 	})
 }

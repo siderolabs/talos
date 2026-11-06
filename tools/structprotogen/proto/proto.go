@@ -8,6 +8,7 @@ package proto
 //nolint:gci
 import (
 	"fmt"
+	gotypes "go/types"
 	"io"
 	"regexp"
 	"strings"
@@ -259,6 +260,10 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 
 			fieldTypeData := types.TypeInfo(field.TypeData.Type())
 
+			if _, ok := types.MatchTypeData[types.Basic](fieldTypeData); !ok && field.Optional {
+				panic(fmt.Errorf("field '%s.%s': optional is only supported on a pointer to a basic type", pkgType.Name, field.Name))
+			}
+
 			if fieldTyp, ok := types.MatchTypeData[types.Complex](fieldTypeData); ok {
 				importName, typeName := mustFormatTypeName(fieldTyp.Pkg, fieldTyp.Name, pkgType.Pkg)
 
@@ -293,7 +298,7 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 
 				sliceutil.AddIfNotFound(def.Fields(), protoField{
 					name:     field.Name,
-					typ:      typeName,
+					typ:      OptionalTypeName(pkgType.Name, field.Name, field.TypeData.Type(), field.Optional, typeName),
 					num:      field.Num,
 					goType:   field.TypeData.Type().String(),
 					comments: field.Comments,
@@ -560,3 +565,18 @@ var (
 	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
 )
+
+// OptionalTypeName returns the proto type of a basic field, marked optional if it is.
+//
+// Only a pointer can be optional: nil is what an unset optional field reads back as.
+func OptionalTypeName(structName, fieldName string, goType gotypes.Type, optional bool, typeName string) string {
+	if !optional {
+		return typeName
+	}
+
+	if _, ok := goType.(*gotypes.Pointer); !ok {
+		panic(fmt.Errorf("field '%s.%s': optional requires a pointer, got %s", structName, fieldName, goType))
+	}
+
+	return "optional " + typeName
+}

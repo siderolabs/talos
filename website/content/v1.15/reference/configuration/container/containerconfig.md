@@ -5,7 +5,7 @@ description: |
 
     The container is started as soon as the configuration is applied, with no image rebuild
     and no reboot. It runs against the CRI containerd instance in the dedicated
-    `taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.
+    `taloscontainers` namespace, and by default is restarted 5 seconds after it stops.
 
     Containers are not Talos services: they do not appear in `talosctl services`, and
     `talosctl service` does not apply to them. Status is reported via `ContainerStatus`.
@@ -63,6 +63,12 @@ lifecycle:
         network:
             - addresses
         time: true # Whether the clock must be synchronized before the container starts.
+
+        # # Other containers, by document name, which must be running first, or have succeeded.
+        # containers:
+        #     - name: migrate
+        #       condition: succeeded
+        #     - db
 
     # # Probe deciding whether the running container is healthy.
     # healthCheck:
@@ -411,6 +417,7 @@ healthCheck:
 |`stopTimeout` |Duration |Time the container gets to exit after SIGTERM before it is killed with SIGKILL.<br><br>It applies whenever Talos stops the container: on shutdown, reboot and upgrade, when it is<br>replaced after a change or restarted with `talosctl restart`, and when it is removed.<br>Defaults to 10s. Must be greater than 0 and at most 4m.<br>Changing it replaces the running container, which is still stopped with its previous timeout. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 stopTimeout: 30s
 {{< /highlight >}}</details> | |
+|`restart` |<a href="#ContainerConfig.lifecycle.restart">ContainerRestart</a> |How the container is restarted after it exits.  | |
 
 
 
@@ -430,7 +437,38 @@ paths:
 {{< /highlight >}}</details> | |
 |`network` |[]string |Network readiness conditions which must be satisfied.  |`addresses`<br />`connectivity`<br />`hostname`<br />`etcfiles`<br /> |
 |`time` |bool |Whether the clock must be synchronized before the container starts.  | |
-|`containers` |[]string |Other containers, by document name, which must be running first.<br><br>On shutdown, reboot and upgrade, the container is stopped before them, as long as that fits<br>into the time the shutdown gives the containers. The order applies to the containers on the<br>same node only.<br><br>Cycles are rejected when the machine configuration is applied.  | |
+|`containers` |<a href="#ContainerConfig.lifecycle.dependsOn.containers.">[]ContainerDependency</a> |Other containers, by document name, which must be running first, or have succeeded.<br><br>An entry is either the name of a container which must be running and healthy, or a name with<br>a condition.<br><br>On shutdown, reboot and upgrade, the container is stopped before them, as long as that fits<br>into the time the shutdown gives the containers. The order applies to the containers on the<br>same node only.<br><br>Cycles are rejected when the machine configuration is applied. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+containers:
+    - name: migrate
+      condition: succeeded
+    - db
+{{< /highlight >}}</details> | |
+
+
+
+
+#### containers[] {#ContainerConfig.lifecycle.dependsOn.containers.}
+
+ContainerDependency is a container which must be running, or have succeeded, first.
+
+
+
+{{< highlight yaml >}}
+lifecycle:
+    dependsOn:
+        containers:
+            - name: migrate
+              condition: succeeded
+            - db
+{{< /highlight >}}
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`name` |string |Name of the ContainerConfig document.  | |
+|`condition` |ContainerDependencyCondition |`running` (the default) waits for the container to be running and healthy, `succeeded` for<br>it to have exited with code 0 and not to be restarted, e.g. a container preparing what this one<br>needs. It is checked again on every boot, as the containers run again.  |`running`<br />`succeeded`<br /> |
+
+
 
 
 
@@ -519,6 +557,29 @@ ContainerGRPCHealthCheck probes a gRPC health service.
 |`service` |string |Service name to pass in the health check request.<br><br>Empty asks for the overall health of the server.  | |
 
 
+
+
+
+
+
+
+### restart {#ContainerConfig.lifecycle.restart}
+
+ContainerRestart configures how the container is restarted after it exits.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`policy` |ContainerRestartPolicy |When the container is restarted after it exits.<br><br>`always` restarts it after every exit, `on-failure` after it failed (a non-zero exit code<br>or a failure to start), and `never` runs it once.<br>A container which is not restarted keeps its outcome until its configuration changes or it<br>is removed, and runs again after a reboot or a restart of machined.<br>`talosctl restart` only signals the container, so it doesn't run such a container again.  |`always`<br />`on-failure`<br />`never`<br /> |
+|`maxRetries` |int |How many times a failed container is restarted at most, with the `on-failure` policy.<br><br>Unset restarts it until it succeeds.  | |
+|`delay` |Duration |Time to wait after the container exited before it is restarted.<br>Defaults to 5s. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+delay: 5s
+{{< /highlight >}}</details> | |
+|`maxDelay` |Duration |Longest time to wait before a restart.<br><br>The delay doubles with each restart of a container which ran for a shorter time than this,<br>up to this. Defaults to the delay, so the delay doesn't grow. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+maxDelay: 1m0s
+{{< /highlight >}}</details> | |
 
 
 

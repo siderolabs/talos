@@ -110,6 +110,7 @@ type FieldData struct {
 	Num      int
 	Comments []string
 	TypeData *types.Var
+	Optional bool
 }
 
 func fieldCmp(left, right FieldData) int { return strings.Compare(left.Name, right.Name) }
@@ -152,6 +153,7 @@ func ParseDeclsData(sortedPkgs slices.Sorted[*PkgDecl], taggedStructs ast.Tagged
 					Num:      fieldInfo.Num,
 					Comments: fieldInfo.Comments,
 					TypeData: field,
+					Optional: fieldInfo.Optional,
 				})
 			}
 		}
