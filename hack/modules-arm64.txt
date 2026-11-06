@@ -25,6 +25,7 @@ kernel/drivers/char/virtio_console.ko
 kernel/drivers/cpufreq/apple-soc-cpufreq.ko
 kernel/drivers/crypto/tegra/tegra-se.ko
 kernel/drivers/crypto/virtio/virtio_crypto.ko
+kernel/drivers/firmware/efi/efi-pstore.ko
 kernel/drivers/gpio/gpio-macsmc.ko
 kernel/drivers/gpu/drm/drm_buddy.ko
 kernel/drivers/gpu/drm/drm_exec.ko
@@ -81,6 +82,7 @@ kernel/drivers/infiniband/core/rdma_cm.ko
 kernel/drivers/infiniband/core/rdma_ucm.ko
 kernel/drivers/infiniband/hw/bnxt_re/bnxt_re.ko
 kernel/drivers/infiniband/hw/hns/hns-roce-hw-v2.ko
+kernel/drivers/infiniband/hw/ionic/ionic_rdma.ko
 kernel/drivers/infiniband/hw/irdma/irdma.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
@@ -175,6 +177,7 @@ kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_i2c.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_minimal.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_pci.ko
 kernel/drivers/net/ethernet/mellanox/mlxsw/mlxsw_spectrum.ko
+kernel/drivers/net/ethernet/pensando/ionic/ionic.ko
 kernel/drivers/net/ethernet/qlogic/qed/qed.ko
 kernel/drivers/net/ethernet/qlogic/qede/qede.ko
 kernel/drivers/net/ethernet/qlogic/qlcnic/qlcnic.ko
