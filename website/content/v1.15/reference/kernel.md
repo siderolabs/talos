@@ -288,6 +288,25 @@ Example:
 talos.device.settle_time=3m
 ```
 
+#### `talos.multipath`
+
+Enables native multipath (`on` to enable, `off` by default).
+
+With native multipath, Talos assembles a multipath device over the paths of every SCSI disk which reports a globally unique
+identifier (an NAA or EUI-64 WWID), early in the boot, before anything on the disk is put to use, so that the system disk
+can be a disk reachable via multiple paths (e.g. a SAN LUN).
+The paths themselves are never used directly.
+A disk reachable via a single path is used via a multipath device as well, so that further paths can be added once they appear.
+
+The multipath devices are named after the WWID of the disk, exactly as `multipath-tools` would name them, so once
+the `multipath-tools` system extension is started, `multipathd` adopts them, and Talos leaves them alone.
+
+Example:
+
+```text
+talos.multipath=on
+```
+
 #### `talos.boot.partuuid`
 
 The GPT partition UUID of the partition Talos was booted from.

@@ -80,6 +80,12 @@ const (
 	// extra device settle timeout.
 	KernelParamDeviceSettleTime = "talos.device.settle_time"
 
+	// KernelParamMultipath is the kernel parameter name for enabling native multipath.
+	//
+	// When enabled ("on"), Talos assembles a multipath device over the paths of each SCSI disk which
+	// is reachable via multiple paths early in the boot, and the paths themselves are never used directly.
+	KernelParamMultipath = "talos.multipath"
+
 	// KernelParamBootPartitionUUID is the kernel parameter name for specifying the
 	// partition UUID of the boot partition (the partition the bootloader was loaded from).
 	//
