@@ -43,6 +43,8 @@ func (suite *ResolverConfigSuite) TestDefaults() {
 				[]network.NameServerSpec{
 					{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolver)},
 					{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolver)},
+					{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolverV6)},
+					{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolverV6)},
 				}, r.TypedSpec().NameServers,
 			)
 			asrt.Empty(r.TypedSpec().SearchDomains)
@@ -92,6 +94,8 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 				[]network.NameServerSpec{
 					{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolver)},
 					{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolver)},
+					{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolverV6)},
+					{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolverV6)},
 				}, r.TypedSpec().NameServers,
 			)
 			asrt.Equal([]string{"example.org"}, r.TypedSpec().SearchDomains)
