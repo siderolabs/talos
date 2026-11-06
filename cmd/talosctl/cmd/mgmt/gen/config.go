@@ -80,7 +80,7 @@ var genConfigCmdFlags struct {
 
 // NewConfigCmd builds the config generation subcommand with the given name.
 func NewConfigCmd(name string) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   fmt.Sprintf("%s <cluster name> <cluster endpoint>", name),
 		Short: "Generates a set of configuration files for Talos cluster",
 		Long: `The cluster endpoint is the URL for the Kubernetes API. If you decide to use
@@ -102,6 +102,10 @@ setup, usually involving a load balancer, use the IP and port of the load balanc
 			}
 		},
 	}
+
+	addConfigFlags(cmd)
+
+	return cmd
 }
 
 func fixControlPlaneEndpoint(u *url.URL) *url.URL {
@@ -433,9 +437,7 @@ func validateClusterEndpoint(endpoint string) error {
 	return nil
 }
 
-func init() {
-	genConfigCmd := NewConfigCmd("config")
-
+func addConfigFlags(genConfigCmd *cobra.Command) {
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installDisk, "install-disk", "/dev/sda", "the disk to install to")
 	genConfigCmd.Flags().StringVar(&genConfigCmdFlags.installImage, "install-image", helpers.DefaultImage(images.InstallerImageRepository("metal")), "the image used to perform an installation")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.additionalSANs, "additional-sans", []string{}, "additional Subject-Alt-Names for the APIServer certificate")
@@ -461,6 +463,8 @@ func init() {
 
 	genConfigCmd.Flags().BoolVar(&genConfigCmdFlags.skipK8sEtcd, "skip-k8s-etcd", false, "skip generating etcd & Kubernetes configuration (experimental)")
 	genConfigCmd.Flags().MarkHidden("skip-k8s-etcd") //nolint:errcheck
+}
 
-	Cmd.AddCommand(genConfigCmd)
+func init() {
+	Cmd.AddCommand(NewConfigCmd("config"))
 }
