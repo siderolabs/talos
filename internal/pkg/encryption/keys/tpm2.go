@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 
@@ -125,6 +126,12 @@ func (h *TPMKeyHandler) GetKey(ctx context.Context, t token.Token) (*encryption.
 
 		return err
 	}); err != nil {
+		if errors.Is(err, tpm2.ErrSRKMismatch) || errors.Is(err, tpm2.ErrPCRPolicyMismatch) {
+			// the sealed blob is bound to a TPM/PCR state which is not the current one,
+			// so it can never be unsealed again: the slot should be re-enrolled
+			return nil, fmt.Errorf("%w: %w", ErrKeyStale, err)
+		}
+
 		return nil, err
 	}
 
