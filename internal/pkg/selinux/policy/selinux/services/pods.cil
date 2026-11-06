@@ -56,6 +56,10 @@
 (boolean pod_use_network_fs true)
 ; Open perf events and pin eBPF objects in bpffs.
 (boolean pod_use_ebpf true)
+; Read the secrets and the configuration of the control plane, and write the audit log of the API server: the CRI labels
+; no container without selinuxCategories, so the static pods of the control plane then run as pod_t. With
+; selinuxCategories they run in domains of their own (cri.cil), and Talos turns it off.
+(boolean pod_use_control_plane_files true)
 
 ; CNI installers copy their plugins, and `install` also runs them.
 (macro pod_cni_plugins_right ((type ARG1))
@@ -72,6 +76,11 @@
 (macro pod_ebpf_right ((type ARG1))
     (allow ARG1 self (perf_event (all)))
     (allow ARG1 bpf_t (fs_classes (rw)))
+)
+
+(macro pod_control_plane_files_right ((type ARG1))
+    (allow ARG1 kube_secret_f (fs_classes (ro)))
+    (allow ARG1 kube_log_t (fs_classes (rw)))
 )
 
 ; What every pod domain shares: it is a workload, entered from the rootfs of its container.
@@ -91,6 +100,7 @@
     (booleanif pod_write_cni_plugins (true (call pod_cni_plugins_right (ARG1))))
     (booleanif pod_use_network_fs (true (call pod_network_fs_right (ARG1))))
     (booleanif pod_use_ebpf (true (call pod_ebpf_right (ARG1))))
+    (booleanif pod_use_control_plane_files (true (call pod_control_plane_files_right (ARG1))))
 )
 
 (typeattribute privileged_readable_f)

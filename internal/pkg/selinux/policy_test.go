@@ -47,7 +47,8 @@ func TestPolicy(t *testing.T) {
 			"the booleans exist",
 			"(booleanif pod_write_cni_plugins (true (allow pod_t pod_t (file (getattr)))))\n" +
 				"(booleanif pod_use_network_fs (true (allow pod_t pod_t (file (getattr)))))\n" +
-				"(booleanif pod_use_ebpf (true (allow pod_t pod_t (file (getattr)))))\n",
+				"(booleanif pod_use_ebpf (true (allow pod_t pod_t (file (getattr)))))\n" +
+				"(booleanif pod_use_control_plane_files (true (allow pod_t pod_t (file (getattr)))))\n",
 			"",
 		},
 		{
@@ -86,6 +87,15 @@ func TestPolicy(t *testing.T) {
 				"(neverallow pod_csi_t cni_plugin_t (file (write)))\n(neverallow pod_csi_t bpf_t (file (write)))\n" +
 				"(neverallow pod_netfs_t init_t (file (read)))\n(neverallow pod_ebpf_t init_t (file (read)))\n" +
 				"(neverallow pod_hostmon_t log_f (file (write append)))\n",
+			"",
+		},
+		{
+			"each static pod of the control plane reads its own secrets, and no other domain uses them whatever the booleans say",
+			"(neverallow kube_scheduler_t kube_apiserver_secret_t (file (read)))\n" +
+				"(neverallow kube_apiserver_t kube_controller_manager_secret_t (file (read)))\n" +
+				"(neverallow pod_hostmon_t kube_secret_f (file (read)))\n(neverallow pod_privileged_t kube_secret_f (file (read)))\n" +
+				"(neverallow pod_cni_t kube_secret_f (file (read)))\n(neverallow pod_csi_t kube_secret_f (file (read)))\n" +
+				"(neverallow kube_controller_manager_t kube_log_t (file (write)))\n(neverallow pod_privileged_t kube_log_t (file (write)))\n",
 			"",
 		},
 		{
@@ -147,6 +157,30 @@ func TestPolicy(t *testing.T) {
 				require.Regexp(t, unconditional, output)
 			})
 		}
+	}
+
+	// The static pods of the control plane use their files whatever the booleans say, and pod_t only under
+	// pod_use_control_plane_files.
+	for _, test := range []struct{ domain, file, permission string }{
+		{"kube_apiserver_t", "kube_apiserver_secret_t", "read"},
+		{"kube_apiserver_t", "kube_log_t", "write"},
+		{"kube_controller_manager_t", "kube_controller_manager_secret_t", "read"},
+		{"kube_scheduler_t", "kube_scheduler_config_t", "read"},
+		{"pod_t", "kube_apiserver_secret_t", "read"},
+		{"pod_t", "kube_log_t", "write"},
+	} {
+		t.Run(test.domain+" "+test.permission+"s "+test.file, func(t *testing.T) {
+			output, err := compile(t, "(neverallow "+test.domain+" "+test.file+" (file ("+test.permission+")))\n")
+
+			require.Error(t, err)
+
+			if test.domain == "pod_t" {
+				require.NotRegexp(t, unconditional, output)
+				require.Contains(t, output, "booleanif at")
+			} else {
+				require.Regexp(t, unconditional, output)
+			}
+		})
 	}
 
 	// A node may refuse a pod domain: the CRI enters it only under its boolean, and enters pod_t whatever the booleans

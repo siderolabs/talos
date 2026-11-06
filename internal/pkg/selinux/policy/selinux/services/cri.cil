@@ -134,10 +134,22 @@
 (typeattributeset kube_secret_f kube_controller_manager_secret_t)
 (typeattributeset kube_secret_f kube_scheduler_secret_t)
 
-; Allow kubernetes pods to access their configuration and secrets
-; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
-; TODO: label static pods with the correct domains
-(allow pod_p kube_secret_f (fs_classes (ro)))
+; The static pods of the control plane, in the domains their manifests select: each reads its own secrets and
+; configuration, and the API server writes its audit log. Without selinuxCategories, they run as pod_t, which gets these
+; files under pod_use_control_plane_files (pods.cil). A pod that selects one of these types gets its rights, so the
+; admission of the cluster decides who may.
+(type kube_apiserver_t)
+(call pod_workload (kube_apiserver_t))
+(allow kube_apiserver_t kube_apiserver_secret_t (fs_classes (ro)))
+(allow kube_apiserver_t kube_apiserver_config_t (fs_classes (ro)))
+(allow kube_apiserver_t kube_log_t (fs_classes (rw)))
+(type kube_controller_manager_t)
+(call pod_workload (kube_controller_manager_t))
+(allow kube_controller_manager_t kube_controller_manager_secret_t (fs_classes (ro)))
+(type kube_scheduler_t)
+(call pod_workload (kube_scheduler_t))
+(allow kube_scheduler_t kube_scheduler_secret_t (fs_classes (ro)))
+(allow kube_scheduler_t kube_scheduler_config_t (fs_classes (ro)))
 
 (type var_log_t)
 (call protected_f (var_log_t))
@@ -164,13 +176,14 @@
 (typeattributeset log_f seccomp_profile_t)
 (typeattributeset log_f kube_log_t)
 
-; FIXME: insecure as anyone with access to the pod containerd may obtain these domains
-; TODO: label static pods with the correct domains
 (allow pod_p log_f (fs_classes (ro)))
-; the process monitor (mcs_read_exempt_p) reads the logs it forwards and writes none of them
+; the process monitor (mcs_read_exempt_p) reads the logs it forwards and writes none of them, and only the API server
+; writes its audit log, with pod_t under pod_use_control_plane_files
 (typeattribute log_writer_p)
 (typeattributeset log_writer_p (and pod_p (not mcs_read_exempt_p)))
-(allow log_writer_p log_f (fs_classes (rw)))
+(typeattribute pod_log_f)
+(typeattributeset pod_log_f (and log_f (not kube_log_t)))
+(allow log_writer_p pod_log_f (fs_classes (rw)))
 
 (type cni_state_t)
 (call protected_f (cni_state_t))

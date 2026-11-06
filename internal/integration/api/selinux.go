@@ -291,6 +291,8 @@ func (suite *SELinuxSuite) TestProcessLabels() {
 			suite.T().Skip("skipping SELinux test since SELinux is disabled")
 		}
 
+		categories := suite.selinuxCategories(nodeCtx)
+
 		r, err := suite.Client.Processes(nodeCtx)
 		suite.Require().NoError(err)
 
@@ -298,6 +300,15 @@ func (suite *SELinuxSuite) TestProcessLabels() {
 			procs := msg.Processes
 
 			for _, p := range procs {
+				if domain, ok := controlPlaneDomains[p.Command]; ok {
+					// the static pods of the control plane run in their domains when the CRI labels containers
+					if !categories {
+						domain = "pod_t"
+					}
+
+					suite.Assert().Contains(suite.getLabel(nodeCtx, p.Pid), ":"+domain+":", p.Command)
+				}
+
 				switch p.Command {
 				case "systemd-udevd":
 					suite.Require().Contains(
@@ -403,6 +414,14 @@ var kubeletPluginDirs = []string{"/var/lib/kubelet/plugins", "/var/lib/kubelet/p
 
 // podDomains are the workload domains of the base policy.
 var podDomains = []string{"pod_t", "pod_privileged_t", "pod_netfs_t", "pod_ebpf_t", "pod_hostmon_t", "pod_cni_t", "pod_csi_t"}
+
+// controlPlaneDomains are the domains of the static pods of the control plane, by their command, which the kernel
+// truncates to 15 characters.
+var controlPlaneDomains = map[string]string{
+	"kube-apiserver":  constants.KubernetesAPIServerSELinuxType,
+	"kube-controller": constants.KubernetesControllerManagerSELinuxType,
+	"kube-scheduler":  constants.KubernetesSchedulerSELinuxType,
+}
 
 // selinuxCategories reports whether the node labels workloads with MCS categories.
 func (suite *SELinuxSuite) selinuxCategories(nodeCtx context.Context) bool {
@@ -896,6 +915,42 @@ func (suite *SELinuxSuite) TestNoStateAccess() {
 	suite.Require().Error(err)
 	suite.Assert().ErrorContains(err, "command terminated with exit code 1")
 	suite.Assert().Contains(stderr, "cat: can't open '/mnt/config.yaml': Permission denied")
+}
+
+// TestControlPlaneSecrets checks that, when the CRI labels containers, Talos turns pod_use_control_plane_files off, and a
+// regular pod that mounts the secrets of the API server is denied them.
+func (suite *SELinuxSuite) TestControlPlaneSecrets() {
+	if !suite.SelinuxEnforcing {
+		suite.T().Skip("skipping SELinux negative tests in permissive mode")
+	}
+
+	ip := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	nodeCtx := client.WithNode(suite.ctx, ip)
+
+	if !suite.selinuxCategories(nodeCtx) {
+		suite.T().Skip("skipping SELinux control plane domain tests since workloads run without SELinux categories")
+	}
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), constants.SELinuxBooleanControlPlaneFiles,
+		func(status *runtimeres.SELinuxBooleanStatus, asrt *assert.Assertions) {
+			asrt.Equal(runtimeres.SELinuxBooleanStatusSpec{Value: false, Default: true, Configured: true}, *status.TypedSpec())
+		})
+
+	node, err := suite.GetK8sNodeByInternalIP(suite.ctx, ip)
+	suite.Require().NoError(err)
+
+	podDef, err := suite.NewPod("selinux-control-plane-secrets")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node.Name).
+		WithHostVolumeMount(constants.KubernetesAPIServerSecretsDir, "/host")
+
+	before := suite.denials(ip, "pod_t")
+
+	_, stderr, err := suite.exec(podDef, "cat /host/service-account.key")
+	suite.Require().Error(err)
+	suite.Assert().Contains(stderr, "Permission denied")
+	suite.Assert().Greater(suite.denials(ip, "pod_t"), before)
 }
 
 func init() {
