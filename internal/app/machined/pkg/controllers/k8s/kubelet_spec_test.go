@@ -59,8 +59,9 @@ func (suite *KubeletSpecSuite) TestReconcileSELinux() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), securityState))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
-		asrt.Len(kubeletSpec.TypedSpec().ExtraMounts, 2)
-		asrt.Equal("/sys/fs/selinux", kubeletSpec.TypedSpec().ExtraMounts[0].Destination)
+		if asrt.Len(kubeletSpec.TypedSpec().ExtraMounts, 2) {
+			asrt.Equal("/sys/fs/selinux", kubeletSpec.TypedSpec().ExtraMounts[0].Destination)
+		}
 	})
 
 	securityState.TypedSpec().SELinuxCategories = false
@@ -308,6 +309,7 @@ func TestKubeletSpecSuite(t *testing.T) {
 	suite.Run(t, &KubeletSpecSuite{
 		Timeout: 3 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
+			cpuPartitionReady(suite)
 			suite.Require().NoError(suite.Runtime().RegisterController(&k8sctrl.KubeletSpecController{}))
 		},
 	})

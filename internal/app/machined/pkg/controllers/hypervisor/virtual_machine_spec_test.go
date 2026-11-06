@@ -80,6 +80,34 @@ firmware: {type: uefi}
 	})
 }
 
+func (suite *VirtualMachineProjectionSuite) TestProjectsCPUSlice() {
+	cfg, err := configloader.NewFromBytes([]byte(`apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: shared
+powerState: running
+cpu: {count: 1}
+memory: {size: 1GiB}
+firmware: {type: uefi}
+---
+apiVersion: v1alpha1
+kind: VirtualMachineConfig
+name: sliced
+powerState: running
+cpu: {count: 1, slice: database}
+memory: {size: 1GiB}
+firmware: {type: uefi}
+`))
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, "shared", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Empty(res.TypedSpec().CPU.Slice)
+	})
+	ctest.AssertResource(suite, "sliced", func(res *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
+		asrt.Equal("database", res.TypedSpec().CPU.Slice)
+	})
+}
+
 func (suite *VirtualMachineProjectionSuite) TestProfileCatalogueAndCleanup() {
 	if runtime.GOARCH != "amd64" {
 		suite.T().Skip("builtin VM profiles are only supported on amd64")
@@ -211,6 +239,7 @@ func TestVirtualMachineSpecSuite(t *testing.T) {
 		Timeout: 30 * time.Second,
 		Logger:  zap.New(core),
 		AfterSetup: func(suite *ctest.DefaultSuite) {
+			cpuPartitionReady(suite)
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineSpecController{}))
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDiskController{}))
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))

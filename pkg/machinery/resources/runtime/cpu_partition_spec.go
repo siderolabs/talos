@@ -16,15 +16,16 @@ import (
 // CPUPartitionSpecType is type of CPUPartitionSpec resource.
 const CPUPartitionSpecType = resource.Type("CPUPartitionSpecs.runtime.talos.dev")
 
-// CPUPartitionSpec is the canonical desired CPU partition policy of the machine.
+// CPUPartitionSpec is the CPU partition policy of the current boot.
 //
-// A missing resource means projection is pending, not that enforcement is disabled.
+// It is captured from the first active machine configuration of the boot and kept until reboot.
+// A missing resource means no machine configuration has been active yet.
 type CPUPartitionSpec = typed.Resource[CPUPartitionSpecSpec, CPUPartitionSpecExtension]
 
 // CPUPartitionSpecID is the ID of the singleton CPUPartitionSpec.
 const CPUPartitionSpecID resource.ID = "cpu-partition"
 
-// CPUPartitionSpecSpec describes the desired CPU partition policy.
+// CPUPartitionSpecSpec describes the CPU partition policy of the current boot.
 //
 //gotagsrewrite:gen
 type CPUPartitionSpecSpec struct {

@@ -97,14 +97,15 @@ func TestCPUPartitionStatusRoundTrip(t *testing.T) {
 
 	res := runtime.NewCPUPartitionStatus()
 	*res.TypedSpec() = runtime.CPUPartitionStatusSpec{
-		Phase:     runtime.CPUPartitionPhaseBlocked,
-		Exclusive: []string{"database"},
-		Blocked:   []runtime.CPUPartitionBlock{{Reason: "swap", VirtualMachines: []string{"db", "web"}, CPUs: "4-7"}},
+		Ready:               true,
+		KubeletReservedCPUs: "0-1",
+		VirtualMachinePools: []runtime.CPUPartitionPoolSpec{
+			{Name: "shared", CPUs: "4", Partition: "/virtualmachines.partition/shared.partition"},
+			{Name: "database", CPUs: "6-7", Partition: "/virtualmachines.partition/database.partition"},
+		},
 	}
-	res.TypedSpec().SetTarget(runtime.CPUPartitionTargetStatus{Key: "virtualMachines/shared", Initial: "", LastApplied: "6-7", Intended: "6-7"})
-	res.TypedSpec().SetTarget(runtime.CPUPartitionTargetStatus{Key: "init", Initial: "0-7", LastApplied: "0-1", Intended: "0-1"})
 
-	require.Equal(t, "init", res.TypedSpec().Targets[0].Key, "targets are kept sorted")
+	assert.Equal(t, runtime.CPUPartitionSpecID, res.Metadata().ID(), "status and spec are singletons sharing an ID")
 
 	encoded, err := protobuf.FromResource(res)
 	require.NoError(t, err)
@@ -114,10 +115,10 @@ func TestCPUPartitionStatusRoundTrip(t *testing.T) {
 	var spec runtimeapi.CPUPartitionStatusSpec
 
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
-	assert.Equal(t, int32(runtime.CPUPartitionPhaseBlocked), int32(spec.GetPhase()))
-	require.Len(t, spec.GetTargets(), 2)
-	assert.Equal(t, "0-1", spec.GetTargets()[0].GetLastApplied())
-	assert.Equal(t, []string{"db", "web"}, spec.GetBlocked()[0].GetVirtualMachines())
+	assert.True(t, spec.GetReady())
+	assert.Equal(t, "0-1", spec.GetKubeletReservedCpUs())
+	require.Len(t, spec.GetVirtualMachinePools(), 2)
+	assert.Equal(t, "/virtualmachines.partition/database.partition", spec.GetVirtualMachinePools()[1].GetPartition())
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)
@@ -125,15 +126,11 @@ func TestCPUPartitionStatusRoundTrip(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, res.TypedSpec(), roundTrip.(*runtime.CPUPartitionStatus).TypedSpec())
 
-	target, ok := res.TypedSpec().Target("init")
-	require.True(t, ok)
-	assert.Equal(t, "0-7", target.Initial)
+	clone := res.DeepCopy().(*runtime.CPUPartitionStatus)
+	clone.TypedSpec().VirtualMachinePools[0].CPUs = "5"
+	assert.Equal(t, "4", res.TypedSpec().VirtualMachinePools[0].CPUs)
 
-	res.TypedSpec().DeleteTarget("init")
-	_, ok = res.TypedSpec().Target("init")
-	assert.False(t, ok)
-
-	marshaled, err := yaml.Marshal(res.TypedSpec())
+	marshaled, err := yaml.Marshal(runtime.NewCPUPartitionStatus().TypedSpec())
 	require.NoError(t, err)
-	assert.Contains(t, string(marshaled), "phase: blocked\n")
+	assert.Equal(t, "ready: false\n", string(marshaled))
 }

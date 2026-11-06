@@ -799,6 +799,19 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 		},
 	}
 
+	reservedCPUsKubelet := newKubelet(map[string]any{"reservedSystemCPUs": "0-1"}, nil)
+
+	newCPUPartition := func(kubepods string) *runtime.CPUPartitionConfigV1Alpha1 {
+		cfg := runtime.NewCPUPartitionConfigV1Alpha1()
+		cfg.SystemConfig = &runtime.CPUPartitionRoot{RootCPUs: "0-1"}
+
+		if kubepods != "" {
+			cfg.KubepodsConfig = &runtime.CPUPartitionRoot{RootCPUs: kubepods}
+		}
+
+		return cfg
+	}
+
 	multidocKubelet := k8s.NewKubeletConfigV1Alpha1()
 	multidocKubelet.KubeletImage = "kubelet"
 	multidocKubelet.KubeletConfig = meta.Unstructured{Object: map[string]any{"cgroupsPerQOS": false}}
@@ -963,6 +976,34 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 		{
 			name:      "compatible kubelet settings",
 			documents: []config.Document{newV1Alpha1(compatibleKubelet, true), newWorkloadResources("16GiB", "")},
+		},
+		{
+			name:      "CPU partition bounding kubepods with user reserved CPUs",
+			documents: []config.Document{newV1Alpha1(reservedCPUsKubelet, true), newCPUPartition("2-7")},
+
+			expectedErrors: []string{`"reservedSystemCPUs" is derived from the CPU partition kubepods root and can't be set`},
+		},
+		{
+			name: "CPU partition bounding kubepods with the reserved CPUs flag",
+			documents: []config.Document{
+				newV1Alpha1(newKubelet(nil, meta.Args{"reserved_cpus": meta.NewArgValue("0-1", nil)}), true),
+				newCPUPartition("2-7"),
+			},
+
+			expectedErrors: []string{`"reserved-cpus" is derived from the CPU partition kubepods root and can't be set`},
+		},
+		{
+			name:      "CPU partition leaving kubepods unbounded keeps user reserved CPUs",
+			documents: []config.Document{newV1Alpha1(reservedCPUsKubelet, true), newCPUPartition("")},
+		},
+		{
+			name:      "user reserved CPUs without a CPU partition",
+			documents: []config.Document{newV1Alpha1(reservedCPUsKubelet, true)},
+		},
+		{
+			name:        "CPU partition in container mode",
+			documents:   []config.Document{newV1Alpha1(reservedCPUsKubelet, true), newCPUPartition("2-7")},
+			inContainer: true,
 		},
 		{
 			name:      "inactive limit without Kubernetes",

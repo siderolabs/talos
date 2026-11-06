@@ -54,37 +54,9 @@ func (o CPUPartitionSpecSpec) DeepCopy() CPUPartitionSpecSpec {
 // DeepCopy generates a deep copy of CPUPartitionStatusSpec.
 func (o CPUPartitionStatusSpec) DeepCopy() CPUPartitionStatusSpec {
 	var cp CPUPartitionStatusSpec = o
-	if o.Targets != nil {
-		cp.Targets = make([]CPUPartitionTargetStatus, len(o.Targets))
-		copy(cp.Targets, o.Targets)
-	}
-	if o.Exclusive != nil {
-		cp.Exclusive = make([]string, len(o.Exclusive))
-		copy(cp.Exclusive, o.Exclusive)
-	}
-	if o.Blocked != nil {
-		cp.Blocked = make([]CPUPartitionBlock, len(o.Blocked))
-		copy(cp.Blocked, o.Blocked)
-		for i2 := range o.Blocked {
-			if o.Blocked[i2].VirtualMachines != nil {
-				cp.Blocked[i2].VirtualMachines = make([]string, len(o.Blocked[i2].VirtualMachines))
-				copy(cp.Blocked[i2].VirtualMachines, o.Blocked[i2].VirtualMachines)
-			}
-		}
-	}
-	if o.EnforcementLoss != nil {
-		cp.EnforcementLoss = make([]string, len(o.EnforcementLoss))
-		copy(cp.EnforcementLoss, o.EnforcementLoss)
-	}
-	if o.AdmissionErrors != nil {
-		cp.AdmissionErrors = make([]CPUPartitionBlock, len(o.AdmissionErrors))
-		copy(cp.AdmissionErrors, o.AdmissionErrors)
-		for i2 := range o.AdmissionErrors {
-			if o.AdmissionErrors[i2].VirtualMachines != nil {
-				cp.AdmissionErrors[i2].VirtualMachines = make([]string, len(o.AdmissionErrors[i2].VirtualMachines))
-				copy(cp.AdmissionErrors[i2].VirtualMachines, o.AdmissionErrors[i2].VirtualMachines)
-			}
-		}
+	if o.VirtualMachinePools != nil {
+		cp.VirtualMachinePools = make([]CPUPartitionPoolSpec, len(o.VirtualMachinePools))
+		copy(cp.VirtualMachinePools, o.VirtualMachinePools)
 	}
 	return cp
 }

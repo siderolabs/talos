@@ -2676,6 +2676,13 @@
           "description": "Optional guest CPU geometry and host CPU pinning.\n\nGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal count.\nPinning may be configured without guest geometry.\n",
           "markdownDescription": "Optional guest CPU geometry and host CPU pinning.\n\nGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal `count`.\nPinning may be configured without guest geometry.",
           "x-intellij-html-description": "\u003cp\u003eOptional guest CPU geometry and host CPU pinning.\u003c/p\u003e\n\n\u003cp\u003eGeometry counts describe the guest, not host CPU IDs. When any dimension is set,\nall three must be positive and their product must equal \u003ccode\u003ecount\u003c/code\u003e.\nPinning may be configured without guest geometry.\u003c/p\u003e\n"
+        },
+        "slice": {
+          "type": "string",
+          "title": "slice",
+          "description": "Name of the CPUPartitionConfig slice of the virtual machine root this virtual machine\nruns in.\n\nOptional; omitting it selects the CPUs of the root outside every named slice. It only\napplies while a CPU partition policy bounds the virtual machine root.\n",
+          "markdownDescription": "Name of the `CPUPartitionConfig` slice of the virtual machine root this virtual machine\nruns in.\n\nOptional; omitting it selects the CPUs of the root outside every named slice. It only\napplies while a CPU partition policy bounds the virtual machine root.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eCPUPartitionConfig\u003c/code\u003e slice of the virtual machine root this virtual machine\nruns in.\u003c/p\u003e\n\n\u003cp\u003eOptional; omitting it selects the CPUs of the root outside every named slice. It only\napplies while a CPU partition policy bounds the virtual machine root.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -8378,7 +8385,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "CPUPartitionConfig is a CPU partition config document.\\nCPUPartitionConfig declares the host CPUs each fixed Talos workload root may run on.\\n\\nThe roots are `init`, `system`, `podruntime`, `kubepods`, `taloscontainers` and\\n`virtualMachines`. A root left out of the document is unrestricted; a root listed in\\nthe document must name at least one CPU. Roots may overlap each other.\\n\\nThe document does not require virtual machines: omit `virtualMachines` to partition\\nthe host services and Kubernetes pods of an ordinary node.\\n\\nThe virtual machine root may be divided into named, pairwise disjoint slices. An\\nexclusive slice must not overlap any other root, and every other root must then be\\nbounded explicitly.\\n\\nIn container mode the document is validated but declares no policy.\\n"
+      "description": "CPUPartitionConfig is a CPU partition config document.\\nCPUPartitionConfig declares the host CPUs each fixed Talos workload root may run on.\\n\\nThe roots are `init`, `system`, `podruntime`, `kubepods`, `taloscontainers` and\\n`virtualMachines`. A root left out of the document is unrestricted; a root listed in\\nthe document must name at least one CPU. Roots may overlap each other.\\n\\nThe document does not require virtual machines: omit `virtualMachines` to partition\\nthe host services and Kubernetes pods of an ordinary node.\\n\\nThe virtual machine root may be divided into named, pairwise disjoint slices. An\\nexclusive slice must not overlap any other root, and every other root must then be\\nbounded explicitly.\\n\\nThe policy is applied once at boot, before the workloads it governs start, and never\\nre-applied. Adding, changing or removing the document takes effect after the next\\nreboot; apply and patch print a warning saying so. Talos does not watch or repair the\\nCPU masks afterwards, and never restarts or moves running processes, pods or virtual\\nmachines.\\n\\nBounding `kubepods` switches the kubelet to the `static` CPU manager policy with\\n`reservedSystemCPUs` set to the online CPUs outside `kubepods`, so at least one online\\nCPU must stay outside `kubepods`.\\n\\nIn container mode the document is validated but declares no policy.\\n"
     },
     "runtime.CPUPartitionRoot": {
       "properties": {

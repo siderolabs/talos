@@ -35,6 +35,8 @@ func (ctrl *RenderSecretsStaticPodController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
+//
+//nolint:dupl
 func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
 	return []controller.Input{
 		{

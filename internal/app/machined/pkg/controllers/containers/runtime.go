@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
@@ -114,6 +115,12 @@ func (ctrl *RuntimeController) Inputs() []controller.Input {
 		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerMountStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -508,6 +515,17 @@ func (ctrl *RuntimeController) reconcileInstanceSpec(
 				return err
 			}
 
+			// Checked here, where an instance is about to start, so that a restart or a replacement
+			// waits too; one already running is never stopped for it.
+			hold, err := cpuStartHold(ctx, runtime)
+			if err != nil {
+				return err
+			}
+
+			if hold != "" {
+				return ctrl.holdStart(ctx, runtime, containerInstanceSpec, hold)
+			}
+
 			instanceRun = ctrl.start(logger, containerInstanceSpec)
 			ctrl.instances[instanceSpecID] = instanceRun
 		}
@@ -708,6 +726,37 @@ func (ctrl *RuntimeController) hasRunningDependents(instanceRun *instanceRunStat
 	}
 
 	return false
+}
+
+// holdStart reports an instance waiting to be started. Created is not a finished phase, so the
+// instance is not replaced while it waits.
+func (ctrl *RuntimeController) holdStart(
+	ctx context.Context,
+	runtime controller.Runtime,
+	containerInstanceSpec *containers.ContainerInstanceSpec,
+	reason string,
+) error {
+	instanceSpec := containerInstanceSpec.TypedSpec()
+
+	if err := safe.WriterModify(ctx, runtime,
+		containers.NewContainerInstanceStatus(containers.NamespaceName, containerInstanceSpec.Metadata().ID()),
+		func(res *containers.ContainerInstanceStatus) error {
+			res.Metadata().Labels().Set(containers.ContainerSpecIdLabel, instanceSpec.ContainerID)
+
+			*res.TypedSpec() = containers.ContainerInstanceStatusSpec{
+				ContainerID: instanceSpec.ContainerID,
+				Generation:  instanceSpec.Generation,
+				Phase:       containers.ContainerInstancePhaseCreated,
+				Error:       "waiting to start: " + reason,
+			}
+
+			return nil
+		},
+	); err != nil {
+		return fmt.Errorf("failed to write instance status %q: %w", containerInstanceSpec.Metadata().ID(), err)
+	}
+
+	return nil
 }
 
 // retainFinished reports whether the instance already ran to completion, keeping its status if so.

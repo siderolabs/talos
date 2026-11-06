@@ -201,6 +201,120 @@ func TestHostFSMasksWithoutCpuset(t *testing.T) {
 	require.ErrorIs(t, err, fs.ErrNotExist)
 }
 
+func TestHostFSPartition(t *testing.T) {
+	t.Parallel()
+
+	hostFS, root := newHostFS(t)
+	path := cpupartition.Slice("database").CgroupPath()
+	file := filepath.Join(root, path, "cpuset.cpus.partition")
+
+	for _, state := range []string{
+		"member",
+		"root",
+		"isolated",
+		"root invalid (Parent is not a partition root)",
+		"isolated invalid (Cpu list in cpuset.cpus not exclusive)",
+	} {
+		writeFile(t, file, state+"\n")
+
+		partition, err := hostFS.Partition(path)
+		require.NoError(t, err)
+		assert.Equal(t, state, partition, "the state is read verbatim")
+	}
+
+	require.NoError(t, hostFS.SetPartition(path, "root"))
+	assert.Equal(t, "root\n", readFile(t, file))
+
+	require.NoError(t, hostFS.SetPartition(path, "member"))
+	assert.Equal(t, "member\n", readFile(t, file), "a shorter value truncates the previous one")
+}
+
+func TestHostFSExclusive(t *testing.T) {
+	t.Parallel()
+
+	hostFS, root := newHostFS(t)
+	path := cpupartition.Slice("database").CgroupPath()
+	slice := filepath.Join(root, path)
+
+	writeFile(t, filepath.Join(slice, "cpuset.cpus.exclusive"), "\n")
+	writeFile(t, filepath.Join(slice, "cpuset.cpus.exclusive.effective"), "\n")
+
+	exclusive, err := hostFS.Exclusive(path)
+	require.NoError(t, err)
+	assert.Empty(t, exclusive)
+
+	effective, err := hostFS.ExclusiveEffective(path)
+	require.NoError(t, err)
+	assert.True(t, effective.IsEmpty())
+
+	require.NoError(t, hostFS.SetExclusive(path, "4-5"))
+	assert.Equal(t, "4-5\n", readFile(t, filepath.Join(slice, "cpuset.cpus.exclusive")))
+
+	exclusive, err = hostFS.Exclusive(path)
+	require.NoError(t, err)
+	assert.Equal(t, "4-5", exclusive)
+
+	writeFile(t, filepath.Join(slice, "cpuset.cpus.exclusive.effective"), "4-5\n")
+
+	effective, err = hostFS.ExclusiveEffective(path)
+	require.NoError(t, err)
+	assert.Equal(t, cpuset.New(4, 5), effective)
+
+	require.NoError(t, hostFS.SetExclusive(path, ""))
+	assert.Equal(t, "\n", readFile(t, filepath.Join(slice, "cpuset.cpus.exclusive")), "the empty value is written as is")
+
+	writeFile(t, filepath.Join(slice, "cpuset.cpus.exclusive.effective"), "4-\n")
+
+	_, err = hostFS.ExclusiveEffective(path)
+	assert.Error(t, err)
+}
+
+func TestHostFSPartitionFilesMissing(t *testing.T) {
+	t.Parallel()
+
+	hostFS, root := newHostFS(t)
+	path := cpupartition.Slice("database").CgroupPath()
+	slice := filepath.Join(root, path)
+
+	require.NoError(t, os.Mkdir(slice, 0o755))
+
+	_, err := hostFS.Partition(path)
+	require.ErrorIs(t, err, fs.ErrNotExist)
+
+	_, err = hostFS.Exclusive(path)
+	require.ErrorIs(t, err, fs.ErrNotExist)
+
+	_, err = hostFS.ExclusiveEffective(path)
+	require.ErrorIs(t, err, fs.ErrNotExist)
+
+	require.ErrorIs(t, hostFS.SetPartition(path, "root"), fs.ErrNotExist)
+	require.ErrorIs(t, hostFS.SetExclusive(path, "4-5"), fs.ErrNotExist)
+
+	assert.NoFileExists(t, filepath.Join(slice, "cpuset.cpus.partition"), "a write never creates the interface file")
+	assert.NoFileExists(t, filepath.Join(slice, "cpuset.cpus.exclusive"), "a write never creates the interface file")
+}
+
+func TestHostFSPartitionWriteErrors(t *testing.T) {
+	t.Parallel()
+
+	hostFS, root := newHostFS(t)
+	path := cpupartition.Slice("database").CgroupPath()
+	slice := filepath.Join(root, path)
+
+	// A directory in place of the interface file makes the open fail without creating anything.
+	require.NoError(t, os.MkdirAll(filepath.Join(slice, "cpuset.cpus.partition"), 0o755))
+	require.NoError(t, os.MkdirAll(filepath.Join(slice, "cpuset.cpus.exclusive"), 0o755))
+
+	require.Error(t, hostFS.SetPartition(path, "root"))
+	require.Error(t, hostFS.SetExclusive(path, "4-5"))
+
+	_, err := hostFS.Partition(path)
+	require.Error(t, err)
+
+	_, err = hostFS.Exclusive(path)
+	require.Error(t, err)
+}
+
 func TestHostFSPopulated(t *testing.T) {
 	t.Parallel()
 
@@ -242,54 +356,6 @@ func TestHostFSPopulated(t *testing.T) {
 	require.ErrorIs(t, err, fs.ErrNotExist)
 }
 
-func TestHostFSLeafEffective(t *testing.T) {
-	t.Parallel()
-
-	hostFS, root := newHostFS(t)
-	kubepods := filepath.Join(root, "kubepods")
-
-	cgroup := func(path, configured, effective string) {
-		writeFile(t, filepath.Join(kubepods, path, "cpuset.cpus"), configured+"\n")
-		writeFile(t, filepath.Join(kubepods, path, "cpuset.cpus.effective"), effective+"\n")
-		writeFile(t, filepath.Join(kubepods, path, "cgroup.events"), "populated 1\n")
-	}
-
-	writeFile(t, filepath.Join(kubepods, "cpuset.cpus"), "2-5\n")
-	cgroup("burstable", "", "2-5")
-	cgroup("burstable/pod-a", "", "2-5")
-	cgroup("burstable/pod-a/shared", "", "2-5")
-	cgroup("pod-b", "4-5", "4-5")
-	cgroup("pod-b/pinned", "4", "4")
-	cgroup("pod-b/sandbox", "2-5", "2-3,5")
-	cgroup("besteffort", "", "2-5")
-
-	leaves, err := hostFS.LeafEffective("kubepods")
-	require.NoError(t, err)
-	assert.Equal(t, map[string]cpuset.CPUSet{
-		"pod-b/pinned":  cpuset.New(4),
-		"pod-b/sandbox": cpuset.New(2, 3, 5),
-	}, leaves, "only leaves with a configured mask hold CPUs")
-
-	leaves, err = hostFS.LeafEffective("taloscontainers")
-	require.NoError(t, err)
-	assert.Empty(t, leaves, "a missing parent has no leaves")
-
-	writeFile(t, filepath.Join(kubepods, "pod-b", "sandbox", "cpuset.cpus.effective"), "garbage\n")
-
-	_, err = hostFS.LeafEffective("kubepods")
-	require.Error(t, err)
-
-	require.NoError(t, os.Remove(filepath.Join(kubepods, "pod-b", "sandbox", "cpuset.cpus.effective")))
-
-	_, err = hostFS.LeafEffective("kubepods")
-	require.ErrorIs(t, err, fs.ErrNotExist)
-
-	require.NoError(t, os.Remove(filepath.Join(kubepods, "pod-b", "sandbox", "cpuset.cpus")))
-
-	_, err = hostFS.LeafEffective("kubepods")
-	require.ErrorIs(t, err, fs.ErrNotExist, "an unreadable leaf is never treated as released")
-}
-
 func TestHostFSLifecycle(t *testing.T) {
 	t.Parallel()
 
@@ -305,16 +371,6 @@ func TestHostFSLifecycle(t *testing.T) {
 	exists, err = hostFS.Exists(path)
 	require.NoError(t, err)
 	assert.True(t, exists)
-
-	writeFile(t, filepath.Join(root, path, "child", "cgroup.events"), "populated 0\n")
-	require.Error(t, hostFS.Remove(path), "a cgroup with children is not removed")
-
-	require.NoError(t, os.RemoveAll(filepath.Join(root, path, "child")))
-	require.NoError(t, hostFS.Remove(path))
-
-	exists, err = hostFS.Exists(path)
-	require.NoError(t, err)
-	assert.False(t, exists)
 
 	writeFile(t, filepath.Join(root, "kubepods"), "")
 
@@ -340,28 +396,4 @@ func TestHostFSOnline(t *testing.T) {
 
 	_, err = hostFS.Online()
 	assert.Error(t, err)
-}
-
-func TestHostFSChildren(t *testing.T) {
-	t.Parallel()
-
-	hostFS, root := newHostFS(t)
-	vmRoot := filepath.Join(root, "virtualmachines.partition")
-
-	require.NoError(t, os.MkdirAll(filepath.Join(vmRoot, "shared.partition"), 0o755))
-	require.NoError(t, os.MkdirAll(filepath.Join(vmRoot, "machine-qemu-legacy.scope", "vcpu0"), 0o755))
-	writeFile(t, filepath.Join(vmRoot, "cgroup.events"), "populated 1\n")
-
-	children, err := hostFS.Children("virtualmachines.partition")
-	require.NoError(t, err)
-	assert.Equal(t, []string{"machine-qemu-legacy.scope", "shared.partition"}, children, "direct child cgroups only, no interface files")
-
-	children, err = hostFS.Children("virtualmachines.partition/missing.partition")
-	require.NoError(t, err)
-	assert.Empty(t, children, "a missing cgroup has no children")
-
-	writeFile(t, filepath.Join(root, "notadir"), "")
-
-	_, err = hostFS.Children("notadir")
-	require.Error(t, err, "a read failure is not an empty cgroup")
 }

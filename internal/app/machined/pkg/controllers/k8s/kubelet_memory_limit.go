@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/prometheus/procfs"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 	"k8s.io/apimachinery/pkg/api/resource"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
@@ -54,6 +55,15 @@ type hostMemory struct {
 type kubeletConfigurationOptions struct {
 	hostMemory                *hostMemory
 	ignoreKubepodsMemoryLimit bool
+	reservedCPUs              optional.Optional[string]
+}
+
+// WithReservedCPUs selects the static CPU manager policy with reservedSystemCPUs set to the CPUs the
+// boot CPU partition policy keeps out of kubepods; conflicting user settings are rejected.
+func WithReservedCPUs(cpus string) KubeletConfigurationOption {
+	return func(o *kubeletConfigurationOptions) {
+		o.reservedCPUs = optional.Some(cpus)
+	}
 }
 
 // WithHostMemory supplies the memory capacity reader and page size the kubepods memory limit projection needs.

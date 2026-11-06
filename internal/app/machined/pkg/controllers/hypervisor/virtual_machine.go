@@ -30,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -159,6 +160,12 @@ func (ctrl *VirtualMachineController) Inputs() []controller.Input {
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        optional.Some(virtqemudServiceID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.CPUPartitionStatusType,
+			ID:        optional.Some(runtimeres.CPUPartitionStatusID),
 			Kind:      controller.InputWeak,
 		},
 	}
