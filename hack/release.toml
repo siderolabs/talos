@@ -381,9 +381,10 @@ with their default and their value.
 With `selinuxCategories` set, the kube-apiserver, kube-controller-manager and kube-scheduler static pods run in SELinux
 domains of their own: `kube_apiserver_t`, `kube_controller_manager_t` and `kube_scheduler_t`. Each reads its own secrets
 and configuration, only the API server writes its audit log, and no other pod reads them, a privileged container
-included. A pod that selects one of these types gets its rights, so the admission of the cluster should keep them to
-the static pods. Without `selinuxCategories`, the static pods run as `pod_t` as before, and `pod_t` keeps these files
-under the `pod_use_control_plane_files` boolean, which Talos turns off when `selinuxCategories` is set.
+included. The `talos-control-plane-selinux-domains` ValidatingAdmissionPolicy, which Talos adds with the bootstrap
+manifests, keeps these types to the static pods: the API server refuses them to any other pod or ephemeral container.
+Without `selinuxCategories`, the static pods run as `pod_t` as before, and `pod_t` keeps these files under the
+`pod_use_control_plane_files` boolean, which Talos turns off when `selinuxCategories` is set.
 """
 
     [notes.kubespan_peer_endpoint_filters]

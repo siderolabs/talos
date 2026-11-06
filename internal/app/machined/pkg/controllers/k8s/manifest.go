@@ -195,6 +195,13 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 				k8stemplates.TalosNodesRBACClusterRole(),
 			},
 		},
+		{
+			"12-selinux-control-plane-domains",
+			[]runtime.Object{
+				k8stemplates.ControlPlaneSELinuxDomainsPolicyTemplate(),
+				k8stemplates.ControlPlaneSELinuxDomainsPolicyBindingTemplate(),
+			},
+		},
 	}
 
 	if cfg.CoreDNSEnabled {

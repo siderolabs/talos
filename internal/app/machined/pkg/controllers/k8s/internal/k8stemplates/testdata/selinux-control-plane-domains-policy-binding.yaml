@@ -1,0 +1,8 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: talos-control-plane-selinux-domains
+spec:
+  policyName: talos-control-plane-selinux-domains
+  validationActions:
+  - Deny

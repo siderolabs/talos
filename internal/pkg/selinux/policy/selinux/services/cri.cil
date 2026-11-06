@@ -136,8 +136,8 @@
 
 ; The static pods of the control plane, in the domains their manifests select: each reads its own secrets and
 ; configuration, and the API server writes its audit log. Without selinuxCategories, they run as pod_t, which gets these
-; files under pod_use_control_plane_files (pods.cil). A pod that selects one of these types gets its rights, so the
-; admission of the cluster decides who may.
+; files under pod_use_control_plane_files (pods.cil). A pod that selects one of these types gets its rights, so an
+; admission policy of the bootstrap manifests refuses them to every pod but the mirror pods of the static pods.
 (type kube_apiserver_t)
 (call pod_workload (kube_apiserver_t))
 (allow kube_apiserver_t kube_apiserver_secret_t (fs_classes (ro)))
