@@ -168,6 +168,9 @@ func (o KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
 			}
 		}
 	}
+	if o.RootCABundle != nil {
+		cp.RootCABundle = o.RootCABundle.DeepCopy()
+	}
 	if o.AggregatorCA != nil {
 		cp.AggregatorCA = o.AggregatorCA.DeepCopy()
 	}

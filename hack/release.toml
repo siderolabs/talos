@@ -15,6 +15,20 @@ preface = """
 """
 
 [notes]
+    [notes.kube_root_ca_bundle]
+        title = "Kubernetes Root CA Bundle"
+        description = """\
+The new `rootCABundle` field of the `KubeAPIServerCAConfig` document allows to override the CA bundle published to the pods as the `kube-root-ca.crt` ConfigMap.
+
+When the Kubernetes issuing CA is an intermediate CA issued by an external PKI, the bundle can contain its parent chain,
+so that clients which require a self-signed trust anchor (e.g. OpenSSL) can verify the API server.
+The bundle is not trusted to authenticate clients.
+
+Publishing a parent CA expands the trust of the workloads to any certificate issued under it,
+so a dedicated self-signed CA per cluster remains the recommended setup.
+The field is not available in the legacy `.cluster.ca` configuration.
+"""
+
     [notes.trustd_ext_key_usage]
         title = "trustd Server Certificate Verification"
         description = """\

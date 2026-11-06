@@ -261,6 +261,17 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename:  "ca.key",
 					},
 					{
+						// published to the pods as kube-root-ca.crt
+						getter: func() *x509.PEMEncodedCertificateAndKey {
+							if rootK8sSecrets.RootCABundle != nil {
+								return &x509.PEMEncodedCertificateAndKey{Crt: rootK8sSecrets.RootCABundle.Crt}
+							}
+
+							return &x509.PEMEncodedCertificateAndKey{Crt: rootK8sSecrets.IssuingCA.Crt}
+						},
+						certFilename: "root-ca.crt",
+					},
+					{
 						getter: func() *x509.PEMEncodedCertificateAndKey {
 							return &x509.PEMEncodedCertificateAndKey{
 								Key: rootK8sSecrets.ServiceAccount.Key,

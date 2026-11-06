@@ -42,6 +42,9 @@ type KubernetesRootSpec struct {
 	AggregatorCA          *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA" protobuf:"9"`
 	AcceptedAggregatorCAs []*x509.PEMEncodedCertificate     `yaml:"acceptedAggregatorCAs" protobuf:"17"`
 
+	// RootCABundle is the CA bundle published to the pods, defaults to the issuing CA.
+	RootCABundle *x509.PEMEncodedCertificate `yaml:"rootCABundle,omitempty" protobuf:"22"`
+
 	// ServiceAccount is the issuing service account key.
 	ServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount" protobuf:"8"`
 	// ServiceAccountAcceptedKeys are the accepted service account keys.
