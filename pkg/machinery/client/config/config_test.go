@@ -5,13 +5,34 @@
 package config_test
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+func TestOpenMergesTALOSCONFIGPaths(t *testing.T) {
+	dir := t.TempDir()
+	firstPath := filepath.Join(dir, "first")
+	secondPath := filepath.Join(dir, "second")
+
+	require.NoError(t, os.WriteFile(firstPath, []byte("context: first\ncontexts:\n  first: {}\n"), 0o600))
+	require.NoError(t, os.WriteFile(secondPath, []byte("context: second\ncontexts:\n  second: {}\n"), 0o600))
+	t.Setenv(constants.TalosConfigEnvVar, firstPath+string(os.PathListSeparator)+secondPath)
+
+	c, err := clientconfig.Open("")
+	require.NoError(t, err)
+	require.Equal(t, firstPath, c.Path().Path)
+	require.Equal(t, "first", c.Context)
+	require.Contains(t, c.Contexts, "first")
+	require.Contains(t, c.Contexts, "second")
+}
 
 func TestProxyURLRoundTrip(t *testing.T) {
 	yaml := `
