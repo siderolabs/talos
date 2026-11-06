@@ -131,10 +131,10 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 		switch res.Metadata().ID() {
 		case constants.StatePartitionLabel:
 			nodeData.stateVolumeKnown = !data.Deleted
-			nodeData.stateVolumeIsMemory = !data.Deleted && res.TypedSpec().Type == block.VolumeTypeMemory
+			nodeData.stateVolumeIsMemory = !data.Deleted && res.TypedSpec().Type == block.VolumeTypeTmpfs
 		case constants.EphemeralPartitionLabel:
 			nodeData.ephemeralVolumeKnown = !data.Deleted
-			nodeData.ephemeralVolumeIsMemory = !data.Deleted && res.TypedSpec().Type == block.VolumeTypeMemory
+			nodeData.ephemeralVolumeIsMemory = !data.Deleted && res.TypedSpec().Type == block.VolumeTypeTmpfs
 		}
 
 		nodeData.ephemeralMode = computeEphemeralMode(nodeData)
