@@ -232,6 +232,11 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, control
 	if kubePrismPort > 0 {
 		kubePrismConfig := k8s.NewKubePrismConfigV1Alpha1()
 		kubePrismConfig.PortConfig = kubePrismPort
+
+		if in.Options.VersionContract.KubePrismReadinessCheckEnabledByDefault() {
+			kubePrismConfig.ReadinessCheckConfig = new(true)
+		}
+
 		docs = append(docs, kubePrismConfig)
 	}
 

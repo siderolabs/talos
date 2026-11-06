@@ -262,6 +262,10 @@ func (o *KubeInlineManifestConfigV1Alpha1) DeepCopy() *KubeInlineManifestConfigV
 // DeepCopy generates a deep copy of *KubePrismConfigV1Alpha1.
 func (o *KubePrismConfigV1Alpha1) DeepCopy() *KubePrismConfigV1Alpha1 {
 	var cp KubePrismConfigV1Alpha1 = *o
+	if o.ReadinessCheckConfig != nil {
+		cp.ReadinessCheckConfig = new(bool)
+		*cp.ReadinessCheckConfig = *o.ReadinessCheckConfig
+	}
 	return &cp
 }
 

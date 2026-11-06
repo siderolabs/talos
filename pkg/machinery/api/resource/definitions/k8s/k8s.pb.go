@@ -1356,10 +1356,16 @@ func (x *ExtraVolume) GetReadOnly() bool {
 
 // KubePrismConfigSpec describes KubePrismConfig data.
 type KubePrismConfigSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Port          int64                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
-	Endpoints     []*KubePrismEndpoint   `protobuf:"bytes,3,rep,name=endpoints,proto3" json:"endpoints,omitempty"`
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Host      string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	Port      int64                  `protobuf:"varint,2,opt,name=port,proto3" json:"port,omitempty"`
+	Endpoints []*KubePrismEndpoint   `protobuf:"bytes,3,rep,name=endpoints,proto3" json:"endpoints,omitempty"`
+	// ReadinessCheck enables upstream health checks via the API server readiness endpoint.
+	ReadinessCheck bool `protobuf:"varint,4,opt,name=readiness_check,json=readinessCheck,proto3" json:"readiness_check,omitempty"`
+	// TLSServerName is the server name used to verify the API server certificate (readiness check only).
+	TlsServerName string `protobuf:"bytes,5,opt,name=tls_server_name,json=tlsServerName,proto3" json:"tls_server_name,omitempty"`
+	// AcceptedCAs are the CAs used to verify the API server certificate (readiness check only).
+	AcceptedCAs   []*common.PEMEncodedCertificate `protobuf:"bytes,6,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1411,6 +1417,27 @@ func (x *KubePrismConfigSpec) GetPort() int64 {
 func (x *KubePrismConfigSpec) GetEndpoints() []*KubePrismEndpoint {
 	if x != nil {
 		return x.Endpoints
+	}
+	return nil
+}
+
+func (x *KubePrismConfigSpec) GetReadinessCheck() bool {
+	if x != nil {
+		return x.ReadinessCheck
+	}
+	return false
+}
+
+func (x *KubePrismConfigSpec) GetTlsServerName() string {
+	if x != nil {
+		return x.TlsServerName
+	}
+	return ""
+}
+
+func (x *KubePrismConfigSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
+	if x != nil {
+		return x.AcceptedCAs
 	}
 	return nil
 }
@@ -3000,11 +3027,14 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\thost_path\x18\x02 \x01(\tR\bhostPath\x12\x1d\n" +
 	"\n" +
 	"mount_path\x18\x03 \x01(\tR\tmountPath\x12\x1b\n" +
-	"\tread_only\x18\x04 \x01(\bR\breadOnly\"\x8e\x01\n" +
+	"\tread_only\x18\x04 \x01(\bR\breadOnly\"\xa2\x02\n" +
 	"\x13KubePrismConfigSpec\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\x03R\x04port\x12O\n" +
-	"\tendpoints\x18\x03 \x03(\v21.talos.resource.definitions.k8s.KubePrismEndpointR\tendpoints\";\n" +
+	"\tendpoints\x18\x03 \x03(\v21.talos.resource.definitions.k8s.KubePrismEndpointR\tendpoints\x12'\n" +
+	"\x0freadiness_check\x18\x04 \x01(\bR\x0ereadinessCheck\x12&\n" +
+	"\x0ftls_server_name\x18\x05 \x01(\tR\rtlsServerName\x12A\n" +
+	"\raccepted_c_as\x18\x06 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\";\n" +
 	"\x11KubePrismEndpoint\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x12\n" +
 	"\x04port\x18\x02 \x01(\rR\x04port\"i\n" +
@@ -3213,8 +3243,9 @@ var file_resource_definitions_k8s_k8s_proto_goTypes = []any{
 	(*structpb.Struct)(nil),                // 57: google.protobuf.Struct
 	(*durationpb.Duration)(nil),            // 58: google.protobuf.Duration
 	(*common.NetIP)(nil),                   // 59: common.NetIP
-	(*proto.Mount)(nil),                    // 60: talos.resource.definitions.proto.Mount
-	(*common.NetIPPrefix)(nil),             // 61: common.NetIPPrefix
+	(*common.PEMEncodedCertificate)(nil),   // 60: common.PEMEncodedCertificate
+	(*proto.Mount)(nil),                    // 61: talos.resource.definitions.proto.Mount
+	(*common.NetIPPrefix)(nil),             // 62: common.NetIPPrefix
 }
 var file_resource_definitions_k8s_k8s_proto_depIdxs = []int32{
 	16, // 0: talos.resource.definitions.k8s.APIServerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
@@ -3241,41 +3272,42 @@ var file_resource_definitions_k8s_k8s_proto_depIdxs = []int32{
 	46, // 21: talos.resource.definitions.k8s.ExtraManifest.extra_headers:type_name -> talos.resource.definitions.k8s.ExtraManifest.ExtraHeadersEntry
 	14, // 22: talos.resource.definitions.k8s.ExtraManifestsConfigSpec.extra_manifests:type_name -> talos.resource.definitions.k8s.ExtraManifest
 	18, // 23: talos.resource.definitions.k8s.KubePrismConfigSpec.endpoints:type_name -> talos.resource.definitions.k8s.KubePrismEndpoint
-	18, // 24: talos.resource.definitions.k8s.KubePrismEndpointsSpec.endpoints:type_name -> talos.resource.definitions.k8s.KubePrismEndpoint
-	60, // 25: talos.resource.definitions.k8s.KubeletConfigSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
-	57, // 26: talos.resource.definitions.k8s.KubeletConfigSpec.extra_config:type_name -> google.protobuf.Struct
-	57, // 27: talos.resource.definitions.k8s.KubeletConfigSpec.credential_provider_config:type_name -> google.protobuf.Struct
-	47, // 28: talos.resource.definitions.k8s.KubeletConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry
-	48, // 29: talos.resource.definitions.k8s.KubeletConfigSpec.register_with_taints:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry
-	49, // 30: talos.resource.definitions.k8s.KubeletConfigSpec.credential_provider_files:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntry
-	60, // 31: talos.resource.definitions.k8s.KubeletSpecSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
-	57, // 32: talos.resource.definitions.k8s.KubeletSpecSpec.config:type_name -> google.protobuf.Struct
-	57, // 33: talos.resource.definitions.k8s.KubeletSpecSpec.credential_provider_config:type_name -> google.protobuf.Struct
-	50, // 34: talos.resource.definitions.k8s.KubeletSpecSpec.credential_provider_files:type_name -> talos.resource.definitions.k8s.KubeletSpecSpec.CredentialProviderFilesEntry
-	38, // 35: talos.resource.definitions.k8s.ManifestSpec.items:type_name -> talos.resource.definitions.k8s.SingleManifest
-	59, // 36: talos.resource.definitions.k8s.NodeIPSpec.addresses:type_name -> common.NetIP
-	51, // 37: talos.resource.definitions.k8s.NodeStatusSpec.labels:type_name -> talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry
-	52, // 38: talos.resource.definitions.k8s.NodeStatusSpec.annotations:type_name -> talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry
-	61, // 39: talos.resource.definitions.k8s.NodeStatusSpec.pod_cid_rs:type_name -> common.NetIPPrefix
-	53, // 40: talos.resource.definitions.k8s.Resources.requests:type_name -> talos.resource.definitions.k8s.Resources.RequestsEntry
-	54, // 41: talos.resource.definitions.k8s.Resources.limits:type_name -> talos.resource.definitions.k8s.Resources.LimitsEntry
-	16, // 42: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
-	55, // 43: talos.resource.definitions.k8s.SchedulerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
-	35, // 44: talos.resource.definitions.k8s.SchedulerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
-	57, // 45: talos.resource.definitions.k8s.SchedulerConfigSpec.config:type_name -> google.protobuf.Struct
-	56, // 46: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
-	57, // 47: talos.resource.definitions.k8s.SingleManifest.object:type_name -> google.protobuf.Struct
-	57, // 48: talos.resource.definitions.k8s.StaticPodSpec.pod:type_name -> google.protobuf.Struct
-	57, // 49: talos.resource.definitions.k8s.StaticPodStatusSpec.pod_status:type_name -> google.protobuf.Struct
-	3,  // 50: talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
-	3,  // 51: talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
-	3,  // 52: talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
-	3,  // 53: talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
-	54, // [54:54] is the sub-list for method output_type
-	54, // [54:54] is the sub-list for method input_type
-	54, // [54:54] is the sub-list for extension type_name
-	54, // [54:54] is the sub-list for extension extendee
-	0,  // [0:54] is the sub-list for field type_name
+	60, // 24: talos.resource.definitions.k8s.KubePrismConfigSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	18, // 25: talos.resource.definitions.k8s.KubePrismEndpointsSpec.endpoints:type_name -> talos.resource.definitions.k8s.KubePrismEndpoint
+	61, // 26: talos.resource.definitions.k8s.KubeletConfigSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
+	57, // 27: talos.resource.definitions.k8s.KubeletConfigSpec.extra_config:type_name -> google.protobuf.Struct
+	57, // 28: talos.resource.definitions.k8s.KubeletConfigSpec.credential_provider_config:type_name -> google.protobuf.Struct
+	47, // 29: talos.resource.definitions.k8s.KubeletConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry
+	48, // 30: talos.resource.definitions.k8s.KubeletConfigSpec.register_with_taints:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry
+	49, // 31: talos.resource.definitions.k8s.KubeletConfigSpec.credential_provider_files:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntry
+	61, // 32: talos.resource.definitions.k8s.KubeletSpecSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
+	57, // 33: talos.resource.definitions.k8s.KubeletSpecSpec.config:type_name -> google.protobuf.Struct
+	57, // 34: talos.resource.definitions.k8s.KubeletSpecSpec.credential_provider_config:type_name -> google.protobuf.Struct
+	50, // 35: talos.resource.definitions.k8s.KubeletSpecSpec.credential_provider_files:type_name -> talos.resource.definitions.k8s.KubeletSpecSpec.CredentialProviderFilesEntry
+	38, // 36: talos.resource.definitions.k8s.ManifestSpec.items:type_name -> talos.resource.definitions.k8s.SingleManifest
+	59, // 37: talos.resource.definitions.k8s.NodeIPSpec.addresses:type_name -> common.NetIP
+	51, // 38: talos.resource.definitions.k8s.NodeStatusSpec.labels:type_name -> talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry
+	52, // 39: talos.resource.definitions.k8s.NodeStatusSpec.annotations:type_name -> talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry
+	62, // 40: talos.resource.definitions.k8s.NodeStatusSpec.pod_cid_rs:type_name -> common.NetIPPrefix
+	53, // 41: talos.resource.definitions.k8s.Resources.requests:type_name -> talos.resource.definitions.k8s.Resources.RequestsEntry
+	54, // 42: talos.resource.definitions.k8s.Resources.limits:type_name -> talos.resource.definitions.k8s.Resources.LimitsEntry
+	16, // 43: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
+	55, // 44: talos.resource.definitions.k8s.SchedulerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
+	35, // 45: talos.resource.definitions.k8s.SchedulerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	57, // 46: talos.resource.definitions.k8s.SchedulerConfigSpec.config:type_name -> google.protobuf.Struct
+	56, // 47: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
+	57, // 48: talos.resource.definitions.k8s.SingleManifest.object:type_name -> google.protobuf.Struct
+	57, // 49: talos.resource.definitions.k8s.StaticPodSpec.pod:type_name -> google.protobuf.Struct
+	57, // 50: talos.resource.definitions.k8s.StaticPodStatusSpec.pod_status:type_name -> google.protobuf.Struct
+	3,  // 51: talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
+	3,  // 52: talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
+	3,  // 53: talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
+	3,  // 54: talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.k8s.ArgValues
+	55, // [55:55] is the sub-list for method output_type
+	55, // [55:55] is the sub-list for method input_type
+	55, // [55:55] is the sub-list for extension type_name
+	55, // [55:55] is the sub-list for extension extendee
+	0,  // [0:55] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_k8s_k8s_proto_init() }

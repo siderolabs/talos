@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -75,6 +77,21 @@ type KubePrismConfigV1Alpha1 struct {
 	//
 	//     When empty (default), no `tls-server-name` is set and behavior is unchanged.
 	TLSServerNameConfig string `yaml:"tlsServerName,omitempty"`
+	//   description: |
+	//     Use the Kubernetes API server readiness endpoint (`/readyz`) to check the health of the upstreams.
+	//
+	//     When enabled, KubePrism establishes a TLS connection to each upstream, verifies the API server
+	//     certificate against the Kubernetes CA (using `tlsServerName` if set), and considers the upstream
+	//     healthy only if the API server reports itself ready. This allows KubePrism to stop routing new
+	//     connections to an API server which still accepts TCP connections, but can't serve requests
+	//     (e.g. it lost connection to etcd, or it is shutting down).
+	//
+	//     The readiness check requires unauthenticated access to the `/readyz` endpoint of the API server
+	//     (see `KubeAuthenticationConfig`), which is the default since Talos 1.14.
+	//
+	//     When disabled (default), the upstream health check is a TCP connection attempt.
+	//     Machine configuration generated for Talos 1.15+ enables the readiness check.
+	ReadinessCheckConfig *bool `yaml:"readinessCheck,omitempty"`
 }
 
 // NewKubePrismConfigV1Alpha1 creates a new KubePrismConfig config document.
@@ -135,4 +152,9 @@ func (s *KubePrismConfigV1Alpha1) Port() int {
 // TLSServerName implements config.K8sKubePrismConfig interface.
 func (s *KubePrismConfigV1Alpha1) TLSServerName() string {
 	return s.TLSServerNameConfig
+}
+
+// ReadinessCheckEnabled implements config.K8sKubePrismConfig interface.
+func (s *KubePrismConfigV1Alpha1) ReadinessCheckEnabled() bool {
+	return pointer.SafeDeref(s.ReadinessCheckConfig)
 }

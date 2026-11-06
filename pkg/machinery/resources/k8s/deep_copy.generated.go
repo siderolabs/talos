@@ -11,6 +11,7 @@ import (
 	"time"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/siderolabs/crypto/x509"
 )
 
 // DeepCopy generates a deep copy of AdmissionControlConfigSpec.
@@ -303,6 +304,15 @@ func (o KubePrismConfigSpec) DeepCopy() KubePrismConfigSpec {
 	if o.Endpoints != nil {
 		cp.Endpoints = make([]KubePrismEndpoint, len(o.Endpoints))
 		copy(cp.Endpoints, o.Endpoints)
+	}
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
 	}
 	return cp
 }

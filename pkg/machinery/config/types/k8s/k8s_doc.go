@@ -819,6 +819,13 @@ func (KubePrismConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Override the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\n\nKubePrism still listens on `127.0.0.1:<port>` and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\n`clusters[0].cluster.tls-server-name` set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\n\nThis is useful when KubePrism's upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn't match any\nroute and the proxy serves a fallback certificate.\n\nWhen empty (default), no `tls-server-name` is set and behavior is unchanged.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the TLS server name (SNI) used by the kubelet when connecting to" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "readinessCheck",
+				Type:        "bool",
+				Note:        "",
+				Description: "Use the Kubernetes API server readiness endpoint (`/readyz`) to check the health of the upstreams.\n\nWhen enabled, KubePrism establishes a TLS connection to each upstream, verifies the API server\ncertificate against the Kubernetes CA (using `tlsServerName` if set), and considers the upstream\nhealthy only if the API server reports itself ready. This allows KubePrism to stop routing new\nconnections to an API server which still accepts TCP connections, but can't serve requests\n(e.g. it lost connection to etcd, or it is shutting down).\n\nThe readiness check requires unauthenticated access to the `/readyz` endpoint of the API server\n(see `KubeAuthenticationConfig`), which is the default since Talos 1.14.\n\nWhen disabled (default), the upstream health check is a TCP connection attempt.\nMachine configuration generated for Talos 1.15+ enables the readiness check.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Use the Kubernetes API server readiness endpoint (`/readyz`) to check the health of the upstreams." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

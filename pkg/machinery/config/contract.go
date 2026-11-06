@@ -311,6 +311,12 @@ func (contract *VersionContract) TrustdExtKeyUsageCheckEnabled() bool {
 	return contract.Greater(TalosVersion1_14)
 }
 
+// KubePrismReadinessCheckEnabledByDefault returns true if version of Talos should enable
+// the KubePrism upstream readiness check (`/readyz`) in the generated configuration.
+func (contract *VersionContract) KubePrismReadinessCheckEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_14)
+}
+
 // MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
 func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

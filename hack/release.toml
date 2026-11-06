@@ -15,6 +15,17 @@ preface = """
 """
 
 [notes]
+    [notes.kubeprism_readiness_check]
+        title = "KubePrism Readiness Check"
+        description = """\
+KubePrism can now check the health of the Kubernetes API server upstreams via the readiness endpoint (`/readyz`), instead of a TCP connection attempt.
+This allows KubePrism to stop routing new connections to an API server which accepts TCP connections, but is not ready to serve requests
+(e.g. it lost connection to etcd, or it is shutting down).
+
+The readiness check is enabled with the `readinessCheck` field of the `KubePrismConfig` document, and it is enabled by default for machine configuration generated for Talos 1.15+.
+The readiness check requires unauthenticated access to the `/readyz` endpoint of the API server (the default since Talos 1.14, see `KubeAuthenticationConfig`).
+"""
+
     [notes.trustd_ext_key_usage]
         title = "trustd Server Certificate Verification"
         description = """\

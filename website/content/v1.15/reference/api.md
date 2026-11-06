@@ -10453,6 +10453,9 @@ KubePrismConfigSpec describes KubePrismConfig data.
 | host | [string](#string) |  |  |
 | port | [int64](#int64) |  |  |
 | endpoints | [KubePrismEndpoint](#talos.resource.definitions.k8s.KubePrismEndpoint) | repeated |  |
+| readiness_check | [bool](#bool) |  | ReadinessCheck enables upstream health checks via the API server readiness endpoint. |
+| tls_server_name | [string](#string) |  | TLSServerName is the server name used to verify the API server certificate (readiness check only). |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated | AcceptedCAs are the CAs used to verify the API server certificate (readiness check only). |
 
 
 

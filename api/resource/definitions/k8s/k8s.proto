@@ -172,6 +172,12 @@ message KubePrismConfigSpec {
   string host = 1;
   int64 port = 2;
   repeated KubePrismEndpoint endpoints = 3;
+  // ReadinessCheck enables upstream health checks via the API server readiness endpoint.
+  bool readiness_check = 4;
+  // TLSServerName is the server name used to verify the API server certificate (readiness check only).
+  string tls_server_name = 5;
+  // AcceptedCAs are the CAs used to verify the API server certificate (readiness check only).
+  repeated common.PEMEncodedCertificate accepted_c_as = 6;
 }
 
 // KubePrismEndpoint holds data for control plane endpoint.

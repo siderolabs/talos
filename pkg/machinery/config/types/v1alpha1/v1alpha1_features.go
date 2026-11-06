@@ -57,6 +57,11 @@ func (a *KubePrism) TLSServerName() string {
 	return ""
 }
 
+// ReadinessCheckEnabled implements [config.K8sKubePrismConfig].
+func (a *KubePrism) ReadinessCheckEnabled() bool {
+	return false
+}
+
 // K8sKubePrismConfigSignal implements [config.K8sKubePrismConfig] interface.
 func (a *KubePrism) K8sKubePrismConfigSignal() {}
 

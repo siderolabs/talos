@@ -20,17 +20,36 @@ import (
 	"github.com/siderolabs/go-loadbalancer/upstream"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/kubeprism"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
+// readinessCheckTierThresholds are the upstream tier thresholds for the readiness check.
+//
+// The default thresholds are tuned for a TCP dial attempt (tens to hundreds of microseconds on a LAN).
+// A readiness check adds a TLS handshake, an HTTP round-trip and the API server readiness checks
+// (including a rate-limited etcd probe), which add about a millisecond on top of the dial,
+// and that overhead varies more than the network latency between the nodes in the same location.
+//
+// The upstream with the lowest tier is always preferred, and the tier is updated on each health check
+// without any smoothing, so the thresholds are coarse to avoid flapping between the upstreams in the same location,
+// while still deprioritizing remote (or overloaded) API servers.
+var readinessCheckTierThresholds = []time.Duration{
+	0,
+	10 * time.Millisecond,
+	100 * time.Millisecond,
+	time.Second,
+}
+
 // KubePrismController creates KubePrism load balancer based on KubePrismEndpointsType resource.
 type KubePrismController struct {
-	balancerHost string
-	balancerPort int
-	lb           *controlplane.LoadBalancer
-	ticker       *time.Ticker
-	upstreamCh   chan []string
+	balancerHost     string
+	balancerPort     int
+	lb               *controlplane.LoadBalancer
+	readinessChecker *kubeprism.ReadinessChecker
+	ticker           *time.Ticker
+	upstreamCh       chan []string
 }
 
 // Name implements controller.Controller interface.
@@ -105,7 +124,10 @@ func (ctrl *KubePrismController) Run(ctx context.Context, r controller.Runtime, 
 				return err
 			}
 		case ctrl.lb != nil && lbCfg != nil:
-			if lbCfg.TypedSpec().Host != ctrl.balancerHost || lbCfg.TypedSpec().Port != ctrl.balancerPort {
+			// switching the health check (TCP dial or readiness check) requires a restart
+			readinessCheckToggled := lbCfg.TypedSpec().ReadinessCheck != (ctrl.readinessChecker != nil)
+
+			if lbCfg.TypedSpec().Host != ctrl.balancerHost || lbCfg.TypedSpec().Port != ctrl.balancerPort || readinessCheckToggled {
 				err = ctrl.stopKubePrism(logger)
 				if err != nil {
 					return err
@@ -116,6 +138,12 @@ func (ctrl *KubePrismController) Run(ctx context.Context, r controller.Runtime, 
 					return err
 				}
 			} else {
+				if ctrl.readinessChecker != nil {
+					if err = updateReadinessChecker(ctrl.readinessChecker, lbCfg.TypedSpec()); err != nil {
+						return err
+					}
+				}
+
 				ctrl.upstreamChan() <- makeEndpoints(lbCfg.TypedSpec())
 			}
 		}
@@ -187,9 +215,17 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 	ctrl.balancerHost = spec.Host
 	ctrl.balancerPort = spec.Port
 
-	lb, err := controlplane.NewLoadBalancer(
-		ctrl.balancerHost, ctrl.balancerPort,
-		logger.WithOptions(zap.IncreaseLevel(zap.ErrorLevel)), // silence the load balancer logs
+	var readinessChecker *kubeprism.ReadinessChecker
+
+	if spec.ReadinessCheck {
+		readinessChecker = &kubeprism.ReadinessChecker{}
+
+		if err := updateReadinessChecker(readinessChecker, spec); err != nil {
+			return err
+		}
+	}
+
+	lbOptions := []controlplane.LoadBalancerOption{
 		controlplane.WithDialTimeout(constants.KubePrismDialTimeout),
 		controlplane.WithKeepAlivePeriod(constants.KubePrismKeepAlivePeriod),
 		controlplane.WithTCPUserTimeout(constants.KubePrismTCPUserTimeout),
@@ -204,6 +240,20 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 			// a full cluster reboot.
 			upstream.WithUnhealthyHealthcheckInterval(constants.KubePrismUnhealthyHealthCheckInterval),
 		),
+	}
+
+	if readinessChecker != nil {
+		// a failure to connect to the upstream while proxying still lowers the upstream score
+		lbOptions = append(lbOptions,
+			controlplane.WithHealthCheck(readinessChecker.Check),
+			controlplane.WithTierThresholds(readinessCheckTierThresholds...),
+		)
+	}
+
+	lb, err := controlplane.NewLoadBalancer(
+		ctrl.balancerHost, ctrl.balancerPort,
+		logger.WithOptions(zap.IncreaseLevel(zap.ErrorLevel)), // silence the load balancer logs
+		lbOptions...,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create KubePrism: %w", err)
@@ -214,11 +264,29 @@ func (ctrl *KubePrismController) startKubePrism(lbCfg *k8s.KubePrismConfig, logg
 		return fmt.Errorf("failed to start KubePrism: %w", err)
 	}
 
-	logger.Info("KubePrism is enabled", zap.String("endpoint", ctrl.endpoint()))
+	logger.Info("KubePrism is enabled", zap.String("endpoint", ctrl.endpoint()), zap.Bool("readiness_check", readinessChecker != nil))
 
 	ctrl.upstreamChan() <- makeEndpoints(spec)
 
 	ctrl.lb = lb
+	ctrl.readinessChecker = readinessChecker
+
+	return nil
+}
+
+// updateReadinessChecker updates the readiness check TLS configuration.
+//
+// The API server certificate is verified the same way the clients of KubePrism verify it:
+// either with the TLS server name override, or with the KubePrism host.
+func updateReadinessChecker(checker *kubeprism.ReadinessChecker, spec *k8s.KubePrismConfigSpec) error {
+	serverName := spec.TLSServerName
+	if serverName == "" {
+		serverName = spec.Host
+	}
+
+	if err := checker.Update(spec.AcceptedCAs, serverName); err != nil {
+		return fmt.Errorf("failed to configure KubePrism readiness check: %w", err)
+	}
 
 	return nil
 }
@@ -263,6 +331,7 @@ func (ctrl *KubePrismController) upstreamChan() chan []string {
 
 func (ctrl *KubePrismController) stopKubePrism(logger *zap.Logger) error {
 	replaceWithZero(&ctrl.upstreamCh)
+	replaceWithZero(&ctrl.readinessChecker)
 
 	lb := replaceWithZero(&ctrl.lb)
 

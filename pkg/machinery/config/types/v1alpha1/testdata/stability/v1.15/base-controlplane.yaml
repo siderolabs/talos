@@ -108,6 +108,7 @@ issuingCA:
 apiVersion: v1alpha1
 kind: KubePrismConfig
 port: 7445
+readinessCheck: true
 ---
 apiVersion: v1alpha1
 kind: KubeAggregatorCAConfig

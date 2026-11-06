@@ -6,6 +6,7 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"strconv"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -49,10 +50,25 @@ func NewKubePrismConfigController() *KubePrismConfigController {
 					return err
 				}
 
+				kubePrismConfig := cfg.Config().K8sKubePrismConfig()
+
 				spec := res.TypedSpec()
 				spec.Endpoints = endpt.TypedSpec().Endpoints
 				spec.Host = "127.0.0.1"
-				spec.Port = cfg.Config().K8sKubePrismConfig().Port()
+				spec.Port = kubePrismConfig.Port()
+				spec.TLSServerName = kubePrismConfig.TLSServerName()
+				spec.ReadinessCheck = kubePrismConfig.ReadinessCheckEnabled()
+				spec.AcceptedCAs = nil
+
+				if spec.ReadinessCheck {
+					if k8sCAProvider := cfg.Config().K8sAPIServerCAConfig(); k8sCAProvider != nil {
+						spec.AcceptedCAs = k8sCAProvider.AcceptedCAs()
+					}
+
+					if len(spec.AcceptedCAs) == 0 {
+						return errors.New("missing accepted Kubernetes CAs for KubePrism readiness check")
+					}
+				}
 
 				return nil
 			},

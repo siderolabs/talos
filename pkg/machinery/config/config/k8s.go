@@ -242,6 +242,7 @@ type K8sKubePrismConfig interface {
 	K8sKubePrismConfigSignal()
 	Port() int
 	TLSServerName() string
+	ReadinessCheckEnabled() bool
 }
 
 // K8sTalosAPIAccessConfig describes the Kubernetes Talos API access features.

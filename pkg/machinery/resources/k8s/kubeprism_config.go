@@ -9,6 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/siderolabs/crypto/x509"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -37,6 +38,13 @@ type KubePrismConfigSpec struct {
 	Host      string              `yaml:"host" protobuf:"1"`
 	Port      int                 `yaml:"port" protobuf:"2"`
 	Endpoints []KubePrismEndpoint `yaml:"endpoints" protobuf:"3"`
+
+	// ReadinessCheck enables upstream health checks via the API server readiness endpoint.
+	ReadinessCheck bool `yaml:"readinessCheck,omitempty" protobuf:"4"`
+	// TLSServerName is the server name used to verify the API server certificate (readiness check only).
+	TLSServerName string `yaml:"tlsServerName,omitempty" protobuf:"5"`
+	// AcceptedCAs are the CAs used to verify the API server certificate (readiness check only).
+	AcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty" protobuf:"6"`
 }
 
 // KubePrismConfigExtension provides auxiliary methods for KubePrismConfig.
