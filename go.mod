@@ -145,7 +145,7 @@ require (
 	github.com/siderolabs/go-debug v0.6.3
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
-	github.com/siderolabs/go-kubernetes v0.2.43
+	github.com/siderolabs/go-kubernetes v0.2.45
 	github.com/siderolabs/go-lldp v0.1.0
 	github.com/siderolabs/go-loadbalancer v0.5.1
 	github.com/siderolabs/go-pcidb v0.3.4
@@ -166,7 +166,7 @@ require (
 	github.com/sigstore/sigstore-go v1.3.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
-	github.com/spf13/pflag v1.0.10
+	github.com/spf13/pflag v1.1.0
 	github.com/stretchr/testify v1.12.1
 	github.com/thejerf/suture/v4 v4.0.6
 	github.com/theupdateframework/go-tuf/v2 v2.4.2
@@ -220,7 +220,7 @@ require (
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.13.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.2.0 // indirect
-	github.com/Azure/go-ansiterm v0.0.0-20261006220739-8c912ac31dd4 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20261013165250-51075c6ea6bc // indirect
 	github.com/Azure/go-ntlmssp v0.1.1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.10.1 // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
@@ -289,9 +289,9 @@ require (
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
-	github.com/fluxcd/cli-utils v1.3.0 // indirect
-	github.com/fluxcd/pkg/ssa v0.78.0 // indirect
-	github.com/fxamacker/cbor/v2 v2.9.4 // indirect
+	github.com/fluxcd/cli-utils v1.4.0 // indirect
+	github.com/fluxcd/pkg/ssa v0.83.0 // indirect
+	github.com/fxamacker/cbor/v2 v2.10.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.15 // indirect
 	github.com/gaissmai/bart v0.26.1 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
@@ -415,6 +415,7 @@ require (
 	github.com/olekukonko/tablewriter v1.1.5 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/orcaman/concurrent-map/v2 v2.0.1 // indirect
+	github.com/pandatix/go-abnf v0.5.5 // indirect
 	github.com/peterbourgon/diskv/v3 v3.0.1 // indirect
 	github.com/petermattis/goid v0.0.0-20260918085751-abfca077860b // indirect
 	github.com/pierrec/lz4/v4 v4.1.33 // indirect
@@ -423,7 +424,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.25.0 // indirect
 	github.com/prometheus/client_model v0.6.3 // indirect
-	github.com/prometheus/common v0.72.0 // indirect
+	github.com/prometheus/common v0.73.1 // indirect
 	github.com/quic-go/quic-go v0.64.1 // indirect
 	github.com/rasky/go-xdr v0.0.0-20170124162913-1a41d1a06c93 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -452,16 +453,16 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/theupdateframework/go-tuf v0.7.0 // indirect
-	github.com/tidwall/gjson v1.18.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
-	github.com/tidwall/sjson v1.2.5 // indirect
+	github.com/tidwall/gjson v1.20.0 // indirect
+	github.com/tidwall/match v1.2.0 // indirect
+	github.com/tidwall/pretty v1.2.2 // indirect
+	github.com/tidwall/sjson v1.2.7 // indirect
 	github.com/transparency-dev/formats v0.1.1 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/vishvananda/netlink v1.3.1 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
-	github.com/wI2L/jsondiff v0.6.1 // indirect
+	github.com/wI2L/jsondiff v0.7.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xiang90/probing v0.0.0-20221125231312-a49e3df8f510 // indirect
 	github.com/xlab/treeprint v1.2.0 // indirect
@@ -479,8 +480,8 @@ require (
 	go.opentelemetry.io/otel/sdk v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.yaml.in/yaml/v2 v2.4.4 // indirect
-	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	go.yaml.in/yaml/v2 v2.4.5 // indirect
+	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
 	golang.org/x/mod v0.42.0 // indirect
@@ -506,11 +507,11 @@ require (
 	modernc.org/memory v1.11.0 // indirect
 	modernc.org/sqlite v1.55.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
-	sigs.k8s.io/controller-runtime v0.25.0 // indirect
+	sigs.k8s.io/controller-runtime v0.25.2 // indirect
 	sigs.k8s.io/json v0.0.0-20260909141634-11ed52e25bc5 // indirect
 	sigs.k8s.io/knftables v0.0.21 // indirect
-	sigs.k8s.io/kustomize/api v0.21.1 // indirect
-	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
+	sigs.k8s.io/kustomize/api v0.21.2 // indirect
+	sigs.k8s.io/kustomize/kyaml v0.21.2 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/structured-merge-diff/v7 v7.0.0 // indirect

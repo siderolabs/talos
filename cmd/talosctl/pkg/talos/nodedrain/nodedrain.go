@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
@@ -63,7 +64,7 @@ func CordonAndDrain(ctx context.Context, clientset kubernetes.Interface, nodeNam
 		Status:  reporter.StatusRunning,
 	})
 
-	if err := nodedrain.Cordon(ctx, clientset, nodeName); err != nil {
+	if err := nodedrain.Cordon(ctx, clientset, nodeName, constants.AnnotationCordonedKey); err != nil {
 		report(reporter.Update{
 			Message: fmt.Sprintf("%s: error cordoning node: %v", nodeName, err),
 			Status:  reporter.StatusError,
@@ -122,7 +123,7 @@ func Uncordon(ctx context.Context, clientset kubernetes.Interface, nodeName stri
 		Status:  reporter.StatusRunning,
 	})
 
-	if err := nodedrain.Uncordon(ctx, clientset, nodeName); err != nil {
+	if err := nodedrain.Uncordon(ctx, clientset, nodeName, constants.AnnotationCordonedKey); err != nil {
 		report(reporter.Update{
 			Message: fmt.Sprintf("%s: error uncordoning node: %v", nodeName, err),
 			Status:  reporter.StatusError,
