@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -951,6 +952,21 @@ func (suite *SELinuxSuite) TestControlPlaneSecrets() {
 	suite.Require().Error(err)
 	suite.Assert().Contains(stderr, "Permission denied")
 	suite.Assert().Greater(suite.denials(ip, "pod_t"), before)
+}
+
+// TestControlPlaneDomainsAdmission checks that the API server refuses the domains of the control plane to a pod: the
+// admission policy of Talos keeps them to the static pods.
+func (suite *SELinuxSuite) TestControlPlaneDomainsAdmission() {
+	podDef, err := suite.NewPod("selinux-control-plane-domain")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNamespace("kube-system").
+		WithSELinuxOptions(&corev1.SELinuxOptions{Type: constants.KubernetesAPIServerSELinuxType})
+
+	err = podDef.Create(suite.ctx, 20*time.Second)
+	suite.Assert().True(apierrors.IsForbidden(err), "%v", err)
+	suite.Assert().ErrorContains(err, "talos-reserved-selinux-domains")
+	suite.Require().NoError(podDef.Delete(suite.ctx))
 }
 
 func init() {

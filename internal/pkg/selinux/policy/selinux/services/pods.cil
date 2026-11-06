@@ -32,6 +32,7 @@
 (neverallow workload_p init_t (unix_stream_socket (connectto)))
 (neverallow workload_p system_p (process (ptrace)))
 ; Every domain the CRI starts is a workload, the system services it runs aside, and a workload enters no other domain.
+; The admission policy of the bootstrap manifests refuses the domains of these services to pods.
 (typeattribute not_cri_workload_p)
 (typeattributeset not_cri_workload_p (not (or workload_p (or pod_containerd_t (or kubelet_t (or etcd_t (or taloscontainer_t taloscontainer_machined_t)))))))
 (neverallow pod_containerd_t not_cri_workload_p (process (transition dyntransition)))
