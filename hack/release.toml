@@ -360,9 +360,12 @@ when its containers share a volume, since a type without a level gives each cont
   that one right, whatever the booleans say.
 * `pod_hostmon_t` for process monitors and log forwarders, which read `/proc`, the logs and the files of every pod, and
   write none of them.
-* `pod_cni_t` for CNI agents and `pod_csi_t` for CSI node plugins: the host access of a privileged container, plus the
-  CNI plugins and eBPF for the first, the network filesystems, lvm, io_uring and the sysfs settings of virtual storage
-  devices for the second, without `privileged: true` and its devices and capabilities.
+* `pod_cni_t` for CNI agents: the CNI plugins, eBPF, `/run`, the `/proc` of every process and read access to the files
+  of every pod, without the host access of a privileged container.
+* `pod_csi_t` for CSI node plugins that mount through the host mount namespace: the host access of a privileged
+  container, plus the network filesystems, lvm, io_uring and the sysfs settings of virtual storage devices, without
+  `privileged: true` and its devices and capabilities. A plugin that mounts volumes with Bidirectional mount
+  propagation must run privileged, so as `pod_privileged_t`.
 
 The new `selinuxBooleans` field of the `SecurityProfileConfig` document sets SELinux booleans without loading the policy
 again. `pod_write_cni_plugins`, `pod_use_network_fs` and `pod_use_ebpf` narrow what every regular pod of the node may do,

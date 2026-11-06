@@ -142,9 +142,14 @@
     (allow ARG1 unlabeled_t (dir (getattr search open read ioctl)))
 )
 
-; A CNI agent: the host access and the network rights.
+; A CNI agent: the network rights, the /proc of every domain, through which it reaches the network namespaces of pods,
+; and /run for its sockets and the xtables lock. It reads the files of every pod whatever their MCS categories and writes
+; only its own, reads no other host file, and only the CRI connects to its sockets, for the CNI plugin.
 (macro pod_cni_domain ((type ARG1))
-    (call pod_host_domain (ARG1))
+    (call pod_workload (ARG1))
+    (typeattributeset mcs_read_exempt_p ARG1)
+    (allow ARG1 any_p (fs_classes (ro)))
+    (allow ARG1 run_t (fs_classes (rw)))
     (call pod_network_rights (ARG1))
 )
 
