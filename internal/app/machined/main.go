@@ -52,7 +52,12 @@ import (
 
 func init() {
 	// Patch a default HTTP client with updated transport to handle cases when default client is being used.
-	http.DefaultClient.Transport = httpdefaults.PatchTransport(cleanhttp.DefaultPooledTransport())
+	//
+	// The transport is built lazily, as it loads the trusted CA bundle, and most of the processes started
+	// from this binary (apid, trustd, dashboard, etc.) never use the default HTTP client.
+	http.DefaultClient.Transport = httpdefaults.LazyTransport(func() *http.Transport {
+		return httpdefaults.PatchTransport(cleanhttp.DefaultPooledTransport())
+	})
 }
 
 func recovery(ctx context.Context) {
