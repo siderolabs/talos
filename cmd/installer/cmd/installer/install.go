@@ -74,12 +74,12 @@ func runInstallCmd(ctx context.Context) (err error) {
 		}
 
 		// defaults from the deprecated .machine.install section (if present).
-		legacyBIOSSupport := config.Machine() != nil && config.Machine().Install().LegacyBIOSSupport()
+		legacyBIOSSupport := config.Machine() != nil && config.Machine().Install() != nil && config.Machine().Install().LegacyBIOSSupport()
 
 		// if we don't have v1alpha1 config (we are in maintenance mode),
 		// or if we have v1alpha1 config, and GrubUseUKICmdline is set to true,
 		// then we should set the option to true
-		grubUseUKICmdline := config.Machine() == nil || config.Machine().Install().GrubUseUKICmdline()
+		grubUseUKICmdline := config.Machine() == nil || (config.Machine().Install() != nil && config.Machine().Install().GrubUseUKICmdline())
 
 		// A config with no .machine.install section has nowhere to hold extraKernelArgs, so there is no
 		// legacy command line to preserve and the UKI is the only source for the kernel arguments. The

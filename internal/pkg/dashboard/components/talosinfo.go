@@ -10,6 +10,8 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -24,6 +26,12 @@ type talosInfoData struct {
 	ready           string
 	numMachinesText string
 	secureBootState string
+	ephemeralMode   string
+
+	stateVolumeIsMemory     bool
+	ephemeralVolumeIsMemory bool
+	stateVolumeKnown        bool
+	ephemeralVolumeKnown    bool
 
 	machineIDSet map[string]struct{}
 }
@@ -119,6 +127,34 @@ func (widget *TalosInfo) updateNodeData(data resourcedata.Data) {
 		}
 
 		nodeData.numMachinesText = fmt.Sprintf("(%d machine%s)", len(nodeData.machineIDSet), suffix)
+	case *block.VolumeStatus:
+		switch res.Metadata().ID() {
+		case constants.StatePartitionLabel:
+			nodeData.stateVolumeKnown = !data.Deleted
+			nodeData.stateVolumeIsMemory = !data.Deleted && res.TypedSpec().Type == block.VolumeTypeMemory
+		case constants.EphemeralPartitionLabel:
+			nodeData.ephemeralVolumeKnown = !data.Deleted
+			nodeData.ephemeralVolumeIsMemory = !data.Deleted && res.TypedSpec().Type == block.VolumeTypeMemory
+		}
+
+		nodeData.ephemeralMode = computeEphemeralMode(nodeData)
+	}
+}
+
+func computeEphemeralMode(d *talosInfoData) string {
+	if !d.stateVolumeKnown || !d.ephemeralVolumeKnown {
+		return notAvailable
+	}
+
+	switch {
+	case d.stateVolumeIsMemory && d.ephemeralVolumeIsMemory:
+		return "yes (STATE + EPHEMERAL on tmpfs — state wiped on reboot)"
+	case d.stateVolumeIsMemory:
+		return "STATE-only (config wiped on reboot)"
+	case d.ephemeralVolumeIsMemory:
+		return "EPHEMERAL-only (runtime wiped on reboot)"
+	default:
+		return "no"
 	}
 }
 
@@ -133,6 +169,7 @@ func (widget *TalosInfo) getOrCreateNodeData(node string) *talosInfoData {
 			ready:           notAvailable,
 			numMachinesText: notAvailable,
 			secureBootState: notAvailable,
+			ephemeralMode:   notAvailable,
 			machineIDSet:    make(map[string]struct{}),
 		}
 
@@ -170,6 +207,10 @@ func (widget *TalosInfo) redraw() {
 			{
 				Name:  "SECUREBOOT",
 				Value: data.secureBootState,
+			},
+			{
+				Name:  "EPHEMERAL",
+				Value: data.ephemeralMode,
 			},
 		},
 	}

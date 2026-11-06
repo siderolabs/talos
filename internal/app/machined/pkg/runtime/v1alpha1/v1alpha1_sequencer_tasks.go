@@ -1492,6 +1492,10 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		switch {
 		case !r.State().Machine().Installed():
+			if r.Config().Machine().Install() == nil {
+				return fmt.Errorf("cannot install: no install config")
+			}
+
 			installerImage := r.Config().Machine().Install().Image()
 			if installerImage == "" {
 				installerImage = images.InstallerImage("metal")
