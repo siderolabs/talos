@@ -904,7 +904,7 @@ func init() {
 
 // TestSELinuxBooleans sets booleans in the machine config: with pod_write_cni_plugins and pod_use_ebpf on, a regular pod
 // writes the CNI plugins directory and bpffs, off, it is denied and the denials audited, while the domain that needs each
-// right still writes it.
+// right still writes it. With allow_pod_netfs_t off, the node refuses pod_netfs_t.
 func (suite *SELinuxSuite) TestSELinuxBooleans() {
 	ip, node := suite.labelingNode(true)
 	nodeCtx := client.WithNode(suite.ctx, ip)
@@ -934,7 +934,7 @@ func (suite *SELinuxSuite) TestSELinuxBooleans() {
 		return suite.exec(podDef, "mkdir "+dir+" && rmdir "+dir+" && echo written")
 	}
 
-	off := map[string]bool{}
+	off := map[string]bool{"allow_pod_netfs_t": false}
 
 	for _, boolean := range booleans {
 		assertBoolean(boolean.name, runtimeres.SELinuxBooleanStatusSpec{Value: true, Default: true})
@@ -963,6 +963,17 @@ func (suite *SELinuxSuite) TestSELinuxBooleans() {
 		suite.Require().NoError(err, stderr)
 		suite.Assert().Equal("written\n", stdout, boolean.domain)
 	}
+
+	podDef, err := suite.NewPod("selinux-boolean-refused")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNamespace("kube-system").WithNodeName(node).WithSELinuxOptions(&corev1.SELinuxOptions{Type: "pod_netfs_t"})
+
+	before := suite.denials(ip, "pod_containerd_t")
+
+	suite.Assert().Error(podDef.Create(suite.ctx, 20*time.Second))
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+	suite.Assert().Greater(suite.denials(ip, "pod_containerd_t"), before)
 }
 
 // setSELinuxBooleans sets the selinuxBooleans of the SecurityProfileConfig document of the node, nil removes them.

@@ -184,3 +184,24 @@
 (typetransition pod_containerd_t pod_file_t process pod_privileged_t)
 (typealias spc_t)
 (typealiasactual spc_t pod_privileged_t)
+
+; A node may refuse the pod domains it does not run, such as pod_csi_t on its control plane nodes: with the boolean of
+; a domain off, the CRI does not start it, and a container that selects it fails to start. pod_t, the domain of the
+; pods that select nothing, and the system services the CRI runs are always allowed.
+(typeattribute pod_optional_p)
+(macro pod_optional ((type ARG1) (boolean ARG2))
+    (typeattributeset pod_optional_p ARG1)
+    (booleanif ARG2 (true (allow pod_containerd_t ARG1 (process (transition)))))
+)
+(boolean allow_pod_netfs_t true)
+(call pod_optional (pod_netfs_t allow_pod_netfs_t))
+(boolean allow_pod_ebpf_t true)
+(call pod_optional (pod_ebpf_t allow_pod_ebpf_t))
+(boolean allow_pod_hostmon_t true)
+(call pod_optional (pod_hostmon_t allow_pod_hostmon_t))
+(boolean allow_pod_cni_t true)
+(call pod_optional (pod_cni_t allow_pod_cni_t))
+(boolean allow_pod_csi_t true)
+(call pod_optional (pod_csi_t allow_pod_csi_t))
+(boolean allow_pod_privileged_t true)
+(call pod_optional (pod_privileged_t allow_pod_privileged_t))
