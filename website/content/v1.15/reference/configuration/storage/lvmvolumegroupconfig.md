@@ -26,6 +26,18 @@ provisioning:
         match: volume.partition_label.startsWith("r-lvm") # CEL expression matching a disk or partition to use as a physical volume.
 {{< /highlight >}}
 
+{{< highlight yaml >}}
+apiVersion: v1alpha1
+kind: LVMVolumeGroupConfig
+name: vg-encrypted # Volume group name.
+# The provisioning describes how the Physical Volumes are provisioned.
+provisioning:
+    # Talos volumes to initialize as physical volumes.
+    parents:
+        - rawVolume: lvm-a # Name of the `RawVolumeConfig` document.
+        - rawVolume: lvm-b # Name of the `RawVolumeConfig` document.
+{{< /highlight >}}
+
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
@@ -44,7 +56,8 @@ ProvisioningSpec describes how the Physical Volumes are provisioned.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`volumeSelector` |<a href="#LVMVolumeGroupConfig.provisioning.volumeSelector">LVMVolumeSelectorSpec</a> |Matches disks to initialize as physical volumes.  | |
+|`volumeSelector` |<a href="#LVMVolumeGroupConfig.provisioning.volumeSelector">LVMVolumeSelectorSpec</a> |Matches disks to initialize as physical volumes.<br><br>Mutually exclusive with `parents`.  | |
+|`parents` |<a href="#LVMVolumeGroupConfig.provisioning.parents.">[]LVMVolumeGroupParent</a> |Talos volumes to initialize as physical volumes.<br><br>Mutually exclusive with `volumeSelector`.  | |
 
 
 
@@ -63,6 +76,22 @@ match: volume.partition_label.startsWith("r-lvm")
 {{< /highlight >}}match the raw volume named lvmdata, encrypted or not:{{< highlight yaml >}}
 match: volume_id == "r-lvmdata"
 {{< /highlight >}}</details> | |
+
+
+
+
+
+
+### parents[] {#LVMVolumeGroupConfig.provisioning.parents.}
+
+LVMVolumeGroupParent references a Talos volume backing the volume group.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`rawVolume` |string |Name of the `RawVolumeConfig` document.  | |
 
 
 

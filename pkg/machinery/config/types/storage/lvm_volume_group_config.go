@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // LVMVolumeGroupConfigKind is a config document kind.
@@ -49,6 +50,7 @@ const maxLVMVolumeGroupNameLength = 63
 //	  Defines volume group and selector for backing disks.
 //	examples:
 //	  - value: exampleLVMVolumeGroupConfigV1Alpha1()
+//	  - value: exampleLVMVolumeGroupConfigParentsV1Alpha1()
 //	alias: LVMVolumeGroupConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/LVMVolumeGroupConfig
@@ -69,18 +71,42 @@ type LVMVolumeGroupConfigV1Alpha1 struct {
 type ProvisioningSpec struct {
 	//   description: |
 	//     Matches disks to initialize as physical volumes.
+	//
+	//     Mutually exclusive with `parents`.
 	VolumeSelector LVMVolumeSelectorSpec `yaml:"volumeSelector,omitempty"`
+	//   description: |
+	//     Talos volumes to initialize as physical volumes.
+	//
+	//     Mutually exclusive with `volumeSelector`.
+	Parents []LVMVolumeGroupParent `yaml:"parents,omitempty"`
+}
+
+// LVMVolumeGroupParent references a Talos volume backing the volume group.
+type LVMVolumeGroupParent struct {
+	//   description: |
+	//     Name of the `RawVolumeConfig` document.
+	RawVolume string `yaml:"rawVolume,omitempty"`
+}
+
+// VolumeID returns the ID of the referenced Talos volume.
+func (p LVMVolumeGroupParent) VolumeID() string {
+	return constants.RawVolumePrefix + p.RawVolume
 }
 
 // IsZero reports whether the spec is empty.
 func (s ProvisioningSpec) IsZero() bool {
-	return s.VolumeSelector.IsZero()
+	return s.VolumeSelector.IsZero() && len(s.Parents) == 0
 }
 
 // Validate parses selector without mutating stored config.
 func (s ProvisioningSpec) Validate() error {
-	if s.VolumeSelector.Match.IsZero() {
-		return errors.New("provisioning.volumeSelector.match is required")
+	switch {
+	case !s.VolumeSelector.Match.IsZero() && len(s.Parents) > 0:
+		return errors.New("provisioning.volumeSelector and provisioning.parents are mutually exclusive")
+	case len(s.Parents) > 0:
+		return s.validateParents()
+	case s.VolumeSelector.Match.IsZero():
+		return errors.New("either provisioning.volumeSelector.match or provisioning.parents is required")
 	}
 
 	if err := s.VolumeSelector.Match.ParseBool(celenv.MemberVolumeLocator()); err != nil {
@@ -88,6 +114,28 @@ func (s ProvisioningSpec) Validate() error {
 	}
 
 	return nil
+}
+
+func (s ProvisioningSpec) validateParents() error {
+	var validationErrors error
+
+	seen := make(map[string]struct{}, len(s.Parents))
+
+	for i, parent := range s.Parents {
+		if parent.RawVolume == "" {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning.parents[%d].rawVolume is required", i))
+
+			continue
+		}
+
+		if _, ok := seen[parent.RawVolume]; ok {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning.parents[%d]: duplicate raw volume %q", i, parent.RawVolume))
+		}
+
+		seen[parent.RawVolume] = struct{}{}
+	}
+
+	return validationErrors
 }
 
 // LVMVolumeSelectorSpec matches disks with CEL.
@@ -151,6 +199,19 @@ func exampleLVMVolumeGroupConfigV1Alpha1() *LVMVolumeGroupConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleLVMVolumeGroupConfigParentsV1Alpha1() *LVMVolumeGroupConfigV1Alpha1 {
+	cfg := NewLVMVolumeGroupConfigV1Alpha1()
+	cfg.MetaName = "vg-encrypted"
+	cfg.ProvisioningSpec = ProvisioningSpec{
+		Parents: []LVMVolumeGroupParent{
+			{RawVolume: "lvm-a"},
+			{RawVolume: "lvm-b"},
+		},
+	}
+
+	return cfg
+}
+
 func exampleLVMVolumeSelector() cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label.startsWith("r-lvm")`, celenv.MemberVolumeLocator()))
 }
@@ -175,6 +236,21 @@ func (s *LVMVolumeGroupConfigV1Alpha1) LVMVolumeGroupConfigSignal() {}
 // PhysicalVolumeSelector implements config.LVMVolumeGroupConfig.
 func (s *LVMVolumeGroupConfigV1Alpha1) PhysicalVolumeSelector() cel.Expression {
 	return s.ProvisioningSpec.VolumeSelector.Match
+}
+
+// ParentVolumeIDs implements config.LVMVolumeGroupConfig.
+func (s *LVMVolumeGroupConfigV1Alpha1) ParentVolumeIDs() []string {
+	if len(s.ProvisioningSpec.Parents) == 0 {
+		return nil
+	}
+
+	ids := make([]string, 0, len(s.ProvisioningSpec.Parents))
+
+	for _, parent := range s.ProvisioningSpec.Parents {
+		ids = append(ids, parent.VolumeID())
+	}
+
+	return ids
 }
 
 // Validate implements config.Validator interface.
