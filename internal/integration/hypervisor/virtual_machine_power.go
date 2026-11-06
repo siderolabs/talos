@@ -26,12 +26,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 )
 
-// gracefulStopTimeout bounds a guest powering itself off after the power button is pressed. There
-// is no deadline on the Talos side, so this one is the test's own patience.
-const gracefulStopTimeout = 2 * time.Minute
-
-// preparePowerVM creates a disposable diskless guest for host-local power tests.
-func (suite *LibvirtSuite) preparePowerVM() (string, context.Context, string) {
+// prepareDisklessVM creates a disposable diskless guest for host-local power tests.
+func (suite *LibvirtSuite) prepareDisklessVM() (string, context.Context, string) {
 	suite.T().Helper()
 
 	node := suite.RandomDiscoveredNodeInternalIP()
@@ -62,25 +58,25 @@ func (suite *LibvirtSuite) preparePowerVM() (string, context.Context, string) {
 	return node, nodeCtx, name
 }
 
-// TestPowerAPI exercises power requests and the forced escape from an uncooperative guest.
-func (suite *LibvirtSuite) TestPowerAPI() {
-	node, nodeCtx, name := suite.preparePowerVM()
+// TestPowerUncooperativeVM exercises power requests and the forced escape from an uncooperative guest.
+func (suite *LibvirtSuite) TestPowerUncooperativeVM() {
+	node, nodeCtx, name := suite.prepareDisklessVM()
 
-	// A graceful stop asks the guest. Whether this guest obeys is the guest's business; what Talos
-	// owes is the request, the configuration it wrote, and a legible status either way.
+	// The diskless guest has no OS to answer the power button,
+	// so it stays up. We expect a forced stop to happen.
 	_, err := suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name})
 	suite.Require().NoError(err)
 
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
 
-	if suite.waitForGracefulStop(nodeCtx, node, name) {
-		suite.T().Log("the guest powered itself off after the power button was pressed")
-	} else {
-		suite.T().Log("the guest did not power itself off; a forced stop is the way out of that")
-	}
+	// The wait only has to outlast the status reporting the pending stop.
+	const gracefulStopTimeout = 10 * time.Second
+
+	suite.Require().False(suite.waitForGracefulStop(nodeCtx, node, name, gracefulStopTimeout),
+		"a guest with no OS cannot power itself off after the power button was pressed")
 
 	// Forced is the escape from a graceful stop a guest refuses, and the only stop a guest cannot
-	// refuse, so after it the domain is gone whichever way the branch above went.
+	// refuse, so after it the domain is gone.
 	_, err = suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name, Force: true})
 	suite.Require().NoError(err)
 
@@ -185,7 +181,7 @@ func (suite *LibvirtSuite) TestPowerOverrideEndsWithHostReboot() {
 	suite.ctxCancel()
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 20*time.Minute)
 
-	node, nodeCtx, name := suite.preparePowerVM()
+	node, nodeCtx, name := suite.prepareDisklessVM()
 	_, err := suite.Client.HypervisorService().Stop(nodeCtx, &machine.VirtualMachineStopRequest{Name: name, Force: true})
 	suite.Require().NoError(err)
 	suite.assertPowerOverride(nodeCtx, name, hypervisorhelpers.PowerStateStopped.String())
@@ -230,11 +226,12 @@ func (suite *LibvirtSuite) assertStopMode(ctx context.Context, name string, mode
 }
 
 // waitForGracefulStop reports whether the guest obeyed the power button, and asserts that the
-// status says something useful about the wait either way.
-func (suite *LibvirtSuite) waitForGracefulStop(ctx context.Context, node, name string) bool {
+// status says something useful about the wait either way. There is no deadline on the Talos side,
+// so timeout is the test's own patience, and the caller knows best how much its guest deserves.
+func (suite *LibvirtSuite) waitForGracefulStop(ctx context.Context, node, name string, timeout time.Duration) bool {
 	suite.T().Helper()
 
-	deadline := time.Now().Add(gracefulStopTimeout)
+	deadline := time.Now().Add(timeout)
 
 	for time.Now().Before(deadline) {
 		if _, code := suite.RunDebugContainer(suite.ctx, node, "/usr/local/bin/virsh", "--connect", libvirtURI, "dominfo", name); code != 0 {
