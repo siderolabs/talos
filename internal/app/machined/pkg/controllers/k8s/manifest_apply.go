@@ -19,7 +19,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-kubernetes/kubernetes/ssa"
+	"github.com/siderolabs/go-kubernetes/kubernetes/ssa/inventory"
 	"github.com/siderolabs/go-kubernetes/kubernetes/ssa/object"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -198,7 +198,7 @@ func (ctrl *ManifestApplyController) applyManifests(
 	}
 
 	if err = etcd.WithLock(ctx, constants.EtcdTalosManifestApplyMutex, logger, func() error {
-		inv, err := ssa.GetInventory(ctx, k8sClient, constants.KubernetesInventoryNamespace, constants.KubernetesBootstrapManifestsInventoryName)
+		inv, err := inventory.Get(ctx, k8sClient, constants.KubernetesInventoryNamespace, constants.KubernetesBootstrapManifestsInventoryName)
 		if err != nil {
 			return fmt.Errorf("error getting inventory: %w", err)
 		}
@@ -356,7 +356,7 @@ func (ctrl *ManifestApplyController) apply(
 			annotations = make(map[string]string)
 		}
 
-		inventoryAnnotation, inventoryAnnotationSet := annotations[ssa.InventoryAnnotationKey]
+		inventoryAnnotation, inventoryAnnotationSet := annotations[inventory.AnnotationKey]
 
 		if inventoryAnnotationSet && inventoryAnnotation != constants.KubernetesBootstrapManifestsInventoryName {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("unexpected foreign inventory annotation on %s ", objName))
@@ -364,7 +364,7 @@ func (ctrl *ManifestApplyController) apply(
 			continue
 		}
 
-		annotations[ssa.InventoryAnnotationKey] = constants.KubernetesBootstrapManifestsInventoryName
+		annotations[inventory.AnnotationKey] = constants.KubernetesBootstrapManifestsInventoryName
 		obj.SetAnnotations(annotations)
 
 		_, err = dr.Apply(ctx, obj.GetName(), obj, metav1.ApplyOptions{
