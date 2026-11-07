@@ -8,20 +8,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
-	"path/filepath"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-cleanhttp"
-	"github.com/hashicorp/go-getter/v2"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/manifestdownload"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -156,61 +154,18 @@ func (ctrl *ExtraManifestController) process(ctx context.Context, r controller.R
 }
 
 func (ctrl *ExtraManifestController) processURL(ctx context.Context, r controller.Runtime, logger *zap.Logger, manifest k8s.ExtraManifest, id resource.ID) (err error) {
-	var tmpDir string
+	client := &http.Client{
+		Transport: httpdefaults.PatchTransport(cleanhttp.DefaultTransport()),
+	}
 
-	tmpDir, err = os.MkdirTemp("", "talos")
+	defer client.CloseIdleConnections()
+
+	contents, err := manifestdownload.Download(ctx, client, manifest.URL, manifest.ExtraHeaders)
 	if err != nil {
-		return err
-	}
-
-	defer os.RemoveAll(tmpDir) //nolint:errcheck
-
-	// I wish we never used go-getter package, as it doesn't allow downloading into memory.
-	// But there's not much we can do about it right now, as it supports lots of magic
-	// users might rely upon.
-
-	// Disable netrc since we don't have getent installed, and most likely
-	// never will.
-	httpGetter := &getter.HttpGetter{
-		Netrc: false,
-		Client: &http.Client{
-			Transport: httpdefaults.PatchTransport(cleanhttp.DefaultTransport()),
-		},
-	}
-
-	httpGetter.Header = make(http.Header)
-
-	for k, v := range manifest.ExtraHeaders {
-		httpGetter.Header.Add(k, v)
-	}
-
-	client := &getter.Client{
-		Getters: []getter.Getter{
-			httpGetter,
-		},
-	}
-
-	dst := filepath.Join(tmpDir, "manifest.yaml")
-
-	if _, err = client.Get(ctx, &getter.Request{
-		Src:     manifest.URL,
-		Dst:     dst,
-		Pwd:     tmpDir,
-		GetMode: getter.ModeFile,
-	}); err != nil {
-		err = fmt.Errorf("error downloading %q: %w", manifest.URL, err)
-
-		return err
+		return fmt.Errorf("error downloading %q: %w", manifest.URL, err)
 	}
 
 	logger.Sugar().Infof("downloaded manifest %q", manifest.URL)
-
-	var contents []byte
-
-	contents, err = os.ReadFile(dst)
-	if err != nil {
-		return err
-	}
 
 	if err = safe.WriterModify(ctx, r, k8s.NewManifest(k8s.ControlPlaneNamespaceName, id),
 		func(r *k8s.Manifest) error {

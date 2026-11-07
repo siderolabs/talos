@@ -103,7 +103,7 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 	case "alibabacloud":
 		p = &alibabacloud.Alibabacloud{}
 	case "aws":
-		return aws.NewAWS()
+		p = &aws.AWS{}
 	case "azure":
 		p = &azure.Azure{}
 	case "cloudstack":
