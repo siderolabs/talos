@@ -83,6 +83,10 @@ func (o *VirtualMachineConfigV1Alpha1) DeepCopy() *VirtualMachineConfigV1Alpha1 
 				cp.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig = make([]byte, len(o.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig))
 				copy(cp.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig, o.NetworkingConfig.InterfacesConfig[i3].HardwareAddressConfig)
 			}
+			if o.NetworkingConfig.InterfacesConfig[i3].TrustGuestRxFiltersConfig != nil {
+				cp.NetworkingConfig.InterfacesConfig[i3].TrustGuestRxFiltersConfig = new(bool)
+				*cp.NetworkingConfig.InterfacesConfig[i3].TrustGuestRxFiltersConfig = *o.NetworkingConfig.InterfacesConfig[i3].TrustGuestRxFiltersConfig
+			}
 		}
 	}
 	if o.GuestConfig.CloudInitConfig != nil {

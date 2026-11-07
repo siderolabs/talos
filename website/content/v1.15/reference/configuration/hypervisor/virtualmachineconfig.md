@@ -107,11 +107,17 @@ networking:
 
           # # Hardware (MAC) address presented to the guest.
           # hardwareAddr: 52:54:00:12:34:56
+
+          # # Let the guest's receive filter updates reach the host-side macvtap device: without
+          # trustGuestRxFilters: true
         - name: net1 # Name of the interface, unique within the virtual machine.
           link: eth1 # Kernel name (or alias) of the host link the interface is attached to.
 
           # # Hardware (MAC) address presented to the guest.
           # hardwareAddr: 52:54:00:12:34:56
+
+          # # Let the guest's receive filter updates reach the host-side macvtap device: without
+          # trustGuestRxFilters: true
 # Settings which apply inside the guest.
 guest:
     # Seed handed to the guest on first boot.
@@ -489,6 +495,9 @@ link: eth0
 {{< /highlight >}}</details> | |
 |`hardwareAddr` |HardwareAddr |Hardware (MAC) address presented to the guest.<br><br>Defaults to an address derived from the virtual machine and interface names, which is<br>stable for as long as both keep their names. Set it to pin the address a DHCP server<br>reserves against, or to keep one across a rename.<br><br>It must be a unicast address, and is not allowed to be all zeroes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 hardwareAddr: 52:54:00:12:34:56
+{{< /highlight >}}</details> | |
+|`trustGuestRxFilters` |bool |Let the guest's receive filter updates reach the host-side macvtap device: without<br>them the interface drops IPv6 multicast, so router advertisements and DHCPv6 never<br>reach the guest. The guest can also put the host device in promiscuous or<br>all-multicast mode: trust it only on a host link dedicated to the guest.<br><br>Optional; defaults to disabled. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+trustGuestRxFilters: true
 {{< /highlight >}}</details> | |
 
 

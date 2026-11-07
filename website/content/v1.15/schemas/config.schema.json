@@ -3202,6 +3202,13 @@
           "description": "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.\n",
           "markdownDescription": "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.",
           "x-intellij-html-description": "\u003cp\u003eHardware (MAC) address presented to the guest.\u003c/p\u003e\n\n\u003cp\u003eDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\u003c/p\u003e\n\n\u003cp\u003eIt must be a unicast address, and is not allowed to be all zeroes.\u003c/p\u003e\n"
+        },
+        "trustGuestRxFilters": {
+          "type": "boolean",
+          "title": "trustGuestRxFilters",
+          "description": "Let the guest’s receive filter updates reach the host-side macvtap device: without\nthem the interface drops IPv6 multicast, so router advertisements and DHCPv6 never\nreach the guest. The guest can also put the host device in promiscuous or\nall-multicast mode: trust it only on a host link dedicated to the guest.\n\nOptional; defaults to disabled.\n",
+          "markdownDescription": "Let the guest's receive filter updates reach the host-side macvtap device: without\nthem the interface drops IPv6 multicast, so router advertisements and DHCPv6 never\nreach the guest. The guest can also put the host device in promiscuous or\nall-multicast mode: trust it only on a host link dedicated to the guest.\n\nOptional; defaults to disabled.",
+          "x-intellij-html-description": "\u003cp\u003eLet the guest\u0026rsquo;s receive filter updates reach the host-side macvtap device: without\nthem the interface drops IPv6 multicast, so router advertisements and DHCPv6 never\nreach the guest. The guest can also put the host device in promiscuous or\nall-multicast mode: trust it only on a host link dedicated to the guest.\u003c/p\u003e\n\n\u003cp\u003eOptional; defaults to disabled.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -9770,6 +9770,7 @@ VirtualMachineInterfaceSpec describes a network interface attached to a host lin
 | name | [string](#string) |  | Name of the virtual machine interface config (not reflected in the guest) |
 | link | [string](#string) |  | Link identifier, as seen from the host |
 | hardware_addr | [string](#string) |  | HardwareAddr is the address presented to the guest.<br><br>Empty when it is to be derived from the virtual machine and interface names. |
+| trust_guest_rx_filters | [bool](#bool) |  | TrustGuestRxFilters lets the guest's NIC receive filter updates propagate onto the host-side macvtap device, so IPv6 multicast (NDP, DHCPv6) can reach the guest. The guest can also put the host filter in promiscuous or all-multicast mode: trust it only when the host link is dedicated to the guest. |
 
 
 

@@ -303,7 +303,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 		},
 	}
 	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
-		{InterfaceName: "net0", InterfaceLink: "eth0"},
+		{InterfaceName: "net0", InterfaceLink: "eth0", TrustGuestRxFiltersConfig: new(true)},
 		{InterfaceName: "net1", InterfaceLink: "uplink"},
 	}
 	cfg, err := container.New(doc)
@@ -352,7 +352,7 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 				},
 			},
 			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
-				{Name: "net0", Link: "eth0"},
+				{Name: "net0", Link: "eth0", TrustGuestRxFilters: true},
 				{Name: "net1", Link: "uplink"},
 			},
 			Guest: hypervisor.VirtualMachineGuestSpec{
@@ -1025,6 +1025,26 @@ func (suite *VirtualMachineSpecSuite) TestInterfacesAttachToResolvedLinks() {
 	suite.Create(config.NewMachineConfig(cfg))
 
 	suite.assertDomain(doc.Name(), "interfaces")
+}
+
+// An interface trusted with its guest's receive filter updates carries the libvirt attribute
+// that lets them reach the host-side device; an untrusted one does not.
+func (suite *VirtualMachineSpecSuite) TestTrustedGuestRxFilters() {
+	suite.createLink("eth0", "")
+
+	doc := newVirtualMachine("trusted")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "eth0", TrustGuestRxFiltersConfig: new(true)},
+		{InterfaceName: "net1", InterfaceLink: "eth0"},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	ctest.AssertResource(suite, doc.Name(), func(res *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Contains(res.TypedSpec().DomainXML, `<interface type="direct" trustGuestRxFilters="yes">`)
+		asrt.Contains(res.TypedSpec().DomainXML, `<interface type="direct">`)
+	})
 }
 
 // The fixture pins MACs derived from the names; this checks they also differ per interface and per
