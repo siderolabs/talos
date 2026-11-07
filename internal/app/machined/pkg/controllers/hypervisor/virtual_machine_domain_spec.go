@@ -1063,7 +1063,7 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 	var result []libvirtxml.DomainInterface
 
 	for i, iface := range interfaces {
-		result = append(result, libvirtxml.DomainInterface{
+		domainInterface := libvirtxml.DomainInterface{
 			MAC: &libvirtxml.DomainInterfaceMAC{
 				Address: interfaceHardwareAddr(name, iface),
 			},
@@ -1084,7 +1084,16 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 			Alias: &libvirtxml.DomainAlias{
 				Name: interfaceAliasPrefix + iface.Name,
 			},
-		})
+		}
+
+		// Honor the guest's receive filter updates on the host-side macvtap device, without
+		// which IPv6 multicast (NDP, DHCPv6) never reaches the guest. Trusting the guest is the
+		// operator's call: it also lets the guest enable promiscuous or all-multicast mode.
+		if iface.TrustGuestRxFilters {
+			domainInterface.TrustGuestRXFilters = "yes"
+		}
+
+		result = append(result, domainInterface)
 	}
 
 	return result, nil

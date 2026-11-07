@@ -219,6 +219,9 @@ type VirtualMachineInterfaceConfig interface {
 	Link() string
 	// HardwareAddress is the address presented to the guest, empty when it is to be derived.
 	HardwareAddress() net.HardwareAddr
+	// TrustGuestRxFilters reports whether guest NIC receive filter updates may be applied to
+	// the host-side macvtap device.
+	TrustGuestRxFilters() bool
 }
 
 // VirtualMachineGuestConfig defines the settings which apply inside the guest.

@@ -211,8 +211,9 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 				c.FirmwareConfig.FirmwareType = hypervisorhelpers.VirtualMachineFirmwareTypeUEFI
 				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{
 					{
-						InterfaceName: "net0",
-						InterfaceLink: "eth0",
+						InterfaceName:             "net0",
+						InterfaceLink:             "eth0",
+						TrustGuestRxFiltersConfig: new(true),
 					},
 					{
 						InterfaceName: "net1",

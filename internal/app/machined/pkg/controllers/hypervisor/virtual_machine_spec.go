@@ -195,9 +195,10 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 		}
 
 		spec.Interfaces = append(spec.Interfaces, hypervisor.VirtualMachineInterfaceSpec{
-			Name:         iface.Name(),
-			Link:         iface.Link(),
-			HardwareAddr: hardwareAddr,
+			Name:                iface.Name(),
+			Link:                iface.Link(),
+			HardwareAddr:        hardwareAddr,
+			TrustGuestRxFilters: iface.TrustGuestRxFilters(),
 		})
 	}
 

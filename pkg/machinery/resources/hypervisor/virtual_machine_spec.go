@@ -90,6 +90,11 @@ type VirtualMachineInterfaceSpec struct {
 	//
 	// Empty when it is to be derived from the virtual machine and interface names.
 	HardwareAddr string `yaml:"hardwareAddr,omitempty" protobuf:"3"`
+	// TrustGuestRxFilters lets the guest's NIC receive filter updates propagate onto the
+	// host-side macvtap device, so IPv6 multicast (NDP, DHCPv6) can reach the guest. The
+	// guest can also put the host filter in promiscuous or all-multicast mode: trust it only
+	// when the host link is dedicated to the guest.
+	TrustGuestRxFilters bool `yaml:"trustGuestRxFilters" protobuf:"4"`
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
