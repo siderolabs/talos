@@ -12,8 +12,6 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/coredns/coredns/plugin/pkg/proxy"
-	"github.com/coredns/coredns/request"
 	dnssrv "github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,6 +19,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
 	"github.com/siderolabs/talos/internal/pkg/dns/doh"
+	"github.com/siderolabs/talos/internal/pkg/dns/proxy"
 )
 
 var (
@@ -84,17 +83,17 @@ type fakeUpstream struct {
 	healthchecks atomic.Int32
 }
 
-func (f *fakeUpstream) Connect(_ context.Context, state request.Request, _ proxy.Options) (*dnssrv.Msg, net.Addr, string, error) {
+func (f *fakeUpstream) Exchange(_ context.Context, req *dnssrv.Msg, _ string) (*dnssrv.Msg, error) {
 	*f.order = append(*f.order, f.addr)
 
 	if f.err != nil {
-		return nil, nil, "", f.err
+		return nil, f.err
 	}
 
 	resp := new(dnssrv.Msg)
-	resp.SetReply(state.Req)
+	resp.SetReply(req)
 
-	return resp, nil, "udp", nil
+	return resp, nil
 }
 
 func (f *fakeUpstream) Addr() string { return f.addr }

@@ -84,9 +84,6 @@ project:
       url: https://github.com/siderolabs/go-api-signature
       comment: API authentication and PGP-based client auth.
     # Forks (maintained patches)
-    - name: coredns
-      url: https://github.com/siderolabs/coredns
-      comment: Fork of coredns/coredns; removes caddy and other unneeded plugins.
     - name: ethtool
       url: https://github.com/siderolabs/ethtool
       comment: Fork of mdlayher/ethtool; adds missing APIs.
