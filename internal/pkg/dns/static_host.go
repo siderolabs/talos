@@ -8,8 +8,6 @@ import (
 	"context"
 	"slices"
 
-	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
 )
@@ -20,42 +18,37 @@ import (
 // configured entries always win against upstream resolution. On miss, the
 // request is forwarded to the next handler.
 type StaticHostHandler struct {
-	next   plugin.Handler
+	next   ChainHandler
 	logger *zap.Logger
 
 	mapper HostMapper
 }
 
 // NewStaticHostHandler creates a new StaticHostHandler with an empty table.
-func NewStaticHostHandler(next plugin.Handler, mapper HostMapper, logger *zap.Logger) *StaticHostHandler {
+func NewStaticHostHandler(next ChainHandler, mapper HostMapper, logger *zap.Logger) *StaticHostHandler {
 	return &StaticHostHandler{next: next, logger: logger, mapper: mapper}
 }
 
-// Name implements plugin.Handler.
-func (h *StaticHostHandler) Name() string {
-	return "StaticHostHandler"
-}
-
-// ServeDNS implements plugin.Handler.
+// ServeDNS implements [ChainHandler].
 func (h *StaticHostHandler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns.Msg) (int, error) {
 	idx := slices.IndexFunc(msg.Question, func(q dns.Question) bool { return q.Qtype == dns.TypeA || q.Qtype == dns.TypeAAAA })
 	if idx != 0 {
 		return h.next.ServeDNS(ctx, wrt, msg)
 	}
 
-	req := request.Request{W: wrt, Req: msg}
+	name := requestName(msg)
 
-	addrs, ok := h.mapper.ResolveAddr(ctx, req.QType(), req.Name())
+	addrs, ok := h.mapper.ResolveAddr(ctx, msg.Question[0].Qtype, name)
 	if !ok {
 		return h.next.ServeDNS(ctx, wrt, msg)
 	}
 
-	answers := mapAnswers(addrs, req.Name())
+	answers := mapAnswers(addrs, name)
 	if len(answers) == 0 {
 		return h.next.ServeDNS(ctx, wrt, msg)
 	}
 
-	resp := new(dns.Msg).SetReply(req.Req)
+	resp := new(dns.Msg).SetReply(msg)
 	resp.Authoritative = true
 	resp.Answer = answers
 

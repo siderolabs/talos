@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coredns/coredns/plugin/pkg/proxy"
 	dnssrv "github.com/miekg/dns"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xiter"
@@ -29,6 +28,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/dns"
+	"github.com/siderolabs/talos/internal/pkg/dns/proxy"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
 
@@ -292,7 +292,7 @@ func newManager(t *testing.T, nameservers ...string) func() {
 	})
 
 	pxs := xslices.Map(nameservers, func(ns string) *proxy.Proxy {
-		p := proxy.NewProxy(ns, net.JoinHostPort(ns, "53"), "dns")
+		p := proxy.New(net.JoinHostPort(ns, "53"), nil)
 		p.Start(500 * time.Millisecond)
 
 		return p
@@ -300,7 +300,7 @@ func newManager(t *testing.T, nameservers ...string) func() {
 
 	t.Cleanup(func() {
 		for _, p := range pxs {
-			p.Close() // We had to manually add this method to the coredns Proxy type.
+			p.Close()
 		}
 	})
 

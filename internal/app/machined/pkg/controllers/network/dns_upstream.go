@@ -10,8 +10,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/coredns/coredns/plugin/pkg/proxy"
-	"github.com/coredns/coredns/plugin/pkg/transport"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -20,8 +18,16 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/dns/doh"
+	"github.com/siderolabs/talos/internal/pkg/dns/proxy"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+)
+
+// Default ports for the DNS protocols.
+const (
+	dnsPort          = "53"
+	dnsOverTLSPort   = "853"
+	dnsOverHTTPSPort = "443"
 )
 
 // DNSUpstreamController is a controller that manages DNS upstreams.
@@ -149,11 +155,11 @@ func existingConnections(ctx context.Context, r controller.Runtime) (func(*netwo
 
 		switch protocol {
 		case nethelpers.DNSProtocolDefault:
-			port = transport.Port
+			port = dnsPort
 		case nethelpers.DNSProtocolDNSOverTLS:
-			port = transport.TLSPort
+			port = dnsOverTLSPort
 		case nethelpers.DNSProtocolDNSOverHTTP:
-			port = transport.HTTPSPort
+			port = dnsOverHTTPSPort
 		default:
 			panic(fmt.Sprintf("unsupported DNS protocol: %s", protocol))
 		}
@@ -179,7 +185,7 @@ func existingConnections(ctx context.Context, r controller.Runtime) (func(*netwo
 			return
 		}
 
-		spec.Conn = network.NewDNSConn(newUpstreamProxy(protocol, remoteHost, remoteAddr, tlsServerName))
+		spec.Conn = network.NewDNSConn(newUpstreamProxy(protocol, remoteAddr, tlsServerName))
 
 		l.Debug(
 			"created new upstream connection",
@@ -192,18 +198,15 @@ func existingConnections(ctx context.Context, r controller.Runtime) (func(*netwo
 	}, nil
 }
 
-func newUpstreamProxy(protocol nethelpers.DNSProtocol, remoteHost, remoteAddr, tlsServerName string) network.Proxy {
+func newUpstreamProxy(protocol nethelpers.DNSProtocol, remoteAddr, tlsServerName string) network.Proxy {
 	switch protocol {
 	case nethelpers.DNSProtocolDefault:
-		return proxy.NewProxy(remoteHost, remoteAddr, transport.DNS)
+		return proxy.New(remoteAddr, nil)
 	case nethelpers.DNSProtocolDNSOverTLS:
-		p := proxy.NewProxy(remoteHost, remoteAddr, transport.TLS)
-		p.SetTLSConfig(&tls.Config{
+		return proxy.New(remoteAddr, &tls.Config{
 			ServerName: tlsServerName,
 			MinVersion: tls.VersionTLS13,
 		})
-
-		return p
 	case nethelpers.DNSProtocolDNSOverHTTP:
 		return doh.NewProxy(remoteAddr, tlsServerName)
 	default:

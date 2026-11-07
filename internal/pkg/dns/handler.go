@@ -8,11 +8,8 @@ import (
 	"context"
 	"errors"
 	"iter"
-	"net"
 	"sync"
 
-	"github.com/coredns/coredns/plugin/pkg/proxy"
-	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"github.com/siderolabs/gen/xiter"
 	"go.uber.org/zap"
@@ -21,12 +18,16 @@ import (
 // Upstream is the abstraction used by [Handler] to forward DNS queries to a
 // concrete upstream resolver.
 //
-// It is implemented by the CoreDNS plugin proxy (used for plain DNS and DoT)
-// and by the DoH proxy in this package, so the handler can iterate uniformly
+// It is implemented by the proxy package (used for plain DNS and DoT)
+// and by the doh package, so the handler can iterate uniformly
 // across all configured upstream protocols.
 type Upstream interface {
-	// Connect sends a DNS query to the upstream and returns the response.
-	Connect(ctx context.Context, state request.Request, opts proxy.Options) (*dns.Msg, net.Addr, string, error)
+	// Exchange sends a DNS query to the upstream and returns the response.
+	//
+	// The proto ("udp" or "tcp") is the protocol the query was received over: plain DNS
+	// upstreams use it to pick the transport (retrying over TCP if the UDP response is truncated),
+	// other upstreams ignore it.
+	Exchange(ctx context.Context, req *dns.Msg, proto string) (*dns.Msg, error)
 	// Addr returns the upstream address (used for logging).
 	Addr() string
 	// Fails returns the number of failed health checks since the last successful one.
@@ -50,23 +51,18 @@ func NewHandler(logger *zap.Logger) *Handler {
 	}
 }
 
-// Name implements plugin.Handler.
-func (h *Handler) Name() string {
-	return "Handler"
-}
-
-// ServeDNS implements plugin.Handler.
+// ServeDNS implements [ChainHandler].
 //
 //nolint:gocyclo
 func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns.Msg) (int, error) {
 	h.mx.RLock()
 	defer h.mx.RUnlock()
 
-	req := request.Request{W: wrt, Req: msg}
+	clientProto := requestProto(wrt)
 	logger := h.logger.With(
 		zap.Stringer("data", msg),
-		zap.String("proto", req.Proto()),
-		zap.String("question", req.QName()),
+		zap.String("proto", clientProto),
+		zap.String("question", requestQuestion(msg).Name),
 		zap.Stringer("local_addr", wrt.LocalAddr()),
 		zap.Stringer("remote_addr", wrt.RemoteAddr()),
 	)
@@ -79,25 +75,10 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 
 	for _, ups := range orderUpstreams(h.dests) {
 		called = true
-		opts := proxy.Options{}
 
 		logger.Debug("making dns request", zap.String("upstream", ups.Addr()))
 
-		for {
-			resp, _, _, err = ups.Connect(ctx, req, opts)
-
-			switch {
-			case errors.Is(err, proxy.ErrCachedClosed): // Remote side closed conn, can only happen with TCP.
-				continue
-			case resp != nil && resp.Truncated && !opts.ForceTCP: // Retry with TCP if truncated
-				opts.ForceTCP = true
-
-				continue
-			}
-
-			break
-		}
-
+		resp, err = ups.Exchange(ctx, msg, clientProto)
 		if err != nil {
 			// Kick off health check to see if the upstream is broken, so that
 			// further requests try healthy upstreams first.
@@ -125,7 +106,7 @@ func (h *Handler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns
 		return dns.RcodeServerFailure, err
 	}
 
-	if !req.Match(resp) {
+	if !matchResponse(msg, resp) {
 		logger.Warn("dns response didn't match", zap.Stringer("data", resp))
 
 		return dns.RcodeFormatError, nil
