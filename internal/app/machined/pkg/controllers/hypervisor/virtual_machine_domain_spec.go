@@ -1064,7 +1064,7 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 	var result []libvirtxml.DomainInterface
 
 	for i, iface := range interfaces {
-		result = append(result, libvirtxml.DomainInterface{
+		domainInterface := libvirtxml.DomainInterface{
 			MAC: &libvirtxml.DomainInterfaceMAC{
 				Address: interfaceHardwareAddr(name, iface),
 			},
@@ -1085,7 +1085,16 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 			Alias: &libvirtxml.DomainAlias{
 				Name: interfaceAliasPrefix + iface.Name,
 			},
-		})
+		}
+
+		// libvirt applies the guest's receive filter updates to the macvtap: the multicast list
+		// (needed for NDP and DHCPv6), the promiscuous and all-multicast flags, which propagate to
+		// the lower link, and the MAC address, which the guest can set to anything.
+		if iface.TrustGuestRxFilters {
+			domainInterface.TrustGuestRXFilters = "yes"
+		}
+
+		result = append(result, domainInterface)
 	}
 
 	return result, nil

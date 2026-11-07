@@ -1444,9 +1444,14 @@ type VirtualMachineInterfaceSpec struct {
 	// HardwareAddr is the address presented to the guest.
 	//
 	// Empty when it is to be derived from the virtual machine and interface names.
-	HardwareAddr  string `protobuf:"bytes,3,opt,name=hardware_addr,json=hardwareAddr,proto3" json:"hardware_addr,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	HardwareAddr string `protobuf:"bytes,3,opt,name=hardware_addr,json=hardwareAddr,proto3" json:"hardware_addr,omitempty"`
+	// TrustGuestRxFilters applies the guest's receive filter updates to the host-side macvtap
+	// device, so IPv6 multicast (NDP, DHCPv6) can reach the guest. The guest can then also set
+	// the device's MAC to any address and turn on promiscuous or all-multicast mode, which
+	// propagates to the host link.
+	TrustGuestRxFilters bool `protobuf:"varint,4,opt,name=trust_guest_rx_filters,json=trustGuestRxFilters,proto3" json:"trust_guest_rx_filters,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *VirtualMachineInterfaceSpec) Reset() {
@@ -1498,6 +1503,13 @@ func (x *VirtualMachineInterfaceSpec) GetHardwareAddr() string {
 		return x.HardwareAddr
 	}
 	return ""
+}
+
+func (x *VirtualMachineInterfaceSpec) GetTrustGuestRxFilters() bool {
+	if x != nil {
+		return x.TrustGuestRxFilters
+	}
+	return false
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.
@@ -2346,11 +2358,12 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\rhardware_addr\x18\x02 \x01(\tR\fhardwareAddr\x126\n" +
 	"\fip_addresses\x18\x03 \x03(\v2\x13.common.NetIPPrefixR\vipAddresses\"o\n" +
 	"\x17VirtualMachineGuestSpec\x12T\n" +
-	"\x05agent\x18\x01 \x01(\v2>.talos.resource.definitions.hypervisor.VirtualMachineAgentSpecR\x05agent\"j\n" +
+	"\x05agent\x18\x01 \x01(\v2>.talos.resource.definitions.hypervisor.VirtualMachineAgentSpecR\x05agent\"\x9f\x01\n" +
 	"\x1bVirtualMachineInterfaceSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04link\x18\x02 \x01(\tR\x04link\x12#\n" +
-	"\rhardware_addr\x18\x03 \x01(\tR\fhardwareAddr\">\n" +
+	"\rhardware_addr\x18\x03 \x01(\tR\fhardwareAddr\x123\n" +
+	"\x16trust_guest_rx_filters\x18\x04 \x01(\bR\x13trustGuestRxFilters\">\n" +
 	"\"VirtualMachineMemoryBallooningSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\"H\n" +
 	"\x1cVirtualMachineMemoryNUMASpec\x12\x12\n" +

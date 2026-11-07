@@ -231,6 +231,11 @@ message VirtualMachineInterfaceSpec {
   //
   // Empty when it is to be derived from the virtual machine and interface names.
   string hardware_addr = 3;
+  // TrustGuestRxFilters applies the guest's receive filter updates to the host-side macvtap
+  // device, so IPv6 multicast (NDP, DHCPv6) can reach the guest. The guest can then also set
+  // the device's MAC to any address and turn on promiscuous or all-multicast mode, which
+  // propagates to the host link.
+  bool trust_guest_rx_filters = 4;
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.

@@ -107,11 +107,17 @@ networking:
 
           # # Hardware (MAC) address presented to the guest.
           # hardwareAddr: 52:54:00:12:34:56
+
+          # # Apply the guest's receive filter updates to the host-side macvtap device. Without
+          # trustGuestRxFilters: true
         - name: net1 # Name of the interface, unique within the virtual machine.
           link: eth1 # Kernel name (or alias) of the host link the interface is attached to.
 
           # # Hardware (MAC) address presented to the guest.
           # hardwareAddr: 52:54:00:12:34:56
+
+          # # Apply the guest's receive filter updates to the host-side macvtap device. Without
+          # trustGuestRxFilters: true
 # Settings which apply inside the guest.
 guest:
     # Seed handed to the guest on first boot.
@@ -490,6 +496,9 @@ link: eth0
 {{< /highlight >}}</details> | |
 |`hardwareAddr` |HardwareAddr |Hardware (MAC) address presented to the guest.<br><br>Defaults to an address derived from the virtual machine and interface names, which is<br>stable for as long as both keep their names. Set it to pin the address a DHCP server<br>reserves against, or to keep one across a rename.<br><br>It must be a unicast address, and is not allowed to be all zeroes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 hardwareAddr: 52:54:00:12:34:56
+{{< /highlight >}}</details> | |
+|`trustGuestRxFilters` |bool |Apply the guest's receive filter updates to the host-side macvtap device. Without<br>them the macvtap passes only broadcast and the guest's own unicast, so IPv6<br>neighbor discovery, router advertisements and DHCPv6 never reach the guest.<br><br>This trusts the guest with the macvtap device: it can change the device's MAC to<br>any address, and so impersonate other hosts on the segment, and it can turn on<br>promiscuous or all-multicast mode, which also propagates to the host link. The<br>risk is shared by every guest and the host on that link.<br><br>Optional; defaults to disabled. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+trustGuestRxFilters: true
 {{< /highlight >}}</details> | |
 
 
