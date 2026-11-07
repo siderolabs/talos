@@ -11,8 +11,6 @@ import (
 	"slices"
 	"sync/atomic"
 
-	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/request"
 	"github.com/miekg/dns"
 	"go.uber.org/zap"
 )
@@ -26,7 +24,7 @@ type HostMapper interface {
 
 // NodeHandler try to resolve dns request to a node. If required node is not found, it will move to the next handler.
 type NodeHandler struct {
-	next   plugin.Handler
+	next   ChainHandler
 	mapper HostMapper
 	logger *zap.Logger
 
@@ -34,16 +32,11 @@ type NodeHandler struct {
 }
 
 // NewNodeHandler creates a new NodeHandler.
-func NewNodeHandler(next plugin.Handler, hostMapper HostMapper, logger *zap.Logger) *NodeHandler {
+func NewNodeHandler(next ChainHandler, hostMapper HostMapper, logger *zap.Logger) *NodeHandler {
 	return &NodeHandler{next: next, mapper: hostMapper, logger: logger}
 }
 
-// Name implements plugin.Handler.
-func (h *NodeHandler) Name() string {
-	return "NodeHandler"
-}
-
-// ServeDNS implements plugin.Handler.
+// ServeDNS implements [ChainHandler].
 func (h *NodeHandler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg *dns.Msg) (int, error) {
 	if !h.enabled.Load() {
 		return h.next.ServeDNS(ctx, wrt, msg)
@@ -54,20 +47,20 @@ func (h *NodeHandler) ServeDNS(ctx context.Context, wrt dns.ResponseWriter, msg 
 		return h.next.ServeDNS(ctx, wrt, msg)
 	}
 
-	req := request.Request{W: wrt, Req: msg}
+	name := requestName(msg)
 
 	// Check if the request is for a node.
-	result, ok := h.mapper.ResolveAddr(ctx, req.QType(), req.Name())
+	result, ok := h.mapper.ResolveAddr(ctx, msg.Question[0].Qtype, name)
 	if !ok {
 		return h.next.ServeDNS(ctx, wrt, msg)
 	}
 
-	answers := mapAnswers(result, req.Name())
+	answers := mapAnswers(result, name)
 	if len(answers) == 0 {
 		return h.next.ServeDNS(ctx, wrt, msg)
 	}
 
-	resp := new(dns.Msg).SetReply(req.Req)
+	resp := new(dns.Msg).SetReply(msg)
 	resp.Authoritative = true
 	resp.Answer = answers
 

@@ -6,15 +6,136 @@ package doh_test
 
 import (
 	"context"
+	"crypto/x509"
+	"io"
 	"net"
+	"net/http"
+	"net/http/httptest"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/dns/doh"
 )
+
+// dohServer is a DoH server answering with an A record, or with the HTTP status if set.
+type dohServer struct {
+	status atomic.Int32
+	proto  atomic.Value
+	ids    []uint16
+}
+
+func (s *dohServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.proto.Store(r.Proto)
+
+	if r.Method != http.MethodPost || r.URL.Path != "/dns-query" || r.Header.Get("Content-Type") != "application/dns-message" {
+		http.Error(w, "bad request", http.StatusBadRequest)
+
+		return
+	}
+
+	if status := s.status.Load(); status != 0 {
+		http.Error(w, "failed", int(status))
+
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	req := new(dns.Msg)
+	if err = req.Unpack(body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	s.ids = append(s.ids, req.Id)
+
+	resp := new(dns.Msg)
+	resp.SetReply(req)
+	resp.Answer = append(resp.Answer, &dns.A{
+		Hdr: dns.RR_Header{Name: req.Question[0].Name, Rrtype: dns.TypeA, Class: dns.ClassINET, Ttl: 60},
+		A:   net.IPv4(10, 0, 0, 1),
+	})
+
+	wire, err := resp.Pack()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/dns-message")
+	w.Write(wire) //nolint:errcheck
+}
+
+func TestExchange(t *testing.T) {
+	handler := &dohServer{}
+
+	server := httptest.NewUnstartedServer(handler)
+	server.EnableHTTP2 = true
+	server.StartTLS()
+
+	t.Cleanup(server.Close)
+
+	pool := x509.NewCertPool()
+	pool.AddCert(server.Certificate())
+
+	// the test certificate is valid for "example.com"
+	p := doh.NewProxy(server.Listener.Addr().String(), "example.com")
+	t.Cleanup(p.Close)
+
+	p.SetRootCAs(pool)
+
+	req := new(dns.Msg)
+	req.SetQuestion("example.com.", dns.TypeA)
+	req.Id = 1234
+
+	resp, err := p.Exchange(t.Context(), req, "udp")
+	require.NoError(t, err)
+
+	// the original ID is restored
+	assert.EqualValues(t, 1234, resp.Id)
+	require.Len(t, resp.Answer, 1)
+	assert.Equal(t, "example.com.\t60\tIN\tA\t10.0.0.1", resp.Answer[0].String())
+	assert.Zero(t, p.Fails())
+
+	// the ID is zero on the wire, and the request is sent over HTTP/2
+	assert.Equal(t, []uint16{0}, handler.ids)
+	assert.Equal(t, "HTTP/2.0", handler.proto.Load())
+
+	// HTTP errors are reported and counted
+	handler.status.Store(http.StatusServiceUnavailable)
+
+	_, err = p.Exchange(t.Context(), req, "udp")
+	require.ErrorContains(t, err, "HTTP 503")
+	assert.EqualValues(t, 1, p.Fails())
+
+	// the proxy recovers
+	handler.status.Store(0)
+
+	_, err = p.Exchange(t.Context(), req, "udp")
+	require.NoError(t, err)
+	assert.Zero(t, p.Fails())
+
+	// a wrong server name fails the TLS verification (the test certificate covers *.example.com)
+	bad := doh.NewProxy(server.Listener.Addr().String(), "dns.example.org")
+	t.Cleanup(bad.Close)
+
+	bad.SetRootCAs(pool)
+
+	_, err = bad.Exchange(t.Context(), req, "udp")
+	require.Error(t, err)
+}
 
 // TestDialContextRouting verifies that the transport's DialContext redirects
 // direct dials to the upstream's pre-resolved IP, while passing through any
