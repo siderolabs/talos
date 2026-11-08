@@ -605,7 +605,19 @@ func (i *Installer) installBootloader(ctx context.Context, mode Mode, bootloader
 	case ModeUpgrade:
 		return bootloader.Upgrade(installOptions)
 	case ModeImage:
-		return &bootloaderoptions.InstallResult{}, nil // bootloader already installed in image mode during partition creation
+		// Bootloader assets are written during partition creation in image
+		// mode, so a full bootloader.Install() is not run. But the overlay
+		// installer (which writes SBC firmware such as u-boot to a raw disk
+		// offset) runs in ExtraInstallStep, otherwise only invoked by
+		// bootloader.Install(). Run it here so image-mode SBC overlays still
+		// get their firmware written.
+		if installOptions.ExtraInstallStep != nil {
+			if err := installOptions.ExtraInstallStep(); err != nil {
+				return nil, err
+			}
+		}
+
+		return &bootloaderoptions.InstallResult{}, nil
 	default:
 		return nil, fmt.Errorf("unknown image mode: %d", mode)
 	}
