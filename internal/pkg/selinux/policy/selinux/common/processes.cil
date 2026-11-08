@@ -7,6 +7,7 @@
 (allow any_p self (process_classes (full)))
 ; Read various parameters like hugepages
 (allow any_p sysfs_t (fs_classes (ro)))
+(allow any_p sys_storage_t (fs_classes (ro)))
 (allow any_p proc_cmdline_t (fs_classes (ro)))
 
 ; Pseudo devices
@@ -130,10 +131,12 @@
 ; allow reading cgroup info
 (allow any_p cgroup_t (fs_classes (ro)))
 
-; cilium-agent
-(allow pod_p self (perf_event (all)))
-; bpffs for pinning BPF objects
-(allow pod_p bpf_t (fs_classes (rw)))
+; perf events and bpffs for the system services built on pod_p; the pod domains get them from their macros, under the
+; pod_use_ebpf boolean for those it narrows
+(typeattribute system_pod_p)
+(typeattributeset system_pod_p (and pod_p (not workload_p)))
+(allow system_pod_p self (perf_event (all)))
+(allow system_pod_p bpf_t (fs_classes (rw)))
 
 ; fio
 (allow any_p self (shm (all)))

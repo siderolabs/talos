@@ -110,6 +110,7 @@
 
 ; manage properties from rules
 (allow udev_t sysfs_t (fs_classes (rw)))
+(allow udev_t sys_storage_t (fs_classes (rw)))
 
 ; Container detection
 (allow udev_t init_t (fs_classes (ro ioctl)))

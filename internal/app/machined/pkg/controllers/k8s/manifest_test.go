@@ -77,6 +77,7 @@ func (suite *ManifestSuite) TestReconcileDefaults() {
 		"11-core-dns-svc",
 		"11-kube-config-in-cluster",
 		"11-talos-node-rbac-template",
+		"12-selinux-reserved-domains",
 	})
 }
 
@@ -99,6 +100,7 @@ func (suite *ManifestSuite) TestReconcileDisableKubeProxy() {
 		"11-core-dns-svc",
 		"11-kube-config-in-cluster",
 		"11-talos-node-rbac-template",
+		"12-selinux-reserved-domains",
 	})
 }
 
@@ -122,6 +124,7 @@ func (suite *ManifestSuite) TestReconcileKubeProxyExtraArgs() {
 		"11-core-dns-svc",
 		"11-kube-config-in-cluster",
 		"11-talos-node-rbac-template",
+		"12-selinux-reserved-domains",
 	})
 
 	ctest.AssertResource(suite, "10-kube-proxy", func(manifest *k8s.Manifest, asrt *assert.Assertions) {
@@ -159,6 +162,7 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 		"11-core-dns-svc",
 		"11-kube-config-in-cluster",
 		"11-talos-node-rbac-template",
+		"12-selinux-reserved-domains",
 	})
 
 	ctest.AssertResource(suite, "11-core-dns-svc", func(manifest *k8s.Manifest, asrt *assert.Assertions) {

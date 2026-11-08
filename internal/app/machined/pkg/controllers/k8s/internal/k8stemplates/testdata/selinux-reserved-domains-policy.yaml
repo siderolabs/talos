@@ -1,0 +1,44 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: talos-reserved-selinux-domains
+spec:
+  failurePolicy: Fail
+  matchConditions:
+  - expression: '!(request.userInfo.username.startsWith("system:node:") && has(object.metadata.annotations)
+      && "kubernetes.io/config.mirror" in object.metadata.annotations)'
+    name: not-a-mirror-pod
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - CREATE
+      resources:
+      - pods
+    - apiGroups:
+      - ""
+      apiVersions:
+      - v1
+      operations:
+      - UPDATE
+      resources:
+      - pods/ephemeralcontainers
+  validations:
+  - expression: '!variables.selinuxTypes.exists(t, t in ["kube_apiserver_t", "kube_controller_manager_t",
+      "kube_scheduler_t", "etcd_t", "kubelet_t", "taloscontainer_t", "taloscontainer_machined_t",
+      "pod_containerd_t"])'
+    message: the SELinux types kube_apiserver_t, kube_controller_manager_t, kube_scheduler_t,
+      etcd_t, kubelet_t, taloscontainer_t, taloscontainer_machined_t, pod_containerd_t
+      are reserved for the system services and the static pods of Talos
+    reason: Forbidden
+  variables:
+  - expression: |-
+      [object.spec.?securityContext.?seLinuxOptions.?type.orValue("")] +
+      object.spec.containers.map(c, c.?securityContext.?seLinuxOptions.?type.orValue("")) +
+      object.spec.?initContainers.orValue([]).map(c, c.?securityContext.?seLinuxOptions.?type.orValue("")) +
+      object.spec.?ephemeralContainers.orValue([]).map(c, c.?securityContext.?seLinuxOptions.?type.orValue(""))
+    name: selinuxTypes
+status: {}

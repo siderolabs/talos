@@ -75,3 +75,27 @@ func TestSecurityProfileConfigSELinuxCategories(t *testing.T) {
 	cfg.SELinuxCategoriesEnabled = new(false)
 	assert.False(t, cfg.SELinuxCategories())
 }
+
+func TestSecurityProfileConfigSELinuxBooleans(t *testing.T) {
+	t.Parallel()
+
+	assert.Empty(t, runtime.NewSecurityProfileConfigV1Alpha1().SELinuxBooleans())
+
+	cfg := runtime.NewSecurityProfileConfigV1Alpha1()
+	cfg.SELinuxBooleansConfig = map[string]bool{"pod_write_cni_plugins": false, "ext_iscsid_clients": true}
+	assert.Equal(t, map[string]bool{"pod_write_cni_plugins": false, "ext_iscsid_clients": true}, cfg.SELinuxBooleans())
+
+	_, err := cfg.Validate(validationMode{})
+	require.NoError(t, err)
+
+	// the static pods of the control plane run in their own domains with categories, so pod_t no longer uses their files
+	cfg.SELinuxCategoriesEnabled = new(true)
+	assert.Equal(t, map[string]bool{"pod_write_cni_plugins": false, "ext_iscsid_clients": true, "pod_use_control_plane_files": false}, cfg.SELinuxBooleans())
+
+	cfg.SELinuxBooleansConfig = map[string]bool{"pod_use_control_plane_files": true}
+	assert.Equal(t, map[string]bool{"pod_use_control_plane_files": true}, cfg.SELinuxBooleans())
+
+	cfg.SELinuxBooleansConfig = map[string]bool{"Pod-Use-NFS": true, "pod_use_ebpf": false}
+	_, err = cfg.Validate(validationMode{})
+	require.EqualError(t, err, `invalid SELinux boolean name "Pod-Use-NFS"`)
+}

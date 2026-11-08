@@ -678,6 +678,7 @@ description: Talos gRPC API reference.
     - [PlatformMetadataSpec](#talos.resource.definitions.runtime.PlatformMetadataSpec)
     - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
+    - [SELinuxBooleanStatusSpec](#talos.resource.definitions.runtime.SELinuxBooleanStatusSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
     - [UnattendedInstallStatusSpec](#talos.resource.definitions.runtime.UnattendedInstallStatusSpec)
@@ -11792,6 +11793,24 @@ SBOMItemSpec describes the SBOM item resource properties.
 | cp_es | [string](#string) | repeated |  |
 | pur_ls | [string](#string) | repeated |  |
 | extension | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.SELinuxBooleanStatusSpec"></a>
+
+### SELinuxBooleanStatusSpec
+SELinuxBooleanStatusSpec describes the SELinuxBooleanStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| value | [bool](#bool) |  | Value is the value of the boolean in the kernel. |
+| default | [bool](#bool) |  | Default is the value of the boolean when the policy was loaded. |
+| configured | [bool](#bool) |  | Configured is true when the machine config sets the boolean. |
+| unknown | [bool](#bool) |  | Unknown is true when the machine config sets a boolean the loaded policy does not define. |
 
 
 
