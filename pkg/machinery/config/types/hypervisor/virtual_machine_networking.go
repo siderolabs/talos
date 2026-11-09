@@ -14,6 +14,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/siderolabs/go-pointer"
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -75,6 +76,17 @@ type VirtualMachineInterface struct {
 	//     type: string
 	//     pattern: ^[0-9a-f:]+$
 	HardwareAddressConfig nethelpers.HardwareAddr `yaml:"hardwareAddr,omitempty"`
+	//   description: |
+	//     Let the guest's receive filter updates reach the host-side macvtap device: without
+	//     them the interface drops IPv6 multicast, so router advertisements and DHCPv6 never
+	//     reach the guest. The guest can also put the host device in promiscuous or
+	//     all-multicast mode: trust it only on a host link dedicated to the guest.
+	//
+	//     Optional; defaults to disabled.
+	//   examples:
+	//     - value: >-
+	//        true
+	TrustGuestRxFiltersConfig *bool `yaml:"trustGuestRxFilters,omitempty"`
 }
 
 // IsZero implements yaml.IsZeroer.
@@ -106,6 +118,11 @@ func (i *VirtualMachineInterface) Link() string {
 // HardwareAddress implements config.VirtualMachineInterfaceConfig interface.
 func (i *VirtualMachineInterface) HardwareAddress() net.HardwareAddr {
 	return net.HardwareAddr(i.HardwareAddressConfig)
+}
+
+// TrustGuestRxFilters implements config.VirtualMachineInterfaceConfig interface.
+func (i *VirtualMachineInterface) TrustGuestRxFilters() bool {
+	return pointer.SafeDeref(i.TrustGuestRxFiltersConfig)
 }
 
 // Validate checks the interface and returns its name.

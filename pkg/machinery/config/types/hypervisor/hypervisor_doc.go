@@ -833,12 +833,20 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 				Description: "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Hardware (MAC) address presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "trustGuestRxFilters",
+				Type:        "bool",
+				Note:        "",
+				Description: "Let the guest's receive filter updates reach the host-side macvtap device: without\nthem the interface drops IPv6 multicast, so router advertisements and DHCPv6 never\nreach the guest. The guest can also put the host device in promiscuous or\nall-multicast mode: trust it only on a host link dedicated to the guest.\n\nOptional; defaults to disabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Let the guest's receive filter updates reach the host-side macvtap device: without" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", "net0")
 	doc.Fields[1].AddExample("", "eth0")
 	doc.Fields[2].AddExample("", "52:54:00:12:34:56")
+	doc.Fields[3].AddExample("", true)
 
 	return doc
 }
