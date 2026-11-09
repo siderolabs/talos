@@ -145,6 +145,7 @@ kernel/drivers/message/fusion/mptspi.ko
 kernel/drivers/mfd/lpc_ich.ko
 kernel/drivers/mfd/mfd-core.ko
 kernel/drivers/misc/hpilo.ko
+kernel/drivers/misc/ntsync.ko
 kernel/drivers/misc/vmw_balloon.ko
 kernel/drivers/misc/vmw_vmci/vmw_vmci.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
