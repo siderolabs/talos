@@ -14,6 +14,15 @@
 (typealiasactual container_file_t pod_file_t)
 (allow kubelet_t kubelet_state_t (fs_classes (relabelfrom)))
 (allow kubelet_t pod_file_t (fs_classes (relabelfrom relabelto)))
+; A volume a CSI driver formatted, or filled before the CRI labeled containers, holds unlabeled_t files until the
+; kubelet applies the fsGroup of the pod and the CRI relabels them for its categories.
+(allow pod_containerd_t unlabeled_t (fs_classes (relabelfrom)))
+(allow kubelet_t unlabeled_t (dir (getattr search open read setattr)))
+(allow kubelet_t unlabeled_t (file (getattr setattr)))
+(allow kubelet_t unlabeled_t (lnk_file (getattr setattr)))
+; A hugepages volume: the CRI labels the hugetlbfs mount, and the pod creates its pages in it.
+(allow pod_containerd_t hugetlbfs_t (fs_classes (relabelfrom)))
+(allow pod_file_t hugetlbfs_t (filesystem (associate)))
 
 ; The rights of a regular pod: pod_t is built on this macro, and so is any other pod domain.
 (macro pod_domain ((type ARG1))
