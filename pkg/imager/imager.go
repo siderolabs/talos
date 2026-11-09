@@ -53,6 +53,22 @@ type Imager struct {
 
 	// xattrsMap is used to store paths and their corresponding SELinux xattr values during extraction of extensions.
 	xattrsMap map[string]string
+
+	// quiet suppresses printing the profile and the kernel command line.
+	quiet bool
+}
+
+// Option configures the Imager.
+type Option func(*Imager)
+
+// WithQuiet suppresses printing the profile and the kernel command line.
+//
+// Both are redacted before they are printed, but they still show the rest of the inputs (e.g. extra kernel
+// args) as they are.
+func WithQuiet(quiet bool) Option {
+	return func(i *Imager) {
+		i.quiet = quiet
+	}
 }
 
 // Exit-code tags for imager failures.
@@ -67,11 +83,17 @@ type (
 )
 
 // New creates a new Imager.
-func New(prof profile.Profile) (*Imager, error) {
-	return &Imager{
+func New(prof profile.Profile, opts ...Option) (*Imager, error) {
+	i := &Imager{
 		prof:      prof,
 		xattrsMap: map[string]string{},
-	}, nil
+	}
+
+	for _, opt := range opts {
+		opt(i)
+	}
+
+	return i, nil
 }
 
 // Execute image generation.
@@ -98,14 +120,9 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		return "", tagPathOrPass(err, IOTag{})
 	}
 
-	report.Report(reporter.Update{
-		Message: "profile ready:",
-		Status:  reporter.StatusSucceeded,
-	})
-
 	// 1. Dump the profile.
-	if err = i.prof.Dump(os.Stderr); err != nil {
-		return "", xerrors.NewTagged[IOTag](err)
+	if err = i.reportProfile(report); err != nil {
+		return "", err
 	}
 
 	// 2. Transform `initramfs.xz` with system extensions
@@ -118,10 +135,12 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		return "", err
 	}
 
-	report.Report(reporter.Update{
-		Message: fmt.Sprintf("kernel command line: %s", i.cmdline),
-		Status:  reporter.StatusSucceeded,
-	})
+	if !i.quiet {
+		report.Report(reporter.Update{
+			Message: fmt.Sprintf("kernel command line: %s", i.redactedCmdline()),
+			Status:  reporter.StatusSucceeded,
+		})
+	}
 
 	// 4. Build UKI if needed
 	needBuildUKI := quirks.New(i.prof.Version).SupportsUKI()
@@ -430,6 +449,53 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 	i.cmdline = cmdline.String()
 
 	return nil
+}
+
+// reportProfile prints the profile with the secrets taken out, unless the imager is quiet.
+func (i *Imager) reportProfile(report *reporter.Reporter) error {
+	if i.quiet {
+		report.Report(reporter.Update{
+			Message: "profile ready",
+			Status:  reporter.StatusSucceeded,
+		})
+
+		return nil
+	}
+
+	redacted := i.prof.Redacted()
+
+	var dump strings.Builder
+
+	if err := redacted.Dump(&dump); err != nil {
+		return xerrors.NewTagged[IOTag](err)
+	}
+
+	report.Report(reporter.Update{
+		Message: "profile ready:\n" + dump.String(),
+		Status:  reporter.StatusSucceeded,
+	})
+
+	return nil
+}
+
+// redactedCmdline returns the kernel command line with the secrets in the META values taken out.
+//
+// The META values are passed on the kernel command line for every output kind except the disk image.
+func (i *Imager) redactedCmdline() string {
+	values := i.prof.Customization.MetaContents
+
+	if len(values) == 0 || i.prof.Output.Kind == profile.OutKindImage {
+		return i.cmdline
+	}
+
+	allowGzip := quirks.New(i.prof.Version).SupportsCompressedEncodedMETA()
+
+	return strings.Replace(
+		i.cmdline,
+		constants.MetaValuesEnvVar+"="+values.Encode(allowGzip),
+		constants.MetaValuesEnvVar+"="+profile.RedactMetaValues(values).Encode(allowGzip),
+		1,
+	)
 }
 
 // buildUKI assembles the UKI and signs it.

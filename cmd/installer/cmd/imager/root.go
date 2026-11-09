@@ -52,6 +52,7 @@ var cmdFlags struct {
 	SecurebootSignerAddress         string
 	PCRSignerAddress                string
 	SecurebootEnrollKeys            string
+	Quiet                           bool
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -221,7 +222,7 @@ var rootCmd = &cobra.Command{
 			return xerrors.NewTaggedf[imager.IOTag]("%w", err)
 		}
 
-		imgr, err := imager.New(prof)
+		imgr, err := imager.New(prof, imager.WithQuiet(cmdFlags.Quiet))
 		if err != nil {
 			return err
 		}
@@ -303,6 +304,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputPath, "output", "/out", "The output directory path")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OutputKind, "output-kind", "", "Override output kind")
 	rootCmd.PersistentFlags().BoolVar(&cmdFlags.TarToStdout, "tar-to-stdout", false, "Tar output and send to stdout")
+	rootCmd.PersistentFlags().BoolVar(&cmdFlags.Quiet, "quiet", false, "Don't print the profile and the kernel command line (secrets in them are redacted otherwise)")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayName, "overlay-name", "", "The name of the overlay to use")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.OverlayImage, "overlay-image", "", "The image reference to the overlay")
 	rootCmd.PersistentFlags().StringArrayVar(&cmdFlags.OverlayOptions, "overlay-option", []string{}, "Extra options to pass to the overlay")

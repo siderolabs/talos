@@ -102,12 +102,29 @@ func (spec *MetaKeySpec) redactValue(md resource.Metadata) (string, bool) {
 		return spec.Value, false
 	}
 
-	redactor, sensitive := sensitiveMetaKeys[md.ID()]
-	if !sensitive {
-		return spec.Value, false
+	return redactMetaKeyValue(md.ID(), spec.Value)
+}
+
+// RedactMetaValue redacts the secrets held in the value of the META key with the given tag.
+//
+// It applies the same rules as the redacted MetaKey resource, so that the value of a META key which is
+// shown anywhere else (e.g. by the imager) is redacted the same way. It returns the value with the secrets
+// taken out, and whether the value carried any secret at all.
+func RedactMetaValue(tag uint8, value string) (redacted string, hasSecrets bool) {
+	if value == "" {
+		return value, false
 	}
 
-	return redactor(spec.Value)
+	return redactMetaKeyValue(MetaKeyTagToID(tag), value)
+}
+
+func redactMetaKeyValue(id resource.ID, value string) (string, bool) {
+	redactor, sensitive := sensitiveMetaKeys[id]
+	if !sensitive {
+		return value, false
+	}
+
+	return redactor(value)
 }
 
 // NewMetaKey initializes a MetaKey resource.

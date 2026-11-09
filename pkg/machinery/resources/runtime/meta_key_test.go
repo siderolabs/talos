@@ -132,3 +132,54 @@ func TestRegisterMetaKeyValueRedactorUnknownKey(t *testing.T) {
 		})
 	})
 }
+
+// TestRedactMetaValue makes sure a META value shown outside of the resource API is redacted by the
+// same rules as the MetaKey resource.
+func TestRedactMetaValue(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		tag   uint8
+		value string
+
+		expectedValue      string
+		expectedHasSecrets bool
+	}{
+		{
+			name:               "unique token",
+			tag:                meta.UniqueMachineToken,
+			value:              "secret-token",
+			expectedValue:      constants.Redacted,
+			expectedHasSecrets: true,
+		},
+		{
+			name:               "state encryption",
+			tag:                meta.StateEncryptionConfig,
+			value:              `{"provider":"luks2"}`,
+			expectedValue:      constants.Redacted,
+			expectedHasSecrets: true,
+		},
+		{
+			name:          "empty sensitive",
+			tag:           meta.UniqueMachineToken,
+			expectedValue: "",
+		},
+		{
+			name:          "not sensitive",
+			tag:           meta.UUIDOverride,
+			value:         "8b1f4c5e-0e7c-4c8b-9b0e-6f0f1f5b6c2a",
+			expectedValue: "8b1f4c5e-0e7c-4c8b-9b0e-6f0f1f5b6c2a",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			redacted, hasSecrets := runtime.RedactMetaValue(test.tag, test.value)
+
+			assert.Equal(t, test.expectedValue, redacted)
+			assert.Equal(t, test.expectedHasSecrets, hasSecrets)
+		})
+	}
+}
