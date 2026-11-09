@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/endpoint"
 )
@@ -78,4 +79,61 @@ func TestParseEndpoint(t *testing.T) {
 		assert.True(t, endpoint.Insecure)
 		assert.Equal(t, "", endpoint.GetParam("jointoken"))
 	})
+}
+
+func TestParseEndpointErrorRedacted(t *testing.T) {
+	t.Parallel()
+
+	_, err := endpoint.Parse("https://10.5.0.2:3445/\x7f?jointoken=secret")
+	require.Error(t, err)
+
+	assert.NotContains(t, err.Error(), "secret")
+	assert.Contains(t, err.Error(), "jointoken=redacted")
+}
+
+func TestRedact(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{
+			name:     "no query",
+			input:    "https://10.5.0.2:3445",
+			expected: "https://10.5.0.2:3445",
+		},
+		{
+			name:     "no scheme",
+			input:    "10.5.0.2:3445?jointoken=secret",
+			expected: "10.5.0.2:3445?jointoken=redacted",
+		},
+		{
+			name:     "omni",
+			input:    "https://instance.siderolink.omni.example.com?jointoken=secret",
+			expected: "https://instance.siderolink.omni.example.com?jointoken=redacted",
+		},
+		{
+			name:     "multiple values",
+			input:    "https://10.5.0.2:3445?jointoken=secret&jointoken=secret2&grpc_tunnel=true",
+			expected: "https://10.5.0.2:3445?grpc_tunnel=true&jointoken=redacted",
+		},
+		{
+			name:     "no token",
+			input:    "grpc://10.5.0.2:3445?grpc_tunnel=true",
+			expected: "grpc://10.5.0.2:3445?grpc_tunnel=true",
+		},
+		{
+			name:     "invalid query",
+			input:    "https://10.5.0.2:3445?jointoken=secret%zz",
+			expected: "https://10.5.0.2:3445?redacted",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, endpoint.Redact(test.input))
+		})
+	}
 }
