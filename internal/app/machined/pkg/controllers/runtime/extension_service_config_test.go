@@ -72,6 +72,9 @@ func (suite *ExtensionServiceConfigSuite) TestReconcileExtensionServiceConfig() 
 				"FOO=BAR",
 			},
 		},
+		{
+			extensionName: "test-extension-empty",
+		},
 	}
 
 	cfgs := xslices.Map(extensionServiceConfigs, func(tt struct {

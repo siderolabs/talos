@@ -138,16 +138,6 @@ func (e *ServiceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.O
 		return nil, fmt.Errorf("name %q is invalid", e.ServiceName)
 	}
 
-	if len(e.ServiceConfigFiles) == 0 && len(e.ServiceEnvironment) == 0 {
-		if len(e.ServiceConfigFiles) == 0 {
-			return nil, fmt.Errorf("no config files found for extension %q", e.ServiceName)
-		}
-
-		if len(e.ServiceEnvironment) == 0 {
-			return nil, fmt.Errorf("no environment defined for extension %q", e.ServiceName)
-		}
-	}
-
 	for _, file := range e.ServiceConfigFiles {
 		if file.ConfigFileContent == "" {
 			return nil, fmt.Errorf("extension content is required for extension %q", e.ServiceName)

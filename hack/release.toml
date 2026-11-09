@@ -15,6 +15,13 @@ preface = """
 """
 
 [notes]
+    [notes.extension_service_config_empty]
+        title = "Empty ExtensionServiceConfig"
+        description = """\
+An `ExtensionServiceConfig` document no longer needs `configFiles` or `environment`: a document with only a `name` is valid.
+This lets an extension service which declares `configuration: true` start when it has nothing to configure.
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\

@@ -130,7 +130,6 @@ func TestExtensionServiceConfigValidate(t *testing.T) {
 
 				return cfg
 			},
-			expectedError: `no config files found for extension "foo"`,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

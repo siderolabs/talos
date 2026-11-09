@@ -73,6 +73,9 @@ func (suite *ExtensionServiceConfigFilesSuite) TestReconcileExtensionServiceConf
 				},
 			},
 		},
+		{
+			extensionName: "test-extension-empty",
+		},
 	} {
 		extensionServiceConfigFiles := runtimeres.NewExtensionServiceConfigSpec(runtimeres.NamespaceName, tt.extensionName)
 		extensionServiceConfigFiles.TypedSpec().Files = xslices.Map(tt.configFiles, func(config struct {
