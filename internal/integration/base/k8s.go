@@ -244,6 +244,7 @@ type podInfo interface { //nolint:interfacebloat
 	WithQuiet(quiet bool) podInfo
 	WithNamespace(namespace string) podInfo
 	WithHostVolumeMount(hostPath, mountPath string) podInfo
+	WithHostVolumeMountPropagation(hostPath, mountPath string, propagation corev1.MountPropagationMode) podInfo
 	WithSELinuxOptions(opts *corev1.SELinuxOptions) podInfo
 	WithHostPID() podInfo
 	WithPersistentVolumeClaim(claim, mountPath string) podInfo
@@ -284,6 +285,12 @@ func (p *pod) WithNamespace(namespace string) podInfo {
 }
 
 func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
+	return p.WithHostVolumeMountPropagation(hostPath, mountPath, corev1.MountPropagationNone)
+}
+
+// WithHostVolumeMountPropagation mounts the host path with the mount propagation: with the bidirectional one,
+// which takes a privileged pod, the mounts the container makes under the path show up on the host.
+func (p *pod) WithHostVolumeMountPropagation(hostPath, mountPath string, propagation corev1.MountPropagationMode) podInfo {
 	name := filepath.Base(hostPath)
 
 	p.pod.Spec.Volumes = append(p.pod.Spec.Volumes, corev1.Volume{
@@ -295,8 +302,9 @@ func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
 	})
 
 	p.pod.Spec.Containers[0].VolumeMounts = append(p.pod.Spec.Containers[0].VolumeMounts, corev1.VolumeMount{
-		Name:      name,
-		MountPath: mountPath,
+		Name:             name,
+		MountPath:        mountPath,
+		MountPropagation: &propagation,
 	})
 
 	return p

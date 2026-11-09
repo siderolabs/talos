@@ -9,6 +9,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"maps"
 	"path/filepath"
@@ -25,6 +26,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -829,9 +831,8 @@ func (suite *SELinuxSuite) TestNoMachineSocketAccess() {
 
 // TestNoStateAccess verifies mounting STATE does not allow /system/state/config.yaml access.
 //
-// STATE carries no xattr labels and machined only mounts it transiently with context=system_state_t, so a
-// mount of the device from a pod shows its files as unlabeled_t, which no pod domain may read. The
-// system_state_t type itself is a neverallow for every pod domain, checked by secilc at compile time.
+// machined labels the files of STATE system_state_t on disk, so a mount of the device from a pod shows them with
+// this label, which no pod domain may read: the policy holds a neverallow for it, checked by secilc at compile time.
 func (suite *SELinuxSuite) TestNoStateAccess() {
 	if !suite.SelinuxEnforcing {
 		suite.T().Skip("skipping SELinux negative tests in permissive mode")
@@ -843,10 +844,13 @@ func (suite *SELinuxSuite) TestNoStateAccess() {
 	state, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), "STATE")
 	suite.Assert().NoError(err)
 
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
 	podDef, err := suite.NewPrivilegedPod("system-state-test")
 	suite.Require().NoError(err)
 
-	podDef = podDef.WithQuiet(true)
+	podDef = podDef.WithQuiet(true).WithNodeName(k8sNode.Name)
 
 	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
 
@@ -868,6 +872,236 @@ func (suite *SELinuxSuite) TestNoStateAccess() {
 	suite.Require().Error(err)
 	suite.Assert().ErrorContains(err, "command terminated with exit code 1")
 	suite.Assert().Contains(stderr, "cat: can't open '/mnt/config.yaml': Permission denied")
+}
+
+// stateLabels returns the SELinux labels of every entry of STATE on the node, as they are on disk, by the path of
+// the entry relative to the root of the partition.
+//
+// STATE is not mounted on the host, so a privileged pod mounts the partition under the kubelet directory, which
+// propagates the mount to the host, and the labels are read with the Talos API: no pod domain may read the files,
+// and the pod image has no tool to read the labels.
+func (suite *SELinuxSuite) stateLabels(node string) map[string]string {
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	state, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.State(), "STATE")
+	suite.Require().NoError(err)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	podDef, err := suite.NewPrivilegedPod("selinux-state-labels")
+	suite.Require().NoError(err)
+
+	podDef = podDef.WithQuiet(true).WithNodeName(k8sNode.Name).
+		WithHostVolumeMountPropagation(constants.KubeletDataPath, constants.KubeletDataPath, corev1.MountPropagationBidirectional)
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+
+	defer podDef.Delete(suite.ctx) //nolint:errcheck
+
+	target := filepath.Join(constants.KubeletDataPath, podDef.Name())
+
+	_, stderr, err := podDef.Exec(suite.ctx, "mkdir "+target+" && mount "+state.TypedSpec().MountLocation+" "+target)
+	suite.Require().NoError(err, stderr)
+
+	defer func() {
+		// the mount outlives the pod on the host, so it has to go before the pod does
+		_, stderr, err := podDef.Exec(suite.ctx, "umount "+target+" && rmdir "+target)
+		suite.Assert().NoError(err, stderr)
+	}()
+
+	stream, err := suite.Client.LS(nodeCtx, &machineapi.ListRequest{Root: target, Recurse: true, ReportXattrs: true})
+	suite.Require().NoError(err)
+
+	labels := map[string]string{}
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		suite.Require().Empty(info.Error, "failed to list %s", info.Name)
+
+		labels[info.RelativeName] = ""
+
+		for _, xattr := range info.Xattrs {
+			if xattr.Name == "security.selinux" {
+				labels[info.RelativeName] = string(bytes.Trim(xattr.Data, "\x00\n"))
+			}
+		}
+
+		return nil
+	}))
+
+	return labels
+}
+
+// TestStateLabels verifies machined labels STATE on disk: a raw mount of the partition shows system_state_t on every
+// entry, which no pod domain may read or relabel, never unlabeled_t, the type of every file without a label.
+func (suite *SELinuxSuite) TestStateLabels() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	if pointer.SafeDeref(procfs.NewCmdline(suite.ReadCmdline(client.WithNode(suite.ctx, node))).Get(constants.KernelParamSELinux).First()) == "" {
+		suite.T().Skip("skipping since SELinux is disabled")
+	}
+
+	labels := suite.stateLabels(node)
+
+	suite.Assert().Contains(labels, ".")
+	suite.Assert().Contains(labels, "config.yaml")
+
+	for name, label := range labels {
+		suite.Assert().Equal(constants.StateSelinuxLabel, label, "label of %s", name)
+	}
+}
+
+// containerOutcome waits for the container of the pod to either fail to be created or print its output, and returns
+// the error or the output. A failed init container fails the test.
+func (suite *SELinuxSuite) containerOutcome(namespace, podName, container string) string {
+	var outcome string
+
+	suite.Require().NoError(retry.Constant(3*time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
+		pod, err := suite.Clientset.CoreV1().Pods(namespace).Get(suite.ctx, podName, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		for _, status := range pod.Status.InitContainerStatuses {
+			if status.State.Terminated != nil && status.State.Terminated.ExitCode != 0 {
+				return fmt.Errorf("init container %s failed: %s", status.Name, status.State.Terminated.Message)
+			}
+		}
+
+		outcome, err = suite.containerStatusOutcome(pod, container)
+		if err != nil {
+			return err
+		}
+
+		if outcome == "" {
+			return retry.ExpectedErrorf("container %s has no outcome yet", container)
+		}
+
+		return nil
+	}))
+
+	return outcome
+}
+
+// containerStatusOutcome returns the error the container failed to be created with, or its output, if any.
+func (suite *SELinuxSuite) containerStatusOutcome(pod *corev1.Pod, container string) (string, error) {
+	for _, status := range pod.Status.ContainerStatuses {
+		if status.Name != container {
+			continue
+		}
+
+		if status.State.Waiting != nil && status.State.Waiting.Reason == "CreateContainerError" {
+			return status.State.Waiting.Message, nil
+		}
+
+		if status.State.Running == nil && status.State.Terminated == nil {
+			return "", nil
+		}
+
+		logs, err := suite.Clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container}).DoRaw(suite.ctx)
+
+		return string(logs), err
+	}
+
+	return "", nil
+}
+
+// TestNoStateRelabel verifies a privileged pod can't hand STATE over to another container through a volume the CRI
+// relabels for it.
+//
+// An init container mounts STATE over the emptyDir of the pod, and the mount propagates to the host: when the kubelet
+// creates the next container, the CRI relabels the emptyDir for the categories of the container, which must fail, so
+// that the container never reads the machine configuration, and the files of STATE keep their labels.
+func (suite *SELinuxSuite) TestNoStateRelabel() {
+	ip, nodeName := suite.labelingNode(true)
+
+	state, err := safe.StateGetByID[*block.VolumeStatus](client.WithNode(suite.ctx, ip), suite.Client.State(), "STATE")
+	suite.Require().NoError(err)
+
+	labels := suite.stateLabels(ip)
+
+	name := "selinux-state-relabel-" + strconv.FormatInt(time.Now().UnixNano(), 36)
+	// the emptyDir on the host, reached through the pods directory of the kubelet
+	target := "/pods/$POD_UID/volumes/kubernetes.io~empty-dir/state"
+	bidirectional := corev1.MountPropagationBidirectional
+	podUID := []corev1.EnvVar{{Name: "POD_UID", ValueFrom: &corev1.EnvVarSource{FieldRef: &corev1.ObjectFieldSelector{FieldPath: "metadata.uid"}}}}
+	podsMount := corev1.VolumeMount{Name: "pods", MountPath: "/pods", MountPropagation: &bidirectional}
+
+	_, err = suite.Clientset.CoreV1().Pods("kube-system").Create(suite.ctx, &corev1.Pod{
+		Name:      name,
+		Namespace: "kube-system",
+		Spec: corev1.PodSpec{
+			NodeName:      nodeName,
+			RestartPolicy: corev1.RestartPolicyNever,
+			SecurityContext: &corev1.PodSecurityContext{
+				SELinuxOptions: &corev1.SELinuxOptions{Level: "s0:c610,c611"},
+			},
+			InitContainers: []corev1.Container{
+				{
+					Name:            "mount",
+					Image:           "alpine",
+					Command:         []string{"/bin/sh", "-ec", "mount " + state.TypedSpec().MountLocation + " " + target + " && test -f " + target + "/config.yaml"},
+					Env:             podUID,
+					SecurityContext: &corev1.SecurityContext{Privileged: new(true)},
+					VolumeMounts:    []corev1.VolumeMount{podsMount, {Name: "dev", MountPath: "/dev"}},
+				},
+			},
+			Containers: []corev1.Container{
+				{
+					// takes STATE off the emptyDir before the kubelet tears it down
+					Name:            "unmount",
+					Image:           "alpine",
+					Command:         []string{"/bin/sh", "-c", "trap 'umount " + target + "; exit 0' TERM; sleep 3600 & wait"},
+					Env:             podUID,
+					SecurityContext: &corev1.SecurityContext{Privileged: new(true)},
+					VolumeMounts:    []corev1.VolumeMount{podsMount},
+				},
+				{
+					Name:         "reader",
+					Image:        "alpine",
+					Command:      []string{"/bin/sh", "-c", "if cat /state/config.yaml >/dev/null; then echo leaked; else echo denied; fi; sleep 3600"},
+					VolumeMounts: []corev1.VolumeMount{{Name: "state", MountPath: "/state"}},
+				},
+			},
+			Volumes: []corev1.Volume{
+				{Name: "state", EmptyDir: &corev1.EmptyDirVolumeSource{}},
+				{Name: "pods", HostPath: &corev1.HostPathVolumeSource{Path: "/var/lib/kubelet/pods"}},
+				{Name: "dev", HostPath: &corev1.HostPathVolumeSource{Path: "/dev"}},
+			},
+		},
+	}, metav1.CreateOptions{})
+	suite.Require().NoError(err)
+
+	defer func() {
+		// the grace period lets the unmount container take STATE off the emptyDir
+		suite.Require().NoError(suite.Clientset.CoreV1().Pods("kube-system").Delete(suite.ctx, name, metav1.DeleteOptions{GracePeriodSeconds: new(int64(30))}))
+
+		suite.Require().NoError(retry.Constant(2*time.Minute, retry.WithUnits(time.Second)).Retry(func() error {
+			_, err := suite.Clientset.CoreV1().Pods("kube-system").Get(suite.ctx, name, metav1.GetOptions{})
+			if err == nil {
+				return retry.ExpectedErrorf("pod %s is still terminating", name)
+			}
+
+			if apierrors.IsNotFound(err) {
+				return nil
+			}
+
+			return err
+		}))
+
+		// machined may add files to STATE in the meantime, so only the entries seen before are compared
+		after := suite.stateLabels(ip)
+
+		for name, label := range labels {
+			suite.Assert().Equal(label, after[name], "the label of %s on STATE changed", name)
+		}
+	}()
+
+	outcome := suite.containerOutcome("kube-system", name, "reader")
+
+	suite.T().Logf("reader container: %s", outcome)
+
+	suite.Assert().NotContains(outcome, "leaked")
 }
 
 func init() {

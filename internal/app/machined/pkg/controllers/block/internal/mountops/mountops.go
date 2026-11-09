@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/makefs"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // CreateMountPoint creates the mount point directory if it doesn't exist.
@@ -68,6 +69,24 @@ func setupMountPoint(target string, mode fs.FileMode, mountSpec block.MountSpec)
 
 	// the filesystem of the mount point is the parent filesystem, which is not known here
 	return mount.FilterSelinuxLabelErrors(target, "", selinux.SetLabel(target, mountSpec.SelinuxLabel))
+}
+
+// LabelRoot sets the SELinux label of the mount spec on the root of a mounted filesystem.
+//
+// It is used for the detached mounts, which have no target path to label. With RecursiveRelabel, the content of the
+// filesystem is labeled as well, even if the root is already labeled: every entry is checked, but only those with
+// a different label are written. The label of the root says nothing about the content: Talos 1.9 to 1.11 mounted
+// STATE attached and labeled only its root, leaving the files created before that unlabeled.
+func LabelRoot(root xfs.Root, fstype block.FilesystemType, mountSpec block.MountSpec) error {
+	var err error
+
+	if mountSpec.RecursiveRelabel {
+		err = selinux.FSetLabelRecursive(root, ".", mountSpec.SelinuxLabel)
+	} else {
+		err = selinux.FSetLabel(root, ".", mountSpec.SelinuxLabel)
+	}
+
+	return mount.FilterSelinuxLabelErrors(root.Source(), fstype.String(), err)
 }
 
 // RemoveMountPoint removes the mount point directory created by createMountPoint after unmount.

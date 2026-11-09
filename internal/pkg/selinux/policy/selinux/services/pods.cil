@@ -55,3 +55,28 @@
 (typetransition pod_containerd_t pod_file_t process pod_privileged_t)
 (typealias spc_t)
 (typealiasactual spc_t pod_privileged_t)
+
+; STATE holds the machine configuration and its secrets, and machined labels its content system_state_t on disk.
+; A privileged pod may mount the partition, so the rules below pin what the policy grants on system_state_t today,
+; for every class of file: a new rule which grants more fails the build.
+;
+; A pod only gets what every domain has on every file: it may see the entries and their labels, never read, change or
+; relabel them. Executing a file is granted on every type as well, but it takes the read permission to do it.
+(neverallow pod_p system_state_t (file (not (getattr execute execute_no_trans))))
+(neverallow pod_p system_state_t (dir (not (getattr search))))
+(neverallow pod_p system_state_t (lnk_file (not (getattr))))
+(neverallow pod_p system_state_t (chr_file (not (getattr))))
+(neverallow pod_p system_state_t (blk_file (not (getattr))))
+(neverallow pod_p system_state_t (sock_file (not (getattr))))
+(neverallow pod_p system_state_t (fifo_file (not (getattr))))
+(neverallow pod_p system_state_t (filesystem (all)))
+; The CRI is a system service and reads any file, but it relabels the volumes of pods, so it may never change the files
+; of STATE or take them out of system_state_t.
+(neverallow pod_containerd_t system_state_t (file (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm mounton))))
+(neverallow pod_containerd_t system_state_t (dir (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm search mounton))))
+(neverallow pod_containerd_t system_state_t (lnk_file (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm mounton))))
+(neverallow pod_containerd_t system_state_t (chr_file (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm mounton))))
+(neverallow pod_containerd_t system_state_t (blk_file (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm mounton))))
+(neverallow pod_containerd_t system_state_t (sock_file (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm mounton))))
+(neverallow pod_containerd_t system_state_t (fifo_file (not (execmod getattr lock map open read watch watch_mount watch_reads watch_sb watch_with_perm mounton))))
+(neverallow pod_containerd_t system_state_t (filesystem (relabelfrom relabelto quotamod)))

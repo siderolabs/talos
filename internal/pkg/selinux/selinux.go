@@ -8,10 +8,13 @@ package selinux
 import (
 	"bytes"
 	_ "embed"
+	"errors"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"sync"
 
 	"github.com/pkg/xattr"
@@ -178,6 +181,58 @@ func FSetLabel(root xfs.Root, filename string, label string, excludeLabels ...st
 	}
 
 	return nil
+}
+
+// FSetLabelRecursive sets label for directory and its content recursively using provided root.
+// It does not perform the operation in case SELinux is disabled, provided label is empty or already set.
+//
+// Every entry is labeled, whatever its type, and symlinks are not followed. The walk stops on the first error.
+func FSetLabelRecursive(root xfs.Root, dir string, label string, excludeLabels ...string) error {
+	if label == "" || !IsEnabled() {
+		return nil
+	}
+
+	return fs.WalkDir(root, dir, func(path string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		return fsetLabelNoOpen(root, path, label, excludeLabels...)
+	})
+}
+
+// fsetLabelNoOpen sets the label of an entry without opening it, so it works for symlinks, sockets, fifos and
+// device nodes as well, and it takes a single descriptor to check and to set the label.
+//
+// The xattr syscalls refuse an O_PATH descriptor, but the path of the descriptor in /proc resolves to the entry
+// itself, even if the entry is a symlink.
+func fsetLabelNoOpen(root xfs.Root, filename string, label string, excludeLabels ...string) error {
+	f, err := xfs.OpenFile(root, filename, unix.O_PATH|unix.O_NOFOLLOW, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close() //nolint:errcheck
+
+	procPath := "/proc/self/fd/" + strconv.FormatUint(uint64(f.Fd()), 10)
+
+	current, err := xattr.Get(procPath, "security.selinux")
+	if err != nil && !errors.Is(err, unix.ENODATA) {
+		return err
+	}
+
+	currentLabel := string(bytes.Trim(current, "\x00\n"))
+
+	// Skip extra FS transactions when labels are okay.
+	if currentLabel == label {
+		return nil
+	}
+
+	// Skip setting label if it's in excludeLabels.
+	if currentLabel != "" && slices.Contains(excludeLabels, currentLabel) {
+		return nil
+	}
+
+	return xattr.Set(procPath, "security.selinux", []byte(label))
 }
 
 // SetLabelRecursive sets label for directory and its content recursively.

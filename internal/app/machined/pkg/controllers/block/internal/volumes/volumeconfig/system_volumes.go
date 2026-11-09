@@ -205,6 +205,24 @@ func GetOverlayVolumesTransformer(inContainer bool) func(configconfig.Config) ([
 	}
 }
 
+// stateMountSpec is the mount spec of the STATE partition.
+//
+// STATE is only mounted detached, and the root of the filesystem gets the label on every read-write mount.
+// The whole content is relabeled, so that a raw mount of the partition (e.g. from a privileged pod) shows
+// system_state_t, not unlabeled_t files: no pod domain may read or relabel system_state_t.
+func stateMountSpec() block.MountSpec {
+	return block.MountSpec{
+		TargetPath:       constants.StateMountPoint,
+		SelinuxLabel:     constants.StateSelinuxLabel,
+		FileMode:         0o700,
+		UID:              0,
+		GID:              0,
+		Secure:           true,
+		NoExec:           true,
+		RecursiveRelabel: true,
+	}
+}
+
 func manageStateNoConfig(encryptionMeta *runtime.MetaKey, isAgent bool) func(vc *block.VolumeConfig) error {
 	match := celmatch.VolumePartitionLabelNonEmpty(constants.StatePartitionLabel)
 	if isAgent { // mark as missing
@@ -213,15 +231,7 @@ func manageStateNoConfig(encryptionMeta *runtime.MetaKey, isAgent bool) func(vc 
 
 	return NewBuilder().
 		WithType(block.VolumeTypePartition).
-		WithMount(block.MountSpec{
-			TargetPath:   constants.StateMountPoint,
-			SelinuxLabel: constants.StateSelinuxLabel,
-			FileMode:     0o700,
-			UID:          0,
-			GID:          0,
-			Secure:       true,
-			NoExec:       true,
-		}).WithLocator(match).
+		WithMount(stateMountSpec()).WithLocator(match).
 		WithFunc(func(spec *block.VolumeConfigSpec) error {
 			if encryptionMeta != nil {
 				encryptionFromMeta, err := volumes.UnmarshalEncryptionMeta([]byte(encryptionMeta.TypedSpec().Value))
@@ -256,15 +266,7 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 
 		return NewBuilder().
 			WithType(block.VolumeTypePartition).
-			WithMount(block.MountSpec{
-				TargetPath:   constants.StateMountPoint,
-				SelinuxLabel: constants.StateSelinuxLabel,
-				FileMode:     0o700,
-				UID:          0,
-				GID:          0,
-				Secure:       true,
-				NoExec:       true,
-			}).
+			WithMount(stateMountSpec()).
 			WithProvisioning(block.ProvisioningSpec{
 				Wave: block.WaveSystemDisk,
 				DiskSelector: block.DiskSelector{

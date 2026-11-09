@@ -604,6 +604,25 @@ func (ctrl *MountController) updateTargetSettings(
 	return mount.FilterSelinuxLabelErrors(targetPath, fstype.String(), err)
 }
 
+// shouldUpdateSettings reports whether the mount may change the metadata of the volume.
+//
+// Read-only volumes preserve their existing metadata, and external volume metadata is owned by the host.
+func shouldUpdateSettings(mountRequest *block.MountRequest, volumeStatus *block.VolumeStatus) bool {
+	return !mountRequest.TypedSpec().ReadOnly && volumeStatus.TypedSpec().Type != block.VolumeTypeExternal
+}
+
+// labelDetachedRoot sets the SELinux label on the root of the filesystem of a detached mount, which has no target to label.
+//
+// A failure fails the mount, as it does for the target settings of an attached mount: the volume must not be used
+// with a part of its content still unlabeled.
+func labelDetachedRoot(mountRequest *block.MountRequest, volumeStatus *block.VolumeStatus, point *mount.Point) error {
+	if !mountRequest.TypedSpec().Detached || !shouldUpdateSettings(mountRequest, volumeStatus) {
+		return nil
+	}
+
+	return mountops.LabelRoot(point.Root(), volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec)
+}
+
 //nolint:gocyclo,cyclop
 func (ctrl *MountController) handleDiskMountOperation(
 	ctx context.Context,
@@ -624,11 +643,8 @@ func (ctrl *MountController) handleDiskMountOperation(
 			fsOpts []fsopen.Option
 		)
 
-		// Read-only volumes preserve their existing metadata, detached mounts have no target,
-		// and external volume metadata is owned by the host.
-		shouldUpdateTargetSettings := !mountRequest.TypedSpec().ReadOnly &&
-			!mountRequest.TypedSpec().Detached &&
-			volumeStatus.TypedSpec().Type != block.VolumeTypeExternal
+		// Detached mounts have no target: only the SELinux label applies, see labelDetachedRoot.
+		shouldUpdateTargetSettings := shouldUpdateSettings(mountRequest, volumeStatus) && !mountRequest.TypedSpec().Detached
 
 		fsOpts = append(
 			fsOpts,
@@ -733,6 +749,12 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
+		if err = labelDetachedRoot(mountRequest, volumeStatus, mountpoint); err != nil {
+			manager.Unmount() //nolint:errcheck
+
+			return fmt.Errorf("failed to label the root of %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
 		if shouldUpdateTargetSettings {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
 				if manager.Unmount() == nil && mountPointCreated {
@@ -783,6 +805,13 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 		if err != nil {
 			return fmt.Errorf("failed to remount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		// A detached mount which was first mounted read-only hasn't been labeled yet.
+		//
+		// On failure the mount stays read-only for the controller, so the next reconcile remounts and labels it again.
+		if err = labelDetachedRoot(mountRequest, volumeStatus, mountCtx.point); err != nil {
+			return fmt.Errorf("failed to label the root of %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
 		logger.Info(
