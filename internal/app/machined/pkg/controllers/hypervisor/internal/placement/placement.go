@@ -78,28 +78,37 @@ func domainHostPlacement(domain *libvirtxml.Domain) (cpus, nodes []hostIDSet) {
 	return cpus, nodes
 }
 
-// parseLibvirtHostIDList parses libvirt's cpuset syntax ("0-3,^2"), bounding every ID before
-// expanding a range.
+// parseLibvirtHostIDList parses libvirt's cpuset syntax ("0-3,^2") as virBitmapParse does: items
+// apply left to right, an exclusion names one ID, and a list selecting nothing is refused. Every
+// ID is bounded before a range is expanded.
 func parseLibvirtHostIDList(list string, maxID int) (cpuset.CPUSet, error) {
-	included, excluded := cpuset.New(), cpuset.New()
+	ids := cpuset.New()
 
 	for item := range strings.SplitSeq(list, ",") {
 		item = strings.TrimSpace(item)
 
-		target := &included
-		if rest, ok := strings.CutPrefix(item, "^"); ok {
-			item, target = strings.TrimSpace(rest), &excluded
+		rest, exclude := strings.CutPrefix(item, "^")
+		if exclude && (rest == "" || strings.Contains(rest, "-")) {
+			return cpuset.New(), fmt.Errorf("exclusion %q must name a single ID", item)
 		}
 
-		set, err := hypervisorhelpers.ParseHostIDList(item, maxID)
+		set, err := hypervisorhelpers.ParseHostIDList(rest, maxID)
 		if err != nil {
 			return cpuset.New(), err
 		}
 
-		*target = target.Union(set)
+		if exclude {
+			ids = ids.Difference(set)
+		} else {
+			ids = ids.Union(set)
+		}
 	}
 
-	return included.Difference(excluded), nil
+	if ids.IsEmpty() {
+		return cpuset.New(), errors.New("list selects no host IDs")
+	}
+
+	return ids, nil
 }
 
 // Validate checks the host CPUs and NUMA nodes the exact domain definition names against the host

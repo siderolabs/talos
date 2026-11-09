@@ -65,6 +65,30 @@ func TestValidate(t *testing.T) {
 			topology: newTopology(),
 		},
 		{
+			name:     "include after exclusion wins",
+			xml:      `<domain><name>vm</name><vcpu cpuset="^3,0-3">2</vcpu></domain>`,
+			topology: newTopology(),
+			invalid:  `virtual machine "vm": invalid host placement: vcpu cpuset names offline host CPU 3`,
+		},
+		{
+			name:     "exclusion range",
+			xml:      `<domain><name>vm</name><vcpu cpuset="0-2,^1-2">2</vcpu></domain>`,
+			topology: newTopology(),
+			invalid:  `virtual machine "vm": invalid host placement: vcpu cpuset "0-2,^1-2": exclusion "^1-2" must name a single ID`,
+		},
+		{
+			name:     "empty vCPU pin",
+			xml:      `<domain><name>vm</name><cputune><vcpupin vcpu="0" cpuset=""/></cputune></domain>`,
+			topology: newTopology(),
+			invalid:  `virtual machine "vm": invalid host placement: vCPU 0 pin "": list selects no host IDs`,
+		},
+		{
+			name:     "fully excluded nodeset",
+			xml:      `<domain><name>vm</name><numatune><memnode cellid="0" mode="strict" nodeset="0,^0"/></numatune></domain>`,
+			topology: newTopology(),
+			invalid:  `virtual machine "vm": invalid host placement: memnode 0 nodeset "0,^0": list selects no host IDs`,
+		},
+		{
 			name:     "offline vCPU pin",
 			xml:      `<domain><name>vm</name><cputune><vcpupin vcpu="1" cpuset="2-3"/></cputune></domain>`,
 			topology: newTopology(),
