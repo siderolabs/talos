@@ -43,6 +43,7 @@ func (suite *StoragePoolSpecSuite) TestStoragePoolSpec() {
 		[]string{"images", "archives"},
 		func(spec *storageres.StoragePoolSpec, asrt *assert.Assertions) {
 			asrt.Equal(map[string]string{"images": "u-data", "archives": "x-external"}[spec.Metadata().ID()], spec.TypedSpec().VolumeID)
+			asrt.Equal(map[string]string{"images": "data", "archives": "external"}[spec.Metadata().ID()], spec.TypedSpec().VolumeName)
 		},
 	)
 
@@ -60,6 +61,7 @@ func (suite *StoragePoolSpecSuite) TestStoragePoolSpec() {
 	ctest.AssertNoResource[*storageres.StoragePoolSpec](suite, "images")
 	ctest.AssertResource(suite, "archives", func(spec *storageres.StoragePoolSpec, asrt *assert.Assertions) {
 		asrt.Equal("e-data", spec.TypedSpec().VolumeID)
+		asrt.Equal("data", spec.TypedSpec().VolumeName)
 	})
 
 	suite.Destroy(updated)
@@ -77,6 +79,7 @@ func (suite *StoragePoolSpecSuite) TestLiteralNameAndInvalidReferences() {
 
 	ctest.AssertResource(suite, "images", func(spec *storageres.StoragePoolSpec, asrt *assert.Assertions) {
 		asrt.Equal("u-u-images", spec.TypedSpec().VolumeID)
+		asrt.Equal("u-images", spec.TypedSpec().VolumeName, "a name which looks like an ID is still reported as configured")
 	})
 
 	// The runtime ID is not an alias for the document name.
@@ -109,6 +112,7 @@ func (suite *StoragePoolSpecSuite) TestUnusableBackingVolumes() {
 	cfg := applyMachineConfigDocs(&suite.DefaultSuite, initial...)
 	ctest.AssertResources(suite, names, func(spec *storageres.StoragePoolSpec, asrt *assert.Assertions) {
 		asrt.Equal("u-"+spec.Metadata().ID(), spec.TypedSpec().VolumeID)
+		asrt.Equal(spec.Metadata().ID(), spec.TypedSpec().VolumeName)
 	})
 
 	raw := blockcfg.NewRawVolumeConfigV1Alpha1()

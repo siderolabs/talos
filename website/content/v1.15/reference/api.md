@@ -14384,7 +14384,8 @@ StoragePoolSpecSpec identifies the backing volume; the resource ID identifies th
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| volume_id | [string](#string) |  |  |
+| volume_id | [string](#string) |  | VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".<br><br>It is the internal identifier the pool's mount is requested and tracked by; VolumeName is what the user configured. |
+| volume_name | [string](#string) |  | VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data". |
 
 
 
@@ -14399,10 +14400,11 @@ StoragePoolStatusSpec reports the pool's backing volume, directory and observed 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| volume_id | [string](#string) |  |  |
+| volume_id | [string](#string) |  | VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".<br><br>It is the internal identifier consumers match the pool's backing by; VolumeName is what the user configured. |
 | target_path | [string](#string) |  |  |
 | phase | [talos.resource.definitions.enums.StorageStoragePoolPhase](#talos.resource.definitions.enums.StorageStoragePoolPhase) |  |  |
 | error | [string](#string) |  |  |
+| volume_name | [string](#string) |  | VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".<br><br>It always names the same volume as VolumeID. |
 
 
 

@@ -175,10 +175,12 @@ func (f *storagePoolFixture) waitPool(ctx context.Context, volumeIndex int, expe
 	rtestutils.AssertResource(nodeCtx, f.suite.T(), f.suite.Client.State(), f.poolName,
 		func(spec *storage.StoragePoolSpec, asrt *assert.Assertions) {
 			asrt.Equal(f.volumeIDs[volumeIndex], spec.TypedSpec().VolumeID)
+			asrt.Equal(f.volumeNames[volumeIndex], spec.TypedSpec().VolumeName)
 		})
 	rtestutils.AssertResource(nodeCtx, f.suite.T(), f.suite.Client.State(), f.poolName,
 		func(status *storage.StoragePoolStatus, asrt *assert.Assertions) {
 			asrt.Equal(f.volumeIDs[volumeIndex], status.TypedSpec().VolumeID)
+			asrt.Equal(f.volumeNames[volumeIndex], status.TypedSpec().VolumeName)
 			asrt.Equal(f.paths[volumeIndex], status.TypedSpec().TargetPath)
 			asrt.True(status.TypedSpec().Phase == storage.StoragePoolPhaseReady)
 			asrt.Empty(status.TypedSpec().Error)

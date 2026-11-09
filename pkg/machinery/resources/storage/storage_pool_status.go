@@ -33,10 +33,18 @@ type StoragePoolStatus = typed.Resource[StoragePoolStatusSpec, StoragePoolStatus
 //
 //gotagsrewrite:gen
 type StoragePoolStatusSpec struct {
+	// VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".
+	//
+	// It is the internal identifier consumers match the pool's backing by; VolumeName is what
+	// the user configured.
 	VolumeID   string           `yaml:"volumeID" protobuf:"1"`
 	TargetPath string           `yaml:"targetPath" protobuf:"2"`
 	Phase      StoragePoolPhase `yaml:"phase" protobuf:"3"`
 	Error      string           `yaml:"error,omitempty" protobuf:"4"`
+	// VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".
+	//
+	// It always names the same volume as VolumeID.
+	VolumeName string `yaml:"volumeName" protobuf:"5"`
 }
 
 // NewStoragePoolStatus initializes a StoragePoolStatus resource.
@@ -56,7 +64,7 @@ func (StoragePoolStatusExtension) ResourceDefinition() meta.ResourceDefinitionSp
 		Type:             StoragePoolStatusType,
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
-			{Name: "Volume", JSONPath: "{.volumeID}"},
+			{Name: "Volume", JSONPath: "{.volumeName}"},
 			{Name: "Target", JSONPath: "{.targetPath}"},
 			{Name: "Phase", JSONPath: "{.phase}"},
 			{Name: "Error", JSONPath: "{.error}"},

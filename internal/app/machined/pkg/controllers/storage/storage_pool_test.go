@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
 	"testing/synctest"
@@ -268,6 +269,7 @@ func (suite *StoragePoolSuite) SetupTest() {
 
 	suite.spec = storageres.NewStoragePoolSpec(storageres.NamespaceName, "images")
 	suite.spec.TypedSpec().VolumeID = "u-vms"
+	suite.spec.TypedSpec().VolumeName = volumeName("u-vms")
 	suite.Create(suite.spec)
 	suite.volume("u-vms")
 }
@@ -275,9 +277,18 @@ func (suite *StoragePoolSuite) SetupTest() {
 func (suite *StoragePoolSuite) setVolumeID(volumeID string) {
 	ctest.UpdateWithConflicts(suite, suite.spec, func(spec *storageres.StoragePoolSpec) error {
 		spec.TypedSpec().VolumeID = volumeID
+		spec.TypedSpec().VolumeName = volumeName(volumeID)
 
 		return nil
 	})
+}
+
+// volumeName is the name the fixtures configure a volume under: its ID without the kind prefix,
+// which the pool must report rather than the ID.
+func volumeName(volumeID string) string {
+	_, name, _ := strings.Cut(volumeID, "-")
+
+	return name
 }
 
 func (suite *StoragePoolSuite) start() {
@@ -330,6 +341,7 @@ func (suite *StoragePoolSuite) assertReady(volume string) {
 		asrt.True(status.TypedSpec().Phase == storageres.StoragePoolPhaseReady, status.TypedSpec().Error)
 		asrt.Empty(status.TypedSpec().Error)
 		asrt.Equal(volume, status.TypedSpec().VolumeID)
+		asrt.Equal(volumeName(volume), status.TypedSpec().VolumeName)
 		asrt.Equal(filepath.Join(suite.root, volume, "images"), status.TypedSpec().TargetPath)
 	})
 }
@@ -370,7 +382,7 @@ func (suite *StoragePoolSuite) activate() {
 
 func (suite *StoragePoolSuite) TestWaitsForExistingMount() {
 	suite.start()
-	suite.assertError("waiting for backing volume")
+	suite.assertError(`waiting for backing volume "vms" to be mounted`)
 	suite.assertNoRequests()
 	suite.Require().NoDirExists(filepath.Join(suite.root, "u-vms", "images"))
 	suite.Require().Empty(suite.client.completedEvents())
@@ -473,7 +485,7 @@ func (suite *StoragePoolSuite) TestHeldRetargetWaitsForConsumerAcrossPasses() {
 	suite.mount("x-new")
 	suite.setVolumeID("x-new")
 
-	suite.assertError("held by a consumer")
+	suite.assertError(`held by a consumer on volume "vms"`)
 	suite.assertHold("u-vms", true)
 	suite.assertHold("x-new", false)
 
@@ -512,6 +524,7 @@ func (suite *StoragePoolSuite) TestMountTeardownIsolatedPerVolume() {
 
 	other := storageres.NewStoragePoolSpec(storageres.NamespaceName, "backups")
 	other.TypedSpec().VolumeID = "u-other"
+	other.TypedSpec().VolumeName = volumeName("u-other")
 	suite.Create(other)
 
 	images := suite.mount("u-vms")
@@ -918,6 +931,7 @@ func (suite *StoragePoolSuite) TestHeldRetargetAcrossDaemonOutage() {
 	suite.assertError("waiting for storage daemon")
 	ctest.AssertResource(suite, "images", func(status *storageres.StoragePoolStatus, asrt *assert.Assertions) {
 		asrt.Equal("u-vms", status.TypedSpec().VolumeID)
+		asrt.Equal("vms", status.TypedSpec().VolumeName, "the name is preserved with the held ID")
 		asrt.Equal(filepath.Join(suite.root, "u-vms", "images"), status.TypedSpec().TargetPath)
 		asrt.Equal(storageres.StoragePoolPhaseNotReady, status.TypedSpec().Phase,
 			"retarget is intentional withdrawal, not uncertain observation")

@@ -1493,8 +1493,14 @@ func (x *MDRefreshRequestSpec) GetRequest() int64 {
 
 // StoragePoolSpecSpec identifies the backing volume; the resource ID identifies the pool.
 type StoragePoolSpecSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	VolumeId      string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".
+	//
+	// It is the internal identifier the pool's mount is requested and tracked by; VolumeName is
+	// what the user configured.
+	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	// VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".
+	VolumeName    string `protobuf:"bytes,2,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1536,13 +1542,28 @@ func (x *StoragePoolSpecSpec) GetVolumeId() string {
 	return ""
 }
 
+func (x *StoragePoolSpecSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
+	}
+	return ""
+}
+
 // StoragePoolStatusSpec reports the pool's backing volume, directory and observed attachability.
 type StoragePoolStatusSpec struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
-	VolumeId      string                        `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	TargetPath    string                        `protobuf:"bytes,2,opt,name=target_path,json=targetPath,proto3" json:"target_path,omitempty"`
-	Phase         enums.StorageStoragePoolPhase `protobuf:"varint,3,opt,name=phase,proto3,enum=talos.resource.definitions.enums.StorageStoragePoolPhase" json:"phase,omitempty"`
-	Error         string                        `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".
+	//
+	// It is the internal identifier consumers match the pool's backing by; VolumeName is what
+	// the user configured.
+	VolumeId   string                        `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	TargetPath string                        `protobuf:"bytes,2,opt,name=target_path,json=targetPath,proto3" json:"target_path,omitempty"`
+	Phase      enums.StorageStoragePoolPhase `protobuf:"varint,3,opt,name=phase,proto3,enum=talos.resource.definitions.enums.StorageStoragePoolPhase" json:"phase,omitempty"`
+	Error      string                        `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	// VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".
+	//
+	// It always names the same volume as VolumeID.
+	VolumeName    string `protobuf:"bytes,5,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1601,6 +1622,13 @@ func (x *StoragePoolStatusSpec) GetPhase() enums.StorageStoragePoolPhase {
 func (x *StoragePoolStatusSpec) GetError() string {
 	if x != nil {
 		return x.Error
+	}
+	return ""
+}
+
+func (x *StoragePoolStatusSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
 	}
 	return ""
 }
@@ -2116,15 +2144,19 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\vsync_action\x18\v \x01(\tR\n" +
 	"syncAction\"0\n" +
 	"\x14MDRefreshRequestSpec\x12\x18\n" +
-	"\arequest\x18\x01 \x01(\x03R\arequest\"2\n" +
+	"\arequest\x18\x01 \x01(\x03R\arequest\"S\n" +
 	"\x13StoragePoolSpecSpec\x12\x1b\n" +
-	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\"\xbc\x01\n" +
+	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1f\n" +
+	"\vvolume_name\x18\x02 \x01(\tR\n" +
+	"volumeName\"\xdd\x01\n" +
 	"\x15StoragePoolStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1f\n" +
 	"\vtarget_path\x18\x02 \x01(\tR\n" +
 	"targetPath\x12O\n" +
 	"\x05phase\x18\x03 \x01(\x0e29.talos.resource.definitions.enums.StorageStoragePoolPhaseR\x05phase\x12\x14\n" +
-	"\x05error\x18\x04 \x01(\tR\x05error\"r\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\x12\x1f\n" +
+	"\vvolume_name\x18\x05 \x01(\tR\n" +
+	"volumeName\"r\n" +
 	"\x19StoragePoolVolumeCopySpec\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
 	"\x06digest\x18\x02 \x01(\tR\x06digest\x12%\n" +

@@ -23,7 +23,13 @@ type StoragePoolSpec = typed.Resource[StoragePoolSpecSpec, StoragePoolSpecExtens
 //
 //gotagsrewrite:gen
 type StoragePoolSpecSpec struct {
+	// VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".
+	//
+	// It is the internal identifier the pool's mount is requested and tracked by; VolumeName is
+	// what the user configured.
 	VolumeID string `yaml:"volumeID" protobuf:"1"`
+	// VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".
+	VolumeName string `yaml:"volumeName" protobuf:"2"`
 }
 
 // NewStoragePoolSpec initializes a StoragePoolSpec resource.

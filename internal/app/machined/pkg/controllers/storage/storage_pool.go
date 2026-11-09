@@ -183,9 +183,14 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 ) (reconcileErr error) {
 	desired := map[string]string{}
 
+	// volumeNames is what statuses and errors report each desired pool's backing as: the name the
+	// user configured, never the internal ID desired holds.
+	volumeNames := map[string]string{}
+
 	for spec := range specs.All() {
 		if spec.Metadata().Phase() == resource.PhaseRunning {
 			desired[spec.Metadata().ID()] = spec.TypedSpec().VolumeID
+			volumeNames[spec.Metadata().ID()] = spec.TypedSpec().VolumeName
 		}
 	}
 
@@ -514,6 +519,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 
 	for name, volumeID := range desired {
 		pool := libvirtstorage.Pool{Name: name, UUID: libvirtstorage.UUID(machineUUID, name)}
+		volumeName := volumeNames[name]
 
 		var (
 			target      string
@@ -530,7 +536,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 
 			previous, activateErr = safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, r, name)
 			if activateErr == nil && previous.TypedSpec().VolumeID != volumeID {
-				activateErr = fmt.Errorf("pool is held by a consumer on volume %q: %w", previous.TypedSpec().VolumeID, errors.Join(errPoolPending, errPoolRetargetHeld))
+				activateErr = fmt.Errorf("pool is held by a consumer on volume %q: %w", previous.TypedSpec().VolumeName, errors.Join(errPoolPending, errPoolRetargetHeld))
 			}
 		}
 
@@ -570,9 +576,9 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 
 				switch {
 				case mount == nil:
-					activateErr = fmt.Errorf("waiting for backing volume %q to be mounted: %w", volumeID, errPoolPending)
+					activateErr = fmt.Errorf("waiting for backing volume %q to be mounted: %w", volumeName, errPoolPending)
 				case !mountWritable(mount):
-					activateErr = fmt.Errorf("backing volume %q is not mounted for writing: %w", volumeID, errPoolPending)
+					activateErr = fmt.Errorf("backing volume %q is not mounted for writing: %w", volumeName, errPoolPending)
 				default:
 					if err = excludePoolMutation(ctx, r, name, mutations); err != nil {
 						return err
@@ -592,7 +598,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 			if activateErr == nil {
 				var outcome libvirtstorage.OperationOutcome
 
-				target, outcome, activateErr = ctrl.activate(ctx, r, client, pool, volumeID, knownReady)
+				target, outcome, activateErr = ctrl.activate(ctx, r, client, pool, volumeID, volumeName, knownReady)
 
 				outcome = recordOutcome(name, outcome)
 				if outcome == libvirtstorage.Unknown && activateErr == nil {
@@ -621,6 +627,7 @@ func (ctrl *StoragePoolController) reconcile(ctx context.Context, r controller.R
 		if err = safe.WriterModify(ctx, r, storage.NewStoragePoolStatus(storage.NamespaceName, name), func(status *storage.StoragePoolStatus) error {
 			if activateErr == nil || !errors.Is(activateErr, errPoolRetargetHeld) {
 				status.TypedSpec().VolumeID = volumeID
+				status.TypedSpec().VolumeName = volumeName
 			}
 
 			status.TypedSpec().Phase = storage.StoragePoolPhaseNotReady
@@ -761,19 +768,19 @@ func poolsHeldUnder(pools []libvirtstorage.Pool, held map[string]struct{}, machi
 // A pending mount is reported through the status wrapped in errPoolPending, not
 // retried: the mount status input wakes the controller when it changes.
 func (ctrl *StoragePoolController) activate(ctx context.Context, r controller.Runtime, client libvirtstorage.PoolClient,
-	pool libvirtstorage.Pool, volumeID string, knownReady bool,
+	pool libvirtstorage.Pool, volumeID, volumeName string, knownReady bool,
 ) (string, libvirtstorage.OperationOutcome, error) {
 	mount, err := safe.ReaderGetByID[*block.VolumeMountStatus](ctx, r, volumeID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return "", libvirtstorage.NoMutationSubmitted, fmt.Errorf("waiting for backing volume %q to be mounted: %w", volumeID, errPoolPending)
+			return "", libvirtstorage.NoMutationSubmitted, fmt.Errorf("waiting for backing volume %q to be mounted: %w", volumeName, errPoolPending)
 		}
 
 		return "", libvirtstorage.NoMutationSubmitted, fmt.Errorf("error getting volume mount status: %w", err)
 	}
 
 	if !mountWritable(mount) {
-		return "", libvirtstorage.NoMutationSubmitted, fmt.Errorf("backing volume %q is not mounted for writing: %w", volumeID, errPoolPending)
+		return "", libvirtstorage.NoMutationSubmitted, fmt.Errorf("backing volume %q is not mounted for writing: %w", volumeName, errPoolPending)
 	}
 
 	if !mount.Metadata().Finalizers().Has(ctrl.Name()) {
@@ -941,11 +948,12 @@ func reportPoolUnavailable(ctx context.Context, r controller.ReaderWriter, spec 
 	}
 
 	return safe.WriterModify(ctx, r, storage.NewStoragePoolStatus(storage.NamespaceName, spec.Metadata().ID()), func(status *storage.StoragePoolStatus) error {
-		// Preserve TargetPath and held VolumeID: with the daemon unreachable these
-		// remain the only record of which mount an attached consumer uses.
+		// Preserve TargetPath and held VolumeID (and VolumeName with it): with the daemon
+		// unreachable these remain the only record of which mount an attached consumer uses.
 		retarget := status.TypedSpec().VolumeID != "" && status.TypedSpec().VolumeID != spec.TypedSpec().VolumeID
 		if !held || status.TypedSpec().VolumeID == "" {
 			status.TypedSpec().VolumeID = spec.TypedSpec().VolumeID
+			status.TypedSpec().VolumeName = spec.TypedSpec().VolumeName
 		}
 
 		status.TypedSpec().Phase = storage.StoragePoolPhaseObservationUnavailable

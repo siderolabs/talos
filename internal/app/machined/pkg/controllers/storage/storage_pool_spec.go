@@ -60,6 +60,7 @@ func (ctrl *StoragePoolSpecController) writeSpecs(ctx context.Context, r control
 			ctx, r, storage.NewStoragePoolSpec(storage.NamespaceName, doc.Name()),
 			func(spec *storage.StoragePoolSpec) error {
 				spec.TypedSpec().VolumeID = backing.ID
+				spec.TypedSpec().VolumeName = doc.VolumeName()
 
 				return nil
 			},

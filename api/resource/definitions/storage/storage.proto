@@ -294,15 +294,29 @@ message MDRefreshRequestSpec {
 
 // StoragePoolSpecSpec identifies the backing volume; the resource ID identifies the pool.
 message StoragePoolSpecSpec {
+  // VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".
+  //
+  // It is the internal identifier the pool's mount is requested and tracked by; VolumeName is
+  // what the user configured.
   string volume_id = 1;
+  // VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".
+  string volume_name = 2;
 }
 
 // StoragePoolStatusSpec reports the pool's backing volume, directory and observed attachability.
 message StoragePoolStatusSpec {
+  // VolumeID is the block volume ID of the backing volume, e.g. "u-vm-data".
+  //
+  // It is the internal identifier consumers match the pool's backing by; VolumeName is what
+  // the user configured.
   string volume_id = 1;
   string target_path = 2;
   talos.resource.definitions.enums.StorageStoragePoolPhase phase = 3;
   string error = 4;
+  // VolumeName is the name of the user, existing or external volume backing the pool, e.g. "vm-data".
+  //
+  // It always names the same volume as VolumeID.
+  string volume_name = 5;
 }
 
 // StoragePoolVolumeCopySpec describes the initial source of a pool-owned copy.
