@@ -11,6 +11,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/qemu/internal/numa"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
@@ -27,7 +28,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 	}
 
 	for _, node := range request.Nodes {
-		if err := validateNUMANodes(options.NUMANodes, nodeVCPUCount(node.NanoCPUs), node.Memory/1024/1024); err != nil {
+		if err := numa.Validate(options.NUMANodes, nodeVCPUCount(node.NanoCPUs), node.Memory/1024/1024); err != nil {
 			return nil, fmt.Errorf("node %s: %w", node.Name, err)
 		}
 	}

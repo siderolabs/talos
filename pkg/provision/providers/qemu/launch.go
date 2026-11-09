@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/provision/providers/qemu/internal/numa"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
@@ -171,7 +172,7 @@ func launchVM(config *LaunchConfig) error {
 
 	args := []string{
 		"-m", strconv.FormatInt(config.MemSize, 10),
-		"-smp", smpArg(config),
+		"-smp", numa.SMPArg(config.VCPUCount, config.NUMANodes),
 		"-cpu", cpuArg,
 		// don't create default devices (VGA, CD-ROM, serial, parallel, monitor, etc.),
 		// everything the VM needs is declared explicitly (VGA is added back below on amd64)
@@ -201,7 +202,13 @@ func launchVM(config *LaunchConfig) error {
 		"-watchdog-action", "pause",
 	)
 
-	memory, err := memoryArgs(config)
+	memory, err := numa.MemoryArgs(numa.Config{
+		MemShmPath:  config.MemShmPath,
+		DiskDrivers: config.DiskDrivers,
+		VCPUs:       config.VCPUCount,
+		MemoryMiB:   config.MemSize,
+		Nodes:       config.NUMANodes,
+	})
 	if err != nil {
 		return err
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/placement"
 	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
@@ -224,7 +225,7 @@ func (ctrl *VirtualMachineStatusController) reconcile(ctx context.Context, runti
 		// it. Unlike a render failure it does not withdraw the power intent: a running domain keeps
 		// running, and only its next start or replacement is held back.
 		if renderErr == nil && effective.PowerState == hypervisorhelpers.VirtualMachinePowerStateRunning.String() {
-			renderErr = validateDomainPlacement(name, domainXML, topology)
+			renderErr = placement.Validate(name, domainXML, topology)
 		}
 
 		definition := definitions[name]
@@ -290,7 +291,7 @@ func listVirtualMachineDomainSpecs(ctx context.Context, reader controller.Reader
 // renderStage grades a spec that cannot be rendered: a link the host has not brought up yet is
 // worth waiting for, anything else needs the config changed.
 func renderStage(err error) hypervisorhelpers.VirtualMachineStage {
-	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, errPlacementPending) || errors.Is(err, vmprofile.ErrNotReady) {
+	if errors.Is(err, errLinkNotFound) || errors.Is(err, errDiskNotReady) || errors.Is(err, placement.ErrPending) || errors.Is(err, vmprofile.ErrNotReady) {
 		return hypervisorhelpers.VirtualMachineStagePending
 	}
 

@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/placement"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -299,7 +300,7 @@ func (ctrl *VirtualMachineController) reconcile(ctx context.Context, r controlle
 		case errors.Is(err, errDiskNotReady):
 			logger.Info("virtual machine is waiting for its disks",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))
-		case isPlacementHeld(err):
+		case placement.IsHeld(err):
 			// Retried when the host NUMA topology or the definition changes.
 			logger.Warn("virtual machine is held back by its host placement",
 				zap.String("virtual_machine", spec.Metadata().ID()), zap.Error(err))

@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/fileutils"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/qemu/internal/numa"
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
@@ -39,7 +40,7 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 	vcpuCount := nodeVCPUCount(nodeReq.NanoCPUs)
 	memSize := nodeReq.Memory / 1024 / 1024
 
-	if err := validateNUMANodes(opts.NUMANodes, vcpuCount, memSize); err != nil {
+	if err := numa.Validate(opts.NUMANodes, vcpuCount, memSize); err != nil {
 		return provision.NodeInfo{}, fmt.Errorf("node %s: %w", nodeReq.Name, err)
 	}
 

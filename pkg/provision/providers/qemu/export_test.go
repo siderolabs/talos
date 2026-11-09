@@ -11,12 +11,6 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-// MemoryArgsForTest exposes NUMA memory argument construction for tests.
-var MemoryArgsForTest = memoryArgs
-
-// SMPArgForTest exposes the CPU topology argument.
-var SMPArgForTest = smpArg
-
 // FabricDeviceForTest exposes fabric device argument construction for tests.
 func FabricDeviceForTest(clos bool, index int, mac string, mtu int, virtioNetDeviceArgs string) string {
 	return fabricDevice(&LaunchConfig{

@@ -6,13 +6,6 @@ package hypervisor
 
 import "github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 
-var (
-	ValidateDomainPlacement = validateDomainPlacement
-	IsPlacementHeld         = isPlacementHeld
-	ErrPlacementPending     = errPlacementPending
-	ErrPlacementInvalid     = errPlacementInvalid
-)
-
 // BlankVolumeNameForTest exposes the volume naming rule, which is the one thing keeping two virtual
 // machines out of each other's disks.
 func BlankVolumeNameForTest(virtualMachine string, disk hypervisor.VirtualMachineDiskSpec) string {
