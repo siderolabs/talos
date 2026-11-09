@@ -18,8 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/google/cadvisor/lib/utils/sysfs"
-	"github.com/google/cadvisor/lib/utils/sysinfo"
 	"github.com/prometheus/procfs"
 	"go.uber.org/zap"
 	"k8s.io/utils/cpuset"
@@ -198,11 +196,11 @@ func (ctrl *NUMATopologyController) readTopology() (*hardware.NUMATopologySpec, 
 			return nil, memErr
 		}
 
-		if mem.MemTotal == nil || *mem.MemTotal > math.MaxUint64/1024 {
-			return nil, errors.New("invalid MemTotal in /proc/meminfo")
+		if mem.MemTotalBytes == nil {
+			return nil, errors.New("MemTotal is missing from /proc/meminfo")
 		}
 
-		spec.Nodes = []hardware.NUMANodeSpec{{ID: 0, CPUs: slices.Clone(present), MemoryTotalBytes: *mem.MemTotal * 1024}}
+		spec.Nodes = []hardware.NUMANodeSpec{{ID: 0, CPUs: slices.Clone(present), MemoryTotalBytes: *mem.MemTotalBytes}}
 	} else {
 		nodes, err = readCPUSet(filepath.Join(nodePath, "online"))
 		if err != nil {
@@ -213,7 +211,7 @@ func (ctrl *NUMATopologyController) readTopology() (*hardware.NUMATopologySpec, 
 			return nil, errors.New("no online NUMA nodes")
 		}
 
-		spec.Nodes, err = readNUMANodes(nodePath, nodes, present, online)
+		spec.Nodes, err = readNUMANodes(nodePath, nodes, present)
 		if err != nil {
 			return nil, err
 		}
@@ -287,22 +285,11 @@ func (ctrl *NUMATopologyController) validateMembership(spec *hardware.NUMATopolo
 	return nil
 }
 
-func readNUMANodes(nodePath string, ids, present, online []uint32) ([]hardware.NUMANodeSpec, error) { //nolint:gocyclo
-	fs := &numaSysfs{SysFs: sysfs.NewRealSysFs(), online: online}
-	for _, id := range ids {
-		fs.nodes = append(fs.nodes, filepath.Join(nodePath, fmt.Sprintf("node%d", id)))
-	}
-
-	discovered, _, err := sysinfo.GetNodesInfo(fs)
-	if err != nil || fs.err != nil {
-		return nil, errors.Join(err, fs.err)
-	}
-
+func readNUMANodes(nodePath string, ids, present []uint32) ([]hardware.NUMANodeSpec, error) {
 	nodes := make([]hardware.NUMANodeSpec, 0, len(ids))
 	assigned := make(map[uint32]struct{})
 
-	for _, node := range discovered {
-		id := uint32(node.Id)
+	for _, id := range ids {
 		path := filepath.Join(nodePath, fmt.Sprintf("node%d", id))
 
 		cpus, err := readCPUSet(filepath.Join(path, "cpulist"))
@@ -322,58 +309,45 @@ func readNUMANodes(nodePath string, ids, present, online []uint32) ([]hardware.N
 			assigned[cpu] = struct{}{}
 		}
 
-		discoveredCPUs := make([]uint32, 0, len(cpus))
-
-		for _, core := range node.Cores {
-			for _, cpu := range core.Threads {
-				discoveredCPUs = append(discoveredCPUs, uint32(cpu))
-			}
+		memory, err := readNodeMemTotal(filepath.Join(path, "meminfo"))
+		if err != nil {
+			return nil, err
 		}
 
-		// cAdvisor reports online threads; retain the offline membership too.
-		for _, cpu := range cpus {
-			if !slices.Contains(online, cpu) {
-				discoveredCPUs = append(discoveredCPUs, cpu)
-			}
-		}
-
-		slices.Sort(discoveredCPUs)
-
-		if !slices.Equal(cpus, discoveredCPUs) {
-			return nil, fmt.Errorf("node %d CPU topology is incomplete or changed during discovery", id)
-		}
-
-		nodes = append(nodes, hardware.NUMANodeSpec{ID: id, CPUs: discoveredCPUs, MemoryTotalBytes: node.Memory})
+		nodes = append(nodes, hardware.NUMANodeSpec{ID: id, CPUs: cpus, MemoryTotalBytes: memory})
 	}
 
 	return nodes, nil
 }
 
-// cAdvisor tolerates missing memory information and filters CPUs against the live
-// host. Preserve read errors and use the membership snapshot for this collection.
-type numaSysfs struct {
-	sysfs.SysFs
-	err    error
-	nodes  []string
-	online []uint32
-}
-
-func (fs *numaSysfs) GetNodesPaths() ([]string, error) { return fs.nodes, nil }
-
-func (fs *numaSysfs) GetMemInfo(nodeDir string) (string, error) {
-	info, err := fs.SysFs.GetMemInfo(nodeDir)
-	fs.err = errors.Join(fs.err, err)
-
-	return info, err
-}
-
-func (fs *numaSysfs) IsCPUOnline(path string) bool {
-	id, err := strconv.ParseUint(strings.TrimPrefix(filepath.Base(path), "cpu"), 10, 32)
+// readNodeMemTotal returns the total memory from the "Node N MemTotal: X kB" record of a node meminfo file.
+func readNodeMemTotal(path string) (uint64, error) {
+	data, err := os.ReadFile(path)
 	if err != nil {
-		fs.err = errors.Join(fs.err, err)
-
-		return false
+		return 0, err
 	}
 
-	return slices.Contains(fs.online, uint32(id))
+	for line := range strings.Lines(string(data)) {
+		fields := strings.Fields(line)
+		if len(fields) < 3 || fields[2] != "MemTotal:" {
+			continue
+		}
+
+		if len(fields) != 5 || fields[4] != "kB" {
+			return 0, fmt.Errorf("malformed MemTotal record in %s: %q", path, strings.TrimSpace(line))
+		}
+
+		total, err := strconv.ParseUint(fields[3], 10, 64)
+		if err != nil {
+			return 0, fmt.Errorf("parse MemTotal in %s: %w", path, err)
+		}
+
+		if total > math.MaxUint64/1024 {
+			return 0, fmt.Errorf("MemTotal in %s overflows: %d kB", path, total)
+		}
+
+		return total * 1024, nil
+	}
+
+	return 0, fmt.Errorf("MemTotal is missing from %s", path)
 }

@@ -8,7 +8,6 @@ import (
 	"context"
 	"os"
 	"path/filepath"
-	"strconv"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -54,12 +53,6 @@ func numaFixture(t *testing.T) string {
 		"devices/system/node/node7/meminfo": "Node 7 MemTotal:       2048 kB\n",
 	} {
 		writeNUMAFile(t, root, path, data)
-	}
-
-	for cpu, node := range map[int]int{0: 0, 1: 2, 2: 0, 3: 2, 8: 2} {
-		base := "devices/system/node/node" + strconv.Itoa(node) + "/cpu" + strconv.Itoa(cpu) + "/topology/"
-		writeNUMAFile(t, root, base+"core_id", strconv.Itoa(cpu/2))
-		writeNUMAFile(t, root, base+"physical_package_id", "0")
 	}
 
 	return root
@@ -216,21 +209,6 @@ func (suite *NUMATopologySuite) TestInconsistentMembership() {
 	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
 	writeNUMAFile(suite.T(), root, "devices/system/cpu/online", "0-3,8\n")
 	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
-}
-
-func (suite *NUMATopologySuite) TestIncompleteCPUDiscovery() {
-	root := numaFixture(suite.T())
-	reconcileCh := suite.register(root)
-	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) { asrt.Len(r.TypedSpec().Nodes, 3) })
-	suite.Require().NoError(os.Remove(filepath.Join(root, "devices/system/node/node2/cpu8/topology/core_id")))
-
-	suite.Require().NoError(triggerNUMAReconcile(suite.Ctx(), reconcileCh))
-
-	ctest.AssertNoResource[*hardware.NUMATopology](suite, hardware.NUMATopologyID)
-	writeNUMAFile(suite.T(), root, "devices/system/node/node2/cpu8/topology/core_id", "4")
-	ctest.AssertResource(suite, hardware.NUMATopologyID, func(r *hardware.NUMATopology, asrt *assert.Assertions) {
-		asrt.Equal([]uint32{1, 3, 8}, r.TypedSpec().Nodes[1].CPUs)
-	})
 }
 
 func TestNUMATopologySuite(t *testing.T) {
