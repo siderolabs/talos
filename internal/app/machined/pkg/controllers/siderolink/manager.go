@@ -30,6 +30,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	networkutils "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/utils"
+	"github.com/siderolabs/talos/internal/pkg/endpoint"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -324,7 +325,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 
 		logger.Info(
 			"siderolink connection configured",
-			zap.String("endpoint", ctrl.pd.apiEndpont),
+			zap.String("endpoint", endpoint.Redact(ctrl.pd.apiEndpont)),
 			zap.String("node_uuid", ctrl.pd.nodeUUID),
 			zap.String("node_address", nodeAddress.String()),
 		)
