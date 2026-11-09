@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 //go:embed testdata/workloadresourceconfig.yaml
@@ -167,6 +168,42 @@ hostDNS:
 			assert.Contains(t, err.Error(), root+".memory.limit")
 		}
 	})
+}
+
+func TestWorkloadResourceRuntimeValidationKubepodsCapacity(t *testing.T) {
+	t.Parallel()
+
+	st := state.WrapCore(inmem.NewState())
+
+	cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+	cfg.KubepodsConfig = workloadMemoryRoot("16GiB")
+
+	// Without the inventory there is nothing to compare against.
+	warnings, err := cfg.RuntimeValidate(t.Context(), st, validationMode{})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+
+	topology := hardware.NewNUMATopology()
+	topology.TypedSpec().Nodes = []hardware.NUMANodeSpec{{ID: 0, MemoryTotalBytes: 4 << 30}, {ID: 1, MemoryTotalBytes: 4 << 30}}
+	require.NoError(t, st.Create(t.Context(), topology))
+
+	warnings, err = cfg.RuntimeValidate(t.Context(), st, validationMode{})
+	require.NoError(t, err)
+	require.Len(t, warnings, 1)
+	assert.Contains(t, warnings[0], "kubepods.memory.limit")
+
+	cfg.KubepodsConfig = workloadMemoryRoot("8GiB")
+
+	warnings, err = cfg.RuntimeValidate(t.Context(), st, validationMode{})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+
+	// The kubelet rounds the limit down to the page size, which brings it back to the capacity.
+	cfg.KubepodsConfig = workloadMemoryRoot("8589934593B")
+
+	warnings, err = cfg.RuntimeValidate(t.Context(), st, validationMode{})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
 }
 
 func TestWorkloadResourceRuntimeValidationDefersStaticErrors(t *testing.T) {

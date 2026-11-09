@@ -13,6 +13,7 @@ import (
 	"math"
 	"os"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -21,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // WorkloadResourceConfigKind is a workload resource config document kind.
@@ -192,14 +194,7 @@ func (s *WorkloadResourceConfigV1Alpha1) Validate(validation.RuntimeMode, ...val
 
 	limited := false
 
-	for _, root := range []struct {
-		name string
-		cfg  *WorkloadResourceRoot
-	}{
-		{constants.CgroupKubepods, s.KubepodsConfig},
-		{constants.CgroupTalosContainersRoot, s.TalosContainersConfig},
-		{virtualMachinesRootField, s.VirtualMachinesConfig},
-	} {
+	for _, root := range s.roots() {
 		if root.cfg == nil {
 			continue
 		}
@@ -217,17 +212,13 @@ func (s *WorkloadResourceConfigV1Alpha1) Validate(validation.RuntimeMode, ...val
 }
 
 // RuntimeValidate implements config.RuntimeValidator using the target node's page size.
-func (s *WorkloadResourceConfigV1Alpha1) RuntimeValidate(context.Context, state.State, validation.RuntimeMode, ...validation.Option) ([]string, error) {
-	var validationErrors error
+func (s *WorkloadResourceConfigV1Alpha1) RuntimeValidate(ctx context.Context, st state.State, _ validation.RuntimeMode, _ ...validation.Option) ([]string, error) {
+	var (
+		validationErrors error
+		kubepodsLimit    uint64
+	)
 
-	for _, root := range []struct {
-		name string
-		cfg  *WorkloadResourceRoot
-	}{
-		{constants.CgroupKubepods, s.KubepodsConfig},
-		{constants.CgroupTalosContainersRoot, s.TalosContainersConfig},
-		{virtualMachinesRootField, s.VirtualMachinesConfig},
-	} {
+	for _, root := range s.roots() {
 		if root.cfg == nil {
 			continue
 		}
@@ -239,12 +230,68 @@ func (s *WorkloadResourceConfigV1Alpha1) RuntimeValidate(context.Context, state.
 			continue
 		}
 
-		if _, err := kernel.NormalizeMemoryLimit(root.cfg.MemoryConfig.MemoryLimit.Value(), os.Getpagesize()); err != nil {
+		limit, err := kernel.NormalizeMemoryLimit(root.cfg.MemoryConfig.MemoryLimit.Value(), os.Getpagesize())
+		if err != nil {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("%s: %w", path, err))
+
+			continue
+		}
+
+		if root.name == constants.CgroupKubepods {
+			kubepodsLimit = limit
 		}
 	}
 
-	return nil, validationErrors
+	if validationErrors != nil || kubepodsLimit == 0 {
+		return nil, validationErrors
+	}
+
+	return kubepodsCapacityWarnings(ctx, st, kubepodsLimit)
+}
+
+// kubepodsCapacityWarnings flags a kubepods limit above the host memory, which the kubelet cannot be configured with.
+//
+// The limit is page-aligned, as the kubelet compares it. It is a warning because runtime validation also runs at boot,
+// where an error would keep the machine from loading a configuration shared with larger hosts. Hosts without the
+// inventory are not checked.
+func kubepodsCapacityWarnings(ctx context.Context, st state.State, limit uint64) ([]string, error) {
+	topology, err := safe.StateGetByID[*hardware.NUMATopology](ctx, st, hardware.NUMATopologyID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	var capacity uint64
+
+	for _, node := range topology.TypedSpec().Nodes {
+		capacity += node.MemoryTotalBytes
+	}
+
+	if capacity == 0 || limit <= capacity {
+		return nil, nil
+	}
+
+	return []string{fmt.Sprintf("%s.memory.limit: %d bytes exceeds the host memory capacity %d bytes, the kubelet will fail to be configured",
+		constants.CgroupKubepods, limit, capacity)}, nil
+}
+
+// workloadRoot names one workload root of the document.
+//
+//docgen:nodoc
+type workloadRoot struct {
+	name string
+	cfg  *WorkloadResourceRoot
+}
+
+func (s *WorkloadResourceConfigV1Alpha1) roots() []workloadRoot {
+	return []workloadRoot{
+		{constants.CgroupKubepods, s.KubepodsConfig},
+		{constants.CgroupTalosContainersRoot, s.TalosContainersConfig},
+		{virtualMachinesRootField, s.VirtualMachinesConfig},
+	}
 }
 
 // validateMemoryLimit accepts only an explicit positive limit which fits the kubelet's int64 quantities.
