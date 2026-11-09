@@ -158,9 +158,6 @@ type VirtualMachineDiskFromImageConfig interface {
 	File() string
 	// Digest is an optional integrity check of the library file, as `sha256:<hex>`.
 	Digest() string
-	// Mode is how the volume is derived from the image, with the default applied. It carries no
-	// meaning for a cdrom, which takes no mode and is attached in place.
-	Mode() hypervisorhelpers.VirtualMachineDiskImageMode
 }
 
 // VirtualMachineConsoleConfig defines the consoles attached to a virtual machine.

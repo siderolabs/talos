@@ -22,6 +22,7 @@ import (
 	"go.uber.org/zap"
 	"libvirt.org/go/libvirtxml"
 
+	diskhelpers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
 	vmprofile "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/profile"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/cleanup"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -387,7 +388,7 @@ func outageCopyBackingCurrent(ctx context.Context, r controller.Reader, disk hyp
 		return false, err
 	}
 
-	requestCurrent := validatePersistedImageRequest(request, diskControllerName, disk, status.Volume, imageBindingKey(status.VirtualMachine, disk)) == nil
+	requestCurrent := diskhelpers.ValidatePersistedImageRequest(request, diskhelpers.ControllerName, disk, status.Volume, disk.ImageBindingKey(status.VirtualMachine)) == nil
 	if !requestCurrent {
 		return false, nil
 	}
@@ -410,15 +411,15 @@ func outageCopyBackingCurrent(ctx context.Context, r controller.Reader, disk hyp
 }
 
 func retainedCopyMatchesDisk(disk hypervisor.VirtualMachineDiskSpec, status hypervisor.VirtualMachineDiskStatusSpec) bool {
-	return disk.Provision.FromImage != nil && disk.Type == "cdrom" && status.ReadOnly &&
-		status.Image == *disk.Provision.FromImage && status.Volume != "" && status.Format == disk.Format
+	return disk.Provision.FromImage != nil && status.Volume != "" && status.Format == disk.Format &&
+		((disk.IsWritableImage() && !status.ReadOnly) ||
+			(disk.Type == "cdrom" && status.ReadOnly && status.Image == *disk.Provision.FromImage))
 }
 
 func retainedCopyCompleted(request *storage.StoragePoolVolumeSpec, volume *storage.StoragePoolVolumeStatus, pool *storage.StoragePoolStatus) bool {
 	observed := volume.TypedSpec().Copy
 
-	return volume.Metadata().Phase() == resource.PhaseRunning && observed != nil &&
-		observed.Phase == storage.StoragePoolVolumeCopyPhaseSucceeded && observed.Intent == storage.StoragePoolVolumeCopyIntent(request, pool)
+	return volume.Metadata().Phase() == resource.PhaseRunning && storage.StoragePoolVolumeCopyCompletionMatches(request, pool, observed)
 }
 
 func retainedCopyBackingMatches(volume *storage.StoragePoolVolumeStatusSpec, pool *storage.StoragePoolStatusSpec, disk hypervisor.VirtualMachineDiskStatusSpec) bool {
@@ -996,7 +997,7 @@ var errDiskNotReady = errors.New("not ready")
 
 // errDiskUnsupported marks a disk nothing on the host will ever make attachable. Unlike
 // errDiskNotReady, waiting does not help: the configuration has to change.
-var errDiskUnsupported = errors.New("unsupported disk")
+var errDiskUnsupported = diskhelpers.ErrDiskUnsupported
 
 // isHeldBack reports whether a render failed on something this controller should wait out rather
 // than fail on. It is wider than what renderStage grades as pending: a configuration the host
@@ -1320,7 +1321,7 @@ func renderVirtualMachineDisks(
 	for _, disk := range disks {
 		// Graded before the disk status is consulted, because every status failure reads as waiting:
 		// a disk this slice does not provision would otherwise leave the machine pending forever.
-		if err := checkVirtualMachineDiskSupported(disk); err != nil {
+		if err := diskhelpers.CheckSupported(disk); err != nil {
 			return nil, fmt.Errorf("virtual machine %q: disk %q: %w", name, disk.Name, err)
 		}
 

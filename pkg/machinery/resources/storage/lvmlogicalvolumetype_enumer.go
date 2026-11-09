@@ -549,11 +549,11 @@ func (i *StoragePoolVolumePhase) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _StoragePoolVolumeCopyPhaseName = "unknownwaitingqueuedrunningcancellingsucceededfailed"
+const _StoragePoolVolumeCopyPhaseName = "unknownwaitingqueuedrunningcancellingsucceededfailedsourceRequired"
 
-var _StoragePoolVolumeCopyPhaseIndex = [...]uint8{0, 7, 14, 20, 27, 37, 46, 52}
+var _StoragePoolVolumeCopyPhaseIndex = [...]uint8{0, 7, 14, 20, 27, 37, 46, 52, 66}
 
-const _StoragePoolVolumeCopyPhaseLowerName = "unknownwaitingqueuedrunningcancellingsucceededfailed"
+const _StoragePoolVolumeCopyPhaseLowerName = "unknownwaitingqueuedrunningcancellingsucceededfailedsourcerequired"
 
 func (i StoragePoolVolumeCopyPhase) String() string {
 	if i < 0 || i >= StoragePoolVolumeCopyPhase(len(_StoragePoolVolumeCopyPhaseIndex)-1) {
@@ -573,9 +573,10 @@ func _StoragePoolVolumeCopyPhaseNoOp() {
 	_ = x[StoragePoolVolumeCopyPhaseCancelling-(4)]
 	_ = x[StoragePoolVolumeCopyPhaseSucceeded-(5)]
 	_ = x[StoragePoolVolumeCopyPhaseFailed-(6)]
+	_ = x[StoragePoolVolumeCopyPhaseSourceRequired-(7)]
 }
 
-var _StoragePoolVolumeCopyPhaseValues = []StoragePoolVolumeCopyPhase{StoragePoolVolumeCopyPhaseUnknown, StoragePoolVolumeCopyPhaseWaiting, StoragePoolVolumeCopyPhaseQueued, StoragePoolVolumeCopyPhaseRunning, StoragePoolVolumeCopyPhaseCancelling, StoragePoolVolumeCopyPhaseSucceeded, StoragePoolVolumeCopyPhaseFailed}
+var _StoragePoolVolumeCopyPhaseValues = []StoragePoolVolumeCopyPhase{StoragePoolVolumeCopyPhaseUnknown, StoragePoolVolumeCopyPhaseWaiting, StoragePoolVolumeCopyPhaseQueued, StoragePoolVolumeCopyPhaseRunning, StoragePoolVolumeCopyPhaseCancelling, StoragePoolVolumeCopyPhaseSucceeded, StoragePoolVolumeCopyPhaseFailed, StoragePoolVolumeCopyPhaseSourceRequired}
 
 var _StoragePoolVolumeCopyPhaseNameToValueMap = map[string]StoragePoolVolumeCopyPhase{
 	_StoragePoolVolumeCopyPhaseName[0:7]:   StoragePoolVolumeCopyPhaseUnknown,
@@ -585,6 +586,7 @@ var _StoragePoolVolumeCopyPhaseNameToValueMap = map[string]StoragePoolVolumeCopy
 	_StoragePoolVolumeCopyPhaseName[27:37]: StoragePoolVolumeCopyPhaseCancelling,
 	_StoragePoolVolumeCopyPhaseName[37:46]: StoragePoolVolumeCopyPhaseSucceeded,
 	_StoragePoolVolumeCopyPhaseName[46:52]: StoragePoolVolumeCopyPhaseFailed,
+	_StoragePoolVolumeCopyPhaseName[52:66]: StoragePoolVolumeCopyPhaseSourceRequired,
 }
 
 var _StoragePoolVolumeCopyPhaseLowerNameToValueMap = map[string]StoragePoolVolumeCopyPhase{
@@ -595,6 +597,7 @@ var _StoragePoolVolumeCopyPhaseLowerNameToValueMap = map[string]StoragePoolVolum
 	_StoragePoolVolumeCopyPhaseLowerName[27:37]: StoragePoolVolumeCopyPhaseCancelling,
 	_StoragePoolVolumeCopyPhaseLowerName[37:46]: StoragePoolVolumeCopyPhaseSucceeded,
 	_StoragePoolVolumeCopyPhaseLowerName[46:52]: StoragePoolVolumeCopyPhaseFailed,
+	_StoragePoolVolumeCopyPhaseLowerName[52:66]: StoragePoolVolumeCopyPhaseSourceRequired,
 }
 
 var _StoragePoolVolumeCopyPhaseNames = []string{
@@ -605,6 +608,7 @@ var _StoragePoolVolumeCopyPhaseNames = []string{
 	_StoragePoolVolumeCopyPhaseName[27:37],
 	_StoragePoolVolumeCopyPhaseName[37:46],
 	_StoragePoolVolumeCopyPhaseName[46:52],
+	_StoragePoolVolumeCopyPhaseName[52:66],
 }
 
 // StoragePoolVolumeCopyPhaseString retrieves an enum value from the enum constants string name.

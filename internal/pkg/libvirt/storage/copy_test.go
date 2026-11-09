@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -594,119 +595,51 @@ func TestCopyAdoptionLiveRejectsMissingOwnershipWitness(t *testing.T) {
 	require.ErrorContains(t, err, "ownership witness")
 }
 
-func TestCopyBindingRequiresMatchingOwnershipAndSurvivesRestart(t *testing.T) {
-	target := t.TempDir()
-	require.NoError(t, os.Mkdir(filepath.Join(target, ".copy-on-use"), 0o700))
-
-	key := fmt.Sprintf("%x", sha256.Sum256([]byte("intent")))
-	name := "vm__install__digest.raw"
-	require.NoError(t, os.WriteFile(filepath.Join(target, name), []byte("image"), 0o600))
-	require.Error(t, new(libvirtstorage.CopyBindings).Record(target, key, name))
-	witness := fmt.Sprintf("%x", sha256.Sum256([]byte(name)))
-	require.NoError(t, os.Link(filepath.Join(target, name), filepath.Join(target, ".copy-on-use", witness)))
-	require.NoError(t, new(libvirtstorage.CopyBindings).Record(target, key, name))
-	got, err := libvirtstorage.ReadCopyBinding(target, key)
-	require.NoError(t, err)
-	require.Equal(t, name, got)
-	require.NoError(t, os.Remove(filepath.Join(target, name)))
-	got, err = libvirtstorage.ReadCopyBinding(target, key)
-	require.Error(t, err)
-	require.Empty(t, got)
-}
-
-func TestCopyBindingDoesNotGuessBetweenCompletedCopies(t *testing.T) {
-	target := t.TempDir()
-	require.NoError(t, os.Mkdir(filepath.Join(target, ".copy-on-use"), 0o700))
-
-	key := fmt.Sprintf("%x", sha256.Sum256([]byte("intent")))
-
-	for _, name := range []string{"a.raw", "b.raw"} {
-		require.NoError(t, os.WriteFile(filepath.Join(target, name), []byte(name), 0o600))
-		witness := fmt.Sprintf("%x", sha256.Sum256([]byte(name)))
-		require.NoError(t, os.Link(filepath.Join(target, name), filepath.Join(target, ".copy-on-use", witness)))
-	}
-
-	got, err := libvirtstorage.ReadCopyBinding(target, key)
-	require.NoError(t, err)
-	require.Empty(t, got)
-	require.NoError(t, new(libvirtstorage.CopyBindings).Record(target, key, "a.raw"))
-	got, err = libvirtstorage.ReadCopyBinding(target, key)
-	require.NoError(t, err)
-	require.Equal(t, "a.raw", got)
-	require.NoError(t, new(libvirtstorage.CopyBindings).Record(target, key, "b.raw"))
-	got, err = libvirtstorage.ReadCopyBinding(target, key)
-	require.NoError(t, err)
-	require.Equal(t, "b.raw", got)
-}
-
-func TestCopyBindingWarmRecordStable(t *testing.T) {
-	target := t.TempDir()
-	key := strings.Repeat("a", 64)
-	name := "a.raw"
-
-	require.NoError(t, os.Mkdir(filepath.Join(target, ".copy-on-use"), 0o700))
-	require.NoError(t, os.WriteFile(filepath.Join(target, name), []byte("image"), 0o600))
-	witness := fmt.Sprintf("%x", sha256.Sum256([]byte(name)))
-	require.NoError(t, os.Link(filepath.Join(target, name), filepath.Join(target, ".copy-on-use", witness)))
-
-	bindings := libvirtstorage.CopyBindings{}
-	require.NoError(t, bindings.Record(target, key, name))
-	path := filepath.Join(target, ".copy-on-use", "binding-"+key)
-	before, err := os.Stat(path)
-	require.NoError(t, err)
-
-	for range 3 {
-		require.NoError(t, bindings.Record(target, key, name))
-	}
-
-	after, err := os.Stat(path)
-	require.NoError(t, err)
-	require.True(t, os.SameFile(before, after), "warm observations must not rewrite bindings")
-
-	cold := libvirtstorage.CopyBindings{}
-	require.NoError(t, cold.Record(target, key, name))
-}
-
-func TestCopyBindingRejectsMalformedRecord(t *testing.T) {
-	for _, test := range []struct {
-		name     string
-		contents string
-		symlink  bool
-	}{
-		{name: "empty"},
-		{name: "oversize", contents: strings.Repeat("a", 256)},
-		{name: "traversal", contents: "../a.raw"},
-		{name: "symlink", contents: "a.raw", symlink: true},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			target := t.TempDir()
-			key := strings.Repeat("b", 64)
-
-			require.NoError(t, os.Mkdir(filepath.Join(target, ".copy-on-use"), 0o700))
-
-			record := filepath.Join(target, ".copy-on-use", "binding-"+key)
-			if test.symlink {
-				require.NoError(t, os.WriteFile(filepath.Join(target, "record"), []byte(test.contents), 0o600))
-				require.NoError(t, os.Symlink("../record", record))
-			} else {
-				require.NoError(t, os.WriteFile(record, []byte(test.contents), 0o600))
-			}
-
-			_, err := libvirtstorage.ReadCopyBinding(target, key)
-			require.Error(t, err)
+func TestCopyBindingLiveRecoversImmutableWithoutSourceOrPublicLink(t *testing.T) {
+	for _, recorded := range []bool{false, true} {
+		t.Run(fmt.Sprintf("completed-binding-%t", recorded), func(t *testing.T) {
+			testCopyBindingImmutableRecovery(t, recorded)
 		})
 	}
 }
 
-func TestCopyPublicationAbsentRejectsWitnessOnly(t *testing.T) {
-	target := t.TempDir()
-	name := "a.raw"
-
-	require.NoError(t, os.Mkdir(filepath.Join(target, ".copy-on-use"), 0o700))
-
-	witness := fmt.Sprintf("%x", sha256.Sum256([]byte(name)))
-	require.NoError(t, os.WriteFile(filepath.Join(target, ".copy-on-use", witness), []byte("image"), 0o600))
-	absent, err := libvirtstorage.CopyPublicationAbsent(target, name)
+func testCopyBindingImmutableRecovery(t *testing.T, recorded bool) {
+	t.Helper()
+	connector, pool := liveCopyPool(t)
+	source := filepath.Join(t.TempDir(), "source.iso")
+	require.NoError(t, os.WriteFile(source, []byte("immutable install media"), 0o400))
+	client, err := connector.OpenVolumes(t.Context())
 	require.NoError(t, err)
-	require.False(t, absent, "a partial publication is not proof that rebinding is safe")
+
+	defer client.Close()
+
+	key := strings.Repeat("c", 64)
+	op, err := client.PrepareCopy(pool, "install.iso", source, "")
+	require.NoError(t, err)
+	t.Cleanup(op.Close)
+	require.NoError(t, op.SetBindingKey(key))
+	require.NoError(t, op.Transfer(t.Context()))
+	volume, err := client.FinishCopy(t.Context(), pool, op, func() error { return nil })
+	require.NoError(t, err)
+	op.Close()
+
+	if recorded {
+		require.NoError(t, new(copyowner.Bindings).Record(pool.Target, key, op.Name))
+	}
+
+	require.NoError(t, os.Remove(source))
+	require.NoError(t, os.Remove(volume.Path))
+
+	name, err := copyowner.ReadBinding(pool.Target, key)
+	require.NoError(t, err)
+	require.Equal(t, op.Name, name)
+	require.NoFileExists(t, volume.Path, "selection must not mutate the pool")
+
+	recovered, found, err := client.AdoptCopy(pool, name, &libvirtstorage.CopyCache{})
+	require.NoError(t, err)
+	require.True(t, found)
+
+	contents, err := os.ReadFile(recovered.Path)
+	require.NoError(t, err)
+	require.Equal(t, "immutable install media", string(contents))
 }

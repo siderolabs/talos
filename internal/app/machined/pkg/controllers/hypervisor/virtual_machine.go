@@ -445,7 +445,7 @@ func currentVMStartIntent(ctx context.Context, r controller.Reader, spec *hyperv
 
 	// A disk status can still be Ready between pool observation loss and its own
 	// reconciliation. Reject new starts at the final boundary in that window.
-	ready, err := blankDiskPoolsReady(ctx, r, vm.TypedSpec().Disks)
+	ready, err := writableDiskPoolsReady(ctx, r, vm.TypedSpec().Disks)
 	if err != nil {
 		return err
 	}
@@ -506,9 +506,9 @@ func effectiveVMPowerState(ctx context.Context, r controller.Reader, vm *hypervi
 	return override.TypedSpec().PowerState, nil
 }
 
-func blankDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hypervisor.VirtualMachineDiskSpec) (bool, error) {
+func writableDiskPoolsReady(ctx context.Context, r controller.Reader, disks []hypervisor.VirtualMachineDiskSpec) (bool, error) {
 	for _, disk := range disks {
-		if !disk.Provision.Blank {
+		if !disk.Provision.Blank && !disk.IsWritableImage() {
 			continue
 		}
 

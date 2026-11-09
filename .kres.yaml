@@ -454,6 +454,8 @@ spec:
           environment:
             EXTENSIONS_FILTER_COMMAND: "grep -E '/libvirtd:'"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: download writable guest disk
+          command: download-cirros-disk
         - name: e2e-hypervisor-short
           command: e2e-qemu
           withSudo: true
@@ -466,7 +468,7 @@ spec:
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.disk-image=$(CIRROS_DISK)
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -1603,6 +1605,8 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: download Alpine ISO
           command: download-alpine-iso
+        - name: download writable guest disk
+          command: download-cirros-disk
         - name: e2e-hypervisor
           command: e2e-qemu
           withSudo: true
@@ -1625,7 +1629,7 @@ spec:
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_ON_CONTROLPLANES: true
             WITH_SKIP_ETCD_K8S: true
-            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ISO)
+            EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ISO) -talos.hypervisor.disk-image=$(CIRROS_DISK)
             TEST_MODE: skip-etcd-k8s
             WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io

@@ -58,6 +58,8 @@ type TalosSuite struct {
 	// HypervisorAlpineISOPath is a path on the test runner to a stock Alpine virt ISO.
 	// Empty skips the serial-console test needing the image.
 	HypervisorAlpineISOPath string
+	// HypervisorDiskImagePath is the checksum-pinned stock CirrOS boot disk.
+	HypervisorDiskImagePath string
 	// NUMANodes is the topology requested with the QEMU provisioner's --numa-nodes flag.
 	NUMANodes int
 	// LLDPEnabled runs tests against a cluster created with --with-lldp.

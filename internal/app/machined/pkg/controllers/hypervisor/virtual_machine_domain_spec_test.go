@@ -1291,7 +1291,13 @@ func (suite *VirtualMachineDiskSuite) TestInjectedEscapedBlankVolumeNames() {
 			suite.Require().False(duplicate, "distinct ID/disk pairs must not share a volume")
 
 			seen[volume] = struct{}{}
-			suite.Equal(volume, hypervisorctrl.BlankVolumeNameForTest(id, disk), "mapping must be stable")
+
+			expectedVolume := id + "__" + diskName + ".raw"
+			if hypervisorhelpers.ValidateName(id) != nil {
+				expectedVolume = fmt.Sprintf("_vm-%x__%s.raw", sha256.Sum256([]byte(id)), diskName)
+			}
+
+			suite.Equal(expectedVolume, volume, "mapping must be stable")
 
 			if id == "vm" || id == "vm-a" {
 				suite.Equal(id+"__"+diskName+".raw", volume, "preserve existing filenames")
@@ -1562,7 +1568,7 @@ func (suite *VirtualMachineSpecSuite) publishCDROMCopy(vmName, diskName, poolPat
 		Phase:  storage.StoragePoolVolumePhaseReady,
 		Copy: &storage.StoragePoolVolumeCopyStatusSpec{
 			Phase:  storage.StoragePoolVolumeCopyPhaseSucceeded,
-			Intent: storage.StoragePoolVolumeCopyIntent(request, pool),
+			Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
 		},
 	}
 	suite.Create(volume)
@@ -1731,8 +1737,17 @@ type copiedOutageFixture struct {
 }
 
 func completedCDROM(suite *ctest.DefaultSuite, name string) copiedOutageFixture {
+	return completedCopy(suite, name, false)
+}
+
+func completedCopy(suite *ctest.DefaultSuite, name string, writable bool) copiedOutageFixture {
 	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
+
 	disk.Pool = name + "-pool"
+	if writable {
+		disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	}
+
 	dir := suite.T().TempDir()
 	pool := storage.NewStoragePoolStatus(storage.NamespaceName, disk.Pool)
 	*pool.TypedSpec() = storage.StoragePoolStatusSpec{
@@ -1749,10 +1764,17 @@ func completedCDROM(suite *ctest.DefaultSuite, name string) copiedOutageFixture 
 		Format: "raw",
 		Copy: &storage.StoragePoolVolumeCopySpec{
 			Digest: "sha256:" + strings.Repeat("a", 64),
+			Image:  writable,
 		},
 	}
 	image := disk.Provision.FromImage
+
 	binding := fmt.Sprintf("%x", sha256.Sum256([]byte(name+"\x00"+disk.Name+"\x00"+disk.Pool+"\x00"+disk.Format+"\x00"+image.Library+"\x00"+image.File+"\x00"+image.Digest)))
+	if writable {
+		binding = fmt.Sprintf("%x", sha256.Sum256([]byte("writable\x00"+name+"\x00"+disk.Name+"\x00"+disk.Pool)))
+		request.TypedSpec().Capacity = disk.Size
+	}
+
 	request.Metadata().Labels().Set(libvirtstorage.CopyBindingLabel, binding)
 	suite.Create(request, state.WithCreateOwner("hypervisor.VirtualMachineDiskController"))
 	volume := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, request.Metadata().ID())
@@ -1764,7 +1786,7 @@ func completedCDROM(suite *ctest.DefaultSuite, name string) copiedOutageFixture 
 		Phase:  storage.StoragePoolVolumePhaseReady,
 		Copy: &storage.StoragePoolVolumeCopyStatusSpec{
 			Phase:  storage.StoragePoolVolumeCopyPhaseSucceeded,
-			Intent: storage.StoragePoolVolumeCopyIntent(request, pool),
+			Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
 		},
 	}
 	suite.Create(volume)
@@ -1777,7 +1799,7 @@ func completedCDROM(suite *ctest.DefaultSuite, name string) copiedOutageFixture 
 		Volume:         "copy.raw",
 		SourcePath:     volume.TypedSpec().Path,
 		Format:         "raw",
-		ReadOnly:       true,
+		ReadOnly:       !writable,
 		Image:          *image,
 		Phase:          hypervisor.VirtualMachineDiskPhaseReady,
 	}
@@ -2574,4 +2596,31 @@ func (suite *VirtualMachineSpecSuite) TestRendersBlankDisk() {
 	res, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), doc.Name())
 	suite.Require().NoError(err)
 	suite.Require().NoError(validateDomainXML([]byte(res.TypedSpec().DomainXML)))
+}
+
+func (suite *VirtualMachineStaleDiskSuite) TestCompletedWritableImageOutageIgnoresInitializationEdits() {
+	f := completedCopy(&suite.DefaultSuite, "guest", true)
+	ctest.UpdateWithConflicts(suite, f.vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Size *= 2
+		current.TypedSpec().Disks[0].Provision.FromImage.Library = "removed-library"
+		current.TypedSpec().Disks[0].Provision.FromImage.File = "another.raw"
+
+		return nil
+	})
+	updated, err := safe.StateGetByID[*hypervisor.VirtualMachineSpec](suite.Ctx(), suite.State(), "guest")
+	suite.Require().NoError(err)
+	ctest.AssertResource(suite, "guest", func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", domain.TypedSpec().PowerState)
+		asrt.Equal(f.xml, domain.TypedSpec().DomainXML)
+		asrt.Equal(hypervisor.VirtualMachineEffectiveGeneration(updated, nil), domain.TypedSpec().ObservedGeneration)
+	})
+	// The renderer accepted initialization-only edits while the disk controller's
+	// image selectors and the completed request still describe the original source.
+	loseCopyObservation(&suite.DefaultSuite, f)
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Require().Never(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, "guest")
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != f.xml
+	}, 400*time.Millisecond, 10*time.Millisecond)
 }

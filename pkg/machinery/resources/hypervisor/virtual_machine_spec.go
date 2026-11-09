@@ -5,6 +5,7 @@
 package hypervisor
 
 import (
+	"crypto/sha256"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -137,7 +138,6 @@ type VirtualMachineDiskFromImageSpec struct {
 	Library string `yaml:"library" protobuf:"1"`
 	File    string `yaml:"file" protobuf:"2"`
 	Digest  string `yaml:"digest" protobuf:"3"`
-	Mode    string `yaml:"mode" protobuf:"4"`
 }
 
 // VirtualMachineCPUSpec describes the desired virtual CPUs and the host CPU time they may consume.
@@ -252,4 +252,27 @@ func init() {
 
 	// the spec is sensitive, but it is safe to be read in the redacted form
 	redactable.Register[VirtualMachineSpecSpec, VirtualMachineSpecExtension]()
+}
+
+// IsWritableImage reports whether the disk owns an independently initialized writable image.
+func (disk VirtualMachineDiskSpec) IsWritableImage() bool {
+	return disk.Type == "disk" && disk.Provision.FromImage != nil
+}
+
+// ImageBindingKey identifies persisted copy ownership independently of runtime reconstruction.
+// Writable initialization is pinned to the first completed copy, not later source edits.
+func (disk VirtualMachineDiskSpec) ImageBindingKey(vm string) string {
+	if disk.Provision.FromImage == nil {
+		return ""
+	}
+
+	if disk.IsWritableImage() {
+		return fmt.Sprintf("%x", sha256.Sum256([]byte("writable\x00"+vm+"\x00"+disk.Name+"\x00"+disk.Pool)))
+	}
+
+	image := disk.Provision.FromImage
+	identity := vm + "\x00" + disk.Name + "\x00" + disk.Pool + "\x00" + disk.Format +
+		"\x00" + image.Library + "\x00" + image.File + "\x00" + image.Digest
+
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(identity)))
 }

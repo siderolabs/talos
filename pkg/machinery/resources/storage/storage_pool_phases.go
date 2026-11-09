@@ -39,11 +39,12 @@ type StoragePoolVolumeCopyPhase int
 //structprotogen:gen_enum
 //nolint:misspell // Public copy phase spelling.
 const (
-	StoragePoolVolumeCopyPhaseUnknown    StoragePoolVolumeCopyPhase = iota // unknown
-	StoragePoolVolumeCopyPhaseWaiting                                      // waiting
-	StoragePoolVolumeCopyPhaseQueued                                       // queued
-	StoragePoolVolumeCopyPhaseRunning                                      // running
-	StoragePoolVolumeCopyPhaseCancelling                                   // cancelling
-	StoragePoolVolumeCopyPhaseSucceeded                                    // succeeded
-	StoragePoolVolumeCopyPhaseFailed                                       // failed
+	StoragePoolVolumeCopyPhaseUnknown        StoragePoolVolumeCopyPhase = iota // unknown
+	StoragePoolVolumeCopyPhaseWaiting                                          // waiting
+	StoragePoolVolumeCopyPhaseQueued                                           // queued
+	StoragePoolVolumeCopyPhaseRunning                                          // running
+	StoragePoolVolumeCopyPhaseCancelling                                       // cancelling
+	StoragePoolVolumeCopyPhaseSucceeded                                        // succeeded
+	StoragePoolVolumeCopyPhaseFailed                                           // failed
+	StoragePoolVolumeCopyPhaseSourceRequired                                   // sourceRequired
 )

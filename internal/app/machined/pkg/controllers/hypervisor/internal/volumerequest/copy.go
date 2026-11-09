@@ -7,6 +7,7 @@ package volumerequest
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 
@@ -19,11 +20,16 @@ var ErrOwner = errors.New("different request owner")
 // ErrDestination identifies an incompatible destination.
 var ErrDestination = errors.New("different copy destination")
 
+// ErrFormat reports that changing an existing copy's on-disk format is not supported.
+var ErrFormat = errors.New("incompatible copy format")
+
 // Destination names the pool resource destination, independently of its mounted backing.
 type Destination struct {
-	Pool   string
-	Name   string
-	Format string
+	Pool     string
+	Name     string
+	Format   string
+	Image    bool
+	Capacity uint64
 }
 
 // Owned reports whether a producer may withdraw this request.
@@ -34,18 +40,18 @@ func Owned(current *storage.StoragePoolVolumeSpec, owner resource.Owner) bool {
 func matches(current *storage.StoragePoolVolumeSpec, destination Destination) bool {
 	spec := current.TypedSpec()
 
-	return spec.Pool == destination.Pool && spec.Name == destination.Name && spec.Format == destination.Format && spec.Copy != nil
+	return spec.Pool == destination.Pool && spec.Name == destination.Name && spec.Format == destination.Format && spec.Copy != nil && spec.Copy.Image == destination.Image
 }
 
 // EnsureAdoption validates an existing image request before initializing source-free copy intent.
-// An existing copy request is preserved verbatim.
+// Existing initialization intent is preserved; writable capacity follows resize requests.
 func EnsureAdoption(current *storage.StoragePoolVolumeSpec, owner resource.Owner, destination Destination) error {
 	if !current.Metadata().Version().Equal(resource.VersionUndefined) && !Owned(current, owner) {
 		return ErrOwner
 	}
 
-	if current.TypedSpec().Pool != "" && !matches(current, destination) {
-		return ErrDestination
+	if err := checkAdoptionDestination(current, destination); err != nil {
+		return err
 	}
 
 	if current.TypedSpec().Copy == nil {
@@ -53,11 +59,28 @@ func EnsureAdoption(current *storage.StoragePoolVolumeSpec, owner resource.Owner
 			Pool:   destination.Pool,
 			Name:   destination.Name,
 			Format: destination.Format,
-			Copy:   &storage.StoragePoolVolumeCopySpec{},
+			Copy:   &storage.StoragePoolVolumeCopySpec{Image: destination.Image},
 		}
 	}
 
+	if destination.Image {
+		current.TypedSpec().Capacity = destination.Capacity
+	}
+
 	return nil
+}
+
+func checkAdoptionDestination(current *storage.StoragePoolVolumeSpec, destination Destination) error {
+	if current.TypedSpec().Pool == "" || matches(current, destination) {
+		return nil
+	}
+
+	spec := current.TypedSpec()
+	if spec.Pool == destination.Pool && spec.Name == destination.Name && spec.Format != destination.Format && spec.Copy != nil && spec.Copy.Image == destination.Image {
+		return fmt.Errorf("%w: %w: format changes from %q to %q are not supported", ErrDestination, ErrFormat, spec.Format, destination.Format)
+	}
+
+	return ErrDestination
 }
 
 // ErrPublished rejects source replacement; retire the request and wait for its copy to drain.

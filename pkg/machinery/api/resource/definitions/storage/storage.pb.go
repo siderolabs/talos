@@ -1654,6 +1654,10 @@ type StoragePoolVolumeCopySpec struct {
 	Digest string                 `protobuf:"bytes,2,opt,name=digest,proto3" json:"digest,omitempty"`
 	// SourceLibrary is the immutable source dependency held until copy completion or withdrawal acknowledgment.
 	SourceLibrary string `protobuf:"bytes,3,opt,name=source_library,json=sourceLibrary,proto3" json:"source_library,omitempty"`
+	// Image imports a self-contained raw/qcow2 source into a writable disk.
+	// Format and Capacity describe the destination. False preserves immutable
+	// raw byte-copy media semantics, which require zero requested capacity.
+	Image         bool `protobuf:"varint,4,opt,name=image,proto3" json:"image,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1709,7 +1713,15 @@ func (x *StoragePoolVolumeCopySpec) GetSourceLibrary() string {
 	return ""
 }
 
-// StoragePoolVolumeCopyStatusSpec observes an intent, never scheduler ownership.
+func (x *StoragePoolVolumeCopySpec) GetImage() bool {
+	if x != nil {
+		return x.Image
+	}
+	return false
+}
+
+// StoragePoolVolumeCopyStatusSpec observes initialization, never scheduler ownership.
+// Intent excludes writable capacity; growth does not initialize a disk again.
 type StoragePoolVolumeCopyStatusSpec struct {
 	state         protoimpl.MessageState                  `protogen:"open.v1"`
 	Phase         enums.StorageStoragePoolVolumeCopyPhase `protobuf:"varint,1,opt,name=phase,proto3,enum=talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhase" json:"phase,omitempty"`
@@ -1785,7 +1797,7 @@ type StoragePoolVolumeSpecSpec struct {
 	// BackingFormat is the format of BackingFile, independent of the overlay Format.
 	// If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased.
 	BackingFormat string `protobuf:"bytes,6,opt,name=backing_format,json=backingFormat,proto3" json:"backing_format,omitempty"`
-	// Copy requests an independent raw copy. A request without a source can adopt
+	// Copy requests an independent copy. A request without a source can adopt
 	// a completed pool-owned copy, but must never create an empty replacement.
 	Copy          *StoragePoolVolumeCopySpec `protobuf:"bytes,7,opt,name=copy,proto3" json:"copy,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -2170,11 +2182,12 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x05phase\x18\x03 \x01(\x0e29.talos.resource.definitions.enums.StorageStoragePoolPhaseR\x05phase\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12\x1f\n" +
 	"\vvolume_name\x18\x05 \x01(\tR\n" +
-	"volumeName\"r\n" +
+	"volumeName\"\x88\x01\n" +
 	"\x19StoragePoolVolumeCopySpec\x12\x16\n" +
 	"\x06source\x18\x01 \x01(\tR\x06source\x12\x16\n" +
 	"\x06digest\x18\x02 \x01(\tR\x06digest\x12%\n" +
-	"\x0esource_library\x18\x03 \x01(\tR\rsourceLibrary\"\x94\x01\n" +
+	"\x0esource_library\x18\x03 \x01(\tR\rsourceLibrary\x12\x14\n" +
+	"\x05image\x18\x04 \x01(\bR\x05image\"\x94\x01\n" +
 	"\x1fStoragePoolVolumeCopyStatusSpec\x12Y\n" +
 	"\x05phase\x18\x01 \x01(\x0e2C.talos.resource.definitions.enums.StorageStoragePoolVolumeCopyPhaseR\x05phase\x12\x16\n" +
 	"\x06intent\x18\x02 \x01(\tR\x06intent\"\x94\x02\n" +

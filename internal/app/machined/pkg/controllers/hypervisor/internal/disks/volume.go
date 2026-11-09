@@ -6,6 +6,7 @@ package disks
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -13,10 +14,43 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
+
+// RetainCopySource holds an incomplete copy's source library and returns its ID.
+// A qualified completed status avoids binding reads. Observation errors are returned
+// alongside the retained ID so the caller can preserve the hold while reporting them.
+// The request must carry a copy spec.
+func RetainCopySource(
+	ctx context.Context,
+	r controller.ReaderWriter,
+	logger *zap.Logger,
+	request *storage.StoragePoolVolumeSpec,
+	libraries map[resource.ID]*hypervisor.ContentLibraryStatus,
+) (resource.ID, error) {
+	if request.TypedSpec().Copy.Source == "" {
+		return "", nil
+	}
+
+	completed, readErr := completedImageCopySource(ctx, r, request)
+	if completed {
+		return "", nil
+	}
+
+	library := libraries[request.TypedSpec().Copy.SourceLibrary]
+	if library == nil {
+		return "", errors.Join(readErr, fmt.Errorf("cannot establish source library for pending copy %q", request.Metadata().ID()))
+	}
+
+	if holdErr := holdImageCopySource(ctx, r, logger, library, request); holdErr != nil {
+		return "", errors.Join(readErr, holdErr)
+	}
+
+	return library.Metadata().ID(), readErr
+}
 
 // BlankVolumeSpec constructs the desired backing resource without observing or provisioning it.
 // The controller validates the disk and volume name before constructing this request.
@@ -75,7 +109,7 @@ func ObserveVolume(
 
 	if request.TypedSpec().Copy != nil {
 		poolStatus, poolErr := safe.ReaderGetByID[*storage.StoragePoolStatus](ctx, reader, pool)
-		if poolErr != nil || !CopyPublicationReady(request, volumeStatus, poolStatus) {
+		if poolErr != nil || !CopyPublicationCompleted(request, volumeStatus, poolStatus) {
 			return hypervisor.VirtualMachineDiskStatusSpec{
 				Phase: hypervisor.VirtualMachineDiskPhaseNotReady,
 			}, fmt.Errorf("volume %q copy is not qualified for current intent", id)
@@ -92,24 +126,19 @@ func ObserveVolume(
 	}, nil
 }
 
-// CopyPublicationReady qualifies immutable publication against the current request
-// incarnation and backing. An attachability phase alone is not copy completion.
-func CopyPublicationReady(request *storage.StoragePoolVolumeSpec, status *storage.StoragePoolVolumeStatus, pool *storage.StoragePoolStatus) bool {
-	if pool == nil || request.Metadata().Phase() != resource.PhaseRunning || request.TypedSpec().Copy == nil || status.TypedSpec().Copy == nil {
-		return false
-	}
-
+// CopyPublicationCompleted qualifies durable initialization even when observation
+// is temporarily unavailable. It releases source lifetime, never authorizes attachment.
+// The caller supplies existing request, status and pool resources.
+func CopyPublicationCompleted(request *storage.StoragePoolVolumeSpec, status *storage.StoragePoolVolumeStatus, pool *storage.StoragePoolStatus) bool {
 	observed := status.TypedSpec().Copy
 
-	return status.Metadata().Phase() == resource.PhaseRunning &&
-		observed.Phase == storage.StoragePoolVolumeCopyPhaseSucceeded &&
-		observed.Intent != "" &&
-		observed.Intent == storage.StoragePoolVolumeCopyIntent(request, pool) &&
+	return request.Metadata().Phase() == resource.PhaseRunning && status.Metadata().Phase() == resource.PhaseRunning &&
+		storage.StoragePoolVolumeCopyCompletionMatches(request, pool, observed) &&
 		copyVolumeIdentityMatches(request.TypedSpec(), status.TypedSpec(), pool.TypedSpec())
 }
 
 func copyVolumeIdentityMatches(request *storage.StoragePoolVolumeSpecSpec, status *storage.StoragePoolVolumeStatusSpec, pool *storage.StoragePoolStatusSpec) bool {
-	return status.Phase == storage.StoragePoolVolumePhaseReady &&
+	return (status.Phase == storage.StoragePoolVolumePhaseReady || status.Phase == storage.StoragePoolVolumePhaseObservationUnavailable) &&
 		status.Pool == request.Pool &&
 		status.Name == request.Name &&
 		status.Format == request.Format &&

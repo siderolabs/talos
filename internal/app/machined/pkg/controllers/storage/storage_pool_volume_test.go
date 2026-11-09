@@ -31,6 +31,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
+	"github.com/siderolabs/talos/internal/pkg/qemuimg"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -374,6 +376,52 @@ func (suite *StoragePoolVolumeSuite) start() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{Open: suite.client.open}))
 }
 
+func (suite *StoragePoolVolumeSuite) TestAdoptedWritableImageGrowsWithoutSource() {
+	suite.pool(true)
+	spec := suite.spec(volumePool, "guest.img", "raw", 16)
+	ctest.UpdateWithConflicts(suite, spec, func(current *storageres.StoragePoolVolumeSpec) error {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{Image: true}
+
+		return nil
+	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+	suite.client.setVolume("guest.img", libvirtstorage.Volume{
+		Name:     "guest.img",
+		Path:     "/var/mnt/u-vms/" + volumePool + "/guest.img",
+		Format:   "raw",
+		Capacity: 8,
+	})
+	suite.start()
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.StoragePoolVolumePhaseReady, status.TypedSpec().Phase, status.TypedSpec().Error)
+		asrt.EqualValues(16, status.TypedSpec().Capacity)
+	})
+}
+
+func (suite *StoragePoolVolumeSuite) TestAdoptedWritableImageNeverShrinks() {
+	suite.pool(true)
+	spec := suite.spec(volumePool, "guest.img", "raw", 4)
+	ctest.UpdateWithConflicts(suite, spec, func(current *storageres.StoragePoolVolumeSpec) error {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{Image: true}
+
+		return nil
+	}, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController"))
+	suite.client.setVolume("guest.img", libvirtstorage.Volume{
+		Name:     "guest.img",
+		Path:     "/var/mnt/u-vms/" + volumePool + "/guest.img",
+		Format:   "raw",
+		Capacity: 8,
+	})
+	suite.start()
+	ctest.AssertResource(suite, spec.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.StoragePoolVolumePhaseReady, status.TypedSpec().Phase, status.TypedSpec().Error)
+		asrt.EqualValues(8, status.TypedSpec().Capacity)
+
+		if asrt.NotNil(status.TypedSpec().Copy) {
+			asrt.Equal(storageres.StoragePoolVolumeCopyPhaseSucceeded, status.TypedSpec().Copy.Phase)
+		}
+	})
+}
+
 func (suite *StoragePoolVolumeSuite) pool(ready bool) *storageres.StoragePoolStatus {
 	status := storageres.NewStoragePoolStatus(storageres.NamespaceName, volumePool)
 	status.TypedSpec().VolumeID = "u-vms"
@@ -405,9 +453,9 @@ func (suite *StoragePoolVolumeSuite) spec(pool, name, format string, capacity ui
 }
 
 // openDisk models an attached consumer without any hypervisor resources.
-func (suite *StoragePoolVolumeSuite) openDisk(pool, volume string) *storageres.StoragePoolVolumeStatus {
-	status := storageres.NewStoragePoolVolumeStatus(storageres.NamespaceName, storageres.StoragePoolVolumeID(pool, volume))
-	status.TypedSpec().Pool = pool
+func (suite *StoragePoolVolumeSuite) openDisk(volume string) *storageres.StoragePoolVolumeStatus {
+	status := storageres.NewStoragePoolVolumeStatus(storageres.NamespaceName, storageres.StoragePoolVolumeID("images", volume))
+	status.TypedSpec().Pool = "images"
 	status.TypedSpec().Name = volume
 
 	_, err := suite.State().Get(suite.Ctx(), status.Metadata())
@@ -884,6 +932,10 @@ func (suite *StoragePoolVolumeSuite) TestCopyWithoutSourceNeverCreatesBlankVolum
 	ctest.AssertResource(suite, spec.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
 		asrt.Equal(storageres.StoragePoolVolumePhaseNotReady, status.TypedSpec().Phase)
 		asrt.Contains(status.TypedSpec().Error, libvirtstorage.ErrCopySourceRequired.Error())
+
+		if asrt.NotNil(status.TypedSpec().Copy) {
+			asrt.Equal(storageres.StoragePoolVolumeCopyPhaseSourceRequired, status.TypedSpec().Copy.Phase)
+		}
 	})
 	suite.Empty(suite.client.recorded())
 }
@@ -954,7 +1006,7 @@ func (suite *StoragePoolVolumeSuite) TestReleasesPendingPoolWhenNoGuestUsesVolum
 func (suite *StoragePoolVolumeSuite) TestPendingPoolKeepsGuestHoldUntilDiskReleased() {
 	pool := suite.pool(true)
 	suite.spec("images", "vm1__data.qcow2", "qcow2", 64<<20)
-	disk := suite.openDisk("images", "vm1__data.qcow2")
+	disk := suite.openDisk("vm1__data.qcow2")
 	suite.start()
 	suite.assertReady(storageres.StoragePoolVolumeID("images", "vm1__data.qcow2"), nil)
 
@@ -1500,7 +1552,7 @@ func (suite *StoragePoolVolumeSuite) TestDefersAGrowthWhileTheVolumeIsOpen() {
 	suite.client.setVolume("vm1__data.qcow2", libvirtstorage.Volume{
 		Name: "vm1__data.qcow2", Path: "/var/mnt/u-vms/images/vm1__data.qcow2", Format: "qcow2", Capacity: 64 << 20,
 	})
-	suite.openDisk("images", "vm1__data.qcow2")
+	suite.openDisk("vm1__data.qcow2")
 	suite.spec("images", "vm1__data.qcow2", "qcow2", 128<<20)
 	suite.start()
 
@@ -1646,7 +1698,7 @@ func (suite *StoragePoolVolumeSuite) TestKeepsAPoolGoingAwayHeldForAGuest() {
 	suite.assertReady(id, nil)
 	suite.assertPoolHold(true)
 
-	disk := suite.openDisk("images", "vm1__data.qcow2")
+	disk := suite.openDisk("vm1__data.qcow2")
 
 	// The configuration drops both the pool and the disk, which is what a guest outliving its own
 	// spec looks like from here.
@@ -1993,7 +2045,7 @@ func (suite *StoragePoolVolumeSuite) TestCopyBindingFollowsCurrentDiskIntent() {
 	suite.assertError(storageres.StoragePoolVolumeID(volumePool, "a.raw"), "awaiting current disk")
 	suite.assertCopyPhase(storageres.StoragePoolVolumeID(volumePool, "a.raw"), storageres.StoragePoolVolumeCopyPhaseWaiting)
 
-	bound, err := libvirtstorage.ReadCopyBinding(target, key)
+	bound, err := copyowner.ReadBinding(target, key)
 	suite.Require().NoError(err)
 	suite.Equal("b.raw", bound, "late A reconciliation cannot overwrite B's completed binding")
 
@@ -2277,12 +2329,21 @@ func (suite *StoragePoolVolumeSuite) TestCopyWorkerShutdownJoinsCleanup() {
 }
 
 func (suite *StoragePoolVolumeSuite) heldCopy(name string) (*storageres.StoragePoolVolumeSpec, context.Context, func()) {
+	return suite.heldCopyWithSpec(name, false)
+}
+
+func (suite *StoragePoolVolumeSuite) heldCopyWithSpec(name string, image bool) (*storageres.StoragePoolVolumeSpec, context.Context, func()) {
 	suite.pool(true)
 	spec := suite.spec(volumePool, name, "raw", 0)
 	current, err := safe.StateGetByID[*storageres.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), spec.Metadata().ID())
 	suite.Require().NoError(err)
 
 	current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{Source: "/library/object"}
+	if image {
+		current.TypedSpec().Copy.Image = true
+		current.TypedSpec().Capacity = 8
+	}
+
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), current, state.WithUpdateOwner("hypervisor.VirtualMachineDiskController")))
 	suite.client.copyStarted = make(chan struct{}, 1)
 	suite.client.copyContexts = make(chan context.Context, 1)
@@ -2379,9 +2440,9 @@ func (suite *StoragePoolVolumeSuite) assertCopyPhase(id string, phase storageres
 
 		pool, err := safe.StateGetByID[*storageres.StoragePoolStatus](suite.Ctx(), suite.State(), current.TypedSpec().Pool)
 		if asrt.NoError(err) {
-			asrt.Equal(storageres.StoragePoolVolumeCopyIntent(current, pool), status.TypedSpec().Copy.Intent)
+			asrt.Equal(storageres.StoragePoolVolumeCopyInitializationIntent(current, pool), status.TypedSpec().Copy.Intent)
 		}
-	}, 2*time.Second, 10*time.Millisecond)
+	}, 5*time.Second, 10*time.Millisecond)
 }
 
 func (suite *StoragePoolVolumeSuite) TestCopyCancellationKeepsSlotAndNeverReportsFailureBeforeDrain() {
@@ -2483,6 +2544,54 @@ func (suite *StoragePoolVolumeSuite) TestCopyFailedAttemptRetriesWithoutStarving
 	client.failure = nil
 	client.mu.Unlock()
 	suite.assertCopyPhase(first.Metadata().ID(), storageres.StoragePoolVolumeCopyPhaseSucceeded)
+}
+
+func (suite *StoragePoolVolumeSuite) TestCopyImportExitBacksOffAndRecoversAfterSpaceReturns() {
+	suite.pool(true)
+	request := suite.copySpec("a-retry.raw")
+	suite.changeCopySpec(request, func(current *storageres.StoragePoolVolumeSpec) {
+		current.TypedSpec().Capacity = 8
+		current.TypedSpec().Copy.Image = true
+	})
+	client := &retryCopyClient{
+		volumeClient: suite.client,
+		attempts:     make(chan string, 10),
+		failure: &qemuimg.ExecError{
+			ExitCode: 1,
+			Stderr:   []byte("No space left on device"),
+		},
+	}
+	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{
+		Open: func(context.Context) (libvirtstorage.VolumeClient, error) {
+			return client, nil
+		},
+	}))
+
+	for range 2 {
+		select {
+		case name := <-client.attempts:
+			suite.Equal("a-retry.raw", name)
+		case <-time.After(3 * time.Second):
+			suite.FailNow("retryable copy never retried")
+		}
+	}
+
+	suite.assertCopyPhase(request.Metadata().ID(), storageres.StoragePoolVolumeCopyPhaseFailed)
+	suite.assertError(request.Metadata().ID(), "No space left on device")
+
+	select {
+	case <-client.attempts:
+		suite.FailNow("second failed import must not retry after one second")
+	case <-time.After(1200 * time.Millisecond):
+	}
+
+	status, err := safe.StateGetByID[*storageres.StoragePoolVolumeStatus](suite.Ctx(), suite.State(), request.Metadata().ID())
+	suite.Require().NoError(err)
+	suite.Equal(storageres.StoragePoolVolumeCopyPhaseFailed, status.TypedSpec().Copy.Phase, "status must not flap during cooldown")
+	client.mu.Lock()
+	client.failure = nil
+	client.mu.Unlock()
+	suite.assertCopyPhase(request.Metadata().ID(), storageres.StoragePoolVolumeCopyPhaseSucceeded)
 }
 
 func (suite *StoragePoolVolumeSuite) changeCopySpec(spec *storageres.StoragePoolVolumeSpec, change func(*storageres.StoragePoolVolumeSpec)) {
@@ -2626,4 +2735,147 @@ func (suite *StoragePoolVolumeSuite) TestCopyRestartAdoptsBeforeRequiringSource(
 	attempts := suite.client.copyPreparations
 	suite.client.mu.Unlock()
 	suite.Zero(attempts)
+}
+
+func (suite *StoragePoolVolumeSuite) TestWritableImageQualificationPreservesDeferredGrowthReason() {
+	suite.pool(true)
+	suite.client.setVolume("guest.img", libvirtstorage.Volume{
+		Name: "guest.img", Path: "/var/mnt/u-vms/images/guest.img", Format: "raw", Capacity: 8,
+	})
+	suite.openDisk("guest.img")
+	request := suite.spec(volumePool, "guest.img", "raw", 16)
+	suite.changeCopySpec(request, func(current *storageres.StoragePoolVolumeSpec) {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{Image: true}
+		current.Metadata().Labels().Set(libvirtstorage.CopyBindingLabel, "missing-disk-intent")
+	})
+	suite.start()
+	ctest.AssertResource(suite, request.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(storageres.StoragePoolVolumePhaseNotReady, status.TypedSpec().Phase)
+		asrt.EqualValues(16, status.TypedSpec().PendingCapacity)
+		asrt.Contains(status.TypedSpec().Error, "detach all consumers to apply growth")
+		asrt.Contains(status.TypedSpec().Error, "awaiting current disk binding intent")
+	})
+	suite.Require().Empty(suite.client.recorded())
+}
+
+func (suite *StoragePoolVolumeSuite) TestWritableImageGrowthDoesNotLogInitialization() {
+	suite.pool(true)
+	suite.client.setVolume("guest.img", libvirtstorage.Volume{
+		Name: "guest.img", Path: "/var/mnt/u-vms/images/guest.img", Format: "raw", Capacity: 8,
+	})
+	request := suite.spec(volumePool, "guest.img", "raw", 8)
+	suite.changeCopySpec(request, func(current *storageres.StoragePoolVolumeSpec) {
+		current.TypedSpec().Copy = &storageres.StoragePoolVolumeCopySpec{Image: true}
+	})
+	suite.start()
+	suite.assertReady(request.Metadata().ID(), nil)
+	suite.Require().Eventually(func() bool {
+		return suite.logs.FilterMessage("copy provisioning succeeded").Len() == 1
+	}, time.Second, time.Millisecond)
+	suite.changeCopySpec(request, func(current *storageres.StoragePoolVolumeSpec) { current.TypedSpec().Capacity = 16 })
+	suite.assertReady(request.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatusSpec, asrt *assert.Assertions) {
+		asrt.EqualValues(16, status.Capacity)
+	})
+	logs := suite.logs
+	suite.Require().Never(func() bool {
+		return logs.FilterMessage("copy provisioning succeeded").Len() != 1
+	}, 100*time.Millisecond, time.Millisecond, "growth did not initialize or copy a disk")
+}
+
+func (suite *StoragePoolVolumeSuite) TestWritableImportMissingToolDoesNotRetry() {
+	input, err := os.CreateTemp(suite.T().TempDir(), "raw")
+	suite.Require().NoError(err)
+
+	defer input.Close() //nolint:errcheck
+
+	_, err = input.WriteString("raw image")
+	suite.Require().NoError(err)
+	_, toolErr := qemuimg.New(filepath.Join(suite.T().TempDir(), "missing-qemu-img")).Info(suite.Ctx(), input)
+	suite.Require().Error(toolErr)
+	suite.testWritableImportFailure(toolErr, true)
+}
+
+func (suite *StoragePoolVolumeSuite) TestWritableImportChildExitRetriesAfterSpaceRecovered() {
+	// Inject the library boundary's child error; the real controller owns worker
+	// completion, retry deadlines, proof invalidation, and eventual publication.
+	suite.testWritableImportFailure(&qemuimg.ExecError{ExitCode: 1, Stderr: []byte("No space left on device")}, false)
+}
+
+func (suite *StoragePoolVolumeSuite) TestWritableImportValidationDoesNotRetry() {
+	input, err := os.CreateTemp(suite.T().TempDir(), "invalid-qcow2")
+	suite.Require().NoError(err)
+
+	defer input.Close() //nolint:errcheck
+
+	_, err = input.WriteString("QFI\xfb")
+	suite.Require().NoError(err)
+
+	_, validationErr := qemuimg.Inspect(input)
+	suite.Require().Error(validationErr)
+	suite.testWritableImportFailure(validationErr, true)
+}
+
+func (suite *StoragePoolVolumeSuite) testWritableImportFailure(failure error, terminal bool) {
+	suite.pool(true)
+	request := suite.copySpec("a-retry.raw")
+	suite.changeCopySpec(request, func(current *storageres.StoragePoolVolumeSpec) {
+		current.TypedSpec().Capacity = 8
+		current.TypedSpec().Copy.Image = true
+	})
+	client := &retryCopyClient{volumeClient: suite.client, attempts: make(chan string, 20), failure: failure}
+	suite.Require().NoError(suite.Runtime().RegisterController(&storagectrl.StoragePoolVolumeController{
+		Open: func(context.Context) (libvirtstorage.VolumeClient, error) { return client, nil },
+	}))
+	suite.assertCopyPhase(request.Metadata().ID(), storageres.StoragePoolVolumeCopyPhaseFailed)
+
+	select {
+	case <-client.attempts:
+	case <-time.After(time.Second):
+		suite.FailNow("worker did not report its first attempt")
+	}
+
+	if terminal {
+		suite.Require().Never(func() bool { return len(client.attempts) != 0 }, 1300*time.Millisecond, 10*time.Millisecond,
+			"missing tool must remain dormant until an input change")
+
+		return
+	}
+
+	select {
+	case <-client.attempts:
+	case <-time.After(3 * time.Second):
+		suite.FailNow("child exit must retry without an input event")
+	}
+
+	client.mu.Lock()
+	client.failure = nil
+	client.mu.Unlock()
+	suite.assertCopyPhase(request.Metadata().ID(), storageres.StoragePoolVolumeCopyPhaseSucceeded)
+}
+
+func (suite *StoragePoolVolumeSuite) TestWritableCapacityEditCancelsInitializationWorker() {
+	request, copyCtx, release := suite.heldCopyWithSpec("growing.img", true)
+	pool, err := safe.StateGetByID[*storageres.StoragePoolStatus](suite.Ctx(), suite.State(), volumePool)
+	suite.Require().NoError(err)
+	before, err := safe.StateGetByID[*storageres.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), request.Metadata().ID())
+	suite.Require().NoError(err)
+
+	initialization := storageres.StoragePoolVolumeCopyInitializationIntent(before, pool)
+
+	suite.changeCopySpec(request, func(current *storageres.StoragePoolVolumeSpec) { current.TypedSpec().Capacity = 16 })
+
+	select {
+	case <-copyCtx.Done():
+	case <-time.After(time.Second):
+		suite.FailNow("desired capacity must still fence an active initialization worker")
+	}
+
+	release()
+	suite.assertReady(request.Metadata().ID(), func(status *storageres.StoragePoolVolumeStatusSpec, asrt *assert.Assertions) {
+		asrt.EqualValues(16, status.Capacity)
+
+		if asrt.NotNil(status.Copy) {
+			asrt.Equal(initialization, status.Copy.Intent, "growth leaves initialization identity unchanged")
+		}
+	})
 }

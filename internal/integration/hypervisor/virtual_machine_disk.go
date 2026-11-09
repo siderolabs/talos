@@ -654,7 +654,6 @@ func diskStatusID(vm string, disk hypervisorcfg.VirtualMachineDisk) string {
 				Library: image.ImageLibrary,
 				File:    image.ImageFile,
 				Digest:  image.ImageDigest,
-				Mode:    image.Mode().String(),
 			},
 		},
 	})

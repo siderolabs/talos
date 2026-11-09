@@ -127,6 +127,9 @@ LIBVIRT_SHA256 ?= dcf579d8a949f4cbf56820529d48f200382a48ea12855ffded7c16a189353c
 ALPINE_VERSION ?= 3.24.4
 # Update the checksum with the image; mirrors of identical bytes can reuse it.
 ALPINE_ISO_SHA256 ?= 157d353f8e54252cad2d9812a0d56bb7fa2231fc154a110e1d180d7480ef8b4f
+# renovate: datasource=github-releases depName=cirros-dev/cirros
+CIRROS_VERSION ?= 0.6.3
+CIRROS_DISK_SHA256 ?= 7d6355852aeb6dbcd191bcda7cd74f1536cfe5cbf8a10495a7283a8396e4b75b
 
 KUBECTL_URL ?= https://dl.k8s.io/release/$(KUBECTL_VERSION)/bin/$(OPERATING_SYSTEM)/amd64/kubectl
 KUBESTR_URL ?= https://github.com/kastenhq/kubestr/releases/download/$(KUBESTR_VERSION)/kubestr_$(subst v,,$(KUBESTR_VERSION))_Linux_amd64.tar.gz
@@ -134,6 +137,8 @@ HELM_URL ?= https://get.helm.sh/helm-$(HELM_VERSION)-linux-amd64.tar.gz
 CILIUM_CLI_URL ?= https://github.com/cilium/cilium-cli/releases/download/$(CILIUM_CLI_VERSION)/cilium-$(OPERATING_SYSTEM)-amd64.tar.gz
 ALPINE_ISO ?= _out/alpine-virt-x86_64.iso
 ALPINE_ISO_URL ?= https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/x86_64/alpine-virt-$(ALPINE_VERSION)-x86_64.iso
+CIRROS_DISK ?= _out/cirros-x86_64-disk.img
+CIRROS_DISK_URL ?= https://download.cirros-cloud.net/$(CIRROS_VERSION)/cirros-$(CIRROS_VERSION)-x86_64-disk.img
 
 TESTPKGS ?= github.com/siderolabs/talos/...
 UNITTEST_PARALLELISM ?= 8
@@ -621,22 +626,32 @@ $(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH): ## This target doe
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
-.PHONY: download-alpine-iso
-download-alpine-iso: ## Downloads and verifies the configured Alpine ISO.
+# Download a bounded HTTPS fixture, verify it before publication, and retain a read-only result.
+# Arguments are the destination, URL and checksum variable names, then the size limit.
+define download-verified-fixture
 	@set -eu; \
-		iso="$(ALPINE_ISO)"; url="$(ALPINE_ISO_URL)"; sha256="$(ALPINE_ISO_SHA256)"; \
-		: "$${iso:?ALPINE_ISO must be configured}"; \
-		: "$${url:?ALPINE_ISO_URL must be configured}"; \
-		: "$${sha256:?ALPINE_ISO_SHA256 must be configured}"; \
-		mkdir -p "$$(dirname "$$iso")"; \
-		trap 'rm -f "$${iso}.tmp"' 0; \
+		dest="$($(1))"; url="$($(2))"; sha256="$($(3))"; \
+		: "$${dest:?$(1) must be configured}"; \
+		: "$${url:?$(2) must be configured}"; \
+		: "$${sha256:?$(3) must be configured}"; \
+		mkdir -p "$$(dirname "$$dest")"; \
+		trap 'rm -f "$${dest}.tmp"' 0; \
 		curl --fail --location --silent --show-error \
 			--proto '=https' --proto-redir '=https' --max-redirs 5 \
-			--connect-timeout 10 --max-time 120 --max-filesize 268435456 \
-			--output "$${iso}.tmp" "$$url"; \
-		printf '%s  %s\n' "$$sha256" "$${iso}.tmp" | sha256sum --check --strict; \
-		chmod 0444 "$${iso}.tmp"; \
-		mv "$${iso}.tmp" "$$iso"
+			--connect-timeout 10 --max-time 120 --max-filesize $(4) \
+			--output "$${dest}.tmp" "$$url"; \
+		printf '%s  %s\n' "$$sha256" "$${dest}.tmp" | sha256sum --check --strict; \
+		chmod 0444 "$${dest}.tmp"; \
+		mv "$${dest}.tmp" "$$dest"
+endef
+
+.PHONY: download-alpine-iso
+download-alpine-iso: ## Downloads and verifies the configured Alpine ISO.
+	$(call download-verified-fixture,ALPINE_ISO,ALPINE_ISO_URL,ALPINE_ISO_SHA256,268435456)
+
+.PHONY: download-cirros-disk
+download-cirros-disk: ## Downloads and verifies the stock writable-image guest fixture.
+	$(call download-verified-fixture,CIRROS_DISK,CIRROS_DISK_URL,CIRROS_DISK_SHA256,33554432)
 
 $(ARTIFACTS)/kubectl: | $(ARTIFACTS)
 	@curl --fail -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"

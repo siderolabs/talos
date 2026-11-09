@@ -99,7 +99,8 @@ func init() {
 	}
 }
 
-// StoragePoolVolumeCopyStatusSpec observes an intent, never scheduler ownership.
+// StoragePoolVolumeCopyStatusSpec observes initialization, never scheduler ownership.
+// Intent excludes writable capacity; growth does not initialize a disk again.
 //
 //gotagsrewrite:gen
 type StoragePoolVolumeCopyStatusSpec struct {
@@ -107,14 +108,34 @@ type StoragePoolVolumeCopyStatusSpec struct {
 	Intent string                     `yaml:"intent" protobuf:"2"`
 }
 
-// StoragePoolVolumeCopyIntent correlates an observation with the request incarnation,
-// semantic contents and observed pool backing. Metadata versions, labels and finalizers
-// are deliberately excluded. An absent pool carries no qualified identity.
+// StoragePoolVolumeCopyIntent fences an active operation against the request
+// incarnation, desired contents (including capacity) and observed pool backing.
+// Metadata versions, labels and finalizers are deliberately excluded.
+// An absent pool carries no qualified identity.
 func StoragePoolVolumeCopyIntent(spec *StoragePoolVolumeSpec, pool *StoragePoolStatus) string {
 	if spec.TypedSpec().Copy == nil || pool == nil {
 		return ""
 	}
 
+	return storagePoolVolumeCopyIntent(spec, pool, spec.TypedSpec())
+}
+
+// StoragePoolVolumeCopyInitializationIntent identifies initialization independently
+// of writable growth. Active workers must use StoragePoolVolumeCopyIntent instead.
+func StoragePoolVolumeCopyInitializationIntent(spec *StoragePoolVolumeSpec, pool *StoragePoolStatus) string {
+	if spec.TypedSpec().Copy == nil || pool == nil {
+		return ""
+	}
+
+	initialization := *spec.TypedSpec()
+	if initialization.Copy.Image {
+		initialization.Capacity = 0
+	}
+
+	return storagePoolVolumeCopyIntent(spec, pool, &initialization)
+}
+
+func storagePoolVolumeCopyIntent(spec *StoragePoolVolumeSpec, pool *StoragePoolStatus, contents *StoragePoolVolumeSpecSpec) string {
 	data, err := json.Marshal(struct {
 		Namespace   string
 		ID          string
@@ -128,7 +149,7 @@ func StoragePoolVolumeCopyIntent(spec *StoragePoolVolumeSpec, pool *StoragePoolS
 		ID:          spec.Metadata().ID(),
 		Created:     spec.Metadata().Created().UTC().String(),
 		PoolCreated: pool.Metadata().Created().UTC().String(),
-		Spec:        spec.TypedSpec(),
+		Spec:        contents,
 		Target:      pool.TypedSpec().TargetPath,
 		Backing:     pool.TypedSpec().VolumeID,
 	})
@@ -137,4 +158,11 @@ func StoragePoolVolumeCopyIntent(spec *StoragePoolVolumeSpec, pool *StoragePoolS
 	}
 
 	return fmt.Sprintf("%x", sha256.Sum256(data))
+}
+
+// StoragePoolVolumeCopyCompletionMatches qualifies completed initialization against
+// the request incarnation, initialization contents and observed pool backing.
+func StoragePoolVolumeCopyCompletionMatches(spec *StoragePoolVolumeSpec, pool *StoragePoolStatus, observed *StoragePoolVolumeCopyStatusSpec) bool {
+	return observed != nil && observed.Phase == StoragePoolVolumeCopyPhaseSucceeded && observed.Intent != "" &&
+		observed.Intent == StoragePoolVolumeCopyInitializationIntent(spec, pool)
 }

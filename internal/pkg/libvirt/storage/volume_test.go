@@ -140,6 +140,22 @@ func (r *rpc) StorageVolGetInfo(vol libvirt.StorageVol) (int8, uint64, uint64, e
 		return 0, 0, 0, err
 	}
 
+	// Real qcow2 fixtures report virtual capacity, not allocated file length.
+	header := make([]byte, 32)
+
+	file, err := os.Open(filepath.Join(r.target, vol.Name))
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	n, readErr := file.Read(header)
+
+	closeErr := file.Close()
+	if readErr == nil && closeErr == nil && n == len(header) && string(header[:4]) == string(qcow2Magic) &&
+		(binary.BigEndian.Uint32(header[4:8]) == 2 || binary.BigEndian.Uint32(header[4:8]) == 3) {
+		return 0, binary.BigEndian.Uint64(header[24:32]), uint64(info.Size()), nil //nolint:gosec
+	}
+
 	return 0, uint64(info.Size()), uint64(info.Size()), nil //nolint:gosec
 }
 
@@ -276,6 +292,72 @@ func TestCopyVolumeSweepsInterruptedStaging(t *testing.T) {
 	require.NoError(t, err)
 	_, err = os.Lstat(staged)
 	assert.True(t, os.IsNotExist(err), "interrupted staging must not leak pool capacity: %v", err)
+}
+
+func TestCopyVolumeSweepsInterruptedPrivateMetadataWithoutTouchingForeignEntries(t *testing.T) {
+	t.Parallel()
+	r, session, pool := newVolumeFixture(t)
+	private := filepath.Join(r.target, ".copy-on-use")
+	require.NoError(t, os.Mkdir(private, 0o700))
+	owner := filepath.Join(private, ".old.raw.0123456789abcdef.staged.owner")
+	bindingStage := filepath.Join(private, ".binding-"+strings.Repeat("a", 64)+".0123456789abcdef.staged")
+	unknown := filepath.Join(private, ".other.0123456789abcdef.staged")
+
+	for _, path := range []string{owner, bindingStage, unknown} {
+		require.NoError(t, os.WriteFile(path, []byte("private"), 0o600))
+	}
+
+	symlink := filepath.Join(private, ".binding-"+strings.Repeat("b", 64)+".0123456789abcdef.staged")
+	require.NoError(t, os.Symlink(owner, symlink))
+
+	_, adopted, err := session.AdoptCopy(pool, "missing.iso", nil)
+	require.NoError(t, err)
+	require.False(t, adopted)
+	require.NoFileExists(t, owner)
+	require.NoFileExists(t, bindingStage)
+	require.FileExists(t, unknown)
+
+	_, err = os.Lstat(symlink)
+	require.NoError(t, err)
+}
+
+func TestCopyVolumeKeepsActiveOwnerStageUntilCopyCloses(t *testing.T) {
+	t.Parallel()
+	r, client, pool := newVolumeFixture(t)
+	source := filepath.Join(t.TempDir(), "source.iso")
+	require.NoError(t, os.WriteFile(source, []byte("source"), 0o600))
+	op, err := client.PrepareCopy(pool, "active.iso", source, "")
+	require.NoError(t, err)
+
+	defer op.Close()
+
+	require.NoError(t, op.Transfer(t.Context()))
+
+	entries, err := os.ReadDir(r.target)
+	require.NoError(t, err)
+
+	var stage string
+
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), ".staged") {
+			stage = entry.Name()
+		}
+	}
+
+	require.NotEmpty(t, stage)
+
+	private := filepath.Join(r.target, ".copy-on-use")
+	owner := filepath.Join(private, stage+".owner")
+	require.NoError(t, os.WriteFile(owner, []byte("active"), 0o600))
+
+	_, adopted, err := client.AdoptCopy(pool, "other.iso", nil)
+	require.NoError(t, err)
+	require.False(t, adopted)
+	require.FileExists(t, owner)
+
+	body, err := os.ReadFile(filepath.Join(r.target, stage))
+	require.NoError(t, err)
+	require.Equal(t, []byte("source"), body)
 }
 
 func TestCopyVolumeRejectsNonRawBeforePublication(t *testing.T) {
@@ -902,4 +984,28 @@ func copyVolume(t *testing.T, client libvirtstorage.VolumeClient, pool libvirtst
 	}
 
 	return client.FinishCopy(t.Context(), pool, op, func() error { return nil })
+}
+
+type failingPoolXML struct {
+	*rpc
+	err error
+}
+
+func (r *failingPoolXML) StoragePoolGetXMLDesc(libvirt.StoragePool, libvirt.StorageXMLFlags) (string, error) {
+	return "", r.err
+}
+
+func TestResizeObservationLossIsClassified(t *testing.T) {
+	t.Parallel()
+
+	r, _, pool := newVolumeFixture(t)
+
+	name := "data.qcow2"
+	require.NoError(t, writeVolumeFile(filepath.Join(r.target, name), "qcow2", 1<<20))
+	r.known[name] = struct{}{}
+
+	client := libvirtstorage.NewTestClient(&failingPoolXML{rpc: r, err: io.EOF})
+	outcome, err := client.ResizeVolumeOperation(pool, name, 2<<20)
+	require.ErrorIs(t, err, libvirtstorage.ErrVolumeObservationUnavailable)
+	require.Equal(t, libvirtstorage.NoMutationSubmitted, outcome)
 }

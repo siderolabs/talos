@@ -16,7 +16,9 @@ disks:
       bus: virtio
       bootOrder: 1
       provision:
-        blank: {}
+        fromImage:
+            library: images
+            file: guest.qcow2
     - name: data
       pool: pool1
       size: 100GiB
@@ -31,4 +33,3 @@ disks:
             library: images
             file: ubuntu-24.04.iso
             digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
-            mode: copy

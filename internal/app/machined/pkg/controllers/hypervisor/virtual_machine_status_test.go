@@ -1011,15 +1011,14 @@ func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
 // A disk this slice does not provision is not something to wait for: no host resource will ever
 // resolve it, so the stage says error rather than pending.
 // A disk nothing on the host will ever make attachable is an error rather than something to wait
-// for: only a change to the configuration helps. Copying a disk from a content library image is not
-// implemented, so that is the case here.
+// for: only a change to the configuration helps. This format is unsupported.
 func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
 	spec := newRenderableSpec("vm1", "running")
 	spec.TypedSpec().Disks = []hypervisor.VirtualMachineDiskSpec{{
 		Name:   "system",
 		Pool:   "pool1",
 		Size:   20 << 30,
-		Format: hypervisorhelpers.VirtualMachineDiskFormatQCOW2.String(),
+		Format: "vmdk",
 		Type:   hypervisorhelpers.VirtualMachineDiskTypeDisk.String(),
 		Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "images", File: "talos.qcow2"},
@@ -1029,7 +1028,7 @@ func (s *VirtualMachineStatusSuite) TestUnsupportedDiskIsError() {
 	s.start()
 
 	s.assertStatus("vm1", "unknown", hypervisorhelpers.VirtualMachineStageError,
-		`virtual machine "vm1": disk "system": unsupported disk: a disk is only provisioned from provision.blank today`)
+		`virtual machine "vm1": disk "system": unsupported disk: unsupported format "vmdk", expected one of [raw qcow2]`)
 }
 
 // A blank disk whose volume is not there yet is worth waiting for, so it is Pending rather than an

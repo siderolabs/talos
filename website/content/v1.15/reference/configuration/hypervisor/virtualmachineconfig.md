@@ -83,7 +83,7 @@ disks:
       bootOrder: 2 # Position of this disk in the guest's boot order, lowest first.
       # Where the volume's contents come from.
       provision:
-        # Attach read-only CD-ROM media from a content library.
+        # Initialize an independent volume from a content library image.
         fromImage:
             library: images # Name of the `ContentLibraryConfig` document holding the image.
             file: ubuntu-24.04.iso # Name of the file within that library.
@@ -341,7 +341,7 @@ VirtualMachineDisk describes a single disk attached to a virtual machine.
 pool: pool1
 {{< /highlight >}}</details> | |
 |`size` |ByteSize |Size of the volume.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 20GiB.<br><br>Required for a `disk`, and not allowed on a `cdrom`, whose size is that of its image.  | |
-|`format` |VirtualMachineDiskFormat |On-disk format of a blank volume.<br><br>Choose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not<br>inferred from a content library image. Writable image-derived disks are not supported.<br><br>Optional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose<br>copied ISO volume uses `raw`.  |`raw`<br />`qcow2`<br /> |
+|`format` |VirtualMachineDiskFormat |On-disk format of a writable volume.<br><br>Choose `raw` or `qcow2`. The destination format is independent of a content library<br>image's format. Writable disks default to qcow2.<br><br>Optional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose<br>copied ISO volume uses `raw`.  |`raw`<br />`qcow2`<br /> |
 |`bus` |VirtualMachineDiskBus |Controller the disk is attached to.<br><br>`virtio` for anything modern; `sata` for guests without virtio drivers at install time.<br><br>Optional; defaults to `virtio` on a `disk` and to `sata` on a `cdrom`. A `cdrom` cannot<br>be attached to `virtio`, which presents no ejectable media.  |`virtio`<br />`scsi`<br />`sata`<br /> |
 |`type` |VirtualMachineDiskType |Kind of device the disk is presented as.<br><br>A `cdrom` is read-only -- QEMU emulates no CD burner -- so its contents are required and<br>it has no size and no format of its own.<br><br>Optional; defaults to `disk`.  |`disk`<br />`cdrom`<br /> |
 |`bootOrder` |uint32 |Position of this disk in the guest's boot order, lowest first.<br><br>Values must be unique across everything the virtual machine can boot from. Only disks<br>are bootable today, so that is only the disks; network interfaces will share this<br>namespace once they are configurable.<br><br>Optional; a disk without a boot order is not booted from.  | |
@@ -363,7 +363,7 @@ Exactly one source must be set.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`blank` |<a href="#VirtualMachineConfig.disks..provision.blank">VirtualMachineDiskBlank</a> |Create an empty volume, formatted per `format`.<br><br>Not allowed on a `cdrom`, which has no meaningful empty contents.  | |
-|`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Attach read-only CD-ROM media from a content library.<br><br>Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.<br>Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit<br>`size` and `format`; `mode: copy` may be explicit or omitted. Writable image-derived<br>disks are not supported. Use `provision.blank` for a writable disk and install from<br>CD-ROM media.  | |
+|`fromImage` |<a href="#VirtualMachineConfig.disks..provision.fromImage">VirtualMachineDiskFromImage</a> |Initialize an independent volume from a content library image.<br><br>Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.<br>Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit<br>`size` and `format`.<br>For a writable `disk`, set `size` and `pool`. The source must be a self-contained,<br>uncompressed raw or qcow2 image (no backing or external data files); it can<br>initialize a raw or qcow2 disk (default qcow2). A file without the qcow2 signature<br>is copied byte for byte as raw, so decompress `.zst`/`.xz`/`.gz` images and convert<br>VMDK, VHDX or VDI images first; common compressed and foreign formats are rejected.<br><br>`size` must be at least the source virtual size; qcow2 disks are rounded up to a<br>multiple of 512 bytes. The pool filesystem must support `user.*` extended attributes,<br>which record which image a disk was created from.<br><br>Existing disks only grow and are never reimaged when the source selector or alias<br>changes. Guest data survives source deletion and configuration removal. Deleting<br>the disk file from the pool triggers a fresh import from the source. Expanding the<br>guest filesystem is the guest's responsibility.  | |
 
 
 
@@ -382,7 +382,9 @@ VirtualMachineDiskBlank provisions an empty volume.
 
 #### fromImage {#VirtualMachineConfig.disks..provision.fromImage}
 
-VirtualMachineDiskFromImage references media in a content library.
+VirtualMachineDiskFromImage initializes an independent copy of media in a content library.
+Sources with external backing or data files are unsupported.
+
 
 
 
@@ -398,7 +400,6 @@ file: ubuntu-24.04.iso
 |`digest` |string |Integrity check of the library file, verified before media is copied.<br><br>Written as `<algorithm>:<hex>`, under either `sha256` or `sha512`.<br><br>Optional; the file is copied without a digest check when this is unset. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 digest: sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c
 {{< /highlight >}}</details> | |
-|`mode` |VirtualMachineDiskImageMode |Mode for copying CD-ROM media from a content library.<br><br>On a `cdrom`, omitted mode defaults to `copy`; explicit `copy` is also accepted.<br>`linked` is not supported because CD-ROM media must be an independent copy.<br>Writable image-derived disks (copy or linked) are not supported; use<br>`provision.blank` for a writable disk.  |`copy`<br />`linked`<br /> |
 
 
 

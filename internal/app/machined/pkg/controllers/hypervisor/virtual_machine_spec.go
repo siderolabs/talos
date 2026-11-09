@@ -178,7 +178,6 @@ func projectVirtualMachineSpec(vm configcfg.VirtualMachineConfig) hypervisor.Vir
 				Library: image.Library(),
 				File:    image.File(),
 				Digest:  image.Digest(),
-				Mode:    image.Mode().String(),
 			}
 		}
 

@@ -119,10 +119,10 @@ type VirtualMachineDisk struct {
 	//     type: string
 	DiskSize meta.ByteSize `yaml:"size,omitempty"`
 	//   description: |
-	//     On-disk format of a blank volume.
+	//     On-disk format of a writable volume.
 	//
-	//     Choose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not
-	//     inferred from a content library image. Writable image-derived disks are not supported.
+	//     Choose `raw` or `qcow2`. The destination format is independent of a content library
+	//     image's format. Writable disks default to qcow2.
 	//
 	//     Optional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose
 	//     copied ISO volume uses `raw`.
@@ -180,13 +180,25 @@ type VirtualMachineDiskProvision struct {
 	//     Not allowed on a `cdrom`, which has no meaningful empty contents.
 	BlankConfig *VirtualMachineDiskBlank `yaml:"blank,omitempty"`
 	//   description: |
-	//     Attach read-only CD-ROM media from a content library.
+	//     Initialize an independent volume from a content library image.
 	//
 	//     Set `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.
 	//     Talos copies the image into an independent read-only CD-ROM volume in the pool. Omit
-	//     `size` and `format`; `mode: copy` may be explicit or omitted. Writable image-derived
-	//     disks are not supported. Use `provision.blank` for a writable disk and install from
-	//     CD-ROM media.
+	//     `size` and `format`.
+	//     For a writable `disk`, set `size` and `pool`. The source must be a self-contained,
+	//     uncompressed raw or qcow2 image (no backing or external data files); it can
+	//     initialize a raw or qcow2 disk (default qcow2). A file without the qcow2 signature
+	//     is copied byte for byte as raw, so decompress `.zst`/`.xz`/`.gz` images and convert
+	//     VMDK, VHDX or VDI images first; common compressed and foreign formats are rejected.
+	//
+	//     `size` must be at least the source virtual size; qcow2 disks are rounded up to a
+	//     multiple of 512 bytes. The pool filesystem must support `user.*` extended attributes,
+	//     which record which image a disk was created from.
+	//
+	//     Existing disks only grow and are never reimaged when the source selector or alias
+	//     changes. Guest data survives source deletion and configuration removal. Deleting
+	//     the disk file from the pool triggers a fresh import from the source. Expanding the
+	//     guest filesystem is the guest's responsibility.
 	FromImageConfig *VirtualMachineDiskFromImage `yaml:"fromImage,omitempty"`
 }
 
@@ -195,7 +207,8 @@ type VirtualMachineDiskProvision struct {
 // It carries no settings: the volume's size and format are the disk's own.
 type VirtualMachineDiskBlank struct{}
 
-// VirtualMachineDiskFromImage references media in a content library.
+// VirtualMachineDiskFromImage initializes an independent copy of media in a content library.
+// Sources with external backing or data files are unsupported.
 type VirtualMachineDiskFromImage struct {
 	//   description: |
 	//     Name of the `ContentLibraryConfig` document holding the image.
@@ -218,17 +231,6 @@ type VirtualMachineDiskFromImage struct {
 	//   examples:
 	//     - value: '"sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c"'
 	ImageDigest string `yaml:"digest,omitempty"`
-	//   description: |
-	//     Mode for copying CD-ROM media from a content library.
-	//
-	//     On a `cdrom`, omitted mode defaults to `copy`; explicit `copy` is also accepted.
-	//     `linked` is not supported because CD-ROM media must be an independent copy.
-	//     Writable image-derived disks (copy or linked) are not supported; use
-	//     `provision.blank` for a writable disk.
-	//   values:
-	//     - copy
-	//     - linked
-	ImageMode hypervisorhelpers.VirtualMachineDiskImageMode `yaml:"mode,omitempty"`
 }
 
 // Name implements config.VirtualMachineDiskConfig interface.
@@ -323,15 +325,6 @@ func (i *VirtualMachineDiskFromImage) Digest() string {
 	return i.ImageDigest
 }
 
-// Mode implements config.VirtualMachineDiskFromImageConfig interface.
-func (i *VirtualMachineDiskFromImage) Mode() hypervisorhelpers.VirtualMachineDiskImageMode {
-	if i.ImageMode == hypervisorhelpers.VirtualMachineDiskImageModeUnknown {
-		return hypervisorhelpers.VirtualMachineDiskImageModeCopy
-	}
-
-	return i.ImageMode
-}
-
 // Validate checks the disk and returns its name.
 //
 //nolint:gocyclo,cyclop
@@ -424,10 +417,6 @@ func (d *VirtualMachineDisk) validateProvision(index int) error {
 		return nil
 	}
 
-	if d.Type() != hypervisorhelpers.VirtualMachineDiskTypeCDROM {
-		return fmt.Errorf("disks[%d]: provision.fromImage: writable image-derived disks are not supported; use provision.blank and install from a cdrom", index)
-	}
-
 	return d.ProvisionConfig.FromImageConfig.validate(index)
 }
 
@@ -449,17 +438,6 @@ func (i *VirtualMachineDiskFromImage) validate(index int) error {
 
 	if i.ImageDigest != "" {
 		validationErrors = errors.Join(validationErrors, validateImageDigest(index, i.ImageDigest))
-	}
-
-	switch i.ImageMode {
-	case hypervisorhelpers.VirtualMachineDiskImageModeUnknown, hypervisorhelpers.VirtualMachineDiskImageModeCopy:
-	case hypervisorhelpers.VirtualMachineDiskImageModeLinked:
-		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: provision.fromImage.mode: linked is not supported on a cdrom", index))
-	default:
-		validationErrors = errors.Join(validationErrors,
-			fmt.Errorf("disks[%d]: unsupported provision.fromImage.mode %q, expected %s", index, i.ImageMode,
-				expectedValues(hypervisorhelpers.VirtualMachineDiskImageModeStrings())))
 	}
 
 	return validationErrors

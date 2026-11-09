@@ -700,7 +700,6 @@ type VirtualMachineDiskFromImageSpec struct {
 	Library       string                 `protobuf:"bytes,1,opt,name=library,proto3" json:"library,omitempty"`
 	File          string                 `protobuf:"bytes,2,opt,name=file,proto3" json:"file,omitempty"`
 	Digest        string                 `protobuf:"bytes,3,opt,name=digest,proto3" json:"digest,omitempty"`
-	Mode          string                 `protobuf:"bytes,4,opt,name=mode,proto3" json:"mode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -752,13 +751,6 @@ func (x *VirtualMachineDiskFromImageSpec) GetFile() string {
 func (x *VirtualMachineDiskFromImageSpec) GetDigest() string {
 	if x != nil {
 		return x.Digest
-	}
-	return ""
-}
-
-func (x *VirtualMachineDiskFromImageSpec) GetMode() string {
-	if x != nil {
-		return x.Mode
 	}
 	return ""
 }
@@ -2288,12 +2280,11 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x0enetwork_config\x18\x04 \x01(\tR\rnetworkConfig\"E\n" +
 	"\x19VirtualMachineConsoleSpec\x12\x16\n" +
 	"\x06serial\x18\x01 \x01(\bR\x06serial\x12\x10\n" +
-	"\x03vnc\x18\x02 \x01(\bR\x03vnc\"{\n" +
+	"\x03vnc\x18\x02 \x01(\bR\x03vnc\"g\n" +
 	"\x1fVirtualMachineDiskFromImageSpec\x12\x18\n" +
 	"\alibrary\x18\x01 \x01(\tR\alibrary\x12\x12\n" +
 	"\x04file\x18\x02 \x01(\tR\x04file\x12\x16\n" +
-	"\x06digest\x18\x03 \x01(\tR\x06digest\x12\x12\n" +
-	"\x04mode\x18\x04 \x01(\tR\x04mode\"\x9e\x01\n" +
+	"\x06digest\x18\x03 \x01(\tR\x06digest\"\x9e\x01\n" +
 	"\x1fVirtualMachineDiskProvisionSpec\x12\x14\n" +
 	"\x05blank\x18\x01 \x01(\bR\x05blank\x12e\n" +
 	"\n" +

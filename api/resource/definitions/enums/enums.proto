@@ -102,13 +102,6 @@ enum HypervisorhelpersVirtualMachineDiskFormat {
   VIRTUAL_MACHINE_DISK_FORMAT_QCOW2 = 2;
 }
 
-// HypervisorhelpersVirtualMachineDiskImageMode is how a disk's contents are derived from a content library image.
-enum HypervisorhelpersVirtualMachineDiskImageMode {
-  VIRTUAL_MACHINE_DISK_IMAGE_MODE_UNKNOWN = 0;
-  VIRTUAL_MACHINE_DISK_IMAGE_MODE_COPY = 1;
-  VIRTUAL_MACHINE_DISK_IMAGE_MODE_LINKED = 2;
-}
-
 // HypervisorhelpersVirtualMachineDiskType is the kind of device a disk is presented as.
 enum HypervisorhelpersVirtualMachineDiskType {
   VIRTUAL_MACHINE_DISK_TYPE_UNKNOWN = 0;
@@ -988,6 +981,7 @@ enum StorageStoragePoolVolumeCopyPhase {
   STORAGE_POOL_VOLUME_COPY_PHASE_CANCELLING = 4;
   STORAGE_POOL_VOLUME_COPY_PHASE_SUCCEEDED = 5;
   STORAGE_POOL_VOLUME_COPY_PHASE_FAILED = 6;
+  STORAGE_POOL_VOLUME_COPY_PHASE_SOURCE_REQUIRED = 7;
 }
 
 // NetworkConfigLayer describes network configuration layers, with lowest priority first.

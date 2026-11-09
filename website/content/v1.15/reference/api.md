@@ -360,7 +360,6 @@ description: Talos gRPC API reference.
     - [HypervisorhelpersPowerState](#talos.resource.definitions.enums.HypervisorhelpersPowerState)
     - [HypervisorhelpersVirtualMachineDiskBus](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskBus)
     - [HypervisorhelpersVirtualMachineDiskFormat](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat)
-    - [HypervisorhelpersVirtualMachineDiskImageMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskImageMode)
     - [HypervisorhelpersVirtualMachineDiskType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType)
     - [HypervisorhelpersVirtualMachineFirmwareType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineFirmwareType)
     - [HypervisorhelpersVirtualMachineNUMAMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineNUMAMode)
@@ -6125,19 +6124,6 @@ HypervisorhelpersVirtualMachineDiskFormat is the on-disk format of a virtual mac
 
 
 
-<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskImageMode"></a>
-
-### HypervisorhelpersVirtualMachineDiskImageMode
-HypervisorhelpersVirtualMachineDiskImageMode is how a disk's contents are derived from a content library image.
-
-| Name | Number | Description |
-| ---- | ------ | ----------- |
-| VIRTUAL_MACHINE_DISK_IMAGE_MODE_UNKNOWN | 0 |  |
-| VIRTUAL_MACHINE_DISK_IMAGE_MODE_COPY | 1 |  |
-| VIRTUAL_MACHINE_DISK_IMAGE_MODE_LINKED | 2 |  |
-
-
-
 <a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType"></a>
 
 ### HypervisorhelpersVirtualMachineDiskType
@@ -7363,6 +7349,7 @@ StorageStoragePoolVolumeCopyPhase describes a copy attempt independently of atta
 | STORAGE_POOL_VOLUME_COPY_PHASE_CANCELLING | 4 |  |
 | STORAGE_POOL_VOLUME_COPY_PHASE_SUCCEEDED | 5 |  |
 | STORAGE_POOL_VOLUME_COPY_PHASE_FAILED | 6 |  |
+| STORAGE_POOL_VOLUME_COPY_PHASE_SOURCE_REQUIRED | 7 |  |
 
 
 
@@ -9678,7 +9665,6 @@ VirtualMachineDiskFromImageSpec identifies an image in a content library.
 | library | [string](#string) |  |  |
 | file | [string](#string) |  |  |
 | digest | [string](#string) |  |  |
-| mode | [string](#string) |  |  |
 
 
 
@@ -14448,6 +14434,7 @@ Once published, a copy is adopted without consulting its source again.
 | source | [string](#string) |  |  |
 | digest | [string](#string) |  |  |
 | source_library | [string](#string) |  | SourceLibrary is the immutable source dependency held until copy completion or withdrawal acknowledgment. |
+| image | [bool](#bool) |  | Image imports a self-contained raw/qcow2 source into a writable disk. Format and Capacity describe the destination. False preserves immutable raw byte-copy media semantics, which require zero requested capacity. |
 
 
 
@@ -14457,7 +14444,8 @@ Once published, a copy is adopted without consulting its source again.
 <a name="talos.resource.definitions.storage.StoragePoolVolumeCopyStatusSpec"></a>
 
 ### StoragePoolVolumeCopyStatusSpec
-StoragePoolVolumeCopyStatusSpec observes an intent, never scheduler ownership.
+StoragePoolVolumeCopyStatusSpec observes initialization, never scheduler ownership.
+Intent excludes writable capacity; growth does not initialize a disk again.
 
 
 | Field | Type | Label | Description |
@@ -14484,7 +14472,7 @@ StoragePoolVolumeSpecSpec is the spec for StoragePoolVolumeSpec.
 | format | [string](#string) |  | Format is the on-disk format the volume is created with, as libvirt names it.<br><br>It applies at creation only. A volume already in the pool under another format is refused rather than rewritten. |
 | backing_file | [string](#string) |  | BackingFile is an optional base image path used only when creating the volume. An existing volume is not rebased when this changes. |
 | backing_format | [string](#string) |  | BackingFormat is the format of BackingFile, independent of the overlay Format. If omitted, libvirt defaults the base to raw. It applies only at creation; existing volumes are not rebased. |
-| copy | [StoragePoolVolumeCopySpec](#talos.resource.definitions.storage.StoragePoolVolumeCopySpec) |  | Copy requests an independent raw copy. A request without a source can adopt a completed pool-owned copy, but must never create an empty replacement. |
+| copy | [StoragePoolVolumeCopySpec](#talos.resource.definitions.storage.StoragePoolVolumeCopySpec) |  | Copy requests an independent copy. A request without a source can adopt a completed pool-owned copy, but must never create an empty replacement. |
 
 
 

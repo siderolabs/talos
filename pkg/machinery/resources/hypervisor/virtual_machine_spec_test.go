@@ -47,7 +47,6 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 						Library: "images",
 						File:    "system.qcow2",
 						Digest:  "sha256:abc",
-						Mode:    "linked",
 					},
 				},
 			},
@@ -81,7 +80,18 @@ func TestVirtualMachineSpecRoundTrip(t *testing.T) {
 	assert.Equal(t, res.TypedSpec().Guest.Agent.Enabled, spec.GetGuest().GetAgent().GetEnabled())
 	assert.Equal(t, res.TypedSpec().Video.Model, spec.GetVideo().GetModel())
 	assert.Equal(t, res.TypedSpec().Video.VRAMMiB, spec.GetVideo().GetVramMiB())
-	assert.Equal(t, res.TypedSpec().Disks[0].Provision.FromImage.Digest, spec.GetDisks()[0].GetProvision().GetFromImage().GetDigest())
+	image := spec.GetDisks()[0].GetProvision().GetFromImage()
+	assert.Equal(t, res.TypedSpec().Disks[0].Provision.FromImage.Library, image.GetLibrary())
+	assert.Equal(t, res.TypedSpec().Disks[0].Provision.FromImage.File, image.GetFile())
+	assert.Equal(t, res.TypedSpec().Disks[0].Provision.FromImage.Digest, image.GetDigest())
+	fields := image.ProtoReflect().Descriptor().Fields()
+	require.Equal(t, 3, fields.Len())
+
+	for i := range fields.Len() {
+		assert.EqualValues(t, i+1, fields.Get(i).Number())
+	}
+
+	assert.Nil(t, fields.ByName("mode"))
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)
@@ -152,7 +162,6 @@ disks:
             library: images
             file: system.qcow2
             digest: sha256:abc
-            mode: linked
 guest:
     agent:
         enabled: true

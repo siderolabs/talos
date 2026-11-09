@@ -26,11 +26,13 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	hypervisorctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor"
 	cas "github.com/siderolabs/talos/internal/pkg/contentlibrary"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -49,6 +51,7 @@ type VirtualMachineDiskSuite struct {
 	// Disk statuses include configured provisioning identity as well as the disk name.
 	disks     map[string]hypervisor.VirtualMachineDiskSpec
 	copyPause *atomic.Pointer[imageCopyPause]
+	failures  chan error
 }
 
 func TestVirtualMachineDiskSuite(t *testing.T) {
@@ -60,7 +63,8 @@ func TestVirtualMachineDiskSuite(t *testing.T) {
 		AfterSetup: func(current *ctest.DefaultSuite) {
 			pause := &atomic.Pointer[imageCopyPause]{}
 			testSuite.copyPause = pause
-			current.Require().NoError(current.Runtime().RegisterController(&pausedImageCopyController{pause: pause}))
+			testSuite.failures = make(chan error, 20)
+			current.Require().NoError(current.Runtime().RegisterController(&pausedImageCopyController{pause: pause, failures: testSuite.failures}))
 		},
 	}
 	suite.Run(t, testSuite)
@@ -221,7 +225,7 @@ func (suite *VirtualMachineDiskSuite) TestCopiesCDROMIntoPoolAndSurvivesLibraryR
 
 		current.TypedSpec().Copy = &storage.StoragePoolVolumeCopyStatusSpec{
 			Phase:  storage.StoragePoolVolumeCopyPhaseSucceeded,
-			Intent: storage.StoragePoolVolumeCopyIntent(request, pool),
+			Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
 		}
 
 		return nil
@@ -373,7 +377,7 @@ func (suite *VirtualMachineDiskSuite) recordCompletedBinding(name string) {
 	key, ok := request.Metadata().Labels().Get(libvirtstorage.CopyBindingLabel)
 	suite.Require().True(ok)
 
-	bindings := libvirtstorage.CopyBindings{}
+	bindings := copyowner.Bindings{}
 	suite.Require().NoError(bindings.Record(poolPath, key, name))
 }
 
@@ -418,7 +422,7 @@ func (suite *VirtualMachineDiskSuite) publishImageCopy(id string) string {
 		Phase:    storage.StoragePoolVolumePhaseReady,
 		Copy: &storage.StoragePoolVolumeCopyStatusSpec{
 			Phase:  storage.StoragePoolVolumeCopyPhaseSucceeded,
-			Intent: storage.StoragePoolVolumeCopyIntent(request, pool),
+			Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
 		},
 	}
 	suite.Require().NoError(safe.StateModify(suite.Ctx(), suite.State(), status, func(current *storage.StoragePoolVolumeStatus) error {
@@ -428,17 +432,6 @@ func (suite *VirtualMachineDiskSuite) publishImageCopy(id string) string {
 	}))
 
 	return path
-}
-
-func (suite *VirtualMachineDiskSuite) TestRejectsLinkedCDROMWithoutCopying() {
-	disk := cdromDiskSpec("install", libraryName, "talos.iso", "")
-	disk.Pool, disk.Format = "pool1", "raw"
-	disk.Provision.FromImage.Mode = "linked"
-	suite.createVM(disk)
-	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
-		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
-		asrt.Contains(spec.Error, "unsupported image mode")
-	})
 }
 
 func (suite *VirtualMachineDiskSuite) TestDoesNotAdoptUnrelatedVolumeRequest() {
@@ -546,27 +539,6 @@ func (suite *VirtualMachineDiskSuite) TestDoesNotWithdrawAnotherControllersPoolC
 		asrt.Equal(resource.PhaseRunning, spec.Metadata().Phase())
 		asrt.True(spec.Metadata().Finalizers().Has("consumer"))
 	})
-}
-
-func (suite *VirtualMachineDiskSuite) TestRejectsWritableImageWithoutRequestingACopy() {
-	suite.library()
-
-	disk := blankDiskSpec("data", "pool1", "raw", 20<<30)
-	disk.Provision.Blank = false
-	disk.Provision.FromImage = &hypervisor.VirtualMachineDiskFromImageSpec{
-		Library: libraryName,
-		File:    "talos.iso",
-		Mode:    "copy",
-	}
-	suite.createVM(disk)
-
-	suite.assertDisk("data", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
-		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
-		asrt.Contains(spec.Error, "a disk is only provisioned from provision.blank today")
-	})
-	ctest.AssertNoResource[*storage.StoragePoolVolumeSpec](suite,
-		storage.StoragePoolVolumeID("pool1", vmName+"__data.raw"))
-	suite.assertLibraryHeld(false)
 }
 
 func (suite *VirtualMachineDiskSuite) TestResolvesCDROMFromPool() {
@@ -763,7 +735,7 @@ func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 func (suite *VirtualMachineDiskSuite) TestReportsUnsupportedDisks() {
 	suite.createVM(
 		hypervisor.VirtualMachineDiskSpec{
-			Name: "system", Pool: "pool1", Size: 20 << 30, Format: "qcow2", Bus: "virtio", Type: "disk",
+			Name: "system", Pool: "pool1", Size: 20 << 30, Format: "vmdk", Bus: "virtio", Type: "disk",
 			Provision: hypervisor.VirtualMachineDiskProvisionSpec{
 				FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: libraryName, File: "talos.qcow2"},
 			},
@@ -772,7 +744,7 @@ func (suite *VirtualMachineDiskSuite) TestReportsUnsupportedDisks() {
 
 	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 		asrt.False(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
-		asrt.Contains(spec.Error, "a disk is only provisioned from provision.blank today")
+		asrt.Contains(spec.Error, "unsupported format")
 	})
 }
 
@@ -876,6 +848,62 @@ func (suite *VirtualMachineDiskSuite) TestBlankDiskAsksForItsVolume() {
 	})
 }
 
+func (suite *VirtualMachineDiskSuite) TestWritableImageRequestsStableDestinationBeforeSource() {
+	disk := cdromDiskSpec("system", libraryName, "guest.qcow2", "")
+	disk.Type = "disk"
+	disk.Format = "qcow2"
+	disk.Size = 20 << 30
+	suite.createVM(disk)
+
+	id := storage.StoragePoolVolumeID("pool1", vmName+"__system.img")
+	ctest.AssertResource(suite, id, func(res *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal(uint64(20<<30), res.TypedSpec().Capacity)
+		asrt.Equal("qcow2", res.TypedSpec().Format)
+		asrt.NotNil(res.TypedSpec().Copy)
+		asrt.True(res.TypedSpec().Copy.Image)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableImageKeepsDestinationAfterAliasAndSelectorChanges() {
+	path := suite.library()
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type = "disk"
+	disk.Size = 20 << 30
+	suite.createVM(disk)
+	destination := suite.completeImageCopy("system")
+	id := storage.StoragePoolVolumeID("pool1", vmName+"__system.img")
+	request, err := safe.StateGetByID[*storage.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), id)
+	suite.Require().NoError(err)
+
+	original := *request.TypedSpec().Copy
+
+	suite.Require().NoError(os.Remove(filepath.Join(path, "talos.iso")))
+	writeLibraryImage(suite.T(), path, "talos.iso", "replacement source")
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.Equal(destination, spec.SourcePath)
+		asrt.False(spec.ReadOnly)
+	})
+
+	vm := hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName)
+	ctest.UpdateWithConflicts(suite, vm, func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Provision.FromImage.File = "missing.qcow2"
+		current.TypedSpec().Disks[0].Provision.FromImage.Digest = digest.SHA256.FromString("different").String()
+		suite.disks["system"] = current.TypedSpec().Disks[0]
+
+		return nil
+	})
+	suite.assertLibraryHeld(false)
+	suite.Destroy(hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName))
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.Equal(destination, spec.SourcePath)
+	})
+	ctest.AssertResource(suite, id, func(current *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal(original, *current.TypedSpec().Copy)
+	})
+}
+
 // Dropping configuration withdraws desired existence even while the attached disk
 // is held. Storage delays request destruction until consumer-held status is released.
 func (suite *VirtualMachineDiskSuite) TestKeepsHeldBlankVolumeUntilConsumersRelease() {
@@ -965,19 +993,6 @@ func (suite *VirtualMachineDiskSuite) TestBlankDiskWaitsForAnUnreadyVolume() {
 		asrt.False(spec.Phase == hypervisor.VirtualMachineDiskPhaseReady)
 		asrt.Contains(spec.Error, "storage pool is not ready")
 	})
-}
-
-// Two names joined by one hyphen are not one name: "a-b" plus "c" and "a" plus "b-c" would be the
-// same file, and two virtual machines would share one writable volume.
-func TestBlankVolumeNamesAreInjective(t *testing.T) {
-	t.Parallel()
-
-	first := hypervisorctrl.BlankVolumeNameForTest("vm-a", blankDiskSpec("b", "pool1", "qcow2", 1<<30))
-	second := hypervisorctrl.BlankVolumeNameForTest("vm", blankDiskSpec("a-b", "pool1", "qcow2", 1<<30))
-
-	assert.NotEqual(t, first, second)
-	assert.Equal(t, "vm-a__b.qcow2", first)
-	assert.Equal(t, "vm__a-b.qcow2", second)
 }
 
 // A blank disk whose shape no volume could be made from is permanently unsupported, not pending.
@@ -1121,6 +1136,11 @@ func (suite *VirtualMachineDiskSuite) completeImageCopy(disk string) string {
 		asrt.NotEmpty(spec.Volume)
 		name = spec.Volume
 	})
+
+	if suite.disks[disk].IsWritableImage() {
+		suite.requireWritableImageSource(storage.StoragePoolVolumeID("pool1", name))
+	}
+
 	ctest.AssertResource(suite, storage.StoragePoolVolumeID("pool1", name), func(spec *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
 		if asrt.NotNil(spec.TypedSpec().Copy) {
 			asrt.NotEmpty(spec.TypedSpec().Copy.Source)
@@ -1396,7 +1416,7 @@ func failedSourceCopyStatus(request *storage.StoragePoolVolumeSpec, pool *storag
 		Error: "old source disappeared",
 		Copy: &storage.StoragePoolVolumeCopyStatusSpec{
 			Phase:  storage.StoragePoolVolumeCopyPhaseFailed,
-			Intent: storage.StoragePoolVolumeCopyIntent(request, pool),
+			Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
 		},
 	}
 
@@ -1472,7 +1492,7 @@ func (suite *VirtualMachineDiskSuite) TestStaleBindingRetainsIncompleteCopySourc
 	suite.Require().NoError(err)
 
 	key, _ := request.Metadata().Labels().Get(libvirtstorage.CopyBindingLabel)
-	bindings := libvirtstorage.CopyBindings{}
+	bindings := copyowner.Bindings{}
 	suite.Require().NoError(bindings.Record(target, key, second))
 	suite.completeImageCopy("install")
 	suite.assertDisk("install", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
@@ -1514,14 +1534,23 @@ func (pause *imageCopyPause) resume() {
 
 type pausedImageCopyController struct {
 	hypervisorctrl.VirtualMachineDiskController
-	pause *atomic.Pointer[imageCopyPause]
+	pause    *atomic.Pointer[imageCopyPause]
+	failures chan error
 }
 
 func (ctrl *pausedImageCopyController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
-	return ctrl.VirtualMachineDiskController.Run(ctx, &pausedImageCopyRuntime{
+	err := ctrl.VirtualMachineDiskController.Run(ctx, &pausedImageCopyRuntime{
 		Runtime: runtime,
 		pause:   ctrl.pause,
 	}, logger)
+	if err != nil && ctrl.failures != nil {
+		select {
+		case ctrl.failures <- err:
+		default:
+		}
+	}
+
+	return err
 }
 
 type pausedImageCopyRuntime struct {
@@ -1670,7 +1699,7 @@ func (suite *VirtualMachineDiskSuite) testSourceFreePublicationRace(afterCallbac
 	suite.Require().NoError(os.Link(filepath.Join(target, second), filepath.Join(target, ".copy-on-use", witness)))
 
 	key, _ := before.Metadata().Labels().Get(libvirtstorage.CopyBindingLabel)
-	bindings := libvirtstorage.CopyBindings{}
+	bindings := copyowner.Bindings{}
 	suite.Require().NoError(bindings.Record(target, key, second))
 	suite.completeImageCopy("install")
 	suite.RemoveFinalizer(intent.Metadata(), libvirtstorage.CopyBindingPublicationFinalizer)
@@ -1684,7 +1713,7 @@ func (suite *VirtualMachineDiskSuite) testSourceFreePublicationRace(afterCallbac
 	suite.Require().NoError(err)
 	suite.Equal(before.TypedSpec().Copy.Source, after.TypedSpec().Copy.Source, "a stale A pass must not withdraw and recreate B")
 
-	bound, err := libvirtstorage.ReadCopyBinding(target, key)
+	bound, err := copyowner.ReadBinding(target, key)
 	suite.Require().NoError(err)
 	suite.Equal(second, bound)
 }
@@ -1928,7 +1957,10 @@ func (suite *VirtualMachineDiskSuite) TestInvalidSourceWaitsForInputWithoutPolli
 
 	suite.createVM(disks...)
 
+	diskStatusIDs := make([]string, 0, len(tests))
+
 	for _, test := range tests {
+		diskStatusIDs = append(diskStatusIDs, suite.diskStatusID(test.name))
 		suite.assertDisk(test.name, func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
 			asrt.Contains(spec.Error, test.error)
 			asrt.Empty(spec.Volume)
@@ -1939,8 +1971,8 @@ func (suite *VirtualMachineDiskSuite) TestInvalidSourceWaitsForInputWithoutPolli
 	suite.assertLibraryHeld(false)
 	ctx, st := suite.Ctx(), suite.State()
 	rejected := func() bool {
-		for _, test := range tests {
-			status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](ctx, st, suite.diskStatusID(test.name))
+		for _, id := range diskStatusIDs {
+			status, err := safe.StateGetByID[*hypervisor.VirtualMachineDiskStatus](ctx, st, id)
 			if err != nil || status.TypedSpec().Volume != "" {
 				return true
 			}
@@ -1966,4 +1998,497 @@ func (suite *VirtualMachineDiskSuite) TestInvalidSourceWaitsForInputWithoutPolli
 
 	suite.Require().Never(rejected, 1300*time.Millisecond, 20*time.Millisecond,
 		"permanent rejection without a binding must not poll, request a copy, or acquire a library hold")
+}
+
+// Record every successful renderer write, including a transient forced stop that
+// eventual-Ready assertions would miss.
+type imageDomainPublications struct {
+	mu     sync.Mutex
+	forced bool
+}
+
+type observedImageDomainController struct {
+	hypervisorctrl.VirtualMachineDomainSpecController
+	publications *imageDomainPublications
+}
+
+func (ctrl *observedImageDomainController) Run(ctx context.Context, runtime controller.Runtime, logger *zap.Logger) error {
+	return ctrl.VirtualMachineDomainSpecController.Run(ctx, &observedImageDomainRuntime{Runtime: runtime, publications: ctrl.publications}, logger)
+}
+
+type observedImageDomainRuntime struct {
+	controller.Runtime
+	publications *imageDomainPublications
+}
+
+func (runtime *observedImageDomainRuntime) Modify(ctx context.Context, res resource.Resource, modify func(resource.Resource) error, options ...owned.ModifyOption) error {
+	var forced bool
+
+	err := runtime.Runtime.Modify(ctx, res, func(current resource.Resource) error {
+		if err := modify(current); err != nil {
+			return err
+		}
+
+		if domain, ok := current.(*hypervisor.VirtualMachineDomainSpec); ok {
+			forced = domain.TypedSpec().PowerState == "stopped" && domain.TypedSpec().StopMode == "forced"
+		}
+
+		return nil
+	}, options...)
+	if err == nil && forced {
+		runtime.publications.mu.Lock()
+		runtime.publications.forced = true
+		runtime.publications.mu.Unlock()
+	}
+
+	return err
+}
+
+func (suite *VirtualMachineDiskSuite) attachedWritableImage() (*imageDomainPublications, *hypervisor.VirtualMachineDomainSpec) {
+	suite.T().Helper()
+
+	publications := &imageDomainPublications{}
+
+	suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&observedImageDomainController{publications: publications}))
+	suite.library()
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 20<<30
+	suite.createVM(disk)
+	suite.completeImageCopy("system")
+	ctest.UpdateWithConflicts(suite, storage.NewStoragePoolVolumeStatus(storage.NamespaceName, "pool1/vm__system.img"), func(current *storage.StoragePoolVolumeStatus) error {
+		current.TypedSpec().Capacity = 20 << 30
+
+		return nil
+	})
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+		asrt.EqualValues(20<<30, spec.Size)
+	})
+	ctest.AssertResource(suite, vmName, func(domain *hypervisor.VirtualMachineDomainSpec, asrt *assert.Assertions) {
+		asrt.Equal("running", domain.TypedSpec().PowerState)
+	})
+	suite.AddFinalizer(hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, suite.diskStatusID("system")).Metadata(), "test.attached")
+	suite.AddFinalizer(storage.NewStoragePoolVolumeStatus(storage.NamespaceName, "pool1/vm__system.img").Metadata(), "test.attached")
+	suite.assertLibraryHeld(false)
+	suite.Destroy(hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName))
+	domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+	suite.Require().NoError(err)
+	// Initial provisioning is allowed to be pending. Only observe publications
+	// after attachment and removal of its initialization source.
+	publications.mu.Lock()
+	publications.forced = false
+	publications.mu.Unlock()
+
+	return publications, domain
+}
+
+func (suite *VirtualMachineDiskSuite) assertImageRemainsRunning(publications *imageDomainPublications, before *hypervisor.VirtualMachineDomainSpec) {
+	suite.T().Helper()
+	suite.Require().Eventually(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+
+		return err == nil && (domain.TypedSpec().PowerState == "stopped" || domain.TypedSpec().ObservedGeneration != before.TypedSpec().ObservedGeneration)
+	}, 3*time.Second, time.Millisecond, "renderer must process the edited VM while its dependent controller is delayed")
+	domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+	suite.Require().NoError(err)
+	suite.Equal("running", domain.TypedSpec().PowerState, "unchanged writable destination must remain attached")
+	suite.Equal(before.TypedSpec().DomainXML, domain.TypedSpec().DomainXML)
+	publications.mu.Lock()
+	suite.False(publications.forced, "renderer published a forced stop during an initialization-only edit")
+	publications.mu.Unlock()
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableImageCapacityEditsPreserveAttachedDomain() {
+	publications, before := suite.attachedWritableImage()
+	// No storage controller runs in this fixture: its old successful response
+	// remains in place until after both edits have reached the renderer.
+	for _, capacity := range []uint64{40 << 30, 10 << 30} {
+		ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+			current.TypedSpec().Disks[0].Size = capacity
+
+			return nil
+		})
+		ctest.AssertResource(suite, "pool1/vm__system.img", func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+			asrt.Equal(capacity, request.TypedSpec().Capacity)
+		})
+		suite.assertImageRemainsRunning(publications, before)
+		suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+			asrt.EqualValues(20<<30, spec.Size)
+		})
+
+		var err error
+
+		before, err = safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+		suite.Require().NoError(err)
+	}
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableImageSelectorEditsPreserveAttachedDomain() {
+	publications, before := suite.attachedWritableImage()
+
+	for _, selector := range []string{"library", "file", "digest"} {
+		pause := &imageCopyPause{kind: storage.StoragePoolVolumeSpecType, id: "pool1/vm__system.img", entered: make(chan struct{}), release: make(chan struct{})}
+
+		suite.copyPause.Store(pause)
+		defer pause.resume()
+
+		ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+			image := current.TypedSpec().Disks[0].Provision.FromImage
+
+			switch selector {
+			case "library":
+				image.Library = "removed-library"
+			case "file":
+				image.File = "another.qcow2"
+			case "digest":
+				image.Digest = digest.SHA256.FromString("replacement").String()
+			}
+
+			suite.disks["system"] = current.TypedSpec().Disks[0]
+
+			return nil
+		})
+
+		select {
+		case <-pause.entered:
+		case <-suite.Ctx().Done():
+			suite.T().Fatal("disk controller did not reach barrier")
+		}
+
+		suite.assertImageRemainsRunning(publications, before)
+		pause.resume()
+		suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+			asrt.Equal("vm__system.img", spec.Volume)
+		})
+
+		var err error
+
+		before, err = safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](suite.Ctx(), suite.State(), vmName)
+		suite.Require().NoError(err)
+	}
+}
+
+func (suite *VirtualMachineDiskSuite) TestCompletedWritableImageOutageAfterSourceRemovalAndEdits() {
+	publications, before := suite.attachedWritableImage()
+	ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Size *= 2
+		current.TypedSpec().Disks[0].Provision.FromImage.File = "no-longer-needed.raw"
+
+		return nil
+	})
+	ctest.AssertResource(suite, "pool1/vm__system.img", func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.EqualValues(40<<30, request.TypedSpec().Capacity)
+	})
+	suite.assertImageRemainsRunning(publications, before)
+	ctest.UpdateWithConflicts(suite, storage.NewStoragePoolVolumeStatus(storage.NamespaceName, "pool1/vm__system.img"), func(current *storage.StoragePoolVolumeStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolVolumePhaseObservationUnavailable
+
+		return nil
+	})
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseObservationUnavailable, spec.Phase)
+	})
+	ctx, st, failures := suite.Ctx(), suite.State(), suite.failures
+	suite.Require().Never(func() bool {
+		domain, err := safe.StateGetByID[*hypervisor.VirtualMachineDomainSpec](ctx, st, vmName)
+
+		publications.mu.Lock()
+		defer publications.mu.Unlock()
+
+		return err != nil || domain.TypedSpec().PowerState != "running" || domain.TypedSpec().DomainXML != before.TypedSpec().DomainXML || publications.forced || len(failures) != 0
+	}, 400*time.Millisecond, 10*time.Millisecond, "completed writable disk must survive loss of observation after source removal")
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableImageAdoptsBeforeSourceObservation() {
+	path := suite.library()
+	object := filepath.Join(path, "objects", "sha256", digest.SHA256.FromString(isoContents).Encoded())
+	fd, err := unix.InotifyInit1(unix.IN_NONBLOCK | unix.IN_CLOEXEC)
+	suite.Require().NoError(err)
+	suite.T().Cleanup(func() { suite.Require().NoError(unix.Close(fd)) })
+
+	_, err = unix.InotifyAddWatch(fd, object, unix.IN_ACCESS|unix.IN_OPEN)
+	suite.Require().NoError(err)
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", digest.SHA256.FromString(isoContents).String())
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 20<<30
+	suite.createVM(disk)
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Contains(spec.Error, "waiting for volume")
+	})
+
+	id := "pool1/vm__system.img"
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Empty(request.TypedSpec().Copy.Source)
+	})
+	suite.publishImageCopy(id) // Storage recovered an existing independent disk.
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseReady, spec.Phase)
+	})
+	suite.assertLibraryHeld(false)
+
+	var events [4096]byte
+
+	_, err = unix.Read(fd, events[:])
+	suite.Require().ErrorIs(err, unix.EAGAIN, "adoption must not open or hash initialization input")
+}
+
+// Model storage's failed adoption before supplying initialization input.
+func (suite *VirtualMachineDiskSuite) requireWritableImageSource(id string) {
+	suite.T().Helper()
+	pool := suite.copyPool()
+	request, err := safe.StateGetByID[*storage.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), id)
+	suite.Require().NoError(err)
+
+	status := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id)
+	*status.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+		Pool: request.TypedSpec().Pool, Name: request.TypedSpec().Name,
+		Phase: storage.StoragePoolVolumePhaseNotReady, Error: "se requiere una imagen inicial",
+		Copy: &storage.StoragePoolVolumeCopyStatusSpec{
+			Phase:  storage.StoragePoolVolumeCopyPhaseSourceRequired,
+			Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
+		},
+	}
+	suite.Create(status)
+}
+
+func (suite *VirtualMachineDiskSuite) TestFailedWritableImageSelectorAndCapacityEditDrainsBeforeRetry() {
+	path := suite.library()
+	writeLibraryImage(suite.T(), path, "replacement.raw", "replacement image B")
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	suite.createVM(disk)
+
+	id := "pool1/vm__system.img"
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.NotNil(request.TypedSpec().Copy)
+	})
+	suite.requireWritableImageSource(id)
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.NotEmpty(request.TypedSpec().Copy.Source)
+	})
+	request, err := safe.StateGetByID[*storage.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), id)
+	suite.Require().NoError(err)
+
+	oldSource := request.TypedSpec().Copy.Source
+	suite.AddFinalizer(request.Metadata(), "test.worker")
+	pool := suite.copyPool()
+	ctest.UpdateWithConflicts(suite, storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id), func(current *storage.StoragePoolVolumeStatus) error {
+		*current.TypedSpec() = *failedSourceCopyStatus(request, pool, "failed").TypedSpec()
+
+		return nil
+	})
+	ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Provision.FromImage.File = "replacement.raw"
+		current.TypedSpec().Disks[0].Size = 4096
+
+		return nil
+	})
+	ctest.AssertResource(suite, id, func(current *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, current.Metadata().Phase())
+		asrt.Equal(oldSource, current.TypedSpec().Copy.Source)
+		asrt.EqualValues(1024, current.TypedSpec().Capacity, "must not admit A at the edited capacity before retirement")
+	})
+	suite.Destroy(storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id))
+	suite.RemoveFinalizer(request.Metadata(), "test.worker")
+	ctest.AssertResource(suite, id, func(current *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseRunning, current.Metadata().Phase())
+		asrt.Empty(current.TypedSpec().Copy.Source)
+		asrt.EqualValues(4096, current.TypedSpec().Capacity)
+	})
+	suite.requireWritableImageSource(id)
+	ctest.AssertResource(suite, id, func(current *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Equal(filepath.Join(path, "objects", "sha256", digest.SHA256.FromString("replacement image B").Encoded()), current.TypedSpec().Copy.Source)
+		asrt.EqualValues(4096, current.TypedSpec().Capacity)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestFailedWritableUnavailablePinnedSourceStillUpdatesCapacity() {
+	suite.library()
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", digest.SHA256.FromString(isoContents).String())
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	suite.createVM(disk)
+
+	id := "pool1/vm__system.img"
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.NotNil(request.TypedSpec().Copy)
+	})
+	suite.requireWritableImageSource(id)
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.NotEmpty(request.TypedSpec().Copy.Source)
+	})
+	request, err := safe.StateGetByID[*storage.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), id)
+	suite.Require().NoError(err)
+	pool := suite.copyPool()
+	ctest.UpdateWithConflicts(suite, storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id), func(current *storage.StoragePoolVolumeStatus) error {
+		*current.TypedSpec() = *failedSourceCopyStatus(request, pool, "failed").TypedSpec()
+
+		return nil
+	})
+	ctest.UpdateWithConflicts(suite, hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName), func(current *hypervisor.ContentLibraryStatus) error {
+		current.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
+
+		return nil
+	})
+	ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Size = 4096
+
+		return nil
+	})
+	ctest.AssertResource(suite, id, func(current *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.EqualValues(4096, current.TypedSpec().Capacity)
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableImageFormatEditExplainsRefusal() {
+	suite.library()
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	suite.createVM(disk)
+	suite.completeImageCopy("system")
+	ctest.UpdateWithConflicts(suite, hypervisor.NewVirtualMachineSpec(hypervisor.NamespaceName, vmName), func(current *hypervisor.VirtualMachineSpec) error {
+		current.TypedSpec().Disks[0].Format = "qcow2"
+		suite.disks["system"] = current.TypedSpec().Disks[0]
+
+		return nil
+	})
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+		asrt.Contains(spec.Error, `format changes from "raw" to "qcow2" are not supported`)
+	})
+}
+
+// A durable publication remains independent when storage later reports Waiting, even
+// if its diagnostic status can no longer prove copy completion by itself.
+func (suite *VirtualMachineDiskSuite) TestCompletedWritableWaitingReleasesOtherLibraryWithoutSource() {
+	suite.library()
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	suite.createVM(disk)
+	suite.completeImageCopy("system")
+	suite.recordCompletedBinding("vm__system.img")
+	suite.assertLibraryHeld(false)
+	suite.Destroy(hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName))
+
+	other := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "unrelated")
+	suite.Create(other)
+	suite.AddFinalizer(other.Metadata(), "hypervisor.VirtualMachineDiskController")
+	ctest.UpdateWithConflicts(suite, storage.NewStoragePoolVolumeStatus(storage.NamespaceName, "pool1/vm__system.img"), func(current *storage.StoragePoolVolumeStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolVolumePhaseNotReady
+		current.TypedSpec().Copy.Phase = storage.StoragePoolVolumeCopyPhaseWaiting
+
+		return nil
+	})
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseNotReady, spec.Phase)
+	})
+	ctest.AssertResource(suite, "unrelated", func(current *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.False(current.Metadata().Finalizers().Has("hypervisor.VirtualMachineDiskController"))
+	})
+}
+
+func (suite *VirtualMachineDiskSuite) TestCompletedWritableImageOutageDoesNotReholdSource() {
+	suite.library()
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	suite.createVM(disk)
+	suite.completeImageCopy("system")
+	suite.assertLibraryHeld(false)
+	ctest.UpdateWithConflicts(suite, storage.NewStoragePoolVolumeStatus(storage.NamespaceName, "pool1/vm__system.img"), func(current *storage.StoragePoolVolumeStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolVolumePhaseObservationUnavailable
+
+		return nil
+	})
+	suite.assertDisk("system", func(spec hypervisor.VirtualMachineDiskStatusSpec, asrt *assert.Assertions) {
+		asrt.Equal(hypervisor.VirtualMachineDiskPhaseObservationUnavailable, spec.Phase)
+	})
+	ctx, st, failures := suite.Ctx(), suite.State(), suite.failures
+	suite.Require().Never(func() bool {
+		library, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](ctx, st, libraryName)
+
+		return err != nil || library.Metadata().Finalizers().Has("hypervisor.VirtualMachineDiskController") || len(failures) != 0
+	}, 400*time.Millisecond, 10*time.Millisecond, "completed initialization must not regain its source dependency")
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableSourceRequiredPhaseIgnoresDiagnostic() {
+	suite.library()
+
+	disk := cdromDiskSpec("system", libraryName, "talos.iso", "")
+	disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+	suite.createVM(disk)
+
+	id := "pool1/vm__system.img"
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.Empty(request.TypedSpec().Copy.Source)
+	})
+	suite.requireWritableImageSource(id) // Localized Error; only the enum conveys source admission.
+	ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+		asrt.NotEmpty(request.TypedSpec().Copy.Source)
+	})
+	suite.assertLibraryHeld(true)
+}
+
+func (suite *VirtualMachineDiskSuite) TestWritableMissingStaleAndProbingStatusDoNotHoldSource() {
+	suite.library()
+
+	configured := make([]hypervisor.VirtualMachineDiskSpec, 0, 3)
+
+	for _, name := range []string{"missing", "stale", "probing"} {
+		disk := cdromDiskSpec(name, libraryName, "talos.iso", digest.SHA256.FromString(isoContents).String())
+		disk.Type, disk.Bus, disk.Size = "disk", "virtio", 1024
+		configured = append(configured, disk)
+	}
+
+	suite.createVM(configured...)
+	pool := suite.copyPool()
+
+	for _, name := range []string{"stale", "probing"} {
+		id := "pool1/vm__" + name + ".img"
+		ctest.AssertResource(suite, id, func(request *storage.StoragePoolVolumeSpec, asrt *assert.Assertions) {
+			asrt.Empty(request.TypedSpec().Copy.Source)
+		})
+		request, err := safe.StateGetByID[*storage.StoragePoolVolumeSpec](suite.Ctx(), suite.State(), id)
+		suite.Require().NoError(err)
+
+		status := storage.NewStoragePoolVolumeStatus(storage.NamespaceName, id)
+
+		*status.TypedSpec() = storage.StoragePoolVolumeStatusSpec{
+			Phase: storage.StoragePoolVolumePhaseNotReady, Error: libvirtstorage.ErrCopySourceRequired.Error(),
+			Copy: &storage.StoragePoolVolumeCopyStatusSpec{
+				Phase:  storage.StoragePoolVolumeCopyPhaseWaiting,
+				Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
+			},
+		}
+		if name == "stale" {
+			status.TypedSpec().Copy.Phase = storage.StoragePoolVolumeCopyPhaseSourceRequired
+			status.TypedSpec().Copy.Intent = "previous-request"
+		}
+
+		suite.Create(status)
+	}
+
+	ctx, st := suite.Ctx(), suite.State()
+	suite.Require().Never(func() bool {
+		library, err := safe.StateGetByID[*hypervisor.ContentLibraryStatus](ctx, st, libraryName)
+		if err != nil || library.Metadata().Finalizers().Has("hypervisor.VirtualMachineDiskController") {
+			return true
+		}
+
+		for _, disk := range configured {
+			request, getErr := safe.StateGetByID[*storage.StoragePoolVolumeSpec](ctx, st, "pool1/vm__"+disk.Name+".img")
+			if getErr == nil && request.TypedSpec().Copy.Source != "" {
+				return true
+			}
+		}
+
+		return false
+	}, 300*time.Millisecond, 10*time.Millisecond)
 }

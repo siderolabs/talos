@@ -29,6 +29,9 @@ import (
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
+	"github.com/siderolabs/talos/internal/pkg/qemuimg"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -51,6 +54,20 @@ var errResizeUncertain = errors.New("resize outcome uncertain")
 // such as a volume whose format differs from the one asked for.
 type pendingError struct{ err error }
 
+// copyQualificationError distinguishes a failed independent qualification from a pending
+// volume condition when both are reported in the same status.
+type copyQualificationError struct{ error }
+
+func (e copyQualificationError) Unwrap() error {
+	return e.error
+}
+
+func retryableVolumeResolution(err error) bool {
+	qualification, qualified := errors.AsType[copyQualificationError](err)
+
+	return err != nil && (!errors.Is(err, errVolumePending) || (qualified && qualification.error != nil))
+}
+
 func (e pendingError) Error() string   { return e.err.Error() }
 func (e pendingError) Unwrap() []error { return []error{errVolumePending, e.err} }
 
@@ -72,9 +89,15 @@ type StoragePoolVolumeController struct {
 
 	// Open is injectable for deterministic reconciliation tests.
 	Open func(context.Context) (libvirtstorage.VolumeClient, error)
+	// ImageTool selects qemu-img for image import tests; nil uses the runtime extension.
+	ImageTool *qemuimg.Client
 
-	bindings libvirtstorage.CopyBindings
+	bindings copyowner.Bindings
 	copies   *copyWork
+
+	privateCopyNow         func() time.Time
+	nextPrivateCopyCleanup time.Time
+	privateCopyConfigID    string
 }
 
 // Name implements controller.Controller interface.
@@ -85,6 +108,17 @@ func (ctrl *StoragePoolVolumeController) Name() string {
 // Inputs implements controller.Controller interface.
 func (ctrl *StoragePoolVolumeController) Inputs() []controller.Input {
 	return []controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hypervisor.NamespaceName,
+			Type:      hypervisor.VirtualMachineSpecType,
+			Kind:      controller.InputWeak,
+		},
 		{
 			Namespace: hypervisor.NamespaceName,
 			Type:      hypervisor.VirtualMachineDiskStatusType,
@@ -128,13 +162,14 @@ func (ctrl *StoragePoolVolumeController) Outputs() []controller.Output {
 //
 // Reconciliation wakes on input events and copy completions. Failed volume operations
 // retry within this Run, without canceling unrelated copies. State failures still
-// use runtime restart backoff; silent external drift does not trigger a poll.
+// use runtime restart backoff. Private artifacts are scanned at most once a minute
+// for unchanged canonical configuration. Each sweep holds and rechecks its backing.
 func (ctrl *StoragePoolVolumeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.V1Alpha1Mode.InContainer() {
 		return nil
 	}
 
-	ctrl.bindings = libvirtstorage.CopyBindings{}
+	ctrl.bindings = copyowner.Bindings{}
 
 	ctrl.copies = ctrl.startCopies(ctx)
 
@@ -164,13 +199,13 @@ func (ctrl *StoragePoolVolumeController) Run(ctx context.Context, r controller.R
 			return fmt.Errorf("error listing storage pool volume specs: %w", err)
 		}
 
-		needsRetry, err := ctrl.reconcile(ctx, r, logger, specs)
+		delay, err := ctrl.reconcile(ctx, r, logger, specs)
 		if err != nil {
 			return err
 		}
 
-		if needsRetry {
-			retry.Reset(time.Second)
+		if delay > 0 {
+			retry.Reset(delay)
 		} else {
 			retry.Stop()
 		}
@@ -184,21 +219,21 @@ func (ctrl *StoragePoolVolumeController) Run(ctx context.Context, r controller.R
 //nolint:gocyclo // Keep hold acquisition, output withdrawal and cleanup acknowledgements in order.
 func (ctrl *StoragePoolVolumeController) reconcile(
 	ctx context.Context, r controller.Runtime, logger *zap.Logger, specs safe.List[*storage.StoragePoolVolumeSpec],
-) (bool, error) {
+) (time.Duration, error) {
 	if err := cleanupCopyBindingFences(ctx, r); err != nil {
-		return false, err
+		return 0, err
 	}
 
 	poolStatuses, err := volumePoolStatuses(ctx, r)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 
 	ctrl.copies.fence(specs, poolStatuses)
 
 	_, poolsInUse, err := volumesInUse(ctx, r)
 	if err != nil {
-		return false, err
+		return 0, err
 	}
 
 	// Seeded with the pools a guest already has a volume of open: those stay held whether or not a
@@ -243,24 +278,35 @@ func (ctrl *StoragePoolVolumeController) reconcile(
 	errs = append(errs, specErrs...)
 
 	if err != nil {
-		return false, errors.Join(append(errs, err)...)
+		return 0, errors.Join(append(errs, err)...)
+	}
+
+	_, cleanupErr := ctrl.cleanupPrivateCopies(ctx, r, logger, poolStatuses, held)
+	if cleanupErr != nil {
+		if !errors.Is(cleanupErr, errVolumePending) {
+			return 0, errors.Join(append(errs, cleanupErr)...)
+		}
+
+		logger.Debug("private copy maintenance deferred", zap.Error(cleanupErr))
 	}
 
 	// A status nothing asks for any more is torn down rather than destroyed, so whatever holds it
 	// has a chance to notice and give the hold back. The volume's file is untouched either way.
 	if err = cleanup.Outputs[*storage.StoragePoolVolumeStatus](ctx, r, "storage pool volume status", wanted); err != nil {
-		return false, errors.Join(append(errs, err)...)
+		return 0, errors.Join(append(errs, err)...)
 	}
 
 	if err = ctrl.releaseSpecs(ctx, r, specs, wanted); err != nil {
-		return false, errors.Join(append(errs, err)...)
+		return 0, errors.Join(append(errs, err)...)
 	}
 
 	if len(specErrs) > 0 {
 		logger.Debug("retrying failed volume operations without interrupting active copies", zap.Errors("errors", specErrs))
 	}
 
-	return len(specErrs) > 0, ctrl.releasePools(ctx, r, logger, poolStatuses, held)
+	now := time.Now()
+
+	return privateCopyRetryDelay(volumeRetryDelay(specErrs, now), ctrl.nextPrivateCopyCleanup, now), ctrl.releasePools(ctx, r, logger, poolStatuses, held)
 }
 
 // volumePoolStatuses observes pools, including those held by an uncertain resize.
@@ -356,7 +402,7 @@ func (ctrl *StoragePoolVolumeController) reconcileVolumeSpec(
 
 	resolved, resolveErr = ctrl.observeCopy(ctx, r, spec, poolStatuses, resolved, resolveErr)
 
-	if resolveErr != nil && !errors.Is(resolveErr, errVolumePending) {
+	if retryableVolumeResolution(resolveErr) {
 		// A libvirt or filesystem failure emits no resource event: retry via backoff.
 		errs = append(errs, fmt.Errorf("volume %q: %w", id, resolveErr))
 	}
@@ -378,10 +424,18 @@ func (ctrl *StoragePoolVolumeController) observeCopy(ctx context.Context, r cont
 	spec *storage.StoragePoolVolumeSpec, poolStatuses map[string]*storage.StoragePoolStatus,
 	resolved storage.StoragePoolVolumeStatusSpec, resolveErr error,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
-	if resolveErr == nil && resolved.Phase == storage.StoragePoolVolumePhaseReady && spec.TypedSpec().Copy != nil {
-		resolveErr = ctrl.qualifyCopy(ctx, r, spec, poolStatuses)
-		if resolveErr != nil {
+	if resolved.Phase == storage.StoragePoolVolumePhaseReady && spec.TypedSpec().Copy != nil {
+		if err := ctrl.qualifyCopy(ctx, r, spec, poolStatuses); err != nil {
+			if !errors.Is(err, errVolumePending) {
+				err = copyQualificationError{err}
+			}
+
+			resolveErr = errors.Join(resolveErr, err)
+
 			resolved.Phase = storage.StoragePoolVolumePhaseNotReady
+			if errors.Is(err, libvirtstorage.ErrVolumeObservationUnavailable) {
+				resolved.Phase = storage.StoragePoolVolumePhaseObservationUnavailable
+			}
 		}
 	}
 
@@ -401,10 +455,11 @@ func (ctrl *StoragePoolVolumeController) observeCopyStatus(ctx context.Context, 
 		copyStatus = &storage.StoragePoolVolumeCopyStatusSpec{Phase: storage.StoragePoolVolumeCopyPhaseWaiting}
 	}
 
-	copyStatus.Intent = storage.StoragePoolVolumeCopyIntent(spec, pool)
+	copyStatus.Intent = storage.StoragePoolVolumeCopyInitializationIntent(spec, pool)
+
 	if job := ctrl.copies.jobs[spec.Metadata().ID()]; job != nil {
 		copyStatus.Phase = job.phase()
-	} else if resolved.Phase == storage.StoragePoolVolumePhaseReady && resolveErr == nil {
+	} else if resolved.Phase == storage.StoragePoolVolumePhaseReady {
 		copyStatus.Phase = storage.StoragePoolVolumeCopyPhaseSucceeded
 	} else if resolved.Phase == storage.StoragePoolVolumePhaseObservationUnavailable {
 		previous, err := retainedCopyCompletion(ctx, r, spec, pool)
@@ -459,8 +514,7 @@ func copyCompletionMatches(previous *storage.StoragePoolVolumeStatus, spec *stor
 
 	return previous.Metadata().Phase() == resource.PhaseRunning && previous.Metadata().Owner() == volumeControllerName &&
 		(previous.TypedSpec().Phase == storage.StoragePoolVolumePhaseReady || previous.TypedSpec().Phase == storage.StoragePoolVolumePhaseObservationUnavailable) &&
-		copyStatus != nil && copyStatus.Phase == storage.StoragePoolVolumeCopyPhaseSucceeded &&
-		copyStatus.Intent == storage.StoragePoolVolumeCopyIntent(spec, pool)
+		storage.StoragePoolVolumeCopyCompletionMatches(spec, pool, copyStatus)
 }
 
 func retainedCopyRequestCurrent(ctx context.Context, r controller.Reader, spec *storage.StoragePoolVolumeSpec) (bool, error) {
@@ -597,7 +651,7 @@ func (ctrl *StoragePoolVolumeController) recordCopyBinding(
 	}
 
 	// Re-qualifying an unchanged binding does not mutate its name and emits no fence events.
-	name, readErr := libvirtstorage.ReadCopyBinding(pool.TypedSpec().TargetPath, key)
+	name, readErr := copyowner.ReadBinding(pool.TypedSpec().TargetPath, key)
 	if readErr == nil && name == spec.TypedSpec().Name {
 		return ctrl.requalifyCopyBinding(ctx, r, intent, pool.TypedSpec().TargetPath, key, name)
 	}
@@ -783,8 +837,10 @@ func publishVolumeStatus(
 }
 
 func copySucceededTransition(previous, next *storage.StoragePoolVolumeCopyStatusSpec) bool {
+	// A growth operation may temporarily publish Waiting for the same initialized
+	// disk. Only an actual copy worker or a new initialization merits this log.
 	return next != nil && next.Phase == storage.StoragePoolVolumeCopyPhaseSucceeded &&
-		(previous == nil || previous.Phase != next.Phase || previous.Intent != next.Intent)
+		(previous == nil || previous.Intent != next.Intent || previous.Phase == storage.StoragePoolVolumeCopyPhaseRunning)
 }
 
 // holdSpec takes a hold on the spec, so the volume's existence is not withdrawn before its status is.
@@ -982,7 +1038,7 @@ func (ctrl *StoragePoolVolumeController) resolveVolume(
 	mutation *volumeMutation,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
 	if spec.Copy != nil {
-		return ctrl.copyResolution(ctx, r, session, pool, poolStatus, spec)
+		return ctrl.copyResolution(ctx, r, session, logger, pool, poolStatus, spec, mutation)
 	}
 
 	volume, exists, err := session.Volume(pool, spec.Name)
@@ -1016,7 +1072,7 @@ func copyVolumeFailure(err error) (storage.StoragePoolVolumeStatusSpec, error) {
 	phase := storage.StoragePoolVolumePhaseNotReady
 
 	if errors.Is(err, libvirtstorage.ErrCopySourceRequired) {
-		return storage.StoragePoolVolumeStatusSpec{Phase: phase}, pending("%w", err)
+		return copyObservation(storage.StoragePoolVolumeCopyPhaseSourceRequired), pending("%w", err)
 	}
 
 	if errors.Is(err, libvirtstorage.ErrVolumeObservationUnavailable) || errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
@@ -1098,6 +1154,10 @@ func recheckHeldPool(ctx context.Context, r controller.Reader, name, volume stri
 
 		if strings.HasPrefix(finalizer, "storage.StoragePoolController/mutating/") {
 			return pending("storage pool %q is changing backing", name)
+		}
+
+		if volume == "" && strings.HasPrefix(finalizer, storage.StoragePoolVolumeMutationFinalizerPrefix) {
+			return pending("storage pool %q has an uncertain volume mutation; private cleanup waits for its retirement", name)
 		}
 
 		if finalizer == storage.StoragePoolVolumeMutationFinalizer(volume) {
@@ -1304,9 +1364,10 @@ func readyVolume(volume libvirtstorage.Volume) storage.StoragePoolVolumeStatusSp
 }
 
 type copyJob struct {
-	id   resource.ID
-	spec storage.StoragePoolVolumeSpecSpec
-	pool libvirtstorage.Pool
+	id         resource.ID
+	spec       storage.StoragePoolVolumeSpecSpec
+	pool       libvirtstorage.Pool
+	bindingKey string
 
 	reader controller.Reader
 	ctx    context.Context //nolint:containedctx // The admitted job owns this cancellable lifetime until its worker acknowledges cleanup.
@@ -1324,7 +1385,42 @@ type copyProof struct {
 	cache    libvirtstorage.CopyCache
 	err      error
 	retryAt  time.Time
+	failures uint8
 	terminal bool
+}
+
+const copyRetryMax = time.Minute
+
+// deferredCopyRetryError keeps the diagnostic and tells the Run timer when the next
+// attempt is eligible; ordinary volume failures still get the one-second retry.
+type deferredCopyRetryError struct {
+	error
+	at time.Time
+}
+
+func (e deferredCopyRetryError) Unwrap() error {
+	return e.error
+}
+
+func volumeRetryDelay(errs []error, now time.Time) time.Duration {
+	var delay time.Duration
+
+	for _, err := range errs {
+		candidate := time.Second
+
+		if deferred, ok := errors.AsType[deferredCopyRetryError](err); ok {
+			candidate = deferred.at.Sub(now)
+			if candidate <= 0 {
+				candidate = time.Millisecond
+			}
+		}
+
+		if delay == 0 || candidate < delay {
+			delay = candidate
+		}
+	}
+
+	return delay
 }
 
 type copyCursor struct {
@@ -1392,9 +1488,29 @@ func (w *copyWork) complete(job *copyJob) {
 	job.cancel()
 
 	if proof := w.proofs[job.id]; proof != nil && proof.intent == job.intent {
-		proof.err, proof.terminal = job.err, job.terminal
-		proof.retryAt = time.Now().Add(time.Second)
+		proof.recordAttempt(job.err, job.terminal, time.Now())
 	}
+}
+
+func (proof *copyProof) recordAttempt(err error, terminal bool, now time.Time) {
+	proof.err, proof.terminal = err, terminal
+	if err == nil || terminal {
+		proof.failures = 0
+		proof.retryAt = time.Time{}
+
+		return
+	}
+
+	delay := time.Second
+	for n := uint8(0); n < proof.failures && delay < copyRetryMax; n++ {
+		delay = min(delay*2, copyRetryMax)
+	}
+
+	if proof.failures < 7 {
+		proof.failures++
+	}
+
+	proof.retryAt = now.Add(delay)
 }
 
 func (w *copyWork) stop() {
@@ -1496,10 +1612,12 @@ func (ctrl *StoragePoolVolumeController) transferCopy(job *copyJob, observer fun
 
 		op.SetProgressObserver(observer)
 
-		if err = op.Transfer(job.ctx); err != nil {
-			var pathErr *os.PathError
+		if err := bindConfiguredCopyOwner(job, op); err != nil {
+			return libvirtstorage.Volume{}, err
+		}
 
-			job.terminal = !errors.As(err, &pathErr) && !errors.Is(err, libvirtstorage.ErrCopySourceChanged) && job.ctx.Err() == nil
+		if err = ctrl.transferCopyStage(job, op); err != nil {
+			job.terminal = job.isTerminalTransferError(err)
 
 			return libvirtstorage.Volume{}, err
 		}
@@ -1518,9 +1636,32 @@ func (ctrl *StoragePoolVolumeController) transferCopy(job *copyJob, observer fun
 	volume, err := validation.FinishCopy(job.ctx, job.pool, op, func() error {
 		return ctrl.checkCopyJob(job.ctx, job.reader, job)
 	})
-	job.terminal = errors.Is(err, libvirtstorage.ErrCopyFormatUnsupported) && job.ctx.Err() == nil
+	job.terminal = (errors.Is(err, libvirtstorage.ErrCopyFormatUnsupported) || qemuimg.IsTerminal(err)) && job.ctx.Err() == nil
 
 	return volume, err
+}
+
+func (job *copyJob) isTerminalTransferError(err error) bool {
+	if job.spec.Copy.Image {
+		return qemuimg.IsTerminal(err) && job.ctx.Err() == nil
+	}
+
+	var pathErr *os.PathError
+
+	return !errors.As(err, &pathErr) && !errors.Is(err, libvirtstorage.ErrCopySourceChanged) && job.ctx.Err() == nil
+}
+
+func (ctrl *StoragePoolVolumeController) transferCopyStage(job *copyJob, op *libvirtstorage.CopyOperation) error {
+	if !job.spec.Copy.Image {
+		return op.Transfer(job.ctx)
+	}
+
+	tool := ctrl.ImageTool
+	if tool == nil {
+		tool = qemuimg.New("")
+	}
+
+	return op.Import(job.ctx, tool, job.spec.Format, job.spec.Capacity)
 }
 
 func (job *copyJob) phase() storage.StoragePoolVolumeCopyPhase {
@@ -1580,13 +1721,15 @@ func copyObservation(phase storage.StoragePoolVolumeCopyPhase) storage.StoragePo
 	}
 }
 
-func (ctrl *StoragePoolVolumeController) copyResolution(ctx context.Context, r controller.Reader, session libvirtstorage.VolumeClient,
+func (ctrl *StoragePoolVolumeController) copyResolution(ctx context.Context, r controller.ReaderWriter, session libvirtstorage.VolumeClient, logger *zap.Logger,
 	pool libvirtstorage.Pool, poolStatus *storage.StoragePoolStatus, spec *storage.StoragePoolVolumeSpecSpec,
+	mutation *volumeMutation,
 ) (storage.StoragePoolVolumeStatusSpec, error) {
 	id := storage.StoragePoolVolumeID(spec.Pool, spec.Name)
 
 	if !validCopySpec(spec) {
-		return copyObservation(storage.StoragePoolVolumeCopyPhaseFailed), pending("copy volume %q requires raw format, no backing chain and no requested capacity", spec.Name)
+		return copyObservation(storage.StoragePoolVolumeCopyPhaseFailed), pending("copy volume %q requires no backing chain; "+
+			"writable image imports require raw/qcow2 format and a positive capacity; immutable media require raw format and zero capacity", spec.Name)
 	}
 
 	current, err := safe.ReaderGetByID[*storage.StoragePoolVolumeSpec](ctx, r, id)
@@ -1600,11 +1743,7 @@ func (ctrl *StoragePoolVolumeController) copyResolution(ctx context.Context, r c
 
 	intent := storage.StoragePoolVolumeCopyIntent(current, poolStatus)
 
-	proof := ctrl.copies.proofs[id]
-	if proof == nil || proof.intent != intent {
-		proof = &copyProof{intent: intent}
-		ctrl.copies.proofs[id] = proof
-	}
+	proof := ctrl.copies.proofFor(id, intent, spec.Copy.Image)
 	// Recover publication before interpreting any failed attempt or requiring source.
 	// Adoption errors leave the outcome unqualified, never permit source replacement.
 	volume, adopted, err := session.AdoptCopy(pool, spec.Name, &proof.cache)
@@ -1613,6 +1752,10 @@ func (ctrl *StoragePoolVolumeController) copyResolution(ctx context.Context, r c
 	}
 
 	if adopted {
+		if spec.Copy.Image {
+			return ctrl.adopt(ctx, r, session, logger, pool, poolStatus, spec, volume, mutation)
+		}
+
 		return readyVolume(volume), nil
 	}
 
@@ -1627,21 +1770,51 @@ func (ctrl *StoragePoolVolumeController) copyResolution(ctx context.Context, r c
 	return ctrl.admitCopy(r, pool, poolStatus, current, spec)
 }
 
+func (w *copyWork) proofFor(id resource.ID, intent string, image bool) *copyProof {
+	proof := w.proofs[id]
+	if proof == nil || proof.intent != intent {
+		proof = &copyProof{intent: intent}
+		proof.cache.Image = image
+		w.proofs[id] = proof
+	}
+
+	return proof
+}
+
 // attemptError keeps rejected attempts dormant and transient attempts on a deadline.
 func (proof *copyProof) attemptError() error {
+	return proof.attemptErrorAt(time.Now())
+}
+
+func (proof *copyProof) attemptErrorAt(now time.Time) error {
+	if proof.err == nil {
+		return nil
+	}
+
 	if proof.terminal {
 		return pending("%w", proof.err)
 	}
 
-	if time.Now().Before(proof.retryAt) {
-		return proof.err
+	if now.Before(proof.retryAt) {
+		return deferredCopyRetryError{
+			error: proof.err,
+			at:    proof.retryAt,
+		}
 	}
 
 	return nil
 }
 
 func validCopySpec(spec *storage.StoragePoolVolumeSpecSpec) bool {
-	return spec.Format == "raw" && spec.BackingFile == "" && spec.BackingFormat == "" && spec.Capacity == 0
+	if spec.BackingFile != "" || spec.BackingFormat != "" {
+		return false
+	}
+
+	if spec.Copy.Image {
+		return (spec.Format == "raw" || spec.Format == "qcow2") && spec.Capacity > 0
+	}
+
+	return spec.Format == "raw" && spec.Capacity == 0
 }
 
 func (ctrl *StoragePoolVolumeController) admitCopy(r controller.Reader, pool libvirtstorage.Pool, poolStatus *storage.StoragePoolStatus,
@@ -1653,14 +1826,16 @@ func (ctrl *StoragePoolVolumeController) admitCopy(r controller.Reader, pool lib
 	}
 
 	jobCtx, cancel := context.WithCancel(ctrl.copies.ctx)
+	bindingKey, _ := current.Metadata().Labels().Get(libvirtstorage.CopyBindingLabel)
 	job := &copyJob{
-		id:     current.Metadata().ID(),
-		spec:   *spec,
-		pool:   pool,
-		intent: storage.StoragePoolVolumeCopyIntent(current, poolStatus),
-		reader: r,
-		ctx:    jobCtx,
-		cancel: cancel,
+		bindingKey: bindingKey,
+		id:         current.Metadata().ID(),
+		spec:       *spec,
+		pool:       pool,
+		intent:     storage.StoragePoolVolumeCopyIntent(current, poolStatus),
+		reader:     r,
+		ctx:        jobCtx,
+		cancel:     cancel,
 	}
 	ctrl.copies.jobs[job.id] = job
 	ctrl.copies.cursor.pool = job.spec.Pool
@@ -1692,6 +1867,15 @@ func (ctrl *StoragePoolVolumeController) checkCopyJob(ctx context.Context, r con
 	}
 
 	if !job.matches(current, pool) {
+		// Losing only observation on the same request/backing is not evidence
+		// that completed initialization was revoked. Recheck exclusion before
+		// classifying it, so teardown, retargeting and mutation still win.
+		if current.Metadata().Phase() == resource.PhaseRunning && storage.StoragePoolVolumeCopyIntent(current, pool) == job.intent {
+			if err := recheckHeldPool(ctx, r, job.spec.Pool, job.spec.Name, pool); errors.Is(err, libvirtstorage.ErrVolumeObservationUnavailable) {
+				return err
+			}
+		}
+
 		return fmt.Errorf("copy request or pool backing changed during transfer")
 	}
 

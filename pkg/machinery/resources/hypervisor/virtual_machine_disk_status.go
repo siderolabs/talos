@@ -74,13 +74,14 @@ const diskStatusIDDigestLength = 12
 // VirtualMachineDiskStatusID builds the resource ID for a disk of a virtual machine. Both names are
 // validated against ^[A-Za-z0-9-]+$, so neither separator can occur within either.
 //
-// It digests what the disk is provisioned from as well as naming the disk: a finalizer stops a
-// resource being destroyed, not updated, so re-provisioning from another image must create a second
-// status rather than rewrite the one a running domain holds.
+// Read-only media includes its source selectors so replacement gets a new status.
+// Writable images include only attachment identity: their source initializes the
+// destination once, and changing it must not revoke a running domain's status.
 func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSpec) resource.ID {
 	var parts []string
 
-	if disk.Provision.Blank {
+	switch {
+	case disk.Provision.Blank:
 		// Pool and format are in, because each changes the file the domain is pointed at -- and
 		// format changes its driver type too -- so a running domain must be re-rendered onto a new
 		// status rather than silently retargeted.
@@ -94,7 +95,11 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 		// "provision=blank" cannot collide with the image branch below: '=' is outside the charset
 		// a library name is validated against.
 		parts = []string{"provision=blank", disk.Pool, disk.Format}
-	} else {
+	case disk.IsWritableImage():
+		// Capacity and initialization selectors cannot retarget the owned disk.
+		// Keep format and pool so unsafe destination changes still fail.
+		parts = []string{"provision=image", disk.Pool, disk.Format}
+	default:
 		var image VirtualMachineDiskFromImageSpec
 
 		if disk.Provision.FromImage != nil {
@@ -103,7 +108,7 @@ func VirtualMachineDiskStatusID(virtualMachine string, disk VirtualMachineDiskSp
 
 		// A disk provisioned from neither hashes the zero value, so it still has one stable ID to
 		// report its own unsupportedness under.
-		parts = []string{image.Library, image.File, image.Digest, image.Mode, disk.Pool, disk.Format}
+		parts = []string{image.Library, image.File, image.Digest, disk.Pool, disk.Format}
 	}
 
 	sum := sha256.Sum256([]byte(strings.Join(parts, "\x00")))

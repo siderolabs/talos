@@ -12,12 +12,15 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
 
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hypervisor"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -194,4 +197,153 @@ func TestCopyProgressObserverDisabled(t *testing.T) {
 	require.Nil(t, copyProgressObserver(zap.New(core)))
 	require.Nil(t, copyProgressObserver(zap.NewNop()))
 	require.Empty(t, logs.All())
+}
+
+func TestCopyFailureBackoffPersistsAcrossReconciliation(t *testing.T) {
+	now := time.Unix(100, 0)
+	failure := errors.New("qemu-img convert: no space left on device")
+
+	proof := &copyProof{intent: "request/backing"}
+
+	for attempt, want := range []time.Duration{time.Second, 2 * time.Second, 4 * time.Second, 8 * time.Second, 16 * time.Second, 32 * time.Second, time.Minute, time.Minute} {
+		proof.recordAttempt(failure, false, now)
+		require.Equal(t, want, proof.retryAt.Sub(now), "attempt %d", attempt)
+		err := proof.attemptErrorAt(now)
+		require.ErrorIs(t, err, failure)
+		require.Equal(t, want, volumeRetryDelay([]error{err}, now))
+		// A status write or input event must not restart the clock or admit work early.
+		require.Equal(t, want/2, volumeRetryDelay([]error{proof.attemptErrorAt(now.Add(want / 2))}, now.Add(want/2)))
+		now = now.Add(want)
+		require.NoError(t, proof.attemptErrorAt(now))
+	}
+
+	proof.recordAttempt(nil, false, now)
+	proof.recordAttempt(failure, false, now)
+	require.Equal(t, time.Second, proof.retryAt.Sub(now), "success resets backoff")
+	work := &copyWork{proofs: map[resource.ID]*copyProof{"volume": proof}}
+	require.Same(t, proof, work.proofFor("volume", "request/backing", true))
+	require.NotSame(t, proof, work.proofFor("volume", "new request/backing", true), "identity change resets backoff")
+	require.Equal(t, time.Second, volumeRetryDelay([]error{failure, proof.attemptErrorAt(now)}, now), "other failures retain ordinary retry")
+}
+
+func TestCopyTerminalAttemptDoesNotScheduleRetry(t *testing.T) {
+	proof := &copyProof{}
+	proof.recordAttempt(errors.New("invalid image format"), true, time.Unix(100, 0))
+	require.ErrorIs(t, proof.attemptErrorAt(time.Unix(1000, 0)), errVolumePending)
+	require.Zero(t, volumeRetryDelay(nil, time.Unix(1000, 0)))
+}
+
+// Lose observation after successful daemon resolution, at binding qualification.
+type qualificationPoolRace struct {
+	controller.Writer
+	state.StateReader
+	beforePoolRead func()
+	poolReadErr    error
+}
+
+func (r *qualificationPoolRace) Get(ctx context.Context, ptr resource.Pointer, options ...state.GetOption) (resource.Resource, error) {
+	if ptr.Type() == storageres.StoragePoolStatusType && r.beforePoolRead != nil {
+		change := r.beforePoolRead
+		r.beforePoolRead = nil
+
+		change()
+	}
+
+	if ptr.Type() == storageres.StoragePoolStatusType && r.poolReadErr != nil {
+		return nil, r.poolReadErr
+	}
+
+	return r.StateReader.Get(ctx, ptr, options...)
+}
+
+func TestPendingResolutionDoesNotMaskCopyQualificationFailure(t *testing.T) {
+	ctx := t.Context()
+	st := state.WrapCore(inmem.NewState())
+	pool := storageres.NewStoragePoolStatus(storageres.NamespaceName, "pool")
+	*pool.TypedSpec() = storageres.StoragePoolStatusSpec{
+		Phase:      storageres.StoragePoolPhaseReady,
+		TargetPath: "/pool",
+		VolumeID:   "backing",
+	}
+	require.NoError(t, st.Create(ctx, pool))
+
+	spec := storageres.NewStoragePoolVolumeSpec(storageres.NamespaceName, "pool/guest.img")
+	*spec.TypedSpec() = storageres.StoragePoolVolumeSpecSpec{
+		Pool:     "pool",
+		Name:     "guest.img",
+		Format:   "raw",
+		Capacity: 1024,
+		Copy:     &storageres.StoragePoolVolumeCopySpec{Image: true},
+	}
+	require.NoError(t, st.Create(ctx, spec))
+
+	failure := errors.New("qualification pool read failed")
+	r := &qualificationPoolRace{
+		StateReader: st,
+		poolReadErr: failure,
+	}
+	ctrl := &StoragePoolVolumeController{copies: &copyWork{}}
+	resolved, err := ctrl.observeCopy(ctx, r, spec, map[string]*storageres.StoragePoolStatus{"pool": pool},
+		storageres.StoragePoolVolumeStatusSpec{
+			Phase:           storageres.StoragePoolVolumePhaseReady,
+			PendingCapacity: 1024,
+		},
+		pending("growth deferred while guest attached"))
+	require.ErrorIs(t, err, errVolumePending)
+	require.ErrorIs(t, err, failure)
+	require.True(t, retryableVolumeResolution(err), "real qualification failure must requeue despite pending growth")
+	require.Equal(t, storageres.StoragePoolVolumePhaseNotReady, resolved.Phase)
+}
+
+func TestCompletedCopyQualificationPoolObservationRace(t *testing.T) {
+	ctx := t.Context()
+	st := state.WrapCore(inmem.NewState())
+	pool := storageres.NewStoragePoolStatus(storageres.NamespaceName, "pool")
+	*pool.TypedSpec() = storageres.StoragePoolStatusSpec{
+		Phase:      storageres.StoragePoolPhaseReady,
+		TargetPath: "/pool",
+		VolumeID:   "backing",
+	}
+	require.NoError(t, st.Create(ctx, pool))
+
+	request := storageres.NewStoragePoolVolumeSpec(storageres.NamespaceName, "pool/guest.img")
+	*request.TypedSpec() = storageres.StoragePoolVolumeSpecSpec{
+		Pool:     "pool",
+		Name:     "guest.img",
+		Format:   "raw",
+		Capacity: 1024,
+		Copy:     &storageres.StoragePoolVolumeCopySpec{Image: true},
+	}
+	request.Metadata().Labels().Set(libvirtstorage.CopyBindingLabel, "binding")
+	require.NoError(t, st.Create(ctx, request, state.WithCreateOwner("hypervisor.VirtualMachineDiskController")))
+
+	disk := hypervisor.NewVirtualMachineDiskStatus(hypervisor.NamespaceName, "vm/system")
+	disk.TypedSpec().Pool, disk.TypedSpec().Volume = "pool", "guest.img"
+	disk.Metadata().Labels().Set(libvirtstorage.CopyBindingLabel, "binding")
+	require.NoError(t, st.Create(ctx, disk, state.WithCreateOwner("hypervisor.VirtualMachineDiskController")))
+	request, err := safe.StateGetByID[*storageres.StoragePoolVolumeSpec](ctx, st, request.Metadata().ID())
+	require.NoError(t, err)
+	pool, err = safe.StateGetByID[*storageres.StoragePoolStatus](ctx, st, "pool")
+	require.NoError(t, err)
+
+	previous := storageres.NewStoragePoolVolumeStatus(storageres.NamespaceName, request.Metadata().ID())
+	*previous.TypedSpec() = storageres.StoragePoolVolumeStatusSpec{
+		Phase: storageres.StoragePoolVolumePhaseReady,
+		Copy: &storageres.StoragePoolVolumeCopyStatusSpec{
+			Phase:  storageres.StoragePoolVolumeCopyPhaseSucceeded,
+			Intent: storageres.StoragePoolVolumeCopyInitializationIntent(request, pool),
+		},
+	}
+	require.NoError(t, st.Create(ctx, previous, state.WithCreateOwner(volumeControllerName)))
+	r := &qualificationPoolRace{StateReader: st, beforePoolRead: func() {
+		current := pool.DeepCopy().(*storageres.StoragePoolStatus)
+		current.TypedSpec().Phase = storageres.StoragePoolPhaseObservationUnavailable
+		require.NoError(t, st.Update(ctx, current))
+	}}
+	ctrl := &StoragePoolVolumeController{copies: &copyWork{}}
+	resolved, err := ctrl.observeCopy(ctx, r, request, map[string]*storageres.StoragePoolStatus{"pool": pool},
+		storageres.StoragePoolVolumeStatusSpec{Phase: storageres.StoragePoolVolumePhaseReady}, nil)
+	require.ErrorIs(t, err, libvirtstorage.ErrVolumeObservationUnavailable)
+	require.Equal(t, storageres.StoragePoolVolumePhaseObservationUnavailable, resolved.Phase)
+	require.Equal(t, previous.TypedSpec().Copy, resolved.Copy, "qualification outage must not erase completed initialization")
 }

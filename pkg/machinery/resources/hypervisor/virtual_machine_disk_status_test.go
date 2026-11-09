@@ -34,7 +34,6 @@ func TestVirtualMachineDiskStatusRoundTrip(t *testing.T) {
 			Library: "images",
 			File:    "alpine.iso",
 			Digest:  "sha256:" + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-			Mode:    "cdrom",
 		},
 	}
 
@@ -55,7 +54,6 @@ func TestVirtualMachineDiskStatusRoundTrip(t *testing.T) {
 	assert.Equal(t, res.TypedSpec().Image.Library, spec.GetImage().GetLibrary())
 	assert.Equal(t, res.TypedSpec().Image.File, spec.GetImage().GetFile())
 	assert.Equal(t, res.TypedSpec().Image.Digest, spec.GetImage().GetDigest())
-	assert.Equal(t, res.TypedSpec().Image.Mode, spec.GetImage().GetMode())
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)
@@ -76,14 +74,13 @@ func TestVirtualMachineDiskStatusRoundTrip(t *testing.T) {
 func TestVirtualMachineDiskStatusIDCoversEveryImageField(t *testing.T) {
 	t.Parallel()
 
-	require.Equal(t, 4, reflect.TypeFor[hypervisor.VirtualMachineDiskFromImageSpec]().NumField(),
+	require.Equal(t, 3, reflect.TypeFor[hypervisor.VirtualMachineDiskFromImageSpec]().NumField(),
 		"VirtualMachineDiskFromImageSpec gained a field: add it to VirtualMachineDiskStatusID")
 
 	base := hypervisor.VirtualMachineDiskFromImageSpec{
 		Library: "images",
 		File:    "alpine.iso",
 		Digest:  "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-		Mode:    "cdrom",
 	}
 
 	id := func(image hypervisor.VirtualMachineDiskFromImageSpec) string {
@@ -99,7 +96,6 @@ func TestVirtualMachineDiskStatusIDCoversEveryImageField(t *testing.T) {
 		"digest": func(image *hypervisor.VirtualMachineDiskFromImageSpec) {
 			image.Digest = "sha256:" + strings.Repeat("f", 64)
 		},
-		"mode": func(image *hypervisor.VirtualMachineDiskFromImageSpec) { image.Mode = "disk" },
 	} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
@@ -134,9 +130,9 @@ func TestVirtualMachineDiskStatusIDIsPinned(t *testing.T) {
 			FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{Library: "images", File: "alpine.iso"},
 		},
 	})
-	// Independently: sha256("images\0alpine.iso\0\0\0pool1\0raw").
+	// Independently: sha256("images\0alpine.iso\0\0pool1\0raw").
 	// Pool-owned copies include the destination, so an attached status cannot be retargeted.
-	assert.Equal(t, "guest/install@c3dc411884f8", cdrom)
+	assert.Equal(t, "guest/install@6aea524aece7", cdrom)
 
 	blank := hypervisor.VirtualMachineDiskStatusID("guest", hypervisor.VirtualMachineDiskSpec{
 		Name:      "data",
@@ -223,6 +219,54 @@ func TestVirtualMachineDiskStatusIDCoversImageDestination(t *testing.T) {
 			change(&changed)
 			assert.NotEqual(t, hypervisor.VirtualMachineDiskStatusID("guest", base),
 				hypervisor.VirtualMachineDiskStatusID("guest", changed))
+		})
+	}
+}
+
+func TestWritableImageStatusIdentity(t *testing.T) {
+	t.Parallel()
+
+	base := hypervisor.VirtualMachineDiskSpec{
+		Name: "system", Type: "disk", Pool: "pool", Format: "qcow2", Size: 20 << 30,
+		Provision: hypervisor.VirtualMachineDiskProvisionSpec{FromImage: &hypervisor.VirtualMachineDiskFromImageSpec{
+			Library: "images", File: "guest.qcow2", Digest: "sha256:old",
+		}},
+	}
+	original := hypervisor.VirtualMachineDiskStatusID("vm", base)
+
+	for name, change := range map[string]func(*hypervisor.VirtualMachineDiskSpec){
+		"library":  func(d *hypervisor.VirtualMachineDiskSpec) { d.Provision.FromImage.Library = "removed" },
+		"file":     func(d *hypervisor.VirtualMachineDiskSpec) { d.Provision.FromImage.File = "other" },
+		"digest":   func(d *hypervisor.VirtualMachineDiskSpec) { d.Provision.FromImage.Digest = "sha256:new" },
+		"capacity": func(d *hypervisor.VirtualMachineDiskSpec) { d.Size *= 2 },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			changed := base
+			image := *base.Provision.FromImage
+			changed.Provision.FromImage = &image
+			change(&changed)
+			assert.Equal(t, original, hypervisor.VirtualMachineDiskStatusID("vm", changed))
+		})
+	}
+
+	for name, change := range map[string]func(*hypervisor.VirtualMachineDiskSpec){
+		"pool":   func(d *hypervisor.VirtualMachineDiskSpec) { d.Pool = "other" },
+		"format": func(d *hypervisor.VirtualMachineDiskSpec) { d.Format = "raw" },
+		"type":   func(d *hypervisor.VirtualMachineDiskSpec) { d.Type = "cdrom" },
+		"blank": func(d *hypervisor.VirtualMachineDiskSpec) {
+			d.Provision = hypervisor.VirtualMachineDiskProvisionSpec{Blank: true}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			changed := base
+			image := *base.Provision.FromImage
+			changed.Provision.FromImage = &image
+			change(&changed)
+			assert.NotEqual(t, original, hypervisor.VirtualMachineDiskStatusID("vm", changed))
 		})
 	}
 }

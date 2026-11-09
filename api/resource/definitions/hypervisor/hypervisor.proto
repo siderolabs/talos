@@ -105,7 +105,6 @@ message VirtualMachineDiskFromImageSpec {
   string library = 1;
   string file = 2;
   string digest = 3;
-  string mode = 4;
 }
 
 // VirtualMachineDiskProvisionSpec names exactly one volume-content source.

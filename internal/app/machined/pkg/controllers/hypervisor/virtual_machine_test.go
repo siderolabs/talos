@@ -36,6 +36,7 @@ import (
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
 	libvirtdomain "github.com/siderolabs/talos/internal/pkg/libvirt/domain"
 	libvirtstorage "github.com/siderolabs/talos/internal/pkg/libvirt/storage"
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/hypervisorhelpers"
@@ -1079,7 +1080,7 @@ func (s *VirtualMachineDomainSuite) assertQualifiedCDROMProducerOutage(readOutag
 
 	image := disk.Provision.FromImage
 	binding := fmt.Sprintf("%x", sha256.Sum256([]byte("vm\x00"+disk.Name+"\x00"+disk.Pool+"\x00"+disk.Format+"\x00"+image.Library+"\x00"+image.File+"\x00"+image.Digest)))
-	s.Require().NoError(new(libvirtstorage.CopyBindings).Record(target, binding, "copy.raw"))
+	s.Require().NoError(new(copyowner.Bindings).Record(target, binding, "copy.raw"))
 
 	pool := storage.NewStoragePoolStatus(storage.NamespaceName, disk.Pool)
 	*pool.TypedSpec() = storage.StoragePoolStatusSpec{
@@ -1121,7 +1122,7 @@ func (s *VirtualMachineDomainSuite) assertQualifiedCDROMProducerOutage(readOutag
 	s.Require().NoError(err)
 	currentPool, err := safe.StateGetByID[*storage.StoragePoolStatus](s.Ctx(), s.State(), disk.Pool)
 	s.Require().NoError(err)
-	s.Require().Equal(storage.StoragePoolVolumeCopyIntent(request, currentPool), proof.Intent)
+	s.Require().Equal(storage.StoragePoolVolumeCopyInitializationIntent(request, currentPool), proof.Intent)
 	ctest.AssertResource(s, "vm", func(domain *hypervisor.VirtualMachineDomainSpec, a *assert.Assertions) {
 		a.Equal("running", domain.TypedSpec().PowerState)
 	})
@@ -2316,8 +2317,11 @@ func (s *VirtualMachineDomainSuite) TestStartsMatchingProjectedCloudInitSeed() {
 
 		return nil
 	})
+	// An invalid name cannot be rendered into a replacement domain even when
+	// the renderer observes the seed update before it observes the disk outage.
+	// A valid different name could race ahead and legitimately start a new domain.
 	ctest.UpdateWithConflicts(s, seed, func(current *hypervisor.CloudInitStatus) error {
-		current.TypedSpec().Name = "different-seed.iso"
+		current.TypedSpec().Name = "../different-seed.iso"
 
 		return nil
 	})
@@ -2904,6 +2908,7 @@ type observedController struct {
 	settled             chan struct{}
 	beforeMutation      func()
 	beforeDiskHold      func()
+	beforeDomainClaim   func()
 	beforeVolumeRelease func() error
 }
 
@@ -2913,6 +2918,10 @@ type observedRuntime struct {
 }
 
 func (r observedRuntime) AddFinalizer(ctx context.Context, pointer resource.Pointer, finalizers ...resource.Finalizer) error {
+	if pointer.Type() == hypervisor.VirtualMachineDomainSpecType && r.observer.beforeDomainClaim != nil {
+		r.observer.beforeDomainClaim()
+	}
+
 	if pointer.Type() == storage.StoragePoolVolumeStatusType && r.observer.beforeDiskHold != nil {
 		r.observer.beforeDiskHold()
 	}
@@ -3832,4 +3841,38 @@ func (s *placementFixture) runningDomainSurvivesTopologyChange() {
 		return nil
 	})
 	s.assertDomain("vm", replacement, true)
+}
+
+func (s *VirtualMachineDomainSuite) TestWritableImageStaleReadyCannotStartDuringPoolOutage() {
+	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
+	f := completedCopy(&s.DefaultSuite, "vm", true)
+
+	var once sync.Once
+
+	observer := &observedController{
+		Controller: &hypervisorctrl.VirtualMachineController{Open: s.client.open},
+		settled:    make(chan struct{}, 1),
+		beforeDomainClaim: func() {
+			once.Do(func() {
+				ctest.UpdateWithConflicts(s, f.pool, func(current *storage.StoragePoolStatus) error {
+					current.TypedSpec().Phase = storage.StoragePoolPhaseObservationUnavailable
+
+					return nil
+				})
+			})
+		},
+	}
+	// Lose pool observation after disk holds and their checks, before final admission.
+	s.Require().NoError(s.Runtime().RegisterController(observer))
+	s.waitResizeSignal(observer.settled)
+	s.client.mu.Lock()
+	_, started := s.client.domains["vm"]
+	s.client.mu.Unlock()
+	s.Require().False(started, "stale Ready writable image must not cross final start boundary")
+	ctest.UpdateWithConflicts(s, f.pool, func(current *storage.StoragePoolStatus) error {
+		current.TypedSpec().Phase = storage.StoragePoolPhaseReady
+
+		return nil
+	})
+	s.assertDomain("vm", f.xml, true)
 }

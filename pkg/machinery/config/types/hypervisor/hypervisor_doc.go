@@ -538,8 +538,8 @@ func (VirtualMachineDisk) Doc() *encoder.Doc {
 				Name:        "format",
 				Type:        "VirtualMachineDiskFormat",
 				Note:        "",
-				Description: "On-disk format of a blank volume.\n\nChoose `raw` or `qcow2` for a writable disk provisioned with `blank`. The format is not\ninferred from a content library image. Writable image-derived disks are not supported.\n\nOptional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose\ncopied ISO volume uses `raw`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "On-disk format of a blank volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "On-disk format of a writable volume.\n\nChoose `raw` or `qcow2`. The destination format is independent of a content library\nimage's format. Writable disks default to qcow2.\n\nOptional; defaults to `qcow2` on a writable disk. Not allowed on a `cdrom`, whose\ncopied ISO volume uses `raw`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "On-disk format of a writable volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"raw",
 					"qcow2",
@@ -613,8 +613,8 @@ func (VirtualMachineDiskProvision) Doc() *encoder.Doc {
 				Name:        "fromImage",
 				Type:        "VirtualMachineDiskFromImage",
 				Note:        "",
-				Description: "Attach read-only CD-ROM media from a content library.\n\nSet `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.\nTalos copies the image into an independent read-only CD-ROM volume in the pool. Omit\n`size` and `format`; `mode: copy` may be explicit or omitted. Writable image-derived\ndisks are not supported. Use `provision.blank` for a writable disk and install from\nCD-ROM media.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Attach read-only CD-ROM media from a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Initialize an independent volume from a content library image.\n\nSet `type: cdrom`, `pool` to a declared storage pool, and `library` and `file` here.\nTalos copies the image into an independent read-only CD-ROM volume in the pool. Omit\n`size` and `format`.\nFor a writable `disk`, set `size` and `pool`. The source must be a self-contained,\nuncompressed raw or qcow2 image (no backing or external data files); it can\ninitialize a raw or qcow2 disk (default qcow2). A file without the qcow2 signature\nis copied byte for byte as raw, so decompress `.zst`/`.xz`/`.gz` images and convert\nVMDK, VHDX or VDI images first; common compressed and foreign formats are rejected.\n\n`size` must be at least the source virtual size; qcow2 disks are rounded up to a\nmultiple of 512 bytes. The pool filesystem must support `user.*` extended attributes,\nwhich record which image a disk was created from.\n\nExisting disks only grow and are never reimaged when the source selector or alias\nchanges. Guest data survives source deletion and configuration removal. Deleting\nthe disk file from the pool triggers a fresh import from the source. Expanding the\nguest filesystem is the guest's responsibility.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Initialize an independent volume from a content library image." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -642,8 +642,8 @@ func (VirtualMachineDiskBlank) Doc() *encoder.Doc {
 func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtualMachineDiskFromImage",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskFromImage references media in a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtualMachineDiskFromImage references media in a content library.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtualMachineDiskFromImage initializes an independent copy of media in a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VirtualMachineDiskFromImage initializes an independent copy of media in a content library.\nSources with external backing or data files are unsupported.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VirtualMachineDiskProvision",
@@ -671,17 +671,6 @@ func (VirtualMachineDiskFromImage) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Integrity check of the library file, verified before media is copied.\n\nWritten as `<algorithm>:<hex>`, under either `sha256` or `sha512`.\n\nOptional; the file is copied without a digest check when this is unset.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Integrity check of the library file, verified before media is copied." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mode",
-				Type:        "VirtualMachineDiskImageMode",
-				Note:        "",
-				Description: "Mode for copying CD-ROM media from a content library.\n\nOn a `cdrom`, omitted mode defaults to `copy`; explicit `copy` is also accepted.\n`linked` is not supported because CD-ROM media must be an independent copy.\nWritable image-derived disks (copy or linked) are not supported; use\n`provision.blank` for a writable disk.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mode for copying CD-ROM media from a content library." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"copy",
-					"linked",
-				},
 			},
 		},
 	}

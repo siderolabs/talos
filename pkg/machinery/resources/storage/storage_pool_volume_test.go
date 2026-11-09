@@ -38,6 +38,7 @@ func TestStoragePoolVolumeSpecRoundTrip(t *testing.T) {
 			Source:        "/library/objects/sha256/abc",
 			Digest:        "sha256:abc",
 			SourceLibrary: "images",
+			Image:         true,
 		},
 	}
 
@@ -173,4 +174,71 @@ func TestCopyIntentIsSemantic(t *testing.T) {
 	assert.NotEqual(t, intent, storage.StoragePoolVolumeCopyIntent(clone, pool))
 	clone.TypedSpec().Copy = nil
 	assert.Empty(t, storage.StoragePoolVolumeCopyIntent(clone, pool))
+}
+
+func TestWritableCopyCompletionPreservesOnlyCapacityEdits(t *testing.T) {
+	t.Parallel()
+
+	for name, change := range map[string]func(*storage.StoragePoolVolumeSpec, *storage.StoragePoolStatus){
+		"capacity": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) { r.TypedSpec().Capacity *= 2 },
+		"source": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) {
+			r.TypedSpec().Copy.Source = "other"
+		},
+		"digest": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) {
+			r.TypedSpec().Copy.Digest = "other"
+		},
+		"library": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) {
+			r.TypedSpec().Copy.SourceLibrary = "other"
+		},
+		"image":  func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) { r.TypedSpec().Copy.Image = false },
+		"format": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) { r.TypedSpec().Format = "raw" },
+		"backing": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) {
+			r.TypedSpec().BackingFile = "other"
+		},
+		"backing format": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) {
+			r.TypedSpec().BackingFormat = "raw"
+		},
+		"name": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) { r.TypedSpec().Name = "other" },
+		"pool": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) { r.TypedSpec().Pool = "other" },
+		"request incarnation": func(r *storage.StoragePoolVolumeSpec, _ *storage.StoragePoolStatus) {
+			r.Metadata().SetCreated(r.Metadata().Created().Add(time.Second))
+		},
+		"pool incarnation": func(_ *storage.StoragePoolVolumeSpec, p *storage.StoragePoolStatus) {
+			p.Metadata().SetCreated(p.Metadata().Created().Add(time.Second))
+		},
+		"pool target": func(_ *storage.StoragePoolVolumeSpec, p *storage.StoragePoolStatus) {
+			p.TypedSpec().TargetPath = "/other"
+		},
+		"pool backing": func(_ *storage.StoragePoolVolumeSpec, p *storage.StoragePoolStatus) { p.TypedSpec().VolumeID = "other" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			request := storage.NewStoragePoolVolumeSpec(storage.NamespaceName, "pool/guest.img")
+			*request.TypedSpec() = storage.StoragePoolVolumeSpecSpec{
+				Pool: "pool", Name: "guest.img", Capacity: 20 << 30, Format: "qcow2",
+				Copy: &storage.StoragePoolVolumeCopySpec{Image: true, Source: "/library/object", Digest: "sha256:123", SourceLibrary: "images"},
+			}
+			pool := storage.NewStoragePoolStatus(storage.NamespaceName, "pool")
+			pool.TypedSpec().TargetPath, pool.TypedSpec().VolumeID = "/pool", "backing"
+			observed := &storage.StoragePoolVolumeCopyStatusSpec{
+				Phase:  storage.StoragePoolVolumeCopyPhaseSucceeded,
+				Intent: storage.StoragePoolVolumeCopyInitializationIntent(request, pool),
+			}
+			workerIntent := storage.StoragePoolVolumeCopyIntent(request, pool)
+			require.True(t, storage.StoragePoolVolumeCopyCompletionMatches(request, pool, observed))
+			// Include a capacity edit with every unsafe change: initialization must
+			// still check every other part of the original publication proof.
+			change(request, pool)
+
+			if name != "capacity" {
+				request.TypedSpec().Capacity *= 2
+			}
+
+			assert.NotEqual(t, workerIntent, storage.StoragePoolVolumeCopyIntent(request, pool), "initial worker must be fenced")
+			assert.Equal(t, name == "capacity", storage.StoragePoolVolumeCopyCompletionMatches(request, pool, observed))
+			observed.Phase = storage.StoragePoolVolumeCopyPhaseRunning
+			assert.False(t, storage.StoragePoolVolumeCopyCompletionMatches(request, pool, observed), "incomplete imports cannot qualify as completed initialization")
+		})
+	}
 }

@@ -38,22 +38,88 @@ func TestCloudInitPoolRequired(t *testing.T) {
 	require.ErrorContains(t, err, "guest.cloudInit.pool is required")
 }
 
-func TestCDROMPoolAndCopyMode(t *testing.T) {
+func TestVirtualMachineFromImageRejectsRemovedMode(t *testing.T) {
+	t.Parallel()
+
+	for _, value := range []string{"copy", "linked", `""`} {
+		t.Run(value, func(t *testing.T) {
+			t.Parallel()
+
+			document := strings.Replace(enumDoc, "            file: talos.qcow2\n",
+				"            file: talos.qcow2\n            mode: "+value+"\n", 1)
+			_, err := configloader.NewFromBytes([]byte(document))
+			require.ErrorContains(t, err, "unknown keys found during decoding")
+			assert.Contains(t, err.Error(), "mode:")
+		})
+	}
+}
+
+func TestVirtualMachineFromImageRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		disk hypervisor.VirtualMachineDisk
+	}{
+		{name: "qcow2", disk: imageDisk("system")},
+		{name: "raw", disk: imageDisk("system")},
+		{name: "cdrom", disk: cdromDisk()},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := validVirtualMachineConfig()
+
+			if test.name == "raw" {
+				test.disk.DiskFormat = hypervisorhelpers.VirtualMachineDiskFormatRaw
+			}
+
+			test.disk.ProvisionConfig.FromImageConfig.ImageDigest = exampleDigest
+			cfg.DisksConfig = []hypervisor.VirtualMachineDisk{test.disk}
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+
+			encoded, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
+			require.NoError(t, err)
+			assert.NotContains(t, string(encoded), "mode:")
+			provider, err := configloader.NewFromBytes(encoded)
+			require.NoError(t, err)
+			require.Len(t, provider.Documents(), 1)
+			assert.Equal(t, cfg, provider.Documents()[0])
+			roundTrip, err := encoder.NewEncoder(provider.Documents()[0], encoder.WithComments(encoder.CommentsDisabled)).Encode()
+			require.NoError(t, err)
+			assert.Equal(t, string(encoded), string(roundTrip))
+		})
+	}
+}
+
+func TestWritableImageDisks(t *testing.T) {
+	for _, format := range []hypervisorhelpers.VirtualMachineDiskFormat{
+		hypervisorhelpers.VirtualMachineDiskFormatRaw,
+		hypervisorhelpers.VirtualMachineDiskFormatQCOW2,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			cfg := validVirtualMachineConfig()
+			disk := imageDisk("system")
+			disk.DiskFormat = format
+
+			cfg.DisksConfig = []hypervisor.VirtualMachineDisk{disk}
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestCDROMPoolRequired(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
 		name string
 		pool string
-		mode hypervisorhelpers.VirtualMachineDiskImageMode
 		want string
 	}{
 		{name: "pool required", want: "disks[0]: pool is required"},
 		{name: "pooled cdrom", pool: "pool1"},
-		{name: "explicit copy", pool: "pool1", mode: hypervisorhelpers.VirtualMachineDiskImageModeCopy},
-		{
-			name: "linked unsupported", pool: "pool1", mode: hypervisorhelpers.VirtualMachineDiskImageModeLinked,
-			want: "disks[0]: provision.fromImage.mode: linked is not supported on a cdrom",
-		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -61,7 +127,7 @@ func TestCDROMPoolAndCopyMode(t *testing.T) {
 			cfg := validVirtualMachineConfig()
 			disk := cdromDisk()
 			disk.DiskPool = test.pool
-			disk.ProvisionConfig.FromImageConfig.ImageMode = test.mode
+
 			cfg.DisksConfig = []hypervisor.VirtualMachineDisk{disk}
 
 			_, err := cfg.Validate(validationMode{})
@@ -132,7 +198,10 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 						DiskBus:       hypervisorhelpers.VirtualMachineDiskBusVirtio,
 						DiskBootOrder: 1,
 						ProvisionConfig: hypervisor.VirtualMachineDiskProvision{
-							BlankConfig: &hypervisor.VirtualMachineDiskBlank{},
+							FromImageConfig: &hypervisor.VirtualMachineDiskFromImage{
+								ImageLibrary: "images",
+								ImageFile:    "guest.qcow2",
+							},
 						},
 					},
 					{
@@ -153,7 +222,6 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 								ImageLibrary: "images",
 								ImageFile:    "ubuntu-24.04.iso",
 								ImageDigest:  "sha256:5f2bc19e8b4b5b4a8b5e9c0d1f2a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c",
-								ImageMode:    hypervisorhelpers.VirtualMachineDiskImageModeCopy,
 							},
 						},
 					},
@@ -573,41 +641,6 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "disks[1]: duplicate bootOrder 1",
-		},
-		{
-			name: "writable image-derived disk is unsupported",
-			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
-				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{imageDisk("system")}
-				c.DisksConfig[0].DiskFormat = hypervisorhelpers.VirtualMachineDiskFormatRaw
-				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = hypervisorhelpers.VirtualMachineDiskImageModeLinked
-
-				return c
-			},
-
-			expectedErrors: "disks[0]: provision.fromImage: writable image-derived disks are not supported; use provision.blank and install from a cdrom",
-		},
-		{
-			name: "linked clone on a cdrom",
-			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
-				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
-				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = hypervisorhelpers.VirtualMachineDiskImageModeLinked
-
-				return c
-			},
-
-			expectedErrors: "disks[0]: provision.fromImage.mode: linked is not supported on a cdrom",
-		},
-		{
-			name: "copy mode on a cdrom",
-			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
-				c := validVirtualMachineConfig()
-				c.DisksConfig = []hypervisor.VirtualMachineDisk{cdromDisk()}
-				c.DisksConfig[0].ProvisionConfig.FromImageConfig.ImageMode = hypervisorhelpers.VirtualMachineDiskImageModeCopy
-
-				return c
-			},
 		},
 		{
 			name: "underscored pool name",
@@ -1479,7 +1512,7 @@ func blankDisk(name string) hypervisor.VirtualMachineDisk {
 	}
 }
 
-// cdromDisk is a valid cdrom: copied into a pool-owned volume, with no size or mode.
+// cdromDisk is a valid cdrom: copied into a pool-owned volume, with no size or format.
 func cdromDisk() hypervisor.VirtualMachineDisk {
 	return hypervisor.VirtualMachineDisk{
 		DiskName: "install",
@@ -1771,7 +1804,6 @@ disks:
         fromImage:
             library: images
             file: talos.qcow2
-            mode: copy
 `
 
 // TestVirtualMachineConfigEnumUnmarshal checks that a value outside an enum is refused while the
@@ -1817,12 +1849,6 @@ func TestVirtualMachineConfigEnumUnmarshal(t *testing.T) {
 			valid:    "type: disk",
 			spoiled:  "type: floppy",
 			expected: "floppy does not belong to VirtualMachineDiskType values",
-		},
-		{
-			name:     "image mode",
-			valid:    "mode: copy",
-			spoiled:  "mode: cow",
-			expected: "cow does not belong to VirtualMachineDiskImageMode values",
 		},
 		{
 			name:     "numa mode",
@@ -1887,12 +1913,6 @@ func TestVirtualMachineConfigEnumDocValues(t *testing.T) {
 			doc:      hypervisor.VirtualMachineDisk{}.Doc(),
 			field:    "type",
 			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskTypeStrings()),
-		},
-		{
-			name:     "image mode",
-			doc:      hypervisor.VirtualMachineDiskFromImage{}.Doc(),
-			field:    "mode",
-			expected: hypervisorhelpers.NameableValues(hypervisorhelpers.VirtualMachineDiskImageModeStrings()),
 		},
 		{
 			name:     "numa mode",

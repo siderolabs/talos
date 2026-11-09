@@ -9,15 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math/rand/v2"
+	"math"
 	"net"
 	"os"
-	"path/filepath"
 	"strings"
-	"sync"
+	"syscall"
 
 	libvirt "github.com/digitalocean/go-libvirt"
 	"libvirt.org/go/libvirtxml"
+
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
 )
 
 // volumeMode is the permission a created volume is given.
@@ -27,16 +28,7 @@ import (
 // cannot open is indistinguishable from one that was never created.
 const volumeMode = 0o600
 
-// stagedVolumePrefix and stagedVolumeSuffix name a volume which is still being created.
-//
-// A volume is built under a staged name and linked into place only if the requested name is
-// still free. A crash mid-create cannot leave a half-written file under the name a virtual
-// machine would adopt. The prefix is a dot, which keeps a leftover out of the way; the suffix is
-// what lets one be swept.
-const (
-	stagedVolumePrefix = "."
-	stagedVolumeSuffix = ".staged"
-)
+const rawFormat = "raw"
 
 // errVolumeExists reports a name already taken in the pool. CreateVolume never overwrites.
 var errVolumeExists = errors.New("volume already exists")
@@ -97,45 +89,6 @@ type Volume struct {
 	// Capacity is the volume's logical size in bytes -- what a guest sees, not what the file
 	// occupies.
 	Capacity uint64
-}
-
-// stagedVolumeName returns the name a volume of name is built under.
-//
-// Unique per attempt, so a staged file left behind by an interrupted create can never block a
-// later one of the same name.
-func stagedVolumeName(name string) string {
-	return fmt.Sprintf("%s%s.%016x%s", stagedVolumePrefix, name, rand.Uint64(), stagedVolumeSuffix)
-}
-
-// isStagedVolumeName reports whether name is a volume staged by stagedVolumeName.
-func isStagedVolumeName(name string) bool {
-	if !strings.HasPrefix(name, stagedVolumePrefix) || !strings.HasSuffix(name, stagedVolumeSuffix) {
-		return false
-	}
-
-	body := strings.TrimSuffix(strings.TrimPrefix(name, stagedVolumePrefix), stagedVolumeSuffix)
-
-	separator := strings.LastIndexByte(body, '.')
-	if separator <= 0 || body[:separator] == "." || body[:separator] == ".." {
-		return false
-	}
-
-	return isStagedVolumeNonce(body[separator+1:])
-}
-
-// isStagedVolumeNonce matches the fixed-width lowercase hexadecimal staging nonce.
-func isStagedVolumeNonce(nonce string) bool {
-	if len(nonce) != 16 {
-		return false
-	}
-
-	for _, character := range nonce {
-		if (character < '0' || character > '9') && (character < 'a' || character > 'f') {
-			return false
-		}
-	}
-
-	return true
 }
 
 // Volume looks a volume up by name within a pool.
@@ -252,114 +205,36 @@ func (c *Client) CreateVolume(pool Pool, name, format string, capacity uint64, b
 // ErrCopySourceRequired identifies an owned copy which has not yet been provisioned.
 var ErrCopySourceRequired = errors.New("copy source is required for initial provisioning")
 
-func validateCopyName(name string) error {
-	if name == "" || filepath.Base(name) != name || name == "." || strings.HasPrefix(name, ".") {
-		return fmt.Errorf("invalid copy volume name %q", name)
-	}
-
-	return nil
-}
-
 func (c *Client) adoptCopy(p libvirt.StoragePool, root *os.Root, name, witness string) (Volume, bool, error) {
-	exists, err := checkCopyOwnership(root, name, witness)
+	exists, err := copyowner.Check(root, name, witness)
 	if err != nil {
 		return Volume{}, false, err
 	}
 
 	if !exists {
-		exists, err = recoverCopy(root, name, witness)
+		if strings.HasPrefix(witness, ".copy-on-use/image-") {
+			return Volume{}, false, nil // A deleted writable disk is never recovered from hidden guest bytes.
+		}
+
+		exists, err = copyowner.Recover(root, name, witness)
 		if !exists || err != nil {
 			return Volume{}, false, err
 		}
 	} else {
 		// Ownership links may survive an attempt whose directory sync failed.
 		// Restore both ordered barriers before admitting the existing copy.
-		if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
+		if err := copyowner.Sync(root, ".copy-on-use"); err != nil {
 			return Volume{}, false, err
 		}
 
-		if err := syncCopyDirectory(root, "."); err != nil {
+		if err := copyowner.Sync(root, "."); err != nil {
 			return Volume{}, false, err
 		}
 	}
 
-	volume, err := c.copiedVolume(p, name)
+	volume, err := c.observedOwnedCopy(p, root, name, witness)
 
 	return volume, true, err
-}
-
-func checkCopyOwnership(root *os.Root, name, witness string) (bool, error) {
-	file, err := root.Lstat(name)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	owned, err := root.Lstat(witness)
-	if err != nil {
-		return false, fmt.Errorf("copy volume %q has no ownership witness: %w", name, err)
-	}
-
-	if !file.Mode().IsRegular() || !owned.Mode().IsRegular() || !os.SameFile(file, owned) {
-		return false, fmt.Errorf("copy volume %q exists without a matching ownership witness", name)
-	}
-
-	return true, nil
-}
-
-func recoverCopy(root *os.Root, name, witness string) (bool, error) {
-	owned, err := root.Lstat(witness)
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	if !owned.Mode().IsRegular() {
-		return false, fmt.Errorf("copy volume %q has a nonregular ownership witness", name)
-	}
-
-	// A witness from an interrupted publication is not proven durable yet.
-	if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
-		return false, err
-	}
-
-	if err = root.Link(witness, name); err != nil {
-		return false, fmt.Errorf("recover copy volume %q: %w", name, err)
-	}
-
-	return true, syncCopyDirectory(root, ".")
-}
-
-func publishCopy(root *os.Root, staged, name, witness string) error {
-	if err := root.Link(staged, witness); err != nil {
-		return fmt.Errorf("claim copy volume %q: %w", name, err)
-	}
-
-	if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
-		return err
-	}
-
-	if err := root.Link(staged, name); err != nil {
-		return fmt.Errorf("publish copy volume %q: %w", name, err)
-	}
-
-	return syncCopyDirectory(root, ".")
-}
-
-// syncCopyDirectory makes ownership and publication durable before reporting a usable copy.
-func syncCopyDirectory(root *os.Root, name string) error {
-	directory, err := root.Open(name)
-	if err != nil {
-		return err
-	}
-
-	return errors.Join(directory.Sync(), directory.Close())
 }
 
 func (c *Client) copiedVolume(p libvirt.StoragePool, name string) (Volume, error) {
@@ -372,12 +247,14 @@ func (c *Client) copiedVolume(p libvirt.StoragePool, name string) (Volume, error
 		return Volume{}, fmt.Errorf("copy volume %q has no libvirt observation", name)
 	}
 
-	if volume.Format != "raw" && volume.Format != "iso" {
+	if volume.Format != rawFormat && volume.Format != "iso" && volume.Format != "qcow2" {
 		return Volume{}, fmt.Errorf("%w: copy volume %q has format %q", ErrCopyFormatUnsupported, name, volume.Format)
 	}
 
 	// Libvirt probes ISO9660 media as "iso"; QEMU attaches its bytes with the raw driver.
-	volume.Format = "raw"
+	if volume.Format == "iso" {
+		volume.Format = rawFormat
+	}
 
 	return volume, nil
 }
@@ -413,7 +290,7 @@ func (c *Client) stageVolumeIntoPlace(p libvirt.StoragePool, target, name, forma
 	// caller's. The error is returned rather than ignored -- publication below needs write access
 	// to this same directory, so a sweep which cannot remove a file predicts a create which cannot
 	// finish.
-	if err := sweepStagedVolumes(target); err != nil {
+	if err := copyowner.SweepStages(target); err != nil {
 		return err
 	}
 
@@ -424,9 +301,9 @@ func (c *Client) stageVolumeIntoPlace(p libvirt.StoragePool, target, name, forma
 
 	defer root.Close() //nolint:errcheck
 
-	staged := stagedVolumeName(name)
+	staged := copyowner.StageName(name)
 
-	releaseStage := protectStage(target, staged)
+	releaseStage := copyowner.ProtectStage(target, staged)
 	defer releaseStage()
 
 	// Also remove a partial file when libvirt fails during creation. A successful publication
@@ -500,12 +377,13 @@ func (c *Client) createStagedVolume(p libvirt.StoragePool, name, format string, 
 }
 
 // ResizeVolumeOperation grows a volume to capacity bytes and reports whether the
-// resize RPC finished, was not submitted, or lost its reply.
+// mutation finished, was not submitted, or has an uncertain result.
 //
-// It only ever grows: the shrink flag is never passed, so libvirt refuses a capacity below the
-// volume's own even if a caller asks for one. Resizing a volume a guest has open is the caller's to
-// avoid -- for qcow2 QEMU holds a write lock and this fails, and for raw it succeeds while the
-// guest goes on seeing the old size.
+// Owned raw images grow by a pinned file descriptor, with a size check that rejects
+// shrink; other volumes keep libvirt's resize RPC without its shrink flag. Resizing
+// a volume a guest has open is the caller's to avoid -- for qcow2 QEMU holds a
+// write lock and this fails, and for raw it succeeds while the guest goes on
+// seeing the old size.
 func (c *Client) ResizeVolumeOperation(pool Pool, name string, capacity uint64) (OperationOutcome, error) {
 	var evidence mutationEvidence
 
@@ -520,7 +398,12 @@ func (c *Client) ResizeVolumeOperation(pool Pool, name string, capacity uint64) 
 
 	vol, err := c.rpc.StorageVolLookupByName(p, name)
 	if err != nil {
-		return evidence.outcome, fmt.Errorf("failed to look up volume %q in storage pool %q: %w", name, pool.Name, err)
+		return evidence.outcome, fmt.Errorf("failed to look up volume %q in storage pool %q: %w", name, pool.Name, volumeReadRPCError(err))
+	}
+
+	// A writable raw image owns its format independently of libvirt's content probe.
+	if handled, outcome, growErr := c.growOwnedRawImage(p, name, capacity); handled {
+		return outcome, growErr
 	}
 
 	err = c.rpc.StorageVolResize(vol, capacity, 0)
@@ -529,78 +412,132 @@ func (c *Client) ResizeVolumeOperation(pool Pool, name string, capacity uint64) 
 	return evidence.outcome, err
 }
 
-var activeStages = struct {
-	sync.Mutex
-	paths map[string]struct{}
-}{paths: make(map[string]struct{})}
-
-func stageKey(target, name string) string { return filepath.Clean(target) + "/" + name }
-
-func protectStage(target, name string) func() {
-	activeStages.Lock()
-	key := stageKey(target, name)
-	activeStages.paths[key] = struct{}{}
-	activeStages.Unlock()
-
-	return func() {
-		activeStages.Lock()
-		delete(activeStages.paths, key)
-		activeStages.Unlock()
+// growOwnedRawImage uses the inode-bound image marker, never guest sector signatures.
+// A missing marker or an owned qcow2 image keeps the usual libvirt resize path.
+func (c *Client) growOwnedRawImage(pool libvirt.StoragePool, name string, capacity uint64) (bool, OperationOutcome, error) {
+	if copyowner.ValidateName(name) != nil {
+		return false, NoMutationSubmitted, nil
 	}
-}
 
-// sweepStagedVolumes clears what interrupted creates left behind.
-//
-// Only names this package stages are removed. A volume is never deleted here: a staged file is one
-// no virtual machine has ever been told about, which is what makes clearing it safe.
-func sweepStagedVolumes(poolDir string) error {
-	activeStages.Lock()
-	defer activeStages.Unlock()
-
-	root, err := os.OpenRoot(poolDir)
+	// Read-only observation: nothing was submitted, so a lost reply is an
+	// observation outage rather than an uncertain mutation.
+	target, err := c.target(pool)
 	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-
-		return err
+		return true, NoMutationSubmitted, fmt.Errorf("failed to read storage pool %q target: %w", pool.Name, volumeReadRPCError(err))
 	}
 
+	if target == "" {
+		return true, NoMutationSubmitted, fmt.Errorf("storage pool %q has no target directory", pool.Name)
+	}
+
+	root, err := os.OpenRoot(target)
+	if err != nil {
+		return true, NoMutationSubmitted, err
+	}
 	defer root.Close() //nolint:errcheck
 
-	dir, err := root.Open(".")
+	// An unreadable marker fails closed: falling back to libvirt's resize
+	// would let it reclassify guest-written raw bytes by content probe.
+	witness := copyowner.Witness(name, true)
+	if _, err := root.Lstat(witness); os.IsNotExist(err) {
+		return false, NoMutationSubmitted, nil
+	} else if err != nil {
+		return true, NoMutationSubmitted, err
+	}
+
+	identity, format, valid, err := copyowner.ReadImageMarker(root, witness)
 	if err != nil {
-		return err
+		return true, NoMutationSubmitted, err
 	}
 
-	defer dir.Close() //nolint:errcheck
-
-	entries, err := dir.ReadDir(-1)
-	if err != nil {
-		return err
+	if !valid {
+		return true, NoMutationSubmitted, errors.New("invalid writable image ownership marker")
 	}
 
-	var errs error
+	if format != rawFormat {
+		err := validateResizeImageOwnership(root, name, witness)
 
-	for _, entry := range entries {
-		if _, active := activeStages.paths[stageKey(poolDir, entry.Name())]; active {
-			continue
-		}
-
-		if !isStagedVolumeEntry(entry) {
-			continue
-		}
-
-		if err = root.Remove(entry.Name()); err != nil && !os.IsNotExist(err) {
-			errs = errors.Join(errs, err)
-		}
+		return err != nil, NoMutationSubmitted, err
 	}
 
-	return errs
+	outcome, err := growPinnedRawImage(root, name, identity, capacity)
+
+	return true, outcome, err
 }
 
-func isStagedVolumeEntry(entry os.DirEntry) bool {
-	return entry.Type().IsRegular() && isStagedVolumeName(entry.Name())
+func validateResizeImageOwnership(root *os.Root, name, witness string) error {
+	owned, err := copyowner.Check(root, name, witness)
+	if err != nil || !owned {
+		return errors.Join(err, errors.New("image volume is not owned by its marker"))
+	}
+
+	return nil
+}
+
+func growPinnedRawImage(root *os.Root, name, identity string, capacity uint64) (OperationOutcome, error) {
+	file, err := root.OpenFile(name, os.O_RDWR, 0)
+	if err != nil {
+		return NoMutationSubmitted, err
+	}
+	defer file.Close() //nolint:errcheck
+
+	opened, err := validatePinnedRawImage(root, file, name, identity)
+	if err != nil {
+		return NoMutationSubmitted, err
+	}
+
+	if capacity < uint64(opened.Size()) || capacity > uint64(math.MaxInt64) {
+		return NoMutationSubmitted, fmt.Errorf("raw image volume %q cannot shrink or exceed file size limits", name)
+	}
+
+	if capacity == uint64(opened.Size()) {
+		return NoMutationSubmitted, nil
+	}
+
+	// Truncate acts on the pinned regular file, not libvirt's potentially
+	// reclassified format. Definitive local rejections are not lost RPC replies.
+	if err := file.Truncate(int64(capacity)); err != nil {
+		return rawTruncateOutcome(err), err
+	}
+
+	if err := file.Sync(); err != nil {
+		return Unknown, err
+	}
+
+	return Finished, nil
+}
+
+func rawTruncateOutcome(err error) OperationOutcome {
+	switch {
+	case errors.Is(err, syscall.EFBIG), errors.Is(err, syscall.ENOSPC), errors.Is(err, syscall.EDQUOT),
+		errors.Is(err, syscall.EROFS), errors.Is(err, syscall.EPERM), errors.Is(err, syscall.EINVAL):
+		return Finished
+	default:
+		return Unknown
+	}
+}
+
+func validatePinnedRawImage(root *os.Root, file *os.File, name, identity string) (os.FileInfo, error) {
+	opened, err := file.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	current, err := root.Lstat(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if !opened.Mode().IsRegular() || !os.SameFile(opened, current) {
+		return nil, fmt.Errorf("raw image volume %q is not owned by its marker", name)
+	}
+
+	owned, err := copyowner.ImageFileMatches(identity, rawFormat, file)
+	if err != nil || !owned {
+		return nil, errors.Join(err, fmt.Errorf("raw image volume %q is not owned by its marker", name))
+	}
+
+	return opened, nil
 }
 
 // isNoStorageVol reports whether err is libvirt saying the volume does not exist.

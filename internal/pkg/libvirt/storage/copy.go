@@ -6,18 +6,23 @@ package storage
 
 import (
 	"context"
-	"crypto/sha256"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/digitalocean/go-libvirt"
 	"github.com/opencontainers/go-digest"
+
+	"github.com/siderolabs/talos/internal/pkg/libvirt/storage/copyowner"
 )
+
+// ErrCopySourceNotRegular identifies a permanent unsupported source kind.
+var ErrCopySourceNotRegular = errors.New("copy source is not a regular file")
 
 // ErrCopySourceChanged identifies a source identity race that a fresh attempt can retry.
 var ErrCopySourceChanged = errors.New("copy source changed")
@@ -29,6 +34,7 @@ type CopyPhase string
 const (
 	CopyPhaseTransfer CopyPhase = "transfer"
 	CopyPhaseVerify   CopyPhase = "verify"
+	CopyPhaseConvert  CopyPhase = "convert"
 	CopyPhaseSync     CopyPhase = "sync"
 	CopyPhaseValidate CopyPhase = "validate"
 	CopyPhasePublish  CopyPhase = "publish"
@@ -91,14 +97,33 @@ type CopyOperation struct {
 	Source   string
 	Expected string
 
-	root     *os.Root
-	backing  os.FileInfo
-	target   string
-	staged   string
-	witness  string
-	release  func()
-	observer func(CopyProgress)
-	progress CopyProgress
+	root          *os.Root
+	backing       os.FileInfo
+	target        string
+	staged        string
+	witness       string
+	release       func()
+	observer      func(CopyProgress)
+	progress      CopyProgress
+	imageFormat   string
+	imageCapacity uint64
+	bindingKey    string
+	transferred   bool
+}
+
+// SetBindingKey associates immutable publication with durable intent before transfer.
+func (op *CopyOperation) SetBindingKey(key string) error {
+	if op == nil || op.root == nil || op.transferred {
+		return fmt.Errorf("copy binding key must be set before transfer")
+	}
+
+	if _, err := copyowner.BindingPath(key); err != nil {
+		return err
+	}
+
+	op.bindingKey = key
+
+	return nil
 }
 
 // Close removes the private stage before releasing its sweep protection.
@@ -117,7 +142,7 @@ func (op *CopyOperation) Close() {
 
 // PrepareCopy observes the pool and reserves a stage without copying bytes.
 func (c *Client) PrepareCopy(pool Pool, name, source, expected string) (*CopyOperation, error) {
-	if err := validateCopyName(name); err != nil {
+	if err := copyowner.ValidateName(name); err != nil {
 		return nil, err
 	}
 
@@ -126,8 +151,8 @@ func (c *Client) PrepareCopy(pool Pool, name, source, expected string) (*CopyOpe
 		return nil, err
 	}
 
-	staged := stagedVolumeName(name)
-	release := protectStage(target, staged)
+	staged := copyowner.StageName(name)
+	release := copyowner.ProtectStage(target, staged)
 
 	root, err := os.OpenRoot(target)
 	if err != nil {
@@ -160,7 +185,7 @@ func (c *Client) PrepareCopy(pool Pool, name, source, expected string) (*CopyOpe
 		backing: backing,
 		target:  target,
 		staged:  staged,
-		witness: fmt.Sprintf(".copy-on-use/%x", sha256.Sum256([]byte(name))),
+		witness: copyowner.Witness(name, false),
 		release: release,
 	}, nil
 }
@@ -170,6 +195,8 @@ func (op *CopyOperation) Transfer(ctx context.Context) error {
 	if op == nil || op.root == nil {
 		return fmt.Errorf("copy stage is closed")
 	}
+
+	op.transferred = true
 
 	if err := ctx.Err(); err != nil {
 		return err
@@ -209,7 +236,7 @@ func openCopySource(source string) (*os.File, os.FileInfo, error) {
 	}
 
 	if !original.Mode().IsRegular() {
-		return nil, nil, fmt.Errorf("copy source %q is not a regular file", source)
+		return nil, nil, fmt.Errorf("%w: %q", ErrCopySourceNotRegular, source)
 	}
 
 	input, err := os.Open(source)
@@ -329,21 +356,46 @@ func (c *Client) FinishCopy(ctx context.Context, pool Pool, op *CopyOperation, v
 		return Volume{}, err
 	}
 
-	if err = validate(); err != nil {
+	if err = op.publish(ctx, validate); err != nil {
 		return Volume{}, err
 	}
 
-	if err = ctx.Err(); err != nil {
-		return Volume{}, err
-	}
-
-	op.observe(CopyPhasePublish)
-
-	if err = publishCopy(op.root, op.staged, op.Name, op.witness); err != nil {
-		return Volume{}, err
+	if op.imageFormat != "" {
+		return c.copiedImageVolume(p, op.root, op.Name, op.imageFormat)
 	}
 
 	return c.copiedVolume(p, op.Name)
+}
+
+// Owner metadata and payload links form one publication transaction.
+var copyPublications sync.Mutex
+
+func (op *CopyOperation) publish(ctx context.Context, validate func() error) error {
+	op.observe(CopyPhasePublish)
+
+	copyPublications.Lock()
+	defer copyPublications.Unlock()
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if err := validate(); err != nil {
+		return err
+	}
+
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	if op.imageFormat == "" && op.bindingKey != "" {
+		owner := copyowner.OwnerStage{Root: op.root, Staged: op.staged, Name: op.Name, Witness: op.witness, Key: op.bindingKey}
+		if err := owner.PublishOwner(); err != nil {
+			return err
+		}
+	}
+
+	return copyowner.Publish(op.root, op.staged, op.Name, op.witness, op.imageFormat)
 }
 
 func (c *Client) copyPool(pool Pool, op *CopyOperation) (libvirt.StoragePool, error) {
@@ -361,16 +413,33 @@ func (c *Client) copyPool(pool Pool, op *CopyOperation) (libvirt.StoragePool, er
 		return p, fmt.Errorf("copy pool backing changed")
 	}
 
-	if _, err = c.copiedVolume(p, op.staged); err != nil {
+	// The private name may have been discovered while conversion was still
+	// writing it. A lookup hit is not evidence that libvirt reread its header.
+	if op.imageFormat != "" {
+		if err := c.rpc.StoragePoolRefresh(p, 0); err != nil {
+			return p, fmt.Errorf("refresh converted image: %w", volumeReadRPCError(err))
+		}
+	}
+
+	var volume Volume
+	if op.imageFormat != "" {
+		volume, err = c.copiedImageVolume(p, op.root, op.staged, op.imageFormat)
+	} else {
+		volume, err = c.copiedVolume(p, op.staged)
+	}
+
+	if err != nil {
 		return p, fmt.Errorf("validate staged copy: %w", err)
 	}
 
-	return p, nil
+	return p, op.validateVolume(volume)
 }
 
 // CopyCache contains ownership and durability proofs for one controller run.
 // A new run must construct a fresh cache so its first adoption restores durability.
 type CopyCache struct {
+	// Image selects writable-image ownership rather than immutable media ownership.
+	Image   bool
 	entries map[string]copyProof
 }
 
@@ -390,7 +459,23 @@ func (cache *CopyCache) Forget(pool Pool, name string) {
 // AdoptCopy checks ownership, backing identity and libvirt observation every pass.
 // A first adoption restores the witness and directory barriers before caching.
 func (c *Client) AdoptCopy(pool Pool, name string, cache *CopyCache) (Volume, bool, error) {
-	if err := validateCopyName(name); err != nil {
+	volume, adopted, err := c.adoptCopyOperation(pool, name, cache)
+	if err != nil || !adopted {
+		return volume, adopted, err
+	}
+
+	// Writable disks are already published and guest-controlled. Their owned
+	// inode and libvirt driver observation establish identity; their sectors
+	// must never be interpreted again as a new source image.
+	if (cache == nil || !cache.Image) && volume.Format != rawFormat {
+		return Volume{}, false, fmt.Errorf("%w: %q", ErrCopyFormatUnsupported, volume.Format)
+	}
+
+	return volume, adopted, nil
+}
+
+func (c *Client) adoptCopyOperation(pool Pool, name string, cache *CopyCache) (Volume, bool, error) {
+	if err := copyowner.ValidateName(name); err != nil {
 		return Volume{}, false, err
 	}
 
@@ -401,7 +486,7 @@ func (c *Client) AdoptCopy(pool Pool, name string, cache *CopyCache) (Volume, bo
 		return Volume{}, false, err
 	}
 
-	witness := fmt.Sprintf(".copy-on-use/%x", sha256.Sum256([]byte(name)))
+	witness := copyowner.Witness(name, cache != nil && cache.Image)
 	if volume, checked, cacheErr := c.cachedCopy(p, pool, target, name, witness, cache); checked {
 		return volume, true, cacheErr
 	}
@@ -434,7 +519,7 @@ func (c *Client) cachedCopy(p libvirt.StoragePool, pool Pool, target, name, witn
 		return Volume{}, err != nil, err
 	}
 
-	volume, err := c.copiedVolume(p, name)
+	volume, err := c.observedOwnedCopy(p, root, name, witness)
 	if err != nil {
 		cache.Forget(pool, name)
 	}
@@ -443,7 +528,7 @@ func (c *Client) cachedCopy(p libvirt.StoragePool, pool Pool, target, name, witn
 }
 
 func (proof copyProof) matches(root *os.Root, target, name, witness string) (bool, error) {
-	exists, err := checkCopyOwnership(root, name, witness)
+	exists, err := copyowner.Check(root, name, witness)
 	if err != nil || !exists {
 		return false, err
 	}
@@ -462,8 +547,25 @@ func (proof copyProof) matches(root *os.Root, target, name, witness string) (boo
 		os.SameFile(file, proof.file) && os.SameFile(backing, proof.backing), nil
 }
 
+func (c *Client) observedOwnedCopy(p libvirt.StoragePool, root *os.Root, name, witness string) (Volume, error) {
+	if strings.HasPrefix(witness, ".copy-on-use/image-") {
+		_, format, valid, err := copyowner.ReadImageMarker(root, witness)
+		if err != nil {
+			return Volume{}, err
+		}
+
+		if !valid {
+			return Volume{}, fmt.Errorf("invalid writable copy ownership marker for %q", name)
+		}
+
+		return c.copiedImageVolume(p, root, name, format)
+	}
+
+	return c.copiedVolume(p, name)
+}
+
 func (c *Client) durableCopy(p libvirt.StoragePool, pool Pool, target, name, witness string, cache *CopyCache) (Volume, bool, error) {
-	if err := sweepStagedVolumes(target); err != nil {
+	if err := copyowner.SweepStages(target); err != nil {
 		return Volume{}, false, err
 	}
 
@@ -518,250 +620,3 @@ const CopyBindingLabel = "storage.talos.dev/copy-binding"
 
 // CopyBindingPublicationFinalizer fences disk-intent CAS updates during durable publication.
 const CopyBindingPublicationFinalizer = "storage.StoragePoolVolumeController"
-
-// CopyBindings remembers durability acknowledgments only for this controller run.
-// Its zero value is ready for use by a single reconciliation owner.
-type CopyBindings struct {
-	proven map[string]copyBindingProof
-}
-
-type copyBindingProof struct {
-	root    os.FileInfo
-	private os.FileInfo
-	record  os.FileInfo
-}
-
-func bindingPath(key string) (string, error) {
-	if len(key) != 64 || strings.Trim(key, "0123456789abcdef") != "" {
-		return "", fmt.Errorf("invalid copy binding key %q", key)
-	}
-
-	return filepath.Join(".copy-on-use", "binding-"+key), nil
-}
-
-func ownedCopy(root *os.Root, name string) error {
-	if err := validateCopyName(name); err != nil {
-		return err
-	}
-
-	witness := fmt.Sprintf(".copy-on-use/%x", sha256.Sum256([]byte(name)))
-
-	exists, err := checkCopyOwnership(root, name, witness)
-	if err != nil {
-		return err
-	}
-
-	if !exists {
-		return fmt.Errorf("copy %q is not published", name)
-	}
-
-	return nil
-}
-
-// CopyPublicationAbsent proves both publication paths are missing, not merely unobservable.
-func CopyPublicationAbsent(target, name string) (bool, error) {
-	if err := validateCopyName(name); err != nil {
-		return false, err
-	}
-
-	root, err := os.OpenRoot(target)
-	if err != nil {
-		return false, err
-	}
-	defer root.Close() //nolint:errcheck
-
-	for _, path := range []string{name, fmt.Sprintf(".copy-on-use/%x", sha256.Sum256([]byte(name)))} {
-		_, err := root.Lstat(path)
-		if err == nil {
-			return false, nil
-		}
-
-		if !os.IsNotExist(err) {
-			return false, err
-		}
-	}
-
-	return true, nil
-}
-
-// ReadCopyBinding selects only an explicitly recorded completed, owned destination.
-// Missing bindings return an empty name; malformed, stale and foreign records fail closed.
-func ReadCopyBinding(target, key string) (string, error) {
-	path, err := bindingPath(key)
-	if err != nil {
-		return "", err
-	}
-
-	root, err := os.OpenRoot(target)
-	if err != nil {
-		return "", err
-	}
-	defer root.Close() //nolint:errcheck
-
-	name, _, err := readBindingRecord(root, path)
-	if err != nil || name == "" {
-		return "", err
-	}
-
-	if err := ownedCopy(root, name); err != nil {
-		return "", fmt.Errorf("invalid copy binding: %w", err)
-	}
-
-	return name, nil
-}
-
-func readBindingRecord(root *os.Root, path string) (string, os.FileInfo, error) {
-	before, err := root.Lstat(path)
-	if os.IsNotExist(err) {
-		return "", nil, nil
-	}
-
-	if err != nil {
-		return "", nil, err
-	}
-
-	if !before.Mode().IsRegular() || before.Size() == 0 || before.Size() > 255 {
-		return "", nil, errors.New("invalid copy binding record")
-	}
-
-	return readBindingFile(root, path, before)
-}
-
-func readBindingFile(root *os.Root, path string, before os.FileInfo) (string, os.FileInfo, error) {
-	file, err := root.Open(path)
-	if err != nil {
-		return "", nil, err
-	}
-
-	info, statErr := file.Stat()
-
-	data, readErr := io.ReadAll(io.LimitReader(file, 256))
-	if err := errors.Join(statErr, readErr, file.Close()); err != nil {
-		return "", nil, err
-	}
-
-	if !os.SameFile(before, info) || len(data) == 0 || len(data) > 255 {
-		return "", nil, errors.New("copy binding record changed while reading")
-	}
-
-	if err := validateCopyName(string(data)); err != nil {
-		return "", nil, err
-	}
-
-	return string(data), info, nil
-}
-
-// Record durably selects a completed owned copy. Cold observations reestablish directory
-// barriers; unchanged, acknowledged root/private-directory/record identities need no writes.
-func (bindings *CopyBindings) Record(target, key, name string) error {
-	path, err := bindingPath(key)
-	if err != nil {
-		return err
-	}
-
-	root, proof, err := openBindingRoot(target, name)
-	if err != nil {
-		return err
-	}
-	defer root.Close() //nolint:errcheck
-
-	return bindings.record(root, target+"\x00"+key, path, key, name, proof)
-}
-
-func openBindingRoot(target, name string) (*os.Root, copyBindingProof, error) {
-	root, err := os.OpenRoot(target)
-	if err != nil {
-		return nil, copyBindingProof{}, err
-	}
-
-	if err := ownedCopy(root, name); err != nil {
-		return nil, copyBindingProof{}, errors.Join(err, root.Close())
-	}
-
-	rootInfo, err := root.Stat(".")
-	if err != nil {
-		return nil, copyBindingProof{}, errors.Join(err, root.Close())
-	}
-
-	privateInfo, err := root.Lstat(".copy-on-use")
-	if err != nil {
-		return nil, copyBindingProof{}, errors.Join(err, root.Close())
-	}
-
-	if !privateInfo.IsDir() {
-		return nil, copyBindingProof{}, errors.Join(errors.New("copy binding directory is not a directory"), root.Close())
-	}
-
-	return root, copyBindingProof{
-		root:    rootInfo,
-		private: privateInfo,
-	}, nil
-}
-
-func (bindings *CopyBindings) acknowledged(key string, proof copyBindingProof) bool {
-	previous, ok := bindings.proven[key]
-
-	return ok && os.SameFile(proof.root, previous.root) && os.SameFile(proof.private, previous.private) &&
-		os.SameFile(proof.record, previous.record)
-}
-
-func (bindings *CopyBindings) record(root *os.Root, cacheKey, path, key, name string, proof copyBindingProof) error {
-	previous, recordInfo, err := readBindingRecord(root, path)
-	if err != nil {
-		return err
-	}
-
-	proof.record = recordInfo
-	if previous == name && bindings.acknowledged(cacheKey, proof) {
-		return nil
-	}
-
-	if previous != name {
-		if err := writeBindingRecord(root, path, key, name); err != nil {
-			return err
-		}
-
-		proof.record, err = root.Lstat(path)
-		if err != nil {
-			return err
-		}
-	}
-
-	if err := syncCopyDirectory(root, ".copy-on-use"); err != nil {
-		return err
-	}
-
-	if err := syncCopyDirectory(root, "."); err != nil {
-		return err
-	}
-
-	if bindings.proven == nil {
-		bindings.proven = make(map[string]copyBindingProof)
-	}
-
-	bindings.proven[cacheKey] = proof
-
-	return nil
-}
-
-func writeBindingRecord(root *os.Root, path, key, name string) error {
-	// stagedVolumeName includes a fresh random nonce on every attempt, including retries.
-	staged := ".copy-on-use/" + stagedVolumeName("binding-"+key)
-
-	file, err := root.OpenFile(staged, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o600)
-	if err != nil {
-		return err
-	}
-	defer root.Remove(staged) //nolint:errcheck
-
-	_, err = file.WriteString(name)
-	if err == nil {
-		err = file.Sync()
-	}
-
-	if err := errors.Join(err, file.Close()); err != nil {
-		return err
-	}
-
-	return root.Rename(staged, path)
-}
