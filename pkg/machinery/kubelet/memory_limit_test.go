@@ -47,6 +47,14 @@ func TestValidateMemoryLimitConfiguration(t *testing.T) {
 			extraConfig: map[string]any{"enforceNodeAllocatable": []any{"pods", "kube-reserved"}, "kubeReservedCgroup": "/podruntime"},
 		},
 		{
+			name: "CPU-only kube-reserved enforcement on a Talos-owned cgroup",
+			extraConfig: map[string]any{
+				"enforceNodeAllocatable": []any{"pods", "kube-reserved"},
+				"kubeReservedCgroup":     "/taloscontainers",
+				"kubeReserved":           map[string]any{"cpu": "100m"},
+			},
+		},
+		{
 			name:        "managed cgroup name without enforcement",
 			extraConfig: map[string]any{"kubeReservedCgroup": "/kubepods", "systemReservedCgroup": "/taloscontainers"},
 		},
@@ -92,8 +100,12 @@ func TestValidateMemoryLimitConfiguration(t *testing.T) {
 				`the derived "systemReserved.memory" is not a system daemon budget`,
 		},
 		{
-			name:        "kube-reserved enforcement on a managed cgroup",
-			extraConfig: map[string]any{"enforceNodeAllocatable": []any{"pods", "kube-reserved"}, "kubeReservedCgroup": "virtualmachines.partition/"},
+			name: "kube-reserved enforcement on a managed cgroup",
+			extraConfig: map[string]any{
+				"enforceNodeAllocatable": []any{"pods", "kube-reserved"},
+				"kubeReservedCgroup":     "virtualmachines.partition/",
+				"kubeReserved":           map[string]any{"memory": "512Mi"},
+			},
 
 			expectedError: `kubelet configuration field "kubeReservedCgroup" "virtualmachines.partition/" is a Talos-managed cgroup: ` +
 				`it cannot be enforced with "kube-reserved" together with the kubepods memory limit`,

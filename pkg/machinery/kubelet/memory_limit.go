@@ -97,7 +97,9 @@ func ValidateMemoryLimitConfiguration(extraConfig map[string]any, extraArgs map[
 	}
 
 	if slices.Contains(enforcement, "kube-reserved") {
-		if cgroupName, ok := extraConfig["kubeReservedCgroup"].(string); ok && isManagedRoot(cgroupName) {
+		// A reservation without memory writes nothing Talos manages on the roots it owns itself.
+		if cgroupName, ok := extraConfig["kubeReservedCgroup"].(string); ok && isManagedRoot(cgroupName) &&
+			(!isTalosOwnedRoot(cgroupName) || stringMapContains(extraConfig["kubeReserved"], "memory")) {
 			errs = errors.Join(errs, fmt.Errorf(`kubelet configuration field "kubeReservedCgroup" %q is a Talos-managed cgroup: `+
 				`it cannot be enforced with "kube-reserved" together with the kubepods memory limit`, cgroupName))
 		}
