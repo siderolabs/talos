@@ -26,11 +26,6 @@ spec:
                 operator: In
                 values:
                 - linux
-              - key: kubernetes.io/arch
-                operator: In
-                values:
-                - amd64
-                - arm64
       containers:
       - command:
         - /usr/local/bin/kube-proxy

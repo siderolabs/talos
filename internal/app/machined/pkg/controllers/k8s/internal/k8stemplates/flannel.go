@@ -368,21 +368,7 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.O
 				},
 				Spec: corev1.PodSpec{
 					Affinity: &corev1.Affinity{
-						NodeAffinity: &corev1.NodeAffinity{
-							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-								NodeSelectorTerms: []corev1.NodeSelectorTerm{
-									{
-										MatchExpressions: []corev1.NodeSelectorRequirement{
-											{
-												Key:      "kubernetes.io/os",
-												Operator: corev1.NodeSelectorOpIn,
-												Values:   []string{"linux"},
-											},
-										},
-									},
-								},
-							},
-						},
+						NodeAffinity: nodeAffinity,
 					},
 					Containers: containers,
 					InitContainers: []corev1.Container{

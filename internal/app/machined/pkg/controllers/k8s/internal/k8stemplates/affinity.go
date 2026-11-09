@@ -6,8 +6,6 @@ package k8stemplates
 
 import (
 	corev1 "k8s.io/api/core/v1"
-
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var nodeAffinity = &corev1.NodeAffinity{
@@ -19,11 +17,6 @@ var nodeAffinity = &corev1.NodeAffinity{
 						Key:      "kubernetes.io/os",
 						Operator: corev1.NodeSelectorOpIn,
 						Values:   []string{"linux"},
-					},
-					{
-						Key:      "kubernetes.io/arch",
-						Operator: corev1.NodeSelectorOpIn,
-						Values:   constants.SupportedArchitectures,
 					},
 				},
 			},
