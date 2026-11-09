@@ -38,10 +38,12 @@ type receiver interface {
 
 // Watcher is a kobject uevent watcher.
 type Watcher struct {
-	wg     sync.WaitGroup
-	cli    receiver
-	logger *zap.Logger
-	errCh  chan error
+	wg        sync.WaitGroup
+	cli       receiver
+	logger    *zap.Logger
+	errCh     chan error
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 // NewWatcher creates a new kobject watcher.
@@ -65,11 +67,15 @@ func NewWatcherFromReceiver(r receiver, logger *zap.Logger) *Watcher {
 		cli:    r,
 		logger: logger,
 		errCh:  make(chan error, 1),
+		done:   make(chan struct{}),
 	}
 }
 
 // Close the watcher.
 func (w *Watcher) Close() error {
+	// Releases a Run goroutine blocked on a full event channel nobody reads anymore.
+	w.closeOnce.Do(func() { close(w.done) })
+
 	if err := w.cli.Close(); err != nil {
 		return err
 	}
@@ -106,7 +112,18 @@ func (w *Watcher) Run(subsystems ...string) <-chan *Event {
 				continue
 			}
 
-			ch <- ev
+			// Try the send alone first, so events fitting the buffer stay readable after Close.
+			select {
+			case ch <- ev:
+				continue
+			default:
+			}
+
+			select {
+			case ch <- ev:
+			case <-w.done:
+				return
+			}
 		}
 	})
 
