@@ -72,6 +72,15 @@ func (o EtcdRootSpec) DeepCopy() EtcdRootSpec {
 	if o.EtcdCA != nil {
 		cp.EtcdCA = o.EtcdCA.DeepCopy()
 	}
+	if o.AcceptedCAs != nil {
+		cp.AcceptedCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedCAs))
+		copy(cp.AcceptedCAs, o.AcceptedCAs)
+		for i2 := range o.AcceptedCAs {
+			if o.AcceptedCAs[i2] != nil {
+				cp.AcceptedCAs[i2] = o.AcceptedCAs[i2].DeepCopy()
+			}
+		}
+	}
 	return cp
 }
 

@@ -5,7 +5,6 @@
 package reg
 
 import (
-	"bytes"
 	"context"
 	stdx509 "crypto/x509"
 	"crypto/x509/pkix"
@@ -16,13 +15,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 
 	securityapi "github.com/siderolabs/talos/pkg/machinery/api/security"
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -100,15 +99,7 @@ func (r *Registrator) Certificate(ctx context.Context, in *securityapi.Certifica
 	}
 
 	resp = &securityapi.CertificateResponse{
-		Ca: bytes.Join(
-			xslices.Map(
-				osRoot.TypedSpec().AcceptedCAs,
-				func(cert *x509.PEMEncodedCertificate) []byte {
-					return cert.Crt
-				},
-			),
-			nil,
-		),
+		Ca:  pemutils.JoinCertificates(osRoot.TypedSpec().AcceptedCAs),
 		Crt: signed.X509CertificatePEM,
 	}
 

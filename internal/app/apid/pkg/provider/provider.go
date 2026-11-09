@@ -6,7 +6,6 @@
 package provider
 
 import (
-	"bytes"
 	"context"
 	stdlibtls "crypto/tls"
 	stdx509 "crypto/x509"
@@ -17,9 +16,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/tls"
-	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/xslices"
 
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -166,15 +164,7 @@ func (p *certificateProvider) Update(apiCerts *secrets.API) error {
 
 	p.serverCert = &serverCert
 
-	p.ca = bytes.Join(
-		xslices.Map(
-			apiCerts.TypedSpec().AcceptedCAs,
-			func(cert *x509.PEMEncodedCertificate) []byte {
-				return cert.Crt
-			},
-		),
-		nil,
-	)
+	p.ca = pemutils.JoinCertificates(apiCerts.TypedSpec().AcceptedCAs)
 
 	p.caCertPool = stdx509.NewCertPool()
 

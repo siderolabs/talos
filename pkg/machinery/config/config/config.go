@@ -69,6 +69,10 @@ type Config interface { //nolint:interfacebloat
 	K8sKubePrismConfig() K8sKubePrismConfig
 	K8sTalosAPIAccessConfig() K8sTalosAPIAccessConfig
 
+	// - etcd:
+	EtcdCAConfig() EtcdCAConfig
+	EtcdMemberConfig() EtcdMemberConfig
+
 	// - containers:
 	ContainerConfigs() []ContainerConfig
 

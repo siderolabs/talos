@@ -1085,6 +1085,34 @@ func (container *Container) K8sTalosAPIAccessConfig() config.K8sTalosAPIAccessCo
 	return nil
 }
 
+// EtcdCAConfig implements config.Config interface.
+func (container *Container) EtcdCAConfig() config.EtcdCAConfig {
+	matching := findMatchingDocs[config.EtcdCAConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.EtcdCAConfig()
+	}
+
+	return nil
+}
+
+// EtcdMemberConfig implements config.Config interface.
+func (container *Container) EtcdMemberConfig() config.EtcdMemberConfig {
+	matching := findMatchingDocs[config.EtcdMemberConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.EtcdMemberConfig()
+	}
+
+	return nil
+}
+
 // CPUPartitionConfig implements config.Config interface.
 func (container *Container) CPUPartitionConfig() config.CPUPartitionConfig {
 	matching := findMatchingDocs[config.CPUPartitionConfig](container.documents)

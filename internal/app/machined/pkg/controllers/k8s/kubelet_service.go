@@ -21,7 +21,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	talosx509 "github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer/json"
@@ -34,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -271,7 +271,7 @@ func (ctrl *KubeletServiceController) cleanupResourceManagerState(kubeletStateDi
 }
 
 func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) error {
-	acceptedCAs := bytes.Join(xslices.Map(secretSpec.AcceptedCAs, func(ca *talosx509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
+	acceptedCAs := pemutils.JoinCertificates(secretSpec.AcceptedCAs)
 
 	bootstrapKubeconfig := clientcmdapi.Config{
 		APIVersion: "v1",
@@ -453,7 +453,7 @@ func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, new
 
 	cluster.Server = newEndpoint.String()
 	cluster.TLSServerName = newTLSServerName
-	cluster.CertificateAuthorityData = bytes.Join(xslices.Map(acceptedCAs, func(ca *talosx509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
+	cluster.CertificateAuthorityData = pemutils.JoinCertificates(acceptedCAs)
 
 	return clientcmd.WriteToFile(*config, constants.KubeletKubeconfig)
 }

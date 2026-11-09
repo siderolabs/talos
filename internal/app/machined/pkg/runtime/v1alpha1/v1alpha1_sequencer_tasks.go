@@ -351,7 +351,7 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		serviceList := []system.Service{}
 
-		shouldStartEtcd := r.Config() != nil && r.Config().Cluster() != nil && r.Config().Cluster().Etcd().CA() != nil
+		shouldStartEtcd := r.Config() != nil && r.Config().EtcdCAConfig() != nil && r.Config().EtcdMemberConfig() != nil
 
 		switch t := r.Config().Machine().Type(); t {
 		case machine.TypeInit:

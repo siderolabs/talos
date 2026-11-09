@@ -6,8 +6,6 @@ package config
 
 import (
 	"time"
-
-	"github.com/siderolabs/crypto/x509"
 )
 
 // ClusterConfig defines the requirements for a config that pertains to cluster
@@ -18,7 +16,6 @@ type ClusterConfig interface {
 	Token() Token
 	AESCBCEncryptionSecret() string
 	SecretboxEncryptionSecret() string
-	Etcd() Etcd
 	// ExternalCloudProvider returns external cloud provider settings.
 	ExternalCloudProvider() ExternalCloudProvider
 	AdminKubeconfig() AdminKubeconfig
@@ -30,16 +27,6 @@ type ClusterConfig interface {
 type DiscoveryIdentityConfig interface {
 	ClusterID() string
 	ClusterSecret() string
-}
-
-// Etcd defines the requirements for a config that pertains to etcd related
-// options.
-type Etcd interface {
-	Image() string
-	CA() *x509.PEMEncodedCertificateAndKey
-	ExtraArgs() map[string][]string
-	AdvertisedSubnets() []string
-	ListenSubnets() []string
 }
 
 // Token defines the requirements for a config that pertains to Kubernetes

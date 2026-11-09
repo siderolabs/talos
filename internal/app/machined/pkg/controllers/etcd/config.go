@@ -40,12 +40,19 @@ func NewConfigController() *ConfigController {
 					return optional.None[*etcd.Config]()
 				}
 
+				if cfg.Config().EtcdMemberConfig() == nil {
+					// etcd member is not configured
+					return optional.None[*etcd.Config]()
+				}
+
 				return optional.Some(etcd.NewConfig(etcd.NamespaceName, etcd.ConfigID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, cfg *etcd.Config) error {
-				cfg.TypedSpec().AdvertiseValidSubnets = machineConfig.Config().Cluster().Etcd().AdvertisedSubnets()
+				memberConfig := machineConfig.Config().EtcdMemberConfig()
+
+				cfg.TypedSpec().AdvertiseValidSubnets = memberConfig.AdvertisedSubnets()
 				cfg.TypedSpec().AdvertiseExcludeSubnets = nil
-				cfg.TypedSpec().ListenValidSubnets = machineConfig.Config().Cluster().Etcd().ListenSubnets()
+				cfg.TypedSpec().ListenValidSubnets = memberConfig.ListenSubnets()
 				cfg.TypedSpec().ListenExcludeSubnets = nil
 
 				// filter out any virtual IPs, they can't be node IPs either
@@ -65,11 +72,12 @@ func NewConfigController() *ConfigController {
 					cfg.TypedSpec().AdvertiseExcludeSubnets = append(cfg.TypedSpec().AdvertiseExcludeSubnets, doc.VIP().String())
 				}
 
-				cfg.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
+				cfg.TypedSpec().Image = memberConfig.Image()
 
-				extraArgs := make(map[string]etcd.ArgValues, len(machineConfig.Config().Cluster().Etcd().ExtraArgs()))
+				memberExtraArgs := memberConfig.ExtraArgs()
+				extraArgs := make(map[string]etcd.ArgValues, len(memberExtraArgs))
 
-				for k, v := range machineConfig.Config().Cluster().Etcd().ExtraArgs() {
+				for k, v := range memberExtraArgs {
 					extraArgs[k] = etcd.ArgValues{Values: v}
 				}
 

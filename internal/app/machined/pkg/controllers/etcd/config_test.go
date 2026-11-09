@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -18,6 +19,7 @@ import (
 	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	etcdcfg "github.com/siderolabs/talos/pkg/machinery/config/types/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -42,14 +44,14 @@ type ConfigSuite struct {
 func (suite *ConfigSuite) TestReconcile() {
 	for _, tt := range []struct {
 		name           string
-		etcdConfig     *v1alpha1.EtcdConfig
+		etcdConfig     *v1alpha1.EtcdConfig //nolint:staticcheck // testing legacy config
 		networkConfig  v1alpha1.NetworkDeviceList
 		expectedConfig etcd.ConfigSpec
 		extraConfig    func(*testing.T) []configconfig.Document
 	}{
 		{
 			name: "default config",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage: "foo/bar:v1.0.0",
 			},
 			expectedConfig: etcd.ConfigSpec{
@@ -61,7 +63,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "extra args config",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage: "foo/bar:v1.0.0",
 				EtcdExtraArgs: meta.Args{
 					"foo": meta.NewArgValue("", []string{"bar", "baz"}),
@@ -78,7 +80,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "legacy subnet",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage: "foo/bar:v1.0.0",
 				EtcdExtraArgs: meta.Args{
 					"arg": meta.NewArgValue("value", nil),
@@ -96,7 +98,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "advertised subnets",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage:        "foo/bar:v1.0.0",
 				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
 			},
@@ -109,7 +111,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "advertised and listen subnets",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage:        "foo/bar:v1.0.0",
 				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
 				EtcdListenSubnets:     []string{"10.0.0.0/8"},
@@ -123,7 +125,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "default with legacy vip",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage: "foo/bar:v1.0.0",
 			},
 			networkConfig: v1alpha1.NetworkDeviceList{
@@ -144,7 +146,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "default with new vip",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage: "foo/bar:v1.0.0",
 			},
 			extraConfig: func(*testing.T) []configconfig.Document {
@@ -163,7 +165,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "advertised with legacy vip",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage:        "foo/bar:v1.0.0",
 				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
 			},
@@ -185,7 +187,7 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 		{
 			name: "advertised with new vip",
-			etcdConfig: &v1alpha1.EtcdConfig{
+			etcdConfig: &v1alpha1.EtcdConfig{ //nolint:staticcheck // testing legacy config
 				ContainerImage:        "foo/bar:v1.0.0",
 				EtcdAdvertisedSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
 			},
@@ -205,9 +207,15 @@ func (suite *ConfigSuite) TestReconcile() {
 		},
 	} {
 		suite.Run(tt.name, func() {
+			// legacy etcd config is in effect only if the CA is set
+			tt.etcdConfig.RootCA = &x509.PEMEncodedCertificateAndKey{
+				Crt: []byte("cert"),
+				Key: []byte("key"),
+			}
+
 			cfgV1Alpha1 := &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					EtcdConfig: tt.etcdConfig,
+					EtcdConfig: tt.etcdConfig, //nolint:staticcheck // testing legacy config
 				},
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineType: "controlplane",
@@ -243,4 +251,53 @@ func (suite *ConfigSuite) TestReconcile() {
 			suite.Require().NoError(suite.State().Destroy(suite.Ctx(), machineConfig.Metadata()))
 		})
 	}
+}
+
+func (suite *ConfigSuite) TestReconcileMultiDoc() {
+	memberCfg := etcdcfg.NewEtcdMemberConfigV1Alpha1()
+	memberCfg.MemberExtraArgs = meta.Args{
+		"arg": meta.NewArgValue("value", nil),
+	}
+	memberCfg.MemberAdvertisedSubnets = []string{"10.0.0.0/8", "!10.0.0.3/32"}
+	memberCfg.MemberListenSubnets = []string{"10.0.0.0/8"}
+
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ClusterConfig: &v1alpha1.ClusterConfig{},
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineType: "controlplane",
+			},
+		},
+		memberCfg,
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(ctr)))
+
+	ctest.AssertResource(suite, etcd.ConfigID, func(etcdConfig *etcd.Config, asrt *assert.Assertions) {
+		asrt.Equal(etcd.ConfigSpec{
+			Image: memberCfg.Image(),
+			ExtraArgs: map[string]etcd.ArgValues{
+				"arg": {Values: []string{"value"}},
+			},
+			AdvertiseValidSubnets: []string{"10.0.0.0/8", "!10.0.0.3/32"},
+			ListenValidSubnets:    []string{"10.0.0.0/8"},
+		}, *etcdConfig.TypedSpec())
+	})
+}
+
+func (suite *ConfigSuite) TestReconcileNoMember() {
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ClusterConfig: &v1alpha1.ClusterConfig{},
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineType: "controlplane",
+			},
+		},
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(ctr)))
+
+	ctest.AssertNoResource[*etcd.Config](suite, etcd.ConfigID)
 }

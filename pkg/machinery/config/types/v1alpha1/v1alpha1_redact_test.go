@@ -24,6 +24,7 @@ func TestRedactSecrets(t *testing.T) {
 	for _, versionContract := range []*config.VersionContract{
 		config.TalosVersion1_13,
 		config.TalosVersion1_14,
+		config.TalosVersion1_15,
 	} {
 		t.Run(versionContract.String(), func(t *testing.T) {
 			t.Parallel()
@@ -50,7 +51,7 @@ func TestRedactSecrets(t *testing.T) {
 			require.NotEmpty(t, config.Cluster().Token().Secret())
 			require.Empty(t, config.Cluster().AESCBCEncryptionSecret())
 
-			require.NotEmpty(t, config.Cluster().Etcd().CA().Key)
+			require.NotEmpty(t, config.EtcdCAConfig().IssuingCA().Key)
 			require.NotEmpty(t, config.K8sServiceAccountConfig().IssuingKey().Key)
 
 			if !versionContract.MultidocKubernetesConfigSupported() {
@@ -71,7 +72,7 @@ func TestRedactSecrets(t *testing.T) {
 			require.Equal(t, "***", redacted.Cluster().Token().Secret())
 			require.Equal(t, "", redacted.Cluster().AESCBCEncryptionSecret())
 			require.Equal(t, replacement, string(redacted.K8sAPIServerCAConfig().IssuingCA().Key))
-			require.Equal(t, replacement, string(redacted.Cluster().Etcd().CA().Key))
+			require.Equal(t, replacement, string(redacted.EtcdCAConfig().IssuingCA().Key))
 			require.Equal(t, replacement, string(redacted.K8sServiceAccountConfig().IssuingKey().Key))
 
 			if versionContract.MultidocKubernetesConfigSupported() {

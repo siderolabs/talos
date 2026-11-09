@@ -12,7 +12,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// Image implements the config.Etcd interface.
+// EtcdMemberConfigSignal implements the config.EtcdMemberConfig interface.
+func (e *EtcdConfig) EtcdMemberConfigSignal() {}
+
+// Image implements the config.EtcdMemberConfig interface.
 func (e *EtcdConfig) Image() string {
 	image := e.ContainerImage
 
@@ -23,17 +26,17 @@ func (e *EtcdConfig) Image() string {
 	return image
 }
 
-// CA implements the config.Etcd interface.
+// CA returns the etcd CA.
 func (e *EtcdConfig) CA() *x509.PEMEncodedCertificateAndKey {
 	return e.RootCA
 }
 
-// ExtraArgs implements the config.Etcd interface.
+// ExtraArgs implements the config.EtcdMemberConfig interface.
 func (e *EtcdConfig) ExtraArgs() map[string][]string {
 	return e.EtcdExtraArgs.ToMap()
 }
 
-// AdvertisedSubnets implements the config.Etcd interface.
+// AdvertisedSubnets implements the config.EtcdMemberConfig interface.
 func (e *EtcdConfig) AdvertisedSubnets() []string {
 	if len(e.EtcdAdvertisedSubnets) > 0 {
 		return e.EtcdAdvertisedSubnets
@@ -46,7 +49,7 @@ func (e *EtcdConfig) AdvertisedSubnets() []string {
 	return nil
 }
 
-// ListenSubnets implements the config.Etcd interface.
+// ListenSubnets implements the config.EtcdMemberConfig interface.
 func (e *EtcdConfig) ListenSubnets() []string {
 	if len(e.EtcdListenSubnets) > 0 {
 		return e.EtcdListenSubnets

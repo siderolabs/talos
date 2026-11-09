@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
+	etcdcfg "github.com/siderolabs/talos/pkg/machinery/config/types/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hypervisor"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
@@ -154,6 +155,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "kubernetes",
 					fileDoc: k8s.GetFileDoc(),
+				},
+				{
+					name:    "etcd",
+					fileDoc: etcdcfg.GetFileDoc(),
 				},
 				{
 					name:    "storage",

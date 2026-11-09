@@ -64,14 +64,16 @@ func NewRootEtcdController() *RootEtcdController {
 				secrets.NewEtcdRoot(secrets.EtcdRootID), true,
 				func(cfg *config.MachineConfig) bool {
 					// skip the controller if the etcd secret is not present
-					return cfg.Config().Cluster().Etcd().CA() != nil
+					return cfg.Config().EtcdCAConfig() != nil
 				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.EtcdRoot) error {
-				cfgProvider := cfg.Config()
 				etcdSecrets := res.TypedSpec()
 
-				etcdSecrets.EtcdCA = cfgProvider.Cluster().Etcd().CA()
+				etcdCAConfig := cfg.Config().EtcdCAConfig()
+
+				etcdSecrets.EtcdCA = etcdCAConfig.IssuingCA()
+				etcdSecrets.AcceptedCAs = etcdCAConfig.AcceptedCAs()
 
 				return nil
 			},

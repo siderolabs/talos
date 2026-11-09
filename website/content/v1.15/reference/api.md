@@ -13787,7 +13787,8 @@ EtcdRootSpec describes etcd CA secrets.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| etcd_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
+| etcd_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  | EtcdCA is the issuing etcd CA. |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated | AcceptedCAs is the list of CA certificates trusted by etcd and etcd clients.<br><br>The issuing CA certificate is included in the list. |
 
 
 

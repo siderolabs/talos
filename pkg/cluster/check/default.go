@@ -239,7 +239,7 @@ func etcdDisabled(ctx context.Context, cluster ClusterInfo) (bool, error) {
 		return false, err
 	}
 
-	return cfg.Config().Cluster() == nil || cfg.Config().Cluster().Etcd() == nil || cfg.Config().Cluster().Etcd().CA() == nil, nil
+	return cfg.Config().EtcdCAConfig() == nil || cfg.Config().EtcdMemberConfig() == nil, nil
 }
 
 func kubeletDisabled(ctx context.Context, cluster ClusterInfo) (bool, error) {

@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: EtcdMemberConfig
+image: registry.k8s.io/etcd:v3.6.0
+extraArgs:
+    election-timeout: "5000"
+    experimental-flag:
+        - a
+        - b
+advertisedSubnets:
+    - 10.0.0.0/8
+    - '!10.0.0.3/32'
+listenSubnets:
+    - 10.0.0.0/8

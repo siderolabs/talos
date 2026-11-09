@@ -56,7 +56,14 @@ func KubeNetworkPolicies() name.Tag {
 func List(config config.Config) Versions {
 	var images Versions
 
-	images.Etcd = mustParseTag(config.Cluster().Etcd().Image())
+	// etcd member config is missing on workers and when etcd is not configured, use the default image
+	etcdImage := fmt.Sprintf("%s:%s", constants.EtcdImage, constants.DefaultEtcdVersion)
+
+	if etcdMember := config.EtcdMemberConfig(); etcdMember != nil {
+		etcdImage = etcdMember.Image()
+	}
+
+	images.Etcd = mustParseTag(etcdImage)
 	images.CoreDNS = mustParseTag(config.K8sCoreDNSConfig().Image())
 	images.Flannel = Flannel()
 	images.Kubelet = mustParseTag(config.K8sKubeletConfig().Image())

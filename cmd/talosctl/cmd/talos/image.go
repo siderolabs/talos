@@ -467,7 +467,6 @@ var imageK8sBundleCmd = &cobra.Command{
 						MachineKubelet: &v1alpha1.KubeletConfig{}, //nolint:staticcheck // legacy config
 					},
 					ClusterConfig: &v1alpha1.ClusterConfig{
-						EtcdConfig:              &v1alpha1.EtcdConfig{},
 						APIServerConfig:         &v1alpha1.APIServerConfig{},         //nolint:staticcheck // legacy configuration
 						ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck // legacy config
 						SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck // legacy config
@@ -649,7 +648,6 @@ var imageIntegrationCmd = &cobra.Command{
 				MachineKubelet: &v1alpha1.KubeletConfig{}, //nolint:staticcheck // legacy config
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				EtcdConfig:              &v1alpha1.EtcdConfig{},
 				APIServerConfig:         &v1alpha1.APIServerConfig{},         //nolint:staticcheck // legacy configuration
 				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck
 				SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck

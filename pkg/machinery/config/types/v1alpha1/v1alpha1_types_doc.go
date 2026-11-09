@@ -197,13 +197,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			{},
 			{},
 			{},
-			{
-				Name:        "etcd",
-				Type:        "EtcdConfig",
-				Note:        "",
-				Description: "Etcd specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Etcd specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "externalCloudProvider",
@@ -228,7 +222,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	}
 
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
-	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
 	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
 
@@ -250,66 +243,6 @@ func (Endpoint) Doc() *encoder.Doc {
 			{},
 		},
 	}
-
-	return doc
-}
-
-func (EtcdConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "EtcdConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "EtcdConfig represents the etcd configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EtcdConfig represents the etcd configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "etcd",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used to create the etcd service.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to create the etcd service." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "ca",
-				Type:        "PEMEncodedCertificateAndKey",
-				Note:        "",
-				Description: "The `ca` is the root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `ca` is the root certificate authority of the PKI." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to etcd." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{
-				Name:        "advertisedSubnets",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "listenSubnets",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterEtcdExample())
-
-	doc.Fields[0].AddExample("", clusterEtcdImageExample())
-	doc.Fields[1].AddExample("", pemEncodedCertificateExample())
-	doc.Fields[4].AddExample("", clusterEtcdAdvertisedSubnetsExample())
 
 	return doc
 }
@@ -515,7 +448,6 @@ func GetFileDoc() *encoder.FileDoc {
 			MachineConfig{}.Doc(),
 			ClusterConfig{}.Doc(),
 			Endpoint{}.Doc(),
-			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
 			FeaturesConfig{}.Doc(),

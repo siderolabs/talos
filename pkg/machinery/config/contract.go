@@ -311,6 +311,11 @@ func (contract *VersionContract) TrustdExtKeyUsageCheckEnabled() bool {
 	return contract.Greater(TalosVersion1_14)
 }
 
+// EtcdMultidocConfig returns true if version of Talos should use the multi-doc etcd config (EtcdCAConfig and EtcdMemberConfig).
+func (contract *VersionContract) EtcdMultidocConfig() bool {
+	return contract.Greater(TalosVersion1_14)
+}
+
 // KubePrismReadinessCheckEnabledByDefault returns true if version of Talos should enable
 // the KubePrism upstream readiness check (`/readyz`) in the generated configuration.
 func (contract *VersionContract) KubePrismReadinessCheckEnabledByDefault() bool {

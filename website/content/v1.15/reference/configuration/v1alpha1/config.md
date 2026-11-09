@@ -192,21 +192,6 @@ ClusterConfig represents the cluster-wide config values.
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>Bootstrap token example (do not use in production!).:{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
-|`etcd` |<a href="#Config.cluster.etcd">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-etcd:
-    image: registry.k8s.io/etcd:v3.7.3 # The container image used to create the etcd service.
-    # The `ca` is the root certificate authority of the PKI.
-    ca:
-        crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
-        key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
-    # Extra arguments to supply to etcd.
-    extraArgs:
-        election-timeout: "5000"
-
-    # # The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.
-    # advertisedSubnets:
-    #     - 10.0.0.0/8
-{{< /highlight >}}</details> | |
 |`externalCloudProvider` |<a href="#Config.cluster.externalCloudProvider">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
     enabled: true # Enable external cloud provider.
@@ -219,52 +204,6 @@ externalCloudProvider:
 adminKubeconfig:
     certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
 {{< /highlight >}}</details> | |
-
-
-
-
-### etcd {#Config.cluster.etcd}
-
-EtcdConfig represents the etcd configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    etcd:
-        image: registry.k8s.io/etcd:v3.7.3 # The container image used to create the etcd service.
-        # The `ca` is the root certificate authority of the PKI.
-        ca:
-            crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
-            key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
-        # Extra arguments to supply to etcd.
-        extraArgs:
-            election-timeout: "5000"
-
-        # # The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.
-        # advertisedSubnets:
-        #     - 10.0.0.0/8
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/etcd:v3.7.3
-{{< /highlight >}}</details> | |
-|`ca` |PEMEncodedCertificateAndKey |The `ca` is the root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-ca:
-    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
-    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
-{{< /highlight >}}</details> | |
-|`extraArgs` |Args |Extra arguments to supply to etcd.<br>Note that the following args are not allowed:<br><br>- `name`<br>- `data-dir`<br>- `initial-cluster-state`<br>- `listen-peer-urls`<br>- `listen-client-urls`<br>- `cert-file`<br>- `key-file`<br>- `trusted-ca-file`<br>- `peer-client-cert-auth`<br>- `peer-cert-file`<br>- `peer-trusted-ca-file`<br>- `peer-key-file`  | |
-|`advertisedSubnets` |[]string |The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.<br><br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, advertised IP is selected as the first routable address of the node. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-advertisedSubnets:
-    - 10.0.0.0/8
-{{< /highlight >}}</details> | |
-|`listenSubnets` |[]string |The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.<br><br>If `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to<br>`advertisedSubnets`.<br><br>If neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.<br><br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, advertised IP is selected as the first routable address of the node.  | |
-
-
 
 
 

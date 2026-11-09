@@ -14,6 +14,19 @@ preface = """
 """
 
 [notes]
+    [notes.etcd_multidoc]
+        title = "etcd Configuration Documents"
+        description = """\
+The etcd configuration was moved from the `.cluster.etcd` section of the v1alpha1 machine configuration to the new configuration documents:
+
+* `EtcdCAConfig` holds the etcd certificate authority, and optionally a list of additional accepted CAs which are trusted by etcd members and clients (e.g. to prepare for an etcd CA rotation);
+* `EtcdMemberConfig` configures the etcd member running on the machine (image, extra arguments, advertised and listen subnets), it requires `EtcdCAConfig` to be present.
+
+Both documents are only allowed on control plane machines.
+The `.cluster.etcd` section is deprecated, but still supported, and it can't be used together with the new documents.
+The new documents are used in the machine configuration generated for Talos 1.15+.
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\

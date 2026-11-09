@@ -12,7 +12,6 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -57,24 +56,6 @@ func machineFeaturesExample() *FeaturesConfig {
 	return &FeaturesConfig{
 		DiskQuotaSupport: new(true),
 	}
-}
-
-func clusterEtcdExample() *EtcdConfig {
-	return &EtcdConfig{
-		ContainerImage: (&EtcdConfig{}).Image(),
-		EtcdExtraArgs: meta.Args{
-			"election-timeout": meta.NewArgValue("5000", nil),
-		},
-		RootCA: pemEncodedCertificateExample(),
-	}
-}
-
-func clusterEtcdImageExample() string {
-	return (&EtcdConfig{}).Image()
-}
-
-func clusterEtcdAdvertisedSubnetsExample() []string {
-	return []string{"10.0.0.0/8"}
 }
 
 func clusterExternalCloudProviderConfigExample() *ExternalCloudProviderConfig {

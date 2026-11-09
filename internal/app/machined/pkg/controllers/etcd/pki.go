@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -97,7 +98,10 @@ func (ctrl *PKIController) Run(ctx context.Context, r controller.Runtime, _ *zap
 			return err
 		}
 
-		if err = os.WriteFile(constants.EtcdCACert, rootScrts.TypedSpec().EtcdCA.Crt, 0o400); err != nil {
+		// the CA certificate file is used as a trust bundle by etcd and etcd clients, so it contains all accepted CAs
+		acceptedCAs := pemutils.JoinCertificates(rootScrts.TypedSpec().AcceptedCAs)
+
+		if err = os.WriteFile(constants.EtcdCACert, acceptedCAs, 0o400); err != nil {
 			return fmt.Errorf("failed to write CA certificate: %w", err)
 		}
 

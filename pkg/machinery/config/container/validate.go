@@ -398,6 +398,14 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 			"either .cluster.clusterName/.cluster.controlPlane.endpoint or the KubeClusterConfig document"))
 	}
 
+	// the etcd member requires the etcd CA to issue certificates, the CA might be provided
+	// in a separate document, so this is a cross-document check
+	//
+	// the legacy .cluster.etcd is validated by the v1alpha1 config itself
+	if len(findMatchingDocs[configconfig.EtcdMemberConfig](container.documents)) > 0 && container.EtcdCAConfig() == nil {
+		errs = multierror.Append(errs, fmt.Errorf("EtcdMemberConfig requires the EtcdCAConfig document to be present"))
+	}
+
 	controlplaneDocs := findMatchingDocs[ControlplaneOnlyConfig](container.documents)
 
 	if len(controlplaneDocs) > 0 && !machineType.IsControlPlane() {

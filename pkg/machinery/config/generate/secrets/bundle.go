@@ -206,10 +206,8 @@ func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
 	// checked for nil before use
 	certs := &Certs{}
 
-	if clusterConfig := c.Cluster(); clusterConfig != nil {
-		if etcdCA := clusterConfig.Etcd(); etcdCA != nil {
-			certs.Etcd = etcdCA.CA()
-		}
+	if etcdCA := c.EtcdCAConfig(); etcdCA != nil {
+		certs.Etcd = etcdCA.IssuingCA()
 	}
 
 	if machineConfig := c.Machine(); machineConfig != nil {

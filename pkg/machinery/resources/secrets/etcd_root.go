@@ -27,7 +27,12 @@ type EtcdRoot = typed.Resource[EtcdRootSpec, EtcdRootExtension]
 //
 //gotagsrewrite:gen
 type EtcdRootSpec struct {
+	// EtcdCA is the issuing etcd CA.
 	EtcdCA *x509.PEMEncodedCertificateAndKey `yaml:"etcdCA" protobuf:"1"`
+	// AcceptedCAs is the list of CA certificates trusted by etcd and etcd clients.
+	//
+	// The issuing CA certificate is included in the list.
+	AcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs" protobuf:"2"`
 }
 
 // NewEtcdRoot initializes a EtcdRoot resource.

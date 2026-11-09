@@ -17,8 +17,10 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -69,7 +71,16 @@ func (suite *RootSuite) TestReconcileControlPlane() {
 	rtestutils.AssertResources(
 		suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.EtcdRootID},
 		func(res *secrets.EtcdRoot, asrt *assert.Assertions) {
-			asrt.Equal(res.TypedSpec().EtcdCA, cfg.Cluster().Etcd().CA())
+			asrt.NotNil(res.TypedSpec().EtcdCA)
+			asrt.Equal(res.TypedSpec().EtcdCA, cfg.EtcdCAConfig().IssuingCA())
+			asrt.Equal(
+				[]*x509.PEMEncodedCertificate{
+					{
+						Crt: cfg.EtcdCAConfig().IssuingCA().Crt,
+					},
+				},
+				res.TypedSpec().AcceptedCAs,
+			)
 		},
 	)
 	rtestutils.AssertResources(
@@ -94,6 +105,68 @@ func (suite *RootSuite) TestReconcileControlPlane() {
 				[]*x509.PEMEncodedCertificate{
 					{
 						Crt: cfg.Machine().Security().IssuingCA().Crt,
+					},
+				},
+				res.TypedSpec().AcceptedCAs,
+			)
+		},
+	)
+}
+
+func (suite *RootSuite) TestReconcileControlPlaneLegacyEtcd() {
+	// Talos 1.14 generates etcd config in the legacy .cluster.etcd section
+	cfg := suite.genConfig(true, talosconfig.TalosVersion1_14)
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.EtcdRootID},
+		func(res *secrets.EtcdRoot, asrt *assert.Assertions) {
+			asrt.NotNil(res.TypedSpec().EtcdCA)
+			asrt.Equal(res.TypedSpec().EtcdCA, cfg.EtcdCAConfig().IssuingCA())
+			asrt.Equal(
+				[]*x509.PEMEncodedCertificate{
+					{
+						Crt: cfg.EtcdCAConfig().IssuingCA().Crt,
+					},
+				},
+				res.TypedSpec().AcceptedCAs,
+			)
+		},
+	)
+}
+
+func (suite *RootSuite) TestReconcileControlPlaneEtcdAcceptedCAs() {
+	input, err := generate.NewInput(
+		"test-cluster", "http://localhost:6443", "1.28.0",
+		generate.WithVersionContract(talosconfig.TalosVersionCurrent),
+	)
+	suite.Require().NoError(err)
+
+	cfg, err := input.Config(machine.TypeControlPlane)
+	suite.Require().NoError(err)
+
+	extraCA, err := x509.NewSelfSignedCertificateAuthority()
+	suite.Require().NoError(err)
+
+	cfg, err = container.PatchDocument(cfg, func(etcdCAConfig *etcd.EtcdCAConfigV1Alpha1) error {
+		etcdCAConfig.CAAcceptedCAs = []string{string(extraCA.CrtPEM)}
+
+		return nil
+	})
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.EtcdRootID},
+		func(res *secrets.EtcdRoot, asrt *assert.Assertions) {
+			asrt.Equal(res.TypedSpec().EtcdCA, cfg.EtcdCAConfig().IssuingCA())
+			asrt.Equal(
+				[]*x509.PEMEncodedCertificate{
+					{
+						Crt: cfg.EtcdCAConfig().IssuingCA().Crt,
+					},
+					{
+						Crt: extraCA.CrtPEM,
 					},
 				},
 				res.TypedSpec().AcceptedCAs,

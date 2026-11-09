@@ -153,7 +153,7 @@ func (in *Input) init() ([]config.Document, error) {
 		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion),
 		}),
-		EtcdConfig: nilIf(in.Options.VersionContract.EtcdDisabled(), &v1alpha1.EtcdConfig{
+		EtcdConfig: nilIf(in.Options.VersionContract.EtcdDisabled() || in.Options.VersionContract.EtcdMultidocConfig(), &v1alpha1.EtcdConfig{ //nolint:staticcheck // legacy configuration
 			RootCA: in.Options.SecretsBundle.Certs.Etcd,
 		}),
 		ClusterNetwork: nilIf( //nolint:staticcheck // legacy configuration
@@ -289,6 +289,13 @@ func (in *Input) init() ([]config.Document, error) {
 	documents = append(documents, extraDocuments...)
 
 	extraDocuments = in.generateKubernetesControlplaneConfigs(controlPlaneURL, certSANs, customCNIURL)
+
+	documents = append(documents, extraDocuments...)
+
+	extraDocuments, err = in.generateEtcdConfigs()
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate etcd configs: %w", err)
+	}
 
 	documents = append(documents, extraDocuments...)
 

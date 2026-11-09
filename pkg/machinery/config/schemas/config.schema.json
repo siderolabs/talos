@@ -2481,6 +2481,138 @@
       ],
       "description": "SeccompProfileConfig declares a named seccomp profile.\\nSeccompProfileConfig declares a seccomp profile which can be referenced by name.\\n\\nEvery profile is written to `/var/lib/kubelet/seccomp/profiles/\u003cname\u003e`, so Kubernetes pods\\ncan use it with `securityContext.seccompProfile.type: Localhost` and\\n`localhostProfile: profiles/\u003cname\u003e`.\\n\\nThis document replaces the deprecated `.machine.seccompProfiles` field.\\n"
     },
+    "etcd.EtcdCAConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "EtcdCAConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "issuingCA": {
+          "properties": {
+            "cert": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "issuingCA",
+          "description": "The issuing certificate authority for etcd.\n\nThe value contains a private key and a certificate, PEM encoded.\n",
+          "markdownDescription": "The issuing certificate authority for etcd.\n\nThe value contains a private key and a certificate, PEM encoded.",
+          "x-intellij-html-description": "\u003cp\u003eThe issuing certificate authority for etcd.\u003c/p\u003e\n\n\u003cp\u003eThe value contains a private key and a certificate, PEM encoded.\u003c/p\u003e\n"
+        },
+        "acceptedCAs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "acceptedCAs",
+          "description": "The list of additional accepted CA certificates for etcd.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.\n",
+          "markdownDescription": "The list of additional accepted CA certificates for etcd.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of additional accepted CA certificates for etcd.\u003c/p\u003e\n\n\u003cp\u003eThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "issuingCA",
+        "kind"
+      ],
+      "description": "EtcdCAConfig configures etcd PKI (certificate authority).\\nThe etcd CA is used to issue the certificates for the etcd members (server and peer),\\nand the etcd clients (e.g. kube-apiserver, Talos itself).\\n\\nThe accepted CAs are trusted by the etcd members (for client and peer connections),\\nand by the etcd clients (for server connections), in addition to the issuing CA.\\n\\nThis document should only be present on the controlplane machines.\\n"
+    },
+    "etcd.EtcdMemberConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "EtcdMemberConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to run etcd.\n\nIf not set, the default etcd image for the Talos version is used.\n",
+          "markdownDescription": "The container image used to run etcd.\n\nIf not set, the default etcd image for the Talos version is used.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to run etcd.\u003c/p\u003e\n\n\u003cp\u003eIf not set, the default etcd image for the Talos version is used.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to etcd.\n\nNote that the following args are not allowed:\n\n\nname\ndata-dir\ninitial-cluster-state\nlisten-peer-urls\nlisten-client-urls\ncert-file\nkey-file\ntrusted-ca-file\npeer-client-cert-auth\npeer-cert-file\npeer-trusted-ca-file\npeer-key-file\n\n",
+          "markdownDescription": "Extra arguments to supply to etcd.\n\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to etcd.\u003c/p\u003e\n\n\u003cp\u003eNote that the following args are not allowed:\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003e\u003ccode\u003ename\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003edata-dir\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003einitial-cluster-state\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003elisten-peer-urls\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003elisten-client-urls\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003ecert-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003ekey-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003etrusted-ca-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-client-cert-auth\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-cert-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-trusted-ca-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-key-file\u003c/code\u003e\u003c/li\u003e\n\u003c/ul\u003e\n"
+        },
+        "advertisedSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "advertisedSubnets",
+          "description": "The advertisedSubnets field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\n",
+          "markdownDescription": "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eadvertisedSubnets\u003c/code\u003e field configures the networks to pick etcd advertised IP from.\u003c/p\u003e\n\n\u003cp\u003eIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\u003c/p\u003e\n"
+        },
+        "listenSubnets": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "listenSubnets",
+          "description": "The listenSubnets field configures the networks for the etcd to listen for peer and client connections.\n\nIf listenSubnets is not set, but advertisedSubnets is set, listenSubnets defaults to\nadvertisedSubnets.\n\nIf neither advertisedSubnets nor listenSubnets is set, listenSubnets defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\n",
+          "markdownDescription": "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003elistenSubnets\u003c/code\u003e field configures the networks for the etcd to listen for peer and client connections.\u003c/p\u003e\n\n\u003cp\u003eIf \u003ccode\u003elistenSubnets\u003c/code\u003e is not set, but \u003ccode\u003eadvertisedSubnets\u003c/code\u003e is set, \u003ccode\u003elistenSubnets\u003c/code\u003e defaults to\n\u003ccode\u003eadvertisedSubnets\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eIf neither \u003ccode\u003eadvertisedSubnets\u003c/code\u003e nor \u003ccode\u003elistenSubnets\u003c/code\u003e is set, \u003ccode\u003elistenSubnets\u003c/code\u003e defaults to listen on all addresses.\u003c/p\u003e\n\n\u003cp\u003eIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "EtcdMemberConfig configures the etcd member running on the machine.\\nThe presence of this document enables the etcd member on the machine.\\nThis document requires the `EtcdCAConfig` document to be present as well.\\n\\nThis document should only be present on the controlplane machines.\\n"
+    },
     "extensions.ConfigFile": {
       "properties": {
         "content": {
@@ -9694,13 +9826,6 @@
           "markdownDescription": "The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/\" target=\"_blank\"\u003ebootstrap token\u003c/a\u003e used to join the cluster.\u003c/p\u003e\n"
         },
-        "etcd": {
-          "$ref": "#/$defs/v1alpha1.EtcdConfig",
-          "title": "etcd",
-          "description": "Etcd specific configuration options.\n",
-          "markdownDescription": "Etcd specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eEtcd specific configuration options.\u003c/p\u003e\n"
-        },
         "externalCloudProvider": {
           "$ref": "#/$defs/v1alpha1.ExternalCloudProviderConfig",
           "title": "externalCloudProvider",
@@ -9762,76 +9887,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "Endpoint represents the endpoint URL parsed out of the machine config."
-    },
-    "v1alpha1.EtcdConfig": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The container image used to create the etcd service.\n",
-          "markdownDescription": "The container image used to create the etcd service.",
-          "x-intellij-html-description": "\u003cp\u003eThe container image used to create the etcd service.\u003c/p\u003e\n"
-        },
-        "ca": {
-          "properties": {
-            "crt": {
-              "type": "string"
-            },
-            "key": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "title": "ca",
-          "description": "The ca is the root certificate authority of the PKI.\nIt is composed of a base64 encoded crt and key.\n",
-          "markdownDescription": "The `ca` is the root certificate authority of the PKI.\nIt is composed of a base64 encoded `crt` and `key`.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eca\u003c/code\u003e is the root certificate authority of the PKI.\nIt is composed of a base64 encoded \u003ccode\u003ecrt\u003c/code\u003e and \u003ccode\u003ekey\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "extraArgs": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
-          "type": "object",
-          "title": "extraArgs",
-          "description": "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n\nname\ndata-dir\ninitial-cluster-state\nlisten-peer-urls\nlisten-client-urls\ncert-file\nkey-file\ntrusted-ca-file\npeer-client-cert-auth\npeer-cert-file\npeer-trusted-ca-file\npeer-key-file\n\n",
-          "markdownDescription": "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`",
-          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to etcd.\nNote that the following args are not allowed:\u003c/p\u003e\n\n\u003cul\u003e\n\u003cli\u003e\u003ccode\u003ename\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003edata-dir\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003einitial-cluster-state\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003elisten-peer-urls\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003elisten-client-urls\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003ecert-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003ekey-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003etrusted-ca-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-client-cert-auth\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-cert-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-trusted-ca-file\u003c/code\u003e\u003c/li\u003e\n\u003cli\u003e\u003ccode\u003epeer-key-file\u003c/code\u003e\u003c/li\u003e\n\u003c/ul\u003e\n"
-        },
-        "advertisedSubnets": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "advertisedSubnets",
-          "description": "The advertisedSubnets field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\n",
-          "markdownDescription": "The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eadvertisedSubnets\u003c/code\u003e field configures the networks to pick etcd advertised IP from.\u003c/p\u003e\n\n\u003cp\u003eIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\u003c/p\u003e\n"
-        },
-        "listenSubnets": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "listenSubnets",
-          "description": "The listenSubnets field configures the networks for the etcd to listen for peer and client connections.\n\nIf listenSubnets is not set, but advertisedSubnets is set, listenSubnets defaults to\nadvertisedSubnets.\n\nIf neither advertisedSubnets nor listenSubnets is set, listenSubnets defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with !, e.g !10.0.0.0/8.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\n",
-          "markdownDescription": "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003elistenSubnets\u003c/code\u003e field configures the networks for the etcd to listen for peer and client connections.\u003c/p\u003e\n\n\u003cp\u003eIf \u003ccode\u003elistenSubnets\u003c/code\u003e is not set, but \u003ccode\u003eadvertisedSubnets\u003c/code\u003e is set, \u003ccode\u003elistenSubnets\u003c/code\u003e defaults to\n\u003ccode\u003eadvertisedSubnets\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eIf neither \u003ccode\u003eadvertisedSubnets\u003c/code\u003e nor \u003ccode\u003elistenSubnets\u003c/code\u003e is set, \u003ccode\u003elistenSubnets\u003c/code\u003e defaults to listen on all addresses.\u003c/p\u003e\n\n\u003cp\u003eIPs can be excluded from the list by using negative match with \u003ccode\u003e!\u003c/code\u003e, e.g \u003ccode\u003e!10.0.0.0/8\u003c/code\u003e.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, advertised IP is selected as the first routable address of the node.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "EtcdConfig represents the etcd configuration options."
     },
     "v1alpha1.ExternalCloudProviderConfig": {
       "properties": {
@@ -10078,6 +10133,12 @@
     },
     {
       "$ref": "#/$defs/cri.SeccompProfileConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/etcd.EtcdCAConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/etcd.EtcdMemberConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/extensions.ServiceConfigV1Alpha1"

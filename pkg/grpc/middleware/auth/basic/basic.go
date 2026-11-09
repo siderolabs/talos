@@ -5,7 +5,6 @@
 package basic
 
 import (
-	"bytes"
 	"crypto/tls"
 	stdx509 "crypto/x509"
 	"encoding/asn1"
@@ -14,12 +13,12 @@ import (
 	"slices"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
 )
 
 // Credentials describes an authorization method.
@@ -75,15 +74,7 @@ func NewTLSConfig(acceptedCAs []*x509.PEMEncodedCertificate, opts ...ConnectionO
 	tlsConfig := &tls.Config{}
 
 	tlsConfig.RootCAs = stdx509.NewCertPool()
-	tlsConfig.RootCAs.AppendCertsFromPEM(bytes.Join(
-		xslices.Map(
-			acceptedCAs,
-			func(cert *x509.PEMEncodedCertificate) []byte {
-				return cert.Crt
-			},
-		),
-		nil,
-	))
+	tlsConfig.RootCAs.AppendCertsFromPEM(pemutils.JoinCertificates(acceptedCAs))
 
 	if options.RequiredServerExtKeyUsage != nil {
 		requiredEKU := options.RequiredServerExtKeyUsage

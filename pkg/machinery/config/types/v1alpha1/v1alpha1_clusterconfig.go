@@ -102,15 +102,6 @@ func (c *ClusterConfig) SecretboxEncryptionSecret() string {
 	return c.ClusterSecretboxEncryptionSecret
 }
 
-// Etcd implements the config.ClusterConfig interface.
-func (c *ClusterConfig) Etcd() config.Etcd {
-	if c.EtcdConfig == nil {
-		return &EtcdConfig{}
-	}
-
-	return c.EtcdConfig
-}
-
 // LocalAPIServerPort implements the config.ClusterConfig interface.
 func (c *ClusterConfig) LocalAPIServerPort() int {
 	if c.ControlPlane == nil || c.ControlPlane.LocalAPIServerPort == 0 {

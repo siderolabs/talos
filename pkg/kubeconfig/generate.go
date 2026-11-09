@@ -5,7 +5,6 @@
 package kubeconfig
 
 import (
-	"bytes"
 	stdlibx509 "crypto/x509"
 	"fmt"
 	"io"
@@ -13,11 +12,11 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/gen/xslices"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/pemutils"
 )
 
 // GenerateAdminInput is the interface for the GenerateAdmin function.
@@ -97,7 +96,7 @@ func Generate(in *GenerateInput, out io.Writer) error {
 
 	clientCertPEM := x509.NewCertificateAndKeyFromKeyPair(clientCert)
 
-	serverCAs := bytes.Join(xslices.Map(in.AcceptedCAs, func(ca *x509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
+	serverCAs := pemutils.JoinCertificates(in.AcceptedCAs)
 
 	cfg := clientcmdapi.Config{
 		APIVersion: "v1",

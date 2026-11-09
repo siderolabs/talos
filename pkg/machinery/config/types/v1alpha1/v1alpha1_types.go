@@ -334,10 +334,9 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use 'DiscoveryServiceConfig' instead
 	ClusterDiscoveryConfig *ClusterDiscoveryConfig `yaml:"discovery,omitempty"`
-	//   description: |
-	//     Etcd specific configuration options.
-	//   examples:
-	//     - value: clusterEtcdExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `EtcdCAConfig` and `EtcdMemberConfig` instead.
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
 	// docgen:nodoc
 	//
@@ -1165,20 +1164,20 @@ type SchedulerConfig struct {
 	SchedulerConfig meta.Unstructured `yaml:"config,omitempty"`
 }
 
-var _ config.Etcd = (*EtcdConfig)(nil)
+var _ config.EtcdMemberConfig = (*EtcdConfig)(nil)
 
 // EtcdConfig represents the etcd configuration options.
+//
+// Deprecated: Use `EtcdCAConfig` and `EtcdMemberConfig` instead.
+//
+// docgen:nodoc
 type EtcdConfig struct {
 	//   description: |
 	//     The container image used to create the etcd service.
-	//   examples:
-	//     - value: clusterEtcdImageExample()
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     The `ca` is the root certificate authority of the PKI.
 	//     It is composed of a base64 encoded `crt` and `key`.
-	//   examples:
-	//     - value: pemEncodedCertificateExample()
 	//   schema:
 	//     type: object
 	//     additionalProperties: false
@@ -1230,8 +1229,6 @@ type EtcdConfig struct {
 	//    Negative subnet matches should be specified last to filter out IPs picked by positive matches.
 	//    If not specified, advertised IP is selected as the first routable address of the node.
 	//
-	//  examples:
-	//    - value: clusterEtcdAdvertisedSubnetsExample()
 	EtcdAdvertisedSubnets []string `yaml:"advertisedSubnets,omitempty"`
 	//  description: |
 	//    The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.
