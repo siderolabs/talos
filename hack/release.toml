@@ -416,16 +416,6 @@ Users can override it by adding `lockdown=confidentiality` to the kernel command
 A new `talosctl diskfree` command (aliased to `df`) reports storage and inode usage for mounted volumes.
 """
 
-    [notes.containers_namespace]
-        title = "Unified --namespace Flag"
-        description = """\
-`talosctl containers`, `logs`, `stats` and `restart` now select the containerd namespace through the same `--namespace` flag and vocabulary already used by `talosctl image` and `talosctl debug`: `system` (the default), `cri` for Kubernetes workloads, and `taloscontainers` for containers declared via a `ContainerConfig` document.
-
-The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
-
-`talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
-"""
-
     [notes.talosctl_legacy_image_api]
         title = "talosctl Legacy Image APIs"
         description = """\
@@ -451,231 +441,87 @@ As before, every profile is written to `/var/lib/kubelet/seccomp/profiles/<name>
 The `.machine.seccompProfiles` field is deprecated in favor of `SeccompProfileConfig` documents. It keeps working, but a document may not reuse the name of a profile declared there.
 """
 
-    [notes.container_seccomp_profile]
-        title = "Container Seccomp Profile"
+    [notes.talos_containers]
+        title = "Talos Containers"
         description = """\
-`ContainerConfig` documents can now choose the seccomp profile applied to a container: the default one, none at all, or a profile declared by a `SeccompProfileConfig` document:
-
-```yaml
-apiVersion: v1alpha1
-kind: SeccompProfileConfig
-name: audit.json
-profile:
-  defaultAction: SCMP_ACT_LOG
----
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: collector
-image: ghcr.io/example/collector:v1.0.0
-security:
-  seccompProfile:
-    type: localhost
-    localhostProfile: audit.json
----
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: buildkit
-image: docker.io/moby/buildkit:v0.34.1
-security:
-  profile: privileged
-  seccompProfile:
-    type: unconfined
-```
-
-The default seccomp profile still applies to every container unless it sets another `seccompProfile.type`, `privileged` ones included.
-Editing a profile restarts the containers using it.
-"""
-
-    [notes.container_swap_limit]
-        title = "Container Swap Limit"
-        description = """\
-`ContainerConfig` documents can now cap the swap a container may use, independently of its memory limit:
-
-```yaml
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: collector
-image: ghcr.io/example/collector:v1.0.0
-resources:
-  limits:
-    swap: "0"
-```
-
-The value maps onto cgroup v2 `memory.swap.max`. Zero keeps the container out of swap entirely, so its memory ceiling is enforced by the OOM killer rather than by swapping; unset leaves the node's swap available to it.
-"""
-
-    [notes.container_depends_on_network]
-        title = "ContainerConfig `dependsOn.networks` Deprecated"
-        description = """\
-The `dependsOn.networks` field of the `ContainerConfig` document has been renamed to `dependsOn.network`, aligning it with extension services.
-The `networks` key is still accepted but deprecated, and is ignored when `network` is set; migrate ContainerConfigs to `network`.
-
-```yaml
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: web
-image: docker.io/library/nginx:1.27
-lifecycle:
-  dependsOn:
-    network:
-      - addresses
-```
-"""
-
-    [notes.container_lifecycle_depends_on]
-        title = "ContainerConfig `dependsOn` Moved under `lifecycle`"
-        description = """\
-The `dependsOn` field of the `ContainerConfig` document has moved to `lifecycle.dependsOn`, where further container lifecycle settings will be grouped.
-The top-level `dependsOn` is still accepted but deprecated, and validation warns when it is used. Setting both `dependsOn` and `lifecycle.dependsOn` is rejected; migrate ContainerConfigs to `lifecycle.dependsOn`.
-
-```yaml
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: web
-image: docker.io/library/nginx:1.27
-lifecycle:
-  dependsOn:
-    containers:
-      - database
-    time: true
-```
-"""
-
-    [notes.container_privileged_sysfs]
-        title = "Writable sysfs for privileged Talos Containers"
-        description = """\
-`ContainerConfig` containers using the `privileged` security profile now get `/sys` mounted read-write:
-
-```yaml
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: tuner
-image: ghcr.io/example/tuner:v1.0.0
-security:
-  profile: privileged
-```
-
-The `restricted` profile (the default) still mounts `/sys` read-only.
-"""
-
-    [notes.container_volume_mounts]
-        title = "ContainerConfig Volume Mounts"
-        description = """\
-The `userVolume` mount source of `ContainerConfig` has been renamed to `volume`, and now accepts the name of a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` document:
-
-```yaml
-mounts:
-  - volume:
-      name: data
-      destination: /data
-```
-
-The `userVolume` key is still accepted but deprecated, and is ignored when `volume` is set; migrate ContainerConfigs to `volume`.
-
-The mounts of the `ContainerSpec` resource no longer carry `volumeID`, as the volume is resolved by name; the resolved volume ID is reported on `ContainerMountStatus`.
-"""
-
-    [notes.container_named_user]
-        title = "ContainerConfig Rejects Non-Numeric Image USER"
-        description = """\
-A `ContainerConfig` container whose image declares `USER` by name (e.g. `app`, `app:app`) is now rejected after the image pull, instead of silently running as root (uid 0, gid 0).
-Talos does not read the image's `/etc/passwd` or `/etc/group`, so every named part of `USER` has to be overridden with `runAs.uid` and/or `runAs.gid`.
-A bare name such as `app` needs both, since its group would come from `/etc/passwd`.
-The container's image status reports the failure, and setting `runAs` resolves it without a re-pull.
-
-```yaml
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: web
-image: docker.io/library/example:1.0 # USER app
-runAs:
-  uid: 1000
-  gid: 1000
-```
-"""
-
-    [notes.container_raw_volume_devices]
-        title = "ContainerConfig Raw Volume Devices"
-        description = """\
-A `RawVolumeConfig` can be handed to a container as a block device with the new `devices` field of `ContainerConfig`:
-
-```yaml
-devices:
-  - rawVolume:
-      name: data
-      destination: /dev/data
-```
-
-The container gets a device node at the destination and is allowed to read and write that device only, so it does not need the `privileged` profile. The container waits for the raw volume to be ready, gets the unlocked device for an encrypted raw volume, and the raw volume is not closed while the container runs. A raw volume can be handed to a single container.
-"""
-
-    [notes.container_stop_timeout]
-        title = "Container Stop Timeout"
-        description = """\
-`ContainerConfig` documents can now set how long a container gets to exit after `SIGTERM` before it is killed with `SIGKILL`, with `lifecycle.stopTimeout`:
-
-```yaml
-apiVersion: v1alpha1
-kind: ContainerConfig
-name: database
-image: ghcr.io/example/database:v1.0.0
-lifecycle:
-  stopTimeout: 2m
-```
-
-The timeout applies whenever Talos stops the container: on shutdown, reboot and upgrade, when the container is replaced after a change or restarted with `talosctl restart`, and when it is removed.
-It defaults to 10s, must be greater than 0 and can be at most 4m, so that stopping containers fits into the shutdown sequence.
-"""
-
-    [notes.container_stop_order]
-        title = "Container Shutdown Order"
-        description = """\
-On shutdown, reboot and upgrade, `ContainerConfig` containers are now stopped in the reverse order of `lifecycle.dependsOn.containers`: a container is stopped before the containers it depends on, and independent containers are still stopped concurrently.
-Waiting for a dependent container ends when the container it depends on would otherwise not be stopped in time for the shutdown.
-The order applies to the containers on the same node only.
-"""
-
-    [notes.container_restart_policy]
-        title = "Container Restart Policy"
-        description = """\
-`ContainerConfig` documents can now set when a container is restarted after it exits, and how long to wait before that, in `lifecycle.restart`:
+Talos can now run OCI containers independently of Kubernetes. Containers are declared with `ContainerConfig` documents.
+They are managed through the `taloscontainers` containerd namespace, and their state is reported in the corresponding `ContainerStatus` resources.
+Also, `talosctl dashboard` ships a new `Containers` tab.
 
 ```yaml
 apiVersion: v1alpha1
 kind: ContainerConfig
 name: migrate
 image: ghcr.io/example/migrate:v1.0.0
+mounts:
+  - volume:
+      name: data
+      destination: /data
 lifecycle:
   restart:
     policy: on-failure
     maxRetries: 3
-    delay: 5s
-    maxDelay: 1m
-```
-
-`always` (the default) restarts the container after every exit, `on-failure` after it failed, up to `maxRetries` times, and `never` runs it once.
-Changing the policy starts the `maxRetries` count over.
-The delay doubles with each restart of a container which ran for less than `maxDelay`, up to `maxDelay`; by default it stays at 5s.
-A container which is not restarted reports `completed` or `failed` in `ContainerStatus`, and keeps its outcome until its configuration changes or it is removed.
-It runs again after a reboot or a restart of machined, and `talosctl restart` only signals it, so it does not run it again.
-"""
-
-    [notes.container_depends_on_succeeded]
-        title = "Container Dependencies on Succeeded Containers"
-        description = """\
-A `ContainerConfig` container can now wait for another container to have run successfully, e.g. one preparing a directory or a database schema it needs:
-
-```yaml
+---
+apiVersion: v1alpha1
+kind: ContainerConfig
+name: server
+image: ghcr.io/example/server:v1.0.0
+mounts:
+  - volume:
+      name: data
+      destination: /data
+resources:
+  limits:
+    memory: 512MiB
+    swap: "0"
 lifecycle:
   dependsOn:
     containers:
       - name: migrate
         condition: succeeded
-      - db
+  stopTimeout: 30s
 ```
 
-`succeeded` waits for the container to have exited with code 0 and not to be restarted, so it has to use the `never` or `on-failure` restart policy; a plain name still waits for the container to be running and healthy.
-As the containers run again on every boot, so does this order.
+`talosctl containers`, `logs`, `stats` and `restart` select these containers with `--namespace taloscontainers`.
+
+#### Lifecycle
+
+`lifecycle.restart.policy` sets when a container is run again after it exits: `always` (the default) after every exit, `on-failure` after a non-zero exit code or a failure to start, up to `maxRetries` times, and `never` not at all.
+The restart waits `delay` (5s by default), which doubles with each restart of a container which ran for less than `maxDelay`, up to `maxDelay`.
+A container which is not restarted reports `completed` or `failed` in `ContainerStatus` until its configuration changes or it is removed.
+Changing the configuration of a container runs it again, and changing its policy starts the `maxRetries` count over.
+Containers run again after a reboot or a restart of machined, so a container which runs once has to be safe to run again; `talosctl restart` only signals the container.
+
+`lifecycle.dependsOn.containers` delays the start of a container until the containers it depends on are running and healthy,
+or, with `condition: succeeded`, have exited with code 0 and are not restarted, e.g. to migrate a database schema or prepare a directory first.
+A container depended on as `succeeded` must use the `on-failure` or `never` restart policy.
+`lifecycle.dependsOn` also waits for the `network` to be ready and the `time` to be synchronized.
+
+`lifecycle.stopTimeout` sets how long a container gets to exit after `SIGTERM` before it is killed (10s by default, at most 4m).
+On shutdown, reboot and upgrade, containers are stopped in the reverse order of their dependencies.
+
+#### Storage and Devices
+
+`mounts` accept host paths, `tmpfs`, and with `volume` a `UserVolumeConfig`, `ExistingVolumeConfig` or `ExternalVolumeConfig` by name.
+`devices.rawVolume` hands a `RawVolumeConfig` to a single container as a block device, without the `privileged` profile.
+
+#### Security and Resources
+
+When SELinux is enabled, Talos Containers use a dedicated SELinux domain; the `privileged` profile gets a writable `/sys` and is excluded from the per-container MCS categories.
+`security.seccompProfile.type` selects the `default` seccomp profile, `unconfined`, or a `localhost` profile declared by a `SeccompProfileConfig` document.
+`runAs` sets the user and group, and an image declaring a non-numeric `USER` is rejected unless `runAs` overrides it.
+`resources.limits` caps the CPU, memory and swap of a container; see "Workload Memory Limits" for the aggregate limit of all containers and "SELinux Workload Categories" for their isolation.
+
+#### Changes from 1.14
+
+Talos 1.14 shipped an early version of `ContainerConfig`. Configurations written for it keep working, with these changes:
+
+* `dependsOn` moved to `lifecycle.dependsOn`; the top-level key is deprecated, and setting both is rejected.
+* `dependsOn.networks` is renamed to `dependsOn.network`, and `mounts.userVolume` to `mounts.volume`; the old keys are deprecated and ignored when the new ones are set.
+* `dependsOn.containers` is now enforced.
+* An image declaring a non-numeric `USER` is rejected instead of running as root.
+* The mounts of the `ContainerSpec` resource no longer carry `volumeID`; the resolved volume ID is reported on `ContainerMountStatus`.
+* The image entrypoint and arguments are now merged correctly when a config patch is applied, and containers running as a non-root user get their added capabilities.
 """
 
     [notes.extension_service_configuration]
