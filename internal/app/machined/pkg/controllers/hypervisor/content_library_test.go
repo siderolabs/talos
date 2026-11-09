@@ -278,13 +278,14 @@ func (suite *ContentLibrarySuite) assertHeld(requestID string, held bool) {
 	})
 }
 
-// TestResolvesUserVolume covers a library backed by a user volume: the name resolves to the volume's
-// internal ID, which is what the status reports.
+// TestResolvesUserVolume covers a library backed by a user volume: the status reports the name the
+// user configured, and the volume's internal ID only in the deprecated field.
 func (suite *ContentLibrarySuite) TestResolvesUserVolume() {
 	suite.applyLibrary(newDoc())
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID)
+		asrt.Equal(testVolumeName, status.TypedSpec().VolumeName)
+		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 	})
 
 	// The mount is asked for, and nothing has answered yet.
@@ -299,7 +300,8 @@ func (suite *ContentLibrarySuite) TestResolvesExternalVolume() {
 	suite.applyConfig(newExternalVolume(externalVolumeName), newDocBackedBy(externalVolumeName))
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.Equal(constants.ExternalVolumePrefix+externalVolumeName, status.TypedSpec().VolumeID)
+		asrt.Equal(externalVolumeName, status.TypedSpec().VolumeName)
+		asrt.Equal(constants.ExternalVolumePrefix+externalVolumeName, status.TypedSpec().VolumeID) //nolint:staticcheck
 	})
 }
 
@@ -311,7 +313,8 @@ func (suite *ContentLibrarySuite) TestResolvesExistingVolume() {
 	suite.applyConfig(newExistingVolume(existingVolumeName), newDocBackedBy(existingVolumeName))
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.Equal(constants.ExistingVolumePrefix+existingVolumeName, status.TypedSpec().VolumeID)
+		asrt.Equal(existingVolumeName, status.TypedSpec().VolumeName)
+		asrt.Equal(constants.ExistingVolumePrefix+existingVolumeName, status.TypedSpec().VolumeID) //nolint:staticcheck
 	})
 }
 
@@ -321,6 +324,12 @@ func (suite *ContentLibrarySuite) TestMissingVolume() {
 	suite.applyConfig(newDocBackedBy("nowhere"))
 
 	suite.assertNotReady(`no user, existing or external volume named "nowhere" is configured`)
+
+	// The configured name is still reported, though nothing resolves it to a volume ID.
+	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
+		asrt.Equal("nowhere", status.TypedSpec().VolumeName)
+		asrt.Empty(status.TypedSpec().VolumeID) //nolint:staticcheck
+	})
 
 	ctest.AssertNoResource[*block.VolumeMountRequest](suite, testRequestID)
 }
@@ -497,7 +506,8 @@ func (suite *ContentLibrarySuite) TestRemovedFromConfig() {
 	suite.applyLibrary(newDoc())
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID)
+		asrt.Equal(testVolumeName, status.TypedSpec().VolumeName)
+		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 	})
 
 	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)
@@ -618,7 +628,8 @@ func (suite *ContentLibrarySuite) TestKeepsTheMountOfAHeldLibrary() {
 	suite.applyLibrary(newDoc())
 
 	ctest.AssertResource(suite, testLibrary, func(status *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID)
+		asrt.Equal(testVolumeName, status.TypedSpec().VolumeName)
+		asrt.Equal(testVolumeID, status.TypedSpec().VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 	})
 
 	suite.satisfyMount(testRequestID, testVolumeID, suite.T().TempDir(), false)

@@ -186,7 +186,8 @@ func setupWithState(t *testing.T, ready bool) (*contentlibrary.Service, string, 
 	st := state.WrapCore(inmem.NewState())
 
 	contentLibraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
-	contentLibraryStatus.TypedSpec().VolumeID = "u-vm-images"
+	contentLibraryStatus.TypedSpec().VolumeName = "vm-images"
+	contentLibraryStatus.TypedSpec().VolumeID = "u-vm-images" //nolint:staticcheck
 
 	contentLibraryStatus.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
 	if ready {

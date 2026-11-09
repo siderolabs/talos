@@ -25,7 +25,9 @@ type ContentLibraryStatus = typed.Resource[ContentLibraryStatusSpec, ContentLibr
 //
 //gotagsrewrite:gen
 type ContentLibraryStatusSpec struct {
-	// VolumeID is the ID of the volume backing the library.
+	// VolumeID is the block volume ID of the volume backing the library, e.g. "u-vm-images".
+	//
+	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
 	VolumeID string `yaml:"volumeID" protobuf:"1"`
 	// Path is the absolute path of the library's contents, the target the backing volume is mounted at.
 	//
@@ -37,6 +39,8 @@ type ContentLibraryStatusSpec struct {
 	Error string `yaml:"error,omitempty" protobuf:"4"`
 	// Fingerprint changes whenever the files in the library do (name, size, modification time).
 	Fingerprint string `yaml:"fingerprint,omitempty" protobuf:"5"`
+	// VolumeName is the name of the user, existing or external volume backing the library, e.g. "vm-images".
+	VolumeName string `yaml:"volumeName" protobuf:"6"`
 }
 
 // contentLibraryMutationFinalizerPrefix marks a library file something is in the middle of replacing.
@@ -70,7 +74,7 @@ func (ContentLibraryStatusExtension) ResourceDefinition() meta.ResourceDefinitio
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Volume",
-				JSONPath: `{.volumeID}`,
+				JSONPath: `{.volumeName}`,
 			},
 			{
 				Name:     "Phase",

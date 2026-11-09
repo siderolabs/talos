@@ -347,7 +347,7 @@ func isLeaving(ctx context.Context, reader controller.Reader, libraryID string) 
 //
 // A library that is not ready has no directory to list, so it keeps its last fingerprint.
 func (ctrl *ContentLibraryController) publishStatus(
-	ctx context.Context, r controller.ReaderWriter, libraryID, volumeID, path, reason string,
+	ctx context.Context, r controller.ReaderWriter, libraryID, volumeName, volumeID, path, reason string,
 ) (bool, error) {
 	ready := reason == ""
 
@@ -369,7 +369,8 @@ func (ctrl *ContentLibraryController) publishStatus(
 		func(res *hypervisor.ContentLibraryStatus) error {
 			becameReady = ready && res.TypedSpec().Phase != hypervisor.ContentLibraryPhaseReady
 
-			res.TypedSpec().VolumeID = volumeID
+			res.TypedSpec().VolumeName = volumeName
+			res.TypedSpec().VolumeID = volumeID //nolint:staticcheck // backward compatibility
 			res.TypedSpec().Path = path
 
 			res.TypedSpec().Phase = hypervisor.ContentLibraryPhaseNotReady
@@ -445,7 +446,7 @@ func (ctrl *ContentLibraryController) reconcileLibrary(
 		}
 	}
 
-	becameReady, err := ctrl.publishStatus(ctx, r, libraryID, backing.ID, path, reason)
+	becameReady, err := ctrl.publishStatus(ctx, r, libraryID, volumeName, backing.ID, path, reason)
 	if err != nil {
 		return "", "", err
 	}

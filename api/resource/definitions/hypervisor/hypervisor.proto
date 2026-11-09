@@ -34,7 +34,9 @@ message CloudInitStatusSpec {
 
 // ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 message ContentLibraryStatusSpec {
-  // VolumeID is the ID of the volume backing the library.
+  // VolumeID is the block volume ID of the volume backing the library, e.g. "u-vm-images".
+  //
+  // Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
   string volume_id = 1;
   // Path is the absolute path of the library's contents, the target the backing volume is mounted at.
   //
@@ -46,6 +48,8 @@ message ContentLibraryStatusSpec {
   string error = 4;
   // Fingerprint changes whenever the files in the library do (name, size, modification time).
   string fingerprint = 5;
+  // VolumeName is the name of the user, existing or external volume backing the library, e.g. "vm-images".
+  string volume_name = 6;
 }
 
 // VirtualMachineAgentSpec describes the qemu-guest-agent channel attached to the guest.

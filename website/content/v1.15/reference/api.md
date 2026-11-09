@@ -9472,11 +9472,12 @@ ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| volume_id | [string](#string) |  | VolumeID is the ID of the volume backing the library. |
+| volume_id | [string](#string) |  | VolumeID is the block volume ID of the volume backing the library, e.g. "u-vm-images".<br><br>Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes. |
 | path | [string](#string) |  | Path is the absolute path of the library's contents, the target the backing volume is mounted at.<br><br>Only meaningful when Ready. |
 | phase | [talos.resource.definitions.enums.HypervisorContentLibraryPhase](#talos.resource.definitions.enums.HypervisorContentLibraryPhase) |  | Phase is Ready once the backing volume is mounted. |
 | error | [string](#string) |  | Error describes why the library is not ready. |
 | fingerprint | [string](#string) |  | Fingerprint changes whenever the files in the library do (name, size, modification time). |
+| volume_name | [string](#string) |  | VolumeName is the name of the user, existing or external volume backing the library, e.g. "vm-images". |
 
 
 

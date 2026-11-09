@@ -1943,7 +1943,7 @@ func (s *VirtualMachineDomainSuite) newImageDiskStatus(id, sourcePath string, im
 // newContentLibraryStatus publishes a ready library a disk status can name.
 func (s *VirtualMachineDomainSuite) newContentLibraryStatus(path string) *hypervisor.ContentLibraryStatus {
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, diskStatusLibrary)
-	library.TypedSpec().VolumeID = "u-" + diskStatusLibrary
+	library.TypedSpec().VolumeName = diskStatusLibrary
 	library.TypedSpec().Phase = hypervisor.ContentLibraryPhaseReady
 	library.TypedSpec().Path = path
 	s.Create(library)

@@ -223,7 +223,9 @@ func (x *CloudInitStatusSpec) GetError() string {
 // ContentLibraryStatusSpec is the spec for ContentLibraryStatus.
 type ContentLibraryStatusSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// VolumeID is the ID of the volume backing the library.
+	// VolumeID is the block volume ID of the volume backing the library, e.g. "u-vm-images".
+	//
+	// Deprecated: use VolumeName. Still populated for compatibility with older clients and nodes.
 	VolumeId string `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
 	// Path is the absolute path of the library's contents, the target the backing volume is mounted at.
 	//
@@ -234,7 +236,9 @@ type ContentLibraryStatusSpec struct {
 	// Error describes why the library is not ready.
 	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
 	// Fingerprint changes whenever the files in the library do (name, size, modification time).
-	Fingerprint   string `protobuf:"bytes,5,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	Fingerprint string `protobuf:"bytes,5,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	// VolumeName is the name of the user, existing or external volume backing the library, e.g. "vm-images".
+	VolumeName    string `protobuf:"bytes,6,opt,name=volume_name,json=volumeName,proto3" json:"volume_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -300,6 +304,13 @@ func (x *ContentLibraryStatusSpec) GetError() string {
 func (x *ContentLibraryStatusSpec) GetFingerprint() string {
 	if x != nil {
 		return x.Fingerprint
+	}
+	return ""
+}
+
+func (x *ContentLibraryStatusSpec) GetVolumeName() string {
+	if x != nil {
+		return x.VolumeName
 	}
 	return ""
 }
@@ -2244,13 +2255,15 @@ const file_resource_definitions_hypervisor_hypervisor_proto_rawDesc = "" +
 	"\x13observed_generation\x18\t \x01(\tR\x12observedGeneration\x12P\n" +
 	"\x05phase\x18\n" +
 	" \x01(\x0e2:.talos.resource.definitions.enums.HypervisorCloudInitPhaseR\x05phase\x12\x14\n" +
-	"\x05error\x18\v \x01(\tR\x05error\"\xda\x01\n" +
+	"\x05error\x18\v \x01(\tR\x05error\"\xfb\x01\n" +
 	"\x18ContentLibraryStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12U\n" +
 	"\x05phase\x18\x03 \x01(\x0e2?.talos.resource.definitions.enums.HypervisorContentLibraryPhaseR\x05phase\x12\x14\n" +
 	"\x05error\x18\x04 \x01(\tR\x05error\x12 \n" +
-	"\vfingerprint\x18\x05 \x01(\tR\vfingerprint\"3\n" +
+	"\vfingerprint\x18\x05 \x01(\tR\vfingerprint\x12\x1f\n" +
+	"\vvolume_name\x18\x06 \x01(\tR\n" +
+	"volumeName\"3\n" +
 	"\x17VirtualMachineAgentSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\"r\n" +
 	"\x1eVirtualMachineCPUPlacementSpec\x12\x1c\n" +

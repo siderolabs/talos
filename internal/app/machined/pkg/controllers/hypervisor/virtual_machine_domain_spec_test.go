@@ -1576,9 +1576,9 @@ func (suite *VirtualMachineSpecSuite) TestRendersCDROMFromContentLibrary() {
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		VolumeID: "u-images",
-		Path:     path,
-		Phase:    hypervisor.ContentLibraryPhaseReady,
+		VolumeName: "images",
+		Path:       path,
+		Phase:      hypervisor.ContentLibraryPhaseReady,
 	}
 	suite.Create(library)
 
@@ -1623,9 +1623,9 @@ func (suite *VirtualMachineSpecSuite) TestAllocatesDistinctTargetDevices() {
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "two-images")
 	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		VolumeID: "u-two-images",
-		Path:     path,
-		Phase:    hypervisor.ContentLibraryPhaseReady,
+		VolumeName: "two-images",
+		Path:       path,
+		Phase:      hypervisor.ContentLibraryPhaseReady,
 	}
 	suite.Create(library)
 
@@ -1671,9 +1671,9 @@ func (suite *VirtualMachineSpecSuite) TestRejectsNVMeBus() {
 
 	library := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "nvme-images")
 	*library.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		VolumeID: "u-nvme-images",
-		Path:     path,
-		Phase:    hypervisor.ContentLibraryPhaseReady,
+		VolumeName: "nvme-images",
+		Path:       path,
+		Phase:      hypervisor.ContentLibraryPhaseReady,
 	}
 	suite.Create(library)
 

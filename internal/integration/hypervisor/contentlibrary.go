@@ -149,7 +149,8 @@ func (suite *ContentLibrarySuite) TestLibraryBecomesReady() {
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.State(), []string{name},
 		func(cls *hypervisor.ContentLibraryStatus, asrt *assert.Assertions) {
-			asrt.Equal(constants.UserVolumePrefix+name, cls.TypedSpec().VolumeID)
+			asrt.Equal(name, cls.TypedSpec().VolumeName)
+			asrt.Equal(constants.UserVolumePrefix+name, cls.TypedSpec().VolumeID, "deprecated field still populated for older clients") //nolint:staticcheck
 			asrt.Equal(path, cls.TypedSpec().Path)
 		},
 	)

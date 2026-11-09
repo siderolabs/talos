@@ -125,7 +125,8 @@ func TestContentLibraryStatusRoundTrip(t *testing.T) {
 
 	res := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, "images")
 	*res.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		VolumeID:    "IMAGES",
+		VolumeID:    "u-images",
+		VolumeName:  "images",
 		Path:        "/var/mnt/images",
 		Phase:       hypervisor.ContentLibraryPhaseReady,
 		Error:       "",
@@ -140,7 +141,8 @@ func TestContentLibraryStatusRoundTrip(t *testing.T) {
 	var spec hypervisorapi.ContentLibraryStatusSpec
 
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
-	assert.Equal(t, res.TypedSpec().VolumeID, spec.GetVolumeId())
+	assert.Equal(t, res.TypedSpec().VolumeID, spec.GetVolumeId()) //nolint:staticcheck
+	assert.Equal(t, res.TypedSpec().VolumeName, spec.GetVolumeName())
 	assert.Equal(t, res.TypedSpec().Path, spec.GetPath())
 	assert.EqualValues(t, res.TypedSpec().Phase, spec.GetPhase())
 	assert.Equal(t, res.TypedSpec().Fingerprint, spec.GetFingerprint())

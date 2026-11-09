@@ -75,9 +75,9 @@ func (suite *VirtualMachineDiskSuite) library() string {
 
 	status := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName)
 	*status.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		VolumeID: "u-" + libraryName,
-		Path:     path,
-		Phase:    hypervisor.ContentLibraryPhaseReady,
+		VolumeName: libraryName,
+		Path:       path,
+		Phase:      hypervisor.ContentLibraryPhaseReady,
 	}
 	suite.Create(status)
 
@@ -718,8 +718,8 @@ func (suite *VirtualMachineDiskSuite) TestReportsUnconfiguredLibrary() {
 func (suite *VirtualMachineDiskSuite) TestWaitsForLibraryToBecomeReady() {
 	status := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, libraryName)
 	*status.TypedSpec() = hypervisor.ContentLibraryStatusSpec{
-		VolumeID: "u-" + libraryName,
-		Error:    "volume is not mounted",
+		VolumeName: libraryName,
+		Error:      "volume is not mounted",
 	}
 	suite.Create(status)
 	suite.createVM(cdromDiskSpec("install", libraryName, "talos.iso", ""))
