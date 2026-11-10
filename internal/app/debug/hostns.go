@@ -131,7 +131,7 @@ func runHostNsContainer( //nolint:gocyclo
 
 	// 7. Per-session cgroup dir as an fd: SysProcAttr.CgroupFD places the child into
 	// the cgroup atomically at fork, avoiding a post-fork cgroup.procs write race.
-	cgroupFd, err := os.Open(filepath.Join("/sys/fs/cgroup", cgroupPath))
+	cgroupFd, err := os.Open(filepath.Join(constants.CgroupMountPath, cgroupPath))
 	if err != nil {
 		return fmt.Errorf("host-ns: open cgroup dir %s: %w", cgroupPath, err)
 	}

@@ -115,6 +115,10 @@ func (s *Service) ContainerRun(srv grpc.BidiStreamingServer[machine.DebugContain
 		cg.Delete() //nolint: errcheck
 	}()
 
+	// pass an absolute path (honoring nested cgroup root), as relative cgroup paths are
+	// resolved by runc relative to its own cgroup
+	cgroupPath = cgroup.Path(cgroupPath)
+
 	// 4a. PROFILE_HOST_NS: namespace fork + overlay, no containerd task.
 	// Pass cgroupPath so the child is placed in the per-session cgroup rather than
 	// inheriting machined's /init cgroup with oom_score_adj=0.
