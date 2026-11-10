@@ -38,15 +38,13 @@ func (s *InspectServer) ControllerRuntimeDependencies(ctx context.Context, in *e
 			edgeType = inspectapi.DependencyEdgeType_OUTPUT_EXCLUSIVE
 		case controller.EdgeOutputShared:
 			edgeType = inspectapi.DependencyEdgeType_OUTPUT_SHARED
-		case controller.EdgeInputStrong:
+		case controller.EdgeInputStrong, controller.EdgeInputQPrimary:
 			edgeType = inspectapi.DependencyEdgeType_INPUT_STRONG
-		case controller.EdgeInputWeak:
+		case controller.EdgeInputWeak, controller.EdgeInputQMapped:
 			edgeType = inspectapi.DependencyEdgeType_INPUT_WEAK
-		case controller.EdgeInputDestroyReady:
+		case controller.EdgeInputDestroyReady, controller.EdgeInputQMappedDestroyReady:
 			edgeType = inspectapi.DependencyEdgeType_INPUT_DESTROY_READY
-		case controller.EdgeInputQPrimary,
-			controller.EdgeInputQMapped,
-			controller.EdgeInputQMappedDestroyReady:
+		default:
 			return nil, fmt.Errorf("unexpected edge type: %v", graph.Edges[i].EdgeType)
 		}
 
