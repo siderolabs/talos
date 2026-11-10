@@ -2617,7 +2617,7 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 	}
 
 	if len(filter) > 0 {
-		if err = handle.SetBPF(filter); err != nil {
+		if err = SetPacketCaptureFilter(handle, filter); err != nil {
 			handle.Close()
 
 			return fmt.Errorf("error setting BPF filter: %w", err)
@@ -2631,6 +2631,46 @@ func (s *Server) PacketCapture(in *machine.PacketCaptureRequest, srv machine.Mac
 	}
 
 	return CapturePackets(srv.Context(), &packetStreamWriter{srv}, handle, in.SnapLen, linkType)
+}
+
+// PacketCaptureFilterHandle is a subset of [afpacket.TPacket] used to attach a BPF filter.
+type PacketCaptureFilterHandle interface {
+	SetBPF(filter []bpf.RawInstruction) error
+	ZeroCopyReadPacketData() ([]byte, gopacket.CaptureInfo, error)
+}
+
+// SetPacketCaptureFilter attaches the BPF filter to the capture handle.
+//
+// The packet socket is bound to the interface when the handle is created, so frames
+// that arrive before the filter is attached are already queued in the ring and would
+// be captured even if they don't match the filter. To avoid that, attach a filter which
+// rejects everything first, drain the frames queued so far, and only then attach
+// the requested filter (the same approach libpcap uses).
+func SetPacketCaptureFilter(handle PacketCaptureFilterHandle, filter []bpf.RawInstruction) error {
+	rejectAll, err := bpf.Assemble([]bpf.Instruction{bpf.RetConstant{Val: 0}})
+	if err != nil {
+		return err
+	}
+
+	if err = handle.SetBPF(rejectAll); err != nil {
+		return err
+	}
+
+	for {
+		_, _, err = handle.ZeroCopyReadPacketData()
+		if err == nil {
+			continue
+		}
+
+		if errors.Is(err, afpacket.ErrTimeout) {
+			// no more queued frames
+			break
+		}
+
+		return fmt.Errorf("error draining queued packets: %w", err)
+	}
+
+	return handle.SetBPF(filter)
 }
 
 // PacketCaptureHandle is a subset of [afpacket.TPacket] used for packet capture.

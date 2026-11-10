@@ -16,6 +16,7 @@ import (
 	"github.com/gopacket/gopacket/pcapgo"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/net/bpf"
 
 	runtime "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
 	"github.com/siderolabs/talos/internal/pkg/pcap"
@@ -163,4 +164,75 @@ func TestCapturePacketsVLAN(t *testing.T) {
 
 	_, _, err = reader.ReadPacketData()
 	assert.ErrorIs(t, err, io.EOF)
+}
+
+// fakeFilterHandle records the filters attached to it and replays the frames queued before the filter.
+type fakeFilterHandle struct {
+	queued  [][]byte
+	filters [][]bpf.RawInstruction
+	// queuedAtSet is the number of queued frames at the time each filter was attached
+	queuedAtSet []int
+	readErr     error
+}
+
+func (h *fakeFilterHandle) SetBPF(filter []bpf.RawInstruction) error {
+	h.filters = append(h.filters, filter)
+	h.queuedAtSet = append(h.queuedAtSet, len(h.queued))
+
+	return nil
+}
+
+func (h *fakeFilterHandle) ZeroCopyReadPacketData() ([]byte, gopacket.CaptureInfo, error) {
+	if h.readErr != nil {
+		return nil, gopacket.CaptureInfo{}, h.readErr
+	}
+
+	if len(h.queued) == 0 {
+		return nil, gopacket.CaptureInfo{}, afpacket.ErrTimeout
+	}
+
+	data := h.queued[0]
+	h.queued = h.queued[1:]
+
+	return data, gopacket.CaptureInfo{CaptureLength: len(data), Length: len(data)}, nil
+}
+
+var _ runtime.PacketCaptureFilterHandle = (*afpacket.TPacket)(nil)
+
+// TestSetPacketCaptureFilterDrainsQueuedFrames verifies that frames queued before the filter
+// is attached are discarded, so they don't end up in a filtered capture.
+func TestSetPacketCaptureFilterDrainsQueuedFrames(t *testing.T) {
+	t.Parallel()
+
+	filter, err := bpf.Assemble([]bpf.Instruction{bpf.RetConstant{Val: 0xffff}})
+	require.NoError(t, err)
+
+	rejectAll, err := bpf.Assemble([]bpf.Instruction{bpf.RetConstant{Val: 0}})
+	require.NoError(t, err)
+
+	handle := &fakeFilterHandle{
+		queued: [][]byte{buildFrame(t, 0), buildFrame(t, 0), buildFrame(t, 10)},
+	}
+
+	require.NoError(t, runtime.SetPacketCaptureFilter(handle, filter))
+
+	// reject-all filter first, then the requested one once the queue is empty
+	assert.Equal(t, [][]bpf.RawInstruction{rejectAll, filter}, handle.filters)
+	assert.Equal(t, []int{3, 0}, handle.queuedAtSet)
+	assert.Empty(t, handle.queued)
+}
+
+func TestSetPacketCaptureFilterReadError(t *testing.T) {
+	t.Parallel()
+
+	filter, err := bpf.Assemble([]bpf.Instruction{bpf.RetConstant{Val: 0xffff}})
+	require.NoError(t, err)
+
+	handle := &fakeFilterHandle{readErr: afpacket.ErrPoll}
+
+	err = runtime.SetPacketCaptureFilter(handle, filter)
+	require.ErrorIs(t, err, afpacket.ErrPoll)
+
+	// the requested filter is not attached, the caller closes the handle
+	assert.Len(t, handle.filters, 1)
 }
