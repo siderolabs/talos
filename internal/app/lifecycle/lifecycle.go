@@ -27,17 +27,22 @@ import (
 type Service struct {
 	machine.UnimplementedLifecycleServiceServer
 
-	lock    sync.Mutex
-	runtime runtime.Runtime
-	logger  *zap.Logger
+	lock          sync.Mutex
+	runtime       runtime.Runtime
+	logger        *zap.Logger
+	consoleLogger *zap.Logger
 }
 
 // NewService creates a new instance of the lifecycle service.
-func NewService(runtime runtime.Runtime, logger *zap.Logger) *Service {
+//
+// The consoleLogger is used only to log the start and the result of the install/upgrade,
+// as these are visible on the console; the progress goes to the logger.
+func NewService(runtime runtime.Runtime, logger, consoleLogger *zap.Logger) *Service {
 	return &Service{
-		lock:    sync.Mutex{},
-		runtime: runtime,
-		logger:  logger.With(zap.String("service", "lifecycle")),
+		lock:          sync.Mutex{},
+		runtime:       runtime,
+		logger:        logger.With(zap.String("service", "lifecycle")),
+		consoleLogger: consoleLogger.With(zap.String("service", "lifecycle")),
 	}
 }
 
@@ -45,7 +50,7 @@ func NewService(runtime runtime.Runtime, logger *zap.Logger) *Service {
 // It ensures that only one installation or upgrade can occur at a time by using a mutex lock.
 //
 //nolint:gocyclo
-func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.ServerStreamingServer[machine.LifecycleServiceInstallResponse]) error {
+func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.ServerStreamingServer[machine.LifecycleServiceInstallResponse]) (retErr error) {
 	if s.runtime.State().Platform().Mode().IsAgent() {
 		return status.Error(codes.Unimplemented, "API is not implemented in agent mode")
 	}
@@ -88,7 +93,17 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("invalid disk path: %v", err))
 	}
 
-	s.logger.Info("starting installation", zap.String("installer_image", installerImage), zap.String("disk", targetDisk))
+	s.consoleLogger.Info(
+		"install via LifecycleService started",
+		zap.String("installer_image", installerImage),
+		zap.String("disk", targetDisk),
+		zap.Stringer("containerd_driver", req.GetContainerd().GetDriver()),
+		zap.Stringer("containerd_namespace", req.GetContainerd().GetNamespace()),
+	)
+
+	var installerExitCode int32
+
+	defer func() { s.logResult("install", installerExitCode, retErr) }()
 
 	//nolint:dupl
 	err = runInstallerContainer(ctx,
@@ -116,11 +131,7 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 				})
 			},
 			sendExitCode: func(exitCode int32) error {
-				if exitCode == 0 {
-					s.logger.Info("installation completed", zap.Int32("exit_code", exitCode))
-				} else {
-					s.logger.Warn("installation failed", zap.Int32("exit_code", exitCode))
-				}
+				installerExitCode = exitCode
 
 				return ss.Send(&machine.LifecycleServiceInstallResponse{
 					Progress: &machine.LifecycleServiceInstallProgress{
@@ -156,7 +167,7 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 // It ensures that only one installation or upgrade can occur at a time by using a mutex lock.
 //
 //nolint:gocyclo
-func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.ServerStreamingServer[machine.LifecycleServiceUpgradeResponse]) error {
+func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.ServerStreamingServer[machine.LifecycleServiceUpgradeResponse]) (retErr error) {
 	if s.runtime.State().Platform().Mode().IsAgent() {
 		return status.Error(codes.Unimplemented, "API is not implemented in agent mode")
 	}
@@ -196,7 +207,17 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 
 	devname := systemDisk.DevPath
 
-	s.logger.Info("starting upgrade", zap.String("installer_image", installerImage), zap.String("disk", devname))
+	s.consoleLogger.Info(
+		"upgrade via LifecycleService started",
+		zap.String("installer_image", installerImage),
+		zap.String("disk", devname),
+		zap.Stringer("containerd_driver", req.GetContainerd().GetDriver()),
+		zap.Stringer("containerd_namespace", req.GetContainerd().GetNamespace()),
+	)
+
+	var installerExitCode int32
+
+	defer func() { s.logResult("upgrade", installerExitCode, retErr) }()
 
 	//nolint:dupl
 	err = runInstallerContainer(ctx,
@@ -223,11 +244,7 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 				})
 			},
 			sendExitCode: func(exitCode int32) error {
-				if exitCode == 0 {
-					s.logger.Info("upgrade completed", zap.Int32("exit_code", exitCode))
-				} else {
-					s.logger.Warn("upgrade failed", zap.Int32("exit_code", exitCode))
-				}
+				installerExitCode = exitCode
 
 				return ss.Send(&machine.LifecycleServiceUpgradeResponse{
 					Progress: &machine.LifecycleServiceInstallProgress{
@@ -243,6 +260,18 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 	}
 
 	return nil
+}
+
+// logResult logs the outcome of the install/upgrade to the console.
+func (s *Service) logResult(op string, exitCode int32, err error) {
+	switch {
+	case err != nil:
+		s.consoleLogger.Error(op+" via LifecycleService failed", zap.String("error", status.Convert(err).Message()))
+	case exitCode != 0:
+		s.consoleLogger.Error(op+" via LifecycleService failed", zap.Int32("exit_code", exitCode))
+	default:
+		s.consoleLogger.Info(op + " via LifecycleService succeeded")
+	}
 }
 
 func (s *Service) checkSupported(feature runtime.ModeCapability) error {

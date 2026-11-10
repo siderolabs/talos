@@ -237,6 +237,18 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 		),
 	).With(logging.Component("machined"))
 
+	consoleLogger := logging.ZapLogger(
+		logging.NewLogDestination(
+			logWriter, zapcore.DebugLevel,
+			logging.WithColoredLevels(),
+		),
+		logging.NewLogDestination(
+			logging.StdWriter, zapcore.InfoLevel,
+			logging.WithoutTimestamp(),
+			logging.WithoutLogLevels(),
+		),
+	).With(logging.Component("machined"))
+
 	// Start the API server.
 	server := factory.NewServer( //nolint:contextcheck
 		&v1alpha1server.Server{
@@ -244,6 +256,7 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 			// breaking the import loop cycle between services/ package and v1alpha1_server.go
 			EtcdBootstrapper: BootstrapEtcd,
 			Logger:           logger,
+			ConsoleLogger:    consoleLogger,
 
 			ShutdownCtx: ctx,
 		},

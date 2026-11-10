@@ -240,10 +240,6 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 		return fmt.Errorf("failed to send exit code: %w", err)
 	}
 
-	if exitCode != 0 {
-		log.Printf("installer container exited with code %d", exitCode)
-	}
-
 	return nil
 }
 

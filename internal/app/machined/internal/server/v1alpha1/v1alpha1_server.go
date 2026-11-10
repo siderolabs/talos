@@ -128,6 +128,10 @@ type Server struct {
 
 	// Zap logger.
 	Logger *zap.Logger
+	// ConsoleLogger writes both to the machined log and to the console.
+	//
+	// Use it sparingly, only for operator-visible events (e.g. an upgrade starting/finishing).
+	ConsoleLogger *zap.Logger
 
 	server *grpc.Server
 
@@ -155,7 +159,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
-	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
+	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger, s.ConsoleLogger))
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
