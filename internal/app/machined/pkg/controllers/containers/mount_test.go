@@ -199,6 +199,9 @@ func (suite *MountSuite) TestRequestsAndResolvesUserVolume() {
 		asrt.False(request.TypedSpec().ReadOnly)
 		// Detached would give a file descriptor with no path to bind into the container.
 		asrt.False(request.TypedSpec().Detached)
+		// Secure, as the volume is by default.
+		asrt.True(request.TypedSpec().Secure)
+		asrt.True(request.TypedSpec().NoExec)
 	})
 
 	// Until the volume is mounted there is no host path, so the container cannot start.
@@ -239,6 +242,35 @@ func (suite *MountSuite) TestReadOnlyOptionIsRequested() {
 		func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
 			asrt.True(request.TypedSpec().ReadOnly)
 		})
+}
+
+// TestVolumeSecurityIsRequested covers the request asking for what the volume itself asks for.
+// Requests for a volume are merged, so a request asking for less would leave the mount less secure
+// whenever it is the last one holding the volume.
+func (suite *MountSuite) TestVolumeSecurityIsRequested() {
+	insecureVolume := blockcfg.NewUserVolumeConfigV1Alpha1()
+	insecureVolume.MetaName = testVolumeName
+	insecureVolume.MountSpec.MountSecure = new(false)
+
+	suite.replaceVolumes(insecureVolume)
+	suite.createSpec(suite.volumeMount())
+
+	ctest.AssertResource(suite, testRequestID, func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.False(request.TypedSpec().Secure)
+		asrt.False(request.TypedSpec().NoExec)
+	})
+
+	secureVolume := blockcfg.NewUserVolumeConfigV1Alpha1()
+	secureVolume.MetaName = testVolumeName
+	secureVolume.MountSpec.MountSecure = new(true)
+
+	suite.replaceVolumes(secureVolume)
+
+	// Followed for the same volume, without the request being replaced.
+	ctest.AssertResource(suite, testRequestID, func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.True(request.TypedSpec().Secure)
+		asrt.True(request.TypedSpec().NoExec)
+	})
 }
 
 // TestResolvesExistingVolume covers a name declared by an ExistingVolumeConfig.

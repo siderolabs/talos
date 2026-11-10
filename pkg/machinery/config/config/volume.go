@@ -18,25 +18,40 @@ import (
 type BackingVolume struct {
 	ID       string
 	ReadOnly bool
+	// Secure is the volume's own mount.secure setting, which the volume's mount request turns into
+	// nosuid, nodev and noexec.
+	//
+	// Another requester of the volume should ask for the same: the mount is only as secure as what
+	// its current requesters ask for, so a requester asking for less weakens the mount whenever it
+	// is the only one left, such as while it still holds the volume after its config is removed.
+	Secure bool
 }
 
 // ResolveBackingVolume resolves a user, existing, or external volume by document name.
 func ResolveBackingVolume(cfg Config, name string) (BackingVolume, bool) {
 	for _, volume := range cfg.UserVolumeConfigs() {
 		if volume.Name() == name {
-			return BackingVolume{ID: constants.UserVolumePrefix + name}, true
+			return BackingVolume{ID: constants.UserVolumePrefix + name, Secure: volume.Mount().Secure()}, true
 		}
 	}
 
 	for _, volume := range cfg.ExistingVolumeConfigs() {
 		if volume.Name() == name {
-			return BackingVolume{ID: constants.ExistingVolumePrefix + name, ReadOnly: volume.Mount().ReadOnly()}, true
+			return BackingVolume{
+				ID:       constants.ExistingVolumePrefix + name,
+				ReadOnly: volume.Mount().ReadOnly(),
+				Secure:   volume.Mount().Secure(),
+			}, true
 		}
 	}
 
 	for _, volume := range cfg.ExternalVolumeConfigs() {
 		if volume.Name() == name {
-			return BackingVolume{ID: constants.ExternalVolumePrefix + name, ReadOnly: volume.Mount().ReadOnly()}, true
+			return BackingVolume{
+				ID:       constants.ExternalVolumePrefix + name,
+				ReadOnly: volume.Mount().ReadOnly(),
+				Secure:   volume.Mount().Secure(),
+			}, true
 		}
 	}
 

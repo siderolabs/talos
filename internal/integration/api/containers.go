@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand"
 	"path/filepath"
 	"slices"
@@ -1965,8 +1966,17 @@ func (suite *ContainersSuite) TestVolumeHeldAcrossKindChange() {
 				"the mount is not held for the container, finalizers: %v", status.Metadata().Finalizers())
 		})
 
+	// The container's request is now the only one, the volume's own having gone with its config. The
+	// mount must not be weakened by that: the status is written once the mount attributes are applied,
+	// so from here on they are what the kernel has.
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), constants.UserVolumePrefix+volumeName,
-		func(*block.MountStatus, *assert.Assertions) {})
+		func(status *block.MountStatus, asrt *assert.Assertions) {
+			asrt.Equal([]string{requestID}, status.TypedSpec().Spec.RequesterIDs)
+			asrt.True(status.TypedSpec().Spec.Secure, "the held mount is no longer secure")
+			asrt.True(status.TypedSpec().Spec.NoExec, "the held mount is no longer noexec")
+		})
+
+	suite.assertMountOptions(ctx, filepath.Join(constants.UserVolumeMountPoint, volumeName), "nosuid", "nodev", "noexec")
 
 	suite.T().Logf("removing container config %q", name)
 
@@ -2205,6 +2215,25 @@ func (suite *ContainersSuite) setupUserVolume(ctx context.Context, node, owner, 
 	suite.PatchMachineConfig(ctx, newDirectoryUserVolume(name))
 
 	return name
+}
+
+// assertMountOptions checks that the mount at mountPoint on the node carries each of the per-mount
+// options, as the kernel reports them.
+func (suite *ContainersSuite) assertMountOptions(ctx context.Context, mountPoint string, options ...string) {
+	r, err := suite.Client.Read(ctx, "/proc/self/mountinfo")
+	suite.Require().NoError(err)
+
+	defer r.Close() //nolint:errcheck
+
+	mounts, err := parseMountInfo(r)
+	suite.Require().NoError(err)
+
+	idx := slices.IndexFunc(mounts, func(m mountInfo) bool { return m.mountPoint == mountPoint })
+	suite.Require().NotEqual(-1, idx, "nothing is mounted at %q", mountPoint)
+
+	for _, option := range options {
+		suite.Assert().True(mounts[idx].has(option), "mount %q is missing %s, has %v", mountPoint, option, slices.Sorted(maps.Keys(mounts[idx].options)))
+	}
 }
 
 // newDirectoryUserVolume builds a directory-backed user volume document.

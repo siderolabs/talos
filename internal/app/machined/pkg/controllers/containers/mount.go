@@ -363,6 +363,11 @@ func (ctrl *MountController) reconcileContainer(
 				// Detached must stay false: a detached mount is reachable only through a file
 				// descriptor and never appears at its target, so there would be no path to bind.
 				res.TypedSpec().Detached = false
+				// The volume's own security, as its own mount request asks for: requests are merged, so
+				// asking for less would weaken the mount whenever this request is the last one holding
+				// it, such as after the volume config is removed or swapped while the container runs.
+				res.TypedSpec().Secure = backing.Secure
+				res.TypedSpec().NoExec = backing.Secure
 
 				return nil
 			},

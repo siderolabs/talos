@@ -26,6 +26,7 @@ func TestResolveBackingVolume(t *testing.T) {
 		mount    string
 		id       string
 		readOnly bool
+		insecure bool
 	}{
 		{kind: "UserVolumeConfig", name: "images", query: "images", id: "u-images"},
 		{kind: "ExistingVolumeConfig", name: "images", query: "images", id: "e-images"},
@@ -39,6 +40,9 @@ func TestResolveBackingVolume(t *testing.T) {
 		{kind: "SwapVolumeConfig", name: "images", query: "images"},
 		{kind: "ExistingVolumeConfig", name: "images", query: "images", mount: "mount:\n  readOnly: true\n", id: "e-images", readOnly: true},
 		{kind: "ExternalVolumeConfig", name: "images", query: "images", mount: "mount:\n  readOnly: true\n", id: "x-images", readOnly: true},
+		{kind: "UserVolumeConfig", name: "images", query: "images", mount: "mount:\n  secure: false\n", id: "u-images", insecure: true},
+		{kind: "ExistingVolumeConfig", name: "images", query: "images", mount: "mount:\n  secure: false\n", id: "e-images", insecure: true},
+		{kind: "ExternalVolumeConfig", name: "images", query: "images", mount: "mount:\n  secure: false\n", id: "x-images", insecure: true},
 	} {
 		t.Run(test.kind+"/"+test.name+"/"+test.query+"/"+test.mount, func(t *testing.T) {
 			t.Parallel()
@@ -48,7 +52,8 @@ func TestResolveBackingVolume(t *testing.T) {
 
 			volume, found := config.ResolveBackingVolume(cfg, test.query)
 			assert.Equal(t, test.id != "", found)
-			assert.Equal(t, config.BackingVolume{ID: test.id, ReadOnly: test.readOnly}, volume)
+			// Secure unless the volume opts out, which is the default of every volume kind.
+			assert.Equal(t, config.BackingVolume{ID: test.id, ReadOnly: test.readOnly, Secure: test.id != "" && !test.insecure}, volume)
 		})
 	}
 }
