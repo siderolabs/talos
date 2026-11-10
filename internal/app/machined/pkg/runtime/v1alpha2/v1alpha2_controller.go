@@ -607,6 +607,14 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.WorkloadMemoryController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&runtimecontrollers.WorkloadPidsController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			Roots: []runtimecontrollers.WorkloadPidsRoot{
+				{Cgroup: constants.CgroupTalosContainersRoot, ReservedPids: constants.CgroupTalosContainersReservedPids},
+				{Cgroup: constants.CgroupVirtualMachines, ReservedPids: constants.CgroupVirtualMachinesReservedPids},
+				{Cgroup: constants.CgroupExtensions, ReservedPids: constants.CgroupExtensionsReservedPids},
+			},
+		},
 		&runtimecontrollers.OOMController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

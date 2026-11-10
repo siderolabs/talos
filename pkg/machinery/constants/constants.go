@@ -954,6 +954,12 @@ const (
 	// CgroupExtensionsMillicores is the CPU weight shared by all extension services.
 	CgroupExtensionsMillicores = 500
 
+	// CgroupExtensionsReservedPids is the number of PIDs held back from the extensions cgroup.
+	//
+	// pids.max of the cgroup is min(kernel.pid_max, kernel.threads-max) minus this reservation, the same
+	// calculation the kubelet applies to kubepods with KubeletSystemReservedPid.
+	CgroupExtensionsReservedPids = 100
+
 	// CgroupInstaller is the cgroup name for the installer container (install/upgrade).
 	CgroupInstaller = CgroupSystem + "/installer"
 
@@ -985,6 +991,12 @@ const (
 	// CgroupTalosContainersMillicores is the CPU weight for the taloscontainers root cgroup.
 	CgroupTalosContainersMillicores = 1000
 
+	// CgroupTalosContainersReservedPids is the number of PIDs held back from the taloscontainers root cgroup.
+	//
+	// pids.max of the root is min(kernel.pid_max, kernel.threads-max) minus this reservation, the same
+	// calculation the kubelet applies to kubepods with KubeletSystemReservedPid.
+	CgroupTalosContainersReservedPids = 100
+
 	// CgroupVirtualMachinesRoot is the root name for virtual machine cgroups.
 	CgroupVirtualMachinesRoot = "virtualmachines"
 
@@ -999,6 +1011,12 @@ const (
 
 	// CgroupVirtualMachinesMillicores is the CPU weight for the virtualmachines root cgroup.
 	CgroupVirtualMachinesMillicores = 1000
+
+	// CgroupVirtualMachinesReservedPids is the number of PIDs held back from the virtual machines partition.
+	//
+	// pids.max of the partition is min(kernel.pid_max, kernel.threads-max) minus this reservation, the same
+	// calculation the kubelet applies to kubepods with KubeletSystemReservedPid.
+	CgroupVirtualMachinesReservedPids = 100
 
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
 	CgroupPodRuntimeRoot = "podruntime"
@@ -1337,6 +1355,9 @@ const (
 
 	// ProcModulesPath is the path to /proc/modules.
 	ProcModulesPath = "/proc/modules"
+
+	// ProcSysPath is the mount point of the sysctl filesystem.
+	ProcSysPath = "/proc/sys"
 
 	// ModprobePath is the modprobe path the kernel is configured with (kernel.modprobe sysctl).
 	//

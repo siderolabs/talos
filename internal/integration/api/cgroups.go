@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -225,6 +226,99 @@ func (suite *CGroupsSuite) TestWorkloadMemoryLimits() {
 	suite.RemoveMachineConfigDocuments(nodeCtx, runtimecfg.WorkloadResourceConfigKind)
 
 	suite.assertWorkloadMemoryMax(nodeCtx, "max", "max")
+}
+
+// workloadPidsRoots are the roots whose pids.max WorkloadPidsController enforces, with their reservations.
+var workloadPidsRoots = []struct {
+	cgroup   string
+	reserved uint64
+}{
+	{constants.CgroupTalosContainersRoot, constants.CgroupTalosContainersReservedPids},
+	{constants.CgroupVirtualMachines, constants.CgroupVirtualMachinesReservedPids},
+}
+
+// TestWorkloadPidsLimit verifies the workload roots' pids.max follows the host PID capacity, as kubepods does.
+func (suite *CGroupsSuite) TestWorkloadPidsLimit() {
+	if !suite.Capabilities().RunsTalosKernel {
+		suite.T().Skip("cgroups are nested in container mode, so the workload roots are not managed")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	pidMax := suite.readSysctlUint(nodeCtx, "pid_max")
+	threadsMax := suite.readSysctlUint(nodeCtx, "threads-max")
+
+	suite.assertWorkloadPidsMax(nodeCtx, pidMax, threadsMax)
+
+	if testing.Short() {
+		return
+	}
+
+	original, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	if slices.ContainsFunc(original.Documents(), func(doc configconfig.Document) bool {
+		return doc.Kind() == runtimecfg.SysctlConfigKind
+	}) {
+		suite.T().Skipf("node %s already carries a %s document", node, runtimecfg.SysctlConfigKind)
+	}
+
+	originalBytes, err := original.Bytes()
+	suite.Require().NoError(err)
+
+	// lower than the Talos default, and still well above anything the node runs
+	lowered := pidMax / 2
+
+	suite.T().Cleanup(func() {
+		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
+		defer cleanupCancel()
+
+		cleanupCtx = client.WithNode(cleanupCtx, node)
+
+		_, applyErr := suite.Client.ApplyConfiguration(cleanupCtx, &machineapi.ApplyConfigurationRequest{
+			Data: originalBytes,
+			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
+		})
+		if !suite.Assert().NoError(applyErr, "restore original configuration on node %s", node) {
+			return
+		}
+
+		suite.assertWorkloadPidsMax(cleanupCtx, pidMax, threadsMax)
+	})
+
+	doc := runtimecfg.NewSysctlConfigV1Alpha1()
+	doc.Params = map[string]string{"kernel.pid_max": strconv.FormatUint(lowered, 10)}
+
+	suite.PatchMachineConfig(nodeCtx, doc)
+
+	suite.assertWorkloadPidsMax(nodeCtx, lowered, threadsMax)
+}
+
+func (suite *CGroupsSuite) assertWorkloadPidsMax(nodeCtx context.Context, pidMax, threadsMax uint64) {
+	suite.T().Helper()
+
+	for _, root := range workloadPidsRoots {
+		suite.AssertCgroupFile(nodeCtx, root.cgroup, "pids.max", expectedPidsMax(pidMax, threadsMax, root.reserved))
+	}
+}
+
+func (suite *CGroupsSuite) readSysctlUint(nodeCtx context.Context, name string) uint64 {
+	value, err := strconv.ParseUint(suite.ReadFile(nodeCtx, filepath.Join(constants.ProcSysPath, "kernel", name)), 10, 64)
+	suite.Require().NoError(err)
+
+	return value
+}
+
+// expectedPidsMax mirrors kubelet Node Allocatable for kubepods: min(pid_max, threads-max) - reserved, floored at zero.
+func expectedPidsMax(pidMax, threadsMax, reserved uint64) string {
+	capacity := min(pidMax, threadsMax)
+
+	if capacity <= reserved {
+		return "0"
+	}
+
+	return strconv.FormatUint(capacity-reserved, 10)
 }
 
 func (suite *CGroupsSuite) readMemoryMax(nodeCtx context.Context, name string) string {

@@ -254,6 +254,7 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 			CPU: &cgroup2.CPU{
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupTalosContainersMillicores))),
 			},
+			Pids: workloadRootPids(),
 		}
 	case constants.CgroupVirtualMachines:
 		// Same reasoning as taloscontainers: guest workloads, so a weight against the other roots but no
@@ -262,10 +263,20 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 			CPU: &cgroup2.CPU{
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupVirtualMachinesMillicores))),
 			},
+			Pids: workloadRootPids(),
 		}
 	}
 
 	return &cgroup2.Resources{}
+}
+
+// workloadRootPids enables the pids controller on a workload root without setting a limit.
+//
+// The cgroup2 manager only enables the controllers whose resources are set, and nothing else enables
+// pids at boot, so without this the root would have no pids.max for WorkloadPidsController to own.
+// A zero Max writes nothing: pids.max of the new cgroup stays "max" until the controller reconciles it.
+func workloadRootPids() *cgroup2.Pids {
+	return &cgroup2.Pids{}
 }
 
 // CreateCgroup creates a cgroup, with resources limits if configured and supported.

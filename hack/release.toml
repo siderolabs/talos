@@ -526,6 +526,9 @@ When SELinux is enabled, Talos Containers use a dedicated SELinux domain; the `p
 `security.seccompProfile.type` selects the `default` seccomp profile, `unconfined`, or a `localhost` profile declared by a `SeccompProfileConfig` document.
 `runAs` sets the user and group, and an image declaring a non-numeric `USER` is rejected unless `runAs` overrides it.
 `resources.limits` caps the CPU, memory and swap of a container; see "Workload Memory Limits" for the aggregate limit of all containers and "SELinux Workload Categories" for their isolation.
+The `/taloscontainers` root cgroup has a `pids.max` limit, so containers can't exhaust the host PID space.
+Talos calculates it the same way the kubelet calculates the `kubepods` limit: the smaller of `kernel.pid_max` and `kernel.threads-max`, minus 100 reserved PIDs.
+The limit follows changes to these sysctls without a reboot.
 
 #### Changes from 1.14
 
@@ -1077,6 +1080,14 @@ Worker nodes use these endpoints to reach trustd, and control plane nodes use th
 Distributing the list to all machines in the cluster makes these operations independent of the discovery service and Kubernetes.
 
 Every connection to the endpoints is authenticated with TLS, and unreachable endpoints are skipped, so a stale list doesn't break the cluster.
+"""
+
+    [notes.vm_pids_max]
+        title = "PID Limit for Virtual Machines"
+        description = """\
+The `/virtualmachines.partition` cgroup has a `pids.max` limit, so virtual machines can't exhaust the host PID space.
+Talos calculates it the same way the kubelet calculates the `kubepods` limit: the smaller of `kernel.pid_max` and `kernel.threads-max`, minus 100 reserved PIDs.
+The limit follows changes to these sysctls without a reboot.
 """
 
 [make_deps]

@@ -105,27 +105,5 @@ func WriteMemoryMax(dir string, value MemoryMax) error {
 // Finite desired values must have gone through kernel.NormalizeMemoryLimit.
 // It returns the value found before any write and whether a write happened.
 func EnsureMemoryMax(dir string, desired MemoryMax) (MemoryMax, bool, error) {
-	current, err := ReadMemoryMax(dir)
-	if err != nil {
-		return MemoryMax{}, false, err
-	}
-
-	if current == desired {
-		return current, false, nil
-	}
-
-	if err = WriteMemoryMax(dir, desired); err != nil {
-		return current, false, err
-	}
-
-	actual, err := ReadMemoryMax(dir)
-	if err != nil {
-		return current, true, fmt.Errorf("error verifying write: %w", err)
-	}
-
-	if actual != desired {
-		return current, true, fmt.Errorf("%s reads back %s after writing %s", filepath.Join(dir, MemoryMaxFile), actual, desired)
-	}
-
-	return current, true, nil
+	return ensureLimit(dir, MemoryMaxFile, desired, ReadMemoryMax, WriteMemoryMax)
 }
