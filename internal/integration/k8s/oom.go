@@ -20,6 +20,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/dustin/go-humanize"
@@ -211,23 +212,35 @@ func (suite *OomSuite) waitForMemoryPressureToSubside(ctx context.Context, nodes
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	var quietSince time.Time
+	var (
+		quietSince time.Time
+		lastReason string
+	)
+
+	// userspace OOM kills already reported for each node, so that every kill restarts the quiet period
+	// only once, instead of keeping the node under pressure until the timeout
+	seenOOMActions := make([]map[resource.ID]struct{}, len(nodes))
+
+	for i := range seenOOMActions {
+		seenOOMActions[i] = map[resource.ID]struct{}{}
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
-			suite.T().Logf("memory pressure didn't subside on the worker nodes in %s", time.Since(startTime))
+			suite.T().Logf("memory pressure didn't subside on the worker nodes in %s, last reason: %s", time.Since(startTime), lastReason)
 
 			return false
 		case <-ticker.C:
 		}
 
-		if reason := suite.memoryPressureReason(ctx, nodes, startTime); reason != "" {
+		if reason := suite.memoryPressureReason(ctx, nodes, startTime, seenOOMActions); reason != "" {
 			if !quietSince.IsZero() {
 				suite.T().Logf("worker nodes are back under memory pressure: %s", reason)
 			}
 
 			quietSince = time.Time{}
+			lastReason = reason
 
 			continue
 		}
@@ -246,7 +259,9 @@ func (suite *OomSuite) waitForMemoryPressureToSubside(ctx context.Context, nodes
 
 // memoryPressureReason checks all the nodes in parallel, returning an empty string if none of them is
 // under memory pressure, or a human-readable reason otherwise.
-func (suite *OomSuite) memoryPressureReason(ctx context.Context, nodes []string, since time.Time) string {
+//
+// seenOOMActions holds the userspace OOM kills already reported for each node (indexed as nodes).
+func (suite *OomSuite) memoryPressureReason(ctx context.Context, nodes []string, since time.Time, seenOOMActions []map[resource.ID]struct{}) string {
 	ctx, cancel := context.WithTimeout(ctx, kernelOOMReadTimeout)
 	defer cancel()
 
@@ -256,7 +271,7 @@ func (suite *OomSuite) memoryPressureReason(ctx context.Context, nodes []string,
 
 	for i, node := range nodes {
 		wg.Go(func() {
-			reasons[i] = suite.nodeMemoryPressureReason(client.WithNode(ctx, node), since)
+			reasons[i] = suite.nodeMemoryPressureReason(client.WithNode(ctx, node), since, seenOOMActions[i])
 		})
 	}
 
@@ -274,30 +289,42 @@ func (suite *OomSuite) memoryPressureReason(ctx context.Context, nodes []string,
 }
 
 // nodeMemoryPressureReason checks a single node for memory pressure.
-func (suite *OomSuite) nodeMemoryPressureReason(nodeCtx context.Context, since time.Time) string {
-	if reason := suite.recentOOMActionReason(nodeCtx, since); reason != "" {
+func (suite *OomSuite) nodeMemoryPressureReason(nodeCtx context.Context, since time.Time, seenOOMActions map[resource.ID]struct{}) string {
+	if reason := suite.newOOMActionReason(nodeCtx, since, seenOOMActions); reason != "" {
 		return reason
 	}
 
 	return suite.psiMemoryPressureReason(nodeCtx)
 }
 
-// recentOOMActionReason reports a userspace OOM kill on the node since the given time, if any.
+// newOOMActionReason reports userspace OOM kills on the node since the given time which haven't been reported yet.
 //
-// Any such kill means the OOM handler still considers the node to be under memory pressure.
-func (suite *OomSuite) recentOOMActionReason(nodeCtx context.Context, since time.Time) string {
+// Such a kill means the OOM handler considered the node to be under memory pressure moments ago.
+// Every kill is reported (and recorded in seenOOMActions) once: a kill from the past doesn't mean the node is still
+// under pressure, so it should only restart the quiet period, not prevent the node from ever settling.
+func (suite *OomSuite) newOOMActionReason(nodeCtx context.Context, since time.Time, seenOOMActions map[resource.ID]struct{}) string {
 	actions, err := safe.StateListAll[*runtime.OOMAction](nodeCtx, suite.Client.State())
 	if err != nil {
 		return fmt.Sprintf("failed to list OOM actions: %v", err)
 	}
 
+	var reasons []string
+
 	for action := range actions.All() {
-		if !action.Metadata().Created().Before(since) {
-			return fmt.Sprintf("userspace OOM kill at %s: %v", action.Metadata().Created().Format(time.RFC3339), action.TypedSpec().Processes)
+		if action.Metadata().Created().Before(since) {
+			continue
 		}
+
+		if _, seen := seenOOMActions[action.Metadata().ID()]; seen {
+			continue
+		}
+
+		seenOOMActions[action.Metadata().ID()] = struct{}{}
+
+		reasons = append(reasons, fmt.Sprintf("userspace OOM kill at %s: %v", action.Metadata().Created().Format(time.RFC3339), action.TypedSpec().Processes))
 	}
 
-	return ""
+	return strings.Join(reasons, ", ")
 }
 
 // psiMemoryPressureReason reports the node's PSI memory pressure if it's above the threshold.
