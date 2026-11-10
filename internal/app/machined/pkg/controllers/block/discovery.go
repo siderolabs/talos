@@ -294,9 +294,13 @@ func (ctrl *DiscoveryController) probeDevice(ctx context.Context, r controller.R
 
 		if device.TypedSpec().Parent != "" {
 			dv.TypedSpec().ParentDevPath = filepath.Join("/dev", device.TypedSpec().Parent)
+		} else {
+			// the offset of a partition is only known from the partition table of its parent, so it is
+			// written when the parent is probed (see writeNestedVolume), and a partition probed on its own
+			// (e.g. after a change event for the partition only) keeps the offset it already has
+			dv.TypedSpec().Offset = 0
 		}
 
-		dv.TypedSpec().Offset = 0
 		dv.TypedSpec().SetSize(info.Size)
 		dv.TypedSpec().SectorSize = info.SectorSize
 		dv.TypedSpec().IOSize = info.IOSize

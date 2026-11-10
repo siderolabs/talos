@@ -106,6 +106,11 @@ func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 	for dv := range volumes.All() {
 		suite.T().Logf("volume: %s %s %s %s", dv.Metadata().ID(), dv.TypedSpec().Name, dv.TypedSpec().PartitionLabel, dv.TypedSpec().Label)
 
+		if dv.TypedSpec().Parent != "" {
+			// partitions should always have an offset, even the first one
+			suite.Assert().NotZero(dv.TypedSpec().Offset, "volume %s has a parent %s but no offset", dv.Metadata().ID(), dv.TypedSpec().Parent)
+		}
+
 		partitionLabel := dv.TypedSpec().PartitionLabel
 		filesystemLabel := dv.TypedSpec().Label
 
