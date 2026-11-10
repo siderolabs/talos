@@ -64,6 +64,10 @@
 
 ; kubelet sends sigkill to pod processes
 (allow kubelet_t pod_p (process_classes (signal)))
+; and to the runc init processes left in an orphaned pod cgroup: when the StartContainer call is
+; canceled (e.g. kubelet restart), runc init stays parked on its exec fifo, still pod_containerd_t
+; as it never exec'd the entrypoint, and the kubelet SIGKILLs it before removing the pod cgroup
+(allow kubelet_t pod_containerd_t (process (sigkill)))
 
 ; ; Used when Mayastor/OpenEBS is enabled
 ; (allow kubelet_t hugetlbfs_t (fs_classes (rw)))
