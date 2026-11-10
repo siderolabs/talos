@@ -74,6 +74,15 @@ const (
 // containerStartTimeout covers an image pull on a cold node plus the controller chain.
 const containerStartTimeout = 5 * time.Minute
 
+// parkCommand keeps a shell container running until it is stopped, for the tests that need it to
+// stay up while they look at it: a container which exits is restarted, which would race them.
+//
+// A plain sleep would hold up every stop for the whole stop timeout: the shell is PID 1 of the
+// container, which ignores SIGTERM unless it installs a handler, so the stop only completes with the
+// SIGKILL that follows. The sleep runs in the background, as the shell runs a trap only once the
+// foreground command returns, while wait returns as soon as a trapped signal arrives.
+const parkCommand = "trap 'exit 0' TERM; sleep 3600 & wait"
+
 // To help track finalizers.
 const containerMountControllerName = "containers.MountController"
 
@@ -1559,11 +1568,11 @@ func (suite *ContainersSuite) TestContainerUserVolumeMount() {
 	const destination = "/mnt/data"
 
 	// The write is what proves the resolved host path is really mounted here: the resource assertions
-	// below only show what the controllers agreed on, not what the container can reach. Parked with
-	// sleep afterwards because a container that exits is restarted, which would race the assertion
-	// that it is running.
+	// below only show what the controllers agreed on, not what the container can reach. Parked
+	// afterwards because a container that exits is restarted, which would race the assertion that it
+	// is running.
 	doc := suite.shellContainer(name,
-		"echo volume-ok > "+destination+"/probe && cat "+destination+"/probe && sleep 3600")
+		"echo volume-ok > "+destination+"/probe && cat "+destination+"/probe && { "+parkCommand+"; }")
 	doc.MountsConfig = []containercfg.ContainerMount{
 		{
 			VolumeMount: &containercfg.VolumeMount{
@@ -1966,14 +1975,13 @@ func (suite *ContainersSuite) TestVolumeHeldAcrossKindChange() {
 				"the mount is not held for the container, finalizers: %v", status.Metadata().Finalizers())
 		})
 
-	// The container's request is now the only one, the volume's own having gone with its config. The
-	// mount must not be weakened by that: the status is written once the mount attributes are applied,
-	// so from here on they are what the kernel has.
+	// With the volume's own request gone along with its config, the block subsystem starts tearing the
+	// mount down, which only completes once the container lets go. The mount attributes are final from
+	// then on, and must not have been weakened on the way to the container's request being the last
+	// one: a weakened mount would stay that way for as long as the container runs.
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), constants.UserVolumePrefix+volumeName,
 		func(status *block.MountStatus, asrt *assert.Assertions) {
-			asrt.Equal([]string{requestID}, status.TypedSpec().Spec.RequesterIDs)
-			asrt.True(status.TypedSpec().Spec.Secure, "the held mount is no longer secure")
-			asrt.True(status.TypedSpec().Spec.NoExec, "the held mount is no longer noexec")
+			asrt.Equal(resource.PhaseTearingDown, status.Metadata().Phase())
 		})
 
 	suite.assertMountOptions(ctx, filepath.Join(constants.UserVolumeMountPoint, volumeName), "nosuid", "nodev", "noexec")
@@ -1991,9 +1999,7 @@ func (suite *ContainersSuite) TestVolumeHeldAcrossKindChange() {
 // startWithUserVolume applies a container mounting the user volume, waits for it to run with the
 // mount held, and returns the ID of its running instance.
 func (suite *ContainersSuite) startWithUserVolume(ctx context.Context, name, volumeName string) resource.ID {
-	// Parked with sleep because a container that exits is restarted, which would race the assertions
-	// that it keeps running.
-	doc := suite.shellContainer(name, "sleep 3600")
+	doc := suite.shellContainer(name, parkCommand)
 	doc.MountsConfig = []containercfg.ContainerMount{
 		{
 			VolumeMount: &containercfg.VolumeMount{
@@ -2167,6 +2173,18 @@ func (suite *ContainersSuite) setupContainerOn(purpose, node string) (context.Co
 					}
 				})...)
 			})
+
+		// Removing the documents only starts the teardown: a volume stays mounted until the container
+		// holding it has stopped, and whatever runs next on the node would find it still there.
+		waitCtx, waitCancel := context.WithTimeout(cleanupCtx, time.Minute)
+		defer waitCancel()
+
+		for _, volume := range volumes {
+			// Every volume kind, as a test may swap one kind for another under the same name.
+			for _, prefix := range []string{constants.UserVolumePrefix, constants.ExistingVolumePrefix, constants.ExternalVolumePrefix} {
+				rtestutils.AssertNoResource[*block.MountStatus](waitCtx, suite.T(), suite.Client.State(), prefix+volume)
+			}
+		}
 	})
 
 	return ctx, name
