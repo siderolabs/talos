@@ -266,7 +266,14 @@ func (suite *ContainersSuite) TestRestartAfterTermination() {
 		suite.Run(test.name, func() {
 			ctx, name, _ := suite.setupContainer(test.name)
 
-			suite.applyContainers(ctx, suite.shellContainer(name, test.command))
+			// A short restart delay keeps the wait for the replacement short; the default delay is
+			// exercised by TestContainerStatus.
+			doc := suite.shellContainer(name, test.command)
+			doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+				RestartConfig: &containercfg.ContainerRestart{RestartDelay: new(time.Second)},
+			}
+
+			suite.applyContainers(ctx, doc)
 
 			firstID, first := suite.assertNewestInstance(ctx, name, "first exit",
 				func(status *containers.ContainerInstanceStatusSpec, asrt *assert.Assertions) bool {
@@ -308,15 +315,23 @@ func (suite *ContainersSuite) TestStopTimeout() {
 	}{
 		{name: "configured", stopTimeout: 2 * time.Second, minStop: 2 * time.Second, maxStop: constants.ContainerDefaultStopTimeout},
 		{name: "default", minStop: constants.ContainerDefaultStopTimeout},
-		// a restarted container is started again 5s after it has exited
-		{name: "restart", restart: true, stopTimeout: 2 * time.Second, minStop: 7 * time.Second, maxStop: constants.ContainerDefaultStopTimeout + 5*time.Second},
+		// a restarted container is started again one restart delay (1s here) after it has exited
+		{name: "restart", restart: true, stopTimeout: 2 * time.Second, minStop: 3 * time.Second, maxStop: constants.ContainerDefaultStopTimeout + time.Second},
 	} {
 		suite.Run(test.name, func() {
+			if test.stopTimeout == 0 && testing.Short() {
+				suite.T().Skip("skipping the default stop timeout in short mode, it takes the whole default timeout")
+			}
+
 			ctx, name, _ := suite.setupContainer("stop-timeout-" + test.name)
 
 			doc := suite.shellContainer(name, "date +start=%s; trap 'date +term=%s' TERM; while true; do sleep 1 & wait $!; done")
 			if test.stopTimeout != 0 {
 				doc.LifecycleConfig = &containercfg.ContainerLifecycle{StopTimeoutConfig: new(test.stopTimeout)}
+			}
+
+			if test.restart {
+				doc.LifecycleConfig.RestartConfig = &containercfg.ContainerRestart{RestartDelay: new(time.Second)}
 			}
 
 			suite.applyContainers(ctx, doc)
@@ -335,22 +350,7 @@ func (suite *ContainersSuite) TestStopTimeout() {
 				suite.applyContainers(ctx, replaced)
 			}
 
-			var term, restart int64
-
-			suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-				log, err := suite.readContainerLog(ctx, name)
-				if !assert.NoError(collect, err) {
-					return
-				}
-
-				starts, terms := logTimes(log, "start="), logTimes(log, "term=")
-
-				if assert.Len(collect, starts, 2, "not started again yet:\n%s", log) && assert.Len(collect, terms, 1, "no SIGTERM logged:\n%s", log) {
-					term, restart = terms[0], starts[1]
-				}
-			}, containerStartTimeout, time.Second)
-
-			stopped := time.Duration(restart-term) * time.Second
+			stopped := suite.stopDuration(ctx, name)
 
 			suite.Assert().GreaterOrEqual(stopped, test.minStop)
 
@@ -361,9 +361,33 @@ func (suite *ContainersSuite) TestStopTimeout() {
 	}
 }
 
+// stopDuration waits for the container to log one SIGTERM and a second start, and returns the
+// time between them.
+func (suite *ContainersSuite) stopDuration(ctx context.Context, name string) time.Duration {
+	var term, restart int64
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		log, err := suite.readContainerLog(ctx, name)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		starts, terms := logTimes(log, "start="), logTimes(log, "term=")
+
+		if assert.Len(collect, starts, 2, "not started again yet:\n%s", log) && assert.Len(collect, terms, 1, "no SIGTERM logged:\n%s", log) {
+			term, restart = terms[0], starts[1]
+		}
+	}, containerStartTimeout, time.Second)
+
+	return time.Duration(restart-term) * time.Second
+}
+
 // TestRestartPolicy verifies that a container which isn't restarted keeps its outcome, and that
 // on-failure restarts a failing container up to maxRetries.
 func (suite *ContainersSuite) TestRestartPolicy() {
+	// Short, so that waiting out a few restart delays to see nothing happen stays cheap.
+	const restartDelay = time.Second
+
 	for _, test := range []struct {
 		name     string
 		command  string
@@ -375,16 +399,22 @@ func (suite *ContainersSuite) TestRestartPolicy() {
 		{
 			name:    "never",
 			command: "exit 0",
-			restart: &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyNever},
-			state:   containers.ContainerStateCompleted,
-			runs:    1,
+			restart: &containercfg.ContainerRestart{
+				RestartPolicy: configcontainer.ContainerRestartPolicyNever,
+				RestartDelay:  new(restartDelay),
+			},
+			state: containers.ContainerStateCompleted,
+			runs:  1,
 		},
 		{
 			name:    "on-failure-success",
 			command: "exit 0",
-			restart: &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyOnFailure},
-			state:   containers.ContainerStateCompleted,
-			runs:    1,
+			restart: &containercfg.ContainerRestart{
+				RestartPolicy: configcontainer.ContainerRestartPolicyOnFailure,
+				RestartDelay:  new(restartDelay),
+			},
+			state: containers.ContainerStateCompleted,
+			runs:  1,
 		},
 		{
 			name:    "on-failure-retries",
@@ -392,7 +422,7 @@ func (suite *ContainersSuite) TestRestartPolicy() {
 			restart: &containercfg.ContainerRestart{
 				RestartPolicy:     configcontainer.ContainerRestartPolicyOnFailure,
 				RestartMaxRetries: new(2),
-				RestartDelay:      new(time.Second),
+				RestartDelay:      new(restartDelay),
 			},
 			state:    containers.ContainerStateFailed,
 			exitCode: 3,
@@ -416,7 +446,7 @@ func (suite *ContainersSuite) TestRestartPolicy() {
 			suite.Assert().Equal(test.runs-1, finished.Generation)
 
 			// longer than the restart delay: it stays where it is
-			time.Sleep(2 * constants.ContainerDefaultRestartDelay)
+			time.Sleep(3 * restartDelay)
 
 			suite.assertContainerStatus(ctx, name, "still finished",
 				func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
@@ -436,7 +466,7 @@ func (suite *ContainersSuite) TestRestartBackoff() {
 
 	doc := suite.shellContainer(name, "date +start=%s; trap 'date +exit=%s' EXIT; exit 1")
 	doc.LifecycleConfig = &containercfg.ContainerLifecycle{
-		RestartConfig: &containercfg.ContainerRestart{RestartDelay: new(time.Second), RestartMaxDelay: new(4 * time.Second)},
+		RestartConfig: &containercfg.ContainerRestart{RestartDelay: new(time.Second), RestartMaxDelay: new(2 * time.Second)},
 	}
 
 	suite.applyContainers(ctx, doc)
@@ -451,11 +481,12 @@ func (suite *ContainersSuite) TestRestartBackoff() {
 
 		starts, exits = logTimes(log, "start="), logTimes(log, "exit=")
 
-		assert.GreaterOrEqual(collect, len(starts), 5, "not restarted often enough yet:\n%s", log)
-		assert.GreaterOrEqual(collect, len(exits), 4, "exits not logged:\n%s", log)
+		assert.GreaterOrEqual(collect, len(starts), 4, "not restarted often enough yet:\n%s", log)
+		assert.GreaterOrEqual(collect, len(exits), 3, "exits not logged:\n%s", log)
 	}, containerStartTimeout, time.Second)
 
-	for i, delay := range []int64{1, 2, 4, 4} {
+	// doubled once, then held at the cap
+	for i, delay := range []int64{1, 2, 2} {
 		suite.Assert().GreaterOrEqual(starts[i+1]-exits[i], delay, "restart %d", i+1)
 	}
 }
@@ -490,7 +521,7 @@ func (suite *ContainersSuite) TestDependsOnSucceeded() {
 		suite.RemoveMachineConfigDocumentsByName(client.WithNode(context.Background(), node), containercfg.ContainerConfigKind, name, initName)
 	})
 
-	initDoc := suite.shellContainer(initName, "sleep 5 && date +done=%s")
+	initDoc := suite.shellContainer(initName, "sleep 2 && date +done=%s")
 	initDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
 		RestartConfig: &containercfg.ContainerRestart{RestartPolicy: configcontainer.ContainerRestartPolicyNever},
 	}
@@ -950,6 +981,9 @@ func (suite *ContainersSuite) TestSeccompProfile() {
 		})
 
 		doc := suite.shellContainer(name, probe)
+		// The shell is PID 1 and ignores SIGTERM, so the restart on the profile edit below would
+		// otherwise wait out the whole default stop timeout.
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{StopTimeoutConfig: new(time.Second)}
 		doc.MountsConfig = []containercfg.ContainerMount{
 			{
 				TmpfsMount: &containercfg.TmpfsMount{
@@ -2586,7 +2620,7 @@ func (suite *ContainersSuite) assertContainerLogged(ctx context.Context, contain
 		}
 
 		logs = read
-	}, containerStartTimeout, 2*time.Second)
+	}, containerStartTimeout, 500*time.Millisecond)
 
 	return logs
 }
