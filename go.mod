@@ -155,7 +155,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.4
 	github.com/siderolabs/siderolink v0.3.18
-	github.com/siderolabs/talos/pkg/machinery v1.15.0-alpha.2.0.20261029102713-bfac82405ccc
+	github.com/siderolabs/talos/pkg/machinery v1.15.0-beta.0
 	github.com/sigstore/protobuf-specs v0.5.2
 	github.com/sigstore/sigstore v1.11.1
 	github.com/sigstore/sigstore-go v1.3.0

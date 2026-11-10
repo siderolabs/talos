@@ -134,7 +134,7 @@ talosctl cluster create dev [flags]
       --bad-rtc[=true|false]                          launch VM with bad RTC state
       --cidr string                                   CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                          search path for CNI binaries (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                         URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.15.0-alpha.2/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                         URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.15.0-beta.0/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                          CNI cache directory path (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                           CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string                a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
@@ -3796,7 +3796,7 @@ talosctl upgrade -n <NODE(S)> --image=factory.talos.dev/metal-installer-securebo
       --schematic-id string         Image Factory schematic ID to use for the installer image (defaults to the node's current schematic)
       --secure-boot[=true|false]    use the SecureBoot installer image (defaults to the node's current SecureBoot state)
       --siderov1-keys-dir string    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
-      --talos-version string        Talos version to upgrade to (defaults to talosctl version) (default "v1.15.0-alpha.2")
+      --talos-version string        Talos version to upgrade to (defaults to talosctl version) (default "v1.15.0-beta.0")
       --talosconfig string          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration            time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
       --wait[=true|false]           wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
