@@ -522,6 +522,7 @@ On shutdown, reboot and upgrade, containers are stopped in the reverse order of 
 #### Security and Resources
 
 When SELinux is enabled, Talos Containers use a dedicated SELinux domain; the `privileged` profile gets a writable `/sys` and is excluded from the per-container MCS categories.
+`security.readOnlyRootFS` mounts the root filesystem read-only, by default with the `restricted` profile only; sysfs stays read-only unless the profile is `privileged`, regardless of this setting.
 `security.seccompProfile.type` selects the `default` seccomp profile, `unconfined`, or a `localhost` profile declared by a `SeccompProfileConfig` document.
 `runAs` sets the user and group, and an image declaring a non-numeric `USER` is rejected unless `runAs` overrides it.
 `resources.limits` caps the CPU, memory and swap of a container; see "Workload Memory Limits" for the aggregate limit of all containers and "SELinux Workload Categories" for their isolation.

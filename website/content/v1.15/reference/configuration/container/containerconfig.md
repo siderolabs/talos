@@ -272,13 +272,16 @@ ContainerSecurity configures the container's security posture.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`profile` |ContainerSecurityProfile |Security profile.<br><br>`restricted` drops all capabilities, allows no device access, and mounts the rootfs<br>and sysfs read-only. `privileged` grants all grantable capabilities and all devices,<br>and mounts sysfs read-write.  |`restricted`<br />`privileged`<br /> |
+|`profile` |ContainerSecurityProfile |Security profile.<br><br>`restricted` drops all capabilities, allows no device access, and mounts sysfs<br>read-only. `privileged` grants all grantable capabilities and all devices, and mounts<br>sysfs read-write.<br><br>The profile also sets the default of `readOnlyRootFS`.  |`restricted`<br />`privileged`<br /> |
 |`capabilities` |<a href="#ContainerConfig.security.capabilities">ContainerCapabilities</a> |Linux capabilities to add or drop on top of the profile.<br><br>When the container runs as a non-root user (through `runAs` or the image's `USER`), the<br>resulting capabilities (the profile's, minus `drop`, plus `add`) are also raised into the<br>ambient set, so that they remain effective after the entrypoint is executed. Ambient<br>capabilities are inherited by every program the container runs, not only its entrypoint,<br>so grant only what the workload needs.  | |
 |`machinedAccess` |bool |Publishes the container's PID so machined's API can recognize it, and bind-mounts the<br>machined API socket into the container.<br><br>This alone does not grant DAC access to the socket, which is owned by the `apid` user:<br>reaching it in practice still requires `profile: privileged` or an equivalent capability/<br>`runAs` grant. Once connected, the container may request any role, same as extension<br>services; the RPC's own role requirements are what actually gate access.  | |
 |`seccompProfile` |<a href="#ContainerConfig.security.seccompProfile">ContainerSeccomp</a> |Seccomp profile applied to the container.<br><br>Unset means the containerd default seccomp profile, independently of the security<br>profile: even a `privileged` container is filtered by it. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 seccompProfile:
     type: localhost # Seccomp profile type.
     localhostProfile: audit.json # Name of the seccomp profile to apply, declared by a `SeccompProfileConfig` document
+{{< /highlight >}}</details> | |
+|`readOnlyRootFS` |bool |Mounts the container's root filesystem read-only.<br><br>Defaults to `true` with `profile: restricted`, and to `false` with `profile: privileged`.<br>Paths the workload writes to need a `tmpfs` or volume mount when the root filesystem is<br>read-only.<br><br>This only affects the root filesystem: sysfs stays read-only unless `profile` is<br>`privileged`, regardless of this setting. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+readOnlyRootFS: false
 {{< /highlight >}}</details> | |
 
 

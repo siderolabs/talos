@@ -863,7 +863,7 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Name:        "profile",
 				Type:        "ContainerSecurityProfile",
 				Note:        "",
-				Description: "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nand mounts sysfs read-write.",
+				Description: "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts sysfs\nread-only. `privileged` grants all grantable capabilities and all devices, and mounts\nsysfs read-write.\n\nThe profile also sets the default of `readOnlyRootFS`.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Security profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"restricted",
@@ -891,10 +891,18 @@ func (ContainerSecurity) Doc() *encoder.Doc {
 				Description: "Seccomp profile applied to the container.\n\nUnset means the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Seccomp profile applied to the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "readOnlyRootFS",
+				Type:        "bool",
+				Note:        "",
+				Description: "Mounts the container's root filesystem read-only.\n\nDefaults to `true` with `profile: restricted`, and to `false` with `profile: privileged`.\nPaths the workload writes to need a `tmpfs` or volume mount when the root filesystem is\nread-only.\n\nThis only affects the root filesystem: sysfs stays read-only unless `profile` is\n`privileged`, regardless of this setting.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mounts the container's root filesystem read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[3].AddExample("", exampleContainerSeccompLocalhost())
+	doc.Fields[4].AddExample("", false)
 
 	return doc
 }

@@ -104,6 +104,10 @@ func (o *ContainerConfigV1Alpha1) DeepCopy() *ContainerConfigV1Alpha1 {
 			cp.SecurityConfig.SecuritySeccompProfile = new(ContainerSeccomp)
 			*cp.SecurityConfig.SecuritySeccompProfile = *o.SecurityConfig.SecuritySeccompProfile
 		}
+		if o.SecurityConfig.SecurityReadOnlyRootFS != nil {
+			cp.SecurityConfig.SecurityReadOnlyRootFS = new(bool)
+			*cp.SecurityConfig.SecurityReadOnlyRootFS = *o.SecurityConfig.SecurityReadOnlyRootFS
+		}
 	}
 	if o.NetworkConfig != nil {
 		cp.NetworkConfig = new(ContainerNetwork)

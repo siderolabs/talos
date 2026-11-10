@@ -113,10 +113,10 @@ type ContainerSecurityProfile string
 // Container security profiles.
 const (
 	// ContainerSecurityProfileRestricted drops all capabilities, allows no devices and mounts
-	// the rootfs and sysfs read-only. This is the default.
+	// sysfs read-only. The rootfs is read-only unless overridden. This is the default.
 	ContainerSecurityProfileRestricted ContainerSecurityProfile = "restricted"
 	// ContainerSecurityProfilePrivileged grants all grantable capabilities and all devices, and
-	// mounts sysfs read-write.
+	// mounts sysfs read-write. The rootfs is writable unless overridden.
 	ContainerSecurityProfilePrivileged ContainerSecurityProfile = "privileged"
 )
 
@@ -131,6 +131,9 @@ type ContainerSecurityConfig interface {
 	// MachinedAccess publishes the container's PID for machined's API to recognize, and mounts
 	// the machined API socket into the container.
 	MachinedAccess() bool
+	// ReadOnlyRootFS mounts the container's rootfs read-only; defaults to true with the
+	// restricted profile and to false with the privileged one.
+	ReadOnlyRootFS() bool
 	// SeccompProfile is the seccomp filter applied to the container; defaults to default.
 	SeccompProfile() ContainerSeccompProfile
 	// SeccompLocalhostProfile names the seccomp profile applied with the localhost seccomp

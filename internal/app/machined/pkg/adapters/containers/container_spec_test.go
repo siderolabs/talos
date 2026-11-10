@@ -23,18 +23,23 @@ func TestOCISpecOptsSysfs(t *testing.T) {
 	t.Parallel()
 
 	for _, tt := range []struct {
-		name       string
-		privileged bool
-		expect     string
+		name           string
+		privileged     bool
+		readOnlyRootFS bool
+		expect         string
 	}{
 		{name: "privileged mounts sysfs read-write", privileged: true, expect: "rw"},
-		{name: "restricted mounts sysfs read-only", privileged: false, expect: "ro"},
+		{name: "privileged with read-only rootfs mounts sysfs read-write", privileged: true, readOnlyRootFS: true, expect: "rw"},
+		{name: "restricted mounts sysfs read-only", privileged: false, readOnlyRootFS: true, expect: "ro"},
+		// A writable rootfs must not make sysfs writable: only the privileged profile does.
+		{name: "restricted with writable rootfs mounts sysfs read-only", privileged: false, expect: "ro"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			opts := containersadapter.ContainerSecuritySpec(&containers.ContainerSecuritySpec{
-				Privileged: tt.privileged,
+				Privileged:     tt.privileged,
+				ReadOnlyRootFS: tt.readOnlyRootFS,
 			}).OCISpecOpts([]string{"CAP_CHOWN"})
 
 			spec, err := oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "test"), nil, &ctrdcontainers.Container{ID: "test"}, opts...)
@@ -44,6 +49,36 @@ func TestOCISpecOptsSysfs(t *testing.T) {
 			require.NotEqual(t, -1, idx, "no /sys mount in the generated spec")
 
 			assert.Contains(t, spec.Mounts[idx].Options, tt.expect)
+		})
+	}
+}
+
+func TestOCISpecOptsRootfs(t *testing.T) {
+	t.Parallel()
+
+	for _, tt := range []struct {
+		name           string
+		privileged     bool
+		readOnlyRootFS bool
+	}{
+		{name: "restricted read-only", readOnlyRootFS: true},
+		{name: "restricted writable"},
+		{name: "privileged read-only", privileged: true, readOnlyRootFS: true},
+		{name: "privileged writable", privileged: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			opts := containersadapter.ContainerSecuritySpec(&containers.ContainerSecuritySpec{
+				Privileged:     tt.privileged,
+				ReadOnlyRootFS: tt.readOnlyRootFS,
+			}).OCISpecOpts([]string{"CAP_CHOWN"})
+
+			spec, err := oci.GenerateSpec(namespaces.WithNamespace(t.Context(), "test"), nil, &ctrdcontainers.Container{ID: "test"}, opts...)
+			require.NoError(t, err)
+
+			require.NotNil(t, spec.Root)
+			assert.Equal(t, tt.readOnlyRootFS, spec.Root.Readonly)
 		})
 	}
 }
@@ -70,28 +105,44 @@ func TestOCISpecOpts(t *testing.T) {
 			spec: containers.ContainerSecuritySpec{
 				Privileged: false,
 			},
+			expectOpts: 1,
+		},
+		{
+			name: "restricted mode with read-only rootfs",
+			spec: containers.ContainerSecuritySpec{
+				Privileged:     false,
+				ReadOnlyRootFS: true,
+			},
 			expectOpts: 2,
+		},
+		{
+			name: "privileged mode with read-only rootfs",
+			spec: containers.ContainerSecuritySpec{
+				Privileged:     true,
+				ReadOnlyRootFS: true,
+			},
+			expectOpts: 4,
 		},
 		{
 			name: "drop capabilities",
 			spec: containers.ContainerSecuritySpec{
 				CapabilitiesDrop: []string{"NET_RAW"},
 			},
-			expectOpts: 3,
+			expectOpts: 2,
 		},
 		{
 			name: "drop all capabilities",
 			spec: containers.ContainerSecuritySpec{
 				CapabilitiesDrop: []string{"ALL"},
 			},
-			expectOpts: 3,
+			expectOpts: 2,
 		},
 		{
 			name: "add capabilities",
 			spec: containers.ContainerSecuritySpec{
 				CapabilitiesAdd: []string{"NET_BIND_SERVICE", "CHOWN"},
 			},
-			expectOpts: 3,
+			expectOpts: 2,
 		},
 		{
 			name: "drop and add capabilities",
@@ -99,7 +150,7 @@ func TestOCISpecOpts(t *testing.T) {
 				CapabilitiesDrop: []string{"NET_RAW", "SETFCAP"},
 				CapabilitiesAdd:  []string{"NET_BIND_SERVICE"},
 			},
-			expectOpts: 4,
+			expectOpts: 3,
 		},
 	}
 

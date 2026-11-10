@@ -198,6 +198,7 @@ func applyConfig(containerSpecSpec *containers.ContainerSpecSpec, containerConfi
 		CapabilitiesDrop:  security.CapabilitiesDrop(),
 		MachinedAccess:    security.MachinedAccess(),
 		SeccompUnconfined: security.SeccompProfile() == configcfg.ContainerSeccompProfileUnconfined,
+		ReadOnlyRootFS:    security.ReadOnlyRootFS(),
 	}
 
 	if security.SeccompProfile() == configcfg.ContainerSeccompProfileLocalhost {

@@ -231,6 +231,9 @@ message ContainerSecuritySpec {
   // JSON in the OCI runtime-spec LinuxSeccomp format. Carrying the content rather than only the
   // name makes an edit of the profile change the spec, which restarts the container.
   string seccomp_localhost_profile_content = 8;
+  // ReadOnlyRootFS mounts the container's rootfs read-only. Independent of Privileged, which
+  // alone decides whether sysfs is writable.
+  bool read_only_root_fs = 9;
 }
 
 // ContainerSpecSpec is the spec for ContainerSpec.

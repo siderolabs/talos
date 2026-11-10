@@ -1166,6 +1166,16 @@ func (m *ContainerSecuritySpec) MarshalToSizedBufferVT(dAtA []byte) (int, error)
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.ReadOnlyRootFs {
+		i--
+		if m.ReadOnlyRootFs {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x48
+	}
 	if len(m.SeccompLocalhostProfileContent) > 0 {
 		i -= len(m.SeccompLocalhostProfileContent)
 		copy(dAtA[i:], m.SeccompLocalhostProfileContent)
@@ -2137,6 +2147,9 @@ func (m *ContainerSecuritySpec) SizeVT() (n int) {
 	l = len(m.SeccompLocalhostProfileContent)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.ReadOnlyRootFs {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5446,6 +5459,26 @@ func (m *ContainerSecuritySpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.SeccompLocalhostProfileContent = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 9:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ReadOnlyRootFs", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.ReadOnlyRootFs = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

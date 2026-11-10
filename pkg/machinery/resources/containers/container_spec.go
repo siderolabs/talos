@@ -357,6 +357,10 @@ type ContainerSecuritySpec struct {
 	// JSON in the OCI runtime-spec LinuxSeccomp format. Carrying the content rather than only the
 	// name makes an edit of the profile change the spec, which restarts the container.
 	SeccompLocalhostProfileContent string `yaml:"seccompLocalhostProfileContent,omitempty" protobuf:"8"`
+
+	// ReadOnlyRootFS mounts the container's rootfs read-only. Independent of Privileged, which
+	// alone decides whether sysfs is writable.
+	ReadOnlyRootFS bool `yaml:"readOnlyRootFS,omitempty" protobuf:"9"`
 }
 
 // Equal compares two security specs field by field, as they carry slices.
@@ -368,7 +372,8 @@ func (a ContainerSecuritySpec) Equal(b ContainerSecuritySpec) bool {
 		a.SeccompUnconfined == b.SeccompUnconfined &&
 		a.SELinuxLevel == b.SELinuxLevel &&
 		a.SeccompLocalhostProfile == b.SeccompLocalhostProfile &&
-		a.SeccompLocalhostProfileContent == b.SeccompLocalhostProfileContent
+		a.SeccompLocalhostProfileContent == b.SeccompLocalhostProfileContent &&
+		a.ReadOnlyRootFS == b.ReadOnlyRootFS
 }
 
 // ContainerNetworkSpec is the resolved network configuration.

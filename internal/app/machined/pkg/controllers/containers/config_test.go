@@ -64,6 +64,7 @@ func (suite *ConfigSuite) TestNormalizesImageAndResolvesDefaults() {
 
 		// Defaults: restricted, default seccomp profile, no host network, no limits, the default stop timeout.
 		asrt.False(spec.TypedSpec().Security.Privileged)
+		asrt.True(spec.TypedSpec().Security.ReadOnlyRootFS)
 		asrt.False(spec.TypedSpec().Security.SeccompUnconfined)
 		asrt.Empty(spec.TypedSpec().Security.SeccompLocalhostProfile)
 		asrt.Empty(spec.TypedSpec().Security.SeccompLocalhostProfileContent)
@@ -269,6 +270,7 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 			CapabilitiesDropConfig: []string{"ALL"},
 		},
 		SecuritySeccompProfile: &containercfg.ContainerSeccomp{SeccompType: "unconfined"},
+		SecurityReadOnlyRootFS: new(true),
 	}
 	doc.NetworkConfig = &containercfg.ContainerNetwork{NetworkMode: "host"}
 	doc.ResourcesConfig = &containercfg.ContainerResources{
@@ -291,6 +293,8 @@ func (suite *ConfigSuite) TestResolvesSecurityNetworkAndResources() {
 
 	ctest.AssertResource(suite, "director", func(spec *containers.ContainerSpec, asrt *assert.Assertions) {
 		asrt.True(spec.TypedSpec().Security.Privileged)
+		// The explicit setting wins over the privileged default of a writable rootfs.
+		asrt.True(spec.TypedSpec().Security.ReadOnlyRootFS)
 		asrt.Equal([]string{"NET_ADMIN"}, spec.TypedSpec().Security.CapabilitiesAdd)
 		asrt.True(spec.TypedSpec().Security.SeccompUnconfined)
 		asrt.True(spec.TypedSpec().Network.HostNetwork)

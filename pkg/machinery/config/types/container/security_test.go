@@ -78,3 +78,62 @@ func TestValidateCapabilityName(t *testing.T) {
 		})
 	}
 }
+
+func TestContainerSecurityReadOnlyRootFS(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		security string
+		expected bool
+	}{
+		{
+			name:     "restricted by default",
+			expected: true,
+		},
+		{
+			name: "restricted explicit",
+			security: `security:
+  profile: restricted
+`,
+			expected: true,
+		},
+		{
+			name: "privileged default",
+			security: `security:
+  profile: privileged
+`,
+			expected: false,
+		},
+		{
+			name: "restricted with writable rootfs",
+			security: `security:
+  readOnlyRootFS: false
+`,
+			expected: false,
+		},
+		{
+			name: "privileged with read-only rootfs",
+			security: `security:
+  profile: privileged
+  readOnlyRootFS: true
+`,
+			expected: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := load(t, `apiVersion: v1alpha1
+kind: ContainerConfig
+name: web
+image: docker.io/library/nginx:1.27
+`+test.security)
+
+			_, err := cfg.Validate(validationMode{})
+			require.NoError(t, err)
+
+			assert.Equal(t, test.expected, cfg.Security().ReadOnlyRootFS())
+		})
+	}
+}

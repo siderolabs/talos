@@ -23,9 +23,11 @@ type ContainerSecurity struct {
 	//   description: |
 	//     Security profile.
 	//
-	//     `restricted` drops all capabilities, allows no device access, and mounts the rootfs
-	//     and sysfs read-only. `privileged` grants all grantable capabilities and all devices,
-	//     and mounts sysfs read-write.
+	//     `restricted` drops all capabilities, allows no device access, and mounts sysfs
+	//     read-only. `privileged` grants all grantable capabilities and all devices, and mounts
+	//     sysfs read-write.
+	//
+	//     The profile also sets the default of `readOnlyRootFS`.
 	//   values:
 	//     - restricted
 	//     - privileged
@@ -65,6 +67,19 @@ type ContainerSecurity struct {
 	//           - unconfined
 	//       - $ref: "#/$defs/container.ContainerSeccomp"
 	SecuritySeccompProfile *ContainerSeccomp `yaml:"seccompProfile,omitempty" merge:"replace"`
+
+	//   description: |
+	//     Mounts the container's root filesystem read-only.
+	//
+	//     Defaults to `true` with `profile: restricted`, and to `false` with `profile: privileged`.
+	//     Paths the workload writes to need a `tmpfs` or volume mount when the root filesystem is
+	//     read-only.
+	//
+	//     This only affects the root filesystem: sysfs stays read-only unless `profile` is
+	//     `privileged`, regardless of this setting.
+	//   examples:
+	//     - value: false
+	SecurityReadOnlyRootFS *bool `yaml:"readOnlyRootFS,omitempty"`
 }
 
 // ContainerSeccomp selects the seccomp filter applied to the container.
@@ -167,6 +182,15 @@ func (s *ContainerSecurity) CapabilitiesDrop() []string {
 // MachinedAccess implements config.ContainerSecurityConfig interface.
 func (s *ContainerSecurity) MachinedAccess() bool {
 	return s.SecurityMachinedAccess
+}
+
+// ReadOnlyRootFS implements config.ContainerSecurityConfig interface.
+func (s *ContainerSecurity) ReadOnlyRootFS() bool {
+	if s.SecurityReadOnlyRootFS == nil {
+		return s.Profile() == config.ContainerSecurityProfileRestricted
+	}
+
+	return *s.SecurityReadOnlyRootFS
 }
 
 // SeccompProfile implements config.ContainerSecurityConfig interface.

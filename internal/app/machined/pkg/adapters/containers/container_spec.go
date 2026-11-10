@@ -35,6 +35,8 @@ func (a containerSecuritySpec) OCISpecOpts(grantableCapabilities []string) []oci
 
 	var opts []oci.SpecOpts
 
+	// Sysfs is deliberately tied to the profile rather than to ReadOnlyRootFS: most of it is not
+	// namespaced, and container root is host root, so a writable sysfs reaches the host.
 	if spec.Privileged {
 		// All grantable capabilities, all devices and a writable sysfs.
 		opts = append(opts,
@@ -43,11 +45,12 @@ func (a containerSecuritySpec) OCISpecOpts(grantableCapabilities []string) []oci
 			oci.WithWriteableSysfs,
 		)
 	} else {
-		// Restricted default: no capabilities, read-only rootfs.
-		opts = append(opts,
-			oci.WithCapabilities(nil),
-			oci.WithRootFSReadonly(),
-		)
+		// Restricted default: no capabilities, sysfs left read-only.
+		opts = append(opts, oci.WithCapabilities(nil))
+	}
+
+	if spec.ReadOnlyRootFS {
+		opts = append(opts, oci.WithRootFSReadonly())
 	}
 
 	// ALL is a set operation rather than a name, so it cannot go through WithDroppedCapabilities,

@@ -1035,6 +1035,46 @@ func (suite *ContainersSuite) TestSecurityProfileRootfs() {
 	)
 }
 
+// TestReadOnlyRootFSOverride verifies that readOnlyRootFS overrides the profile's rootfs default in
+// both directions, and that a writable rootfs leaves sysfs read-only without the privileged profile.
+func (suite *ContainersSuite) TestReadOnlyRootFSOverride() {
+	const probe = `touch /rootfs-probe && echo ROOTFS_WRITABLE || echo ROOTFS_READONLY; ` +
+		`awk '$2 == "/sys" { split($4, o, ","); print "SYSFS_" toupper(o[1]) }' /proc/mounts`
+
+	suite.Run("restricted writable", func() {
+		ctx, name, _ := suite.setupContainer("rootfs-override-restricted")
+
+		doc := suite.shellContainer(name, probe)
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityReadOnlyRootFS: new(false),
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "SYSFS_RO", "SYSFS_RW")
+
+		suite.Assert().Contains(logs, "ROOTFS_WRITABLE", "readOnlyRootFS: false should make the rootfs writable")
+		suite.Assert().Contains(logs, "SYSFS_RO", "a writable rootfs should not make sysfs writable")
+	})
+
+	suite.Run("privileged read-only", func() {
+		ctx, name, _ := suite.setupContainer("rootfs-override-privileged")
+
+		doc := suite.shellContainer(name, probe)
+		doc.SecurityConfig = &containercfg.ContainerSecurity{
+			SecurityProfile:        configcontainer.ContainerSecurityProfilePrivileged,
+			SecurityReadOnlyRootFS: new(true),
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		logs := suite.assertContainerLogged(ctx, name, "SYSFS_RO", "SYSFS_RW")
+
+		suite.Assert().Contains(logs, "ROOTFS_READONLY", "readOnlyRootFS: true should make the rootfs read-only")
+		suite.Assert().Contains(logs, "SYSFS_RW", "the privileged profile should still mount sysfs read-write")
+	})
+}
+
 // TestSecurityProfileSysfs verifies that the restricted profile mounts sysfs read-only and that
 // privileged mounts it read-write.
 //

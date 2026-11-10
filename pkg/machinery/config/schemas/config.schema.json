@@ -1920,9 +1920,9 @@
         "profile": {
           "type": "string",
           "title": "profile",
-          "description": "Security profile.\n\nrestricted drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. privileged grants all grantable capabilities and all devices,\nand mounts sysfs read-write.\n",
-          "markdownDescription": "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nand mounts sysfs read-write.",
-          "x-intellij-html-description": "\u003cp\u003eSecurity profile.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003erestricted\u003c/code\u003e drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. \u003ccode\u003eprivileged\u003c/code\u003e grants all grantable capabilities and all devices,\nand mounts sysfs read-write.\u003c/p\u003e\n"
+          "description": "Security profile.\n\nrestricted drops all capabilities, allows no device access, and mounts sysfs\nread-only. privileged grants all grantable capabilities and all devices, and mounts\nsysfs read-write.\n\nThe profile also sets the default of readOnlyRootFS.\n",
+          "markdownDescription": "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts sysfs\nread-only. `privileged` grants all grantable capabilities and all devices, and mounts\nsysfs read-write.\n\nThe profile also sets the default of `readOnlyRootFS`.",
+          "x-intellij-html-description": "\u003cp\u003eSecurity profile.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003erestricted\u003c/code\u003e drops all capabilities, allows no device access, and mounts sysfs\nread-only. \u003ccode\u003eprivileged\u003c/code\u003e grants all grantable capabilities and all devices, and mounts\nsysfs read-write.\u003c/p\u003e\n\n\u003cp\u003eThe profile also sets the default of \u003ccode\u003ereadOnlyRootFS\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "capabilities": {
           "$ref": "#/$defs/container.ContainerCapabilities",
@@ -1955,6 +1955,13 @@
           "description": "Seccomp profile applied to the container.\n\nUnset means the containerd default seccomp profile, independently of the security\nprofile: even a privileged container is filtered by it.\n",
           "markdownDescription": "Seccomp profile applied to the container.\n\nUnset means the containerd default seccomp profile, independently of the security\nprofile: even a `privileged` container is filtered by it.",
           "x-intellij-html-description": "\u003cp\u003eSeccomp profile applied to the container.\u003c/p\u003e\n\n\u003cp\u003eUnset means the containerd default seccomp profile, independently of the security\nprofile: even a \u003ccode\u003eprivileged\u003c/code\u003e container is filtered by it.\u003c/p\u003e\n"
+        },
+        "readOnlyRootFS": {
+          "type": "boolean",
+          "title": "readOnlyRootFS",
+          "description": "Mounts the container’s root filesystem read-only.\n\nDefaults to true with profile: restricted, and to false with profile: privileged.\nPaths the workload writes to need a tmpfs or volume mount when the root filesystem is\nread-only.\n\nThis only affects the root filesystem: sysfs stays read-only unless profile is\nprivileged, regardless of this setting.\n",
+          "markdownDescription": "Mounts the container's root filesystem read-only.\n\nDefaults to `true` with `profile: restricted`, and to `false` with `profile: privileged`.\nPaths the workload writes to need a `tmpfs` or volume mount when the root filesystem is\nread-only.\n\nThis only affects the root filesystem: sysfs stays read-only unless `profile` is\n`privileged`, regardless of this setting.",
+          "x-intellij-html-description": "\u003cp\u003eMounts the container\u0026rsquo;s root filesystem read-only.\u003c/p\u003e\n\n\u003cp\u003eDefaults to \u003ccode\u003etrue\u003c/code\u003e with \u003ccode\u003eprofile: restricted\u003c/code\u003e, and to \u003ccode\u003efalse\u003c/code\u003e with \u003ccode\u003eprofile: privileged\u003c/code\u003e.\nPaths the workload writes to need a \u003ccode\u003etmpfs\u003c/code\u003e or volume mount when the root filesystem is\nread-only.\u003c/p\u003e\n\n\u003cp\u003eThis only affects the root filesystem: sysfs stays read-only unless \u003ccode\u003eprofile\u003c/code\u003e is\n\u003ccode\u003eprivileged\u003c/code\u003e, regardless of this setting.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

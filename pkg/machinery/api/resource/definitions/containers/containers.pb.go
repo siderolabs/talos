@@ -1314,8 +1314,11 @@ type ContainerSecuritySpec struct {
 	// JSON in the OCI runtime-spec LinuxSeccomp format. Carrying the content rather than only the
 	// name makes an edit of the profile change the spec, which restarts the container.
 	SeccompLocalhostProfileContent string `protobuf:"bytes,8,opt,name=seccomp_localhost_profile_content,json=seccompLocalhostProfileContent,proto3" json:"seccomp_localhost_profile_content,omitempty"`
-	unknownFields                  protoimpl.UnknownFields
-	sizeCache                      protoimpl.SizeCache
+	// ReadOnlyRootFS mounts the container's rootfs read-only. Independent of Privileged, which
+	// alone decides whether sysfs is writable.
+	ReadOnlyRootFs bool `protobuf:"varint,9,opt,name=read_only_root_fs,json=readOnlyRootFs,proto3" json:"read_only_root_fs,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ContainerSecuritySpec) Reset() {
@@ -1402,6 +1405,13 @@ func (x *ContainerSecuritySpec) GetSeccompLocalhostProfileContent() string {
 		return x.SeccompLocalhostProfileContent
 	}
 	return ""
+}
+
+func (x *ContainerSecuritySpec) GetReadOnlyRootFs() bool {
+	if x != nil {
+		return x.ReadOnlyRootFs
+	}
+	return false
 }
 
 // ContainerSpecSpec is the spec for ContainerSpec.
@@ -1961,7 +1971,7 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\trestarted\x18\x06 \x01(\bR\trestarted\x12Z\n" +
 	"\x06policy\x18\a \x01(\x0e2B.talos.resource.definitions.enums.ContainersContainerRestartPolicyR\x06policy\x12/\n" +
 	"\x13finished_generation\x18\b \x01(\x04R\x12finishedGeneration\x12a\n" +
-	"\x0efinished_state\x18\t \x01(\x0e2:.talos.resource.definitions.enums.ContainersContainerStateR\rfinishedState\"\x94\x03\n" +
+	"\x0efinished_state\x18\t \x01(\x0e2:.talos.resource.definitions.enums.ContainersContainerStateR\rfinishedState\"\xbf\x03\n" +
 	"\x15ContainerSecuritySpec\x12\x1e\n" +
 	"\n" +
 	"privileged\x18\x01 \x01(\bR\n" +
@@ -1972,7 +1982,8 @@ const file_resource_definitions_containers_containers_proto_rawDesc = "" +
 	"\x12seccomp_unconfined\x18\x05 \x01(\bR\x11seccompUnconfined\x12$\n" +
 	"\x0ese_linux_level\x18\x06 \x01(\tR\fseLinuxLevel\x12:\n" +
 	"\x19seccomp_localhost_profile\x18\a \x01(\tR\x17seccompLocalhostProfile\x12I\n" +
-	"!seccomp_localhost_profile_content\x18\b \x01(\tR\x1eseccompLocalhostProfileContent\"\xd7\a\n" +
+	"!seccomp_localhost_profile_content\x18\b \x01(\tR\x1eseccompLocalhostProfileContent\x12)\n" +
+	"\x11read_only_root_fs\x18\t \x01(\bR\x0ereadOnlyRootFs\"\xd7\a\n" +
 	"\x11ContainerSpecSpec\x12O\n" +
 	"\x05image\x18\x01 \x01(\v29.talos.resource.definitions.containers.ContainerImageSpecR\x05image\x12\x1e\n" +
 	"\n" +
