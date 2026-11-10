@@ -136,6 +136,10 @@ type Server struct {
 
 	// Zap logger.
 	Logger *zap.Logger
+	// ConsoleLogger writes both to the machined log and to the console.
+	//
+	// Use it sparingly, only for operator-visible events (e.g. an upgrade starting/finishing).
+	ConsoleLogger *zap.Logger
 
 	server *grpc.Server
 
@@ -176,7 +180,7 @@ func (s *Server) Register(obj *grpc.Server) {
 		// on behalf of operators. Console and VNC sessions keep reading through the filter.
 		hypervisord.WithPowerState(rawResourceState),
 	))
-	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
+	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger, s.ConsoleLogger))
 	machine.RegisterContentLibraryServiceServer(obj, contentlibrary.NewService(rawResourceState, s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
