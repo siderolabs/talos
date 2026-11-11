@@ -1,4 +1,10 @@
 columns:
+  - name: IOWeight
+    template: '{{ with .IOWeight }}{{ .default | printf "%6s" }}{{ range $disk, $v := . }}{{ if ne $disk "default" }} {{ $disk }}: {{ $v }}{{ end }}{{ end }}{{ else }}{{ "unset" | printf "%6s" }}{{ end }}'
+  - name: IOLatency
+    template: '{{ range $disk, $v := .IOLatency }}{{ $disk }}: {{ $v.target.UsecToDuration }} {{ end }}'
+  - name: IOMax bps r/w iops r/w
+    template: '{{ range $disk, $v := .IOMax }}{{ $disk }}: {{ $v.rbps.HumanizeIBytes }}/{{ $v.wbps.HumanizeIBytes }} {{ $v.riops }}/{{ $v.wiops }} {{ end }}'
   - name: Bytes Read/Written
     template: '{{ range $disk, $v := .IOStat }}{{ if $v }}{{ $disk }}: {{ $v.rbytes.HumanizeIBytes }}/{{ $v.wbytes.HumanizeIBytes }} {{ end }}{{ end }}'
   - name: ios Read/Write

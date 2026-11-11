@@ -27,6 +27,8 @@ func TestTreeFromTarGz(t *testing.T) {
 	tree, err := cgroups.TreeFromTarGz(tarFile)
 	require.NoError(t, err)
 
-	assert.Equal(t, []string{"init", "kubepods", "podruntime", "system"}, tree.Root.SortedChildren())
-	assert.Equal(t, "114712576", tree.Find("init").MemoryCurrent.String())
+	assert.Equal(t, []string{"init", "kubepods", "podruntime", "system", "taloscontainers", "virtualmachines.partition"}, tree.Root.SortedChildren())
+	assert.Equal(t, "108802048", tree.Find("init").MemoryCurrent.String())
+	assert.Equal(t, "100", tree.Find("system").IOWeight["default"].String())
+	assert.Equal(t, "50000", tree.Find("podruntime/kubelet").IOLatency["251:0"]["target"].String())
 }

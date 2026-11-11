@@ -74,6 +74,23 @@ func (n *Node) ResolveNames(nameMap map[string]string) {
 	}
 }
 
+// ResolveDevices renames the MAJ:MIN keys of the node's per-device IO files to device names.
+func (n *Node) ResolveDevices(deviceMap map[string]string) {
+	resolveDevices(n.IOStat, deviceMap)
+	resolveDevices(n.IOLatency, deviceMap)
+	resolveDevices(n.IOMax, deviceMap)
+	resolveDevices(n.IOWeight, deviceMap)
+}
+
+func resolveDevices[V any](perDevice map[string]V, deviceMap map[string]string) {
+	for dev, v := range perDevice {
+		if name, ok := deviceMap[dev]; ok {
+			delete(perDevice, dev)
+			perDevice[name] = v
+		}
+	}
+}
+
 // Walk the node.
 func (n *Node) Walk(fn func(*Node)) {
 	fn(n)
@@ -111,9 +128,11 @@ type Node struct {
 	CPUSetMemsEffective RawValue
 
 	IOBFQWeight FlatMap
+	IOLatency   NestedKeyed
 	IOMax       NestedKeyed
 	IOPressure  NestedKeyed
 	IOStat      NestedKeyed
+	IOWeight    FlatMap
 
 	MemoryCurrent     Value
 	MemoryEvents      FlatMap
@@ -226,6 +245,10 @@ func (n *Node) Parse(filename string, r io.Reader) error {
 		n.IOBFQWeight, err = ParseFlatMapValues(r)
 
 		return err
+	case "io.latency":
+		n.IOLatency, err = ParseNestedKeyedValues(r)
+
+		return err
 	case "io.max":
 		n.IOMax, err = ParseNestedKeyedValues(r)
 
@@ -236,6 +259,10 @@ func (n *Node) Parse(filename string, r io.Reader) error {
 		return err
 	case "io.stat":
 		n.IOStat, err = ParseNestedKeyedValues(r)
+
+		return err
+	case "io.weight":
+		n.IOWeight, err = ParseFlatMapValues(r)
 
 		return err
 	case "memory.current":

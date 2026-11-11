@@ -129,12 +129,7 @@ To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/c
 				return cgroups.RawValue(pid.String())
 			})
 
-			for dev := range node.IOStat {
-				if name, ok := devicesResolveMap[dev]; ok {
-					node.IOStat[name] = node.IOStat[dev]
-					delete(node.IOStat, dev)
-				}
-			}
+			node.ResolveDevices(devicesResolveMap)
 		})
 
 		w := tabwriter.NewWriter(safeout.Stdout(), 0, 0, 3, ' ', 0)
