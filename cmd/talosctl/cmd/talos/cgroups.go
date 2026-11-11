@@ -47,6 +47,7 @@ Several presets are available to focus on specific cgroup subsystems:
 * io
 * memory
 * process
+* psi
 * swap
 
 You can specify the preset using the --preset flag.
