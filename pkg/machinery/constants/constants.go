@@ -1254,7 +1254,7 @@ const (
 	ModprobePath = "/sbin/modprobe"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.10"
+	GoVersion = "go1.26.11"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
