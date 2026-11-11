@@ -53,6 +53,19 @@ func MustByteSize(value string) ByteSize {
 	return bs
 }
 
+// MustPercentageSize returns a new PercentageSize with the given value.
+//
+// It panics if the value is invalid.
+func MustPercentageSize(value string) PercentageSize {
+	var ps PercentageSize
+
+	if err := ps.UnmarshalText([]byte(value)); err != nil {
+		panic(err)
+	}
+
+	return ps
+}
+
 // Value returns the value.
 func (s Size) Value() uint64 {
 	if s.ByteSize != nil {

@@ -7,7 +7,6 @@ package k8s
 import (
 	"cmp"
 	"context"
-	"errors"
 	"fmt"
 	"net/netip"
 	"os"
@@ -34,11 +33,10 @@ import (
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/labels"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -51,9 +49,6 @@ var kubeletSELinuxMounts = []specs.Mount{
 // KubeletSpecController renders manifests based on templates and config/secrets.
 type KubeletSpecController struct {
 	V1Alpha1Mode v1alpha1runtime.Mode
-
-	// MemoryCapacity is read at render time while a kubepods memory limit is active; defaults to ProcMemoryCapacity.
-	MemoryCapacity MemoryCapacityReader
 }
 
 // Name implements controller.Controller interface.
@@ -83,15 +78,15 @@ func (ctrl *KubeletSpecController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineTypeType,
-			ID:        optional.Some(config.MachineTypeID),
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.SecurityStateType,
+			ID:        optional.Some(runtimeres.SecurityStateID),
 			Kind:      controller.InputWeak,
 		},
 		{
 			Namespace: runtimeres.NamespaceName,
-			Type:      runtimeres.SecurityStateType,
-			ID:        optional.Some(runtimeres.SecurityStateID),
+			Type:      runtimeres.WorkloadMemorySpecType,
+			ID:        optional.Some(runtimeres.WorkloadMemorySpecID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -131,13 +126,13 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		kubeletVersion := compatibility.VersionFromImageRef(cfgSpec.Image)
 
-		machineType, err := safe.ReaderGetByID[*config.MachineType](ctx, r, config.MachineTypeID)
+		memory, ready, err := ctrl.kubeletMemory(ctx, r, cfgSpec)
 		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
+			return err
+		}
 
-			return fmt.Errorf("error getting machine type: %w", err)
+		if !ready {
+			continue
 		}
 
 		nodename, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
@@ -216,7 +211,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			args["image-credential-provider-config"] = argsbuilder.Value{constants.KubeletCredentialProviderConfig}
 		}
 
-		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType(), ctrl.kubeletConfigurationOptions(cfgSpec)...)
+		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, memory)
 		if err != nil {
 			return fmt.Errorf("error creating kubelet configuration: %w", err)
 		}
@@ -266,26 +261,6 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 	}
 }
 
-// kubeletConfigurationOptions wires the host memory reader in when a kubepods memory limit is active outside container mode.
-//
-// In container mode the kubelet does not own the host cgroup hierarchy, so the limit leaves its configuration unchanged.
-func (ctrl *KubeletSpecController) kubeletConfigurationOptions(cfgSpec *k8s.KubeletConfigSpec) []KubeletConfigurationOption {
-	if cfgSpec.KubepodsMemoryLimit == 0 {
-		return nil
-	}
-
-	if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
-		return []KubeletConfigurationOption{IgnoringKubepodsMemoryLimit()}
-	}
-
-	readCapacity := ctrl.MemoryCapacity
-	if readCapacity == nil {
-		readCapacity = ProcMemoryCapacity
-	}
-
-	return []KubeletConfigurationOption{WithHostMemory(readCapacity, os.Getpagesize())}
-}
-
 // selinuxMounts reports whether the CRI labels pods with MCS categories, in which case the kubelet needs selinuxfs and the contexts file.
 func (ctrl *KubeletSpecController) selinuxMounts(ctx context.Context, r controller.Reader) (bool, error) {
 	securityState, err := safe.ReaderGetByID[*runtimeres.SecurityState](ctx, r, runtimeres.SecurityStateID)
@@ -298,6 +273,33 @@ func (ctrl *KubeletSpecController) selinuxMounts(ctx context.Context, r controll
 	}
 
 	return securityState.TypedSpec().SELinuxCategories, nil
+}
+
+// kubeletMemory resolves the kubelet memory policy; ready is false while a kubepods limit waits for the host memory.
+//
+// The configuration values come with KubeletConfig, so a configuration change renders once; WorkloadMemorySpec only
+// contributes the settled host memory. In container mode the kubelet does not own the host cgroups, so the limit is
+// not applied.
+func (ctrl *KubeletSpecController) kubeletMemory(ctx context.Context, r controller.Reader, cfgSpec *k8s.KubeletConfigSpec) (KubeletMemory, bool, error) {
+	memory := KubeletMemory{Reserved: cfgSpec.MemoryReserved, PageSize: os.Getpagesize()}
+
+	if cfgSpec.KubepodsMemoryPercent == 0 || ctrl.V1Alpha1Mode.InContainer() {
+		return memory, true, nil
+	}
+
+	workloadMemory, err := safe.ReaderGetByID[*runtimeres.WorkloadMemorySpec](ctx, r, runtimeres.WorkloadMemorySpecID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return memory, false, nil
+		}
+
+		return memory, false, fmt.Errorf("error getting workload memory spec: %w", err)
+	}
+
+	memory.Capacity = workloadMemory.TypedSpec().MemoryCapacity
+	memory.KubepodsLimit = configcfg.MemoryLimit(cfgSpec.KubepodsMemoryPercent, memory.Capacity, memory.Reserved)
+
+	return memory, true, nil
 }
 
 func prepareExtraConfig(extraConfig map[string]any) (*kubeletconfig.KubeletConfiguration, error) {
@@ -327,29 +329,13 @@ func prepareExtraConfig(extraConfig map[string]any) (*kubeletconfig.KubeletConfi
 
 // NewKubeletConfiguration builds kubelet configuration with defaults and overrides from extraConfig.
 //
-// A kubepods memory limit requires WithHostMemory unless IgnoringKubepodsMemoryLimit is given;
-// the conflicting raw settings are rejected before the Talos defaults are applied.
+// With a kubepods limit the conflicting raw settings are rejected before the Talos defaults are applied.
 //
 //nolint:gocyclo,cyclop
 func NewKubeletConfiguration(
-	cfgSpec *k8s.KubeletConfigSpec, kubeletVersion compatibility.Version, machineType machine.Type, opts ...KubeletConfigurationOption,
+	cfgSpec *k8s.KubeletConfigSpec, kubeletVersion compatibility.Version, memory KubeletMemory,
 ) (*kubeletconfig.KubeletConfiguration, error) {
-	var options kubeletConfigurationOptions
-
-	for _, opt := range opts {
-		opt(&options)
-	}
-
-	kubepodsMemoryLimit := cfgSpec.KubepodsMemoryLimit
-	if options.ignoreKubepodsMemoryLimit {
-		kubepodsMemoryLimit = 0
-	}
-
-	if kubepodsMemoryLimit > 0 {
-		if options.hostMemory == nil {
-			return nil, errors.New("kubepods memory limit requires the host memory capacity")
-		}
-
+	if memory.KubepodsLimit > 0 {
 		extraArgs := maps.Map(cfgSpec.ExtraArgs, func(flag string, v k8s.ArgValues) (string, []string) { return flag, v.Values })
 
 		if err := kubelet.ValidateMemoryLimitConfiguration(cfgSpec.ExtraConfig, extraArgs); err != nil {
@@ -480,21 +466,19 @@ func NewKubeletConfiguration(
 			"pid":               constants.KubeletSystemReservedPid,
 			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
 		}
-
-		if machineType.IsControlPlane() {
-			config.SystemReserved["memory"] = constants.KubeletSystemReservedMemoryControlPlane
-		} else {
-			config.SystemReserved["memory"] = constants.KubeletSystemReservedMemoryWorker
-		}
 	}
 
-	if kubepodsMemoryLimit > 0 {
-		reservation, err := kubepodsMemoryReservation(config, kubepodsMemoryLimit, *options.hostMemory)
+	// systemReserved.memory set in extraConfig is only accepted without a reservation in WorkloadResourceConfig.
+	switch _, userMemory := config.SystemReserved["memory"]; {
+	case memory.KubepodsLimit > 0:
+		reservation, err := kubepodsMemoryReservation(config, memory)
 		if err != nil {
 			return nil, err
 		}
 
 		config.SystemReserved["memory"] = strconv.FormatUint(reservation, 10)
+	case !userMemory:
+		config.SystemReserved["memory"] = strconv.FormatUint(memory.Reserved, 10)
 	}
 
 	if config.Logging.Format == "" {

@@ -470,7 +470,7 @@ spec:
             WITH_SKIP_ETCD_K8S: true
             EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.disk-image=$(CIRROS_DISK)
             TEST_MODE: skip-etcd-k8s
-            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
+            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml:@hack/test/patches/workload-resources.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
@@ -1631,7 +1631,7 @@ spec:
             WITH_SKIP_ETCD_K8S: true
             EXTRA_TEST_ARGS: -talos.extensions.libvirt -talos.hypervisor.talos-iso=_out/metal-amd64.iso -talos.hypervisor.alpine-iso=$(ALPINE_ISO) -talos.hypervisor.disk-image=$(CIRROS_DISK)
             TEST_MODE: skip-etcd-k8s
-            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml"
+            WITH_CONFIG_PATCH: "@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml:@hack/test/patches/workload-resources.yaml"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:

@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
+	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -94,10 +95,13 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
 				kubeletConfig.RegisterWithTaints = cfgProvider.K8sNodeConfig().Taints()
 
+				// Resolved here, so one machine configuration change reaches the kubelet in one update.
+				kubeletConfig.MemoryReserved = configcfg.DefaultMemoryReserved(cfgProvider.Machine().Type())
+				kubeletConfig.KubepodsMemoryPercent = 0
+
 				if workloadResources := cfgProvider.WorkloadResourceConfig(); workloadResources != nil {
-					kubeletConfig.KubepodsMemoryLimit = workloadResources.KubepodsMemoryLimit()
-				} else {
-					kubeletConfig.KubepodsMemoryLimit = 0
+					kubeletConfig.MemoryReserved = workloadResources.MemoryReserved().ValueOr(kubeletConfig.MemoryReserved)
+					kubeletConfig.KubepodsMemoryPercent = workloadResources.KubepodsMemoryPercent()
 				}
 
 				if k8sCredentialProviderConfig := cfgProvider.K8sCredentialProviderConfig(); k8sCredentialProviderConfig != nil {

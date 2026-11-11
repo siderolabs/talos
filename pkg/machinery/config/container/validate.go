@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"net/netip"
+	"os"
 	"slices"
 	"strings"
 
@@ -19,11 +20,14 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -160,7 +164,94 @@ func (container *Container) runtimeValidate(ctx context.Context, st state.State,
 		multiErr = multierror.Append(multiErr, err)
 	}
 
+	workloadWarnings, err := container.runtimeValidateWorkloadResources(ctx, st, mode)
+	if err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	warnings = append(warnings, workloadWarnings...)
+
 	return warnings, multiErr.ErrorOrNil()
+}
+
+// runtimeValidateWorkloadResources resolves WorkloadResourceConfig against the node's memory inventory.
+//
+// It is a container-level check because the default reservation depends on the machine type. Findings are
+// warnings because runtime validation also runs at boot, where an error would keep the machine from loading a
+// configuration shared with larger hosts. Without the inventory nothing is checked.
+func (container *Container) runtimeValidateWorkloadResources(ctx context.Context, st state.State, mode validation.RuntimeMode) ([]string, error) {
+	workloadResources := container.WorkloadResourceConfig()
+	if workloadResources == nil {
+		return nil, nil
+	}
+
+	var roots []workloadMemoryRoot
+
+	// The cgroups are nested in container mode, so only the reservation applies.
+	if !mode.InContainer() {
+		roots = slices.DeleteFunc([]workloadMemoryRoot{
+			{"kubepods", workloadResources.KubepodsMemoryPercent()},
+			{"taloscontainers", workloadResources.TalosContainersMemoryPercent()},
+			{"virtualMachines", workloadResources.VirtualMachinesMemoryPercent()},
+		}, func(root workloadMemoryRoot) bool { return root.percent == 0 })
+	}
+
+	if len(roots) == 0 && !workloadResources.MemoryReserved().IsPresent() {
+		return nil, nil
+	}
+
+	topology, err := safe.StateGetByID[*hardware.NUMATopology](ctx, st, hardware.NUMATopologyID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, err
+	}
+
+	var machineType machine.Type
+
+	if container.Machine() != nil {
+		machineType = container.Machine().Type()
+	}
+
+	reserved := workloadResources.MemoryReserved().ValueOr(configconfig.DefaultMemoryReserved(machineType))
+	capacity := topology.TypedSpec().MemoryTotalBytes()
+
+	// The kubelet refuses to start with a reservation above the host memory.
+	if reserved >= capacity {
+		return []string{fmt.Sprintf("reserved.memory %d bytes leaves none of the host memory %d bytes: the kubelet refuses to start", reserved, capacity)}, nil
+	}
+
+	return workloadMemoryLimitWarnings(roots, capacity, reserved), nil
+}
+
+type workloadMemoryRoot struct {
+	name    string
+	percent uint64
+}
+
+// workloadMemoryLimitWarnings resolves each root limit, warning about the ones which cannot be applied.
+func workloadMemoryLimitWarnings(roots []workloadMemoryRoot, capacity, reserved uint64) []string {
+	var warnings []string
+
+	for _, root := range roots {
+		limit, err := kernel.NormalizeMemoryLimit(configconfig.MemoryLimit(root.percent, capacity, reserved), os.Getpagesize())
+		if err != nil {
+			warnings = append(warnings, fmt.Sprintf("%s.memory.limit: %d%% of the host memory %d bytes minus reserved %d bytes: %s",
+				root.name, root.percent, capacity, reserved, err))
+
+			continue
+		}
+
+		if root.name == constants.CgroupKubepods && limit < meta.MustByteSize(kubelet.DefaultHardMemoryEviction).Value() {
+			warnings = append(warnings, fmt.Sprintf("%s.memory.limit: %d%% of the host memory %d bytes minus reserved %d bytes is %d bytes, "+
+				"below the kubelet default hard eviction threshold %s: the kubelet refuses to start unless \"evictionHard.memory.available\" is lowered",
+				root.name, root.percent, capacity, reserved, limit, kubelet.DefaultHardMemoryEviction))
+		}
+	}
+
+	return warnings
 }
 
 // runtimeValidateContainer validates the full configuration container in the runtime context.
@@ -429,29 +520,27 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) ([]st
 
 // validateWorkloadResourceKubelet protects Talos-managed roots and active workload limits from competing kubelet writers.
 func (container *Container) validateWorkloadResourceKubelet(mode validation.RuntimeMode) error {
-	if mode.InContainer() || !container.kubeletEligible() {
+	// The cgroups are nested in container mode, so neither the roots nor a kubepods limit are managed.
+	if !container.kubeletEligible() || mode.InContainer() {
 		return nil
 	}
 
 	kubeletConfig := container.K8sKubeletConfig()
 	workloadResources := container.WorkloadResourceConfig()
 
-	if workloadResources == nil ||
-		(workloadResources.KubepodsMemoryLimit() == 0 && workloadResources.TalosContainersMemoryLimit() == 0 && workloadResources.VirtualMachinesMemoryLimit() == 0) {
-		return kubelet.ValidateWorkloadRootReservations(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs())
+	roots := kubelet.ValidateWorkloadRootReservations(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs())
+
+	// The reservation alone is only a default: kubelet settings overriding it are the user's responsibility.
+	switch {
+	case workloadResources == nil:
+		return roots
+	case workloadResources.KubepodsMemoryPercent() > 0:
+		return multierror.Append(roots, kubelet.ValidateMemoryLimitConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs())).ErrorOrNil()
+	case workloadResources.TalosContainersMemoryPercent() > 0 || workloadResources.VirtualMachinesMemoryPercent() > 0:
+		return kubelet.ValidateWorkloadRootConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs())
+	default:
+		return roots
 	}
-
-	kubepodsLimit := workloadResources.KubepodsMemoryLimit()
-
-	var multiErr *multierror.Error
-
-	if kubepodsLimit > 0 {
-		multiErr = multierror.Append(multiErr, kubelet.ValidateMemoryLimitConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs()))
-	}
-
-	multiErr = multierror.Append(multiErr, kubelet.ValidateWorkloadRootConfiguration(kubeletConfig.ExtraConfig(), kubeletConfig.ExtraArgs()))
-
-	return multiErr.ErrorOrNil()
 }
 
 // kubeletEligible mirrors the inputs the kubelet configuration controller requires before it renders anything.

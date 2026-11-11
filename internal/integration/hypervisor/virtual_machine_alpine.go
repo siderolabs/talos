@@ -15,7 +15,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -682,14 +681,11 @@ func (suite *LibvirtSuite) TestAlpineGuestWorkloadMemoryLimitEnforced() {
 	// No interface: the proof is host-side, and the guest needs only its serial console.
 	node, nodeCtx := suite.requireAlpineGuestNode()
 
-	originalBytes := suite.RequireNoWorkloadResourceConfig(nodeCtx, node)
+	originalBytes, restored := suite.SnapshotWorkloadMemory(nodeCtx)
 
-	suite.Require().Equal("max", suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, constants.CgroupVirtualMachines, "memory.max")))
 	suite.RequireWorkloadRootIdle(nodeCtx, constants.CgroupVirtualMachines)
 
-	// MiB-aligned so the kernel applies the cap exactly.
 	const (
-		alignment   = uint64(1 << 20)
 		guestMemory = uint64(1 << 30)
 		fillBytes   = uint64(512 << 20)
 	)
@@ -697,9 +693,7 @@ func (suite *LibvirtSuite) TestAlpineGuestWorkloadMemoryLimitEnforced() {
 	memTotal := suite.ReadMemTotal(nodeCtx)
 	suite.Require().Less(guestMemory*2, memTotal, "node %s has %d bytes, too small to host the %d byte guest", node, memTotal, guestMemory)
 
-	suite.RestoreMachineConfigOnCleanup(node, originalBytes, func(cleanupCtx context.Context) {
-		suite.AssertCgroupFile(cleanupCtx, constants.CgroupVirtualMachines, "memory.max", "max")
-	})
+	suite.RestoreMachineConfigOnCleanup(node, originalBytes, restored)
 
 	// Boot uncapped and measure, so the cap is placed on observed numbers.
 	guest := suite.prepareAlpineGuestOnNode(node, nodeCtx, nil, guestMemory, "")
@@ -731,21 +725,33 @@ func (suite *LibvirtSuite) TestAlpineGuestWorkloadMemoryLimitEnforced() {
 	guestAvailable := parseAlpineMarker(suite.T(), console.transcript[start:], "\r\nALPINE_FREE_"+freeNonce+"_", "_END\r\n") * 1024
 	suite.Require().Greater(guestAvailable, fillBytes+fillBytes/4, "guest has %d bytes available, not enough to write %d bytes without guest-side pressure", guestAvailable, fillBytes)
 
-	// The cap sits halfway between the idle charge and the write, so the booted guest keeps running
-	// and the write cannot complete under it.
-	limit := (idleCharge + fillBytes/2) / alignment * alignment
-	suite.Require().Greater(limit, idleCharge+64<<20, "idle charge %d leaves no room for a cap below the %d byte write", idleCharge, fillBytes)
+	// The cap sits about halfway between the idle charge and the write, so the booted guest keeps
+	// running and the write cannot complete under it. On large hosts one percent can be wider than
+	// that window.
+	const margin = 64 << 20
 
-	suite.T().Logf("guest %q QEMU PID %d in %s: idle charge %d, guest MemAvailable %d, cap %d, write %d",
-		guest.Name(), qemuPID, strings.TrimSpace(cgroupPath), idleCharge, guestAvailable, limit, fillBytes)
+	onePercent := suite.WorkloadMemoryOnePercent(nodeCtx)
+
+	percent := (idleCharge + fillBytes/2) / onePercent
+	if percent*onePercent <= idleCharge+margin {
+		percent = (idleCharge+margin)/onePercent + 1
+	}
+
+	if percent*onePercent+margin >= fillBytes {
+		suite.T().Skipf("one percent of the split memory is %d bytes: no whole percent fits between the idle charge %d and the %d byte write", onePercent, idleCharge, fillBytes)
+	}
 
 	doc := runtimecfg.NewWorkloadResourceConfigV1Alpha1()
 	doc.VirtualMachinesConfig = &runtimecfg.WorkloadResourceRoot{
-		MemoryConfig: &runtimecfg.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(strconv.FormatUint(limit, 10))},
+		MemoryConfig: &runtimecfg.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize(strconv.FormatUint(percent, 10) + "%")},
 	}
 
 	suite.PatchMachineConfig(nodeCtx, doc)
-	suite.AssertCgroupFile(nodeCtx, constants.CgroupVirtualMachines, "memory.max", strconv.FormatUint(limit, 10))
+
+	limit := suite.AssertWorkloadRootLimit(nodeCtx, constants.CgroupVirtualMachines, percent)
+
+	suite.T().Logf("guest %q QEMU PID %d in %s: idle charge %d, guest MemAvailable %d, cap %d, write %d",
+		guest.Name(), qemuPID, strings.TrimSpace(cgroupPath), idleCharge, guestAvailable, limit, fillBytes)
 
 	// The guest is still alive under the cap before any pressure is applied.
 	stillPID, err := suite.alpineGuestQEMUPID(nodeCtx, guest.Name())

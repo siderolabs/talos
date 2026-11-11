@@ -447,7 +447,10 @@ func (suite *KubeletSuite) TestKubepodsMemoryLimitEnforced() {
 	node := workers[mathrand.IntN(len(workers))]
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	originalBytes := suite.RequireNoWorkloadResourceConfig(nodeCtx, node)
+	// Restoring the original configuration brings this limit back.
+	kubepodsMax := suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, constants.CgroupKubepods, "memory.max"))
+
+	originalBytes, restored := suite.SnapshotWorkloadMemory(nodeCtx)
 
 	cfg, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
@@ -465,13 +468,16 @@ func (suite *KubeletSuite) TestKubepodsMemoryLimitEnforced() {
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	memTotal := suite.ReadMemTotal(nodeCtx)
+	capacity := suite.ReadNUMAMemoryCapacity(nodeCtx)
 
-	// A quarter of the node, MiB-aligned: above the default 100Mi eviction threshold, and the
-	// derived systemReserved (MemTotal - limit) stays positive.
-	const alignment = uint64(1 << 20)
+	// About a quarter of the node: above the default 100Mi eviction threshold, and the derived
+	// systemReserved (capacity - limit) stays positive.
+	const (
+		percent   = 25
+		alignment = uint64(1 << 20)
+	)
 
-	limit := memTotal / 4 / alignment * alignment
+	limit := percent * suite.WorkloadMemoryOnePercent(nodeCtx)
 
 	podsCharge, err := suite.ReadCgroupUint(nodeCtx, constants.CgroupKubepods, "memory.current")
 	suite.Require().NoError(err)
@@ -480,8 +486,7 @@ func (suite *KubeletSuite) TestKubepodsMemoryLimitEnforced() {
 		suite.T().Skipf("worker %s already charges %d bytes to kubepods, too close to the %d byte test limit", node, podsCharge, limit)
 	}
 
-	kubepodsMax := suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, constants.CgroupKubepods, "memory.max"))
-	suite.T().Logf("worker %s (%s): MemTotal %d, kubepods memory.max %s, pods charge %d, test limit %d", node, k8sNode.Name, memTotal, kubepodsMax, podsCharge, limit)
+	suite.T().Logf("worker %s (%s): memory %d, kubepods memory.max %s, pods charge %d, test limit %d", node, k8sNode.Name, capacity, kubepodsMax, podsCharge, limit)
 
 	nodeReady := func(status corev1.ConditionStatus) bool { return status == corev1.ConditionTrue }
 
@@ -489,11 +494,12 @@ func (suite *KubeletSuite) TestKubepodsMemoryLimitEnforced() {
 
 	suite.RestoreMachineConfigOnCleanup(node, originalBytes, func(cleanupCtx context.Context) {
 		suite.AssertCgroupFile(cleanupCtx, constants.CgroupKubepods, "memory.max", kubepodsMax)
+		restored(cleanupCtx)
 		suite.Assert().NoError(suite.WaitForK8sNodeReadinessStatus(cleanupCtx, k8sNode.Name, nodeReady))
 	})
 
 	doc := runtimecfg.NewWorkloadResourceConfigV1Alpha1()
-	doc.KubepodsConfig = workloadMemoryRoot(limit)
+	doc.KubepodsConfig = workloadMemoryRoot(percent)
 
 	// The kubelet watches memory.available against allocatable (limit - threshold) and evicts the
 	// victim shortly before the charge reaches the kernel limit. Memory eviction is switched off for
@@ -510,7 +516,7 @@ func (suite *KubeletSuite) TestKubepodsMemoryLimitEnforced() {
 
 	// The kubelet, not Talos, writes the kubepods limit, so it has to restart first.
 	suite.AssertServiceEventsInOrder(suite.ctx, node, "kubelet", kubeletRestartSince, []string{"Stopping", "Finished", "Starting", "Waiting", "Preparing", "Running"})
-	suite.AssertCgroupFile(nodeCtx, constants.CgroupKubepods, "memory.max", strconv.FormatUint(limit, 10))
+	limit = suite.AssertWorkloadRootLimit(nodeCtx, constants.CgroupKubepods, percent)
 	suite.Require().NoError(suite.WaitForK8sNodeReadinessStatus(suite.ctx, k8sNode.Name, nodeReady))
 
 	unrelated := []string{constants.CgroupTalosContainersRoot, constants.CgroupVirtualMachines, constants.CgroupSystem, constants.CgroupPodRuntimeRoot}

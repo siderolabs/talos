@@ -12,12 +12,11 @@ import (
 	"path/filepath"
 	"slices"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/stretchr/testify/assert"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -27,6 +26,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	runtimecfg "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
+	k8sres "github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -122,12 +123,9 @@ func (suite *CGroupsSuite) listRootCgroup() map[string]struct{} {
 	return names
 }
 
-// TestWorkloadMemoryLimits verifies the Talos-owned root limit lifecycle.
-func (suite *CGroupsSuite) TestWorkloadMemoryLimits() {
-	if testing.Short() {
-		suite.T().Skip("skipping machine configuration changes in short mode")
-	}
-
+// TestWorkloadMemoryReserve verifies the reservation the node resolves, from WorkloadResourceConfig or the
+// kubelet default for the machine type, on the Talos-owned workload roots and the kubelet.
+func (suite *CGroupsSuite) TestWorkloadMemoryReserve() {
 	if !suite.Capabilities().RunsTalosKernel {
 		suite.T().Skip("cgroups are nested in container mode, so the workload roots are not managed")
 	}
@@ -135,97 +133,49 @@ func (suite *CGroupsSuite) TestWorkloadMemoryLimits() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	original, err := suite.ReadConfigFromNode(nodeCtx)
+	cfg, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	if original.WorkloadResourceConfig() != nil {
-		suite.T().Skipf("node %s already carries a %s document", node, runtimecfg.WorkloadResourceConfigKind)
+	machineType, err := safe.StateGetByID[*configres.MachineType](nodeCtx, suite.Client.State(), configres.MachineTypeID)
+	suite.Require().NoError(err)
+
+	reserved := configconfig.DefaultMemoryReserved(machineType.MachineType())
+	percents := map[string]uint64{constants.CgroupTalosContainersRoot: 0, constants.CgroupVirtualMachines: 0}
+
+	var kubepodsPercent uint64
+
+	if doc := cfg.WorkloadResourceConfig(); doc != nil {
+		reserved = doc.MemoryReserved().ValueOr(reserved)
+		kubepodsPercent = doc.KubepodsMemoryPercent()
+		percents[constants.CgroupTalosContainersRoot] = doc.TalosContainersMemoryPercent()
+		percents[constants.CgroupVirtualMachines] = doc.VirtualMachinesMemoryPercent()
 	}
 
-	originalBytes, err := original.Bytes()
+	spec, err := safe.StateGetByID[*runtime.WorkloadMemorySpec](nodeCtx, suite.Client.State(), runtime.WorkloadMemorySpecID)
 	suite.Require().NoError(err)
+	suite.Require().Equal(reserved, spec.TypedSpec().MemoryReserved)
 
-	suite.Require().Equal("max", suite.readMemoryMax(nodeCtx, constants.CgroupTalosContainersRoot))
-	suite.Require().Equal("max", suite.readMemoryMax(nodeCtx, constants.CgroupVirtualMachines))
-
-	memory, err := suite.Client.Memory(nodeCtx)
-	suite.Require().NoError(err)
-	suite.Require().Len(memory.GetMessages(), 1)
-
-	memTotal := memory.GetMessages()[0].GetMeminfo().GetMemtotal() * 1024
-	suite.Require().NotZero(memTotal)
-
-	// MiB-aligned limits are exact on both supported architectures, irrespective of base page size.
-	const alignment = uint64(1 << 20)
-
-	virtualMachinesLimit := memTotal / 8 / alignment * alignment
-	suite.Require().NotZero(virtualMachinesLimit)
-
-	containersLimit := virtualMachinesLimit * 2
-
-	for _, root := range []string{constants.CgroupTalosContainersRoot, constants.CgroupVirtualMachines} {
-		events := suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, root, "cgroup.events"))
-		if !slices.Contains(strings.Split(events, "\n"), "populated 0") {
-			suite.T().Skipf("workload root %s is populated", root)
+	// A root without a limit is capped at all of the memory beyond the reservation.
+	for root, percent := range percents {
+		if percent == 0 {
+			percent = 100
 		}
 
-		current, readErr := strconv.ParseUint(suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, root, "memory.current")), 10, 64)
-		suite.Require().NoError(readErr)
-
-		if current >= virtualMachinesLimit {
-			suite.T().Skipf("workload root %s retains %d bytes, exceeding the test budget", root, current)
-		}
+		suite.AssertWorkloadRootLimit(nodeCtx, root, percent)
 	}
 
-	suite.T().Logf("node %s MemTotal %d: limiting %s to %d and %s to %d",
-		node, memTotal, constants.CgroupTalosContainersRoot, containersLimit, constants.CgroupVirtualMachines, virtualMachinesLimit)
+	kubeletSpec, err := safe.StateGetByID[*k8sres.KubeletSpec](nodeCtx, suite.Client.State(), k8sres.KubeletID)
+	if state.IsNotFoundError(err) {
+		return
+	}
 
-	// Register the restore before the first apply: a failed assertion must not leave the limit on
-	// the shared cluster. The test deadline may have expired by then.
-	suite.T().Cleanup(func() {
-		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 2*time.Minute)
-		defer cleanupCancel()
+	suite.Require().NoError(err)
 
-		cleanupCtx = client.WithNode(cleanupCtx, node)
-
-		_, applyErr := suite.Client.ApplyConfiguration(cleanupCtx, &machineapi.ApplyConfigurationRequest{
-			Data: originalBytes,
-			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
-		})
-		if !suite.Assert().NoError(applyErr, "restore original configuration on node %s", node) {
-			return
-		}
-
-		suite.assertWorkloadMemoryMax(cleanupCtx, "max", "max")
-	})
-
-	doc := runtimecfg.NewWorkloadResourceConfigV1Alpha1()
-	doc.TalosContainersConfig = workloadMemoryRoot(containersLimit)
-	doc.VirtualMachinesConfig = workloadMemoryRoot(virtualMachinesLimit)
-
-	suite.PatchMachineConfig(nodeCtx, doc)
-
-	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.State(), runtime.WorkloadMemorySpecID,
-		func(spec *runtime.WorkloadMemorySpec, asrt *assert.Assertions) {
-			asrt.Equal(containersLimit, spec.TypedSpec().TalosContainersLimit)
-			asrt.Equal(virtualMachinesLimit, spec.TypedSpec().VirtualMachinesLimit)
-		})
-
-	suite.assertWorkloadMemoryMax(nodeCtx, strconv.FormatUint(containersLimit, 10), strconv.FormatUint(virtualMachinesLimit, 10))
-
-	// Lowering one root and dropping the other: the dropped root must return to unlimited. The
-	// document is replaced rather than merged, as a merge patch would keep the dropped root.
-	doc.TalosContainersConfig = workloadMemoryRoot(containersLimit / 2)
-	doc.VirtualMachinesConfig = nil
-
-	suite.RemoveMachineConfigDocuments(nodeCtx, runtimecfg.WorkloadResourceConfigKind)
-	suite.PatchMachineConfig(nodeCtx, doc)
-
-	suite.assertWorkloadMemoryMax(nodeCtx, strconv.FormatUint(containersLimit/2, 10), "max")
-
-	suite.RemoveMachineConfigDocuments(nodeCtx, runtimecfg.WorkloadResourceConfigKind)
-
-	suite.assertWorkloadMemoryMax(nodeCtx, "max", "max")
+	// A kubepods limit derives systemReserved.memory from the host memory instead.
+	if kubepodsPercent == 0 {
+		systemReserved, _ := kubeletSpec.TypedSpec().Config["systemReserved"].(map[string]any)
+		suite.Assert().Equal(strconv.FormatUint(reserved, 10), systemReserved["memory"], "kubelet systemReserved.memory")
+	}
 }
 
 // workloadPidsRoots are the roots whose pids.max WorkloadPidsController enforces, with their reservations.
@@ -321,39 +271,10 @@ func expectedPidsMax(pidMax, threadsMax, reserved uint64) string {
 	return strconv.FormatUint(capacity-reserved, 10)
 }
 
-func (suite *CGroupsSuite) readMemoryMax(nodeCtx context.Context, name string) string {
-	return suite.ReadFile(nodeCtx, filepath.Join(constants.CgroupMountPath, name, "memory.max"))
-}
-
-func (suite *CGroupsSuite) assertWorkloadMemoryMax(nodeCtx context.Context, talosContainers, virtualMachines string) {
-	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-		asrt := assert.New(collect)
-
-		for name, expected := range map[string]string{
-			constants.CgroupTalosContainersRoot: talosContainers,
-			constants.CgroupVirtualMachines:     virtualMachines,
-		} {
-			reader, err := suite.Client.Read(nodeCtx, filepath.Join(constants.CgroupMountPath, name, "memory.max"))
-			if !asrt.NoError(err) {
-				continue
-			}
-
-			body, err := io.ReadAll(reader)
-			closeErr := reader.Close()
-
-			if !asrt.NoError(err) || !asrt.NoError(closeErr) {
-				continue
-			}
-
-			asrt.Equal(expected, strings.TrimSpace(string(body)), "%s memory.max", name)
-		}
-	}, time.Minute, time.Second, "workload memory limits should be applied")
-}
-
-func workloadMemoryRoot(limit uint64) *runtimecfg.WorkloadResourceRoot {
+func workloadMemoryRoot(percent uint64) *runtimecfg.WorkloadResourceRoot {
 	return &runtimecfg.WorkloadResourceRoot{
 		MemoryConfig: &runtimecfg.WorkloadMemoryResource{
-			MemoryLimit: meta.MustByteSize(strconv.FormatUint(limit, 10)),
+			MemoryLimit: meta.MustPercentageSize(strconv.FormatUint(percent, 10) + "%"),
 		},
 	}
 }

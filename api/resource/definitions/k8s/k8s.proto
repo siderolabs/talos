@@ -213,10 +213,12 @@ message KubeletConfigSpec {
   google.protobuf.Struct credential_provider_config = 13;
   map<string, ArgValues> extra_args = 15;
   map<string, string> register_with_taints = 16;
-  // KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
-  uint64 kubepods_memory_limit = 17;
   // CredentialProviderFiles maps file names to the contents of the credential provider plugin configuration files.
   map<string, string> credential_provider_files = 18;
+  // MemoryReserved is WorkloadResourceConfig reserved.memory, or the default for the machine type, in bytes.
+  uint64 memory_reserved = 19;
+  // KubepodsMemoryPercent is the WorkloadResourceConfig kubepods limit in percent of the memory beyond MemoryReserved.
+  uint64 kubepods_memory_percent = 20;
 }
 
 // KubeletKubeconfigSpec describes the current kubelet client credentials.

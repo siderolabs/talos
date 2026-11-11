@@ -2970,19 +2970,15 @@ func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 	// The ordered cleanup below runs before setupContainer's idempotent config removal.
 	ctx, name, node := suite.setupContainer("memcap")
 
-	originalBytes := suite.RequireNoWorkloadResourceConfig(ctx, node)
-
-	suite.Require().Equal("max", suite.ReadFile(ctx, filepath.Join(constants.CgroupMountPath, constants.CgroupTalosContainersRoot, "memory.max")))
+	originalBytes, restored := suite.SnapshotWorkloadMemory(ctx)
 
 	idle := suite.RequireWorkloadRootIdle(ctx, constants.CgroupTalosContainersRoot)
 
-	// MiB-aligned, so the kernel applies it exactly; fits the smallest (2 GiB) e2e workers.
-	const (
-		limit       = uint64(256 << 20)
-		victimBytes = 2 * limit
-	)
+	// About 256MiB, which fits the smallest (2 GiB) e2e workers.
+	onePercent := suite.WorkloadMemoryOnePercent(ctx)
+	percent := max(uint64(256<<20)/onePercent, 1)
 
-	suite.Require().Less(idle, limit/4, "root %s retains %d bytes without a container", constants.CgroupTalosContainersRoot, idle)
+	suite.Require().Less(idle, percent*onePercent/4, "root %s retains %d bytes without a container", constants.CgroupTalosContainersRoot, idle)
 
 	suite.T().Cleanup(func() {
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -2999,14 +2995,16 @@ func (suite *ContainersSuite) TestWorkloadMemoryLimitEnforced() {
 			Mode: machine.ApplyConfigurationRequest_NO_REBOOT,
 		})
 		suite.Require().NoError(applyErr, "restore original configuration on node %s", node)
-		suite.AssertCgroupFile(cleanupCtx, constants.CgroupTalosContainersRoot, "memory.max", "max")
+		restored(cleanupCtx)
 	})
 
 	doc := runtimecfg.NewWorkloadResourceConfigV1Alpha1()
-	doc.TalosContainersConfig = workloadMemoryRoot(limit)
+	doc.TalosContainersConfig = workloadMemoryRoot(percent)
 
 	suite.PatchMachineConfig(ctx, doc)
-	suite.AssertCgroupFile(ctx, constants.CgroupTalosContainersRoot, "memory.max", strconv.FormatUint(limit, 10))
+
+	limit := suite.AssertWorkloadRootLimit(ctx, constants.CgroupTalosContainersRoot, percent)
+	victimBytes := 2 * limit
 
 	unrelated := []string{constants.CgroupVirtualMachines, constants.CgroupSystem, constants.CgroupPodRuntimeRoot}
 	before := suite.MemoryEventsSnapshot(ctx, append([]string{constants.CgroupTalosContainersRoot}, unrelated...)...)

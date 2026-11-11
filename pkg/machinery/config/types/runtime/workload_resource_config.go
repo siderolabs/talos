@@ -7,22 +7,17 @@ package runtime
 //docgen:jsonschema
 
 import (
-	"context"
+	"bytes"
 	"errors"
 	"fmt"
-	"math"
-	"os"
 
-	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/kernel"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 // WorkloadResourceConfigKind is a workload resource config document kind.
@@ -45,40 +40,49 @@ func init() {
 // Check interfaces.
 var (
 	_ config.Validator              = &WorkloadResourceConfigV1Alpha1{}
-	_ config.RuntimeValidator       = &WorkloadResourceConfigV1Alpha1{}
 	_ config.WorkloadResourceConfig = &WorkloadResourceConfigV1Alpha1{}
 )
 
 // WorkloadResourceConfigV1Alpha1 is a workload resource config document.
 //
 //	description: |
-//	  WorkloadResourceConfig declares an aggregate memory ceiling for each Talos workload root.
+//	  WorkloadResourceConfig splits the host memory between the Talos workload roots.
 //
-//	  The roots are `kubepods`, `taloscontainers` and `virtualMachines`; every root is optional
-//	  and independent of the others. Omitting a root removes its aggregate cap; individual child
-//	  limits still apply.
-//	  A limit must be positive; it is rounded down to the host page size before it is applied,
-//	  and bounds RAM only (including page cache charged to the root): swap and hugepages are
-//	  not limited by it.
+//	  `reserved.memory` stays with the host (`/init`, `/system`, `/podruntime` and the kernel); each
+//	  root gets an aggregate memory ceiling of a whole percentage of the rest. The roots are
+//	  `kubepods`, `taloscontainers` and `virtualMachines`; every root is optional, and the
+//	  percentages must not add up to more than 100%.
+//	  Limits are resolved against the host memory at runtime and follow memory hotplug. They are
+//	  rounded down to the host page size before they are applied, and bound RAM only (including
+//	  page cache charged to the root): swap and hugepages are not limited by them.
 //
 //	  Talos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`,
-//	  even without this document. An omitted limit (zero internally) means an unlimited aggregate cap.
-//	  Kubelet reserved-memory enforcement on these roots is rejected; CPU-only or compressible
-//	  enforcement is allowed. Static validation cannot inspect external kubelet drop-in files;
-//	  drop-in directories are rejected while any workload cap is active.
+//	  even without this document. An omitted root, `kubepods` included, is capped at the host memory
+//	  minus `reserved.memory`, which defaults to the kubelet's default `systemReserved.memory`
+//	  (512Mi on control plane nodes, 384Mi on workers). Individual child limits still apply.
+//	  Kubelet `system-reserved` and `kube-reserved` enforcement on these roots and on
+//	  `/system/extensions`, whose `pids.max` Talos also owns, is rejected, compressible included.
+//	  Static validation cannot inspect external kubelet drop-in files;
+//	  drop-in directories are rejected while this document sets any limit.
 //	  Lowering a limit below current usage makes the kernel reclaim and OOM-kill within that root,
 //	  which can terminate containers or virtual machines.
 //
-//	  The `kubepods` limit is applied by the kubelet, which stays the only writer of its cgroup:
-//	  Talos derives `systemReserved.memory` from the limit, so changing it restarts the kubelet,
+//	  The `kubepods` cap is applied by the kubelet, which stays the only writer of its cgroup:
+//	  Talos sets `systemReserved.memory` to `reserved.memory`, or derives it from the `kubepods`
+//	  limit. A limit makes `systemReserved.memory` depend on the host memory, so a memory hotplug
+//	  restarts the kubelet; without a limit it does not. Changing either value restarts the kubelet,
 //	  and a limit below the memory used by pods (control plane static pods included) causes
 //	  OOM kills. The schedulable Node Allocatable is the limit minus the hard eviction
-//	  threshold and any hugepage capacity, so it is lower than the limit. Setting
-//	  `systemReserved.memory`, the equivalent kubelet command line flags or the `Static` memory
-//	  manager policy together with the limit is rejected. The limit is inactive while Kubernetes
-//	  is not configured on the machine; the other roots are enforced regardless.
+//	  threshold and any hugepage capacity, so it is lower than the limit. With the limit,
+//	  `systemReserved.memory`, `kubeReserved.memory`, the equivalent kubelet command line flags,
+//	  drop-in directories and the `Static` memory manager policy are rejected. Without it, an
+//	  explicit `systemReserved.memory`, the `--system-reserved` flag or a drop-in file overrides
+//	  `reserved.memory` for the kubelet, and keeping them consistent is the user's responsibility.
+//	  The limit is inactive while Kubernetes is not configured on the machine; the other roots are
+//	  enforced regardless.
 //
-//	  In container mode the document is validated but declares no policy.
+//	  In container mode the cgroups are nested, so the limits are not applied; `reserved.memory`
+//	  still sets the kubelet `systemReserved.memory`.
 //	examples:
 //	  - value: exampleWorkloadResourceConfigV1Alpha1()
 //	    name: Kubernetes node with containers and virtual machines.
@@ -91,6 +95,9 @@ type WorkloadResourceConfigV1Alpha1 struct {
 	meta.Meta `yaml:",inline"`
 
 	//   description: |
+	//     Resources left out of the split for the host.
+	ReservedConfig *WorkloadReserved `yaml:"reserved,omitempty"`
+	//   description: |
 	//     Limits for Kubernetes pods.
 	KubepodsConfig *WorkloadResourceRoot `yaml:"kubepods,omitempty"`
 	//   description: |
@@ -99,6 +106,22 @@ type WorkloadResourceConfigV1Alpha1 struct {
 	//   description: |
 	//     Limits for virtual machines.
 	VirtualMachinesConfig *WorkloadResourceRoot `yaml:"virtualMachines,omitempty"`
+}
+
+// WorkloadReserved holds the resources left for the host.
+type WorkloadReserved struct {
+	//   description: |
+	//     Host memory left out of the split. Defaults to the kubelet's default
+	//     `systemReserved.memory`: 512Mi on control plane nodes, 384Mi on workers.
+	//
+	//     It is not written to any cgroup: it is the room left for the host processes
+	//     and the kernel. Talos passes it to the kubelet as `systemReserved.memory`
+	//     unless `kubepods` sets a limit.
+	//   examples:
+	//     - value: '"2GiB"'
+	//   schema:
+	//     type: string
+	MemoryConfig meta.ByteSize `yaml:"memory,omitempty"`
 }
 
 // WorkloadResourceRoot holds the limits of one workload root.
@@ -112,15 +135,14 @@ type WorkloadResourceRoot struct {
 // WorkloadMemoryResource bounds the memory of one workload root.
 type WorkloadMemoryResource struct {
 	//   description: |
-	//     Aggregate memory ceiling of the root, in bytes.
-	//
-	//     The value can be expressed in human readable format, e.g. 16GiB, and must be positive.
+	//     Aggregate memory ceiling of the root, as a whole percentage of the host memory
+	//     minus `reserved.memory`. It must be positive.
 	//   examples:
-	//     - value: '"16GiB"'
+	//     - value: '"40%"'
 	//   schema:
 	//     type: string
 	//   schemaRequired: true
-	MemoryLimit meta.ByteSize `yaml:"limit,omitempty"`
+	MemoryLimit meta.PercentageSize `yaml:"limit,omitempty"`
 }
 
 // NewWorkloadResourceConfigV1Alpha1 creates a new workload resource config document.
@@ -135,16 +157,17 @@ func NewWorkloadResourceConfigV1Alpha1() *WorkloadResourceConfigV1Alpha1 {
 
 func exampleWorkloadResourceConfigV1Alpha1() *WorkloadResourceConfigV1Alpha1 {
 	cfg := NewWorkloadResourceConfigV1Alpha1()
-	cfg.KubepodsConfig = newWorkloadResourceRoot("16GiB")
-	cfg.TalosContainersConfig = newWorkloadResourceRoot("4GiB")
-	cfg.VirtualMachinesConfig = newWorkloadResourceRoot("32GiB")
+	cfg.ReservedConfig = &WorkloadReserved{MemoryConfig: meta.MustByteSize("2GiB")}
+	cfg.KubepodsConfig = newWorkloadResourceRoot("50%")
+	cfg.TalosContainersConfig = newWorkloadResourceRoot("10%")
+	cfg.VirtualMachinesConfig = newWorkloadResourceRoot("40%")
 
 	return cfg
 }
 
 func exampleWorkloadResourceConfigV1Alpha1VirtualMachines() *WorkloadResourceConfigV1Alpha1 {
 	cfg := NewWorkloadResourceConfigV1Alpha1()
-	cfg.VirtualMachinesConfig = newWorkloadResourceRoot("48GiB")
+	cfg.VirtualMachinesConfig = newWorkloadResourceRoot("80%")
 
 	return cfg
 }
@@ -152,7 +175,7 @@ func exampleWorkloadResourceConfigV1Alpha1VirtualMachines() *WorkloadResourceCon
 func newWorkloadResourceRoot(limit string) *WorkloadResourceRoot {
 	return &WorkloadResourceRoot{
 		MemoryConfig: &WorkloadMemoryResource{
-			MemoryLimit: meta.MustByteSize(limit),
+			MemoryLimit: meta.MustPercentageSize(limit),
 		},
 	}
 }
@@ -165,22 +188,31 @@ func (s *WorkloadResourceConfigV1Alpha1) Clone() config.Document {
 // WorkloadResourceConfigSignal implements config.WorkloadResourceConfig interface.
 func (s *WorkloadResourceConfigV1Alpha1) WorkloadResourceConfigSignal() {}
 
-// KubepodsMemoryLimit implements config.WorkloadResourceConfig interface.
-func (s *WorkloadResourceConfigV1Alpha1) KubepodsMemoryLimit() uint64 {
-	return s.KubepodsConfig.memoryLimit()
+// MemoryReserved implements config.WorkloadResourceConfig interface.
+func (s *WorkloadResourceConfigV1Alpha1) MemoryReserved() optional.Optional[uint64] {
+	if s.ReservedConfig == nil || s.ReservedConfig.MemoryConfig.IsZero() || s.ReservedConfig.MemoryConfig.IsNegative() {
+		return optional.None[uint64]()
+	}
+
+	return optional.Some(s.ReservedConfig.MemoryConfig.Value())
 }
 
-// TalosContainersMemoryLimit implements config.WorkloadResourceConfig interface.
-func (s *WorkloadResourceConfigV1Alpha1) TalosContainersMemoryLimit() uint64 {
-	return s.TalosContainersConfig.memoryLimit()
+// KubepodsMemoryPercent implements config.WorkloadResourceConfig interface.
+func (s *WorkloadResourceConfigV1Alpha1) KubepodsMemoryPercent() uint64 {
+	return s.KubepodsConfig.memoryPercent()
 }
 
-// VirtualMachinesMemoryLimit implements config.WorkloadResourceConfig interface.
-func (s *WorkloadResourceConfigV1Alpha1) VirtualMachinesMemoryLimit() uint64 {
-	return s.VirtualMachinesConfig.memoryLimit()
+// TalosContainersMemoryPercent implements config.WorkloadResourceConfig interface.
+func (s *WorkloadResourceConfigV1Alpha1) TalosContainersMemoryPercent() uint64 {
+	return s.TalosContainersConfig.memoryPercent()
 }
 
-func (r *WorkloadResourceRoot) memoryLimit() uint64 {
+// VirtualMachinesMemoryPercent implements config.WorkloadResourceConfig interface.
+func (s *WorkloadResourceConfigV1Alpha1) VirtualMachinesMemoryPercent() uint64 {
+	return s.VirtualMachinesConfig.memoryPercent()
+}
+
+func (r *WorkloadResourceRoot) memoryPercent() uint64 {
 	if r == nil || r.MemoryConfig == nil || r.MemoryConfig.MemoryLimit.IsNegative() {
 		return 0
 	}
@@ -192,90 +224,34 @@ func (r *WorkloadResourceRoot) memoryLimit() uint64 {
 func (s *WorkloadResourceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
 
-	limited := false
+	if reserved, ok := s.MemoryReserved().Get(); ok && reserved == 0 {
+		validationErrors = errors.New("reserved.memory must be greater than zero")
+	}
+
+	if s.ReservedConfig != nil && s.ReservedConfig.MemoryConfig.IsNegative() {
+		validationErrors = errors.New("reserved.memory cannot be negative")
+	}
+
+	var total uint64
 
 	for _, root := range s.roots() {
 		if root.cfg == nil {
 			continue
 		}
 
-		limited = true
+		err := validateMemoryLimit(root.name+".memory.limit", root.cfg.MemoryConfig)
+		if err == nil {
+			total += root.cfg.memoryPercent()
+		}
 
-		validationErrors = errors.Join(validationErrors, validateMemoryLimit(root.name+".memory.limit", root.cfg.MemoryConfig))
+		validationErrors = errors.Join(validationErrors, err)
 	}
 
-	if !limited {
-		return nil, errors.New("at least one root must be limited")
+	if total > 100 {
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("memory limits add up to %d%%, more than 100%%", total))
 	}
 
 	return nil, validationErrors
-}
-
-// RuntimeValidate implements config.RuntimeValidator using the target node's page size.
-func (s *WorkloadResourceConfigV1Alpha1) RuntimeValidate(ctx context.Context, st state.State, _ validation.RuntimeMode, _ ...validation.Option) ([]string, error) {
-	var (
-		validationErrors error
-		kubepodsLimit    uint64
-	)
-
-	for _, root := range s.roots() {
-		if root.cfg == nil {
-			continue
-		}
-
-		path := root.name + ".memory.limit"
-
-		// Static validation reports missing, negative, and out-of-range values.
-		if validateMemoryLimit(path, root.cfg.MemoryConfig) != nil {
-			continue
-		}
-
-		limit, err := kernel.NormalizeMemoryLimit(root.cfg.MemoryConfig.MemoryLimit.Value(), os.Getpagesize())
-		if err != nil {
-			validationErrors = errors.Join(validationErrors, fmt.Errorf("%s: %w", path, err))
-
-			continue
-		}
-
-		if root.name == constants.CgroupKubepods {
-			kubepodsLimit = limit
-		}
-	}
-
-	if validationErrors != nil || kubepodsLimit == 0 {
-		return nil, validationErrors
-	}
-
-	return kubepodsCapacityWarnings(ctx, st, kubepodsLimit)
-}
-
-// kubepodsCapacityWarnings flags a kubepods limit above the host memory, which the kubelet cannot be configured with.
-//
-// The limit is page-aligned, as the kubelet compares it. It is a warning because runtime validation also runs at boot,
-// where an error would keep the machine from loading a configuration shared with larger hosts. Hosts without the
-// inventory are not checked.
-func kubepodsCapacityWarnings(ctx context.Context, st state.State, limit uint64) ([]string, error) {
-	topology, err := safe.StateGetByID[*hardware.NUMATopology](ctx, st, hardware.NUMATopologyID)
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	var capacity uint64
-
-	for _, node := range topology.TypedSpec().Nodes {
-		capacity += node.MemoryTotalBytes
-	}
-
-	if capacity == 0 || limit <= capacity {
-		return nil, nil
-	}
-
-	return []string{fmt.Sprintf("%s.memory.limit: %d bytes exceeds the host memory capacity %d bytes, the kubelet will fail to be configured",
-		constants.CgroupKubepods, limit, capacity)}, nil
 }
 
 // workloadRoot names one workload root of the document.
@@ -294,21 +270,25 @@ func (s *WorkloadResourceConfigV1Alpha1) roots() []workloadRoot {
 	}
 }
 
-// validateMemoryLimit accepts only an explicit positive limit which fits the kubelet's int64 quantities.
-//
-// Page alignment is a host property and is checked at runtime.
+// validateMemoryLimit accepts only an explicit positive whole percentage.
 func validateMemoryLimit(path string, memory *WorkloadMemoryResource) error {
 	if memory == nil || memory.MemoryLimit.IsZero() {
 		return fmt.Errorf("%s is required", path)
 	}
 
-	switch limit := memory.MemoryLimit; {
-	case limit.IsNegative():
+	// The percentage parser truncates fractions.
+	text, err := memory.MemoryLimit.MarshalText()
+	if err != nil {
+		return fmt.Errorf("%s: %w", path, err)
+	}
+
+	switch {
+	case memory.MemoryLimit.IsNegative():
 		return fmt.Errorf("%s cannot be negative", path)
-	case limit.Value() == 0:
+	case bytes.ContainsRune(text, '.'):
+		return fmt.Errorf("%s must be a whole percentage", path)
+	case memory.MemoryLimit.Value() == 0:
 		return fmt.Errorf("%s must be greater than zero", path)
-	case limit.Value() > math.MaxInt64:
-		return fmt.Errorf("%s cannot be greater than %d bytes", path, int64(math.MaxInt64))
 	}
 
 	return nil

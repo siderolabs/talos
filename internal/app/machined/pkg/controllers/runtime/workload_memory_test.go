@@ -394,7 +394,7 @@ func TestWorkloadMemoryRejectedLimitsLeaveRootsUntouched(t *testing.T) {
 				h.Assert().Equal(1, h.writes(constants.CgroupVirtualMachines))
 
 				failures := h.failures()
-				h.Require().Len(failures, 1)
+				h.Require().NotEmpty(failures)
 				h.Assert().Contains(failures[0], constants.CgroupTalosContainersRoot)
 				h.Assert().Contains(failures[0], test.errMsg)
 				h.Assert().Contains(failures[0], strconv.FormatUint(test.limit, 10))

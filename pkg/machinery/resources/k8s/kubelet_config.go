@@ -42,10 +42,12 @@ type KubeletConfigSpec struct {
 	EnableFSQuotaMonitoring      bool                 `yaml:"enableFSQuotaMonitoring" protobuf:"12"`
 	CredentialProviderConfig     map[string]any       `yaml:"credentialProviderConfig,omitempty" protobuf:"13"`
 	RegisterWithTaints           map[string]string    `yaml:"registerWithTaints,omitempty" protobuf:"16"`
-	// KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
-	KubepodsMemoryLimit uint64 `yaml:"kubepodsMemoryLimit,omitempty" protobuf:"17"`
 	// CredentialProviderFiles maps file names to the contents of the credential provider plugin configuration files.
 	CredentialProviderFiles map[string]string `yaml:"credentialProviderFiles,omitempty" protobuf:"18"`
+	// MemoryReserved is WorkloadResourceConfig reserved.memory, or the default for the machine type, in bytes.
+	MemoryReserved uint64 `yaml:"memoryReserved,omitempty" protobuf:"19"`
+	// KubepodsMemoryPercent is the WorkloadResourceConfig kubepods limit in percent of the memory beyond MemoryReserved.
+	KubepodsMemoryPercent uint64 `yaml:"kubepodsMemoryPercent,omitempty" protobuf:"20"`
 }
 
 // NewKubeletConfig initializes an empty KubeletConfig resource.

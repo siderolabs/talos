@@ -161,11 +161,10 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 		asrt.Empty(spec.ExtraArgs)
 		asrt.Empty(spec.ExtraMounts)
 		asrt.False(spec.CloudProviderExternal)
-		asrt.Zero(spec.KubepodsMemoryLimit)
 	})
 }
 
-func (suite *KubeletConfigSuite) TestReconcileKubepodsMemoryLimit() {
+func (suite *KubeletConfigSuite) TestReconcileWorkloadMemory() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
@@ -174,6 +173,7 @@ func (suite *KubeletConfigSuite) TestReconcileKubepodsMemoryLimit() {
 	v1alpha1Cfg := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "controlplane",
 			MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
 				KubeletImage: "kubelet", //nolint:staticcheck // legacy config
 			},
@@ -190,28 +190,25 @@ func (suite *KubeletConfigSuite) TestReconcileKubepodsMemoryLimit() {
 		},
 	}
 
-	workloadResources := runtime.NewWorkloadResourceConfigV1Alpha1()
-	workloadResources.KubepodsConfig = &runtime.WorkloadResourceRoot{
-		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize("16GiB")},
-	}
-	workloadResources.TalosContainersConfig = &runtime.WorkloadResourceRoot{
-		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize("4GiB")},
-	}
-
-	ctr, err := container.New(v1alpha1Cfg, workloadResources)
+	ctr, err := container.New(v1alpha1Cfg)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
 	suite.Create(cfg)
 
+	// without the document the reservation is the default for the machine type
 	ctest.AssertResource(suite, k8s.KubeletID, func(r *k8s.KubeletConfig, asrt *assert.Assertions) {
-		asrt.Equal(uint64(16<<30), r.TypedSpec().KubepodsMemoryLimit)
+		asrt.Equal(uint64(512<<20), r.TypedSpec().MemoryReserved)
+		asrt.Zero(r.TypedSpec().KubepodsMemoryPercent)
 	})
 
-	containersOnly := runtime.NewWorkloadResourceConfigV1Alpha1()
-	containersOnly.TalosContainersConfig = workloadResources.TalosContainersConfig
+	workloadResources := runtime.NewWorkloadResourceConfigV1Alpha1()
+	workloadResources.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("2GiB")}
+	workloadResources.KubepodsConfig = &runtime.WorkloadResourceRoot{
+		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize("50%")},
+	}
 
-	ctr, err = container.New(v1alpha1Cfg, containersOnly)
+	ctr, err = container.New(v1alpha1Cfg, workloadResources)
 	suite.Require().NoError(err)
 
 	replacement := config.NewMachineConfig(ctr)
@@ -219,7 +216,8 @@ func (suite *KubeletConfigSuite) TestReconcileKubepodsMemoryLimit() {
 	suite.Update(replacement)
 
 	ctest.AssertResource(suite, k8s.KubeletID, func(r *k8s.KubeletConfig, asrt *assert.Assertions) {
-		asrt.Zero(r.TypedSpec().KubepodsMemoryLimit)
+		asrt.Equal(uint64(2<<30), r.TypedSpec().MemoryReserved)
+		asrt.Equal(uint64(50), r.TypedSpec().KubepodsMemoryPercent)
 	})
 }
 
