@@ -8,6 +8,11 @@ package api
 
 const (
 	// MetalLBChartVersion is the version of the MetalLB Helm chart to use.
+	//
+	// Note: 0.16.2 (frr-k8s v0.0.27) can't be installed on Kubernetes 1.38.0-beta.0: CEL cost
+	// estimation of string functions on split() elements is unbounded since the switch to cel.dev/cel-go,
+	// so the FRRConfiguration CRD is rejected.
+	//
 	// renovate: datasource=helm versioning=helm depName=metallb registryUrl=https://metallb.github.io/metallb
 	MetalLBChartVersion = "0.16.1"
 	// BGPBackendImage is the image used for local LoadBalancer service endpoints in BGP tests.

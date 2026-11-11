@@ -114,7 +114,7 @@ KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v4.3.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.20.1
+CILIUM_CLI_VERSION ?= v0.20.2
 # renovate: datasource=github-releases depName=cilium/cilium
 CILIUM_VERSION ?= v1.20.4
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
