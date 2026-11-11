@@ -1,3 +1,99 @@
+## [Talos 1.14.6](https://github.com/siderolabs/talos/releases/tag/v1.14.6) (2026-11-11)
+
+Welcome to the v1.14.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.63
+Flannel CNI: 0.28.10
+
+Talos is built with Go 1.26.11.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Fábio Matavelli
+* Jake Watson
+* Justin Garrison
+* Mateusz Urbanek
+* Matthew Kelch
+* Max Makarov
+* Noel
+* Raphaël DUCOM
+* Scott Vandiver
+* frauniki
+* saguila
+* zavermax
+
+### Changes
+<details><summary>19 commits</summary>
+<p>
+
+* [`b42de4573`](https://github.com/siderolabs/talos/commit/b42de45732290df42a53adab1f24886fe695732b) fix: update GoBGP library to 4.10.0
+* [`008f6c3de`](https://github.com/siderolabs/talos/commit/008f6c3dec27fdceca4423323948e41d355eb319) fix: bump Go version in constants
+* [`52417038c`](https://github.com/siderolabs/talos/commit/52417038c5190210477505facf3f6e81e794ac8c) chore: rekres
+* [`2b98b3991`](https://github.com/siderolabs/talos/commit/2b98b3991df0f1bdeb94ba4a272052ba50958734) fix: update Go dependencies
+* [`ba1ae32da`](https://github.com/siderolabs/talos/commit/ba1ae32dadc1c5371e567672cb5bdda1e71f3cae) fix: wait for control plane static pods during Kubernetes CA rotation
+* [`a16555ed5`](https://github.com/siderolabs/talos/commit/a16555ed5f80fa5ff5cb7bd3e60d61e60ac5a19c) fix: log lifecycle service actions to console
+* [`8f6c141db`](https://github.com/siderolabs/talos/commit/8f6c141db0f45cfd23737564e019f4876cbc3e65) fix: don't zero the discovered volume partition offset
+* [`421d1589d`](https://github.com/siderolabs/talos/commit/421d1589dc816cf1adc8dfb882e5786ce77cdd78) fix: give the mdadm runtime map directory a dedicated SELinux type
+* [`c106f41fe`](https://github.com/siderolabs/talos/commit/c106f41fe4413c94463c6598d3a93990dc8733a3) fix: mask the SideroLink join token
+* [`a02b84749`](https://github.com/siderolabs/talos/commit/a02b84749d750d4a1e818f0fcc66053d40f27912) fix: drop architecture constraints from affinity rules
+* [`93b0e406f`](https://github.com/siderolabs/talos/commit/93b0e406f14b002f166d4e0eb5c40891411079ab) feat: update pkgs & tools
+* [`cc384acab`](https://github.com/siderolabs/talos/commit/cc384acab4d7ed982706657f3dc01096e7620b65) fix: use aescbc provider for AES-CBC key in etcd encryption config
+* [`bfc139c8f`](https://github.com/siderolabs/talos/commit/bfc139c8fafc41785a9865815128ff0149cbbd1c) fix: skip logical links when matching OpenStack interfaces by MAC
+* [`e28686aa9`](https://github.com/siderolabs/talos/commit/e28686aa94acaab776d4d976fe743b6ed2dc6441) fix: open the files of pkg/xfs roots with O_CLOEXEC
+* [`90bbad2f1`](https://github.com/siderolabs/talos/commit/90bbad2f1e7b6d4949ac6d166516583a23220b9d) feat: update changed BGP peers
+* [`8a3d3d4b3`](https://github.com/siderolabs/talos/commit/8a3d3d4b3d2890b976effc64cf734c07d990130a) fix: reconnect log senders when the receiver closes the connection
+* [`e7bcb14fe`](https://github.com/siderolabs/talos/commit/e7bcb14fef73fae8bf526aedd2623400485320e3) feat: update Flannel to 0.28.10
+* [`c31b89093`](https://github.com/siderolabs/talos/commit/c31b89093b9d4686ccac33b29a7e6152ca4b45f0) feat: include applesmc module
+* [`e867b1aba`](https://github.com/siderolabs/talos/commit/e867b1aba91a21b51ce3fe413cbfd0db24492775) feat: update Go 1.26.11, Linux 6.18.63
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>11 commits</summary>
+<p>
+
+* [`e6ad19d`](https://github.com/siderolabs/pkgs/commit/e6ad19df338a763890910b142f820d6712c39585) feat: update Linux to 6.18.63
+* [`28f56b5`](https://github.com/siderolabs/pkgs/commit/28f56b5e58863d34e479ca0045e680a9d787fb6e) feat: enable AMD Pensando ionic and ionic_rdma
+* [`64ec876`](https://github.com/siderolabs/pkgs/commit/64ec876294d7aa5f1bae7ef8ad3dab7802605101) fix: enable BROADCOM PHY on amd64
+* [`52e7730`](https://github.com/siderolabs/pkgs/commit/52e7730766f03275d063673fef4494dc3e2cfb87) feat: enable arm64 SMMUv3 SVA for ATS (NVIDIA Grace Hopper)
+* [`5645412`](https://github.com/siderolabs/pkgs/commit/5645412aa0bc92e22ecd780297ca4e31e3c8d37f) feat: update dependencies
+* [`5255939`](https://github.com/siderolabs/pkgs/commit/5255939854fff51d5292cfd110726835843bacd7) feat: enable CONFIG_DRM_ACCEL_AMDXDNA on amd64
+* [`0190570`](https://github.com/siderolabs/pkgs/commit/0190570bd54fd604a2932ad8e85e059ecd9fdb14) feat: update NVIDIA drivers
+* [`ef77f92`](https://github.com/siderolabs/pkgs/commit/ef77f92da47615c7e2f7a34396911319dd68dcb6) feat: update backportable dependencies
+* [`6c2142e`](https://github.com/siderolabs/pkgs/commit/6c2142ebbe62c78b7b3328d632c65de8333a249e) feat: enable arm64 ff-a tpm crb support
+* [`e06cc60`](https://github.com/siderolabs/pkgs/commit/e06cc606d894708130e5d25623ce58550bd64965) feat: enable applesmc on amd64
+* [`f26bb1b`](https://github.com/siderolabs/pkgs/commit/f26bb1b8414d5841f4134c3692ce806249b2d357) feat: update Go to 1.26.11
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`5959f76`](https://github.com/siderolabs/tools/commit/5959f76cc92245aabfd1162cb6946ee7dc19a257) feat: update Go to 1.26.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/gopacket/gopacket**   v1.7.1 -> v1.7.2
+* **github.com/klauspost/compress**  v1.19.2 -> v1.20.2
+* **github.com/osrg/gobgp/v4**       v4.8.0 -> v4.10.0
+* **github.com/siderolabs/pkgs**     v1.14.0-48-gf4bda77 -> v1.14.0-59-ge6ad19d
+* **github.com/siderolabs/tools**    v1.14.0-11-g8dad45e -> v1.14.0-12-g5959f76
+* **golang.org/x/net**               v0.61.0 -> v0.62.0
+
+Previous release can be found at [v1.14.5](https://github.com/siderolabs/talos/releases/tag/v1.14.5)
+
 ## [Talos 1.14.5](https://github.com/siderolabs/talos/releases/tag/v1.14.5) (2026-10-26)
 
 Welcome to the v1.14.5 release of Talos!
