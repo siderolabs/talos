@@ -1610,12 +1610,16 @@ type KubeletConfigSpec struct {
 	CredentialProviderConfig     *structpb.Struct       `protobuf:"bytes,13,opt,name=credential_provider_config,json=credentialProviderConfig,proto3" json:"credential_provider_config,omitempty"`
 	ExtraArgs                    map[string]*ArgValues  `protobuf:"bytes,15,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	RegisterWithTaints           map[string]string      `protobuf:"bytes,16,rep,name=register_with_taints,json=registerWithTaints,proto3" json:"register_with_taints,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset.
+	// KubepodsMemoryLimit is the WorkloadResourceConfig kubepods limit as an absolute size in bytes.
 	KubepodsMemoryLimit uint64 `protobuf:"varint,17,opt,name=kubepods_memory_limit,json=kubepodsMemoryLimit,proto3" json:"kubepods_memory_limit,omitempty"`
 	// CredentialProviderFiles maps file names to the contents of the credential provider plugin configuration files.
 	CredentialProviderFiles map[string]string `protobuf:"bytes,18,rep,name=credential_provider_files,json=credentialProviderFiles,proto3" json:"credential_provider_files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// MemoryReserved is WorkloadResourceConfig reserved.memory, or the default for the machine type, in bytes.
+	MemoryReserved uint64 `protobuf:"varint,19,opt,name=memory_reserved,json=memoryReserved,proto3" json:"memory_reserved,omitempty"`
+	// KubepodsMemoryPercent is the WorkloadResourceConfig kubepods limit in percent of the memory beyond MemoryReserved.
+	KubepodsMemoryPercent uint64 `protobuf:"varint,20,opt,name=kubepods_memory_percent,json=kubepodsMemoryPercent,proto3" json:"kubepods_memory_percent,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *KubeletConfigSpec) Reset() {
@@ -1758,6 +1762,20 @@ func (x *KubeletConfigSpec) GetCredentialProviderFiles() map[string]string {
 		return x.CredentialProviderFiles
 	}
 	return nil
+}
+
+func (x *KubeletConfigSpec) GetMemoryReserved() uint64 {
+	if x != nil {
+		return x.MemoryReserved
+	}
+	return 0
+}
+
+func (x *KubeletConfigSpec) GetKubepodsMemoryPercent() uint64 {
+	if x != nil {
+		return x.KubepodsMemoryPercent
+	}
+	return 0
 }
 
 // KubeletKubeconfigSpec describes the current kubelet client credentials.
@@ -2989,8 +3007,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\tendpoints\x18\x01 \x03(\v21.talos.resource.definitions.k8s.KubePrismEndpointR\tendpoints\"E\n" +
 	"\x15KubePrismStatusesSpec\x12\x12\n" +
 	"\x04host\x18\x01 \x01(\tR\x04host\x12\x18\n" +
-	"\ahealthy\x18\x02 \x01(\bR\ahealthy\"\xcc\n" +
-	"\n" +
+	"\ahealthy\x18\x02 \x01(\bR\ahealthy\"\xad\v\n" +
 	"\x11KubeletConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x1f\n" +
 	"\vcluster_dns\x18\x02 \x03(\tR\n" +
@@ -3010,7 +3027,9 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"extra_args\x18\x0f \x03(\v2@.talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntryR\textraArgs\x12{\n" +
 	"\x14register_with_taints\x18\x10 \x03(\v2I.talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntryR\x12registerWithTaints\x122\n" +
 	"\x15kubepods_memory_limit\x18\x11 \x01(\x04R\x13kubepodsMemoryLimit\x12\x8a\x01\n" +
-	"\x19credential_provider_files\x18\x12 \x03(\v2N.talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntryR\x17credentialProviderFiles\x1ag\n" +
+	"\x19credential_provider_files\x18\x12 \x03(\v2N.talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntryR\x17credentialProviderFiles\x12'\n" +
+	"\x0fmemory_reserved\x18\x13 \x01(\x04R\x0ememoryReserved\x126\n" +
+	"\x17kubepods_memory_percent\x18\x14 \x01(\x04R\x15kubepodsMemoryPercent\x1ag\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
 	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\x1aE\n" +

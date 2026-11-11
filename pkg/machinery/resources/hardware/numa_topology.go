@@ -40,6 +40,17 @@ type NUMANodeSpec struct {
 	ID               uint32   `yaml:"id" protobuf:"1"`
 }
 
+// MemoryTotalBytes sums the memory of all nodes, which matches MemTotal in /proc/meminfo.
+func (spec *NUMATopologySpec) MemoryTotalBytes() uint64 {
+	var total uint64
+
+	for _, node := range spec.Nodes {
+		total += node.MemoryTotalBytes
+	}
+
+	return total
+}
+
 // NewNUMATopology initializes the singleton resource.
 func NewNUMATopology() *NUMATopology {
 	return typed.NewResource[NUMATopologySpec, NUMATopologyExtension](resource.NewMetadata(NamespaceName, NUMATopologyType, NUMATopologyID, resource.VersionUndefined), NUMATopologySpec{})

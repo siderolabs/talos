@@ -5,105 +5,51 @@
 package k8s
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 
-	"github.com/prometheus/procfs"
 	"github.com/siderolabs/go-pointer"
 	"k8s.io/apimachinery/pkg/api/resource"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
+	"github.com/siderolabs/talos/pkg/machinery/kubelet"
 )
 
-// MemoryCapacityReader returns the usable memory capacity of the host in bytes.
-type MemoryCapacityReader func() (uint64, error)
-
-// ProcMemoryCapacity reads MemTotal from /proc/meminfo.
-//
-// This is the same source and conversion (kB * 1024) the kubelet uses for node memory capacity via cAdvisor.
-func ProcMemoryCapacity() (uint64, error) {
-	fs, err := procfs.NewDefaultFS()
-	if err != nil {
-		return 0, fmt.Errorf("error opening procfs: %w", err)
-	}
-
-	info, err := fs.Meminfo()
-	if err != nil {
-		return 0, fmt.Errorf("error reading meminfo: %w", err)
-	}
-
-	if info.MemTotalBytes == nil {
-		return 0, errors.New("MemTotal is missing from meminfo")
-	}
-
-	return *info.MemTotalBytes, nil
-}
-
-// KubeletConfigurationOption adjusts the host-dependent parts of NewKubeletConfiguration.
-type KubeletConfigurationOption func(*kubeletConfigurationOptions)
-
-type hostMemory struct {
-	readCapacity MemoryCapacityReader
-	pageSize     int
-}
-
-type kubeletConfigurationOptions struct {
-	hostMemory                *hostMemory
-	ignoreKubepodsMemoryLimit bool
-}
-
-// WithHostMemory supplies the memory capacity reader and page size the kubepods memory limit projection needs.
-//
-// The capacity is read only after the static conflict checks pass.
-func WithHostMemory(readCapacity MemoryCapacityReader, pageSize int) KubeletConfigurationOption {
-	return func(o *kubeletConfigurationOptions) {
-		o.hostMemory = &hostMemory{readCapacity: readCapacity, pageSize: pageSize}
-	}
-}
-
-// IgnoringKubepodsMemoryLimit renders the configuration as if no kubepods memory limit were configured.
-//
-// The kubelet does not own the cgroup hierarchy in container mode, so the limit is inactive there.
-func IgnoringKubepodsMemoryLimit() KubeletConfigurationOption {
-	return func(o *kubeletConfigurationOptions) {
-		o.ignoreKubepodsMemoryLimit = true
-	}
+// KubeletMemory is the memory policy rendered into the kubelet configuration.
+type KubeletMemory struct {
+	// Reserved is systemReserved.memory without a kubepods limit.
+	Reserved uint64
+	// KubepodsLimit, when set, derives systemReserved.memory from the limit and Capacity instead.
+	KubepodsLimit uint64
+	Capacity      uint64
+	PageSize      int
 }
 
 // kubepodsMemoryReservation derives systemReserved.memory (S) from the kubepods memory limit (C):
 //
-//	S = M - K - C
+//	S = M - C
 //
-// M is the host memory capacity and K is kubeReserved.memory, so the kubelet sets kubepods memory.max = M - S - K = C.
-// The kubelet refuses to start when S + K + E > M, E being the hard memory.available eviction threshold, so C >= E is
-// required as well. Hugepage capacity only reduces the advertised allocatable on the kubelet side and is not part of S.
-func kubepodsMemoryReservation(config *kubeletconfig.KubeletConfiguration, limit uint64, host hostMemory) (uint64, error) {
-	effectiveLimit, err := kernel.NormalizeMemoryLimit(limit, host.pageSize)
-	if err != nil {
-		return 0, fmt.Errorf("invalid kubepods memory limit: %w", err)
-	}
-
-	kubeReserved, err := reservedMemory(config.KubeReserved)
-	if err != nil {
-		return 0, fmt.Errorf(`invalid kubelet configuration field "kubeReserved.memory": %w`, err)
-	}
-
-	capacity, err := host.readCapacity()
-	if err != nil {
-		return 0, fmt.Errorf("error reading memory capacity for the kubepods memory limit: %w", err)
-	}
+// M is the host memory capacity, so the kubelet sets kubepods memory.max = M - S = C; kubeReserved.memory is rejected
+// with the limit. The kubelet refuses to start when S + E > M, E being the hard memory.available eviction threshold,
+// so C >= E is required as well. Hugepage capacity only reduces the advertised allocatable on the kubelet side and is
+// not part of S. C was resolved against the same M, so a memory hotplug updates both.
+func kubepodsMemoryReservation(config *kubeletconfig.KubeletConfiguration, memory KubeletMemory) (uint64, error) {
+	capacity := memory.Capacity
 
 	if capacity == 0 || capacity > math.MaxInt64 {
 		return 0, fmt.Errorf("host memory capacity %d bytes is outside the kubelet's range", capacity)
 	}
 
-	if kubeReserved > capacity || effectiveLimit > capacity-kubeReserved {
-		return 0, fmt.Errorf(`kubepods memory limit %d bytes exceeds the host memory capacity %d bytes minus "kubeReserved.memory" %d bytes`,
-			effectiveLimit, capacity, kubeReserved)
+	effectiveLimit, err := kernel.NormalizeMemoryLimit(memory.KubepodsLimit, memory.PageSize)
+	if err != nil {
+		return 0, fmt.Errorf("invalid kubepods memory limit: %w", err)
+	}
+
+	if effectiveLimit > capacity {
+		return 0, fmt.Errorf("kubepods memory limit %d bytes exceeds the host memory capacity %d bytes", effectiveLimit, capacity)
 	}
 
 	eviction, err := hardMemoryEvictionThreshold(config, capacity)
@@ -116,45 +62,10 @@ func kubepodsMemoryReservation(config *kubeletconfig.KubeletConfiguration, limit
 			effectiveLimit, eviction.String(), eviction.Value())
 	}
 
-	return capacity - kubeReserved - effectiveLimit, nil
+	return capacity - effectiveLimit, nil
 }
 
-// reservedMemory parses a reserved memory entry the way the kubelet does (resource.ParseQuantity, negatives rejected).
-//
-// A whole number of bytes is additionally required so that M - S - K stays exact.
-func reservedMemory(reserved map[string]string) (uint64, error) {
-	raw, ok := reserved["memory"]
-	if !ok {
-		return 0, nil
-	}
-
-	quantity, err := resource.ParseQuantity(raw)
-	if err != nil {
-		return 0, fmt.Errorf("quantity %q: %w", raw, err)
-	}
-
-	if quantity.Sign() < 0 {
-		return 0, fmt.Errorf("quantity %q cannot be negative", raw)
-	}
-
-	bytes, ok := quantity.AsScaledInt64(0)
-	if !ok {
-		return 0, fmt.Errorf("quantity %q exceeds the kubelet's range", raw)
-	}
-
-	if quantity.CmpInt64(bytes) != 0 {
-		return 0, fmt.Errorf("quantity %q is not a whole number of bytes", raw)
-	}
-
-	return uint64(bytes), nil
-}
-
-const (
-	evictionSignalMemoryAvailable = "memory.available"
-
-	// defaultHardMemoryEviction is DefaultEvictionHard["memory.available"] from kubelet pkg/kubelet/eviction/defaults_linux.go (v1.38.0-alpha.1).
-	defaultHardMemoryEviction = "100Mi"
-)
+const evictionSignalMemoryAvailable = "memory.available"
 
 // hardMemoryEvictionThreshold returns the hard memory.available eviction threshold the kubelet will apply.
 //
@@ -165,7 +76,7 @@ func hardMemoryEvictionThreshold(config *kubeletconfig.KubeletConfiguration, mem
 	raw, present := config.EvictionHard[evictionSignalMemoryAvailable]
 
 	if len(config.EvictionHard) == 0 || (!present && pointer.SafeDeref(config.MergeDefaultEvictionSettings)) {
-		raw, present = defaultHardMemoryEviction, true
+		raw, present = kubelet.DefaultHardMemoryEviction, true
 	}
 
 	if !present {

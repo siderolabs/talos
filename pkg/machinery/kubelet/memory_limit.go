@@ -35,6 +35,9 @@ var memoryLimitArgs = map[string]string{
 
 const configDirArg = "config-dir"
 
+// DefaultHardMemoryEviction is DefaultEvictionHard["memory.available"] from kubelet pkg/kubelet/eviction/defaults_linux.go (v1.38.0-alpha.1).
+const DefaultHardMemoryEviction = "100Mi"
+
 // ValidateMemoryLimitConfiguration rejects kubelet settings which conflict with a Talos-managed kubepods memory limit.
 //
 // Talos derives `systemReserved.memory` from the limit and relies on the kubelet enforcing it on the
@@ -69,6 +72,11 @@ func ValidateMemoryLimitConfiguration(extraConfig map[string]any, extraArgs map[
 		errs = errors.Join(errs, errors.New(`kubelet configuration field "systemReserved.memory" conflicts with the kubepods memory limit: Talos derives it from the limit`))
 	}
 
+	if stringMapContains(extraConfig["kubeReserved"], "memory") {
+		errs = errors.Join(errs, errors.New(`kubelet configuration field "kubeReserved.memory" conflicts with the kubepods memory limit: `+
+			`the derived "systemReserved.memory" already holds all of the host memory beyond the limit`))
+	}
+
 	if perQOS, ok := extraConfig["cgroupsPerQOS"].(bool); ok && !perQOS {
 		errs = errors.Join(errs, errors.New(`kubelet configuration field "cgroupsPerQOS" must be enabled with the kubepods memory limit`))
 	}
@@ -96,10 +104,9 @@ func ValidateMemoryLimitConfiguration(extraConfig map[string]any, extraArgs map[
 			`the derived "systemReserved.memory" is not a system daemon budget`))
 	}
 
+	// The Talos-owned roots are rejected by ValidateWorkloadRootReservations.
 	if slices.Contains(enforcement, "kube-reserved") {
-		// A reservation without memory writes nothing Talos manages on the roots it owns itself.
-		if cgroupName, ok := extraConfig["kubeReservedCgroup"].(string); ok && isManagedRoot(cgroupName) &&
-			(!isTalosOwnedRoot(cgroupName) || stringMapContains(extraConfig["kubeReserved"], "memory")) {
+		if cgroupName, ok := extraConfig["kubeReservedCgroup"].(string); ok && path.Clean("/"+cgroupName) == "/"+constants.CgroupKubepods {
 			errs = errors.Join(errs, fmt.Errorf(`kubelet configuration field "kubeReservedCgroup" %q is a Talos-managed cgroup: `+
 				`it cannot be enforced with "kube-reserved" together with the kubepods memory limit`, cgroupName))
 		}
@@ -121,14 +128,55 @@ func ValidateWorkloadRootConfiguration(extraConfig map[string]any, extraArgs map
 	return errs
 }
 
-// ValidateWorkloadRootReservations rejects memory reservations enforced on Talos-managed workload roots.
+// ValidateWorkloadRootReservations rejects kubelet reservations enforced on Talos-managed workload roots.
+//
+// Talos owns those roots, so the kubelet must not write any reservation to them, whatever resources it holds.
+// Flags override the configuration file, so the effective values are derived from both.
+func ValidateWorkloadRootReservations(extraConfig map[string]any, extraArgs map[string][]string) error {
+	var errs error
+
+	args := map[string][]string{}
+
+	for _, flag := range slices.Sorted(maps.Keys(extraArgs)) {
+		normalized := normalizeFlag(flag)
+
+		args[normalized] = append(args[normalized], extraArgs[flag]...)
+	}
+
+	enforcement := effectiveStringSlice(extraConfig, args, "enforceNodeAllocatable", "enforce-node-allocatable")
+
+	for _, reservation := range []struct {
+		field      string
+		cgroupFlag string
+		keys       []string
+	}{
+		{"systemReservedCgroup", "system-reserved-cgroup", []string{"system-reserved", "system-reserved-compressible"}},
+		{"kubeReservedCgroup", "kube-reserved-cgroup", []string{"kube-reserved", "kube-reserved-compressible"}},
+	} {
+		cgroupName, ok := effectiveString(extraConfig, args, reservation.field, reservation.cgroupFlag)
+		if !ok || !isTalosOwnedRoot(cgroupName) {
+			continue
+		}
+
+		for _, key := range reservation.keys {
+			if slices.Contains(enforcement, key) {
+				errs = errors.Join(errs, fmt.Errorf(`kubelet configuration field %q %q is a Talos-managed cgroup: it cannot be enforced with "enforceNodeAllocatable" %q`,
+					reservation.field, cgroupName, key))
+			}
+		}
+	}
+
+	return errs
+}
+
+// ValidateWorkloadRootMemoryReservations rejects memory reservations enforced on Talos-managed workload roots.
 //
 // The kubelet enforces a full `system-reserved`/`kube-reserved` reservation by writing every resource of the
 // reservation, memory included, to the named cgroup; a memory reservation enforced on a Talos-managed root
 // competes with the limit Talos keeps on it. The compressible variants only write CPU shares and stay allowed.
 // Flags override the configuration file, so the effective values are derived from both; an absent or empty
 // `systemReserved` is filled in by Talos with a memory reservation, so it counts as reserving memory.
-func ValidateWorkloadRootReservations(extraConfig map[string]any, extraArgs map[string][]string) error {
+func ValidateWorkloadRootMemoryReservations(extraConfig map[string]any, extraArgs map[string][]string) error {
 	var errs error
 
 	args := map[string][]string{}
@@ -158,7 +206,7 @@ func ValidateWorkloadRootReservations(extraConfig map[string]any, extraArgs map[
 		}
 
 		cgroupName, ok := effectiveString(extraConfig, args, reservation.cgroupField, reservation.cgroupFlag)
-		if !ok || !isTalosOwnedRoot(cgroupName) {
+		if !ok || !isMemoryOwnedRoot(cgroupName) {
 			continue
 		}
 
@@ -288,16 +336,19 @@ func stringSlice(raw any) []string {
 	}
 }
 
-// isManagedRoot reports whether the kubelet cgroup name denotes a root whose memory limit Talos manages,
-// either directly or through the kubepods limit.
-func isManagedRoot(cgroupName string) bool {
-	return path.Clean("/"+cgroupName) == "/"+constants.CgroupKubepods || isTalosOwnedRoot(cgroupName)
+// isMemoryOwnedRoot reports whether the kubelet cgroup name denotes a root whose memory.max Talos writes itself.
+func isMemoryOwnedRoot(cgroupName string) bool {
+	return slices.Contains([]string{
+		"/" + constants.CgroupTalosContainersRoot,
+		"/" + constants.CgroupVirtualMachines,
+	}, path.Clean("/"+cgroupName))
 }
 
-// isTalosOwnedRoot reports whether the kubelet cgroup name denotes a root whose memory.max Talos writes itself.
+// isTalosOwnedRoot reports whether the kubelet cgroup name denotes a cgroup whose limits Talos writes itself.
 func isTalosOwnedRoot(cgroupName string) bool {
 	return slices.Contains([]string{
 		"/" + constants.CgroupTalosContainersRoot,
 		"/" + constants.CgroupVirtualMachines,
+		"/" + constants.CgroupExtensions,
 	}, path.Clean("/"+cgroupName))
 }

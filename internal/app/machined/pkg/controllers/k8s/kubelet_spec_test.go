@@ -25,9 +25,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -38,6 +36,7 @@ type KubeletSpecSuite struct {
 
 func (suite *KubeletSpecSuite) TestReconcileSELinux() {
 	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().MemoryReserved = testWorkerReserved
 	cfg.TypedSpec().Image = "kubelet:v1.29.0"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
@@ -48,10 +47,6 @@ func (suite *KubeletSpecSuite) TestReconcileSELinux() {
 	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
 	nodename.TypedSpec().Nodename = "example.com"
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	securityState := runtimeres.NewSecurityStateSpec(runtimeres.NamespaceName)
 	securityState.TypedSpec().SELinuxState = runtimeres.SELinuxStateEnforcing
@@ -73,6 +68,7 @@ func (suite *KubeletSpecSuite) TestReconcileSELinux() {
 
 func (suite *KubeletSpecSuite) TestReconcileDefault() {
 	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().MemoryReserved = testWorkerReserved
 	cfg.TypedSpec().Image = "kubelet:v1.29.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
@@ -97,10 +93,6 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 	nodename.TypedSpec().Nodename = "example.com"
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
 		spec := kubeletSpec.TypedSpec()
@@ -127,6 +119,7 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 
 func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().MemoryReserved = testWorkerReserved
 	cfg.TypedSpec().Image = "kubelet:v1.29.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
@@ -138,10 +131,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 	nodename.TypedSpec().Nodename = "example.com"
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
 		spec := kubeletSpec.TypedSpec()
@@ -162,6 +151,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 
 func (suite *KubeletSpecSuite) TestReconcileWithContainerRuntimeEndpointFlag() {
 	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().MemoryReserved = testWorkerReserved
 	cfg.TypedSpec().Image = "kubelet:v1.25.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
@@ -173,10 +163,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithContainerRuntimeEndpointFlag() {
 	nodename.TypedSpec().Nodename = "example.com"
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodename))
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
 		spec := kubeletSpec.TypedSpec()
@@ -211,6 +197,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithContainerRuntimeEndpointFlag() {
 
 func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().MemoryReserved = testWorkerReserved
 	cfg.TypedSpec().Image = "kubelet:v2.0.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
 	cfg.TypedSpec().ClusterDomain = "some.local"
@@ -229,10 +216,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.3")}
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeIP))
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
 		spec := kubeletSpec.TypedSpec()
@@ -256,6 +239,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithExtraConfig() {
 
 func (suite *KubeletSpecSuite) TestReconcileWithSkipNodeRegistration() {
 	cfg := k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID)
+	cfg.TypedSpec().MemoryReserved = testWorkerReserved
 	cfg.TypedSpec().Image = "kubelet:v2.0.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.11"}
 	cfg.TypedSpec().ClusterDomain = "some.local"
@@ -272,10 +256,6 @@ func (suite *KubeletSpecSuite) TestReconcileWithSkipNodeRegistration() {
 	nodeIP.TypedSpec().Addresses = []netip.Addr{netip.MustParseAddr("172.20.0.3")}
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeIP))
-
-	machineType := config.NewMachineType()
-	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.KubeletID}, func(kubeletSpec *k8s.KubeletSpec, asrt *assert.Assertions) {
 		spec := kubeletSpec.TypedSpec()
@@ -363,7 +343,7 @@ func TestNewKubeletConfigurationFail(t *testing.T) {
 			tt.name, func(t *testing.T) {
 				t.Parallel()
 
-				_, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec, compatibility.VersionFromImageRef(""), machine.TypeWorker)
+				_, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec, compatibility.VersionFromImageRef(""), k8sctrl.KubeletMemory{Reserved: testWorkerReserved, PageSize: testPageSize})
 				require.Error(t, err)
 
 				assert.EqualError(t, err, tt.expectedErr)
@@ -408,7 +388,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		ImageGCLowThresholdPercent:  new(int32(constants.KubeletImageGCLowThresholdPercent)),
 		SystemReserved: map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,
-			"memory":            constants.KubeletSystemReservedMemoryWorker,
+			"memory":            "402653184",
 			"pid":               constants.KubeletSystemReservedPid,
 			"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
 		},
@@ -429,7 +409,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		cfgSpec           *k8s.KubeletConfigSpec
 		kubeletVersion    compatibility.Version
 		expectedOverrides func(*kubeletconfig.KubeletConfiguration)
-		machineType       machine.Type
+		reserved          uint64
 	}{
 		{
 			name: "override some",
@@ -446,7 +426,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.OOMScoreAdj = new(int32(-300))
 				kc.EnableDebuggingHandlers = new(true)
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 		{
 			name: "controlplane",
@@ -459,7 +439,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.SystemReserved["memory"] = constants.KubeletSystemReservedMemoryControlPlane
+				kc.SystemReserved["memory"] = "536870912"
 				kc.RegisterWithTaints = []corev1.Taint{
 					{
 						Key:    constants.LabelNodeRoleControlPlane,
@@ -467,7 +447,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 					},
 				}
 			},
-			machineType: machine.TypeControlPlane,
+			reserved: 512 << 20,
 		},
 		{
 			name: "disable graceful shutdown",
@@ -484,7 +464,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.ShutdownGracePeriod = metav1.Duration{}
 				kc.ShutdownGracePeriodCriticalPods = metav1.Duration{}
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 		{
 			name: "enable seccomp default",
@@ -497,7 +477,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.SeccompDefault = new(true)
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 		{
 			name: "enable skipNodeRegistration",
@@ -511,7 +491,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.Authentication.Webhook.Enabled = new(false)
 				kc.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 		{
 			name: "disable manifests directory",
@@ -524,7 +504,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
 				kc.StaticPodPath = ""
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 		{
 			name: "override image GC thresholds",
@@ -540,7 +520,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				kc.ImageGCHighThresholdPercent = new(int32(90))
 				kc.ImageGCLowThresholdPercent = nil
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 		{
 			name: "enable local FS quota monitoring",
@@ -555,7 +535,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 					"LocalStorageCapacityIsolationFSQuotaMonitoring": true,
 				}
 			},
-			machineType: machine.TypeWorker,
+			reserved: testWorkerReserved,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -564,7 +544,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			expected := defaultKubeletConfig.DeepCopy()
 			tt.expectedOverrides(expected)
 
-			config, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec, tt.kubeletVersion, tt.machineType)
+			config, err := k8sctrl.NewKubeletConfiguration(tt.cfgSpec, tt.kubeletVersion, k8sctrl.KubeletMemory{Reserved: tt.reserved, PageSize: testPageSize})
 
 			require.NoError(t, err)
 

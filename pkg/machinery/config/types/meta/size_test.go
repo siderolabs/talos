@@ -70,3 +70,17 @@ func TestSizeUnmarshal(t *testing.T) {
 		})
 	}
 }
+
+func TestPercentageSizeUnmarshalRejectsOutOfRange(t *testing.T) {
+	t.Parallel()
+
+	for _, in := range []string{"101%", "NaN%", "-NaN%", "Inf%", "-Inf%"} {
+		t.Run(in, func(t *testing.T) {
+			t.Parallel()
+
+			var ps meta.PercentageSize
+
+			assert.ErrorContains(t, ps.UnmarshalText([]byte(in)), "percentage must be between 0 and 100")
+		})
+	}
+}

@@ -16,7 +16,7 @@ import (
 // WorkloadMemorySpecType is type of WorkloadMemorySpec resource.
 const WorkloadMemorySpecType = resource.Type("WorkloadMemorySpecs.runtime.talos.dev")
 
-// WorkloadMemorySpec is the canonical desired memory ceiling for the Talos-owned workload cgroup roots.
+// WorkloadMemorySpec is the canonical desired memory ceiling for the workload cgroup roots.
 //
 // A missing resource means projection is pending, not that enforcement is disabled.
 type WorkloadMemorySpec = typed.Resource[WorkloadMemorySpecSpec, WorkloadMemorySpecExtension]
@@ -24,14 +24,20 @@ type WorkloadMemorySpec = typed.Resource[WorkloadMemorySpecSpec, WorkloadMemoryS
 // WorkloadMemorySpecID is the ID of the singleton WorkloadMemorySpec.
 const WorkloadMemorySpecID resource.ID = "workload-memory"
 
-// WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+// WorkloadMemorySpecSpec describes the desired memory.max for each workload root, in bytes.
 //
-// Zero means no limit is configured for that root; roots are independent.
+// Zero means the root is not limited; roots are independent. Omitted Talos-owned roots are capped at
+// MemoryCapacity minus MemoryReserved.
 //
 //gotagsrewrite:gen
 type WorkloadMemorySpecSpec struct {
 	TalosContainersLimit uint64 `yaml:"talosContainersLimit,omitempty" protobuf:"1"`
 	VirtualMachinesLimit uint64 `yaml:"virtualMachinesLimit,omitempty" protobuf:"2"`
+	// MemoryCapacity is the host memory the limits were resolved against; the kubelet resolves a kubepods limit
+	// against it as well.
+	MemoryCapacity uint64 `yaml:"memoryCapacity,omitempty" protobuf:"4"`
+	// MemoryReserved is the host memory left out of the limits.
+	MemoryReserved uint64 `yaml:"memoryReserved,omitempty" protobuf:"5"`
 }
 
 // NewWorkloadMemorySpec initializes a WorkloadMemorySpec resource.
@@ -59,6 +65,14 @@ func (WorkloadMemorySpecExtension) ResourceDefinition() meta.ResourceDefinitionS
 			{
 				Name:     "Virtual Machines",
 				JSONPath: `{.virtualMachinesLimit}`,
+			},
+			{
+				Name:     "Capacity",
+				JSONPath: `{.memoryCapacity}`,
+			},
+			{
+				Name:     "Reserved",
+				JSONPath: `{.memoryReserved}`,
 			},
 		},
 	}

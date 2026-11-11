@@ -1,0 +1,6 @@
+# Reserves host memory for the hypervisor runs, which the Talos-owned workload roots are capped against.
+# Tests that need a root limit patch their own percentage.
+apiVersion: v1alpha1
+kind: WorkloadResourceConfig
+reserved:
+  memory: 1GiB

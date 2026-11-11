@@ -306,7 +306,7 @@ jobs:
           QEMU_WORKERS: "0"
           SHORT_INTEGRATION_TEST: "yes"
           TEST_MODE: skip-etcd-k8s
-          WITH_CONFIG_PATCH: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml'
+          WITH_CONFIG_PATCH: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml:@hack/test/patches/workload-resources.yaml'
           WITH_SKIP_ETCD_K8S: "true"
         run: |
           sudo -E make e2e-qemu
@@ -2909,7 +2909,7 @@ jobs:
           QEMU_NUMA_NODES: "2"
           QEMU_WORKERS: "0"
           TEST_MODE: skip-etcd-k8s
-          WITH_CONFIG_PATCH: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml'
+          WITH_CONFIG_PATCH: '@_out/installer-extensions-patch.yaml:@hack/test/patches/extensions-libvirt.yaml:@hack/test/patches/content-library.yaml:@hack/test/patches/workload-resources.yaml'
           WITH_SKIP_ETCD_K8S: "true"
         run: |
           sudo -E make e2e-qemu

@@ -77,7 +77,8 @@ func (ps *PercentageSize) UnmarshalText(text []byte) error {
 		return fmt.Errorf("invalid percentage value: %w", err)
 	}
 
-	if value < 0 || value > 100 {
+	// NaN fails every comparison, so it is rejected by the negated range check.
+	if !(value >= 0 && value <= 100) {
 		return fmt.Errorf("percentage must be between 0 and 100, got %v", value)
 	}
 
