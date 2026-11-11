@@ -113,6 +113,17 @@ type EtcdMemberConfigV1Alpha1 struct {
 	//     IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.
 	//     Negative subnet matches should be specified last to filter out IPs picked by positive matches.
 	MemberListenSubnets []string `yaml:"listenSubnets,omitempty"`
+	//   description: |
+	//     Leave the promotion of a joining member to the operator.
+	//
+	//     A member joining an existing etcd cluster is added as a non-voting learner, and by default
+	//     Talos promotes it to a voting member once it has caught up with the leader.
+	//     With `manualLearnerPromotion` enabled the member stays a learner until it is promoted
+	//     through the etcd API, which keeps a non-voting copy of the data on the machine
+	//     without changing the quorum size.
+	//
+	//     The setting is read when the etcd member joins the cluster.
+	MemberManualLearnerPromotion bool `yaml:"manualLearnerPromotion,omitempty"`
 }
 
 // NewEtcdMemberConfigV1Alpha1 creates a new EtcdMemberConfig config document.
@@ -202,4 +213,9 @@ func (s *EtcdMemberConfigV1Alpha1) ListenSubnets() []string {
 
 	// if advertised subnets are set, use them, otherwise listen on all addresses
 	return s.MemberAdvertisedSubnets
+}
+
+// ManualLearnerPromotion implements config.EtcdMemberConfig interface.
+func (s *EtcdMemberConfigV1Alpha1) ManualLearnerPromotion() bool {
+	return s.MemberManualLearnerPromotion
 }

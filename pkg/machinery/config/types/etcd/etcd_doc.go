@@ -80,6 +80,13 @@ func (EtcdMemberConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.\n\nIf `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to\n`advertisedSubnets`.\n\nIf neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.\n\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "manualLearnerPromotion",
+				Type:        "bool",
+				Note:        "",
+				Description: "Leave the promotion of a joining member to the operator.\n\nA member joining an existing etcd cluster is added as a non-voting learner, and by default\nTalos promotes it to a voting member once it has caught up with the leader.\nWith `manualLearnerPromotion` enabled the member stays a learner until it is promoted\nthrough the etcd API, which keeps a non-voting copy of the data on the machine\nwithout changing the quorum size.\n\nThe setting is read when the etcd member joins the cluster.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Leave the promotion of a joining member to the operator." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

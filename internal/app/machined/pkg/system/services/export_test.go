@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -57,3 +58,8 @@ func (svc *Extension) ApplyExtensionServiceConfig(
 
 // AuthorizationRules exposes production authorization rules for external tests.
 var AuthorizationRules = rules
+
+// PromotesJoinedLearner exposes promotesJoinedLearner for tests.
+func PromotesJoinedLearner(learnerMemberID uint64, cfg config.EtcdMemberConfig) bool {
+	return promotesJoinedLearner(learnerMemberID, cfg)
+}

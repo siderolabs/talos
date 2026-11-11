@@ -11,3 +11,4 @@ advertisedSubnets:
     - '!10.0.0.3/32'
 listenSubnets:
     - 10.0.0.0/8
+manualLearnerPromotion: true

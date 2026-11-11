@@ -64,3 +64,10 @@ func (e *EtcdConfig) ListenSubnets() []string {
 
 	return nil
 }
+
+// ManualLearnerPromotion implements the config.EtcdMemberConfig interface.
+//
+// The legacy etcd configuration has no such setting: learners are always promoted by Talos.
+func (e *EtcdConfig) ManualLearnerPromotion() bool {
+	return false
+}

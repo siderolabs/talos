@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/etcd"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 func TestPromotionEndpoints(t *testing.T) {
@@ -67,4 +69,17 @@ func TestPromotionEndpoints(t *testing.T) {
 			assert.Equal(t, test.expected, services.PromotionEndpoints(test.selfEndpoints, test.votingMemberEndpoints, test.discoveredEndpoints))
 		})
 	}
+}
+
+func TestPromotesJoinedLearner(t *testing.T) {
+	t.Parallel()
+
+	manual := etcd.NewEtcdMemberConfigV1Alpha1()
+	manual.MemberManualLearnerPromotion = true
+
+	assert.True(t, services.PromotesJoinedLearner(0x1234, etcd.NewEtcdMemberConfigV1Alpha1()), "a joined learner is promoted by default")
+	assert.True(t, services.PromotesJoinedLearner(0x1234, &v1alpha1.EtcdConfig{}), "the legacy etcd config always promotes")
+	assert.True(t, services.PromotesJoinedLearner(0x1234, nil))
+	assert.False(t, services.PromotesJoinedLearner(0x1234, manual), "manual learner promotion leaves the learner to the operator")
+	assert.False(t, services.PromotesJoinedLearner(0, etcd.NewEtcdMemberConfigV1Alpha1()), "nothing to promote when the member did not join as a learner")
 }

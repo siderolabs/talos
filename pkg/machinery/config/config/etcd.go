@@ -35,4 +35,7 @@ type EtcdMemberConfig interface {
 	AdvertisedSubnets() []string
 	// ListenSubnets returns the subnets to pick the etcd listen addresses from.
 	ListenSubnets() []string
+	// ManualLearnerPromotion returns true if a member that joins as a learner is left a learner
+	// for the operator to promote, instead of being promoted by Talos once it catches up.
+	ManualLearnerPromotion() bool
 }

@@ -14,6 +14,15 @@ preface = """
 """
 
 [notes]
+    [notes.etcd_manual_learner_promotion]
+        title = "Manual etcd Learner Promotion"
+        description = """\
+`EtcdMemberConfig` has a new `manualLearnerPromotion` setting.
+A member joining an existing etcd cluster is added as a learner, and Talos promotes it to a voting member once it has caught up.
+With `manualLearnerPromotion: true` the member stays a learner until it is promoted through the etcd API,
+which keeps a non-voting copy of the data on the machine without changing the quorum size.
+"""
+
     [notes.etcd_multidoc]
         title = "etcd Configuration Documents"
         description = """\

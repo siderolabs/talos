@@ -49,6 +49,7 @@ import (
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/logging"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
@@ -216,7 +217,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, "ETCD_UNSUPPORTED_ARCH="+goruntime.GOARCH)
 	}
 
-	if e.learnerMemberID != 0 {
+	if promotesJoinedLearner(e.learnerMemberID, r.Config().EtcdMemberConfig()) {
 		var promoteCtx context.Context
 
 		promoteCtx, e.promoteCtxCancel = context.WithCancel(context.Background())
@@ -682,6 +683,23 @@ func (e *Etcd) recoverFromSnapshot(spec *etcdresource.SpecSpec) error {
 	}
 
 	return filetree.ChownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID)
+}
+
+// promotesJoinedLearner reports whether Talos promotes the member it has just added as a learner.
+//
+// With manual learner promotion the member is left a learner, and promoting it is up to the operator.
+func promotesJoinedLearner(learnerMemberID uint64, cfg config.EtcdMemberConfig) bool {
+	if learnerMemberID == 0 {
+		return false
+	}
+
+	if cfg != nil && cfg.ManualLearnerPromotion() {
+		log.Printf("etcd member %x joined as a learner, leaving it a learner (manual learner promotion)", learnerMemberID)
+
+		return false
+	}
+
+	return true
 }
 
 // promoteEndpointTimeout bounds a single promotion call against a single endpoint.

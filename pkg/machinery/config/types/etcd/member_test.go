@@ -27,6 +27,7 @@ func newTestMemberConfig() *etcd.EtcdMemberConfigV1Alpha1 {
 	}
 	cfg.MemberAdvertisedSubnets = []string{"10.0.0.0/8", "!10.0.0.3/32"}
 	cfg.MemberListenSubnets = []string{"10.0.0.0/8"}
+	cfg.MemberManualLearnerPromotion = true
 
 	return cfg
 }
@@ -113,6 +114,7 @@ func TestEtcdMemberConfigAccessors(t *testing.T) {
 	assert.Empty(t, cfg.ExtraArgs())
 	assert.Empty(t, cfg.AdvertisedSubnets())
 	assert.Empty(t, cfg.ListenSubnets())
+	assert.False(t, cfg.ManualLearnerPromotion(), "Talos promotes learners unless told otherwise")
 
 	// listen subnets default to advertised subnets
 	cfg.MemberAdvertisedSubnets = []string{"10.0.0.0/8"}
@@ -127,4 +129,5 @@ func TestEtcdMemberConfigAccessors(t *testing.T) {
 	}, cfg.ExtraArgs())
 	assert.Equal(t, []string{"10.0.0.0/8", "!10.0.0.3/32"}, cfg.AdvertisedSubnets())
 	assert.Equal(t, []string{"10.0.0.0/8"}, cfg.ListenSubnets())
+	assert.True(t, cfg.ManualLearnerPromotion())
 }
