@@ -48,6 +48,7 @@ const (
 	SetKindIfName
 	SetKindConntrackState
 	SetKindICMPType
+	SetKindICMPv6Type
 )
 
 // NfTablesSet is a compiled representation of the set.
@@ -65,7 +66,7 @@ func (set NfTablesSet) IsInterval() bool {
 	switch set.Kind {
 	case SetKindIPv4, SetKindIPv6, SetKindPort:
 		return true
-	case SetKindIfName, SetKindConntrackState, SetKindICMPType:
+	case SetKindIfName, SetKindConntrackState, SetKindICMPType, SetKindICMPv6Type:
 		return false
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
@@ -87,6 +88,8 @@ func (set NfTablesSet) KeyType() nftables.SetDatatype {
 		return nftables.TypeCTState
 	case SetKindICMPType:
 		return nftables.TypeICMPType
+	case SetKindICMPv6Type:
+		return nftables.TypeICMP6Type
 	default:
 		panic(fmt.Sprintf("unknown set kind: %d", set.Kind))
 	}
@@ -184,7 +187,7 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 		}
 
 		return elements
-	case SetKindICMPType:
+	case SetKindICMPType, SetKindICMPv6Type:
 		return xslices.Map(set.ICMPTypes, func(t nethelpers.ICMPType) nftables.SetElement {
 			return nftables.SetElement{
 				Key: []byte{byte(t)},
@@ -524,6 +527,66 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		}
 	}
 
+	if a.NfTablesRule.MatchHopLimit != nil {
+		hopLimit := []byte{a.NfTablesRule.MatchHopLimit.HopLimit}
+
+		if a.NfTablesRule.MatchSourceAddress == nil && a.NfTablesRule.MatchDestinationAddress == nil {
+			// the rule is not split by IP family yet, so match both families,
+			// unless the protocol limits the rule to a single family
+			var protocol nethelpers.Protocol
+
+			if a.NfTablesRule.MatchLayer4 != nil {
+				protocol = a.NfTablesRule.MatchLayer4.Protocol
+			}
+
+			if protocol != nethelpers.ProtocolICMPv6 {
+				rule4 = []expr.Any{}
+			}
+
+			if protocol != nethelpers.ProtocolICMP {
+				rule6 = []expr.Any{}
+			}
+		}
+
+		if rule4 != nil {
+			rule4 = append(
+				rule4,
+				// [ payload load 1b @ network header + 8 => reg 1 ]
+				&expr.Payload{
+					DestRegister: 1,
+					Base:         expr.PayloadBaseNetworkHeader,
+					Offset:       8, // IPv4 TTL
+					Len:          1,
+				},
+				// [ cmp eq reg 1 <hop limit> ]
+				&expr.Cmp{
+					Op:       expr.CmpOpEq,
+					Register: 1,
+					Data:     hopLimit,
+				},
+			)
+		}
+
+		if rule6 != nil {
+			rule6 = append(
+				rule6,
+				// [ payload load 1b @ network header + 7 => reg 1 ]
+				&expr.Payload{
+					DestRegister: 1,
+					Base:         expr.PayloadBaseNetworkHeader,
+					Offset:       7, // IPv6 hop limit
+					Len:          1,
+				},
+				// [ cmp eq reg 1 <hop limit> ]
+				&expr.Cmp{
+					Op:       expr.CmpOpEq,
+					Register: 1,
+					Data:     hopLimit,
+				},
+			)
+		}
+	}
+
 	if a.NfTablesRule.MatchLayer4 != nil {
 		match := a.NfTablesRule.MatchLayer4
 
@@ -577,10 +640,16 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		}
 
 		if match.MatchICMPType != nil {
+			setKind := SetKindICMPType
+
+			if match.Protocol == nethelpers.ProtocolICMPv6 {
+				setKind = SetKindICMPv6Type
+			}
+
 			result.Sets = append(
 				result.Sets,
 				NfTablesSet{
-					Kind:      SetKindICMPType,
+					Kind:      setKind,
 					ICMPTypes: match.MatchICMPType.Types,
 				},
 			)

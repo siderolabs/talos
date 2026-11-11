@@ -765,6 +765,171 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 				},
 			},
 		},
+		{
+			name: "icmpv6 packet type with hop limit",
+			spec: networkres.NfTablesRule{
+				MatchLayer4: &networkres.NfTablesLayer4Match{
+					Protocol: nethelpers.ProtocolICMPv6,
+					MatchICMPType: &networkres.NfTablesICMPTypeMatch{
+						Types: []nethelpers.ICMPType{
+							nethelpers.ICMPv6TypeNeighborSolicitation,
+							nethelpers.ICMPv6TypeNeighborAdvertisement,
+						},
+					},
+				},
+				MatchHopLimit: &networkres.NfTablesHopLimitMatch{
+					HopLimit: 255,
+				},
+				Verdict: new(nethelpers.VerdictAccept),
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Meta{Key: expr.MetaKeyL4PROTO, Register: 1},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{0x3a},
+					},
+					&expr.Meta{Key: expr.MetaKeyNFPROTO, Register: 1},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{byte(nftables.TableFamilyIPv6)},
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseNetworkHeader,
+						Offset:       7,
+						Len:          1,
+					},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{255},
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseTransportHeader,
+						Offset:       0,
+						Len:          1,
+					},
+					&expr.Lookup{
+						SourceRegister: 1,
+						SetID:          0,
+					},
+					&expr.Verdict{Kind: expr.VerdictAccept},
+				},
+			},
+			expectedSets: []network.NfTablesSet{
+				{
+					Kind: network.SetKindICMPv6Type,
+					ICMPTypes: []nethelpers.ICMPType{
+						nethelpers.ICMPv6TypeNeighborSolicitation,
+						nethelpers.ICMPv6TypeNeighborAdvertisement,
+					},
+				},
+			},
+		},
+		{
+			name: "hop limit",
+			spec: networkres.NfTablesRule{
+				MatchHopLimit: &networkres.NfTablesHopLimitMatch{
+					HopLimit: 1,
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Meta{Key: expr.MetaKeyNFPROTO, Register: 1},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{byte(nftables.TableFamilyIPv4)},
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseNetworkHeader,
+						Offset:       8,
+						Len:          1,
+					},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{1},
+					},
+				},
+				{
+					&expr.Meta{Key: expr.MetaKeyNFPROTO, Register: 1},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{byte(nftables.TableFamilyIPv6)},
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseNetworkHeader,
+						Offset:       7,
+						Len:          1,
+					},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{1},
+					},
+				},
+			},
+		},
+		{
+			name: "hop limit with v6 destination address",
+			spec: networkres.NfTablesRule{
+				MatchDestinationAddress: &networkres.NfTablesAddressMatch{
+					IncludeSubnets: []netip.Prefix{
+						netip.MustParsePrefix("fd00::/64"),
+					},
+				},
+				MatchHopLimit: &networkres.NfTablesHopLimitMatch{
+					HopLimit: 255,
+				},
+			},
+			expectedRules: [][]expr.Any{
+				{
+					&expr.Meta{Key: expr.MetaKeyNFPROTO, Register: 1},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{byte(nftables.TableFamilyIPv6)},
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseNetworkHeader,
+						Offset:       24,
+						Len:          16,
+					},
+					&expr.Lookup{
+						SourceRegister: 1,
+						SetID:          0,
+					},
+					&expr.Payload{
+						DestRegister: 1,
+						Base:         expr.PayloadBaseNetworkHeader,
+						Offset:       7,
+						Len:          1,
+					},
+					&expr.Cmp{
+						Op:       expr.CmpOpEq,
+						Register: 1,
+						Data:     []byte{255},
+					},
+				},
+			},
+			expectedSets: []network.NfTablesSet{
+				{
+					Kind: network.SetKindIPv6,
+					Addresses: []netipx.IPRange{
+						netipx.MustParseIPRange("fd00::-fd00::ffff:ffff:ffff:ffff"),
+					},
+				},
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			result, err := network.NfTablesRule(&test.spec).Compile()
@@ -859,6 +1024,40 @@ func TestNftablesSet(t *testing.T) { //nolint:tparallel
 			expectedInterval: true,
 			expectedData: []nftables.SetElement{ // network byte order
 				{Key: []uint8{10, 0, 0, 0}, IntervalEnd: false}, // 10.0.0.0-inf
+			},
+		},
+		{
+			name: "icmp types",
+
+			set: network.NfTablesSet{
+				Kind: network.SetKindICMPType,
+				ICMPTypes: []nethelpers.ICMPType{
+					nethelpers.ICMPTypeTimestampRequest,
+				},
+			},
+
+			expectedKeyType:  nftables.TypeICMPType,
+			expectedInterval: false,
+			expectedData: []nftables.SetElement{
+				{Key: []uint8{13}},
+			},
+		},
+		{
+			name: "icmpv6 types",
+
+			set: network.NfTablesSet{
+				Kind: network.SetKindICMPv6Type,
+				ICMPTypes: []nethelpers.ICMPType{
+					nethelpers.ICMPv6TypeNeighborSolicitation,
+					nethelpers.ICMPv6TypeRedirect,
+				},
+			},
+
+			expectedKeyType:  nftables.TypeICMP6Type,
+			expectedInterval: false,
+			expectedData: []nftables.SetElement{
+				{Key: []uint8{135}},
+				{Key: []uint8{137}},
 			},
 		},
 	} {

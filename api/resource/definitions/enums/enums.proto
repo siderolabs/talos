@@ -299,13 +299,19 @@ enum NethelpersFamily {
   FAMILY_INET6 = 10;
 }
 
-// NethelpersICMPType is a ICMP packet type.
+// NethelpersICMPType is a ICMP or ICMPv6 packet type.
+//
+// ICMP and ICMPv6 type numbers overlap, so the constant should be used with the matching protocol.
 enum NethelpersICMPType {
   NETHELPERS_ICMPTYPE_UNSPECIFIED = 0;
   ICMP_TYPE_TIMESTAMP_REQUEST = 13;
   ICMP_TYPE_TIMESTAMP_REPLY = 14;
   ICMP_TYPE_ADDRESS_MASK_REQUEST = 17;
   ICMP_TYPE_ADDRESS_MASK_REPLY = 18;
+  // ICMPv6 Neighbor Discovery message types (RFC 4861).
+  ICM_PV6_TYPE_NEIGHBOR_SOLICITATION = 135;
+  ICM_PV6_TYPE_NEIGHBOR_ADVERTISEMENT = 136;
+  ICM_PV6_TYPE_REDIRECT = 137;
 }
 
 // NethelpersLACPRate is a LACP rate.

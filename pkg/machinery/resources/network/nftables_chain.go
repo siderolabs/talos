@@ -45,6 +45,7 @@ type NfTablesRule struct {
 	MatchSourceAddress      *NfTablesAddressMatch        `yaml:"matchSourceAddress,omitempty" protobuf:"5"`
 	MatchDestinationAddress *NfTablesAddressMatch        `yaml:"matchDestinationAddress,omitempty" protobuf:"6"`
 	MatchLayer4             *NfTablesLayer4Match         `yaml:"matchLayer4,omitempty" protobuf:"7"`
+	MatchHopLimit           *NfTablesHopLimitMatch       `yaml:"matchHopLimit,omitempty" protobuf:"13"`
 	MatchLimit              *NfTablesLimitMatch          `yaml:"matchLimit,omitempty" protobuf:"10"`
 
 	ClampMSS    *NfTablesClampMSS           `yaml:"clampMSS,omitempty" protobuf:"9"`
@@ -128,6 +129,13 @@ type PortRange struct {
 //gotagsrewrite:gen
 type NfTablesClampMSS struct {
 	MTU uint16 `yaml:"mtu" protobuf:"1"`
+}
+
+// NfTablesHopLimitMatch describes the match on the IPv4 TTL or IPv6 hop limit.
+//
+//gotagsrewrite:gen
+type NfTablesHopLimitMatch struct {
+	HopLimit uint8 `yaml:"hopLimit" protobuf:"1"`
 }
 
 // NfTablesLimitMatch describes the match on the packet rate.

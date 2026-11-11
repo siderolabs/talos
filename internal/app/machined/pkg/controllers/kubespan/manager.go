@@ -37,6 +37,38 @@ import (
 // Peers might be reconciled more often e.g. when peerSpecs are updated.
 const DefaultPeerReconcileInterval = 30 * time.Second
 
+// neighborDiscoveryExemptRule accepts ICMPv6 Neighbor Discovery traffic (Neighbor Solicitation,
+// Neighbor Advertisement and Redirect) before it gets marked for KubeSpan forced routing.
+//
+// Neighbor Discovery is link-scoped and has no business traversing the KubeSpan
+// WireGuard interface. Forcing it through the tunnel would hijack the unicast NS/NA
+// probes that maintain neighbor cache entries for same-L2 peers, eventually dropping
+// their MAC address and breaking the WireGuard endpoint itself.
+//
+// Genuine Neighbor Discovery messages are always sent with the hop limit of 255 (RFC 4861),
+// so the rule matches on it to avoid exempting other traffic which happens to use the same ICMPv6 types.
+//
+// The rule is only needed for locally generated traffic: Neighbor Discovery is never forwarded,
+// and incoming Neighbor Discovery is addressed to the local node, which is never in the routed set.
+//
+// The rule is shared across reconcile loops, so it must not be modified.
+var neighborDiscoveryExemptRule = network.NfTablesRule{
+	MatchLayer4: &network.NfTablesLayer4Match{
+		Protocol: nethelpers.ProtocolICMPv6,
+		MatchICMPType: &network.NfTablesICMPTypeMatch{
+			Types: []nethelpers.ICMPType{
+				nethelpers.ICMPv6TypeNeighborSolicitation,
+				nethelpers.ICMPv6TypeNeighborAdvertisement,
+				nethelpers.ICMPv6TypeRedirect,
+			},
+		},
+	},
+	MatchHopLimit: &network.NfTablesHopLimitMatch{
+		HopLimit: 255,
+	},
+	Verdict: new(nethelpers.VerdictAccept),
+}
+
 // ManagerController sets up Wireguard networking based on KubeSpan configuration, watches and updates peer statuses.
 type ManagerController struct {
 	WireguardClientFactory WireguardClientFactory
@@ -413,6 +445,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 						},
 						Verdict: new(nethelpers.VerdictAccept),
 					},
+					neighborDiscoveryExemptRule,
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
 							IncludeSubnets: routedIPsSet.Prefixes(),

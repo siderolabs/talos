@@ -734,6 +734,7 @@ description: Talos gRPC API reference.
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
     - [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS)
     - [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch)
+    - [NfTablesHopLimitMatch](#talos.resource.definitions.network.NfTablesHopLimitMatch)
     - [NfTablesICMPTypeMatch](#talos.resource.definitions.network.NfTablesICMPTypeMatch)
     - [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch)
     - [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match)
@@ -6495,7 +6496,9 @@ NethelpersFamily is a network family.
 <a name="talos.resource.definitions.enums.NethelpersICMPType"></a>
 
 ### NethelpersICMPType
-NethelpersICMPType is a ICMP packet type.
+NethelpersICMPType is a ICMP or ICMPv6 packet type.
+
+ICMP and ICMPv6 type numbers overlap, so the constant should be used with the matching protocol.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
@@ -6504,6 +6507,9 @@ NethelpersICMPType is a ICMP packet type.
 | ICMP_TYPE_TIMESTAMP_REPLY | 14 |  |
 | ICMP_TYPE_ADDRESS_MASK_REQUEST | 17 |  |
 | ICMP_TYPE_ADDRESS_MASK_REPLY | 18 |  |
+| ICM_PV6_TYPE_NEIGHBOR_SOLICITATION | 135 | ICMPv6 Neighbor Discovery message types (RFC 4861). |
+| ICM_PV6_TYPE_NEIGHBOR_ADVERTISEMENT | 136 |  |
+| ICM_PV6_TYPE_REDIRECT | 137 |  |
 
 
 
@@ -12866,6 +12872,21 @@ NfTablesConntrackStateMatch describes the match on the connection tracking state
 
 
 
+<a name="talos.resource.definitions.network.NfTablesHopLimitMatch"></a>
+
+### NfTablesHopLimitMatch
+NfTablesHopLimitMatch describes the match on the IPv4 TTL or IPv6 hop limit.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hop_limit | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.NfTablesICMPTypeMatch"></a>
 
 ### NfTablesICMPTypeMatch
@@ -12988,6 +13009,7 @@ NfTablesRule describes a single rule in the nftables chain.
 | match_limit | [NfTablesLimitMatch](#talos.resource.definitions.network.NfTablesLimitMatch) |  |  |
 | match_conntrack_state | [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch) |  |  |
 | anon_counter | [bool](#bool) |  |  |
+| match_hop_limit | [NfTablesHopLimitMatch](#talos.resource.definitions.network.NfTablesHopLimitMatch) |  |  |
 
 
 

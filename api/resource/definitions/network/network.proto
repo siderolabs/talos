@@ -524,6 +524,11 @@ message NfTablesConntrackStateMatch {
   repeated talos.resource.definitions.enums.NethelpersConntrackState states = 1;
 }
 
+// NfTablesHopLimitMatch describes the match on the IPv4 TTL or IPv6 hop limit.
+message NfTablesHopLimitMatch {
+  uint32 hop_limit = 1;
+}
+
 // NfTablesICMPTypeMatch describes the match on the ICMP type.
 message NfTablesICMPTypeMatch {
   repeated talos.resource.definitions.enums.NethelpersICMPType types = 1;
@@ -580,6 +585,7 @@ message NfTablesRule {
   NfTablesLimitMatch match_limit = 10;
   NfTablesConntrackStateMatch match_conntrack_state = 11;
   bool anon_counter = 12;
+  NfTablesHopLimitMatch match_hop_limit = 13;
 }
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.

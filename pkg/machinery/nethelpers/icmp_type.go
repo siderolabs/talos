@@ -4,7 +4,9 @@
 
 package nethelpers
 
-// ICMPType is a ICMP packet type.
+// ICMPType is a ICMP or ICMPv6 packet type.
+//
+// ICMP and ICMPv6 type numbers overlap, so the constant should be used with the matching protocol.
 type ICMPType byte
 
 // ICMPType constants.
@@ -15,4 +17,9 @@ const (
 	ICMPTypeTimestampReply     ICMPType = 14 // timestamp-reply
 	ICMPTypeAddressMaskRequest ICMPType = 17 // address-mask-request
 	ICMPTypeAddressMaskReply   ICMPType = 18 // address-mask-reply
+
+	// ICMPv6 Neighbor Discovery message types (RFC 4861).
+	ICMPv6TypeNeighborSolicitation  ICMPType = 135 // nd-neighbor-solicit
+	ICMPv6TypeNeighborAdvertisement ICMPType = 136 // nd-neighbor-advert
+	ICMPv6TypeRedirect              ICMPType = 137 // nd-redirect
 )

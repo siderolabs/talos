@@ -1905,7 +1905,9 @@ func (NethelpersFamily) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{34}
 }
 
-// NethelpersICMPType is a ICMP packet type.
+// NethelpersICMPType is a ICMP or ICMPv6 packet type.
+//
+// ICMP and ICMPv6 type numbers overlap, so the constant should be used with the matching protocol.
 type NethelpersICMPType int32
 
 const (
@@ -1914,23 +1916,33 @@ const (
 	NethelpersICMPType_ICMP_TYPE_TIMESTAMP_REPLY       NethelpersICMPType = 14
 	NethelpersICMPType_ICMP_TYPE_ADDRESS_MASK_REQUEST  NethelpersICMPType = 17
 	NethelpersICMPType_ICMP_TYPE_ADDRESS_MASK_REPLY    NethelpersICMPType = 18
+	// ICMPv6 Neighbor Discovery message types (RFC 4861).
+	NethelpersICMPType_ICM_PV6_TYPE_NEIGHBOR_SOLICITATION  NethelpersICMPType = 135
+	NethelpersICMPType_ICM_PV6_TYPE_NEIGHBOR_ADVERTISEMENT NethelpersICMPType = 136
+	NethelpersICMPType_ICM_PV6_TYPE_REDIRECT               NethelpersICMPType = 137
 )
 
 // Enum value maps for NethelpersICMPType.
 var (
 	NethelpersICMPType_name = map[int32]string{
-		0:  "NETHELPERS_ICMPTYPE_UNSPECIFIED",
-		13: "ICMP_TYPE_TIMESTAMP_REQUEST",
-		14: "ICMP_TYPE_TIMESTAMP_REPLY",
-		17: "ICMP_TYPE_ADDRESS_MASK_REQUEST",
-		18: "ICMP_TYPE_ADDRESS_MASK_REPLY",
+		0:   "NETHELPERS_ICMPTYPE_UNSPECIFIED",
+		13:  "ICMP_TYPE_TIMESTAMP_REQUEST",
+		14:  "ICMP_TYPE_TIMESTAMP_REPLY",
+		17:  "ICMP_TYPE_ADDRESS_MASK_REQUEST",
+		18:  "ICMP_TYPE_ADDRESS_MASK_REPLY",
+		135: "ICM_PV6_TYPE_NEIGHBOR_SOLICITATION",
+		136: "ICM_PV6_TYPE_NEIGHBOR_ADVERTISEMENT",
+		137: "ICM_PV6_TYPE_REDIRECT",
 	}
 	NethelpersICMPType_value = map[string]int32{
-		"NETHELPERS_ICMPTYPE_UNSPECIFIED": 0,
-		"ICMP_TYPE_TIMESTAMP_REQUEST":     13,
-		"ICMP_TYPE_TIMESTAMP_REPLY":       14,
-		"ICMP_TYPE_ADDRESS_MASK_REQUEST":  17,
-		"ICMP_TYPE_ADDRESS_MASK_REPLY":    18,
+		"NETHELPERS_ICMPTYPE_UNSPECIFIED":     0,
+		"ICMP_TYPE_TIMESTAMP_REQUEST":         13,
+		"ICMP_TYPE_TIMESTAMP_REPLY":           14,
+		"ICMP_TYPE_ADDRESS_MASK_REQUEST":      17,
+		"ICMP_TYPE_ADDRESS_MASK_REPLY":        18,
+		"ICM_PV6_TYPE_NEIGHBOR_SOLICITATION":  135,
+		"ICM_PV6_TYPE_NEIGHBOR_ADVERTISEMENT": 136,
+		"ICM_PV6_TYPE_REDIRECT":               137,
 	}
 )
 
@@ -5985,13 +5997,16 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x1dNETHELPERS_FAMILY_UNSPECIFIED\x10\x00\x12\x10\n" +
 	"\fFAMILY_INET4\x10\x02\x12\x10\n" +
 	"\fFAMILY_INET6\x10\n" +
-	"*\xbf\x01\n" +
+	"*\xae\x02\n" +
 	"\x12NethelpersICMPType\x12#\n" +
 	"\x1fNETHELPERS_ICMPTYPE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bICMP_TYPE_TIMESTAMP_REQUEST\x10\r\x12\x1d\n" +
 	"\x19ICMP_TYPE_TIMESTAMP_REPLY\x10\x0e\x12\"\n" +
 	"\x1eICMP_TYPE_ADDRESS_MASK_REQUEST\x10\x11\x12 \n" +
-	"\x1cICMP_TYPE_ADDRESS_MASK_REPLY\x10\x12*<\n" +
+	"\x1cICMP_TYPE_ADDRESS_MASK_REPLY\x10\x12\x12'\n" +
+	"\"ICM_PV6_TYPE_NEIGHBOR_SOLICITATION\x10\x87\x01\x12(\n" +
+	"#ICM_PV6_TYPE_NEIGHBOR_ADVERTISEMENT\x10\x88\x01\x12\x1a\n" +
+	"\x15ICM_PV6_TYPE_REDIRECT\x10\x89\x01*<\n" +
 	"\x12NethelpersLACPRate\x12\x12\n" +
 	"\x0eLACP_RATE_SLOW\x10\x00\x12\x12\n" +
 	"\x0eLACP_RATE_FAST\x10\x01*\x93\v\n" +

@@ -553,6 +553,10 @@ func (o NfTablesChainSpec) DeepCopy() NfTablesChainSpec {
 					}
 				}
 			}
+			if o.Rules[i2].MatchHopLimit != nil {
+				cp.Rules[i2].MatchHopLimit = new(NfTablesHopLimitMatch)
+				*cp.Rules[i2].MatchHopLimit = *o.Rules[i2].MatchHopLimit
+			}
 			if o.Rules[i2].MatchLimit != nil {
 				cp.Rules[i2].MatchLimit = new(NfTablesLimitMatch)
 				*cp.Rules[i2].MatchLimit = *o.Rules[i2].MatchLimit

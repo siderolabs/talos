@@ -635,6 +635,49 @@ func (s *NfTablesChainSuite) TestICMPTypeMatch() {
 }`)
 }
 
+func (s *NfTablesChainSuite) TestICMPv6TypeHopLimitMatch() {
+	chain := network.NewNfTablesChain(network.NamespaceName, "test-icmpv6")
+	chain.TypedSpec().Type = nethelpers.ChainTypeFilter
+	chain.TypedSpec().Hook = nethelpers.ChainHookOutput
+	chain.TypedSpec().Priority = nethelpers.ChainPriorityFilter
+	chain.TypedSpec().Policy = nethelpers.VerdictAccept
+	chain.TypedSpec().Rules = []network.NfTablesRule{
+		{
+			MatchLayer4: &network.NfTablesLayer4Match{
+				Protocol: nethelpers.ProtocolICMPv6,
+				MatchICMPType: &network.NfTablesICMPTypeMatch{
+					Types: []nethelpers.ICMPType{
+						nethelpers.ICMPv6TypeNeighborSolicitation,
+						nethelpers.ICMPv6TypeNeighborAdvertisement,
+						nethelpers.ICMPv6TypeRedirect,
+					},
+				},
+			},
+			MatchHopLimit: &network.NfTablesHopLimitMatch{
+				HopLimit: 255,
+			},
+			Verdict: new(nethelpers.VerdictAccept),
+		},
+		{
+			MatchHopLimit: &network.NfTablesHopLimitMatch{
+				HopLimit: 1,
+			},
+			Verdict: new(nethelpers.VerdictDrop),
+		},
+	}
+
+	s.Require().NoError(s.State().Create(s.Ctx(), chain))
+
+	s.checkNftOutput(`table inet talos-test {
+	chain test-icmpv6 {
+		type filter hook output priority filter; policy accept;
+		ip6 hoplimit 255 icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-redirect } accept
+		ip ttl 1 drop
+		ip6 hoplimit 1 drop
+	}
+}`)
+}
+
 // TestLargeRuleset verifies that a ruleset too big for the default netlink socket buffers still
 // gets applied, as the whole ruleset is committed in a single netlink batch.
 //
