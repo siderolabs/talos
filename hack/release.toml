@@ -320,10 +320,11 @@ Linux: 7.3.4
 Kubernetes: 1.38.0-beta.0
 containerd: 2.3.7
 runc: 1.5.2
-CoreDNS: 1.14.7
+CoreDNS: 1.15.0
 systemd-udevd: 262
 etcd: 3.7.3
 Flannel CNI: 0.28.10
+Kube-network-policies: 1.1.3
 
 Talos is built with Go 1.27.4.
 """
