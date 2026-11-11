@@ -22,3 +22,24 @@ func TestPodRuntimeRootMemoryProtection(t *testing.T) {
 	require.Equal(t, int64(constants.CgroupPodRuntimeRootReservedMemory), *resources.Memory.Min)
 	require.Equal(t, int64(constants.CgroupPodRuntimeRootSoftReservedMemory), *resources.Memory.Low)
 }
+
+// An unset cpu.weight is the kernel default of 100, worth about 2.5 cores on the millicore scale,
+// so every cgroup Talos creates next to its weighted siblings carries a weight of its own.
+func TestCPUWeightDefaults(t *testing.T) {
+	t.Parallel()
+
+	for name, millicores := range map[string]int{
+		constants.CgroupSystemDebug: constants.CgroupSystemDebugMillicores,
+		constants.CgroupExtensions:  constants.CgroupExtensionsMillicores,
+		constants.CgroupInstaller:   constants.CgroupInstallerMillicores,
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			resources := getCgroupV2Resources(name)
+			require.NotNil(t, resources.CPU)
+			require.NotNil(t, resources.CPU.Weight)
+			require.Equal(t, MillicoresToCPUWeight(MilliCores(millicores)), *resources.CPU.Weight)
+		})
+	}
+}

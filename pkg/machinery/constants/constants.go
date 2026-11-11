@@ -845,6 +845,9 @@ const (
 	// CgroupSystemDebug is the cgroup name for debug processes.
 	CgroupSystemDebug = CgroupSystem + "/debug"
 
+	// CgroupSystemDebugMillicores is the CPU weight for the debug cgroup.
+	CgroupSystemDebugMillicores = 500
+
 	// DebugHostNsImage is the default image used for PROFILE_HOST_NS debug sessions.
 	// It provides a Nix environment whose store paths are self-contained and do not
 	// conflict with the Talos host's library paths when bind-mounted into the forked
@@ -948,8 +951,14 @@ const (
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
 
+	// CgroupExtensionsMillicores is the CPU weight shared by all extension services.
+	CgroupExtensionsMillicores = 500
+
 	// CgroupInstaller is the cgroup name for the installer container (install/upgrade).
 	CgroupInstaller = CgroupSystem + "/installer"
+
+	// CgroupInstallerMillicores is the CPU weight for the installer container.
+	CgroupInstallerMillicores = 500
 
 	// CgroupDashboard is the cgroup name for dashboard process.
 	CgroupDashboard = CgroupSystem + "/dashboard"

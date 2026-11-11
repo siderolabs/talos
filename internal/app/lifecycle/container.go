@@ -113,6 +113,11 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 	// without asking containerd for the container spec back.
 	cgroupPath := cgroup.Path(constants.CgroupInstaller)
 
+	// Created ahead of the container so it carries the installer's CPU weight; runc joins it.
+	if _, err = cgroup.CreateCgroup(constants.CgroupInstaller); err != nil {
+		return fmt.Errorf("failed to create installer cgroup: %w", err)
+	}
+
 	// build container spec
 	mounts := buildMounts()
 	args := buildInstallerArgs(rc.disk, rc.platform, &options)

@@ -110,7 +110,24 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 			},
 		}
 	case constants.CgroupSystemDebug:
-		return &cgroup2.Resources{} // no limits for debug cgroup
+		// no memory limits for the debug cgroup, only a CPU weight against the other system services
+		return &cgroup2.Resources{
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupSystemDebugMillicores))),
+			},
+		}
+	case constants.CgroupExtensions:
+		return &cgroup2.Resources{
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupExtensionsMillicores))),
+			},
+		}
+	case constants.CgroupInstaller:
+		return &cgroup2.Resources{
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupInstallerMillicores))),
+			},
+		}
 	case constants.CgroupSystemRuntime:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{

@@ -38,6 +38,7 @@ func CreateSystemCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtim
 	groups := []string{
 		constants.CgroupInit,
 		constants.CgroupSystem,
+		constants.CgroupExtensions,
 		constants.CgroupPodRuntimeRoot,
 		constants.CgroupPodRuntimeShim,
 		constants.CgroupTalosContainersRoot,
