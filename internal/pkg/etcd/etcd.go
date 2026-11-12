@@ -6,16 +6,15 @@ package etcd
 
 import (
 	"context"
+	"crypto/tls"
+	stdx509 "crypto/x509"
 	"errors"
 	"fmt"
 	"log"
 	"math/rand/v2"
-	"os"
-	"path/filepath"
+	"slices"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-retry/retry"
 	"go.etcd.io/etcd/api/v3/etcdserverpb"
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -23,11 +22,9 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 )
 
@@ -53,6 +50,51 @@ func NewClient(ctx context.Context, endpoints []string, dialOpts ...grpc.DialOpt
 		return nil, fmt.Errorf("error building etcd client TLS config: %w", err)
 	}
 
+	return newClient(ctx, endpoints, tlsConfig, dialOpts...)
+}
+
+// NewClientFromSpec initializes and returns an etcd client configured to talk to a list of endpoints,
+// using the credentials from the etcd client spec (instead of the etcd PKI on disk).
+func NewClientFromSpec(ctx context.Context, spec *etcdresource.ClientSpecSpec, endpoints []string, dialOpts ...grpc.DialOption) (*Client, error) {
+	if spec.Certificate == nil {
+		return nil, errors.New("etcd client certificate is missing")
+	}
+
+	cert, err := tls.X509KeyPair(spec.Certificate.Crt, spec.Certificate.Key)
+	if err != nil {
+		return nil, fmt.Errorf("error loading etcd client certificate: %w", err)
+	}
+
+	rootCAs := stdx509.NewCertPool()
+
+	for _, ca := range spec.AcceptedCAs {
+		if !rootCAs.AppendCertsFromPEM(ca.Crt) {
+			return nil, errors.New("error loading etcd CA certificate")
+		}
+	}
+
+	return newClient(ctx, endpoints, &tls.Config{
+		MinVersion:   tls.VersionTLS12,
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      rootCAs,
+	}, dialOpts...)
+}
+
+// NewClusterClientFromSpec initializes and returns an etcd client configured to talk to the etcd members across the cluster.
+func NewClusterClientFromSpec(ctx context.Context, spec *etcdresource.ClientSpecSpec, dialOpts ...grpc.DialOption) (*Client, error) {
+	if len(spec.ClusterEndpoints) == 0 {
+		return nil, errNoEndpoints
+	}
+
+	endpoints := slices.Clone(spec.ClusterEndpoints)
+
+	// Shuffle endpoints to establish random order on each call to avoid patterns based on sorted IP list.
+	rand.Shuffle(len(endpoints), func(i, j int) { endpoints[i], endpoints[j] = endpoints[j], endpoints[i] })
+
+	return NewClientFromSpec(ctx, spec, endpoints, dialOpts...)
+}
+
+func newClient(ctx context.Context, endpoints []string, tlsConfig *tls.Config, dialOpts ...grpc.DialOption) (*Client, error) {
 	c, err := clientv3.New(clientv3.Config{
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
@@ -72,14 +114,14 @@ func NewClient(ctx context.Context, endpoints []string, dialOpts ...grpc.DialOpt
 func NewLocalClient(ctx context.Context, dialOpts ...grpc.DialOption) (client *Client, err error) {
 	return NewClient(
 		ctx,
-		[]string{nethelpers.JoinHostPort("localhost", constants.EtcdClientPort)},
+		LocalEndpoints(),
 		dialOpts...,
 	)
 }
 
 // NewClientFromControlPlaneIPs initializes and returns an etcd client
 // configured to talk to all members.
-func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State, dialOpts ...grpc.DialOption) (client *Client, err error) {
+func NewClientFromControlPlaneIPs(ctx context.Context, resources ResourceLister, dialOpts ...grpc.DialOption) (client *Client, err error) {
 	endpoints, err := GetEndpoints(ctx, resources)
 	if err != nil {
 		return nil, err
@@ -166,68 +208,6 @@ func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) 
 	defer c.Close() //nolint:errcheck
 
 	return c.ValidateQuorum(ctx)
-}
-
-// LeaveCluster removes the current member from the etcd cluster and nukes etcd data directory.
-//
-// nolint:gocyclo
-func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
-	memberID, err := GetLocalMemberID(ctx, st)
-	if err != nil {
-		return err
-	}
-
-	if err := retry.Constant(5*time.Minute, retry.WithUnits(10*time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
-		err := c.RemoveMemberByMemberID(ctx, memberID)
-		if err == nil {
-			return nil
-		}
-
-		if errors.Is(err, rpctypes.ErrUnhealthy) {
-			// unhealthy is returned when the member hasn't established connections with quorum other members
-			return retry.ExpectedError(err)
-		}
-
-		if errors.Is(err, rpctypes.ErrStopped) {
-			// retry the stopped errors as the member might be in the process of shutting down
-			return retry.ExpectedError(err)
-		}
-
-		if errors.Is(err, rpctypes.ErrMemberNotFound) {
-			// already removed, nothing to do
-			return nil
-		}
-
-		return err
-	}); err != nil {
-		return err
-	}
-
-	if err := system.Services(nil).Stop(ctx, "etcd"); err != nil {
-		return fmt.Errorf("failed to stop etcd: %w", err)
-	}
-
-	// Once the member is removed, the data is no longer valid. Remove the *contents* of the etcd
-	// data directory rather than the directory itself: /var/lib/etcd may be a dedicated volume
-	// mount point (promotable system volume), and unlinking a mount point fails with EBUSY.
-	entries, err := os.ReadDir(constants.EtcdDataPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-
-		return fmt.Errorf("failed to read %s: %w", constants.EtcdDataPath, err)
-	}
-
-	for _, entry := range entries {
-		p := filepath.Join(constants.EtcdDataPath, entry.Name())
-
-		if err := os.RemoveAll(p); err != nil {
-			return fmt.Errorf("failed to remove %s: %w", p, err)
-		}
-	}
-
-	return nil
 }
 
 // GetMemberID returns the member ID of the node client is connected to.

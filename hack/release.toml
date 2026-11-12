@@ -27,6 +27,25 @@ The `.cluster.etcd` section is deprecated, but still supported, and it can't be 
 The new documents are used in the machine configuration generated for Talos 1.15+.
 """
 
+    [notes.etcd_lifecycle]
+        title = "etcd Lifecycle"
+        description = """\
+The `etcd` service is now fully managed by the controllers (the same way as `kubelet`), and the etcd configuration changes are applied without a reboot:
+when the etcd image, extra arguments, or the listen subnets are changed in the machine configuration, etcd is restarted with the new configuration.
+Talos doesn't coordinate the etcd restarts across the cluster, so such changes should be rolled out to the control plane machines one by one.
+The only exception is etcd joining the cluster as a learner: it is never restarted, the restart is deferred until the learner is promoted.
+A change of the advertised addresses doesn't restart etcd: the peer URLs of the member are updated in the etcd cluster via the etcd API.
+
+If etcd is interrupted (e.g. the machine is rebooted) while it is still a learner catching up with the cluster, the learner is removed from the cluster,
+its data is wiped, and the machine joins the cluster from scratch, instead of failing to start with a partially synchronized data.
+
+The state of the etcd member is available as the `EtcdMembershipStatus` resource (`talosctl get etcdmembershipstatus`),
+and the exact arguments etcd is running with as the `EtcdServiceSpec` resource.
+
+The `etcd` service is no longer listed in the `talosctl services` output until etcd is about to be started
+(i.e. the machine either has the etcd data, the cluster is bootstrapped, or the machine joins an existing cluster).
+"""
+
     [notes.kubeprism_readiness_check]
         title = "KubePrism Readiness Check"
         description = """\

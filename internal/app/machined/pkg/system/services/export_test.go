@@ -10,7 +10,6 @@ import (
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -29,11 +28,6 @@ func (svc *Extension) GetOCIOptions() ([]oci.SpecOpts, error) {
 	}
 
 	return svc.getOCIOptions(envVars, svc.Spec.Container.Mounts), nil
-}
-
-// PromotionEndpoints exposes promotionEndpoints for tests.
-func PromotionEndpoints(selfEndpoints, votingMemberEndpoints, discoveredEndpoints []string) []string {
-	return promotionEndpoints(xslices.ToSetFunc(selfEndpoints, normalizeEtcdEndpoint), votingMemberEndpoints, discoveredEndpoints)
 }
 
 // HostProcessArgs exposes hostProcessArgs for tests.
