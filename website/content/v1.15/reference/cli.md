@@ -93,7 +93,7 @@ Several presets are available to focus on specific cgroup subsystems:
 You can specify the preset using the --preset flag.
 
 Alternatively, a custom schema can be provided using the --schema-file flag.
-To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/cmd/talosctl/cmd/talos/cgroupsprinter/schemas.
+To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/cmd/talosctl/cmd/talos/cgroupsprinter/presets.
 
 
 ```
