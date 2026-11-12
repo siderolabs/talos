@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -18,10 +19,12 @@ import (
 	tasks "github.com/containerd/containerd/api/services/tasks/v1"
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
+	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/typeurl/v2"
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/siderolabs/talos/internal/pkg/containerpid"
 	ctrs "github.com/siderolabs/talos/internal/pkg/containers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -30,6 +33,9 @@ type inspector struct {
 	client *containerd.Client
 	//nolint:containedctx
 	nsctx context.Context
+
+	// runtimePIDNS is the PID namespace of the containerd instance, asked for once per inspector.
+	runtimePIDNS func() (uint64, error)
 }
 
 type inspectorOptions struct {
@@ -67,12 +73,40 @@ func NewInspector(ctx context.Context, namespace string, options ...Option) (ctr
 
 	i.nsctx = namespaces.WithNamespace(ctx, namespace)
 
+	i.runtimePIDNS = sync.OnceValues(func() (uint64, error) {
+		return containerpid.RuntimePIDNamespace(i.nsctx, i.client)
+	})
+
 	return &i, nil
 }
 
 // Close frees associated resources.
 func (i *inspector) Close() error {
 	return i.client.Close()
+}
+
+// resolvePID returns the PID of the task in the PID namespace of the caller, which is not the one
+// containerd reports it in when the CRI containerd runs in the sandbox PID namespace.
+//
+// It is 0 if the PID is not known: a PID from another namespace would point at an unrelated process.
+func (i *inspector) resolvePID(spec *oci.Spec, task containerd.Task) uint32 {
+	runtimePIDNS, err := i.runtimePIDNS()
+	if err != nil {
+		return 0
+	}
+
+	var cgroupPath string
+
+	if spec != nil && spec.Linux != nil {
+		cgroupPath = spec.Linux.CgroupsPath
+	}
+
+	pid, err := containerpid.DefaultResolver().Resolve(cgroupPath, runtimePIDNS, task.Pid())
+	if err != nil {
+		return 0
+	}
+
+	return uint32(pid) //nolint:gosec
 }
 
 // Images returns a hash of image digest -> name.
@@ -154,7 +188,7 @@ func (i *inspector) containerInfo(
 		}
 	}
 
-	cp.Pid = task.Pid()
+	cp.Pid = i.resolvePID(spec, task)
 	cp.Status = strings.ToUpper(string(status.Status))
 
 	var (

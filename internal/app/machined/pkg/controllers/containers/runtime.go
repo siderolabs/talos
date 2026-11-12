@@ -168,6 +168,10 @@ func (s *instanceRunState) snapshot() containers.ContainerInstanceStatusSpec {
 	return containerInstanceStatusSpec
 }
 
+// setStarted marks the instance as running.
+//
+// pid is the PID of the container init as machined sees it, or 0 if it is not known: the container
+// runs all the same.
 func (s *instanceRunState) setStarted(pid uint32) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -685,6 +689,22 @@ func (ctrl *RuntimeController) waitForRunOrTime(t time.Time) {
 	}
 }
 
+// recordMachinedAccessPID publishes the PID of a container granted machined access, which is what the
+// PID authorizer of the machined socket admits its calls by.
+func (ctrl *RuntimeController) recordMachinedAccessPID(logger *zap.Logger, instanceSpecID, containerID string, taskPID uint32) {
+	// A zero PID is a task whose PID is not known (it has already exited, or could not be resolved):
+	// there is nothing to authorize by.
+	if taskPID == 0 {
+		logger.Warn("container PID is not known, its machined API calls will be denied", zap.String("instance", instanceSpecID))
+
+		return
+	}
+
+	if err := ctrl.PIDRecorder(containerServicePID(containerID), int32(taskPID), false); err != nil { //nolint:gosec
+		logger.Error("failed to record container PID", zap.String("instance", instanceSpecID), zap.Error(err))
+	}
+}
+
 // containerDependencies returns the containers each container depends on, as currently configured.
 func containerDependencies(ctx context.Context, r controller.Reader) (map[string][]string, error) {
 	containerSpecs, err := safe.ReaderListAll[*containers.ContainerSpec](ctx, r)
@@ -863,12 +883,14 @@ func (ctrl *RuntimeController) start(
 
 			instanceRun.setStarted(taskPID)
 
-			logger.Info("container started", zap.String("instance", instanceSpecID), zap.Uint32("pid", taskPID))
+			if taskPID == 0 {
+				logger.Warn("container started, its PID is not known", zap.String("instance", instanceSpecID))
+			} else {
+				logger.Info("container started", zap.String("instance", instanceSpecID), zap.Uint32("pid", taskPID))
+			}
 
 			if containerInstanceSpecSpec.Security.MachinedAccess {
-				if err := ctrl.PIDRecorder(containerServicePID(containerInstanceSpecSpec.ContainerID), int32(taskPID), false); err != nil { //nolint:gosec
-					logger.Error("failed to record container PID", zap.String("instance", instanceSpecID), zap.Error(err))
-				}
+				ctrl.recordMachinedAccessPID(logger, instanceSpecID, containerInstanceSpecSpec.ContainerID, taskPID)
 			}
 
 			notify()

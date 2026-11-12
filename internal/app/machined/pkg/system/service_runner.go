@@ -332,6 +332,11 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 				svcrunner.healthState.Update(false, "service not running")
 			}
 		}, func(pid int32) {
+			if pid == 0 {
+				// not known (already exited, or not resolved): nothing to record
+				return
+			}
+
 			if err := svcrunner.pidRecorder(svcrunner.id, pid, false); err != nil {
 				log.Printf("error recording pid for %q: %v", svcrunner.id, err)
 			}

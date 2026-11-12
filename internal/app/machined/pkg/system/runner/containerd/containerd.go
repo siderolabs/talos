@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/internal/lastlog"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
+	"github.com/siderolabs/talos/internal/pkg/containerpid"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -251,12 +252,25 @@ func (c *containerdRunner) Run(ctx context.Context, eventSink events.Recorder, o
 		return status, fmt.Errorf("failed to start task: %q: %w", c.args.ID, err)
 	}
 
-	eventSink(events.StateRunning, "Started task %s (PID %d) for container %s", task.ID(), task.Pid(), c.container.ID())
+	// The task runs whether or not its PID is known here: without one it only cannot be recorded,
+	// which is not worth taking the task down for.
+	pid, err := c.resolvePID(task)
+
+	switch {
+	case err == nil:
+		eventSink(events.StateRunning, "Started task %s (PID %d) for container %s", task.ID(), pid, c.container.ID())
+	case errors.Is(err, containerpid.ErrGone):
+		eventSink(events.StateRunning, "Started task %s for container %s, its init was gone before its PID was resolved", task.ID(), c.container.ID())
+	default:
+		log.Printf("failed to resolve PID of task %q, it runs without a recorded PID: %v", c.args.ID, err)
+
+		eventSink(events.StateRunning, "Started task %s (PID is not known) for container %s", task.ID(), c.container.ID())
+	}
 
 	status.Started = true
 
 	if onStart != nil {
-		onStart(int32(task.Pid())) //nolint:gosec
+		onStart(pid)
 	}
 
 	recovering := false
@@ -307,7 +321,7 @@ taskWaitLoop:
 		events.StateStopping,
 		"Sending SIGTERM to task %s (PID %d, container %s)",
 		task.ID(),
-		task.Pid(),
+		pid,
 		c.container.ID(),
 	)
 
@@ -330,7 +344,7 @@ taskWaitLoop:
 			events.StateStopping,
 			"Sending SIGKILL to task %s (PID %d, container %s)",
 			task.ID(),
-			task.Pid(),
+			pid,
 			c.container.ID(),
 		)
 
@@ -348,6 +362,27 @@ taskWaitLoop:
 	}
 
 	return status, logW.Close()
+}
+
+// resolvePID translates the PID of the task, as containerd reports it, into the PID namespace of
+// machined: the CRI containerd runs in the sandbox PID namespace when workload isolation is on.
+//
+// The PID is 0 on error, which is [containerpid.ErrGone] if the task init has already exited.
+func (c *containerdRunner) resolvePID(task containerd.Task) (int32, error) {
+	// The system containerd always shares the PID namespace of machined, so there is nothing to
+	// translate, and nothing which could fail on the way: apid, trustd and the extension services
+	// would otherwise depend on one more containerd call to get their PID recorded.
+	if c.opts.ContainerdAddress == constants.SystemContainerdAddress {
+		return int32(task.Pid()), nil //nolint:gosec
+	}
+
+	var cgroupPath string
+
+	if c.opts.CgroupPath != "" {
+		cgroupPath = cgroup.Path(c.opts.CgroupPath)
+	}
+
+	return containerpid.ResolveTask(c.ctx, c.client, cgroupPath, task)
 }
 
 func retryTaskWait(status containerd.ExitStatus, ok bool) (bool, error) {

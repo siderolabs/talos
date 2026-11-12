@@ -7,7 +7,9 @@
 package api
 
 import (
+	"bytes"
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +28,8 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v4"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/hpack"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/images"
@@ -49,6 +53,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 const (
@@ -2161,20 +2166,49 @@ sleep 3600`,
 	})
 }
 
-// TestAllowMachinedSocketConnect verifies that a container granted security.machinedAccess can
-// actually connect() to the machined socket, not merely see it.
-func (suite *ContainersSuite) TestAllowMachinedSocketConnect() {
+// TestAllowMachinedAPICall verifies that a container granted security.machinedAccess can call the
+// machined API over the socket, not merely connect() to it.
+//
+// The PID authorizer only gets involved once a request comes in, and admits the caller by matching
+// it against the ServicePID recorded for the container: a wrong PID there (e.g. one as seen by a CRI
+// containerd running in the sandbox PID namespace) lets connect() succeed while every call is denied.
+// The call is made from a child of the container init, so the mount namespace match is what admits
+// it, the same as for any tool a container would run.
+func (suite *ContainersSuite) TestAllowMachinedAPICall() {
 	if testing.Short() {
 		suite.T().Skip("skipping the test in short mode")
 	}
 
-	ctx, name, _ := suite.setupContainer("allow-machined-connect")
+	ctx, name, _ := suite.setupContainer("allow-machined-api")
 
+	version, err := suite.Client.Version(ctx)
+	suite.Require().NoError(err)
+
+	tag := version.Messages[0].GetVersion().GetTag()
+	suite.Require().NotEmpty(tag)
+
+	request, err := grpcUnaryRequest("/machine.MachineService/Version", role.Reader)
+	suite.Require().NoError(err)
+
+	// The image has no gRPC client, so the request is pre-rendered and replayed with socat. Keeping
+	// the write side open past the response (a denial comes after unix.PIDTimeout) stops the server
+	// from seeing a half-closed connection and dropping the call; the response is binary, so it is
+	// made printable for the log, where the version tag shows up as is in a successful one.
+	//
+	// How long the response takes is not known up front, and nothing in the shell can tell a complete
+	// one from the frames which precede it, so the call is repeated with a longer wait each time
+	// until the tag shows up: a loaded node costs time rather than the test.
 	script := fmt.Sprintf(
-		`out=$(timeout 10 socat -u OPEN:/dev/null UNIX-CONNECT:%s 2>&1); rc=$?
-echo "CONNECT rc=$rc out=$out"
+		`for wait in 10 30 60; do
+  out=$( (echo '%s' | base64 -d; sleep $wait) | timeout $((wait + 5)) socat - UNIX-CONNECT:%s | tr -c ' -~' '.')
+  echo "CALL wait=$wait out=$out"
+  case "$out" in *'%s'*) break ;; esac
+done
+echo CALL_DONE
 sleep 3600`,
+		base64.StdEncoding.EncodeToString(request),
 		constants.MachineSocketPath,
+		tag,
 	)
 
 	doc := suite.socatContainer(name, script)
@@ -2187,10 +2221,68 @@ sleep 3600`,
 
 	suite.assertContainerRunning(ctx, name, "with security.machinedAccess")
 
-	logs := suite.assertContainerLogged(ctx, name, "CONNECT rc=")
+	logs := suite.assertContainerLogged(ctx, name, "CALL_DONE")
 
-	suite.Assert().Contains(logs, "CONNECT rc=0",
-		"the container could not connect to the machined socket: %s", logs)
+	suite.Assert().Contains(logs, tag,
+		"the container could not call the machined API (expected version %q in the response): %s", tag, logs)
+}
+
+// grpcUnaryRequest renders a complete HTTP/2 client stream for a single unary gRPC call to method
+// with an empty request message: the connection preface, the settings, the headers (carrying the
+// requested roles) and the message.
+//
+// The stream is replayed blindly, so the acknowledgment of the server settings is rendered up front
+// as well, right behind the client's own: the server sends its settings before it reads anything.
+func grpcUnaryRequest(method string, roles ...role.Role) ([]byte, error) {
+	fields := make([]hpack.HeaderField, 0, 6+len(roles))
+
+	fields = append(fields,
+		hpack.HeaderField{Name: ":method", Value: "POST"},
+		hpack.HeaderField{Name: ":scheme", Value: "http"},
+		hpack.HeaderField{Name: ":path", Value: method},
+		hpack.HeaderField{Name: ":authority", Value: "localhost"},
+		hpack.HeaderField{Name: "content-type", Value: "application/grpc"},
+		hpack.HeaderField{Name: "te", Value: "trailers"},
+	)
+
+	for _, r := range roles {
+		fields = append(fields, hpack.HeaderField{Name: constants.APIAuthzRoleMetadataKey, Value: string(r)})
+	}
+
+	var headers bytes.Buffer
+
+	encoder := hpack.NewEncoder(&headers)
+
+	for _, field := range fields {
+		if err := encoder.WriteField(field); err != nil {
+			return nil, err
+		}
+	}
+
+	var buf bytes.Buffer
+
+	buf.WriteString(http2.ClientPreface)
+
+	framer := http2.NewFramer(&buf, nil)
+
+	if err := framer.WriteSettings(); err != nil {
+		return nil, err
+	}
+
+	if err := framer.WriteSettingsAck(); err != nil {
+		return nil, err
+	}
+
+	if err := framer.WriteHeaders(http2.HeadersFrameParam{StreamID: 1, BlockFragment: headers.Bytes(), EndHeaders: true}); err != nil {
+		return nil, err
+	}
+
+	// an empty message: not compressed, zero length
+	if err := framer.WriteData(1, true, []byte{0, 0, 0, 0, 0}); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
 
 // setupContainer returns a node-scoped context and a container name unique to this test, and registers

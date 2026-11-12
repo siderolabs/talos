@@ -286,6 +286,8 @@ func RunInstallerContainer(
 
 	pidRecorder := pid.NewStateRecorder(resources)
 
+	// The system containerd shares the PID namespace of machined (only the CRI one is sandboxed), so
+	// the PID it reports needs no translation.
 	if err := pidRecorder.Record("installer", int32(t.Pid()), false); err != nil {
 		return fmt.Errorf("failed to record installer PID: %w", err)
 	}

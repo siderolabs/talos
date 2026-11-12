@@ -36,7 +36,12 @@ type Runner interface {
 	Close() error
 }
 
-// OnStart is a callback, called with the process PID when it's started.
+// OnStart is a callback, called when the process is started.
+//
+// pid is the PID of the process in the PID namespace of machined, whatever namespace the process was
+// started from. It is 0 when that PID is not known: the process had already exited by the time its
+// PID could be resolved, or the resolution failed. The process did start, but there is no PID to
+// record.
 type OnStart func(pid int32)
 
 // Status is how a single run ended.
