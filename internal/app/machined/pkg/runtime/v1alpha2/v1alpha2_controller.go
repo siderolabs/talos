@@ -48,12 +48,12 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/internal/pkg/md"
+	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
-	"github.com/siderolabs/talos/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
@@ -112,20 +112,22 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		etcFSOpts = append(etcFSOpts, fsopen.WithStringParameter("context", constants.EtcSelinuxLabel))
 	}
 
-	var networkEtcRoot xfs.Root = &xfs.UnixRoot{
-		FS: fsopen.New(
+	networkEtcPoint, err := mountv3.NewManager(
+		mountv3.WithDetached(),
+		mountv3.WithFsopen(
 			"tmpfs",
 			fsopen.WithStringParameter("mode", "0755"),
 			fsopen.WithStringParameter("size", "4M"),
 		),
-	}
-
-	networkBindMountTarget := constants.SystemResolvedPath
-
-	if err := networkEtcRoot.OpenFS(); err != nil {
+	).Mount()
+	if err != nil {
 		return fmt.Errorf("failed to open network etc root: %w", err)
 	}
+
+	networkEtcRoot := networkEtcPoint.Root()
 	defer networkEtcRoot.Close() //nolint:errcheck
+
+	networkBindMountTarget := constants.SystemResolvedPath
 
 	// /etc is a writable overlay (upper = a managed tmpfs labeled via etcFSOpts, lower = the
 	// static rootfs /etc) bind-mounted read-only at /etc. etcRoot is the detached writable overlay

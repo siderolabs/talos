@@ -57,6 +57,12 @@ func (p *Point) Mount(opts Options) error {
 	defer p.Release(false) //nolint:errcheck
 
 	if p.detached {
+		if err := p.hardenDetached(); err != nil {
+			p.Release(true) //nolint:errcheck
+
+			return err
+		}
+
 		return nil
 	}
 
@@ -90,6 +96,27 @@ func (p *Point) Mount(opts Options) error {
 
 		return FilterSelinuxLabelErrors(p.Target(), p.FSType(), selinux.SetLabel(p.target, p.selinuxLabel))
 	}, false)
+}
+
+// hardenDetached sets NOSUID, NODEV and NOEXEC on a detached mount.
+//
+// A detached mount has no path, but any process which can open /proc/<pid>/fd/<fd>
+// of the holder resolves paths through it with this mount's attributes, so device nodes
+// and setuid binaries created on it would be usable. RDONLY is not set: detached
+// mounts are written through, and RemountReadWrite does not apply to them.
+func (p *Point) hardenDetached() error {
+	fd, err := p.root.Fd()
+	if err != nil {
+		return err
+	}
+
+	if err = unix.MountSetattr(fd, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
+		Attr_set: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV | unix.MOUNT_ATTR_NOEXEC,
+	}); err != nil {
+		return fmt.Errorf("error hardening detached mount of %q: %w", p.Source(), err)
+	}
+
+	return nil
 }
 
 // FilterSelinuxLabelErrors filters out certain errors when setting the SELinux label on the mount point.
