@@ -132,6 +132,38 @@ func TestExtensionServiceConfigValidate(t *testing.T) {
 			},
 			expectedError: `no config files found for extension "foo"`,
 		},
+		{
+			name: "mount path dot-dot",
+			cfg: func() *extensions.ServiceConfigV1Alpha1 {
+				cfg := extensions.NewServicesConfigV1Alpha1()
+				cfg.ServiceName = "foo"
+				cfg.ServiceConfigFiles = []extensions.ConfigFile{
+					{
+						ConfigFileContent:   "bar",
+						ConfigFileMountPath: "/..",
+					},
+				}
+
+				return cfg
+			},
+			expectedError: `extension mount path "/.." is invalid for extension "foo"`,
+		},
+		{
+			name: "mount path root",
+			cfg: func() *extensions.ServiceConfigV1Alpha1 {
+				cfg := extensions.NewServicesConfigV1Alpha1()
+				cfg.ServiceName = "foo"
+				cfg.ServiceConfigFiles = []extensions.ConfigFile{
+					{
+						ConfigFileContent:   "bar",
+						ConfigFileMountPath: "/",
+					},
+				}
+
+				return cfg
+			},
+			expectedError: `extension mount path "/" is invalid for extension "foo"`,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

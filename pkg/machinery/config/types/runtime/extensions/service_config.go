@@ -8,6 +8,7 @@ package extensions
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/siderolabs/gen/xslices"
 
@@ -153,12 +154,26 @@ func (e *ServiceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.O
 			return nil, fmt.Errorf("extension content is required for extension %q", e.ServiceName)
 		}
 
-		if file.ConfigFileMountPath == "" {
-			return nil, fmt.Errorf("extension mount path is required for extension %q", e.ServiceName)
+		if err := validateMountPath(file.ConfigFileMountPath, e.ServiceName); err != nil {
+			return nil, err
 		}
 	}
 
 	return nil, nil
+}
+
+func validateMountPath(path, serviceName string) error {
+	if path == "" {
+		return fmt.Errorf("extension mount path is required for extension %q", serviceName)
+	}
+
+	// the mount path is flattened into a single file name in the service config directory
+	switch strings.ReplaceAll(strings.TrimPrefix(path, "/"), "/", "-") {
+	case "", ".", "..":
+		return fmt.Errorf("extension mount path %q is invalid for extension %q", path, serviceName)
+	}
+
+	return nil
 }
 
 // Name implements config.ExtensionServiceConfig interface.
