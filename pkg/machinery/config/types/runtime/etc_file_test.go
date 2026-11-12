@@ -152,6 +152,16 @@ func TestEtcFileValidate(t *testing.T) {
 			expectedError: `user etc file "foo/../../bar" must be a local path`,
 		},
 		{
+			name:          "inner dot-dot into managed prefix",
+			configName:    "foo/../ssl/certs/bar",
+			expectedError: `user etc file "foo/../ssl/certs/bar" must be a local path`,
+		},
+		{
+			name:          "trailing slash",
+			configName:    "foo/",
+			expectedError: `user etc file "foo/" must be a local path`,
+		},
+		{
 			name:          "absolute path",
 			configName:    "/foo",
 			expectedError: `user etc file "/foo" must be a local path`,

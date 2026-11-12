@@ -168,7 +168,8 @@ var managedEtcPrefixes = []string{
 }
 
 func validateEtcFilePath(path string) error {
-	if !filepath.IsLocal(path) || strings.HasPrefix(path, ".") {
+	// a non-clean path such as "foo/../ssl/x" would slip past the managed prefix checks below
+	if !filepath.IsLocal(path) || strings.HasPrefix(path, ".") || path != filepath.Clean(path) {
 		return fmt.Errorf("user etc file %q must be a local path", path)
 	}
 

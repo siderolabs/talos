@@ -178,29 +178,17 @@ func Remove(root Root, name string) error {
 }
 
 // RemoveAll is equivalent of os.RemoveAll acting on specified FileSystem.
-func RemoveAll(root Root, name string) (err error) {
-	var f fs.File
-
-	f, err = root.Open(name)
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			return nil
-		}
-
-		return err
+//
+// It removes a symlink itself and never descends into its target.
+func RemoveAll(root Root, name string) error {
+	err := root.Remove(name)
+	if err == nil || errors.Is(err, fs.ErrNotExist) {
+		return nil
 	}
 
-	stat, err := f.Stat()
-	if err != nil {
+	// only a non-empty directory (ENOTEMPTY) needs its children removed first
+	if !errors.Is(err, fs.ErrExist) {
 		return err
-	}
-
-	if err := f.Close(); err != nil {
-		return err
-	}
-
-	if !stat.IsDir() {
-		return root.Remove(name)
 	}
 
 	entries, err := ReadDir(root, name)
