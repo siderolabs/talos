@@ -93,6 +93,7 @@ kernel/drivers/hwmon/applesmc.ko
 kernel/drivers/hwmon/coretemp.ko
 kernel/drivers/hwmon/drivetemp.ko
 kernel/drivers/hwmon/fam15h_power.ko
+kernel/drivers/hwmon/hp-wmi-sensors.ko
 kernel/drivers/hwmon/hwmon-vid.ko
 kernel/drivers/hwmon/i5500_temp.ko
 kernel/drivers/hwmon/i5k_amb.ko

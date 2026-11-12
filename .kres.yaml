@@ -72,9 +72,6 @@ spec:
     integration/aws-arm64: "Run AWS integration tests on ARM64"
     integration/aws-nvidia: "Run AWS NVIDIA integration tests (all drivers, variants, architectures)"
     integration/aws-nvidia-nonfree: "Run AWS NVIDIA integration tests with non-free drivers"
-    integration/aws-nvidia-nonfree-lts: "Run AWS NVIDIA non-free LTS driver tests (all architectures)"
-    integration/aws-nvidia-nonfree-lts-amd64: "Run AWS NVIDIA non-free LTS driver tests on AMD64"
-    integration/aws-nvidia-nonfree-lts-arm64: "Run AWS NVIDIA non-free LTS driver tests on ARM64"
     integration/aws-nvidia-nonfree-production: "Run AWS NVIDIA non-free production driver tests (all architectures)"
     integration/aws-nvidia-nonfree-production-amd64: "Run AWS NVIDIA non-free production driver tests on AMD64"
     integration/aws-nvidia-nonfree-production-arm64: "Run AWS NVIDIA non-free production driver tests on ARM64"
@@ -2328,9 +2325,6 @@ spec:
         - integration/aws-nvidia-oss-new-feature-amd64
         - integration/aws-nvidia-oss-new-feature-arm64
         - integration/aws-nvidia-nonfree
-        - integration/aws-nvidia-nonfree-lts
-        - integration/aws-nvidia-nonfree-lts-amd64
-        - integration/aws-nvidia-nonfree-lts-arm64
         - integration/aws-nvidia-nonfree-production
         - integration/aws-nvidia-nonfree-production-amd64
         - integration/aws-nvidia-nonfree-production-arm64
@@ -2509,34 +2503,6 @@ spec:
             buildPlatform: linux/arm64
             targetArch: arm64
             e2eTarget: nvidia-oss-new-feature
-            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
-          - driver: nonfree
-            variant: lts
-            arch: amd64
-            triggerLabels:
-              [
-                integration/aws-nvidia-nonfree,
-                integration/aws-nvidia-nonfree-lts,
-                integration/aws-nvidia-nonfree-lts-amd64,
-              ]
-            buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
-            buildPlatform: linux/amd64
-            targetArch: amd64
-            e2eTarget: nvidia-nonfree-lts
-            extraTestArgs: -talos.extensions.nvidia
-          - driver: nonfree
-            variant: lts
-            arch: arm64
-            triggerLabels:
-              [
-                integration/aws-nvidia-nonfree,
-                integration/aws-nvidia-nonfree-lts,
-                integration/aws-nvidia-nonfree-lts-arm64,
-              ]
-            buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
-            buildPlatform: linux/arm64
-            targetArch: arm64
-            e2eTarget: nvidia-nonfree-lts
             extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
           - driver: nonfree
             variant: production
