@@ -43,6 +43,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha2/internal/extconfigroot"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	"github.com/siderolabs/talos/internal/pkg/libvirt"
@@ -54,6 +55,7 @@ import (
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	configresource "github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
@@ -152,6 +154,19 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		}
 
 		defer udevUnmount() //nolint:errcheck
+	}
+
+	var extensionServiceConfigRoot xfs.Root
+
+	if ctrl.v1alpha1Runtime.State().Platform().Mode() != runtime.ModeContainer {
+		var extensionServiceConfigUnmount func() error
+
+		extensionServiceConfigRoot, extensionServiceConfigUnmount, err = extconfigroot.Setup(constants.ExtensionServiceUserConfigPath, ctrl.logger)
+		if err != nil {
+			return fmt.Errorf("failed to set up extension service config root: %w", err)
+		}
+
+		defer extensionServiceConfigUnmount() //nolint:errcheck
 	}
 
 	lvmProvisioner, err := lvm.New()
@@ -539,8 +554,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		runtimecontrollers.NewRebootController(ctrl.v1alpha1Runtime, ctrl.reboot),
 		&runtimecontrollers.ExtensionServiceConfigController{},
 		&runtimecontrollers.ExtensionServiceConfigFilesController{
-			V1Alpha1Mode:            ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			ExtensionsConfigBaseDir: constants.ExtensionServiceUserConfigPath,
+			V1Alpha1Mode:         ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			ExtensionsConfigRoot: extensionServiceConfigRoot,
 		},
 		&runtimecontrollers.EventsSinkConfigController{
 			Cmdline:      procfs.ProcCmdline(),

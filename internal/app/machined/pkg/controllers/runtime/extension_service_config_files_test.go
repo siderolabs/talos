@@ -6,9 +6,9 @@ package runtime_test
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -16,6 +16,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/opendir"
 )
 
 type ExtensionServiceConfigFilesSuite struct {
@@ -27,11 +29,17 @@ type ExtensionServiceConfigFilesSuite struct {
 func TestExtensionServiceConfigFilesSuite(t *testing.T) {
 	extensionsConfigDir := t.TempDir()
 
+	root := &xfs.UnixRoot{FS: opendir.NewFromPath(extensionsConfigDir)}
+
 	suite.Run(t, &ExtensionServiceConfigFilesSuite{
 		AfterSetup: func(suite *ctest.DefaultSuite) {
+			suite.Require().NoError(root.OpenFS())
 			suite.Require().NoError(suite.Runtime().RegisterController(&runtime.ExtensionServiceConfigFilesController{
-				ExtensionsConfigBaseDir: extensionsConfigDir,
+				ExtensionsConfigRoot: root,
 			}))
+		},
+		AfterTearDown: func(*ctest.DefaultSuite) {
+			root.Close() //nolint:errcheck
 		},
 		extensionsConfigDir: extensionsConfigDir,
 	})
@@ -96,7 +104,7 @@ func (suite *ExtensionServiceConfigFilesSuite) TestReconcileExtensionServiceConf
 		)
 
 		for _, file := range tt.configFiles {
-			content, err := os.ReadFile(filepath.Join(suite.extensionsConfigDir, tt.extensionName, strings.ReplaceAll(strings.TrimPrefix(file.mountPath, "/"), "/", "-")))
+			content, err := os.ReadFile(filepath.Join(suite.extensionsConfigDir, tt.extensionName, file.mountPath))
 			suite.Require().NoError(err)
 
 			suite.Assert().Equal(file.content, string(content))
@@ -109,7 +117,7 @@ func (suite *ExtensionServiceConfigFilesSuite) TestReconcileExtensionServiceConf
 	suite.Assert().NoError(os.Mkdir(filepath.Join(suite.extensionsConfigDir, "test"), 0o755))
 	suite.Assert().NoError(os.WriteFile(filepath.Join(suite.extensionsConfigDir, "test", "testdata"), []byte("{}"), 0o644))
 
-	extensionAConfigFileInfo, err := os.Stat(filepath.Join(suite.extensionsConfigDir, "test-extension-a", "etc-test"))
+	extensionAConfigFileInfo, err := os.Stat(filepath.Join(suite.extensionsConfigDir, "test-extension-a", "etc", "test"))
 	suite.Assert().NoError(err)
 
 	// delete test-extension-b resource
@@ -118,12 +126,33 @@ func (suite *ExtensionServiceConfigFilesSuite) TestReconcileExtensionServiceConf
 
 	suite.Assert().NoFileExists(filepath.Join(suite.extensionsConfigDir, "test", "testdata"))
 	suite.Assert().NoDirExists(filepath.Join(suite.extensionsConfigDir, "test"))
-	suite.Assert().NoFileExists(filepath.Join(suite.extensionsConfigDir, "test-extension-b", "etc-bar"))
-	suite.Assert().NoFileExists(filepath.Join(suite.extensionsConfigDir, "test-extension-b", "var-etc-foo"))
+	suite.Assert().NoFileExists(filepath.Join(suite.extensionsConfigDir, "test-extension-b", "etc", "bar"))
+	suite.Assert().NoFileExists(filepath.Join(suite.extensionsConfigDir, "test-extension-b", "var", "etc", "foo"))
 	suite.Assert().NoDirExists(filepath.Join(suite.extensionsConfigDir, "test-extension-b"))
 
-	extensionAConfigFileInfoAfterUpdate, err := os.Stat(filepath.Join(suite.extensionsConfigDir, "test-extension-a", "etc-test"))
+	extensionAConfigFileInfoAfterUpdate, err := os.Stat(filepath.Join(suite.extensionsConfigDir, "test-extension-a", "etc", "test"))
 	suite.Require().NoError(err)
 
 	suite.Assert().Equal(extensionAConfigFileInfo.ModTime(), extensionAConfigFileInfoAfterUpdate.ModTime())
+
+	// a mount path which turns a config file into a directory replaces the file
+	extensionA, err := safe.StateUpdateWithConflicts(suite.Ctx(), suite.State(), runtimeres.NewExtensionServiceConfigSpec(runtimeres.NamespaceName, "test-extension-a").Metadata(),
+		func(res *runtimeres.ExtensionServiceConfig) error {
+			res.TypedSpec().Files = []runtimeres.ExtensionServiceConfigFile{{Content: "test-content-d", MountPath: "/etc/test/inner"}}
+
+			return nil
+		},
+	)
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(
+		suite, "test-extension-a",
+		func(status *runtimeres.ExtensionServiceConfigStatus, asrt *assert.Assertions) {
+			asrt.Equal(extensionA.Metadata().Version().String(), status.TypedSpec().SpecVersion)
+		},
+	)
+
+	content, err := os.ReadFile(filepath.Join(suite.extensionsConfigDir, "test-extension-a", "etc", "test", "inner"))
+	suite.Require().NoError(err)
+	suite.Assert().Equal("test-content-d", string(content))
 }

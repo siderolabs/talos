@@ -1091,6 +1091,17 @@ Talos calculates it the same way the kubelet calculates the `kubepods` limit: th
 The limit follows changes to these sysctls without a reboot.
 """
 
+    [notes.extension_service_config_mount_paths]
+        title = "Extension Service Config Mount Paths"
+        description = """\
+`ExtensionServiceConfig` mount paths must be absolute and clean (no `.`, `..`, repeated or trailing slashes),
+must not repeat, and must not sit under another mount path of the same extension service.
+Talos used to accept such paths, so fix them in the machine configuration before upgrading:
+a node with an invalid mount path in its saved machine configuration fails to load the configuration on boot.
+
+Config files are now stored on a dedicated 1 MiB tmpfs, which limits the total size of all extension service config files.
+"""
+
 [make_deps]
 
     [make_deps.tools]

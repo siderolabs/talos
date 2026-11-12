@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // WaitForDevicesReady waits for devices to be ready.
@@ -66,13 +67,13 @@ func WaitForDevicesReady(ctx context.Context, r controller.Runtime, nextInputs [
 	return nil
 }
 
-// updateFile is like `os.WriteFile`, but it will only update the file if the
+// updateFile is like `xfs.WriteFile`, but it will only update the file if the
 // contents have changed.
-func updateFile(filename string, contents []byte, mode os.FileMode) error {
-	oldContents, err := os.ReadFile(filename)
+func updateFile(root xfs.Root, filename string, contents []byte, mode os.FileMode) error {
+	oldContents, err := xfs.ReadFile(root, filename)
 	if err == nil && bytes.Equal(oldContents, contents) {
 		return nil
 	}
 
-	return os.WriteFile(filename, contents, mode)
+	return xfs.WriteFile(root, filename, contents, mode)
 }

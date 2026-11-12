@@ -164,6 +164,40 @@ func TestExtensionServiceConfigValidate(t *testing.T) {
 			},
 			expectedError: `extension mount path "/" is invalid for extension "foo"`,
 		},
+		{
+			name: "mount paths sharing a parent",
+			cfg:  withMountPaths("/etc/a/b", "/etc/a-b", "/etc/a/c"),
+		},
+		{
+			name:          "mount path relative",
+			cfg:           withMountPaths("../tailscale/etc/auth"),
+			expectedError: `extension mount path "../tailscale/etc/auth" is invalid for extension "foo"`,
+		},
+		{
+			name:          "mount path not clean",
+			cfg:           withMountPaths("/../tailscale/etc/auth"),
+			expectedError: `extension mount path "/../tailscale/etc/auth" is invalid for extension "foo"`,
+		},
+		{
+			name:          "mount path inner dot-dot",
+			cfg:           withMountPaths("/foo/../../../tailscale/etc/auth"),
+			expectedError: `extension mount path "/foo/../../../tailscale/etc/auth" is invalid for extension "foo"`,
+		},
+		{
+			name:          "mount path trailing slash",
+			cfg:           withMountPaths("/etc/foo/"),
+			expectedError: `extension mount path "/etc/foo/" is invalid for extension "foo"`,
+		},
+		{
+			name:          "mount path duplicated",
+			cfg:           withMountPaths("/etc/foo", "/etc/foo"),
+			expectedError: `extension mount path "/etc/foo" is duplicated for extension "foo"`,
+		},
+		{
+			name:          "mount path under another",
+			cfg:           withMountPaths("/etc/foo/bar/baz", "/etc/foo"),
+			expectedError: `extension mount path "/etc/foo/bar/baz" is under "/etc/foo" for extension "foo"`,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -175,6 +209,22 @@ func TestExtensionServiceConfigValidate(t *testing.T) {
 				require.NoError(t, err)
 			}
 		})
+	}
+}
+
+func withMountPaths(mountPaths ...string) func() *extensions.ServiceConfigV1Alpha1 {
+	return func() *extensions.ServiceConfigV1Alpha1 {
+		cfg := extensions.NewServicesConfigV1Alpha1()
+		cfg.ServiceName = "foo"
+
+		for _, mountPath := range mountPaths {
+			cfg.ServiceConfigFiles = append(cfg.ServiceConfigFiles, extensions.ConfigFile{
+				ConfigFileContent:   "bar",
+				ConfigFileMountPath: mountPath,
+			})
+		}
+
+		return cfg
 	}
 }
 

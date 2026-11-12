@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -31,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	extservices "github.com/siderolabs/talos/pkg/machinery/extensions/services"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -389,8 +389,13 @@ func (svc *Extension) applyExtensionServiceConfig(
 	}
 
 	for _, ext := range spec.Files {
+		fileName, err := extensions.ConfigFileName(svc.Spec.Name, ext.MountPath)
+		if err != nil {
+			return nil, nil, err
+		}
+
 		mounts = append(mounts, specs.Mount{
-			Source:      filepath.Join(constants.ExtensionServiceUserConfigPath, svc.Spec.Name, strings.ReplaceAll(strings.TrimPrefix(ext.MountPath, "/"), "/", "-")),
+			Source:      filepath.Join(constants.ExtensionServiceUserConfigPath, svc.Spec.Name, fileName),
 			Destination: ext.MountPath,
 			Type:        "bind",
 			Options:     []string{"ro", "bind"},
