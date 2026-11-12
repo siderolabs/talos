@@ -131,7 +131,7 @@ func PreBootSequenceChecks() []ClusterCheck {
 				skipIf(
 					cluster, etcdDisabled,
 					func(ctx context.Context) error {
-						return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+						return EtcdHealthAssertion(ctx, cluster)
 					},
 				),
 				5*time.Second)

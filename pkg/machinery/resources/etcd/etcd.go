@@ -12,7 +12,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 )
 
-//go:generate go tool github.com/siderolabs/deep-copy -type ConfigSpec -type PKIStatusSpec -type SpecSpec -type MemberSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type BootstrapRequestSpec -type ClientSpecSpec -type ConfigSpec -type LaunchSpecSpec -type LeaveRequestSpec -type MembershipSpecSpec -type MembershipStatusSpec -type PKIStatusSpec -type ServiceSpecSpec -type SpecSpec -type MemberSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
+//go:generate go tool github.com/dmarkham/enumer -type=MembershipPhase -linecomment -text
 
 // NamespaceName contains resources supporting etcd service.
 const NamespaceName resource.Namespace = "etcd"

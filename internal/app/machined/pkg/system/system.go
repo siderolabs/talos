@@ -158,6 +158,8 @@ func (s *singleton) Start(serviceIDs ...string) error {
 		svcrunner := s.state[id]
 		if svcrunner == nil {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("service %q not defined", id))
+
+			continue
 		}
 
 		s.runningMu.Lock()
@@ -173,6 +175,10 @@ func (s *singleton) Start(serviceIDs ...string) error {
 			// service already running, skip
 			continue
 		}
+
+		// the service is not running, so a pending shutdown request (if any) was meant for the previous run:
+		// it should not stop the service which is being started
+		svcrunner.clearShutdown()
 
 		runNotify := make(chan struct{})
 
@@ -440,6 +446,19 @@ func (s *singleton) IsRunning(id string) (Service, bool, error) {
 	s.runningMu.Unlock()
 
 	return runner.service, running, nil
+}
+
+// GetState returns the state of the service.
+func (s *singleton) GetState(id string) (events.ServiceState, error) {
+	s.mu.Lock()
+	runner, exists := s.state[id]
+	s.mu.Unlock()
+
+	if !exists {
+		return events.StateInitialized, fmt.Errorf("service %q not defined", id)
+	}
+
+	return runner.GetState(), nil
 }
 
 // APIStart processes service start request from the API.

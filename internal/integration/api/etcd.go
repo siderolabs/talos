@@ -13,18 +13,26 @@ import (
 	"time"
 
 	"github.com/blang/semver/v4"
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	etcdcfg "github.com/siderolabs/talos/pkg/machinery/config/types/etcd"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	v1alpha1res "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // EtcdSuite ...
@@ -281,6 +289,144 @@ func (suite *EtcdSuite) TestRemoveMember() {
 		}, 10*time.Minute,
 		suite.CleanupFailedPods,
 	)
+}
+
+// TestConfigUpdate verifies that the etcd configuration changes are applied without a reboot.
+//
+// Talos restarts etcd as soon as the machine configuration is applied, without coordinating the restarts across the cluster,
+// so the test (as the cluster manager would) updates the control plane nodes one by one.
+//
+//nolint:gocyclo
+func (suite *EtcdSuite) TestConfigUpdate() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if suite.Cluster == nil {
+		suite.T().Skip("without full cluster state etcd test is not reliable (can't wait for cluster readiness)")
+	}
+
+	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
+
+	const (
+		argName  = "max-txn-ops"
+		argValue = "256"
+		arg      = "--" + argName + "=" + argValue
+	)
+
+	// setExtraArg sets (or removes, if the value is empty) the etcd extra argument, either in the EtcdMemberConfig document,
+	// or in the legacy .cluster.etcd section, depending on what the machine configuration uses.
+	setExtraArg := func(cfg config.Provider, value string) (config.Provider, error) {
+		if cfg.RawV1Alpha1() != nil && cfg.RawV1Alpha1().ClusterConfig != nil && cfg.RawV1Alpha1().ClusterConfig.EtcdConfig != nil { //nolint:staticcheck // legacy config
+			return cfg.PatchV1Alpha1(func(c *v1alpha1.Config) error {
+				etcdConfig := c.ClusterConfig.EtcdConfig //nolint:staticcheck // legacy config
+
+				if value == "" {
+					delete(etcdConfig.EtcdExtraArgs, argName)
+
+					return nil
+				}
+
+				if etcdConfig.EtcdExtraArgs == nil {
+					etcdConfig.EtcdExtraArgs = meta.Args{}
+				}
+
+				etcdConfig.EtcdExtraArgs[argName] = meta.NewArgValue(value, nil)
+
+				return nil
+			})
+		}
+
+		return container.PatchDocument(cfg, func(memberConfig *etcdcfg.EtcdMemberConfigV1Alpha1) error {
+			if value == "" {
+				delete(memberConfig.MemberExtraArgs, argName)
+
+				return nil
+			}
+
+			if memberConfig.MemberExtraArgs == nil {
+				memberConfig.MemberExtraArgs = meta.Args{}
+			}
+
+			memberConfig.MemberExtraArgs[argName] = meta.NewArgValue(value, nil)
+
+			return nil
+		})
+	}
+
+	// assertNodeEtcd waits for etcd on the node to run with (or without) the extra argument,
+	// being a healthy voting member of the cluster.
+	assertNodeEtcd := func(node string, withArg bool) {
+		nodeCtx := client.WithNode(suite.ctx, node)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), etcd.ServiceSpecID,
+			func(spec *etcd.ServiceSpec, asrt *assert.Assertions) {
+				if withArg {
+					asrt.Contains(spec.TypedSpec().Args, arg)
+				} else {
+					asrt.NotContains(spec.TypedSpec().Args, arg)
+				}
+			},
+		)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), "etcd",
+			func(service *v1alpha1res.Service, asrt *assert.Assertions) {
+				asrt.True(service.TypedSpec().Running)
+				asrt.True(service.TypedSpec().Healthy)
+			},
+		)
+
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.State(), etcd.MembershipStatusID,
+			func(status *etcd.MembershipStatus, asrt *assert.Assertions) {
+				asrt.Equal(etcd.MembershipPhaseMember, status.TypedSpec().Phase)
+			},
+		)
+	}
+
+	// assertEtcd checks etcd on all control plane nodes.
+	assertEtcd := func(withArg bool) {
+		for _, node := range nodes {
+			assertNodeEtcd(node, withArg)
+		}
+
+		// the etcd members keep their identity across the restart
+		resp, err := suite.Client.EtcdMemberList(suite.ctx, &machineapi.EtcdMemberListRequest{})
+		suite.Require().NoError(err)
+
+		for _, message := range resp.GetMessages() {
+			suite.Assert().Len(message.GetMembers(), len(nodes))
+
+			for _, member := range message.GetMembers() {
+				suite.Assert().False(member.GetIsLearner())
+			}
+		}
+
+		suite.AssertClusterHealthy(suite.ctx)
+	}
+
+	assertEtcd(false)
+
+	// apply the change to the control plane nodes one by one, waiting for etcd to be back before moving on to the next node
+	for _, value := range []string{argValue, ""} {
+		suite.T().Logf("setting etcd extra argument %q to %q on nodes %v", argName, value, nodes)
+
+		for _, node := range nodes {
+			suite.UpdateMachineConfig(
+				client.WithNode(suite.ctx, node),
+				func(*machineapi.ApplyConfigurationRequest) {},
+				func(cfg config.Provider) (config.Provider, error) {
+					return setExtraArg(cfg, value)
+				},
+			)
+
+			assertNodeEtcd(node, value != "")
+		}
+
+		assertEtcd(value != "")
+	}
 }
 
 func (suite *EtcdSuite) downgradesSupported() bool {
