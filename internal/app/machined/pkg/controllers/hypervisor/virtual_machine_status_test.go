@@ -45,6 +45,7 @@ type VirtualMachineStatusSuite struct {
 
 func (s *VirtualMachineStatusSuite) SetupTest() {
 	s.DefaultSuite.SetupTest()
+	cpuPartitionReady(&s.DefaultSuite)
 	s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
 	s.openErr.Store(nil)
 	s.opens.Store(0)

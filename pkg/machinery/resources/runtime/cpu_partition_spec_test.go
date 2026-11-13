@@ -22,7 +22,6 @@ func TestCPUPartitionSpecRoundTrip(t *testing.T) {
 
 	res := runtime.NewCPUPartitionSpec()
 	*res.TypedSpec() = runtime.CPUPartitionSpecSpec{
-		Enabled: true,
 		Roots: map[string]string{
 			"init":            "0-1",
 			"kubepods":        "2-3",
@@ -42,7 +41,6 @@ func TestCPUPartitionSpecRoundTrip(t *testing.T) {
 	var spec runtimeapi.CPUPartitionSpecSpec
 
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
-	assert.True(t, spec.GetEnabled())
 	assert.Equal(t, res.TypedSpec().Roots, spec.GetRoots())
 	require.Len(t, spec.GetSlices(), 2)
 	assert.Equal(t, "database", spec.GetSlices()[0].GetName())
@@ -67,8 +65,7 @@ func TestCPUPartitionSpecRoundTrip(t *testing.T) {
 
 	marshaled, err := yaml.Marshal(res.TypedSpec())
 	require.NoError(t, err)
-	assert.Equal(t, `enabled: true
-roots:
+	assert.Equal(t, `roots:
     init: 0-1
     kubepods: 2-3
     virtualMachines: 4-7
@@ -89,5 +86,48 @@ slices:
 	disabled := runtime.NewCPUPartitionSpec()
 	marshaled, err = yaml.Marshal(disabled.TypedSpec())
 	require.NoError(t, err)
-	assert.Equal(t, "enabled: false\n", string(marshaled))
+	assert.Equal(t, "{}\n", string(marshaled))
+}
+
+func TestCPUPartitionStatusRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	res := runtime.NewCPUPartitionStatus()
+	*res.TypedSpec() = runtime.CPUPartitionStatusSpec{
+		Ready:               true,
+		KubeletReservedCPUs: "0-1",
+		VirtualMachinePools: []runtime.CPUPartitionPoolSpec{
+			{Name: "shared", CPUs: "4", Partition: "/virtualmachines.partition/shared.partition"},
+			{Name: "database", CPUs: "6-7", Partition: "/virtualmachines.partition/database.partition"},
+		},
+	}
+
+	assert.Equal(t, runtime.CPUPartitionSpecID, res.Metadata().ID(), "status and spec are singletons sharing an ID")
+
+	encoded, err := protobuf.FromResource(res)
+	require.NoError(t, err)
+	wire, err := encoded.Marshal()
+	require.NoError(t, err)
+
+	var spec runtimeapi.CPUPartitionStatusSpec
+
+	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
+	assert.True(t, spec.GetReady())
+	assert.Equal(t, "0-1", spec.GetKubeletReservedCpUs())
+	require.Len(t, spec.GetVirtualMachinePools(), 2)
+	assert.Equal(t, "/virtualmachines.partition/database.partition", spec.GetVirtualMachinePools()[1].GetPartition())
+
+	decoded, err := protobuf.Unmarshal(wire)
+	require.NoError(t, err)
+	roundTrip, err := protobuf.UnmarshalResource(decoded)
+	require.NoError(t, err)
+	assert.Equal(t, res.TypedSpec(), roundTrip.(*runtime.CPUPartitionStatus).TypedSpec())
+
+	clone := res.DeepCopy().(*runtime.CPUPartitionStatus)
+	clone.TypedSpec().VirtualMachinePools[0].CPUs = "5"
+	assert.Equal(t, "4", res.TypedSpec().VirtualMachinePools[0].CPUs)
+
+	marshaled, err := yaml.Marshal(runtime.NewCPUPartitionStatus().TypedSpec())
+	require.NoError(t, err)
+	assert.Equal(t, "ready: false\n", string(marshaled))
 }

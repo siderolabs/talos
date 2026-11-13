@@ -1715,6 +1715,7 @@ func TestVirtualMachineStaleDiskSuite(t *testing.T) {
 	suite.Run(t, &VirtualMachineStaleDiskSuite{
 		Timeout: 15 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
+			cpuPartitionReady(suite)
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))
 			suite.Require().NoError(suite.Runtime().RegisterController(&hypervisorctrl.VirtualMachineDomainSpecController{}))
 		},
@@ -2250,6 +2251,7 @@ func TestVirtualMachineCloudInitDomainSuite(t *testing.T) {
 		ctest.DefaultSuite{
 			Timeout: 30 * time.Second,
 			AfterSetup: func(s *ctest.DefaultSuite) {
+				cpuPartitionReady(s)
 				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.CloudInitSpecController{}))
 
 				s.Require().NoError(s.Runtime().RegisterController(&hypervisorctrl.VirtualMachineProfileSpecController{}))

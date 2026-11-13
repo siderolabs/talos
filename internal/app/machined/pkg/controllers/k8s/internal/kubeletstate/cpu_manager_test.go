@@ -200,6 +200,18 @@ func TestValidateCPUManagerState(t *testing.T) {
 			cfg:   staticConfig(cpuset.New(0, 1, 4, 5), false),
 		},
 		{
+			name:          "static, same number of reserved CPUs moved onto assigned CPUs",
+			state:         `{"policyName":"static","defaultCpuSet":"0-1,4-7","entries":{"pod1":{"c1":"2","c2":"3"}},"checksum":1}`,
+			cfg:           staticConfig(cpuset.New(2, 3), false),
+			expectedError: `not all reserved CPUs "2-3" are present in the default cpuset "0-1,4-7"`,
+		},
+		{
+			name:          "strict, same number of reserved CPUs moved",
+			state:         `{"policyName":"static","defaultCpuSet":"2-7","checksum":1}`,
+			cfg:           staticConfig(cpuset.New(6, 7), true),
+			expectedError: `strictly reserved CPUs "6-7" are present in the default cpuset "2-7"`,
+		},
+		{
 			name:          "static, reserved CPUs assigned to a container",
 			state:         `{"policyName":"static","defaultCpuSet":"0-1,4-7","entries":{"pod1":{"c1":"2","c2":"3"}},"checksum":1}`,
 			cfg:           staticConfig(cpuset.New(0, 1, 2), false),

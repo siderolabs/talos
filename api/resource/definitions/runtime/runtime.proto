@@ -33,6 +33,15 @@ message BootedEntrySpec {
   string booted_entry = 1;
 }
 
+// CPUPartitionPoolSpec is one pool of the virtual machine root.
+message CPUPartitionPoolSpec {
+  // Name is the slice name, or "shared" for the CPUs outside every named slice.
+  string name = 1;
+  string cp_us = 2;
+  // Partition is the libvirt resource partition of the pool.
+  string partition = 3;
+}
+
 // CPUPartitionSliceSpec is one named subset of the virtual machine root.
 message CPUPartitionSliceSpec {
   string name = 1;
@@ -40,12 +49,22 @@ message CPUPartitionSliceSpec {
   bool exclusive = 3;
 }
 
-// CPUPartitionSpecSpec describes the desired CPU partition policy.
+// CPUPartitionSpecSpec describes the CPU partition policy of the current boot.
 message CPUPartitionSpecSpec {
-  bool enabled = 1;
-  // Omitted roots are unrestricted.
+  // Omitted roots are unrestricted; no roots is no policy.
   map<string, string> roots = 2;
   repeated CPUPartitionSliceSpec slices = 3;
+}
+
+// CPUPartitionStatusSpec describes the applied CPU partition policy.
+message CPUPartitionStatusSpec {
+  bool ready = 1;
+  // KubeletReservedCPUs is set when kubepods is bounded: the online CPUs outside kubepods.
+  string kubelet_reserved_cp_us = 2;
+  // VirtualMachinePools is set when the virtual machine root is bounded.
+  repeated CPUPartitionPoolSpec virtual_machine_pools = 3;
+  // Error is why the policy failed to apply.
+  string error = 4;
 }
 
 // DevicesStatusSpec is the spec for devices status.

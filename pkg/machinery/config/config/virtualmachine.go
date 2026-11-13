@@ -65,6 +65,8 @@ type VirtualMachineCPUConfig interface {
 	Limit() optional.Optional[uint64]
 	// Topology settings; never nil.
 	Topology() VirtualMachineCPUTopologyConfig
+	// Slice names the CPU partition slice of the virtual machine root; empty selects the shared remainder.
+	Slice() string
 }
 
 // VirtualMachineCPUTopologyConfig defines guest CPU geometry and host CPU pinning.

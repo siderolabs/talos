@@ -15,16 +15,16 @@ import (
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	configcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// CPUPartitionConfigController projects CPUPartitionConfig into the canonical CPUPartitionSpec.
+// CPUPartitionConfigController captures the CPU partition policy of the boot into CPUPartitionSpec.
 //
-// The spec is published only once the machine configuration is active, so consumers can tell
-// a pending projection (no resource) from no policy (Enabled=false). In container mode the
-// projected policy is always disabled.
+// The spec is published from the first active machine configuration complete for boot, including
+// when it declares no policy, and never changes afterwards: a different policy takes effect after a
+// reboot. In container mode the policy is always disabled.
 type CPUPartitionConfigController struct {
 	V1Alpha1Mode machineruntime.Mode
 }
@@ -65,62 +65,48 @@ func (ctrl *CPUPartitionConfigController) Run(ctx context.Context, r controller.
 		case <-r.EventCh():
 		}
 
-		if err := ctrl.reconcile(ctx, r); err != nil {
+		captured, err := ctrl.capture(ctx, r)
+		if err != nil {
 			return err
 		}
 
-		r.ResetRestartBackoff()
-	}
-}
-
-func (ctrl *CPUPartitionConfigController) reconcile(ctx context.Context, r controller.Runtime) error {
-	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
-	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting machine config: %w", err)
-	}
-
-	r.StartTrackingOutputs()
-
-	if cfg != nil && cfg.Config() != nil {
-		var partition configcfg.CPUPartitionConfig
-
-		if !ctrl.V1Alpha1Mode.InContainer() {
-			partition = cfg.Config().CPUPartitionConfig()
-		}
-
-		if err = safe.WriterModify(ctx, r, runtime.NewCPUPartitionSpec(), func(res *runtime.CPUPartitionSpec) error {
-			*res.TypedSpec() = projectCPUPartitionSpec(partition)
-
+		if captured {
 			return nil
-		}); err != nil {
-			return fmt.Errorf("error updating CPU partition spec: %w", err)
 		}
 	}
-
-	return safe.CleanupOutputs[*runtime.CPUPartitionSpec](ctx, r)
 }
 
-func projectCPUPartitionSpec(partition configcfg.CPUPartitionConfig) runtime.CPUPartitionSpecSpec {
-	if partition == nil {
-		return runtime.CPUPartitionSpecSpec{}
+// capture publishes the spec from the active configuration, reporting whether it did. Run returns
+// once it has, and the controller runtime never runs a controller again after a nil return: only an
+// error, before the spec exists, restarts it.
+func (ctrl *CPUPartitionConfigController) capture(ctx context.Context, r controller.Runtime) (bool, error) {
+	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("error getting machine config: %w", err)
 	}
 
-	spec := runtime.CPUPartitionSpecSpec{
-		Enabled: true,
-		Roots:   map[string]string{},
+	// A partial configuration only lasts until maintenance mode replaces it within the same boot.
+	if cfg.Config() == nil || !cfg.Provider().CompleteForBoot() {
+		return false, nil
 	}
 
-	for root, cpus := range partition.Roots() {
-		spec.Roots[string(root)] = cpus
+	spec := runtime.CPUPartitionSpecSpec{}
+
+	if !ctrl.V1Alpha1Mode.InContainer() {
+		spec = container.ProjectCPUPartition(cfg.Config().CPUPartitionConfig())
 	}
 
-	for _, slice := range partition.Slices() {
-		spec.Slices = append(spec.Slices, runtime.CPUPartitionSliceSpec{
-			Name:      slice.Name(),
-			CPUs:      slice.CPUs(),
-			Exclusive: slice.Exclusive(),
-		})
+	if err = safe.WriterModify(ctx, r, runtime.NewCPUPartitionSpec(), func(res *runtime.CPUPartitionSpec) error {
+		*res.TypedSpec() = spec
+
+		return nil
+	}); err != nil {
+		return false, fmt.Errorf("error publishing CPU partition spec: %w", err)
 	}
 
-	return spec
+	return true, nil
 }

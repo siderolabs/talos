@@ -10,8 +10,10 @@ import (
 	"slices"
 
 	"github.com/hashicorp/go-multierror"
+	"k8s.io/utils/cpuset"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // validateVirtualMachinePoolReferences checks pools for virtual machine disks and cloud-init seeds.
@@ -61,4 +63,58 @@ func validateVirtualMachinePoolReferences(container *Container) error {
 	}
 
 	return errs.ErrorOrNil()
+}
+
+// validateVirtualMachineCPUSlices checks cpu.slice against the CPU partition policy as written; the
+// running node keeps the slices of its boot policy until a reboot. A virtual machine without a slice
+// needs the CPUs of the root outside every named slice.
+func validateVirtualMachineCPUSlices(container *Container) error {
+	declared, shared, bounded := virtualMachineCPUSlices(container.CPUPartitionConfig())
+	if !bounded {
+		return nil
+	}
+
+	var errs *multierror.Error
+
+	for _, virtualMachineConfig := range container.VirtualMachineConfigs() {
+		slice := virtualMachineConfig.CPU().Slice()
+
+		switch _, ok := declared[slice]; {
+		case slice != "" && !ok:
+			errs = multierror.Append(errs, fmt.Errorf(
+				"virtual machine %q: cpu.slice: CPUPartitionConfig declares no slice %q", virtualMachineConfig.Name(), slice))
+		case slice == "" && shared.IsEmpty():
+			errs = multierror.Append(errs, fmt.Errorf(
+				"virtual machine %q: cpu.slice: the CPUPartitionConfig slices take every CPU of the virtual machine root, select one of them",
+				virtualMachineConfig.Name()))
+		}
+	}
+
+	return errs.ErrorOrNil()
+}
+
+// virtualMachineCPUSlices returns the declared slice names and the CPUs of the virtual machine root
+// outside them, and whether the policy bounds a valid virtual machine root at all. Invalid lists are
+// reported by the document's own validation.
+func virtualMachineCPUSlices(partition config.CPUPartitionConfig) (map[string]struct{}, cpuset.CPUSet, bool) {
+	if partition == nil {
+		return nil, cpuset.New(), false
+	}
+
+	shared, err := cpuset.Parse(partition.Roots()[constants.CgroupVirtualMachinesRoot])
+	if err != nil || shared.IsEmpty() {
+		return nil, cpuset.New(), false
+	}
+
+	declared := map[string]struct{}{}
+
+	for _, slice := range partition.Slices() {
+		declared[slice.Name()] = struct{}{}
+
+		if cpus, err := cpuset.Parse(slice.CPUs()); err == nil {
+			shared = shared.Difference(cpus)
+		}
+	}
+
+	return declared, shared, true
 }
