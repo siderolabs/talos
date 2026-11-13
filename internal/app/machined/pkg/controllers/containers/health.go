@@ -182,6 +182,10 @@ type desiredProbe struct {
 // An instance is probed while its task is running and its container has a health check configured.
 // The health check comes from the container spec rather than the instance: editing it re-targets
 // the probe without replacing the execution.
+//
+// A running task whose PID is not known (0) is probed all the same: in the host network it does not
+// need one, and otherwise every check fails on it, so the container is reported degraded with the
+// reason rather than left pending for good.
 func (ctrl *HealthController) desiredTargets(ctx context.Context, reader controller.Reader) (map[string]desiredProbe, error) {
 	instanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, reader)
 	if err != nil {
@@ -211,7 +215,7 @@ func (ctrl *HealthController) desiredTarget(
 	id := instanceStatus.Metadata().ID()
 	status := instanceStatus.TypedSpec()
 
-	if status.Phase != containers.ContainerInstancePhaseRunning || status.PID == 0 {
+	if status.Phase != containers.ContainerInstancePhaseRunning {
 		return desiredProbe{}, false, nil
 	}
 

@@ -423,6 +423,23 @@ func (suite *HealthSuite) TestProbeProviderErrorReportsUnhealthy() {
 	suite.Zero(suite.prober.closedCount())
 }
 
+// TestUnknownPIDIsProbed covers a running task whose PID the runner could not resolve: it is probed
+// all the same, so that a failure to build the probe surfaces as unhealthy rather than the container
+// staying pending, and its dependents waiting, for good.
+func (suite *HealthSuite) TestUnknownPIDIsProbed() {
+	suite.prober.setProvideErr(errors.New("container PID is not known"))
+
+	suite.createSpec(testHealthCheck)
+	suite.createInstance(0, 0)
+
+	ctest.AssertResource(suite, containers.InstanceID(healthTestContainer, 0), func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Healthy)
+		asrt.Equal("container PID is not known", status.TypedSpec().Message)
+	})
+
+	suite.Contains(suite.prober.probedTargets(), containersctrl.ProbeTarget{PID: 0, HealthCheck: testHealthCheck})
+}
+
 // TestNoProbeWithoutInstanceSpec covers a running instance status whose instance spec is gone.
 func (suite *HealthSuite) TestNoProbeWithoutInstanceSpec() {
 	suite.createSpec(testHealthCheck)

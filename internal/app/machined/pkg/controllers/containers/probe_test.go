@@ -338,8 +338,9 @@ func TestNewProbeHostNetwork(t *testing.T) {
 	t.Cleanup(func() { listener.Close() }) //nolint:errcheck
 
 	probe, closer, err := containersctrl.NewProbe(containersctrl.ProbeTarget{
-		// Not looked at: the PID only identifies the network namespace of a non-host container.
-		PID:         math.MaxUint32,
+		// Not known, and not needed: the PID only identifies the network namespace of a non-host
+		// container.
+		PID:         0,
 		HostNetwork: true,
 		HealthCheck: containers.ContainerHealthCheckSpec{
 			Kind: string(config.ContainerHealthCheckKindTCP),
@@ -369,6 +370,20 @@ func TestNewProbeMissingNetNS(t *testing.T) {
 		},
 	})
 	assert.ErrorContains(t, err, "failed to open network namespace of PID 4294967295")
+}
+
+// TestNewProbeUnknownPID covers a task whose PID the runner could not resolve: without it there is no
+// network namespace to connect from, and /proc/0 must not be looked up.
+func TestNewProbeUnknownPID(t *testing.T) {
+	t.Parallel()
+
+	_, _, err := containersctrl.NewProbe(containersctrl.ProbeTarget{
+		HealthCheck: containers.ContainerHealthCheckSpec{
+			Kind: string(config.ContainerHealthCheckKindTCP),
+			Port: 80,
+		},
+	})
+	assert.ErrorContains(t, err, "container PID is not known")
 }
 
 // isolatedNetNS starts an OS thread in a new network namespace, with loopback up, standing in for a

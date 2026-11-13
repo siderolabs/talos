@@ -6,6 +6,7 @@ package containers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -35,7 +36,7 @@ type ProbeTarget struct {
 	// connects from.
 	//
 	// The runner already resolves the task PID out of the CRI containerd's PID namespace, which is a
-	// sandbox one when workload isolation is enabled.
+	// sandbox one when workload isolation is enabled. It is 0 if the runner could not resolve it.
 	PID uint32
 	// HostNetwork is true if the container shares the host network namespace.
 	HostNetwork bool
@@ -63,6 +64,10 @@ func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 		}), nopCloser{}, nil
 	}
 
+	if target.PID == 0 {
+		return nil, nil, errPIDUnknown
+	}
+
 	netNS, err := ns.GetNS(netNSPath(target.PID))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open network namespace of PID %d: %w", target.PID, err)
@@ -70,6 +75,10 @@ func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 
 	return NewProbeWithDialer(target.HealthCheck, netNSDialer(netNS)), netNS, nil
 }
+
+// errPIDUnknown is the probe failure of a container outside the host network whose task PID the
+// runner could not resolve: there is no network namespace to connect from.
+var errPIDUnknown = errors.New("container PID is not known, its network namespace cannot be probed")
 
 // netNSPath returns the path of the network namespace of pid, a PID in machined's PID namespace.
 func netNSPath(pid uint32) string {
