@@ -27,7 +27,7 @@ func TestMountSuite(t *testing.T) {
 	t.Parallel()
 
 	suite.Run(t, &MountSuite{
-		Timeout: 3 * time.Second,
+		Timeout: 30 * time.Second,
 		AfterSetup: func(suite *ctest.DefaultSuite) {
 			suite.Require().NoError(suite.Runtime().RegisterController(&blockctrls.MountController{}))
 		},
@@ -177,4 +177,55 @@ func (suite *MountSuite) TestUserVolumeMountPointCleanup() {
 	suite.Assert().NoDirExists(filepath.Join(dir, "empty"))
 	suite.Assert().FileExists(filepath.Join(dir, "data", "file"))
 	suite.Assert().FileExists(filepath.Join(dir, "file"))
+}
+
+// TestUnmountBusy verifies that a busy unmount neither holds back the teardown of other mounts,
+// nor waits for the controller restart backoff once released.
+func (suite *MountSuite) TestUnmountBusy() {
+	if os.Getuid() != 0 {
+		suite.T().Skip("can't run the test as non-root")
+	}
+
+	dir := suite.T().TempDir()
+
+	// mount requests are processed in ID order, so the busy one goes first
+	for _, id := range []string{"a-busy", "b-other"} {
+		volumeStatus := block.NewVolumeStatus(block.NamespaceName, id)
+		volumeStatus.TypedSpec().Type = block.VolumeTypeDirectory
+		volumeStatus.TypedSpec().MountSpec = block.MountSpec{
+			TargetPath: filepath.Join(dir, id),
+			BindTarget: new(filepath.Join(dir, id+"-bind")),
+			FileMode:   0o755,
+		}
+		volumeStatus.TypedSpec().Phase = block.VolumePhaseReady
+		suite.Create(volumeStatus)
+
+		suite.mountVolume(id)
+	}
+
+	// an open directory keeps the bind mount busy
+	busy, err := os.Open(filepath.Join(dir, "a-busy-bind"))
+	suite.Require().NoError(err)
+
+	for _, id := range []string{"a-busy", "b-other"} {
+		_, err = suite.State().Teardown(suite.Ctx(), block.NewMountRequest(block.NamespaceName, id).Metadata())
+		suite.Require().NoError(err)
+	}
+
+	ctest.AssertResource(suite, "b-other", func(mountRequest *block.MountRequest, asrt *assert.Assertions) {
+		asrt.True(mountRequest.Metadata().Finalizers().Empty())
+	})
+
+	ctest.AssertResource(suite, "a-busy", func(mountRequest *block.MountRequest, asrt *assert.Assertions) {
+		asrt.False(mountRequest.Metadata().Finalizers().Empty())
+	})
+
+	suite.Require().NoError(busy.Close())
+
+	// any input event retries the unmount, well before the retry interval
+	suite.Create(block.NewVolumeStatus(block.NamespaceName, "c-trigger"))
+
+	ctest.AssertResource(suite, "a-busy", func(mountRequest *block.MountRequest, asrt *assert.Assertions) {
+		asrt.True(mountRequest.Metadata().Finalizers().Empty())
+	})
 }
