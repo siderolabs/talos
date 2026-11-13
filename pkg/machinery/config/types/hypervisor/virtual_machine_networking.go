@@ -75,6 +75,24 @@ type VirtualMachineInterface struct {
 	//     type: string
 	//     pattern: ^[0-9a-f:]+$
 	HardwareAddressConfig nethelpers.HardwareAddr `yaml:"hardwareAddr,omitempty"`
+	//   description: |
+	//     How the interface is attached to the host link.
+	//
+	//     `macvtap` puts a macvtap device in bridge mode on top of `link`. Guests on the same link
+	//     can reach each other, but the host cannot reach the guest through the link's own
+	//     addresses. `link` must not be a port of a bridge or a bond.
+	//
+	//     `bridge` adds a tap device to `link` as a bridge port, so the guest shares the bridge's
+	//     layer 2 segment with the host and the bridge's other ports. `link` must be a bridge.
+	//     Talos enables `bridge-nf-call-iptables` and `bridge-nf-call-ip6tables`, so bridged guest
+	//     traffic passes the host's ingress firewall: with `NetworkRuleConfig` ingress filtering
+	//     and a `block` default action, guest traffic arriving on the bridge ports is dropped.
+	//
+	//     Optional; defaults to `macvtap`.
+	//   values:
+	//     - macvtap
+	//     - bridge
+	AttachmentConfig hypervisorhelpers.VirtualMachineInterfaceAttachment `yaml:"attachment,omitempty"`
 }
 
 // IsZero implements yaml.IsZeroer.
@@ -108,6 +126,15 @@ func (i *VirtualMachineInterface) HardwareAddress() net.HardwareAddr {
 	return net.HardwareAddr(i.HardwareAddressConfig)
 }
 
+// Attachment implements config.VirtualMachineInterfaceConfig interface.
+func (i *VirtualMachineInterface) Attachment() hypervisorhelpers.VirtualMachineInterfaceAttachment {
+	if i.AttachmentConfig == hypervisorhelpers.VirtualMachineInterfaceAttachmentUnknown {
+		return hypervisorhelpers.VirtualMachineInterfaceAttachmentMacvtap
+	}
+
+	return i.AttachmentConfig
+}
+
 // Validate checks the interface and returns its name.
 func (i *VirtualMachineInterface) Validate(index int) (string, error) {
 	var validationErrors error
@@ -118,6 +145,12 @@ func (i *VirtualMachineInterface) Validate(index int) (string, error) {
 
 	validationErrors = errors.Join(validationErrors, validateLink(index, i.InterfaceLink))
 	validationErrors = errors.Join(validationErrors, validateHardwareAddress(index, net.HardwareAddr(i.HardwareAddressConfig)))
+
+	if !i.Attachment().IsAVirtualMachineInterfaceAttachment() {
+		validationErrors = errors.Join(validationErrors,
+			fmt.Errorf("networking.interfaces[%d]: unsupported attachment %q, expected %s", index, i.AttachmentConfig,
+				expectedValues(hypervisorhelpers.VirtualMachineInterfaceAttachmentStrings())))
+	}
 
 	return i.InterfaceName, validationErrors
 }

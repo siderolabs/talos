@@ -283,8 +283,9 @@ func TestVirtualMachineConfigMarshalUnmarshal(t *testing.T) {
 						InterfaceLink: "eth0",
 					},
 					{
-						InterfaceName: "net1",
-						InterfaceLink: "eth1",
+						InterfaceName:    "net1",
+						InterfaceLink:    "br0",
+						AttachmentConfig: hypervisorhelpers.VirtualMachineInterfaceAttachmentBridge,
 					},
 				}
 
@@ -992,6 +993,18 @@ func TestVirtualMachineConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "networking.interfaces[0]: hardwareAddr \"01:54:00:00:31:31\" must be a unicast address",
+		},
+		{
+			name: "unsupported attachment",
+			cfg: func() *hypervisor.VirtualMachineConfigV1Alpha1 {
+				c := validVirtualMachineConfig()
+				c.NetworkingConfig.InterfacesConfig = []hypervisor.VirtualMachineInterface{linkInterface("net0")}
+				c.NetworkingConfig.InterfacesConfig[0].AttachmentConfig = 42
+
+				return c
+			},
+
+			expectedErrors: "networking.interfaces[0]: unsupported attachment \"VirtualMachineInterfaceAttachment(42)\", expected macvtap or bridge",
 		},
 		{
 			name: "short hardware address",

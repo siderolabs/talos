@@ -231,6 +231,8 @@ message VirtualMachineInterfaceSpec {
   //
   // Empty when it is to be derived from the virtual machine and interface names.
   string hardware_addr = 3;
+  // Attachment is how the interface is attached to the host link: macvtap or bridge.
+  string attachment = 4;
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.

@@ -216,6 +216,8 @@ type VirtualMachineInterfaceConfig interface {
 	Link() string
 	// HardwareAddress is the address presented to the guest, empty when it is to be derived.
 	HardwareAddress() net.HardwareAddr
+	// Attachment is how the interface is attached to its host link.
+	Attachment() hypervisorhelpers.VirtualMachineInterfaceAttachment
 }
 
 // VirtualMachineGuestConfig defines the settings which apply inside the guest.
