@@ -23,7 +23,6 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 var errInjected = errors.New("injected")
@@ -99,17 +98,13 @@ var faultyTestHealthCheck = containers.ContainerHealthCheckSpec{
 	FailureThreshold: 1,
 }
 
-// seedRunningContainer creates a health-checked container with a running instance, and the CRI
-// containerd PID, so that every read of a reconcile is reached.
+// seedRunningContainer creates a health-checked container with a running instance, so that every
+// read of a reconcile is reached.
 func seedRunningContainer(t *testing.T, st state.State) {
 	t.Helper()
 
 	ctx := t.Context()
 	id := containers.InstanceID(faultyTestContainer, 0)
-
-	criPID := runtimeres.NewServicePID(criServiceID)
-	criPID.TypedSpec().PID = 1
-	require.NoError(t, st.Create(ctx, criPID))
 
 	spec := containers.NewContainerSpec(containers.NamespaceName, faultyTestContainer)
 	spec.TypedSpec().HealthCheck = faultyTestHealthCheck
@@ -152,11 +147,6 @@ func TestHealthReconcileErrors(t *testing.T) {
 			name:    "list instance statuses",
 			fault:   func(r *faultyRuntime) { r.failList = containers.ContainerInstanceStatusType },
 			wantErr: "failed to list instance statuses",
-		},
-		{
-			name:    "get runtime PID",
-			fault:   func(r *faultyRuntime) { r.failGet = runtimeres.ServicePIDType },
-			wantErr: "failed to get cri service PID",
 		},
 		{
 			name:    "get instance spec",

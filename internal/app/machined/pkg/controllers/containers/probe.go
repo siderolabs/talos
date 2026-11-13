@@ -31,13 +31,11 @@ const probeHost = "127.0.0.1"
 //
 // It is comparable: a change to any field means the running probe no longer matches.
 type ProbeTarget struct {
-	// RuntimePID is the host PID of the containerd which runs the task.
+	// PID of the container's task in machined's PID namespace, whose network namespace the probe
+	// connects from.
 	//
-	// The task PID is only meaningful in that containerd's PID namespace, which is not machined's
-	// when workload isolation is enabled.
-	RuntimePID uint32
-	// PID of the container's task, as seen by the containerd running it, whose network namespace the
-	// probe connects from.
+	// The runner already resolves the task PID out of the CRI containerd's PID namespace, which is a
+	// sandbox one when workload isolation is enabled.
 	PID uint32
 	// HostNetwork is true if the container shares the host network namespace.
 	HostNetwork bool
@@ -65,7 +63,7 @@ func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 		}), nopCloser{}, nil
 	}
 
-	netNS, err := ns.GetNS(netNSPath(target.RuntimePID, target.PID))
+	netNS, err := ns.GetNS(netNSPath(target.PID))
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to open network namespace of PID %d: %w", target.PID, err)
 	}
@@ -73,13 +71,9 @@ func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 	return NewProbeWithDialer(target.HealthCheck, netNSDialer(netNS)), netNS, nil
 }
 
-// netNSPath returns the path of the network namespace of pid, as seen by the process runtimePID.
-//
-// It goes through the procfs mounted in runtimePID's mount namespace: with workload isolation that
-// is the procfs of the sandbox PID namespace the task PID belongs to, and without it it is the host
-// one. machined's own /proc would resolve a sandbox PID to a missing or an unrelated process.
-func netNSPath(runtimePID, pid uint32) string {
-	return fmt.Sprintf("/proc/%d/root/proc/%d/ns/net", runtimePID, pid)
+// netNSPath returns the path of the network namespace of pid, a PID in machined's PID namespace.
+func netNSPath(pid uint32) string {
+	return fmt.Sprintf("/proc/%d/ns/net", pid)
 }
 
 type nopCloser struct{}

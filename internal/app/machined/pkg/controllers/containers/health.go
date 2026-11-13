@@ -19,7 +19,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // HealthController runs the configured health checks against running container instances.
@@ -57,12 +56,6 @@ func (ctrl *HealthController) Inputs() []controller.Input {
 		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceStatusType,
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: runtimeres.NamespaceName,
-			Type:      runtimeres.ServicePIDType,
-			ID:        optional.Some(criServiceID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -197,18 +190,8 @@ func (ctrl *HealthController) desiredTargets(ctx context.Context, reader control
 
 	desired := map[string]desiredProbe{}
 
-	runtimePID, err := safe.ReaderGetByID[*runtimeres.ServicePID](ctx, reader, criServiceID)
-	if err != nil {
-		if state.IsNotFoundError(err) {
-			// The task PIDs cannot be resolved without it; it is back before any task runs again.
-			return desired, nil
-		}
-
-		return nil, fmt.Errorf("failed to get %s service PID: %w", criServiceID, err)
-	}
-
 	for instanceStatus := range instanceStatuses.All() {
-		probe, ok, err := ctrl.desiredTarget(ctx, reader, instanceStatus, uint32(runtimePID.TypedSpec().PID)) //nolint:gosec // PIDs are positive.
+		probe, ok, err := ctrl.desiredTarget(ctx, reader, instanceStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -223,7 +206,7 @@ func (ctrl *HealthController) desiredTargets(ctx context.Context, reader control
 
 // desiredTarget returns the probe which should be running for an instance, if any.
 func (ctrl *HealthController) desiredTarget(
-	ctx context.Context, reader controller.Reader, instanceStatus *containers.ContainerInstanceStatus, runtimePID uint32,
+	ctx context.Context, reader controller.Reader, instanceStatus *containers.ContainerInstanceStatus,
 ) (desiredProbe, bool, error) {
 	id := instanceStatus.Metadata().ID()
 	status := instanceStatus.TypedSpec()
@@ -262,7 +245,6 @@ func (ctrl *HealthController) desiredTarget(
 	return desiredProbe{
 		containerID: status.ContainerID,
 		target: ProbeTarget{
-			RuntimePID:  runtimePID,
 			PID:         status.PID,
 			HostNetwork: instanceSpec.TypedSpec().Network.HostNetwork,
 			HealthCheck: healthCheck,

@@ -361,7 +361,6 @@ func TestNewProbeMissingNetNS(t *testing.T) {
 	t.Parallel()
 
 	_, _, err := containersctrl.NewProbe(containersctrl.ProbeTarget{
-		RuntimePID: uint32(os.Getpid()), //nolint:gosec // PIDs fit in 32 bits.
 		// Above the kernel's PID limit, so never a live process.
 		PID: math.MaxUint32,
 		HealthCheck: containers.ContainerHealthCheckSpec{
@@ -558,8 +557,6 @@ func TestNewProbeNetNS(t *testing.T) {
 			t.Parallel()
 
 			probe, closer, err := containersctrl.NewProbe(containersctrl.ProbeTarget{
-				// Itself as the runtime: its /proc is the one the thread ID belongs to.
-				RuntimePID:  uint32(os.Getpid()), //nolint:gosec // PIDs fit in 32 bits.
 				PID:         tid,
 				HealthCheck: test.healthCheck,
 			})
@@ -579,10 +576,10 @@ func TestNewProbeNetNS(t *testing.T) {
 	}
 }
 
-// TestNetNSPath covers resolving the task PID through the runtime's procfs: with workload isolation
-// the task PID belongs to the sandbox PID namespace, which machined's own /proc does not show.
+// TestNetNSPath covers the task PID being looked up in machined's own procfs: the runner has already
+// resolved it into machined's PID namespace, even with workload isolation.
 func TestNetNSPath(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "/proc/7/root/proc/42/ns/net", containersctrl.NetNSPath(7, 42))
+	assert.Equal(t, "/proc/42/ns/net", containersctrl.NetNSPath(42))
 }
