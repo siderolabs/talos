@@ -149,6 +149,13 @@ enum HypervisorhelpersVirtualMachineFirmwareType {
   VIRTUAL_MACHINE_FIRMWARE_TYPE_BIOS = 2;
 }
 
+// HypervisorhelpersVirtualMachineInterfaceAttachment is how a guest interface is attached to its host link.
+enum HypervisorhelpersVirtualMachineInterfaceAttachment {
+  VIRTUAL_MACHINE_INTERFACE_ATTACHMENT_UNKNOWN = 0;
+  VIRTUAL_MACHINE_INTERFACE_ATTACHMENT_MACVTAP = 1;
+  VIRTUAL_MACHINE_INTERFACE_ATTACHMENT_BRIDGE = 2;
+}
+
 // HypervisorhelpersVirtualMachineNUMAMode is how guest memory is bound to the host NUMA nodes it is placed on.
 enum HypervisorhelpersVirtualMachineNUMAMode {
   VIRTUAL_MACHINE_NUMA_MODE_UNKNOWN = 0;

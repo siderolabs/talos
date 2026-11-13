@@ -491,6 +491,7 @@ link: eth0
 |`hardwareAddr` |HardwareAddr |Hardware (MAC) address presented to the guest.<br><br>Defaults to an address derived from the virtual machine and interface names, which is<br>stable for as long as both keep their names. Set it to pin the address a DHCP server<br>reserves against, or to keep one across a rename.<br><br>It must be a unicast address, and is not allowed to be all zeroes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 hardwareAddr: 52:54:00:12:34:56
 {{< /highlight >}}</details> | |
+|`attachment` |VirtualMachineInterfaceAttachment |How the interface is attached to the host link.<br><br>`macvtap` puts a macvtap device in bridge mode on top of `link`. Guests on the same link<br>can reach each other, but the host cannot reach the guest through the link's own<br>addresses. `link` must not be a port of a bridge or a bond.<br><br>`bridge` adds a tap device to `link` as a bridge port, so the guest shares the bridge's<br>layer 2 segment with the host and the bridge's other ports. `link` must be a bridge.<br>Talos enables `bridge-nf-call-iptables` and `bridge-nf-call-ip6tables`, so bridged guest<br>traffic passes the host's ingress firewall: with `NetworkRuleConfig` ingress filtering<br>and a `block` default action, guest traffic arriving on the bridge ports is dropped.<br><br>Optional; defaults to `macvtap`.  |`macvtap`<br />`bridge`<br /> |
 
 
 

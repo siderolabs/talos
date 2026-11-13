@@ -373,7 +373,7 @@ func (suite *VirtualMachineSuite) assertVirtualMachineInterfaces(ctx context.Con
 
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), name,
 		func(spec *hypervisor.VirtualMachineSpec, asrt *assert.Assertions) {
-			asrt.Equal([]hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: link}}, spec.TypedSpec().Interfaces)
+			asrt.Equal([]hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: link, Attachment: "macvtap"}}, spec.TypedSpec().Interfaces)
 		},
 	)
 }

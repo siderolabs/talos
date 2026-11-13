@@ -992,6 +992,13 @@ var errLinkNotFound = errors.New("host link not found")
 // errLinkNotEthernet marks a host link that exists but cannot carry a macvtap.
 var errLinkNotEthernet = errors.New("host link is not an Ethernet link")
 
+// errLinkEnslaved marks a host link that is a port of another link, and so cannot carry a
+// macvtap: its master already owns the traffic it receives.
+var errLinkEnslaved = errors.New("host link is a port of another link")
+
+// errLinkNotBridge marks a host link a bridge attachment cannot add a port to.
+var errLinkNotBridge = errors.New("host link is not a bridge")
+
 // errDiskNotReady marks a render waiting on a disk that has not been resolved or provisioned yet.
 var errDiskNotReady = errors.New("not ready")
 
@@ -1004,32 +1011,46 @@ var errDiskUnsupported = diskhelpers.ErrDiskUnsupported
 // cannot satisfy is a permanent obstacle to report, but still no reason to restart the controller.
 func isHeldBack(err error) bool {
 	return errors.Is(err, errLinkNotFound) || errors.Is(err, errLinkNotEthernet) ||
+		errors.Is(err, errLinkEnslaved) || errors.Is(err, errLinkNotBridge) ||
 		errors.Is(err, errDiskNotReady) || errors.Is(err, errDiskUnsupported) || errors.Is(err, vmprofile.ErrNotReady)
 }
 
 // hostLinks carries what an interface needs to know about the host's links: how to resolve a
-// name or alias, and whether what it resolves to can carry a macvtap.
+// name or alias, and whether what it resolves to can carry the requested attachment.
 type hostLinks struct {
 	resolver *network.LinkResolver
-	types    map[string]nethelpers.LinkType
+	links    map[string]hostLink
+}
+
+// hostLink is what attachment checks need of a single host link.
+type hostLink struct {
+	typ         nethelpers.LinkType
+	kind        string
+	slaveKind   string
+	masterIndex uint32
 }
 
 // newHostLinks indexes the observed host links for interface resolution.
 func newHostLinks(links safe.List[*network.LinkStatus]) hostLinks {
-	types := make(map[string]nethelpers.LinkType, links.Len())
+	index := make(map[string]hostLink, links.Len())
 
 	for link := range links.All() {
-		types[link.Metadata().ID()] = link.TypedSpec().Type
+		index[link.Metadata().ID()] = hostLink{
+			typ:         link.TypedSpec().Type,
+			kind:        link.TypedSpec().Kind,
+			slaveKind:   link.TypedSpec().SlaveKind,
+			masterIndex: link.TypedSpec().MasterIndex,
+		}
 	}
 
 	return hostLinks{
 		resolver: network.NewLinkResolver(links.All),
-		types:    types,
+		links:    index,
 	}
 }
 
 // resolveInterfaceLinks resolves the host link of each interface, in order. It fails on the
-// first link the host does not have, or has but cannot attach a macvtap to: rendering fewer
+// first link the host does not have, or has but cannot attach the interface to: rendering fewer
 // interfaces than requested would silently alter the VM definition, so the whole render fails
 // and VirtualMachineDomainSpecController withdraws the power intent.
 //
@@ -1043,16 +1064,39 @@ func resolveInterfaceLinks(name string, interfaces []hypervisor.VirtualMachineIn
 			return nil, fmt.Errorf("virtual machine %q: interface %q: %w: %q", name, iface.Name, errLinkNotFound, iface.Link)
 		}
 
-		// Only the type is checked, not the kind: a bond or a VLAN is as good a macvtap lower
-		// link as a physical interface, while a loopback or an L3 tunnel is not one at all.
-		if links.types[link] != nethelpers.LinkEther {
-			return nil, fmt.Errorf("virtual machine %q: interface %q: %w: %q", name, iface.Name, errLinkNotEthernet, iface.Link)
+		if err := checkInterfaceLink(iface, links.links[link]); err != nil {
+			return nil, fmt.Errorf("virtual machine %q: interface %q: %w: %q", name, iface.Name, err, iface.Link)
 		}
 
 		resolved = append(resolved, link)
 	}
 
 	return resolved, nil
+}
+
+// checkInterfaceLink reports whether link can carry the interface's attachment.
+func checkInterfaceLink(iface hypervisor.VirtualMachineInterfaceSpec, link hostLink) error {
+	if iface.Attachment == hypervisorhelpers.VirtualMachineInterfaceAttachmentBridge.String() {
+		if link.kind != network.LinkKindBridge {
+			return errLinkNotBridge
+		}
+
+		return nil
+	}
+
+	// Only the type is checked, not the kind: a bond or a VLAN is as good a macvtap lower
+	// link as a physical interface, while a loopback or an L3 tunnel is not one at all.
+	if link.typ != nethelpers.LinkEther {
+		return errLinkNotEthernet
+	}
+
+	// A bridge or bond port has its receive handler taken by its master, so a macvtap on it
+	// fails at domain start. A VRF port does not: VRF steers traffic without one.
+	if link.masterIndex != 0 && link.slaveKind != network.LinkKindVRF {
+		return errLinkEnslaved
+	}
+
+	return nil
 }
 
 func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.VirtualMachineInterfaceSpec, links hostLinks) ([]libvirtxml.DomainInterface, error) {
@@ -1068,15 +1112,7 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 			MAC: &libvirtxml.DomainInterfaceMAC{
 				Address: interfaceHardwareAddr(name, iface),
 			},
-			// A macvtap in bridge mode lets guests on the same lower link reach each other, and
-			// a host macvlan in bridge mode on the same parent reach the guest. The lower link's
-			// own address cannot: macvtap traffic never loops back to its parent.
-			Source: &libvirtxml.DomainInterfaceSource{
-				Direct: &libvirtxml.DomainInterfaceSourceDirect{
-					Dev:  resolved[i],
-					Mode: "bridge",
-				},
-			},
+			Source: renderInterfaceSource(iface, resolved[i]),
 			Model: &libvirtxml.DomainInterfaceModel{
 				Type: "virtio",
 			},
@@ -1089,6 +1125,28 @@ func renderVirtualMachineInterfaces(name string, interfaces []hypervisor.Virtual
 	}
 
 	return result, nil
+}
+
+// renderInterfaceSource attaches an interface to its resolved host link.
+func renderInterfaceSource(iface hypervisor.VirtualMachineInterfaceSpec, link string) *libvirtxml.DomainInterfaceSource {
+	if iface.Attachment == hypervisorhelpers.VirtualMachineInterfaceAttachmentBridge.String() {
+		// libvirt creates a tap device and adds it to the bridge as a port.
+		return &libvirtxml.DomainInterfaceSource{
+			Bridge: &libvirtxml.DomainInterfaceSourceBridge{
+				Bridge: link,
+			},
+		}
+	}
+
+	// A macvtap in bridge mode lets guests on the same lower link reach each other, and
+	// a host macvlan in bridge mode on the same parent reach the guest. The lower link's
+	// own address cannot: macvtap traffic never loops back to its parent.
+	return &libvirtxml.DomainInterfaceSource{
+		Direct: &libvirtxml.DomainInterfaceSourceDirect{
+			Dev:  link,
+			Mode: "bridge",
+		},
+	}
 }
 
 // interfaceAliasPrefix marks a device alias as user-assigned; libvirt ignores other aliases.

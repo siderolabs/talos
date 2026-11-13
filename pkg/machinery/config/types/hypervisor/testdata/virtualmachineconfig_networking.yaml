@@ -13,4 +13,5 @@ networking:
         - name: net0
           link: eth0
         - name: net1
-          link: eth1
+          link: br0
+          attachment: bridge

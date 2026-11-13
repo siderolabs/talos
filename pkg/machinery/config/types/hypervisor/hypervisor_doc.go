@@ -822,6 +822,17 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 				Description: "Hardware (MAC) address presented to the guest.\n\nDefaults to an address derived from the virtual machine and interface names, which is\nstable for as long as both keep their names. Set it to pin the address a DHCP server\nreserves against, or to keep one across a rename.\n\nIt must be a unicast address, and is not allowed to be all zeroes.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Hardware (MAC) address presented to the guest." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "attachment",
+				Type:        "VirtualMachineInterfaceAttachment",
+				Note:        "",
+				Description: "How the interface is attached to the host link.\n\n`macvtap` puts a macvtap device in bridge mode on top of `link`. Guests on the same link\ncan reach each other, but the host cannot reach the guest through the link's own\naddresses. `link` must not be a port of a bridge or a bond.\n\n`bridge` adds a tap device to `link` as a bridge port, so the guest shares the bridge's\nlayer 2 segment with the host and the bridge's other ports. `link` must be a bridge.\nTalos enables `bridge-nf-call-iptables` and `bridge-nf-call-ip6tables`, so bridged guest\ntraffic passes the host's ingress firewall: with `NetworkRuleConfig` ingress filtering\nand a `block` default action, guest traffic arriving on the bridge ports is dropped.\n\nOptional; defaults to `macvtap`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How the interface is attached to the host link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"macvtap",
+					"bridge",
+				},
+			},
 		},
 	}
 

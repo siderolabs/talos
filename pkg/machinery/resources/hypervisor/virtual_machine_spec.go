@@ -91,6 +91,8 @@ type VirtualMachineInterfaceSpec struct {
 	//
 	// Empty when it is to be derived from the virtual machine and interface names.
 	HardwareAddr string `yaml:"hardwareAddr,omitempty" protobuf:"3"`
+	// Attachment is how the interface is attached to the host link: macvtap or bridge.
+	Attachment string `yaml:"attachment" protobuf:"4"`
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.

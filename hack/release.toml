@@ -224,6 +224,28 @@ After a reboot, the virtual machine follows the `powerState` of its `VirtualMach
 The commands require the `os:admin` or `os:operator` role.
 """
 
+    [notes.vm_bridge_attachment]
+        title = "Virtual Machine Bridge Attachment"
+        description = """\
+A virtual machine interface can now be attached to a Linux bridge as a port, instead of only through a macvtap device:
+
+```yaml
+networking:
+  interfaces:
+    - name: net0
+      link: br0
+      attachment: bridge
+```
+
+The guest then shares the bridge's layer 2 segment with the host, which can reach the guest through the bridge's addresses.
+`attachment` defaults to `macvtap`, so existing configurations are unchanged.
+
+Bridged guest traffic passes the host's ingress firewall: with `NetworkRuleConfig` ingress filtering and a `block` default action,
+guest traffic arriving on the bridge ports is dropped.
+
+A macvtap interface on a bridge or bond port is now rejected before the domain starts, rather than failing at domain start.
+"""
+
     [notes.cpu_scaling_config]
         title = "CPU Scaling Configuration"
         description = """\

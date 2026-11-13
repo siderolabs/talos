@@ -350,8 +350,8 @@ func (suite *VirtualMachineProjectionSuite) TestProjectsRequiredAndOptionalInten
 				},
 			},
 			Interfaces: []hypervisor.VirtualMachineInterfaceSpec{
-				{Name: "net0", Link: "eth0"},
-				{Name: "net1", Link: "uplink"},
+				{Name: "net0", Link: "eth0", Attachment: "macvtap"},
+				{Name: "net1", Link: "uplink", Attachment: "macvtap"},
 			},
 			Guest: hypervisor.VirtualMachineGuestSpec{
 				Agent: hypervisor.VirtualMachineAgentSpec{Enabled: true},
@@ -1128,6 +1128,71 @@ func (suite *VirtualMachineSpecSuite) TestNonEthernetLinkIsRejected() {
 	suite.Create(config.NewMachineConfig(cfg))
 
 	suite.assertWaitingForLink(`virtual machine "non-ethernet-link": interface "net0": host link is not an Ethernet link: "lo"`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
+}
+
+func (suite *VirtualMachineSpecSuite) createBridgeLinks() {
+	bridge := network.NewLinkStatus(network.NamespaceName, "br0")
+	bridge.TypedSpec().Type = nethelpers.LinkEther
+	bridge.TypedSpec().Kind = network.LinkKindBridge
+	bridge.TypedSpec().Index = 10
+	suite.Create(bridge)
+
+	port := network.NewLinkStatus(network.NamespaceName, "eth1")
+	port.TypedSpec().Type = nethelpers.LinkEther
+	port.TypedSpec().MasterIndex = 10
+	port.TypedSpec().SlaveKind = network.LinkKindBridge
+	suite.Create(port)
+}
+
+// A bridge attachment adds a tap port to the bridge; macvtap interfaces of the same virtual machine
+// are unaffected.
+func (suite *VirtualMachineSpecSuite) TestBridgeAttachment() {
+	suite.createLink("eth0", "")
+	suite.createBridgeLinks()
+
+	doc := newVirtualMachine("interfaces-bridge")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "eth0"},
+		{InterfaceName: "net1", InterfaceLink: "br0", AttachmentConfig: hypervisorhelpers.VirtualMachineInterfaceAttachmentBridge},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertDomain(doc.Name(), "interfaces-bridge")
+}
+
+func (suite *VirtualMachineSpecSuite) TestBridgeAttachmentNeedsBridge() {
+	suite.logs.TakeAll()
+	suite.createLink("eth0", "")
+
+	doc := newVirtualMachine("bridge-on-ethernet")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "eth0", AttachmentConfig: hypervisorhelpers.VirtualMachineInterfaceAttachmentBridge},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertWaitingForLink(`virtual machine "bridge-on-ethernet": interface "net0": host link is not a bridge: "eth0"`)
+	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
+}
+
+// A macvtap on a bridge port would fail at domain start: the bridge owns the port's traffic.
+func (suite *VirtualMachineSpecSuite) TestMacvtapOnBridgePortIsRejected() {
+	suite.logs.TakeAll()
+	suite.createBridgeLinks()
+
+	doc := newVirtualMachine("macvtap-on-port")
+	doc.NetworkingConfig.InterfacesConfig = []hypervisorcfg.VirtualMachineInterface{
+		{InterfaceName: "net0", InterfaceLink: "eth1"},
+	}
+	cfg, err := container.New(doc)
+	suite.Require().NoError(err)
+	suite.Create(config.NewMachineConfig(cfg))
+
+	suite.assertWaitingForLink(`virtual machine "macvtap-on-port": interface "net0": host link is a port of another link: "eth1"`)
 	ctest.AssertNoResource[*hypervisor.VirtualMachineDomainSpec](suite, doc.Name())
 }
 
