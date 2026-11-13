@@ -121,6 +121,7 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 			CPU: &cgroup2.CPU{
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupExtensionsMillicores))),
 			},
+			Pids: workloadRootPids(),
 		}
 	case constants.CgroupInstaller:
 		return &cgroup2.Resources{

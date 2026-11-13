@@ -20,7 +20,7 @@ import (
 func TestWorkloadRootsEnablePidsUnlimited(t *testing.T) {
 	t.Parallel()
 
-	for _, name := range []string{constants.CgroupTalosContainersRoot, constants.CgroupVirtualMachines} {
+	for _, name := range []string{constants.CgroupTalosContainersRoot, constants.CgroupVirtualMachines, constants.CgroupExtensions} {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
