@@ -46,8 +46,8 @@ func (ctrl *MountController) deviceHolders(volumeStatus *block.VolumeStatus) []s
 }
 
 // deviceUsers returns, per raw volume ID, the containers with a live instance using it.
-func (ctrl *MountController) deviceUsers(ctx context.Context, runtime controller.Runtime) (map[string]map[string]struct{}, error) {
-	containerInstanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, runtime)
+func (ctrl *MountController) deviceUsers(ctx context.Context, reader controller.Reader) (map[string]map[string]struct{}, error) {
+	containerInstanceStatuses, err := safe.ReaderListAll[*containers.ContainerInstanceStatus](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance statuses: %w", err)
 	}
@@ -60,7 +60,7 @@ func (ctrl *MountController) deviceUsers(ctx context.Context, runtime controller
 		}
 	}
 
-	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, runtime)
+	containerInstanceSpecs, err := safe.ReaderListAll[*containers.ContainerInstanceSpec](ctx, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list instance specs: %w", err)
 	}
@@ -263,8 +263,8 @@ func (ctrl *MountController) releaseDevices(
 }
 
 // heldDevices counts the raw volume holds of this controller.
-func (ctrl *MountController) heldDevices(ctx context.Context, runtime controller.Runtime) (int, error) {
-	volumeStatuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, runtime,
+func (ctrl *MountController) heldDevices(ctx context.Context, reader controller.Reader) (int, error) {
+	volumeStatuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, reader,
 		state.WithLabelQuery(resource.LabelExists(block.RawVolumeLabel)),
 	)
 	if err != nil {

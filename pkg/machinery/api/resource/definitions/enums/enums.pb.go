@@ -5188,7 +5188,7 @@ const (
 	ContainersContainerState_CONTAINER_STATE_EXITED    ContainersContainerState = 4
 	ContainersContainerState_CONTAINER_STATE_BACKOFF   ContainersContainerState = 5
 	ContainersContainerState_CONTAINER_STATE_STOPPING  ContainersContainerState = 6
-	ContainersContainerState_CONTAINER_STATE_COMPLETED ContainersContainerState = 7
+	ContainersContainerState_CONTAINER_STATE_SUCCEEDED ContainersContainerState = 7
 	ContainersContainerState_CONTAINER_STATE_FAILED    ContainersContainerState = 8
 )
 
@@ -5202,7 +5202,7 @@ var (
 		4: "CONTAINER_STATE_EXITED",
 		5: "CONTAINER_STATE_BACKOFF",
 		6: "CONTAINER_STATE_STOPPING",
-		7: "CONTAINER_STATE_COMPLETED",
+		7: "CONTAINER_STATE_SUCCEEDED",
 		8: "CONTAINER_STATE_FAILED",
 	}
 	ContainersContainerState_value = map[string]int32{
@@ -5213,7 +5213,7 @@ var (
 		"CONTAINER_STATE_EXITED":    4,
 		"CONTAINER_STATE_BACKOFF":   5,
 		"CONTAINER_STATE_STOPPING":  6,
-		"CONTAINER_STATE_COMPLETED": 7,
+		"CONTAINER_STATE_SUCCEEDED": 7,
 		"CONTAINER_STATE_FAILED":    8,
 	}
 )
@@ -6623,7 +6623,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x16CONTAINER_STATE_EXITED\x10\x04\x12\x1b\n" +
 	"\x17CONTAINER_STATE_BACKOFF\x10\x05\x12\x1c\n" +
 	"\x18CONTAINER_STATE_STOPPING\x10\x06\x12\x1d\n" +
-	"\x19CONTAINER_STATE_COMPLETED\x10\a\x12\x1a\n" +
+	"\x19CONTAINER_STATE_SUCCEEDED\x10\a\x12\x1a\n" +
 	"\x16CONTAINER_STATE_FAILED\x10\b*\x94\x01\n" +
 	"\x19ContainersContainerHealth\x12\x1c\n" +
 	"\x18CONTAINER_HEALTH_PENDING\x10\x00\x12\x1c\n" +

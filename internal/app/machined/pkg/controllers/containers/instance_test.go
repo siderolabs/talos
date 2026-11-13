@@ -19,6 +19,7 @@ import (
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -469,6 +470,73 @@ func (suite *InstanceSuite) TestGatesOnNetworkAndTime() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), timeStatus))
 
 	suite.assertInstance(0)
+}
+
+// TestGatesOnHealthCheckedDependency covers dependsOn.containers on a container with a health check:
+// its process running is not enough, its check has to pass; once it has, there is no stability
+// window on top.
+func (suite *InstanceSuite) TestGatesOnHealthCheckedDependency() {
+	const dependency = "db"
+
+	// No image status for the dependency: this suite has no RuntimeController, so its instance and
+	// status are faked below instead.
+	suite.createNamedSpec(dependency, func(spec *containers.ContainerSpecSpec) {
+		spec.HealthCheck = containers.ContainerHealthCheckSpec{Kind: string(config.ContainerHealthCheckKindTCP), Port: 5432}
+	})
+
+	dependencyInstanceStatus := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(dependency, 0))
+	dependencyInstanceStatus.TypedSpec().ContainerID = dependency
+	dependencyInstanceStatus.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+	dependencyInstanceStatus.TypedSpec().StartedAt = time.Now()
+	dependencyInstanceStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, dependency)
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), dependencyInstanceStatus))
+
+	// What StatusController writes while the check has not passed yet.
+	dependencyStatus := containers.NewContainerStatus(containers.NamespaceName, dependency)
+	dependencyStatus.TypedSpec().State = containers.ContainerStateRunning
+	dependencyStatus.TypedSpec().Health = containers.ContainerHealthPending
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), dependencyStatus))
+
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.DependsOn.Containers = []containers.ContainerDependencySpec{{Name: dependency}}
+	})
+	suite.markImageReady()
+
+	suite.tick()
+	suite.assertNoInstance(0)
+	suite.assertWaitingFor("container: " + dependency)
+
+	// ContainerStatus reporting healthy is not proof of a passed check: it may still be the health the
+	// dependency had before its check was enabled. Without a passed check the window applies.
+	ctest.UpdateWithConflicts(suite, dependencyStatus, func(res *containers.ContainerStatus) error {
+		res.TypedSpec().Health = containers.ContainerHealthHealthy
+
+		return nil
+	})
+
+	md := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(testContainer, 0)).Metadata()
+	ctx, st := suite.Ctx(), suite.State()
+
+	suite.Never(func() bool {
+		_, err := st.Get(ctx, md)
+
+		return err == nil
+	}, 300*time.Millisecond, 10*time.Millisecond)
+
+	// What HealthController publishes once the check of the running instance has passed.
+	healthStatus := containers.NewContainerHealthStatus(containers.NamespaceName, containers.InstanceID(dependency, 0))
+	healthStatus.TypedSpec().Healthy = true
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), healthStatus))
+
+	// Well within the stability window the dependency only just started in: had the window applied,
+	// the instance would not exist yet.
+	suite.Eventually(func() bool {
+		_, err := st.Get(ctx, md)
+
+		return err == nil
+	}, 2*time.Second, 10*time.Millisecond)
+
+	suite.assertWaitingFor()
 }
 
 // assertNetworkConditionStarts pins one dependsOn.network condition to the network.Status field it
@@ -1226,7 +1294,7 @@ func (suite *InstanceSuite) TestNeverIsNotRestarted() {
 	suite.finishInstance(0, 0)
 
 	suite.assertNotRestarted(0)
-	suite.assertOutcome(containers.ContainerStateCompleted)
+	suite.assertOutcome(containers.ContainerStateSucceeded)
 }
 
 // TestRefusedIsReplaced covers an instance Talos refused to start: it is replaced right away despite
@@ -1369,7 +1437,7 @@ func (suite *InstanceSuite) TestStopTimeoutChangeKeepsOutcome() {
 	suite.updateSpec(func(spec *containers.ContainerSpecSpec) { spec.StopTimeout = time.Minute })
 
 	suite.assertNotRestarted(0)
-	suite.assertOutcome(containers.ContainerStateCompleted)
+	suite.assertOutcome(containers.ContainerStateSucceeded)
 }
 
 // TestDependsOnChangeKeepsOutcome covers a dependsOn change of a container which isn't restarted: it
@@ -1391,7 +1459,7 @@ func (suite *InstanceSuite) TestDependsOnChangeKeepsOutcome() {
 	suite.updateSpec(func(spec *containers.ContainerSpecSpec) { spec.DependsOn.Time = true })
 
 	suite.assertNotRestarted(0)
-	suite.assertOutcome(containers.ContainerStateCompleted)
+	suite.assertOutcome(containers.ContainerStateSucceeded)
 }
 
 // TestStopTimeoutChangeKeepsRestartAccounting covers a stop timeout change of a running container: the

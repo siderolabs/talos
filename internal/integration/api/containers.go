@@ -74,6 +74,12 @@ const (
 	//
 	// Note: this image is part of the default image cache in `talosctl image integration`.
 	containerSocatImage = "docker.io/alpine/socat:1.8.1.3"
+
+	// containerGRPCHealthImage serves the gRPC health checking protocol, which nothing in the shell
+	// images can: its grpc-health-checking command answers grpc.health.v1.Health/Check on --port.
+	//
+	// Note: this image is part of the default image cache in `talosctl image integration`.
+	containerGRPCHealthImage = "registry.k8s.io/e2e-test-images/agnhost:2.61"
 )
 
 // containerStartTimeout covers an image pull on a cold node plus the controller chain.
@@ -408,7 +414,7 @@ func (suite *ContainersSuite) TestRestartPolicy() {
 				RestartPolicy: configcontainer.ContainerRestartPolicyNever,
 				RestartDelay:  new(restartDelay),
 			},
-			state: containers.ContainerStateCompleted,
+			state: containers.ContainerStateSucceeded,
 			runs:  1,
 		},
 		{
@@ -418,7 +424,7 @@ func (suite *ContainersSuite) TestRestartPolicy() {
 				RestartPolicy: configcontainer.ContainerRestartPolicyOnFailure,
 				RestartDelay:  new(restartDelay),
 			},
-			state: containers.ContainerStateCompleted,
+			state: containers.ContainerStateSucceeded,
 			runs:  1,
 		},
 		{
@@ -548,9 +554,9 @@ func (suite *ContainersSuite) TestDependsOnSucceeded() {
 			asrt.Contains(status.WaitingFor, "container: "+initName+" to succeed")
 		})
 
-	suite.assertContainerStatus(ctx, initName, "completed",
+	suite.assertContainerStatus(ctx, initName, "succeeded",
 		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
-			asrt.Equal(containers.ContainerStateCompleted, status.State, "error %q", status.Error)
+			asrt.Equal(containers.ContainerStateSucceeded, status.State, "error %q", status.Error)
 		})
 
 	suite.assertContainerRunning(ctx, name, "after "+initName+" succeeded")
@@ -1571,6 +1577,394 @@ func (suite *ContainersSuite) TestDependsOnFailingContainer() {
 		})
 }
 
+// healthCheckPort is the port the health check tests serve on, inside the container's own network
+// namespace, so it cannot collide with anything on the node.
+const healthCheckPort = 8080
+
+// httpServerCommand serves an empty 200 response on healthCheckPort, after waiting delay seconds.
+func httpServerCommand(delay int) string {
+	return httpServerCommandOn("", healthCheckPort, delay)
+}
+
+// httpServerCommandOn serves an empty 200 response on port, bound to bindAddress if it is not empty,
+// after waiting delay seconds.
+//
+// The printf command lives in an environment variable and socat only runs `eval $H`: socat parses
+// its own address strings, stripping quotes and expanding \r and \n before the shell sees them,
+// which would cut the response down to its first word.
+func httpServerCommandOn(bindAddress string, port, delay int) string {
+	listen := fmt.Sprintf("TCP-LISTEN:%d,fork,reuseaddr", port)
+	if bindAddress != "" {
+		listen += ",bind=" + bindAddress
+	}
+
+	return fmt.Sprintf(
+		`H='printf "HTTP/1.0 200 OK\r\nContent-Length: 0\r\n\r\n"'; export H; sleep %d; exec socat %s SYSTEM:'eval $H'`,
+		delay, listen,
+	)
+}
+
+// TestHealthCheck verifies that a health check decides the health of a running container: a passing
+// check makes it healthy, and a failing one degrades it without stopping it.
+//
+// Both containers run in the default network mode, so the probe has to reach into the container's
+// own network namespace.
+func (suite *ContainersSuite) TestHealthCheck() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	suite.Run("passing", func() {
+		ctx, name, _ := suite.setupContainer("health-passing")
+
+		doc := suite.socatContainer(name, httpServerCommand(0))
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				HTTPCheck:     &containercfg.ContainerHTTPHealthCheck{CheckPort: healthCheckPort, CheckPath: "/healthz"},
+				CheckInterval: 2 * time.Second,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		instanceID, _ := suite.assertContainerRunning(ctx, name, "healthy once the check passes")
+
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), instanceID,
+			func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+				asrt.True(status.TypedSpec().Healthy, "health check message %q", status.TypedSpec().Message)
+			})
+	})
+
+	suite.Run("failing", func() {
+		ctx, name, _ := suite.setupContainer("health-failing")
+
+		// Never listens on anything.
+		doc := suite.newContainer(name, containerPauseImage)
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				TCPCheck:              &containercfg.ContainerTCPHealthCheck{CheckPort: healthCheckPort},
+				CheckInterval:         time.Second,
+				CheckFailureThreshold: 2,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		suite.assertContainerStatus(ctx, name, "degraded by its failing check",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerStateRunning, status.State,
+					"state is %s (error %q)", status.State, status.Error)
+				asrt.Equal(containers.ContainerHealthDegraded, status.Health)
+				asrt.True(strings.HasPrefix(status.Error, "health check: "), "error is %q", status.Error)
+				asrt.Zero(status.RestartCount, "a failing health check restarted the container")
+			})
+	})
+
+	suite.Run("host-network", func() {
+		ctx, name, _ := suite.setupContainer("health-host")
+
+		// The host's loopback is shared with everything else on the node, so the port is picked at
+		// random from a range nothing in Talos listens on, and bound to loopback only.
+		port := 40000 + rand.Intn(10000)
+
+		doc := suite.socatContainer(name, httpServerCommandOn("127.0.0.1", port, 0))
+		doc.NetworkConfig = &containercfg.ContainerNetwork{
+			NetworkMode: configcontainer.ContainerNetworkModeHost,
+		}
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				HTTPCheck:     &containercfg.ContainerHTTPHealthCheck{CheckPort: uint16(port), CheckPath: "/healthz"}, //nolint:gosec // Below 50000.
+				CheckInterval: 2 * time.Second,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		instanceID, _ := suite.assertContainerRunning(ctx, name, "healthy once the check passes")
+
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), instanceID,
+			func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+				asrt.True(status.TypedSpec().Healthy, "health check message %q", status.TypedSpec().Message)
+			})
+	})
+
+	suite.Run("recovering", func() {
+		ctx, name, _ := suite.setupContainer("health-recovering")
+
+		// Fails its check for long enough to be degraded, then starts serving.
+		doc := suite.socatContainer(name, httpServerCommand(20))
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				TCPCheck:              &containercfg.ContainerTCPHealthCheck{CheckPort: healthCheckPort},
+				CheckInterval:         time.Second,
+				CheckFailureThreshold: 2,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		degraded := suite.assertContainerStatus(ctx, name, "degraded before it serves",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerStateRunning, status.State,
+					"state is %s (error %q)", status.State, status.Error)
+				asrt.Equal(containers.ContainerHealthDegraded, status.Health)
+			})
+
+		suite.assertContainerStatus(ctx, name, "healthy once it serves",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerHealthHealthy, status.Health)
+				asrt.Empty(status.Error)
+				asrt.Equal(degraded.PID, status.PID, "the container was restarted on its way back to healthy")
+				asrt.Zero(status.RestartCount, "the container was restarted on its way back to healthy")
+			})
+	})
+
+	suite.Run("retargeted", func() {
+		ctx, name, _ := suite.setupContainer("health-retargeted")
+
+		withCheckPort := func(port uint16) *containercfg.ContainerConfigV1Alpha1 {
+			doc := suite.socatContainer(name, httpServerCommand(0))
+			doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+				HealthCheckConfig: &containercfg.ContainerHealthCheck{
+					TCPCheck:              &containercfg.ContainerTCPHealthCheck{CheckPort: port},
+					CheckInterval:         time.Second,
+					CheckFailureThreshold: 2,
+				},
+			}
+
+			return doc
+		}
+
+		// Checks a port the container does not serve on.
+		suite.applyContainers(ctx, withCheckPort(healthCheckPort+1))
+
+		suite.assertContainerStatus(ctx, name, "degraded by checking the wrong port",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerStateRunning, status.State,
+					"state is %s (error %q)", status.State, status.Error)
+				asrt.Equal(containers.ContainerHealthDegraded, status.Health)
+			})
+
+		beforeID, before := suite.assertNewestInstance(ctx, name, "before the check is corrected",
+			func(status *containers.ContainerInstanceStatusSpec, asrt *assert.Assertions) bool {
+				return asrt.Equal(containers.ContainerInstancePhaseRunning, status.Phase,
+					"phase is %s (error %q)", status.Phase, status.Error) &&
+					asrt.NotZero(status.PID, "no PID reported")
+			})
+
+		suite.T().Logf("pointing the health check of container %q at the port it serves on", name)
+
+		suite.applyContainers(ctx, withCheckPort(healthCheckPort))
+
+		// The health check is not part of the instance: correcting it re-targets the probe of the
+		// running execution instead of replacing it.
+		afterID, after := suite.assertContainerRunning(ctx, name, "healthy after the check is corrected")
+
+		suite.Assert().Equal(beforeID, afterID, "the instance was replaced when only its health check changed")
+		suite.Assert().Equal(before.PID, after.PID, "the container was restarted when only its health check changed")
+	})
+
+	suite.Run("grpc-serving", func() {
+		ctx, name, _ := suite.setupContainer("health-grpc")
+
+		doc := suite.grpcHealthContainer(name)
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				GRPCCheck:     &containercfg.ContainerGRPCHealthCheck{CheckPort: healthCheckPort},
+				CheckInterval: 2 * time.Second,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		instanceID, _ := suite.assertContainerRunning(ctx, name, "healthy once the gRPC check passes")
+
+		rtestutils.AssertResource(ctx, suite.T(), suite.Client.State(), instanceID,
+			func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+				asrt.True(status.TypedSpec().Healthy, "health check message %q", status.TypedSpec().Message)
+			})
+	})
+
+	suite.Run("grpc-not-serving", func() {
+		ctx, name, _ := suite.setupContainer("health-grpc-not-serving")
+
+		// Answers every check, with NOT_SERVING from the start: unlike a closed port, this fails on
+		// the status the server reports rather than on the connection.
+		doc := suite.grpcHealthContainer(name, "--delay-unhealthy-sec", "0")
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				GRPCCheck:             &containercfg.ContainerGRPCHealthCheck{CheckPort: healthCheckPort},
+				CheckInterval:         time.Second,
+				CheckFailureThreshold: 2,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		suite.assertContainerStatus(ctx, name, "degraded by the status its server reports",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerStateRunning, status.State,
+					"state is %s (error %q)", status.State, status.Error)
+				asrt.Equal(containers.ContainerHealthDegraded, status.Health)
+				asrt.Contains(status.Error, "NOT_SERVING")
+			})
+	})
+
+	suite.Run("exited-while-degraded", func() {
+		ctx, name, _ := suite.setupContainer("health-exited")
+
+		// Never serves, and exits after long enough to have been degraded by its check.
+		doc := suite.shellContainer(name, "sleep 15; exit 4")
+		doc.LifecycleConfig = &containercfg.ContainerLifecycle{
+			HealthCheckConfig: &containercfg.ContainerHealthCheck{
+				TCPCheck:              &containercfg.ContainerTCPHealthCheck{CheckPort: healthCheckPort},
+				CheckInterval:         time.Second,
+				CheckFailureThreshold: 2,
+			},
+		}
+
+		suite.applyContainers(ctx, doc)
+
+		suite.assertContainerStatus(ctx, name, "degraded by its failing check",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerStateRunning, status.State,
+					"state is %s (error %q)", status.State, status.Error)
+				asrt.True(strings.HasPrefix(status.Error, "health check: "), "error is %q", status.Error)
+			})
+
+		// The check describes a probe that stopped with the execution: what is reported once it has
+		// exited is why it exited.
+		suite.assertContainerStatus(ctx, name, "exited",
+			func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+				asrt.Equal(containers.ContainerStateExited, status.State,
+					"state is %s (error %q)", status.State, status.Error)
+				asrt.Equal(int32(4), status.ExitCode)
+				asrt.False(strings.HasPrefix(status.Error, "health check: "),
+					"an exited container still reports its health check failure: %q", status.Error)
+			})
+	})
+}
+
+// TestDependsOnHealthCheck verifies that a container listing another in lifecycle.dependsOn.containers waits
+// for the dependency's health check to pass, not just for its process to be running.
+func (suite *ContainersSuite) TestDependsOnHealthCheck() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	ctx, base, node := suite.setupContainer("dependson-health")
+
+	dependency, waiter := base+"-dep", base+"-waiter"
+
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(
+			client.WithNode(context.Background(), node),
+			containercfg.ContainerConfigKind, dependency, waiter,
+		)
+	})
+
+	// Running for a while before it serves anything: long enough to see the waiter held back by the
+	// check rather than by the dependency's process.
+	dependencyDoc := suite.socatContainer(dependency, httpServerCommand(30))
+	dependencyDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		HealthCheckConfig: &containercfg.ContainerHealthCheck{
+			TCPCheck:      &containercfg.ContainerTCPHealthCheck{CheckPort: healthCheckPort},
+			CheckInterval: time.Second,
+			// Well past the 30 seconds before it serves: the dependency has to stay pending rather than
+			// turn degraded, or the pending state asserted below is only there for a few seconds.
+			CheckFailureThreshold: 100,
+		},
+	}
+
+	waiterDoc := suite.newContainer(waiter, containerPauseImage)
+	waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
+		},
+	}
+
+	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
+
+	suite.assertContainerStatus(ctx, dependency, "running, not yet passing its check",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateRunning, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthPending, status.Health)
+		})
+
+	suite.assertContainerStatus(ctx, waiter, "held on its dependency's health check",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Contains(status.WaitingFor, "container: "+dependency)
+		})
+
+	// Held for longer than the stability window a dependency without a check is trusted after, and
+	// still well inside the 30 seconds before the dependency serves: a gate that fell back to the
+	// window would let the waiter start here.
+	suite.assertNoInstanceFor(ctx, waiter, 10*time.Second)
+
+	suite.assertContainerRunning(ctx, dependency, "healthy once it serves")
+
+	suite.assertContainerRunning(ctx, waiter, "after its dependency's check passed")
+}
+
+// TestDependsOnDegradedContainer verifies that a dependency which is running but failing its health
+// check keeps the containers depending on it waiting, however long it has been running.
+func (suite *ContainersSuite) TestDependsOnDegradedContainer() {
+	if testing.Short() {
+		suite.T().Skip("skipping the test in short mode")
+	}
+
+	ctx, base, node := suite.setupContainer("dependson-degraded")
+
+	dependency, waiter := base+"-dep", base+"-waiter"
+
+	suite.T().Cleanup(func() {
+		suite.RemoveMachineConfigDocumentsByName(
+			client.WithNode(context.Background(), node),
+			containercfg.ContainerConfigKind, dependency, waiter,
+		)
+	})
+
+	// Never listens on anything, so its check fails for as long as it runs.
+	dependencyDoc := suite.newContainer(dependency, containerPauseImage)
+	dependencyDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		HealthCheckConfig: &containercfg.ContainerHealthCheck{
+			TCPCheck:              &containercfg.ContainerTCPHealthCheck{CheckPort: healthCheckPort},
+			CheckInterval:         time.Second,
+			CheckFailureThreshold: 2,
+		},
+	}
+
+	waiterDoc := suite.newContainer(waiter, containerPauseImage)
+	waiterDoc.LifecycleConfig = &containercfg.ContainerLifecycle{
+		DependsOnConfig: &containercfg.ContainerDependsOn{
+			ContainersConfig: []containercfg.ContainerDependency{{DependencyName: dependency}},
+		},
+	}
+
+	suite.applyContainers(ctx, dependencyDoc, waiterDoc)
+
+	suite.assertContainerStatus(ctx, dependency, "running, degraded by its check",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStateRunning, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Equal(containers.ContainerHealthDegraded, status.Health)
+		})
+
+	// Unlike a crash-looping dependency, this one stays up the whole time, so it is well past the
+	// stability window for most of it: only its failing check holds the waiter back.
+	suite.assertNoInstanceFor(ctx, waiter, 20*time.Second)
+
+	suite.assertContainerStatus(ctx, waiter, "held on its degraded dependency",
+		func(status *containers.ContainerStatusSpec, asrt *assert.Assertions) {
+			asrt.Equal(containers.ContainerStatePending, status.State,
+				"state is %s (error %q)", status.State, status.Error)
+			asrt.Contains(status.WaitingFor, "container: "+dependency)
+		})
+}
+
 // TestMultipleContainers verifies that containers declared side by side are independent of each other.
 func (suite *ContainersSuite) TestMultipleContainers() {
 	ctx, base, node := suite.setupContainer("multi")
@@ -2532,6 +2926,23 @@ func (suite *ContainersSuite) socatContainer(name, command string) *containercfg
 	doc := suite.newContainer(name, containerSocatImage)
 	doc.ContainerEntrypoint = []string{"/bin/sh", "-c"}
 	doc.ContainerArgs = []string{command}
+
+	return doc
+}
+
+// grpcHealthContainer builds a ContainerConfig document serving the gRPC health checking protocol on
+// healthCheckPort, with extraArgs passed on to agnhost's grpc-health-checking command.
+//
+// The image's entrypoint is agnhost itself, so only the arguments are set. Its HTTP control server
+// is moved off healthCheckPort, where it listens by default.
+func (suite *ContainersSuite) grpcHealthContainer(name string, extraArgs ...string) *containercfg.ContainerConfigV1Alpha1 {
+	doc := suite.newContainer(name, containerGRPCHealthImage)
+
+	doc.ContainerArgs = append([]string{
+		"grpc-health-checking",
+		"--port", strconv.Itoa(healthCheckPort),
+		"--http-port", strconv.Itoa(healthCheckPort + 1),
+	}, extraArgs...)
 
 	return doc
 }

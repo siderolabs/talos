@@ -18,7 +18,7 @@ const (
 	ContainerStateExited                          // exited
 	ContainerStateBackoff                         // backoff
 	ContainerStateStopping                        // stopping
-	ContainerStateCompleted                       // completed
+	ContainerStateSucceeded                       // succeeded
 	ContainerStateFailed                          // failed
 )
 
@@ -33,12 +33,32 @@ func (state ContainerState) Health(prev ContainerHealth) ContainerHealth {
 		return ContainerHealthPending
 	case ContainerStatePulling, ContainerStateStarting:
 		return ContainerHealthPulling
-	case ContainerStateRunning, ContainerStateCompleted:
+	case ContainerStateRunning, ContainerStateSucceeded:
 		return ContainerHealthHealthy
 	case ContainerStateExited, ContainerStateBackoff, ContainerStateFailed:
 		return ContainerHealthDegraded
 	case ContainerStateStopping:
 		return prev
+	default:
+		return ContainerHealthDegraded
+	}
+}
+
+// CheckedHealth is Health for a container which may have a health check configured.
+//
+// With a health check, running is not enough to be healthy: the check's outcome decides. No outcome
+// yet means no check has passed, nor have enough failed to call the container degraded: it is still
+// coming up, which is what pending says. Every other state maps exactly as Health does.
+func (state ContainerState) CheckedHealth(prev ContainerHealth, healthCheckEnabled bool, containerHealthStatus *ContainerHealthStatus) ContainerHealth {
+	if state != ContainerStateRunning || !healthCheckEnabled {
+		return state.Health(prev)
+	}
+
+	switch {
+	case containerHealthStatus == nil:
+		return ContainerHealthPending
+	case containerHealthStatus.TypedSpec().Healthy:
+		return ContainerHealthHealthy
 	default:
 		return ContainerHealthDegraded
 	}

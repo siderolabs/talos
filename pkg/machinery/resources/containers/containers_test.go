@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -98,6 +99,16 @@ func TestProtobufRoundTrip(t *testing.T) {
 			MaxRetries: new(uint32(3)),
 			Delay:      time.Second,
 			MaxDelay:   time.Minute,
+		},
+		HealthCheck: containers.ContainerHealthCheckSpec{
+			Kind:             string(config.ContainerHealthCheckKindHTTP),
+			Port:             8080,
+			Path:             "/healthz",
+			GRPCService:      "svc",
+			InitialDelay:     time.Second,
+			Interval:         10 * time.Second,
+			Timeout:          2 * time.Second,
+			FailureThreshold: 3,
 		},
 	}
 

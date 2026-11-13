@@ -676,6 +676,7 @@ var imageIntegrationCmd = &cobra.Command{
 			"docker.io/library/alpine:3.23",
 			constants.DebugNixyBoxImage,
 			"docker.io/library/nginx:latest",
+			"registry.k8s.io/e2e-test-images/agnhost:2.61",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
 			imageIntegrationCmdFlags.registryAndUser + "/talos:" +
