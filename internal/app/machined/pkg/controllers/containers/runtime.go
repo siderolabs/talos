@@ -75,7 +75,7 @@ type RuntimeController struct {
 
 	// Everything below outlives a single Run: see init.
 	instances map[string]*instanceRunState
-	notifyCh  chan struct{}
+	notifyCh  notifier
 	// instanceCtx parents the per-instance run goroutines.
 	instanceCtx context.Context //nolint:containedctx
 	taskRunner  TaskRunner
@@ -293,7 +293,7 @@ func (ctrl *RuntimeController) init(ctx context.Context) {
 	}
 
 	ctrl.instances = map[string]*instanceRunState{}
-	ctrl.notifyCh = make(chan struct{}, 1)
+	ctrl.notifyCh = newNotifier()
 
 	// Cancellation is what stops a container, so the instances are deliberately hung off a context
 	// that nothing cancels: stopping is driven explicitly instead, per instance when its spec tears
@@ -832,20 +832,10 @@ func (ctrl *RuntimeController) start(
 	// ctrl.taskRunner, and reading it from here would race with it.
 	taskRunner := ctrl.taskRunner
 
-	// notify wakes the controller's main loop without blocking. ctrl.notifyCh is single-slot and purely
-	// a coalescing "something changed, look again" signal: a full buffer already means a reconcile
-	// is pending, so a second send is redundant, and it must never block. Blocking here on a
-	// canceled or uncancelable context can deadlock the controller's shutdown: if the main loop has
-	// already returned via ctx.Done(), nothing will ever drain this channel again.
-	//
-	// It belongs to the controller rather than to one Run for the same reason as the map it wakes the
-	// loop to look at: an instance that exits just after a restart still has to reach the next loop.
-	notify := func() {
-		select {
-		case ctrl.notifyCh <- struct{}{}:
-		default:
-		}
-	}
+	// The notifier belongs to the controller rather than to one Run for the same reason as the map it
+	// wakes the loop to look at: an instance that exits just after a restart still has to reach the
+	// next loop.
+	notify := ctrl.notifyCh.notify
 
 	go func() {
 		var everStarted bool

@@ -184,7 +184,7 @@ func TestHealthReconcileErrors(t *testing.T) {
 			ctrl := &HealthController{
 				ProbeProvider: passingProbe,
 				probes:        map[string]*probeRun{},
-				notifyCh:      make(chan struct{}, 1),
+				notifyCh:      newNotifier(),
 				// The seeded outcome is of the configured check, as if from an earlier Run.
 				checks: map[string]containers.ContainerHealthCheckSpec{
 					containers.InstanceID(faultyTestContainer, 0): faultyTestHealthCheck,
@@ -244,7 +244,7 @@ func TestHealthCarriesOutcomeOfSameCheck(t *testing.T) {
 					}, nopCloser{}, nil
 				},
 				probes:   map[string]*probeRun{},
-				notifyCh: make(chan struct{}, 1),
+				notifyCh: newNotifier(),
 				checks:   test.remembered,
 			}
 
@@ -295,7 +295,7 @@ func TestHealthNotifyNeverBlocks(t *testing.T) {
 			}, nopCloser{}, nil
 		},
 		// Already full: a reconcile is due, and nothing drains it.
-		notifyCh: make(chan struct{}, 1),
+		notifyCh: newNotifier(),
 	}
 	ctrl.notifyCh <- struct{}{}
 

@@ -34,7 +34,7 @@ type HealthController struct {
 	ProbeProvider func(ProbeTarget) (Probe, io.Closer, error)
 
 	probes   map[string]*probeRun
-	notifyCh chan struct{}
+	notifyCh notifier
 
 	// Maps instance id to the healthcheck it was last probed with.
 	checks map[string]containers.ContainerHealthCheckSpec
@@ -83,7 +83,7 @@ func (ctrl *HealthController) Run(ctx context.Context, runtime controller.Runtim
 	}
 
 	ctrl.probes = map[string]*probeRun{}
-	ctrl.notifyCh = make(chan struct{}, 1)
+	ctrl.notifyCh = newNotifier()
 
 	if ctrl.checks == nil {
 		ctrl.checks = map[string]containers.ContainerHealthCheckSpec{}
@@ -327,17 +327,12 @@ func (ctrl *HealthController) start(
 	// An execution that already has an outcome is past its start-up: no reason to wait again.
 	waitInitialDelay := !run.decided
 
-	// Same coalescing wake-up as RuntimeController's: never blocks, a full slot already means a pass is due.
-	notify := func() {
-		select {
-		case ctrl.notifyCh <- struct{}{}:
-		default:
-		}
-	}
+	// Captured rather than read from ctrl inside the goroutine: the next Run replaces it.
+	notifyCh := ctrl.notifyCh
 
 	report := func(healthy bool, message string) {
 		if run.report(healthy, message) {
-			notify()
+			notifyCh.notify()
 		}
 	}
 
