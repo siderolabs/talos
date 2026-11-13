@@ -267,11 +267,9 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 	// Start the API server.
 	server := factory.NewServer( //nolint:contextcheck
 		&v1alpha1server.Server{
-			Controller: s.c,
-			// breaking the import loop cycle between services/ package and v1alpha1_server.go
-			EtcdBootstrapper: BootstrapEtcd,
-			Logger:           logger,
-			ConsoleLogger:    consoleLogger,
+			Controller:    s.c,
+			Logger:        logger,
+			ConsoleLogger: consoleLogger,
 
 			ShutdownCtx: ctx,
 		},

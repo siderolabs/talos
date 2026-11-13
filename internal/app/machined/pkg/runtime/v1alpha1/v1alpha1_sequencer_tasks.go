@@ -33,7 +33,6 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
-	clientv3 "go.etcd.io/etcd/client/v3"
 	"golang.org/x/sys/unix"
 	runtimeapi "k8s.io/cri-api/pkg/apis/runtime/v1"
 
@@ -45,7 +44,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/pkg/cri"
 	"github.com/siderolabs/talos/internal/pkg/environment"
@@ -351,27 +349,14 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		serviceList := []system.Service{}
 
-		shouldStartEtcd := r.Config() != nil && r.Config().EtcdCAConfig() != nil && r.Config().EtcdMemberConfig() != nil
+		// etcd (as kubelet) is not started here: it is started by the etcd controllers once it is ready to run
 
 		switch t := r.Config().Machine().Type(); t {
-		case machine.TypeInit:
+		case machine.TypeInit, machine.TypeControlPlane:
 			serviceList = append(
 				serviceList,
 				&services.Trustd{},
 			)
-
-			if shouldStartEtcd {
-				serviceList = append(serviceList, &services.Etcd{Bootstrap: true})
-			}
-		case machine.TypeControlPlane:
-			serviceList = append(
-				serviceList,
-				&services.Trustd{},
-			)
-
-			if shouldStartEtcd {
-				serviceList = append(serviceList, &services.Etcd{})
-			}
 		case machine.TypeWorker:
 			// nothing
 		case machine.TypeUnknown:
@@ -812,57 +797,19 @@ func waitForNodeCordoned(ctx context.Context, logger *log.Logger, r runtime.Runt
 }
 
 // LeaveEtcd represents the task for removing a control plane node from etcd.
-//
-//nolint:gocyclo
 func LeaveEtcd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		_, err = os.Stat(filepath.Join(constants.EtcdDataPath, "/member"))
-		if err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
+		// the member removal is retried while the etcd cluster is not healthy
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
+		defer cancel()
+
+		// leaving the cluster is performed by the etcd membership controller
+		if err = etcd.RequestLeave(ctx, r.State().V1Alpha2().Resources()); err != nil {
+			if errors.Is(err, etcd.ErrNotReady) {
+				// etcd is not running, so there is nothing to leave
 				return nil
 			}
 
-			return err
-		}
-
-		etcdID := (&services.Etcd{}).ID(r)
-
-		services := system.Services(r).List()
-
-		shouldLeaveEtcd := false
-
-		for _, service := range services {
-			if service.AsProto().Id != etcdID {
-				continue
-			}
-
-			switch service.GetState() { //nolint:exhaustive
-			case events.StateRunning:
-				fallthrough
-			case events.StateStopping:
-				fallthrough
-			case events.StateFailed:
-				shouldLeaveEtcd = true
-			}
-
-			break
-		}
-
-		if !shouldLeaveEtcd {
-			return nil
-		}
-
-		client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.State().V1Alpha2().Resources())
-		if err != nil {
-			return fmt.Errorf("failed to create etcd client: %w", err)
-		}
-
-		//nolint:errcheck
-		defer client.Close()
-
-		ctx = clientv3.WithRequireLeader(ctx)
-
-		if err = client.LeaveCluster(ctx, r.State().V1Alpha2().Resources()); err != nil {
 			return fmt.Errorf("failed to leave cluster: %w", err)
 		}
 

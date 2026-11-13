@@ -354,6 +354,7 @@ description: Talos gRPC API reference.
     - [ContainersContainerState](#talos.resource.definitions.enums.ContainersContainerState)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
+    - [EtcdMembershipPhase](#talos.resource.definitions.enums.EtcdMembershipPhase)
     - [HypervisorCloudInitPhase](#talos.resource.definitions.enums.HypervisorCloudInitPhase)
     - [HypervisorContentLibraryPhase](#talos.resource.definitions.enums.HypervisorContentLibraryPhase)
     - [HypervisorVirtualMachineDiskPhase](#talos.resource.definitions.enums.HypervisorVirtualMachineDiskPhase)
@@ -509,10 +510,16 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/etcd/etcd.proto](#resource/definitions/etcd/etcd.proto)
     - [ArgValues](#talos.resource.definitions.etcd.ArgValues)
+    - [BootstrapRequestSpec](#talos.resource.definitions.etcd.BootstrapRequestSpec)
+    - [ClientSpecSpec](#talos.resource.definitions.etcd.ClientSpecSpec)
     - [ConfigSpec](#talos.resource.definitions.etcd.ConfigSpec)
     - [ConfigSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry)
+    - [LaunchSpecSpec](#talos.resource.definitions.etcd.LaunchSpecSpec)
     - [MemberSpec](#talos.resource.definitions.etcd.MemberSpec)
+    - [MembershipSpecSpec](#talos.resource.definitions.etcd.MembershipSpecSpec)
+    - [MembershipStatusSpec](#talos.resource.definitions.etcd.MembershipStatusSpec)
     - [PKIStatusSpec](#talos.resource.definitions.etcd.PKIStatusSpec)
+    - [ServiceSpecSpec](#talos.resource.definitions.etcd.ServiceSpecSpec)
     - [SpecSpec](#talos.resource.definitions.etcd.SpecSpec)
     - [SpecSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry)
   
@@ -6043,6 +6050,22 @@ CriImageCacheStatus describes image cache status type.
 
 
 
+<a name="talos.resource.definitions.enums.EtcdMembershipPhase"></a>
+
+### EtcdMembershipPhase
+EtcdMembershipPhase describes the phase of the etcd cluster membership of this machine.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MEMBERSHIP_PHASE_PREPARING | 0 | MembershipPhasePreparing means that the prerequisites (etcd spec, PKI, etcd data volume) are not ready yet. |
+| MEMBERSHIP_PHASE_JOINING | 1 | MembershipPhaseJoining means that the etcd data is empty, and the machine is either trying to join an existing etcd cluster, or it is waiting for the bootstrap request. |
+| MEMBERSHIP_PHASE_LEARNER | 2 | MembershipPhaseLearner means that the machine joined the etcd cluster as a learner, and it is not promoted to a voting member yet.<br><br>The etcd data of a learner is disposable: if etcd is interrupted in this phase, the data is wiped, and the machine joins the cluster from scratch. |
+| MEMBERSHIP_PHASE_MEMBER | 3 | MembershipPhaseMember means that the machine is a (voting) member of the etcd cluster. |
+| MEMBERSHIP_PHASE_LEAVING | 4 | MembershipPhaseLeaving means that the machine is in the process of leaving the etcd cluster. |
+| MEMBERSHIP_PHASE_LEFT | 5 | MembershipPhaseLeft means that the machine left the etcd cluster, and the etcd data was wiped. |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorCloudInitPhase"></a>
 
 ### HypervisorCloudInitPhase
@@ -8965,6 +8988,40 @@ ArgValues represents values for a command line argument which can be specified m
 
 
 
+<a name="talos.resource.definitions.etcd.BootstrapRequestSpec"></a>
+
+### BootstrapRequestSpec
+BootstrapRequestSpec describes the etcd bootstrap request.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| recover_from_snapshot | [bool](#bool) |  | RecoverFromSnapshot requests to recover the etcd data from the previously uploaded snapshot. |
+| recover_skip_hash_check | [bool](#bool) |  | RecoverSkipHashCheck skips the integrity check of the snapshot on recovery. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.etcd.ClientSpecSpec"></a>
+
+### ClientSpecSpec
+ClientSpecSpec describes the etcd client configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated | AcceptedCAs is the list of CA certificates the etcd client trusts. |
+| certificate | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  | Certificate is the etcd client certificate (with the key). |
+| local_endpoints | [string](#string) | repeated | LocalEndpoints is the list of endpoints (host:port) of the etcd member running on this machine. |
+| cluster_endpoints | [string](#string) | repeated | ClusterEndpoints is the list of endpoints (host:port) of the etcd members across the cluster.<br><br>The endpoints are the discovered control plane machines, so it is not guaranteed that etcd is running on each of them. The list is empty until the control plane machines are discovered. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.etcd.ConfigSpec"></a>
 
 ### ConfigSpec
@@ -9001,6 +9058,23 @@ ConfigSpec describes (some) configuration settings of etcd.
 
 
 
+<a name="talos.resource.definitions.etcd.LaunchSpecSpec"></a>
+
+### LaunchSpecSpec
+LaunchSpecSpec describes the way etcd is started.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| initial_cluster_state | [string](#string) |  | InitialClusterState is the value of the etcd `--initial-cluster-state` flag. |
+| initial_cluster | [string](#string) |  | InitialCluster is the value of the etcd `--initial-cluster` flag.<br><br>It is empty if etcd already has the data (so the flag is not used), or if the initial cluster is supplied in the extra arguments. |
+| initial_advertise_peer_ur_ls | [string](#string) | repeated | InitialAdvertisePeerURLs is the value of the etcd `--initial-advertise-peer-urls` flag.<br><br>It is set along with the InitialCluster, as the two should match: these are the peer URLs of this member at the moment it was decided how to launch etcd. If it is empty, the current advertised addresses are used. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.etcd.MemberSpec"></a>
 
 ### MemberSpec
@@ -9010,6 +9084,42 @@ MemberSpec holds information about an etcd member.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | member_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.etcd.MembershipSpecSpec"></a>
+
+### MembershipSpecSpec
+MembershipSpecSpec describes the etcd member with respect to the etcd cluster membership.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name is the name of the etcd member. |
+| advertised_addresses | [common.NetIP](#common.NetIP) | repeated | AdvertisedAddresses is the list of addresses the etcd member advertises to the cluster. |
+| manual_initial_cluster | [bool](#bool) |  | ManualInitialCluster is set if the etcd initial cluster is supplied in the etcd extra arguments, so the cluster membership is managed outside of Talos. |
+| init_node | [bool](#bool) |  | InitNode is set if the machine is of type init. |
+| auto_bootstrap | [bool](#bool) |  | AutoBootstrap is set if the machine should bootstrap the etcd cluster on its own if it has no etcd data. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.etcd.MembershipStatusSpec"></a>
+
+### MembershipStatusSpec
+MembershipStatusSpec describes the status of the etcd cluster membership.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| phase | [talos.resource.definitions.enums.EtcdMembershipPhase](#talos.resource.definitions.enums.EtcdMembershipPhase) |  | Phase is the current phase of the etcd membership. |
+| member_id | [string](#string) |  | MemberID is the etcd member ID of this machine, if it is known. |
+| error | [string](#string) |  | Error is the last error encountered while driving the membership to the desired state. |
 
 
 
@@ -9026,6 +9136,22 @@ PKIStatusSpec describes status of rendered secrets.
 | ----- | ---- | ----- | ----------- |
 | ready | [bool](#bool) |  |  |
 | version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.etcd.ServiceSpecSpec"></a>
+
+### ServiceSpecSpec
+ServiceSpecSpec describes the image and the arguments of the etcd service.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  | Image is the etcd container image reference. |
+| args | [string](#string) | repeated | Args is the full list of the etcd command line arguments. |
 
 
 

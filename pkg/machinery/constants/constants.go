@@ -1157,11 +1157,6 @@ const (
 	// FailurePauseTimeout is the timeout for the sequencer failures which can be fixed by updating the machine config.
 	FailurePauseTimeout = 35 * time.Minute
 
-	// EtcdJoinTimeout is the timeout for etcd to join the existing cluster.
-	//
-	// BootTimeout should be higher than EtcdJoinTimeout.
-	EtcdJoinTimeout = 30 * time.Minute
-
 	// NodeReadyTimeout is the timeout to wait for the node to be ready (CNI to be running).
 	// For bootstrap API, this includes time to run bootstrap.
 	NodeReadyTimeout = BootTimeout

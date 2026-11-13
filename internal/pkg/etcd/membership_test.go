@@ -2,14 +2,14 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package services_test
+package etcd_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
+	"github.com/siderolabs/talos/internal/pkg/etcd"
 )
 
 func TestPromotionEndpoints(t *testing.T) {
@@ -64,7 +64,7 @@ func TestPromotionEndpoints(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			assert.Equal(t, test.expected, services.PromotionEndpoints(test.selfEndpoints, test.votingMemberEndpoints, test.discoveredEndpoints))
+			assert.Equal(t, test.expected, etcd.PromotionEndpoints(test.selfEndpoints, test.votingMemberEndpoints, test.discoveredEndpoints))
 		})
 	}
 }

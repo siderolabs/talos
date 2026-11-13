@@ -24,7 +24,17 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []meta.ResourceWithRD{
+		&etcd.BootstrapRequest{},
+		&etcd.ClientSpec{},
+		&etcd.Config{},
+		&etcd.LaunchSpec{},
+		&etcd.LeaveRequest{},
+		&etcd.Member{},
+		&etcd.MembershipSpec{},
+		&etcd.MembershipStatus{},
 		&etcd.PKIStatus{},
+		&etcd.ServiceSpec{},
+		&etcd.Spec{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}

@@ -6,10 +6,34 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.etcd";
 
 import "common/common.proto";
+import "resource/definitions/enums/enums.proto";
 
 // ArgValues represents values for a command line argument which can be specified multiple times.
 message ArgValues {
   repeated string values = 1;
+}
+
+// BootstrapRequestSpec describes the etcd bootstrap request.
+message BootstrapRequestSpec {
+  // RecoverFromSnapshot requests to recover the etcd data from the previously uploaded snapshot.
+  bool recover_from_snapshot = 1;
+  // RecoverSkipHashCheck skips the integrity check of the snapshot on recovery.
+  bool recover_skip_hash_check = 2;
+}
+
+// ClientSpecSpec describes the etcd client configuration.
+message ClientSpecSpec {
+  // AcceptedCAs is the list of CA certificates the etcd client trusts.
+  repeated common.PEMEncodedCertificate accepted_c_as = 1;
+  // Certificate is the etcd client certificate (with the key).
+  common.PEMEncodedCertificateAndKey certificate = 2;
+  // LocalEndpoints is the list of endpoints (host:port) of the etcd member running on this machine.
+  repeated string local_endpoints = 3;
+  // ClusterEndpoints is the list of endpoints (host:port) of the etcd members across the cluster.
+  //
+  // The endpoints are the discovered control plane machines, so it is not guaranteed that etcd is running on each of them.
+  // The list is empty until the control plane machines are discovered.
+  repeated string cluster_endpoints = 4;
 }
 
 // ConfigSpec describes (some) configuration settings of etcd.
@@ -22,15 +46,65 @@ message ConfigSpec {
   map<string, ArgValues> extra_args = 7;
 }
 
+// LaunchSpecSpec describes the way etcd is started.
+message LaunchSpecSpec {
+  // InitialClusterState is the value of the etcd `--initial-cluster-state` flag.
+  string initial_cluster_state = 1;
+  // InitialCluster is the value of the etcd `--initial-cluster` flag.
+  //
+  // It is empty if etcd already has the data (so the flag is not used),
+  // or if the initial cluster is supplied in the extra arguments.
+  string initial_cluster = 2;
+  // InitialAdvertisePeerURLs is the value of the etcd `--initial-advertise-peer-urls` flag.
+  //
+  // It is set along with the InitialCluster, as the two should match: these are the peer URLs
+  // of this member at the moment it was decided how to launch etcd.
+  // If it is empty, the current advertised addresses are used.
+  repeated string initial_advertise_peer_ur_ls = 3;
+}
+
 // MemberSpec holds information about an etcd member.
 message MemberSpec {
   string member_id = 1;
+}
+
+// MembershipSpecSpec describes the etcd member with respect to the etcd cluster membership.
+message MembershipSpecSpec {
+  // Name is the name of the etcd member.
+  string name = 1;
+  // AdvertisedAddresses is the list of addresses the etcd member advertises to the cluster.
+  repeated common.NetIP advertised_addresses = 2;
+  // ManualInitialCluster is set if the etcd initial cluster is supplied in the etcd extra arguments,
+  // so the cluster membership is managed outside of Talos.
+  bool manual_initial_cluster = 3;
+  // InitNode is set if the machine is of type init.
+  bool init_node = 4;
+  // AutoBootstrap is set if the machine should bootstrap the etcd cluster on its own if it has no etcd data.
+  bool auto_bootstrap = 5;
+}
+
+// MembershipStatusSpec describes the status of the etcd cluster membership.
+message MembershipStatusSpec {
+  // Phase is the current phase of the etcd membership.
+  talos.resource.definitions.enums.EtcdMembershipPhase phase = 1;
+  // MemberID is the etcd member ID of this machine, if it is known.
+  string member_id = 2;
+  // Error is the last error encountered while driving the membership to the desired state.
+  string error = 3;
 }
 
 // PKIStatusSpec describes status of rendered secrets.
 message PKIStatusSpec {
   bool ready = 1;
   string version = 2;
+}
+
+// ServiceSpecSpec describes the image and the arguments of the etcd service.
+message ServiceSpecSpec {
+  // Image is the etcd container image reference.
+  string image = 1;
+  // Args is the full list of the etcd command line arguments.
+  repeated string args = 2;
 }
 
 // SpecSpec describes (some) Specuration settings of etcd.

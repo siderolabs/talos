@@ -15,6 +15,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 
 	common "github.com/siderolabs/talos/pkg/machinery/api/common"
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (
@@ -69,6 +70,137 @@ func (x *ArgValues) GetValues() []string {
 	return nil
 }
 
+// BootstrapRequestSpec describes the etcd bootstrap request.
+type BootstrapRequestSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// RecoverFromSnapshot requests to recover the etcd data from the previously uploaded snapshot.
+	RecoverFromSnapshot bool `protobuf:"varint,1,opt,name=recover_from_snapshot,json=recoverFromSnapshot,proto3" json:"recover_from_snapshot,omitempty"`
+	// RecoverSkipHashCheck skips the integrity check of the snapshot on recovery.
+	RecoverSkipHashCheck bool `protobuf:"varint,2,opt,name=recover_skip_hash_check,json=recoverSkipHashCheck,proto3" json:"recover_skip_hash_check,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
+}
+
+func (x *BootstrapRequestSpec) Reset() {
+	*x = BootstrapRequestSpec{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BootstrapRequestSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BootstrapRequestSpec) ProtoMessage() {}
+
+func (x *BootstrapRequestSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BootstrapRequestSpec.ProtoReflect.Descriptor instead.
+func (*BootstrapRequestSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *BootstrapRequestSpec) GetRecoverFromSnapshot() bool {
+	if x != nil {
+		return x.RecoverFromSnapshot
+	}
+	return false
+}
+
+func (x *BootstrapRequestSpec) GetRecoverSkipHashCheck() bool {
+	if x != nil {
+		return x.RecoverSkipHashCheck
+	}
+	return false
+}
+
+// ClientSpecSpec describes the etcd client configuration.
+type ClientSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// AcceptedCAs is the list of CA certificates the etcd client trusts.
+	AcceptedCAs []*common.PEMEncodedCertificate `protobuf:"bytes,1,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
+	// Certificate is the etcd client certificate (with the key).
+	Certificate *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=certificate,proto3" json:"certificate,omitempty"`
+	// LocalEndpoints is the list of endpoints (host:port) of the etcd member running on this machine.
+	LocalEndpoints []string `protobuf:"bytes,3,rep,name=local_endpoints,json=localEndpoints,proto3" json:"local_endpoints,omitempty"`
+	// ClusterEndpoints is the list of endpoints (host:port) of the etcd members across the cluster.
+	//
+	// The endpoints are the discovered control plane machines, so it is not guaranteed that etcd is running on each of them.
+	// The list is empty until the control plane machines are discovered.
+	ClusterEndpoints []string `protobuf:"bytes,4,rep,name=cluster_endpoints,json=clusterEndpoints,proto3" json:"cluster_endpoints,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *ClientSpecSpec) Reset() {
+	*x = ClientSpecSpec{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ClientSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ClientSpecSpec) ProtoMessage() {}
+
+func (x *ClientSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ClientSpecSpec.ProtoReflect.Descriptor instead.
+func (*ClientSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *ClientSpecSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
+	if x != nil {
+		return x.AcceptedCAs
+	}
+	return nil
+}
+
+func (x *ClientSpecSpec) GetCertificate() *common.PEMEncodedCertificateAndKey {
+	if x != nil {
+		return x.Certificate
+	}
+	return nil
+}
+
+func (x *ClientSpecSpec) GetLocalEndpoints() []string {
+	if x != nil {
+		return x.LocalEndpoints
+	}
+	return nil
+}
+
+func (x *ClientSpecSpec) GetClusterEndpoints() []string {
+	if x != nil {
+		return x.ClusterEndpoints
+	}
+	return nil
+}
+
 // ConfigSpec describes (some) configuration settings of etcd.
 type ConfigSpec struct {
 	state                   protoimpl.MessageState `protogen:"open.v1"`
@@ -84,7 +216,7 @@ type ConfigSpec struct {
 
 func (x *ConfigSpec) Reset() {
 	*x = ConfigSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -96,7 +228,7 @@ func (x *ConfigSpec) String() string {
 func (*ConfigSpec) ProtoMessage() {}
 
 func (x *ConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -109,7 +241,7 @@ func (x *ConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigSpec.ProtoReflect.Descriptor instead.
 func (*ConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ConfigSpec) GetAdvertiseValidSubnets() []string {
@@ -154,6 +286,77 @@ func (x *ConfigSpec) GetExtraArgs() map[string]*ArgValues {
 	return nil
 }
 
+// LaunchSpecSpec describes the way etcd is started.
+type LaunchSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// InitialClusterState is the value of the etcd `--initial-cluster-state` flag.
+	InitialClusterState string `protobuf:"bytes,1,opt,name=initial_cluster_state,json=initialClusterState,proto3" json:"initial_cluster_state,omitempty"`
+	// InitialCluster is the value of the etcd `--initial-cluster` flag.
+	//
+	// It is empty if etcd already has the data (so the flag is not used),
+	// or if the initial cluster is supplied in the extra arguments.
+	InitialCluster string `protobuf:"bytes,2,opt,name=initial_cluster,json=initialCluster,proto3" json:"initial_cluster,omitempty"`
+	// InitialAdvertisePeerURLs is the value of the etcd `--initial-advertise-peer-urls` flag.
+	//
+	// It is set along with the InitialCluster, as the two should match: these are the peer URLs
+	// of this member at the moment it was decided how to launch etcd.
+	// If it is empty, the current advertised addresses are used.
+	InitialAdvertisePeerUrLs []string `protobuf:"bytes,3,rep,name=initial_advertise_peer_ur_ls,json=initialAdvertisePeerUrLs,proto3" json:"initial_advertise_peer_ur_ls,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *LaunchSpecSpec) Reset() {
+	*x = LaunchSpecSpec{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LaunchSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LaunchSpecSpec) ProtoMessage() {}
+
+func (x *LaunchSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LaunchSpecSpec.ProtoReflect.Descriptor instead.
+func (*LaunchSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *LaunchSpecSpec) GetInitialClusterState() string {
+	if x != nil {
+		return x.InitialClusterState
+	}
+	return ""
+}
+
+func (x *LaunchSpecSpec) GetInitialCluster() string {
+	if x != nil {
+		return x.InitialCluster
+	}
+	return ""
+}
+
+func (x *LaunchSpecSpec) GetInitialAdvertisePeerUrLs() []string {
+	if x != nil {
+		return x.InitialAdvertisePeerUrLs
+	}
+	return nil
+}
+
 // MemberSpec holds information about an etcd member.
 type MemberSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -164,7 +367,7 @@ type MemberSpec struct {
 
 func (x *MemberSpec) Reset() {
 	*x = MemberSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -176,7 +379,7 @@ func (x *MemberSpec) String() string {
 func (*MemberSpec) ProtoMessage() {}
 
 func (x *MemberSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -189,12 +392,159 @@ func (x *MemberSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MemberSpec.ProtoReflect.Descriptor instead.
 func (*MemberSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *MemberSpec) GetMemberId() string {
 	if x != nil {
 		return x.MemberId
+	}
+	return ""
+}
+
+// MembershipSpecSpec describes the etcd member with respect to the etcd cluster membership.
+type MembershipSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Name is the name of the etcd member.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// AdvertisedAddresses is the list of addresses the etcd member advertises to the cluster.
+	AdvertisedAddresses []*common.NetIP `protobuf:"bytes,2,rep,name=advertised_addresses,json=advertisedAddresses,proto3" json:"advertised_addresses,omitempty"`
+	// ManualInitialCluster is set if the etcd initial cluster is supplied in the etcd extra arguments,
+	// so the cluster membership is managed outside of Talos.
+	ManualInitialCluster bool `protobuf:"varint,3,opt,name=manual_initial_cluster,json=manualInitialCluster,proto3" json:"manual_initial_cluster,omitempty"`
+	// InitNode is set if the machine is of type init.
+	InitNode bool `protobuf:"varint,4,opt,name=init_node,json=initNode,proto3" json:"init_node,omitempty"`
+	// AutoBootstrap is set if the machine should bootstrap the etcd cluster on its own if it has no etcd data.
+	AutoBootstrap bool `protobuf:"varint,5,opt,name=auto_bootstrap,json=autoBootstrap,proto3" json:"auto_bootstrap,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MembershipSpecSpec) Reset() {
+	*x = MembershipSpecSpec{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MembershipSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MembershipSpecSpec) ProtoMessage() {}
+
+func (x *MembershipSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MembershipSpecSpec.ProtoReflect.Descriptor instead.
+func (*MembershipSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *MembershipSpecSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *MembershipSpecSpec) GetAdvertisedAddresses() []*common.NetIP {
+	if x != nil {
+		return x.AdvertisedAddresses
+	}
+	return nil
+}
+
+func (x *MembershipSpecSpec) GetManualInitialCluster() bool {
+	if x != nil {
+		return x.ManualInitialCluster
+	}
+	return false
+}
+
+func (x *MembershipSpecSpec) GetInitNode() bool {
+	if x != nil {
+		return x.InitNode
+	}
+	return false
+}
+
+func (x *MembershipSpecSpec) GetAutoBootstrap() bool {
+	if x != nil {
+		return x.AutoBootstrap
+	}
+	return false
+}
+
+// MembershipStatusSpec describes the status of the etcd cluster membership.
+type MembershipStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Phase is the current phase of the etcd membership.
+	Phase enums.EtcdMembershipPhase `protobuf:"varint,1,opt,name=phase,proto3,enum=talos.resource.definitions.enums.EtcdMembershipPhase" json:"phase,omitempty"`
+	// MemberID is the etcd member ID of this machine, if it is known.
+	MemberId string `protobuf:"bytes,2,opt,name=member_id,json=memberId,proto3" json:"member_id,omitempty"`
+	// Error is the last error encountered while driving the membership to the desired state.
+	Error         string `protobuf:"bytes,3,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MembershipStatusSpec) Reset() {
+	*x = MembershipStatusSpec{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MembershipStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MembershipStatusSpec) ProtoMessage() {}
+
+func (x *MembershipStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MembershipStatusSpec.ProtoReflect.Descriptor instead.
+func (*MembershipStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *MembershipStatusSpec) GetPhase() enums.EtcdMembershipPhase {
+	if x != nil {
+		return x.Phase
+	}
+	return enums.EtcdMembershipPhase(0)
+}
+
+func (x *MembershipStatusSpec) GetMemberId() string {
+	if x != nil {
+		return x.MemberId
+	}
+	return ""
+}
+
+func (x *MembershipStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
 	}
 	return ""
 }
@@ -210,7 +560,7 @@ type PKIStatusSpec struct {
 
 func (x *PKIStatusSpec) Reset() {
 	*x = PKIStatusSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -222,7 +572,7 @@ func (x *PKIStatusSpec) String() string {
 func (*PKIStatusSpec) ProtoMessage() {}
 
 func (x *PKIStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -235,7 +585,7 @@ func (x *PKIStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PKIStatusSpec.ProtoReflect.Descriptor instead.
 func (*PKIStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PKIStatusSpec) GetReady() bool {
@@ -250,6 +600,61 @@ func (x *PKIStatusSpec) GetVersion() string {
 		return x.Version
 	}
 	return ""
+}
+
+// ServiceSpecSpec describes the image and the arguments of the etcd service.
+type ServiceSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Image is the etcd container image reference.
+	Image string `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	// Args is the full list of the etcd command line arguments.
+	Args          []string `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServiceSpecSpec) Reset() {
+	*x = ServiceSpecSpec{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServiceSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServiceSpecSpec) ProtoMessage() {}
+
+func (x *ServiceSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServiceSpecSpec.ProtoReflect.Descriptor instead.
+func (*ServiceSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ServiceSpecSpec) GetImage() string {
+	if x != nil {
+		return x.Image
+	}
+	return ""
+}
+
+func (x *ServiceSpecSpec) GetArgs() []string {
+	if x != nil {
+		return x.Args
+	}
+	return nil
 }
 
 // SpecSpec describes (some) Specuration settings of etcd.
@@ -267,7 +672,7 @@ type SpecSpec struct {
 
 func (x *SpecSpec) Reset() {
 	*x = SpecSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[4]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -279,7 +684,7 @@ func (x *SpecSpec) String() string {
 func (*SpecSpec) ProtoMessage() {}
 
 func (x *SpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[4]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -292,7 +697,7 @@ func (x *SpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SpecSpec.ProtoReflect.Descriptor instead.
 func (*SpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *SpecSpec) GetName() string {
@@ -341,9 +746,17 @@ var File_resource_definitions_etcd_etcd_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"\n" +
-	"$resource/definitions/etcd/etcd.proto\x12\x1ftalos.resource.definitions.etcd\x1a\x13common/common.proto\"#\n" +
+	"$resource/definitions/etcd/etcd.proto\x12\x1ftalos.resource.definitions.etcd\x1a\x13common/common.proto\x1a&resource/definitions/enums/enums.proto\"#\n" +
 	"\tArgValues\x12\x16\n" +
-	"\x06values\x18\x01 \x03(\tR\x06values\"\xc3\x03\n" +
+	"\x06values\x18\x01 \x03(\tR\x06values\"\x81\x01\n" +
+	"\x14BootstrapRequestSpec\x122\n" +
+	"\x15recover_from_snapshot\x18\x01 \x01(\bR\x13recoverFromSnapshot\x125\n" +
+	"\x17recover_skip_hash_check\x18\x02 \x01(\bR\x14recoverSkipHashCheck\"\xf0\x01\n" +
+	"\x0eClientSpecSpec\x12A\n" +
+	"\raccepted_c_as\x18\x01 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x12E\n" +
+	"\vcertificate\x18\x02 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\vcertificate\x12'\n" +
+	"\x0flocal_endpoints\x18\x03 \x03(\tR\x0elocalEndpoints\x12+\n" +
+	"\x11cluster_endpoints\x18\x04 \x03(\tR\x10clusterEndpoints\"\xc3\x03\n" +
 	"\n" +
 	"ConfigSpec\x126\n" +
 	"\x17advertise_valid_subnets\x18\x01 \x03(\tR\x15advertiseValidSubnets\x12:\n" +
@@ -355,13 +768,30 @@ const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"extra_args\x18\a \x03(\v2:.talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntryR\textraArgs\x1ah\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
-	"\x05value\x18\x02 \x01(\v2*.talos.resource.definitions.etcd.ArgValuesR\x05value:\x028\x01\")\n" +
+	"\x05value\x18\x02 \x01(\v2*.talos.resource.definitions.etcd.ArgValuesR\x05value:\x028\x01\"\xad\x01\n" +
+	"\x0eLaunchSpecSpec\x122\n" +
+	"\x15initial_cluster_state\x18\x01 \x01(\tR\x13initialClusterState\x12'\n" +
+	"\x0finitial_cluster\x18\x02 \x01(\tR\x0einitialCluster\x12>\n" +
+	"\x1cinitial_advertise_peer_ur_ls\x18\x03 \x03(\tR\x18initialAdvertisePeerUrLs\")\n" +
 	"\n" +
 	"MemberSpec\x12\x1b\n" +
-	"\tmember_id\x18\x01 \x01(\tR\bmemberId\"?\n" +
+	"\tmember_id\x18\x01 \x01(\tR\bmemberId\"\xe4\x01\n" +
+	"\x12MembershipSpecSpec\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
+	"\x14advertised_addresses\x18\x02 \x03(\v2\r.common.NetIPR\x13advertisedAddresses\x124\n" +
+	"\x16manual_initial_cluster\x18\x03 \x01(\bR\x14manualInitialCluster\x12\x1b\n" +
+	"\tinit_node\x18\x04 \x01(\bR\binitNode\x12%\n" +
+	"\x0eauto_bootstrap\x18\x05 \x01(\bR\rautoBootstrap\"\x96\x01\n" +
+	"\x14MembershipStatusSpec\x12K\n" +
+	"\x05phase\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.EtcdMembershipPhaseR\x05phase\x12\x1b\n" +
+	"\tmember_id\x18\x02 \x01(\tR\bmemberId\x12\x14\n" +
+	"\x05error\x18\x03 \x01(\tR\x05error\"?\n" +
 	"\rPKIStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\"\xc3\x03\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\";\n" +
+	"\x0fServiceSpecSpec\x12\x14\n" +
+	"\x05image\x18\x01 \x01(\tR\x05image\x12\x12\n" +
+	"\x04args\x18\x02 \x03(\tR\x04args\"\xc3\x03\n" +
 	"\bSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
 	"\x14advertised_addresses\x18\x02 \x03(\v2\r.common.NetIPR\x13advertisedAddresses\x12\x14\n" +
@@ -387,30 +817,43 @@ func file_resource_definitions_etcd_etcd_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_etcd_etcd_proto_rawDescData
 }
 
-var file_resource_definitions_etcd_etcd_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_resource_definitions_etcd_etcd_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_resource_definitions_etcd_etcd_proto_goTypes = []any{
-	(*ArgValues)(nil),     // 0: talos.resource.definitions.etcd.ArgValues
-	(*ConfigSpec)(nil),    // 1: talos.resource.definitions.etcd.ConfigSpec
-	(*MemberSpec)(nil),    // 2: talos.resource.definitions.etcd.MemberSpec
-	(*PKIStatusSpec)(nil), // 3: talos.resource.definitions.etcd.PKIStatusSpec
-	(*SpecSpec)(nil),      // 4: talos.resource.definitions.etcd.SpecSpec
-	nil,                   // 5: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
-	nil,                   // 6: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
-	(*common.NetIP)(nil),  // 7: common.NetIP
+	(*ArgValues)(nil),                    // 0: talos.resource.definitions.etcd.ArgValues
+	(*BootstrapRequestSpec)(nil),         // 1: talos.resource.definitions.etcd.BootstrapRequestSpec
+	(*ClientSpecSpec)(nil),               // 2: talos.resource.definitions.etcd.ClientSpecSpec
+	(*ConfigSpec)(nil),                   // 3: talos.resource.definitions.etcd.ConfigSpec
+	(*LaunchSpecSpec)(nil),               // 4: talos.resource.definitions.etcd.LaunchSpecSpec
+	(*MemberSpec)(nil),                   // 5: talos.resource.definitions.etcd.MemberSpec
+	(*MembershipSpecSpec)(nil),           // 6: talos.resource.definitions.etcd.MembershipSpecSpec
+	(*MembershipStatusSpec)(nil),         // 7: talos.resource.definitions.etcd.MembershipStatusSpec
+	(*PKIStatusSpec)(nil),                // 8: talos.resource.definitions.etcd.PKIStatusSpec
+	(*ServiceSpecSpec)(nil),              // 9: talos.resource.definitions.etcd.ServiceSpecSpec
+	(*SpecSpec)(nil),                     // 10: talos.resource.definitions.etcd.SpecSpec
+	nil,                                  // 11: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
+	nil,                                  // 12: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
+	(*common.PEMEncodedCertificate)(nil), // 13: common.PEMEncodedCertificate
+	(*common.PEMEncodedCertificateAndKey)(nil), // 14: common.PEMEncodedCertificateAndKey
+	(*common.NetIP)(nil),                       // 15: common.NetIP
+	(enums.EtcdMembershipPhase)(0),             // 16: talos.resource.definitions.enums.EtcdMembershipPhase
 }
 var file_resource_definitions_etcd_etcd_proto_depIdxs = []int32{
-	5, // 0: talos.resource.definitions.etcd.ConfigSpec.extra_args:type_name -> talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
-	7, // 1: talos.resource.definitions.etcd.SpecSpec.advertised_addresses:type_name -> common.NetIP
-	7, // 2: talos.resource.definitions.etcd.SpecSpec.listen_peer_addresses:type_name -> common.NetIP
-	7, // 3: talos.resource.definitions.etcd.SpecSpec.listen_client_addresses:type_name -> common.NetIP
-	6, // 4: talos.resource.definitions.etcd.SpecSpec.extra_args:type_name -> talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
-	0, // 5: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
-	0, // 6: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	13, // 0: talos.resource.definitions.etcd.ClientSpecSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	14, // 1: talos.resource.definitions.etcd.ClientSpecSpec.certificate:type_name -> common.PEMEncodedCertificateAndKey
+	11, // 2: talos.resource.definitions.etcd.ConfigSpec.extra_args:type_name -> talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
+	15, // 3: talos.resource.definitions.etcd.MembershipSpecSpec.advertised_addresses:type_name -> common.NetIP
+	16, // 4: talos.resource.definitions.etcd.MembershipStatusSpec.phase:type_name -> talos.resource.definitions.enums.EtcdMembershipPhase
+	15, // 5: talos.resource.definitions.etcd.SpecSpec.advertised_addresses:type_name -> common.NetIP
+	15, // 6: talos.resource.definitions.etcd.SpecSpec.listen_peer_addresses:type_name -> common.NetIP
+	15, // 7: talos.resource.definitions.etcd.SpecSpec.listen_client_addresses:type_name -> common.NetIP
+	12, // 8: talos.resource.definitions.etcd.SpecSpec.extra_args:type_name -> talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
+	0,  // 9: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
+	0,  // 10: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_etcd_etcd_proto_init() }
@@ -424,7 +867,7 @@ func file_resource_definitions_etcd_etcd_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_etcd_etcd_proto_rawDesc), len(file_resource_definitions_etcd_etcd_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

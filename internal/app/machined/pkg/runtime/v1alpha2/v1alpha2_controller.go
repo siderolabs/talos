@@ -320,10 +320,17 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			SeccompProfilesDirectory: constants.SeccompProfilesDirectory,
 		},
 		&etcd.AdvertisedPeerController{},
+		&etcd.BootstrapLoggerController{},
+		&etcd.ClientSpecController{},
 		etcd.NewConfigController(),
 		&etcd.PKIController{},
 		&etcd.SpecController{},
 		&etcd.MemberController{},
+		&etcd.MembershipController{},
+		&etcd.MembershipSpecController{},
+		&etcd.ServiceController{
+			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
+		},
 		&files.CRIBaseRuntimeSpecController{},
 		&files.CRIConfigController{
 			EtcRoot: etcRoot,

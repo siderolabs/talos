@@ -1073,6 +1073,27 @@ enum CriImageCacheCopyStatus {
   IMAGE_CACHE_COPY_STATUS_READY = 3;
 }
 
+// EtcdMembershipPhase describes the phase of the etcd cluster membership of this machine.
+enum EtcdMembershipPhase {
+  // MembershipPhasePreparing means that the prerequisites (etcd spec, PKI, etcd data volume) are not ready yet.
+  MEMBERSHIP_PHASE_PREPARING = 0;
+  // MembershipPhaseJoining means that the etcd data is empty, and the machine is either trying to join
+  // an existing etcd cluster, or it is waiting for the bootstrap request.
+  MEMBERSHIP_PHASE_JOINING = 1;
+  // MembershipPhaseLearner means that the machine joined the etcd cluster as a learner,
+  // and it is not promoted to a voting member yet.
+  //
+  // The etcd data of a learner is disposable: if etcd is interrupted in this phase, the data is wiped,
+  // and the machine joins the cluster from scratch.
+  MEMBERSHIP_PHASE_LEARNER = 2;
+  // MembershipPhaseMember means that the machine is a (voting) member of the etcd cluster.
+  MEMBERSHIP_PHASE_MEMBER = 3;
+  // MembershipPhaseLeaving means that the machine is in the process of leaving the etcd cluster.
+  MEMBERSHIP_PHASE_LEAVING = 4;
+  // MembershipPhaseLeft means that the machine left the etcd cluster, and the etcd data was wiped.
+  MEMBERSHIP_PHASE_LEFT = 5;
+}
+
 // HypervisorVirtualMachineDiskPhase describes observed disk attachability, not COSI metadata lifecycle.
 enum HypervisorVirtualMachineDiskPhase {
   VIRTUAL_MACHINE_DISK_PHASE_UNKNOWN = 0;
