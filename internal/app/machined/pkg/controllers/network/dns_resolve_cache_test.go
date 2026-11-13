@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"fmt"
 	"net"
 	"net/netip"
 	"slices"
@@ -21,7 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap/zaptest/observer"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
@@ -321,6 +325,89 @@ func TestDNSServer(t *testing.T) {
 				State:  suite.State(),
 			}))
 		},
+	})
+}
+
+type DNSServerLogLevel struct {
+	ctest.DefaultSuite
+
+	logs *observer.ObservedLogs
+}
+
+func (suite *DNSServerLogLevel) TestLogLevel() {
+	port := getDynamicPort(suite.T())
+
+	cfg := network.NewHostDNSConfig(network.HostDNSConfigID)
+	cfg.TypedSpec().Enabled = true
+	cfg.TypedSpec().ListenAddresses = makeAddrs(port)
+	cfg.TypedSpec().LogLevel = "error"
+	suite.Create(cfg)
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(),
+		expectedDNSRunners(port),
+		func(r *network.DNSResolveCache, assert *assert.Assertions) {
+			assert.Equal("running", r.TypedSpec().Status)
+		},
+	)
+
+	// there are no upstreams, so every request fails, which is logged at warn level;
+	// failures are cached, so each request uses a unique name to reach the handler
+	const failureMsg = "error serving dns request"
+
+	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) { suite.assertServerFailure(collect, port) }, 3*time.Second, 100*time.Millisecond)
+	suite.Assert().Zero(suite.logs.FilterMessage(failureMsg).Len(), "warn messages should be filtered out at error level")
+
+	cfg.TypedSpec().LogLevel = ""
+	suite.Update(cfg)
+
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			if !suite.assertServerFailure(collect, port) {
+				return
+			}
+
+			assert.NotZero(collect, suite.logs.FilterMessage(failureMsg).Len(), "warn messages should be logged at default level")
+		},
+		3*time.Second, 100*time.Millisecond,
+	)
+}
+
+func (suite *DNSServerLogLevel) assertServerFailure(collect *assert.CollectT, port string) bool {
+	id := dns.Id()
+
+	exchange, err := dns.Exchange(
+		&dns.Msg{
+			Id: id, RecursionDesired: true,
+			Question: []dns.Question{
+				{Name: dns.Fqdn(fmt.Sprintf("test-%d.example.com", id)), Qtype: dns.TypeA, Qclass: dns.ClassINET},
+			},
+		},
+		"127.0.0.53:"+port,
+	)
+	if !assert.NoError(collect, err) {
+		return false
+	}
+
+	return assert.Equal(collect, dns.RcodeServerFailure, exchange.Rcode)
+}
+
+func TestDNSServerLogLevel(t *testing.T) {
+	t.Parallel()
+
+	core, logs := observer.New(zapcore.DebugLevel)
+
+	suite.Run(t, &DNSServerLogLevel{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.DNSResolveCacheController{
+					Logger: zap.New(core),
+					State:  suite.State(),
+				}))
+			},
+		},
+		logs: logs,
 	})
 }
 

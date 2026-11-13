@@ -6813,6 +6813,18 @@
           "description": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\n",
           "markdownDescription": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
           "x-intellij-html-description": "\u003cp\u003eResolve member hostnames using the host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\u003c/p\u003e\n"
+        },
+        "logLevel": {
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "title": "logLevel",
+          "description": "Log level for the host DNS resolver.\n\nThe default log level is debug, which logs every DNS request and response.\nRaise the log level to reduce the verbosity of the host DNS resolver logs.\n",
+          "markdownDescription": "Log level for the host DNS resolver.\n\nThe default log level is `debug`, which logs every DNS request and response.\nRaise the log level to reduce the verbosity of the host DNS resolver logs.",
+          "x-intellij-html-description": "\u003cp\u003eLog level for the host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eThe default log level is \u003ccode\u003edebug\u003c/code\u003e, which logs every DNS request and response.\nRaise the log level to reduce the verbosity of the host DNS resolver logs.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

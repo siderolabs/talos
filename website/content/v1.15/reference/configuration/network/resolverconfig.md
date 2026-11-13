@@ -49,6 +49,9 @@ hostDNS:
     enabled: true # Enable host DNS caching resolver.
     forwardKubeDNSToHost: true # Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.
     resolveMemberNames: true # Resolve member hostnames using the host DNS resolver.
+
+    # # Log level for the host DNS resolver.
+    # logLevel: warn
 {{< /highlight >}}
 
 {{< highlight yaml >}}
@@ -138,6 +141,9 @@ HostDNSConfig represents host DNS configuration.
 |`enabled` |bool |Enable host DNS caching resolver.<br><br>When enabled, a local DNS caching resolver is deployed on the host to improve DNS resolution performance and reliability.<br>Upstream DNS servers for the host resolver are configured using the `nameservers` field in this config document.  | |
 |`forwardKubeDNSToHost` |bool |Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.<br><br>When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of<br>using configured upstream DNS resolvers directly).  | |
 |`resolveMemberNames` |bool |Resolve member hostnames using the host DNS resolver.<br><br>When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.<br>This requires service discovery to be enabled.  | |
+|`logLevel` |string |Log level for the host DNS resolver.<br><br>The default log level is `debug`, which logs every DNS request and response.<br>Raise the log level to reduce the verbosity of the host DNS resolver logs. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+logLevel: warn
+{{< /highlight >}}</details> |`debug`<br />`info`<br />`warn`<br />`error`<br /> |
 
 
 

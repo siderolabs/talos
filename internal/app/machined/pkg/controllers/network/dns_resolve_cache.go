@@ -32,9 +32,11 @@ type DNSResolveCacheController struct {
 	State  state.State
 	Logger *zap.Logger
 
-	mx        sync.Mutex
-	manager   *dns.Manager
-	reconcile chan struct{}
+	mx         sync.Mutex
+	manager    *dns.Manager
+	level      zap.AtomicLevel
+	baseLogger *zap.Logger
+	reconcile  chan struct{}
 }
 
 // Name implements controller.Controller interface.
@@ -110,6 +112,7 @@ func (ctrl *DNSResolveCacheController) run(ctx context.Context, r controller.Run
 		return fmt.Errorf("error getting host dns config: %w", err)
 	}
 
+	ctrl.setLogLevel(cfg.TypedSpec().LogLevel)
 	ctrl.manager.AllowNodeResolving(cfg.TypedSpec().ResolveMemberNames)
 
 	if !cfg.TypedSpec().Enabled {
@@ -174,6 +177,11 @@ func (ctrl *DNSResolveCacheController) writeDNSStatus(ctx context.Context, r con
 
 func (ctrl *DNSResolveCacheController) init(ctx context.Context) {
 	if ctrl.manager == nil {
+		// Log level defaults to debug, and it can be raised via the host DNS configuration.
+		ctrl.level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
+		ctrl.baseLogger = ctrl.Logger
+		ctrl.Logger = ctrl.Logger.WithOptions(zap.IncreaseLevel(ctrl.level))
+
 		ctrl.manager = dns.NewManager(
 			&memberReader{st: ctrl.State},
 			&staticHostReader{st: ctrl.State},
@@ -195,6 +203,27 @@ func (ctrl *DNSResolveCacheController) init(ctx context.Context) {
 	}
 
 	ctrl.manager.ServeBackground(ctx)
+}
+
+func (ctrl *DNSResolveCacheController) setLogLevel(level string) {
+	newLevel := zapcore.DebugLevel
+
+	if level != "" {
+		parsed, err := zapcore.ParseLevel(level)
+		if err != nil {
+			ctrl.Logger.Warn("invalid host dns log level, using debug", zap.String("level", level), zap.Error(err))
+		} else {
+			newLevel = parsed
+		}
+	}
+
+	if newLevel == ctrl.level.Level() {
+		return
+	}
+
+	// log the change with the unfiltered logger, so that it is always visible
+	ctrl.baseLogger.Info("setting host dns log level", zap.Stringer("level", newLevel))
+	ctrl.level.SetLevel(newLevel)
 }
 
 func (ctrl *DNSResolveCacheController) eventHook(event suture.Event) {
