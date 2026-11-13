@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -37,6 +38,7 @@ type fakeProber struct {
 	panic      bool
 	targets    []containersctrl.ProbeTarget
 	closed     int
+	checks     int
 }
 
 func (prober *fakeProber) provide(target containersctrl.ProbeTarget) (containersctrl.Probe, io.Closer, error) {
@@ -52,6 +54,8 @@ func (prober *fakeProber) provide(target containersctrl.ProbeTarget) (containers
 	return func(context.Context) error {
 		prober.mu.Lock()
 		defer prober.mu.Unlock()
+
+		prober.checks++
 
 		if prober.panic {
 			panic("probe exploded")
@@ -105,6 +109,23 @@ func (prober *fakeProber) setErr(err error) {
 // returned, while the next test replaces the suite's prober.
 func (prober *fakeProber) probeCount(check func(int) bool) func() bool {
 	return func() bool { return check(len(prober.probedTargets())) }
+}
+
+// checkCount returns a condition on the number of checks run; see probeCount.
+func (prober *fakeProber) checkCount(check func(int) bool) func() bool {
+	return func() bool {
+		prober.mu.Lock()
+		defer prober.mu.Unlock()
+
+		return check(prober.checks)
+	}
+}
+
+func (prober *fakeProber) checksRun() int {
+	prober.mu.Lock()
+	defer prober.mu.Unlock()
+
+	return prober.checks
 }
 
 // probed returns a condition on target having been probed; see probeCount.
@@ -444,6 +465,36 @@ func (suite *HealthSuite) TestRecoversAfterFailure() {
 	ctest.AssertResource(suite, id, func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
 		asrt.True(status.TypedSpec().Healthy)
 		asrt.Empty(status.TypedSpec().Message)
+	})
+}
+
+// TestFailureMessageChangeNotRepublished covers a container which keeps failing with a different
+// message on every check, e.g. one carrying the ephemeral source port: its status is written once, with
+// the failure which made it unhealthy, rather than on every interval.
+func (suite *HealthSuite) TestFailureMessageChangeNotRepublished() {
+	suite.prober.setErr(errors.New("read tcp 127.0.0.1:53817->127.0.0.1:8080: connection reset by peer"))
+
+	suite.createSpec(testHealthCheck)
+	suite.createInstance(0, 42)
+
+	id := containers.InstanceID(healthTestContainer, 0)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+		asrt.False(status.TypedSpec().Healthy)
+		asrt.Equal("read tcp 127.0.0.1:53817->127.0.0.1:8080: connection reset by peer", status.TypedSpec().Message)
+	})
+
+	published, err := safe.StateGetByID[*containers.ContainerHealthStatus](suite.Ctx(), suite.State(), id)
+	suite.Require().NoError(err)
+
+	suite.prober.setErr(errors.New("read tcp 127.0.0.1:53818->127.0.0.1:8080: connection reset by peer"))
+
+	checks := suite.prober.checksRun()
+	suite.Eventually(suite.prober.checkCount(func(n int) bool { return n >= checks+5 }), time.Second, 10*time.Millisecond)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+		asrt.Equal(published.Metadata().Version(), status.Metadata().Version())
+		asrt.Equal("read tcp 127.0.0.1:53817->127.0.0.1:8080: connection reset by peer", status.TypedSpec().Message)
 	})
 }
 

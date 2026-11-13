@@ -399,18 +399,20 @@ func (run *probeRun) stop() {
 }
 
 // report records an outcome, reporting whether it changed anything.
+//
+// Only a transition between healthy and unhealthy is an outcome change: the message of a container
+// that keeps failing is the one of the failure which made it unhealthy. Failure messages often carry
+// text which changes on every check, such as the ephemeral source port of a dial, and publishing each
+// of them would rewrite the status, and warn about the container, on every interval.
 func (run *probeRun) report(healthy bool, message string) bool {
 	run.mu.Lock()
 	defer run.mu.Unlock()
 
-	if run.decided && run.status.Healthy == healthy && run.status.Message == message {
+	if run.decided && run.status.Healthy == healthy {
 		return false
 	}
 
-	if !run.decided || run.status.Healthy != healthy {
-		run.status.LastChange = time.Now()
-	}
-
+	run.status.LastChange = time.Now()
 	run.decided = true
 	run.status.Healthy = healthy
 	run.status.Message = message
