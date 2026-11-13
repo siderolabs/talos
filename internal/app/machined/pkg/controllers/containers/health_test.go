@@ -26,6 +26,9 @@ import (
 
 const healthTestContainer = "web"
 
+// testCgroupPath is the cgroup the task of healthTestContainer runs in, as machined sees it.
+const testCgroupPath = "/taloscontainers/" + healthTestContainer
+
 // fakeProber hands out probes whose outcome the test controls, and records what was probed.
 type fakeProber struct {
 	mu         sync.Mutex
@@ -202,7 +205,7 @@ func (suite *HealthSuite) TestReportsOutcome() {
 		asrt.Equal(healthTestContainer, label)
 	})
 
-	suite.Equal([]containersctrl.ProbeTarget{{PID: 42, HealthCheck: testHealthCheck}}, suite.prober.probedTargets())
+	suite.Equal([]containersctrl.ProbeTarget{{PID: 42, CgroupPath: testCgroupPath, HealthCheck: testHealthCheck}}, suite.prober.probedTargets())
 
 	suite.prober.setErr(errors.New("connection refused"))
 
@@ -278,7 +281,7 @@ func (suite *HealthSuite) TestFollowsNewGeneration() {
 
 	ctest.AssertNoResource[*containers.ContainerHealthStatus](suite, containers.InstanceID(healthTestContainer, 0))
 
-	suite.Contains(suite.prober.probedTargets(), containersctrl.ProbeTarget{PID: 43, HealthCheck: testHealthCheck})
+	suite.Contains(suite.prober.probedTargets(), containersctrl.ProbeTarget{PID: 43, CgroupPath: testCgroupPath, HealthCheck: testHealthCheck})
 }
 
 // TestRetargetsOnSpecChange covers editing the health check of a running container: the probe is
@@ -301,7 +304,7 @@ func (suite *HealthSuite) TestRetargetsOnSpecChange() {
 	spec.TypedSpec().HealthCheck = edited
 	suite.Update(spec)
 
-	suite.Eventually(suite.prober.probed(containersctrl.ProbeTarget{PID: 42, HealthCheck: edited}), 5*time.Second, 10*time.Millisecond)
+	suite.Eventually(suite.prober.probed(containersctrl.ProbeTarget{PID: 42, CgroupPath: testCgroupPath, HealthCheck: edited}), 5*time.Second, 10*time.Millisecond)
 
 	// The replaced probe is released.
 	prober := suite.prober
@@ -334,7 +337,7 @@ func (suite *HealthSuite) TestRetargetKeepsOutcome() {
 	spec.TypedSpec().HealthCheck = edited
 	suite.Update(spec)
 
-	suite.Eventually(suite.prober.probed(containersctrl.ProbeTarget{PID: 42, HealthCheck: edited}), 5*time.Second, 10*time.Millisecond)
+	suite.Eventually(suite.prober.probed(containersctrl.ProbeTarget{PID: 42, CgroupPath: testCgroupPath, HealthCheck: edited}), 5*time.Second, 10*time.Millisecond)
 
 	md := containers.NewContainerHealthStatus(containers.NamespaceName, id).Metadata()
 
@@ -437,7 +440,7 @@ func (suite *HealthSuite) TestUnknownPIDIsProbed() {
 		asrt.Equal("container PID is not known", status.TypedSpec().Message)
 	})
 
-	suite.Contains(suite.prober.probedTargets(), containersctrl.ProbeTarget{PID: 0, HealthCheck: testHealthCheck})
+	suite.Contains(suite.prober.probedTargets(), containersctrl.ProbeTarget{PID: 0, CgroupPath: testCgroupPath, HealthCheck: testHealthCheck})
 }
 
 // TestNoProbeWithoutInstanceSpec covers a running instance status whose instance spec is gone.
@@ -536,7 +539,7 @@ func (suite *HealthSuite) TestProbeSurvivesCRIRestart() {
 	suite.Create(restarted)
 
 	suite.Never(func() bool { return suite.prober.closedCount() > 0 }, 200*time.Millisecond, 10*time.Millisecond)
-	suite.Equal([]containersctrl.ProbeTarget{{PID: 42, HealthCheck: testHealthCheck}}, suite.prober.probedTargets())
+	suite.Equal([]containersctrl.ProbeTarget{{PID: 42, CgroupPath: testCgroupPath, HealthCheck: testHealthCheck}}, suite.prober.probedTargets())
 
 	ctest.AssertResource(suite, id, func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
 		asrt.True(status.TypedSpec().Healthy)

@@ -11,13 +11,18 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/containernetworking/plugins/pkg/ns"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
@@ -38,6 +43,9 @@ type ProbeTarget struct {
 	// The runner already resolves the task PID out of the CRI containerd's PID namespace, which is a
 	// sandbox one when workload isolation is enabled. It is 0 if the runner could not resolve it.
 	PID uint32
+	// CgroupPath is the cgroup the container's task runs in, as /proc/<pid>/cgroup shows it to
+	// machined. It tells the task apart from another process which got its PID after it exited.
+	CgroupPath string
 	// HostNetwork is true if the container shares the host network namespace.
 	HostNetwork bool
 	// HealthCheck to run.
@@ -52,9 +60,9 @@ type ContextDialer func(ctx context.Context, address string) (net.Conn, error)
 
 // NewProbe builds the probe for a target.
 //
-// The container's network namespace is opened once, here, and held until the returned closer is
-// called: every check then runs in that namespace even if the PID is reused by another process
-// before the controller notices the task has exited.
+// The container's network namespace is opened here, and held until the returned closer is called:
+// every check then runs in that namespace even if the PID is reused by another process before the
+// controller notices the task has exited.
 func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 	if target.HostNetwork {
 		var dialer net.Dialer
@@ -64,13 +72,9 @@ func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 		}), nopCloser{}, nil
 	}
 
-	if target.PID == 0 {
-		return nil, nil, errPIDUnknown
-	}
-
-	netNS, err := ns.GetNS(netNSPath(target.PID))
+	netNS, err := openTaskNetNS(target.PID, target.CgroupPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open network namespace of PID %d: %w", target.PID, err)
+		return nil, nil, err
 	}
 
 	return NewProbeWithDialer(target.HealthCheck, netNSDialer(netNS)), netNS, nil
@@ -80,9 +84,87 @@ func NewProbe(target ProbeTarget) (Probe, io.Closer, error) {
 // runner could not resolve: there is no network namespace to connect from.
 var errPIDUnknown = errors.New("container PID is not known, its network namespace cannot be probed")
 
+// openTaskNetNS opens the network namespace of the container task pid, which runs in cgroupPath.
+//
+// By the time it is opened, pid may name another process: the task may have exited and its PID been
+// reused. So the process is pinned with a pidfd first, checked to run in the container's cgroup, and
+// checked to be still alive once its network namespace is open. While it is alive its PID cannot be
+// reused, so the cgroup read and the namespace opened in between are both its own.
+func openTaskNetNS(pid uint32, cgroupPath string) (ns.NetNS, error) {
+	if pid == 0 {
+		return nil, errPIDUnknown
+	}
+
+	pidfd, err := unix.PidfdOpen(int(pid), 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open PID %d: %w", pid, err)
+	}
+
+	defer unix.Close(pidfd) //nolint:errcheck
+
+	if err = checkCgroup(procCgroupPath(pid), cgroupPath); err != nil {
+		return nil, fmt.Errorf("PID %d is not the container task: %w", pid, err)
+	}
+
+	netNS, err := ns.GetNS(netNSPath(pid))
+	if err != nil {
+		return nil, fmt.Errorf("failed to open network namespace of PID %d: %w", pid, err)
+	}
+
+	if err = unix.PidfdSendSignal(pidfd, 0, nil, 0); err != nil {
+		netNS.Close() //nolint:errcheck
+
+		return nil, fmt.Errorf("PID %d exited while its network namespace was opened: %w", pid, err)
+	}
+
+	return netNS, nil
+}
+
+// checkCgroup returns an error unless the process whose cgroup membership is listed at procCgroup
+// runs in cgroupPath, or in a cgroup below it.
+//
+// Each line is hierarchy-ID:controllers:path: a single one on the unified hierarchy, and one per
+// hierarchy with cgroup v1, where any hierarchy placing the process there will do.
+func checkCgroup(procCgroup, cgroupPath string) error {
+	contents, err := os.ReadFile(procCgroup)
+	if err != nil {
+		return err
+	}
+
+	var found []string
+
+	for line := range strings.Lines(string(contents)) {
+		fields := strings.SplitN(strings.TrimSpace(line), ":", 3)
+		if len(fields) != 3 {
+			continue
+		}
+
+		path := fields[2]
+
+		if path == cgroupPath || strings.HasPrefix(path, cgroupPath+"/") {
+			return nil
+		}
+
+		found = append(found, path)
+	}
+
+	return fmt.Errorf("it runs in cgroup %q, not %q", strings.Join(found, ", "), cgroupPath)
+}
+
+// taskCgroupPath returns the cgroup the task of a container runs in, as /proc/<pid>/cgroup shows it
+// to machined: below the cgroup root of machined when it is nested.
+func taskCgroupPath(containerID string) string {
+	return filepath.Join("/", cgroup.Path(containerCgroupPath(containerID)))
+}
+
 // netNSPath returns the path of the network namespace of pid, a PID in machined's PID namespace.
 func netNSPath(pid uint32) string {
 	return fmt.Sprintf("/proc/%d/ns/net", pid)
+}
+
+// procCgroupPath returns the path listing the cgroups of pid, a PID in machined's PID namespace.
+func procCgroupPath(pid uint32) string {
+	return fmt.Sprintf("/proc/%d/cgroup", pid)
 }
 
 type nopCloser struct{}

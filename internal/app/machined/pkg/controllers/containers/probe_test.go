@@ -6,18 +6,23 @@ package containers_test
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 	"testing"
 	"time"
 
+	"github.com/containernetworking/plugins/pkg/ns"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -369,7 +374,7 @@ func TestNewProbeMissingNetNS(t *testing.T) {
 			Port: 80,
 		},
 	})
-	assert.ErrorContains(t, err, "failed to open network namespace of PID 4294967295")
+	assert.ErrorContains(t, err, "failed to open PID 4294967295")
 }
 
 // TestNewProbeUnknownPID covers a task whose PID the runner could not resolve: without it there is no
@@ -571,13 +576,14 @@ func TestNewProbeNetNS(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			probe, closer, err := containersctrl.NewProbe(containersctrl.ProbeTarget{
-				PID:         tid,
-				HealthCheck: test.healthCheck,
-			})
+			// Opened directly rather than through NewProbe: a thread ID cannot be pinned with a
+			// pidfd, which TestOpenTaskNetNS covers with a process of its own.
+			netNS, err := ns.GetNS(containersctrl.NetNSPath(tid))
 			require.NoError(t, err)
 
-			t.Cleanup(func() { assert.NoError(t, closer.Close()) })
+			t.Cleanup(func() { assert.NoError(t, netNS.Close()) })
+
+			probe := containersctrl.NewProbeWithDialer(test.healthCheck, containersctrl.NetNSDialer(netNS))
 
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()
@@ -597,4 +603,80 @@ func TestNetNSPath(t *testing.T) {
 	t.Parallel()
 
 	assert.Equal(t, "/proc/42/ns/net", containersctrl.NetNSPath(42))
+}
+
+// TestCheckCgroup covers telling the container task apart by the cgroups procfs lists for it.
+func TestCheckCgroup(t *testing.T) {
+	t.Parallel()
+
+	const cgroupPath = "/taloscontainers/web"
+
+	for _, test := range []struct {
+		name     string
+		contents string
+		wantErr  string
+	}{
+		{name: "unified", contents: "0::/taloscontainers/web\n"},
+		{name: "unified below", contents: "0::/taloscontainers/web/nested\n"},
+		{name: "cgroup v1", contents: "12:pids:/system\n4:memory:/taloscontainers/web\n"},
+		{
+			name:     "other container",
+			contents: "0::/taloscontainers/web2\n",
+			wantErr:  `it runs in cgroup "/taloscontainers/web2", not "/taloscontainers/web"`,
+		},
+		{
+			name:     "other process",
+			contents: "0::/system/runtime\n",
+			wantErr:  `it runs in cgroup "/system/runtime", not "/taloscontainers/web"`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			path := filepath.Join(t.TempDir(), "cgroup")
+			require.NoError(t, os.WriteFile(path, []byte(test.contents), 0o600))
+
+			err := containersctrl.CheckCgroup(path, cgroupPath)
+			if test.wantErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.EqualError(t, err, test.wantErr)
+			}
+		})
+	}
+}
+
+// TestOpenTaskNetNS covers opening the network namespace of a task only while its PID still names a
+// process in the container's cgroup: a PID reused by another process after the task exited is
+// refused, rather than probed in its stead.
+func TestOpenTaskNetNS(t *testing.T) {
+	t.Parallel()
+
+	cmd := exec.CommandContext(t.Context(), "sleep", "60")
+	require.NoError(t, cmd.Start())
+
+	pid := uint32(cmd.Process.Pid) //nolint:gosec // PIDs fit in 32 bits.
+
+	// The child stays in the cgroup of the test.
+	contents, err := os.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
+	require.NoError(t, err)
+
+	_, ownCgroup, ok := strings.Cut(strings.TrimSpace(string(contents)), "0::")
+	if !ok || strings.Contains(ownCgroup, "\n") {
+		t.Skip("the cgroup of the test is only checked on the unified hierarchy")
+	}
+
+	netNS, err := containersctrl.OpenTaskNetNS(pid, ownCgroup)
+	require.NoError(t, err)
+	assert.NoError(t, netNS.Close())
+
+	_, err = containersctrl.OpenTaskNetNS(pid, "/taloscontainers/web")
+	assert.ErrorContains(t, err, fmt.Sprintf("PID %d is not the container task", pid))
+
+	require.NoError(t, cmd.Process.Kill())
+	assert.Error(t, cmd.Wait())
+
+	// Gone, or, should the PID have been reused already, another process outside the cgroup.
+	_, err = containersctrl.OpenTaskNetNS(pid, ownCgroup)
+	assert.Error(t, err)
 }

@@ -12,6 +12,9 @@ var (
 	DecodeSeccompProfile  = decodeSeccompProfile
 	RunProbeLoop          = runProbeLoop
 	NetNSPath             = netNSPath
+	NetNSDialer           = netNSDialer
+	OpenTaskNetNS         = openTaskNetNS
+	CheckCgroup           = checkCgroup
 
 	LogContainerStatusTransition = logContainerStatusTransition
 )

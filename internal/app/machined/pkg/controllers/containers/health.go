@@ -250,6 +250,7 @@ func (ctrl *HealthController) desiredTarget(
 		containerID: status.ContainerID,
 		target: ProbeTarget{
 			PID:         status.PID,
+			CgroupPath:  taskCgroupPath(status.ContainerID),
 			HostNetwork: instanceSpec.TypedSpec().Network.HostNetwork,
 			HealthCheck: healthCheck,
 		},
@@ -320,7 +321,9 @@ func (ctrl *HealthController) start(
 		// Built up front while the task is known to be running. A failure here is retried on every
 		// check, each failed attempt counting as a failed check: a passing container must not stay
 		// degraded over a transient failure to open its network namespace, which would otherwise
-		// never be retried while the target is unchanged.
+		// never be retried while the target is unchanged. A retry is as safe as the first attempt:
+		// the provider makes sure the PID still names the container's task, not a process which
+		// got the PID after the task exited.
 		probe, closer, openErr := ctrl.ProbeProvider(target)
 
 		defer func() {
