@@ -19,13 +19,22 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// LVMActivationController activates discovered LVM volume groups.
+// LVMActivator is the activation controller's LVM subset.
+type LVMActivator interface {
+	PVScanAutoActivation(ctx context.Context, devicePath string) (map[string]string, error)
+	VGChangeActivate(ctx context.Context, vgName string) error
+}
+
+// LVMActivationController activates discovered LVM volume groups not declared in the machine config.
+//
+// Declared volume groups are activated by LVMVolumeGroupReconcileController.
 type LVMActivationController struct {
 	V1Alpha1Mode machineruntime.Mode
-	LVM          *lvm.LVM
+	LVM          LVMActivator
 
 	seenVolumes  map[string]struct{}
 	activatedVGs map[string]struct{}
@@ -54,6 +63,12 @@ func (ctrl *LVMActivationController) Inputs() []controller.Input {
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
 			ID:        optional.Some("udevd"),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -136,6 +151,22 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 			continue
 		}
 
+		machineConfig, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				// wait for the machine config to tell declared volume groups apart
+				continue
+			}
+
+			return fmt.Errorf("failed to get machine config: %w", err)
+		}
+
+		declaredVGs := map[string]struct{}{}
+
+		for _, doc := range machineConfig.Config().LVMVolumeGroupConfigs() {
+			declaredVGs[doc.Name()] = struct{}{}
+		}
+
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 		if err != nil {
 			return fmt.Errorf("failed to list discovered volumes: %w", err)
@@ -165,6 +196,10 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 			}
 
 			if vgName == "" {
+				continue
+			}
+
+			if _, ok := declaredVGs[vgName]; ok {
 				continue
 			}
 

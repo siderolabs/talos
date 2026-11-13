@@ -12,14 +12,21 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	storagectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
+	"github.com/siderolabs/talos/internal/pkg/lvm"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
-const testVGName = "vg-pool"
+const (
+	testVGName         = "vg-pool"
+	testParentVolumeID = "r-lvm"
+)
 
 // fakeProvisioner records unique LVM mutations. The reconcile loop re-runs on
 // every state-change event until on-disk state catches up; deduplicating by
@@ -28,13 +35,17 @@ const testVGName = "vg-pool"
 type fakeProvisioner struct {
 	mu sync.Mutex
 
-	pvCreates map[string]struct{}
-	vgCreates map[string][]string
-	vgExtends map[string]map[string]struct{}
+	pvCreates   map[string]struct{}
+	vgCreates   map[string][]string
+	vgExtends   map[string]map[string]struct{}
+	activations map[string]int
+
+	deactivations map[string]int
 
 	pvCreateErr   error
 	vgCreateErr   error
 	vgExtendErr   error
+	deactivateErr error
 	pvCreateCalls int
 }
 
@@ -43,7 +54,49 @@ func newFakeProvisioner() *fakeProvisioner {
 		pvCreates: map[string]struct{}{},
 		vgCreates: map[string][]string{},
 		vgExtends: map[string]map[string]struct{}{},
+
+		activations:   map[string]int{},
+		deactivations: map[string]int{},
 	}
+}
+
+func (f *fakeProvisioner) VGChangeActivate(_ context.Context, vg string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.activations[vg]++
+
+	return nil
+}
+
+func (f *fakeProvisioner) VGChangeDeactivate(_ context.Context, vg string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.deactivations[vg]++
+
+	return f.deactivateErr
+}
+
+func (f *fakeProvisioner) activationCount(vg string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.activations[vg]
+}
+
+func (f *fakeProvisioner) deactivationCount(vg string) int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return f.deactivations[vg]
+}
+
+func (f *fakeProvisioner) setDeactivateError(err error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.deactivateErr = err
 }
 
 func (f *fakeProvisioner) PVCreate(_ context.Context, device string) error {
@@ -150,6 +203,9 @@ func (f *fakeProvisioner) reset() {
 	f.pvCreates = map[string]struct{}{}
 	f.vgCreates = map[string][]string{}
 	f.vgExtends = map[string]map[string]struct{}{}
+	f.activations = map[string]int{}
+	f.deactivations = map[string]int{}
+	f.deactivateErr = nil
 	f.pvCreateCalls = 0
 	f.pvCreateErr = nil
 	f.vgCreateErr = nil
@@ -178,10 +234,31 @@ func (suite *LVMVolumeGroupReconcileSuite) createPVStatus(id, device, vgName str
 }
 
 func (suite *LVMVolumeGroupReconcileSuite) createVGStatus(name string) {
+	suite.createVGStatusWithMissingPVs(name, "0")
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) createVGStatusWithMissingPVs(name, missing string) {
 	vg := storageres.NewLVMVolumeGroupStatus(storageres.NamespaceName, name)
 	vg.TypedSpec().Name = name
+	vg.TypedSpec().MissingPVCount = missing
 
 	suite.Create(vg)
+}
+
+// createAssembledParentVG sets up a VG on top of a ready raw volume, as declared via provisioning.parents.
+func (suite *LVMVolumeGroupReconcileSuite) createAssembledParentVG() {
+	applyMachineConfig(&suite.DefaultSuite, newParentsVGDoc(testVGName, "lvm"))
+	createVolumeStatus(&suite.DefaultSuite, testParentVolumeID, block.VolumePhaseReady, block.EncryptionProviderLUKS2, "/dev/vda5", "/dev/dm-0")
+
+	suite.createPVStatus("dm-0", "/dev/dm-0", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/dm-0")
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) assertParentFinalizer(present bool) {
+	ctest.AssertResource(suite, testParentVolumeID, func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+		asrt.Equal(present, vs.Metadata().Finalizers().Has("storage.LVMVolumeGroupReconcileController"))
+	})
 }
 
 func (suite *LVMVolumeGroupReconcileSuite) eventually(check func() bool) {
@@ -279,6 +356,75 @@ func (suite *LVMVolumeGroupReconcileSuite) TestPersistentFailureKeepsRetrying() 
 
 	// A persistent operational error continues to retry without event input.
 	suite.eventually(func() bool { return suite.provisioner.pvCreateCallCount() >= 3 })
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestActivatesAssembledVG() {
+	suite.createPVStatus("nvme0n1", "/dev/nvme0n1", testVGName)
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec("/dev/nvme0n1")
+
+	suite.eventually(func() bool { return suite.provisioner.activationCount(testVGName) > 0 })
+
+	// Further events must not re-activate the VG.
+	suite.createPVStatus("nvme1n1", "/dev/nvme1n1", "")
+	time.Sleep(250 * time.Millisecond)
+
+	suite.Assert().Equal(1, suite.provisioner.activationCount(testVGName))
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestSkipsActivationWithMissingPVs() {
+	suite.createPVStatus("nvme0n1", "/dev/nvme0n1", testVGName)
+	suite.createVGStatusWithMissingPVs(testVGName, "1")
+	suite.createVGSpec("/dev/nvme0n1")
+
+	time.Sleep(250 * time.Millisecond)
+
+	suite.Assert().Zero(suite.provisioner.activationCount(testVGName))
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestDeactivatesOnParentTeardown() {
+	suite.createAssembledParentVG()
+
+	suite.assertParentFinalizer(true)
+	suite.eventually(func() bool { return suite.provisioner.activationCount(testVGName) > 0 })
+
+	// An LV is still open: the finalizer must be kept until the deactivation succeeds.
+	suite.provisioner.setDeactivateError(lvm.ErrOpen)
+
+	_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeStatus(block.NamespaceName, testParentVolumeID).Metadata())
+	suite.Require().NoError(err)
+
+	suite.eventually(func() bool { return suite.provisioner.deactivationCount(testVGName) > 0 })
+	suite.assertParentFinalizer(true)
+
+	suite.provisioner.setDeactivateError(nil)
+
+	suite.assertParentFinalizer(false)
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestWaitsForParentsToBeReady() {
+	applyMachineConfig(&suite.DefaultSuite, newParentsVGDoc(testVGName, "lvm"))
+	createVolumeStatus(&suite.DefaultSuite, testParentVolumeID, block.VolumePhaseProvisioned, block.EncryptionProviderLUKS2, "/dev/vda5", "")
+
+	suite.createVGStatus(testVGName)
+	suite.createVGSpec()
+
+	suite.assertParentFinalizer(true)
+
+	time.Sleep(250 * time.Millisecond)
+
+	suite.Assert().Zero(suite.provisioner.activationCount(testVGName))
+}
+
+func (suite *LVMVolumeGroupReconcileSuite) TestReleasesParentWhenConfigRemoved() {
+	suite.createAssembledParentVG()
+
+	suite.assertParentFinalizer(true)
+
+	suite.Destroy(config.NewMachineConfig(nil))
+
+	suite.assertParentFinalizer(false)
+	suite.Assert().Zero(suite.provisioner.deactivationCount(testVGName))
 }
 
 func TestLVMVolumeGroupReconcileSuite(t *testing.T) {
