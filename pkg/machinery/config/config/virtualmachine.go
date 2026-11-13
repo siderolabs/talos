@@ -219,6 +219,8 @@ type VirtualMachineInterfaceConfig interface {
 	// TrustGuestRxFilters reports whether guest NIC receive filter updates may be applied to
 	// the host-side macvtap device.
 	TrustGuestRxFilters() bool
+	// Attachment is how the interface is attached to its host link.
+	Attachment() hypervisorhelpers.VirtualMachineInterfaceAttachment
 }
 
 // VirtualMachineGuestConfig defines the settings which apply inside the guest.

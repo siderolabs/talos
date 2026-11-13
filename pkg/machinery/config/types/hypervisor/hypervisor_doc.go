@@ -829,6 +829,17 @@ func (VirtualMachineInterface) Doc() *encoder.Doc {
 				Description: "Apply the guest's receive filter updates to the host-side macvtap device. Without\nthem the macvtap passes only broadcast and the guest's own unicast, so IPv6\nneighbor discovery, router advertisements and DHCPv6 never reach the guest.\n\nThis trusts the guest with the macvtap device: it can change the device's MAC to\nany address, and so impersonate other hosts on the segment, and it can turn on\npromiscuous or all-multicast mode, which also propagates to the host link. The\nrisk is shared by every guest and the host on that link.\n\nOptional; defaults to disabled.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Apply the guest's receive filter updates to the host-side macvtap device. Without" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "attachment",
+				Type:        "VirtualMachineInterfaceAttachment",
+				Note:        "",
+				Description: "How the interface is attached to the host link.\n\n`macvtap` puts a macvtap device in bridge mode on top of `link`. Guests on the same link\ncan reach each other, but the host cannot reach the guest through the link's own\naddresses. `link` must not be a port of a bridge or a bond.\n\n`bridge` adds a tap device to `link` as a bridge port, so the guest shares the bridge's\nlayer 2 segment with the host and the bridge's other ports. `link` must be a bridge.\nTalos enables `bridge-nf-call-iptables` and `bridge-nf-call-ip6tables`, so bridged guest\ntraffic passes the host's ingress firewall: with `NetworkRuleConfig` ingress filtering\nand a `block` default action, guest traffic arriving on the bridge ports is dropped.\n\nOptional; defaults to `macvtap`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "How the interface is attached to the host link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"macvtap",
+					"bridge",
+				},
+			},
 		},
 	}
 

@@ -236,6 +236,8 @@ message VirtualMachineInterfaceSpec {
   // the device's MAC to any address and turn on promiscuous or all-multicast mode, which
   // propagates to the host link.
   bool trust_guest_rx_filters = 4;
+  // Attachment is how the interface is attached to the host link: macvtap or bridge.
+  string attachment = 5;
 }
 
 // VirtualMachineMemoryBallooningSpec describes the desired memory ballooning state.

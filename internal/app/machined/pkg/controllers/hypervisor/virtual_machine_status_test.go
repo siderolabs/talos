@@ -1008,6 +1008,36 @@ func (s *VirtualMachineStatusSuite) TestNonEthernetLinkIsError() {
 		`virtual machine "vm1": interface "net0": host link is not an Ethernet link: "lo"`)
 }
 
+// A link that cannot carry the requested attachment is an error too, for the same reason.
+func (s *VirtualMachineStatusSuite) TestAttachmentMismatchIsError() {
+	bridge := network.NewLinkStatus(network.NamespaceName, "br0")
+	bridge.TypedSpec().Type = nethelpers.LinkEther
+	bridge.TypedSpec().Kind = network.LinkKindBridge
+	bridge.TypedSpec().Index = 10
+	s.Create(bridge)
+
+	port := network.NewLinkStatus(network.NamespaceName, "eth1")
+	port.TypedSpec().Type = nethelpers.LinkEther
+	port.TypedSpec().MasterIndex = 10
+	port.TypedSpec().SlaveKind = network.LinkKindBridge
+	s.Create(port)
+
+	bridgeOnPort := newRenderableSpec("bridge-on-port", "running")
+	bridgeOnPort.TypedSpec().Interfaces = []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: "eth1", Attachment: "bridge"}}
+	s.Create(bridgeOnPort)
+
+	macvtapOnPort := newRenderableSpec("macvtap-on-port", "running")
+	macvtapOnPort.TypedSpec().Interfaces = []hypervisor.VirtualMachineInterfaceSpec{{Name: "net0", Link: "eth1", Attachment: "macvtap"}}
+	s.Create(macvtapOnPort)
+
+	s.start()
+
+	s.assertStatus("bridge-on-port", "unknown", hypervisorhelpers.VirtualMachineStageError,
+		`virtual machine "bridge-on-port": interface "net0": host link is not a bridge: "eth1"`)
+	s.assertStatus("macvtap-on-port", "unknown", hypervisorhelpers.VirtualMachineStageError,
+		`virtual machine "macvtap-on-port": interface "net0": host link is a port of another link: "eth1"`)
+}
+
 // A disk this slice does not provision is not something to wait for: no host resource will ever
 // resolve it, so the stage says error rather than pending.
 // A disk nothing on the host will ever make attachable is an error rather than something to wait

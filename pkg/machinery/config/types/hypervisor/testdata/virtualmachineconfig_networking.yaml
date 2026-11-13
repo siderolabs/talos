@@ -14,4 +14,5 @@ networking:
           link: eth0
           trustGuestRxFilters: true
         - name: net1
-          link: eth1
+          link: br0
+          attachment: bridge

@@ -362,6 +362,7 @@ description: Talos gRPC API reference.
     - [HypervisorhelpersVirtualMachineDiskFormat](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskFormat)
     - [HypervisorhelpersVirtualMachineDiskType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineDiskType)
     - [HypervisorhelpersVirtualMachineFirmwareType](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineFirmwareType)
+    - [HypervisorhelpersVirtualMachineInterfaceAttachment](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineInterfaceAttachment)
     - [HypervisorhelpersVirtualMachineNUMAMode](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineNUMAMode)
     - [HypervisorhelpersVirtualMachinePowerState](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachinePowerState)
     - [HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy](#talos.resource.definitions.enums.HypervisorhelpersVirtualMachineProfileCPUFeaturePolicy)
@@ -6151,6 +6152,18 @@ HypervisorhelpersVirtualMachineFirmwareType is the firmware a virtual machine bo
 
 
 
+<a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineInterfaceAttachment"></a>
+
+### HypervisorhelpersVirtualMachineInterfaceAttachment
+HypervisorhelpersVirtualMachineInterfaceAttachment is how a guest interface is attached to its host link.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| VIRTUAL_MACHINE_INTERFACE_ATTACHMENT_MACVTAP | 0 |  |
+| VIRTUAL_MACHINE_INTERFACE_ATTACHMENT_BRIDGE | 1 |  |
+
+
+
 <a name="talos.resource.definitions.enums.HypervisorhelpersVirtualMachineNUMAMode"></a>
 
 ### HypervisorhelpersVirtualMachineNUMAMode
@@ -9864,6 +9877,7 @@ VirtualMachineInterfaceSpec describes a network interface attached to a host lin
 | link | [string](#string) |  | Link identifier, as seen from the host |
 | hardware_addr | [string](#string) |  | HardwareAddr is the address presented to the guest.<br><br>Empty when it is to be derived from the virtual machine and interface names. |
 | trust_guest_rx_filters | [bool](#bool) |  | TrustGuestRxFilters applies the guest's receive filter updates to the host-side macvtap device, so IPv6 multicast (NDP, DHCPv6) can reach the guest. The guest can then also set the device's MAC to any address and turn on promiscuous or all-multicast mode, which propagates to the host link. |
+| attachment | [string](#string) |  | Attachment is how the interface is attached to the host link: macvtap or bridge. |
 
 
 

@@ -96,6 +96,8 @@ type VirtualMachineInterfaceSpec struct {
 	// the device's MAC to any address and turn on promiscuous or all-multicast mode, which
 	// propagates to the host link.
 	TrustGuestRxFilters bool `yaml:"trustGuestRxFilters,omitempty" protobuf:"4"`
+	// Attachment is how the interface is attached to the host link: macvtap or bridge.
+	Attachment string `yaml:"attachment" protobuf:"5"`
 }
 
 // VirtualMachineFirmwareSpec describes firmware selection without host firmware paths.
