@@ -135,7 +135,7 @@ require (
 	github.com/anchore/go-struct-converter v0.2.1 // indirect
 	github.com/anchore/go-sync v0.1.2 // indirect
 	github.com/anchore/go-version v1.2.2-0.20210903204242-51efa5b487c4 // indirect
-	github.com/anchore/grype v0.121.0 // indirect
+	github.com/anchore/grype v0.121.3 // indirect
 	github.com/anchore/packageurl-go v0.2.0 // indirect
 	github.com/anchore/stereoscope v0.4.1 // indirect
 	github.com/anchore/syft v1.57.1 // indirect
@@ -157,7 +157,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.12 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.12 // indirect
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.344.3 // indirect
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.346.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.12 // indirect
@@ -449,7 +449,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pkg/xattr v0.4.12 // indirect
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/proglottis/gpgme v0.1.6 // indirect
 	github.com/prometheus/client_golang v1.24.1 // indirect
@@ -495,13 +495,13 @@ require (
 	github.com/siderolabs/go-pointer v1.0.1 // indirect
 	github.com/siderolabs/go-retry v0.3.3 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20261027151435-d8dcbf9e03ad // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20261027151435-d8dcbf9e03ad // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20261027151435-d8dcbf9e03ad // indirect
-	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20261027151435-d8dcbf9e03ad // indirect
-	github.com/siderolabs/talos/tools/redactgen v0.0.0-20261027151435-d8dcbf9e03ad // indirect
-	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20261027151435-d8dcbf9e03ad // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20261027151435-d8dcbf9e03ad // indirect
+	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20261113144430-ba4a88b62b80 // indirect
+	github.com/siderolabs/talos/tools/docgen v0.0.0-20261113144430-ba4a88b62b80 // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20261113144430-ba4a88b62b80 // indirect
+	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20261113123442-f0a81e1b8bdf // indirect
+	github.com/siderolabs/talos/tools/redactgen v0.0.0-20261113144430-ba4a88b62b80 // indirect
+	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20261113144430-ba4a88b62b80 // indirect
+	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20261113144430-ba4a88b62b80 // indirect
 	github.com/sigstore/fulcio v1.8.8 // indirect
 	github.com/sigstore/protobuf-specs v0.5.2 // indirect
 	github.com/sigstore/sigstore v1.10.11 // indirect
@@ -607,7 +607,7 @@ require (
 	golang.org/x/vuln v1.9.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/api v0.312.0 // indirect
+	google.golang.org/api v0.314.0 // indirect
 	google.golang.org/genproto v0.0.0-20261110000943-09e21b237f2c // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20261110000943-09e21b237f2c // indirect
@@ -620,8 +620,8 @@ require (
 	gorm.io/gorm v1.31.2 // indirect
 	honnef.co/go/tools v0.8.2 // indirect
 	howett.net/plist v1.0.1 // indirect
-	k8s.io/apimachinery v0.37.1 // indirect
-	k8s.io/code-generator v0.37.1 // indirect
+	k8s.io/apimachinery v0.37.2 // indirect
+	k8s.io/code-generator v0.37.2 // indirect
 	k8s.io/gengo/v2 v2.0.0-20260408192533-25e2208e0dc3 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	modernc.org/libc v1.81.0 // indirect

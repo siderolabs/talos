@@ -24,6 +24,8 @@ github.com/cloudflare/circl v1.6.4 h1:pOXuDTCEYyzydgUpQ0CQz3LsinKjiSk6nNP5Lt5K64
 github.com/cloudflare/circl v1.6.4/go.mod h1:YxarevkLlbaHuWsxG6vmYNWBEsSp4pnp7j+4VljMavY=
 github.com/containerd/go-cni v1.1.14 h1:jcFWauA5ED2wUHgCdvPB/IyvOtBcXzmgj8LprJ8nJH0=
 github.com/containerd/go-cni v1.1.14/go.mod h1:igdwKOd5qpuMIafFcovqefXeThU/s2MoDSOnkCv77fw=
+github.com/containerd/go-cni v1.1.15 h1:ce9mQ012Es7DKGq4CP60k97AnTIzIwOKF9/j/7LEeLQ=
+github.com/containerd/go-cni v1.1.15/go.mod h1:5DAleVZ1qeXMhkTJnPSTFZVgP7QbEz2RDd67hMFZ4ew=
 github.com/containernetworking/cni v1.3.1 h1:gnHlU/YC1bJcS+CSh+pYQKeuu4O4gsMGW1NMaLhkzW4=
 github.com/containernetworking/cni v1.3.1/go.mod h1:OtVXL0yXMfQb+p93OC/vRuhjpxsO1gAV0smjt28UQUQ=
 github.com/cosi-project/runtime v1.17.1 h1:N4yr9QbUPivm5joJR6mR7Jtd/uTAgsXpcsXKacPIA6k=

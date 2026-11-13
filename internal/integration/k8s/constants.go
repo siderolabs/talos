@@ -18,7 +18,7 @@ const (
 	CephCSIDriversHelmChartVersion = "1.1.0"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
-	LongHornHelmChartVersion = "1.12.1"
+	LongHornHelmChartVersion = "1.13.0"
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
 	OpenEBSChartVersion = "4.6.2"

@@ -46,6 +46,8 @@ github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.12 h1:uvX2yaL+aMjkmnrLPPlR/zwjoKF
 github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.12/go.mod h1:dicT+2eNhHHqGkxHO7LoXw3QghIUGuzgdmFqaSTopgI=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.344.3 h1:gdv8OhKZxtEYkeERVbmIYyGudBtilrdHirKtfalhhuM=
 github.com/aws/aws-sdk-go-v2/service/ec2 v1.344.3/go.mod h1:uMJiOkxaT3pV+LAeAvEaXToZ2x3nEnN53HnPdj+pcNo=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.346.0 h1:mVKNHBeByAci4VyF3a72tihL6hHCB8x7Q8/yIcmDgFQ=
+github.com/aws/aws-sdk-go-v2/service/ec2 v1.346.0/go.mod h1:uMJiOkxaT3pV+LAeAvEaXToZ2x3nEnN53HnPdj+pcNo=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25 h1:rKwkY3Z+fvt2W0msjdNs6uNewPmXzPayQ961oyuWhes=
 github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.25/go.mod h1:dBuAadQKd1F4Q4ZOg8gnFmuSHMRE40Pe3IfFwbtC4lE=
 github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.13 h1:U5HZ8FpTr6tyvulf1nT11Nw4KG1CAsXkuQGdUrIjZ/E=
@@ -161,6 +163,8 @@ gonum.org/v1/gonum v0.17.0 h1:VbpOemQlsSMrYmn7T2OUvQ4dqxQXU+ouZFQsZOx50z4=
 gonum.org/v1/gonum v0.17.0/go.mod h1:El3tOrEuMpv2UdMrbNlKEh9vd86bmQ6vqIcDwxEOc1E=
 google.golang.org/api v0.312.0 h1:c6EbM0/irOk8MemsYRO3ewSQWxVk2QYQJ/rYHXwEYh0=
 google.golang.org/api v0.312.0/go.mod h1:kn5kd1IMbs2x4hq99GcaTOumC0fnMYMwLNAfFxzpISU=
+google.golang.org/api v0.314.0 h1:1P6RtsfXD7KfUUI7YxdGcJ5Ekw+QHH9dEVTHzWc96p0=
+google.golang.org/api v0.314.0/go.mod h1:kn5kd1IMbs2x4hq99GcaTOumC0fnMYMwLNAfFxzpISU=
 google.golang.org/genproto v0.0.0-20261110000943-09e21b237f2c h1:4nfdocNgwiZ3kcGvgxucXk/gTqG6kCkbel7m0iP5oOc=
 google.golang.org/genproto v0.0.0-20261110000943-09e21b237f2c/go.mod h1:8uJkuAUFkZ0SrS8jn4wEa0mj+e9ghn2dylqpGHbOt9A=
 google.golang.org/genproto/googleapis/api v0.0.0-20261110000943-09e21b237f2c h1:ofk4SEqvpf6M5VWh88xRp42IYgdVOh7gffebnDj3OqU=
