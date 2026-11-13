@@ -351,6 +351,45 @@ func (suite *HealthSuite) TestRetargetKeepsOutcome() {
 	}, 300*time.Millisecond, 10*time.Millisecond)
 }
 
+// TestRetargetResetsOutcome covers changing what a container that already passed is checked on: the
+// outcome of the previous check says nothing about the new one, so it is withdrawn, which reads as
+// pending, until the new check decides.
+func (suite *HealthSuite) TestRetargetResetsOutcome() {
+	spec := suite.createSpec(testHealthCheck)
+	suite.createInstance(0, 42)
+
+	id := containers.InstanceID(healthTestContainer, 0)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Healthy)
+	})
+
+	// Nothing listens on the new port, and the new check never fails enough times to decide.
+	suite.prober.setErr(errors.New("connection refused"))
+
+	edited := testHealthCheck
+	edited.Port = 8080
+	edited.FailureThreshold = 1000
+
+	existing, err := suite.State().Get(suite.Ctx(), spec.Metadata())
+	suite.Require().NoError(err)
+
+	spec = existing.(*containers.ContainerSpec) //nolint:forcetypeassert,errcheck
+	spec.TypedSpec().HealthCheck = edited
+	suite.Update(spec)
+
+	suite.Eventually(suite.prober.probed(containersctrl.ProbeTarget{PID: 42, CgroupPath: testCgroupPath, HealthCheck: edited}), 5*time.Second, 10*time.Millisecond)
+
+	ctest.AssertNoResource[*containers.ContainerHealthStatus](suite, id)
+
+	// The new check passing decides it again.
+	suite.prober.setErr(nil)
+
+	ctest.AssertResource(suite, id, func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
+		asrt.True(status.TypedSpec().Healthy)
+	})
+}
+
 // TestPanicReportsUnhealthy covers a probe that panics: it is not restarted while its target is
 // unchanged, so the container is reported unhealthy rather than pending for good.
 func (suite *HealthSuite) TestPanicReportsUnhealthy() {

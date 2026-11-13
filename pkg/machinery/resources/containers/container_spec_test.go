@@ -503,6 +503,47 @@ func TestExecutionHash(t *testing.T) {
 	}
 }
 
+// TestHealthCheckSameCheck covers which edits of a health check leave its outcome standing: only
+// those of its schedule.
+func TestHealthCheckSameCheck(t *testing.T) {
+	t.Parallel()
+
+	base := containers.ContainerHealthCheckSpec{
+		Kind:             string(config.ContainerHealthCheckKindHTTP),
+		Port:             8080,
+		Path:             "/healthz",
+		InitialDelay:     time.Second,
+		Interval:         10 * time.Second,
+		Timeout:          time.Second,
+		FailureThreshold: 3,
+	}
+
+	for name, mutate := range map[string]func(*containers.ContainerHealthCheckSpec){
+		"initial delay":     func(hc *containers.ContainerHealthCheckSpec) { hc.InitialDelay = time.Hour },
+		"interval":          func(hc *containers.ContainerHealthCheckSpec) { hc.Interval = time.Minute },
+		"timeout":           func(hc *containers.ContainerHealthCheckSpec) { hc.Timeout = 5 * time.Second },
+		"failure threshold": func(hc *containers.ContainerHealthCheckSpec) { hc.FailureThreshold = 10 },
+	} {
+		changed := base
+		mutate(&changed)
+
+		assert.True(t, base.SameCheck(changed), name)
+	}
+
+	for name, mutate := range map[string]func(*containers.ContainerHealthCheckSpec){
+		"kind":         func(hc *containers.ContainerHealthCheckSpec) { hc.Kind = string(config.ContainerHealthCheckKindTCP) },
+		"port":         func(hc *containers.ContainerHealthCheckSpec) { hc.Port = 8081 },
+		"path":         func(hc *containers.ContainerHealthCheckSpec) { hc.Path = "/readyz" },
+		"grpc service": func(hc *containers.ContainerHealthCheckSpec) { hc.GRPCService = "api" },
+		"disabled":     func(hc *containers.ContainerHealthCheckSpec) { *hc = containers.ContainerHealthCheckSpec{} },
+	} {
+		changed := base
+		mutate(&changed)
+
+		assert.False(t, base.SameCheck(changed), name)
+	}
+}
+
 func TestContainersReadySucceeded(t *testing.T) {
 	t.Parallel()
 

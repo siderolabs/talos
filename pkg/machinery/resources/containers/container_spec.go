@@ -415,6 +415,24 @@ func (healthCheck ContainerHealthCheckSpec) Enabled() bool {
 	return healthCheck.Kind != ""
 }
 
+// SameCheck reports whether other checks the same thing as healthCheck, i.e. whether an outcome of
+// one is also an outcome of the other.
+//
+// Only the schedule may differ: when and how often a check runs, and how many failures it takes,
+// does not change what passing it proves. Every other field, including any added later, does.
+func (healthCheck ContainerHealthCheckSpec) SameCheck(other ContainerHealthCheckSpec) bool {
+	return healthCheck.withoutSchedule() == other.withoutSchedule()
+}
+
+func (healthCheck ContainerHealthCheckSpec) withoutSchedule() ContainerHealthCheckSpec {
+	healthCheck.InitialDelay = 0
+	healthCheck.Interval = 0
+	healthCheck.Timeout = 0
+	healthCheck.FailureThreshold = 0
+
+	return healthCheck
+}
+
 // ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
 //
 // Zero means unset, which for a limit means unlimited. The swap limit is a pointer because zero is

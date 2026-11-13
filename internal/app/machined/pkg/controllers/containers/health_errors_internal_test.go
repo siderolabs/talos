@@ -185,6 +185,10 @@ func TestHealthReconcileErrors(t *testing.T) {
 				ProbeProvider: passingProbe,
 				probes:        map[string]*probeRun{},
 				notifyCh:      make(chan struct{}, 1),
+				// The seeded outcome is of the configured check, as if from an earlier Run.
+				checks: map[string]containers.ContainerHealthCheckSpec{
+					containers.InstanceID(faultyTestContainer, 0): faultyTestHealthCheck,
+				},
 			}
 
 			t.Cleanup(func() {
@@ -196,6 +200,65 @@ func TestHealthReconcileErrors(t *testing.T) {
 			err := ctrl.reconcile(t.Context(), rt, zaptest.NewLogger(t))
 			assert.ErrorIs(t, err, errInjected)
 			assert.ErrorContains(t, err, test.wantErr)
+		})
+	}
+}
+
+// TestHealthCarriesOutcomeOfSameCheck covers a probe started over an outcome already published, e.g.
+// by an earlier Run: the outcome is carried over only if it is of the same check, as remembered by
+// the controller, so a changed check is never reported healthy before it has run.
+func TestHealthCarriesOutcomeOfSameCheck(t *testing.T) {
+	t.Parallel()
+
+	rescheduled := faultyTestHealthCheck
+	rescheduled.Interval = time.Hour
+
+	otherPort := faultyTestHealthCheck
+	otherPort.Port = 8080
+
+	id := containers.InstanceID(faultyTestContainer, 0)
+
+	for _, test := range []struct {
+		name        string
+		remembered  map[string]containers.ContainerHealthCheckSpec
+		wantDecided bool
+	}{
+		{name: "same check", remembered: map[string]containers.ContainerHealthCheckSpec{id: faultyTestHealthCheck}, wantDecided: true},
+		{name: "same check, other schedule", remembered: map[string]containers.ContainerHealthCheckSpec{id: rescheduled}, wantDecided: true},
+		{name: "other check", remembered: map[string]containers.ContainerHealthCheckSpec{id: otherPort}},
+		{name: "check not known", remembered: map[string]containers.ContainerHealthCheckSpec{}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			rt := newFaultyRuntime()
+			seedRunningContainer(t, rt.state)
+
+			ctrl := &HealthController{
+				// Never decides by itself: whether the probe is decided is down to the carried outcome.
+				ProbeProvider: func(ProbeTarget) (Probe, io.Closer, error) {
+					return func(ctx context.Context) error {
+						<-ctx.Done()
+
+						return ctx.Err()
+					}, nopCloser{}, nil
+				},
+				probes:   map[string]*probeRun{},
+				notifyCh: make(chan struct{}, 1),
+				checks:   test.remembered,
+			}
+
+			t.Cleanup(func() {
+				for _, run := range ctrl.probes {
+					run.stop()
+				}
+			})
+
+			require.NoError(t, ctrl.reconcile(t.Context(), rt, zaptest.NewLogger(t)))
+
+			_, decided := ctrl.probes[id].result()
+			assert.Equal(t, test.wantDecided, decided)
+			assert.Equal(t, faultyTestHealthCheck, ctrl.checks[id])
 		})
 	}
 }

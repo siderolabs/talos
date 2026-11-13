@@ -33,6 +33,9 @@ type HealthController struct {
 
 	probes   map[string]*probeRun
 	notifyCh chan struct{}
+
+	// Maps instance id to the healthcheck it was last probed with.
+	checks map[string]containers.ContainerHealthCheckSpec
 }
 
 // Name implements controller.Controller interface.
@@ -79,6 +82,10 @@ func (ctrl *HealthController) Run(ctx context.Context, runtime controller.Runtim
 
 	ctrl.probes = map[string]*probeRun{}
 	ctrl.notifyCh = make(chan struct{}, 1)
+
+	if ctrl.checks == nil {
+		ctrl.checks = map[string]containers.ContainerHealthCheckSpec{}
+	}
 
 	// Probes are cheap to start again, so unlike container tasks they do not outlive a Run.
 	defer func() {
@@ -127,15 +134,39 @@ func (ctrl *HealthController) reconcile(ctx context.Context, runtime controller.
 			continue
 		}
 
-		previous, err := previousOutcome(ctx, runtime, id)
-		if err != nil {
+		if err := ctrl.startProbe(ctx, runtime, logger, id, target); err != nil {
 			return err
 		}
+	}
 
-		ctrl.probes[id] = ctrl.start(logger, id, target, previous)
+	for id := range ctrl.checks {
+		if _, ok := desired[id]; !ok {
+			delete(ctrl.checks, id)
+		}
 	}
 
 	return ctrl.publish(ctx, runtime)
+}
+
+// startProbe starts the probe of an instance, carrying on from its published outcome if that is an
+// outcome of the same check.
+func (ctrl *HealthController) startProbe(ctx context.Context, reader controller.Reader, logger *zap.Logger, id string, target desiredProbe) error {
+	previous, err := previousOutcome(ctx, reader, id)
+	if err != nil {
+		return err
+	}
+
+	// An outcome of another check, e.g. of another port, says nothing about this one: the probe
+	// starts over undecided, rather than reporting healthy for a check which has never run.
+	if check, known := ctrl.checks[id]; !known || !check.SameCheck(target.target.HealthCheck) {
+		previous = optional.None[containers.ContainerHealthStatusSpec]()
+	}
+
+	ctrl.checks[id] = target.target.HealthCheck
+
+	ctrl.probes[id] = ctrl.start(logger, id, target, previous)
+
+	return nil
 }
 
 // publish writes the outcome of every decided probe, and removes the outcomes of stopped ones.
@@ -260,8 +291,9 @@ func (ctrl *HealthController) desiredTarget(
 // previousOutcome returns the outcome already published for an instance, if any.
 //
 // Instance IDs are unique per execution, so an outcome found here belongs to the same execution: a
-// probe replaced because its settings changed, or restarted with the controller, carries on from it
-// instead of reporting the container pending again.
+// probe replaced because its schedule changed, or restarted with the controller, carries on from it
+// instead of reporting the container pending again. Whether it is an outcome of the check the new
+// probe runs is up to the caller, which remembers that in checks.
 func previousOutcome(ctx context.Context, reader controller.Reader, id string) (optional.Optional[containers.ContainerHealthStatusSpec], error) {
 	res, err := safe.ReaderGetByID[*containers.ContainerHealthStatus](ctx, reader, id)
 	if err != nil {
