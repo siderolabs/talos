@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/panicsafe"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -340,44 +342,49 @@ func (ctrl *HealthController) start(
 	}
 
 	run.wg.Go(func() {
-		defer func() {
-			if p := recover(); p != nil {
-				logger.Error("container health check panicked", zap.Any("panic", p), zap.Stack("stack"), zap.String("instance", id))
+		if err := panicsafe.Run(func() { ctrl.runProbe(ctx, target, waitInitialDelay, report) }); err != nil {
+			logger.Error("container health check panicked", zap.String("instance", id), zap.Error(err))
 
-				// The probe is not restarted while its target is unchanged: report the failure rather
-				// than leaving the container pending for good.
-				report(false, fmt.Sprintf("health check panicked: %v", p))
-			}
-		}()
+			// The probe is not restarted while its target is unchanged: report the failure rather
+			// than leaving the container pending for good. The error carries the stack after its first
+			// line, which is for the log only.
+			message, _, _ := strings.Cut(err.Error(), "\n")
 
-		// Built up front while the task is known to be running. A failure here is retried on every
-		// check, each failed attempt counting as a failed check: a passing container must not stay
-		// degraded over a transient failure to open its network namespace, which would otherwise
-		// never be retried while the target is unchanged. A retry is as safe as the first attempt:
-		// the provider makes sure the PID still names the container's task, not a process which
-		// got the PID after the task exited.
-		probe, closer, openErr := ctrl.ProbeProvider(target)
-
-		defer func() {
-			if openErr == nil {
-				closer.Close() //nolint:errcheck
-			}
-		}()
-
-		check := func(ctx context.Context) error {
-			if openErr != nil {
-				if probe, closer, openErr = ctrl.ProbeProvider(target); openErr != nil {
-					return openErr
-				}
-			}
-
-			return probe(ctx)
+			report(false, message)
 		}
-
-		runProbeLoop(ctx, target.HealthCheck, waitInitialDelay, check, report)
 	})
 
 	return run
+}
+
+// runProbe builds the probe for target and runs it on the schedule of its health check until ctx is
+// canceled.
+func (ctrl *HealthController) runProbe(ctx context.Context, target ProbeTarget, waitInitialDelay bool, report func(healthy bool, message string)) {
+	// Built up front while the task is known to be running. A failure here is retried on every
+	// check, each failed attempt counting as a failed check: a passing container must not stay
+	// degraded over a transient failure to open its network namespace, which would otherwise
+	// never be retried while the target is unchanged. A retry is as safe as the first attempt:
+	// the provider makes sure the PID still names the container's task, not a process which
+	// got the PID after the task exited.
+	probe, closer, openErr := ctrl.ProbeProvider(target)
+
+	defer func() {
+		if openErr == nil {
+			closer.Close() //nolint:errcheck
+		}
+	}()
+
+	check := func(ctx context.Context) error {
+		if openErr != nil {
+			if probe, closer, openErr = ctrl.ProbeProvider(target); openErr != nil {
+				return openErr
+			}
+		}
+
+		return probe(ctx)
+	}
+
+	runProbeLoop(ctx, target.HealthCheck, waitInitialDelay, check, report)
 }
 
 // probeRun tracks one running probe.

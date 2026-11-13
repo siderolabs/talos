@@ -421,7 +421,7 @@ func (suite *HealthSuite) TestPanicReportsUnhealthy() {
 
 	ctest.AssertResource(suite, containers.InstanceID(healthTestContainer, 0), func(status *containers.ContainerHealthStatus, asrt *assert.Assertions) {
 		asrt.False(status.TypedSpec().Healthy)
-		asrt.Equal("health check panicked: probe exploded", status.TypedSpec().Message)
+		asrt.Equal("goroutine panicked: probe exploded", status.TypedSpec().Message)
 	})
 }
 
