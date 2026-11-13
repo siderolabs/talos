@@ -588,6 +588,41 @@ func TestContainerStatusSpecUpdate(t *testing.T) {
 				RestartCount: 2,
 			},
 		},
+		{
+			// Where an error came from is told by the state it was reported in, not by its text.
+			name: "an execution's error is carried over whatever its text",
+			prev: containers.ContainerStatusSpec{
+				State:        containers.ContainerStateBackoff,
+				Health:       containers.ContainerHealthDegraded,
+				RestartCount: 2,
+				Error:        "health check: binary not found",
+			},
+			healthChecked: true,
+			want: containers.ContainerStatusSpec{
+				State:        containers.ContainerStateStarting,
+				Health:       containers.ContainerHealthPulling,
+				Image:        imageRef,
+				RestartCount: 2,
+				Error:        "health check: binary not found",
+			},
+		},
+		{
+			// An image error reported next to a running instance is not why it went away: it is derived
+			// again from the image status, here gone.
+			name: "an error reported while running is not carried over",
+			prev: containers.ContainerStatusSpec{
+				State:        containers.ContainerStateRunning,
+				Health:       containers.ContainerHealthHealthy,
+				RestartCount: 2,
+				Error:        "failed to pull image",
+			},
+			want: containers.ContainerStatusSpec{
+				State:        containers.ContainerStateStarting,
+				Health:       containers.ContainerHealthPulling,
+				Image:        imageRef,
+				RestartCount: 2,
+			},
+		},
 	}
 
 	for _, tt := range tests {

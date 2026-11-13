@@ -5,8 +5,6 @@
 package containers
 
 import (
-	"strings"
-
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -168,10 +166,7 @@ func (containerStatusSpec *ContainerStatusSpec) Update(
 		containerStatusSpec.Error = healthCheckErrorPrefix + containerHealthStatus.TypedSpec().Message
 	}
 
-	// Same reasoning as RestartCount and ExitCode: keep the reason the last execution ended visible
-	// while the status that reported it is gone. A health check failure is not such a reason: a check
-	// never ends an execution, so it describes a probe that is no longer running.
-	if containerStatusSpec.Error == "" && containerInstanceStatus == nil && !strings.HasPrefix(prev.Error, healthCheckErrorPrefix) {
+	if containerStatusSpec.Error == "" && containerInstanceStatus == nil && prev.State != ContainerStateRunning {
 		containerStatusSpec.Error = prev.Error
 	}
 }
@@ -206,7 +201,7 @@ func finishedOutcome(
 	return containerInstanceStatus, ContainerStateExited
 }
 
-// healthCheckErrorPrefix marks an Error that comes from a failing health check.
+// healthCheckErrorPrefix tells the reader that an Error comes from a failing health check.
 const healthCheckErrorPrefix = "health check: "
 
 // ResolveReportedImage picks the image to report.
