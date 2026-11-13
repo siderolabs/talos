@@ -1191,6 +1191,83 @@ func (suite *LinkSpecSuite) TestBridge() {
 	ctest.AssertNoResource[*network.LinkStatus](suite, bridgeName)
 }
 
+// TestBridgeKeepsForeignPorts verifies that a bridge settings change does not leave a port the
+// controller does not manage (e.g. a virtual machine tap) unslaved.
+func (suite *LinkSpecSuite) TestBridgeKeepsForeignPorts() {
+	bridgeName := uniqueDummyInterface()
+	bridge := network.NewLinkSpec(network.NamespaceName, bridgeName)
+	*bridge.TypedSpec() = network.LinkSpecSpec{
+		Name:        bridgeName,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindBridge,
+		Up:          true,
+		Logical:     true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	suite.Create(bridge)
+
+	var bridgeIndex uint32
+
+	ctest.AssertResource(suite, bridgeName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
+
+		bridgeIndex = r.TypedSpec().Index
+	})
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	foreignName := uniqueDummyInterface()
+
+	suite.Require().NoError(conn.Link.New(&rtnetlink.LinkMessage{
+		Type: uint16(nethelpers.LinkEther),
+		Attributes: &rtnetlink.LinkAttributes{
+			Name:   foreignName,
+			Master: new(bridgeIndex),
+			Info: &rtnetlink.LinkInfo{
+				Kind: "dummy",
+				Data: &rtnetlink.LinkData{Name: "dummy"},
+			},
+		},
+	}))
+
+	defer func() {
+		if iface, ifaceErr := net.InterfaceByName(foreignName); ifaceErr == nil {
+			conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+		}
+	}()
+
+	ctest.AssertResource(suite, foreignName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(bridgeIndex, r.TypedSpec().MasterIndex)
+	})
+
+	ctest.UpdateWithConflicts(suite, bridge, func(r *network.LinkSpec) error {
+		r.TypedSpec().BridgeMaster.STP.Enabled = true
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, bridgeName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
+	})
+
+	// read the kernel state directly: the foreign port's LinkStatus may not have caught up yet
+	foreign, err := net.InterfaceByName(foreignName)
+	suite.Require().NoError(err)
+
+	msg, err := conn.Link.Get(uint32(foreign.Index))
+	suite.Require().NoError(err)
+	suite.Require().NotNil(msg.Attributes.Master, "foreign port was left unslaved")
+	suite.Assert().Equal(bridgeIndex, *msg.Attributes.Master)
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), bridge.Metadata()))
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, bridgeName)
+}
+
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestVRF() {
 	vrfName := uniqueDummyInterface()

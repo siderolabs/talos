@@ -274,6 +274,18 @@ func rawLinkData(link *rtnetlink.LinkMessage) []byte {
 	return linkData.Data
 }
 
+// setLinkMaster enslaves link under the master with the given index; zero unslaves it.
+func setLinkMaster(conn *rtnetlink.Conn, link rtnetlink.LinkMessage, masterIndex uint32) error {
+	return conn.Link.Set(&rtnetlink.LinkMessage{
+		Family: link.Family,
+		Type:   link.Type,
+		Index:  link.Index,
+		Attributes: &rtnetlink.LinkAttributes{
+			Master: new(masterIndex),
+		},
+	})
+}
+
 func verifyVethPeers(links []rtnetlink.LinkMessage, name, peerName string) error {
 	nameLink := findLink(links, name, false)
 	if nameLink == nil {
@@ -818,21 +830,18 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					return fmt.Errorf("error changing flags for %q: %w", link.TypedSpec().Name, err)
 				}
 
-				// unslave all slaves
+				// unslave all slaves, remembering them: ports this controller does not manage (e.g.
+				// virtual machine taps) would otherwise never be put back
+				var unslaved []int
+
 				for i, slave := range *links {
 					if slave.Attributes.Master != nil && *slave.Attributes.Master == existing.Index {
-						if err = conn.Link.Set(&rtnetlink.LinkMessage{
-							Family: slave.Family,
-							Type:   slave.Type,
-							Index:  slave.Index,
-							Attributes: &rtnetlink.LinkAttributes{
-								Master: new(uint32(0)),
-							},
-						}); err != nil {
-							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().BridgeSlave.MasterName, err)
+						if err = setLinkMaster(conn, slave, 0); err != nil {
+							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().Name, err)
 						}
 
 						(*links)[i].Attributes.Master = nil
+						unslaved = append(unslaved, i)
 					}
 				}
 
@@ -852,6 +861,17 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 					},
 				}); err != nil {
 					return fmt.Errorf("error updating bridge settings for %q: %w", link.TypedSpec().Name, err)
+				}
+
+				// re-enslave the ports removed above
+				for _, i := range unslaved {
+					slave := (*links)[i]
+
+					if err = setLinkMaster(conn, slave, existing.Index); err != nil {
+						return fmt.Errorf("error re-enslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().Name, err)
+					}
+
+					(*links)[i].Attributes.Master = new(existing.Index)
 				}
 
 				logger.Info("updated bridge settings")
