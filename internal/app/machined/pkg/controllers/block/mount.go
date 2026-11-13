@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"slices"
 	"syscall"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -51,6 +52,8 @@ type mountContext struct {
 	// volumeSize is the size of the volume the filesystem was last grown for.
 	volumeSize uint64
 }
+
+const unmountRetryInterval = 30 * time.Second
 
 // MountController performs actual mount/unmount operations based on the MountRequests.
 type MountController struct {
@@ -101,11 +104,22 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 		ctrl.activeMounts = map[string]*mountContext{}
 	}
 
+	retryTicker := time.NewTicker(unmountRetryInterval)
+	defer retryTicker.Stop()
+
+	shouldRetry := false
+
 	for {
 		select {
 		case <-r.EventCh():
 		case <-ctx.Done():
 			return nil
+		case <-retryTicker.C:
+			if !shouldRetry {
+				continue
+			}
+
+			shouldRetry = false
 		}
 
 		volumeStatuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
@@ -186,7 +200,13 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 
 				if volumeStatus != nil {
 					if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
-						return err
+						// Returning would park the controller in restart backoff (up to 90s) deaf to events,
+						// stalling other mounts and shutdown teardown, which waits for these finalizers.
+						logger.Warn("failed to unmount, will retry", zap.String("mount_request", mountRequest.Metadata().ID()), zap.Error(err))
+
+						shouldRetry = true
+
+						continue
 					}
 				}
 
