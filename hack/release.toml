@@ -508,6 +508,7 @@ lifecycle:
 `lifecycle.restart.policy` sets when a container is run again after it exits: `always` (the default) after every exit, `on-failure` after a non-zero exit code or a failure to start, up to `maxRetries` times, and `never` not at all.
 The restart waits `delay` (5s by default), which doubles with each restart of a container which ran for less than `maxDelay`, up to `maxDelay`.
 A container which is not restarted reports `succeeded` or `failed` in `ContainerStatus` until its configuration changes or it is removed.
+The `succeeded` state was named `completed` (`CONTAINER_STATE_COMPLETED` in the API) in v1.15.0-beta.0; it was renamed to match the `succeeded` dependency condition.
 Changing the configuration of a container runs it again, and changing its policy starts the `maxRetries` count over.
 Containers run again after a reboot or a restart of machined, so a container which runs once has to be safe to run again; `talosctl restart` only signals the container.
 
