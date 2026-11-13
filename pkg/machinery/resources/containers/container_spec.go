@@ -694,10 +694,6 @@ func runningHealthyInstance(ctx context.Context, r controller.Reader, name strin
 
 // stabilityWindowRemaining returns how much longer a running, healthy dependency has to stay running
 // before it is trusted; zero once it is.
-//
-// A dependency with a health check has already proven itself by passing it: the window is only a
-// stand-in for that proof on containers which have none. A container whose spec is gone has none
-// either, so it falls back to the window.
 func stabilityWindowRemaining(
 	ctx context.Context, r controller.Reader, name string, instanceStatus *ContainerInstanceStatus,
 ) (time.Duration, error) {
@@ -707,10 +703,33 @@ func stabilityWindowRemaining(
 	}
 
 	if err == nil && containerSpec.TypedSpec().HealthCheck.Enabled() {
-		return 0, nil
+		passed, err := healthCheckPassed(ctx, r, instanceStatus.Metadata().ID())
+		if err != nil {
+			return 0, err
+		}
+
+		if passed {
+			return 0, nil
+		}
 	}
 
 	return max(containerDependencyStabilityWindow-time.Since(instanceStatus.TypedSpec().StartedAt), 0), nil
+}
+
+// healthCheckPassed reports whether the health check of the instance instanceID has passed: its
+// ContainerHealthStatus, which is per instance, reports healthy. No status means no check has decided
+// yet.
+func healthCheckPassed(ctx context.Context, r controller.Reader, instanceID resource.ID) (bool, error) {
+	healthStatus, err := safe.ReaderGetByID[*ContainerHealthStatus](ctx, r, instanceID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get health status %q: %w", instanceID, err)
+	}
+
+	return healthStatus.TypedSpec().Healthy, nil
 }
 
 // NetworkConditionMet reports whether one declared dependsOn.network condition is satisfied.

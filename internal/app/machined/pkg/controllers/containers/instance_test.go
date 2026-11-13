@@ -506,17 +506,30 @@ func (suite *InstanceSuite) TestGatesOnHealthCheckedDependency() {
 	suite.assertNoInstance(0)
 	suite.assertWaitingFor("container: " + dependency)
 
+	// ContainerStatus reporting healthy is not proof of a passed check: it may still be the health the
+	// dependency had before its check was enabled. Without a passed check the window applies.
 	ctest.UpdateWithConflicts(suite, dependencyStatus, func(res *containers.ContainerStatus) error {
 		res.TypedSpec().Health = containers.ContainerHealthHealthy
 
 		return nil
 	})
 
-	// Well within the stability window the dependency only just started in: had the window applied,
-	// the instance would not exist yet.
 	md := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(testContainer, 0)).Metadata()
 	ctx, st := suite.Ctx(), suite.State()
 
+	suite.Never(func() bool {
+		_, err := st.Get(ctx, md)
+
+		return err == nil
+	}, 300*time.Millisecond, 10*time.Millisecond)
+
+	// What HealthController publishes once the check of the running instance has passed.
+	healthStatus := containers.NewContainerHealthStatus(containers.NamespaceName, containers.InstanceID(dependency, 0))
+	healthStatus.TypedSpec().Healthy = true
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), healthStatus))
+
+	// Well within the stability window the dependency only just started in: had the window applied,
+	// the instance would not exist yet.
 	suite.Eventually(func() bool {
 		_, err := st.Get(ctx, md)
 

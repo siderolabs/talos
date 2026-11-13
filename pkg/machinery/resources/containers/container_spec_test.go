@@ -205,6 +205,7 @@ func TestContainersReady(t *testing.T) {
 		setup           func(*containers.ContainerStatus)
 		setupInstance   func(*containers.ContainerInstanceStatus)
 		healthChecked   bool
+		healthStatus    func(*containers.ContainerHealthStatus)
 		want            []string
 		wantWakeUpAfter bool
 	}{
@@ -245,7 +246,46 @@ func TestContainersReady(t *testing.T) {
 				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
 				status.TypedSpec().StartedAt = time.Now()
 			},
+			healthStatus: func(status *containers.ContainerHealthStatus) {
+				status.TypedSpec().Healthy = true
+			},
 			want: nil,
+		},
+		{
+			// The health check was just enabled, and ContainerStatus still reports the health from
+			// before it: no check has passed, so the stability window still applies.
+			name:          "health check enabled but not decided yet",
+			containers:    []string{"other"},
+			healthChecked: true,
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now()
+			},
+			want:            []string{"container: other"},
+			wantWakeUpAfter: true,
+		},
+		{
+			// ContainerStatus has not caught up with a failing check yet: the failure is no proof.
+			name:          "health check failing but status not caught up",
+			containers:    []string{"other"},
+			healthChecked: true,
+			setup: func(status *containers.ContainerStatus) {
+				status.TypedSpec().Health = containers.ContainerHealthHealthy
+				status.TypedSpec().State = containers.ContainerStateRunning
+			},
+			setupInstance: func(status *containers.ContainerInstanceStatus) {
+				status.TypedSpec().Phase = containers.ContainerInstancePhaseRunning
+				status.TypedSpec().StartedAt = time.Now()
+			},
+			healthStatus: func(status *containers.ContainerHealthStatus) {
+				status.TypedSpec().Healthy = false
+			},
+			want:            []string{"container: other"},
+			wantWakeUpAfter: true,
 		},
 		{
 			// Running, but its health check has not passed yet: the process alone does not satisfy the gate.
@@ -349,6 +389,12 @@ func TestContainersReady(t *testing.T) {
 				instanceStatus.Metadata().Labels().Set(containers.ContainerSpecIdLabel, "other")
 				tt.setupInstance(instanceStatus)
 				require.NoError(t, st.Create(ctx, instanceStatus))
+			}
+
+			if tt.healthStatus != nil {
+				healthStatus := containers.NewContainerHealthStatus(containers.NamespaceName, containers.InstanceID("other", 0))
+				tt.healthStatus(healthStatus)
+				require.NoError(t, st.Create(ctx, healthStatus))
 			}
 
 			got, wakeUpAfter, err := containers.ContainerDependsOnSpec{Containers: xslices.Map(tt.containers, func(name string) containers.ContainerDependencySpec {
