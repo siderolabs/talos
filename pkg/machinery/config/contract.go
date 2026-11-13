@@ -322,6 +322,14 @@ func (contract *VersionContract) KubePrismReadinessCheckEnabledByDefault() bool 
 	return contract.Greater(TalosVersion1_14)
 }
 
+// WorkloadResourceConfigEnabledByDefault returns true if version of Talos should generate a WorkloadResourceConfig
+// document with the default memory reservation.
+//
+// Without the document the same reservation applies, so machines upgraded without it behave the same.
+func (contract *VersionContract) WorkloadResourceConfigEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_14)
+}
+
 // MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
 func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

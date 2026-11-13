@@ -5,6 +5,7 @@
 package kubelet_test
 
 import (
+	"fmt"
 	"maps"
 	"testing"
 
@@ -31,7 +32,7 @@ func TestValidateMemoryLimitConfiguration(t *testing.T) {
 			extraConfig: map[string]any{
 				"serverTLSBootstrap":     true,
 				"systemReserved":         map[string]any{"cpu": "500m", "pid": "1000"},
-				"kubeReserved":           map[string]any{"memory": "512Mi", "cpu": "100m"},
+				"kubeReserved":           map[string]any{"cpu": "100m"},
 				"evictionHard":           map[string]any{"memory.available": "5%"},
 				"systemReservedCgroup":   "/system",
 				"kubeReservedCgroup":     "/podruntime",
@@ -100,15 +101,21 @@ func TestValidateMemoryLimitConfiguration(t *testing.T) {
 				`the derived "systemReserved.memory" is not a system daemon budget`,
 		},
 		{
-			name: "kube-reserved enforcement on a managed cgroup",
+			name: "kube-reserved enforcement on kubepods",
 			extraConfig: map[string]any{
 				"enforceNodeAllocatable": []any{"pods", "kube-reserved"},
-				"kubeReservedCgroup":     "virtualmachines.partition/",
-				"kubeReserved":           map[string]any{"memory": "512Mi"},
+				"kubeReservedCgroup":     "kubepods/",
 			},
 
-			expectedError: `kubelet configuration field "kubeReservedCgroup" "virtualmachines.partition/" is a Talos-managed cgroup: ` +
+			expectedError: `kubelet configuration field "kubeReservedCgroup" "kubepods/" is a Talos-managed cgroup: ` +
 				`it cannot be enforced with "kube-reserved" together with the kubepods memory limit`,
+		},
+		{
+			name:        "kubeReserved memory",
+			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "512Mi"}},
+
+			expectedError: `kubelet configuration field "kubeReserved.memory" conflicts with the kubepods memory limit: ` +
+				`the derived "systemReserved.memory" already holds all of the host memory beyond the limit`,
 		},
 		{
 			name:        "cgroupsPerQOS disabled",
@@ -235,81 +242,14 @@ func TestValidateWorkloadRootConfiguration(t *testing.T) {
 			extraArgs: map[string][]string{"eviction-hard": {"memory.available<100Mi"}, "node-labels": {"a=b"}},
 		},
 		{
-			name: "compressible enforcement on Talos roots",
-			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"memory": "1Gi", "cpu": "500m"},
-				"kubeReserved":           map[string]string{"memory": "512Mi"},
-				"systemReservedCgroup":   "/taloscontainers",
-				"kubeReservedCgroup":     "virtualmachines.partition",
-				"enforceNodeAllocatable": []string{"pods", "system-reserved-compressible", "kube-reserved-compressible"},
-			},
-		},
-		{
-			name: "enforcement without a memory reservation on a Talos root",
-			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"cpu": "500m", "pid": "1000"},
-				"systemReservedCgroup":   "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
-			},
-		},
-		{
-			name: "absent system reservation is defaulted by Talos with memory",
+			name: "cgroup on a Talos root without enforcement",
 			extraConfig: map[string]any{
 				"systemReservedCgroup":   "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
-			},
-
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
-		},
-		{
-			name: "empty system reservation is defaulted by Talos with memory",
-			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{},
-				"systemReservedCgroup":   "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
-			},
-
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
-		},
-		{
-			name: "absent kube reservation is not defaulted",
-			extraConfig: map[string]any{
-				"kubeReservedCgroup":     "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "kube-reserved"},
+				"enforceNodeAllocatable": []any{"pods"},
 			},
 		},
 		{
-			name: "mixed spelling of the enforcement argument",
-			extraConfig: map[string]any{
-				"systemReserved":       map[string]any{"memory": "1Gi"},
-				"systemReservedCgroup": "/taloscontainers",
-			},
-			extraArgs: map[string][]string{
-				"enforce-node-allocatable": {"system-reserved"},
-				"enforce_node_allocatable": {"pods"},
-			},
-
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
-		},
-		{
-			name: "mixed spelling of the reservation argument",
-			extraConfig: map[string]any{
-				"systemReservedCgroup":   "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
-			},
-			extraArgs: map[string][]string{
-				"system-reserved": {"memory=1Gi"},
-				"system_reserved": {"cpu=500m"},
-			},
-
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
-		},
-		{
-			name: "memory enforcement on the kubelet-owned kubepods root",
+			name: "enforcement on the kubelet-owned kubepods root",
 			extraConfig: map[string]any{
 				"kubeReserved":           map[string]any{"memory": "512Mi"},
 				"kubeReservedCgroup":     "/kubepods",
@@ -317,41 +257,59 @@ func TestValidateWorkloadRootConfiguration(t *testing.T) {
 			},
 		},
 		{
-			name: "system reserved memory enforced on the containers root",
+			name: "CPU-only enforcement on a Talos root",
 			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"memory": "1Gi"},
+				"systemReserved":         map[string]any{"cpu": "500m", "pid": "1000"},
 				"systemReservedCgroup":   "/taloscontainers/",
 				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
 			},
 
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers/" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
+			expectedError: rootError("systemReservedCgroup", "/taloscontainers/", "system-reserved"),
 		},
 		{
-			name: "kube reserved memory enforced on the virtual machines root with typed shapes",
+			name: "compressible enforcement on Talos roots with typed shapes",
 			extraConfig: map[string]any{
-				"kubeReserved":           map[string]string{"memory": "2Gi"},
+				"systemReservedCgroup":   "/taloscontainers",
 				"kubeReservedCgroup":     "virtualmachines.partition",
-				"enforceNodeAllocatable": []string{"pods", "kube-reserved"},
+				"enforceNodeAllocatable": []string{"pods", "system-reserved-compressible", "kube-reserved-compressible"},
 			},
 
-			expectedError: `kubelet enforces the "kubeReserved.memory" reservation on the Talos-managed cgroup "virtualmachines.partition" through "enforceNodeAllocatable" "kube-reserved": ` +
-				`use "kube-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
+			expectedError: rootError("systemReservedCgroup", "/taloscontainers", "system-reserved-compressible") + "\n" +
+				rootError("kubeReservedCgroup", "virtualmachines.partition", "kube-reserved-compressible"),
 		},
 		{
 			name: "both reservations enforced on Talos roots",
 			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"memory": "1Gi"},
-				"kubeReserved":           map[string]any{"memory": "2Gi"},
 				"systemReservedCgroup":   "/taloscontainers",
 				"kubeReservedCgroup":     "/virtualmachines.partition",
 				"enforceNodeAllocatable": []any{"pods", "system-reserved", "kube-reserved"},
 			},
 
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots` + "\n" +
-				`kubelet enforces the "kubeReserved.memory" reservation on the Talos-managed cgroup "/virtualmachines.partition" through "enforceNodeAllocatable" "kube-reserved": ` +
-				`use "kube-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
+			expectedError: rootError("systemReservedCgroup", "/taloscontainers", "system-reserved") + "\n" +
+				rootError("kubeReservedCgroup", "/virtualmachines.partition", "kube-reserved"),
+		},
+		{
+			name: "enforcement on the extensions cgroup",
+			extraConfig: map[string]any{
+				"systemReservedCgroup":   "/system/extensions",
+				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
+			},
+
+			expectedError: rootError("systemReservedCgroup", "/system/extensions", "system-reserved"),
+		},
+		{
+			name:        "enforcement on the system cgroup",
+			extraConfig: map[string]any{"systemReservedCgroup": "/system", "enforceNodeAllocatable": []any{"pods", "system-reserved"}},
+		},
+		{
+			name:        "mixed spelling of the enforcement argument",
+			extraConfig: map[string]any{"systemReservedCgroup": "/taloscontainers"},
+			extraArgs: map[string][]string{
+				"enforce-node-allocatable": {"system-reserved"},
+				"enforce_node_allocatable": {"pods"},
+			},
+
+			expectedError: rootError("systemReservedCgroup", "/taloscontainers", "system-reserved"),
 		},
 		{
 			name:        "arguments override a safe configuration",
@@ -359,49 +317,26 @@ func TestValidateWorkloadRootConfiguration(t *testing.T) {
 			extraArgs: map[string][]string{
 				"enforce-node-allocatable": {"pods,system-reserved"},
 				"system-reserved-cgroup":   {"/taloscontainers"},
-				"system-reserved":          {"cpu=500m,memory=1Gi"},
 			},
 
-			expectedError: `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved": ` +
-				`use "system-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
+			expectedError: rootError("systemReservedCgroup", "/taloscontainers", "system-reserved"),
 		},
 		{
 			name: "underscore argument aliases",
 			extraArgs: map[string][]string{
 				"enforce_node_allocatable": {"pods", "kube-reserved"},
 				"kube_reserved_cgroup":     {"virtualmachines.partition"},
-				"kube_reserved":            {"memory=2Gi"},
 			},
 
-			expectedError: `kubelet enforces the "kubeReserved.memory" reservation on the Talos-managed cgroup "virtualmachines.partition" through "enforceNodeAllocatable" "kube-reserved": ` +
-				`use "kube-reserved-compressible" or a cgroup outside the Talos-managed workload roots`,
+			expectedError: rootError("kubeReservedCgroup", "virtualmachines.partition", "kube-reserved"),
 		},
 		{
 			name: "arguments move the enforcement off the Talos root",
 			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"memory": "1Gi"},
 				"systemReservedCgroup":   "/taloscontainers",
 				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
 			},
 			extraArgs: map[string][]string{"system-reserved-cgroup": {"/system"}},
-		},
-		{
-			name: "arguments drop the memory reservation",
-			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"memory": "1Gi"},
-				"systemReservedCgroup":   "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
-			},
-			extraArgs: map[string][]string{"system-reserved": {"cpu=500m"}},
-		},
-		{
-			name: "arguments switch to compressible enforcement",
-			extraConfig: map[string]any{
-				"systemReserved":         map[string]any{"memory": "1Gi"},
-				"systemReservedCgroup":   "/taloscontainers",
-				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
-			},
-			extraArgs: map[string][]string{"enforce-node-allocatable": {"pods,system-reserved-compressible"}},
 		},
 		{
 			name:      "configuration directory",
@@ -432,4 +367,9 @@ func TestValidateWorkloadRootConfiguration(t *testing.T) {
 			assert.Equal(t, snapshot, test.extraArgs)
 		})
 	}
+}
+
+// rootError is the error ValidateWorkloadRootReservations reports for one enforcement key on a Talos-owned root.
+func rootError(field, cgroupName, key string) string {
+	return fmt.Sprintf(`kubelet configuration field %q %q is a Talos-managed cgroup: it cannot be enforced with "enforceNodeAllocatable" %q`, field, cgroupName, key)
 }

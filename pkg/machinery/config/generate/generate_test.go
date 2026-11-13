@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -305,6 +306,64 @@ func TestGenerateDiskSMARTConfig(t *testing.T) {
 
 				// the presence of the document is what enables SMART monitoring
 				assert.Equal(t, constants.DefaultDiskSMARTInterval, smartConfig.Interval())
+			})
+		}
+	}
+}
+
+// TestGenerateWorkloadResourceConfig verifies that from 1.15 on a WorkloadResourceConfig document carries the
+// default reservation for the machine type, which older configurations get without the document.
+func TestGenerateWorkloadResourceConfig(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name            string
+		versionContract *config.VersionContract
+		expectConfig    bool
+	}{
+		{
+			name:         "current",
+			expectConfig: true,
+		},
+		{
+			name:            "1.15",
+			versionContract: config.TalosVersion1_15,
+			expectConfig:    true,
+		},
+		{
+			name:            "1.14",
+			versionContract: config.TalosVersion1_14,
+		},
+	} {
+		for _, machineType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+			t.Run(fmt.Sprintf("%s/%s", test.name, machineType), func(t *testing.T) {
+				t.Parallel()
+
+				input, err := generate.NewInput(
+					"test",
+					"https://10.0.1.5:6443",
+					constants.DefaultKubernetesVersion,
+					generate.WithVersionContract(test.versionContract),
+				)
+				require.NoError(t, err)
+
+				cfg, err := input.Config(machineType)
+				require.NoError(t, err)
+
+				workloadResources := cfg.WorkloadResourceConfig()
+
+				if !test.expectConfig {
+					assert.Nil(t, workloadResources)
+
+					return
+				}
+
+				require.NotNil(t, workloadResources)
+
+				assert.Equal(t, optional.Some(mc.DefaultMemoryReserved(machineType)), workloadResources.MemoryReserved())
+				assert.Zero(t, workloadResources.KubepodsMemoryPercent())
+				assert.Zero(t, workloadResources.TalosContainersMemoryPercent())
+				assert.Zero(t, workloadResources.VirtualMachinesMemoryPercent())
 			})
 		}
 	}

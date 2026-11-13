@@ -1,11 +1,13 @@
 apiVersion: v1alpha1
 kind: WorkloadResourceConfig
+reserved:
+    memory: 2GiB
 kubepods:
     memory:
-        limit: 16GiB
+        limit: 50%
 taloscontainers:
     memory:
-        limit: 4GiB
+        limit: 10%
 virtualMachines:
     memory:
-        limit: 32GiB
+        limit: 40%

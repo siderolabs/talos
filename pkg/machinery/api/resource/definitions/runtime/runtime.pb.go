@@ -2355,15 +2355,21 @@ func (x *WatchdogTimerStatusSpec) GetFeedInterval() *durationpb.Duration {
 	return nil
 }
 
-// WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+// WorkloadMemorySpecSpec describes the desired memory.max for each workload root, in bytes.
 //
-// Zero means no limit is configured for that root; roots are independent.
+// Zero means the root is not limited; roots are independent. Omitted Talos-owned roots are capped at
+// MemoryCapacity minus MemoryReserved.
 type WorkloadMemorySpecSpec struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	TalosContainersLimit uint64                 `protobuf:"varint,1,opt,name=talos_containers_limit,json=talosContainersLimit,proto3" json:"talos_containers_limit,omitempty"`
 	VirtualMachinesLimit uint64                 `protobuf:"varint,2,opt,name=virtual_machines_limit,json=virtualMachinesLimit,proto3" json:"virtual_machines_limit,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// MemoryCapacity is the host memory the limits were resolved against; the kubelet resolves a kubepods limit
+	// against it as well.
+	MemoryCapacity uint64 `protobuf:"varint,4,opt,name=memory_capacity,json=memoryCapacity,proto3" json:"memory_capacity,omitempty"`
+	// MemoryReserved is the host memory left out of the limits.
+	MemoryReserved uint64 `protobuf:"varint,5,opt,name=memory_reserved,json=memoryReserved,proto3" json:"memory_reserved,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *WorkloadMemorySpecSpec) Reset() {
@@ -2406,6 +2412,20 @@ func (x *WorkloadMemorySpecSpec) GetTalosContainersLimit() uint64 {
 func (x *WorkloadMemorySpecSpec) GetVirtualMachinesLimit() uint64 {
 	if x != nil {
 		return x.VirtualMachinesLimit
+	}
+	return 0
+}
+
+func (x *WorkloadMemorySpecSpec) GetMemoryCapacity() uint64 {
+	if x != nil {
+		return x.MemoryCapacity
+	}
+	return 0
+}
+
+func (x *WorkloadMemorySpecSpec) GetMemoryReserved() uint64 {
+	if x != nil {
+		return x.MemoryReserved
 	}
 	return 0
 }
@@ -2582,10 +2602,12 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x17WatchdogTimerStatusSpec\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x123\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\x12>\n" +
-	"\rfeed_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\ffeedInterval\"\x84\x01\n" +
+	"\rfeed_interval\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\ffeedInterval\"\xd6\x01\n" +
 	"\x16WorkloadMemorySpecSpec\x124\n" +
 	"\x16talos_containers_limit\x18\x01 \x01(\x04R\x14talosContainersLimit\x124\n" +
-	"\x16virtual_machines_limit\x18\x02 \x01(\x04R\x14virtualMachinesLimitBx\n" +
+	"\x16virtual_machines_limit\x18\x02 \x01(\x04R\x14virtualMachinesLimit\x12'\n" +
+	"\x0fmemory_capacity\x18\x04 \x01(\x04R\x0ememoryCapacity\x12'\n" +
+	"\x0fmemory_reserved\x18\x05 \x01(\x04R\x0ememoryReservedBx\n" +
 	"*dev.talos.api.resource.definitions.runtimeZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/runtimeb\x06proto3"
 
 var (

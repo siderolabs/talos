@@ -1690,6 +1690,20 @@ func (m *KubeletConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.KubepodsMemoryPercent != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.KubepodsMemoryPercent))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa0
+	}
+	if m.MemoryReserved != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.MemoryReserved))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x98
+	}
 	if len(m.CredentialProviderFiles) > 0 {
 		for k := range m.CredentialProviderFiles {
 			v := m.CredentialProviderFiles[k]
@@ -1710,13 +1724,6 @@ func (m *KubeletConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			i--
 			dAtA[i] = 0x92
 		}
-	}
-	if m.KubepodsMemoryLimit != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.KubepodsMemoryLimit))
-		i--
-		dAtA[i] = 0x1
-		i--
-		dAtA[i] = 0x88
 	}
 	if len(m.RegisterWithTaints) > 0 {
 		for k := range m.RegisterWithTaints {
@@ -3777,9 +3784,6 @@ func (m *KubeletConfigSpec) SizeVT() (n int) {
 			n += mapEntrySize + 2 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
 	}
-	if m.KubepodsMemoryLimit != 0 {
-		n += 2 + protohelpers.SizeOfVarint(uint64(m.KubepodsMemoryLimit))
-	}
 	if len(m.CredentialProviderFiles) > 0 {
 		for k, v := range m.CredentialProviderFiles {
 			_ = k
@@ -3787,6 +3791,12 @@ func (m *KubeletConfigSpec) SizeVT() (n int) {
 			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + 1 + len(v) + protohelpers.SizeOfVarint(uint64(len(v)))
 			n += mapEntrySize + 2 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
+	}
+	if m.MemoryReserved != 0 {
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.MemoryReserved))
+	}
+	if m.KubepodsMemoryPercent != 0 {
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.KubepodsMemoryPercent))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -9380,25 +9390,6 @@ func (m *KubeletConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.RegisterWithTaints[mapkey] = mapvalue
 			iNdEx = postIndex
-		case 17:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field KubepodsMemoryLimit", wireType)
-			}
-			m.KubepodsMemoryLimit = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.KubepodsMemoryLimit |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
 		case 18:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CredentialProviderFiles", wireType)
@@ -9526,6 +9517,44 @@ func (m *KubeletConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.CredentialProviderFiles[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 19:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MemoryReserved", wireType)
+			}
+			m.MemoryReserved = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.MemoryReserved |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 20:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field KubepodsMemoryPercent", wireType)
+			}
+			m.KubepodsMemoryPercent = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.KubepodsMemoryPercent |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

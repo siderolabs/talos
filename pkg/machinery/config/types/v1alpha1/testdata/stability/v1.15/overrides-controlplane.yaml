@@ -63,6 +63,11 @@ kind: SecurityProfileConfig
 workloadIsolation: true
 ---
 apiVersion: v1alpha1
+kind: WorkloadResourceConfig
+reserved:
+    memory: 512Mi
+---
+apiVersion: v1alpha1
 kind: RegistryMirrorConfig
 name: ghcr.io
 endpoints:

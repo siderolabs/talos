@@ -9322,9 +9322,9 @@
         "limit": {
           "type": "string",
           "title": "limit",
-          "description": "Aggregate memory ceiling of the root, in bytes.\n\nThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.\n",
-          "markdownDescription": "Aggregate memory ceiling of the root, in bytes.\n\nThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.",
-          "x-intellij-html-description": "\u003cp\u003eAggregate memory ceiling of the root, in bytes.\u003c/p\u003e\n\n\u003cp\u003eThe value can be expressed in human readable format, e.g. 16GiB, and must be positive.\u003c/p\u003e\n"
+          "description": "Aggregate memory ceiling of the root, as a whole percentage of the host memory\nminus reserved.memory. It must be positive.\n",
+          "markdownDescription": "Aggregate memory ceiling of the root, as a whole percentage of the host memory\nminus `reserved.memory`. It must be positive.",
+          "x-intellij-html-description": "\u003cp\u003eAggregate memory ceiling of the root, as a whole percentage of the host memory\nminus \u003ccode\u003ereserved.memory\u003c/code\u003e. It must be positive.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -9333,6 +9333,20 @@
         "limit"
       ],
       "description": "WorkloadMemoryResource bounds the memory of one workload root."
+    },
+    "runtime.WorkloadReserved": {
+      "properties": {
+        "memory": {
+          "type": "string",
+          "title": "memory",
+          "description": "Host memory left out of the split. Defaults to the kubelet’s default\nsystemReserved.memory: 512Mi on control plane nodes, 384Mi on workers.\n\nIt is not written to any cgroup: it is the room left for the host processes\nand the kernel. Talos passes it to the kubelet as systemReserved.memory\nunless kubepods sets a limit.\n",
+          "markdownDescription": "Host memory left out of the split. Defaults to the kubelet's default\n`systemReserved.memory`: 512Mi on control plane nodes, 384Mi on workers.\n\nIt is not written to any cgroup: it is the room left for the host processes\nand the kernel. Talos passes it to the kubelet as `systemReserved.memory`\nunless `kubepods` sets a limit.",
+          "x-intellij-html-description": "\u003cp\u003eHost memory left out of the split. Defaults to the kubelet\u0026rsquo;s default\n\u003ccode\u003esystemReserved.memory\u003c/code\u003e: 512Mi on control plane nodes, 384Mi on workers.\u003c/p\u003e\n\n\u003cp\u003eIt is not written to any cgroup: it is the room left for the host processes\nand the kernel. Talos passes it to the kubelet as \u003ccode\u003esystemReserved.memory\u003c/code\u003e\nunless \u003ccode\u003ekubepods\u003c/code\u003e sets a limit.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "WorkloadReserved holds the resources left for the host."
     },
     "runtime.WorkloadResourceConfigV1Alpha1": {
       "properties": {
@@ -9353,6 +9367,13 @@
           "description": "kind is the kind of the resource.\n",
           "markdownDescription": "kind is the kind of the resource.",
           "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "reserved": {
+          "$ref": "#/$defs/runtime.WorkloadReserved",
+          "title": "reserved",
+          "description": "Resources left out of the split for the host.\n",
+          "markdownDescription": "Resources left out of the split for the host.",
+          "x-intellij-html-description": "\u003cp\u003eResources left out of the split for the host.\u003c/p\u003e\n"
         },
         "kubepods": {
           "$ref": "#/$defs/runtime.WorkloadResourceRoot",
@@ -9382,7 +9403,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "WorkloadResourceConfig is a workload resource config document.\\nWorkloadResourceConfig declares an aggregate memory ceiling for each Talos workload root.\\n\\nThe roots are `kubepods`, `taloscontainers` and `virtualMachines`; every root is optional\\nand independent of the others. Omitting a root removes its aggregate cap; individual child\\nlimits still apply.\\nA limit must be positive; it is rounded down to the host page size before it is applied,\\nand bounds RAM only (including page cache charged to the root): swap and hugepages are\\nnot limited by it.\\n\\nTalos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`,\\neven without this document. An omitted limit (zero internally) means an unlimited aggregate cap.\\nKubelet reserved-memory enforcement on these roots is rejected; CPU-only or compressible\\nenforcement is allowed. Static validation cannot inspect external kubelet drop-in files;\\ndrop-in directories are rejected while any workload cap is active.\\nLowering a limit below current usage makes the kernel reclaim and OOM-kill within that root,\\nwhich can terminate containers or virtual machines.\\n\\nThe `kubepods` limit is applied by the kubelet, which stays the only writer of its cgroup:\\nTalos derives `systemReserved.memory` from the limit, so changing it restarts the kubelet,\\nand a limit below the memory used by pods (control plane static pods included) causes\\nOOM kills. The schedulable Node Allocatable is the limit minus the hard eviction\\nthreshold and any hugepage capacity, so it is lower than the limit. Setting\\n`systemReserved.memory`, the equivalent kubelet command line flags or the `Static` memory\\nmanager policy together with the limit is rejected. The limit is inactive while Kubernetes\\nis not configured on the machine; the other roots are enforced regardless.\\n\\nIn container mode the document is validated but declares no policy.\\n"
+      "description": "WorkloadResourceConfig is a workload resource config document.\\nWorkloadResourceConfig splits the host memory between the Talos workload roots.\\n\\n`reserved.memory` stays with the host (`/init`, `/system`, `/podruntime` and the kernel); each\\nroot gets an aggregate memory ceiling of a whole percentage of the rest. The roots are\\n`kubepods`, `taloscontainers` and `virtualMachines`; every root is optional, and the\\npercentages must not add up to more than 100%.\\nLimits are resolved against the host memory at runtime and follow memory hotplug. They are\\nrounded down to the host page size before they are applied, and bound RAM only (including\\npage cache charged to the root): swap and hugepages are not limited by them.\\n\\nTalos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`,\\neven without this document. An omitted root, `kubepods` included, is capped at the host memory\\nminus `reserved.memory`, which defaults to the kubelet's default `systemReserved.memory`\\n(512Mi on control plane nodes, 384Mi on workers). Individual child limits still apply.\\nKubelet `system-reserved` and `kube-reserved` enforcement on these roots and on\\n`/system/extensions`, whose `pids.max` Talos also owns, is rejected, compressible included.\\nStatic validation cannot inspect external kubelet drop-in files;\\ndrop-in directories are rejected while this document sets any limit.\\nLowering a limit below current usage makes the kernel reclaim and OOM-kill within that root,\\nwhich can terminate containers or virtual machines.\\n\\nThe `kubepods` cap is applied by the kubelet, which stays the only writer of its cgroup:\\nTalos sets `systemReserved.memory` to `reserved.memory`, or derives it from the `kubepods`\\nlimit. A limit makes `systemReserved.memory` depend on the host memory, so a memory hotplug\\nrestarts the kubelet; without a limit it does not. Changing either value restarts the kubelet,\\nand a limit below the memory used by pods (control plane static pods included) causes\\nOOM kills. The schedulable Node Allocatable is the limit minus the hard eviction\\nthreshold and any hugepage capacity, so it is lower than the limit. With the limit,\\n`systemReserved.memory`, `kubeReserved.memory`, the equivalent kubelet command line flags,\\ndrop-in directories and the `Static` memory manager policy are rejected. Without it, an\\nexplicit `systemReserved.memory`, the `--system-reserved` flag or a drop-in file overrides\\n`reserved.memory` for the kubelet, and keeping them consistent is the user's responsibility.\\nThe limit is inactive while Kubernetes is not configured on the machine; the other roots are\\nenforced regardless.\\n\\nIn container mode the cgroups are nested, so the limits are not applied; `reserved.memory`\\nstill sets the kubelet `systemReserved.memory`.\\n"
     },
     "runtime.WorkloadResourceRoot": {
       "properties": {

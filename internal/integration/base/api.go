@@ -46,6 +46,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	k8sres "github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -973,8 +974,7 @@ func (apiSuite *APISuite) TearDownSuite() {
 	}
 }
 
-// ReadMemTotal returns the node's MemTotal in bytes, the same source the kubelet and the
-// workload memory controllers derive their limits from.
+// ReadMemTotal returns the node's MemTotal in bytes.
 func (apiSuite *APISuite) ReadMemTotal(nodeCtx context.Context) uint64 {
 	memory, err := apiSuite.Client.Memory(nodeCtx)
 	apiSuite.Require().NoError(err)
@@ -984,6 +984,83 @@ func (apiSuite *APISuite) ReadMemTotal(nodeCtx context.Context) uint64 {
 	apiSuite.Require().NotZero(memTotal)
 
 	return memTotal
+}
+
+// ReadNUMAMemoryCapacity returns the host memory the Talos-owned workload limits are resolved against.
+func (apiSuite *APISuite) ReadNUMAMemoryCapacity(nodeCtx context.Context) uint64 {
+	topology, err := safe.StateGetByID[*hardware.NUMATopology](nodeCtx, apiSuite.Client.State(), hardware.NUMATopologyID)
+	apiSuite.Require().NoError(err)
+
+	capacity := topology.TypedSpec().MemoryTotalBytes()
+	apiSuite.Require().NotZero(capacity)
+
+	return capacity
+}
+
+// WorkloadMemoryOnePercent returns the bytes one percent of a workload root limit resolves to on the node:
+// one percent of the host memory beyond the reservation.
+func (apiSuite *APISuite) WorkloadMemoryOnePercent(nodeCtx context.Context) uint64 {
+	spec, err := safe.StateGetByID[*runtimeres.WorkloadMemorySpec](nodeCtx, apiSuite.Client.State(), runtimeres.WorkloadMemorySpecID)
+	apiSuite.Require().NoError(err)
+
+	onePercent := configconfig.MemoryLimit(1, spec.TypedSpec().MemoryCapacity, spec.TypedSpec().MemoryReserved)
+	apiSuite.Require().NotZero(onePercent)
+
+	return onePercent
+}
+
+// AssertWorkloadRootLimit waits until the root's memory.max is percent of the host memory beyond the reservation,
+// rounded down to the page size by the kernel, and returns the applied limit.
+func (apiSuite *APISuite) AssertWorkloadRootLimit(nodeCtx context.Context, root string, percent uint64) uint64 {
+	apiSuite.T().Helper()
+
+	// The kernel page size of the node is not exposed; no supported kernel uses pages above 64KiB.
+	const maxPageSize = 64 << 10
+
+	var applied uint64
+
+	apiSuite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		spec, err := safe.StateGetByID[*runtimeres.WorkloadMemorySpec](nodeCtx, apiSuite.Client.State(), runtimeres.WorkloadMemorySpecID)
+		if !assert.NoError(collect, err) {
+			return
+		}
+
+		expected := configconfig.MemoryLimit(percent, spec.TypedSpec().MemoryCapacity, spec.TypedSpec().MemoryReserved)
+
+		applied, err = apiSuite.ReadCgroupUint(nodeCtx, root, "memory.max")
+		if assert.NoError(collect, err) {
+			assert.LessOrEqual(collect, applied, expected, "%s/memory.max", root)
+			assert.Less(collect, expected-min(applied, expected), uint64(maxPageSize), "%s/memory.max", root)
+		}
+	}, time.Minute, time.Second, "%s should be limited to %d%% of the memory beyond the reservation", root, percent)
+
+	return applied
+}
+
+// SnapshotWorkloadMemory returns the exact bytes of the node configuration, and a function waiting until the
+// Talos-owned workload roots are back to their current limits once that configuration is restored.
+func (apiSuite *APISuite) SnapshotWorkloadMemory(nodeCtx context.Context) ([]byte, func(context.Context)) {
+	apiSuite.T().Helper()
+
+	original, err := apiSuite.ReadConfigFromNode(nodeCtx)
+	apiSuite.Require().NoError(err)
+
+	originalBytes, err := original.Bytes()
+	apiSuite.Require().NoError(err)
+
+	roots := []string{constants.CgroupTalosContainersRoot, constants.CgroupVirtualMachines}
+	originalMax := make([]string, len(roots))
+
+	for i, root := range roots {
+		originalMax[i], err = apiSuite.ReadCgroupFile(nodeCtx, root, "memory.max")
+		apiSuite.Require().NoError(err)
+	}
+
+	return originalBytes, func(ctx context.Context) {
+		for i, root := range roots {
+			apiSuite.AssertCgroupFile(ctx, root, "memory.max", originalMax[i])
+		}
+	}
 }
 
 // ReadCgroupFile reads a file of a cgroup named relative to the cgroup root, returning the error
@@ -1164,24 +1241,6 @@ func (apiSuite *APISuite) AssertNoUserspaceOOMSince(nodeCtx context.Context, sin
 		apiSuite.Assert().True(action.Metadata().Created().Before(since),
 			"userspace OOM handler killed %v at %s", action.TypedSpec().Processes, action.Metadata().Created())
 	}
-}
-
-// RequireNoWorkloadResourceConfig skips the test if the node already carries a
-// WorkloadResourceConfig document and returns the exact bytes of its current configuration.
-func (apiSuite *APISuite) RequireNoWorkloadResourceConfig(nodeCtx context.Context, node string) []byte {
-	apiSuite.T().Helper()
-
-	original, err := apiSuite.ReadConfigFromNode(nodeCtx)
-	apiSuite.Require().NoError(err)
-
-	if original.WorkloadResourceConfig() != nil {
-		apiSuite.T().Skipf("node %s already carries a WorkloadResourceConfig document", node)
-	}
-
-	originalBytes, err := original.Bytes()
-	apiSuite.Require().NoError(err)
-
-	return originalBytes
 }
 
 // RestoreMachineConfigOnCleanup registers restoring the exact original configuration of the node.

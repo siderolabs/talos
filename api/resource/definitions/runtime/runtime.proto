@@ -294,11 +294,17 @@ message WatchdogTimerStatusSpec {
   google.protobuf.Duration feed_interval = 3;
 }
 
-// WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+// WorkloadMemorySpecSpec describes the desired memory.max for each workload root, in bytes.
 //
-// Zero means no limit is configured for that root; roots are independent.
+// Zero means the root is not limited; roots are independent. Omitted Talos-owned roots are capped at
+// MemoryCapacity minus MemoryReserved.
 message WorkloadMemorySpecSpec {
   uint64 talos_containers_limit = 1;
   uint64 virtual_machines_limit = 2;
+  // MemoryCapacity is the host memory the limits were resolved against; the kubelet resolves a kubepods limit
+  // against it as well.
+  uint64 memory_capacity = 4;
+  // MemoryReserved is the host memory left out of the limits.
+  uint64 memory_reserved = 5;
 }
 

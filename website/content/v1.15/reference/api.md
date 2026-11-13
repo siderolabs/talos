@@ -10598,8 +10598,9 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
 | register_with_taints | [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry) | repeated |  |
-| kubepods_memory_limit | [uint64](#uint64) |  | KubepodsMemoryLimit is the desired kubepods memory.max in bytes; zero means unset. |
 | credential_provider_files | [KubeletConfigSpec.CredentialProviderFilesEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.CredentialProviderFilesEntry) | repeated | CredentialProviderFiles maps file names to the contents of the credential provider plugin configuration files. |
+| memory_reserved | [uint64](#uint64) |  | MemoryReserved is WorkloadResourceConfig reserved.memory, or the default for the machine type, in bytes. |
+| kubepods_memory_percent | [uint64](#uint64) |  | KubepodsMemoryPercent is the WorkloadResourceConfig kubepods limit in percent of the memory beyond MemoryReserved. |
 
 
 
@@ -11932,15 +11933,18 @@ WatchdogTimerStatusSpec describes configuration of watchdog timer.
 <a name="talos.resource.definitions.runtime.WorkloadMemorySpecSpec"></a>
 
 ### WorkloadMemorySpecSpec
-WorkloadMemorySpecSpec describes the desired memory.max for each Talos-owned workload root, in bytes.
+WorkloadMemorySpecSpec describes the desired memory.max for each workload root, in bytes.
 
-Zero means no limit is configured for that root; roots are independent.
+Zero means the root is not limited; roots are independent. Omitted Talos-owned roots are capped at
+MemoryCapacity minus MemoryReserved.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | talos_containers_limit | [uint64](#uint64) |  |  |
 | virtual_machines_limit | [uint64](#uint64) |  |  |
+| memory_capacity | [uint64](#uint64) |  | MemoryCapacity is the host memory the limits were resolved against; the kubelet resolves a kubepods limit against it as well. |
+| memory_reserved | [uint64](#uint64) |  | MemoryReserved is the host memory left out of the limits. |
 
 
 

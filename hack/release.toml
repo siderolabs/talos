@@ -117,34 +117,76 @@ configFiles:
     [notes.workload_memory_limits]
         title = "Workload Memory Limits"
         description = """\
-The new `WorkloadResourceConfig` document sets independent aggregate memory limits for Kubernetes pods, Talos containers and virtual machines:
+The new `WorkloadResourceConfig` document splits host memory
+between Kubernetes pods, Talos containers and virtual machines.
+`reserved.memory` stays with the host,
+and each limit is a whole percentage of the remaining memory.
+The reservation defaults to the kubelet's default `systemReserved.memory`,
+which is 512Mi on control plane nodes and 384Mi on workers.
 
 ```yaml
 apiVersion: v1alpha1
 kind: WorkloadResourceConfig
+reserved:
+  memory: 2GiB
 kubepods:
   memory:
-    limit: 16GiB
+    limit: 50%
 taloscontainers:
   memory:
-    limit: 4GiB
+    limit: 10%
 virtualMachines:
   memory:
-    limit: 32GiB
+    limit: 40%
 ```
 
-Each root is optional. Limits are ceilings, not reservations, and do not cover swap or HugeTLB memory.
-For `kubepods`, Talos derives `systemReserved.memory` so kubelet enforces the cap and adjusts Node Allocatable;
-an explicit `systemReserved.memory`, conflicting kubelet flags or the Static memory manager cannot be combined with this limit.
-Changing the Kubernetes cap restarts kubelet. Without Kubernetes, only the container and virtual machine limits apply.
+Limits are resolved against the host memory at runtime and follow memory hotplug.
+They must not add up to more than 100%.
+Each root is optional.
+A root without a limit is capped at the host memory minus `reserved.memory`,
+so all three roots are bounded even without the document,
+the way `kubepods` always was.
+Limits are ceilings, not reservations,
+and they don't cover swap or HugeTLB memory.
 
-Lowering a limit can OOM-kill workloads in that group, including QEMU guests or Kubernetes control-plane pods.
-Talos exclusively owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`, even without this document.
-Omitting their limits means unlimited aggregate memory; individual child limits still apply.
-Kubelet system-reserved or kube-reserved memory enforcement on these roots is rejected regardless of this document;
-CPU-only or compressible enforcement and reservations on unrelated roots remain supported.
-Kubelet drop-in directories are rejected while any cap is active; without caps, their contents remain the operator's responsibility.
-Removing the Kubernetes cap restores the original kubelet configuration. The document has no effect in container mode.
+Newly generated configurations include the document with only `reserved.memory`,
+set to the default for the machine type.
+Machines upgraded without it get the same default.
+
+Kubelet receives `reserved.memory` as `systemReserved.memory`.
+With a `kubepods` limit,
+Talos derives `systemReserved.memory` from the limit instead,
+so kubelet applies the cap and adjusts Node Allocatable.
+Changing the reservation or the `kubepods` limit restarts kubelet once.
+A `kubepods` limit also restarts kubelet once per memory hotplug,
+after the change settles.
+Without a `kubepods` limit, hotplug leaves kubelet alone,
+and `kubepods` and Node Allocatable keep the memory size kubelet started with
+until its next restart.
+A kubelet `systemReserved` that sets other resources but no memory
+now gets the reservation added.
+Without a `kubepods` limit, an explicit `systemReserved.memory`,
+the `--system-reserved` flag or a kubelet drop-in file
+overrides `reserved.memory` for kubelet,
+and keeping them consistent is the operator's responsibility.
+A `kubepods` limit rejects them, along with `kubeReserved.memory`,
+conflicting kubelet flags and the Static memory manager.
+Without Kubernetes, only the container and virtual machine limits apply.
+
+Lowering a limit can OOM-kill workloads in that root,
+including QEMU guests and Kubernetes control plane pods.
+Talos owns `memory.max` on `/taloscontainers` and `/virtualmachines.partition`,
+even without this document.
+Limits on individual containers and guests still apply.
+Kubelet `system-reserved` and `kube-reserved` enforcement on these roots
+is rejected, compressible variants included.
+The same applies to `/system/extensions`, because Talos owns its `pids.max`.
+Reservations enforced on other cgroups still work.
+Kubelet drop-in directories are rejected while the document sets any limit.
+Otherwise their contents are the operator's responsibility.
+Removing the `kubepods` limit restores the original kubelet configuration.
+In container mode the limits aren't applied,
+but `reserved.memory` still sets the kubelet `systemReserved.memory`.
 """
 
     [notes.memory_protection_small_ram]

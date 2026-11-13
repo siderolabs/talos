@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
+	hardwareres "github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 func TestValidateAsClient(t *testing.T) {
@@ -726,19 +727,26 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
 
 		if kubepods != "" {
-			cfg.KubepodsConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(kubepods)}}
+			cfg.KubepodsConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize(kubepods)}}
 		}
 
 		if talosContainers != "" {
-			cfg.TalosContainersConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(talosContainers)}}
+			cfg.TalosContainersConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize(talosContainers)}}
 		}
+
+		return cfg
+	}
+
+	newReservedResources := func(memory string) *runtime.WorkloadResourceConfigV1Alpha1 {
+		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+		cfg.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize(memory)}
 
 		return cfg
 	}
 
 	newVirtualMachineResources := func(limit string) *runtime.WorkloadResourceConfigV1Alpha1 {
 		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-		cfg.VirtualMachinesConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(limit)}}
+		cfg.VirtualMachinesConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize(limit)}}
 
 		return cfg
 	}
@@ -775,7 +783,7 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 
 	configDirKubelet := newKubelet(nil, meta.Args{"config_dir": meta.NewArgValue("/etc/kubernetes/kubelet.conf.d", nil)})
 
-	talosRootError := `kubelet enforces the "systemReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers" through "enforceNodeAllocatable" "system-reserved"`
+	talosRootError := `kubelet configuration field "systemReservedCgroup" "/taloscontainers" is a Talos-managed cgroup: it cannot be enforced with "enforceNodeAllocatable" "system-reserved"`
 
 	conflictingKubelet := &v1alpha1.KubeletConfig{ //nolint:staticcheck // testing legacy features
 		KubeletImage: "kubelet", //nolint:staticcheck // testing legacy features
@@ -792,7 +800,7 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 		KubeletExtraConfig: meta.Unstructured{ //nolint:staticcheck // testing legacy features
 			Object: map[string]any{
 				"systemReserved":         map[string]any{"cpu": "500m"},
-				"kubeReserved":           map[string]any{"memory": "512Mi"},
+				"kubeReserved":           map[string]any{"cpu": "100m"},
 				"enforceNodeAllocatable": []any{"pods", "system-reserved-compressible"},
 				"systemReservedCgroup":   "/system",
 			},
@@ -816,7 +824,7 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 	}{
 		{
 			name:      "no limit imposes nothing",
-			documents: []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("", "4GiB")},
+			documents: []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("", "10%")},
 		},
 		{
 			name:           "no document rejects system memory on containers root",
@@ -830,7 +838,7 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 				"systemReservedCgroup":   "/virtualmachines.partition",
 				"enforceNodeAllocatable": []any{"pods", "system-reserved"},
 			}, nil), true)},
-			expectedErrors: []string{`"systemReserved.memory" reservation on the Talos-managed cgroup "/virtualmachines.partition"`},
+			expectedErrors: []string{`"systemReservedCgroup" "/virtualmachines.partition" is a Talos-managed cgroup`},
 		},
 		{
 			name: "no document rejects kube memory on containers root",
@@ -839,12 +847,12 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 				"kubeReservedCgroup":     "/taloscontainers",
 				"enforceNodeAllocatable": []any{"pods", "kube-reserved"},
 			}, nil), true)},
-			expectedErrors: []string{`"kubeReserved.memory" reservation on the Talos-managed cgroup "/taloscontainers"`},
+			expectedErrors: []string{`"kubeReservedCgroup" "/taloscontainers" is a Talos-managed cgroup`},
 		},
 		{
 			name:           "no document rejects kube memory on VM root via aliases",
 			documents:      []config.Document{newV1Alpha1(talosRootArgsKubelet, true)},
-			expectedErrors: []string{`"kubeReserved.memory" reservation on the Talos-managed cgroup "virtualmachines.partition"`},
+			expectedErrors: []string{`"kubeReservedCgroup" "virtualmachines.partition" is a Talos-managed cgroup`},
 		},
 		{
 			name:           "no document rejects default system memory on containers root",
@@ -857,14 +865,15 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 				"system_reserved_cgroup":   meta.NewArgValue("/virtualmachines.partition", nil),
 				"enforce_node_allocatable": meta.NewArgValue("pods,system-reserved", nil),
 			}), true)},
-			expectedErrors: []string{`"systemReserved.memory" reservation on the Talos-managed cgroup "/virtualmachines.partition"`},
+			expectedErrors: []string{`"systemReservedCgroup" "/virtualmachines.partition" is a Talos-managed cgroup`},
 		},
 		{
-			name:      "no document allows compressible enforcement",
-			documents: []config.Document{newV1Alpha1(talosRootCompressibleKubelet, true)},
+			name:           "no document rejects compressible enforcement",
+			documents:      []config.Document{newV1Alpha1(talosRootCompressibleKubelet, true)},
+			expectedErrors: []string{`"systemReservedCgroup" "/taloscontainers" is a Talos-managed cgroup: it cannot be enforced with "enforceNodeAllocatable" "system-reserved-compressible"`},
 		},
 		{
-			name: "no document allows CPU-only enforcement on both roots",
+			name: "no document rejects CPU-only enforcement on both roots",
 			documents: []config.Document{newV1Alpha1(newKubelet(map[string]any{
 				"systemReserved":         map[string]any{"cpu": "500m"},
 				"systemReservedCgroup":   "/taloscontainers",
@@ -872,6 +881,10 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 				"kubeReservedCgroup":     "/virtualmachines.partition",
 				"enforceNodeAllocatable": []any{"pods", "system-reserved", "kube-reserved"},
 			}, nil), true)},
+			expectedErrors: []string{
+				`"systemReservedCgroup" "/taloscontainers" is a Talos-managed cgroup`,
+				`"kubeReservedCgroup" "/virtualmachines.partition" is a Talos-managed cgroup`,
+			},
 		},
 		{
 			name: "no document allows memory enforcement on unrelated roots",
@@ -896,57 +909,59 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 			documents: []config.Document{newV1Alpha1(talosRootKubelet, false)},
 		},
 		{
-			name:      "containers limit with compressible enforcement on its root",
-			documents: []config.Document{newV1Alpha1(talosRootCompressibleKubelet, true), newWorkloadResources("", "4GiB")},
+			name:           "containers limit with compressible enforcement on its root",
+			documents:      []config.Document{newV1Alpha1(talosRootCompressibleKubelet, true), newWorkloadResources("", "10%")},
+			expectedErrors: []string{`"systemReservedCgroup" "/taloscontainers" is a Talos-managed cgroup`},
 		},
 		{
 			name:      "containers limit without Kubernetes",
-			documents: []config.Document{newV1Alpha1(talosRootKubelet, false), newWorkloadResources("", "4GiB")},
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, false), newWorkloadResources("", "10%")},
 		},
 		{
 			name:        "containers limit in container mode",
-			documents:   []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("", "4GiB")},
+			documents:   []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("", "10%")},
 			inContainer: true,
 		},
 		{
 			name:      "containers limit with memory enforcement on its root",
-			documents: []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("", "4GiB")},
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("", "10%")},
 
 			expectedErrors: []string{talosRootError},
 		},
 		{
 			name:      "containers limit with Talos-defaulted memory enforcement on its root",
-			documents: []config.Document{newV1Alpha1(talosRootDefaultedKubelet, true), newWorkloadResources("", "4GiB")},
+			documents: []config.Document{newV1Alpha1(talosRootDefaultedKubelet, true), newWorkloadResources("", "10%")},
 
 			expectedErrors: []string{talosRootError},
 		},
 		{
 			name:      "kubepods limit with memory enforcement on the containers root",
-			documents: []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("16GiB", "")},
+			documents: []config.Document{newV1Alpha1(talosRootKubelet, true), newWorkloadResources("50%", "")},
 
 			expectedErrors: []string{talosRootError},
 		},
 		{
 			name:      "virtual machines limit with argument enforcement on its root",
-			documents: []config.Document{newV1Alpha1(talosRootArgsKubelet, true), newVirtualMachineResources("32GiB")},
+			documents: []config.Document{newV1Alpha1(talosRootArgsKubelet, true), newVirtualMachineResources("40%")},
 
-			expectedErrors: []string{`kubelet enforces the "kubeReserved.memory" reservation on the Talos-managed cgroup "virtualmachines.partition" through "enforceNodeAllocatable" "kube-reserved"`},
+			expectedErrors: []string{`kubelet configuration field "kubeReservedCgroup" "virtualmachines.partition" is a Talos-managed cgroup: ` +
+				`it cannot be enforced with "enforceNodeAllocatable" "kube-reserved"`},
 		},
 		{
 			name:      "containers limit with a configuration directory",
-			documents: []config.Document{newV1Alpha1(configDirKubelet, true), newWorkloadResources("", "4GiB")},
+			documents: []config.Document{newV1Alpha1(configDirKubelet, true), newWorkloadResources("", "10%")},
 
 			expectedErrors: []string{`kubelet argument "config_dir" conflicts with WorkloadResourceConfig`},
 		},
 		{
 			name:      "kubepods limit with a configuration directory",
-			documents: []config.Document{newV1Alpha1(configDirKubelet, true), newWorkloadResources("16GiB", "")},
+			documents: []config.Document{newV1Alpha1(configDirKubelet, true), newWorkloadResources("50%", "")},
 
 			expectedErrors: []string{`kubelet argument "config_dir" conflicts with the kubepods memory limit`},
 		},
 		{
 			name:        "kubepods limit in container mode",
-			documents:   []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("16GiB", "4GiB")},
+			documents:   []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("50%", "10%")},
 			inContainer: true,
 		},
 		{
@@ -956,25 +971,59 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 				multidocNetwork,
 				k8s.NewKubeNodeConfigV1Alpha1(),
 				multidocKubelet,
-				newWorkloadResources("16GiB", ""),
+				newWorkloadResources("50%", ""),
 			},
 			inContainer: true,
 		},
 		{
 			name:      "compatible kubelet settings",
-			documents: []config.Document{newV1Alpha1(compatibleKubelet, true), newWorkloadResources("16GiB", "")},
+			documents: []config.Document{newV1Alpha1(compatibleKubelet, true), newWorkloadResources("50%", "")},
 		},
 		{
 			name:      "inactive limit without Kubernetes",
-			documents: []config.Document{newV1Alpha1(conflictingKubelet, false), newWorkloadResources("16GiB", "4GiB")},
+			documents: []config.Document{newV1Alpha1(conflictingKubelet, false), newWorkloadResources("50%", "10%")},
 		},
 		{
 			name:      "active limit with legacy kubelet conflicts",
-			documents: []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("16GiB", "")},
+			documents: []config.Document{newV1Alpha1(conflictingKubelet, true), newWorkloadResources("50%", "")},
 
 			expectedErrors: []string{
 				`kubelet argument "eviction-hard" conflicts with the kubepods memory limit: use the "evictionHard" configuration field instead`,
 				`kubelet configuration field "systemReserved.memory" conflicts with the kubepods memory limit`,
+			},
+		},
+		{
+			name: "reserved memory leaves kubelet memory reservations to the user",
+			documents: []config.Document{
+				newV1Alpha1(newKubelet(map[string]any{"systemReserved": map[string]any{"memory": "1Gi"}}, meta.Args{
+					"system_reserved": meta.NewArgValue("cpu=500m", nil),
+					"config_dir":      meta.NewArgValue("/etc/kubernetes/kubelet.conf.d", nil),
+				}), true),
+				newReservedResources("2GiB"),
+			},
+		},
+		{
+			name: "reserved memory with a containers limit and a configuration directory",
+			documents: func() []config.Document {
+				workloadResources := newWorkloadResources("", "10%")
+				workloadResources.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("2GiB")}
+
+				return []config.Document{newV1Alpha1(configDirKubelet, true), workloadResources}
+			}(),
+
+			expectedErrors: []string{`kubelet argument "config_dir" conflicts with WorkloadResourceConfig`},
+		},
+		{
+			name:      "reserved memory with compatible kubelet settings",
+			documents: []config.Document{newV1Alpha1(compatibleKubelet, true), newReservedResources("2GiB")},
+		},
+		{
+			name: "reserved memory allows settings only a kubepods limit conflicts with",
+			documents: []config.Document{
+				newV1Alpha1(newKubelet(map[string]any{"cgroupsPerQOS": false, "memoryManagerPolicy": "Static"}, meta.Args{
+					"eviction-hard": meta.NewArgValue("memory.available<100Mi", nil),
+				}), true),
+				newReservedResources("2GiB"),
 			},
 		},
 		{
@@ -984,7 +1033,7 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 				multidocNetwork,
 				k8s.NewKubeNodeConfigV1Alpha1(),
 				multidocKubelet,
-				newWorkloadResources("16GiB", ""),
+				newWorkloadResources("50%", ""),
 			},
 
 			expectedErrors: []string{`kubelet configuration field "cgroupsPerQOS" must be enabled with the kubepods memory limit`},
@@ -1009,4 +1058,92 @@ func TestWorkloadResourceKubeletConflict(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRuntimeValidateWorkloadResources(t *testing.T) {
+	t.Parallel()
+
+	newContainer := func(machineType string, workloadResources *runtime.WorkloadResourceConfigV1Alpha1) *container.Container {
+		ca := &x509.PEMEncodedCertificateAndKey{Crt: []byte("cert")}
+
+		if machineType == "controlplane" {
+			ca.Key = []byte("key")
+		}
+
+		ctr, err := container.New(&v1alpha1.Config{
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineType: machineType,
+				MachineCA:   ca,
+				MachineFeatures: &v1alpha1.FeaturesConfig{
+					HostDNSSupport: &v1alpha1.HostDNSConfig{ //nolint:staticcheck // testing legacy features
+						HostDNSConfigEnabled:        new(true),
+						HostDNSForwardKubeDNSToHost: new(true),
+					},
+				},
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{ //nolint:staticcheck // testing legacy features
+					Endpoint: &v1alpha1.Endpoint{URL: must.Value(url.Parse("https://localhost:6443"))(t)},
+				},
+			},
+		}, workloadResources)
+		require.NoError(t, err)
+
+		return ctr
+	}
+
+	newWorkloadResources := func(reserved, kubepods string) *runtime.WorkloadResourceConfigV1Alpha1 {
+		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+
+		if reserved != "" {
+			cfg.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize(reserved)}
+		}
+
+		if kubepods != "" {
+			cfg.KubepodsConfig = &runtime.WorkloadResourceRoot{MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize(kubepods)}}
+		}
+
+		return cfg
+	}
+
+	st := state.WrapCore(inmem.NewState())
+
+	// Without the inventory the limits cannot be resolved.
+	warnings, err := newContainer("worker", newWorkloadResources("", "1%")).ValidateAtRuntime(t.Context(), st, validationMode{})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+
+	topology := hardwareres.NewNUMATopology()
+	topology.TypedSpec().Nodes = []hardwareres.NUMANodeSpec{{ID: 0, MemoryTotalBytes: 4 << 30}, {ID: 1, MemoryTotalBytes: 4 << 30}}
+	require.NoError(t, st.Create(t.Context(), topology))
+
+	warnings, err = newContainer("worker", newWorkloadResources("", "50%")).ValidateAtRuntime(t.Context(), st, validationMode{})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+
+	// A kubepods limit below the kubelet's default hard eviction threshold keeps the kubelet from starting;
+	// the default reservation follows the machine type.
+	for machineType, reserved := range map[string]string{"worker": "402653184", "controlplane": "536870912"} {
+		warnings, err = newContainer(machineType, newWorkloadResources("", "1%")).ValidateAtRuntime(t.Context(), st, validationMode{})
+		require.NoError(t, err)
+		require.Len(t, warnings, 1, machineType)
+		assert.Contains(t, warnings[0], "kubepods.memory.limit: 1% of the host memory 8589934592 bytes minus reserved "+reserved+" bytes is ")
+		assert.Contains(t, warnings[0], " bytes, below the kubelet default hard eviction threshold 100Mi")
+	}
+
+	// A reserve above the host memory leaves nothing to split, which is a warning on this host only.
+	for _, workloadResources := range []*runtime.WorkloadResourceConfigV1Alpha1{newWorkloadResources("16GiB", "1%"), newWorkloadResources("16GiB", "")} {
+		warnings, err = newContainer("worker", workloadResources).ValidateAtRuntime(t.Context(), st, validationMode{})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"reserved.memory 17179869184 bytes leaves none of the host memory 8589934592 bytes: the kubelet refuses to start"}, warnings)
+	}
+
+	// The limits are not applied in container mode, but the reservation still reaches the kubelet.
+	warnings, err = newContainer("worker", newWorkloadResources("", "1%")).ValidateAtRuntime(t.Context(), st, validationMode{inContainer: true})
+	require.NoError(t, err)
+	assert.Empty(t, warnings)
+
+	warnings, err = newContainer("worker", newWorkloadResources("16GiB", "1%")).ValidateAtRuntime(t.Context(), st, validationMode{inContainer: true})
+	require.NoError(t, err)
+	assert.Len(t, warnings, 1)
 }

@@ -6,13 +6,9 @@ package runtime_test
 
 import (
 	_ "embed"
-	"fmt"
-	"math"
-	"os"
 	"testing"
 
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/siderolabs/gen/optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -22,7 +18,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
-	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
 //go:embed testdata/workloadresourceconfig.yaml
@@ -30,15 +25,16 @@ var expectedWorkloadResourceConfigDocument []byte
 
 func workloadMemoryRoot(limit string) *runtime.WorkloadResourceRoot {
 	return &runtime.WorkloadResourceRoot{
-		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustByteSize(limit)},
+		MemoryConfig: &runtime.WorkloadMemoryResource{MemoryLimit: meta.MustPercentageSize(limit)},
 	}
 }
 
 func acceptedWorkloadResourceConfig() *runtime.WorkloadResourceConfigV1Alpha1 {
 	cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-	cfg.KubepodsConfig = workloadMemoryRoot("16GiB")
-	cfg.TalosContainersConfig = workloadMemoryRoot("4GiB")
-	cfg.VirtualMachinesConfig = workloadMemoryRoot("32GiB")
+	cfg.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("2GiB")}
+	cfg.KubepodsConfig = workloadMemoryRoot("50%")
+	cfg.TalosContainersConfig = workloadMemoryRoot("10%")
+	cfg.VirtualMachinesConfig = workloadMemoryRoot("40%")
 
 	return cfg
 }
@@ -59,19 +55,33 @@ func TestWorkloadResourceConfigMarshalStability(t *testing.T) {
 	assert.Equal(t, acceptedWorkloadResourceConfig(), docs[0])
 
 	partial := runtime.NewWorkloadResourceConfigV1Alpha1()
-	partial.VirtualMachinesConfig = workloadMemoryRoot("32GiB")
+	partial.VirtualMachinesConfig = workloadMemoryRoot("80%")
 
 	marshaled, err = encoder.NewEncoder(partial, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
-	assert.Equal(t, "apiVersion: v1alpha1\nkind: WorkloadResourceConfig\nvirtualMachines:\n    memory:\n        limit: 32GiB\n", string(marshaled))
+	assert.Equal(t, "apiVersion: v1alpha1\nkind: WorkloadResourceConfig\nvirtualMachines:\n    memory:\n        limit: 80%\n", string(marshaled))
 }
 
-func TestWorkloadResourceConfigUnknownRootRejected(t *testing.T) {
+func TestWorkloadResourceConfigRejectedOnLoad(t *testing.T) {
 	t.Parallel()
 
-	_, err := configloader.NewFromBytes([]byte("apiVersion: v1alpha1\nkind: WorkloadResourceConfig\nsystem:\n    memory:\n        limit: 1GiB\n"))
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "system")
+	for _, test := range []struct {
+		name     string
+		document string
+		expected string
+	}{
+		{"unknown root", "system:\n    memory:\n        limit: 10%\n", "system"},
+		{"size instead of a percentage", "kubepods:\n    memory:\n        limit: 16GiB\n", "percentage must end with '%'"},
+		{"above 100", "kubepods:\n    memory:\n        limit: 101%\n", "percentage must be between 0 and 100"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := configloader.NewFromBytes([]byte("apiVersion: v1alpha1\nkind: WorkloadResourceConfig\n" + test.document))
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), test.expected)
+		})
+	}
 }
 
 func TestWorkloadResourceConfigLoadedValidation(t *testing.T) {
@@ -81,12 +91,12 @@ func TestWorkloadResourceConfigLoadedValidation(t *testing.T) {
 kind: WorkloadResourceConfig
 kubepods:
     memory:
-        limit: 0
+        limit: 0%
 taloscontainers:
     memory: {}
 virtualMachines:
     memory:
-        limit: -1GiB
+        limit: -10%
 `))
 	require.NoError(t, err)
 
@@ -98,141 +108,6 @@ virtualMachines:
 	assert.Contains(t, err.Error(), "virtualMachines.memory.limit cannot be negative")
 }
 
-func TestWorkloadResourceConfigRuntimeValidation(t *testing.T) {
-	t.Parallel()
-
-	pageSize := uint64(os.Getpagesize())
-	sentinel := (uint64(math.MaxInt64) / pageSize) * pageSize
-
-	for _, root := range []string{"kubepods", "taloscontainers", "virtualMachines"} {
-		for _, test := range []struct {
-			name    string
-			limit   uint64
-			invalid bool
-		}{
-			{"subpage", 1, true},
-			{"sentinel", sentinel, true},
-			{"max-int64", math.MaxInt64, true},
-			{"one-page", pageSize, false},
-			{"unaligned", pageSize + 1, false},
-			{"largest-finite", sentinel - pageSize, false},
-			{"largest-finite-rounded", sentinel - 1, false},
-		} {
-			t.Run(root+"/"+test.name, func(t *testing.T) {
-				t.Parallel()
-
-				provider, err := configloader.NewFromBytes(fmt.Appendf(nil, `apiVersion: v1alpha1
-kind: WorkloadResourceConfig
-%s:
-  memory:
-    limit: %dB
----
-apiVersion: v1alpha1
-kind: ResolverConfig
-hostDNS:
-  enabled: true
-  forwardKubeDNSToHost: true
-`, root, test.limit))
-				require.NoError(t, err)
-
-				// Client validation must not use the client's page size for a remote node.
-				_, err = provider.ValidateAsClient(validationMode{})
-				require.NoError(t, err)
-
-				for _, inContainer := range []bool{false, true} {
-					_, err = provider.ValidateAtRuntime(t.Context(), state.WrapCore(inmem.NewState()), workloadValidationMode{inContainer: inContainer})
-					if test.invalid {
-						require.Error(t, err, "expected error got nil")
-						assert.Contains(t, err.Error(), root+".memory.limit")
-					} else {
-						require.NoError(t, err)
-					}
-				}
-			})
-		}
-	}
-
-	t.Run("all violations", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-		cfg.KubepodsConfig = workloadMemoryRoot("1B")
-		cfg.TalosContainersConfig = workloadMemoryRoot(fmt.Sprintf("%dB", sentinel))
-		cfg.VirtualMachinesConfig = workloadMemoryRoot(fmt.Sprintf("%dB", int64(math.MaxInt64)))
-		provider, err := container.New(cfg)
-		require.NoError(t, err)
-		_, err = provider.ValidateAtRuntime(t.Context(), state.WrapCore(inmem.NewState()), validationMode{})
-		require.Error(t, err, "expected error got nil")
-
-		for _, root := range []string{"kubepods", "taloscontainers", "virtualMachines"} {
-			assert.Contains(t, err.Error(), root+".memory.limit")
-		}
-	})
-}
-
-func TestWorkloadResourceRuntimeValidationKubepodsCapacity(t *testing.T) {
-	t.Parallel()
-
-	st := state.WrapCore(inmem.NewState())
-
-	cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-	cfg.KubepodsConfig = workloadMemoryRoot("16GiB")
-
-	// Without the inventory there is nothing to compare against.
-	warnings, err := cfg.RuntimeValidate(t.Context(), st, validationMode{})
-	require.NoError(t, err)
-	assert.Empty(t, warnings)
-
-	topology := hardware.NewNUMATopology()
-	topology.TypedSpec().Nodes = []hardware.NUMANodeSpec{{ID: 0, MemoryTotalBytes: 4 << 30}, {ID: 1, MemoryTotalBytes: 4 << 30}}
-	require.NoError(t, st.Create(t.Context(), topology))
-
-	warnings, err = cfg.RuntimeValidate(t.Context(), st, validationMode{})
-	require.NoError(t, err)
-	require.Len(t, warnings, 1)
-	assert.Contains(t, warnings[0], "kubepods.memory.limit")
-
-	cfg.KubepodsConfig = workloadMemoryRoot("8GiB")
-
-	warnings, err = cfg.RuntimeValidate(t.Context(), st, validationMode{})
-	require.NoError(t, err)
-	assert.Empty(t, warnings)
-
-	// The kubelet rounds the limit down to the page size, which brings it back to the capacity.
-	cfg.KubepodsConfig = workloadMemoryRoot("8589934593B")
-
-	warnings, err = cfg.RuntimeValidate(t.Context(), st, validationMode{})
-	require.NoError(t, err)
-	assert.Empty(t, warnings)
-}
-
-func TestWorkloadResourceRuntimeValidationDefersStaticErrors(t *testing.T) {
-	t.Parallel()
-
-	for _, root := range []*runtime.WorkloadResourceRoot{
-		nil,
-		{},
-		{MemoryConfig: &runtime.WorkloadMemoryResource{}},
-		workloadMemoryRoot("-1B"),
-		workloadMemoryRoot("0B"),
-		workloadMemoryRoot("9223372036854775808B"),
-	} {
-		cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-		cfg.KubepodsConfig = root
-		cfg.TalosContainersConfig = root
-		cfg.VirtualMachinesConfig = root
-		_, err := cfg.RuntimeValidate(t.Context(), nil, validationMode{})
-		require.NoError(t, err)
-	}
-}
-
-type workloadValidationMode struct {
-	validationMode
-	inContainer bool
-}
-
-func (m workloadValidationMode) InContainer() bool { return m.inContainer }
-
 func TestWorkloadResourceConfigValidate(t *testing.T) {
 	t.Parallel()
 
@@ -243,10 +118,13 @@ func TestWorkloadResourceConfigValidate(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name: "empty",
-			cfg:  runtime.NewWorkloadResourceConfigV1Alpha1,
+			name: "reserved only",
+			cfg: func() *runtime.WorkloadResourceConfigV1Alpha1 {
+				cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+				cfg.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("2GiB")}
 
-			expectedError: "at least one root must be limited",
+				return cfg
+			},
 		},
 		{
 			name: "accepted",
@@ -256,7 +134,7 @@ func TestWorkloadResourceConfigValidate(t *testing.T) {
 			name: "single root",
 			cfg: func() *runtime.WorkloadResourceConfigV1Alpha1 {
 				cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-				cfg.TalosContainersConfig = workloadMemoryRoot("1")
+				cfg.TalosContainersConfig = workloadMemoryRoot("100%")
 
 				return cfg
 			},
@@ -274,28 +152,44 @@ func TestWorkloadResourceConfigValidate(t *testing.T) {
 			expectedError: "kubepods.memory.limit is required\nvirtualMachines.memory.limit is required",
 		},
 		{
-			name: "zero, negative and oversized limits",
+			name: "above 100 in total",
 			cfg: func() *runtime.WorkloadResourceConfigV1Alpha1 {
 				cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-				cfg.KubepodsConfig = workloadMemoryRoot("0")
-				cfg.TalosContainersConfig = workloadMemoryRoot("-4GiB")
-				cfg.VirtualMachinesConfig = workloadMemoryRoot("9223372036854775808")
+				cfg.KubepodsConfig = workloadMemoryRoot("60%")
+				cfg.VirtualMachinesConfig = workloadMemoryRoot("50%")
 
 				return cfg
 			},
 
-			expectedError: "kubepods.memory.limit must be greater than zero\n" +
-				"taloscontainers.memory.limit cannot be negative\n" +
-				"virtualMachines.memory.limit cannot be greater than 9223372036854775807 bytes",
+			expectedError: "memory limits add up to 110%, more than 100%",
 		},
 		{
-			name: "largest accepted limit",
+			name: "zero reserved",
 			cfg: func() *runtime.WorkloadResourceConfigV1Alpha1 {
-				cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
-				cfg.VirtualMachinesConfig = workloadMemoryRoot("9223372036854775807")
+				cfg := acceptedWorkloadResourceConfig()
+				cfg.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("0")}
 
 				return cfg
 			},
+
+			expectedError: "reserved.memory must be greater than zero",
+		},
+		{
+			name: "fractional, zero and negative limits, negative reserved",
+			cfg: func() *runtime.WorkloadResourceConfigV1Alpha1 {
+				cfg := runtime.NewWorkloadResourceConfigV1Alpha1()
+				cfg.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("-1GiB")}
+				cfg.KubepodsConfig = workloadMemoryRoot("12.5%")
+				cfg.TalosContainersConfig = workloadMemoryRoot("-10%")
+				cfg.VirtualMachinesConfig = workloadMemoryRoot("0%")
+
+				return cfg
+			},
+
+			expectedError: "reserved.memory cannot be negative\n" +
+				"kubepods.memory.limit must be a whole percentage\n" +
+				"taloscontainers.memory.limit cannot be negative\n" +
+				"virtualMachines.memory.limit must be greater than zero",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -319,17 +213,23 @@ func TestWorkloadResourceConfigAccessors(t *testing.T) {
 
 	cfg := acceptedWorkloadResourceConfig()
 
-	assert.Equal(t, uint64(16<<30), cfg.KubepodsMemoryLimit())
-	assert.Equal(t, uint64(4<<30), cfg.TalosContainersMemoryLimit())
-	assert.Equal(t, uint64(32<<30), cfg.VirtualMachinesMemoryLimit())
+	assert.Equal(t, optional.Some(uint64(2<<30)), cfg.MemoryReserved())
+	assert.Equal(t, uint64(50), cfg.KubepodsMemoryPercent())
+	assert.Equal(t, uint64(10), cfg.TalosContainersMemoryPercent())
+	assert.Equal(t, uint64(40), cfg.VirtualMachinesMemoryPercent())
 
 	partial := runtime.NewWorkloadResourceConfigV1Alpha1()
 	partial.KubepodsConfig = &runtime.WorkloadResourceRoot{}
-	partial.VirtualMachinesConfig = workloadMemoryRoot("-1GiB")
+	partial.VirtualMachinesConfig = workloadMemoryRoot("-10%")
 
-	assert.Zero(t, partial.KubepodsMemoryLimit())
-	assert.Zero(t, partial.TalosContainersMemoryLimit())
-	assert.Zero(t, partial.VirtualMachinesMemoryLimit())
+	assert.False(t, partial.MemoryReserved().IsPresent())
+	assert.Zero(t, partial.KubepodsMemoryPercent())
+	assert.Zero(t, partial.TalosContainersMemoryPercent())
+	assert.Zero(t, partial.VirtualMachinesMemoryPercent())
+
+	// An explicit zero is kept for Validate to reject.
+	partial.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("0")}
+	assert.Equal(t, optional.Some(uint64(0)), partial.MemoryReserved())
 }
 
 func TestWorkloadResourceConfigClone(t *testing.T) {
@@ -341,18 +241,20 @@ func TestWorkloadResourceConfigClone(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, cfg, clone)
 
-	clone.KubepodsConfig.MemoryConfig.MemoryLimit = meta.MustByteSize("1GiB")
+	clone.ReservedConfig = &runtime.WorkloadReserved{MemoryConfig: meta.MustByteSize("4GiB")}
+	clone.KubepodsConfig.MemoryConfig.MemoryLimit = meta.MustPercentageSize("1%")
 	clone.VirtualMachinesConfig.MemoryConfig = nil
 
-	assert.Equal(t, uint64(16<<30), cfg.KubepodsMemoryLimit())
-	assert.Equal(t, uint64(32<<30), cfg.VirtualMachinesMemoryLimit())
+	assert.Equal(t, optional.Some(uint64(2<<30)), cfg.MemoryReserved())
+	assert.Equal(t, uint64(50), cfg.KubepodsMemoryPercent())
+	assert.Equal(t, uint64(40), cfg.VirtualMachinesMemoryPercent())
 }
 
 func TestWorkloadResourceConfigMerge(t *testing.T) {
 	t.Parallel()
 
 	patch := runtime.NewWorkloadResourceConfigV1Alpha1()
-	patch.KubepodsConfig = workloadMemoryRoot("8GiB")
+	patch.KubepodsConfig = workloadMemoryRoot("30%")
 
 	left, err := container.New(acceptedWorkloadResourceConfig())
 	require.NoError(t, err)
@@ -369,9 +271,10 @@ func TestWorkloadResourceConfigMerge(t *testing.T) {
 	cfg, ok := documents[0].(*runtime.WorkloadResourceConfigV1Alpha1)
 	require.True(t, ok)
 
-	assert.Equal(t, uint64(8<<30), cfg.KubepodsMemoryLimit())
-	assert.Equal(t, uint64(4<<30), cfg.TalosContainersMemoryLimit())
-	assert.Equal(t, uint64(32<<30), cfg.VirtualMachinesMemoryLimit())
+	assert.Equal(t, optional.Some(uint64(2<<30)), cfg.MemoryReserved())
+	assert.Equal(t, uint64(30), cfg.KubepodsMemoryPercent())
+	assert.Equal(t, uint64(10), cfg.TalosContainersMemoryPercent())
+	assert.Equal(t, uint64(40), cfg.VirtualMachinesMemoryPercent())
 }
 
 func TestWorkloadResourceConfigSingleton(t *testing.T) {

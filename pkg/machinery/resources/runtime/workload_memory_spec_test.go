@@ -34,6 +34,8 @@ func TestWorkloadMemorySpecRoundTrip(t *testing.T) {
 	*res.TypedSpec() = runtime.WorkloadMemorySpecSpec{
 		TalosContainersLimit: 4 << 30,
 		VirtualMachinesLimit: math.MaxInt64,
+		MemoryCapacity:       16 << 30,
+		MemoryReserved:       512 << 20,
 	}
 
 	encoded, err := protobuf.FromResource(res)
@@ -46,6 +48,8 @@ func TestWorkloadMemorySpecRoundTrip(t *testing.T) {
 	require.NoError(t, proto.Unmarshal(wire.Spec.ProtoSpec, &spec))
 	assert.Equal(t, uint64(4<<30), spec.GetTalosContainersLimit())
 	assert.Equal(t, uint64(math.MaxInt64), spec.GetVirtualMachinesLimit())
+	assert.Equal(t, uint64(16<<30), spec.GetMemoryCapacity())
+	assert.Equal(t, uint64(512<<20), spec.GetMemoryReserved())
 
 	decoded, err := protobuf.Unmarshal(wire)
 	require.NoError(t, err)
@@ -60,7 +64,7 @@ func TestWorkloadMemorySpecRoundTrip(t *testing.T) {
 
 	marshaled, err = yaml.Marshal(res.TypedSpec())
 	require.NoError(t, err)
-	assert.Equal(t, "talosContainersLimit: 4294967296\nvirtualMachinesLimit: 9223372036854775807\n", string(marshaled))
+	assert.Equal(t, "talosContainersLimit: 4294967296\nvirtualMachinesLimit: 9223372036854775807\nmemoryCapacity: 17179869184\nmemoryReserved: 536870912\n", string(marshaled))
 
 	var yamlSpec runtime.WorkloadMemorySpecSpec
 

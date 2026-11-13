@@ -49,6 +49,11 @@ kind: SecurityProfileConfig
 workloadIsolation: true
 ---
 apiVersion: v1alpha1
+kind: WorkloadResourceConfig
+reserved:
+    memory: 384Mi
+---
+apiVersion: v1alpha1
 kind: HostnameConfig
 auto: stable
 ---

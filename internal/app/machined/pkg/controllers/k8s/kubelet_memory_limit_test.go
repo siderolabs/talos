@@ -5,7 +5,6 @@
 package k8s_test
 
 import (
-	"errors"
 	"math"
 	"strconv"
 	"testing"
@@ -13,11 +12,9 @@ import (
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/resource"
 	kubeletconfig "k8s.io/kubelet/config/v1beta1"
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -26,6 +23,7 @@ const (
 	testPageSize       = 4096
 	testMemoryCapacity = uint64(64) << 30 // M = 64 GiB
 	testKubepodsLimit  = uint64(48) << 30 // C = 48 GiB
+	testWorkerReserved = uint64(384) << 20
 )
 
 var testKubeletVersion = compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.38.0-alpha.1")
@@ -34,17 +32,17 @@ func renderWithLimit(t *testing.T, extraConfig map[string]any, limit, capacity u
 	t.Helper()
 
 	cfgSpec := &k8s.KubeletConfigSpec{
-		ClusterDNS:          []string{"10.0.0.5"},
-		ClusterDomain:       "cluster.local",
-		ExtraConfig:         extraConfig,
-		KubepodsMemoryLimit: limit,
+		ClusterDNS:    []string{"10.0.0.5"},
+		ClusterDomain: "cluster.local",
+		ExtraConfig:   extraConfig,
 	}
 
-	return k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, machine.TypeWorker, k8sctrl.WithHostMemory(constantCapacity(capacity), testPageSize))
-}
-
-func constantCapacity(capacity uint64) k8sctrl.MemoryCapacityReader {
-	return func() (uint64, error) { return capacity, nil }
+	return k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, k8sctrl.KubeletMemory{
+		KubepodsLimit: limit,
+		Capacity:      capacity,
+		Reserved:      testWorkerReserved,
+		PageSize:      testPageSize,
+	})
 }
 
 func TestKubepodsMemoryLimitSystemReserved(t *testing.T) {
@@ -96,8 +94,8 @@ func TestKubepodsMemoryLimitSystemReserved(t *testing.T) {
 			},
 		},
 		{
-			name:        "kubeReserved memory is subtracted",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "1Gi", "cpu": "100m"}},
+			name:        "kubeReserved without memory is kept",
+			extraConfig: map[string]any{"kubeReserved": map[string]any{"cpu": "100m"}},
 			limit:       testKubepodsLimit,
 			capacity:    testMemoryCapacity,
 
@@ -105,39 +103,13 @@ func TestKubepodsMemoryLimitSystemReserved(t *testing.T) {
 				"cpu":               constants.KubeletSystemReservedCPU,
 				"pid":               constants.KubeletSystemReservedPid,
 				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-				"memory":            strconv.FormatUint(testMemoryCapacity-testKubepodsLimit-(1<<30), 10),
-			},
-		},
-		{
-			name:        "kubeReserved with decimal quantity",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "1.5G"}},
-			limit:       testKubepodsLimit,
-			capacity:    testMemoryCapacity,
-
-			expectedSystemReserved: map[string]string{
-				"cpu":               constants.KubeletSystemReservedCPU,
-				"pid":               constants.KubeletSystemReservedPid,
-				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-				"memory":            strconv.FormatUint(testMemoryCapacity-testKubepodsLimit-1_500_000_000, 10),
+				"memory":            strconv.FormatUint(testMemoryCapacity-testKubepodsLimit, 10),
 			},
 		},
 		{
 			name:     "limit equal to capacity yields zero reservation",
 			limit:    testMemoryCapacity,
 			capacity: testMemoryCapacity,
-
-			expectedSystemReserved: map[string]string{
-				"cpu":               constants.KubeletSystemReservedCPU,
-				"pid":               constants.KubeletSystemReservedPid,
-				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-				"memory":            "0",
-			},
-		},
-		{
-			name:        "limit equal to capacity minus kubeReserved yields zero reservation",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "16Gi"}},
-			limit:       testMemoryCapacity - (16 << 30),
-			capacity:    testMemoryCapacity,
 
 			expectedSystemReserved: map[string]string{
 				"cpu":               constants.KubeletSystemReservedCPU,
@@ -213,12 +185,6 @@ func TestKubepodsMemoryLimitEffectiveTarget(t *testing.T) {
 			limit:               testPageSize,
 			expectedKubepodsMax: testPageSize,
 		},
-		{
-			name:                "kubeReserved present",
-			extraConfig:         map[string]any{"kubeReserved": map[string]any{"memory": "512Mi"}},
-			limit:               testKubepodsLimit + testPageSize/2,
-			expectedKubepodsMax: testKubepodsLimit,
-		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -229,16 +195,7 @@ func TestKubepodsMemoryLimitEffectiveTarget(t *testing.T) {
 			systemReserved, err := strconv.ParseUint(config.SystemReserved["memory"], 10, 64)
 			require.NoError(t, err)
 
-			var kubeReserved uint64
-
-			if raw, ok := config.KubeReserved["memory"]; ok {
-				quantity, err := resource.ParseQuantity(raw)
-				require.NoError(t, err)
-
-				kubeReserved = uint64(quantity.Value())
-			}
-
-			assert.Equal(t, tt.expectedKubepodsMax, testMemoryCapacity-systemReserved-kubeReserved)
+			assert.Equal(t, tt.expectedKubepodsMax, testMemoryCapacity-systemReserved)
 		})
 	}
 }
@@ -258,49 +215,15 @@ func TestKubepodsMemoryLimitRejected(t *testing.T) {
 			name:        "limit above capacity",
 			limit:       testMemoryCapacity + testPageSize,
 			capacity:    testMemoryCapacity,
-			expectedErr: `kubepods memory limit 68719480832 bytes exceeds the host memory capacity 68719476736 bytes minus "kubeReserved.memory" 0 bytes`,
+			expectedErr: `kubepods memory limit 68719480832 bytes exceeds the host memory capacity 68719476736 bytes`,
 		},
 		{
-			name:        "limit above capacity minus kubeReserved",
+			name:        "kubeReserved memory conflicts",
 			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "1Gi"}},
-			limit:       testMemoryCapacity - (1 << 30) + testPageSize,
-			capacity:    testMemoryCapacity,
-			expectedErr: `kubepods memory limit 67645739008 bytes exceeds the host memory capacity 68719476736 bytes minus "kubeReserved.memory" 1073741824 bytes`,
-		},
-		{
-			name:        "kubeReserved above capacity",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "128Gi"}},
 			limit:       testKubepodsLimit,
 			capacity:    testMemoryCapacity,
-			expectedErr: `kubepods memory limit 51539607552 bytes exceeds the host memory capacity 68719476736 bytes minus "kubeReserved.memory" 137438953472 bytes`,
-		},
-		{
-			name:        "negative kubeReserved",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "-1Gi"}},
-			limit:       testKubepodsLimit,
-			capacity:    testMemoryCapacity,
-			expectedErr: `invalid kubelet configuration field "kubeReserved.memory": quantity "-1Gi" cannot be negative`,
-		},
-		{
-			name:        "out of range kubeReserved",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "1e30"}},
-			limit:       testKubepodsLimit,
-			capacity:    testMemoryCapacity,
-			expectedErr: `invalid kubelet configuration field "kubeReserved.memory": quantity "1e30" exceeds the kubelet's range`,
-		},
-		{
-			name:        "fractional kubeReserved",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "1500m"}},
-			limit:       testKubepodsLimit,
-			capacity:    testMemoryCapacity,
-			expectedErr: `invalid kubelet configuration field "kubeReserved.memory": quantity "1500m" is not a whole number of bytes`,
-		},
-		{
-			name:        "malformed kubeReserved",
-			extraConfig: map[string]any{"kubeReserved": map[string]any{"memory": "lots"}},
-			limit:       testKubepodsLimit,
-			capacity:    testMemoryCapacity,
-			expectedErr: `invalid kubelet configuration field "kubeReserved.memory": quantity "lots": quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'`,
+			expectedErr: `kubelet configuration field "kubeReserved.memory" conflicts with the kubepods memory limit: ` +
+				`the derived "systemReserved.memory" already holds all of the host memory beyond the limit`,
 		},
 		{
 			name:        "limit below the page size",
@@ -375,128 +298,50 @@ func TestKubepodsMemoryLimitExtraArgsRejected(t *testing.T) {
 	t.Parallel()
 
 	cfgSpec := &k8s.KubeletConfigSpec{
-		ClusterDNS:          []string{"10.0.0.5"},
-		ClusterDomain:       "cluster.local",
-		ExtraArgs:           map[string]k8s.ArgValues{"system-reserved": {Values: []string{"cpu=500m"}}, "node-labels": {Values: []string{"a=b"}}},
-		KubepodsMemoryLimit: testKubepodsLimit,
+		ClusterDNS:    []string{"10.0.0.5"},
+		ClusterDomain: "cluster.local",
+		ExtraArgs:     map[string]k8s.ArgValues{"system-reserved": {Values: []string{"cpu=500m"}}, "node-labels": {Values: []string{"a=b"}}},
 	}
 
-	_, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, machine.TypeWorker, k8sctrl.WithHostMemory(constantCapacity(testMemoryCapacity), testPageSize))
+	_, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, k8sctrl.KubeletMemory{
+		KubepodsLimit: testKubepodsLimit,
+		Capacity:      testMemoryCapacity,
+		Reserved:      testWorkerReserved,
+		PageSize:      testPageSize,
+	})
 	assert.EqualError(t, err, `kubelet argument "system-reserved" conflicts with the kubepods memory limit: use the "systemReserved" configuration field instead`)
 }
 
-func TestKubepodsMemoryLimitCapacityFailure(t *testing.T) {
-	t.Parallel()
-
-	cfgSpec := &k8s.KubeletConfigSpec{
-		ClusterDNS:          []string{"10.0.0.5"},
-		ClusterDomain:       "cluster.local",
-		KubepodsMemoryLimit: testKubepodsLimit,
-	}
-
-	failing := func() (uint64, error) { return 0, errors.New("meminfo unavailable") }
-
-	_, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, machine.TypeWorker, k8sctrl.WithHostMemory(failing, testPageSize))
-	assert.EqualError(t, err, "error reading memory capacity for the kubepods memory limit: meminfo unavailable")
-}
-
-func TestKubepodsMemoryLimitStaticConflictSkipsCapacity(t *testing.T) {
-	t.Parallel()
-
-	cfgSpec := &k8s.KubeletConfigSpec{
-		ClusterDNS:          []string{"10.0.0.5"},
-		ClusterDomain:       "cluster.local",
-		ExtraConfig:         map[string]any{"cgroupsPerQOS": false},
-		KubepodsMemoryLimit: testKubepodsLimit,
-	}
-
-	reads := 0
-	counting := func() (uint64, error) {
-		reads++
-
-		return testMemoryCapacity, nil
-	}
-
-	_, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, machine.TypeWorker, k8sctrl.WithHostMemory(counting, testPageSize))
-	assert.EqualError(t, err, `kubelet configuration field "cgroupsPerQOS" must be enabled with the kubepods memory limit`)
-	assert.Zero(t, reads)
-}
-
-func TestKubepodsMemoryLimitRequiresHostMemory(t *testing.T) {
-	t.Parallel()
-
-	cfgSpec := &k8s.KubeletConfigSpec{
-		ClusterDNS:          []string{"10.0.0.5"},
-		ClusterDomain:       "cluster.local",
-		KubepodsMemoryLimit: testKubepodsLimit,
-	}
-
-	_, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, machine.TypeWorker)
-	assert.EqualError(t, err, "kubepods memory limit requires the host memory capacity")
-}
-
-func TestKubepodsMemoryLimitIgnored(t *testing.T) {
-	t.Parallel()
-
-	extraConfig := map[string]any{"systemReserved": map[string]any{"memory": "1Gi"}}
-
-	withLimit := &k8s.KubeletConfigSpec{
-		ClusterDNS:          []string{"10.0.0.5"},
-		ClusterDomain:       "cluster.local",
-		ExtraConfig:         extraConfig,
-		KubepodsMemoryLimit: testKubepodsLimit,
-	}
-
-	withoutLimit := &k8s.KubeletConfigSpec{
-		ClusterDNS:    []string{"10.0.0.5"},
-		ClusterDomain: "cluster.local",
-		ExtraConfig:   extraConfig,
-	}
-
-	ignored, err := k8sctrl.NewKubeletConfiguration(withLimit, testKubeletVersion, machine.TypeControlPlane, k8sctrl.IgnoringKubepodsMemoryLimit())
-	require.NoError(t, err)
-
-	plain, err := k8sctrl.NewKubeletConfiguration(withoutLimit, testKubeletVersion, machine.TypeControlPlane)
-	require.NoError(t, err)
-
-	assert.Equal(t, plain, ignored)
-	assert.Equal(t, map[string]string{"memory": "1Gi"}, ignored.SystemReserved)
-}
-
-func TestKubepodsMemoryLimitZeroRendersUnchanged(t *testing.T) {
+func TestSystemReservedMemory(t *testing.T) {
 	t.Parallel()
 
 	for _, tt := range []struct {
 		name        string
 		extraConfig map[string]any
-		machineType machine.Type
+		reserved    uint64
 
 		expectedSystemReserved map[string]string
 	}{
 		{
-			name:        "worker defaults",
-			machineType: machine.TypeWorker,
+			name:     "defaults",
+			reserved: testWorkerReserved,
 			expectedSystemReserved: map[string]string{
 				"cpu":               constants.KubeletSystemReservedCPU,
 				"pid":               constants.KubeletSystemReservedPid,
 				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-				"memory":            constants.KubeletSystemReservedMemoryWorker,
+				"memory":            "402653184",
 			},
 		},
 		{
-			name:        "control plane defaults",
-			machineType: machine.TypeControlPlane,
-			expectedSystemReserved: map[string]string{
-				"cpu":               constants.KubeletSystemReservedCPU,
-				"pid":               constants.KubeletSystemReservedPid,
-				"ephemeral-storage": constants.KubeletSystemReservedEphemeralStorage,
-				"memory":            constants.KubeletSystemReservedMemoryControlPlane,
-			},
+			name:                   "user map without memory gets the reservation",
+			extraConfig:            map[string]any{"systemReserved": map[string]any{"cpu": "1"}, "kubeReserved": map[string]any{"memory": "1Gi"}},
+			reserved:               2 << 30,
+			expectedSystemReserved: map[string]string{"cpu": "1", "memory": "2147483648"},
 		},
 		{
-			name:                   "user memory and conflicting settings are accepted",
+			name:                   "user memory and conflicting settings are accepted without a kubepods limit",
 			extraConfig:            map[string]any{"systemReserved": map[string]any{"memory": "1Gi"}, "cgroupsPerQOS": false},
-			machineType:            machine.TypeWorker,
+			reserved:               testWorkerReserved,
 			expectedSystemReserved: map[string]string{"memory": "1Gi"},
 		},
 	} {
@@ -509,7 +354,7 @@ func TestKubepodsMemoryLimitZeroRendersUnchanged(t *testing.T) {
 				ExtraConfig:   tt.extraConfig,
 			}
 
-			config, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, tt.machineType)
+			config, err := k8sctrl.NewKubeletConfiguration(cfgSpec, testKubeletVersion, k8sctrl.KubeletMemory{Reserved: tt.reserved, PageSize: testPageSize})
 			require.NoError(t, err)
 
 			assert.Equal(t, tt.expectedSystemReserved, config.SystemReserved)

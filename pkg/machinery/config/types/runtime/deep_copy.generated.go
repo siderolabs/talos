@@ -189,6 +189,11 @@ func (o *CPUPartitionConfigV1Alpha1) DeepCopy() *CPUPartitionConfigV1Alpha1 {
 // DeepCopy generates a deep copy of *WorkloadResourceConfigV1Alpha1.
 func (o *WorkloadResourceConfigV1Alpha1) DeepCopy() *WorkloadResourceConfigV1Alpha1 {
 	var cp WorkloadResourceConfigV1Alpha1 = *o
+	if o.ReservedConfig != nil {
+		cp.ReservedConfig = new(WorkloadReserved)
+		*cp.ReservedConfig = *o.ReservedConfig
+		cp.ReservedConfig.MemoryConfig = o.ReservedConfig.MemoryConfig.DeepCopy()
+	}
 	if o.KubepodsConfig != nil {
 		cp.KubepodsConfig = new(WorkloadResourceRoot)
 		*cp.KubepodsConfig = *o.KubepodsConfig
