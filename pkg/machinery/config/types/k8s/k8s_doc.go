@@ -167,6 +167,13 @@ func (KubeAPIServerCAConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The list of accepted CA certificates for the Kubernetes API server.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of accepted CA certificates for the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "rootCABundle",
+				Type:        "string",
+				Note:        "",
+				Description: "The CA bundle published to the pods as the `kube-root-ca.crt` ConfigMap.\n\nBy default, the issuing CA certificate is published.\nWhen the issuing CA is an intermediate CA, the bundle can contain its parent chain,\nso that clients which require a self-signed trust anchor (e.g. OpenSSL) can verify the API server.\nThe bundle is not trusted to authenticate clients, and it is reset when the issuing CA is rotated.\n\nPublishing a parent CA expands the trust of the workloads to any certificate issued under it:\na dedicated self-signed CA per cluster (the default) is recommended.\n\nThis field should only be set for the controlplane machines.\nThe value should be PEM encoded certificates which allow to verify the issuing CA.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The CA bundle published to the pods as the `kube-root-ca.crt` ConfigMap." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
